@@ -1,6 +1,6 @@
 - name: Test that retrieving a url works
   set_fact:
-    web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/get?one') }}"
+    web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/get?one') | from_json }}"
 
 - name: Assert that the url was retrieved
   assert:
@@ -39,7 +39,7 @@
   block:
     - name: Test user agent
       set_fact:
-        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/user-agent') }}"
+        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/user-agent') | from_json }}"
 
     - name: Assert that user agent is set
       assert:
@@ -51,7 +51,7 @@
   block:
     - name: Test force basic auth
       set_fact:
-        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/headers', username='abc') }}"
+        web_data: "{{ lookup('url', 'https://' ~ httpbin_host ~ '/headers', username='abc') | from_json }}"
 
     - name: Assert that Authorization header is set
       assert:

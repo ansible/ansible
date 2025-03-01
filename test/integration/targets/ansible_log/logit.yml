@@ -6,7 +6,7 @@
 
     - name: force warning
       ping:
-      when: "{{pepe}} == 1"
+      when: "{{pepe == 1}}"
       vars:
         lola: 1
         pepe: lola

@@ -1,4 +1,5 @@
 - hosts: testhost
+  gather_facts: no
   vars_files:
     - vars/test_hash_vars.yml
   vars:

@@ -19,14 +19,6 @@
 - set_fact:
     output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 
-- name: show python interpreter
-  debug:
-     msg: "{{ ansible_python['executable'] }}"
-
-- name: show jinja2 version
-  debug:
-     msg: "{{ lookup('pipe', ansible_python.executable ~ ' -c \"import jinja2; print(jinja2.__version__)\"') }}"
-
 - name: get default group
   shell: id -gn
   register: group
@@ -357,7 +349,7 @@
 - assert:
     that:
       - "\"foo t'e~m\\plated\" in unusual_results.stdout_lines"
-      - "{{unusual_results.stdout_lines| length}} == 1"
+      - "unusual_results.stdout_lines| length == 1"
 
 - name: check that the unusual filename can be checked for changes
   template:
@@ -715,8 +707,7 @@
 - name: check that proper error message is emitted when in operator is used
   assert:
     that:
-      - '"The task includes an option with an undefined variable" in error.msg'
-      - "\"'y' is undefined\n\n\" in error.msg"
+      - error.msg is contains "'y' is undefined"
 
 - template:
     src: template_import_macro_globals.j2
@@ -732,8 +723,9 @@
 # aliases file requires root for template tests so this should be safe
 - import_tasks: backup_test.yml
 
-- name: test STRING_TYPE_FILTERS
+- name: ensure that Jinja preserves types previously eaten by repr/eval literal collisions
   copy:
+    # setting indent_value is how we're sure the output JSON string was preserved as a string instead of a repr of the dict
     content: "{{ a_dict | to_nice_json(indent=(indent_value|int))}}\n"
     dest: "{{ output_dir }}/string_type_filters.templated"
   vars:
@@ -758,11 +750,9 @@
     src: empty_template.j2
     dest: "{{ output_dir }}/empty_template.templated"
 
-- assert:
-    that:
-      - test
-  vars:
-    test: "{{ lookup('file', output_dir ~ '/empty_template.templated')|length == 0 }}"
+- name: assert empty template contents
+  assert:
+    that: lookup('file', output_dir + '/empty_template.templated')|length == 0
 
 - name: test jinja2 override without colon throws proper error
   block:

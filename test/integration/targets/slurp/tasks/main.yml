@@ -29,11 +29,11 @@
 - name: check slurp existing result
   assert:
     that:
-      - 'slurp_existing.content'
-      - 'slurp_existing.encoding == "base64"'
-      - 'slurp_existing is not changed'
-      - 'slurp_existing is not failed'
-      - '"{{ slurp_existing.content | b64decode }}" == "We are at the café"'
+      - slurp_existing.content is truthy
+      - slurp_existing.encoding == "base64"
+      - slurp_existing is not changed
+      - slurp_existing is not failed
+      - slurp_existing.content | b64decode == "We are at the café"
 
 - name: Create a binary file to test with
   copy:
@@ -49,10 +49,10 @@
 - name: check slurp result of binary
   assert:
     that:
-      - "slurp_binary.content"
-      - "slurp_binary.encoding == 'base64'"
-      - "slurp_binary is not changed"
-      - "slurp_binary is not failed"
+      - slurp_binary.content is truthy
+      - slurp_binary.encoding == 'base64'
+      - slurp_binary is not changed
+      - slurp_binary is not failed
 
 - name: test slurp with missing argument
   action: slurp
@@ -62,8 +62,8 @@
 - name: check slurp with missing argument result
   assert:
     that:
-      - "slurp_no_args is failed"
-      - "slurp_no_args.msg"
-      - "slurp_no_args is not changed"
+      - slurp_no_args is failed
+      - slurp_no_args.msg is truthy
+      - slurp_no_args is not changed
 
 - import_tasks: test_unreadable.yml

@@ -39,7 +39,7 @@
   - include_tasks: gpg-verification.yml
     when:
     - not gpg_version.stderr
-    - gpg_version.stdout
+    - gpg_version.stdout is truthy
     - not (ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('7', '<'))
   - import_tasks: localmods.yml
   - import_tasks: reset-origin.yml

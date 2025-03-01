@@ -60,13 +60,13 @@
 
 - assert:
     that:
-      - "'dev.collection1  *' in list_result.stdout"
+      - 'list_result.stdout is regex "dev.collection1\s+\*"'
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
-      - "'dev.collection2  placeholder' in list_result.stdout"
-      - "'dev.collection3  *' in list_result.stdout"
-      - "'dev.collection4  *' in list_result.stdout"
-      - "'dev.collection5  *' in list_result.stdout"
-      - "'dev.collection6  *' in list_result.stdout"
+      - 'list_result.stdout is regex "dev.collection2\s+placeholder"'
+      - 'list_result.stdout is regex "dev.collection3\s+\*"'
+      - 'list_result.stdout is regex "dev.collection4\s+\*"'
+      - 'list_result.stdout is regex "dev.collection5\s+\*"'
+      - 'list_result.stdout is regex "dev.collection6\s+\*"'
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
@@ -76,12 +76,13 @@
 
 - assert:
     that:
-      - "'dev.collection1  *' in list_result_human.stdout"
+      - 'list_result_human.stdout is regex "dev.collection1\s+\*"'
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
-      - "'dev.collection2  placeholder' in list_result_human.stdout"
-      - "'dev.collection3  *' in list_result_human.stdout"
-      - "'dev.collection5  *' in list_result.stdout"
-      - "'dev.collection6  *' in list_result.stdout"
+      - 'list_result_human.stdout is regex "dev.collection2\s+placeholder"'
+      - 'list_result_human.stdout is regex "dev.collection3\s+\*"'
+      - 'list_result_human.stdout is regex "dev.collection4\s+\*"'
+      - 'list_result_human.stdout is regex "dev.collection5\s+\*"'
+      - 'list_result_human.stdout is regex "dev.collection6\s+\*"'
 
 - name: list collections in yaml format
   command: ansible-galaxy collection list --format yaml

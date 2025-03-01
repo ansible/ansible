@@ -29,30 +29,30 @@
                 "popular": false
             }
         }
-    }, 
+    },
     "all": {
         "children": [
-            "cousins", 
-            "kids", 
-            "the-maid", 
-            "ungrouped"
+            "ungrouped",
+            "kids",
+            "cousins",
+            "the-maid"
         ]
-    }, 
+    },
     "cousins": {
         "children": [
             "redheads"
         ]
-    }, 
+    },
     "kids": {
         "hosts": [
-            "bobby", 
-            "cindy", 
-            "greg", 
-            "jan", 
-            "marcia", 
-            "peter"
+            "marcia",
+            "jan",
+            "cindy",
+            "greg",
+            "peter",
+            "bobby"
         ]
-    }, 
+    },
     "the-maid": {
         "hosts": [
             "alice"

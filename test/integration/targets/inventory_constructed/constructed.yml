@@ -1,4 +1,5 @@
 plugin: ansible.builtin.constructed
+strict: True
 keyed_groups:
   - key: hostvar0
   - key: hostvar1

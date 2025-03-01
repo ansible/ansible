@@ -941,7 +941,6 @@
       - "stat_dir_in_copy_link.stat.exists"
       - "not stat_dir_in_copy_link.stat.islnk"
       - "stat_dir_in_copy_link.stat.isdir"
-      -
       - "stat_dir_outside_copy_link.stat.exists"
       - "not stat_dir_outside_copy_link.stat.islnk"
       - "stat_dir_outside_copy_link.stat.isdir"
@@ -1064,7 +1063,7 @@
 - name: Test that remote_dir is appropriate for this test (absolute path)
   assert:
     that:
-      - '{{ remote_dir_expanded[0] == "/" }}'
+      - 'remote_dir_expanded[0] == "/"'
 
 - block:
   - name: Create a directory to copy
@@ -1262,7 +1261,7 @@
   assert:
     that:
       - "copy_result6.changed"
-      - "copy_result6.dest == '{{remote_dir_expanded}}/multiline.txt'"
+      - "copy_result6.dest == remote_dir_expanded + '/multiline.txt'"
       - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)
@@ -2165,26 +2164,26 @@
     assert:
       that:
       - testcase5 is changed
-      - "stat_new_dir_with_chown.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_file1.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_file1.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_file1.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_file1.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_subdir.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_subdir.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir_file12.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_subdir_file12.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_subdir_file12.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_subdir_file12.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_link_file12.stat.uid == {{ ansible_copy_test_user.uid }}"
-      - "stat_new_dir_with_chown_link_file12.stat.gid == {{ ansible_copy_test_group.gid }}"
-      - "stat_new_dir_with_chown_link_file12.stat.pw_name == '{{ ansible_copy_test_user_name }}'"
-      - "stat_new_dir_with_chown_link_file12.stat.gr_name == '{{ ansible_copy_test_user_name }}'"
+      - stat_new_dir_with_chown.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_file1.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_file1.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_file1.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_file1.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_subdir.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_subdir.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir_file12.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_subdir_file12.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_subdir_file12.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir_file12.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_link_file12.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_link_file12.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_link_file12.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_link_file12.stat.gr_name == ansible_copy_test_user_name
 
   always:
     - name: execute - remove the user for test
@@ -2356,7 +2355,7 @@
   assert:
     that:
     - fail_copy_encrypted_file is failed
-    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+    - fail_copy_encrypted_file.msg.endswith('A vault password or secret must be specified to decrypt ' + role_path + '/files-different/vault/vault-file')
 
 - name: fail to copy a directory with an encrypted file without the password
   copy:
@@ -2369,7 +2368,7 @@
   assert:
     that:
     - fail_copy_directory_with_enc_file is failed
-    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+    - fail_copy_directory_with_enc_file.msg.endswith('A vault password or secret must be specified to decrypt ' + role_path + '/files-different/vault/vault-file')
 
 #
 # Test for issue 74536: recursively copy all nested directories with remote_src=yes and src='dir/' when dest exists

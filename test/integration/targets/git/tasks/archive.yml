@@ -118,5 +118,5 @@
 
 - name: ARCHIVE | Assert that prefix directory is found
   assert:
-    that: '{{ item.matched == 1 }}'
+    that: item.matched == 1
   with_items: "{{ archive_check.results }}"

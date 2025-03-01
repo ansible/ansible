@@ -106,8 +106,8 @@
 - name: Test hash filter
   assert:
     that:
-      - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
-      - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
+      - '"hash" | hash("sha1") == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
+      - '"café" | hash("sha1") == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
 
 - name: Test unsupported hash type
   debug:
@@ -237,7 +237,8 @@
       # but even though it's redundant with those unit tests, we do at least the most complicated example of the documentation here
       - "(default | combine(patch, recursive=True, list_merge='append_rp')) == result"
       - combine_fail is failed
-      - "combine_fail.msg == \"'recursive' and 'list_merge' are the only valid keyword arguments\""
+      - |
+          "'recursive' and 'list_merge' are the only valid keyword arguments" is in combine_fail.msg
 
 - set_fact:
     combine: "{{[x, [y]] | combine(z)}}"
@@ -247,7 +248,7 @@
 - name: Ensure combining objects which aren't dictionaries throws an error
   assert:
     that:
-      - "result.msg.startswith(\"failed to combine variables, expected dicts but got\")"
+      - "'failed to combine variables, expected dicts but got' is in result.msg"
 
 - name: Ensure combining two dictionaries containing undefined variables provides a helpful error
   block:
@@ -262,7 +263,8 @@
 
     - assert:
         that:
-          - "result.msg.startswith('The task includes an option with an undefined variable')"
+          - |
+            result.msg is contains "'undef_variable' is undefined"
 
     - set_fact:
         combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
@@ -271,7 +273,8 @@
 
     - assert:
         that:
-          - "result.msg.startswith('The task includes an option with an undefined variable')"
+          - |
+            result.msg is contains "'undef_variable' is undefined"
 
 - name: regex_search
   set_fact:
@@ -388,9 +391,9 @@
     that:
       - '"]]^"|regex_escape(re_type="posix_basic") == "\\]\\]\\^"'
       - regex_escape_fail_1 is failed
-      - 'regex_escape_fail_1.msg == "Regex type (posix_extended) not yet implemented"'
+      - '"Regex type (posix_extended) not yet implemented" is in regex_escape_fail_1.msg'
       - regex_escape_fail_2 is failed
-      - 'regex_escape_fail_2.msg == "Invalid regex type (haha)"'
+      - '"Invalid regex type (haha)" is in regex_escape_fail_2.msg'
 
 - name: Verify from_yaml and from_yaml_all
   assert:
@@ -517,11 +520,19 @@
 - name: Verify mandatory
   assert:
     that:
-      - '{{mandatory_demo|mandatory}} == 123'
+      - mandatory_demo | mandatory == 123
       - mandatory_1 is failed
       - "mandatory_1.msg == \"Mandatory variable 'hey'  not defined.\""
       - mandatory_2 is failed
-      - "mandatory_2.msg == 'You did not give me a variable. I am a sad wolf.'"
+      - mandatory_2.msg is contains "You did not give me a variable. I am a sad wolf."
+
+- name: Verify undef throws if resolved (default message)
+  set_fact:
+    foo: '{{ fail_foo }}'
+  vars:
+    fail_foo: '{{ undef() }}'
+  ignore_errors: yes
+  register: fail_default
 
 - name: Verify undef throws if resolved
   set_fact:
@@ -552,7 +563,10 @@
 - name: Verify undef
   assert:
     that:
+      - fail_default is failed
+      - fail_default.msg is contains('Mandatory variable has not been overridden')
       - fail_1 is failed
+      - fail_1.msg is contains('Expected failure')
       - not (fail_2 is failed)
       - not (fail_3 is failed)
 
@@ -603,9 +617,9 @@
   assert:
     that:
       - subelements_1 is failed
-      - 'subelements_1.msg == "obj must be a list of dicts or a nested dict"'
+      - '"obj must be a list of dicts or a nested dict" is in subelements_1.msg'
       - subelements_2 is failed
-      - '"subelements must be a list or a string" in subelements_2.msg'
+      - '"subelements must be a list or a string" is in subelements_2.msg'
       - 'subelements_demo|subelements("does not compute", skip_missing=True) == []'
       - subelements_3 is failed
       - '"could not find" in subelements_3.msg'
@@ -706,7 +720,7 @@
     that:
       - '"foo"|type_debug == "str"'
 
-- name: Assert that a jinja2 filter that produces a map is auto unrolled
+- name: Assert that a jinja2 filter that produces an iterable is auto unrolled
   assert:
     that:
       - thing|map(attribute="bar")|first == 123

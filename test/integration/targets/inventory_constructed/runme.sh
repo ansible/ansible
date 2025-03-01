@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eux -o pipefail
 
 ansible-inventory -i static_inventory.yml -i constructed.yml --graph | tee out.txt
 

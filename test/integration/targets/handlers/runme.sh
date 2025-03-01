@@ -76,7 +76,7 @@ ansible-playbook test_multiple_handlers_with_recursive_notification.yml -i inven
 set +e
 result="$(ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers "$@" 2>&1)"
 set -e
-grep -q "ERROR! The requested handler 'notify_inexistent_handler' was not found in either the main handlers list nor in the listening handlers list" <<< "$result"
+grep -q "The requested handler 'notify_inexistent_handler' was not found in either the main handlers list nor in the listening handlers list" <<< "$result"
 
 # Notify inexistent handlers without errors when ANSIBLE_ERROR_ON_MISSING_HANDLER=false
 ANSIBLE_ERROR_ON_MISSING_HANDLER=false ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers -v "$@"
@@ -116,19 +116,19 @@ ansible-playbook 58841.yml "$@" --tags evaluation_time -e test_var=myvar | tee o
 
 # Test the handler is not found when the variable is undefined
 ansible-playbook 58841.yml "$@" --tags evaluation_time 2>&1 | tee out.txt ; cat out.txt
-grep out.txt -e "ERROR! The requested handler 'handler name with myvar' was not found"
+grep out.txt -e "The requested handler 'handler name with myvar' was not found"
 grep out.txt -e "\[WARNING\]: Handler 'handler name with {{ test_var }}' is unusable"
 [ "$(grep out.txt -ce 'handler ran')" = "0" ]
 [ "$(grep out.txt -ce 'handler with var ran')" = "0" ]
 
 # Test include_role and import_role cannot be used as handlers
 ansible-playbook test_role_as_handler.yml "$@"  2>&1 | tee out.txt
-grep out.txt -e "ERROR! Using 'include_role' as a handler is not supported."
+grep out.txt -e "Using 'include_role' as a handler is not supported."
 
 # Test notifying a handler from within include_tasks does not work anymore
 ansible-playbook test_notify_included.yml "$@"  2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'I was included')" = "1" ]
-grep out.txt -e "ERROR! The requested handler 'handler_from_include' was not found in either the main handlers list nor in the listening handlers list"
+grep out.txt -e "The requested handler 'handler_from_include' was not found in either the main handlers list nor in the listening handlers list"
 
 ansible-playbook test_handlers_meta.yml -i inventory.handlers -vv "$@" | tee out.txt
 [ "$(grep out.txt -ce 'RUNNING HANDLER \[noop_handler\]')" = "1" ]
@@ -154,7 +154,7 @@ ansible-playbook include_handlers_fail_force.yml --force-handlers -i inventory.h
 [ "$(grep out.txt -ce 'included handler ran')" = "1" ]
 
 ansible-playbook test_flush_handlers_as_handler.yml -i inventory.handlers "$@"  2>&1 | tee out.txt
-grep out.txt -e "ERROR! flush_handlers cannot be used as a handler"
+grep out.txt -e "flush_handlers cannot be used as a handler"
 
 ansible-playbook test_skip_flush.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran')" = "0" ]
@@ -178,13 +178,13 @@ grep out.txt -e "after flush"
 ansible-playbook 79776.yml -i inventory.handlers "$@"
 
 ansible-playbook test_block_as_handler.yml "$@"  2>&1 | tee out.txt
-grep out.txt -e "ERROR! Using a block as a handler is not supported."
+grep out.txt -e "Using a block as a handler is not supported."
 
 ansible-playbook test_block_as_handler-include.yml "$@"  2>&1 | tee out.txt
-grep out.txt -e "ERROR! Using a block as a handler is not supported."
+grep out.txt -e "Using a block as a handler is not supported."
 
 ansible-playbook test_block_as_handler-import.yml "$@"  2>&1 | tee out.txt
-grep out.txt -e "ERROR! Using a block as a handler is not supported."
+grep out.txt -e "Using a block as a handler is not supported."
 
 ansible-playbook test_include_role_handler_once.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran')" = "1" ]

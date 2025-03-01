@@ -23,7 +23,7 @@
 
 - set_fact:
     selinux_policytype: "{{ r.stdout_lines[0] | trim }}"
-  when: r is success and r.stdout_lines
+  when: r is success and r.stdout_lines is truthy
 
 - assert:
     that:

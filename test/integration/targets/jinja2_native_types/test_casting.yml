@@ -14,18 +14,18 @@
 - assert:
     that:
         - int_to_str == "'2'"
-        - 'int_to_str|type_debug in ["str", "unicode"]'
+        - int_to_str | type_debug == "str"
         - 'int_to_str2 == "2"'
-        - 'int_to_str2|type_debug in ["NativeJinjaText"]'
         - 'str_to_int == 2'
-        - 'str_to_int|type_debug == "int"'
-        - 'dict_to_str|type_debug in ["str", "unicode"]'
-        - 'list_to_str|type_debug in ["str", "unicode"]'
+        - str_to_int|type_debug == "int"
+        - dict_to_str|type_debug == "str"
+        - list_to_str|type_debug == "str"
         - 'int_to_bool is sameas true'
         - 'int_to_bool|type_debug == "bool"'
         - 'str_true_to_bool is sameas true'
         - 'str_true_to_bool|type_debug == "bool"'
         - 'str_false_to_bool is sameas false'
         - 'str_false_to_bool|type_debug == "bool"'
-        - 'list_to_json_str|type_debug in ["NativeJinjaText"]'
-        - 'list_to_yaml_str|type_debug in ["NativeJinjaText"]'
+        - |
+            list_to_json_str == '["one", "two"]'
+        - 'list_to_yaml_str == "[one, two]\n"'

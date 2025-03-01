@@ -52,7 +52,7 @@ class LookupModule(LookupBase):
             if option in kwargs:
                 self.set_option(option, kwargs[option])
                 value = self.get_option(option)
-                if type(value) is not cast:
+                if not isinstance(value, cast):
                     raise Exception('%s is not a %s: got %s/%s' % (option, cast, type(value), value))
 
         return terms

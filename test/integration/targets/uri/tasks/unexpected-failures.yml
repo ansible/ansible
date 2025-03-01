@@ -22,5 +22,4 @@
   assert:
     that:
       - ret is failed
-      - "not ret.msg.startswith('MODULE FAILURE')"
-      - '"Could not replace file" in ret.msg'
+      - ret.msg is match "Could not replace file"

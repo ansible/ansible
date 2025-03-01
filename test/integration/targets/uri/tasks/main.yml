@@ -227,7 +227,7 @@
 - name: Assert location header
   assert:
     that:
-      - 'result.location|default("") == "https://{{ httpbin_host }}/relative-redirect/1"'
+      - 'result.location|default("") == "https://" + httpbin_host + "/relative-redirect/1"'
 
 - name: Check SSL with redirect
   uri:
@@ -237,7 +237,7 @@
 - name: Assert SSL with redirect
   assert:
     that:
-      - 'result.url|default("") == "https://{{ httpbin_host }}/get"'
+      - 'result.url|default("") == "https://" + httpbin_host + "/get"'
 
 - name: redirect to bad SSL site
   uri:
@@ -475,7 +475,7 @@
     body:
       integer_value: 1
   register: multipart_invalid
-  failed_when: 'multipart_invalid.msg != "failed to parse body as form-multipart: value must be a string, or mapping, cannot be type int"'
+  failed_when: '"failed to parse body as form-multipart: value must be a string, or mapping, cannot be type" not in multipart_invalid.msg'
 
 - name: Validate invalid method
   uri:

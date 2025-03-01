@@ -3,7 +3,7 @@
     test_file: /tmp/ansible-test.module_defaults.foo
   module_defaults:
     debug:
-      msg: test default
+      msg: test {{ "default" }}
     file:
       path: '{{ test_file }}'
   block:

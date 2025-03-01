@@ -78,9 +78,11 @@ RETURN = """
 
 import datetime
 import os
+import random
 import subprocess
 import tarfile
 import tempfile
+import time
 import yaml
 
 from ansible.module_utils.basic import AnsibleModule
@@ -99,6 +101,8 @@ def publish_collection(module, collection):
     version = collection['version']
     dependencies = collection['dependencies']
     use_symlink = collection['use_symlink']
+
+    time.sleep(random.random())  # inject some time wobble into parallel publish operations since Galaxy publish DB key generation is not mutex'd
 
     result = {}
     collection_dir = os.path.join(module.tmpdir, "%s-%s-%s" % (namespace, name, version))

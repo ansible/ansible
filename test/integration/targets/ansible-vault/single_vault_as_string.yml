@@ -12,7 +12,7 @@
         msg: "{{ vaulted_value }}"
 
     - debug:
-        msg: "{{ vaulted_value|type_debug }}"
+        msg: "{{ vaulted_value|pprint }}"
 
     - assert:
         that:

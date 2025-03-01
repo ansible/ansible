@@ -39,7 +39,7 @@
     assert:
       that:
         - "'1.0.0' not in foo_version.stdout"
-        - "{{ foo_version.changed }}"
+        - "foo_version.changed"
 
   - name: "(upgrade type: {{upgrade_type}}) upgrade packages to latest version (Idempotant)"
     apt:

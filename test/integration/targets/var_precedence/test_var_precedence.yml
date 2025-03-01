@@ -29,8 +29,7 @@
     - debug: var=registered_var
     - debug: var=from_inventory_once_removed
     - assert:
-        that: item
-      with_items:
+        that:
           - 'extra_var == "extra_var"'
           - 'extra_var_override == "extra_var_override"'
           - 'extra_var_override_once_removed == "extra_var_override"'

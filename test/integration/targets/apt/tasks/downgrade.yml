@@ -51,7 +51,7 @@
     assert:
       that:
         - "'1.0.0' in apt_downgrade_foo_version.stdout"
-        - "{{ apt_downgrade_foo_version.changed }}"
+        - "apt_downgrade_foo_version.changed"
 
   - name: downgrade foo with flag again
     apt:
