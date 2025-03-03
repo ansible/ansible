@@ -817,8 +817,20 @@ class GalaxyAPI:
 
         signatures = data.get('signatures') or []
 
+        download_url_info = urlparse(data['download_url'])
+        if not download_url_info.scheme and not download_url_info.path.startswith('/'):
+            # galaxy does a lot of redirects, with much more complex pathing than we use
+            # within this codebase, without updating _call_galaxy to be able to return
+            # the final URL, we can't reliably build a relative URL.
+            raise AnsibleError(f'Invalid non absolute download_url: {data["download_url"]}')
+
+        if download_url_info.scheme:
+            download_url = data['download_url']
+        else:
+            download_url = urljoin(self.api_server, data['download_url'])
+
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
-                                         data['download_url'], data['artifact']['sha256'],
+                                         download_url, data['artifact']['sha256'],
                                          data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
