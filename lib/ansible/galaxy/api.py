@@ -908,12 +908,11 @@ class GalaxyAPI:
             if not next_link:
                 break
             elif relative_link:
-                # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
-                # with someone who knows the AH API.
-
-                # Remove the query string from the versions_url to use the next_link's query
-                versions_url = urljoin(versions_url, urlparse(versions_url).path)
-                next_link = versions_url.replace(versions_url_info.path, next_link)
+                next_link_info = urlparse(next_link)
+                next_link = versions_url_info._replace(
+                    query=next_link_info.query,
+                    path=urljoin(versions_url_info.path, next_link_info.path)
+                ).geturl()
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
