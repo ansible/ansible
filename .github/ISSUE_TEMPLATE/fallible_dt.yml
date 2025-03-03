@@ -1,0 +1,37 @@
+name: Fallible 2.19 Data Tagging Preview Bug Report
+description: File a bug report against the Fallible 2.19 Data Tagging Preview
+labels:
+  - fallible_dt
+  - bug
+  - data_tagging
+assignees:
+  - nitzmahone
+  - mattclay
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+  - type: dropdown
+    attributes:
+      label: The fallible release that reproduces the issue described.
+      options:
+        - 2025.3.3
+        - 2025.1.30
+  - type: textarea
+    attributes:
+      label: Describe the issue with any relevant steps to reproduce.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: <!-- Bot instructions (ignore this) -->
+      options:
+        - |
+          <!--
+          ### Ansible Version
+          ### Configuration
+          ### OS / Environment
+          -->
+    validations:
+      required: true
