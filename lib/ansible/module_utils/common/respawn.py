@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import subprocess
 import sys
 import typing as t
 
 from ansible.module_utils.common.text.converters import to_bytes
+
+_ANSIBLE_PARENT_PATH = pathlib.Path(__file__).parents[3]
 
 
 def has_respawned():
@@ -55,11 +58,20 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
     be returned (or ``None`` if probing fails for all supplied paths).
     :arg module_name: fully-qualified Python module name to probe for (eg, ``selinux``)
     """
+    PYTHONPATH = os.getenv('PYTHONPATH', '')
+    env = os.environ | {'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')}
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
         try:
-            rc = subprocess.call([interpreter_path, '-c', 'import {0}'.format(module_name)])
+            rc = subprocess.call(
+                [
+                    interpreter_path,
+                    '-c',
+                    f'import {module_name}, ansible.module_utils.basic',
+                ],
+                env=env,
+            )
             if rc == 0:
                 return interpreter_path
         except Exception:
