@@ -1206,7 +1206,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         if status_code >= 400 :
             body = info['body']
     """
-    # DTFIX-MERGE: replace jsonify above with a new specific profile encoder
+    # DTFIX-MERGE:JSON: replace jsonify above with a new specific profile encoder
 
     if not HAS_GZIP:
         module.fail_json(msg=GzipDecodedReader.missing_gzip_error())

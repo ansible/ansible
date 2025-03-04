@@ -1382,7 +1382,7 @@ class AnsibleModule(object):
             self.fail_json(msg=to_native(e))
 
     def jsonify(self, data):
-        # DTFIX-MERGE: what to do with this? we're not using it internally now
+        # DTFIX-MERGE:JSON: what to do with this? we're not using it internally now
         try:
             return jsonify(data)
         except UnicodeError as e:

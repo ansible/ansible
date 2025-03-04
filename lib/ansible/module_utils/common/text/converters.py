@@ -268,7 +268,7 @@ def _json_encode_fallback(obj):
 
 
 def jsonify(data, **kwargs):
-    # DTFIX-MERGE: what to do with this? we shouldn't be (but are in validation.py), using this internally
+    # DTFIX-MERGE:JSON: what to do with this? we shouldn't be (but are in validation.py), using this internally
     return json.dumps(data, cls=AnsibleJSONEncoder, **kwargs)
 
 

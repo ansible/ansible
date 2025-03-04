@@ -96,7 +96,7 @@ _T_encoder = t.TypeVar('_T_encoder', bound="AnsibleProfileJSONEncoder")
 _T_decoder = t.TypeVar('_T_decoder', bound="AnsibleProfileJSONDecoder")
 
 
-# DTFIX-MERGE: we probably need to hollow out this module, moving most to _internal and leaving whatever facade/public types behind that make sense
+# DTFIX-MERGE:JSON: we probably need to hollow out this module, moving most to _internal and leaving whatever facade/public types behind that make sense
 class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
     serialize_map: t.ClassVar[dict[type, t.Callable]]
     """
@@ -308,7 +308,7 @@ class AnsibleProfileJSONEncoder(json.JSONEncoder):
 
 class AnsibleJSONEncoder(json.JSONEncoder):
     """JSON encoder capable of handling Ansible internal types."""
-    # DTFIX-MERGE: figure out the disposition of this class (compat, etc)
+    # DTFIX-MERGE:JSON: figure out the disposition of this class (compat, etc)
 
     _wrap_container_types = (list, set, tuple, dict)
 
