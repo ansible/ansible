@@ -54,7 +54,7 @@ class ActionModule(ActionBase):
             fact_module, collection_list=self._task.collections
         ).resolved_fqcn
 
-        mod_args = _apply_action_arg_defaults(resolved_fact_module, self._task, mod_args)
+        mod_args = _apply_action_arg_defaults(resolved_fact_module, self._task, mod_args, self._templar)
 
         return mod_args
 

@@ -184,7 +184,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 raise AnsibleError(f'Action {module_or_action_context.resolved_fqcn!r} does not support raw params.', obj=self.action)
 
         args_finalizer = _task.TaskArgsFinalizer(
-            _get_action_arg_defaults(module_or_action_context.resolved_fqcn, self),
+            _get_action_arg_defaults(module_or_action_context.resolved_fqcn, self, templar),
             vp,
             raw_params_to_finalize,
             value,

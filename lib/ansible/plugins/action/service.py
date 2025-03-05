@@ -77,7 +77,7 @@ class ActionModule(ActionBase):
 
                 # get defaults for specific module
                 context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
-                new_module_args = _apply_action_arg_defaults(context.resolved_fqcn, self._task, new_module_args)
+                new_module_args = _apply_action_arg_defaults(context.resolved_fqcn, self._task, new_module_args, self._templar)
 
                 # collection prefix known internal modules to avoid collisions from collections search, while still allowing library/ overrides
                 if module in self.BUILTIN_SVC_MGR_MODULES:

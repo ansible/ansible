@@ -49,7 +49,8 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
-from ansible._internal._templating._engine import TemplateOptions
+from ansible._internal._templating._engine import TemplateOptions, TemplateEngine
+from ansible.template import Templar
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
 from ansible.module_utils._internal import _serialization, _ansiballz
 from ansible.module_utils import basic as _basic
@@ -1317,7 +1318,7 @@ def modify_module(
     )
 
 
-def _get_action_arg_defaults(action: str, task: Task) -> dict[str, t.Any]:
+def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -> dict[str, t.Any]:
     action_groups = task._parent._play._action_groups
     defaults = task.module_defaults
 
@@ -1345,16 +1346,16 @@ def _get_action_arg_defaults(action: str, task: Task) -> dict[str, t.Any]:
         if default.startswith('group/'):
             group_name = default.split('group/')[-1]
             if group_name in group_names:
-                tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
+                tmp_args.update(templar.resolve_to_container(module_defaults.get(f'group/{group_name}', {})))
 
     # handle specific action defaults
-    tmp_args.update(module_defaults.get(action, {}).copy())
+    tmp_args.update(templar.resolve_to_container(module_defaults.get(action, {})))
 
     return tmp_args
 
 
-def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any]) -> dict[str, t.Any]:
-    args = _get_action_arg_defaults(action, task)
+def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
+    args = _get_action_arg_defaults(action, task, templar._engine)
     args.update(action_args)
 
     return args
