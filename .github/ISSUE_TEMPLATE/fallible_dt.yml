@@ -14,13 +14,15 @@ body:
         ## Bug Report
   - type: dropdown
     attributes:
-      label: The fallible release that reproduces the issue described.
+      label: Fallible Version
+      description: The fallible release that reproduces the issue described.
       options:
         - 2025.3.3
         - 2025.1.30
   - type: textarea
     attributes:
-      label: Describe the issue with any relevant steps to reproduce.
+      label: Summary
+      description: Describe the issue with any relevant steps to reproduce.
     validations:
       required: true
   - type: dropdown
@@ -29,7 +31,12 @@ body:
       options:
         - |
           <!--
+          ### Component Name
+          bin/ansible
+          ### Issue Type
+          Bug Report
           ### Ansible Version
+          2.19.0.dev0
           ### Configuration
           ### OS / Environment
           -->
