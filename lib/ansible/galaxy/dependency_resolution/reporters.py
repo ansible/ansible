@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import typing as t
 from collections import defaultdict
 from contextlib import suppress as suppress_exceptions
 
@@ -59,7 +58,7 @@ class CollectionDependencyReporter(BaseReporter):
         """Initialize the collection rejection counter."""
         super().__init__()
 
-        self.reject_count_by_fqcn: t.DefaultDict[str, int] = defaultdict(int)
+        self.reject_count_by_fqcn: defaultdict[str, int] = defaultdict(int)
 
     def _log_mapped_rejection_message(self, candidate: Candidate) -> None:
         """Print out rejection messages on pre-defined limit hits."""
