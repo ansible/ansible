@@ -22,6 +22,7 @@ import errno
 import os
 import tempfile
 import time
+import typing as t
 
 from abc import abstractmethod
 from collections.abc import MutableMapping
@@ -43,36 +44,36 @@ class BaseCacheModule(AnsiblePlugin):
     # Backwards compat only.  Just import the global display instead
     _display = display
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(BaseCacheModule, self).__init__()
         self.set_options(var_options=args, direct=kwargs)
 
     @abstractmethod
-    def get(self, key):
+    def get(self, key: str) -> dict[str, object]:
         pass
 
     @abstractmethod
-    def set(self, key, value):
+    def set(self, key: str, value: dict[str, object]) -> None:
         pass
 
     @abstractmethod
-    def keys(self):
+    def keys(self) -> t.Sequence[str]:
         pass
 
     @abstractmethod
-    def contains(self, key):
+    def contains(self, key: object) -> bool:
         pass
 
     @abstractmethod
-    def delete(self, key):
+    def delete(self, key: str) -> None:
         pass
 
     @abstractmethod
-    def flush(self):
+    def flush(self) -> None:
         pass
 
     @abstractmethod
-    def copy(self):
+    def copy(self) -> dict[str, dict[str, object]]:
         pass
 
 
