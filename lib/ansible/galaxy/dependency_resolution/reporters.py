@@ -18,11 +18,8 @@ except ImportError:
 try:
     from resolvelib.resolvers import Criterion
 except ImportError:
-    try:
-        from resolvelib.resolvers.criterion import Criterion
-    except ImportError:
-        class Criterion:  # type: ignore[no-redef]
-            pass
+    class Criterion:  # type: ignore[no-redef]
+        pass
 
 from ansible.utils.display import Display
 from .dataclasses import Candidate, Requirement
