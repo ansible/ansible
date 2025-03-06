@@ -1245,10 +1245,10 @@ def _iter_modules_impl(paths, prefix=''):
         if not os.path.isdir(path):
             continue
 
-        yielded = set()
+        yielded = {'__init__'}
         for basename in sorted(os.listdir(path)):
             modname = inspect.getmodulename(basename)
-            if modname == '__init__' or modname in yielded:
+            if modname in yielded:
                 continue
 
             mod_path = os.path.join(path, basename)
