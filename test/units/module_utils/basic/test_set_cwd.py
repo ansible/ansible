@@ -31,7 +31,7 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'getcwd', mock_getcwd)
         monkeypatch.setattr(os, 'access', mock_access)
 
-        with patch_module_args(None), \
+        with patch_module_args(), \
              patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
@@ -68,7 +68,7 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
 
-        with patch_module_args(None), \
+        with patch_module_args(), \
              patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
@@ -106,7 +106,7 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
 
-        with patch_module_args(None), \
+        with patch_module_args(), \
              patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
@@ -146,7 +146,7 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
 
-        with patch_module_args(None), \
+        with patch_module_args(), \
              patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
@@ -184,7 +184,7 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
 
-        with patch_module_args(None), \
+        with patch_module_args(), \
              patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 

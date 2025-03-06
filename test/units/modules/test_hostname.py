@@ -3,12 +3,12 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
+import unittest
 
 from unittest.mock import patch, MagicMock, mock_open
 
 from ansible.module_utils.common._utils import get_all_subclasses
 from ansible.modules import hostname
-from units.modules.utils import ModuleTestCase
 
 
 class TestHostname:
@@ -43,7 +43,7 @@ class TestHostname:
             assert issubclass(cls, hostname.BaseStrategy)
 
 
-class TestRedhatStrategy(ModuleTestCase):
+class TestRedhatStrategy(unittest.TestCase):
     def setUp(self):
         super(TestRedhatStrategy, self).setUp()
         self.testdir = tempfile.mkdtemp(prefix='ansible-test-hostname-')

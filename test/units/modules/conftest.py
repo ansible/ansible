@@ -16,11 +16,12 @@ assert module_env_mocker is not None  # avoid unused imports
 
 @pytest.fixture
 def patch_ansible_module(request):
-    request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
+    args = request.param.copy()
 
-    args = request.param
+    args.update(
+        _ansible_remote_tmp='/tmp',
+        _ansible_keep_remote_files=False,
+    )
 
     with patch_module_args(args):
         yield
@@ -35,8 +36,6 @@ def set_module_args():
 
         args['_ansible_remote_tmp'] = '/tmp'
         args['_ansible_keep_remote_files'] = False
-
-        args = {'ANSIBLE_MODULE_ARGS': args}
 
         ctx = patch_module_args(args)
         ctx.__enter__()

@@ -6,31 +6,30 @@
 
 from __future__ import annotations
 
+import unittest
+
 import pytest
 
 from ansible.module_utils.testing import patch_module_args
-from units.mock.procenv import ModuleTestCase
 
 from unittest.mock import patch, MagicMock
-import builtins
-
-realimport = builtins.__import__
 
 
 @pytest.fixture
 def no_module_args():
-    with patch_module_args(None):
+    with patch_module_args():
         yield
 
 
 @pytest.mark.usefixtures("no_module_args")
-class TestOtherFilesystem(ModuleTestCase):
+class TestOtherFilesystem(unittest.TestCase):
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
 
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
+        with patch_module_args():
+            am = basic.AnsibleModule(
+                argument_spec=dict(),
+            )
 
         mock_stat = MagicMock()
         mock_stat.st_uid = 0
@@ -42,9 +41,10 @@ class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_find_mount_point(self):
         from ansible.module_utils import basic
 
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
+        with patch_module_args():
+            am = basic.AnsibleModule(
+                argument_spec=dict(),
+            )
 
         def _mock_ismount(path):
             if path == b'/':
@@ -65,9 +65,10 @@ class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
 
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
+        with patch_module_args():
+            am = basic.AnsibleModule(
+                argument_spec=dict(),
+            )
 
         assert am.set_owner_if_different('/path/to/file', None, True)
         assert not am.set_owner_if_different('/path/to/file', None, False)
@@ -103,9 +104,10 @@ class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_set_group_if_different(self):
         from ansible.module_utils import basic
 
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
+        with patch_module_args():
+            am = basic.AnsibleModule(
+                argument_spec=dict(),
+            )
 
         assert am.set_group_if_different('/path/to/file', None, True)
         assert not am.set_group_if_different('/path/to/file', None, False)
@@ -141,9 +143,10 @@ class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_set_directory_attributes_if_different(self):
         from ansible.module_utils import basic
 
-        am = basic.AnsibleModule(
-            argument_spec=dict(),
-        )
+        with patch_module_args():
+            am = basic.AnsibleModule(
+                argument_spec=dict(),
+            )
 
         am.selinux_enabled = lambda: False
 

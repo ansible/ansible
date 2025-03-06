@@ -73,7 +73,7 @@ class TestAnsibleModuleTmpDir:
         monkeypatch.setattr(os.path, 'exists', lambda x: stat_exists)
         monkeypatch.setattr(os, 'makedirs', mock_makedirs)
 
-        with patch_module_args({'ANSIBLE_MODULE_ARGS': args}), \
+        with patch_module_args(args), \
              patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
             actual_tmpdir = am.tmpdir
