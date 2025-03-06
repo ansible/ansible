@@ -8,7 +8,6 @@ import sys
 import pytest
 
 import ansible.module_utils.basic
-from collections.abc import MutableMapping
 
 from ansible.module_utils.testing import patch_module_args
 from ..mock.module import module_env_mocker  # expose shared fixture in this part of the unit test tree
