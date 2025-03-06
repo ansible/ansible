@@ -14,7 +14,7 @@
 
   <group>
     <id>customenvgroup</id>
-    <name>Custom Environment Group</name>
+    <name>Custom Group in Environment</name>
     <description></description>
     <default>false</default>
     <uservisible>false</uservisible>
