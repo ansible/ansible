@@ -764,7 +764,7 @@ class Connection(ConnectionBase):
         pubkey_msg = PublicKeyMsg.from_public_key(public_key)
         fingerprint = pubkey_msg.fingerprint()
         with SshAgentClient(auth_sock) as client:
-            if (public_key := private_key.public_key()) not in client:
+            if public_key not in client:
                 display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
                 client.add(
                     private_key,
