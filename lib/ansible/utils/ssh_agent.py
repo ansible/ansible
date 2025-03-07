@@ -9,6 +9,7 @@ import dataclasses
 import enum
 import hashlib
 import socket
+import types
 import typing as t
 
 try:
@@ -206,7 +207,7 @@ class KeyAlgo(str, VariableSized, enum.Enum):
     RSASHA512 = "rsa-sha2-512"
 
     @property
-    def main_type(self):
+    def main_type(self) -> str:
         match self:
             case self.RSA:
                 return 'RSA'
@@ -268,7 +269,7 @@ class AgentLockMsg(Msg):
 @dataclasses.dataclass
 class PrivateKeyMsg(Msg):
     @staticmethod
-    def from_private_key(private_key: CryptoPrivateKey):
+    def from_private_key(private_key: CryptoPrivateKey) -> PrivateKeyMsg:
         match private_key:
             case RSAPrivateKey():
                 rsa_pn: RSAPrivateNumbers = private_key.private_numbers()
@@ -390,37 +391,37 @@ class PublicKeyMsg(Msg):
                 raise NotImplementedError(type)
 
     def public_key(self) -> CryptoPublicKey:
-        type = self.type  # type: ignore[attr-defined]
+        type: KeyAlgo = self.type
         match type:
             case KeyAlgo.RSA:
                 return RSAPublicNumbers(
-                    self.e,  # type: ignore[attr-defined]
-                    self.n  # type: ignore[attr-defined]
+                    self.e,
+                    self.n
                 ).public_key()
             case KeyAlgo.ECDSA256 | KeyAlgo.ECDSA384 | KeyAlgo.ECDSA521:
                 curve = _ECDSA_KEY_TYPE[KeyAlgo(type)]
                 return EllipticCurvePublicKey.from_encoded_point(
                     curve(),
-                    self.Q  # type: ignore[attr-defined]
+                    self.Q
                 )
             case KeyAlgo.ED25519:
                 return Ed25519PublicKey.from_public_bytes(
-                    self.enc_a  # type: ignore[attr-defined]
+                    self.enc_a
                 )
             case KeyAlgo.DSA:
                 return DSAPublicNumbers(
-                    self.y,  # type: ignore[attr-defined]
+                    self.y,
                     DSAParameterNumbers(
-                        self.p,  # type: ignore[attr-defined]
-                        self.q,  # type: ignore[attr-defined]
-                        self.g  # type: ignore[attr-defined]
+                        self.p,
+                        self.q,
+                        self.g
                     )
                 ).public_key()
             case _:
                 raise NotImplementedError(type)
 
     @staticmethod
-    def from_public_key(public_key: CryptoPublicKey):
+    def from_public_key(public_key: CryptoPublicKey) -> PublicKeyMsg:
         match public_key:
             case DSAPublicKey():
                 dsa_pn: DSAPublicNumbers = public_key.public_numbers()
@@ -458,7 +459,7 @@ class PublicKeyMsg(Msg):
             case _:
                 raise NotImplementedError(public_key)
 
-    def fingerprint(self):
+    def fingerprint(self) -> str:
         digest = hashlib.sha256()
         msg = copy.copy(self)
         msg.comments = unicode_string('')
@@ -508,7 +509,7 @@ class KeyList(Msg):
     nkeys: uint32
     keys: PublicKeyMsgList
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.nkeys != len(self.keys):
             raise SshAgentFailure(
                 "agent: invalid number of keys received for identities list"
@@ -519,10 +520,10 @@ class KeyList(Msg):
 class PublicKeyMsgList(Msg):
     keys: list[PublicKeyMsg]
 
-    def __iter__(self):
+    def __iter__(self) -> t.Iterator[PublicKeyMsg]:
         yield from self.keys
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.keys)
 
     @classmethod
@@ -559,17 +560,22 @@ class PublicKeyMsgList(Msg):
 
 
 class SshAgentClient:
-    def __init__(self, auth_sock: str):
+    def __init__(self, auth_sock: str) -> None:
         self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._sock.connect(auth_sock)
 
-    def close(self):
+    def close(self) -> None:
         self._sock.close()
 
-    def __enter__(self):
+    def __enter__(self) -> t.Self:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_value: BaseException | None,
+            traceback: types.TracebackType | None
+    ) -> None:
         self.close()
 
     def send(self, msg: bytes) -> bytes:
@@ -581,12 +587,12 @@ class SshAgentClient:
             raise SshAgentFailure('agent: failure')
         return resp
 
-    def remove_all(self):
+    def remove_all(self) -> None:
         self.send(
             ProtocolMsgNumbers.SSH_AGENTC_REMOVE_ALL_IDENTITIES.to_blob()
         )
 
-    def remove(self, public_key: CryptoPublicKey):
+    def remove(self, public_key: CryptoPublicKey) -> None:
         key_blob = PublicKeyMsg.from_public_key(public_key).to_blob()
         self.send(
             ProtocolMsgNumbers.SSH_AGENTC_REMOVE_IDENTITY.to_blob() +
@@ -599,7 +605,7 @@ class SshAgentClient:
             comments: str | None = None,
             lifetime: int | None = None,
             confirm: bool | None = None,
-    ):
+    ) -> None:
         key_msg = PrivateKeyMsg.from_private_key(private_key)
         key_msg.comments = unicode_string(comments or '')
         if lifetime:
@@ -627,12 +633,12 @@ class SshAgentClient:
             )
         return KeyList.from_blob(r[1:])
 
-    def lock(self, passphrase: bytes):
+    def lock(self, passphrase: bytes) -> None:
         self.send(
             ProtocolMsgNumbers.SSH_AGENTC_LOCK.to_blob() + AgentLockMsg(binary_string(passphrase)).to_blob()
         )
 
-    def unlock(self, passphrase: bytes):
+    def unlock(self, passphrase: bytes) -> None:
         self.send(
             ProtocolMsgNumbers.SSH_AGENTC_UNLOCK.to_blob() + AgentLockMsg(binary_string(passphrase)).to_blob()
         )
@@ -644,7 +650,7 @@ class SshAgentClient:
 
 def load_private_key(key_data: bytes, passphrase: bytes) -> CryptoPrivateKey:
     try:
-        private_key = ssh.load_ssh_private_key(
+        private_key: CryptoPrivateKey = ssh.load_ssh_private_key(
             key_data,
             password=passphrase,
         )
@@ -652,15 +658,16 @@ def load_private_key(key_data: bytes, passphrase: bytes) -> CryptoPrivateKey:
         # Old keys generated by ssh-agent may not adhere to the strict
         # definition of what ``load_ssh_private_key`` expects, fall
         # back to generic PEM private key loading
-        private_key: CryptoPrivateKey = serialization.load_pem_private_key(  # type: ignore[no-redef]
+        maybe_allowed_private_key = serialization.load_pem_private_key(
             key_data,
             password=passphrase,
         )
-    allowed_types = t.get_args(CryptoPrivateKey)
-    if not isinstance(private_key, allowed_types):
-        type_names = (o.__name__ for o in allowed_types)
-        raise ValueError(
-            f'key_data must be one of {", ".join(type_names)} not, '
-            f'{private_key.__class__.__name__}'
-        )
+        allowed_types = t.get_args(CryptoPrivateKey)
+        if not isinstance(maybe_allowed_private_key, allowed_types):
+            type_names = (o.__name__ for o in allowed_types)
+            raise ValueError(
+                f'key_data must be one of {", ".join(type_names)} not, '
+                f'{maybe_allowed_private_key.__class__.__name__}'
+            )
+        private_key = maybe_allowed_private_key
     return private_key
