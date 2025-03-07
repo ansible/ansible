@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from contextlib import suppress as suppress_exceptions
 
 try:
     from resolvelib import BaseReporter
@@ -60,20 +59,22 @@ class CollectionDependencyReporter(BaseReporter):
 
         self.reject_count_by_fqcn: defaultdict[str, int] = defaultdict(int)
 
-    def _log_mapped_rejection_message(self, candidate: Candidate) -> None:
+    def _maybe_log_rejection_message(self, candidate: Candidate) -> bool:
         """Print out rejection messages on pre-defined limit hits."""
         # Inspired by https://github.com/pypa/pip/commit/9731131
         self.reject_count_by_fqcn[candidate.fqcn] += 1
 
         collection_rejections_count = self.reject_count_by_fqcn[candidate.fqcn]
-        try:
-            collection_rejection_message = _MESSAGES_AT_REJECT_COUNT[
-                collection_rejections_count
-            ]
-        except KeyError as key_err:
-            raise LookupError from key_err
 
+        if collection_rejections_count not in _MESSAGES_AT_REJECT_COUNT:
+            return False
+
+        collection_rejection_message = _MESSAGES_AT_REJECT_COUNT[
+            collection_rejections_count
+        ]
         display.display(collection_rejection_message.format(fqcn=candidate.fqcn))
+
+        return True
 
     def rejecting_candidate(  # resolvelib >= 0.9.0
             self,
@@ -81,9 +82,7 @@ class CollectionDependencyReporter(BaseReporter):
             candidate: Candidate,
     ) -> None:
         """Augment rejection messages with conflict details."""
-        try:
-            self._log_mapped_rejection_message(candidate)
-        except LookupError:
+        if not self._maybe_log_rejection_message(candidate):
             return
 
         msg = 'Will try a different candidate, due to conflict:'
@@ -99,5 +98,4 @@ class CollectionDependencyReporter(BaseReporter):
 
     def backtracking(self, candidate: Candidate) -> None:  # resolvelib < 0.9.0
         """Print out rejection messages on pre-defined limit hits."""
-        with suppress_exceptions(LookupError):
-            return self._log_mapped_rejection_message(candidate)
+        self._maybe_log_rejection_message(candidate)
