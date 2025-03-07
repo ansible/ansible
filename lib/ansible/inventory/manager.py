@@ -174,7 +174,7 @@ class InventoryManager(object):
         self._cached_dynamic_hosts = []
         self._cached_dynamic_grouping = []
 
-    def _launch_ssh_agent(self):
+    def _launch_ssh_agent(self) -> None:
         ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
         match ssh_agent_cfg:
             case 'none':
@@ -188,12 +188,18 @@ class InventoryManager(object):
                 ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
                 os.mkdir(ssh_agent_dir, 0o700)
                 sock = os.path.join(ssh_agent_dir, 'agent.sock')
-                p = subprocess.Popen(
-                    [ssh_agent_bin, '-D', '-s', '-a', sock],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
+                try:
+                    p = subprocess.Popen(
+                        [ssh_agent_bin, '-D', '-s', '-a', sock],
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
+                except OSError as e:
+                    raise AnsibleError(
+                        f'Could not start ssh-agent: {e}'
+                    ) from e
+
                 if p.poll() is not None:
                     raise AnsibleError(
                         f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr}"'
