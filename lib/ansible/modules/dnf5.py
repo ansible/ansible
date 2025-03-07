@@ -588,7 +588,12 @@ class Dnf5Module(YumDnf):
         elif self.best is not None:
             conf.best = self.best
         conf.install_weak_deps = self.install_weak_deps
-        conf.gpgcheck = not self.disable_gpg_check
+        try:
+            conf.pkg_gpgcheck  # raises AttributeError only on getter if not available
+            conf.pkg_gpgcheck = not self.disable_gpg_check
+        except AttributeError:
+            # dnf5 < 5.2.7.0
+            conf.gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
         conf.clean_requirements_on_remove = self.autoremove
