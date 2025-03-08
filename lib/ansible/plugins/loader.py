@@ -51,6 +51,9 @@ except ImportError:
 
 import importlib.util
 
+if t.TYPE_CHECKING:
+    from ansible.plugins.cache import BaseCacheModule
+
 _PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
 
@@ -1149,7 +1152,7 @@ class PluginLoader:
 class _CacheLoader(PluginLoader):
     """Customized loader for cache plugins that wraps the requested plugin with an interposer that schema-qualifies keys and JSON encodes the values."""
 
-    def get(self, name: str, *args, **kwargs) -> t.Any:
+    def get(self, name: str, *args, **kwargs) -> BaseCacheModule:
         plugin = super().get(name, *args, **kwargs)
 
         if not plugin:

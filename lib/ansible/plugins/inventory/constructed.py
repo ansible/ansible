@@ -154,7 +154,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
                 # get available variables to templar
                 hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if host in cache:  # adds facts if cache is active
+                if cache.contains(host):  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, cache.get(host))
 
                 # create composite vars
@@ -162,7 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
                 # refetch host vars in case new ones have been created above
                 hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if host in cache:  # adds facts if cache is active
+                if cache.contains(host):  # adds facts if cache is active
                     hostvars = combine_vars(hostvars, cache.get(host))
 
                 # constructed groups based on conditionals
