@@ -27,6 +27,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def get_hosts(self):
         return {'host1': {'one': 'two'}, 'host2': {'three': 'four'}}
 
+    def verify_file(self, path):
+        return path.endswith('.inventoryconfig.yml')
+
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
 

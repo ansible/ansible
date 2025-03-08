@@ -9,7 +9,7 @@ import pathlib
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
-from ansible._internal._datatag._tags import _EncryptedSource
+from ansible._internal._datatag._tags import EncryptedSource
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
@@ -236,7 +236,7 @@ class ActionModule(ActionBase):
         else:
             data = self._loader.load_from_file(filename, cache='none', trusted_as_template=True)
 
-            self.show_content &= not _EncryptedSource.is_tagged_on(data)
+            self.show_content &= not EncryptedSource.is_tagged_on(data)
 
             if data is None:  # support empty files, but not falsey values
                 data = dict()

@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import dataclasses
 import datetime
+import hashlib
 import itertools
 import json
 import pathlib
@@ -21,11 +22,13 @@ from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
-from ansible._internal._datatag._tags import TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate, VaultedValue, Origin, EncryptedSource
 from ansible._internal import _serialization as controller_serialization
 from ansible.module_utils.serialization import get_encoder, get_decoder
 from ansible.module_utils._internal._serialization import _fallback_to_str
+from ansible._internal._serialization import _cache_persistence
 from ansible.errors import AnsibleRuntimeError
+
 
 from ..mock.custom_collections import CustomMapping, CustomSequence
 
@@ -46,17 +49,60 @@ basic_values = (
     {1},
     dict(a=1),
     CustomMapping(dict(a=1)),
-    {(1, 2): "three"},
-    {frozenset((1, 2)): "three"},
+    {(1, 2): "three"},  # hashable non-scalar key
+    {frozenset((1, 2)): "three"},  # hashable non-scalar key
 )
 
 # DTFIX-MERGE: we need tests for recursion, specifically things like custom sequences and mappings when using the legacy serializer
 #              e.g. -- does trust inversion get applied to a value inside a custom sequence or mapping
 
 tag_values = {
-    Deprecated: Deprecated(msg='x'),
+    Deprecated: Deprecated(msg='x'),  # DTFIX-RELEASE: we need more exhaustive testing of the values supported by this tag to ensure schema ID is robust
     TrustedAsTemplate: TrustedAsTemplate(),
+    Origin: Origin(path='/tmp/x', line_num=1, col_num=2, description='y'),
+    VaultedValue: VaultedValue(ciphertext='x'),
+    EncryptedSource: EncryptedSource(),
 }
+
+
+def test_cache_persistence_schema() -> None:
+    """
+    Check the schema ID for the cache_persistence schema to ensure it is updated when the schema changes.
+    Failure to update the schema ID will result in serialization/deserialiation failures for persisted data for things like cache plugins.
+    This test is only as comprehensive as these unit tests, so ensure profile data types are thoroughly covered.
+    If additional capabilities are added to the cache_persistence profile which are not tested, they will go undetected, leading to runtime failures.
+    """
+    expected_schema_id = 1
+    expected_schema_hash = "cd40c74fa3a1cf7dbc39fd6df9609d9317a1b8926b22c739a9b02dc152da78a5"
+
+    test_hash = hashlib.sha256()
+    test_hash.update(pathlib.Path(DataSet.PROFILE_DIR / _cache_persistence._Profile.profile_name).with_suffix('.txt').read_bytes())
+
+    actual_schema_id = _cache_persistence._Profile.schema_id
+    actual_schema_hash = test_hash.hexdigest()
+
+    next_schema_id = actual_schema_id + 1
+
+    schema_check_failure_instructions = f"""The cache_persistence schema check hash has changed. The solution depends on the reason why:
+
+1) The schema and tests have changed:
+
+   i. Increment `ansible._internal._serialization._cache_persistence._Profile.schema_id` to {next_schema_id}.
+   ii. Update `expected_schema_id` to {next_schema_id}.
+   iii. Update `expected_schema_hash` to {actual_schema_hash!r}.
+
+2) The schema is unchanged, but the tests have changed:
+
+   i. Double-check that the schema really hasn't changed.
+   ii. Don't forget about added/changed/removed types as well as fields on those types.
+   iii. Update `expected_schema_hash` to {actual_schema_hash!r}.
+"""
+
+    if actual_schema_id != expected_schema_id:
+        raise Exception(f"The actual schema ID {actual_schema_id} does not match the expected schema ID {expected_schema_id}.")
+
+    if actual_schema_hash != expected_schema_hash:
+        raise Exception(schema_check_failure_instructions)
 
 
 def get_profile_names() -> tuple[str, ...]:
@@ -154,9 +200,11 @@ class _TestCase:
 
 
 class DataSet:
+    PROFILE_DIR = pathlib.Path(__file__).parent / 'expected_serialization_profiles'
+
     def __init__(self, generate: bool) -> None:
         self.data: dict[_TestParameters, _TestOutput] = {}
-        self.path = pathlib.Path(__file__).parent / 'expected_serialization_profiles'
+        self.path = self.PROFILE_DIR
         self.generate = generate
 
     def load(self) -> None:
@@ -175,9 +223,23 @@ class DataSet:
         grouped_data_set = {key: dict(gen) for key, gen in itertools.groupby(sorted_items, key=lambda o: o[0].profile_name)}
 
         for group_name, profiles in grouped_data_set.items():
-            content = pprint.pformat(profiles, width=1000, indent=0, sort_dicts=False)
-            content = f'{{\n{content[1:-1]}\n}}\n'
+            content = self.generate_content(profiles)
             (self.path / f'{group_name}.txt').write_text(content)
+
+    @staticmethod
+    def generate_content(profiles: dict[_TestParameters, _TestOutput]) -> str:
+        content = ["{"]
+
+        # loop the dictionary entries manually to ensure one entry per line
+        for key, value in profiles.items():
+            key_pprint = pprint.pformat(key, width=10000, indent=0, sort_dicts=False)
+            value_pprint = pprint.pformat(value, width=10000, indent=0, sort_dicts=False)
+
+            content.append(f"{key_pprint}: {value_pprint},")
+
+        content.append("}")
+
+        return '\n'.join(content) + '\n'
 
     def fetch_or_create_expected(self, test_params: _TestParameters) -> _TestOutput:
         if self.generate:
@@ -197,7 +259,7 @@ class ProfileHelper:
 
         profile = _serialization.get_serialization_profile(profile_name)
 
-        supported_tags = set(obj for obj in profile.serialize_map if issubclass(obj, AnsibleDatatagBase))
+        supported_tags = {obj: None for obj in profile.serialize_map if issubclass(obj, AnsibleDatatagBase)}
 
         if supported_tags:
             self.supported_tag_values = tuple(tag_value for tag_type, tag_value in tag_values.items() if tag_type in supported_tags)
@@ -207,12 +269,10 @@ class ProfileHelper:
         else:
             self.supported_tag_values = tuple()
 
-        unsupported_tag_values = [tag_value for tag_type, tag_value in tag_values.items() if tag_type not in supported_tags]
+        self.unsupported_tag_value = next((tag_value for tag_type, tag_value in tag_values.items() if tag_type not in supported_tags), None)
 
-        if not unsupported_tag_values:
+        if not self.unsupported_tag_value and profile.profile_name != _cache_persistence._Profile.profile_name:
             raise Exception(f'Profile {profile} supports tags {supported_tags}, but no unsupported tag value is available.')
-
-        self.unsupported_tag_value = unsupported_tag_values[0]
 
     def create_parameters_from_values(self, *values: t.Any) -> list[_TestParameters]:
         return list(itertools.chain.from_iterable(self.create_parameters_from_value(value) for value in values))
@@ -232,11 +292,12 @@ class ProfileHelper:
                 tags=self.supported_tag_values,
             ))
 
-        test_parameters.append(_TestParameters(
-            profile_name=self.profile_name,
-            value=value,
-            tags=(self.unsupported_tag_value,),
-        ))
+        if self.unsupported_tag_value:
+            test_parameters.append(_TestParameters(
+                profile_name=self.profile_name,
+                value=value,
+                tags=(self.unsupported_tag_value,),
+            ))
 
         # test lazy containers on all non m2c profiles
         if not self.profile_name.endswith("_m2c") and isinstance(value, (list, dict)):
@@ -303,7 +364,7 @@ def test_profile(test_case: _TestCase) -> None:
         else:
             assert output.round_trip == test_case.expected.round_trip
 
-        assert output.tags == test_case.expected.tags
+        assert not set(output.tags).symmetric_difference(test_case.expected.tags)
 
 
 def test_not_generate_mode():

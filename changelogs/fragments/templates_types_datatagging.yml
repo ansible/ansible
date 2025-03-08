@@ -100,6 +100,7 @@ breaking_changes:
   - inventory - Invalid variable names provided by inventories result in an inventory parse failure. This behavior is now consistent with other variable name usages throughout Ansible.
   - internals - The ``ansible.utils.native_jinja`` Python module has been removed.
   - internals - The ``AnsibleLoader`` and ``AnsibleDumper`` classes for working with YAML are now factory functions and cannot be extended.
+  - public API - The ``ansible.vars.fact_cache.FactCache`` wrapper has been removed.
 
 security_fixes:
   - templating - Ansible's template engine no longer processes Jinja templates in strings unless they are marked as coming from a trusted source.
@@ -134,6 +135,7 @@ bugfixes:
     Previously use of templated raw task args silently ignored all values from the templated ``args`` keyword.
   - action plugins - Action plugins that raise unhandled exceptions no longer terminate playbook loops. Previously, exceptions raised by an action plugin caused abnormal loop termination and loss of loop iteration results.
   - display - The ``Display.deprecated`` method once again properly handles the ``removed=True`` argument (https://github.com/ansible/ansible/issues/82358).
+  - stability - Fixed silent process failure on unhandled IOError/OSError under ``linear`` strategy.
 
 deprecated_features:
   - templating - The ``ansible_managed`` variable available for certain templating scenarios, such as the ``template`` action and ``template`` lookup has been deprecated.

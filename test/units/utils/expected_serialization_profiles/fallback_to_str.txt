@@ -64,5 +64,5 @@ _TestParameters(profile_name='fallback_to_str', value={b'hi': '2'}, tags=(Deprec
 _TestParameters(profile_name='fallback_to_str', value={(b'hi',): 3}): _TestOutput(payload='{"[\\"hi\\"]": 3}', round_trip={'["hi"]': 3}, tags=()),
 _TestParameters(profile_name='fallback_to_str', value={(b'hi',): 3}, tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"[\\"hi\\"]": 3}', round_trip={'["hi"]': 3}, tags=()),
 _TestParameters(profile_name='fallback_to_str', value={(b'hi',): 3}, lazy=True): _TestOutput(payload='{"[\\"hi\\"]": 3}', round_trip={'["hi"]': 3}, tags=()),
-_TestParameters(profile_name='fallback_to_str', value={(b'hi',): 3}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"[\\"hi\\"]": 3}', round_trip={'["hi"]': 3}, tags=())
+_TestParameters(profile_name='fallback_to_str', value={(b'hi',): 3}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"[\\"hi\\"]": 3}', round_trip={'["hi"]': 3}, tags=()),
 }

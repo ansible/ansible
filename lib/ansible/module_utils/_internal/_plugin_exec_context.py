@@ -10,13 +10,16 @@ class HasPluginInfo(t.Protocol):
     """Protocol to type-annotate and expose PluginLoader-set values."""
 
     @property
-    def _load_name(self) -> str: ...
+    def _load_name(self) -> str:
+        """The requested name used to load the plugin."""
 
     @property
-    def ansible_name(self) -> str: ...
+    def ansible_name(self) -> str:
+        """Fully resolved plugin name."""
 
     @property
-    def plugin_type(self) -> str: ...
+    def plugin_type(self) -> str:
+        """Plugin type name."""
 
 
 class PluginExecContext(AmbientContextBase):

@@ -344,6 +344,10 @@ class TemplateEngine:
                         variable, options, template_result, stop_on_container=mode is TemplateMode.STOP_ON_CONTAINER
                     )
 
+            # DTFIX-MERGE: _JinjaConstTemplate should not be able to escape?
+            #     - debug:
+            #         msg: |
+            #           {{ '{{ "echo hi" }}' }}
             return template_result
 
         raise AnsibleTemplateTransformLimitError(obj=original_variable)

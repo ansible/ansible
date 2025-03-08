@@ -192,33 +192,33 @@ AGNOSTIC_BECOME_PROMPT:
   yaml: {key: privilege_escalation.agnostic_become_prompt}
   version_added: "2.5"
 CACHE_PLUGIN:
-  name: Persistent Cache plugin
+  name: Persistent Fact Cache plugin
   default: memory
-  description: Chooses which cache plugin to use, the default 'memory' is ephemeral.
+  description: Chooses which fact cache plugin to use. By default, no cache is used and facts do not persist between runs.
   env: [{name: ANSIBLE_CACHE_PLUGIN}]
   ini:
   - {key: fact_caching, section: defaults}
   yaml: {key: facts.cache.plugin}
 CACHE_PLUGIN_CONNECTION:
-  name: Cache Plugin URI
+  name: Fact Cache Plugin URI
   default: ~
-  description: Defines connection or path information for the cache plugin.
+  description: Defines connection or path information for the fact cache plugin.
   env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
   ini:
   - {key: fact_caching_connection, section: defaults}
   yaml: {key: facts.cache.uri}
 CACHE_PLUGIN_PREFIX:
-  name: Cache Plugin table prefix
+  name: Fact Cache Plugin table prefix
   default: ansible_facts
-  description: Prefix to use for cache plugin files/tables.
+  description: Prefix to use for fact cache plugin files/tables.
   env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
   ini:
   - {key: fact_caching_prefix, section: defaults}
   yaml: {key: facts.cache.prefix}
 CACHE_PLUGIN_TIMEOUT:
-  name: Cache Plugin expiration timeout
+  name: Fact Cache Plugin expiration timeout
   default: 86400
-  description: Expiration timeout for the cache plugin data.
+  description: Expiration timeout for the fact cache plugin data.
   env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
   ini:
   - {key: fact_caching_timeout, section: defaults}

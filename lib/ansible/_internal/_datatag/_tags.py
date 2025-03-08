@@ -106,7 +106,7 @@ class TrustedAsTemplate(AnsibleSingletonTagBase):
 
 
 @dataclasses.dataclass(**_tag_dataclass_kwargs)
-class _EncryptedSource(AnsibleSingletonTagBase):
+class EncryptedSource(AnsibleSingletonTagBase):
     """
     For internal use only.
     Indicates the tagged value was sourced from an encrypted file.

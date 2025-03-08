@@ -42,5 +42,5 @@ _TestParameters(profile_name='module_modern_c2m', value={(1, 2): 'three'}, tags=
 _TestParameters(profile_name='module_modern_c2m', value={frozenset({1, 2}): 'three'}): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_modern_c2m' profile."), round_trip=None, tags=()),
 _TestParameters(profile_name='module_modern_c2m', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_modern_c2m' profile."), round_trip=None, tags=()),
 _TestParameters(profile_name='module_modern_c2m', value={frozenset({1, 2}): 'three'}, lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_modern_c2m' profile."), round_trip=None, tags=()),
-_TestParameters(profile_name='module_modern_c2m', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_modern_c2m' profile."), round_trip=None, tags=())
+_TestParameters(profile_name='module_modern_c2m', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'module_modern_c2m' profile."), round_trip=None, tags=()),
 }

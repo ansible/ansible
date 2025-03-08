@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import collections.abc as c
 import os
 import sys
 import typing as t
@@ -31,13 +30,12 @@ from ansible.errors import (AnsibleError, AnsibleParserError, AnsibleUndefinedVa
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.six import text_type
 from ansible.module_utils.datatag import deprecate_value
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars.fact_cache import FactCache
 from ansible._internal._templating._engine import TemplateEngine
+from ansible.plugins.loader import cache_loader
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.vars.clean import namespace_facts, clean_facts
@@ -112,39 +110,14 @@ class VariableManager:
         # load extra vars
         self._extra_vars = load_extra_vars(loader=self._loader)
 
-        self._fact_cache: c.MutableMapping[str, dict[str, t.Any]]
-
         # load fact cache
         try:
-            self._fact_cache = FactCache()
-        except AnsibleError as e:
+            self._fact_cache = cache_loader.get(C.CACHE_PLUGIN)
+        except Exception as ex:
             # bad cache plugin is not fatal error
-            # fallback to a dict as in memory cache
-            display.warning(to_text(e))
-            self._fact_cache = {}
-
-    def __getstate__(self):
-        data = dict(
-            fact_cache=self._fact_cache,
-            np_fact_cache=self._nonpersistent_fact_cache,
-            vars_cache=self._vars_cache,
-            extra_vars=self._extra_vars,
-            options_vars=self._options_vars,
-            inventory=self._inventory,
-            safe_basedir=self.safe_basedir,
-        )
-        return data
-
-    def __setstate__(self, data):
-        self._fact_cache = data.get('fact_cache', defaultdict(dict))
-        self._nonpersistent_fact_cache = data.get('np_fact_cache', defaultdict(dict))
-        self._vars_cache = data.get('vars_cache', defaultdict(dict))
-        self._extra_vars = data.get('extra_vars', dict())
-        self._inventory = data.get('inventory', None)
-        self._options_vars = data.get('options_vars', dict())
-        self.safe_basedir = data.get('safe_basedir', False)
-        self._loader = None
-        self._hostvars = None
+            # fallback to builtin memory cache plugin
+            display.error_as_warning(None, ex)
+            self._fact_cache = cache_loader.get('ansible.builtin.memory')  # use FQCN to ensure the builtin version is used
 
     @property
     def extra_vars(self):
@@ -318,7 +291,11 @@ class VariableManager:
             # finally, the facts caches for this host, if it exists
             # TODO: cleaning of facts should eventually become part of taskresults instead of vars
             try:
-                facts = self._fact_cache.get(host.name, {})
+                try:
+                    facts = self._fact_cache.get(host.name)
+                except KeyError:
+                    facts = {}
+
                 all_vars |= namespace_facts(facts)
 
                 # push facts to main namespace
@@ -385,12 +362,18 @@ class VariableManager:
                             raise AnsibleParserError(f"Error reading `vars_files` file {vars_file!r}.", obj=vars_file) from ex
 
                 except AnsibleUndefinedVariable as ex:
-                    if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
-                                                       % vars_file_item, obj=vars_file_item) from ex
-                    else:
-                        display.warning("skipping vars_file item due to an undefined variable", obj=vars_file_item)
-                        continue
+                    if host is not None:
+                        try:
+                            facts = self._fact_cache.get(host.name)
+                        except KeyError:
+                            pass
+                        else:
+                            if facts.get('module_setup') and task is not None:
+                                raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
+                                                               % vars_file_item, obj=vars_file_item) from ex
+
+                    display.warning("skipping vars_file item due to an undefined variable", obj=vars_file_item)
+                    continue
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
@@ -565,7 +548,10 @@ class VariableManager:
         """
         Clears the facts for a host
         """
-        self._fact_cache.pop(hostname, None)
+        try:
+            self._fact_cache.delete(hostname)
+        except KeyError:
+            pass
 
     def set_host_facts(self, host, facts):
         """
@@ -577,7 +563,7 @@ class VariableManager:
 
         warn_if_reserved(facts.keys())
         try:
-            host_cache = self._fact_cache[host]
+            host_cache = self._fact_cache.get(host)
         except KeyError:
             # We get to set this as new
             host_cache = facts
@@ -589,7 +575,7 @@ class VariableManager:
             host_cache |= facts
 
         # Save the facts back to the backing store
-        self._fact_cache[host] = host_cache
+        self._fact_cache.set(host, host_cache)
 
     def set_nonpersistent_facts(self, host, facts):
         """

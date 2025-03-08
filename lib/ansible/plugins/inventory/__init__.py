@@ -28,10 +28,11 @@ from collections.abc import Mapping
 from ansible import template as _template
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.inventory.group import to_safe_group_name as original_safe
+from ansible.module_utils._internal import _plugin_exec_context
 from ansible.parsing.utils.addresses import parse_address
 from ansible.parsing.dataloader import DataLoader
-from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
+from ansible.plugins import AnsiblePlugin, _ConfigurablePlugin
+from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
@@ -134,8 +135,11 @@ def expand_hostname_range(line=None):
 
 
 def get_cache_plugin(plugin_name, **kwargs):
+    if not plugin_name:
+        raise AnsibleError("A cache plugin must be configured to use inventory caching.")
+
     try:
-        cache = CacheObject(plugin_name, **kwargs)
+        cache = CachePluginAdjudicator(plugin_name, **kwargs)
     except AnsibleError as e:
         if 'fact_caching_connection' in to_native(e):
             raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set "
@@ -143,9 +147,9 @@ def get_cache_plugin(plugin_name, **kwargs):
                                "[inventory]: cache_connection;\nEnvironment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\n"
                                "ANSIBLE_CACHE_PLUGIN_CONNECTION." % plugin_name)
         else:
-            raise e
+            raise
 
-    if plugin_name != 'memory' and kwargs and not getattr(cache._plugin, '_options', None):
+    if cache._plugin.ansible_name != 'ansible.builtin.memory' and kwargs and not getattr(cache._plugin, '_options', None):
         raise AnsibleError('Unable to use cache plugin {0} for inventory. Cache options were provided but may not reconcile '
                            'correctly unless set via set_options. Refer to the porting guide if the plugin derives user settings '
                            'from ansible.constants.'.format(plugin_name))
@@ -317,43 +321,36 @@ class BaseFileInventoryPlugin(_BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
-class Cacheable(object):
+class Cacheable(_plugin_exec_context.HasPluginInfo, _ConfigurablePlugin):
+    """Mixin for inventory plugins which support caching."""
 
-    _cache = CacheObject()
+    _cache: CachePluginAdjudicator
 
     @property
-    def cache(self):
+    def cache(self) -> CachePluginAdjudicator:
         return self._cache
 
-    def load_cache_plugin(self):
+    def load_cache_plugin(self) -> None:
         plugin_name = self.get_option('cache_plugin')
         cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
         cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
         self._cache = get_cache_plugin(plugin_name, **cache_options)
 
-    def get_cache_key(self, path):
-        return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
+    def get_cache_key(self, path: str) -> str:
+        return f'{self.ansible_name}_{self._get_cache_prefix(path)}'
 
-    def _get_cache_prefix(self, path):
-        """ create predictable unique prefix for plugin/inventory """
+    def _get_cache_prefix(self, path: str) -> str:
+        """Return a predictable unique key based on the given path."""
+        # DTFIX-RELEASE: choose a better hashing approach
+        return 'k' + hashlib.sha256(f'{self.ansible_name}{path}'.encode(), usedforsecurity=False).hexdigest()[:6]
 
-        m = hashlib.sha1()
-        m.update(to_bytes(self.NAME, errors='surrogate_or_strict'))
-        d1 = m.hexdigest()
+    def clear_cache(self) -> None:
+        self._cache.clear()
 
-        n = hashlib.sha1()
-        n.update(to_bytes(path, errors='surrogate_or_strict'))
-        d2 = n.hexdigest()
-
-        return 's_'.join([d1[:5], d2[:5]])
-
-    def clear_cache(self):
-        self._cache.flush()
-
-    def update_cache_if_changed(self):
+    def update_cache_if_changed(self) -> None:
         self._cache.update_cache_if_changed()
 
-    def set_cache_plugin(self):
+    def set_cache_plugin(self) -> None:
         self._cache.set_cache()
 
 

@@ -42,5 +42,5 @@ _TestParameters(profile_name='tagless', value={(1, 2): 'three'}, tags=(Deprecate
 _TestParameters(profile_name='tagless', value={frozenset({1, 2}): 'three'}): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'tagless' profile."), round_trip=None, tags=()),
 _TestParameters(profile_name='tagless', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'tagless' profile."), round_trip=None, tags=()),
 _TestParameters(profile_name='tagless', value={frozenset({1, 2}): 'three'}, lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'tagless' profile."), round_trip=None, tags=()),
-_TestParameters(profile_name='tagless', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'tagless' profile."), round_trip=None, tags=())
+_TestParameters(profile_name='tagless', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload=TypeError("Key of type 'frozenset' is not JSON serializable by the 'tagless' profile."), round_trip=None, tags=()),
 }

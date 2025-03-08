@@ -47,6 +47,12 @@ def get_plugin_class(obj):
         return obj.__class__.__name__.lower().replace('module', '')
 
 
+class _ConfigurablePlugin(t.Protocol):
+    """Protocol to provide type-safe access to config for plugin-related mixins."""
+
+    def get_option(self, option: str, hostvars: dict[str, object] | None = None) -> object: ...
+
+
 class _AnsiblePluginInfoMixin(_plugin_exec_context.HasPluginInfo):
     """Mixin to provide type annotations and default values for existing PluginLoader-set load-time attrs."""
     _original_path: str | None = None
@@ -60,7 +66,7 @@ class _AnsiblePluginInfoMixin(_plugin_exec_context.HasPluginInfo):
         return self.__class__.__name__.lower().replace('module', '')
 
 
-class AnsiblePlugin(_AnsiblePluginInfoMixin, metaclass=abc.ABCMeta):
+class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.ABCMeta):
 
     # Set by plugin loader
     _load_name: str

@@ -37,6 +37,7 @@ from ansible._internal._datatag import _tags
 from . import _AnsiblePluginInfoMixin
 from .filter import AnsibleJinja2Filter
 from .test import AnsibleJinja2Test
+from .._internal._plugins import _cache
 from ..module_utils.common.messages import PluginInfo
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
@@ -1145,6 +1146,21 @@ class PluginLoader:
             yield obj
 
 
+class _CacheLoader(PluginLoader):
+    """Customized loader for cache plugins that wraps the requested plugin with an interposer that schema-qualifies keys and JSON encodes the values."""
+
+    def get(self, name: str, *args, **kwargs) -> t.Any:
+        plugin = super().get(name, *args, **kwargs)
+
+        if not plugin:
+            raise AnsibleError(f'Unable to load the cache plugin {name!r}.')
+
+        if plugin._persistent:
+            return _cache.PluginInterposer(plugin)
+
+        return plugin
+
+
 class Jinja2Loader(PluginLoader):
     """
     PluginLoader optimized for Jinja2 plugins
@@ -1583,7 +1599,7 @@ action_loader = PluginLoader(
     required_base_class='ActionBase',
 )
 
-cache_loader = PluginLoader(
+cache_loader = _CacheLoader(
     'CacheModule',
     'ansible.plugins.cache',
     C.DEFAULT_CACHE_PLUGIN_PATH,

@@ -85,8 +85,8 @@ from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible.plugins.loader import cache_loader
 from ansible.utils.vars import combine_vars
-from ansible.vars.fact_cache import FactCache
 from ansible.vars.plugins import get_vars_from_inventory_sources
 
 
@@ -96,13 +96,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     NAME = 'constructed'
 
     # implicit trust behavior is already added by the YAML parser invoked by the loader
-
-    def __init__(self):
-
-        super(InventoryModule, self).__init__()
-
-        # DTFIX-MERGE: variables that traverse the fact cache likely lost some tags (eg TrustedAsTemplate); did unsafe preservation work in devel?
-        self._cache = FactCache()
 
     def verify_file(self, path):
 
@@ -152,23 +145,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 raise
 
         strict = self.get_option('strict')
-        fact_cache = FactCache()
+
+        cache = cache_loader.get(C.CACHE_PLUGIN)
+
         try:
             # Go over hosts (less var copies)
             for host in inventory.hosts:
 
                 # get available variables to templar
                 hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if host in fact_cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, fact_cache[host])
+                if host in cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, cache.get(host))
 
                 # create composite vars
                 self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
                 hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if host in self._cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, self._cache[host])
+                if host in cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, cache.get(host))
 
                 # constructed groups based on conditionals
                 self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict, fetch_hostvars=False)

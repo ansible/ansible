@@ -42,5 +42,5 @@ _TestParameters(profile_name='legacy', value={(1, 2): 'three'}, tags=(Deprecated
 _TestParameters(profile_name='legacy', value={frozenset({1, 2}): 'three'}): _TestOutput(payload='{"frozenset({1, 2})": {"__ansible_unsafe": "three"}}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
 _TestParameters(profile_name='legacy', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),)): _TestOutput(payload='{"frozenset({1, 2})": {"__ansible_unsafe": "three"}}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
 _TestParameters(profile_name='legacy', value={frozenset({1, 2}): 'three'}, lazy=True): _TestOutput(payload='{"frozenset({1, 2})": {"__ansible_unsafe": "three"}}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
-_TestParameters(profile_name='legacy', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"frozenset({1, 2})": {"__ansible_unsafe": "three"}}', round_trip={'frozenset({1, 2})': 'three'}, tags=())
+_TestParameters(profile_name='legacy', value={frozenset({1, 2}): 'three'}, tags=(Deprecated(msg='x'),), lazy=True): _TestOutput(payload='{"frozenset({1, 2})": {"__ansible_unsafe": "three"}}', round_trip={'frozenset({1, 2})': 'three'}, tags=()),
 }

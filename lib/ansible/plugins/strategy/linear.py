@@ -354,10 +354,9 @@ class StrategyModule(StrategyBase):
                     return result
                 display.debug("done checking to see if all hosts have failed")
 
-            except (IOError, EOFError) as e:
-                display.debug("got IOError/EOFError in task loop: %s" % e)
-                # most likely an abort, return failed
-                return self._tqm.RUN_UNKNOWN_ERROR
+            finally:
+                # removed unnecessary exception handler, don't want to mis-attribute the entire code block by changing indentation
+                pass
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered

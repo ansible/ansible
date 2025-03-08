@@ -17,7 +17,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible._internal._errors import _utils
 from ansible.module_utils.basic import is_executable
-from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, _EncryptedSource
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, EncryptedSource
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
@@ -120,7 +120,7 @@ class DataLoader:
 
             # we're tagging the resulting container with _EncryptedSource if it was loaded from a vaulted file, since this method doesn't expose show_content
             if not show_content:
-                parsed_data = _EncryptedSource().tag(parsed_data)
+                parsed_data = EncryptedSource().tag(parsed_data)
 
             # Cache the file contents for next time based on the cache option
             if cache == 'all':

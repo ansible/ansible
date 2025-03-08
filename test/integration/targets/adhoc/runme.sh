@@ -18,7 +18,11 @@ grep "Encountered untrusted template" "${OUTPUT_DIR}/output.txt"  # look for the
 # test ansible --flush-cache
 export ANSIBLE_CACHE_PLUGIN=jsonfile
 export ANSIBLE_CACHE_PLUGIN_CONNECTION=./
+# verify facts are not yet present
+ansible localhost -m assert -a '{"that": "ansible_facts.distribution is not defined"}'
 # collect and cache facts
-ansible localhost -m setup > /dev/null && test -s localhost
+ansible localhost -m setup > /dev/null
+# verify facts were cached
+ansible localhost -m assert -a '{"that": "ansible_facts.distribution is defined"}'
 # test flushing the fact cache
 ansible --flush-cache localhost -m debug -a "msg={{ ansible_facts }}" | grep '"msg": {}'
