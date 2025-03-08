@@ -428,6 +428,14 @@ class VariableManager:
         display.debug("done with get_vars()")
         return all_vars
 
+    def _facts_gathered_for_host(self, hostname) -> bool:
+        try:
+            facts = self._fact_cache.get(hostname)
+        except KeyError:
+            facts = {}
+
+        return facts.get('_ansible_facts_gathered', False)
+
     def _get_magic_variables(self, play, host, task, include_hostvars, _hosts=None, _hosts_all=None):
         """
         Returns a dictionary of so-called "magic" variables in Ansible,
