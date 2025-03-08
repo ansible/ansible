@@ -434,7 +434,7 @@ class VariableManager:
         except KeyError:
             facts = {}
 
-        return facts.get('_ansible_facts_gathered', False)
+        return bool(facts.get('_ansible_facts_gathered', False))
 
     def _get_magic_variables(self, play, host, task, include_hostvars, _hosts=None, _hosts_all=None):
         """
