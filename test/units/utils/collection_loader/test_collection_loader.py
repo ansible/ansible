@@ -579,16 +579,17 @@ def test_default_collection_detection():
 
 
 @pytest.mark.parametrize(
-    'role_name,collection_list,expected_collection_name,expected_path_suffix',
+    'role_name,collection_list,expected_collection_name,expected_role_name,expected_path_suffix',
     [
-        ('some_role', ['testns.testcoll', 'ansible.bogus'], 'testns.testcoll', 'testns/testcoll/roles/some_role'),
-        ('testns.testcoll.some_role', ['ansible.bogus', 'testns.testcoll'], 'testns.testcoll', 'testns/testcoll/roles/some_role'),
-        ('testns.testcoll.some_role', [], 'testns.testcoll', 'testns/testcoll/roles/some_role'),
-        ('testns.testcoll.some_role', None, 'testns.testcoll', 'testns/testcoll/roles/some_role'),
-        ('some_role', [], None, None),
-        ('some_role', None, None, None),
+        ('some_role', ['testns.testcoll', 'ansible.bogus'], 'testns.testcoll', 'some_role', 'testns/testcoll/roles/some_role'),
+        ('testns.testcoll.some_role', ['ansible.bogus', 'testns.testcoll'], 'testns.testcoll', 'some_role', 'testns/testcoll/roles/some_role'),
+        ('testns.testcoll.some_role', [], 'testns.testcoll', 'some_role', 'testns/testcoll/roles/some_role'),
+        ('testns.testcoll.some_role', None, 'testns.testcoll', 'some_role', 'testns/testcoll/roles/some_role'),
+        ('testns.testcoll.nested_role.inner_role', None, 'testns.testcoll', 'nested_role.inner_role', 'testns/testcoll/roles/nested_role/inner_role'),
+        ('some_role', [], None, None, None),
+        ('some_role', None, None, None, None),
     ])
-def test_collection_role_name_location(role_name, collection_list, expected_collection_name, expected_path_suffix):
+def test_collection_role_name_location(role_name, collection_list, expected_collection_name, expected_role_name, expected_path_suffix):
     finder = get_default_finder()
     reset_collections_loader_state(finder)
 
@@ -599,11 +600,11 @@ def test_collection_role_name_location(role_name, collection_list, expected_coll
     found = _get_collection_role_path(role_name, collection_list)
 
     if found:
-        assert found[0] == role_name.rpartition('.')[2]
+        assert found[0] == expected_role_name
         assert found[1] == expected_path
         assert found[2] == expected_collection_name
     else:
-        assert expected_collection_name is None and expected_path_suffix is None
+        assert expected_collection_name is None and expected_role_name is None and expected_path_suffix is None
 
 
 def test_bogus_imports():

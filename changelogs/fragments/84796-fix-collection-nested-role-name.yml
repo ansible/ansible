@@ -1,0 +1,2 @@
+bugfixes:
+  - Nested role directories in collections won't cut off intermediate directory names in task output
