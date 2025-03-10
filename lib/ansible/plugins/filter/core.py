@@ -798,6 +798,7 @@ class FilterModule(object):
 
             # Jinja builtins that need special arg handling
             # DTFIX-RELEASE: document these now that they're overridden, or hide them so they don't show up as undocumented
+            'd': ansible_default,  # replaces the implementation instead of wrapping it
             'default': ansible_default,  # replaces the implementation instead of wrapping it
             'map': wrapped_map,
             'select': wrapped_select,
