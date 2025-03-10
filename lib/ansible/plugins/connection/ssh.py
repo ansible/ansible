@@ -671,7 +671,7 @@ class Connection(ConnectionBase):
         self._tty_parser.add_argument('-t', action='count')
         self._tty_parser.add_argument('-o', action='append')
 
-        self._populated_agent = None
+        self._populated_agent: str | None = None
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
