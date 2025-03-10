@@ -215,6 +215,8 @@
     dest: '{{ galaxy_dir }}/test_req.yml'
 
 - name: install the requirements file with mismatched versions
+  # NOTE: This hits the InconsistentCandidate code path: the requirements file
+  # NOTE: asks for v1.2.0 but the offered tarball has v1.0.0 in its metadata.
   command: ansible-galaxy collection install -r '{{ galaxy_dir }}/test_req.yml' {{ galaxy_verbosity }}
   ignore_errors: True
   register: result
@@ -233,8 +235,9 @@
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
             Failed to resolve the requested dependencies map.
-            Got the candidate namespace3.name:1.0.0 (direct request)
-            which didn't satisfy all of the following requirements:
+            A package index offered us an invalid candidate
+            namespace3.name:1.0.0 (direct request)
+            and it does not satisfy all of the following requirements:
             * namespace3.name:1.2.0
 
 - name: test error for mismatched dependency versions
@@ -242,8 +245,9 @@
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
             Failed to resolve the requested dependencies map.
-            Got the candidate namespace3.name:1.0.0 (dependency of tmp_parent.name:1.0.0)
-            which didn't satisfy all of the following requirements:
+            A package index offered us an invalid candidate
+            namespace3.name:1.0.0 (dependency of tmp_parent.name:1.0.0)
+            and it does not satisfy all of the following requirements:
             * namespace3.name:1.2.0
   environment:
     ANSIBLE_NOCOLOR: True
