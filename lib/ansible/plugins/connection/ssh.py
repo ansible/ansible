@@ -747,7 +747,7 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
 
-    def _populate_agent(self):
+    def _populate_agent(self) -> str:
         if self._populated_agent:
             return self._populated_agent
 
@@ -877,8 +877,8 @@ class Connection(ConnectionBase):
 
         if self.get_option('private_key'):
             key = self._populate_agent()
-            b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', b'IdentityFile="' + to_bytes(key, errors='surrogate_or_strict') + b'"')
-            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY/private_key set")
+            b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', to_bytes(f'IdentityFile="{key}"', errors='surrogate_or_strict'))
+            self._add_args(b_command, b_args, "ANSIBLE_PRIVATE_KEY/private_key set")
         elif key := self.get_option('private_key_file'):
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
