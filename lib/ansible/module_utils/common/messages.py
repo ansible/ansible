@@ -1,16 +1,21 @@
-from __future__ import annotations
+"""
+Message contract definitions for various target-side types.
 
-# DTFIX-MERGE: this module should probably move to module_utils/_internal
+These types and the wire format they implement are currently considered provisional and subject to change without notice.
+A future release will remove the provisional status.
+"""
 
-import sys
-import dataclasses
+from __future__ import annotations as _annotations
+
+import sys as _sys
+import dataclasses as _dataclasses
 
 # deprecated: description='typing.Self exists in Python 3.11+' python_version='3.10'
-from ..compat import typing as t
+from ..compat import typing as _t
 
 from ansible.module_utils._internal._datatag import AnsibleSerializableDataclass
 
-if sys.version_info >= (3, 10):
+if _sys.version_info >= (3, 10):
     # Using slots for reduced memory usage and improved performance.
     _dataclass_kwargs = dict(frozen=True, kw_only=True, slots=True)
 else:
@@ -18,7 +23,7 @@ else:
     _dataclass_kwargs = dict(frozen=True)
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
+@_dataclasses.dataclass(**_dataclass_kwargs)
 class PluginInfo(AnsibleSerializableDataclass):
     """Information about a loaded plugin."""
 
@@ -47,24 +52,24 @@ class PluginInfo(AnsibleSerializableDataclass):
         return f'{name} {plugin_type}{clarification}'
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
+@_dataclasses.dataclass(**_dataclass_kwargs)
 class Detail(AnsibleSerializableDataclass):
     """Message detail with optional source context and help text."""
 
     msg: str
-    formatted_source_context: t.Optional[str] = None
-    help_text: t.Optional[str] = None
+    formatted_source_context: _t.Optional[str] = None
+    help_text: _t.Optional[str] = None
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
+@_dataclasses.dataclass(**_dataclass_kwargs)
 class SummaryBase(AnsibleSerializableDataclass):
     """Base class for an error/warning/deprecation summary with details (possibly derived from an exception __cause__ chain) and an optional traceback."""
 
-    details: t.Tuple[Detail, ...]
-    formatted_traceback: t.Optional[str] = None
+    details: _t.Tuple[Detail, ...]
+    formatted_traceback: _t.Optional[str] = None
 
     def format(self) -> str:
-        """Returns a string representation of the warning details."""
+        """Returns a string representation of the details."""
         # DTFIX-RELEASE: should this borrow some of the message squashing features we use in get_chained_message?
         return ': '.join(detail.msg for detail in self.details)
 
@@ -73,31 +78,31 @@ class SummaryBase(AnsibleSerializableDataclass):
             raise ValueError(f'{type(self).__name__}.details cannot be empty')
 
     @classmethod
-    def _from_details(cls, *details: Detail, formatted_traceback: t.Optional[str] = None, **kwargs) -> t.Self:
+    def _from_details(cls, *details: Detail, formatted_traceback: _t.Optional[str] = None, **kwargs) -> _t.Self:
         """Utility factory method to avoid inline tuples."""
         return cls(details=details, formatted_traceback=formatted_traceback, **kwargs)
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
+@_dataclasses.dataclass(**_dataclass_kwargs)
 class ErrorSummary(SummaryBase):
     """Error summary with details (possibly derived from an exception __cause__ chain) and an optional traceback."""
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
+@_dataclasses.dataclass(**_dataclass_kwargs)
 class WarningSummary(SummaryBase):
     """Warning summary with details (possibly derived from an exception __cause__ chain) and an optional traceback."""
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
+@_dataclasses.dataclass(**_dataclass_kwargs)
 class DeprecationSummary(WarningSummary):
     """Deprecation summary with details (possibly derived from an exception __cause__ chain) and an optional traceback."""
 
-    version: t.Optional[str] = None
-    date: t.Optional[str] = None
-    plugin: t.Optional[PluginInfo] = None
+    version: _t.Optional[str] = None
+    date: _t.Optional[str] = None
+    plugin: _t.Optional[PluginInfo] = None
 
     @property
-    def collection_name(self) -> t.Optional[str]:
+    def collection_name(self) -> _t.Optional[str]:
         if not self.plugin:
             return None
 
@@ -114,7 +119,7 @@ class DeprecationSummary(WarningSummary):
 
         return collection_name
 
-    def _as_simple_dict(self) -> t.Dict[str, t.Any]:
+    def _as_simple_dict(self) -> _t.Dict[str, _t.Any]:
         """Returns a dictionary representation of the deprecation object in the format exposed to playbooks."""
         result = self._as_dict()
         result.pop('details')
