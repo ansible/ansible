@@ -27,7 +27,6 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import generate_ansible_template_vars
-from ansible._internal._templating._engine import TemplateOptions, TemplateOverrides
 
 
 class ActionModule(ActionBase):
@@ -120,7 +119,7 @@ class ActionModule(ActionBase):
             temp_vars = task_vars.copy()
             temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), fullpath=source, dest_path=dest))
 
-            overrides = TemplateOverrides(
+            overrides = dict(
                 block_start_string=block_start_string,
                 block_end_string=block_end_string,
                 variable_start_string=variable_start_string,
@@ -132,9 +131,8 @@ class ActionModule(ActionBase):
                 newline_sequence=newline_sequence,
             )
 
-            # DTFIX-MERGE: use public API for these (convert TemplateOverrides to dict or make it public also)
             data_templar = self._templar.copy_with_new_env(searchpath=searchpath, available_variables=temp_vars)
-            resultant = data_templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
+            resultant = data_templar.template(template_data, escape_backslashes=False, overrides=overrides)
 
             new_task = self._task.copy()
             # mode is either the mode from task.args or the mode of the source file if the task.args

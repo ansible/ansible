@@ -147,7 +147,7 @@ def test_template_overrides_defaults(key: str) -> None:
 ], ids=lambda value: repr(value.overlay_kwargs() if isinstance(value, TemplateOverrides) else value))
 def test_template_override_extract_success(value: str, expected_overrides: TemplateOverrides):
     expected_template = value.split('\n', maxsplit=1)[1]
-    template, overrides = TemplateOverrides.DEFAULT.extract_template_overrides(value)
+    template, overrides = TemplateOverrides.DEFAULT._extract_template_overrides(value)
 
     assert template == expected_template
     assert overrides == expected_overrides
@@ -165,7 +165,7 @@ def test_template_override_extract_success(value: str, expected_overrides: Templ
 ])
 def test_template_override_extract_failure(value: str):
     with pytest.raises(tuple([TypeError, ValueError])):
-        TemplateOverrides.DEFAULT.extract_template_overrides(value)
+        TemplateOverrides.DEFAULT._extract_template_overrides(value)
 
 
 def test_filter_plugin_error_wrap():

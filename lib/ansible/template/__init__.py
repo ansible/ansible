@@ -235,6 +235,7 @@ class Templar:
         disable_lookups: bool = _UNSET,
     ) -> _t.Any:
         """Templates (possibly recursively) any given data as input."""
+        # DTFIX-FUTURE: offer a public version of TemplateOverrides to support an optional strongly typed `overrides` argument
         if convert_bare is not _UNSET:
             # Skipping a deferred deprecation due to minimal usage outside ansible-core.
             # Use `hasattr(templar, 'evaluate_expression')` to determine if `template` or `evaluate_expression` should be used.

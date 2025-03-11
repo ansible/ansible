@@ -109,7 +109,6 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.template import generate_ansible_template_vars
 from ansible.utils.display import Display
-from ansible._internal._templating._engine import TemplateOptions, TemplateOverrides
 
 
 display = Display()
@@ -164,7 +163,7 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, fullpath=lookupfile))
                 vars.update(lookup_template_vars)
 
-                overrides = TemplateOverrides(
+                overrides = dict(
                     variable_start_string=variable_start_string,
                     variable_end_string=variable_end_string,
                     comment_start_string=comment_start_string,
@@ -172,9 +171,8 @@ class LookupModule(LookupBase):
                     trim_blocks=trim_blocks,
                 )
 
-                # DTFIX-RELEASE: use public API for these (convert TemplateOverrides to dict or make it public also)
                 data_templar = templar.copy_with_new_env(available_variables=vars, searchpath=searchpath)
-                res = data_templar._engine.template(template_data, options=TemplateOptions(escape_backslashes=False, overrides=overrides))
+                res = data_templar.template(template_data, escape_backslashes=False, overrides=overrides)
 
                 ret.append(res)
             else:

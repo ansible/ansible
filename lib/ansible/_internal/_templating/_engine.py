@@ -183,7 +183,7 @@ class TemplateEngine:
 
     def _create_overlay(self, template: str, overrides: TemplateOverrides) -> tuple[str, AnsibleEnvironment]:
         try:
-            template, overrides = overrides.extract_template_overrides(template)
+            template, overrides = overrides._extract_template_overrides(template)
         except Exception as ex:
             raise AnsibleTemplateSyntaxError("Syntax error in template.", obj=template) from ex
 

@@ -131,7 +131,7 @@ class TemplateOverrides:
 
         return False
 
-    def extract_template_overrides(self, template: str) -> tuple[str, TemplateOverrides]:
+    def _extract_template_overrides(self, template: str) -> tuple[str, TemplateOverrides]:
         if template.startswith(JINJA2_OVERRIDE):
             eol = template.find('\n')
 
