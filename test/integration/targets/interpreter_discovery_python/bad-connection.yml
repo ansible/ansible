@@ -20,4 +20,4 @@
 
     - assert:
         that:
-          - discovery is failed
+          - discovery is unreachable
