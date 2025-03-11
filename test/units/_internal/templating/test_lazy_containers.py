@@ -706,15 +706,15 @@ def test_undefined_in_jinja_constant_container():
 @pytest.mark.parametrize("expression, expected_result, expected_warning", (
     # verify templates sourced by plugins are not auto-templated
     ("list_with_bad_template() | pass_through is first_item_unrendered", True, None),  # plain list return values are lazy wrapped, but not templated
-    ("tuple_with_bad_template() | pass_through is first_item_unrendered", True, "Variables of type 'tuple' are not supported."),  # tuples are not lazified
+    ("tuple_with_bad_template() | pass_through is first_item_unrendered", True, None),  # tuples are not lazified, but suppressed unsupported type warning
     # verify markers are tripped on managed access, but not unmanaged access (they will still trip on use, which is not tested here)
     ("list_with_undefined() | pass_through is first_item_trips", True, None),  # managed access trips
-    ("tuple_with_undefined() | pass_through is first_item_trips", False, "Variables of type 'tuple' are not supported."),  # unmanaged access doesn't trip
+    ("tuple_with_undefined() | pass_through is first_item_trips", False, None),  # unmanaged access doesn't trip
     # # verify that Jinja constant containers are wrapped where possible
     ("['{{ 1 }}'] | pass_through is first_item_unrendered", True, "Jinja constant strings should not contain embedded templates."),
     ("[bogusvar] | pass_through is first_item_trips", True, None),
     ("{'k': bogusvar} | pass_through is first_item_trips", True, None),
-    ("(bogusvar,) | pass_through is first_item_trips", False, "Variables of type 'tuple' are not supported."),
+    ("(bogusvar,) | pass_through is first_item_trips", False, None),
     # verify that plugins directly invoking tests and filters do not trigger auto-templating
     ('call_filter_with_native_args_kwargs()', True, None),  # `call_filter` invocations with plain list/dict should be lazy non-templating
     ('call_test_with_native_args_kwargs()', True, None),  # `call_test` invocations with plain list/dict should be lazy non-templating

@@ -55,6 +55,7 @@ class _AnsibleLazyTemplateMixin:
             range,  # range is acceptable for historical reasons, but only within templating, it is always an error during finalization
             type,  # DTFIX-MERGE: this is a broad ignore for looking up `range` via `resolve_or_missing`; is there a better way?
             type(''.startswith),  # DTFIX-MERGE: builtin_function_or_method - is there a better way to include callables so we're not playing whack-a-mole?
+            tuple,  # common native Python type, don't complain about it
             TemplateModule,  # the result of a Jinja `import` directive, just pass it through
         }
     )
