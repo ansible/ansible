@@ -17,6 +17,7 @@ body:
       label: Fallible Version
       description: The fallible release that reproduces the issue described.
       options:
+        - 2025.3.11
         - 2025.3.3
         - 2025.1.30
   - type: textarea
