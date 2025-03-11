@@ -1869,8 +1869,7 @@ def _resolve_depenency_map(
             f'Collection dependency resolution impossible: {dep_exc !s}',
         )
         conflict_causes = (
-            '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
-                req=req_inf.requirement,
+            f'* {req_inf.requirement !s} ({{dep_origin!s}})'.format(
                 dep_origin='direct request'
                 if req_inf.parent is None
                 else 'dependency of {parent!s}'.
@@ -1901,10 +1900,9 @@ def _resolve_depenency_map(
             (
                 'Failed to resolve the requested dependencies map. '
                 'A package index offered us an invalid candidate '
-                '{req.fqcn!s}:{req.ver!s} ({dep_origin!s}) and it does '
+                f'{dep_exc.candidate !s} ({{dep_origin!s}}) and it does '
                 'not satisfy all of the following requirements:'.
                 format(
-                    req=dep_exc.candidate,
                     dep_origin='direct request'
                     if not parents else 'dependency of {parent!s}'.
                     format(parent=', '.join(parents))
@@ -1914,7 +1912,7 @@ def _resolve_depenency_map(
 
         for req in dep_exc.criterion.iter_requirement():
             error_msg_lines.append(
-                f'* {req.fqcn!s}:{req.ver!s}'
+                f'* {req !s}'
             )
         error_msg_lines.append(pre_release_hint)
 
