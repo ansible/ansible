@@ -46,7 +46,7 @@ def deprecate(msg: str, version: str | None = None, date: str | datetime.date | 
 def get_warning_messages() -> tuple[str, ...]:
     """Return a tuple of warning messages accumulated over this run."""
     # DTFIX-RELEASE: add future deprecation comment
-    return tuple(item.format() for item in _global_warnings)
+    return tuple(item._format() for item in _global_warnings)
 
 
 def get_deprecation_messages() -> tuple[dict[str, t.Any], ...]:

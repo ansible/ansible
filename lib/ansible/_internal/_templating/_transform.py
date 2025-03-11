@@ -28,7 +28,7 @@ def error_summary(value: ErrorSummary) -> str:
 
 def warning_summary(value: WarningSummary) -> str:
     """Render WarningSummary as a simple message string for backward-compatibility with pre-2.19 TaskResult.warnings."""
-    return value.format()
+    return value._format()
 
 
 def deprecation_summary(value: DeprecationSummary) -> dict[str, t.Any]:

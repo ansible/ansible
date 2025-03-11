@@ -801,11 +801,11 @@ def test_plugin_result_wrapping(expression: str, expected_result: t.Any, expecte
         result = templar.evaluate_expression(expression)
 
     warnings = warning_ctx.get_warnings() + warning_ctx.get_deprecation_warnings()
-    warnings = [warning for warning in warnings if 'Deprecation warnings can be disabled' not in warning.format()]
+    warnings = [warning for warning in warnings if 'Deprecation warnings can be disabled' not in warning._format()]
 
     if expected_warning:
         assert len(warnings) == 1
-        assert expected_warning in warnings[0].format()
+        assert expected_warning in warnings[0]._format()
     else:
         assert not warnings
 

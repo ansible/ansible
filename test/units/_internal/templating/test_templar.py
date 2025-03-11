@@ -1057,6 +1057,6 @@ def test_deprecated_dedupe_and_source():
     dep_warnings = dwc.get_deprecation_warnings()
 
     assert len(dep_warnings) == 3
-    assert 'deprecated_string' in dep_warnings[0].format()
-    assert 'indirect1 and deprecated_list and deprecated_dict' in dep_warnings[1].format()
-    assert 'd1 and d2' in dep_warnings[2].format()
+    assert 'deprecated_string' in dep_warnings[0]._format()
+    assert 'indirect1 and deprecated_list and deprecated_dict' in dep_warnings[1]._format()
+    assert 'd1 and d2' in dep_warnings[2]._format()
