@@ -11,8 +11,11 @@ import pytest
 from ansible.module_utils._internal._datatag import AnsibleTagHelper, NotTaggableError
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, VaultSecret, VaultLib
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, VaultedValue
-from ansible.utils.datatag import trust_value
+from ansible.utils.datatag import trust_value, is_value_trusted
 from ..module_utils.datatag.test_datatag import TestDatatagTarget as _TestDatatagTarget, Later
+
+
+class CustomStr(str): ...
 
 
 def _get_test_secret():
@@ -179,7 +182,7 @@ def test_encrypted_string_binary_operators(comparison: str, expected: bool) -> N
 
 
 @pytest.mark.parametrize("value", (
-    "astring",
+    "yep",
     lambda tmppath: pathlib.Path(tmppath / "afile").open("w"),
     io.StringIO("blee"),
     io.BytesIO(b"blee"),
@@ -194,10 +197,21 @@ def test_trust_value_success(value: str | io.IOBase, tmp_path: pytest.TempPathFa
     assert result is not value
     assert TrustedAsTemplate.is_tagged_on(result)
     assert isinstance(result, type(value))
+    assert is_value_trusted(result)
 
 
-class CustomStr(str):
-    ...
+@pytest.mark.parametrize("value", (
+    None,
+    123,
+    dict(x=TrustedAsTemplate().tag("nope")),
+    [123],
+))
+def test_is_not_trusted_value(value: object) -> None:
+    """Validate that types incorrectly tagged with trust are not reported as trusted."""
+    result = TrustedAsTemplate().tag(value)  # force application of trust
+
+    assert not is_value_trusted(value)
+    assert not is_value_trusted(result)
 
 
 @pytest.mark.parametrize("value, error_type, error_pattern", (
