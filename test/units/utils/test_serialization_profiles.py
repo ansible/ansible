@@ -29,8 +29,8 @@ from ansible.module_utils._internal._serialization import _fallback_to_str
 from ansible._internal._serialization import _cache_persistence
 from ansible.errors import AnsibleRuntimeError
 
+from ..mock.custom_types import CustomMapping, CustomSequence, CustomStr, CustomInt, CustomFloat
 
-from ..mock.custom_collections import CustomMapping, CustomSequence
 
 basic_values = (
     None,
@@ -46,6 +46,9 @@ basic_values = (
     (1,),
     [1],
     CustomSequence([1]),
+    CustomStr('hello'),
+    CustomInt(42),
+    CustomFloat(42.0),
     {1},
     dict(a=1),
     CustomMapping(dict(a=1)),
@@ -53,8 +56,10 @@ basic_values = (
     {frozenset((1, 2)): "three"},  # hashable non-scalar key
 )
 
-# DTFIX-MERGE: we need tests for recursion, specifically things like custom sequences and mappings when using the legacy serializer
-#              e.g. -- does trust inversion get applied to a value inside a custom sequence or mapping
+# DTFIX-RELEASE: we need tests for recursion, specifically things like custom sequences and mappings when:
+#                1) using the legacy serializer
+#                2) containing types in the type map, such as tagged values
+#                e.g. -- does trust inversion get applied to a value inside a custom sequence or mapping
 
 tag_values = {
     Deprecated: Deprecated(msg='x'),  # DTFIX-RELEASE: we need more exhaustive testing of the values supported by this tag to ensure schema ID is robust
@@ -73,7 +78,7 @@ def test_cache_persistence_schema() -> None:
     If additional capabilities are added to the cache_persistence profile which are not tested, they will go undetected, leading to runtime failures.
     """
     expected_schema_id = 1
-    expected_schema_hash = "cd40c74fa3a1cf7dbc39fd6df9609d9317a1b8926b22c739a9b02dc152da78a5"
+    expected_schema_hash = "91d10c3d68120fad79047ff01a08f7fe05ee97f567817a2df8f1fcf90701a728"
 
     test_hash = hashlib.sha256()
     test_hash.update(pathlib.Path(DataSet.PROFILE_DIR / _cache_persistence._Profile.profile_name).with_suffix('.txt').read_bytes())
@@ -171,7 +176,7 @@ class _TestParameters:
             return _TestOutput(
                 payload=payload,
                 round_trip=AnsibleTagHelper.as_native_type(round_trip),
-                tags=tuple(AnsibleTagHelper.tags(round_trip)),
+                tags=tuple(sorted(AnsibleTagHelper.tags(round_trip), key=lambda item: type(item).__name__)),
             )
 
 

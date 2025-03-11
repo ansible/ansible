@@ -66,4 +66,4 @@ def test_suppress_extended_error_deprecation() -> None:
     (int, f'Variables of type {type.__name__!r} are not supported.'),
 ))
 def test_ansible_variable_type_error(obj: object, expected: str) -> None:
-    assert str(AnsibleVariableTypeError(obj=obj)) == expected
+    assert str(AnsibleVariableTypeError.from_value(obj=obj)) == expected

@@ -406,11 +406,12 @@ class AnsibleConditionalError(AnsibleRuntimeError):
 class AnsibleVariableTypeError(AnsibleRuntimeError):
     """An error due to attempted storage of an unsupported variable type."""
 
-    def __init__(self, *, obj: t.Any) -> None:
+    @classmethod
+    def from_value(cls, *, obj: t.Any) -> t.Self:
         # avoid an incorrect error message when `obj` is a type
         type_name = type(obj).__name__ if isinstance(obj, type) else native_type_name(obj)
 
-        super().__init__(f'Variables of type {type_name!r} are not supported.', obj=obj)
+        return cls(message=f'Variables of type {type_name!r} are not supported.', obj=obj)
 
 
 def __getattr__(name: str) -> t.Any:

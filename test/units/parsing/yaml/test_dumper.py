@@ -34,7 +34,7 @@ from ansible.plugins.filter.core import to_yaml, to_nice_yaml
 from ansible._internal._templating._jinja_bits import _DEFAULT_UNDEF
 from ansible._internal._templating._jinja_common import MarkerError
 
-from ...mock.custom_collections import CustomMapping, CustomSequence
+from ...mock.custom_types import CustomMapping, CustomSequence
 from units.mock.yaml_helper import YamlTestUtils
 from units.mock.vault_helper import TextVaultSecret
 

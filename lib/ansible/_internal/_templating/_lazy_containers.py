@@ -136,7 +136,7 @@ class _AnsibleLazyTemplateMixin:
             if item_type not in _AnsibleLazyTemplateMixin._ignore_types and not isinstance(item, _AnsibleLazyTemplateMixin._ignore_types_tuple):
                 # DTFIX-MERGE: need a way to reliably ascend the template stack to describe the context for constant tuples
                 #              we have a similar need in other locations for more than just constant tuples
-                raise AnsibleVariableTypeError(obj=item)
+                raise AnsibleVariableTypeError.from_value(obj=item)
 
         return item
 

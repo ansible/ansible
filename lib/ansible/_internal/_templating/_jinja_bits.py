@@ -947,7 +947,7 @@ def _finalize_fallback_collection(
         case ErrorAction.WARN:
             display.warning(f'Converting unsupported type {native_type_name(o)!r} to {native_type_name(target_type)!r}.')
         case ErrorAction.FAIL:
-            raise AnsibleVariableTypeError(obj=o)
+            raise AnsibleVariableTypeError.from_value(obj=o)
 
     return _finalize_collection(o, mode, finalizer, target_type)
 
@@ -959,6 +959,10 @@ def _finalize_collection(
     target_type: type[list | dict],
 ) -> t.Collection[t.Any]:
     return AnsibleTagHelper.tag(finalizer(o, mode), AnsibleTagHelper.tags(o), value_type=target_type)
+
+
+_FALLBACK_ITERABLE_TYPES = (set, frozenset, c.Sequence)
+"""Minimal support for serializing arbitrary sequences and set subclasses for backward compatibility."""
 
 
 _DISALLOWED_TYPES = {
@@ -989,12 +993,12 @@ def _finalize_template_result(o: t.Any, mode: FinalizeMode) -> t.Any:
         return o
 
     if o_type in _DISALLOWED_TYPES:  # early abort for disallowed types that would otherwise be handled below
-        raise AnsibleVariableTypeError(obj=o)
+        raise AnsibleVariableTypeError.from_value(obj=o)
 
     if isinstance(o, c.Mapping):  # since isinstance checks are slower, this is separate from the exact type check above
         return _finalize_fallback_collection(o, mode, _finalize_dict, dict)
 
-    if isinstance(o, c.Sequence):  # since isinstance checks are slower, this is separate from the exact type check above
+    if isinstance(o, _FALLBACK_ITERABLE_TYPES):  # since isinstance checks are slower, this is separate from the exact type check above
         return _finalize_fallback_collection(o, mode, _finalize_list, list)
 
-    raise AnsibleVariableTypeError(obj=o)
+    raise AnsibleVariableTypeError.from_value(obj=o)

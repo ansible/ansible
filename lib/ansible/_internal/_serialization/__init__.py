@@ -64,6 +64,7 @@ class AnsibleVariableVisitor:
         origin: Origin | None = None,
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
+        convert_custom_scalars: bool = False,
         allow_encrypted_string: bool = False,
     ):
         super().__init__()  # supports StateTrackingMixIn
@@ -72,6 +73,7 @@ class AnsibleVariableVisitor:
         self.origin = origin
         self.convert_mapping_to_dict = convert_mapping_to_dict
         self.convert_sequence_to_list = convert_sequence_to_list
+        self.convert_custom_scalars = convert_custom_scalars
         self.allow_encrypted_string = allow_encrypted_string
 
         self._current: t.Any = None  # supports StateTrackingMixIn
@@ -129,11 +131,19 @@ class AnsibleVariableVisitor:
             return value  # type: ignore[return-value]  # DTFIX-MERGE: this should probably only be allowed for values in dict, not keys (set, dict)
         elif self.convert_mapping_to_dict and isinstance(value, c.Mapping):
             result = {k: self._visit(k, v) for k, v in value.items()}  # type: ignore[assignment]
+        # DTFIX-MERGE: share these somehow before they drift (and fix to include set, frozenset)
         elif self.convert_sequence_to_list and isinstance(value, c.Sequence) and not isinstance(value, (str, bytes)):
             result = [self._visit(k, v) for k, v in enumerate(value)]  # type: ignore[assignment]
+        # DTFIX-MERGE: share these somehow before they drift and ick
+        elif self.convert_custom_scalars and isinstance(value, str):
+            result = str(value)
+        elif self.convert_custom_scalars and isinstance(value, float):
+            result = float(value)
+        elif self.convert_custom_scalars and isinstance(value, int) and not isinstance(value, bool):
+            result = int(value)
         else:
             if value_type not in _allowed_var_types:
-                raise AnsibleVariableTypeError(obj=value)
+                raise AnsibleVariableTypeError.from_value(obj=value)
 
             # supported scalar type that requires no special handling, just return as-is
             result = value

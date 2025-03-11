@@ -39,12 +39,14 @@ class _LegacyVariableVisitor(_serialization.AnsibleVariableVisitor):
         origin: _tags.Origin | None = None,
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
+        convert_custom_scalars: bool = False,
     ):
         super().__init__(
             trusted_as_template=trusted_as_template,
             origin=origin,
             convert_mapping_to_dict=convert_mapping_to_dict,
             convert_sequence_to_list=convert_sequence_to_list,
+            convert_custom_scalars=convert_custom_scalars,
             allow_encrypted_string=True,
         )
 
@@ -157,7 +159,7 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
 
     @classmethod
     def pre_serialize(cls, encoder: Encoder, o: _t.Any) -> _t.Any:
-        avv = cls.visitor_type(invert_trust=True, convert_mapping_to_dict=True, convert_sequence_to_list=True)
+        avv = cls.visitor_type(invert_trust=True, convert_mapping_to_dict=True, convert_sequence_to_list=True, convert_custom_scalars=True)
 
         return avv.visit(o)
 

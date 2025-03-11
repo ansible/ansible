@@ -7,7 +7,6 @@ The decoder provides no special behavior.
 
 from __future__ import annotations as _annotations
 
-import collections.abc as _c
 import datetime as _datetime
 import typing as _t
 
@@ -59,14 +58,11 @@ class _Profile(_json._JSONSerializationProfile["Encoder", "Decoder"]):
         return k
 
     @classmethod
-    def default(cls, o: _t.Any) -> _t.Any:
-        if isinstance(o, _c.Mapping):
-            return dict(o)
-
-        if isinstance(o, _c.Iterable) and not isinstance(o, (str, bytes)):
-            return list(o)
-
-        return str(o)
+    def last_chance(cls, o: _t.Any) -> _t.Any:
+        try:
+            return str(o)
+        except Exception as ex:
+            return str(ex)
 
 
 class Encoder(_json.AnsibleProfileJSONEncoder):

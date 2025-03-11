@@ -41,6 +41,9 @@ from ansible.module_utils._internal._datatag import (
 
 _NoneType: t.Final[type] = type(None)
 
+_json_subclassable_scalar_types: t.Final[tuple[type, ...]] = (str, float, int)
+"""Scalar types understood by JSONEncoder which can also be subclassed."""
+
 _json_scalar_types: t.Final[tuple[type, ...]] = (str, float, int, bool, _NoneType)
 """Scalar types understood by JSONEncoder."""
 
@@ -49,6 +52,9 @@ _json_container_types: t.Final[tuple[type, ...]] = (dict, list, tuple)
 
 _json_types: t.Final[tuple[type, ...]] = _json_scalar_types + _json_container_types
 """Types understood by JSONEncoder."""
+
+_str_bytes: t.Final[tuple[type, ...]] = (str, bytes)
+"""String and bytes types."""
 
 _intercept_containers = frozenset({
     dict,
@@ -94,6 +100,10 @@ _common_module_response_types: frozenset[type[AnsibleSerializable]] = frozenset(
 
 _T_encoder = t.TypeVar('_T_encoder', bound="AnsibleProfileJSONEncoder")
 _T_decoder = t.TypeVar('_T_decoder', bound="AnsibleProfileJSONDecoder")
+
+
+_fallback_iterable_types = (set, frozenset, _c.Sequence)
+"""Minimal support for serializing arbitrary sequences and set subclasses for backward compatibility."""
 
 
 # DTFIX-MERGE:JSON: we probably need to hollow out this module, moving most to _internal and leaving whatever facade/public types behind that make sense
@@ -192,6 +202,13 @@ class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
         pass
 
     @classmethod
+    def maybe_wrap(cls, o: t.Any) -> t.Any:
+        if type(o) in cls._unwrapped_json_types:
+            return o
+
+        return _WrappedValue(o)
+
+    @classmethod
     def handle_key(cls, k: t.Any) -> t.Any:
         if not isinstance(k, str):  # DTFIX-FUTURE: optimize this to use all known str-derived types in type map / allowed types
             raise TypeError(f'Key of type {type(k).__name__!r} is not JSON serializable by the {cls.profile_name!r} profile.')
@@ -200,12 +217,24 @@ class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
 
     @classmethod
     def default(cls, o: t.Any) -> t.Any:
-        if isinstance(o, _c.Mapping):
-            return dict(o)
+        # Preserve the built-in JSON encoder support for subclasses of scalar types.
 
-        if isinstance(o, _c.Sequence) and not isinstance(o, (str, bytes)):
-            return list(o)
+        if isinstance(o, _json_subclassable_scalar_types):
+            return o
 
+        # Preserve the built-in JSON encoder support for subclasses of dict and list.
+        # Additionally, add universal support for mappings and sequences/sets by converting them to dict and list, respectively.
+
+        if isinstance(o, _c.Mapping):   # supports HostVars, HostVarsVars
+            return {cls.handle_key(k): cls.maybe_wrap(v) for k, v in o.items()}
+
+        if isinstance(o, _fallback_iterable_types) and not isinstance(o, _str_bytes):
+            return [cls.maybe_wrap(v) for v in o]
+
+        return cls.last_chance(o)
+
+    @classmethod
+    def last_chance(cls, o: t.Any) -> t.Any:
         if isinstance(o, Tripwire):
             o.trip()
 
@@ -268,15 +297,9 @@ class AnsibleProfileJSONEncoder(json.JSONEncoder):
         cls.profile_name = cls._profile.profile_name
 
     def encode(self, o):
-        o = self.maybe_wrap(self._profile.pre_serialize(self, o))
+        o = self._profile.maybe_wrap(self._profile.pre_serialize(self, o))
 
         return super().encode(o)
-
-    def maybe_wrap(self, o: t.Any) -> t.Any:
-        if type(o) in self._profile._unwrapped_json_types:
-            return o
-
-        return _WrappedValue(o)
 
     def default(self, o: t.Any) -> t.Any:
         o_type = type(o)
@@ -286,19 +309,16 @@ class AnsibleProfileJSONEncoder(json.JSONEncoder):
             o_type = type(o)
 
         if mapped_callable := self._profile.serialize_map.get(o_type):
-            return self.maybe_wrap(mapped_callable(o))
+            return self._profile.maybe_wrap(mapped_callable(o))
 
         # This is our last chance to intercept the values in containers, so they must be wrapped here.
         # Only containers natively understood by the built-in JSONEncoder are recognized, since any other container types must be present in serialize_map.
 
         if o_type is dict:  # pylint: disable=unidiomatic-typecheck
-            return {self._profile.handle_key(k): self.maybe_wrap(v) for k, v in o.items()}
+            return {self._profile.handle_key(k): self._profile.maybe_wrap(v) for k, v in o.items()}
 
-        if o_type is list:  # pylint: disable=unidiomatic-typecheck
-            return list(self.maybe_wrap(v) for v in o)
-
-        if o_type is tuple:  # pylint: disable=unidiomatic-typecheck
-            return list(self.maybe_wrap(v) for v in o)  # JSONEncoder converts this to a list, so just make it a list now
+        if o_type is list or o_type is tuple:  # pylint: disable=unidiomatic-typecheck
+            return [self._profile.maybe_wrap(v) for v in o]  # JSONEncoder converts tuple to a list, so just make it a list now
 
         # Any value here is a type not explicitly handled by this encoder.
         # The profile default handler is responsible for generating an error or converting the value to a supported type.

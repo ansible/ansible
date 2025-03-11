@@ -40,3 +40,12 @@ class CustomSequence(c.Sequence):
 
     def __eq__(self, other):
         return self._data == other
+
+
+class CustomInt(int): ...
+
+
+class CustomFloat(float): ...
+
+
+class CustomStr(str): ...
