@@ -378,10 +378,20 @@ def is_installed(base, spec):
         # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
         # due to settings.set_with_filenames(True) being default.
         settings.set_with_binaries(False)
+        # Disable checking whether SPEC is provided by an installed package.
+        # Consider following real scenario from the rpmfusion repo:
+        #   * the `ffmpeg-libs` package is installed and provides `libavcodec-freeworld`
+        #   * but `libavcodec-freeworld` is NOT installed (???)
+        #   * due to `set_with_provides(True)` being default `is_installed(base, "libavcodec-freeworld")`
+        #     would  "unexpectedly" return True
+        # We disable provides only for this `is_installed` check, for actual installation we leave the default
+        # setting to mirror the dnf cmdline behavior.
+        settings.set_with_provides(False)
     except AttributeError:
         # dnf5 < 5.2.0.0
         settings.group_with_name = True
         settings.with_binaries = False
+        settings.with_provides = False
 
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
