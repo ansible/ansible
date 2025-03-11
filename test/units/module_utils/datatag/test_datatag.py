@@ -44,6 +44,7 @@ from ansible.module_utils._internal._datatag import (
 )
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.module_utils.datatag import native_type_name
+from units.mock.messages import make_summary
 
 if sys.version_info >= (3, 9):
     from typing import get_type_hints
@@ -74,9 +75,9 @@ class CopyProtocol(t.Protocol):
 
 message_instances = [
     Detail(msg="bla", formatted_source_context="sc"),
-    ErrorSummary._from_details(Detail(msg="bla"), formatted_traceback="tb"),
-    WarningSummary._from_details(Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb"),
-    DeprecationSummary._from_details(Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb", version="1.2.3"),
+    make_summary(ErrorSummary, Detail(msg="bla"), formatted_traceback="tb"),
+    make_summary(WarningSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb"),
+    make_summary(DeprecationSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb", version="1.2.3"),
     PluginInfo(requested_name='a.b.c', resolved_name='a.b.c', type='module'),
 ]
 

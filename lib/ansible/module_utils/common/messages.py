@@ -77,11 +77,6 @@ class SummaryBase(AnsibleSerializableDataclass):
         if not self.details:
             raise ValueError(f'{type(self).__name__}.details cannot be empty')
 
-    @classmethod
-    def _from_details(cls, *details: Detail, formatted_traceback: _t.Optional[str] = None, **kwargs) -> _t.Self:
-        """Utility factory method to avoid inline tuples."""
-        return cls(details=details, formatted_traceback=formatted_traceback, **kwargs)
-
 
 @_dataclasses.dataclass(**_dataclass_kwargs)
 class ErrorSummary(SummaryBase):

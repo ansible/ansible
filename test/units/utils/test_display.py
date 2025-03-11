@@ -15,6 +15,8 @@ from ansible.module_utils.common.messages import Detail, WarningSummary, Depreca
 from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width, format_message
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
+from units.mock.messages import make_summary
+
 
 @pytest.fixture
 def problematic_wcswidth_chars():
@@ -117,7 +119,7 @@ def test_Display_display_warn_fork(display_resource):
         display = Display()
         display.set_queue(queue)
         display.warning('foo')
-        queue.send_display.assert_called_once_with('_warning', WarningSummary._from_details(Detail(msg='foo')), wrap_text=True)
+        queue.send_display.assert_called_once_with('_warning', make_summary(WarningSummary, Detail(msg='foo')), wrap_text=True)
 
     p = multiprocessing_context.Process(target=test)
     p.start()

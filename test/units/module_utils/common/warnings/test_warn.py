@@ -12,6 +12,7 @@ from ansible.module_utils.common import warnings
 from ansible.module_utils.common.messages import WarningSummary, Detail
 
 from ansible.module_utils.common.warnings import warn
+from units.mock.messages import make_summary
 from units.mock.module import ModuleEnvMocker
 
 pytestmark = pytest.mark.usefixtures("module_env_mocker")
@@ -20,7 +21,7 @@ pytestmark = pytest.mark.usefixtures("module_env_mocker")
 def test_warn():
     warn('Warning message')
     assert warnings.get_warning_messages() == ('Warning message',)
-    assert warnings.get_warnings() == [WarningSummary._from_details(Detail(msg='Warning message'))]
+    assert warnings.get_warnings() == [make_summary(WarningSummary, Detail(msg='Warning message'))]
 
 
 def test_multiple_warnings():
@@ -34,7 +35,7 @@ def test_multiple_warnings():
         warn(w)
 
     assert warnings.get_warning_messages() == tuple(messages)
-    assert warnings.get_warnings() == [WarningSummary._from_details(Detail(msg=w)) for w in messages]
+    assert warnings.get_warnings() == [make_summary(WarningSummary, Detail(msg=w)) for w in messages]
 
 
 def test_dedupe_with_traceback(module_env_mocker: ModuleEnvMocker) -> None:

@@ -17,6 +17,8 @@ from ansible.module_utils.serialization import get_module_decoder, Direction
 from ansible.module_utils.common import warnings
 from ansible.module_utils.common.messages import Detail, DeprecationSummary, WarningSummary, PluginInfo
 
+from units.mock.messages import make_summary
+
 pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
 
@@ -29,7 +31,7 @@ def test_warn(am, capfd):
         am.exit_json(warnings=['warning2'])
     out, err = capfd.readouterr()
     actual = json.loads(out, cls=get_module_decoder('legacy', Direction.MODULE_TO_CONTROLLER))['warnings']
-    expected = [WarningSummary._from_details(Detail(msg=msg)) for msg in ['warning1', 'warning2']]
+    expected = [make_summary(WarningSummary, Detail(msg=msg)) for msg in ['warning1', 'warning2']]
     assert actual == expected
 
 
@@ -63,9 +65,9 @@ def test_deprecate(am: AnsibleModule, capfd, kwargs: dict[str, t.Any], plugin_na
     msg = kwargs.pop('msg')
 
     assert output['deprecations'] == [
-        DeprecationSummary._from_details(Detail(msg=msg), **kwargs, plugin=plugin_info),
-        DeprecationSummary._from_details(Detail(msg='deprecation9'), plugin=plugin_info),
-        DeprecationSummary._from_details(Detail(msg='deprecation10'), version='2.4', plugin=plugin_info),
+        make_summary(DeprecationSummary, Detail(msg=msg), **kwargs, plugin=plugin_info),
+        make_summary(DeprecationSummary, Detail(msg='deprecation9'), plugin=plugin_info),
+        make_summary(DeprecationSummary, Detail(msg='deprecation10'), version='2.4', plugin=plugin_info),
     ]
 
 
@@ -78,7 +80,7 @@ def test_deprecate_without_list(am, capfd):
     output = json.loads(out, cls=get_module_decoder('legacy', Direction.MODULE_TO_CONTROLLER))
     assert ('warnings' not in output or output['warnings'] == [])
     assert output['deprecations'] == [
-        DeprecationSummary._from_details(Detail(msg='Simple deprecation warning')),
+        make_summary(DeprecationSummary, Detail(msg='Simple deprecation warning')),
     ]
 
 
