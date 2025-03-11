@@ -136,11 +136,11 @@ class AnsibleVariableVisitor:
             result = [self._visit(k, v) for k, v in enumerate(value)]  # type: ignore[assignment]
         # DTFIX-MERGE: share these somehow before they drift and ick
         elif self.convert_custom_scalars and isinstance(value, str):
-            result = str(value)
+            result = str(value)  # type: ignore[assignment]
         elif self.convert_custom_scalars and isinstance(value, float):
-            result = float(value)
+            result = float(value)  # type: ignore[assignment]
         elif self.convert_custom_scalars and isinstance(value, int) and not isinstance(value, bool):
-            result = int(value)
+            result = int(value)  # type: ignore[assignment]
         else:
             if value_type not in _allowed_var_types:
                 raise AnsibleVariableTypeError.from_value(obj=value)
