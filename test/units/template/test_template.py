@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import io
+import pathlib
+
 import typing as t
 
 import pytest
@@ -9,7 +12,8 @@ from contextlib import nullcontext
 from ansible import errors as _errors
 from ansible import template as _template
 from ansible._internal._templating import _engine, _jinja_bits
-from ansible.template import Templar
+from ansible.module_utils._internal._datatag import NotTaggableError
+from ansible.template import Templar, trust_as_template, is_trusted_as_template
 from ansible._internal._datatag._tags import TrustedAsTemplate
 
 from ..test_utils.controller.display import emits_deprecation_warning
@@ -264,3 +268,49 @@ def test_set_temporary_context_available_variables() -> None:
 
     with templar.set_temporary_context(available_variables=new_variables):
         assert templar.available_variables is new_variables
+
+
+class CustomStr(str): ...
+
+
+@pytest.mark.parametrize("value", (
+    "yep",
+    lambda tmppath: pathlib.Path(tmppath / "afile").open("w"),
+    io.StringIO("blee"),
+    io.BytesIO(b"blee"),
+))
+def test_trust_as_template(value: str | io.IOBase, tmp_path: pytest.TempPathFactory) -> None:
+    """Validate expected success behavior for `trust_value`."""
+    if callable(value):
+        value = value(tmp_path)
+
+    result = trust_as_template(value)
+
+    assert result is not value
+    assert TrustedAsTemplate.is_tagged_on(result)
+    assert isinstance(result, type(value))
+    assert is_trusted_as_template(result)
+
+
+@pytest.mark.parametrize("value", (
+    None,
+    123,
+    dict(x=TrustedAsTemplate().tag("nope")),
+    [123],
+))
+def test_not_is_trusted_as_template(value: object) -> None:
+    """Validate that types incorrectly tagged with trust are not reported as trusted."""
+    result = TrustedAsTemplate().tag(value)  # force application of trust
+
+    assert not is_trusted_as_template(value)
+    assert not is_trusted_as_template(result)
+
+
+@pytest.mark.parametrize("value, error_type, error_pattern", (
+    (123, TypeError, "cannot be applied to"),
+    (CustomStr("hey"), NotTaggableError, "is not taggable"),
+))
+def test_trust_as_template_errors(value: object, error_type: t.Type[Exception], error_pattern: str | None) -> None:
+    """Validate expected error behavior for `trust_value`."""
+    with pytest.raises(error_type, match=error_pattern):
+        trust_as_template(value)  # type: ignore

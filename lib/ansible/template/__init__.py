@@ -1,26 +1,26 @@
 from __future__ import annotations as _annotations
 
 import contextlib as _contextlib
-import datetime
-import os
-import pwd
-import time
+import datetime as _datetime
+import io as _io
+import os as _os
+import pwd as _pwd
+import time as _time
 import typing as _t
 
 from jinja2 import environment as _environment
 
 from ansible import _internal
-from ansible import constants
+from ansible import constants as _constants
 from ansible import errors as _errors
+from ansible._internal._datatag import _tags, _wrappers
 from ansible._internal._templating import _jinja_bits, _engine, _jinja_common
+from ansible.module_utils import datatag as _module_utils_datatag
 from ansible.module_utils._internal import _datatag
-from ansible.module_utils.datatag import deprecate_value
-from ansible.utils.datatag import trust_value
 from ansible.utils.display import Display as _Display
 
 if _t.TYPE_CHECKING:  # pragma: nocover
     import collections as _collections
-    import os as _os
 
     from ansible.parsing import dataloader as _dataloader
 
@@ -29,7 +29,8 @@ if _t.TYPE_CHECKING:  # pragma: nocover
 
 _display: _t.Final[_Display] = _Display()
 _UNSET = _t.cast(_t.Any, ...)
-
+_TTrustable = _t.TypeVar('_TTrustable', bound=str | _io.IOBase | _t.TextIO | _t.BinaryIO)
+_TRUSTABLE_TYPES = (str, _io.IOBase)
 
 AnsibleUndefined = _jinja_common.UndefinedMarker
 """Backwards compatibility alias for UndefinedMarker."""
@@ -354,19 +355,19 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
     If `fullpath` is `None`, `path` will be used instead.
     """
     if fullpath is None:
-        fullpath = os.path.abspath(path)
+        fullpath = _os.path.abspath(path)
 
     template_path = fullpath
-    template_stat = os.stat(template_path)
+    template_stat = _os.stat(template_path)
 
     template_uid: int | str
 
     try:
-        template_uid = pwd.getpwuid(template_stat.st_uid).pw_name
+        template_uid = _pwd.getpwuid(template_stat.st_uid).pw_name
     except KeyError:
         template_uid = template_stat.st_uid
 
-    managed_default = constants.config.get_config_value('DEFAULT_MANAGED_STR')
+    managed_default = _constants.config.get_config_value('DEFAULT_MANAGED_STR')
 
     managed_str = managed_default.format(
         # IMPORTANT: These values must be constant strings to avoid template injection.
@@ -376,11 +377,11 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
         file="{{ template_path }}",
     )
 
-    ansible_managed = time.strftime(managed_str, time.localtime(template_stat.st_mtime))
+    ansible_managed = _time.strftime(managed_str, _time.localtime(template_stat.st_mtime))
     # DTFIX-RELEASE: this should not be tag_copy, it should either be an origin copy or some kind of derived origin
     ansible_managed = _datatag.AnsibleTagHelper.tag_copy(managed_default, ansible_managed)
-    ansible_managed = trust_value(ansible_managed)
-    ansible_managed = deprecate_value(
+    ansible_managed = trust_as_template(ansible_managed)
+    ansible_managed = _module_utils_datatag.deprecate_value(
         value=ansible_managed,
         msg="The `ansible_managed` variable is deprecated.",
         help_text="Define and use a custom variable instead.",
@@ -388,14 +389,38 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
     )
 
     temp_vars = dict(
-        template_host=os.uname()[1],
+        template_host=_os.uname()[1],
         template_path=path,
-        template_mtime=datetime.datetime.fromtimestamp(template_stat.st_mtime),
+        template_mtime=_datetime.datetime.fromtimestamp(template_stat.st_mtime),
         template_uid=template_uid,
-        template_run_date=datetime.datetime.now(),
+        template_run_date=_datetime.datetime.now(),
         template_destpath=dest_path,
         template_fullpath=fullpath,
         ansible_managed=ansible_managed,
     )
 
     return temp_vars
+
+
+def trust_as_template(value: _TTrustable) -> _TTrustable:
+    """
+    Returns `value` tagged as trusted for templating.
+    Raises a `TypeError` if `value` is not a supported type.
+    """
+    if isinstance(value, str):
+        return _tags.TrustedAsTemplate().tag(value)  # type: ignore[return-value]
+
+    if isinstance(value, _io.IOBase):  # covers TextIO and BinaryIO at runtime, but type checking disagrees
+        return _wrappers.TaggedStreamWrapper(value, _tags.TrustedAsTemplate())
+
+    raise TypeError(f"Trust cannot be applied to {_module_utils_datatag.native_type_name(value)}, only to 'str' or 'IOBase'.")
+
+
+def is_trusted_as_template(value: object) -> bool:
+    """
+    Returns `True` if `value` is a `str` or `IOBase` marked as trusted for templating, otherwise returns `False`.
+    Returns `False` for types which cannot be trusted for templating.
+    Containers are not recursed and will always return `False`.
+    This function should not be needed for production code, but may be useful in unit tests.
+    """
+    return isinstance(value, _TRUSTABLE_TYPES) and _tags.TrustedAsTemplate.is_tagged_on(value)

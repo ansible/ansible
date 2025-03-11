@@ -43,7 +43,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
-from ansible.utils.datatag import trust_value
+from ansible.template import trust_as_template
 
 display = Display()
 
@@ -131,7 +131,7 @@ class RoleMixin(object):
 
         try:
             with open(path, 'r') as f:
-                data = yaml.load(trust_value(f), Loader=AnsibleLoader)
+                data = yaml.load(trust_as_template(f), Loader=AnsibleLoader)
                 if data is None:
                     data = {}
         except (IOError, OSError) as ex:
