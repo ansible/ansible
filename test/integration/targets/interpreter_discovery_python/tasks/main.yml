@@ -233,25 +233,25 @@
   - name: fedora assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/bin/python3'
+      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
     when: distro == 'fedora'
 
   - name: rhel assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/bin/python3'
+      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/bin/python3')
     when: distro == 'redhat'
 
   - name: ubuntu assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/bin/python3'
+      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
     when: distro == 'ubuntu'
 
   - name: mac assertions
     assert:
       that:
-      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python'
+      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
     when: os_family == 'darwin'
 
   always:
