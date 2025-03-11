@@ -587,3 +587,35 @@
           - provides-binary
           - package-name
         state: absent
+
+# https://github.com/ansible/ansible/issues/84578
+- name: Test installing a package that is listed in `provides` in different package
+  block:
+    - dnf:
+        name: provides-package
+        state: present
+
+    - command: rpm -q provided-package
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+
+    - dnf:
+        name: provided-package
+        state: present
+      register: r
+
+    - assert:
+        that:
+          - r is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides-package
+        - provided-package
