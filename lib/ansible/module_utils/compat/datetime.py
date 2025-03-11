@@ -39,10 +39,7 @@ def __getattr__(importable_name: str) -> t.Callable[..., object] | _datetime.tim
     try:
         importable = _deprecated_shims_map[importable_name]
     except KeyError as key_err:
-        raise AttributeError(
-            f'cannot import name {importable_name !r} '
-            f'has no attribute ({__file__ !s})',
-        ) from key_err
+        raise AttributeError(f"module {__name__!r} has no attribute {key_err}") from None
 
     deprecate(
         msg=f'The `ansible.module_utils.compat.datetime.{importable_name}` '
