@@ -438,12 +438,12 @@ import os
 import re
 import shutil
 import tempfile
+from datetime import datetime, timezone
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import (
     fetch_url,
@@ -579,7 +579,10 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     kwargs = {}
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = datetime.fromtimestamp(
+            os.path.getmtime(dest),
+            tz=timezone.utc,
+        )
 
     if module.params.get('follow_redirects') in ('no', 'yes'):
         module.deprecate(
@@ -693,12 +696,12 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
-    start = utcnow()
+    start = datetime.now(timezone.utc)
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
                   decompress, ciphers, use_netrc)
 
-    elapsed = (utcnow() - start).seconds
+    elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'

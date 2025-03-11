@@ -5,16 +5,15 @@
 from __future__ import annotations
 
 import pytest
-import datetime
 import string
 import time
+from datetime import datetime, timezone
 
-from ansible.module_utils.compat.datetime import UTC
 from ansible.module_utils.facts.system import date_time
 
 EPOCH_TS = 1594449296.123456
-DT = datetime.datetime(2020, 7, 11, 12, 34, 56, 124356)
-UTC_DT = datetime.datetime(2020, 7, 11, 2, 34, 56, 124356)
+DT = datetime(2020, 7, 11, 12, 34, 56, 124356)
+UTC_DT = datetime(2020, 7, 11, 2, 34, 56, 124356)
 
 
 @pytest.fixture
@@ -26,9 +25,13 @@ def fake_now(monkeypatch):
 
     class FakeNow:
         @classmethod
-        def fromtimestamp(cls, timestamp, tz=None):
-            if tz == UTC:
-                return UTC_DT.replace(tzinfo=tz)
+        def fromtimestamp(
+            cls: type[FakeNow],
+            timestamp: float,
+            tz: timezone | None = None,
+        ) -> datetime:
+            if tz == timezone.utc:
+                return UTC_DT.replace(tzinfo=None)
             return DT.replace(tzinfo=tz)
 
     def _time():
