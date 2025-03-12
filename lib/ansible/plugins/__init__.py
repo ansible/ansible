@@ -162,7 +162,6 @@ class AnsibleJinja2Plugin(AnsiblePlugin, metaclass=abc.ABCMeta):
         super(AnsibleJinja2Plugin, self).__init__()
         self._function = function
 
-        # DTFIX-MERGE: should this come from sidecar config or another more user/doc-friendly mechanism?
         # Declare support for markers. Plugins with `False` here will never be invoked with markers for top-level arguments.
         self.accept_marker = getattr(self._function, 'accept_marker', False)
 
