@@ -112,6 +112,13 @@ class YamlChecker:
 
     def check_module(self, conf, path, contents):  # type: (YamlLintConfig, str, str) -> None
         """Check the given module."""
+        # print("Conf:", conf)
+        # print("Path:", path)
+        # print("Contents:", contents)
+        # import q
+        # q(conf)
+        # q(path)
+        # q(content)
         docs = self.get_module_docs(path, contents)
 
         for key, value in docs.items():
@@ -181,6 +188,7 @@ class YamlChecker:
         ]
 
         docs = {}
+        # print(contents)
 
         fmt_re = re.compile(r'^# fmt:\s+(\S+)')
 
@@ -193,7 +201,13 @@ class YamlChecker:
                 if doc_types and target.id not in doc_types:
                     continue
 
+                print("statement ", statement)
+                print("statement value: ", statement.value)
+                print(path)
+                # print("statement value.value: ", statement.value.value)
                 fmt_match = fmt_re.match(statement.value.value.lstrip())
+                print("statement ", statement)
+                print("===================================================")
                 fmt = 'yaml'
                 if fmt_match:
                     fmt = fmt_match.group(1)

@@ -35,6 +35,7 @@ from ansible.utils.collection_loader._collection_finder import _AnsibleCollectio
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 from ansible.utils.unsafe_proxy import _is_unsafe
+import q
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 
@@ -208,7 +209,7 @@ class PluginLoader:
 
     def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
         aliases = {} if aliases is None else aliases
-
+        # q("ANSIBLE_PLUGIN_LOADER: inside init ") 
         self.class_name = class_name
         self.base_class = required_base_class
         self.package = package
@@ -223,6 +224,17 @@ class PluginLoader:
             config = []
 
         self.config = config
+        # q("ANSIBLE_PLUGIN_LOADER: inside init=> class_name ", class_name) 
+        # q("ANSIBLE_PLUGIN_LOADER: inside init=> package ", package) 
+        # q("ANSIBLE_PLUGIN_LOADER: inside init=> config ", config) 
+        # q("ANSIBLE_PLUGIN_LOADER: inside init=> subdir ", subdir) 
+        # q("ANSIBLE_PLUGIN_LOADER: inside init=> aliases ", aliases) 
+        # q("ANSIBLE_PLUGIN_LOADER: inside init=> required_base_class ", required_base_class)
+        
+        
+        # q("MODULE_CACHE: ", MODULE_CACHE) 
+        # q("PATH_CACHE: ", PATH_CACHE) 
+        # q("PLUGIN_PATH_CACHE: ", PLUGIN_PATH_CACHE) 
 
         if class_name not in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
@@ -862,6 +874,7 @@ class PluginLoader:
 
     def get_with_context(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
+        # q("ANSIBLE PLUGIN_LOADER: inside get_with_context") 
         if _is_unsafe(name):
             # Objects constructed using the name wrapped as unsafe remain
             # (correctly) unsafe. Using such unsafe objects in places
@@ -877,6 +890,8 @@ class PluginLoader:
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
         collection_list = kwargs.pop('collection_list', None)
+        # q("ANSIBLE PLUGIN_LOADER: get_with_context collection_list", collection_list) 
+        # q("ANSIBLE PLUGIN_LOADER get_with_context self.aliases", self.aliases)
         if name in self.aliases:
             name = self.aliases[name]
 
@@ -925,6 +940,7 @@ class PluginLoader:
 
         # FIXME: update this to use the load context
         self._display_plugin_load(self.class_name, resolved_type_name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+        # q("ANSIBLE PLUGIN LOADER get_eith_context: ", self.class_name, resolved_type_name, self._searched_paths, path, found_in_cache, class_only)
 
         if not class_only:
             try:

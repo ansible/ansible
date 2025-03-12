@@ -392,6 +392,7 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
+import q
 
 display = Display()
 
@@ -571,6 +572,9 @@ class Connection(ConnectionBase):
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
+        q(self.port)
+        q(self.user)
+        q(self.host)
         self.control_path: str | None = None
         self.control_path_dir: str | None = None
 
