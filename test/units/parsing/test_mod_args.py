@@ -64,7 +64,7 @@ class TestModArgsDwim:
         assert args['creates'] == '/tmp/baz'
         assert args['removes'] == '/tmp/bleep'
         assert args['_raw_params'] == '/bin/foo'
-        assert args['/bin/foo'] == True
+        assert args['/bin/foo'] is True
         assert to is Sentinel
 
     def test_normal_usage(self):

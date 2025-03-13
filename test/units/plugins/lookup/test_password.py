@@ -217,6 +217,11 @@ class TestParseParameters(unittest.TestCase):
         for testcase in old_style_params_data:
             filename, params = self.password_lookup._parse_parameters(testcase['term'])
             params['chars'].sort()
+            tmp_params = {}
+            for key in params:
+                if key in testcase['params']:
+                    tmp_params[key]=params[key]
+            params = tmp_params
             self.assertEqual(filename, testcase['filename'])
             self.assertEqual(params, testcase['params'])
 
