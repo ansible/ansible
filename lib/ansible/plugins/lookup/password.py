@@ -329,7 +329,14 @@ class LookupModule(LookupBase):
         # Check for invalid parameters.  Probably a user typo
         invalid_params = frozenset(params.keys()).difference(VALID_PARAMS)
         if invalid_params:
-            raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
+            # Check if param from freeform params.
+            all_from_freeform = True
+            for param in invalid_params:
+                if params[param] != True:
+                    all_from_freeform = False
+                    break
+            if not all_from_freeform:
+                raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
 
         # update options with what we got
         if params:

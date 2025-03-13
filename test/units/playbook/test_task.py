@@ -51,12 +51,12 @@ class TestTask(unittest.TestCase):
         assert t is not None
         self.assertEqual(t.get_name(), basic_command_task['name'])
         self.assertEqual(t.action, 'command')
-        self.assertEqual(t.args, dict(_raw_params='echo hi'))
+        self.assertEqual(t.args, dict(_raw_params='echo hi', echo=True, hi=True))
 
     def test_load_task_kv_form(self):
         t = Task.load(kv_command_task)
         self.assertEqual(t.action, 'command')
-        self.assertEqual(t.args, dict(_raw_params='echo hi'))
+        self.assertEqual(t.args, dict(_raw_params='echo hi', echo=True, hi=True))
 
     @patch.object(errors.AnsibleError, '_get_error_lines_from_file')
     def test_load_task_kv_form_error_36848(self, mock_get_err_lines):

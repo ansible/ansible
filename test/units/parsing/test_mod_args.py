@@ -37,6 +37,8 @@ class TestModArgsDwim:
         assert mod == 'shell'
         assert args == dict(
             _raw_params='echo hi',
+            echo=True,
+            hi=True,
         )
         assert to is Sentinel
 
@@ -48,6 +50,8 @@ class TestModArgsDwim:
         assert mod == 'command'
         assert args == dict(
             _raw_params='echo hi',
+            echo=True,
+            hi=True,
         )
         assert to is Sentinel
 
@@ -57,11 +61,10 @@ class TestModArgsDwim:
         self._debug(mod, args, to)
 
         assert mod == 'shell'
-        assert args == dict(
-            creates='/tmp/baz',
-            removes='/tmp/bleep',
-            _raw_params='/bin/foo',
-        )
+        assert args['creates'] == '/tmp/baz'
+        assert args['removes'] == '/tmp/bleep'
+        assert args['_raw_params'] == '/bin/foo'
+        assert args['/bin/foo'] == True
         assert to is Sentinel
 
     def test_normal_usage(self):

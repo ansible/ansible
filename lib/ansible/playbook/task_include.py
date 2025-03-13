@@ -66,8 +66,13 @@ class TaskInclude(Task):
         """
         my_arg_names = frozenset(task.args.keys())
 
-        # validate bad args, otherwise we silently ignore
+        # validate bad args, and check freeform params, otherwise we silently ignore
         bad_opts = my_arg_names.difference(self.VALID_ARGS)
+        tmp_bad_opts = []
+        for opt in bad_opts:
+            if task.args.get(opt) != True:
+                tmp_bad_opts.append(opt)
+        bad_opts = tmp_bad_opts
         if bad_opts and task.action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS:
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
