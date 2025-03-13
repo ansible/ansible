@@ -245,7 +245,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                     display.warning(
                         (
                             f'WorkerProcess for [{self._host}/{self._task}] errantly sent data directly to {name} instead of using Display:\n'
-                            f'{textwrap.indent(data, "    ")}\n'
+                            f'{textwrap.indent(data[:256], "    ")}\n'
                         ),
                         formatted=True
                     )
