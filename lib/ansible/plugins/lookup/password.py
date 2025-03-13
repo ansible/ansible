@@ -332,7 +332,7 @@ class LookupModule(LookupBase):
             # Check if param from freeform params.
             all_from_freeform = True
             for param in invalid_params:
-                if not params[param]:
+                if params[param] is not True:
                     all_from_freeform = False
                     break
             if not all_from_freeform:

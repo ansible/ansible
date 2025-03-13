@@ -70,7 +70,7 @@ class TaskInclude(Task):
         bad_opts = my_arg_names.difference(self.VALID_ARGS)
         tmp_bad_opts = []
         for opt in bad_opts:
-            if not task.args.get(opt):
+            if task.args.get(opt) is not True:
                 tmp_bad_opts.append(opt)
         bad_opts = tmp_bad_opts
         if bad_opts and task.action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS:
