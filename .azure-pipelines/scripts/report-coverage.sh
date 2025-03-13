@@ -12,6 +12,6 @@ if ! ansible-test --help >/dev/null 2>&1; then
     pip install https://github.com/ansible/ansible/archive/devel.tar.gz --disable-pip-version-check
 fi
 
-# Generate stubs using docker (if supported) otherwise fall back to using a virtual environment instead.
-# The use of docker is required when Powershell code is present, but Ansible 2.12 was the first version to support --docker with coverage.
-ansible-test coverage xml --group-by command --stub --docker --color -v || ansible-test coverage xml --group-by command --stub --venv --color -v
+# Generate stubs using docker.
+# The use of docker is mandatory when Powershell code is present.
+ansible-test coverage xml --group-by command --stub --docker --color -v
