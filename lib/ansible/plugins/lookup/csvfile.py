@@ -195,7 +195,7 @@ class LookupModule(LookupBase):
             try:
                 reset_params = False
                 for name, value in kv.items():
-                    if name == '_raw_params':
+                    if name == '_raw_params' or name == key or value is True:
                         continue
                     if name not in paramvals:
                         raise AnsibleAssertionError('%s is not a valid option' % name)

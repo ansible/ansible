@@ -23,7 +23,7 @@ from ansible.errors import AnsibleParserError
 
 import pytest
 
-SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str]], ...] = (
+SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str | bool]], ...] = (
     (None,
         [],
         {}),
@@ -32,7 +32,7 @@ SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str]], ...] = (
         {}),
     (u'a',
         [u'a'],
-        {u'_raw_params': u'a'}),
+        {u'a': True, u'_raw_params': u'a'}),
     (u'a=b',
         [u'a=b'],
         {u'a': u'b'}),
@@ -41,10 +41,10 @@ SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str]], ...] = (
         {u'a': u'foo bar'}),
     (u'"foo bar baz"',
         [u'"foo bar baz"'],
-        {u'_raw_params': '"foo bar baz"'}),
+        {u'"foo bar baz"' : True, u'_raw_params': '"foo bar baz"'}),
     (u'foo bar baz',
         [u'foo', u'bar', u'baz'],
-        {u'_raw_params': u'foo bar baz'}),
+        {u'foo': True, u'bar': True, u'baz': True, u'_raw_params': u'foo bar baz'}),
     (u'a=b c="foo bar"',
         [u'a=b', u'c="foo bar"'],
         {u'a': u'b', u'c': u'foo bar'}),
@@ -80,10 +80,10 @@ SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str]], ...] = (
         {u'a': 'multiline\nmessage1\\\n', u'b': u'multiline\nmessage2\\\n'}),
     (u'line \\\ncontinuation',
         [u'line', u'continuation'],
-        {u'_raw_params': u'line continuation'}),
+        {u'line': True, u'continuation': True, u'_raw_params': u'line continuation'}),
     (u'not jinja}}',
         [u'not', u'jinja}}'],
-        {u'_raw_params': u'not jinja}}'}),
+        {u'not': True, u'jinja}}': True, u'_raw_params': u'not jinja}}'}),
     (u'a={{multiline\njinja}}',
         [u'a={{multiline\njinja}}'],
         {u'a': u'{{multiline\njinja}}'}),
@@ -125,10 +125,19 @@ SPLIT_DATA: tuple[tuple[str | None, list[str], dict[str, str]], ...] = (
         {u'a': u'{{ foo | some_filter(\' \', " ") }}', u'b': u'bar'}),
     (u'One\n  Two\n    Three\n',
         [u'One\n ', u'Two\n   ', u'Three\n'],
-        {u'_raw_params': u'One\n  Two\n    Three\n'}),
+        {u'One': True, u'Two': True, u'Three': True, u'_raw_params': u'One\n  Two\n    Three\n'}),
     (u'\nOne\n  Two\n    Three\n',
         [u'\n', u'One\n ', u'Two\n   ', u'Three\n'],
-        {u'_raw_params': u'\nOne\n  Two\n    Three\n'}),
+        {u'One': True, u'Two': True, u'Three': True, u'_raw_params': u'\nOne\n  Two\n    Three\n'}),
+    (u'foobar',
+        [u'foobar'],
+        {u'foobar': True, u'_raw_params': u'foobar'}),
+    (u'foobar foo=bar',
+        [u'foobar', u'foo=bar'],
+        {u'foobar': True, u'foo': u'bar', u'_raw_params': u'foobar'}),
+    (u'a b=c d',
+        [u'a', u'b=c', u'd'],
+        {u'a': True, u'b': u'c', u'd': True, u'_raw_params': u'a d'}),
 )
 
 PARSE_KV_CHECK_RAW = (

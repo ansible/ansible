@@ -83,6 +83,10 @@ def parse_kv(args, check_raw=False):
                 else:
                     options[k.strip()] = unquote(v.strip())
             else:
+                if not check_raw:
+                    key = orig_x.strip()
+                    if len(key) != 0:
+                        options[key] = True
                 raw_params.append(orig_x)
 
         # recombine the free-form params, if any were found, and assign

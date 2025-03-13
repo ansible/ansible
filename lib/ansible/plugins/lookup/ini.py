@@ -168,8 +168,10 @@ class LookupModule(LookupBase):
                         if '=' in param:
                             name, value = param.split('=')
                             if name not in paramvals:
-                                raise AnsibleLookupError('%s is not a valid option.' % name)
-                            self.set_option(name, value)
+                                if value is not True:
+                                    raise AnsibleLookupError('%s is not a valid option.' % name)
+                            else:
+                                self.set_option(name, value)
                             updated_options = True
                         elif key == term:
                             # only take first, this format never supported multiple keys inline

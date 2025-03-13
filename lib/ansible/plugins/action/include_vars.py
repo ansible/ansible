@@ -91,6 +91,8 @@ class ActionModule(ActionBase):
                 files += 1
             elif arg in self.VALID_ALL:
                 pass
+            elif self._task.args.get(arg) is True:
+                pass
             else:
                 raise AnsibleError('{0} is not a valid option in include_vars'.format(to_native(arg)))
 
