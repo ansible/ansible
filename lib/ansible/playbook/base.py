@@ -559,6 +559,13 @@ class FieldAttributeBase:
 
             raise AnsibleFieldAttributeError(f'The field {name!r} is required but was not set.', obj=self.get_ds())
 
+        from .role_include import IncludeRole
+
+        if not attribute.always_post_validate and isinstance(self, IncludeRole) and self.statically_loaded:  # import_role
+            # normal field attributes should not go through post validation on import_role/import_tasks
+            # only import_role is checked here because import_tasks never reaches this point
+            return Sentinel
+
         # FIXME: compare types, not strings
         if not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext', 'IncludeRole', 'TaskInclude'):
             # Intermediate objects like Play() won't have their fields validated by
