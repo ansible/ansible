@@ -127,7 +127,8 @@ def cleanup_tmp_file(path, warn=False):
                 elif os.path.isfile(path):
                     os.unlink(path)
             except Exception as e:
-                if warn and getattr(e, 'errno', None) != ENOENT:
+                # if warn and getattr(e, 'errno', None) != ENOENT:
+                if warn:
                     # Importing here to avoid circular import
                     from ansible.utils.display import Display
                     display = Display()
