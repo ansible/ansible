@@ -8,6 +8,7 @@ import pytest
 from ansible.modules import iptables
 
 IPTABLES_CMD = "/sbin/iptables"
+IP6TABLES_CMD = "/sbin/ip6tables"
 IPTABLES_VERSION = "1.8.2"
 CONST_INPUT_FILTER = [IPTABLES_CMD, "-t", "filter", "-L", "INPUT",]
 
@@ -1422,3 +1423,67 @@ def test_chain_deletion_check_mode(mocker):
         iptables.main()
 
     assert not exc.value.args[0]["changed"]
+
+
+@pytest.mark.parametrize("ip_version", ["both"])
+def test_ip_version(mocker, ip_version):
+    """Test 'both' option for ip_version."""
+
+    set_module_args(
+        {
+            "chain": "INPUT",
+            "protocol": "tcp",
+            "destination_port": "80",
+            "jump": "ACCEPT",
+            "ip_version": ip_version,
+        }
+    )
+
+    commands_results = [
+        (0, "", ""),
+        (0, "", ""),
+    ]
+
+    def get_bin_path_side_effect(arg, *args, **kwargs):
+        if arg == "iptables":
+            return IPTABLES_CMD
+        elif arg == "ip6tables":
+            return IP6TABLES_CMD
+        return None
+
+    mocker.patch(
+        "ansible.module_utils.basic.AnsibleModule.get_bin_path",
+        side_effect=get_bin_path_side_effect,
+    )
+
+    mocker.patch("ansible.modules.iptables.get_iptables_version", return_value=IPTABLES_VERSION)
+
+    run_command = mocker.patch(
+        "ansible.module_utils.basic.AnsibleModule.run_command",
+        side_effect=commands_results,
+    )
+
+    with pytest.raises(SystemExit):
+        iptables.main()
+
+    assert run_command.call_count == 2
+
+    first_cmd_args = run_command.call_args_list[0][0][0]
+    assert first_cmd_args == [
+        IPTABLES_CMD,
+        "-t", "filter",
+        "-C", "INPUT",
+        "-p", "tcp",
+        "-j", "ACCEPT",
+        "--destination-port", "80",
+    ]
+
+    second_cmd_args = run_command.call_args_list[1][0][0]
+    assert second_cmd_args == [
+        IP6TABLES_CMD,
+        "-t", "filter",
+        "-C", "INPUT",
+        "-p", "tcp",
+        "-j", "ACCEPT",
+        "--destination-port", "80",
+    ]

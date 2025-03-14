@@ -67,7 +67,7 @@ options:
     description:
       - Which version of the IP protocol this rule should apply to.
     type: str
-    choices: [ ipv4, ipv6 ]
+    choices: [ ipv4, ipv6, both ]
     default: ipv4
   chain:
     description:
@@ -564,6 +564,7 @@ BINS = dict(
 ICMP_TYPE_OPTIONS = dict(
     ipv4='--icmp-type',
     ipv6='--icmpv6-type',
+    both='--icmp-type --icmpv6-type',
 )
 
 
@@ -782,7 +783,7 @@ def main():
             table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             action=dict(type='str', default='append', choices=['append', 'insert']),
-            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
+            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6', 'both']),
             chain=dict(type='str'),
             rule_num=dict(type='str'),
             protocol=dict(type='str'),
@@ -865,84 +866,94 @@ def main():
         wait=module.params['wait'],
     )
 
-    ip_version = module.params['ip_version']
-    iptables_path = module.get_bin_path(BINS[ip_version], True)
+    ip_version = ['ipv4', 'ipv6'] if module.params['ip_version'] == 'both' else [module.params['ip_version']]
+    iptables_path = [module.get_bin_path('iptables', True) if ip_version == 'ipv4' else module.get_bin_path('ip6tables', True) for ip_version in ip_version]
 
-    if module.params.get('log_prefix', None) or module.params.get('log_level', None):
-        if module.params['jump'] is None:
-            module.params['jump'] = 'LOG'
-        elif module.params['jump'] != 'LOG':
-            module.fail_json(msg="Logging options can only be used with the LOG jump target.")
+    both_changed = False
 
-    # Check if wait option is supported
-    iptables_version = LooseVersion(get_iptables_version(iptables_path, module))
+    for path in iptables_path:
+        if module.params.get('log_prefix', None) or module.params.get('log_level', None):
+            if module.params['jump'] is None:
+                module.params['jump'] = 'LOG'
+            elif module.params['jump'] != 'LOG':
+                module.fail_json(msg="Logging options can only be used with the LOG jump target.")
 
-    if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
-        if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
-            module.params['wait'] = ''
-    else:
-        module.params['wait'] = None
+        # Check if wait option is supported
+        iptables_version = LooseVersion(get_iptables_version(path, module))
 
-    # Flush the table
-    if args['flush'] is True:
-        args['changed'] = True
-        if not module.check_mode:
-            flush_table(iptables_path, module, module.params)
+        if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
+            if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
+                module.params['wait'] = ''
+        else:
+            module.params['wait'] = None
 
-    # Set the policy
-    elif module.params['policy']:
-        current_policy = get_chain_policy(iptables_path, module, module.params)
-        if not current_policy:
-            module.fail_json(msg='Can\'t detect current policy')
+        # Flush the table
+        if args['flush'] is True:
+            args['changed'] = True
+            both_changed = True
+            if not module.check_mode:
+                flush_table(path, module, module.params)
 
-        changed = current_policy != module.params['policy']
-        args['changed'] = changed
-        if changed and not module.check_mode:
-            set_chain_policy(iptables_path, module, module.params)
+        # Set the policy
+        elif module.params['policy']:
+            current_policy = get_chain_policy(path, module, module.params)
+            if not current_policy:
+                module.fail_json(msg='Can\'t detect current policy')
 
-    # Delete the chain if there is no rule in the arguments
-    elif (args['state'] == 'absent') and not args['rule']:
-        chain_is_present = check_chain_present(
-            iptables_path, module, module.params
-        )
-        args['changed'] = chain_is_present
+            changed = current_policy != module.params['policy']
+            args['changed'] = changed
+            both_changed = both_changed or changed
+            if changed and not module.check_mode:
+                set_chain_policy(path, module, module.params)
 
-        if (chain_is_present and args['chain_management'] and not module.check_mode):
-            delete_chain(iptables_path, module, module.params)
-
-    else:
-        # Create the chain if there are no rule arguments
-        if (args['state'] == 'present') and not args['rule'] and args['chain_management']:
+        # Delete the chain if there is no rule in the arguments
+        elif (args['state'] == 'absent') and not args['rule']:
             chain_is_present = check_chain_present(
-                iptables_path, module, module.params
+                path, module, module.params
             )
-            args['changed'] = not chain_is_present
+            args['changed'] = chain_is_present
+            both_changed = both_changed or chain_is_present
 
-            if (not chain_is_present and args['chain_management'] and not module.check_mode):
-                create_chain(iptables_path, module, module.params)
+            if (chain_is_present and args['chain_management'] and not module.check_mode):
+                delete_chain(path, module, module.params)
 
         else:
-            insert = (module.params['action'] == 'insert')
-            rule_is_present = check_rule_present(
-                iptables_path, module, module.params
-            )
+            # Create the chain if there are no rule arguments
+            if (args['state'] == 'present') and not args['rule']:
+                chain_is_present = check_chain_present(
+                    path, module, module.params
+                )
+                args['changed'] = not chain_is_present
+                both_changed = both_changed or not chain_is_present
 
-            should_be_present = (args['state'] == 'present')
-            # Check if target is up to date
-            args['changed'] = (rule_is_present != should_be_present)
-            if args['changed'] is False:
-                # Target is already up to date
-                module.exit_json(**args)
+                if (not chain_is_present and args['chain_management'] and not module.check_mode):
+                    create_chain(path, module, module.params)
 
-            # Modify if not check_mode
-            if not module.check_mode:
-                if should_be_present:
-                    if insert:
-                        insert_rule(iptables_path, module, module.params)
+            else:
+                insert = (module.params['action'] == 'insert')
+                rule_is_present = check_rule_present(
+                    path, module, module.params
+                )
+
+                should_be_present = (args['state'] == 'present')
+                # Check if target is up to date
+                args['changed'] = (rule_is_present != should_be_present)
+                both_changed = both_changed or (rule_is_present != should_be_present)
+                if args['changed'] is False:
+                    # Target is already up to date
+                    continue
+
+                # Modify if not check_mode
+                if not module.check_mode:
+                    if should_be_present:
+                        if insert:
+                            insert_rule(path, module, module.params)
+                        else:
+                            append_rule(path, module, module.params)
                     else:
-                        append_rule(iptables_path, module, module.params)
-                else:
-                    remove_rule(iptables_path, module, module.params)
+                        remove_rule(path, module, module.params)
+
+    args['changed'] = both_changed
 
     module.exit_json(**args)
 
