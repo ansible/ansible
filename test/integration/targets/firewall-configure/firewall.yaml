@@ -1,0 +1,65 @@
+- name: Configure firewall to allow HTTP/HTTPS/SSH trafic and enhance security
+  hosts: webserver
+  become: yes
+
+  tasks:
+    - name: Allow HTTP traffic on port 80
+      ufw:
+        rule: allow
+        port: 80
+        proto: tcp
+      tags: firewall
+    
+    - name: Allow HTTPS traffic on port 443
+      ufw:
+        rule: allow
+        port: 443
+        proto: tcp
+      tags: firewall
+
+    - name: Allow SSH traffic on port 22
+      ufw:
+        rule: allow
+        port: 22
+        proto: tcp
+      tags: firewall
+    
+    - name: Enable UFW is it is not
+      ufw:
+        state: enabled
+      tags: firewall
+    
+    - name: Esure UFW is active and configured correctly
+      ufw:
+        state: enabled
+        policy: deny
+        logging: on
+      tags: firewall
+    
+    - name: Configure UFW rate limiting for SSH to prevent brute-force attacks
+      ufw:
+        rule: limit
+        port: 22
+        proto: tcp
+      tags: firewall
+    
+    - name: Configure UFW rate limiting for HTTP
+      ufw:
+        rule: limit
+        port: 80
+        proto: tcp
+      tags: firewall
+    
+    - name: Configure UFW rate limiting for HTTPS
+      ufw:
+        rule: limit
+        port: 443
+        proto: tcp
+      tags: firewall
+
+    - name: Allow loopback interface
+      ufw:
+        rule: allow
+        from: 127.0.0.1
+        to: 127.0.0.1
+      tags: firewall
