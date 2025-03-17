@@ -123,6 +123,12 @@ class SupportsFromBlob(t.Protocol):
         ...
 
 
+def _split_blob(blob: memoryview | bytes, length: int) -> tuple[memoryview | bytes, memoryview | bytes]:
+    if len(blob) < length:
+        raise ValueError("_split_blob: unexpected data length")
+    return blob[:length], blob[length:]
+
+
 class VariableSized:
     @classmethod
     def from_blob(cls, blob: memoryview | bytes) -> t.Self:
@@ -132,7 +138,8 @@ class VariableSized:
     def consume_from_blob(cls, blob: memoryview | bytes) -> tuple[t.Self, memoryview | bytes]:
         length = uint32.from_blob(blob[:4])
         blob = blob[4:]
-        return cls.from_blob(blob[:length]), blob[length:]
+        data, rest = _split_blob(blob, length)
+        return cls.from_blob(data), rest
 
 
 class uint32(int):
@@ -146,7 +153,8 @@ class uint32(int):
     @classmethod
     def consume_from_blob(cls, blob: memoryview | bytes) -> tuple[t.Self, memoryview | bytes]:
         length = uint32(4)
-        return cls.from_blob(blob[:length]), blob[length:]
+        data, rest = _split_blob(blob, length)
+        return cls.from_blob(data), rest
 
 
 class mpint(int, VariableSized):
@@ -559,7 +567,8 @@ class PublicKeyMsgList(Msg):
     ) -> tuple[memoryview | bytes, uint32, memoryview | bytes]:
         length = uint32.from_blob(blob[:4])
         blob = blob[4:]
-        return blob[:length], length, blob[length:]
+        data, rest = _split_blob(blob, length)
+        return data, length, rest
 
 
 class SshAgentClient:
