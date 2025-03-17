@@ -35,6 +35,12 @@ P = t.ParamSpec('P')
 T = t.TypeVar('T')
 
 
+class ConnectionKwargs(t.TypedDict):
+    task_uuid: str
+    ansible_playbook_pid: str
+    shell: t.NotRequired[ShellBase]
+
+
 def ensure_connect(
     func: c.Callable[t.Concatenate[ConnectionBase, P], T],
 ) -> c.Callable[t.Concatenate[ConnectionBase, P], T]:
@@ -71,10 +77,8 @@ class ConnectionBase(AnsiblePlugin):
     def __init__(
         self,
         play_context: PlayContext,
-        new_stdin: io.TextIOWrapper | None = None,
-        shell: ShellBase | None = None,
         *args: t.Any,
-        **kwargs: t.Any,
+        **kwargs: t.Unpack[ConnectionKwargs],
     ) -> None:
 
         super(ConnectionBase, self).__init__()
@@ -83,9 +87,6 @@ class ConnectionBase(AnsiblePlugin):
         if not hasattr(self, '_play_context'):
             # Backwards compat: self._play_context isn't really needed, using set_options/get_option
             self._play_context = play_context
-        # Delete once the deprecation period is over for WorkerProcess._new_stdin
-        if not hasattr(self, '__new_stdin'):
-            self.__new_stdin = new_stdin
         if not hasattr(self, '_display'):
             # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
@@ -95,24 +96,13 @@ class ConnectionBase(AnsiblePlugin):
         self._connected = False
         self._socket_path: str | None = None
 
-        # helper plugins
+        # we always must have shell
+        if not (shell := kwargs.get('shell')):
+            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
+            shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
         self._shell = shell
 
-        # we always must have shell
-        if not self._shell:
-            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
-            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
-
         self.become: BecomeBase | None = None
-
-    @property
-    def _new_stdin(self) -> io.TextIOWrapper | None:
-        display.deprecated(
-            "The connection's stdin object is deprecated. "
-            "Call display.prompt_until(msg) instead.",
-            version='2.19',
-        )
-        return self.__new_stdin
 
     def set_become_plugin(self, plugin: BecomeBase) -> None:
         self.become = plugin
@@ -319,11 +309,10 @@ class NetworkConnectionBase(ConnectionBase):
     def __init__(
         self,
         play_context: PlayContext,
-        new_stdin: io.TextIOWrapper | None = None,
         *args: t.Any,
         **kwargs: t.Any,
     ) -> None:
-        super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        super(NetworkConnectionBase, self).__init__(play_context, *args, **kwargs)
         self._messages: list[tuple[str, str]] = []
         self._conn_closed = False
 

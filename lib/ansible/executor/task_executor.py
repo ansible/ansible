@@ -92,12 +92,11 @@ class TaskExecutor:
     class.
     """
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, variable_manager):
+    def __init__(self, host, task, job_vars, play_context, loader, shared_loader_obj, final_q, variable_manager):
         self._host = host
         self._task = task
         self._job_vars = job_vars
         self._play_context = play_context
-        self._new_stdin = new_stdin
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
@@ -992,7 +991,7 @@ class TaskExecutor:
         connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
             conn_type,
             self._play_context,
-            self._new_stdin,
+            new_stdin=None,  # No longer used, kept for backwards compat for plugins that explicitly accept this as an arg
             task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )

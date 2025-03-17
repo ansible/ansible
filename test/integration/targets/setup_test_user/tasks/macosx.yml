@@ -1,6 +1,8 @@
 - name: set variables
   set_fact:
     test_user_group: staff
+    test_user_groups:
+      - com.apple.access_ssh
 
 - name: set plaintext password
   no_log: yes
