@@ -421,6 +421,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import typing as t
 from functools import wraps
@@ -782,12 +783,15 @@ class Connection(ConnectionBase):
         )
         if os.path.exists(pubkey_path):
             return pubkey_path
-        fd = os.open(pubkey_path, os.O_CREAT | os.O_WRONLY, mode=0o400)
-        with os.fdopen(fd, 'wb') as f:
+
+        with tempfile.NamedTemporaryFile(dir=C.DEFAULT_LOCAL_TMP, delete=False) as f:
             f.write(public_key.public_bytes(
                 encoding=serialization.Encoding.OpenSSH,
                 format=serialization.PublicFormat.OpenSSH
             ))
+        os.rename(f.name, pubkey_path)
+        os.chmod(pubkey_path, mode=0o400)
+
         return self._populated_agent
 
     def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
