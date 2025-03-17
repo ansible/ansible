@@ -284,9 +284,6 @@ DOCUMENTATION = """
           description:
             - Private key contents in PEM format. Requires the C(SSH_AGENT) configuration to be enabled.
           type: string
-          ini:
-            - section: defaults
-              key: private_key
           env:
             - name: ANSIBLE_PRIVATE_KEY
           vars:
@@ -297,9 +294,6 @@ DOCUMENTATION = """
             - Private key passphrase, dependent on O(private_key).
             - This does NOT have any effect when used with O(private_key_file).
           type: string
-          ini:
-            - section: defaults
-              key: private_key_passphrase
           env:
             - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
           vars:
