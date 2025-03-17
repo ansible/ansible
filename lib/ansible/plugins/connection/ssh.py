@@ -749,6 +749,7 @@ class Connection(ConnectionBase):
         b_command += b_args
 
     def _populate_agent(self) -> str:
+        """Adds configured private key identity to the SSH agent. Returns a path to a file containing the public key."""
         if self._populated_agent:
             return self._populated_agent
 
