@@ -64,6 +64,9 @@ if t.TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
 
 
+_SSH_AGENT_CLIENT_SOCKET_TIMEOUT = 10
+
+
 class ProtocolMsgNumbers(enum.IntEnum):
     # Responses
     SSH_AGENT_FAILURE = 5
@@ -562,6 +565,7 @@ class PublicKeyMsgList(Msg):
 class SshAgentClient:
     def __init__(self, auth_sock: str) -> None:
         self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._sock.settimeout(_SSH_AGENT_CLIENT_SOCKET_TIMEOUT)
         self._sock.connect(auth_sock)
 
     def close(self) -> None:
