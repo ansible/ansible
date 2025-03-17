@@ -4,6 +4,24 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-03-17
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Bugfixes
+--------
+
+- Windows - add support for running on system where WDAC is in audit mode with ``Dynamic Code Security`` enabled.
+- dnf5 - fix ``is_installed`` check for packages that are not installed but listed as provided by an installed package (https://github.com/ansible/ansible/issues/84578)
+- dnf5 - libdnf5 - use ``conf.pkg_gpgcheck`` instead of deprecated ``conf.gpgcheck`` which is used only as a fallback
+- facts - gather pagesize and calculate respective values depending upon architecture (https://github.com/ansible/ansible/issues/84773).
+- module respawn - limit to supported Python versions
+
 v2.18.3
 =======
 
