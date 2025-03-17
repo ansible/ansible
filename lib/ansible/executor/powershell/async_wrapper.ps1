@@ -71,18 +71,13 @@ try {
     $stdoutHandle = $stdoutPipe.ClientSafePipeHandle
     $stderrHandle = $stderrPipe.ClientSafePipeHandle
 
-    $executablePath = [Process]::GetCurrentProcess().MainModule.FileName
-    # wsmprovhost is used in a PSRP WSMan PSRemoting target, we need to change that
-    # to the proper executable.
-    if ($executablePath -eq "$env:SystemRoot\system32\wsmprovhost.exe") {
-        $executable = if (Get-Variable -Name IsCoreCLR -ValueOnly -ErrorAction SilentlyContinue) {
-            'pwsh.exe'
-        }
-        else {
-            'powershell.exe'
-        }
-        $executablePath = Join-Path -Path $PSHome -ChildPath $executable
+    $executable = if ($PSVersionTable.PSVersion -lt '6.0') {
+        'powershell.exe'
     }
+    else {
+        'pwsh.exe'
+    }
+    $executablePath = Join-Path -Path $PSHome -ChildPath $executable
 
     # We need to escape the job of the current process to allow the async
     # process to outlive the Windows job. If the current process is not part of
