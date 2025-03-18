@@ -1,0 +1,3 @@
+minor_changes:
+  - >-
+    Windows - refactor the async implementation to better handle errors during bootstrapping and avoid WMI when possible.
