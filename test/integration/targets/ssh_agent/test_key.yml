@@ -27,23 +27,8 @@
           - keys.nkeys == ansible_loop.index
           - keys['keys'][ansible_loop.index0].fingerprint == fingerprint
 
-    - name: lock the agent
-      ssh_agent:
-        action: lock
-        password: pancakes
-
-    - name: this will fail because the agent is locked
+    - name: key already exists in the agent
       ping:
-      ignore_errors: true
-      register: _
-      failed_when: _ is not failed
-
-    - name: unlock the agent
-      ssh_agent:
-        action: unlock
-        password: pancakes
-
-    - ping:
   vars:
     ansible_password: ~
     ansible_ssh_password: ~

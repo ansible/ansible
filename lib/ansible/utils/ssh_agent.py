@@ -272,11 +272,6 @@ class Msg:
         return cls(*args)
 
 
-@dataclasses.dataclass(order=True, slots=True)
-class AgentLockMsg(Msg):
-    passphrase: binary_string
-
-
 @dataclasses.dataclass
 class PrivateKeyMsg(Msg):
     @staticmethod
@@ -645,16 +640,6 @@ class SshAgentClient:
                 'agent: non-identities answer received for identities list'
             )
         return KeyList.from_blob(r[1:])
-
-    def lock(self, passphrase: bytes) -> None:
-        self.send(
-            ProtocolMsgNumbers.SSH_AGENTC_LOCK.to_blob() + AgentLockMsg(binary_string(passphrase)).to_blob()
-        )
-
-    def unlock(self, passphrase: bytes) -> None:
-        self.send(
-            ProtocolMsgNumbers.SSH_AGENTC_UNLOCK.to_blob() + AgentLockMsg(binary_string(passphrase)).to_blob()
-        )
 
     def __contains__(self, public_key: CryptoPublicKey) -> bool:
         msg = PublicKeyMsg.from_public_key(public_key)
