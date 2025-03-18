@@ -272,3 +272,27 @@
     - http_308_post.redirected == false
     - http_308_post.status == 308
     - http_308_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=308&url=https://' + httpbin_host + '/anything'
+
+
+- name: Test HTTP using HEAD with relative path in redirection
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code={{ item }}&url=/anything?foo=bar
+    follow_redirects: safe
+    return_content: yes
+    method: HEAD
+  register: http_head
+  loop:
+    - '301'
+    - '302'
+    - '303'
+    - '307'
+    - '308'
+
+- assert:
+    that:
+    - item.changed is false
+    - item.json is not defined
+    - item.redirected
+    - item.status == 200
+    - item.url == 'https://' + httpbin_host + '/anything?foo=bar'
+  loop: "{{ http_head.results }}"

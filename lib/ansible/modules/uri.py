@@ -442,7 +442,7 @@ from datetime import datetime, timezone
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import binary_type, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
+from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import (
@@ -503,27 +503,6 @@ def write_file(module, dest, content, resp):
 
     if os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-
-
-def absolute_location(url, location):
-    """Attempts to create an absolute URL based on initial URL, and
-    next URL, specifically in the case of a ``Location`` header.
-    """
-
-    if '://' in location:
-        return location
-
-    elif location.startswith('/'):
-        parts = urlsplit(url)
-        base = url.replace(parts[2], '')
-        return '%s%s' % (base, location)
-
-    elif not location.startswith('/'):
-        base = os.path.dirname(url)
-        return '%s/%s' % (base, location)
-
-    else:
-        return location
 
 
 def kv_list(data):
@@ -773,7 +752,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = absolute_location(url, uresp['location'])
+        uresp['location'] = urljoin(url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, binary_type):
