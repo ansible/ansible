@@ -11,6 +11,7 @@ import hashlib
 import socket
 import types
 import typing as t
+from functools import cached_property
 
 try:
     from cryptography.hazmat.primitives import serialization
@@ -38,6 +39,10 @@ try:
         RSAPublicNumbers,
     )
     from cryptography.hazmat.primitives.serialization import ssh
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+else:
+    HAS_CRYPTOGRAPHY = True
 
     CryptoPublicKey = t.Union[
         DSAPublicKey,
@@ -52,10 +57,6 @@ try:
         Ed25519PrivateKey,
         RSAPrivateKey,
     ]
-except ImportError:
-    HAS_CRYPTOGRAPHY = False
-else:
-    HAS_CRYPTOGRAPHY = True
 
 
 if t.TYPE_CHECKING:
@@ -396,6 +397,7 @@ class PublicKeyMsg(Msg):
             case _:
                 raise NotImplementedError(type)
 
+    @cached_property
     def public_key(self) -> CryptoPublicKey:
         type: KeyAlgo = self.type
         match type:
@@ -465,6 +467,7 @@ class PublicKeyMsg(Msg):
             case _:
                 raise NotImplementedError(public_key)
 
+    @cached_property
     def fingerprint(self) -> str:
         digest = hashlib.sha256()
         msg = copy.copy(self)

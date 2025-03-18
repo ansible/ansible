@@ -4,7 +4,6 @@ import os
 
 from ansible.plugins.action import ActionBase
 from ansible.utils._ssh_agent import SshAgentClient
-from ansible.module_utils.common.text.converters import to_bytes
 
 
 class ActionModule(ActionBase):
@@ -15,22 +14,8 @@ class ActionModule(ActionBase):
         match self._task.args['action']:
             case 'list':
                 return self.list()
-            case 'lock':
-                return self.lock(self._task.args['password'])
-            case 'unlock':
-                return self.unlock(self._task.args['password'])
             case _:
                 return {'failed': True, 'msg': 'not implemented'}
-
-    def lock(self, password):
-        with SshAgentClient(os.environ['SSH_AUTH_SOCK']) as client:
-            client.lock(to_bytes(password))
-        return {'changed': True}
-
-    def unlock(self, password):
-        with SshAgentClient(os.environ['SSH_AUTH_SOCK']) as client:
-            client.unlock(to_bytes(password))
-        return {'changed': True}
 
     def list(self):
         result = {'keys': [], 'nkeys': 0}
@@ -38,9 +23,9 @@ class ActionModule(ActionBase):
             key_list = client.list()
             result['nkeys'] = key_list.nkeys
             for key in key_list.keys:
-                public_key = key.public_key()
+                public_key = key.public_key
                 key_size = getattr(public_key, 'key_size', 256)
-                fingerprint = key.fingerprint()
+                fingerprint = key.fingerprint
                 key_type = key.type.main_type
                 result['keys'].append({
                     'type': key_type,

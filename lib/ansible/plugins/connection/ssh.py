@@ -666,7 +666,7 @@ class Connection(ConnectionBase):
         self._tty_parser.add_argument('-t', action='count')
         self._tty_parser.add_argument('-o', action='append')
 
-        self._populated_agent: str | None = None
+        self._populated_agent: pathlib.Path | None = None
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -742,7 +742,7 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
 
-    def _populate_agent(self) -> str:
+    def _populate_agent(self) -> pathlib.Path:
         """Adds configured private key identity to the SSH agent. Returns a path to a file containing the public key."""
         if self._populated_agent:
             return self._populated_agent
@@ -758,7 +758,7 @@ class Connection(ConnectionBase):
         )
         public_key = private_key.public_key()
         pubkey_msg = PublicKeyMsg.from_public_key(public_key)
-        fingerprint = pubkey_msg.fingerprint()
+        fingerprint = pubkey_msg.fingerprint
         with SshAgentClient(auth_sock) as client:
             if public_key not in client:
                 display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
@@ -772,8 +772,7 @@ class Connection(ConnectionBase):
         # Write the public key to disk, to be provided as IdentityFile.
         # This allows ssh to pick an explicit key in the agent to use,
         # preventing ssh from attempting all keys in the agent.
-        pubkey_path = self._populated_agent = os.path.join(
-            C.DEFAULT_LOCAL_TMP,
+        pubkey_path = self._populated_agent = pathlib.Path(C.DEFAULT_LOCAL_TMP).joinpath(
             fingerprint.replace('/', '-') + '.pub'
         )
         if os.path.exists(pubkey_path):

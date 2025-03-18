@@ -50,5 +50,5 @@ class ActionModule(ActionBase):
                 encoding=serialization.Encoding.OpenSSH,
                 format=serialization.PublicFormat.OpenSSH,
             )),
-            'fingerprint': f'SHA256:{public_key_msg.fingerprint()}',
+            'fingerprint': f'SHA256:{public_key_msg.fingerprint}',
         }
