@@ -176,7 +176,7 @@ namespace Ansible._Async
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static unsafe extern bool UpdateProcThreadAttribute(
-            IntPtr lpAttributeList,
+            SafeProcThreadAttrList lpAttributeList,
             int dwFlags,
             UIntPtr Attribute,
             void* lpValue,
@@ -238,6 +238,20 @@ namespace Ansible._Async
         public ManagedWaitHandle(SafeWaitHandle handle)
         {
             SafeWaitHandle = handle;
+        }
+    }
+
+    internal sealed class SafeProcThreadAttrList : SafeHandle
+    {
+        public SafeProcThreadAttrList(IntPtr handle) : base(handle, true) { }
+
+        public override bool IsInvalid { get { return handle == IntPtr.Zero; } }
+
+        protected override bool ReleaseHandle()
+        {
+            NativeMethods.DeleteProcThreadAttributeList(handle);
+            Marshal.FreeHGlobal(handle);
+            return true;
         }
     }
 
@@ -308,18 +322,9 @@ namespace Ansible._Async
                 rawParentProcessHandle = parentProcess.DangerousGetHandle();
             }
 
-            IntPtr attrSize = IntPtr.Zero;
-            NativeMethods.InitializeProcThreadAttributeList(IntPtr.Zero, attrCount, 0, ref attrSize);
-
-            bool freeThreadAttributes = false;
-            si.lpAttributeList = Marshal.AllocHGlobal((int)attrSize);
-            try
+            using (SafeProcThreadAttrList attrList = CreateProcThreadAttribute(attrCount))
             {
-                if (!NativeMethods.InitializeProcThreadAttributeList(si.lpAttributeList, attrCount, 0, ref attrSize))
-                {
-                    throw new Win32Exception("InitializeProcThreadAttributeList() failed");
-                }
-                freeThreadAttributes = true;
+                si.lpAttributeList = attrList.DangerousGetHandle();
 
                 IntPtr[] handlesToInherit = new IntPtr[4]
                 {
@@ -328,22 +333,20 @@ namespace Ansible._Async
                     stderr.DangerousGetHandle(),
                     mutexHandle.DangerousGetHandle()
                 };
-                IntPtr parentProcessHandlePtr = IntPtr.Zero;
                 unsafe
                 {
                     fixed (IntPtr* handlesToInheritPtr = &handlesToInherit[0])
                     {
                         UpdateProcThreadAttribute(
-                            si.lpAttributeList,
+                            attrList,
                             NativeHelpers.PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
                             handlesToInheritPtr,
                             IntPtr.Size * 4);
 
                         if (rawParentProcessHandle != IntPtr.Zero)
                         {
-                            parentProcessHandlePtr = parentProcess.DangerousGetHandle();
                             UpdateProcThreadAttribute(
-                                si.lpAttributeList,
+                                attrList,
                                 NativeHelpers.PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                                 &rawParentProcessHandle,
                                 IntPtr.Size);
@@ -375,14 +378,6 @@ namespace Ansible._Async
                             Task.Run(() => stderrReader.ReadToEnd()));
                     }
                 }
-            }
-            finally
-            {
-                if (freeThreadAttributes)
-                {
-                    NativeMethods.DeleteProcThreadAttributeList(si.lpAttributeList);
-                }
-                Marshal.FreeHGlobal(si.lpAttributeList);
             }
         }
 
@@ -475,8 +470,30 @@ namespace Ansible._Async
             }
         }
 
+        private static SafeProcThreadAttrList CreateProcThreadAttribute(int count)
+        {
+            IntPtr attrSize = IntPtr.Zero;
+            NativeMethods.InitializeProcThreadAttributeList(IntPtr.Zero, count, 0, ref attrSize);
+
+            IntPtr attributeList = Marshal.AllocHGlobal((int)attrSize);
+            try
+            {
+                if (!NativeMethods.InitializeProcThreadAttributeList(attributeList, count, 0, ref attrSize))
+                {
+                    throw new Win32Exception("InitializeProcThreadAttributeList() failed");
+                }
+
+                return new SafeProcThreadAttrList(attributeList);
+            }
+            catch
+            {
+                Marshal.FreeHGlobal(attributeList);
+                throw;
+            }
+        }
+
         private static unsafe void UpdateProcThreadAttribute(
-            IntPtr attributeList,
+            SafeProcThreadAttrList attributeList,
             int attribute,
             void* value,
             int size)
