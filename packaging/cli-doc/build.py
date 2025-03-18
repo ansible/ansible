@@ -116,7 +116,7 @@ def collect_programs() -> dict[str, dict[str, t.Any]]:
     cli_bin_name_list: list[str] = []
 
     for source_file in (SOURCE_DIR / 'lib/ansible/cli').glob('*.py'):
-        if source_file.name != '__init__.py':
+        if not source_file.name.startswith('_'):
             programs.append(generate_options_docs(source_file, cli_bin_name_list))
 
     return dict(programs)
