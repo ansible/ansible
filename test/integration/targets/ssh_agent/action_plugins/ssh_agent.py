@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 from ansible.plugins.action import ActionBase
-from ansible.utils.ssh_agent import SshAgentClient
+from ansible.utils._ssh_agent import SshAgentClient
 from ansible.module_utils.common.text.converters import to_bytes
 
 

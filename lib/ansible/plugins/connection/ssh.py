@@ -434,7 +434,7 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.utils.ssh_agent import load_private_key, SshAgentClient, PublicKeyMsg
+from ansible.utils._ssh_agent import load_private_key, SshAgentClient, PublicKeyMsg
 
 try:
     from cryptography.hazmat.primitives import serialization
