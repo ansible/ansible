@@ -93,9 +93,7 @@ class DarwinHardware(Hardware):
         }
 
         total_used = 0
-        page_size = 4096
-        if 'hw.pagesize' in self.sysctl:
-            page_size = int(self.sysctl['hw.pagesize'])
+        page_size = int(self.sysctl.get('hw.pagesize', 4096))
 
         vm_stat_command = self.module.get_bin_path('vm_stat')
         if vm_stat_command is None:
