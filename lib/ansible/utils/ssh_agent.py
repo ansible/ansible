@@ -99,8 +99,8 @@ class ProtocolMsgNumbers(enum.IntEnum):
         return bytes([self])
 
 
-class SshAgentFailure(Exception):
-    ...
+class SshAgentFailure(RuntimeError):
+    """Server failure or unexpected response."""
 
 
 # NOTE: Classes below somewhat represent "Data Type Representations Used in the SSH Protocols"
