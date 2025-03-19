@@ -45,4 +45,7 @@ ANSIBLE_FACTS_MODULES='smart' ansible -m gather_facts localhost -e 'ansible_netw
 # ensure we warn on setup + network OS
 ANSIBLE_FACTS_MODULES='smart, setup' ansible -m gather_facts localhost -e 'ansible_network_os="N/A"' "$@" 2>&1 | grep "Detected 'setup' module and a network OS is set"
 
+# ensure run setup when smart+ and no network OS
+ANSIBLE_FACTS_MODULES='smart, facts_one' ansible-playbook smart_added.yml -i inventory "$@"
+
 rm "${OUTPUT_DIR}/canary.txt"

@@ -1,0 +1,11 @@
+- hosts: facthost0
+  tasks:
+    - name: ensure we ran custom module AND setup.py/smart
+      assert:
+        that:
+          - >-
+            'factsone' in ansible_facts
+          - >-
+            ansible_facts['factsone'] == "from facts_one module"
+          - >-
+            'os_family' in ansible_facts
