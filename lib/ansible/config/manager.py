@@ -6,6 +6,7 @@ from __future__ import annotations
 import atexit
 import decimal
 import configparser
+import importlib.resources
 import os
 import os.path
 import sys
@@ -316,7 +317,7 @@ class ConfigManager(object):
 
         self._config_file = conf_file
 
-        self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
+        self._base_defs = self._read_config_yaml_file(defs_file or 'base.yml', from_package=defs_file is None)
         _add_base_defs_deprecations(self._base_defs)
 
         if self._config_file is None:
@@ -378,15 +379,24 @@ class ConfigManager(object):
                 pass  # not templatable
         return value
 
-    def _read_config_yaml_file(self, yml_file):
-        # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
-        # Currently this is only used with absolute paths to the `ansible/config` directory
-        yml_file = to_bytes(yml_file)
-        if os.path.exists(yml_file):
-            with open(yml_file, 'rb') as config_def:
-                return yaml_load(config_def) or {}
-        raise AnsibleError(
-            "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
+    def _read_config_yaml_file(self, yml_file, from_package=False):
+        if from_package:
+            try:
+                config_def = importlib.resources.read_text(__package__, yml_file)
+            except FileNotFoundError:
+                raise AnsibleError(
+                    "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
+
+            return yaml_load(config_def) or {}
+        else:
+            # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
+            # Currently this is only used with absolute paths to the `ansible/config` directory
+            yml_file = to_bytes(yml_file)
+            if os.path.exists(yml_file):
+                with open(yml_file, 'rb') as config_def:
+                    return yaml_load(config_def) or {}
+            raise AnsibleError(
+                "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
 
     def _parse_config_file(self, cfile=None):
         """ return flat configuration settings from file(s) """

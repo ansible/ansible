@@ -130,6 +130,17 @@ class TestConfigManager:
 
         assert "Missing base YAML definition file (bad install?)" in str(exec_info.value)
 
+    def test_read_config_yaml_file_from_package(self):
+        actual_value = self.manager._read_config_yaml_file('base.yml', from_package=True)
+        assert isinstance(actual_value, dict)
+        assert len(actual_value) == 205
+
+    def test_read_config_yaml_file_from_package_negative(self):
+        with pytest.raises(AnsibleError) as exec_info:
+            self.manager._read_config_yaml_file('test_non_existent.yml', from_package=True)
+
+        assert "Missing base YAML definition file (bad install?)" in str(exec_info.value)
+
     def test_entry_as_vault_var(self):
         class MockVault:
 
