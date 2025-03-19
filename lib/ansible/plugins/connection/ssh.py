@@ -288,6 +288,7 @@ DOCUMENTATION = """
             - name: ANSIBLE_PRIVATE_KEY
           vars:
             - name: ansible_private_key
+            - name: ansible_ssh_private_key
           version_added: '2.19'
       private_key_passphrase:
           description:
@@ -298,6 +299,7 @@ DOCUMENTATION = """
             - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
           vars:
             - name: ansible_private_key_passphrase
+            - name: ansible_ssh_private_key_passphrase
           version_added: '2.19'
       control_path:
         description:

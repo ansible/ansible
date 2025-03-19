@@ -33,6 +33,6 @@
     ansible_password: ~
     ansible_ssh_password: ~
     ansible_ssh_private_key_file: ~
-    ansible_private_key: '{{ sshkey.private_key }}'
-    ansible_private_key_passphrase: passphrase
+    ansible_ssh_private_key: '{{ sshkey.private_key }}'
+    ansible_ssh_private_key_passphrase: passphrase
     fingerprint: '{{ sshkey.fingerprint }}'
