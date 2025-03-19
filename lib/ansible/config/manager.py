@@ -382,7 +382,7 @@ class ConfigManager(object):
     def _read_config_yaml_file(self, yml_file, from_package=False):
         if from_package:
             try:
-                config_def = importlib.resources.read_text(__package__, yml_file)
+                config_def = importlib.resources.files(__package__).joinpath(yml_file).read_text('utf-8')
             except FileNotFoundError:
                 raise AnsibleError(
                     "Missing base YAML definition file (bad install?): %s" % to_native(yml_file))
