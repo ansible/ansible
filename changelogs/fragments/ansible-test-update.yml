@@ -4,3 +4,4 @@ minor_changes:
   - ansible-test - Disable the ``deprecated-`` prefixed ``pylint`` rules as their results vary by Python version.
   - ansible-test - Update the ``base`` and ``default`` containers.
   - ansible-test - Update sanity test requirements to latest available versions.
+  - ansible-test - Disable the ``pep8`` sanity test rules ``E701`` and ``E704`` to improve compatibility with ``black``.
