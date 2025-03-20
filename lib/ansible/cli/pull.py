@@ -31,6 +31,34 @@ from ansible.utils.display import Display
 
 display = Display()
 
+SAFE_OUTPUT_ENV = {
+    'ANSIBLE_CALLBACK_RESULT_FORMAT': 'json',
+    'ANSIBLE_LOAD_CALLBACK_PLUGINS': '0',
+}
+
+
+def safe_output_env(f):
+
+    def wrapper(*args, **kwargs):
+
+        orig = {}
+
+        for k, v in SAFE_OUTPUT_ENV.items():
+            orig[k] = os.environ.get(k, None)
+            os.environ[k] = v
+
+        result = f(*args, **kwargs)
+
+        for key in orig.keys():
+            if orig[key] is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = orig[key]
+
+        return result
+
+    return wrapper
+
 
 class PullCLI(CLI):
     """ Used to pull a remote copy of ansible on each managed node,
@@ -250,14 +278,14 @@ class PullCLI(CLI):
         # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
         display.vvvv('EXEC: %s' % cmd)
-        rc, b_out, b_err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = safe_output_env(run_cmd)(cmd, live=True)
 
         if rc != 0:
             if context.CLIARGS['force']:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif context.CLIARGS['ifchanged'] and b'"changed": true' not in b_out:
+        elif context.CLIARGS['ifchanged'] and (b'"changed": true' not in b_out or b"changed: True" not in b_out):
             display.display("Repository has not changed, quitting.")
             return 0
 
