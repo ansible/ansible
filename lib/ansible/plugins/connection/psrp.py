@@ -308,6 +308,7 @@ import base64
 import json
 import logging
 import os
+import shlex
 import typing as t
 
 from ansible import constants as C
@@ -432,8 +433,10 @@ class Connection(ConnectionBase):
                                              sudoable=sudoable)
 
         pwsh_in_data: bytes | str | None = None
+        script_args: list[str] | None = None
 
-        if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
+        common_args_prefix = " ".join(_common_args)
+        if cmd.startswith(f"{common_args_prefix} -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
             # decode the script and execute it in the runspace instead of
             # starting a new interpreter to save on time
@@ -458,6 +461,17 @@ class Connection(ConnectionBase):
                 display.vvv("PSRP: EXEC (via pipeline wrapper)")
             else:
                 display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
+
+        elif cmd.startswith(f"{common_args_prefix} -File "):  # trailing space is on purpose
+            # Used when executing a script file, we will execute it in the runspace process
+            # instead on a new subprocess
+            script = 'param([string]$Path, [Parameter(ValueFromRemainingArguments)][string[]]$ScriptArgs) & $Path @ScriptArgs'
+
+            # Using shlex isn't perfect but it's good enough.
+            cmd = cmd[len(common_args_prefix) + 7:]
+            script_args = shlex.split(cmd)
+            display.vvv(f"PSRP: EXEC {cmd}")
+
         else:
             # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
             # rc is propagated back to the connection plugin.
@@ -465,7 +479,11 @@ class Connection(ConnectionBase):
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data.splitlines() if pwsh_in_data else None)
+        rc, stdout, stderr = self._exec_psrp_script(
+            script=script,
+            input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
+            arguments=script_args,
+        )
         return rc, stdout, stderr
 
     def put_file(self, in_path: str, out_path: str) -> None:

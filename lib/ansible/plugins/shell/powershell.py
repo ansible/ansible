@@ -303,11 +303,28 @@ class ShellModule(ShellBase):
         cmd_parts = shlex.split(cmd, posix=False)
         cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
-            if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
-                # we're running a module via the bootstrap wrapper
-                cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
-            return wrapper_cmd
+            if arg_path:
+                # Running a module without the exec_wrapper and with an argument
+                # file.
+                script_path = self._unquote(cmd_parts[0])
+                if not script_path.lower().endswith('.ps1'):
+                    script_path += '.ps1'
+
+                cmd_parts.insert(0, '-File')
+                cmd_parts[1] = f'"{script_path}"'
+                if arg_path:
+                    cmd_parts.append(f'"{arg_path}"')
+
+                wrapper_cmd = " ".join(_common_args + cmd_parts)
+                return wrapper_cmd
+
+            else:
+                # Running a module with ANSIBLE_KEEP_REMOTE_FILES=true, the script
+                # arg is actually the input manifest JSON to provide to the bootstrap
+                # wrapper.
+                wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
+                return wrapper_cmd
+
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:
