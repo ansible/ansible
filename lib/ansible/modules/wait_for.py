@@ -187,17 +187,19 @@ EXAMPLES = r"""
     host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
     delay: 10
-  connection: local
+    timeout: 300
+  delegate_to: localhost
 
-# Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
+# Same as above but using config lookup for the target,
+# most plugins use 'remote_addr', but ssh uses 'host'
 - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
   ansible.builtin.wait_for:
     port: 22
-    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    host: "{{ lookup('config', 'host', plugin_name='ssh', plugin_type='connection') }}"
     search_regex: OpenSSH
     delay: 10
-  vars:
-    ansible_connection: local
+    timeout: 300
+  delegate_to: localhost
 """
 
 RETURN = r"""
