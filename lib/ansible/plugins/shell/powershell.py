@@ -18,10 +18,10 @@ import base64
 import os
 import re
 import shlex
-import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
+from ansible.executor.powershell.module_manifest import _get_powershell_script
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
@@ -292,7 +292,7 @@ class ShellModule(ShellBase):
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
+        bootstrap_wrapper = _get_powershell_script("bootstrap_wrapper.ps1")
 
         # pipelining bypass
         if cmd == '':

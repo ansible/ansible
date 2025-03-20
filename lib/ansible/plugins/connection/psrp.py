@@ -313,6 +313,7 @@ import typing as t
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
+from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
@@ -464,7 +465,7 @@ class Connection(ConnectionBase):
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data)
+        rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data.splitlines() if pwsh_in_data else None)
         return rc, stdout, stderr
 
     def put_file(self, in_path: str, out_path: str) -> None:
@@ -473,101 +474,9 @@ class Connection(ConnectionBase):
         out_path = self._shell._unquote(out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
 
-        copy_script = """begin {
-    $ErrorActionPreference = "Stop"
-    $WarningPreference = "Continue"
-    $path = $MyInvocation.UnboundArguments[0]
-    $fd = [System.IO.File]::Create($path)
-    $algo = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
-    $bytes = @()
-
-    $bindingFlags = [System.Reflection.BindingFlags]'NonPublic, Instance'
-    Function Get-Property {
-        <#
-        .SYNOPSIS
-        Gets the private/internal property specified of the object passed in.
-        #>
-        Param (
-            [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-            [System.Object]
-            $Object,
-
-            [Parameter(Mandatory=$true, Position=1)]
-            [System.String]
-            $Name
-        )
-
-        $Object.GetType().GetProperty($Name, $bindingFlags).GetValue($Object, $null)
-    }
-
-    Function Set-Property {
-        <#
-        .SYNOPSIS
-        Sets the private/internal property specified on the object passed in.
-        #>
-        Param (
-            [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-            [System.Object]
-            $Object,
-
-            [Parameter(Mandatory=$true, Position=1)]
-            [System.String]
-            $Name,
-
-            [Parameter(Mandatory=$true, Position=2)]
-            [AllowNull()]
-            [System.Object]
-            $Value
-        )
-
-        $Object.GetType().GetProperty($Name, $bindingFlags).SetValue($Object, $Value, $null)
-    }
-
-    Function Get-Field {
-        <#
-        .SYNOPSIS
-        Gets the private/internal field specified of the object passed in.
-        #>
-        Param (
-            [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-            [System.Object]
-            $Object,
-
-            [Parameter(Mandatory=$true, Position=1)]
-            [System.String]
-            $Name
-        )
-
-        $Object.GetType().GetField($Name, $bindingFlags).GetValue($Object)
-    }
-
-    # MaximumAllowedMemory is required to be set to so we can send input data that exceeds the limit on a PS
-    # Runspace. We use reflection to access/set this property as it is not accessible publicly. This is not ideal
-    # but works on all PowerShell versions I've tested with. We originally used WinRS to send the raw bytes to the
-    # host but this falls flat if someone is using a custom PS configuration name so this is a workaround. This
-    # isn't required for smaller files so if it fails we ignore the error and hope it wasn't needed.
-    # https://github.com/PowerShell/PowerShell/blob/c8e72d1e664b1ee04a14f226adf655cced24e5f0/src/System.Management.Automation/engine/serialization.cs#L325
-    try {
-        $Host | Get-Property 'ExternalHost' | `
-            Get-Field '_transportManager' | `
-            Get-Property 'Fragmentor' | `
-            Get-Property 'DeserializationContext' | `
-            Set-Property 'MaximumAllowedMemory' $null
-    } catch {}
-}
-process {
-    $bytes = [System.Convert]::FromBase64String($input)
-    $algo.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) > $null
-    $fd.Write($bytes, 0, $bytes.Length)
-}
-end {
-    $fd.Close()
-
-    $algo.TransformFinalBlock($bytes, 0, 0) > $null
-    $hash = [System.BitConverter]::ToString($algo.Hash).Replace('-', '').ToLowerInvariant()
-    Write-Output -InputObject "{`"sha1`":`"$hash`"}"
-}
-"""
+        script, in_data = _bootstrap_powershell_script('psrp_put_file.ps1', {
+            'Path': out_path,
+        }, has_input=True)
 
         # Get the buffer size of each fragment to send, subtract 82 for the fragment, message, and other header info
         # fields that PSRP adds. Adjust to size of the base64 encoded bytes length.
@@ -580,6 +489,8 @@ end {
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
         def read_gen():
+            yield from list(in_data.decode().splitlines())
+
             offset = 0
 
             with open(b_in_path, 'rb') as src_fd:
@@ -598,7 +509,7 @@ end {
                 if offset == 0:  # empty file
                     yield [""]
 
-        rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path])
+        rc, stdout, stderr = self._exec_psrp_script(script, read_gen())
 
         if rc != 0:
             raise AnsibleError(to_native(stderr))
@@ -622,6 +533,7 @@ end {
 
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
+        b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
 
         # because we are dealing with base64 data we need to get the max size
         # of the bytes that the base64 size would equal
@@ -629,74 +541,39 @@ end {
                            (self.runspace.connection.max_payload_size / 4 * 3))
         buffer_size = max_b64_size - (max_b64_size % 1024)
 
-        # setup the file stream with read only mode
-        setup_script = """param([string]$Path)
-$ErrorActionPreference = "Stop"
+        script, in_data = _bootstrap_powershell_script('psrp_fetch_file.ps1', {
+            'Path': in_path,
+            'BufferSize': buffer_size,
+        })
 
-if (Test-Path -LiteralPath $path -PathType Leaf) {
-    $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
-        $path,
-        [System.IO.FileMode]::Open,
-        [System.IO.FileAccess]::Read,
-        [System.IO.FileShare]::Read
-    )
-} elseif (Test-Path -Path $path -PathType Container) {
-    Write-Output -InputObject "[DIR]"
-} else {
-    Write-Error -Message "$path does not exist"
-    $host.SetShouldExit(1)
-}"""
+        ps = PowerShell(self.runspace)
+        ps.add_script(script)
+        ps.begin_invoke(in_data.decode().splitlines())
 
-        # read the file stream at the offset and return the b64 string
-        read_script = """param([int64]$Offset, [int]$BufferSize)
-$ErrorActionPreference = "Stop"
-$fs.Seek($Offset, [System.IO.SeekOrigin]::Begin) > $null
-$buffer = New-Object -TypeName byte[] -ArgumentList $BufferSize
-$read = $fs.Read($buffer, 0, $buffer.Length)
+        # Call poll once to get the first output telling us if it's a file/dir/failure
+        ps.poll_invoke()
 
-if ($read -gt 0) {
-    [System.Convert]::ToBase64String($buffer, 0, $read)
-}"""
+        if ps.output:
+            if ps.output[0] == '[DIR]':
+                # to be consistent with other connection plugins, we assume the caller has created the target dir
+                return
 
-        # need to run the setup script outside of the local scope so the
-        # file stream stays active between fetch operations
-        rc, stdout, stderr = self._exec_psrp_script(
-            setup_script,
-            use_local_scope=False,
-            arguments=[in_path],
-        )
+            ps.output.pop(0)
+            with open(b_out_path, 'wb') as out_file:
+                while True:
+                    while ps.output:
+                        data = base64.b64decode(ps.output.pop(0))
+                        out_file.write(data)
+
+                    if ps.state == PSInvocationState.RUNNING:
+                        ps.poll_invoke()
+                    else:
+                        break
+
+        ps.end_invoke()
+        rc, stdout, stderr = self._parse_pipeline_result(ps)
         if rc != 0:
-            raise AnsibleError("failed to setup file stream for fetch '%s': %s"
-                               % (out_path, to_native(stderr)))
-        elif stdout.strip() == '[DIR]':
-            # to be consistent with other connection plugins, we assume the caller has created the target dir
-            return
-
-        b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
-        # to be consistent with other connection plugins, we assume the caller has created the target dir
-        offset = 0
-        with open(b_out_path, 'wb') as out_file:
-            while True:
-                display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
-                              (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = self._exec_psrp_script(
-                    read_script,
-                    arguments=[offset, buffer_size],
-                )
-                if rc != 0:
-                    raise AnsibleError("failed to transfer file to '%s': %s"
-                                       % (out_path, to_native(stderr)))
-
-                data = base64.b64decode(stdout.strip())
-                out_file.write(data)
-                if len(data) < buffer_size:
-                    break
-                offset += len(data)
-
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()")
-            if rc != 0:
-                display.warning("failed to close remote file stream of file "
-                                "'%s': %s" % (in_path, to_native(stderr)))
+            raise AnsibleError(f"failed to transfer file to '{out_path}': {to_text(stderr)}")
 
     def close(self) -> None:
         if self.runspace and self.runspace.state == RunspacePoolState.OPENED:
@@ -851,7 +728,7 @@ if ($read -gt 0) {
 
         if len(self.host.ui.stderr) > 0:
             stderr_list += self.host.ui.stderr
-        stderr = u"\r\n".join([to_text(o) for o in stderr_list])
+        stderr = "".join([to_text(o) for o in stderr_list])
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
         display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)

@@ -1068,8 +1068,8 @@ def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
         )
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout,
+                       become_plugin, environment, remote_is_local=False):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -1096,7 +1096,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif REPLACER_WINDOWS in b_module_data:
         module_style = 'new'
         module_substyle = 'powershell'
-        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
+        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#AnsibleRequires -PowerShell Ansible.ModuleUtils.Legacy')
     elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
             or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
             or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
@@ -1287,9 +1287,15 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # create the common exec wrapper payload and set that as the module_data
         # bytes
         b_module_data = ps_manifest._create_powershell_wrapper(
-            b_module_data, module_path, module_args, environment,
-            async_timeout, become, become_method, become_user, become_password,
-            become_flags, module_substyle, task_vars, remote_module_fqn
+            name=remote_module_fqn,
+            module_data=b_module_data,
+            module_path=module_path,
+            module_args=module_args,
+            environment=environment,
+            async_timeout=async_timeout,
+            become_plugin=become_plugin,
+            substyle=module_substyle,
+            task_vars=task_vars,
         )
 
     elif module_substyle == 'jsonargs':
@@ -1337,8 +1343,8 @@ def _extract_interpreter(b_module_data):
     return interpreter, args
 
 
-def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
+def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0,
+                  become_plugin=None, environment=None, remote_is_local=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1367,10 +1373,19 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         # read in the module source
         b_module_data = f.read()
 
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
-                                                                async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment, remote_is_local=remote_is_local)
+    (b_module_data, module_style, shebang) = _find_module_utils(
+        module_name,
+        b_module_data,
+        module_path,
+        module_args,
+        task_vars,
+        templar,
+        module_compression,
+        async_timeout=async_timeout,
+        become_plugin=become_plugin,
+        environment=environment,
+        remote_is_local=remote_is_local,
+    )
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
