@@ -1,2 +1,3 @@
 pylint
+pytest  # needed for ansible_pytest_unit_test_module_mocks.py
 pyyaml  # needed for collection_detail.py

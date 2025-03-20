@@ -113,8 +113,8 @@ def function_times_out():
 # This is just about the same test as function_times_out but uses a separate process which is where
 # we normally have our timeouts.  It's more of an integration test than a unit test.
 @timeout.timeout(1)
-def function_times_out_in_run_command(am):
-    am.run_command([sys.executable, '-c', 'import time ; time.sleep(2)'])
+def function_times_out_in_run_command(ansible_module):
+    ansible_module.run_command([sys.executable, '-c', 'import time ; time.sleep(2)'])
 
 
 @timeout.timeout(1)
@@ -140,10 +140,10 @@ def test_timeout_raises_timeout():
         function_times_out()
 
 
-@pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
-def test_timeout_raises_timeout_integration_test(am):
+@pytest.mark.parametrize('ansible_module_args', ({},), indirect=['ansible_module_args'])
+def test_timeout_raises_timeout_integration_test(ansible_module):
     with pytest.raises(timeout.TimeoutError, match=r"^Timer expired after"):
-        function_times_out_in_run_command(am)
+        function_times_out_in_run_command(ansible_module)
 
 
 def test_timeout_raises_other_exception():
