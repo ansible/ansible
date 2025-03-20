@@ -159,7 +159,7 @@ def _launch_ssh_agent() -> None:
 
             if p.poll() is not None:
                 raise AnsibleError(
-                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr}"'
+                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr.decode()}"'
                 )
             if (stdout := p.stdout.read(13)) != b'SSH_AUTH_SOCK':
                 display.warning(

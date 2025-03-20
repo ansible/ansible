@@ -649,7 +649,7 @@ class SshAgentClient:
         return msg in self.list().keys
 
 
-def load_private_key(key_data: bytes, passphrase: bytes) -> CryptoPrivateKey:
+def load_private_key(key_data: bytes, passphrase: bytes | None) -> CryptoPrivateKey:
     try:
         private_key: CryptoPrivateKey = ssh.load_ssh_private_key(
             key_data,

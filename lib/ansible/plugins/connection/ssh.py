@@ -766,7 +766,7 @@ class Connection(ConnectionBase):
                 display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
                 client.add(
                     private_key,
-                    '[added by ansible]',
+                    f'[added by ansible: PID={os.getpid()}, UID={os.getuid()}, EUID={os.geteuid()}, TIME={time.time()}]',
                     C.config.get_config_value('SSH_AGENT_KEY_LIFETIME'),
                 )
             else:
