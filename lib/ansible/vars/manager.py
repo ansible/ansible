@@ -49,7 +49,7 @@ if t.TYPE_CHECKING:
 
 display = Display()
 
-_DEPRECATE_TOP_LEVEL_FACT_MSG = sys.intern('Top-level facts are deprecated, use `ansible_facts` instead.')
+_DEPRECATE_TOP_LEVEL_FACT_MSG = sys.intern('Top-level facts availability by default is deprecated. INJECT_FACTS_AS_VARS will change to default to off, we recommend the use `ansible_facts` instead.')
 _DEPRECATE_TOP_LEVEL_FACT_REMOVAL_VERSION = sys.intern('2.22')
 
 
@@ -299,9 +299,13 @@ class VariableManager:
                 all_vars |= namespace_facts(facts)
 
                 # push facts to main namespace
-                if C.INJECT_FACTS_AS_VARS:
-                    deprecated_facts_vars = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(facts).items()}
-                    all_vars = _combine_and_track(all_vars, deprecated_facts_vars, "facts")
+                inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
+                if inject:
+                    if origin == 'default':
+                        facts_vars = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(facts).items()}
+                    else:
+                        facts_vars = {k: v for k, v in clean_facts(facts).items()}
+                    all_vars = _combine_and_track(all_vars, facts_vars, "facts")
                 else:
                     # always 'promote' ansible_local
                     all_vars = _combine_and_track(all_vars, {'ansible_local': facts.get('ansible_local', {})}, "facts")

@@ -691,8 +691,13 @@ class TaskExecutor:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     af = result['ansible_facts']
                     vars_copy['ansible_facts'] = combine_vars(vars_copy.get('ansible_facts', {}), namespace_facts(af))
-                    if C.INJECT_FACTS_AS_VARS:
-                        cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+
+                    inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
+                    if inject:
+                        if origin == 'default':
+                            cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                        else:
+                            cleaned_toplevel = {k: v for k, v in clean_facts(af).items()}
                         vars_copy.update(cleaned_toplevel)
 
             # set the failed property if it was missing.
@@ -785,7 +790,13 @@ class TaskExecutor:
                 variables['ansible_facts'] = combine_vars(variables.get('ansible_facts', {}), namespace_facts(af))
                 if C.INJECT_FACTS_AS_VARS:
                     # DTFIX-FUTURE: why is this happening twice, esp since we're post-fork and these will be discarded?
-                    cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                    # This is done x2, once inside loops for intermediate access in the in loop, the other is final result
+                    inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
+                    if inject:
+                        if origin == 'default':
+                            cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                        else:
+                            cleaned_toplevel = {k: v for k, v in clean_facts(af).items()}
                     variables.update(cleaned_toplevel)
 
         # save the notification target in the result, if it was specified, as
