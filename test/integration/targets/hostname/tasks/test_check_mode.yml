@@ -14,7 +14,7 @@
       - hn1 is changed
       - original.stdout == after_hn.stdout
 
-- when: _hostname_file is defined and _hostname_file
+- when: _hostname_file is defined and _hostname_file is not none
   block:
     - name: See if current hostname file exists
       stat:

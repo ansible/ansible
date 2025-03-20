@@ -67,7 +67,7 @@
 
     - name: run ping with loop to exceed quota
       win_ping:
-      loop: '{{ range(0, 4) }}'
+      loop: '{{ range(0, 4) | list }}'
 
     always:
     - name: reset WinRM quota value

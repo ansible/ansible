@@ -17,8 +17,7 @@
 
 - block:
   - name: EXPECTED FAILURE - test invalid var
-    debug:
-      var: '{{ lookup("vars", "doesnotexist") }}'
+    raw: '{{ lookup("vars", "doesnotexist") }}'
 
   - fail:
       msg: "should not get here"

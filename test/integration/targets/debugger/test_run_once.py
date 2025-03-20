@@ -27,7 +27,7 @@ with io.BytesIO() as logfile:
     debugger_test_test.logfile = logfile
 
     debugger_test_test.expect_exact('TASK: Task 1 (debug)> ')
-    debugger_test_test.send('task.args["that"] = "true"\r')
+    debugger_test_test.send('task.args["that"] = []\r')
     debugger_test_test.expect_exact('TASK: Task 1 (debug)> ')
     debugger_test_test.send('r\r')
     debugger_test_test.expect(pexpect.EOF)

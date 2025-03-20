@@ -619,7 +619,7 @@
 - name: assert that keys were sanitized
   assert:
     that:
-      - sanitize_keys.json.args['key-********'] == 'value-********'
+    - sanitize_keys.json.args['key-********'] == 'value-********'
 
 - name: Test gzip encoding
   uri:

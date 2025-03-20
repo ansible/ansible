@@ -10,4 +10,4 @@
       assert:
         that:
           - bad_sub is failed
-          - "'MODULE FAILURE' not in bad_sub['msg']"
+          - bad_sub.msg is match "Bad subset 'nonsense' given to Ansible"

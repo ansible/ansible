@@ -78,3 +78,9 @@
       - invalid_conditional is failed
       - invalid_conditional.stdout is defined
       - invalid_conditional.failed_when_result is contains('boomboomboom')
+
+- name: add_host failed_when (coverage exercise for strategy)
+  add_host:
+    name: some_host
+    groups: blah
+  failed_when: false

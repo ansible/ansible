@@ -3,7 +3,7 @@
 
 - name: Verify endpoints exist
   assert:
-    that: clusters
+    that: clusters is defined
 
 - name: Verify endpoints respond
   uri:
