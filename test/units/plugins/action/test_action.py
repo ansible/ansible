@@ -125,6 +125,7 @@ class TestActionBase(unittest.TestCase):
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
+        mock_connection.become = None
 
         # create a mock shared loader object
         def mock_find_plugin_with_context(name, options, collection_list=None):

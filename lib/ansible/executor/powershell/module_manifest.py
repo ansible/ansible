@@ -416,7 +416,7 @@ def _create_powershell_wrapper(
 
         if become_plugin:
             if not isinstance(become_plugin, RunasBecomeModule):
-                raise AnsibleError(f"Become plugin {become_plugin.name} is not supported by the Windows exec wrapper.")
+                raise AnsibleError(f"Become plugin {become_plugin.name} is not supported by the Windows exec wrapper. Make sure to set the become method to runas.")
 
             become_script, become_params, become_secure_params = become_plugin._build_powershell_wrapper_action()
 

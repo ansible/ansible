@@ -1,3 +1,6 @@
+bugfixes:
+  - psrp - Improve stderr parsing when running raw commands that emit error records or stderr lines.
+
 minor_changes:
   - windows - add hard minimum limit for PowerShell to 5.1. Ansible dropped support for older versions of PowerShell
     in the 2.16 release but this reqirement is now enforced at runtime.

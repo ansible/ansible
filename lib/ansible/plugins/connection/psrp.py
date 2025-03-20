@@ -714,6 +714,13 @@ class Connection(ConnectionBase):
         for error in pipeline.streams.error:
             # the error record is not as fully fleshed out like we usually get
             # in PS, we will manually create it here
+            # NativeCommandError and NativeCommandErrorMessage are special
+            # cases used for stderr from a subprocess, we will just print the
+            # error message
+            if error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
+                stderr_list.append(f"{error}\r\n")
+                continue
+
             command_name = "%s : " % error.command_name if error.command_name else ''
             position = "%s\r\n" % error.invocation_position_message if error.invocation_position_message else ''
             error_msg = "%s%s\r\n%s" \
@@ -724,7 +731,7 @@ class Connection(ConnectionBase):
             stacktrace = error.script_stacktrace
             if display.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
-            stderr_list.append(error_msg)
+            stderr_list.append(f"{error_msg}\r\n")
 
         if len(self.host.ui.stderr) > 0:
             stderr_list += self.host.ui.stderr
