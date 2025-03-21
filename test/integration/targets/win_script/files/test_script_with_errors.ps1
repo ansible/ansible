@@ -2,7 +2,7 @@
 
 trap {
     Write-Error -ErrorRecord $_
-    exit 2
+    exit 1
 }
 
 throw "Oh noes I has an error"

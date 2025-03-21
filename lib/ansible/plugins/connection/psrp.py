@@ -735,7 +735,16 @@ class Connection(ConnectionBase):
             # NativeCommandError and NativeCommandErrorMessage are special
             # cases used for stderr from a subprocess, we will just print the
             # error message
-            if error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
+            if error.fq_error == 'NativeCommandErrorMessage' and not error.target_name:
+                # This can be removed once Server 2016 is EOL and no longer
+                # supported. PS 5.1 on 2016 will emit only 2 error records
+                # for stderr, the first NativeCommandError is the first line,
+                # and the second is all the remaining stderr in a single
+                # record with the expected newlines. We know it's 2016 as the
+                # target_name is empty.
+                stderr_list.append(str(error))
+                continue
+            elif error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
                 stderr_list.append(f"{error}\r\n")
                 continue
 

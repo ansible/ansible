@@ -126,7 +126,7 @@
 - name: check that script ran but failed with errors
   assert:
     that:
-      - "test_script_with_errors_result.rc == 2"
+      - "test_script_with_errors_result.rc == 1"
       - "not test_script_with_errors_result.stdout"
       - test_script_with_errors_result.stderr is match("Oh noes I has an error\\r\\nAt ansible\\.builtin\\.script\\.test_script_with_errors\\.ps1.*")
       - "test_script_with_errors_result is failed"
