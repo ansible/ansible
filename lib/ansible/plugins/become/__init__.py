@@ -34,6 +34,8 @@ class BecomeBase(AnsiblePlugin):
     # plugin requires a tty, i.e su
     require_tty = False
 
+    has_pipelining = True
+
     # prompt to match
     prompt = ''
 

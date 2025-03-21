@@ -384,8 +384,7 @@ class ActionBase(ABC):
         always_pipeline = self._connection.always_pipeline_modules
 
         # su does not work with pipelining
-        # TODO: add has_pipelining class prop to become plugins
-        become_exception = (self._connection.become.name if self._connection.become else '') != 'su'
+        become_has_pipelining = self._connection.become.has_pipelining if self._connection.become else True
 
         # any of these require a true
         conditions = [
@@ -394,7 +393,7 @@ class ActionBase(ABC):
             module_style == "new",              # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
             not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
-            become_exception,
+            become_has_pipelining,              # some become plugins (su, machinectl) do not support pipelining
         ]
 
         return all(conditions)
