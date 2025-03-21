@@ -128,7 +128,7 @@
     that:
       - "test_script_with_errors_result.rc == 1"
       - "not test_script_with_errors_result.stdout"
-      - test_script_with_errors_result.stderr is match("Oh noes I has an error\\r\\nAt ansible\\.builtin\\.script\\.test_script_with_errors\\.ps1.*")
+      - test_script_with_errors_result.stderr is search("Oh noes I has an error\\r\\nAt ansible\.builtin\.script\.test_script_with_errors\.ps1")
       - "test_script_with_errors_result is failed"
       - "test_script_with_errors_result is changed"
 
@@ -321,4 +321,6 @@
     that:
     - script_stderr.rc == 0
     - script_stderr.stdout == ""
-    - script_stderr.stderr == "stderr 1\r\nstderr 2\r\n"
+    # SSH includes debug output in stderr, and WinRM on 2016 includes a trailing newline
+    # Use a simple search to ensure the expected stderr is present but ignoring any extra output
+    - script_stderr.stderr is search("stderr 1\r\nstderr 2\r\n"),

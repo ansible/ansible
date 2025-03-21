@@ -737,11 +737,12 @@ class Connection(ConnectionBase):
             # error message
             if error.fq_error == 'NativeCommandErrorMessage' and not error.target_name:
                 # This can be removed once Server 2016 is EOL and no longer
-                # supported. PS 5.1 on 2016 will emit only 2 error records
-                # for stderr, the first NativeCommandError is the first line,
-                # and the second is all the remaining stderr in a single
-                # record with the expected newlines. We know it's 2016 as the
-                # target_name is empty.
+                # supported. PS 5.1 on 2016 will emit 1 error record under
+                # NativeCommandError being the first line, subsequent records
+                # are the raw stderr up to 4096 chars. Each entry is the raw
+                # stderr value without any newlines appended so we just use the
+                # value as is. We know it's 2016 as the target_name is empty in
+                # this scenario.
                 stderr_list.append(str(error))
                 continue
             elif error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
