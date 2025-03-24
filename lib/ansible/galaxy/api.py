@@ -906,10 +906,9 @@ class GalaxyAPI:
                 break
             elif relative_link:
                 next_link_info = urlparse(next_link)
-                next_link = versions_url_info._replace(
-                    query=next_link_info.query,
-                    path=urljoin(versions_url_info.path, next_link_info.path)
-                ).geturl()
+                if not next_link_info.scheme and not next_link_info.path.startswith('/'):
+                    raise AnsibleError(f'Invalid non absolute pagination link: {next_link}')
+                next_link = urljoin(self.api_server, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
