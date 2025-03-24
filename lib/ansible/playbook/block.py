@@ -177,7 +177,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
-                new_task = task.copy(exclude_parent=True)
+                new_task = task.copy(exclude_parent=True, exclude_tasks=exclude_tasks)
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
                     if task._parent == new_block:
