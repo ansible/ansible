@@ -216,6 +216,13 @@ class AnsibleError(Exception):
 class AnsiblePromptInterrupt(AnsibleError):
     """User interrupt"""
 
+    def __init__(self, message="User interrupt", *args, **kwargs):
+        super().__init__(message, *args, **kwargs) 
+        self.interrupt = True # for flow control
+
+    def Log_interrupt(self):
+        return f"User interrupt: {self.message}"
+
 
 class AnsiblePromptNoninteractive(AnsibleError):
     """Unable to get user input"""
