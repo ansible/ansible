@@ -10,6 +10,10 @@ $module = [AnsibleModule]::Create($args, @{ options = @{} })
 
 $module.Result.module_using_namespace = [Parser].FullName
 
+# Verifies the module is run in its own script scope
+$var = 'test'
+$module.Result.script_var = $script:var
+
 $missingUsingNamespace = $false
 try {
     # exec_wrapper does 'using namespace System.IO'. This ensures that this

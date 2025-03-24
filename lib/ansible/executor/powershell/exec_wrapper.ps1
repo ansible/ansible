@@ -168,16 +168,19 @@ begin {
         $scriptContents = [Encoding]::UTF8.GetString($scriptBytes)
 
         if ($Pipeline) {
-            # The marker is a way to easily identify whether a failed statement was
-            # inside the script being run through this statement or not.
+            # We invoke it through a command with useLocalScope $false to
+            # ensure the code runs with it's own $script: scope. It also
+            # cleans up the StackTrace on errors by not showing the stub
+            # execution line and starts immediately at the module "cmd".
             $null = $Pipeline.AddScript(@'
-<# Ansible-ExecWrapper-Marker #> & ([System.Management.Automation.Language.Parser]::ParseInput(
+${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::ParseInput(
     $args[0],
     $args[1],
     [ref]$null,
-    [ref]$null).GetScriptBlock())
+    [ref]$null).GetScriptBlock()
 '@)
             $null = $Pipeline.AddArgument($scriptContents).AddArgument($Name).AddStatement()
+            $null = $Pipeline.AddCommand('<AnsibleModule>', $false).AddStatement()
             return
         }
 

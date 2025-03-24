@@ -61,48 +61,6 @@ Function Write-AnsibleErrorDetail {
         $ErrorRecord = $ErrorRecord.Exception.InnerException.ErrorRecord
     }
 
-    # The way we invoke the module code means the invocation info in the error
-    # points to the invocation stub which is useless for debugging. Try to
-    # rebuild it with the exact location of the error.
-    $invocationInfo = $ErrorRecord.InvocationInfo
-    if ($invocationInfo.Line.StartsWith('<# Ansible-ExecWrapper-Marker #>')) {
-        $errorExtent = $invocationInfo.MyCommand.ScriptBlock.Ast.Extent
-        $rawInfo = $ErrorRecord.ScriptStackTrace -split '\r?\n' | Select-Object -First 1
-
-        $stackPattern = '^at .*: line (\d+)$'
-        if ($rawInfo -match $stackPattern) {
-            $line = [int]$Matches[1]
-
-            $errorLine = ($errorExtent.Text -split '\r?\n')[$line - $errorExtent.StartLineNumber]
-            $errorLineTrimmed = $errorLine.Trim()
-
-            # This will always be the entire line and won't be able to detect
-            # if the error happened in a subexpression as the columns isn't
-            # exposed in the error record.
-            $startColumn = $errorLine.IndexOf($errorLineTrimmed)
-            $endColumn = $startColumn + $errorLineTrimmed.Length
-            $startPosition = [ScriptPosition]::new(
-                $errorExtent.File,
-                $line,
-                $startColumn + 1,
-                $errorLine,
-                $errorExtent.Text)
-            $endPosition = [ScriptPosition]::new(
-                $errorExtent.File,
-                $line,
-                $endColumn + 1,
-                $errorLine,
-                $errorExtent.Text)
-            $newErrorExtent = [ScriptExtent]::new(
-                $startPosition,
-                $endPosition)
-
-            $invocationInfo = [InvocationInfo]::Create(
-                $null,
-                $newErrorExtent)
-        }
-    }
-
     $exception = @(
         "$ErrorRecord"
 
