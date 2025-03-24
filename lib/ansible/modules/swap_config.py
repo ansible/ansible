@@ -16,7 +16,8 @@ description: |
     The module can handle both swap files and LVM swap logical volumes.
     Additionally, this module can optionally update the '/etc/fstab' file when adding or removing swap.
 version_added: "2.19"
-author: "Nidhi Sinha"
+author:
+    - Nidhi Sinha (@Nid04)
 options:
     state:
         description:
