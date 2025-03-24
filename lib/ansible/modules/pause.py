@@ -117,3 +117,55 @@ echo:
   type: bool
   sample: true
 """
+
+import time
+from ansible.module_utils.basic import AnsibleModule
+
+def pause_execution(minutes=None, seconds=None, prompt=None, echo=True):
+    """ Handles the pause logic here """
+    
+    if minutes is not None and seconds is not None:
+        total_seconds = (minutes or 0) * 60 + (seconds or 0)
+        time.sleep(total_seconds) # sleep for total_seconds
+        return total_seconds
+    elif prompt: # prompt for user input
+        try:
+            if echo:
+                input(prompt)
+            else:
+                import getpass
+                getpass.getpass(prompt)
+        except KeyboardInterrupt:
+            print("\nUser interrupted pause")
+    else:
+        print("Pausing")
+        try:
+            while True:
+                time.sleep(1) # sleep for 1 second
+        except KeyboardInterrupt:
+            print("\nUser interrupted pause")
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            minutes=dict(type='int'),
+            seconds=dict(type='int'),
+            prompt=dict(type='str'),
+            echo=dict(type='bool', default=True)
+        ),
+        supports_check_mode=True
+    )
+
+    start = time.time() # start time
+    minutes = module.params['minutes'] # get minutes
+    seconds = module.params['seconds'] # get seconds
+    prompt = module.params['prompt'] # get prompt
+    echo = module.params['echo'] # get echo
+
+    try:
+        pause_execution(minutes, seconds, prompt, echo)
+    except KeyboardInterrupt:
+        module.fail_json(msg="User interrupted pause")
+
+if __name__ == '__main__':
+    main()
