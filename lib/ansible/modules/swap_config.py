@@ -15,9 +15,8 @@ description: |
     It supports operations such as creating, resizing, enabling, disabling, and removing swap files or logical volumes (LVM).
     The module can handle both swap files and LVM swap logical volumes.
     Additionally, this module can optionally update the '/etc/fstab' file when adding or removing swap.
-version_added: "1.0"
-author:
-- Nidhi Sinha
+version_added: "2.19"
+author: "Nidhi Sinha"
 options:
     state:
         description:
@@ -32,8 +31,8 @@ options:
     is_swapfile:
         description:
             - Defines whether the swap is a file or logical volume.
-            - True: Treat it as a swap file.
-            - False: Treat it as a logical volume (LVM).
+            - If True, Treat it as a swap file.
+            - If False, Treat it as a logical volume (LVM).
         required: false
         type: bool
         default: no
@@ -59,6 +58,7 @@ options:
     edit_fstab:
         description:
             - If 'True', the module will automatically update the '/etc/fstab' file to add or remove the swap entry.
+            - Else, nothing to do.
         required: false
         type: bool
         default: no
@@ -322,7 +322,7 @@ def resize_swap(module, is_swapfile, vg_name, swap_name, swap_size):
         else:
             full_path = f"/dev/{vg_name}/{swap_name}"
             if not os.path.exists(full_path):
-                module.fail_json(changed=False, msg=f"Swap logical volume does not exists.")
+                module.fail_json(changed=False, msg="Swap logical volume does not exists.")
             module.run_command(f"lvresize {full_path} -L +{swap_size}")
             module.run_command(f"mkswap {full_path}")
         return module.exit_json(changed=True, msg=f"{swap_name} has been resized by {swap_size}.")
@@ -374,4 +374,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-#End of file
