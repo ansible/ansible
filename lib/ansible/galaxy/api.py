@@ -824,10 +824,7 @@ class GalaxyAPI:
             # the final URL, we can't reliably build a relative URL.
             raise AnsibleError(f'Invalid non absolute download_url: {data["download_url"]}')
 
-        if download_url_info.scheme:
-            download_url = data['download_url']
-        else:
-            download_url = urljoin(self.api_server, data['download_url'])
+        download_url = urljoin(self.api_server, data['download_url'])
 
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          download_url, data['artifact']['sha256'],
