@@ -67,7 +67,7 @@ Function Write-AnsibleErrorDetail {
         # stderr from sub processes have this error id, we don't want to format those errors
         # like a normal powershell error record.
         if ($ErrorRecord.FullyQualifiedErrorId -notin @('NativeCommandError', 'NativeCommandErrorMessage')) {
-            "$($invocationInfo.PositionMessage)"
+            "$($ErrorRecord.InvocationInfo.PositionMessage)"
             "+ CategoryInfo          : $($ErrorRecord.CategoryInfo)"
             "+ FullyQualifiedErrorId : $($ErrorRecord.FullyQualifiedErrorId)"
             ""
