@@ -515,7 +515,7 @@ def main():
     skipped = {}
 
     def handle_walk_errors(e):
-        if e.errno in (errno.EPERM, errno.EACCES):
+        if e.errno in (errno.EPERM, errno.EACCES, errno.ENOENT):
             skipped[e.filename] = to_text(e)
             return
         raise e
