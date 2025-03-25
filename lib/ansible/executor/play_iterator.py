@@ -73,7 +73,6 @@ class HostState:
         self.tasks_child_state = None
         self.rescue_child_state = None
         self.always_child_state = None
-        self.did_rescue = False
         self.did_start_at_task = False
 
     def __repr__(self):
@@ -83,7 +82,7 @@ class HostState:
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handlers=%d, run_state=%s, fail_state=%s, "
                 "pre_flushing_run_state=%s, update_handlers=%s, pending_setup=%s, "
                 "tasks child state? (%s), rescue child state? (%s), always child state? (%s), "
-                "did rescue? %s, did start at task? %s" % (
+                "did start at task? %s" % (
                     self.cur_block,
                     self.cur_regular_task,
                     self.cur_rescue_task,
@@ -97,7 +96,6 @@ class HostState:
                     self.tasks_child_state,
                     self.rescue_child_state,
                     self.always_child_state,
-                    self.did_rescue,
                     self.did_start_at_task,
                 ))
 
@@ -131,7 +129,6 @@ class HostState:
         new_state.pre_flushing_run_state = self.pre_flushing_run_state
         new_state.update_handlers = self.update_handlers
         new_state.pending_setup = self.pending_setup
-        new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
@@ -376,7 +373,6 @@ class PlayIterator:
                         if len(block.rescue) > 0:
                             state.fail_state = FailedStates.NONE
                         state.run_state = IteratingStates.ALWAYS
-                        state.did_rescue = True
                     else:
                         task = block.rescue[state.cur_rescue_task]
                         if isinstance(task, Block):
@@ -412,7 +408,6 @@ class PlayIterator:
                             state.tasks_child_state = None
                             state.rescue_child_state = None
                             state.always_child_state = None
-                            state.did_rescue = False
                     else:
                         task = block.always[state.cur_always_task]
                         if isinstance(task, Block):
@@ -526,24 +521,8 @@ class PlayIterator:
     def _check_failed_state(self, state):
         if state is None:
             return False
-        elif state.run_state == IteratingStates.RESCUE and self._check_failed_state(state.rescue_child_state):
-            return True
-        elif state.run_state == IteratingStates.ALWAYS and self._check_failed_state(state.always_child_state):
-            return True
-        elif state.fail_state != FailedStates.NONE:
-            if state.run_state == IteratingStates.RESCUE and state.fail_state & FailedStates.RESCUE == 0:
-                return False
-            elif state.run_state == IteratingStates.ALWAYS and state.fail_state & FailedStates.ALWAYS == 0:
-                return False
-            else:
-                return not (state.did_rescue and state.fail_state & FailedStates.ALWAYS == 0)
-        elif state.run_state == IteratingStates.TASKS and self._check_failed_state(state.tasks_child_state):
-            cur_block = state._blocks[state.cur_block]
-            if len(cur_block.rescue) > 0 and state.fail_state & FailedStates.RESCUE == 0:
-                return False
-            else:
-                return True
-        return False
+
+        return state.fail_state != FailedStates.NONE and state.run_state == IteratingStates.COMPLETE
 
     def is_failed(self, host):
         s = self.get_host_state(host)
