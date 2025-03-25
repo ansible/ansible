@@ -4,6 +4,10 @@ using namespace Invalid.Namespace.That.Does.Not.Exist
 $var = 'bar'
 
 Function Test-ScopedUtil {
+    <#
+    .SYNOPSIS
+    Test out module util scoping.
+    #>
     [CmdletBinding()]
     param ()
 
