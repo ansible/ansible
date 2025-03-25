@@ -398,11 +398,6 @@ begin {
     $jsonPipeline = $null
     $actionPipeline = $null
     $setupManifest = {
-        # [SuppressMessageAttribute(
-        #     "PSUseCmdletCorrectly",
-        #     "",
-        #     Justification = "ConvertFrom-Json is being used in a steppable pipeline and works this way."
-        # )]
         [CmdletBinding()]
         param (
             [Parameter()]
