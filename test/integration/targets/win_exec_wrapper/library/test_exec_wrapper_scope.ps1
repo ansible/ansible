@@ -5,13 +5,14 @@ using namespace System.Management.Automation.Language
 using namespace Invalid.Namespace.That.Does.Not.Exist
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
+#AnsibleRequires -PowerShell Ansible.ModuleUtils.ScopedUtil
 
 $module = [AnsibleModule]::Create($args, @{ options = @{} })
 
 $module.Result.module_using_namespace = [Parser].FullName
 
 # Verifies the module is run in its own script scope
-$var = 'test'
+$var = 'foo'
 $module.Result.script_var = $script:var
 
 $missingUsingNamespace = $false
@@ -25,5 +26,6 @@ catch {
     $missingUsingNamespace = $true
 }
 $module.Result.missing_using_namespace = $missingUsingNamespace
+$module.Result.util_res = Test-ScopedUtil
 
 $module.ExitJson()

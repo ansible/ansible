@@ -53,7 +53,7 @@ $executablePath = Join-Path -Path $PSHome -ChildPath $executable
 $actionInfo = Get-AnsibleExecWrapper -EncodeInputOutput
 $bootstrapManifest = ConvertTo-Json -InputObject @{
     n = "exec_wrapper-become-$([Guid]::NewGuid()).ps1"
-    s = $actionInfo.ScriptBlock.ToString()
+    s = $actionInfo.Script
     p = $actionInfo.Parameters
 } -Depth 99 -Compress
 

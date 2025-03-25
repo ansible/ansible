@@ -102,30 +102,62 @@ foreach ($variable in $Variables) {
     $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
 }
 
-if ($Environment.Count) {
-    $ps.Runspace.SessionStateProxy.SetVariable("_AnsibleEnvironment", $Environment)
-    $null = $ps.AddScript(@'
-foreach ($env in $_AnsibleEnvironment.GetEnumerator()) {
-    [System.Environment]::SetEnvironmentVariable($env.Key, $env.Value)
-}
-Remove-Variable -Name _AnsibleEnvironment -Force
-'@).AddStatement()
+# env vars are process side so we can just set them here.
+foreach ($env in $Environment.GetEnumerator()) {
+    [Environment]::SetEnvironmentVariable($env.Key, $env.Value)
 }
 
 # Redefine Write-Host to dump to output instead of failing, lots of scripts
 # still use it.
 $null = $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement()
 
+# This will inject the script into the pipeline for us.
+$scriptInfo = Get-AnsibleScript -Name $Script
+
 if ($PowerShellModules) {
-    Import-PowerShellUtil -Name $PowerShellModules -Pipeline $ps
+    foreach ($utilName in $PowerShellModules) {
+        $utilInfo = Get-AnsibleScript -Name $utilName
+
+        $null = $ps.AddScript(@'
+param ($Name, $Script)
+
+$moduleName = [System.IO.Path]::GetFileNameWithoutExtension($Name)
+$sbk = [System.Management.Automation.Language.Parser]::ParseInput(
+    $Script,
+    $Name,
+    [ref]$null,
+    [ref]$null).GetScriptBlock()
+
+New-Module -Name $moduleName -ScriptBlock $sbk |
+    Import-Module -WarningAction SilentlyContinue -Scope Global
+'@, $true)
+        $null = $ps.AddParameters(
+            @{
+                Name = $utilName
+                Script = $utilInfo.Script
+            }
+        ).AddStatement()
+    }
 }
 
 if ($CSharpModules) {
+    # C# utils are process wide so just load them here.
     Import-CSharpUtil -Name $CSharpModules
 }
 
-# This will inject the script into the pipeline for us.
-Get-AnsibleScript -Name $Script -Pipeline $ps
+# We invoke it through a command with useLocalScope $false to
+# ensure the code runs with it's own $script: scope. It also
+# cleans up the StackTrace on errors by not showing the stub
+# execution line and starts immediately at the module "cmd".
+$null = $ps.AddScript(@'
+${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::ParseInput(
+    $args[0],
+    $args[1],
+    [ref]$null,
+    [ref]$null).GetScriptBlock()
+'@).AddArgument($scriptInfo.Script).AddArgument($Script).AddStatement()
+$null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
+
 if ($Breakpoints) {
     $ps.Runspace.Debugger.SetBreakpoints($Breakpoints)
 }

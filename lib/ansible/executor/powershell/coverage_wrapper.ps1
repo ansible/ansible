@@ -102,11 +102,11 @@ try {
     $coveragePathFilter = $PathFilter.Split(":", [StringSplitOptions]::RemoveEmptyEntries)
     $breakpointInfo = @(
         foreach ($scriptName in @($ModuleName; $actionParams.PowerShellModules)) {
-            $scriptInfo = Get-AnsibleScript -Name $scriptName
+            $scriptInfo = Get-AnsibleScript -Name $scriptName -IncludeScriptBlock
 
             if (Compare-PathFilterPattern -Patterns $coveragePathFilter -Path $scriptInfo.Path) {
                 $covParams = @{
-                    ScriptBlock = $scriptInfo.Script
+                    ScriptBlock = $scriptInfo.ScriptBlock
                     AnsiblePath = $scriptInfo.Path
                 }
                 New-CoverageBreakpoint @covParams

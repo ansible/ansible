@@ -139,19 +139,15 @@ begin {
     }
 
     Function Get-AnsibleScript {
-        [CmdletBinding(DefaultParameterSetName = 'PowerShell')]
+        [CmdletBinding()]
         param (
             [Parameter(Mandatory)]
             [string]
             $Name,
 
-            [Parameter(ParameterSetName = 'CSharp')]
+            [Parameter()]
             [switch]
-            $IsCSharpScript,
-
-            [Parameter(ParameterSetName = 'PowerShell')]
-            [PowerShell]
-            $Pipeline
+            $IncludeScriptBlock
         )
 
         if (-not $Script:AnsibleManifest.scripts.Contains($Name)) {
@@ -167,40 +163,21 @@ begin {
         $scriptBytes = [Convert]::FromBase64String($scriptInfo.script)
         $scriptContents = [Encoding]::UTF8.GetString($scriptBytes)
 
-        if ($Pipeline) {
-            # We invoke it through a command with useLocalScope $false to
-            # ensure the code runs with it's own $script: scope. It also
-            # cleans up the StackTrace on errors by not showing the stub
-            # execution line and starts immediately at the module "cmd".
-            $null = $Pipeline.AddScript(@'
-${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::ParseInput(
-    $args[0],
-    $args[1],
-    [ref]$null,
-    [ref]$null).GetScriptBlock()
-'@)
-            $null = $Pipeline.AddArgument($scriptContents).AddArgument($Name).AddStatement()
-            $null = $Pipeline.AddCommand('<AnsibleModule>', $false).AddStatement()
-            return
-        }
-
-        $outputCode = if ($IsCSharpScript) {
-            $scriptContents
-        }
-        else {
-            [Parser]::ParseInput(
+        $sbk = $null
+        if ($IncludeScriptBlock) {
+            $sbk = [Parser]::ParseInput(
                 $scriptContents,
                 $Name,
                 [ref]$null,
                 [ref]$null).GetScriptBlock()
         }
-        $outputValue = [PSCustomObject]@{
-            Name = $Name
-            Script = $outputCode
-            Path = $scriptInfo.path
-        }
 
-        $outputValue
+        [PSCustomObject]@{
+            Name = $Name
+            Script = $scriptContents
+            Path = $scriptInfo.path
+            ScriptBlock = $sbk
+        }
     }
 
     Function Get-NextAnsibleAction {
@@ -212,7 +189,7 @@ ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::Pa
 
         $actionName = $action.name
         $actionParams = $action.params
-        $actionSbk = Get-AnsibleScript -Name $actionName
+        $actionScript = Get-AnsibleScript -Name $actionName -IncludeScriptBlock
 
         foreach ($kvp in $action.secure_params.GetEnumerator()) {
             if (-not $kvp.Value) {
@@ -225,7 +202,7 @@ ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::Pa
 
         [PSCustomObject]@{
             Name = $actionName
-            ScriptBlock = $actionSbk.Script
+            ScriptBlock = $actionScript.ScriptBlock
             Parameters = $actionParams
         }
     }
@@ -239,10 +216,14 @@ ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::Pa
 
             [Parameter()]
             [switch]
-            $EncodeInputOutput
+            $EncodeInputOutput,
+
+            [Parameter()]
+            [switch]
+            $IncludeScriptBlock
         )
 
-        $sbk = Get-AnsibleScript -Name exec_wrapper.ps1
+        $sbk = Get-AnsibleScript -Name exec_wrapper.ps1 -IncludeScriptBlock:$IncludeScriptBlock
         $params = @{
             # TempPath may contain env vars that change based on the runtime
             # environment. Ensure we use that and not the $script:AnsibleTempPath
@@ -263,7 +244,8 @@ ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::Pa
         }
 
         [PSCustomObject]@{
-            ScriptBlock = $sbk.Script
+            Script = $sbk.Script
+            ScriptBlock = $sbk.ScriptBlock
             Parameters = $params
             InputData = $inputData
         }
@@ -274,29 +256,14 @@ ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::Pa
         param (
             [Parameter(Mandatory)]
             [string[]]
-            $Name,
-
-            [Parameter()]
-            [PowerShell]
-            $Pipeline
+            $Name
         )
 
         foreach ($moduleName in $Name) {
-            $moduleSbk = Get-AnsibleScript -Name $moduleName
-
+            $moduleInfo = Get-AnsibleScript -Name $moduleName -IncludeScriptBlock
             $moduleShortName = [Path]::GetFileNameWithoutExtension($moduleName)
-            if ($Pipeline) {
-                $null = $Pipeline.AddCommand("New-Module").AddParameters(
-                    @{
-                        Name = $moduleShortName
-                        ScriptBlock = $moduleSbk.Script
-                    })
-                $null = $Pipeline.AddCommand("Import-Module").AddParameter("WarningAction", "SilentlyContinue")
-                $null = $Pipeline.AddCommand("Out-Null").AddStatement()
-            }
-            else {
-                $null = New-Module -Name $moduleShortName -ScriptBlock $moduleSbk.Script | Import-Module -Scope Global
-            }
+            $null = New-Module -Name $moduleShortName -ScriptBlock $moduleInfo.ScriptBlock |
+                Import-Module -Scope Global
         }
     }
 
@@ -312,7 +279,7 @@ ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::Pa
 
         $isBasicUtil = $false
         $csharpModules = foreach ($moduleName in $Name) {
-            (Get-AnsibleScript -Name $moduleName -IsCSharpScript).Script
+            (Get-AnsibleScript -Name $moduleName).Script
 
             if ($moduleName -eq 'Ansible.Basic.cs') {
                 $isBasicUtil = $true

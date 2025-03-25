@@ -30,7 +30,7 @@ $result = Get-Content -LiteralPath $ResultPath | ConvertFrom-Json | Convert-Json
 # The intermediate script is used so that things are set up like it normally
 # is. The new Runspace is used to ensure we can stop it once the async time is
 # exceeded.
-$execInfo = Get-AnsibleExecWrapper -ManifestAsParam
+$execInfo = Get-AnsibleExecWrapper -ManifestAsParam -IncludeScriptBlock
 $ps = [PowerShell]::Create()
 $null = $ps.AddScript(@'
 [CmdletBinding()]
