@@ -743,6 +743,17 @@ releases:
     - ansible-test-curl.yml
     - fix-include_vars-reserved-warning.yml
     release_date: '2025-02-17'
+  2.18.4:
+    changes:
+      release_summary: '| Release Date: 2025-03-25
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.4_summary.yaml
+    release_date: '2025-03-25'
   2.18.4rc1:
     changes:
       bugfixes:
