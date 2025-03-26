@@ -70,7 +70,7 @@ class PullCLI(CLI):
         you should use an external scheduler and/or locking to ensure there are no clashing operations.
 
         The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
-        This is useful both for extreme scale-out as well as periodic remediation.
+        This is useful both for extreme scale-out and periodic remediation.
         Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
         excellent way to gather and analyze remote logs from ansible-pull.
     """
@@ -205,7 +205,7 @@ class PullCLI(CLI):
             limit_opts = 'localhost,127.0.0.1'
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
-            base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
+            base_opts += ' -%s' % ''.join(["v" for _ in range(0, context.CLIARGS['verbosity'])])
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
@@ -376,7 +376,7 @@ class PullCLI(CLI):
             if 0 < len(errors):
                 display.warning("\n".join(errors))
             elif len(playbooks) == len(context.CLIARGS['args']):
-                playbook = " ".join(playbooks)
+                playbook = " ".join(str(playbooks))
             return playbook
         else:
             fqdn = socket.getfqdn()
