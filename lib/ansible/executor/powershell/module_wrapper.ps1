@@ -111,7 +111,6 @@ foreach ($env in $Environment.GetEnumerator()) {
 # still use it.
 $null = $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement()
 
-# This will inject the script into the pipeline for us.
 $scriptInfo = Get-AnsibleScript -Name $Script
 
 if ($PowerShellModules) {
