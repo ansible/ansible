@@ -1334,7 +1334,7 @@ def _find_module_utils(
 
         syslog_facility = task_vars.get(
             'ansible_syslog_facility',
-            C.DEFAULT_SYSLOG_FACILITY)  #   # type: ignore[attr-defined]
+            C.DEFAULT_SYSLOG_FACILITY)  # type: ignore[attr-defined]
         facility = b'syslog.' + to_bytes(syslog_facility, errors='surrogate_or_strict')
         b_module_data = b_module_data.replace(b'syslog.LOG_USER', facility)
 
