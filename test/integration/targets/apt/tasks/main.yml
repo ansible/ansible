@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: skip test on unsupported platforms
+  meta: end_play
+  when: ansible_distribution not in ('Ubuntu', 'Debian')
+
 - block:
   - import_tasks: 'apt.yml'
 
@@ -33,9 +37,6 @@
       - file:
           name: "{{ repodir }}"
           state: absent
-
-  when:
-    - ansible_distribution in ('Ubuntu', 'Debian')
 
   always:
     - name: Check if the target is managed by ansible-test
