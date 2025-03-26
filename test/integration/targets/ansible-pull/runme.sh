@@ -116,24 +116,29 @@ ansible-pull -d "${pull_dir}" -U "${repo_dir}" --flush-cache "$@" test_empty_fac
 unset ANSIBLE_CACHE_PLUGIN ANSIBLE_CACHE_PLUGIN_CONNECTION
 
 #### CHACHCHCHANGES!
-# test no run on no changes
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+echo 'setup for change detection'
+ORIG_CONFIG="${ANSIBLE_CONFIG}"
+unset ANSIBLE_CONFIG
+
+echo 'test no run on no changes'
+ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
 no_change_tests
 
-# test run on changes
+echo 'test run on changes'
 change_repo
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
 pass_tests
 
 # test changed with non yaml result format, ensures we ignore callback or format changes for adhoc/change detection
-export  ANSIBLE_CALLBACK_RESULT_FORMAT='yaml'
-# test no run on no changes
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+echo 'test no run on no changes, yaml result format'
+ANSIBLE_CALLBACK_RESULT_FORMAT='yaml' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
 no_change_tests
 
-# test run on changes
+echo 'test run on changes, yaml result format'
 change_repo
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+ANSIBLE_CALLBACK_RESULT_FORMAT='yaml' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
 pass_tests
 
-unset ANSIBLE_CALLBACK_RESULT_FORMAT
+if [ "${ORIG_CONFIG}" != "" ]; then
+  export ANSIBLE_CONFIG="${ORIG_CONFIG}"
+fi
