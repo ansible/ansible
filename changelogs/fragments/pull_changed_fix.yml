@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-pull change detection will now work independant of callback or result format settings.
