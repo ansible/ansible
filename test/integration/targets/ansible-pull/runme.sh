@@ -28,20 +28,20 @@ cd "${repo_dir}"
 )
 
 function change_repo {
-	cd "${repo_dir}"
-	date > forced_change
-	git add forced_change
-	git commit -m "forced changed"
-	cd -
+    cd "${repo_dir}"
+    date > forced_change
+    git add forced_change
+    git commit -m "forced changed"
+    cd -
 }
 
 function no_change_tests {
-	# test for https://github.com/ansible/ansible/issues/13688
-	if grep MAGICKEYWORD "${temp_log}"; then
-	    cat "${temp_log}"
-	    echo "Ran the playbook, found MAGICKEYWORD in output."
-	    exit 1
-	fi
+    # test for https://github.com/ansible/ansible/issues/13688
+    if grep MAGICKEYWORD "${temp_log}"; then
+        cat "${temp_log}"
+        echo "Ran the playbook, found MAGICKEYWORD in output."
+        exit 1
+    fi
 }
 
 function pass_tests {
