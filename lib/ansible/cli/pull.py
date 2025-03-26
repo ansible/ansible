@@ -208,7 +208,7 @@ class PullCLI(CLI):
             limit_opts = 'localhost,127.0.0.1'
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
-            base_opts += ' -%s' % ''.join(["v" for _ in range(0, context.CLIARGS['verbosity'])])
+            base_opts += ' -%s' % ''.join(["v" for dummy in range(0, context.CLIARGS['verbosity'])])
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
