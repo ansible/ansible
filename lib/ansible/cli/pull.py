@@ -104,8 +104,9 @@ class PullCLI(CLI):
         return inv_opts
 
     def init_parser(self):
-        """ create an options parser for bin/ansible """
+        """ Specific args/option parser for pull """
 
+        # signature is different from parent as caller should not need to add usage/desc
         super(PullCLI, self).init_parser(
             usage='%prog -U <repository> [options] [<playbook.yml>]',
             desc="pulls playbooks from a VCS repo and executes them on target host")
@@ -134,10 +135,12 @@ class PullCLI(CLI):
                                  help='path to the directory to which Ansible will checkout the repository.')
         self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
+        # TODO: resolve conflict with check mode, added manually below
         self.parser.add_argument('-C', '--checkout', dest='checkout',
                                  help='branch/tag/commit to checkout. Defaults to behavior of repository module.')
         self.parser.add_argument('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
                                  help='adds the hostkey for the repo url if not already added')
+        # Overloaded with adhoc ... but really passthrough to adhoc
         self.parser.add_argument('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
                                  help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
                                       % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
@@ -149,7 +152,7 @@ class PullCLI(CLI):
         self.parser.add_argument('--track-subs', dest='tracksubs', default=False, action='store_true',
                                  help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
         # add a subset of the check_opts flag group manually, as the full set's
-        # shortcodes conflict with above --checkout/-C
+        # shortcodes conflict with above --checkout/-C, see to-do above
         self.parser.add_argument("--check", default=False, dest='check', action='store_true',
                                  help="don't make any changes; instead, try to predict some of the changes that may occur")
         self.parser.add_argument("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
