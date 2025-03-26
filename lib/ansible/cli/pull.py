@@ -280,6 +280,7 @@ class PullCLI(CLI):
         display.vvvv('EXEC: %s' % cmd)
         rc, b_out, b_err = safe_output_env(run_cmd)(cmd, live=True)
 
+        print('BCS', context.CLIARGS['ifchanged'], b'"changed": true' not in b_out, b"changed: True" not in b_out)
         if rc != 0:
             if context.CLIARGS['force']:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
