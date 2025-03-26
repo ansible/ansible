@@ -277,7 +277,7 @@
   apt: pkg=hello state=absent purge=yes
 
 - name: install deb file from URL
-  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_download_version }}_{{ hello_architecture.stdout }}.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   register: apt_url
 
 - name: verify installation of hello
