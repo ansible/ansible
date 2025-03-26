@@ -32,15 +32,20 @@ DOCUMENTATION:
       default: False
 
 EXAMPLES: |
-  # simply encrypt my key in a vault
+  # Encrypt a value using the vault filter
   vars:
-    myvaultedkey: "{{ keyrawdata|vault(passphrase) }} "
+    myvaultedkey: "{{ 'my_secret_key' | vault('my_vault_password') }}"
 
-  - name: save templated vaulted data
-    template: src=dump_template_data.j2 dest=/some/key/vault.txt
-    vars:
-      mysalt: '{{2**256|random(seed=inventory_hostname)}}'
-      template_data: '{{ secretdata|vault(vaultsecret, salt=mysalt) }}'
+  # Encrypt a value and save it to a file using the template module
+  vars:
+    template_data: "{{ 'my_sensitive_data' | vault('another_vault_password', salt=(2**256 | random(seed=inventory_hostname))) }}"
+
+  # The content of dump_template_data.j2 looks like
+  #     Encrypted secret: {{ template_data }}
+  - name: Save vaulted data
+    template:
+      src: dump_template_data.j2
+      dest: /some/key/vault.txt
 
 RETURN:
   _value:
