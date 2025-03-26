@@ -21,8 +21,6 @@
   - import_tasks: 'url-with-deps.yml'
 
   - import_tasks: 'apt-multiarch.yml'
-    when:
-      - ansible_userspace_architecture != apt_foreign_arch
 
   - import_tasks: 'apt-builddep.yml'
 
