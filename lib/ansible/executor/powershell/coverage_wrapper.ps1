@@ -25,7 +25,7 @@ param(
 # Required to be set for psrp so we can set a breakpoint in the remote runspace
 $Host.Runspace.Debugger.SetDebugMode([DebugModes]::RemoteScript)
 
-Function New-CoverageBreakpoint {
+Function New-CoverageBreakpointsForScriptBlock {
     Param (
         [Parameter(Mandatory)]
         [ScriptBlock]
@@ -48,7 +48,7 @@ Function New-CoverageBreakpoint {
     }
 
     # LineBreakpoint was only made public in PowerShell 6.0 so we need to use
-    # relfection to achieve the same thing in 5.1.
+    # reflection to achieve the same thing in 5.1.
     $lineCtor = if ($PSVersionTable.PSVersion -lt '6.0') {
         [LineBreakpoint].GetConstructor(
             [BindingFlags]'NonPublic, Instance',
@@ -109,7 +109,7 @@ try {
                     ScriptBlock = $scriptInfo.ScriptBlock
                     AnsiblePath = $scriptInfo.Path
                 }
-                New-CoverageBreakpoint @covParams
+                New-CoverageBreakpointsForScriptBlock @covParams
             }
         }
     )

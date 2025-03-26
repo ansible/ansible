@@ -507,7 +507,7 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
         def read_gen():
-            yield from list(in_data.decode().splitlines())
+            yield from in_data.decode().splitlines()
 
             offset = 0
 
@@ -572,11 +572,10 @@ class Connection(ConnectionBase):
         ps.poll_invoke()
 
         if ps.output:
-            if ps.output[0] == '[DIR]':
+            if ps.output.pop(0) == '[DIR]':
                 # to be consistent with other connection plugins, we assume the caller has created the target dir
                 return
 
-            ps.output.pop(0)
             with open(b_out_path, 'wb') as out_file:
                 while True:
                     while ps.output:

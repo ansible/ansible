@@ -362,7 +362,6 @@ begin {
                     $streams = @(([xml]$clixml[1]).Objs.GetEnumerator() | ForEach-Object { $_.S })
                     $objects = @([PSSerializer]::Deserialize($clixml[1]))
 
-                    $wroteStderr = $true
                     for ($i = 0; $i -lt $objects.Count; $i++) {
                         $msg = $objects[$i]
                         if ($msg -isnot [string] -or $streams.Length -le $i) {
@@ -381,6 +380,7 @@ begin {
                             'warning' { $host.UI.WriteWarningLine($msg) }
                         }
                     }
+                    $wroteStderr = $true
                 }
                 catch {
                     $null = $_

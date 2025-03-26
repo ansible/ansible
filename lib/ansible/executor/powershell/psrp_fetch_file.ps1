@@ -5,11 +5,11 @@ using namespace System.IO
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory)]
     [string]
     $Path,
 
-    [Parameter()]
+    [Parameter(Mandatory)]
     [int]
     $BufferSize
 )

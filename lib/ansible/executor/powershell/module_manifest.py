@@ -25,19 +25,23 @@ from ansible.plugins.loader import ps_module_utils_loader
 
 
 @dataclasses.dataclass(frozen=True)
-class ExecManifest:
-    scripts: dict[str, ScriptInfo] = dataclasses.field(default_factory=dict)
-    actions: list[ManifestAction] = dataclasses.field(default_factory=list)
+class _ExecManifest:
+    scripts: dict[str, _ScriptInfo] = dataclasses.field(default_factory=dict)
+    actions: list[_ManifestAction] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
-class ScriptInfo:
-    script: str  # base64 encoded script
-    path: str | None = None
+class _ScriptInfo:
+    content: dataclasses.InitVar[bytes]
+    path: str
+    script: str = dataclasses.field(init=False)
+
+    def __post_init__(self, content: bytes) -> None:
+        object.__setattr__(self, 'script', base64.b64encode(content).decode())
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
-class ManifestAction:
+class _ManifestAction:
     name: str
     params: dict[str, object] = dataclasses.field(default_factory=dict)
     secure_params: dict[str, object] = dataclasses.field(default_factory=dict)
@@ -47,7 +51,7 @@ class PSModuleDepFinder(object):
 
     def __init__(self) -> None:
         # This is also used by validate-modules to get a module's required utils in base and a collection.
-        self.scripts: dict[str, ScriptInfo] = {}
+        self.scripts: dict[str, _ScriptInfo] = {}
 
         self._util_deps: dict[str, set[str]] = {}
 
@@ -98,8 +102,9 @@ class PSModuleDepFinder(object):
             return
 
         exec_code = _get_powershell_script(name)
-        self.scripts[name] = ScriptInfo(
-            script=base64.b64encode(exec_code).decode(),
+        self.scripts[name] = _ScriptInfo(
+            content=exec_code,
+            path=name,
         )
         self.scan_module(exec_code, powershell=True)
 
@@ -238,8 +243,8 @@ class PSModuleDepFinder(object):
 
         # This is important to be set before scan_module is called to avoid
         # recursive dependencies.
-        self.scripts[util_name] = ScriptInfo(
-            script=base64.b64encode(util_data).decode(),
+        self.scripts[util_name] = _ScriptInfo(
+            content=util_data,
             path=util_path,
         )
 
@@ -293,15 +298,16 @@ def _bootstrap_powershell_script(
     :param has_input: The script will be provided with input data.
     :return: The bootstrap wrapper and input to provide to it.
     """
-    exec_manifest = ExecManifest()
+    exec_manifest = _ExecManifest()
 
     script = _get_powershell_script(name)
-    exec_manifest.scripts[name] = ScriptInfo(
-        script=base64.b64encode(script).decode(),
+    exec_manifest.scripts[name] = _ScriptInfo(
+        content=script,
+        path=name,
     )
 
     exec_manifest.actions.append(
-        ManifestAction(
+        _ManifestAction(
             name=name,
             params=parameters or {},
         )
@@ -335,6 +341,7 @@ def _get_powershell_script(
 
 
 def _create_powershell_wrapper(
+    *,
     name: str,
     module_data: bytes,
     module_path: str,
@@ -365,14 +372,14 @@ def _create_powershell_wrapper(
     # creates the manifest/wrapper used in PowerShell/C# modules to enable
     # things like become and async - this is also called in action/script.py
 
-    actions: list[ManifestAction] = []
+    actions: list[_ManifestAction] = []
     finder = PSModuleDepFinder()
     finder.scan_exec_script('module_wrapper.ps1')
 
     ext = os.path.splitext(module_path)[1]
     name_with_ext = f"{name}{ext}"
-    finder.scripts[name_with_ext] = ScriptInfo(
-        script=base64.b64encode(module_data).decode(),
+    finder.scripts[name_with_ext] = _ScriptInfo(
+        content=module_data,
         path=module_path,
     )
 
@@ -424,7 +431,7 @@ def _create_powershell_wrapper(
         finder.scan_exec_script('exec_wrapper.ps1')
         finder.scan_exec_script(become_script)
         actions.append(
-            ManifestAction(
+            _ManifestAction(
                 name=become_script,
                 params=become_params,
                 secure_params=become_secure_params,
@@ -441,7 +448,7 @@ def _create_powershell_wrapper(
 
         finder.scan_exec_script('async_wrapper.ps1')
         actions.append(
-            ManifestAction(
+            _ManifestAction(
                 name='async_wrapper.ps1',
                 params={
                     'AsyncDir': async_dir,
@@ -453,7 +460,7 @@ def _create_powershell_wrapper(
 
         finder.scan_exec_script('async_watchdog.ps1')
         actions.append(
-            ManifestAction(
+            _ManifestAction(
                 name='async_watchdog.ps1',
                 params={
                     'Timeout': async_timeout,
@@ -467,7 +474,7 @@ def _create_powershell_wrapper(
 
         finder.scan_exec_script('coverage_wrapper.ps1')
         actions.append(
-            ManifestAction(
+            _ManifestAction(
                 name='coverage_wrapper.ps1',
                 params={
                     'ModuleName': name_with_ext,
@@ -478,7 +485,7 @@ def _create_powershell_wrapper(
         )
 
     actions.append(
-        ManifestAction(
+        _ManifestAction(
             name='module_wrapper.ps1',
             params=module_params,
         ),
@@ -490,7 +497,7 @@ def _create_powershell_wrapper(
             temp_path = temp_value
             break
 
-    exec_manifest = ExecManifest(
+    exec_manifest = _ExecManifest(
         scripts=finder.scripts,
         actions=actions,
     )
@@ -504,7 +511,7 @@ def _create_powershell_wrapper(
 
 
 def _get_bootstrap_input(
-    manifest: ExecManifest,
+    manifest: _ExecManifest,
     min_os_version: str | None = None,
     min_ps_version: str | None = None,
     temp_path: str | None = None,
