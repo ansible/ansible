@@ -1,17 +1,69 @@
----
-
 - set_fact:
     test_ppa_name: 'ppa:git-core/ppa'
     test_ppa_filename: 'git-core'
     test_ppa_spec: 'deb https://ppa.launchpadcontent.net/git-core/ppa/ubuntu {{ansible_distribution_release}} main'
     test_ppa_key: 'E1DF1F24' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
-
-- name: show python version
-  debug: var=ansible_python_version
-
-- name: use python3-apt
-  set_fact:
     python_apt: python3-apt
+
+- name: verify that comments are preserved unmodified when writing their source file
+  vars:
+    test_source_filename: ansible_test_comment
+    test_source_path: "/etc/apt/sources.list.d/{{ test_source_filename }}.list"
+  block:
+    - name: ensure the test source is absent
+      file:
+        path: "{{ test_source_path }}"
+        state: absent
+
+    - name: add the test PPA to the test source
+      apt_repository:
+        repo: "{{ test_ppa_name }}"
+        filename: "{{ test_source_filename }}"
+        update_cache: false
+      register: add_ppa
+
+    - name: verify the expected test source was added
+      assert:
+        that:
+          - add_ppa.sources_added | length == 1
+          - add_ppa.sources_added[0] == test_source_path
+
+    - name: overwrite the test source with a comment
+      copy:
+        content: "## comment"
+        dest: "{{ test_source_path }}"
+
+    - name: add the test PPA to the test source again
+      apt_repository:
+        repo: "{{ test_ppa_name }}"
+        filename: "{{ test_source_filename }}"
+        update_cache: false
+      register: add_ppa
+
+    - name: verify no sources were added
+      assert:
+        that:
+          - add_ppa.sources_added | length == 0
+
+    - name: read the test source
+      slurp:
+        src: "{{ test_source_path }}"
+      register: test_source
+
+    - name: decode the contents of the test source
+      set_fact:
+        test_source_content: "{{ test_source.content | b64decode }}"
+
+    - name: verify the comment in the test source was preserved
+      assert:
+        that:
+          - '"# # comment\n" in test_source_content'  # bug, see: https://github.com/ansible/ansible/issues/54403
+          # - '"## comment\n" in test_source_content'  # correct behavior
+  always:
+    - name: ensure the test source is absent
+      file:
+        path: "{{ test_source_path }}"
+        state: absent
 
 # UNINSTALL 'python-apt'
 #  The `apt_repository` module has the smarts to auto-install `python-apt`.  To
