@@ -69,8 +69,8 @@
     lineinfile:
       path: /etc/apt/sources.list
       backrefs: True
-      regexp: ^#\s*deb-src http://archive\.ubuntu\.com/ubuntu/ (\w*){{ item }} universe$
-      line: deb-src http://archive.ubuntu.com/ubuntu \1{{ item }} universe
+      regexp: ^#\s*deb-src (http://.*\.ubuntu\.com/ubuntu.*/) (\w*){{ item }} universe$
+      line: deb-src \1 \2{{ item }} universe
       state: present
     with_items:
     - ''

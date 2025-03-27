@@ -1,5 +1,9 @@
+- name: get the default arch
+  command: dpkg --print-architecture
+  register: default_arch
+
 - name: download and install old version of hello
-  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_amd64.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_{{ default_arch.stdout }}.deb"
 
 - name: freeze version for hello
   dpkg_selections:
