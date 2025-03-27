@@ -57,8 +57,7 @@
     - name: verify the comment in the test source was preserved
       assert:
         that:
-          - '"# # comment\n" in test_source_content'  # bug, see: https://github.com/ansible/ansible/issues/54403
-          # - '"## comment\n" in test_source_content'  # correct behavior
+          - '"## comment\n" in test_source_content'
   always:
     - name: ensure the test source is absent
       file:
