@@ -471,12 +471,12 @@ class AnsibleModule(object):
             if self._remote_tmp is not None:
                 basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
 
-            basedir_exists = basedir is not None and os.path.exists(basedir)
             if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
                 except FileExistsError:
-                    basedir_exists = True
+                    self.warn("Unable to create remote_tmp %s. "
+                              "This is either an attempt to use parallelism or an attack." % basedir)
                 except (OSError, IOError) as e:
                     self.warn("Unable to use %s as temporary directory, "
                               "failing back to system: %s" % (basedir, to_native(e)))
@@ -487,9 +487,6 @@ class AnsibleModule(object):
                               " issues when running as another user. To "
                               "avoid this, create the remote_tmp dir with "
                               "the correct permissions manually" % basedir)
-
-            if basedir_exists:
-                self.warn(f"Module remote_tmp {basedir} already exists. This could cause issues if created by another user.")
 
             basefile = "ansible-moduletmp-%s-" % time.time()
             try:
