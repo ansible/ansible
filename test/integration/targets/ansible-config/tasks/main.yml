@@ -86,9 +86,6 @@
     - all
     register: galaxy_server_dump
 
-  #- debug: msg='{{ (galaxy_server_dump.results[0].stdout | from_json) }}'
-  #- debug: msg='{{ (galaxy_server_dump.results[1].stdout | from_json) }}'
-
   - name: extract galaxy servers from config dump
     set_fact:
       galaxy_server_dump_base: '{{ (galaxy_server_dump.results[0].stdout | from_json | select("contains", "GALAXY_SERVERS"))[0].get("GALAXY_SERVERS") }}'
@@ -139,8 +136,8 @@
     - name: Check individual settings
       assert:
         that:
-          - gs[item[0]][item[1]] == galaxy_server_dump_base[item[0]][item[1]][1]
-          - gs[item[0]][item[1]] == galaxy_server_dump_all[item[0]][item[1]][1]
+          - gs[item[0]][item[1]] == (galaxy_server_dump_base[item[0]] | selectattr('name', '==', item[1]))[0]['value']
+          - gs[item[0]][item[1]] == (galaxy_server_dump_all[item[0]] | selectattr('name', '==', item[1]))[0]['value']
       when:
         - item[1] in gs[item[0]]
       loop: '{{gs_keys | product(gs_all) }}'
