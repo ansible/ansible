@@ -64,7 +64,7 @@ class TestAnsibleModuleTmpDir:
         def mock_mkdtemp(prefix, dir):
             return os.path.join(dir, prefix)
 
-        def mock_makedirs(path, mode, exist_ok=False):
+        def mock_makedirs(path, mode):
             makedirs['called'] = True
             makedirs['path'] = path
             makedirs['mode'] = mode
@@ -106,7 +106,7 @@ class TestAnsibleModuleTmpDir:
         actual = am.tmpdir
         assert actual == "/tmp/path"
         assert mock_makedirs.call_args[0] == (os.path.expanduser(os.path.expandvars("$HOME/.test")),)
-        assert mock_makedirs.call_args[1] == {"mode": 0o700, "exist_ok": True}
+        assert mock_makedirs.call_args[1] == {"mode": 0o700}
 
         # because makedirs failed the dir should be None so it uses the System tmp
         assert mock_mkdtemp.call_args[1]['dir'] is None

@@ -473,7 +473,11 @@ class AnsibleModule(object):
 
             if basedir is not None and not os.path.exists(basedir):
                 try:
-                    os.makedirs(basedir, mode=0o700, exist_ok=True)
+                    os.makedirs(basedir, mode=0o700)
+                except FileExistsError:
+                    # Skipping the warning in the else statement since the directory was not created here.
+                    # Add a warning about the race condition?
+                    pass
                 except (OSError, IOError) as e:
                     self.warn("Unable to use %s as temporary directory, "
                               "failing back to system: %s" % (basedir, to_native(e)))

@@ -1,2 +1,2 @@
 bugfixes:
-  - AnsibleModule.tmpdir - Fix race condition by passing exist_ok=True when creating the base directory of the temporary directory (https://github.com/ansible/ansible/issues/84907).
+  - AnsibleModule.tmpdir - Fix using the remote temp directory as the base directory (https://github.com/ansible/ansible/issues/84907).
