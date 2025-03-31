@@ -473,7 +473,7 @@ class AnsibleModule(object):
 
             if basedir is not None and not os.path.exists(basedir):
                 try:
-                    os.makedirs(basedir, mode=0o700)
+                    os.makedirs(basedir, mode=0o700, exist_ok=True)
                 except (OSError, IOError) as e:
                     self.warn("Unable to use %s as temporary directory, "
                               "failing back to system: %s" % (basedir, to_native(e)))

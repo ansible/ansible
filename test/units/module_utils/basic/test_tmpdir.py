@@ -64,7 +64,7 @@ class TestAnsibleModuleTmpDir:
         def mock_mkdtemp(prefix, dir):
             return os.path.join(dir, prefix)
 
-        def mock_makedirs(path, mode):
+        def mock_makedirs(path, mode, exist_ok=False):
             makedirs['called'] = True
             makedirs['path'] = path
             makedirs['mode'] = mode
@@ -106,8 +106,24 @@ class TestAnsibleModuleTmpDir:
         actual = am.tmpdir
         assert actual == "/tmp/path"
         assert mock_makedirs.call_args[0] == (os.path.expanduser(os.path.expandvars("$HOME/.test")),)
-        assert mock_makedirs.call_args[1] == {"mode": 0o700}
+        assert mock_makedirs.call_args[1] == {"mode": 0o700, "exist_ok": True}
 
         # because makedirs failed the dir should be None so it uses the System tmp
         assert mock_mkdtemp.call_args[1]['dir'] is None
         assert mock_mkdtemp.call_args[1]['prefix'].startswith("ansible-moduletmp-")
+
+    # https://github.com/ansible/ansible/issues/84907
+    @pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+    def test_tmpdir_makedirs_race(self, am, monkeypatch):
+        with tempfile.TemporaryDirectory(prefix='ansible-test-units-') as test_dir:
+            remote_tmp = os.path.join(test_dir, 'test_tmpdir_makedirs_race')
+            am._remote_tmp = remote_tmp
+
+            # simulate race condition
+            os.mkdir(remote_tmp)
+            monkeypatch.setattr(os.path, 'exists', lambda x: False)
+
+            result = am.tmpdir
+
+        basedir = os.path.dirname(result)
+        assert basedir == remote_tmp
