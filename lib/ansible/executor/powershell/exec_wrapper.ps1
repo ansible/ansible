@@ -1,238 +1,504 @@
-# (c) 2018 Ansible Project
+# (c) 2025 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+using namespace System.Collections
+using namespace System.Collections.Generic
+using namespace System.Diagnostics.CodeAnalysis
+using namespace System.IO
+using namespace System.Linq
+using namespace System.Management.Automation
+using namespace System.Management.Automation.Language
+using namespace System.Management.Automation.Security
+using namespace System.Security.Cryptography
+using namespace System.Text
+
+[SuppressMessageAttribute(
+    "PSUseCmdletCorrectly",
+    "",
+    Justification = "ConvertFrom-Json is being used in a steppable pipeline and works this way."
+)]
+[CmdletBinding()]
+param (
+    [Parameter(ValueFromPipeline)]
+    [string]
+    $InputObject,
+
+    [Parameter()]
+    [IDictionary]
+    $Manifest,
+
+    [Parameter()]
+    [switch]
+    $EncodeInputOutput,
+
+    [Parameter()]
+    [Version]
+    $MinOSVersion,
+
+    [Parameter()]
+    [Version]
+    $MinPSVersion,
+
+    [Parameter()]
+    [string]
+    $TempPath,
+
+    [Parameter()]
+    [PSObject]
+    $ActionParameters
+)
+
 begin {
-    $DebugPreference = "Continue"
-    $ProgressPreference = "SilentlyContinue"
+    $DebugPreference = "SilentlyContinue"
     $ErrorActionPreference = "Stop"
-    Set-StrictMode -Version 2
+    $ProgressPreference = "SilentlyContinue"
 
-    # common functions that are loaded in exec and module context, this is set
-    # as a script scoped variable so async_watchdog and module_wrapper can
-    # access the functions when creating their Runspaces
-    $script:common_functions = {
-        Function ConvertFrom-AnsibleJson {
-            <#
-            .SYNOPSIS
-            Converts a JSON string to a Hashtable/Array in the fastest way
-            possible. Unfortunately ConvertFrom-Json is still faster but outputs
-            a PSCustomObject which is cumbersome for module consumption.
+    # Try and set the console encoding to UTF-8 allowing Ansible to read the
+    # output of the wrapper as UTF-8 bytes.
+    try {
+        [Console]::InputEncoding = [Console]::OutputEncoding = [UTF8Encoding]::new()
+    }
+    catch {
+        # PSRP will not have a console host so this will fail. The line here is
+        # to ignore sanity checks.
+        $null = $_
+    }
 
-            .PARAMETER InputObject
-            [String] The JSON string to deserialize.
-            #>
-            param(
-                [Parameter(Mandatory = $true, Position = 0)][String]$InputObject
-            )
+    if ($MinOSVersion) {
+        [version]$actualOSVersion = (Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion
 
-            # we can use -AsHashtable to get PowerShell to convert the JSON to
-            # a Hashtable and not a PSCustomObject. This was added in PowerShell
-            # 6.0, fall back to a manual conversion for older versions
-            $cmdlet = Get-Command -Name ConvertFrom-Json -CommandType Cmdlet
-            if ("AsHashtable" -in $cmdlet.Parameters.Keys) {
-                return , (ConvertFrom-Json -InputObject $InputObject -AsHashtable)
+        if ($actualOSVersion -lt $MinOSVersion) {
+            @{
+                failed = $true
+                msg = "This module cannot run on this OS as it requires a minimum version of $MinOSVersion, actual was $actualOSVersion"
+            } | ConvertTo-Json -Compress
+            $Host.SetShouldExit(1)
+            return
+        }
+    }
+
+    if ($MinPSVersion) {
+        if ($PSVersionTable.PSVersion -lt $MinPSVersion) {
+            @{
+                failed = $true
+                msg = "This module cannot run as it requires a minimum PowerShell version of $MinPSVersion, actual was ""$($PSVersionTable.PSVersion)"""
+            } | ConvertTo-Json -Compress
+            $Host.SetShouldExit(1)
+            return
+        }
+    }
+
+    # $Script:AnsibleManifest = @{}  # Defined in process/end.
+    $Script:AnsibleWrapperWarnings = [List[string]]::new()
+    $Script:AnsibleTempPath = @(
+        # Wrapper defined tmpdir
+        [Environment]::ExpandEnvironmentVariables($TempPath)
+        # Fallback to user's tmpdir
+        [Path]::GetTempPath()
+        # Should not happen but just in case use the current dir.
+        $pwd.Path
+    ) | Where-Object {
+        if (-not $_) {
+            return $false
+        }
+
+        try {
+            Test-Path -LiteralPath $_ -ErrorAction Ignore
+        }
+        catch {
+            # Access denied could cause Test-Path to throw an exception.
+            $false
+        }
+    } | Select-Object -First 1
+
+    Function Convert-JsonObject {
+        param(
+            [Parameter(Mandatory, ValueFromPipeline)]
+            [AllowNull()]
+            [object]
+            $InputObject
+        )
+
+        process {
+            # Using the full type name is important as PSCustomObject is an
+            # alias for PSObject which all piped objects are.
+            if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+                $value = @{}
+                foreach ($prop in $InputObject.PSObject.Properties) {
+                    $value[$prop.Name] = Convert-JsonObject -InputObject $prop.Value
+                }
+                $value
+            }
+            elseif ($InputObject -is [Array]) {
+                , @($InputObject | Convert-JsonObject)
             }
             else {
-                # get the PSCustomObject and then manually convert from there
-                $raw_obj = ConvertFrom-Json -InputObject $InputObject
-
-                Function ConvertTo-Hashtable {
-                    param($InputObject)
-
-                    if ($null -eq $InputObject) {
-                        return $null
-                    }
-
-                    if ($InputObject -is [PSCustomObject]) {
-                        $new_value = @{}
-                        foreach ($prop in $InputObject.PSObject.Properties.GetEnumerator()) {
-                            $new_value.($prop.Name) = (ConvertTo-Hashtable -InputObject $prop.Value)
-                        }
-                        return , $new_value
-                    }
-                    elseif ($InputObject -is [Array]) {
-                        $new_value = [System.Collections.ArrayList]@()
-                        foreach ($val in $InputObject) {
-                            $new_value.Add((ConvertTo-Hashtable -InputObject $val)) > $null
-                        }
-                        return , $new_value.ToArray()
-                    }
-                    else {
-                        return , $InputObject
-                    }
-                }
-                return , (ConvertTo-Hashtable -InputObject $raw_obj)
-            }
-        }
-
-        Function Format-AnsibleException {
-            <#
-            .SYNOPSIS
-            Formats a PowerShell ErrorRecord to a string that's fit for human
-            consumption.
-
-            .NOTES
-            Using Out-String can give us the first part of the exception but it
-            also wraps the messages at 80 chars which is not ideal. We also
-            append the ScriptStackTrace and the .NET StackTrace if present.
-            #>
-            param([System.Management.Automation.ErrorRecord]$ErrorRecord)
-
-            $exception = @"
-$($ErrorRecord.ToString())
-$($ErrorRecord.InvocationInfo.PositionMessage)
-    + CategoryInfo          : $($ErrorRecord.CategoryInfo.ToString())
-    + FullyQualifiedErrorId : $($ErrorRecord.FullyQualifiedErrorId.ToString())
-"@
-            # module_common strip comments and empty newlines, need to manually
-            # add a preceding newline using `r`n
-            $exception += "`r`n`r`nScriptStackTrace:`r`n$($ErrorRecord.ScriptStackTrace)`r`n"
-
-            # exceptions from C# will also have a StackTrace which we
-            # append if found
-            if ($null -ne $ErrorRecord.Exception.StackTrace) {
-                $exception += "`r`n$($ErrorRecord.Exception.ToString())"
-            }
-
-            return $exception
-        }
-    }
-    .$common_functions
-
-    # common wrapper functions used in the exec wrappers, this is defined in a
-    # script scoped variable so async_watchdog can pass them into the async job
-    $script:wrapper_functions = {
-        Function Write-AnsibleError {
-            <#
-            .SYNOPSIS
-            Writes an error message to a JSON string in the format that Ansible
-            understands. Also optionally adds an exception record if the
-            ErrorRecord is passed through.
-            #>
-            param(
-                [Parameter(Mandatory = $true)][String]$Message,
-                [System.Management.Automation.ErrorRecord]$ErrorRecord = $null
-            )
-            $result = @{
-                msg = $Message
-                failed = $true
-            }
-            if ($null -ne $ErrorRecord) {
-                $result.msg += ": $($ErrorRecord.Exception.Message)"
-                $result.exception = (Format-AnsibleException -ErrorRecord $ErrorRecord)
-            }
-            Write-Output -InputObject (ConvertTo-Json -InputObject $result -Depth 99 -Compress)
-        }
-
-        Function Write-AnsibleLog {
-            <#
-            .SYNOPSIS
-            Used as a debugging tool to log events to a file as they run in the
-            exec wrappers. By default this is a noop function but the $log_path
-            can be manually set to enable it. Manually set ANSIBLE_EXEC_DEBUG as
-            an env value on the Windows host that this is run on to enable.
-            #>
-            param(
-                [Parameter(Mandatory = $true, Position = 0)][String]$Message,
-                [Parameter(Position = 1)][String]$Wrapper
-            )
-
-            $log_path = $env:ANSIBLE_EXEC_DEBUG
-            if ($log_path) {
-                $log_path = [System.Environment]::ExpandEnvironmentVariables($log_path)
-                $parent_path = [System.IO.Path]::GetDirectoryName($log_path)
-                if (Test-Path -LiteralPath $parent_path -PathType Container) {
-                    $msg = "{0:u} - {1} - {2} - " -f (Get-Date), $pid, ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)
-                    if ($null -ne $Wrapper) {
-                        $msg += "$Wrapper - "
-                    }
-                    $msg += $Message + "`r`n"
-                    $msg_bytes = [System.Text.Encoding]::UTF8.GetBytes($msg)
-
-                    $fs = [System.IO.File]::Open($log_path, [System.IO.FileMode]::Append,
-                        [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
-                    try {
-                        $fs.Write($msg_bytes, 0, $msg_bytes.Length)
-                    }
-                    finally {
-                        $fs.Close()
-                    }
-                }
+                $InputObject
             }
         }
     }
-    .$wrapper_functions
 
-    # only init and stream in $json_raw if it wasn't set by the enclosing scope
-    if (-not $(Get-Variable "json_raw" -ErrorAction SilentlyContinue)) {
-        $json_raw = ''
-    }
-} process {
-    $json_raw += [String]$input
-} end {
-    Write-AnsibleLog "INFO - starting exec_wrapper" "exec_wrapper"
-    if (-not $json_raw) {
-        Write-AnsibleError -Message "internal error: no input given to PowerShell exec wrapper"
-        exit 1
-    }
+    Function Get-AnsibleScript {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [string]
+            $Name,
 
-    Write-AnsibleLog "INFO - converting json raw to a payload" "exec_wrapper"
-    $payload = ConvertFrom-AnsibleJson -InputObject $json_raw
-    $payload.module_args._ansible_exec_wrapper_warnings = [System.Collections.Generic.List[string]]@()
+            [Parameter()]
+            [switch]
+            $IncludeScriptBlock
+        )
 
-    # TODO: handle binary modules
-    # TODO: handle persistence
-
-    if ($payload.min_os_version) {
-        $min_os_version = [Version]$payload.min_os_version
-        # Environment.OSVersion.Version is deprecated and may not return the
-        # right version
-        $actual_os_version = [Version](Get-Item -Path $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion
-
-        Write-AnsibleLog "INFO - checking if actual os version '$actual_os_version' is less than the min os version '$min_os_version'" "exec_wrapper"
-        if ($actual_os_version -lt $min_os_version) {
-            $msg = "internal error: This module cannot run on this OS as it requires a minimum version of $min_os_version, actual was $actual_os_version"
-            Write-AnsibleError -Message $msg
-            exit 1
+        if (-not $Script:AnsibleManifest.scripts.Contains($Name)) {
+            $err = [ErrorRecord]::new(
+                [Exception]::new("Could not find the script '$Name'."),
+                "ScriptNotFound",
+                [ErrorCategory]::ObjectNotFound,
+                $Name)
+            $PSCmdlet.ThrowTerminatingError($err)
         }
-    }
-    if ($payload.min_ps_version) {
-        $min_ps_version = [Version]$payload.min_ps_version
-        $actual_ps_version = $PSVersionTable.PSVersion
 
-        Write-AnsibleLog "INFO - checking if actual PS version '$actual_ps_version' is less than the min PS version '$min_ps_version'" "exec_wrapper"
-        if ($actual_ps_version -lt $min_ps_version) {
-            $msg = "internal error: This module cannot run as it requires a minimum PowerShell version of $min_ps_version, actual was $actual_ps_version"
-            Write-AnsibleError -Message $msg
-            exit 1
+        $scriptInfo = $Script:AnsibleManifest.scripts[$Name]
+        $scriptBytes = [Convert]::FromBase64String($scriptInfo.script)
+        $scriptContents = [Encoding]::UTF8.GetString($scriptBytes)
+
+        $sbk = $null
+        if ($IncludeScriptBlock) {
+            $sbk = [Parser]::ParseInput(
+                $scriptContents,
+                $Name,
+                [ref]$null,
+                [ref]$null).GetScriptBlock()
+        }
+
+        [PSCustomObject]@{
+            Name = $Name
+            Script = $scriptContents
+            Path = $scriptInfo.path
+            ScriptBlock = $sbk
         }
     }
 
-    # pop 0th action as entrypoint
-    $action = $payload.actions[0]
-    Write-AnsibleLog "INFO - running action $action" "exec_wrapper"
+    Function Get-NextAnsibleAction {
+        [CmdletBinding()]
+        param ()
 
-    $entrypoint = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($payload.($action)))
-    $entrypoint = [ScriptBlock]::Create($entrypoint)
-    # so we preserve the formatting and don't fall prey to locale issues, some
-    # wrappers want the output to be in base64 form, we store the value here in
-    # case the wrapper changes the value when they create a payload for their
-    # own exec_wrapper
-    $encoded_output = $payload.encoded_output
+        $action, $newActions = $Script:AnsibleManifest.actions
+        $Script:AnsibleManifest.actions = @($newActions | Select-Object)
 
-    try {
-        $output = &$entrypoint -Payload $payload
-        if ($encoded_output -and $null -ne $output) {
-            $b64_output = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($output))
-            Write-Output -InputObject $b64_output
+        $actionName = $action.name
+        $actionParams = $action.params
+        $actionScript = Get-AnsibleScript -Name $actionName -IncludeScriptBlock
+
+        foreach ($kvp in $action.secure_params.GetEnumerator()) {
+            if (-not $kvp.Value) {
+                continue
+            }
+
+            $name = $kvp.Key
+            $actionParams.$name = $kvp.Value | ConvertTo-SecureString -AsPlainText -Force
+        }
+
+        [PSCustomObject]@{
+            Name = $actionName
+            ScriptBlock = $actionScript.ScriptBlock
+            Parameters = $actionParams
+        }
+    }
+
+    Function Get-AnsibleExecWrapper {
+        [CmdletBinding()]
+        param (
+            [Parameter()]
+            [switch]
+            $ManifestAsParam,
+
+            [Parameter()]
+            [switch]
+            $EncodeInputOutput,
+
+            [Parameter()]
+            [switch]
+            $IncludeScriptBlock
+        )
+
+        $sbk = Get-AnsibleScript -Name exec_wrapper.ps1 -IncludeScriptBlock:$IncludeScriptBlock
+        $params = @{
+            # TempPath may contain env vars that change based on the runtime
+            # environment. Ensure we use that and not the $script:AnsibleTempPath
+            # when starting the exec wrapper.
+            TempPath = $TempPath
+            EncodeInputOutput = $EncodeInputOutput.IsPresent
+        }
+
+        $inputData = $null
+        if ($ManifestAsParam) {
+            $params.Manifest = $Script:AnsibleManifest
         }
         else {
-            $output
+            $inputData = ConvertTo-Json -InputObject $Script:AnsibleManifest -Depth 99 -Compress
+            if ($EncodeInputOutput) {
+                $inputData = [Convert]::ToBase64String([Encoding]::UTF8.GetBytes($inputData))
+            }
+        }
+
+        [PSCustomObject]@{
+            Script = $sbk.Script
+            ScriptBlock = $sbk.ScriptBlock
+            Parameters = $params
+            InputData = $inputData
+        }
+    }
+
+    Function Import-PowerShellUtil {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [string[]]
+            $Name
+        )
+
+        foreach ($moduleName in $Name) {
+            $moduleInfo = Get-AnsibleScript -Name $moduleName -IncludeScriptBlock
+            $moduleShortName = [Path]::GetFileNameWithoutExtension($moduleName)
+            $null = New-Module -Name $moduleShortName -ScriptBlock $moduleInfo.ScriptBlock |
+                Import-Module -Scope Global
+        }
+    }
+
+    Function Import-CSharpUtil {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [string[]]
+            $Name
+        )
+
+        Import-PowerShellUtil -Name Ansible.ModuleUtils.AddType.psm1
+
+        $isBasicUtil = $false
+        $csharpModules = foreach ($moduleName in $Name) {
+            (Get-AnsibleScript -Name $moduleName).Script
+
+            if ($moduleName -eq 'Ansible.Basic.cs') {
+                $isBasicUtil = $true
+            }
+        }
+
+        $fakeModule = [PSCustomObject]@{
+            Tmpdir = $Script:AnsibleTempPath
+        }
+        $warningFunc = [PSScriptMethod]::new('Warn', {
+                param($message)
+                $Script:AnsibleWrapperWarnings.Add($message)
+            })
+        $fakeModule.PSObject.Members.Add($warningFunc)
+        Add-CSharpType -References $csharpModules -AnsibleModule $fakeModule
+
+        if ($isBasicUtil) {
+            # Ansible.Basic.cs is a special case where we need to provide it
+            # with the wrapper warnings list so it injects it into the result.
+            [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $Script:AnsibleWrapperWarnings
+        }
+    }
+
+    Function Write-AnsibleErrorJson {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [ErrorRecord]
+            $ErrorRecord,
+
+            [Parameter()]
+            [string]
+            $Message = "failure during exec_wrapper"
+        )
+
+        $exception = @(
+            "$ErrorRecord"
+            "$($ErrorRecord.InvocationInfo.PositionMessage)"
+            "+ CategoryInfo          : $($ErrorRecord.CategoryInfo)"
+            "+ FullyQualifiedErrorId : $($ErrorRecord.FullyQualifiedErrorId)"
+            ""
+            "ScriptStackTrace:"
+            "$($ErrorRecord.ScriptStackTrace)"
+
+            if ($ErrorRecord.Exception.StackTrace) {
+                "$($ErrorRecord.Exception.StackTrace)"
+            }
+        ) -join ([Environment]::NewLine)
+
+        @{
+            failed = $true
+            msg = "${Message}: $ErrorRecord"
+            exception = $exception
+        } | ConvertTo-Json -Compress
+        $host.SetShouldExit(1)
+    }
+
+    Function Write-PowerShellClixmlStderr {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [AllowEmptyString()]
+            [string]
+            $Output
+        )
+
+        if (-not $Output) {
+            return
+        }
+
+        # -EncodedCommand in WinPS will output CLIXML to stderr. This attempts to parse
+        # it into a human readable format otherwise it'll just output the raw CLIXML.
+        $wroteStderr = $false
+        if ($Output.StartsWith('#< CLIXML')) {
+            $clixml = $Output -split "\r?\n"
+            if ($clixml.Count -eq 2) {
+                try {
+                    # PSSerialize.Deserialize doesn't tell us what streams each record
+                    # is for so we get the S attribute manually.
+                    $streams = @(([xml]$clixml[1]).Objs.GetEnumerator() | ForEach-Object { $_.S })
+                    $objects = @([PSSerializer]::Deserialize($clixml[1]))
+
+                    for ($i = 0; $i -lt $objects.Count; $i++) {
+                        $msg = $objects[$i]
+                        if ($msg -isnot [string] -or $streams.Length -le $i) {
+                            continue
+                        }
+
+                        # Doesn't use TrimEnd() so it only removes the last newline
+                        if ($msg.EndsWith([Environment]::NewLine)) {
+                            $msg = $msg.Substring(0, $msg.Length - [Environment]::NewLine.Length)
+                        }
+                        $stream = $streams[$i]
+                        switch ($stream) {
+                            'error' { $host.UI.WriteErrorLine($msg) }
+                            'debug' { $host.UI.WriteDebugLine($msg) }
+                            'verbose' { $host.UI.WriteVerboseLine($msg) }
+                            'warning' { $host.UI.WriteWarningLine($msg) }
+                        }
+                    }
+                    $wroteStderr = $true
+                }
+                catch {
+                    $null = $_
+                }
+            }
+        }
+        if (-not $wroteStderr) {
+            $host.UI.WriteErrorLine($Output.TrimEnd())
+        }
+    }
+
+    # To handle optional input for the incoming manifest and optional input to
+    # the subsequent action we optionally run this step in the begin or end
+    # block.
+    $jsonPipeline = $null
+    $actionPipeline = $null
+    $setupManifest = {
+        [CmdletBinding()]
+        param (
+            [Parameter()]
+            [switch]
+            $ExpectingInput
+        )
+
+        if ($jsonPipeline) {
+            $Script:AnsibleManifest = $jsonPipeline.End()[0]
+            $jsonPipeline.Dispose()
+            $jsonPipeline = $null
+        }
+        else {
+            $Script:AnsibleManifest = $Manifest
+        }
+
+        $actionInfo = Get-NextAnsibleAction
+        $actionParams = $actionInfo.Parameters
+
+        if ($ActionParameters) {
+            foreach ($prop in $ActionParameters.PSObject.Properties) {
+                $actionParams[$prop.Name] = $prop.Value
+            }
+        }
+
+        $actionPipeline = { & $actionInfo.ScriptBlock @actionParams }.GetSteppablePipeline()
+        $actionPipeline.Begin($ExpectingInput)
+        if (-not $ExpectingInput) {
+            $null = $actionPipeline.Process()
+        }
+    }
+
+    try {
+        if ($Manifest) {
+            # If the manifest was provided through the parameter, we can start the
+            # action pipeline and all subsequent input (if any) will be sent to the
+            # action.
+            # It is important that $setupManifest is called by dot sourcing or
+            # else the pipelines started in it loose access to all parent scopes.
+            # https://github.com/PowerShell/PowerShell/issues/17868
+            . $setupManifest -ExpectingInput:$MyInvocation.ExpectingInput
+        }
+        else {
+            # Otherwise the first part of the input is the manifest json with the
+            # chance for extra data afterwards.
+            $jsonPipeline = { ConvertFrom-Json | Convert-JsonObject }.GetSteppablePipeline()
+            $jsonPipeline.Begin($true)
         }
     }
     catch {
-        Write-AnsibleError -Message "internal error: failed to run exec_wrapper action $action" -ErrorRecord $_
-        exit 1
+        Write-AnsibleErrorJson -ErrorRecord $_
     }
-    Write-AnsibleLog "INFO - ending exec_wrapper" "exec_wrapper"
+}
+
+process {
+    try {
+        if ($actionPipeline) {
+            # We received our manifest and started the action pipeline, redirect
+            # all further input to that pipeline.
+            $null = $actionPipeline.Process($InputObject)
+        }
+        elseif ([string]::Equals($InputObject, "`0`0`0`0")) {
+            # Special marker used to indicate all subsequent input is for the
+            # action. Setup that pipeline and finalise the manifest.
+            . $setupManifest -ExpectingInput
+        }
+        elseif ($jsonPipeline) {
+            # Data is for the JSON manifest, decode if needed.
+            if ($EncodeInputOutput) {
+                $jsonPipeline.Process([Encoding]::UTF8.GetString([Convert]::FromBase64String($InputObject)))
+            }
+            else {
+                $jsonPipeline.Process($InputObject)
+            }
+        }
+    }
+    catch {
+        Write-AnsibleErrorJson -ErrorRecord $_
+    }
+}
+
+end {
+    try {
+        if ($jsonPipeline) {
+            # Only manifest input was received, process it now and start the
+            # action pipeline with no input being provided.
+            . $setupManifest
+        }
+
+        $out = $actionPipeline.End()
+        if ($EncodeInputOutput) {
+            [Convert]::ToBase64String([Encoding]::UTF8.GetBytes($out))
+        }
+        else {
+            $out
+        }
+    }
+    catch {
+        Write-AnsibleErrorJson -ErrorRecord $_
+    }
+    finally {
+        $actionPipeline.Dispose()
+    }
 }

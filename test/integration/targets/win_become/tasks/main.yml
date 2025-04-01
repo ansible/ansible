@@ -170,21 +170,30 @@
     become_flags: logon_type=batch invalid_flags=a
     become_method: runas
     register: failed_flags_invalid_key
-    failed_when: "failed_flags_invalid_key.msg != \"internal error: failed to parse become_flags 'logon_type=batch invalid_flags=a': become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'\""
+    ignore_errors: true
 
   - name: test failure with invalid logon_type
     vars: *become_vars
     win_whoami:
     become_flags: logon_type=invalid
     register: failed_flags_invalid_type
-    failed_when: "failed_flags_invalid_type.msg != \"internal error: failed to parse become_flags 'logon_type=invalid': become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials\""
+    ignore_errors: true
 
   - name: test failure with invalid logon_flag
     vars: *become_vars
     win_whoami:
     become_flags: logon_flags=with_profile,invalid
     register: failed_flags_invalid_flag
-    failed_when: "failed_flags_invalid_flag.msg != \"internal error: failed to parse become_flags 'logon_flags=with_profile,invalid': become_flags logon_flags value 'invalid' is not valid, valid values are: with_profile, netcredentials_only\""
+    ignore_errors: true
+
+  - name: assert test failures with invalid runas options
+    assert:
+      that:
+      - failed_flags_invalid_key.msg == "become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
+      - >-
+        failed_flags_invalid_type.msg == "become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials"
+      - >-
+        failed_flags_invalid_flag.msg == "become_flags logon_flags value 'invalid' is not valid, valid values are: none, with_profile, netcredentials_only"
 
   - name: echo some non ascii characters
     win_command: cmd.exe /c echo über den Fußgängerübergang gehen
@@ -241,11 +250,11 @@
     win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
     args:
       executable: cmd.exe
-    when: become_test_username in profile_dir_out.stdout_lines[0]
+    when: become_test_username in profile_dir_out.stdout_lines[0] | default([])
 
   - name: ensure privileged test user profile is deleted
     # NB: have to work around powershell limitation of long filenames until win_file fixes it
     win_shell: rmdir /S /Q {{ admin_profile_dir_out.stdout_lines[0] }}
     args:
       executable: cmd.exe
-    when: become_test_admin_username in admin_profile_dir_out.stdout_lines[0]
+    when: become_test_admin_username in admin_profile_dir_out.stdout_lines[0] | default([])

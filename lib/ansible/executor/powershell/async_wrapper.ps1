@@ -4,7 +4,6 @@
 #AnsibleRequires -CSharpUtil Ansible._Async
 
 using namespace System.Collections
-using namespace System.ComponentModel
 using namespace System.Diagnostics
 using namespace System.IO
 using namespace System.IO.Pipes
@@ -14,45 +13,21 @@ using namespace System.Threading
 [CmdletBinding()]
 param (
     [Parameter(Mandatory)]
-    [IDictionary]
-    $Payload
+    [string]
+    $AsyncDir,
+
+    [Parameter(Mandatory)]
+    [string]
+    $AsyncJid,
+
+    [Parameter(Mandatory)]
+    [int]
+    $StartupTimeout
 )
 
-$ErrorActionPreference = "Stop"
+Import-CSharpUtil -Name 'Ansible._Async.cs'
 
-$utf8 = [UTF8Encoding]::new($false)
-$newTmp = [Environment]::ExpandEnvironmentVariables($Payload.module_args["_ansible_remote_tmp"])
-$asyncDef = $utf8.GetString([Convert]::FromBase64String($Payload.csharp_utils["Ansible._Async"]))
-
-# Ansible.ModuleUtils.AddType handles this but has some extra overhead, as we
-# don't need any of the extra checks we just use Add-Type manually here.
-$addTypeParams = @{
-    TypeDefinition = $asyncDef
-}
-if ($PSVersionTable.PSVersion -ge '6.0') {
-    $addTypeParams.CompilerOptions = '/unsafe'
-}
-else {
-    $referencedAssemblies = @(
-        [Win32Exception].Assembly.Location
-    )
-    $addTypeParams.CompilerParameters = [CodeDom.Compiler.CompilerParameters]@{
-        CompilerOptions = "/unsafe"
-        TempFiles = [CodeDom.Compiler.TempFileCollection]::new($newTmp, $false)
-    }
-    $addTypeParams.CompilerParameters.ReferencedAssemblies.AddRange($referencedAssemblies)
-}
-$origLib = $env:LIB
-$env:LIB = $null
-Add-Type @addTypeParams 5>$null
-$env:LIB = $origLib
-
-if (-not $Payload.environment.ContainsKey("ANSIBLE_ASYNC_DIR")) {
-    Write-AnsibleError -Message "internal error: the environment variable ANSIBLE_ASYNC_DIR is not set and is required for an async task"
-    $host.SetShouldExit(1)
-    return
-}
-$asyncDir = [Environment]::ExpandEnvironmentVariables($Payload.environment.ANSIBLE_ASYNC_DIR)
+$AsyncDir = [Environment]::ExpandEnvironmentVariables($AsyncDir)
 if (-not [Directory]::Exists($asyncDir)) {
     $null = [Directory]::CreateDirectory($asyncDir)
 }
@@ -60,6 +35,7 @@ if (-not [Directory]::Exists($asyncDir)) {
 $parentProcessId = 0
 $parentProcessHandle = $stdoutReader = $stderrReader = $stdinPipe = $stdoutPipe = $stderrPipe = $asyncProcess = $waitHandle = $null
 try {
+    $utf8 = [UTF8Encoding]::new($false)
     $stdinPipe = [AnonymousPipeServerStream]::new([PipeDirection]::Out, [HandleInheritability]::Inheritable)
     $stdoutPipe = [AnonymousPipeServerStream]::new([PipeDirection]::In, [HandleInheritability]::Inheritable)
     $stderrPipe = [AnonymousPipeServerStream]::new([PipeDirection]::In, [HandleInheritability]::Inheritable)
@@ -125,30 +101,25 @@ try {
         $stderrPipe.DisposeLocalCopyOfClientHandle()
     }
 
-    $localJid = "$($Payload.async_jid).$pid"
-    $resultsPath = [Path]::Combine($asyncDir, $localJid)
+    $localJid = "$AsyncJid.$pid"
+    $resultsPath = [Path]::Combine($AsyncDir, $localJid)
 
-    $Payload.async_results_path = $resultsPath
-    $Payload.async_wait_handle_id = [Int64]$clientWaitHandle.DangerousGetHandle()
-    $Payload.actions = $Payload.actions[1..99]
-    $payloadJson = ConvertTo-Json -InputObject $Payload -Depth 99 -Compress
+    $bootstrapWrapper = Get-AnsibleScript -Name bootstrap_wrapper.ps1
+    $execAction = Get-AnsibleExecWrapper -EncodeInputOutput
 
-    # We can't use our normal bootstrap_wrapper.ps1 as it uses $input. We need
-    # to use [Console]::In.ReadToEnd() to ensure it respects the codepage set
-    # at the start of the script. As we are spawning this process with an
-    # explicit new console we can guarantee there is a console present.
-    $bootstrapWrapper = {
-        [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-
-        $inData = [Console]::In.ReadToEnd()
-        $execWrapper, $json_raw = $inData.Split(@("`0`0`0`0"), 2, [StringSplitOptions]::RemoveEmptyEntries)
-        & ([ScriptBlock]::Create($execWrapper))
+    $execAction.Parameters.ActionParameters = @{
+        ResultPath = $resultsPath
+        WaitHandleId = [Int64]$clientWaitHandle.DangerousGetHandle()
     }
-    $execWrapper = $utf8.GetString([Convert]::FromBase64String($Payload.exec_wrapper))
+    $execWrapper = @{
+        name = 'exec_wrapper-async.ps1'
+        script = $execAction.Script
+        params = $execAction.Parameters
+    } | ConvertTo-Json -Compress -Depth 99
+    $asyncInput = "$execWrapper`n`0`0`0`0`n$($execAction.InputData)"
 
-    $encCommand = [Convert]::ToBase64String([Encoding]::Unicode.GetBytes($bootstrapWrapper))
+    $encCommand = [Convert]::ToBase64String([Encoding]::Unicode.GetBytes($bootstrapWrapper.Script))
     $asyncCommand = "`"$executablePath`" -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encCommand"
-    $asyncInput = "$execWrapper`0`0`0`0$payloadJson"
 
     $asyncProcess = [Ansible._Async.AsyncUtil]::CreateAsyncProcess(
         $executablePath,
@@ -203,13 +174,13 @@ try {
     if ($procAlive) {
         # Wait for the process to signal it has started the async task or if it
         # has ended early/timed out.
-        $startupTimeout = [TimeSpan]::FromSeconds($Payload.async_startup_timeout)
+        $waitTimespan = [TimeSpan]::FromSeconds($StartupTimeout)
         $handleIdx = [WaitHandle]::WaitAny(
             @(
                 [Ansible._Async.ManagedWaitHandle]::new($waitHandle),
                 [Ansible._Async.ManagedWaitHandle]::new($asyncProcess.Process)
             ),
-            $startupTimeout)
+            $waitTimespan)
         if ($handleIdx -eq [WaitHandle]::WaitTimeout) {
             $msg = -join @(
                 "Ansible encountered a timeout while waiting for the async task to start and signal it has started. "
@@ -228,21 +199,21 @@ try {
     else {
         # If the process had ended before it signaled it was ready, we return
         # back the raw output and hope it contains an error.
-        Remove-Item -LiteralPath $resultsPath -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $resultsPath -ErrorAction Ignore
 
         $stdout = $asyncProcess.StdoutReader.GetAwaiter().GetResult()
         $stderr = $asyncProcess.StderrReader.GetAwaiter().GetResult()
         $rc = [Ansible._Async.AsyncUtil]::GetProcessExitCode($asyncProcess.Process)
 
         $host.UI.WriteLine($stdout)
-        $host.UI.WriteErrorLine($stderr)
+        Write-PowerShellClixmlStderr -Output $stderr
         $host.SetShouldExit($rc)
     }
 }
 finally {
     if ($parentProcessHandle) { $parentProcessHandle.Dispose() }
     if ($parentProcessId) {
-        Stop-Process -Id $parentProcessId -Force -ErrorAction SilentlyContinue
+        Stop-Process -Id $parentProcessId -Force -ErrorAction Ignore
     }
     if ($stdoutReader) { $stdoutReader.Dispose() }
     if ($stderrReader) { $stderrReader.Dispose() }

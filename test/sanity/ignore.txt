@@ -1,6 +1,5 @@
 .github/ISSUE_TEMPLATE/internal_issue.md pymarkdown!skip
 lib/ansible/config/base.yml no-unwanted-files
-lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid

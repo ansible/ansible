@@ -3,51 +3,48 @@
 
 using namespace Microsoft.Win32.SafeHandles
 using namespace System.Collections
+using namespace System.IO
 using namespace System.Text
 using namespace System.Threading
 
 [CmdletBinding()]
 param (
     [Parameter(Mandatory)]
-    [IDictionary]
-    $Payload
+    [string]
+    $ResultPath,
+
+    [Parameter(Mandatory)]
+    [int]
+    $Timeout,
+
+    [Parameter(Mandatory)]
+    [Int64]
+    $WaitHandleId
 )
 
-$ErrorActionPreference = "Stop"
-
-# pop 0th action as entrypoint
-$payload.actions = $payload.actions[1..99]
-
-$actions = $Payload.actions
-$entrypoint = $payload.($actions[0])
-$entrypoint = [Encoding]::UTF8.GetString([Convert]::FromBase64String($entrypoint))
-
-$resultPath = $payload.async_results_path
-$timeoutSec = $payload.async_timeout_sec
-$waitHandleId = $payload.async_wait_handle_id
-
-if (-not (Test-Path -LiteralPath $resultPath)) {
-    throw "result file at '$resultPath' does not exist"
+if (-not (Test-Path -LiteralPath $ResultPath)) {
+    throw "async result file at '$ResultPath' does not exist"
 }
-$resultJson = Get-Content -LiteralPath $resultPath -Raw
-$result = ConvertFrom-AnsibleJson -InputObject $resultJson
+$result = Get-Content -LiteralPath $ResultPath | ConvertFrom-Json | Convert-JsonObject
 
+# The intermediate script is used so that things are set up like it normally
+# is. The new Runspace is used to ensure we can stop it once the async time is
+# exceeded.
+$execInfo = Get-AnsibleExecWrapper -ManifestAsParam -IncludeScriptBlock
 $ps = [PowerShell]::Create()
+$null = $ps.AddScript(@'
+[CmdletBinding()]
+param([ScriptBlock]$ScriptBlock, $Param)
 
-# these functions are set in exec_wrapper
-$ps.AddScript($script:common_functions).AddStatement() > $null
-$ps.AddScript($script:wrapper_functions).AddStatement() > $null
-$functionParams = @{
-    Name = "common_functions"
-    Value = $script:common_functions
-    Scope = "script"
-}
-$ps.AddCommand("Set-Variable").AddParameters($functionParams).AddStatement() > $null
-
-$ps.AddScript($entrypoint).AddArgument($payload) > $null
+& $ScriptBlock.Ast.GetScriptBlock() @Param
+'@).AddParameters(
+    @{
+        ScriptBlock = $execInfo.ScriptBlock
+        Param = $execInfo.Parameters
+    })
 
 # Signals async_wrapper that we are ready to start the job and to stop waiting
-$waitHandle = [SafeWaitHandle]::new([IntPtr]$waitHandleId, $true)
+$waitHandle = [SafeWaitHandle]::new([IntPtr]$WaitHandleId, $true)
 $waitEvent = [ManualResetEvent]::new($false)
 $waitEvent.SafeWaitHandle = $waitHandle
 $null = $waitEvent.Set()
@@ -56,7 +53,7 @@ $jobOutput = $null
 $jobError = $null
 try {
     $jobAsyncResult = $ps.BeginInvoke()
-    $jobAsyncResult.AsyncWaitHandle.WaitOne($timeoutSec * 1000) > $null
+    $jobAsyncResult.AsyncWaitHandle.WaitOne($Timeout * 1000) > $null
     $result.finished = 1
 
     if ($jobAsyncResult.IsCompleted) {
@@ -65,12 +62,14 @@ try {
 
         # write success/output/error to result object
         # TODO: cleanse leading/trailing junk
-        $moduleResult = ConvertFrom-AnsibleJson -InputObject $jobOutput
+        $moduleResult = $jobOutput | ConvertFrom-Json | Convert-JsonObject
         # TODO: check for conflicting keys
         $result = $result + $moduleResult
     }
     else {
-        $ps.BeginStop($null, $null)  > $null # best effort stop
+        # We can't call Stop() as pwsh won't respond if it is busy calling a .NET
+        # method. The process end will shut everything down instead.
+        $ps.BeginStop($null, $null)  > $null
 
         throw "timed out waiting for module completion"
     }
@@ -99,5 +98,5 @@ catch {
 }
 finally {
     $resultJson = ConvertTo-Json -InputObject $result -Depth 99 -Compress
-    Set-Content -LiteralPath $resultPath -Value $resultJson -Encoding UTF8
+    Set-Content -LiteralPath $ResultPath -Value $resultJson -Encoding UTF8
 }

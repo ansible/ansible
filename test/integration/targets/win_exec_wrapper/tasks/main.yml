@@ -37,6 +37,7 @@
     - throw_module is failed
     - 'throw_module.msg == "Unhandled exception while executing module: module is thrown"'
     - '"throw [ArgumentException]\"module is thrown\"" in throw_module.exception'
+    - '"at <ScriptBlock>, ansible.modules.test_fail.ps1: line 39" in throw_module.exception'
 
 - name: test module with error msg
   test_fail:
@@ -95,7 +96,7 @@
     - function_exception is failed
     - 'function_exception.msg == "Unhandled exception while executing module: exception in function"'
     - '"throw \"exception in function\"" in function_exception.exception'
-    - '"at Test-ThrowException, <No file>: line" in function_exception.exception'
+    - '"at Test-ThrowException, ansible.modules.test_fail.ps1: line" in function_exception.exception'
 
 - name: test module with fail process but Exit-Json
   test_fail:
@@ -288,16 +289,6 @@
       path: C:\Windows\TEMP\test-dir
       state: absent
 
-- name: test common functions in exec
-  test_common_functions:
-  register: common_functions_res
-
-- name: assert test common functions in exec
-  assert:
-    that:
-    - not common_functions_res is failed
-    - common_functions_res.msg == "good"
-
 - name: get PS events containing module args or envvars created since test start
   raw: |
     $dt=[datetime]"{{ test_starttime.stdout|trim }}"
@@ -318,3 +309,17 @@
   assert:
     that:
     - module_had_errors.rc == 0
+
+- name: test module cannot access exec wrapper scope
+  test_exec_wrapper_scope:
+  register: exec_wrapper_scope
+
+- name: assert test module cannot access exec wrapper scope
+  assert:
+    that:
+    - exec_wrapper_scope.module_using_namespace == 'System.Management.Automation.Language.Parser'
+    - exec_wrapper_scope.missing_using_namespace == True
+    - exec_wrapper_scope.script_var == 'foo'
+    - exec_wrapper_scope.util_res.module_using_namespace == 'System.Security.Cryptography.X509Certificates.X509Certificate2'
+    - exec_wrapper_scope.util_res.missing_using_namespace == True
+    - exec_wrapper_scope.util_res.script_var == 'bar'

@@ -126,9 +126,9 @@
 - name: check that script ran but failed with errors
   assert:
     that:
-      - "test_script_with_errors_result.rc != 0"
+      - "test_script_with_errors_result.rc == 1"
       - "not test_script_with_errors_result.stdout"
-      - "test_script_with_errors_result.stderr | length > 0"
+      - test_script_with_errors_result.stderr is search("Oh noes I has an error\\r\\nAt ansible\.builtin\.script\.test_script_with_errors\.ps1")
       - "test_script_with_errors_result is failed"
       - "test_script_with_errors_result is changed"
 
@@ -311,3 +311,16 @@
     that:
     - test_script_result_become.stdout_lines[0]|lower == 'nt authority\\system'
     - test_script_result_become.stdout_lines[1] == 'finished'
+
+- name: run script that emits stderr from sub process
+  script: test_script_with_native_stderr.ps1
+  register: script_stderr
+
+- name: check that script ran and emitted stderr
+  assert:
+    that:
+    - script_stderr.rc == 0
+    - script_stderr.stdout == ""
+    # SSH includes debug output in stderr, and WinRM on 2016 includes a trailing newline
+    # Use a simple search to ensure the expected stderr is present but ignoring any extra output
+    - script_stderr.stderr is search("stderr 1\r\nstderr 2\r\n"),
