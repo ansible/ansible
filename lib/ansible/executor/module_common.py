@@ -28,6 +28,7 @@ import time
 import zipfile
 import re
 import pkgutil
+import typing as t
 
 from ast import AST, Import, ImportFrom
 from io import BytesIO
@@ -39,7 +40,9 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.plugins.become import BecomeBase
 from ansible.plugins.loader import module_utils_loader
+from ansible.template import Templar
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
 
 # Must import strategy and use write_locks from there
@@ -1068,12 +1071,25 @@ def _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data):
         )
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
+def _find_module_utils(
+    module_name: str,
+    b_module_data: bytes,
+    module_path: str,
+    module_args: dict[object, object],
+    task_vars: dict[str, object],
+    templar: Templar,
+    module_compression: str,
+    async_timeout: int,
+    become_plugin: BecomeBase | None,
+    environment: dict[str, str],
+    remote_is_local: bool = False,
+) -> tuple[bytes, t.Literal['binary', 'new', 'non_native_want_json', 'old'], str | None]:
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
     """
+    module_substyle: t.Literal['binary', 'jsonargs', 'non_native_want_json', 'old', 'powershell', 'python']
+    module_style: t.Literal['binary', 'new', 'non_native_want_json', 'old']
     module_substyle = module_style = 'old'
 
     # module_style is something important to calling code (ActionBase).  It
@@ -1096,7 +1112,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif REPLACER_WINDOWS in b_module_data:
         module_style = 'new'
         module_substyle = 'powershell'
-        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
+        b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#AnsibleRequires -PowerShell Ansible.ModuleUtils.Legacy')
     elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
             or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
             or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE) \
@@ -1146,7 +1162,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
 
-        lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
+        lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')  # type: ignore[attr-defined]
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
 
         zipdata = None
@@ -1283,13 +1299,19 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         # safely set this here.  If we let the fallback code handle this
         # it can fail in the presence of the UTF8 BOM commonly added by
         # Windows text editors
-        shebang = u'#!powershell'
+        shebang = '#!powershell'
         # create the common exec wrapper payload and set that as the module_data
         # bytes
         b_module_data = ps_manifest._create_powershell_wrapper(
-            b_module_data, module_path, module_args, environment,
-            async_timeout, become, become_method, become_user, become_password,
-            become_flags, module_substyle, task_vars, remote_module_fqn
+            name=remote_module_fqn,
+            module_data=b_module_data,
+            module_path=module_path,
+            module_args=module_args,
+            environment=environment,
+            async_timeout=async_timeout,
+            become_plugin=become_plugin,
+            substyle=module_substyle,
+            task_vars=task_vars,
         )
 
     elif module_substyle == 'jsonargs':
@@ -1303,12 +1325,17 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         python_repred_args = to_bytes(repr(module_args_json))
         b_module_data = b_module_data.replace(REPLACER_VERSION, to_bytes(repr(__version__)))
         b_module_data = b_module_data.replace(REPLACER_COMPLEX, python_repred_args)
-        b_module_data = b_module_data.replace(REPLACER_SELINUX, to_bytes(','.join(C.DEFAULT_SELINUX_SPECIAL_FS)))
+        b_module_data = b_module_data.replace(
+            REPLACER_SELINUX,
+            to_bytes(','.join(C.DEFAULT_SELINUX_SPECIAL_FS)))  # type: ignore[attr-defined]
 
         # The main event -- substitute the JSON args string into the module
         b_module_data = b_module_data.replace(REPLACER_JSONARGS, module_args_json)
 
-        facility = b'syslog.' + to_bytes(task_vars.get('ansible_syslog_facility', C.DEFAULT_SYSLOG_FACILITY), errors='surrogate_or_strict')
+        syslog_facility = task_vars.get(
+            'ansible_syslog_facility',
+            C.DEFAULT_SYSLOG_FACILITY)  # type: ignore[attr-defined]
+        facility = b'syslog.' + to_bytes(syslog_facility, errors='surrogate_or_strict')
         b_module_data = b_module_data.replace(b'syslog.LOG_USER', facility)
 
     return (b_module_data, module_style, shebang)
@@ -1337,8 +1364,8 @@ def _extract_interpreter(b_module_data):
     return interpreter, args
 
 
-def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
+def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0,
+                  become_plugin=None, environment=None, remote_is_local=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1367,10 +1394,19 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         # read in the module source
         b_module_data = f.read()
 
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
-                                                                async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment, remote_is_local=remote_is_local)
+    (b_module_data, module_style, shebang) = _find_module_utils(
+        module_name,
+        b_module_data,
+        module_path,
+        module_args,
+        task_vars,
+        templar,
+        module_compression,
+        async_timeout=async_timeout,
+        become_plugin=become_plugin,
+        environment=environment,
+        remote_is_local=remote_is_local,
+    )
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))

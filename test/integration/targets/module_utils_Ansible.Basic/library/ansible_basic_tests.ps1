@@ -1324,32 +1324,32 @@ test_no_log - Invoked with:
     }
 
     "Run with exec wrapper warnings" = {
-        Set-Variable -Name complex_args -Scope Global -Value @{
-            _ansible_exec_wrapper_warnings = [System.Collections.Generic.List[string]]@(
-                'Warning 1',
-                'Warning 2'
-            )
-        }
-        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Warn("Warning 3")
-
-        $failed = $false
+        [Ansible.Basic.AnsibleModule]::_WrapperWarnings = [System.Collections.Generic.List[string]]@('Warning 1', 'Warning 2')
         try {
-            $m.ExitJson()
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+            $m.Warn("Warning 3")
+
+            $failed = $false
+            try {
+                $m.ExitJson()
+            }
+            catch [System.Management.Automation.RuntimeException] {
+                $failed = $true
+                $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+                $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+            }
+            $failed | Assert-Equal -Expected $true
         }
-        catch [System.Management.Automation.RuntimeException] {
-            $failed = $true
-            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        finally {
+            [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $null
         }
-        $failed | Assert-Equal -Expected $true
 
         $expected = @{
             changed = $false
             invocation = @{
                 module_args = @{}
             }
-            warnings = @("Warning 1", "Warning 2", "Warning 3")
+            warnings = @("Warning 3", "Warning 1", "Warning 2")
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }

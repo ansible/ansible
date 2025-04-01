@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 // Used by async_wrapper.ps1, not for general use.
+//AllowUnsafe
 
 namespace Ansible._Async
 {

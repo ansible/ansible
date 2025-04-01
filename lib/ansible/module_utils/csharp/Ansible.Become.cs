@@ -221,6 +221,7 @@ namespace Ansible.Become
     [Flags]
     public enum LogonFlags
     {
+        None = 0x00000000,
         WithProfile = 0x00000001,
         NetcredentialsOnly = 0x00000002
     }

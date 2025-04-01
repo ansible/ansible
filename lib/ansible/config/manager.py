@@ -12,7 +12,6 @@ import sys
 import stat
 import tempfile
 
-from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
@@ -26,8 +25,6 @@ from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
-
-Setting = namedtuple('Setting', 'name value origin type')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
