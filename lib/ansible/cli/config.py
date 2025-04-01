@@ -21,7 +21,7 @@ import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.config.manager import ConfigManager, Setting
+from ansible.config.manager import ConfigManager
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common.json import json_dump
@@ -458,21 +458,21 @@ class ConfigCLI(CLI):
 
         entries = []
         for setting in sorted(config):
-            changed = (config[setting].origin not in ('default', 'REQUIRED') and setting not in _IGNORE_CHANGED)
+            changed = (config[setting]['origin'] not in ('default', 'REQUIRED') and setting not in _IGNORE_CHANGED)
 
             if context.CLIARGS['format'] == 'display':
-                if isinstance(config[setting], Setting):
+                if isinstance(config[setting], dict):
                     # proceed normally
-                    value = config[setting].value
-                    if config[setting].origin == 'default' or setting in _IGNORE_CHANGED:
+                    value = config[setting]['value']
+                    if config[setting]['origin'] == 'default' or setting in _IGNORE_CHANGED:
                         color = 'green'
                         value = self.config.template_default(value, get_constants())
-                    elif config[setting].origin == 'REQUIRED':
+                    elif config[setting]['origin'] == 'REQUIRED':
                         # should include '_terms', '_input', etc
                         color = 'red'
                     else:
                         color = 'yellow'
-                    msg = "%s(%s) = %s" % (setting, config[setting].origin, value)
+                    msg = "%s(%s) = %s" % (setting, config[setting]['origin'], value)
                 else:
                     color = 'green'
                     msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
@@ -480,10 +480,10 @@ class ConfigCLI(CLI):
                 entry = stringc(msg, color)
             else:
                 entry = {}
-                for key in config[setting]._fields:
+                for key in config[setting].keys():
                     if key == 'type':
                         continue
-                    entry[key] = getattr(config[setting], key)
+                    entry[key] = config[setting][key]
 
             if not context.CLIARGS['only_changed'] or changed:
                 entries.append(entry)
@@ -497,7 +497,12 @@ class ConfigCLI(CLI):
         # convert to settings
         for setting in config.keys():
             v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
-            config[setting] = Setting(setting, v, o, None)
+            config[setting] = {
+                'name': setting,
+                'value': v,
+                'origin': o,
+                'type': None
+            }
 
         return self._render_settings(config)
 
@@ -554,7 +559,12 @@ class ConfigCLI(CLI):
                     # not all cases will be error
                     o = 'REQUIRED'
 
-                config_entries[finalname][setting] = Setting(setting, v, o, None)
+                config_entries[finalname][setting] = {
+                    'name': setting,
+                    'value': v,
+                    'origin': o,
+                    'type': None
+                }
 
             # pretty please!
             results = self._render_settings(config_entries[finalname])
@@ -587,7 +597,12 @@ class ConfigCLI(CLI):
                 if v is None and o is None:
                     # not all cases will be error
                     o = 'REQUIRED'
-                server_config[setting] = Setting(setting, v, o, None)
+                server_config[setting] = {
+                    'name': setting,
+                    'value': v,
+                    'origin': o,
+                    'type': None
+                }
             if context.CLIARGS['format'] == 'display':
                 if not context.CLIARGS['only_changed'] or server_config:
                     equals = '=' * len(server)
@@ -617,7 +632,7 @@ class ConfigCLI(CLI):
                 for server_config in server_config_list:
                     server = list(server_config.keys())[0]
                     server_reduced_config = server_config.pop(server)
-                    configs[server] = server_reduced_config
+                    configs[server] = list(server_reduced_config.values())
                 output.append({'GALAXY_SERVERS': configs})
 
         if context.CLIARGS['type'] == 'all':
