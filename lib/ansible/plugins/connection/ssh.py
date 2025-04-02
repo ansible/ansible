@@ -785,6 +785,7 @@ class Connection(ConnectionBase):
                 encoding=serialization.Encoding.OpenSSH,
                 format=serialization.PublicFormat.OpenSSH
             ))
+        # move atomically to prevent race conditions, silently succeeds if the target exists
         os.rename(f.name, pubkey_path)
         os.chmod(pubkey_path, mode=0o400)
 
