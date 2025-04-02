@@ -817,8 +817,17 @@ class GalaxyAPI:
 
         signatures = data.get('signatures') or []
 
+        download_url_info = urlparse(data['download_url'])
+        if not download_url_info.scheme and not download_url_info.path.startswith('/'):
+            # galaxy does a lot of redirects, with much more complex pathing than we use
+            # within this codebase, without updating _call_galaxy to be able to return
+            # the final URL, we can't reliably build a relative URL.
+            raise AnsibleError(f'Invalid non absolute download_url: {data["download_url"]}')
+
+        download_url = urljoin(self.api_server, data['download_url'])
+
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
-                                         data['download_url'], data['artifact']['sha256'],
+                                         download_url, data['artifact']['sha256'],
                                          data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
@@ -896,12 +905,10 @@ class GalaxyAPI:
             if not next_link:
                 break
             elif relative_link:
-                # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
-                # with someone who knows the AH API.
-
-                # Remove the query string from the versions_url to use the next_link's query
-                versions_url = urljoin(versions_url, urlparse(versions_url).path)
-                next_link = versions_url.replace(versions_url_info.path, next_link)
+                next_link_info = urlparse(next_link)
+                if not next_link_info.scheme and not next_link_info.path.startswith('/'):
+                    raise AnsibleError(f'Invalid non absolute pagination link: {next_link}')
+                next_link = urljoin(self.api_server, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
