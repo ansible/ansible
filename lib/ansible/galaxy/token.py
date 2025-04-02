@@ -67,7 +67,7 @@ class KeycloakToken(object):
             payload['client_secret'] = self.client_secret
             payload['scope'] = 'api.console'
             payload['grant_type'] = 'client_credentials'
-            if self.access_token:
+            if self.access_token not in (None, NoTokenSentinel):
                 display.warning(
                     'Found both a client_secret and access_token for galaxy authentication, ignoring access_token'
                 )
