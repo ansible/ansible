@@ -38,7 +38,6 @@ try:
         RSAPublicKey,
         RSAPublicNumbers,
     )
-    from cryptography.hazmat.primitives.serialization import ssh
 except ImportError:
     HAS_CRYPTOGRAPHY = False
 else:
