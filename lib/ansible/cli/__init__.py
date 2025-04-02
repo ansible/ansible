@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import locale
 import os
+import signal
 import sys
 
 
@@ -131,6 +132,12 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 
+_SSH_AGENT_STDOUT_READ_TIMEOUT = 5  # seconds
+
+def _ssh_agent_timeout_handler(signum, frame):
+    raise TimeoutError
+
+
 def _launch_ssh_agent() -> None:
     ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
     match ssh_agent_cfg:
@@ -145,6 +152,7 @@ def _launch_ssh_agent() -> None:
             ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
             os.mkdir(ssh_agent_dir, 0o700)
             sock = os.path.join(ssh_agent_dir, 'agent.sock')
+            display.vvv('SSH_AGENT: starting...')
             try:
                 p = subprocess.Popen(
                     [ssh_agent_bin, '-D', '-s', '-a', sock],
@@ -159,9 +167,20 @@ def _launch_ssh_agent() -> None:
 
             if p.poll() is not None:
                 raise AnsibleError(
-                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr.decode()}"'
+                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr.read().decode()}"'
                 )
-            if (stdout := p.stdout.read(13)) != b'SSH_AUTH_SOCK':
+
+            old_sigalrm_handler = signal.signal(signal.SIGALRM, _ssh_agent_timeout_handler)
+            signal.alarm(_SSH_AGENT_STDOUT_READ_TIMEOUT)
+            try:
+                stdout = p.stdout.read(13)
+            except TimeoutError:
+                stdout = b''
+            finally:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old_sigalrm_handler)
+
+            if stdout != b'SSH_AUTH_SOCK':
                 display.warning(
                     f'The first 13 characters of stdout did not match the '
                     f'expected SSH_AUTH_SOCK. This may not be the right binary, '
