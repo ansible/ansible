@@ -635,7 +635,10 @@ class CLI(ABC):
         loader.set_vault_secrets(vault_secrets)
 
         if self.USES_CONNECTION:
-            _launch_ssh_agent()
+            try:
+                _launch_ssh_agent()
+            except Exception as e:
+                raise AnsibleError('Failed to launch ssh agent', orig_exc=e)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))

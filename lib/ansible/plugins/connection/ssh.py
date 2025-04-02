@@ -436,7 +436,7 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.utils._ssh_agent import load_private_key, SshAgentClient, PublicKeyMsg
+from ansible.utils._ssh_agent import SshAgentClient, PublicKeyMsg
 
 try:
     from cryptography.hazmat.primitives import serialization
@@ -754,9 +754,9 @@ class Connection(ConnectionBase):
 
         key_data = self.get_option('private_key')
         passphrase = self.get_option('private_key_passphrase')
-        private_key = load_private_key(
+        private_key = serialization.ssh.load_ssh_private_key(
             to_bytes(key_data),
-            to_bytes(passphrase) if passphrase else None
+            to_bytes(passphrase) if passphrase else None,
         )
         public_key = private_key.public_key()
         pubkey_msg = PublicKeyMsg.from_public_key(public_key)
@@ -877,7 +877,13 @@ class Connection(ConnectionBase):
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
         if self.get_option('private_key'):
-            key = self._populate_agent()
+            try:
+                key = self._populate_agent()
+            except Exception as e:
+                raise AnsibleAuthenticationFailure(
+                    'Failed to add configured private key into ssh-agent',
+                    orig_exc=e,
+                )
             b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', to_bytes(f'IdentityFile="{key}"', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, "ANSIBLE_PRIVATE_KEY/private_key set")
         elif key := self.get_option('private_key_file'):
