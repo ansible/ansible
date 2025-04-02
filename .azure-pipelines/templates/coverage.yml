@@ -23,7 +23,7 @@ jobs:
       - bash: .azure-pipelines/scripts/report-coverage.sh
         displayName: Generate Coverage Report
         condition: gt(variables.coverageFileCount, 0)
-      - bash: .azure-pipelines/scripts/publish-codecov.py "$(outputPath)"
-        displayName: Publish to codecov.io
-        condition: gt(variables.coverageFileCount, 0)
-        continueOnError: true
+      # - bash: .azure-pipelines/scripts/publish-codecov.py "$(outputPath)"
+      #   displayName: Publish to codecov.io
+      #   condition: gt(variables.coverageFileCount, 0)
+      #   continueOnError: true
