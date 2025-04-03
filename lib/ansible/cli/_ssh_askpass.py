@@ -33,6 +33,13 @@ def main() -> t.Never:
         # We must be running after the ansible fork is shutting down
         sys.exit(1)
     cfg = json.loads(shm.buf.tobytes().rstrip(b'\x00'))
+
+    try:
+        if cfg['prompt'] not in sys.argv[1]:
+            sys.exit(1)
+    except IndexError:
+        sys.exit(1)
+
     sys.stdout.buffer.write(cfg['password'].encode('utf-8'))
     sys.stdout.flush()
     shm.buf[:] = b'\x00' * shm.size

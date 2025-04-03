@@ -79,17 +79,26 @@ DOCUMENTATION = """
               - name: ansible_ssh_password_mechanism
       sshpass_prompt:
           description:
-              - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+              - Password prompt that C(sshpass)/C(SSH_ASKPASS) should search for.
+              - Supported by sshpass 1.06 and up when O(password_mechanism) set to V(sshpass).
               - Defaults to C(Enter PIN for) when pkcs11_provider is set.
+              - Defaults to C(assword) when O(password_mechanism) set to V(ssh_askpass).
           default: ''
           type: string
           ini:
               - section: 'ssh_connection'
                 key: 'sshpass_prompt'
+              - section: 'ssh_connection'
+                key: 'ssh_askpass_prompt'
+                version_added: '2.19'
           env:
               - name: ANSIBLE_SSHPASS_PROMPT
+              - name: ANSIBLE_SSH_ASKPASS_PROMPT
+                version_added: '2.19'
           vars:
               - name: ansible_sshpass_prompt
+              - name: ansible_ssh_askpass_prompt
+                version_added: '2.19'
           version_added: '2.10'
       ssh_args:
           description: Arguments to pass to all SSH CLI tools.
@@ -965,9 +974,10 @@ class Connection(ConnectionBase):
             kwargs['track'] = False
         self.shm = shm = SharedMemory(create=True, size=16384, **kwargs)  # type: ignore[arg-type]
 
-        data = json.dumps(
-            {'password': conn_password},
-        ).encode('utf-8')
+        data = json.dumps({
+            'password': conn_password,
+            'prompt': self.get_option('sshpass_prompt') or 'assword',
+        }).encode('utf-8')
         shm.buf[:len(data)] = bytearray(data)
         shm.close()
 
