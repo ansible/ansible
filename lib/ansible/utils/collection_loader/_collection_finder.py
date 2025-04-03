@@ -1182,13 +1182,6 @@ def _get_collection_name_from_path(path):
     :param path: path to evaluate for collection containment
     :return: collection name or None
     """
-    if not path:
-        return ""  # Return an empty string instead of None
-    
-    # Existing logic...
-    collection_name = some_processing_logic(path)
-
-    return collection_name if collection_name is not None else ""  # Ensure it never returns None
 
     # ensure we compare full paths since pkg path will be abspath
     path = to_native(os.path.abspath(to_bytes(path)))
