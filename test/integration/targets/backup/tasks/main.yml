@@ -133,10 +133,3 @@
         path: "{{item}}"
         state: absent
       loop: "{{myfiles}}"
-
-  always:
-    - name: cleanup
-      file:
-        path: "{{item}}"
-        state: absent
-      loop: "{{myfiles}}"
