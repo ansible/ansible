@@ -4,6 +4,7 @@
 using namespace Microsoft.Win32.SafeHandles
 using namespace System.Collections
 using namespace System.IO
+using namespace System.Management.Automation
 using namespace System.Text
 using namespace System.Threading
 
@@ -43,6 +44,15 @@ param([ScriptBlock]$ScriptBlock, $Param)
         Param = $execInfo.Parameters
     })
 
+# It is important we run with the invocation settings so that it has access
+# to the same PSHost. The pipeline input also needs to be marked as complete
+# so the exec_wrapper isn't waiting for input indefinitely.
+$pipelineInput = [PSDataCollection[object]]::new()
+$pipelineInput.Complete()
+$invocationSettings = [PSInvocationSettings]@{
+    Host = $host
+}
+
 # Signals async_wrapper that we are ready to start the job and to stop waiting
 $waitHandle = [SafeWaitHandle]::new([IntPtr]$WaitHandleId, $true)
 $waitEvent = [ManualResetEvent]::new($false)
@@ -52,7 +62,7 @@ $null = $waitEvent.Set()
 $jobOutput = $null
 $jobError = $null
 try {
-    $jobAsyncResult = $ps.BeginInvoke()
+    $jobAsyncResult = $ps.BeginInvoke($pipelineInput, $invocationSettings, $null, $null)
     $jobAsyncResult.AsyncWaitHandle.WaitOne($Timeout * 1000) > $null
     $result.finished = 1
 
