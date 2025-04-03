@@ -1,0 +1,23 @@
+# Test discovery error handling when a connection failure is involved (raises AnsibleError).
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - add_host:
+        name: bad_connection
+        ansible_connection: ssh
+        ansible_port: 1
+        ansible_host: localhost
+        ansible_python_interpreter: auto
+        ansible_pipelining: yes
+
+- hosts: bad_connection
+  gather_facts: no
+  tasks:
+    - ping:
+      register: discovery
+      ignore_unreachable: yes
+
+    - assert:
+        that:
+          - discovery is unreachable
