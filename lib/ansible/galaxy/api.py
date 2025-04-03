@@ -914,7 +914,7 @@ class GalaxyAPI:
         """
         Gets the collection signatures from the Galaxy server about a specific Collection version.
 
-        :param namespace: The collection namespace.
+        :param namespace: The collection namespace
         :param name: The collection name.
         :param version: Version of the collection to get the information for.
         :return: A list of signature strings.
