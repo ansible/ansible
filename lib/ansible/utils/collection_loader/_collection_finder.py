@@ -1133,16 +1133,7 @@ def _get_collection_playbook_path(playbook):
 
 
 def _get_collection_role_path(role_name, collection_list=None):
-    return _get_collection_resource_path(role_name, u'role', collection_list)
-
-
-def _get_collection_resource_path(name, ref_type, collection_list=None):
-
-    if ref_type == u'playbook':
-        # they are handled a bit diff due to 'extension variance' and no collection_list
-        return _get_collection_playbook_path(name)
-
-    acr = AnsibleCollectionRef.try_parse_fqcr(name, ref_type)
+    acr = AnsibleCollectionRef.try_parse_fqcr(role_name, u'role')
     if acr:
         # looks like a valid qualified collection ref; skip the collection_list
         collection_list = [acr.collection]
@@ -1151,19 +1142,20 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
     elif not collection_list:
         return None  # not a FQ and no collection search list spec'd, nothing to do
     else:
-        resource = name  # treat as unqualified, loop through the collection search list to try and resolve
+        resource = role_name  # treat as unqualified, loop through the collection search list to try and resolve
         subdirs = ''
 
     for collection_name in collection_list:
         try:
-            acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=subdirs, resource=resource, ref_type=ref_type)
+            acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=subdirs, resource=resource, ref_type=u'role')
             # FIXME: error handling/logging; need to catch any import failures and move along
             pkg = import_module(acr.n_python_package_name)
 
             if pkg is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
                 path = os.path.dirname(to_bytes(sys.modules[acr.n_python_package_name].__file__, errors='surrogate_or_strict'))
-                return resource, to_text(path, errors='surrogate_or_strict'), collection_name
+                subdir_resource = "%s.%s" % (subdirs, resource) if subdirs else resource
+                return subdir_resource, to_text(path, errors='surrogate_or_strict'), collection_name
 
         except (IOError, ModuleNotFoundError) as e:
             continue
