@@ -711,7 +711,7 @@ class ConfigCLI(CLI):
                         # Validate only the required key for galaxy servers
                         if s.startswith("galaxy_server.") and s in sections:
                             if 'url' not in p.options(s):
-                                display.error(f"Missing required key 'url' in section '{s}' in '{C.CONFIG_FILE}'.")
+                                display.error(f"Missing required key 'url' in section '{s}' in '{C.CONFIG_FILE}.")
                                 found = True                   
         elif context.CLIARGS['format'] == 'env':
             # validate any 'ANSIBLE_' env vars found
