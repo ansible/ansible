@@ -134,6 +134,7 @@ except ImportError:
 
 _SSH_AGENT_STDOUT_READ_TIMEOUT = 5  # seconds
 
+
 def _ssh_agent_timeout_handler(signum, frame):
     raise TimeoutError
 
