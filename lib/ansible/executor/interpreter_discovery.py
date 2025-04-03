@@ -71,7 +71,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         if not is_silent:
             action._discovery_warnings.append(f'Unhandled error in Python interpreter discovery for host {host}: {ex}')
             display.debug(msg=f'Interpreter discovery traceback:\n{format_exc()}', host=host)
-            if res and res.get('stderr'):  # it may not be possible to reach this point without having res and stderr
+            if res and res.get('stderr'):  # the current ssh plugin implementation always has stderr, making coverage of the false case difficult
                 display.vvv(msg=f"Interpreter discovery remote stderr:\n{res.get('stderr')}", host=host)
 
     if not is_silent:
