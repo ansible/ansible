@@ -708,6 +708,12 @@ class ConfigCLI(CLI):
                                 display.error(f"Found unknown key '{k}' in section '{s}' in '{C.CONFIG_FILE}.")
                                 found = True
 
+                        # Validate only the required key for galaxy servers
+                        if s.startswith("galaxy_server.") and s in sections:
+                            if 'url' not in p.options(s):
+                                display.error(f"Missing required key 'url' in section '{s}' in '{C.CONFIG_FILE}'.")
+                                found = True
+                                
         elif context.CLIARGS['format'] == 'env':
             # validate any 'ANSIBLE_' env vars found
             evars = [varname for varname in os.environ.keys() if _ansible_env_vars(varname)]
