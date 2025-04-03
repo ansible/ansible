@@ -1,0 +1,5 @@
+bbasename: "{{dest|basename}}"
+dest: "{{ tempfile['path'] }}"
+myfiles: "{{[dest, backup.files, custom.files, ignored.files]|flatten(1)}}"
+#now: "{{lookup('pipe', 'date')}}"
+output_dir: "{{lookup('env', 'OUTPUT_DIR')|default('/var/tmp')}}"

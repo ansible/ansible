@@ -1,0 +1,142 @@
+- name: setup backup test
+  vars:
+    timestamp: '\d{4}-\d{2}-\d{2}@\d{2}:\d{2}:\d{2}' #212692.2025-04-03@13:05:06
+  block:
+    - name: make test tempfile
+      tempfile:
+        prefix: a_b_
+        path: '{{output_dir}}'
+      register: tempfile
+
+    - name: create initial file
+      copy: content='init' dest={{dest}}
+
+    - name: test no backup
+      vars:
+        now: 1
+      block:
+      - name: force change, no backup
+        template:
+          src: backmeup.j2
+          dest: "{{dest}}"
+          backup: no
+        register: first
+
+      - name: find backup
+        find:
+          file_type: file
+          use_regex: true
+          paths: '{{output_dir}}'
+          patterns: ['{{bbasename}}\.\d+\.{{timestamp}}~']
+        register: backup
+
+      - name: No backup was created
+        assert:
+          that:
+            - not first.backup_file|default('')|basename|regex_search(bbasename + '.*\.\d+.' + timestamp + '~')
+            - backup['files']|length == 0
+
+    - name: test default backup ('{basename}.{pid}.{timestamp}~')
+      vars:
+        now: 2
+      block:
+      - name: force change/backup
+        template:
+          src: backmeup.j2
+          dest: "{{dest}}"
+          backup: True
+        register: second
+
+      - name: find backup
+        find:
+          file_type: file
+          use_regex: true
+          paths: '{{output_dir}}'
+          patterns: ['{{bbasename}}\.\d+\.{{timestamp}}~']
+        register: backup
+
+      - name: Backup matching default template
+        assert:
+          that:
+            - second.backup_file|basename|regex_search(bbasename + '.*\.\d+.' + timestamp + '~')
+            - backup['files']|length > 0
+
+    - name: test custom backup
+      vars:
+        now: 3
+        ansible_backup_file_name_template: '{timestamp}.{pid}.{basename}~'
+      block:
+      - name: force change/backup for custom
+        template:
+          src: backmeup.j2
+          dest: "{{dest}}"
+          backup: yes
+        register: third
+
+      - name: find backup
+        find:
+          file_type: file
+          use_regex: true
+          paths: '{{output_dir}}'
+          patterns: ['{{timestamp}}\.\d+\.{{bbasename}}~']
+        register: custom
+
+      - name: Backup matching default template
+        assert:
+          that:
+            - third.backup_file|basename|regex_search(timestamp + '.*\.\d+.' + bbasename + '~')
+            - custom['files']|length > 0
+
+    - name: test bad template detection
+      vars:
+        ansible_backup_file_name_template: '{{item}}'
+        now: 4 + {{loop_index}}
+        badones:
+          - '{basename}~'
+          - !unsafe '{{basename}}.{pid}~'
+          - '{../basename}.{pid}~'
+          - '{pid}.{timestamp}~'
+
+      block:
+      - name: force change/backup for invalid
+        template:
+          src: backmeup.j2
+          dest: "{{dest}}"
+          backup: yes
+        register: baddies
+        loop_control:
+          index_var: loop_index
+        loop: '{{ badones }}'
+
+      - name: find backup ignored baddies
+        find:
+          file_type: file
+          use_regex: true
+          paths: '{{output_dir}}'
+          patterns: ['{{bbasename}}\.\d+\.{{timestamp}}~']
+        register: ignored
+
+      - name: ensure bad backups templates were ignored
+        assert:
+          that:
+            - ignored['files']|length > 0
+
+      - name: ensure bad backups were ignored
+        assert:
+          that:
+            - item.backup_file|basename|regex_search(bbasename + '.*\.\d+.' + timestamp + '~')
+        loop: '{{baddies.results}}'
+
+  always:
+    - name: cleanup
+      file:
+        path: "{{item}}"
+        state: absent
+      loop: "{{myfiles}}"
+
+  always:
+    - name: cleanup
+      file:
+        path: "{{item}}"
+        state: absent
+      loop: "{{myfiles}}"
