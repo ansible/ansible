@@ -379,7 +379,7 @@ class PullCLI(CLI):
             if 0 < len(errors):
                 display.warning("\n".join(errors))
             elif len(playbooks) == len(context.CLIARGS['args']):
-                playbook = " ".join(str(playbooks))
+                playbook = " ".join(playbooks)
             return playbook
         else:
             fqdn = socket.getfqdn()
