@@ -84,7 +84,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 playbook = os.path.join(basedir, playbook)
 
             # might still be collection playbook
-            playbook_collection = _get_collection_name_from_path(playbook)
+            playbook_collection = _get_collection_name_from_path(playbook) or "default_collection"
 
         if playbook_collection:
             # it is a collection playbook, setup default collections
