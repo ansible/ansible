@@ -283,15 +283,20 @@ class PullCLI(CLI):
         display.vvvv('EXEC: %s' % cmd)
         rc, b_out, b_err = safe_output_env(run_cmd)(cmd, live=True)
 
-        print('BCS', context.CLIARGS['ifchanged'], b'"changed": true' not in b_out, b"changed: True" not in b_out)
         if rc != 0:
             if context.CLIARGS['force']:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif context.CLIARGS['ifchanged'] and (b'"changed": true' not in b_out or b"changed: True" not in b_out):
-            display.display("Repository has not changed, quitting.")
-            return 0
+        elif context.CLIARGS['ifchanged']:
+            # detect json/yaml/header, any count as 'changed'
+            for detect in (b'"changed": true', b"changed: True", b"| CHANGED =>"):
+                if detect in b_out:
+                   break
+            else:
+                # no change, we bail
+                display.display(f"Repository has not changed, quitting: {b_out!r}")
+                return 0
 
         playbook = self.select_playbook(context.CLIARGS['dest'])
         if playbook is None:
