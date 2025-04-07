@@ -292,7 +292,7 @@ class PullCLI(CLI):
             # detect json/yaml/header, any count as 'changed'
             for detect in (b'"changed": true', b"changed: True", b"| CHANGED =>"):
                 if detect in b_out:
-                   break
+                    break
             else:
                 # no change, we bail
                 display.display(f"Repository has not changed, quitting: {b_out!r}")
