@@ -1486,7 +1486,7 @@ class Connection(ConnectionBase):
 
     @property
     def has_tty(self):
-        return self.is_tty_requested()
+        return self._is_tty_requested()
 
     def _is_tty_requested(self):
 
@@ -1503,9 +1503,13 @@ class Connection(ConnectionBase):
             return True
 
         for arg in args.o or []:
-            val = arg.split('=', 1)
-            if val[0].lower() == 'requesttty':
-                if val[1].lower() in ('yes', 'force'):
+            if '=' in arg:
+                val = arg.split('=', 1)
+            else:
+                val = arg.split(maxsplit=1)
+
+            if val[0].lower().strip() == 'requesttty':
+                if val[1].lower().strip() in ('yes', 'force'):
                     return True
 
         return False
