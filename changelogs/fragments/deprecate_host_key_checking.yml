@@ -1,0 +1,3 @@
+---
+deprecated_features:
+  - config - deprecate host_key_checking from the global configuration.

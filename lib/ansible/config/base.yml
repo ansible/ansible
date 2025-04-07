@@ -1551,6 +1551,10 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+  deprecated:
+    why: This option was moved to the individual plugin itself
+    version: "2.22"
+    alternatives: Use the option from the plugin itself.
 HOST_PATTERN_MISMATCH:
   name: Control host pattern mismatch behaviour
   default: 'warning'
