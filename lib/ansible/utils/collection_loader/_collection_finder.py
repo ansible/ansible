@@ -24,6 +24,7 @@ from types import ModuleType
 # that only allow stdlib and module_utils
 from . import _to_bytes, _to_text
 from ._collection_config import AnsibleCollectionConfig
+from ansible.utils.display import Display
 
 try:
     try:
@@ -49,6 +50,7 @@ except ImportError:
 
 PB_EXTENSIONS = ('.yml', '.yaml')
 SYNTHETIC_PACKAGE_NAME = '<ansible_synthetic_collection_package>'
+display = Display()
 
 
 class _AnsibleNSTraversable:
@@ -1141,20 +1143,26 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
         subdirs = ''
 
     for collection_name in collection_list:
+        display.vvvv(f"Attempt to load {ref_type} '{resource}' from '{collection_name}'")
         try:
             acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=subdirs, resource=resource, ref_type=ref_type)
-            # FIXME: error handling/logging; need to catch any import failures and move along
-            pkg = import_module(acr.n_python_package_name)
+            try:
+                pkg = import_module(acr.n_python_package_name)
+            except ImportError as e:
+                display.vvvv(f"Unable to load {ref_type} '{resource}' from '{collection_name}': {e!r|}")
+                continue
 
             if pkg is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
                 path = os.path.dirname(_to_bytes(sys.modules[acr.n_python_package_name].__file__))
-                return resource, _to_text(path), collection_name
+                resource_name = ".".join(subdirs.split(os.path.sep) + [resource]) if subdirs else resource
+                return resource_name, _to_text(path), collection_name
 
         except (IOError, ModuleNotFoundError) as e:
+            display.vvvv(f"Failed accessing {ref_type} '{resource}' from '{collection_name}': {e!r|}")
             continue
         except Exception as ex:
-            # FIXME: pick out typical import errors first, then error logging
+            display.vvvv(f"Unexpected error while loading {ref_type} '{resource}' from '{collection_name}': {e!r|}")
             continue
 
     return None
