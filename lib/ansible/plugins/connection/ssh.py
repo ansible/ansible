@@ -79,8 +79,10 @@ DOCUMENTATION = """
               - name: ansible_ssh_password_mechanism
       sshpass_prompt:
           description:
-              - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+              - Password prompt that C(sshpass)/C(SSH_ASKPASS) should search for.
+              - Supported by sshpass 1.06 and up when O(password_mechanism) set to V(sshpass).
               - Defaults to C(Enter PIN for) when pkcs11_provider is set.
+              - Defaults to C(assword) when O(password_mechanism) set to V(ssh_askpass).
           default: ''
           type: string
           ini:
@@ -430,6 +432,9 @@ SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
 _HAS_RESOURCE_TRACK = sys.version_info[:2] >= (3, 13)
 
+PKCS11_DEFAULT_PROMPT = 'Enter PIN for '
+SSH_ASKPASS_DEFAULT_PROMPT = 'assword'
+
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
     """ ControlPersist broken pipe """
@@ -735,7 +740,7 @@ class Connection(ConnectionBase):
             password_prompt = self.get_option('sshpass_prompt')
             if not password_prompt and pkcs11_provider:
                 # Set default password prompt for pkcs11_provider to make it clear its a PIN
-                password_prompt = 'Enter PIN for '
+                password_prompt = PKCS11_DEFAULT_PROMPT
 
             if password_prompt:
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
@@ -965,9 +970,16 @@ class Connection(ConnectionBase):
             kwargs['track'] = False
         self.shm = shm = SharedMemory(create=True, size=16384, **kwargs)  # type: ignore[arg-type]
 
-        data = json.dumps(
-            {'password': conn_password},
-        ).encode('utf-8')
+        sshpass_prompt = self.get_option('sshpass_prompt')
+        if not sshpass_prompt and pkcs11_provider:
+            sshpass_prompt = PKCS11_DEFAULT_PROMPT
+        elif not sshpass_prompt:
+            sshpass_prompt = SSH_ASKPASS_DEFAULT_PROMPT
+
+        data = json.dumps({
+            'password': conn_password,
+            'prompt': sshpass_prompt,
+        }).encode('utf-8')
         shm.buf[:len(data)] = bytearray(data)
         shm.close()
 
