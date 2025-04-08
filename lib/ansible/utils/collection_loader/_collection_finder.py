@@ -309,7 +309,6 @@ class _AnsibleCollectionFinder:
     def _get_loader(self, fullname, path=None):
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
-        module_to_find = split_name[-1]
         part_count = len(split_name)
 
         if toplevel_pkg not in ['ansible', 'ansible_collections']:
@@ -846,7 +845,6 @@ class _AnsibleInternalRedirectLoader:
 
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
-        module_to_load = split_name[-1]
 
         if toplevel_pkg != 'ansible':
             raise ImportError('not interested')
