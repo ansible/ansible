@@ -88,17 +88,10 @@ DOCUMENTATION = """
           ini:
               - section: 'ssh_connection'
                 key: 'sshpass_prompt'
-              - section: 'ssh_connection'
-                key: 'ssh_askpass_prompt'
-                version_added: '2.19'
           env:
               - name: ANSIBLE_SSHPASS_PROMPT
-              - name: ANSIBLE_SSH_ASKPASS_PROMPT
-                version_added: '2.19'
           vars:
               - name: ansible_sshpass_prompt
-              - name: ansible_ssh_askpass_prompt
-                version_added: '2.19'
           version_added: '2.10'
       ssh_args:
           description: Arguments to pass to all SSH CLI tools.
