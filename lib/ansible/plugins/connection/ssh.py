@@ -382,6 +382,7 @@ DOCUMENTATION = """
 """
 
 import collections.abc as c
+import argparse
 import errno
 import contextlib
 import fcntl
@@ -631,6 +632,11 @@ class Connection(ConnectionBase):
             self.always_pipeline_modules = True
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.allow_executable = False
+
+        # parser to discover 'passed options', used later on for pipelining resolution
+        self._tty_parser = argparse.ArgumentParser()
+        self._tty_parser.add_argument('-t', action='count')
+        self._tty_parser.add_argument('-o', action='append')
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -1489,3 +1495,41 @@ class Connection(ConnectionBase):
 
     def close(self) -> None:
         self._connected = False
+
+    @property
+    def has_tty(self):
+        return self._is_tty_requested()
+
+    def _is_tty_requested(self):
+
+        # check if we require tty (only from our args, cannot see options in configuration files)
+        opts = []
+        for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):
+            attr = self.get_option(opt)
+            if attr is not None:
+                opts.extend(self._split_ssh_args(attr))
+
+        args, dummy = self._tty_parser.parse_known_args(opts)
+
+        if args.t:
+            return True
+
+        for arg in args.o or []:
+            if '=' in arg:
+                val = arg.split('=', 1)
+            else:
+                val = arg.split(maxsplit=1)
+
+            if val[0].lower().strip() == 'requesttty':
+                if val[1].lower().strip() in ('yes', 'force'):
+                    return True
+
+        return False
+
+    def is_pipelining_enabled(self, wrap_async=False):
+        """ override parent method and ensure we don't request a tty """
+
+        if self._is_tty_requested():
+            return False
+        else:
+            return super(Connection, self).is_pipelining_enabled(wrap_async)
