@@ -1149,7 +1149,7 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
             try:
                 pkg = import_module(acr.n_python_package_name)
             except ImportError as e:
-                display.vvvv(f"Unable to load {ref_type} '{resource}' from '{collection_name}': {e!r|}")
+                display.vvvv(f"Unable to load {ref_type} '{resource}' from '{collection_name}': {e!r}")
                 continue
 
             if pkg is not None:
@@ -1159,10 +1159,10 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
                 return resource_name, _to_text(path), collection_name
 
         except (IOError, ModuleNotFoundError) as e:
-            display.vvvv(f"Failed accessing {ref_type} '{resource}' from '{collection_name}': {e!r|}")
+            display.vvvv(f"Failed accessing {ref_type} '{resource}' from '{collection_name}': {e!r}")
             continue
         except Exception as ex:
-            display.vvvv(f"Unexpected error while loading {ref_type} '{resource}' from '{collection_name}': {e!r|}")
+            display.vvvv(f"Unexpected error while loading {ref_type} '{resource}' from '{collection_name}': {e!r}")
             continue
 
     return None
