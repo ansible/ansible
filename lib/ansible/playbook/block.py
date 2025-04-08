@@ -54,6 +54,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             self._parent = task_include
         elif parent_block:
             self._parent = parent_block
+        elif role:
+            self._parent = role
+        elif play:
+            self._parent = play
 
         super(Block, self).__init__()
 
