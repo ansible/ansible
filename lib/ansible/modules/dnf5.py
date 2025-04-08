@@ -364,6 +364,8 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
+# Through dnf5-5.2.12 all exceptions raised through swig became RuntimeError
+LIBDNF5_ERROR = RuntimeError
 
 
 def is_installed(base, spec):
@@ -421,7 +423,7 @@ def is_newer_version_installed(base, spec):
 
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except (RuntimeError, StopIteration):
+    except (LIBDNF5_ERROR, StopIteration):
         return False
 
     spec_version = spec_nevra.get_version()
@@ -515,11 +517,18 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
+        global LIBDNF5_ERROR
         has_dnf = True
         try:
             import libdnf5  # type: ignore[import]
         except ImportError:
             has_dnf = False
+
+        try:
+            import libdnf5.exception  # type: ignore[import-not-found]
+            LIBDNF5_ERROR = libdnf5.exception.Error
+        except (ImportError, AttributeError):
+            pass
 
         if has_dnf:
             return
@@ -574,7 +583,7 @@ class Dnf5Module(YumDnf):
 
         try:
             base.load_config()
-        except RuntimeError as e:
+        except LIBDNF5_ERROR as e:
             self.module.fail_json(
                 msg=str(e),
                 conf_file=self.conf_file,
@@ -737,7 +746,7 @@ class Dnf5Module(YumDnf):
             for spec in self.names:
                 try:
                     goal.add_remove(spec, settings)
-                except RuntimeError as e:
+                except LIBDNF5_ERROR as e:
                     self.module.fail_json(msg=str(e), failures=[], rc=1)
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
@@ -746,7 +755,7 @@ class Dnf5Module(YumDnf):
         goal.set_allow_erasing(self.allowerasing)
         try:
             transaction = goal.resolve()
-        except RuntimeError as e:
+        except LIBDNF5_ERROR as e:
             self.module.fail_json(msg=str(e), failures=[], rc=1)
 
         if transaction.get_problems():
