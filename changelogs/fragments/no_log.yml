@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - basic - remember password for later sanitization of sensitive information (https://github.com/ansible/ansible/issues/84557).
