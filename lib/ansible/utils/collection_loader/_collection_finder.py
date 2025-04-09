@@ -945,6 +945,9 @@ class AnsibleCollectionRef:
         if self.subdirs:
             package_components.append(self.subdirs)
             fqcr_components.append(self.subdirs)
+            self.resource_name = u'.'.join(self.subdirs + [resource])
+        else:
+            self.resource_name = resource
 
         if self.ref_type in (u'role', u'playbook'):
             # playbooks and roles are their own resource
@@ -1153,8 +1156,7 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
             if pkg is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
                 path = os.path.dirname(_to_bytes(sys.modules[acr.n_python_package_name].__file__))
-                resource_name = ".".join(subdirs.split(os.path.sep) + [resource]) if subdirs else resource
-                return resource_name, _to_text(path), collection_name
+                return acr.resource_name, _to_text(path), collection_name
 
         except (IOError, ModuleNotFoundError) as e:
             display.vvvv(f"Failed accessing {ref_type} '{resource}' from '{collection_name}': {e!r}")
