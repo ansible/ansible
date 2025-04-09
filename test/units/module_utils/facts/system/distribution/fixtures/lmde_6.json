@@ -1,0 +1,44 @@
+{
+    "name": "Linux Mint Debian Edition 6",
+    "distro": {
+        "codename": "faye",
+        "id": "linuxmint",
+        "name": "LMDE",
+        "version": "6",
+        "version_best": "6",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "pretty_name": "LMDE 6 (faye)",
+            "name": "LMDE",
+            "version_id": "6",
+            "version": "6 (faye)",
+            "version_codename": "faye",
+            "id": "linuxmint",
+            "home_url": "https://www.linuxmint.com/",
+            "support_url": "https://forums.linuxmint.com/",
+            "bug_report_url": "http://linuxmint-troubleshooting-guide.readthedocs.io/en/latest/",
+            "privacy_policy_url": "https://www.linuxmint.com/",
+            "id_like": "debian",
+            "debian_codename": "bookworm",
+            "codename": "faye",
+            "release_codename": "faye"
+        }
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"LMDE 6 (faye)\"\nNAME=\"LMDE\"\nVERSION_ID=\"6\"\nVERSION=\"6 (faye)\"\nVERSION_CODENAME=faye\nID=linuxmint\nHOME_URL=\"https://www.linuxmint.com/\"\nSUPPORT_URL=\"https://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://linuxmint-troubleshooting-guide.readthedocs.io/en/latest/\"\nPRIVACY_POLICY_URL=\"https://www.linuxmint.com/\"\nID_LIKE=debian\nDEBIAN_CODENAME=bookworm\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"LMDE 6 (faye)\"\nNAME=\"LMDE\"\nVERSION_ID=\"6\"\nVERSION=\"6 (faye)\"\nVERSION_CODENAME=faye\nID=linuxmint\nHOME_URL=\"https://www.linuxmint.com/\"\nSUPPORT_URL=\"https://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://linuxmint-troubleshooting-guide.readthedocs.io/en/latest/\"\nPRIVACY_POLICY_URL=\"https://www.linuxmint.com/\"\nID_LIKE=debian\nDEBIAN_CODENAME=bookworm\n"
+    },
+    "platform.dist": [
+        "linuxmint",
+        "6",
+        "faye"
+    ],
+    "result": {
+        "distribution": "Linux Mint Debian Edition",
+        "distribution_version": "6",
+        "distribution_release": "faye",
+        "distribution_major_version": "6",
+        "os_family": "Debian"
+    },
+    "platform.release": "6.1.0-12-amd64"
+}

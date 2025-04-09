@@ -319,7 +319,7 @@ class DistributionFiles:
 
     def parse_distribution_file_Debian(self, name, data, path, collected_facts):
         debian_facts = {}
-        if 'Debian' in data or 'Raspbian' in data:
+        if any(distro in data for distro in ('Debian', 'Raspbian')):
             debian_facts['distribution'] = 'Debian'
             release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
@@ -398,6 +398,8 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'LMDE' in data:
+            debian_facts['distribution'] = 'Linux Mint Debian Edition'
         else:
             return False, debian_facts
 
@@ -515,7 +517,7 @@ class Distribution(object):
                                 'EuroLinux', 'Kylin Linux Advanced Server', 'MIRACLE'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC', 'Linux Mint Debian Edition'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap', 'ALP-Dolomite', 'SL-Micro',
                               'openSUSE MicroOS'],
@@ -571,7 +573,6 @@ class Distribution(object):
             distribution_facts.update(dist_file_facts)
 
         distro = distribution_facts['distribution']
-
         # look for a os family alias for the 'distribution', if there isnt one, use 'distribution'
         distribution_facts['os_family'] = self.OS_FAMILY.get(distro, None) or distro
 
