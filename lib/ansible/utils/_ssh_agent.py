@@ -7,11 +7,11 @@ import binascii
 import copy
 import dataclasses
 import enum
+import functools
 import hashlib
 import socket
 import types
 import typing as t
-from functools import cached_property
 
 try:
     from cryptography.hazmat.primitives import serialization
@@ -396,7 +396,7 @@ class PublicKeyMsg(Msg):
             case _:
                 raise NotImplementedError(type)
 
-    @cached_property
+    @functools.cached_property
     def public_key(self) -> CryptoPublicKey:
         type: KeyAlgo = self.type
         match type:
@@ -466,7 +466,7 @@ class PublicKeyMsg(Msg):
             case _:
                 raise NotImplementedError(public_key)
 
-    @cached_property
+    @functools.cached_property
     def fingerprint(self) -> str:
         digest = hashlib.sha256()
         msg = copy.copy(self)
@@ -646,3 +646,12 @@ class SshAgentClient:
     def __contains__(self, public_key: CryptoPublicKey) -> bool:
         msg = PublicKeyMsg.from_public_key(public_key)
         return msg in self.list().keys
+
+
+@functools.cache
+def _key_data_into_crypto_objects(key_data: bytes, passphrase: bytes | None) -> tuple[CryptoPrivateKey, CryptoPublicKey, str]:
+    private_key = serialization.ssh.load_ssh_private_key(key_data, passphrase)
+    public_key = private_key.public_key()
+    fingerprint = PublicKeyMsg.from_public_key(public_key).fingerprint
+
+    return private_key, public_key, fingerprint

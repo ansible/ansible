@@ -436,7 +436,7 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.utils._ssh_agent import SshAgentClient, PublicKeyMsg
+from ansible.utils._ssh_agent import SshAgentClient, _key_data_into_crypto_objects
 
 try:
     from cryptography.hazmat.primitives import serialization
@@ -754,13 +754,12 @@ class Connection(ConnectionBase):
 
         key_data = self.get_option('private_key')
         passphrase = self.get_option('private_key_passphrase')
-        private_key = serialization.ssh.load_ssh_private_key(
+
+        private_key, public_key, fingerprint = _key_data_into_crypto_objects(
             to_bytes(key_data),
             to_bytes(passphrase) if passphrase else None,
         )
-        public_key = private_key.public_key()
-        pubkey_msg = PublicKeyMsg.from_public_key(public_key)
-        fingerprint = pubkey_msg.fingerprint
+
         with SshAgentClient(auth_sock) as client:
             if public_key not in client:
                 display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
