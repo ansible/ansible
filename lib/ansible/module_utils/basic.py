@@ -283,6 +283,12 @@ def heuristic_log_sanitize(data, no_log_values=None):
                 # Search for a different beginning of the password field.
                 sep_search_end = begin
                 continue
+            # Check whether we simply found a 'mailto' URI. These do not contain passwords.
+            if data[begin:sep].endswith('mailto') and (sep == 6 or not data[sep - 7].isalnum()):
+                sep = None
+                # Return the remaining data
+                output.insert(0, data[0:prev_begin])
+                break
         if sep:
             # Password was found; remove it.
             output.insert(0, data[end:prev_begin])

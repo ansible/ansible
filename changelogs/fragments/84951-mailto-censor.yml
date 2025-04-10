@@ -1,0 +1,2 @@
+bugfixes:
+  - "module utils - do not detect user part of ``mailto:`` URIs as secrets (https://github.com/ansible/ansible/issues/84951)."

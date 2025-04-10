@@ -86,5 +86,17 @@ class TestHeuristicLogSanitize(unittest.TestCase):
         output = heuristic_log_sanitize('token="secret", user="person", token_entry="test=secret"', frozenset(['secret']))
         self.assertNotIn('secret', output)
 
+    def test_keeps_mailto_uri(self):
+        clean_data = 'contact=mailto:foo@bar.com'
+        output = heuristic_log_sanitize(clean_data, frozenset(['secret']))
+        self.assertEqual(output, 'contact=mailto:foo@bar.com')
+
+    def test_hides_not_mailto_uri(self):
+        clean_data = 'other=amailto:sensitive@bar.com'
+        no_log_values = {'secret'}
+        output = heuristic_log_sanitize(clean_data, no_log_values)
+        self.assertEqual(output, 'other=amailto:********@bar.com')
+        self.assertEqual(no_log_values, {'secret', 'sensitive'})
+
     def test_no_password(self):
         self.assertEqual(heuristic_log_sanitize('foo@bar'), 'foo@bar')
