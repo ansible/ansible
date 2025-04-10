@@ -27,6 +27,23 @@ cd "${repo_dir}"
     git commit -m "Initial commit."
 )
 
+function change_repo {
+    cd "${repo_dir}"
+    date > forced_change
+    git add forced_change
+    git commit -m "forced changed"
+    cd -
+}
+
+function no_change_tests {
+    # test for https://github.com/ansible/ansible/issues/13688
+    if grep MAGICKEYWORD "${temp_log}"; then
+        cat "${temp_log}"
+        echo "Ran the playbook, found MAGICKEYWORD in output."
+        exit 1
+    fi
+}
+
 function pass_tests {
 	# test for https://github.com/ansible/ansible/issues/13688
 	if ! grep MAGICKEYWORD "${temp_log}"; then
@@ -97,3 +114,31 @@ export ANSIBLE_CACHE_PLUGIN=jsonfile ANSIBLE_CACHE_PLUGIN_CONNECTION=./
 ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" gather_facts.yml
 ansible-pull -d "${pull_dir}" -U "${repo_dir}" --flush-cache "$@" test_empty_facts.yml
 unset ANSIBLE_CACHE_PLUGIN ANSIBLE_CACHE_PLUGIN_CONNECTION
+
+#### CHACHCHCHANGES!
+echo 'setup for change detection'
+ORIG_CONFIG="${ANSIBLE_CONFIG}"
+unset ANSIBLE_CONFIG
+
+echo 'test no run on no changes'
+ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+no_change_tests
+
+echo 'test run on changes'
+change_repo
+ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+pass_tests
+
+# test changed with non yaml result format, ensures we ignore callback or format changes for adhoc/change detection
+echo 'test no run on no changes, yaml result format'
+ANSIBLE_CALLBACK_RESULT_FORMAT='yaml' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+no_change_tests
+
+echo 'test run on changes, yaml result format'
+change_repo
+ANSIBLE_CALLBACK_RESULT_FORMAT='yaml' ansible-pull -d "${pull_dir}" -U "${repo_dir}" --only-if-changed "$@" | tee "${temp_log}"
+pass_tests
+
+if [ "${ORIG_CONFIG}" != "" ]; then
+  export ANSIBLE_CONFIG="${ORIG_CONFIG}"
+fi
