@@ -1,0 +1,23 @@
+- delegate_to: localhost
+  block:
+    - name: install bcrypt
+      pip:
+        name: bcrypt
+      register: bcrypt
+
+    - tempfile:
+        path: "{{ lookup('env', 'OUTPUT_DIR') }}"
+        state: directory
+      register: tmpdir
+
+    - import_tasks: tests.yml
+  always:
+    - name: uninstall bcrypt
+      pip:
+        name: bcrypt
+        state: absent
+      when: bcrypt is changed
+
+    - file:
+        path: tmpdir.path
+        state: absent

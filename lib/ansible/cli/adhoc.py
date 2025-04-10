@@ -30,6 +30,8 @@ class AdHocCLI(CLI):
 
     name = 'ansible'
 
+    USES_CONNECTION = True
+
     def init_parser(self):
         """ create an options parser for bin/ansible """
         super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',

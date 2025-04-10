@@ -265,7 +265,6 @@ DOCUMENTATION = """
           vars:
             - name: ansible_pipelining
             - name: ansible_ssh_pipelining
-
       private_key_file:
           description:
               - Path to private key file to use for authentication.
@@ -281,7 +280,27 @@ DOCUMENTATION = """
           cli:
             - name: private_key_file
               option: '--private-key'
-
+      private_key:
+          description:
+            - Private key contents in PEM format. Requires the C(SSH_AGENT) configuration to be enabled.
+          type: string
+          env:
+            - name: ANSIBLE_PRIVATE_KEY
+          vars:
+            - name: ansible_private_key
+            - name: ansible_ssh_private_key
+          version_added: '2.19'
+      private_key_passphrase:
+          description:
+            - Private key passphrase, dependent on O(private_key).
+            - This does NOT have any effect when used with O(private_key_file).
+          type: string
+          env:
+            - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
+          vars:
+            - name: ansible_private_key_passphrase
+            - name: ansible_ssh_private_key_passphrase
+          version_added: '2.19'
       control_path:
         description:
           - This is the location to save SSH's ControlPath sockets, it uses SSH's variable substitution.
@@ -398,11 +417,13 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import typing as t
 from functools import wraps
 from multiprocessing.shared_memory import SharedMemory
 
+from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -415,6 +436,15 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils._ssh_agent import SshAgentClient, _key_data_into_crypto_objects
+
+try:
+    from cryptography.hazmat.primitives import serialization
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+else:
+    HAS_CRYPTOGRAPHY = True
+
 
 display = Display()
 
@@ -638,6 +668,8 @@ class Connection(ConnectionBase):
         self._tty_parser.add_argument('-t', action='count')
         self._tty_parser.add_argument('-o', action='append')
 
+        self._populated_agent: pathlib.Path | None = None
+
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
@@ -711,6 +743,52 @@ class Connection(ConnectionBase):
         """
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
+
+    def _populate_agent(self) -> pathlib.Path:
+        """Adds configured private key identity to the SSH agent. Returns a path to a file containing the public key."""
+        if self._populated_agent:
+            return self._populated_agent
+
+        if (auth_sock := C.config.get_config_value('SSH_AGENT')) == 'none':
+            raise AnsibleError('Cannot utilize private_key with SSH_AGENT disabled')
+
+        key_data = self.get_option('private_key')
+        passphrase = self.get_option('private_key_passphrase')
+
+        private_key, public_key, fingerprint = _key_data_into_crypto_objects(
+            to_bytes(key_data),
+            to_bytes(passphrase) if passphrase else None,
+        )
+
+        with SshAgentClient(auth_sock) as client:
+            if public_key not in client:
+                display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
+                client.add(
+                    private_key,
+                    f'[added by ansible: PID={os.getpid()}, UID={os.getuid()}, EUID={os.geteuid()}, TIME={time.time()}]',
+                    C.config.get_config_value('SSH_AGENT_KEY_LIFETIME'),
+                )
+            else:
+                display.vvv(f'SSH: SSH_AGENT {fingerprint} exists in agent', host=self.host)
+        # Write the public key to disk, to be provided as IdentityFile.
+        # This allows ssh to pick an explicit key in the agent to use,
+        # preventing ssh from attempting all keys in the agent.
+        pubkey_path = self._populated_agent = pathlib.Path(C.DEFAULT_LOCAL_TMP).joinpath(
+            fingerprint.replace('/', '-') + '.pub'
+        )
+        if os.path.exists(pubkey_path):
+            return pubkey_path
+
+        with tempfile.NamedTemporaryFile(dir=C.DEFAULT_LOCAL_TMP, delete=False) as f:
+            f.write(public_key.public_bytes(
+                encoding=serialization.Encoding.OpenSSH,
+                format=serialization.PublicFormat.OpenSSH
+            ))
+        # move atomically to prevent race conditions, silently succeeds if the target exists
+        os.rename(f.name, pubkey_path)
+        os.chmod(pubkey_path, mode=0o400)
+
+        return self._populated_agent
 
     def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         """
@@ -797,8 +875,17 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self.get_option('private_key_file')
-        if key:
+        if self.get_option('private_key'):
+            try:
+                key = self._populate_agent()
+            except Exception as e:
+                raise AnsibleAuthenticationFailure(
+                    'Failed to add configured private key into ssh-agent',
+                    orig_exc=e,
+                )
+            b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', to_bytes(f'IdentityFile="{key}"', errors='surrogate_or_strict'))
+            self._add_args(b_command, b_args, "ANSIBLE_PRIVATE_KEY/private_key set")
+        elif key := self.get_option('private_key_file'):
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 

@@ -72,6 +72,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
     # use specific to console, but fallback to highlight for backwards compatibility
     NORMAL_PROMPT = C.COLOR_CONSOLE_PROMPT or C.COLOR_HIGHLIGHT
 
+    USES_CONNECTION = True
+
     def __init__(self, args):
 
         super(ConsoleCLI, self).__init__(args)

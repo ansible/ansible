@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import locale
 import os
+import signal
 import sys
 
 
@@ -88,6 +89,7 @@ if jinja2_version < LooseVersion('3.1'):
         'Current version: %s' % jinja2_version
     )
 
+import atexit
 import errno
 import getpass
 import subprocess
@@ -111,10 +113,12 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
+from ansible.module_utils.common.process import get_bin_path
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
+from ansible.utils._ssh_agent import SshAgentClient
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.path import unfrackpath
@@ -128,6 +132,77 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 
+_SSH_AGENT_STDOUT_READ_TIMEOUT = 5  # seconds
+
+
+def _ssh_agent_timeout_handler(signum, frame):
+    raise TimeoutError
+
+
+def _launch_ssh_agent() -> None:
+    ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
+    match ssh_agent_cfg:
+        case 'none':
+            display.debug('SSH_AGENT set to none')
+            return
+        case 'auto':
+            try:
+                ssh_agent_bin = get_bin_path('ssh-agent', required=True)
+            except ValueError as e:
+                raise AnsibleError('SSH_AGENT set to auto, but cannot find ssh-agent binary') from e
+            ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
+            os.mkdir(ssh_agent_dir, 0o700)
+            sock = os.path.join(ssh_agent_dir, 'agent.sock')
+            display.vvv('SSH_AGENT: starting...')
+            try:
+                p = subprocess.Popen(
+                    [ssh_agent_bin, '-D', '-s', '-a', sock],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            except OSError as e:
+                raise AnsibleError(
+                    f'Could not start ssh-agent: {e}'
+                ) from e
+
+            if p.poll() is not None:
+                raise AnsibleError(
+                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr.read().decode()}"'
+                )
+
+            old_sigalrm_handler = signal.signal(signal.SIGALRM, _ssh_agent_timeout_handler)
+            signal.alarm(_SSH_AGENT_STDOUT_READ_TIMEOUT)
+            try:
+                stdout = p.stdout.read(13)
+            except TimeoutError:
+                stdout = b''
+            finally:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old_sigalrm_handler)
+
+            if stdout != b'SSH_AUTH_SOCK':
+                display.warning(
+                    f'The first 13 characters of stdout did not match the '
+                    f'expected SSH_AUTH_SOCK. This may not be the right binary, '
+                    f'or an incompatible agent: {stdout.decode()}'
+                )
+            display.vvv(f'SSH_AGENT: ssh-agent[{p.pid}] started and bound to {sock}')
+            atexit.register(p.terminate)
+        case _:
+            sock = ssh_agent_cfg
+
+    try:
+        with SshAgentClient(sock) as client:
+            client.list()
+    except Exception as e:
+        raise AnsibleError(
+            f'Could not communicate with ssh-agent using auth sock {sock}: {e}'
+        ) from e
+
+    os.environ['SSH_AUTH_SOCK'] = os.environ['ANSIBLE_SSH_AGENT'] = sock
+
+
 class CLI(ABC):
     """ code behind bin/ansible* programs """
 
@@ -137,6 +212,7 @@ class CLI(ABC):
     # -S (chop long lines) -X (disable termcap init and de-init)
     LESS_OPTS = 'FRSX'
     SKIP_INVENTORY_DEFAULTS = False
+    USES_CONNECTION = False
 
     def __init__(self, args, callback=None):
         """
@@ -528,8 +604,7 @@ class CLI(ABC):
         except KeyboardInterrupt:
             pass
 
-    @staticmethod
-    def _play_prereqs():
+    def _play_prereqs(self):
         # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
         # into ``init_plugin_loader`` so that we can specifically remove
         # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
@@ -559,6 +634,12 @@ class CLI(ABC):
                                                 ask_vault_pass=options['ask_vault_pass'],
                                                 auto_prompt=False)
         loader.set_vault_secrets(vault_secrets)
+
+        if self.USES_CONNECTION:
+            try:
+                _launch_ssh_agent()
+            except Exception as e:
+                raise AnsibleError('Failed to launch ssh agent', orig_exc=e)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))

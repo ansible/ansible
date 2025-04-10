@@ -1888,6 +1888,24 @@ SHOW_CUSTOM_STATS:
   ini:
   - {key: show_custom_stats, section: defaults}
   type: bool
+SSH_AGENT:
+  name: Manage an SSH Agent
+  description: Manage an SSH Agent via Ansible. A configuration of ``none`` will not interact with an agent,
+               ``auto`` will start and destroy an agent via ``ssh-agent`` binary during the run, and a path
+               to an SSH_AUTH_SOCK will allow interaction with a pre-existing agent.
+  default: none
+  type: string
+  env: [{name: ANSIBLE_SSH_AGENT}]
+  ini: [{key: ssh_agent, section: connection}]
+  version_added: '2.19'
+SSH_AGENT_KEY_LIFETIME:
+  name: Set a maximum lifetime when adding identities to an agent
+  description: For keys inserted into an agent defined by ``SSH_AGENT``, define a lifetime, in seconds, that the key may remain
+               in the agent.
+  type: int
+  env: [{name: ANSIBLE_SSH_AGENT_KEY_LIFETIME}]
+  ini: [{key: ssh_agent_key_lifetime, section: connection}]
+  version_added: '2.19'
 STRING_TYPE_FILTERS:
   name: Filters to preserve strings
   default: [string, to_json, to_nice_json, to_yaml, to_nice_yaml, ppretty, json]
