@@ -56,10 +56,13 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
     :arg interpreter_paths: iterable of paths to Python interpreters. The paths will be probed
     in order, and the first path that exists and can successfully import the named module will
     be returned (or ``None`` if probing fails for all supplied paths).
-    :arg module_name: fully-qualified Python module name to probe for (eg, ``selinux``)
+    :arg module_name: fully-qualified Python module name to probe for (for example, ``selinux``)
     """
     PYTHONPATH = os.getenv('PYTHONPATH', '')
-    env = os.environ | {'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')}
+    env = os.environ.copy()
+    env.update({
+        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')
+    })
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
