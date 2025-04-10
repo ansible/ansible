@@ -123,6 +123,12 @@ options:
     type: bool
     default: no
     version_added: "2.5"
+  encoding:
+    description:
+      - The character set the target file is encoded in.
+    type:
+      str
+    version_added: "2.19"
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
