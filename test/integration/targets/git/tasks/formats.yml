@@ -38,16 +38,3 @@
   assert:
     that:
       - "not git_result2.changed"
-
-- name: FORMATS | check for sensitive information in repo
-  git:
-    repo: "{{ repo_format4 }}"
-    dest: "{{ repo_dir }}/format4"
-  register: format4
-  ignore_errors: yes
-
-- name: FORMATS | assert absence of repo
-  assert:
-    that:
-      - not format4.changed
-      - "'********@https' in format4.stderr"

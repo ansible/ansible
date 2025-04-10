@@ -288,9 +288,6 @@ def heuristic_log_sanitize(data, no_log_values=None):
             output.insert(0, data[end:prev_begin])
             output.insert(0, '********')
             output.insert(0, data[begin:sep + 1])
-            # Remember the password for later log sanitization
-            if no_log_values is not None:
-                no_log_values.add(data[sep + 1:end])
             prev_begin = begin
 
     output = ''.join(output)
