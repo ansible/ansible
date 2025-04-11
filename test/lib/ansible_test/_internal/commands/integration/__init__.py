@@ -629,7 +629,32 @@ def command_integration_script(
                 cmd += ['-e', '@%s' % config_path]
 
             env.update(coverage_manager.get_environment(target.name, target.aliases))
-            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
+            try:
+                cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
+            except (PermissionError, SubprocessError) as e:
+                if any(msg in str(e) for msg in ['runme.sh', 'Permission denied']):
+                    # Get the permanent source path
+                    source_path = os.path.join(
+                        'test/integration/targets',
+                        target.name,
+                        'runme.sh'
+                    )
+                    abs_source_path = os.path.join(data_context().content.root, source_path)
+                    # Verify the file exists at the source location
+                    if not os.path.exists(abs_source_path):
+                        raise ApplicationError(
+                            f"Cannot locate 'runme.sh' at expected path: {abs_source_path}\n"
+                            f"Please check the test target configuration."
+                        ) from e
+                    raise ApplicationError(
+                        f"Integration test script 'runme.sh' is not executable in target '{target.name}'.\n"
+                        f"\n"
+                        f"To fix this permanently, run this command from your Ansible root directory ({data_context().content.root}):\n"
+                        f"  chmod +x {source_path}\n"
+                        f"\n"
+                        f"Current permissions: {oct(os.stat(abs_source_path).st_mode & 0o777)}"
+                    ) from e
+                raise
 
 
 def command_integration_role(

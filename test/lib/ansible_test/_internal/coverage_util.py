@@ -155,10 +155,29 @@ def cover_python(
     cwd: t.Optional[str] = None,
 ) -> tuple[t.Optional[str], t.Optional[str]]:
     """Run a command while collecting Python code coverage."""
-    if args.coverage:
-        env.update(get_coverage_environment(args, target_name, python.version))
-
-    return intercept_python(args, python, cmd, env, capture, data, cwd)
+    try:
+        if args.coverage:
+            env.update(get_coverage_environment(args, target_name, python.version))
+        return intercept_python(args, python, cmd, env, capture, data, cwd)
+    except PermissionError as e:
+        if 'runme.sh' in str(e):
+            # Get the permanent source path relative to content root
+            source_path = os.path.join('test/integration/targets', target_name, 'runme.sh')
+            abs_source_path = os.path.abspath(os.path.join(data_context().content.root, source_path))
+            if not os.path.exists(abs_source_path):
+                raise ApplicationError(
+                    f"Cannot locate 'runme.sh' for target '{target_name}' at: {source_path}"
+                ) from e
+            current_permissions = oct(os.stat(abs_source_path).st_mode & 0o777)
+            raise ApplicationError(
+                f"Test script 'runme.sh' is not executable in target '{target_name}'.\n"
+                f"Current permissions: {current_permissions}\n"
+                f"To fix this, run:\n"
+                f"  chmod +x {source_path}\n"
+                f"Or from the Ansible root directory:\n"
+                f"  chmod +x {os.path.relpath(abs_source_path)}"
+            ) from e
+        raise
 
 
 def get_coverage_platform(config: HostConfig) -> str:

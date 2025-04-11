@@ -466,7 +466,32 @@ def intercept_python(
     env['ANSIBLE_TEST_PYTHON_VERSION'] = python.version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = python.path
 
-    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
+    try:
+        return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
+    except PermissionError as e:
+        if len(cmd) > 0 and any(script in cmd[0] for script in ('runme.sh', 'setup.sh')):
+            script_name = os.path.basename(cmd[0])
+            target_name = os.path.basename(cwd) if cwd else 'unknown_target'
+            # Get the permanent source path
+            source_path = os.path.join(
+                'test/integration/targets',
+                target_name,
+                script_name
+            )
+            abs_source_path = os.path.join(data_context().content.root, source_path)
+            # Verify the file exists at the source location
+            if not os.path.exists(abs_source_path):
+                raise ApplicationError(
+                    f"ERROR! Cannot locate test script '{script_name}' at: {source_path}\n"
+                    f"Please check the test target configuration."
+                ) from e
+            raise ApplicationError(
+                f"ERROR! The test script '{script_name}' is not executable in target '{target_name}'.\n"
+                f"File location: {source_path}\n"
+                f"To fix this, run the following command from your Ansible source directory:\n"
+                f"  chmod +x {source_path}"
+            ) from e
+        raise
 
 
 def run_command(
