@@ -14,6 +14,18 @@ import builtins
 realimport = builtins.__import__
 
 
+def _mock_getgrnam(*args, **kwargs):
+    mock_gr = MagicMock()
+    mock_gr.gr_gid = 0
+    return mock_gr
+
+
+def _mock_getpwnam(*args, **kwargs):
+    mock_pw = MagicMock()
+    mock_pw.pw_uid = 0
+    return mock_pw
+
+
 class TestOtherFilesystem(ModuleTestCase):
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
@@ -54,6 +66,58 @@ class TestOtherFilesystem(ModuleTestCase):
         with patch('os.path.ismount', side_effect=_mock_ismount):
             self.assertEqual(am.find_mount_point('/subdir/mount/path/to/whatever'), '/subdir/mount')
 
+    def test_module_utils_basic_ansible_module_set_owner_and_group_if_different(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        assert am.set_owner_and_group_if_different('/path/to/file', None, None, True)
+        assert not am.set_owner_and_group_if_different('/path/to/file', None, None, False)
+
+        am.user_and_group = MagicMock(return_value=(500, 500))
+
+        with patch('os.lchown', return_value=None) as m:
+            assert am.set_owner_and_group_if_different('/path/to/file', 0, None, False)
+            m.assert_called_with(b'/path/to/file', 0, -1)
+
+            m.reset_mock()
+            assert am.set_owner_and_group_if_different('/path/to/file', None, 0, False)
+            m.assert_called_with(b'/path/to/file', -1, 0)
+
+            m.reset_mock()
+            assert am.set_owner_and_group_if_different('/path/to/file', 0, 0, False)
+            m.assert_called_with(b'/path/to/file', 0, 0)
+
+            # Successful lookup of username and group name
+            m.reset_mock()
+            with patch('pwd.getpwnam', side_effect=_mock_getpwnam), \
+                 patch('grp.getgrnam', side_effect=_mock_getgrnam):
+                assert am.set_owner_and_group_if_different('/path/to/file', 'root', 'root', False)
+                m.assert_called_with(b'/path/to/file', 0, 0)
+
+            # Failure to lookup username
+            m.reset_mock()
+            with patch('pwd.getpwnam', side_effect=KeyError), \
+                 patch('grp.getgrnam', side_effect=_mock_getgrnam), \
+                 self.assertRaises(SystemExit):
+                am.set_owner_and_group_if_different('/path/to/file', 'root', 'root', False)
+
+            # Failure to lookup group name
+            with patch('pwd.getpwnam', side_effect=_mock_getpwnam), \
+                 patch('grp.getgrnam', side_effect=KeyError), \
+                 self.assertRaises(SystemExit):
+                am.set_owner_and_group_if_different('/path/to/file', 'root', 'root', False)
+
+            # Running in check mode does not perform any operation
+            m.reset_mock()
+            am.check_mode = True
+            assert am.set_owner_and_group_if_different('/path/to/file', 0, 0, False)
+            assert not m.called
+            am.check_mode = False
+
     def test_module_utils_basic_ansible_module_set_owner_if_different(self):
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None
@@ -70,11 +134,6 @@ class TestOtherFilesystem(ModuleTestCase):
         with patch('os.lchown', return_value=None) as m:
             assert am.set_owner_if_different('/path/to/file', 0, False)
             m.assert_called_with(b'/path/to/file', 0, -1)
-
-            def _mock_getpwnam(*args, **kwargs):
-                mock_pw = MagicMock()
-                mock_pw.pw_uid = 0
-                return mock_pw
 
             m.reset_mock()
             with patch('pwd.getpwnam', side_effect=_mock_getpwnam):
@@ -109,11 +168,6 @@ class TestOtherFilesystem(ModuleTestCase):
         with patch('os.lchown', return_value=None) as m:
             assert am.set_group_if_different('/path/to/file', 0, False)
             m.assert_called_with(b'/path/to/file', -1, 0)
-
-            def _mock_getgrnam(*args, **kwargs):
-                mock_gr = MagicMock()
-                mock_gr.gr_gid = 0
-                return mock_gr
 
             m.reset_mock()
             with patch('grp.getgrnam', side_effect=_mock_getgrnam):
