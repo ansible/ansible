@@ -31,6 +31,8 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
+from ansible.playbook.vars_prompt import VarsPrompt
+from ansible.vars.manager import preprocess_vars
 from ansible.utils.display import Display
 
 display = Display()
@@ -62,7 +64,8 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
-    vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
+    vars_prompt = NonInheritableFieldAttribute(isa='class', class_type=VarsPrompt, default=VarsPrompt)
+    #vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
 
     # Role Attributes
     roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
