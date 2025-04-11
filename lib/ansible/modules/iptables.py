@@ -394,6 +394,14 @@ options:
     type: bool
     default: false
     version_added: "2.15"
+  mac_source:
+    description:
+      - Match source MAC address.
+      - Must be of the form XX:XX:XX:XX:XX:XX.
+      - Only makes sense for packets entering the PREROUTING, FORWARD or INPUT chains from an Ethernet device.
+      - When specified, V(mac) will be added to O(match).
+    type: str
+    version_added: "2.19"
 """
 
 EXAMPLES = r"""
@@ -619,6 +627,9 @@ def construct_rule(params):
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
+    if params.get('mac_source') and 'mac' not in params['match']:
+        append_match(rule, params['mac_source'], 'mac')
+    append_param(rule, params['mac_source'], '--mac-source', False)
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['jump'], '-j', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
@@ -838,6 +849,7 @@ def main():
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
             chain_management=dict(type='bool', default=False),
             numeric=dict(type='bool', default=False),
+            mac_source=dict(type='str'),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
