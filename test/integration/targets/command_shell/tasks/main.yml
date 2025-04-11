@@ -480,6 +480,18 @@
     - shell_result9 is failed or
       shell_result9 is changed
 
+- name: execute a shell command with parameter-oriented invocation using "cmd"
+  shell: 'cmd="echo test"'
+  register: shell_result10
+
+- name: Assert the shell with parameter-oriented invocation ran as expected
+  assert:
+    that:
+    - shell_result10 is changed
+    - shell_result10.rc == 0
+    - shell_result10.cmd == "echo test"
+    - shell_result10.stdout == "test"
+
 - name: remove the previously created file
   file:
     path: "{{ remote_tmp_dir_test }}/afile.txt"

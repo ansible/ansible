@@ -1,0 +1,2 @@
+bugfixes:
+  - shell module - parameter-oriented invocation using 'cmd' was silently failing. Fix now adds 'cmd' argument in shell module and creates centralized list of options for usage in `splitter.py` (https://github.com/ansible/ansible/issues/73005).
