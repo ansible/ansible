@@ -1,0 +1,2 @@
+---
+- import_playbook: namespace.foobar.entrypoint
