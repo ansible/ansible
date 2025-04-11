@@ -26,9 +26,9 @@ import tempfile
 import traceback
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleActionFail, _AnsibleActionDone
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
@@ -209,7 +209,7 @@ class ActionModule(ActionBase):
         # This is not automatic.
         # NOTE: do not add to this. This should be made a generic function for action plugins.
         # This should also use the same argspec as the module instead of keeping it in sync.
-        if 'invocation' not in result:
+        if 'invocation' not in result and self._display.verbosity:
             if self._task.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
             else:
@@ -407,10 +407,9 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ handler for file transfer operations """
         if task_vars is None:
-            task_vars = dict()
+            task_vars = {}
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
 
         # ensure user is not setting internal parameters
         for internal in ('_original_basename', '_diff_peek'):
@@ -423,44 +422,43 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
-        result['failed'] = True
+        # TODO: move to controller side argspec
+        msg = ''
         if not source and content is None:
-            result['msg'] = 'src (or content) is required'
+            msg = 'src (or content) is required'
         elif not dest:
-            result['msg'] = 'dest is required'
+            msg = 'dest is required'
         elif source and content is not None:
-            result['msg'] = 'src and content are mutually exclusive'
+            msg = 'src and content are mutually exclusive'
         elif content is not None and dest is not None and dest.endswith("/"):
-            result['msg'] = "can not use content with a dir as dest"
-        else:
-            del result['failed']
+            msg = "can not use content with a dir as dest"
 
-        if result.get('failed'):
-            return self._ensure_invocation(result)
+        if msg:
+            raise AnsibleActionFail(msg, result=result)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
 
         # If content is defined make a tmp file and write the content into it.
         if content is not None:
+            if isinstance(content, str):
+                source = content
+            else:
+                # If content is not a string we encode it to JSON
+                # to write it out.
+                source = json.dumps(source)
             try:
-                # If content comes to us as a dict it should be decoded json.
-                # We need to encode it back into a string to write it out.
-                if isinstance(content, dict) or isinstance(content, list):
-                    content_tempfile = self._create_content_tempfile(json.dumps(content))
-                else:
-                    content_tempfile = self._create_content_tempfile(content)
-                source = content_tempfile
-            except Exception as err:
-                result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % to_native(err)
-                return self._ensure_invocation(result)
+                content_tempfile = self._create_content_tempfile(source)
+            except (AttributeError, UnicodeError) as err:
+                raise AnsibleActionFail("Unable to encode content for writing to file", result=result) from err
+            except OSError as err:
+                raise AnsibleActionFail("Could not use temporary file", result=result) from err
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
             result.update(self._execute_module(module_name='ansible.legacy.copy', task_vars=task_vars))
-            return self._ensure_invocation(result)
+            raise _AnsibleActionDone(result=result)
         else:
             # find_needle returns a path that may not have a trailing slash on
             # a directory so we need to determine that now (we use it just
@@ -471,10 +469,8 @@ class ActionModule(ActionBase):
                 # find in expected paths
                 source = self._find_needle('files', source)
             except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_text(e)
                 result['exception'] = traceback.format_exc()
-                return self._ensure_invocation(result)
+                raise AnsibleActionFail(result=result) from e
 
             if trailing_slash != source.endswith(os.path.sep):
                 if source[-1] == os.path.sep:
@@ -528,7 +524,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return self._ensure_invocation(result)
+                raise AnsibleActionFail(result=result)
 
             paths = os.path.split(source_rel)
             dir_path = ''
@@ -558,7 +554,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return self._ensure_invocation(result)
+                raise AnsibleActionFail(result=result)
 
             module_executed = True
             changed = changed or module_return.get('changed', False)
@@ -585,7 +581,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return self._ensure_invocation(result)
+                raise AnsibleActionFail(result=result)
 
             changed = changed or module_return.get('changed', False)
 
@@ -602,4 +598,4 @@ class ActionModule(ActionBase):
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
 
-        return self._ensure_invocation(result)
+        return result
