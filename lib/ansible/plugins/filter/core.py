@@ -457,12 +457,18 @@ def extract(environment, item, container, morekeys=None):
     return value
 
 
-def b64encode(string, encoding='utf-8'):
-    return to_text(base64.b64encode(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
+def b64encode(string, encoding='utf-8', urlsafe=False):
+    func = base64.b64encode
+    if urlsafe:
+        func = base64.urlsafe_b64encode
+    return to_text(func(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
 
 
-def b64decode(string, encoding='utf-8'):
-    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
+def b64decode(string, encoding='utf-8', urlsafe=False):
+    func = base64.b64decode
+    if urlsafe:
+        func = base64.urlsafe_b64decode
+    return to_text(func(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
 
 
 def flatten(mylist, levels=None, skip_nulls=True):

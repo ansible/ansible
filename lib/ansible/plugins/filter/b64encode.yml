@@ -17,6 +17,14 @@ DOCUMENTATION:
         - Defaults to using 'utf-8'.
       type: string
       required: false
+    urlsafe:
+      description:
+        - Encode string using URL- and filesystem-safe alphabet,
+          which substitutes I(-) instead of I(+) and I(_) instead of I(/) in the Base64 alphabet.
+      type: bool
+      default: false
+      required: false
+      version_added: 2.19
 
 EXAMPLES: |
   # Base64 encode a string
@@ -28,6 +36,10 @@ EXAMPLES: |
   # Base64 encode the content with different encoding
   b64stuff: "{{ 'Ansible - くらとみ\n' | b64encode(encoding='utf-16-le') }}"
   # => 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA'
+
+  # URL-safe Base64 encoding
+  b64stuff: "{{ 'https://www.python.org/example-1' | b64encode(urlsafe=True) }}"
+  # => 'aHR0cHM6Ly93d3cucHl0aG9uLm9yZy9leGFtcGxlLTE='
 
 RETURN:
   _value:
