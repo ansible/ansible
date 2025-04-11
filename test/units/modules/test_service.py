@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 
-import json
 import platform
+from io import BytesIO
 
 import pytest
 from ansible.modules import service
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 from units.modules.utils import set_module_args
 
 
@@ -49,7 +50,7 @@ def mocked_sunos_service(mocker):
     mocker_sunos_service(mocker)
 
 
-def test_sunos_service_start(mocked_sunos_service, capfd):
+def test_sunos_service_start(mocked_sunos_service, capfdbinary):
     """
     test SunOS Service Start
     """
@@ -62,7 +63,7 @@ def test_sunos_service_start(mocked_sunos_service, capfd):
     with pytest.raises(SystemExit):
         service.main()
 
-    out, dummy = capfd.readouterr()
-    results = json.loads(out)
+    b_out, _b_err = capfdbinary.readouterr()
+    results = next(read_json_documents(BytesIO(b_out)))
     assert not results.get("failed")
     assert results["changed"]
