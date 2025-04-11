@@ -569,6 +569,7 @@ class Display(metaclass=Singleton):
 
         return message_text
 
+
     @_proxy
     def deprecated(
         self,
@@ -578,20 +579,18 @@ class Display(metaclass=Singleton):
         date: str | None = None,
         collection_name: str | None = None,
     ) -> None:
-        if not removed and not C.DEPRECATION_WARNINGS:
-            return
+        if removed or C.DEPRECATION_WARNINGS:
+            message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
-        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
+            if removed:
+                raise AnsibleError(message_text)
 
-        if removed:
-            raise AnsibleError(message_text)
+            wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+            message_text = "\n".join(wrapped) + "\n"
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
-        message_text = "\n".join(wrapped) + "\n"
-
-        if message_text not in self._deprecations:
-            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
-            self._deprecations[message_text] = 1
+            if message_text not in self._deprecations:
+                self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+                self._deprecations[message_text] = 1
 
     @_proxy
     def warning(self, msg: str, formatted: bool = False) -> None:
