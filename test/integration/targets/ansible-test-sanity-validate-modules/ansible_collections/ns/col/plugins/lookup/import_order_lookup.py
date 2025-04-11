@@ -10,6 +10,10 @@ short_description: Import order lookup
 description: Import order lookup.
 """
 
+EXAMPLES = """
+    {{ q('import_order_lookup') }}
+"""
+
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):

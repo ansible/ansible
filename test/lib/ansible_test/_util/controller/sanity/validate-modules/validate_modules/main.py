@@ -121,10 +121,11 @@ OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
-
-PLUGINS_WITH_RETURN_VALUES = ('module', )
-PLUGINS_WITH_EXAMPLES = ('module', )
-PLUGINS_WITH_YAML_EXAMPLES = ('module', )
+# NOTE: filter and test plugins are not currently validated by this library,
+#       but when they are implented they should obey these constraints.
+PLUGINS_REQUIRE_RETURN_VALUES = ('module', 'lookup', 'test', 'filter')
+PLUGINS_REQUIRE_EXAMPLES = ('module', 'inventory', 'lookup', 'filter', 'test')
+PLUGINS_REQUIRE_YAML_EXAMPLES = ('module',)
 
 
 def is_potential_secret_option(option_name):
@@ -1097,31 +1098,30 @@ class ModuleValidator(Validator):
                 msg='No DOCUMENTATION provided',
             )
 
-        if not examples_raw and self.plugin_type in PLUGINS_WITH_EXAMPLES:
-            if self.plugin_type in PLUGINS_WITH_EXAMPLES:
+        if self.plugin_type in PLUGINS_REQUIRE_EXAMPLES:
+            if not examples_raw:
                 self.reporter.error(
                     path=self.object_path,
                     code='missing-examples',
                     msg='No EXAMPLES provided'
                 )
-
-        elif self.plugin_type in PLUGINS_WITH_YAML_EXAMPLES:
-            dummy, errors, traces = parse_yaml(examples_raw,
-                                               examples_lineno,
-                                               self.name, 'EXAMPLES',
-                                               load_all=True,
-                                               ansible_loader=True)
-            for error in errors:
-                self.reporter.error(
-                    path=self.object_path,
-                    code='invalid-examples',
-                    **error
-                )
-            for trace in traces:
-                self.reporter.trace(
-                    path=self.object_path,
-                    tracebk=trace
-                )
+            elif self.plugin_type in PLUGINS_REQUIRE_YAML_EXAMPLES:
+                dummy, errors, traces = parse_yaml(examples_raw,
+                                                   examples_lineno,
+                                                   self.name, 'EXAMPLES',
+                                                   load_all=True,
+                                                   ansible_loader=True)
+                for error in errors:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='invalid-examples',
+                        **error
+                    )
+                for trace in traces:
+                    self.reporter.trace(
+                        path=self.object_path,
+                        tracebk=trace
+                    )
 
         if returns:
             if returns:
@@ -1135,7 +1135,7 @@ class ModuleValidator(Validator):
                 return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
                 'RETURN', 'return-syntax-error')
 
-        elif self.plugin_type in PLUGINS_WITH_RETURN_VALUES:
+        elif self.plugin_type in PLUGINS_REQUIRE_RETURN_VALUES:
             if self._is_new_module():
                 self.reporter.error(
                     path=self.object_path,

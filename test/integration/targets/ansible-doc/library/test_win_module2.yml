@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  module: test_win_module2
+  short_description: Test win module v2
+  description:
+      - Test win module with sidecar docs v2
+  author:
+      - Ansible Core Team
+  options:
+    hello:
+      description: hi!
+      type: str
+EXAMPLES:
+  - name: this is example
+    test_win_module:
+            hello: how youz doin?
+RETURN:
+  hello:
+      description: just your input
+      returned: success
+      type: str
+      sample: 'how youz doin?'
