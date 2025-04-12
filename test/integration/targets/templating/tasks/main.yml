@@ -1,3 +1,11 @@
+- name: Run a module which returns a warning and deprecation warning
+  noisy:
+  register: result
+
+- name: Verify the registered module results can be displayed without error
+  debug:
+    var: result
+
 - include_tasks: plugin_errors.yml
 
 - command: echo {% raw %}{{ foo }}{% endraw %}
