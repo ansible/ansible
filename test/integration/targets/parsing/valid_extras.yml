@@ -1,0 +1,8 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+  - name: ensure bad extra vars parameter does not create bad var
+    assert:
+      that:
+        - _raw_params is not defined
+        - valid is defined
