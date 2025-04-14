@@ -88,7 +88,6 @@ host4 # same host as above, but member of 2 groups, will inherit vars from both
 '''
 
 import ast
-import os
 import re
 import typing as t
 import warnings
