@@ -4,6 +4,24 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-04-14
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Bugfixes
+--------
+
+- build - Pin ``wheel`` in ``pyproject.toml`` to ensure compatibility with supported ``setuptools`` versions.
+- dnf5 - Handle forwarded exceptions from dnf5-5.2.13 where a generic ``RuntimeError`` was previously raised
+- find - skip ENOENT error code while recursively enumerating files. find module will now be tolerant to race conditions that remove files or directories from the target it is currently inspecting. (https://github.com/ansible/ansible/issues/84873).
+- gather_facts action, will now add setup when 'smart' appears with other modules in the FACTS_MODULES setting (#84750).
+- uri - Form location correctly when the server returns a relative redirect (https://github.com/ansible/ansible/issues/84540)
+
 v2.18.4
 =======
 
