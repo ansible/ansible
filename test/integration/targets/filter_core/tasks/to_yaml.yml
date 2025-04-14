@@ -1,0 +1,45 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Check allow_unicode=False
+  set_fact:
+    msg: "{{ thing | to_yaml(allow_unicode=False) }}"
+  vars:
+    thing: 'Café'
+  register: yaml_test_01
+
+- name: Check allow_unicode=True
+  set_fact:
+    msg: "{{ thing | to_yaml(allow_unicode=True) }}"
+  vars:
+    thing: 'Café'
+  register: yaml_test_02
+
+- name: Check to_yaml exception handling
+  set_fact:
+    msg: "{{ 'thing' | to_yaml(nonexistent_argument=True) }}"
+  register: yaml_test_03
+  ignore_errors: yes
+
+- name: Check default_style
+  set_fact:
+    msg: "{{ 'thing' | to_yaml(default_style='|') }}"
+  register: yaml_test_04
+
+- name: Check canonical
+  set_fact:
+    msg: "{{ 'thing' | to_yaml(canonical=True) }}"
+  register: yaml_test_05
+  ignore_errors: yes
+
+- name: Test to_yaml
+  assert:
+    that:
+      - not yaml_test_01.changed
+      - yaml_test_01.ansible_facts.msg == '\"Caf\\xE9\"\n'
+      - not yaml_test_02.changed
+      - yaml_test_02.ansible_facts.msg == "Café\n"
+      - yaml_test_03.failed
+      - yaml_test_03.msg.startswith('to_yaml')
+      - yaml_test_04.ansible_facts.msg == "|-\n  thing\n"
+      - yaml_test_05.ansible_facts.msg == "---\n!!str \"thing\"\n"
