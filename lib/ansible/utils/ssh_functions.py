@@ -22,7 +22,7 @@ import subprocess
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.compat.paramiko import paramiko
+from ansible.module_utils.compat.paramiko import _paramiko as paramiko
 from ansible.utils.display import Display
 
 display = Display()

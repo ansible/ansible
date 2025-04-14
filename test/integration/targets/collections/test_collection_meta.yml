@@ -31,7 +31,7 @@
   - assert:
       that:
         - redirect_failure is failed
-        - "'Could not load \"testns.testredirect.dead_end\"' in redirect_failure.msg"
+        - redirect_failure.msg is contains("No filter named 'testns.testredirect.dead_end'")
   # recursive filter redirect
   - debug: msg="{{ 'data' | testns.testredirect.recursive_redirect }}"
     ignore_errors: yes

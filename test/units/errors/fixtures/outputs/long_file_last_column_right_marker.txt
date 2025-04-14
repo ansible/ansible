@@ -1,0 +1,4 @@
+12 short
+13 a line of reasonably normal length
+14 a line of exactly 117 chars content content content content content content content content content content conte EOL
+                                                                                                            column 117 ^

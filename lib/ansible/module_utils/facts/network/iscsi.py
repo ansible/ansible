@@ -18,8 +18,7 @@
 from __future__ import annotations
 
 import sys
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.network.base import NetworkCollector

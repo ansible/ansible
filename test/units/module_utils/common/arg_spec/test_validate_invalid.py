@@ -89,7 +89,7 @@ INVALID_SPECS = [
         {'numbers': [55, 33, 34, {'key': 'value'}]},
         {'numbers': [55, 33, 34]},
         set(),
-        "Elements value for option 'numbers' is of type <class 'dict'> and we were unable to convert to int:"
+        "Elements value for option 'numbers' is of type dict and we were unable to convert to int"
     ),
     (
         'required',

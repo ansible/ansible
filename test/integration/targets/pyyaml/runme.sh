@@ -8,4 +8,4 @@ set +x
 # Install PyYAML without libyaml to validate ansible can run
 PYYAML_FORCE_LIBYAML=0 pip install --no-binary PyYAML --ignore-installed --no-cache-dir --no-deps PyYAML
 
-ansible --version | tee /dev/stderr | grep 'libyaml = False'
+ansible --version | tee /dev/stderr | grep 'without libyaml'

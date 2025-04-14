@@ -21,6 +21,7 @@ DOCUMENTATION = """
 
 from ansible import constants as C
 from ansible import context
+from ansible.executor.task_result import TaskResult
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -46,20 +47,20 @@ class CallbackModule(CallbackBase):
         self._task_type_cache = {}
         super(CallbackModule, self).__init__()
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-
+    def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
         host_label = self.host_label(result)
-        self._clean_results(result._result, result._task.action)
 
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._handle_exception(result._result, use_stderr=self.get_option('display_failed_stderr'))
-        self._handle_warnings(result._result)
+        self._handle_warnings_and_exception(result)
+
+        # FIXME: this method should not exist, delegate "suggested keys to display" to the plugin or something... As-is, the placement of this
+        #          call obliterates `results`, which causes a task summary to be printed on loop failures, which we don't do anywhere else.
+        self._clean_results(result._result, result._task.action)
 
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
-
         else:
             if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
                 self._print_task_path(result._task)
@@ -69,8 +70,7 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
-    def v2_runner_on_ok(self, result):
-
+    def v2_runner_on_ok(self, result: TaskResult) -> None:
         host_label = self.host_label(result)
 
         if isinstance(result._task, TaskInclude):
@@ -93,7 +93,7 @@ class CallbackModule(CallbackBase):
             msg = "ok: [%s]" % (host_label,)
             color = C.COLOR_OK
 
-        self._handle_warnings(result._result)
+        self._handle_warnings_and_exception(result)
 
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
@@ -104,14 +104,15 @@ class CallbackModule(CallbackBase):
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
-    def v2_runner_on_skipped(self, result):
-
+    def v2_runner_on_skipped(self, result: TaskResult) -> None:
         if self.get_option('display_skipped_hosts'):
 
             self._clean_results(result._result, result._task.action)
 
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
+
+            self._handle_warnings_and_exception(result)
 
             if result._task.loop is not None and 'results' in result._result:
                 self._process_items(result)
@@ -121,9 +122,11 @@ class CallbackModule(CallbackBase):
                 msg += " => %s" % self._dump_results(result._result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
-    def v2_runner_on_unreachable(self, result):
+    def v2_runner_on_unreachable(self, result: TaskResult) -> None:
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
+
+        self._handle_warnings_and_exception(result)
 
         host_label = self.host_label(result)
         msg = "fatal: [%s]: UNREACHABLE! => %s" % (host_label, self._dump_results(result._result))
@@ -171,6 +174,7 @@ class CallbackModule(CallbackBase):
         # that they can secure this if they feel that their stdout is insecure
         # (shoulder surfing, logging stdout straight to a file, etc).
         args = ''
+        # FIXME: the no_log value is not templated at this point, so any template will be considered truthy
         if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
             args = u', '.join(u'%s=%s' % a for a in task.args.items())
             args = u' %s' % args
@@ -234,8 +238,7 @@ class CallbackModule(CallbackBase):
                     self._print_task_banner(result._task)
                 self._display.display(diff)
 
-    def v2_runner_item_on_ok(self, result):
-
+    def v2_runner_item_on_ok(self, result: TaskResult) -> None:
         host_label = self.host_label(result)
         if isinstance(result._task, TaskInclude):
             return
@@ -255,32 +258,36 @@ class CallbackModule(CallbackBase):
             msg = 'ok'
             color = C.COLOR_OK
 
+        self._handle_warnings_and_exception(result)
+
         msg = "%s: [%s] => (item=%s)" % (msg, host_label, self._get_item_label(result._result))
         self._clean_results(result._result, result._task.action)
         if self._run_is_verbose(result):
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
-    def v2_runner_item_on_failed(self, result):
+    def v2_runner_item_on_failed(self, result: TaskResult) -> None:
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
+        self._handle_warnings_and_exception(result)
+
         host_label = self.host_label(result)
-        self._clean_results(result._result, result._task.action)
-        self._handle_exception(result._result, use_stderr=self.get_option('display_failed_stderr'))
 
         msg = "failed: [%s]" % (host_label,)
-        self._handle_warnings(result._result)
+        self._clean_results(result._result, result._task.action)
         self._display.display(
             msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)),
             color=C.COLOR_ERROR,
             stderr=self.get_option('display_failed_stderr')
         )
 
-    def v2_runner_item_on_skipped(self, result):
+    def v2_runner_item_on_skipped(self, result: TaskResult) -> None:
         if self.get_option('display_skipped_hosts'):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
+
+            self._handle_warnings_and_exception(result)
 
             self._clean_results(result._result, result._task.action)
             msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))

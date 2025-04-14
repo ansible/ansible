@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
-from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
@@ -92,10 +92,7 @@ class ActionModule(ActionBase):
 
                     # get defaults for specific module
                     context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
-                    new_module_args = get_action_args_with_defaults(
-                        context.resolved_fqcn, new_module_args, self._task.module_defaults, self._templar,
-                        action_groups=self._task._parent._play._action_groups
-                    )
+                    new_module_args = _apply_action_arg_defaults(context.resolved_fqcn, self._task, new_module_args, self._templar)
 
                     if module in self.BUILTIN_PKG_MGR_MODULES:
                         # prefix with ansible.legacy to eliminate external collisions while still allowing library/ override

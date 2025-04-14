@@ -3,7 +3,55 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Note: |groupby is already tested by the `groupby_filter` target.
+- name: test customized groupby filter
+  vars:
+    fruits:
+      - name: apple
+        enjoy: yes
+      - name: orange
+        enjoy: no
+      - name: strawberry
+        enjoy: yes
+
+    result: "{{ fruits | groupby('enjoy') }}"
+      # use the GroupTuple namedtuple `grouper` and `list` elements
+    grouper_values: "{{ fruits | groupby('enjoy') | map('attr', 'grouper') | sort }}"
+    grouper_false_list: "{{ (fruits | groupby('enjoy') | selectattr('grouper', 'false'))[0].list }}"
+    expected: [[false, [{enjoy: false, name: orange}]], [true, [{enjoy: true, name: apple}, {enjoy: true, name: strawberry}]]]
+
+  assert:
+    that:
+    - grouper_false_list == [fruits[1]]
+    - (result | ansible._protomatter.finalize) == expected
+    - grouper_values == [false, true]
+
+- name: test groupby __repr__ (via tuple.__str__)
+  assert:
+    that:
+      - |
+        ([{'a': 1}] | groupby('a'))[0] | string == "(1, [{'a': 1}])"
+
+- name: test updated default filter
+  assert:
+    that:
+      - bogus_var | default('passed') == 'passed'
+      - false | default('failed') == false
+      - false | default('passed', boolean=true) == 'passed'
+      - true | default('failed') == true
+
+- name: test core filters which are wrappers around jinja built-in filters
+  assert:
+    that:
+      - "['a'] | map('upper') == ['A']"
+      - "[1, 2] | select('odd') == [1]"
+      - "[1, 2] | reject('odd') == [2]"
+      - "[{'a': 1}, {'a': 0}] | selectattr('a') == [{'a': 1}]"
+      - "[{'a': 1}, {'a': 0}] | rejectattr('a') == [{'a': 0}]"
+      - not_defined | map('upper') is undefined
+      - not_defined | select('odd') is undefined
+      - not_defined | reject('odd') is undefined
+      - not_defined | selectattr('a') is undefined
+      - not_defined | rejectattr('a') is undefined
 
 - set_fact:
     output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
@@ -297,9 +345,9 @@
 - name: regex_search check
   assert:
     that:
-      - match_case == ''
+      - match_case is none
       - ignore_case == 'hello'
-      - single_line == ''
+      - single_line is none
       - multi_line == 'world'
       - named_groups == ['bye', 'good']
       - numbered_groups == ['bye', 'good']
@@ -309,11 +357,21 @@
 - name: Verify to_bool
   assert:
     that:
-      - 'None|bool == None'
-      - 'False|bool == False'
-      - '"TrUe"|bool == True'
-      - '"FalSe"|bool == False'
-      - '7|bool == False'
+      - (true|bool)==true
+      - ("TrUe"|bool)==true
+      - (1|bool)==true
+      - ('1'|bool)==true
+      - ('on'|bool)==true
+      - (false|bool)==false
+      - ("FaLsE"|bool)==false
+      - (0|bool)==false
+      - ('0'|bool)==false
+      - ('off'|bool)==false
+      # deprecated scenarios
+      - (None|bool)==false
+      - (1.0|bool)==true
+      - (0.0|bool)==false
+      - (7|bool)==false
 
 - name: Verify to_datetime
   assert:
@@ -396,6 +454,19 @@
       - '"Regex type (posix_extended) not yet implemented" is in regex_escape_fail_1.msg'
       - regex_escape_fail_2 is failed
       - '"Invalid regex type (haha)" is in regex_escape_fail_2.msg'
+
+- name: verify serialization filters
+  vars:
+    thing:
+      sublist: [ '{{ "howdy" }}' ]
+      subdict:
+        k1: v1
+  assert:
+    that:
+      - 'thing | to_yaml == "subdict: {k1: v1}\nsublist: [howdy]\n"'
+      - 'thing | to_nice_yaml == "subdict:\n    k1: v1\nsublist:\n- howdy\n"'
+      - 'thing | to_json == "{\"sublist\": [\"howdy\"], \"subdict\": {\"k1\": \"v1\"}}"'
+      - 'thing | to_nice_json == "{\n    \"subdict\": {\n        \"k1\": \"v1\"\n    },\n    \"sublist\": [\n        \"howdy\"\n    ]\n}"'
 
 - name: Verify from_yaml and from_yaml_all
   assert:
@@ -524,7 +595,7 @@
     that:
       - mandatory_demo | mandatory == 123
       - mandatory_1 is failed
-      - "mandatory_1.msg == \"Mandatory variable 'hey'  not defined.\""
+      - mandatory_1.msg is contains "Mandatory variable 'hey' not defined."
       - mandatory_2 is failed
       - mandatory_2.msg is contains "You did not give me a variable. I am a sad wolf."
 
@@ -728,7 +799,6 @@
       - thing|map(attribute="bar")|first == 123
       - thing_result|first == 123
       - thing_items|first|last == 123
-      - thing_range == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   vars:
     thing:
       - bar: 123
@@ -736,7 +806,6 @@
     thing_dict:
       bar: 123
     thing_items: '{{ thing_dict.items() }}'
-    thing_range: '{{ range(10) }}'
 
 - name: Assert that quote works on None
   assert:

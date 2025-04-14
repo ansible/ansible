@@ -13,11 +13,11 @@
       set_fact:
         test_env:
           ANSIBLE_UNSAFE_WRITES: "{{ lookup('env', 'ANSIBLE_UNSAFE_WRITES') }}"
-      when: lookup('env', 'ANSIBLE_UNSAFE_WRITES')
+      when: lookup('env', 'ANSIBLE_UNSAFE_WRITES', default=undef()) is defined
     - name: define test environment without unsafe writes set
       set_fact:
         test_env: {}
-      when: not lookup('env', 'ANSIBLE_UNSAFE_WRITES')
+      when: lookup('env', 'ANSIBLE_UNSAFE_WRITES', default=undef()) is not defined
     - name: test unsafe_writes on immutable dir (file cannot be atomically replaced)
       block:
       - name: create target dir

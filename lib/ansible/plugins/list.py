@@ -124,7 +124,7 @@ def list_collection_plugins(ptype, collections, search_paths=None):
     try:
         ploader = getattr(loader, '{0}_loader'.format(ptype))
     except AttributeError:
-        raise AnsibleError('Cannot list plugins, incorrect plugin type supplied: {0}'.format(ptype))
+        raise AnsibleError(f"Cannot list plugins, incorrect plugin type {ptype!r} supplied.") from None
 
     # get plugins for each collection
     for collection in collections.keys():
@@ -191,8 +191,8 @@ def list_plugins(ptype, collections=None, search_paths=None):
             else:
                 try:
                     plugin_collections[collection] = to_bytes(_get_collection_path(collection))
-                except ValueError as e:
-                    raise AnsibleError("Cannot use supplied collection {0}: {1}".format(collection, to_native(e)), orig_exc=e)
+                except ValueError as ex:
+                    raise AnsibleError(f"Cannot use supplied collection {collection!r}.") from ex
 
     if plugin_collections:
         plugins.update(list_collection_plugins(ptype, plugin_collections))

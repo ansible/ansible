@@ -22,16 +22,16 @@ import os
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import split_args
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 
 display = Display()
@@ -65,7 +65,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if variable_manager:
             all_vars |= variable_manager.get_vars()
 
-        templar = Templar(loader=loader, variables=all_vars)
+        templar = TemplateEngine(loader=loader, variables=all_vars)
 
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
@@ -130,11 +130,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
-        # the new, cleaned datastructure, which will have legacy
-        # items reduced to a standard structure
-        new_ds = AnsibleMapping()
-        if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.ansible_pos = ds.ansible_pos
+        # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
+        # attributes of the task class; copy any tagged data to preserve things like origin
+        new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         for (k, v) in ds.items():
             if k in C._ACTION_IMPORT_PLAYBOOK:
@@ -166,4 +164,5 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if len(items) == 0:
             raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
 
-        new_ds['import_playbook'] = items[0].strip()
+        # DTFIX-RELEASE: investigate this as a possible "problematic strip"
+        new_ds['import_playbook'] = AnsibleTagHelper.tag_copy(v, items[0].strip())

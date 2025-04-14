@@ -153,148 +153,136 @@ EXAMPLES = r'''# fmt: code
 '''
 
 
+import json
 import os
+import shlex
 import subprocess
+import typing as t
 
-from collections.abc import Mapping
-
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils.basic import json_dict_bytes_to_unicode
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.errors import AnsibleError, AnsibleJSONParserError
+from ansible.inventory.data import InventoryData
+from ansible.module_utils.datatag import native_type_name
+from ansible.module_utils.common.json import get_decoder
+from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible._internal._datatag._tags import TrustedAsTemplate, Origin
 from ansible.utils.display import Display
+from ansible._internal._json._profiles import _legacy, _inventory_legacy
 
 display = Display()
 
 
 class InventoryModule(BaseInventoryPlugin):
-    """ Host inventory parser for ansible using external inventory scripts. """
+    """Host inventory parser for ansible using external inventory scripts."""
 
     NAME = 'script'
 
-    def __init__(self):
-
+    def __init__(self) -> None:
         super(InventoryModule, self).__init__()
 
-        self._hosts = set()
+        self._hosts: set[str] = set()
 
-    def verify_file(self, path):
-        """ Verify if file is usable by this plugin, base does minimal accessibility check """
+    def verify_file(self, path: str) -> bool:
+        return super(InventoryModule, self).verify_file(path) and os.access(path, os.X_OK)
 
-        valid = super(InventoryModule, self).verify_file(path)
-
-        if valid:
-            # not only accessible, file must be executable and/or have shebang
-            shebang_present = False
-            try:
-                with open(path, 'rb') as inv_file:
-                    initial_chars = inv_file.read(2)
-                    if initial_chars.startswith(b'#!'):
-                        shebang_present = True
-            except Exception:
-                pass
-
-            if not os.access(path, os.X_OK) and not shebang_present:
-                valid = False
-
-        return valid
-
-    def parse(self, inventory, loader, path, cache=None):
-
+    def parse(self, inventory: InventoryData, loader: DataLoader, path: str, cache: bool = False) -> None:
         super(InventoryModule, self).parse(inventory, loader, path)
+
         self.set_options()
 
-        # Support inventory scripts that are not prefixed with some
-        # path information but happen to be in the current working
-        # directory when '.' is not in PATH.
-        cmd = [path, "--list"]
+        origin = Origin(description=f'<inventory script output from {path!r}>')
+
+        data, stderr, stderr_help_text = run_command(path, ['--list'], origin)
+
+        try:
+            profile_name = detect_profile_name(data)
+            decoder = get_decoder(profile_name)
+        except Exception as ex:
+            raise AnsibleError(
+                message="Unable to get JSON decoder for inventory script result.",
+                help_text=stderr_help_text,
+                # obj will be added by inventory manager
+            ) from ex
 
         try:
             try:
-                sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleParserError("problem running %s (%s)" % (' '.join(cmd), to_native(e)))
-            (stdout, stderr) = sp.communicate()
+                processed = json.loads(data, cls=decoder)
+            except Exception as json_ex:
+                AnsibleJSONParserError.handle_exception(json_ex, origin)
+        except Exception as ex:
+            raise AnsibleError(
+                message="Inventory script result could not be parsed as JSON.",
+                help_text=stderr_help_text,
+                # obj will be added by inventory manager
+            ) from ex
 
-            path = to_native(path)
-            err = to_native(stderr or "")
+        # if no other errors happened, and you want to force displaying stderr, do so now
+        if stderr and self.get_option('always_show_stderr'):
+            self.display.error(msg=stderr)
 
-            if err and not err.endswith('\n'):
-                err += '\n'
+        data_from_meta: dict | None = None
 
-            if sp.returncode != 0:
-                raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+        # A "_meta" subelement may contain a variable "hostvars" which contains a hash for each host
+        # if this "hostvars" exists at all then do not call --host for each # host.
+        # This is for efficiency and scripts should still return data
+        # if called with --host for backwards compat with 1.2 and earlier.
+        for (group, gdata) in processed.items():
+            if group == '_meta':
+                data_from_meta = gdata.get('hostvars')
 
-            # make sure script output is unicode so that json loader will output unicode strings itself
-            try:
-                data = to_text(stdout, errors="strict")
-            except Exception as e:
-                raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
+                if not isinstance(data_from_meta, dict):
+                    raise TypeError(f"Value contains '_meta.hostvars' which is {native_type_name(data_from_meta)!r} instead of {native_type_name(dict)!r}.")
+            else:
+                self._parse_group(group, gdata, origin)
 
-            try:
-                processed = self.loader.load(data, json_only=True)
-            except Exception as e:
-                raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
+        if data_from_meta is None:
+            display.deprecated(
+                msg="Inventory scripts should always provide 'meta.hostvars'. "
+                    "Host variables will be collected by running the inventory script with the '--host' option for each host.",
+                version='2.23',
+                obj=origin,
+            )
 
-            # if no other errors happened and you want to force displaying stderr, do so now
-            if stderr and self.get_option('always_show_stderr'):
-                self.display.error(msg=to_text(err))
+        for host in self._hosts:
+            if data_from_meta is None:
+                got = self.get_host_variables(path, host, origin)
+            else:
+                got = data_from_meta.get(host, {})
 
-            if not isinstance(processed, Mapping):
-                raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
+            self._populate_host_vars([host], got)
 
-            group = None
-            data_from_meta = None
-
-            # A "_meta" subelement may contain a variable "hostvars" which contains a hash for each host
-            # if this "hostvars" exists at all then do not call --host for each # host.
-            # This is for efficiency and scripts should still return data
-            # if called with --host for backwards compat with 1.2 and earlier.
-            for (group, gdata) in processed.items():
-                if group == '_meta':
-                    if 'hostvars' in gdata:
-                        data_from_meta = gdata['hostvars']
-                else:
-                    self._parse_group(group, gdata)
-
-            for host in self._hosts:
-                got = {}
-                if data_from_meta is None:
-                    got = self.get_host_variables(path, host)
-                else:
-                    try:
-                        got = data_from_meta.get(host, {})
-                    except AttributeError as e:
-                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)), orig_exc=e)
-
-                self._populate_host_vars([host], got)
-
-        except Exception as e:
-            raise AnsibleParserError(to_native(e))
-
-    def _parse_group(self, group, data):
-
+    def _parse_group(self, group: str, data: t.Any, origin: Origin) -> None:
+        """Normalize and ingest host/var information for the named group."""
         group = self.inventory.add_group(group)
 
         if not isinstance(data, dict):
             data = {'hosts': data}
-        # is not those subkeys, then simplified syntax, host with vars
+            display.deprecated(
+                msg=f"Group {group!r} was converted to {native_type_name(dict)!r} from {native_type_name(data)!r}.",
+                version='2.23',
+                obj=origin,
+            )
         elif not any(k in data for k in ('hosts', 'vars', 'children')):
             data = {'hosts': [group], 'vars': data}
+            display.deprecated(
+                msg=f"Treating malformed group {group!r} as the sole host of that group. Variables provided in this manner cannot be templated.",
+                version='2.23',
+                obj=origin,
+            )
 
-        if 'hosts' in data:
-            if not isinstance(data['hosts'], list):
-                raise AnsibleError("You defined a group '%s' with bad data for the host list:\n %s" % (group, data))
+        if (data_hosts := data.get('hosts', ...)) is not ...:
+            if not isinstance(data_hosts, list):
+                raise TypeError(f"Value contains '{group}.hosts' which is {native_type_name(data_hosts)!r} instead of {native_type_name(list)!r}.")
 
-            for hostname in data['hosts']:
+            for hostname in data_hosts:
                 self._hosts.add(hostname)
                 self.inventory.add_host(hostname, group)
 
-        if 'vars' in data:
-            if not isinstance(data['vars'], dict):
-                raise AnsibleError("You defined a group '%s' with bad data for variables:\n %s" % (group, data))
+        if (data_vars := data.get('vars', ...)) is not ...:
+            if not isinstance(data_vars, dict):
+                raise TypeError(f"Value contains '{group}.vars' which is {native_type_name(data_vars)!r} instead of {native_type_name(dict)!r}.")
 
-            for k, v in data['vars'].items():
+            for k, v in data_vars.items():
                 self.inventory.set_variable(group, k, v)
 
         if group != '_meta' and isinstance(data, dict) and 'children' in data:
@@ -302,22 +290,102 @@ class InventoryModule(BaseInventoryPlugin):
                 child_name = self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)
 
-    def get_host_variables(self, path, host):
-        """ Runs <script> --host <hostname>, to determine additional host variables """
+    @staticmethod
+    def get_host_variables(path: str, host: str, origin: Origin) -> dict:
+        """Runs <script> --host <hostname>, to determine additional host variables."""
+        origin = origin.replace(description=f'{origin.description} for host {host!r}')
 
-        cmd = [path, "--host", host]
-        try:
-            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError as e:
-            raise AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
-        (out, stderr) = sp.communicate()
+        data, stderr, stderr_help_text = run_command(path, ['--host', host], origin)
 
-        if sp.returncode != 0:
-            raise AnsibleError("Inventory script (%s) had an execution error: %s" % (path, to_native(stderr)))
-
-        if out.strip() == '':
+        if not data.strip():
             return {}
+
         try:
-            return json_dict_bytes_to_unicode(self.loader.load(out, file_name=path))
-        except ValueError:
-            raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
+            try:
+                # Use standard legacy trust inversion here.
+                # Unlike the normal inventory output, everything here is considered a variable and thus supports trust (and trust inversion).
+                processed = json.loads(data, cls=_legacy.Decoder)
+            except Exception as json_ex:
+                AnsibleJSONParserError.handle_exception(json_ex, origin)
+        except Exception as ex:
+            raise AnsibleError(
+                message=f"Inventory script result for host {host!r} could not be parsed as JSON.",
+                help_text=stderr_help_text,
+                # obj will be added by inventory manager
+            ) from ex
+
+        return processed
+
+
+def detect_profile_name(value: str) -> str:
+    """
+    Detect (optional) JSON profile name from an inventory JSON document.
+    Defaults to `inventory_legacy`.
+    """
+    try:
+        data = json.loads(value)
+    except Exception as ex:
+        raise ValueError('Value could not be parsed as JSON.') from ex
+
+    if not isinstance(data, dict):
+        raise TypeError(f'Value is {native_type_name(data)!r} instead of {native_type_name(dict)!r}.')
+
+    if (meta := data.get('_meta', ...)) is ...:
+        return _inventory_legacy.Decoder.profile_name
+
+    if not isinstance(meta, dict):
+        raise TypeError(f"Value contains '_meta' which is {native_type_name(meta)!r} instead of {native_type_name(dict)!r}.")
+
+    if (profile := meta.get('profile', ...)) is ...:
+        return _inventory_legacy.Decoder.profile_name
+
+    if not isinstance(profile, str):
+        raise TypeError(f"Value contains '_meta.profile' which is {native_type_name(profile)!r} instead of {native_type_name(str)!r}.")
+
+    if not profile.startswith('inventory_'):
+        raise ValueError(f"Non-inventory profile {profile!r} is not allowed.")
+
+    return profile
+
+
+def run_command(path: str, options: list[str], origin: Origin) -> tuple[str, str, str]:
+    """Run an inventory script, normalize and validate output."""
+    cmd = [path] + options
+
+    try:
+        sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError as ex:
+        raise AnsibleError(
+            message=f"Failed to execute inventory script command {shlex.join(cmd)!r}.",
+            # obj will be added by inventory manager
+        ) from ex
+
+    stdout_bytes, stderr_bytes = sp.communicate()
+
+    stderr = stderr_bytes.decode(errors='surrogateescape')
+
+    if stderr and not stderr.endswith('\n'):
+        stderr += '\n'
+
+    # DTFIX-RELEASE: another use case for the "not quite help text, definitely not message" diagnostic output on errors
+    stderr_help_text = f'Standard error from inventory script:\n{stderr}' if stderr.strip() else None
+
+    if sp.returncode != 0:
+        raise AnsibleError(
+            message=f"Inventory script returned non-zero exit code {sp.returncode}.",
+            help_text=stderr_help_text,
+            # obj will be added by inventory manager
+        )
+
+    try:
+        data = stdout_bytes.decode()
+    except Exception as ex:
+        raise AnsibleError(
+            "Inventory script result contained characters that cannot be interpreted as UTF-8.",
+            help_text=stderr_help_text,
+            # obj will be added by inventory manager
+        ) from ex
+    else:
+        data = TrustedAsTemplate().tag(origin.tag(data))
+
+    return data, stderr, stderr_help_text

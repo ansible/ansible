@@ -9,6 +9,38 @@ _ANSIBLE_CONNECTION_PATH:
     - For internal use only.
   type: path
   version_added: "2.18"
+ALLOW_BROKEN_CONDITIONALS:
+  # This config option will be deprecated once it no longer has any effect (2.23).
+  name: Allow broken conditionals
+  default: false
+  description:
+    - When enabled, this option allows conditionals with non-boolean results to be used.
+    - A deprecation warning will be emitted in these cases.
+    - By default, non-boolean conditionals result in an error.
+    - Such results often indicate unintentional use of templates where they are not supported, resulting in a conditional that is always true.
+    - When this option is enabled, conditional expressions which are a literal ``None`` or empty string will evaluate as true for backwards compatibility.
+  env: [{name: ANSIBLE_ALLOW_BROKEN_CONDITIONALS}]
+  ini:
+  - {key: allow_broken_conditionals, section: defaults}
+  type: boolean
+  version_added: "2.19"
+ALLOW_EMBEDDED_TEMPLATES:
+  name: Allow embedded templates
+  default: true
+  description:
+    - When enabled, this option allows embedded templates to be used for specific backward compatibility scenarios.
+    - A deprecation warning will be emitted in these cases.
+    - First, conditionals (for example, ``failed_when``, ``until``, ``assert.that``) fully enclosed in template delimiters.
+    - "Second, string constants in conditionals (for example, ``when: some_var == '{{ some_other_var }}'``)."
+    - Finally, positional arguments to lookups (for example, ``lookup('pipe', 'echo {{ some_var }}')``).
+    - This feature is deprecated, since embedded templates are unnecessary in these cases.
+    - When disabled, use of embedded templates will result in an error.
+    - A future release will disable this feature by default.
+  env: [{name: ANSIBLE_ALLOW_EMBEDDED_TEMPLATES}]
+  ini:
+  - {key: allow_embedded_templates, section: defaults}
+  type: boolean
+  version_added: "2.19"
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
@@ -160,38 +192,50 @@ AGNOSTIC_BECOME_PROMPT:
   yaml: {key: privilege_escalation.agnostic_become_prompt}
   version_added: "2.5"
 CACHE_PLUGIN:
-  name: Persistent Cache plugin
+  name: Persistent Fact Cache plugin
   default: memory
-  description: Chooses which cache plugin to use, the default 'memory' is ephemeral.
+  description: Chooses which fact cache plugin to use. By default, no cache is used and facts do not persist between runs.
   env: [{name: ANSIBLE_CACHE_PLUGIN}]
   ini:
   - {key: fact_caching, section: defaults}
   yaml: {key: facts.cache.plugin}
 CACHE_PLUGIN_CONNECTION:
-  name: Cache Plugin URI
+  name: Fact Cache Plugin URI
   default: ~
-  description: Defines connection or path information for the cache plugin.
+  description: Defines connection or path information for the fact cache plugin.
   env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
   ini:
   - {key: fact_caching_connection, section: defaults}
   yaml: {key: facts.cache.uri}
 CACHE_PLUGIN_PREFIX:
-  name: Cache Plugin table prefix
+  name: Fact Cache Plugin table prefix
   default: ansible_facts
-  description: Prefix to use for cache plugin files/tables.
+  description: Prefix to use for fact cache plugin files/tables.
   env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
   ini:
   - {key: fact_caching_prefix, section: defaults}
   yaml: {key: facts.cache.prefix}
 CACHE_PLUGIN_TIMEOUT:
-  name: Cache Plugin expiration timeout
+  name: Fact Cache Plugin expiration timeout
   default: 86400
-  description: Expiration timeout for the cache plugin data.
+  description: Expiration timeout for the fact cache plugin data.
   env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
   ini:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+_CALLBACK_DISPATCH_ERROR_BEHAVIOR:
+  name: Callback dispatch error behavior
+  default: warn
+  description:
+    - Action to take when a callback dispatch results in an error.
+  type: choices
+  choices: &choices_ignore_warn_fail
+    - ignore
+    - warn
+    - fail
+  env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
+  version_added: '2.19'
 COLLECTIONS_SCAN_SYS_PATH:
   name: Scan PYTHONPATH for installed collections
   description: A boolean to enable or disable scanning the sys.path for installed collections.
@@ -496,6 +540,10 @@ DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   - {key: allow_unsafe_lookups, section: defaults}
   type: boolean
   version_added: "2.2.3"
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: Lookup plugins are responsible for tagging strings containing templates to allow evaluation as a template.
 DEFAULT_ASK_PASS:
   name: Ask for the login password
   default: False
@@ -755,15 +803,20 @@ DEFAULT_INVENTORY_PLUGIN_PATH:
 DEFAULT_JINJA2_EXTENSIONS:
   name: Enabled Jinja2 extensions
   default: []
+  type: list
   description:
     - This is a developer-specific feature that allows enabling additional Jinja2 extensions.
     - "See the Jinja2 documentation for details. If you do not know what these do, you probably don't need to change this setting :)"
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
   - {key: jinja2_extensions, section: defaults}
+  deprecated:
+    why: Jinja2 extensions have been deprecated
+    version: "2.23"
+    alternatives: Ansible-supported Jinja plugins (tests, filters, lookups)
 DEFAULT_JINJA2_NATIVE:
   name: Use Jinja2's NativeEnvironment for templating
-  default: False
+  default: True
   description: This option preserves variable types during template operations.
   env: [{name: ANSIBLE_JINJA2_NATIVE}]
   ini:
@@ -771,6 +824,10 @@ DEFAULT_JINJA2_NATIVE:
   type: boolean
   yaml: {key: jinja2_native}
   version_added: 2.7
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: Jinja2 native mode is now the default and only option.
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
@@ -930,6 +987,10 @@ DEFAULT_NULL_REPRESENTATION:
   ini:
   - {key: null_representation, section: defaults}
   type: raw
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 DEFAULT_POLL_INTERVAL:
   name: Async poll interval
   default: 15
@@ -1129,6 +1190,10 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR:
   ini:
   - {key: error_on_undefined_vars, section: defaults}
   type: boolean
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 DEFAULT_VARS_PLUGIN_PATH:
   name: Vars Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/vars:/usr/share/ansible/plugins/vars" }}'
@@ -1213,6 +1278,9 @@ DEPRECATION_WARNINGS:
   ini:
   - {key: deprecation_warnings, section: defaults}
   type: boolean
+  vars:
+    - name: ansible_deprecation_warnings
+      version_added: '2.19'
 DEVEL_WARNING:
   name: Running devel warning
   default: True
@@ -1266,6 +1334,22 @@ DISPLAY_SKIPPED_HOSTS:
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
+DISPLAY_TRACEBACK:
+  name: Control traceback display
+  default: never
+  description: When to include tracebacks in extended error messages
+  env:
+    - name: ANSIBLE_DISPLAY_TRACEBACK
+  ini:
+    - {key: display_traceback, section: defaults}
+  type: list
+  choices:
+    - error
+    - warning
+    - deprecated
+    - always
+    - never
+  version_added: "2.19"
 DOCSITE_ROOT_URL:
   name: Root docsite URL
   default: https://docs.ansible.com/ansible-core/
@@ -1916,6 +2000,10 @@ STRING_TYPE_FILTERS:
   ini:
   - {key: dont_type_filters, section: jinja2}
   type: list
+  deprecated:
+    why: This option has no effect.
+    version: "2.23"
+    alternatives: None; native types returned from filters are always preserved.
 SYSTEM_WARNINGS:
   name: System warnings
   default: True
@@ -1968,6 +2056,39 @@ TASK_TIMEOUT:
   - {key: task_timeout, section: defaults}
   type: integer
   version_added: '2.10'
+_TEMPLAR_UNKNOWN_TYPE_CONVERSION:
+  name: Templar unknown type conversion behavior
+  default: warn
+  description:
+    - Action to take when an unknown type is converted for variable storage during template finalization.
+    - This setting has no effect on the inability to store unsupported variable types as the result of templating.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *choices_ignore_warn_fail
+  env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_CONVERSION}]
+  version_added: '2.19'
+_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
+  name: Templar unknown type encountered behavior
+  default: ignore
+  description:
+    - Action to take when an unknown type is encountered inside a template pipeline.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *choices_ignore_warn_fail
+  env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED}]
+  version_added: '2.19'
+_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
+  name: Templar untrusted template behavior
+  default: ignore
+  description:
+    - Action to take when processing of an untrusted template is skipped.
+    - For `ignore` or `warn`, the input template string is returned as-is.
+    - This setting has no effect on expressions.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *choices_ignore_warn_fail
+  env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
+  version_added: '2.19'
 WORKER_SHUTDOWN_POLL_COUNT:
   name: Worker Shutdown Poll Count
   default: 0
@@ -2030,6 +2151,12 @@ WIN_ASYNC_STARTUP_TIMEOUT:
   vars:
     - {name: ansible_win_async_startup_timeout}
   version_added: '2.10'
+WRAP_STDERR:
+  description: Control line-wrapping behavior on console warnings and errors from default output callbacks (eases pattern-based output testing)
+  env: [{name: ANSIBLE_WRAP_STDERR}]
+  default: false
+  type: bool
+  version_added: "2.19"
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

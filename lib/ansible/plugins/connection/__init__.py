@@ -15,6 +15,7 @@ from abc import abstractmethod
 from functools import wraps
 
 from ansible import constants as C
+from ansible.errors import AnsibleValueOmittedError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import AnsiblePlugin
@@ -286,13 +287,19 @@ class ConnectionBase(AnsiblePlugin):
         }
         for var_name in C.config.get_plugin_vars('connection', self._load_name):
             if var_name in variables:
-                var_options[var_name] = templar.template(variables[var_name])
+                try:
+                    var_options[var_name] = templar.template(variables[var_name])
+                except AnsibleValueOmittedError:
+                    pass
 
         # add extras if plugin supports them
         if getattr(self, 'allow_extras', False):
             for var_name in variables:
                 if var_name.startswith(f'ansible_{self.extras_prefix}_') and var_name not in var_options:
-                    var_options['_extras'][var_name] = templar.template(variables[var_name])
+                    try:
+                        var_options['_extras'][var_name] = templar.template(variables[var_name])
+                    except AnsibleValueOmittedError:
+                        pass
 
         return var_options
 

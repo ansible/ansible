@@ -1,4 +1,5 @@
 """Proxy stdlib threading module that only supports non-joinable daemon threads."""
+
 # NB: all new local module attrs are _ prefixed to ensure an identical public attribute surface area to the module we're proxying
 
 from __future__ import annotations as _annotations

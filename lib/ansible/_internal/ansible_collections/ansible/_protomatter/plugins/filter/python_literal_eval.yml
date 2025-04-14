@@ -1,0 +1,33 @@
+DOCUMENTATION:
+  name: python_literal_eval
+  version_added: "2.19"
+  short_description: evaluate a Python literal expression string
+  description:
+    - Evaluates the input string as a Python literal expression, returning the resulting data structure.
+    - Previous versions of Ansible applied this behavior to all template results in non-native Jinja mode.
+    - This filter provides a way to emulate the previous behavior.
+  notes:
+    - Directly calls Python's C(ast.literal_eval).
+  positional: _input
+  options:
+    _input:
+      description: Python literal string expression.
+      type: str
+      required: true
+    ignore_errors:
+      description: Whether to silently ignore all errors resulting from the literal_eval operation. If true, the input is silently returned unmodified when an error occurs.
+      type: bool
+      default: false
+
+EXAMPLES: |
+  - name: evaluate an expression comprised only of Python literals
+    assert:
+      that: (another_var | ansible._protomatter.python_literal_eval)[1] == 2  # in 2.19 and later, the explicit python_literal_eval emulates the old templating behavior
+    vars:
+      another_var: "{{ some_var }}"  # in 2.18 and earlier, indirection through templating caused implicit literal_eval, converting the value to a list 
+      some_var: "[1, 2]"  # a value that looks like a Python list literal embedded in a string
+
+RETURN:
+  _value:
+    description: Resulting data structure.
+    type: raw

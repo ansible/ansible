@@ -3,11 +3,15 @@
 
 from __future__ import annotations
 
-from ansible import constants as C
+import typing as t
+
 from ansible.plugins import AnsibleJinja2Plugin
 
 
 class AnsibleJinja2Filter(AnsibleJinja2Plugin):
+    @property
+    def plugin_type(self) -> str:
+        return "filter"
 
-    def _no_options(self, *args, **kwargs):
+    def _no_options(self, *args, **kwargs) -> t.NoReturn:
         raise NotImplementedError("Jinja2 filter plugins do not support option functions, they use direct arguments instead.")

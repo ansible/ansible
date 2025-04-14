@@ -13,8 +13,9 @@ DOCUMENTATION = """
         - This is the output callback used by the C(-o)/C(--one-line) command line option.
 """
 
-from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
+from ansible.plugins.callback import CallbackBase
+from ansible.template import Templar
 
 
 class CallbackModule(CallbackBase):
@@ -28,6 +29,10 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'oneline'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._display.deprecated('The oneline callback plugin is deprecated.', version='2.23')
+
     def _command_generic_msg(self, hostname, result, caption):
         stdout = result.get('stdout', '').replace('\n', '\\n').replace('\r', '\\r')
         if 'stderr' in result and result['stderr']:
@@ -38,12 +43,13 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
+            error_text = Templar().template(result._result['exception'])  # transform to a string
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text
-                error = result._result['exception'].strip().split('\n')[-1]
+                error = error_text.strip().split('\n')[-1]
                 msg = "An exception occurred during task execution. To see the full traceback, use -vvv. The error was: %s" % error
             else:
-                msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception'].replace('\n', '')
+                msg = "An exception occurred during task execution. The full traceback is:\n" + error_text.replace('\n', '')
 
             if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
                 self._display.display(self._command_generic_msg(result._host.get_name(), result._result, 'FAILED'), color=C.COLOR_ERROR)
