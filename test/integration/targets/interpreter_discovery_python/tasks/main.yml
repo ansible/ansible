@@ -60,6 +60,8 @@
   - assert:
       that:
       - auto_out.ansible_facts.discovered_interpreter_python is defined
+      # whatever it found should be python 3.x
+      - auto_out.ansible_facts.discovered_interpreter_python is search 'bin/python3.*'
       - echoout.running_python_interpreter == normalized_discovered_interpreter
       # verify that discovery didn't run again (if it did, we'd have the fact in the result)
       - echoout.ansible_facts is not defined or echoout.ansible_facts.discovered_interpreter_python is not defined
@@ -74,6 +76,7 @@
   - name: trigger discovery with auto_legacy
     vars:
       ansible_python_interpreter: auto_legacy
+      ansible_deprecation_warnings: true
     ping:
     register: legacy
 
@@ -146,7 +149,7 @@
       that:
        - discovery.warnings | length == 2
        - discovery.warnings[0] is contains "Unhandled error in Python interpreter discovery for host"
-       - discovery.warnings[1] is contains "Host testhost is using the discovered Python interpreter at /usr/bin/python3"
+       - discovery.warnings[1] is contains "Host 'testhost' is using the discovered Python interpreter at '/usr/bin/python3'"
        - discovery.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
 
   - name: clear facts to force interpreter discovery to run
@@ -223,36 +226,7 @@
       - ansible_facts['ansible_bogus_interpreter'] | default('nope') == 'nope'
       - ansible_facts['discovered_interpreter_bogus'] | default('nope') == 'nope'
 
-  - name: debian assertions
-    assert:
-      # versioned interpreter gets discovered, ensure it's at least py >= 3
-      that:
-        - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
-    when: distro == 'debian'
-
-  - name: fedora assertions
-    assert:
-      that:
-      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
-    when: distro == 'fedora'
-
-  - name: rhel assertions
-    assert:
-      that:
-      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/bin/python3')
-    when: distro == 'redhat'
-
-  - name: ubuntu assertions
-    assert:
-      that:
-      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
-    when: distro == 'ubuntu'
-
-  - name: mac assertions
-    assert:
-      that:
-      - auto_out.ansible_facts.discovered_interpreter_python|regex_search('^/usr/bin/python3')
-    when: os_family == 'darwin'
-
   always:
   - meta: clear_facts
+
+- include_tasks: config_templating.yml

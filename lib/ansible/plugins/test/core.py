@@ -17,17 +17,22 @@
 
 from __future__ import annotations
 
+import functools
 import re
 import operator as py_operator
 
 from collections.abc import MutableMapping, MutableSequence
 
+from jinja2.tests import test_defined, test_undefined
+
 from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
+from ansible._internal._templating._jinja_common import Marker, UndefinedMarker
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.parsing.vault import is_encrypted_file
+from ansible.plugins import accept_args_markers
+from ansible.parsing.vault import is_encrypted_file, VaultHelper, VaultLib
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
 
@@ -131,8 +136,6 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
         This is likely only useful for `search` and `match` which already
         have their own filters.
     """
-    # In addition to ensuring the correct type, to_text here will ensure
-    # _fail_with_undefined_error happens if the value is Undefined
     value = to_text(value, errors='surrogate_or_strict')
     flags = 0
     if ignorecase:
@@ -143,12 +146,19 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     return bool(getattr(_re, match_type, 'search')(value))
 
 
-def vault_encrypted(value):
+@accept_args_markers
+def vault_encrypted(value: object) -> bool:
     """Evaluate whether a variable is a single vault encrypted value
 
     .. versionadded:: 2.10
     """
-    return getattr(value, '__ENCRYPTED__', False) and value.is_encrypted()
+    if ciphertext := VaultHelper.get_ciphertext(value, with_tags=False):
+        return VaultLib.is_encrypted(ciphertext)
+
+    if isinstance(value, Marker):
+        value.trip()
+
+    return False
 
 
 def vaulted_file(value):
@@ -257,6 +267,26 @@ def falsy(value, convert_bool=False):
     return not truthy(value, convert_bool=convert_bool)
 
 
+@accept_args_markers
+@functools.wraps(test_defined)
+def wrapped_test_defined(value: object) -> Marker | bool:
+    """Wrapper around Jinja's `defined` test to avoid mutating the externally-owned function with our marker attribute."""
+    if isinstance(value, Marker) and not isinstance(value, UndefinedMarker):
+        return value
+
+    return test_defined(value)
+
+
+@accept_args_markers
+@functools.wraps(test_undefined)
+def wrapped_test_undefined(value: object) -> Marker | bool:
+    """Wrapper around Jinja's `undefined` test to avoid mutating the externally-owned function with our marker attribute."""
+    if isinstance(value, Marker) and not isinstance(value, UndefinedMarker):
+        return value
+
+    return test_undefined(value)
+
+
 class TestModule(object):
     """ Ansible core jinja2 tests """
 
@@ -304,4 +334,8 @@ class TestModule(object):
             # vault
             'vault_encrypted': vault_encrypted,
             'vaulted_file': vaulted_file,
+
+            # overrides that require special arg handling
+            'defined': wrapped_test_defined,
+            'undefined': wrapped_test_undefined,
         }

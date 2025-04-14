@@ -1006,7 +1006,7 @@ class ModuleValidator(Validator):
             missing_fragment = False
             with CaptureStd():
                 try:
-                    get_docstring(self.path, fragment_loader=fragment_loader,
+                    get_docstring(os.path.abspath(self.path), fragment_loader=fragment_loader,
                                   verbose=True,
                                   collection_name=self.collection_name,
                                   plugin_type=self.plugin_type)
@@ -1030,7 +1030,7 @@ class ModuleValidator(Validator):
                     )
 
             if not missing_fragment:
-                add_fragments(doc, self.object_path, fragment_loader=fragment_loader,
+                add_fragments(doc, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
                               is_module=self.plugin_type == 'module')
 
             if 'options' in doc and doc['options'] is None:
@@ -1616,7 +1616,7 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader,
+                add_fragments(docs, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
                               is_module=self.plugin_type == 'module')
         except Exception:
             # Cannot merge fragments
@@ -2213,7 +2213,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name,
+                    os.path.abspath(self.base_module), fragment_loader, verbose=True, collection_name=self.collection_name,
                     is_module=self.plugin_type == 'module')
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:

@@ -17,14 +17,18 @@
 
 from __future__ import annotations
 
+import typing as t
+
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.common.sentinel import Sentinel
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
+from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import string_types
-from ansible.parsing.mod_args import ModuleArgsParser
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.plugins.loader import lookup_loader
+from ansible.parsing.mod_args import ModuleArgsParser, RAW_PARAM_MODULES
+from ansible.plugins.action import ActionBase
+from ansible.plugins.loader import action_loader, module_loader, lookup_loader
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -35,10 +39,14 @@ from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible._internal import _task
+from ansible._internal._templating import _marker_behaviors
+from ansible._internal._templating._jinja_bits import is_possibly_all_template
+from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 
-from ansible.utils.vars import isidentifier
+from ansible.utils.vars import validate_variable_name
 
 __all__ = ['Task']
 
@@ -68,8 +76,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     # inheritance is only triggered if the 'current value' is Sentinel,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    args = NonInheritableFieldAttribute(isa='dict', default=dict)
-    action = NonInheritableFieldAttribute(isa='string')
+    args = t.cast(dict, NonInheritableFieldAttribute(isa='dict', default=dict))
+    action = t.cast(str, NonInheritableFieldAttribute(isa='string'))
 
     async_val = NonInheritableFieldAttribute(isa='int', default=0, alias='async')
     changed_when = NonInheritableFieldAttribute(isa='list', default=list)
@@ -85,13 +93,13 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     # deprecated, used to be loop and loop_args but loop has been repurposed
     loop_with = NonInheritableFieldAttribute(isa='string', private=True)
 
-    def __init__(self, block=None, role=None, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None) -> None:
         """ constructors a task, without the Task.load classmethod, it will be pretty blank """
 
         self._role = role
         self._parent = None
         self.implicit = False
-        self.resolved_action = None
+        self.resolved_action: str | None = None
 
         if task_include:
             self._parent = task_include
@@ -132,13 +140,80 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
-        t = Task(block=block, role=role, task_include=task_include)
-        return t.load_data(data, variable_manager=variable_manager, loader=loader)
+        task = Task(block=block, role=role, task_include=task_include)
+        return task.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    def _post_validate_module_defaults(self, attr: str, value: t.Any, templar: TemplateEngine) -> t.Any:
+        """Override module_defaults post validation to disable templating, which is handled by args post validation."""
+        return value
+
+    def _post_validate_args(self, attr: str, value: t.Any, templar: TemplateEngine) -> dict[str, t.Any]:
+        try:
+            self.action = templar.template(self.action)
+        except AnsibleValueOmittedError:
+            # some strategies may trigger this error when templating task.action, but backstop here if not
+            raise AnsibleParserError("Omit is not valid for the `action` keyword.", obj=self.action) from None
+
+        action_context = action_loader.get_with_context(self.action, collection_list=self.collections, class_only=True)
+
+        if not action_context.plugin_load_context.resolved:
+            module_or_action_context = module_loader.find_plugin_with_context(self.action, collection_list=self.collections)
+
+            if not module_or_action_context.resolved:
+                raise AnsibleError(f"Cannot resolve {self.action!r} to an action or module.", obj=self.action)
+
+            action_context = action_loader.get_with_context('ansible.legacy.normal', collection_list=self.collections, class_only=True)
+        else:
+            module_or_action_context = action_context.plugin_load_context
+
+        self.resolved_action = module_or_action_context.resolved_fqcn
+
+        action_type: type[ActionBase] = action_context.object
+
+        vp = value.pop('_variable_params', None)
+
+        supports_raw_params = action_type.supports_raw_params or module_or_action_context.resolved_fqcn in RAW_PARAM_MODULES
+
+        if supports_raw_params:
+            raw_params_to_finalize = None
+        else:
+            raw_params_to_finalize = value.pop('_raw_params', None)  # always str or None
+
+            # TaskArgsFinalizer performs more thorough type checking, but this provides a friendlier error message for a subset of detected cases.
+            if raw_params_to_finalize and not is_possibly_all_template(raw_params_to_finalize):
+                raise AnsibleError(f'Action {module_or_action_context.resolved_fqcn!r} does not support raw params.', obj=self.action)
+
+        args_finalizer = _task.TaskArgsFinalizer(
+            _get_action_arg_defaults(module_or_action_context.resolved_fqcn, self, templar),
+            vp,
+            raw_params_to_finalize,
+            value,
+            templar=templar,
+        )
+
+        try:
+            with action_type.get_finalize_task_args_context() as finalize_context:
+                args = args_finalizer.finalize(action_type.finalize_task_arg, context=finalize_context)
+        except Exception as ex:
+            raise AnsibleError(f'Finalization of task args for {module_or_action_context.resolved_fqcn!r} failed.', obj=self.action) from ex
+
+        if self._origin:
+            args = self._origin.tag(args)
+
+        return args
+
+    def _get_meta(self) -> str | None:
+        # FUTURE: validate meta and return an enum instead of a str
+        # meta currently does not support being templated, so we can cheat
+        if self.action in C._ACTION_META:
+            return self.args.get('_raw_params')
+
+        return None
 
     def __repr__(self):
         """ returns a human-readable representation of the task """
-        if self.action in C._ACTION_META:
-            return "TASK: meta (%s)" % self.args['_raw_params']
+        if meta := self._get_meta():
+            return f"TASK: meta ({meta})"
         else:
             return "TASK: %s" % self.get_name()
 
@@ -164,12 +239,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
-        # the new, cleaned datastructure, which will have legacy
-        # items reduced to a standard structure suitable for the
-        # attributes of the task class
-        new_ds = AnsibleMapping()
-        if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.ansible_pos = ds.ansible_pos
+        # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
+        # attributes of the task class; copy any tagged data to preserve things like origin
+        new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         # since this affects the task action parsing, we have to resolve in preprocess instead of in typical validator
         default_collection = AnsibleCollectionConfig.default_collection
@@ -202,26 +274,13 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         args_parser = ModuleArgsParser(task_ds=ds, collection_list=collections_list)
         try:
             (action, args, delegate_to) = args_parser.parse()
-        except AnsibleParserError as e:
+        except AnsibleParserError as ex:
             # if the raises exception was created with obj=ds args, then it includes the detail
             # so we dont need to add it so we can just re raise.
-            if e.obj:
+            if ex.obj:
                 raise
             # But if it wasn't, we can add the yaml object now to get more detail
-            raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
-        else:
-            # Set the resolved action plugin (or if it does not exist, module) for callbacks.
-            self.resolved_action = args_parser.resolved_action
-
-        # the command/shell/script modules used to support the `cmd` arg,
-        # which corresponds to what we now call _raw_params, so move that
-        # value over to _raw_params (assuming it is empty)
-        if action in C._ACTION_HAS_CMD:
-            if 'cmd' in args:
-                if args.get('_raw_params', '') != '':
-                    raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
-                                       " Please put everything in one or the other place.", obj=ds)
-                args['_raw_params'] = args.pop('cmd')
+            raise AnsibleParserError("Error parsing task arguments.", obj=ds) from ex
 
         new_ds['action'] = action
         new_ds['args'] = args
@@ -277,8 +336,11 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             setattr(self, name, [value])
 
     def _validate_register(self, attr, name, value):
-        if value is not None and not isidentifier(value):
-            raise AnsibleParserError(f"Invalid variable name in 'register' specified: '{value}'")
+        if value is not None:
+            try:
+                validate_variable_name(value)
+            except Exception as ex:
+                raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
 
     def post_validate(self, templar):
         """
@@ -289,9 +351,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         if self._parent:
             self._parent.post_validate(templar)
 
-        if AnsibleCollectionConfig.default_collection:
-            pass
-
         super(Task, self).post_validate(templar)
 
     def _post_validate_loop(self, attr, value, templar):
@@ -301,44 +360,53 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         """
         return value
 
+    def _post_validate_name(self, attr, value, templar):
+        """
+        Override post-validation behavior for `name` to be best-effort for the vars available.
+        Direct access via `post_validate_attribute` writes the value back to provide a stable value.
+        This value is individually post-validated early by strategies for the benefit of callbacks.
+        """
+        with _marker_behaviors.ReplacingMarkerBehavior.warning_context() as replacing_behavior:
+            self.name = templar.extend(marker_behavior=replacing_behavior).template(value, options=TemplateOptions(value_for_omit=None))
+
+        return self.name
+
     def _post_validate_environment(self, attr, value, templar):
         """
         Override post validation of vars on the play, as we don't want to
         template these too early.
         """
         env = {}
-        if value is not None:
 
-            def _parse_env_kv(k, v):
-                try:
-                    env[k] = templar.template(v, convert_bare=False)
-                except AnsibleUndefinedVariable as e:
-                    error = to_native(e)
-                    if self.action in C._ACTION_FACT_GATHERING and 'ansible_facts.env' in error or 'ansible_env' in error:
-                        # ignore as fact gathering is required for 'env' facts
-                        return
-                    raise
+        # FUTURE: kill this with fire
+        def _parse_env_kv(k, v):
+            try:
+                env[k] = templar.template(v)
+            except AnsibleValueOmittedError:
+                # skip this value
+                return
+            except AnsibleUndefinedVariable as e:
+                error = to_native(e)
+                if self.action in C._ACTION_FACT_GATHERING and 'ansible_facts.env' in error or 'ansible_env' in error:
+                    # ignore as fact gathering is required for 'env' facts
+                    return
+                raise
 
-            if isinstance(value, list):
-                for env_item in value:
-                    if isinstance(env_item, dict):
-                        for k in env_item:
-                            _parse_env_kv(k, env_item[k])
-                    else:
-                        isdict = templar.template(env_item, convert_bare=False)
-                        if isinstance(isdict, dict):
-                            env |= isdict
-                        else:
-                            display.warning("could not parse environment value, skipping: %s" % value)
-
-            elif isinstance(value, dict):
-                # should not really happen
-                env = dict()
-                for env_item in value:
-                    _parse_env_kv(env_item, value[env_item])
+        # NB: the environment FieldAttribute definition ensures that value is always a list
+        for env_item in value:
+            if isinstance(env_item, dict):
+                for k in env_item:
+                    _parse_env_kv(k, env_item[k])
             else:
-                # at this point it should be a simple string, also should not happen
-                env = templar.template(value, convert_bare=False)
+                try:
+                    isdict = templar.template(env_item)
+                except AnsibleValueOmittedError:
+                    continue
+
+                if isinstance(isdict, dict):
+                    env |= isdict
+                else:
+                    display.warning("could not parse environment value, skipping: %s" % value)
 
         return env
 
@@ -385,7 +453,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             all_vars |= self.vars
         return all_vars
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
+    def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Task:
         new_me = super(Task, self).copy()
 
         new_me._parent = None
@@ -519,3 +587,28 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         while not isinstance(parent, Block):
             parent = parent._parent
         return parent._play
+
+    def dump_attrs(self):
+        """Override to smuggle important non-FieldAttribute values back to the controller."""
+        attrs = super().dump_attrs()
+        attrs.update(resolved_action=self.resolved_action)
+        return attrs
+
+    def _resolve_conditional(
+        self,
+        conditional: list[str | bool],
+        variables: dict[str, t.Any],
+        *,
+        result_context: dict[str, t.Any] | None = None,
+    ) -> bool:
+        """Loops through the conditionals set on this object, returning False if any of them evaluate as such, as well as the condition that was False."""
+        engine = TemplateEngine(self._loader, variables=variables)
+
+        for item in conditional:
+            if not engine.evaluate_conditional(item):
+                if result_context is not None:
+                    result_context.update(false_condition=item)
+
+                return False
+
+        return True

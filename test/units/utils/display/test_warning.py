@@ -23,9 +23,10 @@ def test_warning(capsys, mocker, warning_message):
     mocker.patch('ansible.utils.color.parsecolor', return_value=u'1;35')  # value for 'bright purple'
 
     d = Display()
+    d._warns.clear()
     d.warning(warning_message)
     out, err = capsys.readouterr()
-    assert d._warns == {expected_warning_message: 1}
+    assert d._warns == {expected_warning_message}
     assert err == '\x1b[1;35m{0}\x1b[0m\n'.format(expected_warning_message.rstrip('\n'))
 
 
@@ -35,7 +36,8 @@ def test_warning_no_color(capsys, mocker, warning_message):
     mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
 
     d = Display()
+    d._warns.clear()
     d.warning(warning_message)
     out, err = capsys.readouterr()
-    assert d._warns == {expected_warning_message: 1}
+    assert d._warns == {expected_warning_message}
     assert err == expected_warning_message

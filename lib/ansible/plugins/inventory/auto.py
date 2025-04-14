@@ -30,6 +30,8 @@ class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'auto'
 
+    # no need to set trusted_by_default, since the consumers of this value will always consult the real plugin substituted during our parse()
+
     def verify_file(self, path):
         if not path.endswith('.yml') and not path.endswith('.yaml'):
             return False
@@ -55,6 +57,11 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleParserError("inventory source '{0}' could not be verified by inventory plugin '{1}'".format(path, plugin_name))
 
         self.display.v("Using inventory plugin '{0}' to process inventory source '{1}'".format(plugin._load_name, path))
+
+        # unfortunate magic to swap the real plugin type we're proxying here into the inventory data API wrapper, so the wrapper can make the right compat
+        # decisions based on the metadata the real plugin provides instead of our metadata
+        inventory._target_plugin = plugin
+
         plugin.parse(inventory, loader, path, cache=cache)
         try:
             plugin.update_cache_if_changed()

@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: sample config for traceback behavior
+  set_fact:
+    traceback_on_error: |
+      {{ lookup('ansible._protomatter.config', 'DISPLAY_TRACEBACK') is contains 'error' }}
+
 - name: test win_ping
   action: win_ping
   register: win_ping_result
@@ -64,7 +69,7 @@
       - win_ping_crash_result is failed
       - win_ping_crash_result is not changed
       - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
-      - '"throw \"boom\"" in win_ping_crash_result.exception'
+      - not traceback_on_error or "throw \"boom\"" in win_ping_crash_result.exception
 
 - name: verify that shortname _raw_params works
   win_shell: echo "name=foo"

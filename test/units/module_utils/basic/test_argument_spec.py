@@ -15,10 +15,11 @@ import pytest
 from unittest.mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
-from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 import builtins
 
+
+pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
@@ -72,14 +73,13 @@ VALID_SPECS = (
 
 INVALID_SPECS: tuple[tuple[dict[str, t.Any], dict[str, t.Any], str], ...] = (
     # Type is int; unable to convert this string
-    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, f"is of type {type('wolf')} and we were unable to convert to int:"),
+    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, "is of type str and we were unable to convert to int"),
     # Type is list elements is int; unable to convert this string
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]},
-     "is of type {0} and we were unable to convert to int:".format(type('int'))),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "is of type str and we were unable to convert to int"),
     # Type is int; unable to convert float
-    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> and we were unable to convert to int:"),
+    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "is of type float and we were unable to convert to int:"),
     # Type is list, elements is int; unable to convert float
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> and we were unable to convert to int:"),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "is of type float and we were unable to convert to int:"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
     # type is a list, elements is callable that fails to convert
@@ -402,10 +402,8 @@ class TestComplexArgSpecs:
         assert am.params['bar3'][1] == 'test/'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
-    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec, monkeypatch):
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
         """Test a deprecated alias"""
-        monkeypatch.setattr(warnings, '_global_deprecations', [])
-
         am = basic.AnsibleModule(**complex_argspec)
 
         assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']

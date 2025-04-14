@@ -4,6 +4,7 @@ some_structure:
     this: "is a hash element in a list"
     warp: 9
     where: endor
+    templated: "{{ 1 }}"
 
 other_data:
   level1:

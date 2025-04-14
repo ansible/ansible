@@ -25,7 +25,7 @@ ANSIBLE_CALLBACKS_ENABLED=formerly_core_callback ansible localhost -m debug 2>&1
 ## validate missing redirected callback
 ANSIBLE_CALLBACKS_ENABLED=formerly_core_missing_callback ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'formerly_core_missing_callback'"
 ## validate redirected + removed callback (fatal)
-ANSIBLE_CALLBACKS_ENABLED=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "testns.testcoll.removedcallback has been removed"
+ANSIBLE_CALLBACKS_ENABLED=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "The 'testns.testcoll.removedcallback' callback plugin has been removed"
 # validate avoiding duplicate loading of callback, even if using diff names
 [ "$(ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback,formerly_core_callback ansible localhost -m debug 2>&1 | grep -c 'usercallback says ok')" = "1" ]
 # ensure non existing callback does not crash ansible
@@ -159,4 +159,5 @@ cat <<EOF > test_dead_ping_error.yml
   tasks:
   - dead_ping:
 EOF
-ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e 'line 4, column 5'
+ansible-playbook test_dead_ping_error.yml 2>&1 >/dev/null | grep -e ':4:5'
+echo PASS

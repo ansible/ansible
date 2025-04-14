@@ -17,27 +17,25 @@
 
 from __future__ import annotations
 
+import collections.abc as c
+import typing as t
+
 from collections.abc import Mapping, MutableMapping
 
 from ansible.inventory.group import Group, InventoryObjectType
 from ansible.parsing.utils.addresses import patterns
-from ansible.utils.vars import combine_vars, get_unique_id
+from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
 
+from . import helpers  # this is left as a module import to facilitate easier unit test patching
 
 __all__ = ['Host']
 
 
 class Host:
-    """ a single ansible host """
+    """A single ansible host."""
     base_type = InventoryObjectType.HOST
 
     # __slots__ = [ 'name', 'vars', 'groups' ]
-
-    def __getstate__(self):
-        return self.serialize()
-
-    def __setstate__(self, data):
-        return self.deserialize(data)
 
     def __eq__(self, other):
         if not isinstance(other, Host):
@@ -56,55 +54,28 @@ class Host:
     def __repr__(self):
         return self.get_name()
 
-    def serialize(self):
-        groups = []
-        for group in self.groups:
-            groups.append(group.serialize())
+    def __init__(self, name: str, port: int | str | None = None, gen_uuid: bool = True) -> None:
+        name = helpers.remove_trust(name)
 
-        return dict(
-            name=self.name,
-            vars=self.vars.copy(),
-            address=self.address,
-            uuid=self._uuid,
-            groups=groups,
-            implicit=self.implicit,
-        )
+        self.vars: dict[str, t.Any] = {}
+        self.groups: list[Group] = []
+        self._uuid: str | None = None
 
-    def deserialize(self, data):
-        self.__init__(gen_uuid=False)  # used by __setstate__ to deserialize in place  # pylint: disable=unnecessary-dunder-call
-
-        self.name = data.get('name')
-        self.vars = data.get('vars', dict())
-        self.address = data.get('address', '')
-        self._uuid = data.get('uuid', None)
-        self.implicit = data.get('implicit', False)
-
-        groups = data.get('groups', [])
-        for group_data in groups:
-            g = Group()
-            g.deserialize(group_data)
-            self.groups.append(g)
-
-    def __init__(self, name=None, port=None, gen_uuid=True):
-
-        self.vars = {}
-        self.groups = []
-        self._uuid = None
-
-        self.name = name
-        self.address = name
+        self.name: str = name
+        self.address: str = name
 
         if port:
             self.set_variable('ansible_port', int(port))
 
         if gen_uuid:
             self._uuid = get_unique_id()
-        self.implicit = False
 
-    def get_name(self):
+        self.implicit: bool = False
+
+    def get_name(self) -> str:
         return self.name
 
-    def populate_ancestors(self, additions=None):
+    def populate_ancestors(self, additions: c.Iterable[Group] | None = None) -> None:
         # populate ancestors
         if additions is None:
             for group in self.groups:
@@ -114,7 +85,7 @@ class Host:
                 if group not in self.groups:
                     self.groups.append(group)
 
-    def add_group(self, group):
+    def add_group(self, group: Group) -> bool:
         added = False
         # populate ancestors first
         for oldg in group.get_ancestors():
@@ -127,7 +98,7 @@ class Host:
             added = True
         return added
 
-    def remove_group(self, group):
+    def remove_group(self, group: Group) -> bool:
         removed = False
         if group in self.groups:
             self.groups.remove(group)
@@ -143,18 +114,25 @@ class Host:
                         self.remove_group(oldg)
         return removed
 
-    def set_variable(self, key, value):
+    def set_variable(self, key: str, value: t.Any) -> None:
+        key = helpers.remove_trust(key)
+
+        validate_variable_name(key)
+
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars = combine_vars(self.vars, {key: value})
         else:
             self.vars[key] = value
 
-    def get_groups(self):
+    def get_groups(self) -> list[Group]:
         return self.groups
 
-    def get_magic_vars(self):
-        results = {}
-        results['inventory_hostname'] = self.name
+    def get_magic_vars(self) -> dict[str, t.Any]:
+        results: dict[str, t.Any] = dict(
+            inventory_hostname=self.name,
+        )
+
+        # FUTURE: these values should be dynamically calculated on access ala the rest of magic vars
         if patterns['ipv4'].match(self.name) or patterns['ipv6'].match(self.name):
             results['inventory_hostname_short'] = self.name
         else:
@@ -164,5 +142,5 @@ class Host:
 
         return results
 
-    def get_vars(self):
+    def get_vars(self) -> dict[str, t.Any]:
         return combine_vars(self.vars, self.get_magic_vars())

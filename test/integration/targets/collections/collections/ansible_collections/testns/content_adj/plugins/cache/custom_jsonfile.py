@@ -42,7 +42,7 @@ DOCUMENTATION = """
 import codecs
 import json
 
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
+from ansible.module_utils.common.json import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseFileCacheModule
 
 

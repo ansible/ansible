@@ -23,7 +23,6 @@ import os
 import os.path
 import stat
 import tempfile
-import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
@@ -470,10 +469,9 @@ class ActionModule(ActionBase):
             try:
                 # find in expected paths
                 source = self._find_needle('files', source)
-            except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_text(e)
-                result['exception'] = traceback.format_exc()
+            except AnsibleError as ex:
+                result.update(self.result_dict_from_exception(ex))
+
                 return self._ensure_invocation(result)
 
             if trailing_slash != source.endswith(os.path.sep):

@@ -47,7 +47,7 @@
       assert:
         that:
         - bad_mojo is failed
-        - '"No key to lookup was provided as first term with in string inline option" in bad_mojo.msg'
+        - '"No key to look up was provided as first term within string inline options" in bad_mojo.msg'
 
     - name: Test invalid option
       debug:

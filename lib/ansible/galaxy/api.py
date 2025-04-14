@@ -57,13 +57,13 @@ def should_retry_error(exception):
     if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
         return True
 
-    if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
+    if isinstance(exception, AnsibleError) and (cause := exception.__cause__):
         # URLError is often a proxy for an underlying error, handle wrapped exceptions
-        if isinstance(orig_exc, URLError):
-            orig_exc = orig_exc.reason
+        if isinstance(cause, URLError):
+            cause = cause.reason
 
         # Handle common URL related errors
-        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
+        if isinstance(cause, (TimeoutError, BadStatusLine, IncompleteRead)):
             return True
 
     return False
@@ -408,11 +408,8 @@ class GalaxyAPI:
                             method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
-        except Exception as e:
-            raise AnsibleError(
-                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
-                orig_exc=e
-            )
+        except Exception as ex:
+            raise AnsibleError(f"Unknown error when attempting to call Galaxy at {url!r}.") from ex
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
@@ -471,8 +468,8 @@ class GalaxyAPI:
             resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self._server_timeout)
         except HTTPError as e:
             raise GalaxyError(e, 'Attempting to authenticate to galaxy')
-        except Exception as e:
-            raise AnsibleError('Unable to authenticate to galaxy: %s' % to_native(e), orig_exc=e)
+        except Exception as ex:
+            raise AnsibleError('Unable to authenticate to galaxy.') from ex
 
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data

@@ -6,7 +6,7 @@
 
 - assert:
     that:
-      - '"found a duplicate dict key (foo)" in duplicate_warn.stderr'
+      - duplicate_warn.stderr is contains("Found duplicate mapping key 'foo'")
       - duplicate_warn.rc == 0
 
 - name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=error
@@ -18,7 +18,7 @@
 
 - assert:
     that:
-      - '"found a duplicate dict key (foo)" in duplicate_error.stderr'
+      - duplicate_error.stderr is contains("Found duplicate mapping key 'foo'")
       - duplicate_error.rc == 4
 
 - name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=ignore
@@ -29,7 +29,7 @@
 
 - assert:
     that:
-      - '"found a duplicate dict key (foo)" not in duplicate_ignore.stderr'
+      - duplicate_ignore.stderr is not contains("Found duplicate mapping key 'foo'")
       - duplicate_ignore.rc == 0
 
 

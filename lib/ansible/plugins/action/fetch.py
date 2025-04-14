@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
             validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             msg = ''
-            # validate source and dest are strings FIXME: use basic.py and module specs
+            # FIXME: validate source and dest are strings; use basic.py and module specs
             if not isinstance(source, string_types):
                 msg = "Invalid type supplied for source option, it must be a string"
 

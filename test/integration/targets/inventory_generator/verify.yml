@@ -1,0 +1,87 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    expected_host_names:
+      - build_api_dev_runner
+      - build_api_prod_runner
+      - build_api_test_runner
+      - build_web_dev_runner
+      - build_web_prod_runner
+      - build_web_test_runner
+      - launch_api_dev_runner
+      - launch_api_prod_runner
+      - launch_api_test_runner
+      - launch_web_dev_runner
+      - launch_web_prod_runner
+      - launch_web_test_runner
+    expected_group_names:
+      - all
+      - api
+      - api_dev
+      - api_prod
+      - api_test
+      - build
+      - build_api
+      - build_api_dev
+      - build_api_prod
+      - build_api_test
+      - build_web
+      - build_web_dev
+      - build_web_prod
+      - build_web_test
+      - dev
+      - launch
+      - launch_api
+      - launch_api_dev
+      - launch_api_prod
+      - launch_api_test
+      - launch_web
+      - launch_web_dev
+      - launch_web_prod
+      - launch_web_test
+      - prod
+      - runner
+      - test
+      - ungrouped
+      - web
+      - web_dev
+      - web_prod
+      - web_test
+  tasks:
+    - name: verify the shape and contents of inventory from the plugin
+      assert:
+        that:
+          - groups.all | sort == expected_host_names
+          - groups.runner | sort == expected_host_names
+          - groups.keys() | sort == expected_group_names
+          # and now some spot checks...
+          - groups.api | length == 6
+          - groups.api_dev | length == 2
+          - groups.build | length == 6
+          - groups.build_api | length == 3
+          - groups.dev | length == 4
+          - groups.launch | length == 6
+          - groups.test | length == 4
+          - groups.web | length == 6
+
+    - name: dump inventory for a broken plugin configuration
+      command: ansible-inventory -i parent_without_name.yml --list --export
+      register: result
+
+    - assert:
+        that:
+          - (result.stdout | from_json(profile="inventory_legacy"))._meta.hostvars == {}
+          - (result.stdout | from_json(profile="inventory_legacy")).all.children == ["ungrouped"]
+          - result.stderr is contains('Element host_with_unnamed_parent has a parent with no name.')
+
+- hosts: all
+  gather_facts: no
+  vars:
+    defined_on_play: alive  # host vars have templates that refer to this
+  tasks:
+    - name: spot check host vars
+      assert:
+        that:
+          - my_dict.hello == 'alive'
+          - my_list[0] == 'alive'
+          - environment is defined

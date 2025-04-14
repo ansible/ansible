@@ -18,27 +18,28 @@
 from __future__ import annotations
 
 import difflib
+import functools
 import json
 import re
 import sys
 import textwrap
+import typing as t
+
 from typing import TYPE_CHECKING
 
-from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
 
 from ansible import constants as C
-from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import text_type
-from ansible.parsing.ajson import AnsibleJSONEncoder
-from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.parsing.yaml.objects import AnsibleUnicode
+from ansible.module_utils._internal import _datatag
+from ansible.module_utils.common.messages import ErrorSummary
+from ansible._internal._yaml import _dumper
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, NativeJinjaUnsafeText
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
+from ansible.module_utils._internal._json._profiles import _fallback_to_str
+from ansible._internal._templating import _engine
 
 import yaml
 
@@ -52,23 +53,41 @@ __all__ = ["CallbackBase"]
 
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
-_YAML_TEXT_TYPES = (text_type, AnsibleUnicode, AnsibleUnsafeText, NativeJinjaUnsafeText)
 # Characters that libyaml/pyyaml consider breaks
 _YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 # regex representation of libyaml/pyyaml of a space followed by a break character
 _SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
 
 
-class _AnsibleCallbackDumper(AnsibleDumper):
-    def __init__(self, lossy=False):
+class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
+    def __init__(self, *args, lossy: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self._lossy = lossy
 
-    def __call__(self, *args, **kwargs):
-        # pyyaml expects that we are passing an object that can be instantiated, but to
-        # smuggle the ``lossy`` configuration, we do that in ``__init__`` and then
-        # define this ``__call__`` that will mimic the ability for pyyaml to instantiate class
-        super().__init__(*args, **kwargs)
-        return self
+    def _pretty_represent_str(self, data):
+        """Uses block style for multi-line strings"""
+        data = _datatag.AnsibleTagHelper.as_native_type(data)
+
+        if _should_use_block(data):
+            style = '|'
+            if self._lossy:
+                data = _munge_data_for_lossy_yaml(data)
+        else:
+            style = self.default_style
+
+        node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
+
+        if self.alias_key is not None:
+            self.represented_objects[self.alias_key] = node
+
+        return node
+
+    @classmethod
+    def _register_representers(cls) -> None:
+        super()._register_representers()
+
+        cls.add_multi_representer(str, cls._pretty_represent_str)
 
 
 def _should_use_block(scalar):
@@ -77,6 +96,7 @@ def _should_use_block(scalar):
     for ch in _YAML_BREAK_CHARS:
         if ch in scalar:
             return True
+
     return False
 
 
@@ -95,12 +115,12 @@ class _SpecialCharacterTranslator:
         return None
 
 
-def _filter_yaml_special(scalar):
+def _filter_yaml_special(scalar: str) -> str:
     """Filter a string removing any character that libyaml/pyyaml declare as special"""
     return scalar.translate(_SpecialCharacterTranslator())
 
 
-def _munge_data_for_lossy_yaml(scalar):
+def _munge_data_for_lossy_yaml(scalar: str) -> str:
     """Modify a string so that analyze_scalar in libyaml/pyyaml will allow block formatting"""
     # we care more about readability than accuracy, so...
     # ...libyaml/pyyaml does not permit trailing spaces for block scalars
@@ -113,31 +133,7 @@ def _munge_data_for_lossy_yaml(scalar):
     return _SPACE_BREAK_RE.sub(r'\1', scalar)
 
 
-def _pretty_represent_str(self, data):
-    """Uses block style for multi-line strings"""
-    data = text_type(data)
-    if _should_use_block(data):
-        style = '|'
-        if self._lossy:
-            data = _munge_data_for_lossy_yaml(data)
-    else:
-        style = self.default_style
-
-    node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
-    if self.alias_key is not None:
-        self.represented_objects[self.alias_key] = node
-    return node
-
-
-for data_type in _YAML_TEXT_TYPES:
-    _AnsibleCallbackDumper.add_representer(
-        data_type,
-        _pretty_represent_str
-    )
-
-
 class CallbackBase(AnsiblePlugin):
-
     """
     This is a base ansible callback class that does nothing. New callbacks should
     use this class as a base and override any callback methods they wish to execute
@@ -244,9 +240,12 @@ class CallbackBase(AnsiblePlugin):
         if self._display.verbosity < 3 and 'diff' in result:
             del abridged_result['diff']
 
-        # remove exception from screen output
-        if 'exception' in abridged_result:
-            del abridged_result['exception']
+        # remove error/warning values; the stdout callback should have already handled them
+        abridged_result.pop('exception', None)
+        abridged_result.pop('warnings', None)
+        abridged_result.pop('deprecations', None)
+
+        abridged_result = _engine.TemplateEngine().transform(abridged_result)  # ensure the dumped view matches the transformed view a playbook sees
 
         if not serialize:
             # Just return ``abridged_result`` without going through serialization
@@ -255,17 +254,8 @@ class CallbackBase(AnsiblePlugin):
             return abridged_result
 
         if result_format == 'json':
-            try:
-                return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
-            except TypeError:
-                # Python3 bug: throws an exception when keys are non-homogenous types:
-                # https://bugs.python.org/issue25457
-                # sort into an OrderedDict and then json.dumps() that instead
-                if not OrderedDict:
-                    raise
-                return json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
-                                  cls=AnsibleJSONEncoder, indent=indent,
-                                  ensure_ascii=False, sort_keys=False)
+            return json.dumps(abridged_result, cls=_fallback_to_str.Encoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+
         elif result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior
             # default behavior for yaml is to prettify results
@@ -283,7 +273,7 @@ class CallbackBase(AnsiblePlugin):
                 yaml.dump(
                     abridged_result,
                     allow_unicode=True,
-                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
                     indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
@@ -291,32 +281,31 @@ class CallbackBase(AnsiblePlugin):
                 ' ' * (indent or 4)
             )
 
-    def _handle_warnings(self, res):
-        """ display warnings, if enabled and any exist in the result """
-        if C.ACTION_WARNINGS:
-            if 'warnings' in res and res['warnings']:
-                for warning in res['warnings']:
-                    self._display.warning(warning)
-                del res['warnings']
-            if 'deprecations' in res and res['deprecations']:
-                for warning in res['deprecations']:
-                    self._display.deprecated(**warning)
-                del res['deprecations']
+    def _handle_warnings(self, res: dict[str, t.Any]) -> None:
+        """Display warnings and deprecation warnings sourced by task execution."""
+        for warning in res.pop('warnings', []):
+            # DTFIX-RELEASE: what to do about propagating wrap_text from the original display.warning call?
+            self._display._warning(warning, wrap_text=False)
 
-    def _handle_exception(self, result, use_stderr=False):
+        for warning in res.pop('deprecations', []):
+            self._display._deprecated(warning)
 
-        if 'exception' in result:
-            msg = "An exception occurred during task execution. "
-            exception_str = to_text(result['exception'])
-            if self._display.verbosity < 3:
-                # extract just the actual error message from the exception text
-                error = exception_str.strip().split('\n')[-1]
-                msg += "To see the full traceback, use -vvv. The error was: %s" % error
-            else:
-                msg = "The full traceback is:\n" + exception_str
-                del result['exception']
+    def _handle_exception(self, result: dict[str, t.Any], use_stderr: bool = False) -> None:
+        error_summary: ErrorSummary | None
 
-            self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
+        if error_summary := result.pop('exception', None):
+            self._display._error(error_summary, wrap_text=False, stderr=use_stderr)
+
+    def _handle_warnings_and_exception(self, result: TaskResult) -> None:
+        """Standardized handling of warnings/deprecations and exceptions from a task/item result."""
+        # DTFIX-RELEASE: make/doc/porting-guide a public version of this method?
+        try:
+            use_stderr = self.get_option('display_failed_stderr')
+        except KeyError:
+            use_stderr = False
+
+        self._handle_warnings(result._result)
+        self._handle_exception(result._result, use_stderr=use_stderr)
 
     def _serialize_diff(self, diff):
         try:
@@ -341,7 +330,7 @@ class CallbackBase(AnsiblePlugin):
                 yaml.dump(
                     diff,
                     allow_unicode=True,
-                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
                     indent=4,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
@@ -425,6 +414,7 @@ class CallbackBase(AnsiblePlugin):
         """ removes data from results for display """
 
         # mostly controls that debug only outputs what it was meant to
+        # FIXME: this is a terrible heuristic to format debug's output- it masks exception detail
         if task_name in C._ACTION_DEBUG:
             if 'msg' in result:
                 # msg should be alone
@@ -659,13 +649,13 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_include(self, included_file):
         pass  # no v1 correspondence
 
-    def v2_runner_item_on_ok(self, result):
+    def v2_runner_item_on_ok(self, result: TaskResult) -> None:
         pass
 
-    def v2_runner_item_on_failed(self, result):
+    def v2_runner_item_on_failed(self, result: TaskResult) -> None:
         pass
 
-    def v2_runner_item_on_skipped(self, result):
+    def v2_runner_item_on_skipped(self, result: TaskResult) -> None:
         pass
 
     def v2_runner_retry(self, result):

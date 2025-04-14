@@ -27,7 +27,6 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionErr
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import binary_type, text_type
-from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -200,9 +199,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
             return r
 
-        except RuntimeError:
+        except RecursionError as ex:
             raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
-                               obj=role_include._ds)
+                               obj=role_include._ds) from ex
 
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name = role_include.role
@@ -274,18 +273,17 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
-            except AssertionError as e:
-                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
-                                         obj=task_data, orig_exc=e)
+            except AssertionError as ex:
+                raise AnsibleParserError(f"The tasks/main.yml file for role {self._role_name!r} must contain a list of tasks.", obj=task_data) from ex
 
         handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
                                                            variable_manager=self._variable_manager)
-            except AssertionError as e:
-                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
-                                         obj=handler_data, orig_exc=e)
+            except AssertionError as ex:
+                raise AnsibleParserError(f"The handlers/main.yml file for role {self._role_name!r} must contain a list of tasks.",
+                                         obj=handler_data) from ex
 
     def _get_role_argspecs(self):
         """Get the role argument spec data.
@@ -412,7 +410,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                         raise AnsibleParserError("Failed loading '%s' for role (%s) as it is not inside the expected role path: '%s'" %
                                                  (to_text(found), self._role_name, to_text(file_path)))
 
-                    new_data = self._loader.load_from_file(found)
+                    new_data = self._loader.load_from_file(found, trusted_as_template=True)
                     if new_data:
                         if data is not None and isinstance(new_data, Mapping):
                             data = combine_vars(data, new_data)

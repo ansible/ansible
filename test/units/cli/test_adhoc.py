@@ -108,4 +108,4 @@ def test_ansible_version(capsys):
     assert re.match('  executable location = .*$', version_lines[5]), 'Incorrect executable locaction in "ansible --version" output'
     assert re.match('  python version = .*$', version_lines[6]), 'Incorrect python version in "ansible --version" output'
     assert re.match('  jinja version = .*$', version_lines[7]), 'Incorrect jinja version in "ansible --version" output'
-    assert re.match('  libyaml = .*$', version_lines[8]), 'Missing libyaml in "ansible --version" output'
+    assert re.match('  pyyaml version = .*$', version_lines[8]), 'Missing pyyaml version in "ansible --version" output'

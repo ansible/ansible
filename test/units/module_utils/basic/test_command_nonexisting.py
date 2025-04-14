@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import sys
 import pytest
 import subprocess
-from ansible.module_utils.common.text.converters import to_bytes
+
 from ansible.module_utils import basic
+from ansible.module_utils.testing import patch_module_args
 
 
 def test_run_non_existent_command(monkeypatch):
@@ -18,10 +18,11 @@ def test_run_non_existent_command(monkeypatch):
     def popen(*args, **kwargs):
         raise OSError()
 
-    monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}})))
     monkeypatch.setattr(subprocess, 'Popen', popen)
 
-    am = basic.AnsibleModule(argument_spec={})
+    with patch_module_args():
+        am = basic.AnsibleModule(argument_spec={})
+
     monkeypatch.setattr(am, 'fail_json', fail_json)
     with pytest.raises(SystemExit):
         am.run_command("lecho", "whatever")

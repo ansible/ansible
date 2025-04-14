@@ -1,0 +1,2 @@
+1 first line of a file with less than 10 lines
+  ^ column 1

@@ -88,15 +88,15 @@
     that:
       - '"meow" in lookup("config", "ANSIBLE_COW_ACCEPTLIST")'
       - lookup_config_1 is failed
-      - '"Unable to find setting" in lookup_config_1.msg'
+      - lookup_config_1.msg is contains "Setting 'THIS_DOES_NOT_EXIST' does not exist."
       - lookup_config_2 is failed
-      - '"Unable to find setting" in lookup_config_2.msg'
+      - lookup_config_2.msg is contains "Setting 'THIS_DOES_NOT_EXIST' does not exist."
       - lookup_config_3 is success
       - 'lookup3|length == 0'
       - lookup_config_4 is success
       - 'lookup4|length == 0'
       - lookup_config_5 is failed
-      - '"valid values are" in lookup_config_5.msg'
+      - lookup_config_5.msg is contains "Invalid value 'boo'"
       - lookup_config_6 is failed
       - '"Invalid setting identifier" in lookup_config_6.msg'
       - lookup_config_7 is failed
@@ -106,11 +106,11 @@
       - lookup_config_9 is failed
       - '"Both plugin_type and plugin_name" in lookup_config_9.msg'
       - lookup_config_10 is failed
-      - '"Unable to find setting plugin_type1" in lookup_config_10.msg'
+      - lookup_config_10.msg is contains "No config definition exists for 'plugin_type1'"
       - lookup_config_11 is failed
       - '"Unable to load lookup" in lookup_config_11.msg'
       - lookup_config_12 is failed
-      - '"No setting was provided for required" in lookup_config_12.msg'
+      - lookup_config_12.msg is contains "Required config 'test_list' for 'bogus' lookup plugin not provided"
       - ssh_user_and_port == ['lola', 2022]
       - "ssh_user_and_port_and_origin == [['lola', 'var: ansible_ssh_user'], [2022, 'var: ansible_ssh_port']]"
       - yolo_remote == ["yolo"]

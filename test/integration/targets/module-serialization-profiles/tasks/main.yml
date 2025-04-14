@@ -1,0 +1,41 @@
+- echo_modern:
+    data: "{{ data }}"
+  register: result
+
+- assert:
+    that:
+      - result.data.date | type_debug == 'date'
+      - result.data.time | type_debug == 'time'
+      - result.data.datetime | type_debug == 'datetime'
+      - result.data.int | type_debug == 'int'
+      - result.data.float | type_debug == 'float'
+      - result.data.str | type_debug == 'str'
+      - result.data.bool | type_debug == 'bool'
+      - result.data.none | type_debug == 'NoneType'
+      - result.data.dict | type_debug == 'dict'
+      - result.data.list | type_debug == 'list'
+
+- echo_legacy:
+    data: "{{ data }}"
+  register: result
+
+- assert:
+    that:
+      - result.data.date | type_debug == 'str'
+      - result.data.time | type_debug == 'str'
+      - result.data.datetime | type_debug == 'str'
+      - result.data.int | type_debug == 'int'
+      - result.data.float | type_debug == 'float'
+      - result.data.str | type_debug == 'str'
+      - result.data.bool | type_debug == 'bool'
+      - result.data.none | type_debug == 'NoneType'
+      - result.data.dict | type_debug == 'dict'
+      - result.data.list | type_debug == 'list'
+
+- echo_unspecified:
+    data: "{{ data }}"
+  register: unspecified
+
+- assert:
+    that:
+      - unspecified == result

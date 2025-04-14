@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import unittest
 
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleFieldAttributeError
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.playbook import base
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 
 from units.mock.loader import DictDataLoader
 
@@ -36,7 +36,6 @@ class TestBase(unittest.TestCase):
                               'var_1_key': 'var_1_value',
                               'a_list': ['a_list_1', 'a_list_2'],
                               'a_dict': {'a_dict_key': 'a_dict_value'},
-                              'a_set': set(['set_1', 'set_2']),
                               'a_int': 42,
                               'a_float': 37.371,
                               'a_bool': True,
@@ -52,7 +51,7 @@ class TestBase(unittest.TestCase):
         parent._dep_chain = None
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         bsc.post_validate(templar)
         return bsc
 
@@ -139,7 +138,7 @@ class TestBase(unittest.TestCase):
 
     def test_post_validate_empty(self):
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         ret = self.b.post_validate(templar)
         self.assertIsNone(ret)
 
@@ -340,7 +339,6 @@ class BaseSubClass(base.Base):
     test_attr_string_required = FieldAttribute(isa='string', required=True,
                                                default='the_test_attr_string_default_value')
     test_attr_percent = FieldAttribute(isa='percent', always_post_validate=True)
-    test_attr_set = FieldAttribute(isa='set', default=set, always_post_validate=True)
     test_attr_dict = FieldAttribute(isa='dict', default=lambda: {'a_key': 'a_value'}, always_post_validate=True)
     test_attr_class = FieldAttribute(isa='class', class_type=ExampleSubClass)
     test_attr_class_post_validate = FieldAttribute(isa='class', class_type=ExampleSubClass,
@@ -426,25 +424,6 @@ class TestBaseSubClass(TestBase):
         bsc = self._base_validate(ds)
         self.assertEqual(bsc.test_attr_percent, percentage_float)
 
-    def test_attr_set(self):
-        test_set = set(['first_string_in_set', 'second_string_in_set'])
-        ds = {'test_attr_set': test_set}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_set, test_set)
-
-    def test_attr_set_string(self):
-        test_data = ['something', 'other']
-        test_value = ','.join(test_data)
-        ds = {'test_attr_set': test_value}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_set, set(test_data))
-
-    def test_attr_set_not_string_or_list(self):
-        test_value = 37.1
-        ds = {'test_attr_set': test_value}
-        bsc = self._base_validate(ds)
-        self.assertEqual(bsc.test_attr_set, set([test_value]))
-
     def test_attr_dict(self):
         test_dict = {'a_different_key': 'a_different_value'}
         ds = {'test_attr_dict': test_dict}
@@ -477,13 +456,13 @@ class TestBaseSubClass(TestBase):
     def test_attr_class_post_validate_class_not_instance(self):
         not_a_esc = ExampleSubClass
         ds = {'test_attr_class_post_validate': not_a_esc}
-        self.assertRaisesRegex(AnsibleParserError, "is not a valid.*got a <class 'type'> instead",
+        self.assertRaisesRegex(AnsibleParserError, "Error processing keyword 'test_attr_class_post_validate': The value .* could not be converted to 'class'.",
                                self._base_validate, ds)
 
     def test_attr_class_post_validate_wrong_class(self):
         not_a_esc = 37
         ds = {'test_attr_class_post_validate': not_a_esc}
-        self.assertRaisesRegex(AnsibleParserError, 'is not a valid.*got a.*int.*instead',
+        self.assertRaisesRegex(AnsibleParserError, "Error processing keyword 'test_attr_class_post_validate': The value 37 could not be converted to 'class'",
                                self._base_validate, ds)
 
     def test_attr_remote_user(self):
@@ -496,12 +475,6 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_example': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
         exc_regex_str = 'test_attr_example.*has an invalid value, which includes an undefined variable.*some_var_that_shouldnt*'
         self.assertRaises(AnsibleParserError)
-
-    def test_attr_name_undefined(self):
-        ds = {'name': '{{ some_var_that_shouldnt_exist_to_test_omit }}'}
-        bsc = self._base_validate(ds)
-        # the attribute 'name' is special cases in post_validate
-        self.assertEqual(bsc.name, '{{ some_var_that_shouldnt_exist_to_test_omit }}')
 
     def test_subclass_validate_method(self):
         ds = {'test_attr_list': ['string_list_item_1', 'string_list_item_2'],
@@ -562,7 +535,7 @@ class TestBaseSubClass(TestBase):
         bsc = self.ClassUnderTest()
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         bsc.post_validate(templar)
         self.assertEqual(string_list, bsc._test_attr_list_required)
 
@@ -572,13 +545,13 @@ class TestBaseSubClass(TestBase):
         bsc = self.ClassUnderTest()
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
         self.assertRaisesRegex(AnsibleParserError, 'cannot have empty values',
                                bsc.post_validate, templar)
 
     def test_attr_unknown(self):
         self.assertRaises(
-            AnsibleAssertionError,
+            AnsibleFieldAttributeError,
             self._base_validate,
             {'test_attr_unknown_isa': True}
         )
@@ -595,11 +568,11 @@ class TestBaseSubClass(TestBase):
         bsc = self._base_validate(ds)
         self.assertEqual(bsc.test_attr_method_missing, a_string)
 
-    def test_get_validated_value_string_rewrap_unsafe(self):
+    def test_get_validated_value_string_preserve_tags(self):
         attribute = FieldAttribute(isa='string')
-        value = AnsibleUnsafeText(u'bar')
-        templar = Templar(None)
+        value = TrustedAsTemplate().tag('bar')
+        templar = TemplateEngine(None)
         bsc = self.ClassUnderTest()
         result = bsc.get_validated_value('foo', attribute, value, templar)
-        self.assertIsInstance(result, AnsibleUnsafeText)
-        self.assertEqual(result, AnsibleUnsafeText(u'bar'))
+        assert TrustedAsTemplate.is_tagged_on(result)
+        assert result == 'bar'

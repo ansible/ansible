@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: create an ansible variable which is only available after load
+      set_fact:
+        an_ansible_var: something
+
+    - name: verify the environment keyword on import_role is not resolved during load
+      environment:
+        AN_ENV_VAR: "{{ an_ansible_var }}"  # this should be resolved during execution, not load
+      import_role:
+        name: test_environment
+
+    - name: verify the environment keyword on import_tasks is not resolved during load
+      environment:
+        AN_ENV_VAR: "{{ an_ansible_var }}"  # this should be resolved during execution, not load
+      import_tasks: roles/test_environment/tasks/main.yml

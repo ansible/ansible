@@ -88,7 +88,7 @@ class PlayContext(Base):
     # networking modules
     network_os = FieldAttribute(isa='string')
 
-    # docker FIXME: remove these
+    # FIXME: docker - remove these
     docker_extra_args = FieldAttribute(isa='string')
 
     # ???
@@ -102,10 +102,6 @@ class PlayContext(Base):
     become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
     become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
     prompt = FieldAttribute(isa='string')
-
-    # general flags
-    only_tags = FieldAttribute(isa='set', default=set)
-    skip_tags = FieldAttribute(isa='set', default=set)
 
     start_at_task = FieldAttribute(isa='string')
     step = FieldAttribute(isa='bool', default=False)
@@ -201,8 +197,7 @@ class PlayContext(Base):
             # In the case of a loop, the delegated_to host may have been
             # templated based on the loop variable, so we try and locate
             # the host name in the delegated variable dictionary here
-            delegated_host_name = templar.template(task.delegate_to)
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(task.delegate_to, dict())
 
             delegated_transport = C.DEFAULT_TRANSPORT
             for transport_var in C.MAGIC_VARIABLE_MAPPING.get('connection'):
@@ -218,8 +213,8 @@ class PlayContext(Base):
                 if address_var in delegated_vars:
                     break
             else:
-                display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
-                delegated_vars['ansible_host'] = delegated_host_name
+                display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % task.delegate_to)
+                delegated_vars['ansible_host'] = task.delegate_to
 
             # reset the port back to the default if none was specified, to prevent
             # the delegated host from inheriting the original host's setting

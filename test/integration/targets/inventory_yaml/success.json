@@ -28,7 +28,8 @@
                 "in_trouble": true, 
                 "popular": false
             }
-        }
+        },
+        "profile": "inventory_legacy"
     },
     "all": {
         "children": [

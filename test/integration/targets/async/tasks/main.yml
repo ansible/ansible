@@ -147,7 +147,9 @@
     - async_result is not changed
     - async_result.failed == true
     - async_result is failed
-    - async_result.stderr is search('failing via exception', multiline=True)
+    - async_result.msg is contains 'failing via exception'
+    # DTFIX-RELEASE: enable tracebacks, ensure exception is populated
+    #- async_result.exception is contains 'failing via exception'
 
 - name: test leading junk before JSON
   async_test:
@@ -320,7 +322,6 @@
   vars:
     ansible_facts_modules:
       - setup
-      - package_facts
       - service_facts
 
 - name: test async in check mode

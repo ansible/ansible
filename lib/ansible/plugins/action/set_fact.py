@@ -18,12 +18,9 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
-
-import ansible.constants as C
+from ansible.utils.vars import validate_variable_name
 
 
 class ActionModule(ActionBase):
@@ -43,16 +40,10 @@ class ActionModule(ActionBase):
 
         if self._task.args:
             for (k, v) in self._task.args.items():
-                k = self._templar.template(k)
+                k = self._templar.template(k)  # a rare case where key templating is allowed; backward-compatibility for dynamic storage
 
-                if not isidentifier(k):
-                    raise AnsibleActionFail("The variable name '%s' is not valid. Variables must start with a letter or underscore character, "
-                                            "and contain only letters, numbers and underscores." % k)
+                validate_variable_name(k)
 
-                # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
-                # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
-                if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v, strict=False)
                 facts[k] = v
         else:
             raise AnsibleActionFail('No key/value pairs provided, at least one is required for this action to succeed')

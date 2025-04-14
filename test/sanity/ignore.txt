@@ -1,4 +1,5 @@
 .github/ISSUE_TEMPLATE/internal_issue.md pymarkdown!skip
+lib/ansible/_internal/_wrapt.py black!skip  # vendored code
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
@@ -47,13 +48,18 @@ lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py replace-urlopen
-lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
 lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
+lib/ansible/_internal/_wrapt.py mypy-3.11!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.12!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
+lib/ansible/_internal/_wrapt.py pep8!skip # vendored code
+lib/ansible/_internal/_wrapt.py pylint!skip # vendored code
+lib/ansible/_internal/ansible_collections/ansible/_protomatter/README.md no-unwanted-files
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
@@ -140,8 +146,6 @@ README.md pymarkdown:line-length
 test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
 test/integration/targets/find/files/hello_world.gbk no-smart-quotes
 test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
-lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
-lib/ansible/template/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/module_utils/facts/hardware/aix.py pylint:used-before-assignment
 lib/ansible/modules/rpm_key.py pylint:used-before-assignment
 lib/ansible/modules/service.py pylint:used-before-assignment
@@ -151,7 +155,6 @@ test/integration/targets/module_utils/library/test_optional.py pylint:used-befor
 test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.13:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.13:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.13:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.13:assignment
@@ -163,7 +166,6 @@ test/units/modules/test_mount_facts.py mypy-3.13:index
 test/units/playbook/test_base.py mypy-3.13:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.12:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.12:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.12:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.12:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.12:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.12:assignment
@@ -175,7 +177,6 @@ test/units/modules/test_mount_facts.py mypy-3.12:index
 test/units/playbook/test_base.py mypy-3.12:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.11:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.11:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.11:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.11:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.11:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.11:assignment
@@ -187,7 +188,6 @@ test/units/modules/test_mount_facts.py mypy-3.11:index
 test/units/playbook/test_base.py mypy-3.11:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.10:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.10:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.10:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.10:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.10:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.10:assignment
@@ -198,7 +198,6 @@ test/units/modules/test_apt.py mypy-3.10:name-match
 test/units/modules/test_mount_facts.py mypy-3.10:index
 test/units/module_utils/basic/test_exit_json.py mypy-3.9:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.9:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.9:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.9:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.9:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.9:assignment
@@ -209,7 +208,6 @@ test/units/modules/test_apt.py mypy-3.9:name-match
 test/units/modules/test_mount_facts.py mypy-3.9:index
 test/units/module_utils/basic/test_exit_json.py mypy-3.8:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.8:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.8:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.8:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.8:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.8:assignment
@@ -218,3 +216,5 @@ test/units/module_utils/facts/test_facts.py mypy-3.8:assignment
 test/units/modules/mount_facts_data.py mypy-3.8:arg-type
 test/units/modules/test_apt.py mypy-3.8:name-match
 test/units/modules/test_mount_facts.py mypy-3.8:index
+test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
+test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang

@@ -10,16 +10,14 @@ import os
 import re
 
 from ast import literal_eval
+from ansible.module_utils.common import json as _common_json
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
-from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import (
-    binary_type,
     string_types,
-    text_type,
 )
 
 
@@ -385,6 +383,10 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     raise TypeError(to_native(msg))
 
 
+def _check_type_str_no_conversion(value) -> str:
+    return check_type_str(value, allow_conversion=False)
+
+
 def check_type_list(value):
     """Verify that the value is a list or convert to a list
 
@@ -400,12 +402,21 @@ def check_type_list(value):
     if isinstance(value, list):
         return value
 
+    # DTFIX-RELEASE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
     if isinstance(value, string_types):
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):
         return [str(value)]
 
     raise TypeError('%s cannot be converted to a list' % type(value))
+
+
+def _check_type_list_strict(value):
+    # FUTURE: this impl should replace `check_type_list`
+    if isinstance(value, list):
+        return value
+
+    return [value]
 
 
 def check_type_dict(value):
@@ -565,14 +576,21 @@ def check_type_bits(value):
 
 
 def check_type_jsonarg(value):
-    """Return a jsonified string. Sometimes the controller turns a json string
-    into a dict/list so transform it back into json here
-
-    Raises :class:`TypeError` if unable to convert the value
-
     """
-    if isinstance(value, (text_type, binary_type)):
+    JSON serialize dict/list/tuple, strip str and bytes.
+    Previously required for cases where Ansible/Jinja classic-mode literal eval pass could inadvertently deserialize objects.
+    """
+    # deprecated: description='deprecate jsonarg type support' core_version='2.23'
+    # deprecate(
+    #     msg="The `jsonarg` type is deprecated.",
+    #     version="2.27",
+    #     help_text="JSON string arguments should use `str`; structures can be explicitly serialized as JSON with the `to_json` filter.",
+    # )
+
+    if isinstance(value, (str, bytes)):
         return value.strip()
-    elif isinstance(value, (list, tuple, dict)):
-        return jsonify(value)
+
+    if isinstance(value, (list, tuple, dict)):
+        return json.dumps(value, cls=_common_json._get_legacy_encoder(), _decode_bytes=True)
+
     raise TypeError('%s cannot be converted to a json string' % type(value))

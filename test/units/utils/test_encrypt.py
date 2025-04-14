@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+import warnings
+
 import pytest
 
-from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.errors import AnsibleError
+
 from ansible.plugins.filter.core import get_encrypted_password
 from ansible.utils import encrypt
 
@@ -65,7 +68,7 @@ def test_encrypt_default_rounds():
 @pytest.mark.skipif(not encrypt.PASSLIB_AVAILABLE, reason='passlib must be installed to run this test')
 def test_password_hash_filter_passlib():
 
-    with pytest.raises(AnsibleFilterError):
+    with pytest.raises(AnsibleError):
         get_encrypted_password("123", "sha257", salt="12345678")
 
     # Uses passlib default rounds value for sha256 matching crypt behaviour
@@ -108,7 +111,11 @@ def test_random_salt():
 
 
 def test_passlib_bcrypt_salt(recwarn):
-    passlib_exc = pytest.importorskip("passlib.exc")
+    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
+
+        passlib_exc = pytest.importorskip("passlib.exc")
 
     secret = 'foo'
     salt = '1234567890123456789012'

@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: powershell
 version_added: historical
 short_description: Windows PowerShell
@@ -12,7 +12,7 @@ description:
 - Can also be used when using 'ssh' as a connection plugin and the C(DefaultShell) has been configured to PowerShell.
 extends_documentation_fragment:
 - shell_windows
-'''
+"""
 
 import base64
 import os
@@ -221,9 +221,9 @@ class ShellModule(ShellBase):
     def remove(self, path, recurse=False):
         path = self._escape(self._unquote(path))
         if recurse:
-            return self._encode_script('''Remove-Item '%s' -Force -Recurse;''' % path)
+            return self._encode_script("""Remove-Item '%s' -Force -Recurse;""" % path)
         else:
-            return self._encode_script('''Remove-Item '%s' -Force;''' % path)
+            return self._encode_script("""Remove-Item '%s' -Force;""" % path)
 
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         # Windows does not have an equivalent for the system temp files, so
@@ -233,12 +233,12 @@ class ShellModule(ShellBase):
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = self._escape(tmpdir if tmpdir else self.get_option('remote_tmp'))
 
-        script = f'''
+        script = f"""
         {self._CONSOLE_ENCODING}
         $tmp_path = [System.Environment]::ExpandEnvironmentVariables('{basetmpdir}')
         $tmp = New-Item -Type Directory -Path $tmp_path -Name '{basefile}'
         Write-Output -InputObject $tmp.FullName
-        '''
+        """
         return self._encode_script(script.strip())
 
     def expand_user(self, user_home_path, username=''):
@@ -256,7 +256,7 @@ class ShellModule(ShellBase):
 
     def exists(self, path):
         path = self._escape(self._unquote(path))
-        script = '''
+        script = """
             If (Test-Path '%s')
             {
                 $res = 0;
@@ -267,12 +267,12 @@ class ShellModule(ShellBase):
             }
             Write-Output '$res';
             Exit $res;
-         ''' % path
+         """ % path
         return self._encode_script(script)
 
     def checksum(self, path, *args, **kwargs):
         path = self._escape(self._unquote(path))
-        script = '''
+        script = """
             If (Test-Path -PathType Leaf '%(path)s')
             {
                 $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
@@ -288,7 +288,7 @@ class ShellModule(ShellBase):
             {
                 Write-Output "1";
             }
-        ''' % dict(path=path)
+        """ % dict(path=path)
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
@@ -331,7 +331,7 @@ class ShellModule(ShellBase):
             # The module is assumed to be a binary
             cmd_parts[0] = self._unquote(cmd_parts[0])
             cmd_parts.append(arg_path)
-        script = '''
+        script = """
             Try
             {
                 %s
@@ -366,7 +366,7 @@ class ShellModule(ShellBase):
                 Echo $_obj | ConvertTo-Json -Compress -Depth 99
                 Exit 1
             }
-        ''' % (env_string, ' '.join(cmd_parts))
+        """ % (env_string, ' '.join(cmd_parts))
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):

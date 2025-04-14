@@ -255,7 +255,7 @@ class TestVaultEditor(unittest.TestCase):
 
         new_password = 'password2:electricbugaloo'
         self.assertRaisesRegex(errors.AnsibleError,
-                               'input is not vault encrypted data',
+                               'Input is not vault encrypted data',
                                ve.rekey_file,
                                src_file_path, new_password)
 
@@ -279,7 +279,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
         self.assertRaisesRegex(errors.AnsibleError,
-                               'input is not vault encrypted data',
+                               'Input is not vault encrypted data',
                                ve.plaintext,
                                src_file_path)
 
@@ -410,7 +410,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
         self.assertRaisesRegex(errors.AnsibleError,
-                               'input is not vault encrypted data',
+                               'Input is not vault encrypted data',
                                ve.edit_file,
                                src_file_path)
 
@@ -433,7 +433,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
         self.assertRaisesRegex(errors.AnsibleError,
-                               'input is not vault encrypted data',
+                               'Input is not vault encrypted data',
                                ve.decrypt_file,
                                src_file_path)
 

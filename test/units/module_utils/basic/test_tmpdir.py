@@ -4,16 +4,15 @@
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 
 import pytest
 
 from unittest.mock import patch, MagicMock
-from ansible.module_utils.common.text.converters import to_bytes
 
 from ansible.module_utils import basic
+from ansible.module_utils.testing import patch_module_args
 
 
 class TestAnsibleModuleTmpDir:
@@ -73,9 +72,9 @@ class TestAnsibleModuleTmpDir:
         monkeypatch.setattr(tempfile, 'mkdtemp', mock_mkdtemp)
         monkeypatch.setattr(os.path, 'exists', lambda x: stat_exists)
         monkeypatch.setattr(os, 'makedirs', mock_makedirs)
-        monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': args})))
 
-        with patch('time.time', return_value=42):
+        with patch_module_args(args), \
+             patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
             actual_tmpdir = am.tmpdir
 

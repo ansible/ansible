@@ -10,22 +10,26 @@ def main():
     """Main entry point."""
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
-    allowed_extensions = (
+    allowed_extensions = {
         '.cs',
         '.ps1',
         '.psm1',
         '.py',
-    )
+    }
 
-    skip_paths = set([
+    skip_paths = {
         'lib/ansible/config/ansible_builtin_runtime.yml',  # not included in the sanity ignore file since it won't exist until after migration
-    ])
+    }
 
-    skip_directories = (
+    skip_directories = {
         'lib/ansible/galaxy/data/',
-    )
+    }
 
-    allow_yaml = ('lib/ansible/plugins/test', 'lib/ansible/plugins/filter')
+    allow_yaml = {
+        'lib/ansible/plugins/test',
+        'lib/ansible/plugins/filter',
+        'lib/ansible/_internal/ansible_collections',
+    }
 
     for path in paths:
         if path in skip_paths:

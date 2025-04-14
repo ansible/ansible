@@ -1,0 +1,21 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: assert inventory var shapes
+      vars:
+        expected_offset_datetime: 2020-01-01T12:42:42-07:00
+        expected_local_datetime: 2020-01-01T12:42:42
+        expected_local_date: 2020-01-01
+      assert:
+        that:
+          - hostvars.host1.string_value == "hi mom"
+          - hostvars.host1.integer_value == 42
+          - hostvars.host1.float_value == 42.1
+          - hostvars.host1.boolean_value == false
+          - hostvars.host1.offset_datetime == expected_offset_datetime
+          - hostvars.host1.local_datetime == expected_local_datetime
+          - hostvars.host1.local_date == expected_local_date
+          - hostvars.host1.local_time == expected_local_datetime.time()
+          - hostvars.host1.array == [1,2,3]
+          - 'hostvars.host1.table == { "foo" : "bar" }'
+          - hostvars.host1.group_template_str == "i am a group level template"

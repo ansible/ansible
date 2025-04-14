@@ -26,8 +26,7 @@
 - assert:
     that:
       - verify.rc != 0
-      - >-
-        "ERROR! 'file' type is not supported. The format namespace.name is expected." in verify.stderr
+      - verify.stderr is contains "'file' type is not supported. The format namespace.name is expected."
 
 - name: install the collection from the server
   command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_api_fallback }} {{ galaxy_verbosity }}

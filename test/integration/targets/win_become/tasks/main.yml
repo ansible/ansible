@@ -189,11 +189,11 @@
   - name: assert test failures with invalid runas options
     assert:
       that:
-      - failed_flags_invalid_key.msg == "become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
+      - failed_flags_invalid_key.msg is contains "become_flags key 'invalid_flags' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
       - >-
-        failed_flags_invalid_type.msg == "become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials"
+        failed_flags_invalid_type.msg is contains "become_flags logon_type value 'invalid' is not valid, valid values are: interactive, network, batch, service, unlock, network_cleartext, new_credentials"
       - >-
-        failed_flags_invalid_flag.msg == "become_flags logon_flags value 'invalid' is not valid, valid values are: none, with_profile, netcredentials_only"
+        failed_flags_invalid_flag.msg is contains "become_flags logon_flags value 'invalid' is not valid, valid values are: none, with_profile, netcredentials_only"
 
   - name: echo some non ascii characters
     win_command: cmd.exe /c echo über den Fußgängerübergang gehen

@@ -244,7 +244,19 @@ from ansible.module_utils.common.sentinel import Sentinel
 module = None
 
 
-def additional_parameter_handling(module):
+class AnsibleModuleError(Exception):
+    def __init__(self, results):
+        self.results = results
+
+    def __repr__(self):
+        return 'AnsibleModuleError(results={0})'.format(self.results)
+
+
+class ParameterError(AnsibleModuleError):
+    pass
+
+
+def additional_parameter_handling(params):
     """Additional parameter validation and reformatting"""
     # When path is a directory, rewrite the pathname to be the file inside of the directory
     # TODO: Why do we exclude link?  Why don't we exclude directory?  Should we exclude touch?
@@ -256,7 +268,6 @@ def additional_parameter_handling(module):
     # if state == file:    place inside of the directory (use _original_basename)
     # if state == link:    place inside of the directory (use _original_basename.  Fallback to src?)
     # if state == hard:    place inside of the directory (use _original_basename.  Fallback to src?)
-    params = module.params
     if (params['state'] not in ("link", "absent") and os.path.isdir(to_bytes(params['path'], errors='surrogate_or_strict'))):
         basename = None
 
@@ -966,46 +977,49 @@ def main():
         supports_check_mode=True,
     )
 
-    additional_parameter_handling(module)
-    params = module.params
+    try:
+        additional_parameter_handling(module.params)
+        params = module.params
 
-    state = params['state']
-    recurse = params['recurse']
-    force = params['force']
-    follow = params['follow']
-    path = params['path']
-    src = params['src']
+        state = params['state']
+        recurse = params['recurse']
+        force = params['force']
+        follow = params['follow']
+        path = params['path']
+        src = params['src']
 
-    if module.check_mode and state != 'absent':
-        file_args = module.load_file_common_arguments(module.params)
-        if file_args['owner']:
-            check_owner_exists(module, file_args['owner'])
-        if file_args['group']:
-            check_group_exists(module, file_args['group'])
+        if module.check_mode and state != 'absent':
+            file_args = module.load_file_common_arguments(module.params)
+            if file_args['owner']:
+                check_owner_exists(module, file_args['owner'])
+            if file_args['group']:
+                check_group_exists(module, file_args['group'])
 
-    timestamps = {}
-    timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
-    timestamps['modification_time_format'] = params['modification_time_format']
-    timestamps['access_time'] = keep_backward_compatibility_on_timestamps(params['access_time'], state)
-    timestamps['access_time_format'] = params['access_time_format']
+        timestamps = {}
+        timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
+        timestamps['modification_time_format'] = params['modification_time_format']
+        timestamps['access_time'] = keep_backward_compatibility_on_timestamps(params['access_time'], state)
+        timestamps['access_time_format'] = params['access_time_format']
 
-    # short-circuit for diff_peek
-    if params['_diff_peek'] is not None:
-        appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
-        module.exit_json(path=path, changed=False, appears_binary=appears_binary)
+        # short-circuit for diff_peek
+        if params['_diff_peek'] is not None:
+            appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
+            module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
-    if state == 'file':
-        result = ensure_file_attributes(path, follow, timestamps)
-    elif state == 'directory':
-        result = ensure_directory(path, follow, recurse, timestamps)
-    elif state == 'link':
-        result = ensure_symlink(path, src, follow, force, timestamps)
-    elif state == 'hard':
-        result = ensure_hardlink(path, src, follow, force, timestamps)
-    elif state == 'touch':
-        result = execute_touch(path, follow, timestamps)
-    elif state == 'absent':
-        result = ensure_absent(path)
+        if state == 'file':
+            result = ensure_file_attributes(path, follow, timestamps)
+        elif state == 'directory':
+            result = ensure_directory(path, follow, recurse, timestamps)
+        elif state == 'link':
+            result = ensure_symlink(path, src, follow, force, timestamps)
+        elif state == 'hard':
+            result = ensure_hardlink(path, src, follow, force, timestamps)
+        elif state == 'touch':
+            result = execute_touch(path, follow, timestamps)
+        elif state == 'absent':
+            result = ensure_absent(path)
+    except AnsibleModuleError as ex:
+        module.fail_json(**ex.results)
 
     if not module._diff:
         result.pop('diff', None)

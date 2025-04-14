@@ -1,4 +1,10 @@
 ---
+- hosts: localhost
+  tasks:
+    - name: throttle template that resolves to an integer
+      debug:
+      throttle: "{{ 1 }}"
+
 - hosts: localhosts
   gather_facts: false
   strategy: linear

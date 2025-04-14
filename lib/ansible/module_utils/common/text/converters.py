@@ -6,12 +6,9 @@
 from __future__ import annotations
 
 import codecs
-import datetime
 import json
 
-from ansible.module_utils.six.moves.collections_abc import Set
 from ansible.module_utils.six import (
-    PY3,
     binary_type,
     iteritems,
     text_type,
@@ -237,44 +234,21 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     return to_text(value, encoding, errors)
 
 
-#: :py:func:`to_native`
-#:      Transform a variable into the native str type for the python version
-#:
-#:      On Python2, this is an alias for
-#:      :func:`~ansible.module_utils.to_bytes`.  On Python3 it is an alias for
-#:      :func:`~ansible.module_utils.to_text`.  It makes it easier to
-#:      transform a variable into the native str type for the python version
-#:      the code is running on.  Use this when constructing the message to
-#:      send to exceptions or when dealing with an API that needs to take
-#:      a native string.  Example::
-#:
-#:          try:
-#:              1//0
-#:          except ZeroDivisionError as e:
-#:              raise MyException('Encountered and error: %s' % to_native(e))
-if PY3:
-    to_native = to_text
-else:
-    to_native = to_bytes
-
-
-def _json_encode_fallback(obj):
-    if isinstance(obj, Set):
-        return list(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("Cannot json serialize %s" % to_native(obj))
+to_native = to_text
 
 
 def jsonify(data, **kwargs):
-    # After 2.18, we should remove this loop, and hardcode to utf-8 in alignment with requiring utf-8 module responses
-    for encoding in ("utf-8", "latin-1"):
-        try:
-            new_data = container_to_text(data, encoding=encoding)
-        except UnicodeDecodeError:
-            continue
-        return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-    raise UnicodeError('Invalid unicode encoding encountered')
+    from ansible.module_utils.common import json as _common_json
+    # from ansible.module_utils.common.warnings import deprecate
+
+    # deprecated: description='deprecate jsonify()' core_version='2.23'
+    # deprecate(
+    #     msg="The `jsonify` function is deprecated.",
+    #     version="2.27",
+    #     # help_text="",  # DTFIX-RELEASE: fill in this help text
+    # )
+
+    return json.dumps(data, cls=_common_json._get_legacy_encoder(), _decode_bytes=True, **kwargs)
 
 
 def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
@@ -283,6 +257,7 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
         Specialized for json return because this only handles, lists, tuples,
         and dict container types (the containers that the json module returns)
     """
+    # DTFIX-RELEASE: deprecate
 
     if isinstance(d, text_type):
         return to_bytes(d, encoding=encoding, errors=errors)
@@ -302,6 +277,7 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
     Specialized for json return because this only handles, lists, tuples,
     and dict container types (the containers that the json module returns)
     """
+    # DTFIX-RELEASE: deprecate
 
     if isinstance(d, binary_type):
         # Warning, can traceback

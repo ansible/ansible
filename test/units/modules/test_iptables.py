@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-from units.modules.utils import AnsibleExitJson, AnsibleFailJson, set_module_args, fail_json, exit_json
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, fail_json, exit_json
 import pytest
 
 from ansible.modules import iptables
@@ -24,7 +24,7 @@ def _mock_basic_commands(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_flush_table_without_chain(mocker):
+def test_flush_table_without_chain(mocker, set_module_args):
     """Test flush without chain, flush the table."""
     set_module_args(
         {
@@ -46,7 +46,7 @@ def test_flush_table_without_chain(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_flush_table_check_true(mocker):
+def test_flush_table_check_true(mocker, set_module_args):
     """Test flush without parameters and check == true."""
     set_module_args(
         {
@@ -64,7 +64,7 @@ def test_flush_table_check_true(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_policy_table(mocker):
+def test_policy_table(mocker, set_module_args):
     """Test change policy of a chain."""
     set_module_args(
         {
@@ -122,7 +122,7 @@ def test_policy_table(mocker):
         )
     ]
 )
-def test_policy_table_flush(mocker, test_input, commands_results):
+def test_policy_table_flush(mocker, test_input, commands_results, set_module_args):
     """Test flush without parameters and change == false."""
     set_module_args(test_input)
     run_command = mocker.patch(
@@ -142,7 +142,7 @@ def test_policy_table_flush(mocker, test_input, commands_results):
 # TODO ADD test policy with wrong choice fail
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_insert_rule_change_false(mocker):
+def test_insert_rule_change_false(mocker, set_module_args):
     """Test flush without parameters."""
     set_module_args(
         {
@@ -184,7 +184,7 @@ def test_insert_rule_change_false(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_insert_rule(mocker):
+def test_insert_rule(mocker, set_module_args):
     """Test flush without parameters."""
     set_module_args(
         {
@@ -239,7 +239,7 @@ def test_insert_rule(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_append_rule_check_mode(mocker):
+def test_append_rule_check_mode(mocker, set_module_args):
     """Test append a redirection rule in check mode."""
     set_module_args(
         {
@@ -294,7 +294,7 @@ def test_append_rule_check_mode(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_append_rule(mocker):
+def test_append_rule(mocker, set_module_args):
     """Test append a redirection rule."""
     set_module_args(
         {
@@ -371,7 +371,7 @@ def test_append_rule(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_remove_rule(mocker):
+def test_remove_rule(mocker, set_module_args):
     """Test flush without parameters."""
     set_module_args(
         {
@@ -467,7 +467,7 @@ def test_remove_rule(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_remove_rule_check_mode(mocker):
+def test_remove_rule_check_mode(mocker, set_module_args):
     """Test flush without parameters check mode."""
     set_module_args(
         {
@@ -584,7 +584,7 @@ def test_remove_rule_check_mode(mocker):
         ),
     ]
 )
-def test_insert_with_reject(mocker, test_input, expected):
+def test_insert_with_reject(mocker, test_input, expected, set_module_args):
     """Using reject_with with a previously defined jump: REJECT results in two Jump statements #18988."""
     set_module_args(test_input)
     commands_results = [
@@ -605,7 +605,7 @@ def test_insert_with_reject(mocker, test_input, expected):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_jump_tee_gateway_negative(mocker):
+def test_jump_tee_gateway_negative(mocker, set_module_args):
     """Missing gateway when JUMP is set to TEE."""
     set_module_args(
         {
@@ -631,7 +631,7 @@ def test_jump_tee_gateway_negative(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_jump_tee_gateway(mocker):
+def test_jump_tee_gateway(mocker, set_module_args):
     """Using gateway when JUMP is set to TEE."""
     set_module_args(
         {
@@ -707,7 +707,7 @@ def test_jump_tee_gateway(mocker):
         ),
     ],
 )
-def test_tcp_flags(mocker, test_input):
+def test_tcp_flags(mocker, test_input, set_module_args):
     """Test various ways of inputting tcp_flags."""
     rule_data = {
         "chain": "OUTPUT",
@@ -770,7 +770,7 @@ def test_tcp_flags(mocker, test_input):
         "debug",
     ],
 )
-def test_log_level(mocker, log_level):
+def test_log_level(mocker, log_level, set_module_args):
     """Test various ways of log level flag."""
 
     set_module_args(
@@ -886,7 +886,7 @@ def test_log_level(mocker, log_level):
         ),
     ],
 )
-def test_iprange(mocker, test_input, expected):
+def test_iprange(mocker, test_input, expected, set_module_args):
     """Test iprange module with its flags src_range and dst_range."""
     set_module_args(test_input)
 
@@ -908,7 +908,7 @@ def test_iprange(mocker, test_input, expected):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_insert_rule_with_wait(mocker):
+def test_insert_rule_with_wait(mocker, set_module_args):
     """Test flush without parameters."""
     set_module_args(
         {
@@ -953,7 +953,7 @@ def test_insert_rule_with_wait(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_comment_position_at_end(mocker):
+def test_comment_position_at_end(mocker, set_module_args):
     """Test comment position to make sure it is at the end of command."""
     set_module_args(
         {
@@ -1001,7 +1001,7 @@ def test_comment_position_at_end(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_destination_ports(mocker):
+def test_destination_ports(mocker, set_module_args):
     """Test multiport module usage with multiple ports."""
     set_module_args(
         {
@@ -1170,7 +1170,7 @@ def test_destination_ports(mocker):
         ),
     ],
 )
-def test_match_set(mocker, test_input, expected):
+def test_match_set(mocker, test_input, expected, set_module_args):
     """Test match_set together with match_set_flags."""
     set_module_args(test_input)
     commands_results = [
@@ -1190,7 +1190,7 @@ def test_match_set(mocker, test_input, expected):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_chain_creation(mocker):
+def test_chain_creation(mocker, set_module_args):
     """Test chain creation when absent."""
     set_module_args(
         {
@@ -1256,7 +1256,7 @@ def test_chain_creation(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_chain_creation_check_mode(mocker):
+def test_chain_creation_check_mode(mocker, set_module_args):
     """Test chain creation when absent in check mode."""
     set_module_args(
         {
@@ -1310,7 +1310,7 @@ def test_chain_creation_check_mode(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_chain_deletion(mocker):
+def test_chain_deletion(mocker, set_module_args):
     """Test chain deletion when present."""
     set_module_args(
         {
@@ -1372,7 +1372,7 @@ def test_chain_deletion(mocker):
 
 
 @pytest.mark.usefixtures('_mock_basic_commands')
-def test_chain_deletion_check_mode(mocker):
+def test_chain_deletion_check_mode(mocker, set_module_args):
     """Test chain deletion when present in check mode."""
     set_module_args(
         {
@@ -1426,7 +1426,7 @@ def test_chain_deletion_check_mode(mocker):
 
 
 @pytest.mark.parametrize("ip_version", ["both"])
-def test_ip_version(mocker, ip_version):
+def test_ip_version(mocker, ip_version, set_module_args):
     """Test 'both' option for ip_version."""
 
     set_module_args(

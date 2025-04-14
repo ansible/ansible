@@ -92,8 +92,8 @@ from io import StringIO
 from collections import defaultdict
 from collections.abc import MutableSequence
 
-from ansible.errors import AnsibleLookupError, AnsibleOptionsError
-from ansible.module_utils.common.text.converters import to_text, to_native
+from ansible.errors import AnsibleError
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.lookup import LookupBase
 
 
@@ -161,6 +161,7 @@ class LookupModule(LookupBase):
             if '=' in term or ' ' in term.strip():
                 self._deprecate_inline_kv()
                 params = _parse_params(term, paramvals)
+                param = None
                 try:
                     updated_key = False
                     updated_options = False
@@ -168,7 +169,7 @@ class LookupModule(LookupBase):
                         if '=' in param:
                             name, value = param.split('=')
                             if name not in paramvals:
-                                raise AnsibleLookupError('%s is not a valid option.' % name)
+                                raise AnsibleError(f"{name!r} is not a valid option.")
                             self.set_option(name, value)
                             updated_options = True
                         elif key == term:
@@ -177,11 +178,11 @@ class LookupModule(LookupBase):
                             updated_key = True
                     if updated_options:
                         paramvals = self.get_options()
-                except ValueError as e:
+                except ValueError as ex:
                     # bad params passed
-                    raise AnsibleLookupError("Could not use '%s' from '%s': %s" % (param, params, to_native(e)), orig_exc=e)
+                    raise ValueError(f"Could not use {param!r} from {params!r}.") from ex
                 if not updated_key:
-                    raise AnsibleOptionsError("No key to lookup was provided as first term with in string inline options: %s" % term)
+                    raise ValueError(f"No key to look up was provided as first term within string inline options: {term}")
                     # only passed options in inline string
 
             # TODO: look to use cache to avoid redoing this for every term if they use same file
@@ -195,25 +196,25 @@ class LookupModule(LookupBase):
                 config.write(u'[java_properties]\n')
                 paramvals['section'] = 'java_properties'
 
-            # Open file using encoding
-            contents, show_data = self._loader._get_file_contents(path)
-            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
+            contents = self._loader.get_text_file_contents(path, encoding=paramvals['encoding'])
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
             try:
                 self.cp.read_file(config)
-            except configparser.DuplicateOptionError as doe:
-                raise AnsibleLookupError("Duplicate option in '{file}': {error}".format(file=paramvals['file'], error=to_native(doe)))
+            except configparser.DuplicateOptionError as ex:
+                raise ValueError(f"Duplicate option in {paramvals['file']!r}.") from ex
 
             try:
                 var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
             except configparser.NoSectionError:
-                raise AnsibleLookupError("No section '{section}' in {file}".format(section=paramvals['section'], file=paramvals['file']))
+                raise ValueError(f"No section {paramvals['section']!r} in {paramvals['file']!r}.") from None
+
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:
                         ret.append(v)
                 else:
                     ret.append(var)
+
         return ret

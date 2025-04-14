@@ -14,29 +14,33 @@ import pkgutil
 import sys
 import types
 import warnings
+import typing as t
+
+import yaml
 
 from collections import defaultdict, namedtuple
 from importlib import import_module
-from traceback import format_exc
 from yaml.parser import ParserError
 
-import ansible.module_utils.compat.typing as t
-
-from .filter import AnsibleJinja2Filter
-from .test import AnsibleJinja2Test
-
 from ansible import __version__ as ansible_version
-from ansible import constants as C
+from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.six import string_types
-from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
+from ansible._internal._datatag import _tags
+
+from . import _AnsiblePluginInfoMixin
+from .filter import AnsibleJinja2Filter
+from .test import AnsibleJinja2Test
+from .._internal._plugins import _cache
+from ..module_utils.common.messages import PluginInfo
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 
@@ -48,6 +52,9 @@ except ImportError:
     Version = None  # type: ignore[misc]
 
 import importlib.util
+
+if t.TYPE_CHECKING:
+    from ansible.plugins.cache import BaseCacheModule
 
 _PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
@@ -419,15 +426,15 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
+                documentation_source = getattr(module, 'DOCUMENTATION', '')
                 try:
-                    dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                    dstring = yaml.load(_tags.Origin(path=path).tag(documentation_source), Loader=AnsibleLoader)
                 except ParserError as e:
                     raise AnsibleError(f"plugin {name} has malformed documentation!") from e
 
                 # TODO: allow configurable plugins to use sidecar
                 # if not dstring:
                 #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
-                #     # TODO: dstring = AnsibleLoader(, file_name=path).get_single_data()
 
                 if dstring:
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
@@ -511,10 +518,19 @@ class PluginLoader:
                 removal_date = tombstone.get('removal_date')
                 removal_version = tombstone.get('removal_version')
                 warning_text = tombstone.get('warning_text') or ''
-                warning_text = '{0} has been removed.{1}{2}'.format(fq_name, ' ' if warning_text else '', warning_text)
-                removed_msg = display.get_deprecation_message(msg=warning_text, version=removal_version,
-                                                              date=removal_date, removed=True,
-                                                              collection_name=acr.collection)
+                warning_plugin_type = "module" if self.type == "modules" else f'{self.type} plugin'
+                warning_text = f'The {fq_name!r} {warning_plugin_type} has been removed.{" " if warning_text else ""}{warning_text}'
+                removed_msg = display._get_deprecation_message_with_plugin_info(
+                    msg=warning_text,
+                    version=removal_version,
+                    date=removal_date,
+                    removed=True,
+                    plugin=PluginInfo(
+                        requested_name=acr.collection,
+                        resolved_name=acr.collection,
+                        type='collection',
+                    ),
+                )
                 plugin_load_context.removal_date = removal_date
                 plugin_load_context.removal_version = removal_version
                 plugin_load_context.resolved = True
@@ -598,7 +614,14 @@ class PluginLoader:
 
         return None
 
-    def find_plugin_with_context(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
+    def find_plugin_with_context(
+        self,
+        name: str,
+        mod_type: str = '',
+        ignore_deprecated: bool = False,
+        check_aliases: bool = False,
+        collection_list: list[str] | None = None,
+    ) -> PluginLoadContext:
         """ Find a plugin named name, returning contextual info about the load, recursively resolving redirection """
         plugin_load_context = PluginLoadContext()
         plugin_load_context.original_name = name
@@ -852,12 +875,20 @@ class PluginLoader:
 
         return module
 
-    def _update_object(self, obj, name, path, redirected_names=None, resolved=None):
+    def _update_object(
+        self,
+        obj: _AnsiblePluginInfoMixin,
+        name: str,
+        path: str,
+        redirected_names: list[str] | None = None,
+        resolved: str | None = None,
+    ) -> None:
+        # DTFIX-RELEASE: clean this up- standardize types, document, split/remove redundant bits
 
         # set extra info on the module, in case we want it later
-        setattr(obj, '_original_path', path)
-        setattr(obj, '_load_name', name)
-        setattr(obj, '_redirected_names', redirected_names or [])
+        obj._original_path = path
+        obj._load_name = name
+        obj._redirected_names = redirected_names or []
 
         names = []
         if resolved:
@@ -868,8 +899,8 @@ class PluginLoader:
         if not names:
             raise AnsibleError(f"Missing FQCN for plugin source {name}")
 
-        setattr(obj, 'ansible_aliases', names)
-        setattr(obj, 'ansible_name', names[0])
+        obj.ansible_aliases = names
+        obj.ansible_name = names[0]
 
     def get(self, name, *args, **kwargs):
         ctx = self.get_with_context(name, *args, **kwargs)
@@ -883,7 +914,7 @@ class PluginLoader:
 
         return ctx.object
 
-    def get_with_context(self, name, *args, **kwargs):
+    def get_with_context(self, name, *args, **kwargs) -> get_with_context_result:
         """ instantiates a plugin of the given name using arguments """
 
         found_in_cache = True
@@ -1129,6 +1160,21 @@ class PluginLoader:
             yield obj
 
 
+class _CacheLoader(PluginLoader):
+    """Customized loader for cache plugins that wraps the requested plugin with an interposer that schema-qualifies keys and JSON encodes the values."""
+
+    def get(self, name: str, *args, **kwargs) -> BaseCacheModule:
+        plugin = super().get(name, *args, **kwargs)
+
+        if not plugin:
+            raise AnsibleError(f'Unable to load the cache plugin {name!r}.')
+
+        if plugin._persistent:
+            return _cache.PluginInterposer(plugin)
+
+        return plugin
+
+
 class Jinja2Loader(PluginLoader):
     """
     PluginLoader optimized for Jinja2 plugins
@@ -1137,10 +1183,12 @@ class Jinja2Loader(PluginLoader):
     We need to do a few things differently in the base class because of file == plugin
     assumptions and dedupe logic.
     """
-    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None):
+
+    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None) -> None:
         super(Jinja2Loader, self).__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=required_base_class)
         self._plugin_wrapper_type = plugin_wrapper_type
-        self._cached_non_collection_wrappers = {}
+        self._plugin_type_friendly_name = 'filter' if plugin_wrapper_type is AnsibleJinja2Filter else 'test'
+        self._cached_non_collection_wrappers: dict[str, AnsibleJinja2Filter | AnsibleJinja2Test | _DeferredPluginLoadFailure] = {}
 
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
@@ -1152,6 +1200,36 @@ class Jinja2Loader(PluginLoader):
     @property
     def method_map_name(self):
         return get_plugin_class(self.class_name) + 's'
+
+    def _wrap_func(self, name: str, resolved: str, func: t.Callable) -> AnsibleJinja2Test | AnsibleJinja2Filter:
+        """Wrap a Jinja builtin function in a `AnsibleJinja2Plugin` instance."""
+        try:
+            path = sys.modules[func.__module__].__file__
+        except AttributeError:
+            path = None
+
+        wrapper = self._plugin_wrapper_type(func)
+
+        self._update_object(obj=wrapper, name=name, path=path, resolved=resolved)
+
+        return wrapper
+
+    def _wrap_funcs(self, plugins: dict[str, t.Callable], aliases: dict[str, str]) -> dict[str, AnsibleJinja2Test | AnsibleJinja2Filter]:
+        """Map a dictionary of Jinja builtin functions to one containing `AnsibleJinja2Plugin` instances."""
+        wrappers: dict[str, AnsibleJinja2Test | AnsibleJinja2Filter] = {}
+
+        for load_name, func in plugins.items():
+            name = aliases.get(load_name, load_name)
+            resolved = f'ansible.builtin.{name}'
+
+            wrappers[load_name] = self._wrap_func(load_name, resolved, func)
+
+            if resolved not in wrappers:
+                # When the resolved name hasn't been cached, do so.
+                # Functions that have aliases will appear more than once, and we don't need to overwrite them.
+                wrappers[resolved] = self._wrap_func(resolved, resolved, func)
+
+        return wrappers
 
     def get_contained_plugins(self, collection, plugin_path, name):
 
@@ -1191,10 +1269,12 @@ class Jinja2Loader(PluginLoader):
 
     # FUTURE: now that the resulting plugins are closer, refactor base class method with some extra
     # hooks so we can avoid all the duplicated plugin metadata logic, and also cache the collection results properly here
-    def get_with_context(self, name, *args, **kwargs):
+    def get_with_context(self, name: str, *args, **kwargs) -> get_with_context_result:
         # pop N/A kwargs to avoid passthrough to parent methods
         kwargs.pop('class_only', False)
         kwargs.pop('collection_list', None)
+
+        requested_name = name
 
         context = PluginLoadContext()
 
@@ -1205,6 +1285,9 @@ class Jinja2Loader(PluginLoader):
 
         # check for stuff loaded via legacy/builtin paths first
         if known_plugin := self._cached_non_collection_wrappers.get(name):
+            if isinstance(known_plugin, _DeferredPluginLoadFailure):
+                raise known_plugin.ex
+
             context.resolved = True
             context.plugin_resolved_name = name
             context.plugin_resolved_path = known_plugin._original_path
@@ -1231,7 +1314,7 @@ class Jinja2Loader(PluginLoader):
                 ts = _get_collection_metadata(acr.collection)
             except ValueError as e:
                 # no collection
-                raise KeyError('Invalid plugin FQCN ({0}): {1}'.format(key, to_native(e)))
+                raise KeyError('Invalid plugin FQCN ({0}): {1}'.format(key, to_native(e))) from e
 
             # TODO: implement cycle detection (unified across collection redir as well)
             routing_entry = ts.get('plugin_routing', {}).get(self.type, {}).get(leaf_key, {})
@@ -1253,11 +1336,19 @@ class Jinja2Loader(PluginLoader):
                 warning_text = tombstone_entry.get('warning_text') or ''
                 removal_date = tombstone_entry.get('removal_date')
                 removal_version = tombstone_entry.get('removal_version')
+                warning_text = f'The {key!r} {self.type} plugin has been removed.{" " if warning_text else ""}{warning_text}'
 
-                warning_text = f'{self.type.title()} "{key}" has been removed.{" " if warning_text else ""}{warning_text}'
-
-                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
-                                                          collection_name=acr.collection, removed=True)
+                exc_msg = display._get_deprecation_message_with_plugin_info(
+                    msg=warning_text,
+                    version=removal_version,
+                    date=removal_date,
+                    removed=True,
+                    plugin=PluginInfo(
+                        requested_name=acr.collection,
+                        resolved_name=acr.collection,
+                        type='collection',
+                    ),
+                )
 
                 raise AnsiblePluginRemovedError(exc_msg)
 
@@ -1309,20 +1400,16 @@ class Jinja2Loader(PluginLoader):
                         plugin = self._plugin_wrapper_type(func)
                         if plugin:
                             context = plugin_impl.plugin_load_context
-                            self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            self._update_object(plugin, requested_name, plugin_impl.object._original_path, resolved=fq_name)
                             # context will have filename, which for tests/filters might not be correct
                             context._resolved_fqcn = plugin.ansible_name
                             # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 
-        except AnsiblePluginRemovedError as apre:
-            raise AnsibleError(to_native(apre), 0, orig_exc=apre)
         except (AnsibleError, KeyError):
             raise
         except Exception as ex:
-            display.warning('An unexpected error occurred during Jinja2 plugin loading: {0}'.format(to_native(ex)))
-            display.vvv('Unexpected error during Jinja2 plugin loading: {0}'.format(format_exc()))
-            raise AnsibleError(to_native(ex), 0, orig_exc=ex)
+            raise AnsibleError('An unexpected error occurred during Jinja2 plugin loading.') from ex
 
         return get_with_context_result(plugin, context)
 
@@ -1336,10 +1423,13 @@ class Jinja2Loader(PluginLoader):
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
         self._ensure_non_collection_wrappers(*args, **kwargs)
+
+        plugins = [plugin for plugin in self._cached_non_collection_wrappers.values() if not isinstance(plugin, _DeferredPluginLoadFailure)]
+
         if path_only:
-            yield from (w._original_path for w in self._cached_non_collection_wrappers.values())
+            yield from (w._original_path for w in plugins)
         else:
-            yield from (w for w in self._cached_non_collection_wrappers.values())
+            yield from (w for w in plugins)
 
     def _ensure_non_collection_wrappers(self, *args, **kwargs):
         if self._cached_non_collection_wrappers:
@@ -1366,27 +1456,39 @@ class Jinja2Loader(PluginLoader):
                     display.debug("%s skipped due to a defined plugin filter" % plugin_name)
                     continue
 
-                # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
-                # its own surrogate wrapper instance here to ease the bookkeeping...
-                wrapper = self._plugin_wrapper_type(plugins[plugin_name])
                 fqcn = plugin_name
                 collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
                 if not plugin_name.startswith(collection):
                     fqcn = f"{collection}.{plugin_name}"
 
-                self._update_object(wrapper, plugin_name, p_map._original_path, resolved=fqcn)
-
                 target_names = {plugin_name, fqcn}
+
                 if is_builtin:
                     target_names.add(f'ansible.builtin.{plugin_name}')
 
                 for target_name in target_names:
+                    # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
+                    # its own surrogate wrapper instance here to ease the bookkeeping...
+                    try:
+                        wrapper = self._plugin_wrapper_type(plugins[plugin_name])
+                    except Exception as ex:
+                        wrapper = _DeferredPluginLoadFailure(ex)
+
+                    self._update_object(obj=wrapper, name=target_name, path=p_map._original_path, resolved=fqcn)
+
                     if existing_plugin := self._cached_non_collection_wrappers.get(target_name):
                         display.debug(f'Jinja plugin {target_name} from {p_map._original_path} skipped; '
                                       f'shadowed by plugin from {existing_plugin._original_path})')
                         continue
 
                     self._cached_non_collection_wrappers[target_name] = wrapper
+
+
+class _DeferredPluginLoadFailure:
+    """Represents a plugin which failed to load. For internal use only within plugin loader."""
+
+    def __init__(self, ex: Exception) -> None:
+        self.ex = ex
 
 
 def get_fqcr_and_name(resource, collection='ansible.builtin'):
@@ -1412,7 +1514,7 @@ def _load_plugin_filter():
     if os.path.exists(filter_cfg):
         with open(filter_cfg, 'rb') as f:
             try:
-                filter_data = from_yaml(f.read())
+                filter_data = yaml.load(f, Loader=AnsibleInstrumentedLoader)
             except Exception as e:
                 display.warning(u'The plugin filter file, {0} was not parsable.'
                                 u' Skipping: {1}'.format(filter_cfg, to_text(e)))
@@ -1501,7 +1603,8 @@ def _configure_collection_loader(prefix_collections_path=None):
     if prefix_collections_path is None:
         prefix_collections_path = []
 
-    paths = list(prefix_collections_path) + C.COLLECTIONS_PATHS
+    # insert the internal ansible._protomatter collection up front
+    paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
     finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 
@@ -1541,7 +1644,7 @@ action_loader = PluginLoader(
     required_base_class='ActionBase',
 )
 
-cache_loader = PluginLoader(
+cache_loader = _CacheLoader(
     'CacheModule',
     'ansible.plugins.cache',
     C.DEFAULT_CACHE_PLUGIN_PATH,

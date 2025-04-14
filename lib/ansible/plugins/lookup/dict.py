@@ -61,11 +61,6 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-
-        # NOTE: can remove if with_ is removed
-        if not isinstance(terms, list):
-            terms = [terms]
-
         results = []
         for term in terms:
             # Expect any type of Mapping, notably hostvars

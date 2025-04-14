@@ -21,9 +21,9 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.utils.display import Display
+from ansible._internal._templating._engine import TemplateEngine
 
 display = Display()
 
@@ -92,7 +92,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.task_include import TaskInclude
     from ansible.playbook.role_include import IncludeRole
     from ansible.playbook.handler_task_include import HandlerTaskInclude
-    from ansible.template import Templar
 
     if not isinstance(ds, list):
         raise AnsibleAssertionError('The ds (%s) should be a list but was a %s' % (ds, type(ds)))
@@ -105,7 +104,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
         if 'block' in task_ds:
             if use_handlers:
                 raise AnsibleParserError("Using a block as a handler is not supported.", obj=task_ds)
-            t = Block.load(
+            task = Block.load(
                 task_ds,
                 play=play,
                 parent_block=block,
@@ -115,18 +114,20 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 variable_manager=variable_manager,
                 loader=loader,
             )
-            task_list.append(t)
+            task_list.append(task)
         else:
             args_parser = ModuleArgsParser(task_ds)
             try:
                 (action, args, delegate_to) = args_parser.parse(skip_action_validation=True)
-            except AnsibleParserError as e:
+            except AnsibleParserError as ex:
                 # if the raises exception was created with obj=ds args, then it includes the detail
                 # so we dont need to add it so we can just re raise.
-                if e.obj:
+                if ex.obj:
                     raise
                 # But if it wasn't, we can add the yaml object now to get more detail
-                raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
+                # DTFIX-FUTURE: this *should* be unnecessary- check code coverage.
+                #  Will definitely be unnecessary once we have proper contexts to consult.
+                raise AnsibleParserError("Error loading tasks.", obj=task_ds) from ex
 
             if action in C._ACTION_ALL_INCLUDE_IMPORT_TASKS:
 
@@ -135,7 +136,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     include_class = TaskInclude
 
-                t = include_class.load(
+                task = include_class.load(
                     task_ds,
                     block=block,
                     role=role,
@@ -144,16 +145,16 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     loader=loader
                 )
 
-                all_vars = variable_manager.get_vars(play=play, task=t)
-                templar = Templar(loader=loader, variables=all_vars)
+                all_vars = variable_manager.get_vars(play=play, task=task)
+                templar = TemplateEngine(loader=loader, variables=all_vars)
 
                 # check to see if this include is dynamic or static:
                 if action in C._ACTION_IMPORT_TASKS:
-                    if t.loop is not None:
+                    if task.loop is not None:
                         raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
 
                     # we set a flag to indicate this include was static
-                    t.statically_loaded = True
+                    task.statically_loaded = True
 
                     # handle relative includes by walking up the list of parent include
                     # tasks and checking the relative result to see if it exists
@@ -168,26 +169,14 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if not isinstance(parent_include, TaskInclude):
                             parent_include = parent_include._parent
                             continue
-                        try:
-                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
-                        except AnsibleUndefinedVariable as e:
-                            if not parent_include.statically_loaded:
-                                raise AnsibleParserError(
-                                    "Error when evaluating variable in dynamic parent include path: %s. "
-                                    "When using static imports, the parent dynamic include cannot utilize host facts "
-                                    "or variables from inventory" % parent_include.args.get('_raw_params'),
-                                    obj=task_ds,
-                                    suppress_extended_error=True,
-                                    orig_exc=e
-                                )
-                            raise
+                        parent_include_dir = os.path.dirname(parent_include.args.get('_raw_params'))
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
                             cumulative_path = os.path.join(parent_include_dir, cumulative_path)
-                        include_target = templar.template(t.args['_raw_params'])
-                        if t._role:
-                            new_basedir = os.path.join(t._role._role_path, subdir, cumulative_path)
+                        include_target = templar.template(task.args['_raw_params'])
+                        if task._role:
+                            new_basedir = os.path.join(task._role._role_path, subdir, cumulative_path)
                             include_file = loader.path_dwim_relative(new_basedir, subdir, include_target)
                         else:
                             include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
@@ -200,22 +189,21 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     if not found:
                         try:
-                            include_target = templar.template(t.args['_raw_params'])
-                        except AnsibleUndefinedVariable as e:
+                            include_target = templar.template(task.args['_raw_params'])
+                        except AnsibleUndefinedVariable as ex:
                             raise AnsibleParserError(
-                                "Error when evaluating variable in import path: %s.\n\n"
-                                "When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"
+                                message=f"Error when evaluating variable in import path {task.args['_raw_params']!r}.",
+                                help_text="When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"
                                 "or extra-vars passed in from the command line. Static imports cannot use variables from facts or inventory\n"
-                                "sources like group or host vars." % t.args['_raw_params'],
+                                "sources like group or host vars.",
                                 obj=task_ds,
-                                suppress_extended_error=True,
-                                orig_exc=e)
-                        if t._role:
-                            include_file = loader.path_dwim_relative(t._role._role_path, subdir, include_target)
+                            ) from ex
+                        if task._role:
+                            include_file = loader.path_dwim_relative(task._role._role_path, subdir, include_target)
                         else:
                             include_file = loader.path_dwim(include_target)
 
-                    data = loader.load_from_file(include_file)
+                    data = loader.load_from_file(include_file, trusted_as_template=True)
                     if not data:
                         display.warning('file %s is empty and had no tasks to include' % include_file)
                         continue
@@ -228,7 +216,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # nested includes, and we want the include order printed correctly
                     display.vv("statically imported: %s" % include_file)
 
-                    ti_copy = t.copy(exclude_parent=True)
+                    ti_copy = task.copy(exclude_parent=True)
                     ti_copy._parent = block
                     included_blocks = load_list_of_blocks(
                         data,
@@ -246,7 +234,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # now we extend the tags on each of the included blocks
                     for b in included_blocks:
                         b.tags = list(set(b.tags).union(tags))
-                    # END FIXME
+                    # FIXME - END
 
                     # FIXME: handlers shouldn't need this special handling, but do
                     #        right now because they don't iterate blocks correctly
@@ -256,7 +244,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     else:
                         task_list.extend(included_blocks)
                 else:
-                    task_list.append(t)
+                    task_list.append(task)
 
             elif action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES:
                 if use_handlers:
@@ -280,7 +268,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                     # template the role name now, if needed
                     all_vars = variable_manager.get_vars(play=play, task=ir)
-                    templar = Templar(loader=loader, variables=all_vars)
+                    templar = TemplateEngine(loader=loader, variables=all_vars)
                     ir.post_validate(templar=templar)
                     ir._role_name = templar.template(ir._role_name)
 
@@ -292,15 +280,15 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     task_list.append(ir)
             else:
                 if use_handlers:
-                    t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-                    if t.action in C._ACTION_META and t.args.get('_raw_params') == "end_role":
-                        raise AnsibleParserError("Cannot execute 'end_role' from a handler")
+                    task = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                    if task._get_meta() == "end_role":
+                        raise AnsibleParserError("Cannot execute 'end_role' from a handler", obj=task)
                 else:
-                    t = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-                    if t.action in C._ACTION_META and t.args.get('_raw_params') == "end_role" and role is None:
-                        raise AnsibleParserError("Cannot execute 'end_role' from outside of a role")
+                    task = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                    if task._get_meta() == "end_role" and role is None:
+                        raise AnsibleParserError("Cannot execute 'end_role' from outside of a role", obj=task)
 
-                task_list.append(t)
+                task_list.append(task)
 
     return task_list
 

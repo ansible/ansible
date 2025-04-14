@@ -9,7 +9,7 @@ import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleActionFail
-from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
@@ -54,10 +54,7 @@ class ActionModule(ActionBase):
             fact_module, collection_list=self._task.collections
         ).resolved_fqcn
 
-        mod_args = get_action_args_with_defaults(
-            resolved_fact_module, mod_args, self._task.module_defaults, self._templar,
-            action_groups=self._task._parent._play._action_groups
-        )
+        mod_args = _apply_action_arg_defaults(resolved_fact_module, self._task, mod_args, self._templar)
 
         return mod_args
 
@@ -132,6 +129,8 @@ class ActionModule(ActionBase):
                 # TODO: use gather_timeout to cut module execution if module itself does not support gather_timeout
                 res = self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False)
                 if res.get('failed', False):
+                    # DTFIX-RELEASE: this trashes the individual failure details and does not work with the new error handling; need to do something to
+                    # invoke per-item error handling- perhaps returning this as a synthetic loop result?
                     failed[fact_module] = res
                 elif res.get('skipped', False):
                     skipped[fact_module] = res
@@ -164,6 +163,8 @@ class ActionModule(ActionBase):
                     res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
+                            # DTFIX-RELEASE: this trashes the individual failure details and does not work with the new error handling; need to do something to
+                            # invoke per-item error handling- perhaps returning this as a synthetic loop result?
                             failed[module] = res
                         elif res.get('skipped', False):
                             skipped[module] = res

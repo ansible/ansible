@@ -50,7 +50,7 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = []
         for term in terms:
@@ -63,7 +63,7 @@ class LookupModule(LookupBase):
             # https://github.com/ansible/ansible/issues/6550
             term = str(term)
 
-            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(term, cwd=self._templar.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.append(stdout.decode("utf-8").rstrip())

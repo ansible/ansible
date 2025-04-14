@@ -38,10 +38,6 @@ EXAMPLES = """
   ansible.builtin.debug:
     msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default='World') }}"
 
-- name: Fail if the variable is not defined by setting default value to 'Undefined'
-  ansible.builtin.debug:
-    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default=Undefined) }}"
-
 - name: Fail if the variable is not defined by setting default value to 'undef()'
   ansible.builtin.debug:
     msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default=undef()) }}"
@@ -56,23 +52,30 @@ RETURN = """
 
 import os
 
-from jinja2.runtime import Undefined
 
-from ansible.errors import AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
+from ansible._internal._templating._jinja_bits import _undef, _DEFAULT_UNDEF
+from ansible._internal._datatag._tags import Origin
 
 
 class LookupModule(LookupBase):
-    def run(self, terms, variables, **kwargs):
+    accept_args_markers = True  # the `default` arg can accept undefined values
 
+    def run(self, terms, variables=None, **kwargs):
         self.set_options(var_options=variables, direct=kwargs)
 
         ret = []
         d = self.get_option('default')
+
         for term in terms:
             var = term.split()[0]
             val = os.environ.get(var, d)
-            if isinstance(val, Undefined):
-                raise AnsibleUndefinedVariable('The "env" lookup, found an undefined variable: %s' % var)
+
+            if val is _DEFAULT_UNDEF:
+                val = _undef(f'The environment variable {var!r} is not set.')
+            else:
+                val = Origin(description=f"<environment variable {var!r}>").try_tag(val)
+
             ret.append(val)
+
         return ret

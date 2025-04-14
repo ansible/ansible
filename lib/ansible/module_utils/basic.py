@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import sys
 import typing as t
@@ -25,6 +26,7 @@ if sys.version_info < _PY_MIN:
 
 import __main__
 import atexit
+import dataclasses as _dataclasses
 import errno
 import grp
 import fcntl
@@ -51,6 +53,10 @@ try:
 except ImportError:
     HAS_SYSLOG = False
 
+# deprecated: description='types.EllipsisType is available in Python 3.10+' python_version='3.9'
+if t.TYPE_CHECKING:
+    from builtins import ellipsis
+
 try:
     from systemd import journal, daemon as systemd_daemon
     # Makes sure that systemd.journal has method sendv()
@@ -71,8 +77,12 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._text import to_native, to_bytes, to_text
-from ansible.module_utils.common.text.converters import (
+from ._internal import _traceback, _errors, _debugging
+
+from .common.text.converters import (
+    to_native,
+    to_bytes,
+    to_text,
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
     container_to_text as json_dict_bytes_to_unicode,
@@ -86,6 +96,8 @@ from ansible.module_utils.common.text.formatters import (
     human_to_bytes,
     SIZE_RANGES,
 )
+
+from ansible.module_utils.common import json as _common_json
 
 import hashlib
 
@@ -110,6 +122,8 @@ def _get_available_hash_algorithms():
 
 
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
+
+from ansible.module_utils.common import json as _json
 
 from ansible.module_utils.six.moves.collections_abc import (
     KeysView,
@@ -149,11 +163,12 @@ from ansible.module_utils.common.validation import (
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
+from ansible.module_utils.common import messages as _messages
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
     deprecate,
-    get_deprecation_messages,
-    get_warning_messages,
+    get_deprecations,
+    get_warnings,
     warn,
 )
 
@@ -169,7 +184,9 @@ imap = map
 # multiple AnsibleModules are created.  Otherwise each AnsibleModule would
 # attempt to read from stdin.  Other code should not use this directly as it
 # is an internal implementation detail
-_ANSIBLE_ARGS = None
+_ANSIBLE_ARGS: bytes | None = None
+_ANSIBLE_PROFILE: str | None = None
+_PARSED_MODULE_ARGS: dict[str, t.Any] | None = None
 
 
 FILE_COMMON_ARGUMENTS = dict(
@@ -307,40 +324,31 @@ def _load_params():
     to call this function and consume its outputs than to implement the logic
     inside it as a copy in your own code.
     """
-    global _ANSIBLE_ARGS
-    if _ANSIBLE_ARGS is not None:
-        buffer = _ANSIBLE_ARGS
-    else:
-        # debug overrides to read args from file or cmdline
+    global _ANSIBLE_ARGS, _ANSIBLE_PROFILE
 
-        # Avoid tracebacks when locale is non-utf8
-        # We control the args and we pass them as utf8
-        if len(sys.argv) > 1:
-            if os.path.isfile(sys.argv[1]):
-                with open(sys.argv[1], 'rb') as fd:
-                    buffer = fd.read()
-            else:
-                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
-        # default case, read from stdin
-        else:
-            buffer = sys.stdin.buffer.read()
-        _ANSIBLE_ARGS = buffer
+    if _ANSIBLE_ARGS is None:
+        _ANSIBLE_ARGS, _ANSIBLE_PROFILE = _debugging.load_params()
+
+    buffer = _ANSIBLE_ARGS
+    profile = _ANSIBLE_PROFILE
+
+    if not profile:
+        raise Exception("No serialization profile was specified.")
 
     try:
-        params = json.loads(buffer.decode('utf-8'))
-    except ValueError:
-        # This helper is used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
-        sys.exit(1)
+        decoder = _json.get_module_decoder(profile, _json.Direction.CONTROLLER_TO_MODULE)
+        params = json.loads(buffer.decode(), cls=decoder)
+    except Exception as ex:
+        raise Exception("Failed to decode JSON module parameters.") from ex
 
-    try:
-        return params['ANSIBLE_MODULE_ARGS']
-    except KeyError:
-        # This helper does not have access to fail_json so we have to print
-        # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in JSON data from stdin. Unable to figure out what parameters were passed", '
-              '"failed": true}')
-        sys.exit(1)
+    if (ansible_module_args := params.get('ANSIBLE_MODULE_ARGS', ...)) is ...:
+        raise Exception("ANSIBLE_MODULE_ARGS not provided.")
+
+    global _PARSED_MODULE_ARGS
+
+    _PARSED_MODULE_ARGS = copy.deepcopy(ansible_module_args)  # AnsibleModule mutates the returned dict, so a copy is needed
+
+    return ansible_module_args
 
 
 def missing_required_lib(library, reason=None, url=None):
@@ -506,7 +514,7 @@ class AnsibleModule(object):
     def deprecate(self, msg, version=None, date=None, collection_name=None):
         if version is not None and date is not None:
             raise AssertionError("implementation error -- version and date must not both be set")
-        deprecate(msg, version=version, date=date, collection_name=collection_name)
+        deprecate(msg, version=version, date=date)
         # For compatibility, we accept that neither version nor date is set,
         # and treat that the same as if version would not have been set
         if date is not None:
@@ -878,8 +886,7 @@ class AnsibleModule(object):
                     raise
             except Exception as e:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chmod failed', details=to_native(e),
-                               exception=traceback.format_exc())
+                self.fail_json(path=path, msg='chmod failed', details=to_native(e))
 
             path_stat = os.lstat(b_path)
             new_mode = stat.S_IMODE(path_stat.st_mode)
@@ -927,8 +934,7 @@ class AnsibleModule(object):
                         if rc != 0 or err:
                             raise Exception("Error while setting attributes: %s" % (out + err))
                     except Exception as e:
-                        self.fail_json(path=to_text(b_path), msg='chattr failed',
-                                       details=to_native(e), exception=traceback.format_exc())
+                        self.fail_json(path=to_text(b_path), msg='chattr failed', details=to_native(e))
         return changed
 
     def get_file_attributes(self, path, include_version=True):
@@ -1173,8 +1179,7 @@ class AnsibleModule(object):
             os.environ['LC_ALL'] = best_locale
             os.environ['LC_MESSAGES'] = best_locale
         except Exception as e:
-            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
-                           to_native(e), exception=traceback.format_exc())
+            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % to_native(e))
 
     def _set_internal_properties(self, argument_spec=None, module_parameters=None):
         if argument_spec is None:
@@ -1224,7 +1229,6 @@ class AnsibleModule(object):
                     msg='Failed to log to syslog (%s). To proceed anyway, '
                         'disable syslog logging by setting no_target_syslog '
                         'to True in your Ansible config.' % to_native(e),
-                    exception=traceback.format_exc(),
                     msg_to_log=msg,
                 )
 
@@ -1378,8 +1382,15 @@ class AnsibleModule(object):
             self.fail_json(msg=to_native(e))
 
     def jsonify(self, data):
+        # deprecated: description='deprecate AnsibleModule.jsonify()' core_version='2.23'
+        # deprecate(
+        #     msg="The `AnsibleModule.jsonify' method is deprecated.",
+        #     version="2.27",
+        #     # help_text="",  # DTFIX-RELEASE: fill in this help text
+        # )
+
         try:
-            return jsonify(data)
+            return json.dumps(data, cls=_common_json._get_legacy_encoder())
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
@@ -1408,7 +1419,7 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        warnings = get_warning_messages()
+        warnings = get_warnings()
         if warnings:
             kwargs['warnings'] = warnings
 
@@ -1425,7 +1436,7 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        deprecations = get_deprecation_messages()
+        deprecations = get_deprecations()
         if deprecations:
             kwargs['deprecations'] = deprecations
 
@@ -1438,7 +1449,8 @@ class AnsibleModule(object):
         # return preserved
         kwargs.update(preserved)
 
-        print('\n%s' % self.jsonify(kwargs))
+        encoder = _json.get_module_encoder(_ANSIBLE_PROFILE, _json.Direction.MODULE_TO_CONTROLLER)
+        print('\n%s' % json.dumps(kwargs, cls=encoder))
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """
@@ -1447,19 +1459,56 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, msg, **kwargs) -> t.NoReturn:
-        """ return from the module, with an error message """
+    def fail_json(self, msg: str, *, exception: BaseException | str | ellipsis | None = ..., **kwargs) -> t.NoReturn:
+        """
+        Return from the module with an error message and optional exception/traceback detail.
+        A traceback will only be included in the result if error traceback capturing has been enabled.
 
-        kwargs['failed'] = True
-        kwargs['msg'] = msg
+        When `exception` is an exception object, its message chain will be automatically combined with `msg` to create the final error message.
+        The message chain includes the exception's message as well as messages from any __cause__ exceptions.
+        The traceback from `exception` will be used for the formatted traceback.
 
-        # Add traceback if debug or high verbosity and it is missing
-        # NOTE: Badly named as exception, it really always has been a traceback
-        if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+        When `exception` is a string, it will be used as the formatted traceback.
+
+        When `exception` is set to `None`, the current call stack will be used for the formatted traceback.
+
+        When `exception` is not specified, a formatted traceback will be retrieved from the current exception.
+        If no exception is pending, the current call stack will be used instead.
+        """
+        msg = str(msg)  # coerce to str instead of raising an error due to an invalid type
+
+        kwargs.update(
+            failed=True,
+            msg=msg,
+        )
+
+        if isinstance(exception, BaseException):
+            # Include a `_messages.ErrorDetail` in the result.
+            # The `msg` is included in the list of errors to ensure it is not lost when looking only at `exception` from the result.
+
+            error_summary = _errors.create_error_summary(exception)
+            error_summary = _dataclasses.replace(error_summary, details=(_messages.Detail(msg=msg),) + error_summary.details)
+
+            kwargs.update(exception=error_summary)
+        elif _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR):
+            # Include only a formatted traceback string in the result.
+            # The controller will combine this with `msg` to create an `_messages.ErrorDetail`.
+
+            formatted_traceback: str | None
+
+            if isinstance(exception, str):
+                formatted_traceback = exception
+            elif exception is ... and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
+                formatted_traceback = _traceback.maybe_extract_traceback(current_exception, _traceback.TracebackEvent.ERROR)
+            else:
+                formatted_traceback = _traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR)
+
+            if formatted_traceback:
+                kwargs.update(exception=formatted_traceback)
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
+
         sys.exit(1)
 
     def fail_on_missing_params(self, required_params=None):
@@ -1611,7 +1660,7 @@ class AnsibleModule(object):
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)))
             else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
@@ -1624,12 +1673,11 @@ class AnsibleModule(object):
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
                 except (OSError, IOError) as e:
                     error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-                finally:
-                    if error_msg:
-                        if unsafe_writes:
-                            self._unsafe_writes(b_src, b_dest)
-                        else:
-                            self.fail_json(msg=error_msg, exception=traceback.format_exc())
+
+                    if unsafe_writes:
+                        self._unsafe_writes(b_src, b_dest)
+                    else:
+                        self.fail_json(msg=error_msg)
 
                 if tmp_dest_name:
                     b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
@@ -1668,12 +1716,12 @@ class AnsibleModule(object):
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
                                     self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)), exception=traceback.format_exc())
+                                                       (src, dest, b_tmp_dest_name, to_native(e)))
                         except (shutil.Error, OSError, IOError) as e:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
+                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)))
                     finally:
                         self.cleanup(b_tmp_dest_name)
 
@@ -1713,8 +1761,7 @@ class AnsibleModule(object):
                 if in_src:
                     in_src.close()
         except (shutil.Error, OSError, IOError) as e:
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
-                           exception=traceback.format_exc())
+            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)))
 
     def _clean_args(self, args):
 
@@ -2009,7 +2056,7 @@ class AnsibleModule(object):
         except Exception as e:
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
             if handle_exceptions:
-                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
+                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
             else:
                 raise e
 

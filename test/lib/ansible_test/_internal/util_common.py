@@ -177,6 +177,7 @@ class CommonConfig:
         self.debug: bool = args.debug
         self.truncate: int = args.truncate
         self.redact: bool = args.redact
+        self.display_traceback: str = args.display_traceback
 
         self.display_stderr: bool = False
 

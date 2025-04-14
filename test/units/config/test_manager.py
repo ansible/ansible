@@ -10,7 +10,6 @@ import pytest
 
 from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
@@ -129,31 +128,6 @@ class TestConfigManager:
             self.manager._read_config_yaml_file(os.path.join(curdir, 'test_non_existent.yml'))
 
         assert "Missing base YAML definition file (bad install?)" in str(exec_info.value)
-
-    def test_entry_as_vault_var(self):
-        class MockVault:
-
-            def decrypt(self, value, filename=None, obj=None):
-                return value
-
-        vault_var = AnsibleVaultEncryptedUnicode(b"vault text")
-        vault_var.vault = MockVault()
-
-        actual_value, actual_origin = self.manager._loop_entries({'name': vault_var}, [{'name': 'name'}])
-        assert actual_value == "vault text"
-        assert actual_origin == "name"
-
-    @pytest.mark.parametrize("value_type", ("str", "string", None))
-    def test_ensure_type_with_vaulted_str(self, value_type):
-        class MockVault:
-            def decrypt(self, value, filename=None, obj=None):
-                return value
-
-        vault_var = AnsibleVaultEncryptedUnicode(b"vault text")
-        vault_var.vault = MockVault()
-
-        actual_value = ensure_type(vault_var, value_type)
-        assert actual_value == "vault text"
 
 
 @pytest.mark.parametrize(("key", "expected_value"), (

@@ -22,7 +22,7 @@ from unittest.mock import MagicMock
 
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils import context_objects as co
 
 from units.mock.loader import DictDataLoader
@@ -79,7 +79,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         mock_inventory = MagicMock()
         mock_var_manager = MagicMock()
 
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
 
         pbe = PlaybookExecutor(
             playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml'],

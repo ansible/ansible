@@ -29,5 +29,5 @@
         - "'hosts' in inv['parent_3']"
         - "'test1' in inv['test_group1']['hosts']"
   vars:
-    inv: '{{limited.stdout|from_json }}'
+    inv: '{{limited.stdout|from_json(profile="inventory_legacy") }}'
   delegate_to: localhost

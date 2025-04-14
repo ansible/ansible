@@ -147,6 +147,8 @@ def jwrite(info):
 
 def _run_module(wrapped_cmd, jid):
 
+    # DTFIX-FUTURE: needs rework for serialization profiles
+
     jwrite({"started": 1, "finished": 0, "ansible_job_id": jid})
 
     result = {}
@@ -188,6 +190,9 @@ def _run_module(wrapped_cmd, jid):
             module_warnings = result.get('warnings', [])
             if not isinstance(module_warnings, list):
                 module_warnings = [module_warnings]
+
+            # this relies on the controller's fallback conversion of string warnings to WarningMessageDetail instances, and assumes
+            # that the module result and warning collection are basic JSON datatypes (eg, no tags or other custom collections).
             module_warnings.extend(json_warnings)
             result['warnings'] = module_warnings
 
@@ -257,7 +262,7 @@ def main():
         end({
             "failed": 1,
             "msg": "could not create directory: %s - %s" % (jobdir, to_text(e)),
-            "exception": to_text(traceback.format_exc()),
+            "exception": to_text(traceback.format_exc()),  # NB: task executor compat will coerce to the correct dataclass type
         }, 1)
 
     # immediately exit this process, leaving an orphaned process

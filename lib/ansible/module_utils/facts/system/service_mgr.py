@@ -20,8 +20,7 @@ from __future__ import annotations
 import os
 import platform
 import re
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.common.text.converters import to_native
 

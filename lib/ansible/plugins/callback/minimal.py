@@ -15,6 +15,7 @@ DOCUMENTATION = """
       - result_format_callback
 """
 
+from ansible.executor.task_result import TaskResult
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
 
@@ -40,20 +41,18 @@ class CallbackModule(CallbackBase):
 
         return buf + "\n"
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-
-        self._handle_exception(result._result)
-        self._handle_warnings(result._result)
+    def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
+        self._handle_warnings_and_exception(result)
 
         if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
         else:
             self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_ERROR)
 
-    def v2_runner_on_ok(self, result):
-        self._clean_results(result._result, result._task.action)
+    def v2_runner_on_ok(self, result: TaskResult) -> None:
+        self._handle_warnings_and_exception(result)
 
-        self._handle_warnings(result._result)
+        self._clean_results(result._result, result._task.action)
 
         if result._result.get('changed', False):
             color = C.COLOR_CHANGED
@@ -67,10 +66,14 @@ class CallbackModule(CallbackBase):
         else:
             self._display.display("%s | %s => %s" % (result._host.get_name(), state, self._dump_results(result._result, indent=4)), color=color)
 
-    def v2_runner_on_skipped(self, result):
+    def v2_runner_on_skipped(self, result: TaskResult) -> None:
+        self._handle_warnings_and_exception(result)
+
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)
 
-    def v2_runner_on_unreachable(self, result):
+    def v2_runner_on_unreachable(self, result: TaskResult) -> None:
+        self._handle_warnings_and_exception(result)
+
         self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
 
     def v2_on_file_diff(self, result):

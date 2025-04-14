@@ -38,7 +38,7 @@
 
     - assert:
         that:
-          - "{{ unsafe_foo[0] | type_debug == 'AnsibleUnsafeText' }}"
+          - unsafe_foo is not ansible._protomatter.tagged_with('TrustedAsTemplate')
 
     - block:
       - copy:

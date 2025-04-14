@@ -7,7 +7,7 @@ from __future__ import annotations
 import pytest
 
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.common.validation import check_type_str
+from ansible.module_utils.common.validation import check_type_str, _check_type_str_no_conversion
 
 
 TEST_CASES = (
@@ -28,5 +28,5 @@ def test_check_type_str(value, expected):
 @pytest.mark.parametrize('value, expected', TEST_CASES[1:])
 def test_check_type_str_no_conversion(value, expected):
     with pytest.raises(TypeError) as e:
-        check_type_str(value, allow_conversion=False)
+        _check_type_str_no_conversion(value)
     assert 'is not a string and conversion is not allowed' in to_native(e.value)

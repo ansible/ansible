@@ -47,9 +47,9 @@ ansible-playbook -vv always_failure_with_rescue_rc.yml > rc_test.out || exit_cod
 set -e
 cat rc_test.out
 [ $exit_code -eq 2 ]
-[ "$(grep -c 'Failure in block' rc_test.out )" -eq 1 ]
-[ "$(grep -c 'Rescue' rc_test.out )" -eq 1 ]
-[ "$(grep -c 'Failure in always' rc_test.out )" -eq 1 ]
+[ "$(grep -c 'Failure in block' rc_test.out )" -eq 2 ]
+[ "$(grep -c 'Rescue' rc_test.out )" -eq 2 ]
+[ "$(grep -c 'Failure in always' rc_test.out )" -eq 2 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test_out
 
@@ -59,7 +59,7 @@ ansible-playbook -vv always_no_rescue_rc.yml > rc_test.out || exit_code=$?
 set -e
 cat rc_test.out
 [ $exit_code -eq 2 ]
-[ "$(grep -c 'Failure in block' rc_test.out )" -eq 1 ]
+[ "$(grep -c 'Failure in block' rc_test.out )" -eq 2 ]
 [ "$(grep -c 'Always' rc_test.out )" -eq 1 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
@@ -70,8 +70,8 @@ ansible-playbook -vv always_failure_no_rescue_rc.yml > rc_test.out || exit_code=
 set -e
 cat rc_test.out
 [ $exit_code -eq 2 ]
-[ "$(grep -c 'Failure in block' rc_test.out )" -eq 1 ]
-[ "$(grep -c 'Failure in always' rc_test.out )" -eq 1 ]
+[ "$(grep -c 'Failure in block' rc_test.out )" -eq 3 ]
+[ "$(grep -c 'Failure in always' rc_test.out )" -eq 2 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
 

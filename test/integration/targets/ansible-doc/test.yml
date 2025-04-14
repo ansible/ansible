@@ -18,8 +18,8 @@
         that:
           - result is failed
           - |
-            "ERROR! Unable to retrieve documentation from 'test_docs_missing_description'. All (sub-)options and return values must have a 'description' field"
-            in result.stderr
+              "Unable to retrieve documentation from 'test_docs_missing_description': All (sub-)options and return values must have a 'description' field"
+              in result.stderr
 
     - name: module with suboptions (avoid first line as it has full path)
       shell: ansible-doc test_docs_suboptions| tail -n +3
@@ -57,7 +57,7 @@
     - assert:
         that:
           - result is failed
-          - '"module test_docs_returns_broken missing documentation (or could not parse documentation)" in result.stderr'
+          - '"module test_docs_returns_broken Missing documentation (or could not parse documentation)" in result.stderr'
 
     - name: non-existent module
       command: ansible-doc test_does_not_exist
@@ -166,7 +166,7 @@
 
     - assert:
         that:
-          - '"[WARNING]" not in result.stderr'
+          - '"[WARNING]" in result.stderr'
           - '"[DEPRECATION WARNING]" in result.stderr'
           - '"deprecated_with_docs " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'
@@ -177,7 +177,7 @@
 
     - assert:
         that:
-          - '"[WARNING]" not in result.stderr'
+          - '"[WARNING]" in result.stderr'
           - '"[DEPRECATION WARNING]" in result.stderr'
           - '"deprecated_with_adj_docs " in result.stdout'
           - '"AUTHOR: Ansible Core Team" in result.stdout'

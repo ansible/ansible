@@ -2,6 +2,8 @@
 
 set -eux
 
+export ANSIBLE_DEPRECATION_WARNINGS=1  # re-enable deprecation warnings, since this test is looking for one
+
 ALOG=${OUTPUT_DIR}/ansible_log_test.log
 
 # no log enabled
@@ -17,7 +19,7 @@ ANSIBLE_LOG_PATH=${ALOG} ansible-playbook logit.yml
 # Ensure tasks and log levels appear
 grep -q '\[normal task\]' "${ALOG}"
 grep -q 'INFO| TASK \[force warning\]' "${ALOG}"
-grep -q 'WARNING| \[WARNING\]: conditional statements' "${ALOG}"
+grep -q 'INFO| \[DEPRECATION WARNING\]: Conditionals should not be surrounded by templating delimiters' "${ALOG}"
 rm "${ALOG}"
 
 # inline grep should fail if EXEC was present

@@ -330,12 +330,12 @@
     - '"Installing ''namespace4.name:1.0.0'' to" in install_uri.stdout'
     - (install_uri_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
-- name: fail to install a collection with an undefined URL - {{ test_id }}
+- name: fail to install a collection with missing URL - {{ test_id }}
   command: ansible-galaxy collection install namespace5.name {{ galaxy_verbosity }}
   register: fail_undefined_server
-  failed_when: '"No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined" not in fail_undefined_server.stderr'
+  failed_when: fail_undefined_server.stderr is not contains "config 'url' for 'bogus' galaxy_server plugin not provided"
   environment:
-    ANSIBLE_GALAXY_SERVER_LIST: undefined
+    ANSIBLE_GALAXY_SERVER_LIST: bogus
 
 # pulp_v2 doesn't require auth
 - when: v2|default(false)

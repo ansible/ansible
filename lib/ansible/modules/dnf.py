@@ -408,10 +408,10 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 
-# NOTE dnf Python bindings import is postponed, see DnfModule._ensure_dnf(),
-# because we need AnsibleModule object to use get_best_parsable_locale()
-# to set proper locale before importing dnf to be able to scrape
-# the output in some cases (FIXME?).
+# FIXME: NOTE dnf Python bindings import is postponed, see DnfModule._ensure_dnf(),
+#  because we need AnsibleModule object to use get_best_parsable_locale()
+#  to set proper locale before importing dnf to be able to scrape
+#  the output in some cases.
 dnf = None
 
 

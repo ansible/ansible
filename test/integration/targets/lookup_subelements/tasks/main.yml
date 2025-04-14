@@ -95,7 +95,7 @@
 - assert:
     that:
       - err1 is failed
-      - "'expects a dictionary' in err1.msg"
+      - "'first a dict or a list' in err1.msg"
 
 - name: Ensure it errors properly when pointing to non-list
   set_fact:

@@ -1,0 +1,31 @@
+- name: valid template
+  shell: ulimit -n
+  vars:
+    ansible_python_module_rlimit_nofile: "{{ 123 }}"
+  register: result
+
+- assert:
+    that:
+      - result.stdout | int == 123
+
+- name: omit template
+  shell: ulimit -n
+  vars:
+    ansible_python_module_rlimit_nofile: "{{ omit }}"
+  register: result
+
+- assert:
+    that:
+      - result.stdout | int == lookup('pipe', 'ulimit -n') | int
+
+- name: undefined variable
+  shell: ulimit -n
+  vars:
+    ansible_python_module_rlimit_nofile: "{{ undefined_variable }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("undefined")

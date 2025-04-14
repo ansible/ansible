@@ -6,17 +6,16 @@
 
 from __future__ import annotations
 
+import builtins
 import sys
-
-from units.mock.procenv import ModuleTestCase
+import unittest
 
 from unittest.mock import patch
-import builtins
 
 realimport = builtins.__import__
 
 
-class TestImports(ModuleTestCase):
+class TestImports(unittest.TestCase):
 
     def clear_modules(self, mods):
         for mod in mods:

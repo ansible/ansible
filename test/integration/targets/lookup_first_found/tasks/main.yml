@@ -1,3 +1,95 @@
+- name: an invalid term data type results in an error
+  debug:
+  with_first_found:
+    - 1
+  ignore_errors: yes
+  register: result
+
+- name: verify the invalid term failure
+  assert:
+    that:
+      - result is failed
+      - result.msg is contains "not 'int'"
+
+- name: an undefined kwarg results in an error
+  debug:
+    msg: "{{ lookup('first_found', files=resolve_to_undefined) }}"
+  vars:
+    resolve_to_undefined: "{{ sorry_not_defined }}"
+  ignore_errors: yes
+  register: result
+
+- name: verify the undefined kwarg is handled properly
+  assert:
+    that:
+      - result is failed
+      - result.msg is search "Error while resolving value for 'msg'. 'sorry_not_defined' is undefined"
+
+- name: ensure empty terms mappings are properly handled
+  debug:
+  with_first_found:
+    - {}
+    - foo1
+  register: result
+
+- name: verify the correct file was found
+  assert:
+    that:
+      - result.results | length == 1
+      - result.results[0].item.endswith('/foo1')
+
+- name: ensure template errors are properly handled when using with_first_found
+  debug:
+  with_first_found:
+    - "{{ 1 / 0 }}"
+  ignore_errors: yes
+  register: result
+
+- name: check the result of the template error
+  assert:
+    that:
+      - result is failed
+      - result.msg is search "Error rendering template. division by zero"
+
+- name: undefined values should be ignored
+  debug:
+    msg: "found: {{ item }}"
+  with_first_found:
+    - "{{ missing_var }}foo1"
+    - bar1
+  register: result
+
+- name: verify the correct file was found
+  assert:
+    that:
+      result.results[0].item.endswith('/bar1')
+
+- name: undefined values in tuples should be ignored
+  debug:
+    msg: "found: {{ item }}"
+  with_first_found: '{{ ([{"files": missing_var}] | zip([{"files": ["bar1"]}])) }}'
+  register: result
+
+- name: verify the correct file was found
+  assert:
+    that:
+      result.results[0].item.endswith('/bar1')
+
+- name: verify lazy undefined handling
+  debug:
+    msg: "found: {{ item }}"
+  with_first_found:
+    - files: "{{ files }}"
+  register: result
+  vars:
+    files:
+      - "{{ missing_var }}foo1"
+      - bar1
+- name: verify the correct file was found
+  assert:
+    that:
+      result.results[0].item.endswith('/bar1')
+
 - name: test with_first_found
   set_fact: "first_found={{ item }}"
   with_first_found:
@@ -30,7 +122,7 @@
     that:
       - "first_found_var == []"
 
-- name: test lookup(first_found) with no files produces empty string
+- name: test lookup(first_found) with no files produces none
   set_fact:
     first_found_var: "{{ lookup('first_found', params, errors='ignore') }}"
   vars:
@@ -40,7 +132,7 @@
 - name: verify lookup(first_found) result
   assert:
     that:
-      - "first_found_var == ''"
+      - "first_found_var is none"
 
 # NOTE: skip: True deprecated e17a2b502d6601be53c60d7ba1c627df419460c9, remove 2.12
 - name: test first_found with no matches and skip=True does nothing
@@ -113,6 +205,8 @@
         - item|basename == 'itworks.yml'
     with_first_found:
       - files:
+          # DTFIX-FUTURE: these variables are misleading for the test; use "bogus" or something for the ones that are not
+          #  expected to exist
           - "{{ansible_id}}-{{ansible_lsb.major_release}}.yml"  # invalid var, should be skipped
           - "{{ansible_lsb.id}}-{{ansible_lsb.major_release}}.yml"  # does not exist, but should try
           - "{{ansible_distribution}}-{{ansible_distribution_major_version}}.yml"  # does not exist, but should try
@@ -147,6 +241,38 @@
           - ishouldnotbefound.yml
         paths:
           - "{{role_path}}/vars"
+
+  - name: ensure vars subdir is searched for var-named actions
+    # DTFIX-RELEASE: the following *should* work, but since task.action is not templated by TE, it does not
+#    action: '{{ "debug_v" ~ "ar_alias" }}'
+#    args:
+#      var: item
+    debug_var_alias:
+      var: item
+    with_first_found:
+      - findme.txt
+    failed_when: item is not contains "/vars/"
+
+  - name: ensure files subdir is searched for file-named actions
+    debug_file_alias:
+      var: item
+    with_first_found:
+      - findme.txt
+    failed_when: item is not contains "/files/"
+
+  - name: ensure templates subdir is searched for template-named actions
+    debug_template_alias:
+      var: item
+    with_first_found:
+      - findme.txt
+    failed_when: item is not contains "/templates/"
+
+  - name: ensure files subdir is searched for actions not matching `var` or `template`
+    debug:
+      var: item
+    with_first_found:
+      - findme.txt
+    failed_when: item is not contains "/files/"
 
 - name: Make sure skip works in 'mixed' argument passing
   assert:

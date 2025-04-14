@@ -6,8 +6,7 @@ from __future__ import annotations
 
 import os
 import subprocess
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 

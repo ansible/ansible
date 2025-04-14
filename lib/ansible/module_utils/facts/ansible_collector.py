@@ -30,8 +30,7 @@ from __future__ import annotations
 
 import fnmatch
 import sys
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts import timeout
 from ansible.module_utils.facts import collector

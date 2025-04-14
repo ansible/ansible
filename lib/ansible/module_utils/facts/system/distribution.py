@@ -8,8 +8,7 @@ from __future__ import annotations
 import os
 import platform
 import re
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
@@ -208,7 +207,7 @@ class DistributionFiles:
 
         return dist_file_facts
 
-    # TODO: FIXME: split distro file parsing into its own module or class
+    # FIXME: split distro file parsing into its own module or class
     def parse_distribution_file_Slackware(self, name, data, path, collected_facts):
         slackware_facts = {}
         if 'Slackware' not in data:

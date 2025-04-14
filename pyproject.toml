@@ -54,6 +54,8 @@ where = ["lib", "test/lib"]
 
 [tool.setuptools.package-data]
 ansible = [
+    "_internal/ansible_collections/*/*/plugins/*/*.yml",
+    "_internal/ansible_collections/*/*/*.md",
     "config/*.yml",
     "executor/powershell/*.ps1",
     "galaxy/data/COPYING",

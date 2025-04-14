@@ -97,7 +97,7 @@
   assert:
     that:
       - people_col_2_r.failed
-      - "'Invalid type for configuration option' in people_col_2_r.msg"
+      - people_col_2_r.msg is contains "has an invalid value"
 
 # NOTE: For historical reasons, this is correct; quotes in the search field must
 # be treated literally as if they appear (escaped as required) in the field in the

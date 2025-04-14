@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from ansible.plugins.loader import lookup_loader
@@ -14,7 +16,15 @@ from ansible.plugins.loader import lookup_loader
     ('equation', 'a=b*100')
 ])
 def test_env_var_value(monkeypatch, env_var, exp_value):
-    monkeypatch.setattr('os.environ.get', lambda x, y: exp_value)
+    original_environ_get = os.environ.get
+
+    def environ_get(key: str, *args, **kwargs) -> str | None:
+        if key == env_var:
+            return exp_value
+
+        return original_environ_get(key, *args, **kwargs)
+
+    monkeypatch.setattr('os.environ.get', environ_get)
 
     env_lookup = lookup_loader.get('env')
     retval = env_lookup.run([env_var], None)
@@ -26,7 +36,15 @@ def test_env_var_value(monkeypatch, env_var, exp_value):
     ('the_var', 'ãnˈsiβle')
 ])
 def test_utf8_env_var_value(monkeypatch, env_var, exp_value):
-    monkeypatch.setattr('os.environ.get', lambda x, y: exp_value)
+    original_environ_get = os.environ.get
+
+    def environ_get(key: str, *args, **kwargs) -> str | None:
+        if key == env_var:
+            return exp_value
+
+        return original_environ_get(key, *args, **kwargs)
+
+    monkeypatch.setattr('os.environ.get', environ_get)
 
     env_lookup = lookup_loader.get('env')
     retval = env_lookup.run([env_var], None)

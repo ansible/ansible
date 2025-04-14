@@ -1,0 +1,28 @@
+- environment:
+    ANSIBLE_CACHE_PLUGINS: cache_plugins
+    ANSIBLE_INVENTORY_PLUGINS: ./
+    ANSIBLE_INVENTORY_ENABLED: test_inventory
+  module_defaults:
+    command:
+      chdir: "{{ role_path }}"
+  block:
+    - command: ansible-inventory --list -i ./config_without_parameter.yml --export
+      register: result
+    - set_fact:
+        inventory_data: '{{ result.stdout | from_json(profile="inventory_legacy") }}'
+    - assert:
+        that: inventory_data._meta.hostvars.test_host.departments == ['seine-et-marne', 'haute-garonne']
+
+    - command: ansible-inventory --list -i ./config_with_parameter.yml --export
+      register: result
+    - set_fact:
+        inventory_data: '{{ result.stdout | from_json(profile="inventory_legacy") }}'
+    - assert:
+        that: inventory_data._meta.hostvars.test_host.departments == ['paris']
+
+    - command: ansible-inventory --list -i ./config_with_parameter.yml --export
+      register: result
+    - set_fact:
+        inventory_data: '{{ result.stdout | from_json(profile="inventory_legacy") }}'
+    - assert:
+        that: inventory_data._meta.hostvars.test_host.given_timeout == inventory_data._meta.hostvars.test_host.cache_timeout

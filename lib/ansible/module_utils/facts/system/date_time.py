@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import datetime
 import time
+import typing as t
 
-import ansible.module_utils.compat.typing as t
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 

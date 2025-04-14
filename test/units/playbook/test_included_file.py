@@ -24,6 +24,7 @@ import pytest
 from unittest.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
+from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
@@ -212,8 +213,7 @@ def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manage
     assert res[1]._vars == {}
 
 
-def test_process_include_simulate_free_block_role_tasks(mock_iterator,
-                                                        mock_variable_manager):
+def test_process_include_simulate_free_block_role_tasks(mock_iterator, mock_variable_manager, collection_loader):
     """Test loading the same role returns different included files
 
     In the case of free, we may end up with included files from roles that
@@ -257,7 +257,7 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator,
     }
     parent_block = Block.load(parent_task_ds, loader=fake_loader)
 
-    parent_block._play = None
+    parent_block._play = Play.load({})
 
     include_role1_ds = {
         'include_args': {

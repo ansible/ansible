@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import pytest
 
+from ansible.template import Templar
+
 
 @pytest.fixture
 def templar():
-    class FakeTemplar:
-        def template(self, template_string, *args, **kwargs):
-            return template_string
-
-    return FakeTemplar()
+    return Templar()

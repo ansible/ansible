@@ -15,7 +15,8 @@ import os
 import os.path
 import re
 import textwrap
-import traceback
+
+import yaml
 
 import ansible.plugins.loader as plugin_loader
 
@@ -28,12 +29,12 @@ from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
-from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
@@ -41,6 +42,8 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
+from ansible.template import trust_as_template
+from ansible._internal import _json
 
 display = Display()
 
@@ -83,10 +86,9 @@ ref_style = {
 
 def jdump(text):
     try:
-        display.display(json_dump(text))
-    except TypeError as e:
-        display.vvv(traceback.format_exc())
-        raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
+        display.display(_json.json_dumps_formatted(text))
+    except TypeError as ex:
+        raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue.') from ex
 
 
 class RoleMixin(object):
@@ -129,11 +131,11 @@ class RoleMixin(object):
 
         try:
             with open(path, 'r') as f:
-                data = from_yaml(f.read(), file_name=path)
+                data = yaml.load(trust_as_template(f), Loader=AnsibleLoader)
                 if data is None:
                     data = {}
-        except (IOError, OSError) as e:
-            raise AnsibleParserError("Could not read the role '%s' (at %s)" % (role_name, path), orig_exc=e)
+        except (IOError, OSError) as ex:
+            raise AnsibleParserError(f"Could not read the role {role_name!r} (at {path}).") from ex
 
         return data
 
@@ -697,16 +699,16 @@ class DocCLI(CLI, RoleMixin):
                     display.warning("Skipping role '%s' due to: %s" % (role, role_json[role]['error']), True)
                     continue
                 text += self.get_role_man_text(role, role_json[role])
-            except AnsibleParserError as e:
+            except AnsibleError as ex:
                 # TODO: warn and skip role?
-                raise AnsibleParserError("Role '%s" % (role), orig_exc=e)
+                raise AnsibleParserError(f"Error extracting role docs from {role!r}.") from ex
 
         # display results
         DocCLI.pager("\n".join(text))
 
     @staticmethod
     def _list_keywords():
-        return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
+        return yaml.load(pkgutil.get_data('ansible', 'keyword_desc.yml'), Loader=AnsibleInstrumentedLoader)
 
     @staticmethod
     def _get_keywords_docs(keys):
@@ -769,10 +771,8 @@ class DocCLI(CLI, RoleMixin):
 
                 data[key] = kdata
 
-            except (AttributeError, KeyError) as e:
-                display.warning("Skipping Invalid keyword '%s' specified: %s" % (key, to_text(e)))
-                if display.verbosity >= 3:
-                    display.verbose(traceback.format_exc())
+            except (AttributeError, KeyError) as ex:
+                display.error_as_warning(f'Skipping invalid keyword {key!r}.', ex)
 
         return data
 
@@ -820,16 +820,19 @@ class DocCLI(CLI, RoleMixin):
             except AnsiblePluginNotFound as e:
                 display.warning(to_native(e))
                 continue
-            except Exception as e:
+            except Exception as ex:
+                msg = "Missing documentation (or could not parse documentation)"
+
                 if not fail_on_errors:
-                    plugin_docs[plugin] = {'error': 'Missing documentation or could not parse documentation: %s' % to_native(e)}
+                    plugin_docs[plugin] = {'error': f'{msg}: {ex}.'}
                     continue
-                display.vvv(traceback.format_exc())
-                msg = "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e))
+
+                msg = f"{plugin_type} {plugin} {msg}"
+
                 if fail_ok:
-                    display.warning(msg)
+                    display.warning(f'{msg}: {ex}')
                 else:
-                    raise AnsibleError(msg)
+                    raise AnsibleError(f'{msg}.') from ex
 
             if not doc:
                 # The doc section existed but was empty
@@ -841,9 +844,9 @@ class DocCLI(CLI, RoleMixin):
             if not fail_on_errors:
                 # Check whether JSON serialization would break
                 try:
-                    json_dump(docs)
-                except Exception as e:  # pylint:disable=broad-except
-                    plugin_docs[plugin] = {'error': 'Cannot serialize documentation as JSON: %s' % to_native(e)}
+                    _json.json_dumps_formatted(docs)
+                except Exception as ex:  # pylint:disable=broad-except
+                    plugin_docs[plugin] = {'error': f'Cannot serialize documentation as JSON: {ex}'}
                     continue
 
             plugin_docs[plugin] = docs
@@ -1016,9 +1019,8 @@ class DocCLI(CLI, RoleMixin):
         try:
             doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
                                             collection_name=collection_name, plugin_type=plugin_type)
-        except Exception:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("%s %s at %s has a documentation formatting error or is missing documentation." % (plugin_type, plugin_name, filename))
+        except Exception as ex:
+            raise AnsibleError(f"{plugin_type} {plugin_name} at {filename!r} has a documentation formatting error or is missing documentation.") from ex
 
         if doc is None:
             # Removed plugins don't have any documentation
@@ -1094,9 +1096,8 @@ class DocCLI(CLI, RoleMixin):
 
         try:
             text = DocCLI.get_man_text(doc, collection_name, plugin_type)
-        except Exception as e:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("Unable to retrieve documentation from '%s'" % (plugin), orig_exc=e)
+        except Exception as ex:
+            raise AnsibleError(f"Unable to retrieve documentation from {plugin!r}.") from ex
 
         return text
 
@@ -1508,8 +1509,8 @@ class DocCLI(CLI, RoleMixin):
             else:
                 try:
                     text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
-                except Exception as e:
-                    raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+                except Exception as ex:
+                    raise AnsibleParserError("Unable to parse examples section.") from ex
 
         if doc.get('returndocs', False):
             text.append('')

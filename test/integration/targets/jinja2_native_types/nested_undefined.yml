@@ -3,21 +3,21 @@
   tasks:
     - block:
       - name: Test nested undefined var fails, single node
-        debug:
-          msg: "{{ [{ 'key': nested_and_undefined }] }}"
+        raw: "{{ [{ 'key': nested_and_undefined }] }}"
         register: result
         ignore_errors: yes
 
       - assert:
           that:
-            - "\"'nested_and_undefined' is undefined\" in result.msg"
+            - result.msg is contains "Task failed:"
+            - result.msg is contains "'nested_and_undefined' is undefined"
 
       - name: Test nested undefined var fails, multiple nodes
-        debug:
-          msg: "{{ [{ 'key': nested_and_undefined}] }} second_node"
+        raw: "{{ [{ 'key': nested_and_undefined}] }} second_node"
         register: result
         ignore_errors: yes
 
       - assert:
           that:
-            - "\"'nested_and_undefined' is undefined\" in result.msg"
+            - result.msg is contains "Task failed:"
+            - result.msg is contains "'nested_and_undefined' is undefined"

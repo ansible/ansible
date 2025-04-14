@@ -21,6 +21,8 @@ import os
 
 import unittest
 from unittest.mock import MagicMock, patch
+from ansible.inventory.manager import InventoryManager
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.play import Play
 
 
@@ -30,12 +32,17 @@ from units.mock.path import mock_unfrackpath_noop
 from ansible.vars.manager import VariableManager
 
 
+def _tag_ignore_magicmock():
+    orig_tag = AnsibleTagHelper.tag
+    return patch.object(AnsibleTagHelper, 'tag', lambda value, *args, **kwargs: value if isinstance(value, MagicMock) else orig_tag(value, *args, **kwargs))
+
+
 class TestVariableManager(unittest.TestCase):
 
     def test_basic_manager(self):
         fake_loader = DictDataLoader({})
 
-        mock_inventory = MagicMock()
+        mock_inventory = InventoryManager(loader=fake_loader)
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
         variables = v.get_vars(use_cache=False)
 
@@ -48,7 +55,7 @@ class TestVariableManager(unittest.TestCase):
         fake_loader = DictDataLoader({})
 
         extra_vars = dict(a=1, b=2, c=3)
-        mock_inventory = MagicMock()
+        mock_inventory = InventoryManager(loader=fake_loader)
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
 
         # override internal extra_vars loading
@@ -62,7 +69,7 @@ class TestVariableManager(unittest.TestCase):
         fake_loader = DictDataLoader({})
 
         options_vars = dict(a=1, b=2, c=3)
-        mock_inventory = MagicMock()
+        mock_inventory = InventoryManager(loader=fake_loader)
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
 
         # override internal options_vars loading
@@ -81,8 +88,11 @@ class TestVariableManager(unittest.TestCase):
         mock_play.get_vars_files.return_value = []
 
         mock_inventory = MagicMock()
+
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
-        self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
+
+        with _tag_ignore_magicmock():
+            self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
 
     def test_variable_manager_play_vars_files(self):
         fake_loader = DictDataLoader({
@@ -98,15 +108,14 @@ class TestVariableManager(unittest.TestCase):
 
         mock_inventory = MagicMock()
         v = VariableManager(inventory=mock_inventory, loader=fake_loader)
-        self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
+        with _tag_ignore_magicmock():
+            self.assertEqual(v.get_vars(play=mock_play, use_cache=False).get("foo"), "bar")
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_variable_manager_role_vars_dependencies(self):
         """
         Tests vars from role dependencies with duplicate dependencies.
         """
-        mock_inventory = MagicMock()
-
         fake_loader = DictDataLoader({
             # role common-role
             '/etc/ansible/roles/common-role/tasks/main.yml': """
@@ -135,21 +144,24 @@ class TestVariableManager(unittest.TestCase):
             """,
         })
 
-        v = VariableManager(loader=fake_loader, inventory=mock_inventory)
+        mock_inventory = InventoryManager(loader=fake_loader)
 
-        play1 = Play.load(dict(
-            hosts=['all'],
-            roles=['role1', 'role2'],
-        ), loader=fake_loader, variable_manager=v)
+        with _tag_ignore_magicmock():
+            v = VariableManager(loader=fake_loader, inventory=mock_inventory)
 
-        # The task defined by common-role exists twice because role1
-        # and role2 depend on common-role.  Check that the tasks see
-        # different values of role_var.
-        blocks = play1.compile()
-        task = blocks[1].block[0]
-        res = v.get_vars(play=play1, task=task)
-        self.assertEqual(res['role_var'], 'role_var_from_role1')
+            play1 = Play.load(dict(
+                hosts=['all'],
+                roles=['role1', 'role2'],
+            ), loader=fake_loader, variable_manager=v)
 
-        task = blocks[2].block[0]
-        res = v.get_vars(play=play1, task=task)
-        self.assertEqual(res['role_var'], 'role_var_from_role2')
+            # The task defined by common-role exists twice because role1
+            # and role2 depend on common-role.  Check that the tasks see
+            # different values of role_var.
+            blocks = play1.compile()
+            task = blocks[1].block[0]
+            res = v.get_vars(play=play1, task=task)
+            self.assertEqual(res['role_var'], 'role_var_from_role1')
+
+            task = blocks[2].block[0]
+            res = v.get_vars(play=play1, task=task)
+            self.assertEqual(res['role_var'], 'role_var_from_role2')

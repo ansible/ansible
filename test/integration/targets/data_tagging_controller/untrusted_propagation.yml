@@ -1,0 +1,42 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    sentinel_path: '{{ output_dir }}/uhoh.txt'
+    untrusted_pipe_lookup: !unsafe
+      sub1:
+        sub2: '{{ lookup("pipe", "touch " + sentinel_path + " && echo should not be rendered") }}'
+    trusted_pipe_lookup:
+      sub1:
+        sub2: '{{ lookup("pipe", "touch " + sentinel_path + " && echo should be rendered") }}'
+  tasks:
+  - name: ensure sentinel file is absent before test
+    file:
+      path: '{{ sentinel_path }}'
+      state: absent
+  - name: render a template with a side effect
+    debug:
+      var: trusted_pipe_lookup
+  - name: ensure the template side effect occurred
+    stat:
+      path: '{{ sentinel_path }}'
+    register: sentinel
+    failed_when: not sentinel.stat.exists
+  - assert:
+      that:
+      - trusted_pipe_lookup.sub1.sub2 == 'should be rendered'
+
+  - name: ensure sentinel file is absent before test
+    file:
+      path: '{{ sentinel_path }}'
+      state: absent
+  - name: attempt to render an untrusted value as a template with a side effect
+    debug:
+      var: untrusted_pipe_lookup
+  - name: ensure the untrusted value template side effect did not occur
+    stat:
+      path: '{{ sentinel_path }}'
+    register: sentinel
+    failed_when: sentinel.stat.exists
+  - assert:
+      that:
+      - untrusted_pipe_lookup.sub1.sub2 is contains 'echo should not be rendered'

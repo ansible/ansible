@@ -1,0 +1,5 @@
+- hosts: localhost
+  tasks:
+    - name: throttle template that resolves to an undefined value
+      debug:
+      throttle: "{{ nope }}"

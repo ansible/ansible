@@ -1,6 +1,22 @@
 - hosts: testhost
   gather_facts: no
   tasks:
+   - name: verify omit is handled properly by the environment keyword
+     shell: echo "IAMHERE = $IAMHERE; NOTHERE = $NOTHERE; ANOTHER = $ANOTHER"
+     environment:
+       - NOTHERE: '{{ omit }}'
+         IAMHERE: hello
+       - '{{ omit }}'
+       - ANOTHER: stillhere
+     register: result
+
+   - assert:
+       that:
+         - result.stdout == "IAMHERE = hello; NOTHERE = ; ANOTHER = stillhere"
+
+- hosts: testhost
+  gather_facts: no
+  tasks:
     - name: get PATH from target
       command: echo $PATH
       register: target_path

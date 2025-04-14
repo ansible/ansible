@@ -4,6 +4,8 @@ set -eux -o pipefail
 
 export ANSIBLE_DEPRECATION_WARNINGS=True
 
+ansible-playbook deprecated.yml -i ../../inventory "${@}"
+
 ### check general config
 
 # check for entry key valid, no deprecation

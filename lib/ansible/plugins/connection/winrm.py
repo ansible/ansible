@@ -604,9 +604,7 @@ class Connection(ConnectionBase):
                     self._winrm_write_stdin(command_id, stdin_iterator)
 
             except Exception as ex:
-                display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
-                                % (type(ex).__name__, to_text(ex)))
-                display.debug(traceback.format_exc())
+                display.error_as_warning("ERROR DURING WINRM SEND INPUT. Attempting to recover.", ex)
                 stdin_push_failed = True
 
             # Even on a failure above we try at least once to get the output

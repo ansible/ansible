@@ -6,6 +6,8 @@ import pkgutil
 import pytest
 import re
 import sys
+import typing as t
+
 from importlib import import_module
 
 from ansible.modules import ping as ping_module
@@ -13,7 +15,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleColl
 from ansible.utils.collection_loader._collection_finder import (
     _AnsibleCollectionFinder, _AnsibleCollectionLoader, _AnsibleCollectionNSPkgLoader, _AnsibleCollectionPkgLoader,
     _AnsibleCollectionPkgLoaderBase, _AnsibleCollectionRootPkgLoader, _AnsibleNSTraversable, _AnsiblePathHookFinder,
-    _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl
+    _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl, _to_bytes, _to_text
 )
 from ansible.utils.collection_loader._collection_config import _EventSource
 from unittest.mock import MagicMock, NonCallableMagicMock, patch
@@ -920,3 +922,43 @@ def reset_collections_loader_state(metapath_finder=None):
 
     if metapath_finder:
         metapath_finder._install()
+
+
+class SurrogateEncryptedString:
+    def __init__(self, value) -> None:
+        self._value = value
+
+    def _decrypt(self) -> str:
+        return self._value
+
+
+@pytest.mark.parametrize('value, expected_result', (
+    (b'somebytes', 'somebytes'),
+    (SurrogateEncryptedString("encrypted"), "encrypted"),
+    ('astring', 'astring'),
+    (None, None),
+    (1.2, TypeError),
+))
+def test_to_text(value: t.Any, expected_result: t.Any) -> None:
+    """Validate the private `_to_text` implementation."""
+    if isinstance(expected_result, type) and issubclass(expected_result, Exception):
+        with pytest.raises(expected_result):
+            _to_text(value)
+    else:
+        assert _to_text(value) == expected_result
+
+
+@pytest.mark.parametrize('value, expected_result', (
+    ('somestr', b'somestr'),
+    (SurrogateEncryptedString("encrypted"), b"encrypted"),
+    (b'somebytes', b'somebytes'),
+    (None, None),
+    (1.2, TypeError),
+))
+def test_to_bytes(value: t.Any, expected_result: t.Any) -> None:
+    """Validate the private `_to_bytes` implementation."""
+    if isinstance(expected_result, type) and issubclass(expected_result, Exception):
+        with pytest.raises(expected_result):
+            _to_bytes(value)
+    else:
+        assert _to_bytes(value) == expected_result

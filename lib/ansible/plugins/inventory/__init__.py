@@ -17,23 +17,29 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import string
+import typing as t
 
 from collections.abc import Mapping
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible import template as _template
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleValueOmittedError
 from ansible.inventory.group import to_safe_group_name as original_safe
+from ansible.module_utils._internal import _plugin_exec_context
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
+from ansible.parsing.dataloader import DataLoader
+from ansible.plugins import AnsiblePlugin, _ConfigurablePlugin
+from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
-from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, load_extra_vars
+
+if t.TYPE_CHECKING:
+    from ansible.inventory.data import InventoryData
 
 display = Display()
 
@@ -127,8 +133,11 @@ def expand_hostname_range(line=None):
 
 
 def get_cache_plugin(plugin_name, **kwargs):
+    if not plugin_name:
+        raise AnsibleError("A cache plugin must be configured to use inventory caching.")
+
     try:
-        cache = CacheObject(plugin_name, **kwargs)
+        cache = CachePluginAdjudicator(plugin_name, **kwargs)
     except AnsibleError as e:
         if 'fact_caching_connection' in to_native(e):
             raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set "
@@ -136,17 +145,22 @@ def get_cache_plugin(plugin_name, **kwargs):
                                "[inventory]: cache_connection;\nEnvironment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\n"
                                "ANSIBLE_CACHE_PLUGIN_CONNECTION." % plugin_name)
         else:
-            raise e
+            raise
 
-    if plugin_name != 'memory' and kwargs and not getattr(cache._plugin, '_options', None):
+    if cache._plugin.ansible_name != 'ansible.builtin.memory' and kwargs and not getattr(cache._plugin, '_options', None):
         raise AnsibleError('Unable to use cache plugin {0} for inventory. Cache options were provided but may not reconcile '
                            'correctly unless set via set_options. Refer to the porting guide if the plugin derives user settings '
                            'from ansible.constants.'.format(plugin_name))
     return cache
 
 
-class BaseInventoryPlugin(AnsiblePlugin):
-    """ Parses an Inventory Source"""
+class _BaseInventoryPlugin(AnsiblePlugin):
+    """
+    Internal base implementation for inventory plugins.
+
+    Do not inherit from this directly, use one of its public subclasses instead.
+    Used to introduce an extra layer in the class hierarchy to allow Constructed to subclass this while remaining a mixin for existing inventory plugins.
+    """
 
     TYPE = 'generator'
 
@@ -156,16 +170,26 @@ class BaseInventoryPlugin(AnsiblePlugin):
     # it by default.
     _sanitize_group_name = staticmethod(to_safe_group_name)
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        super(BaseInventoryPlugin, self).__init__()
+        super().__init__()
 
         self._options = {}
-        self.inventory = None
         self.display = display
-        self._vars = {}
 
-    def parse(self, inventory, loader, path, cache=True):
+        # These attributes are set by the parse() method on this (base) class.
+        self.loader: DataLoader | None = None
+        self.inventory: InventoryData | None = None
+        self._vars: dict[str, t.Any] | None = None
+
+    trusted_by_default: bool = False
+    """Inventory plugins that only source templates from trusted sources can set this True to have trust automatically applied to all templates."""
+
+    @functools.cached_property
+    def templar(self) -> _template.Templar:
+        return _template.Templar(loader=self.loader)
+
+    def parse(self, inventory: InventoryData, loader: DataLoader, path: str, cache: bool = True) -> None:
         """ Populates inventory from the given data. Raises an error on any parse failure
             :arg inventory: a copy of the previously accumulated inventory data,
                  to be updated with any new data this plugin provides.
@@ -178,10 +202,8 @@ class BaseInventoryPlugin(AnsiblePlugin):
             :arg cache: a boolean that indicates if the plugin should use the cache or not
                  you can ignore if this plugin does not implement caching.
         """
-
         self.loader = loader
         self.inventory = inventory
-        self.templar = Templar(loader=loader)
         self._vars = load_extra_vars(loader)
 
     def verify_file(self, path):
@@ -214,11 +236,10 @@ class BaseInventoryPlugin(AnsiblePlugin):
             :arg path: path to common yaml format config file for this plugin
         """
 
-        config = {}
         try:
             # avoid loader cache so meta: refresh_inventory can pick up config changes
             # if we read more than once, fs cache should be good enough
-            config = self.loader.load_from_file(path, cache='none')
+            config = self.loader.load_from_file(path, cache='none', trusted_as_template=True)
         except Exception as e:
             raise AnsibleParserError(to_native(e))
 
@@ -279,7 +300,11 @@ class BaseInventoryPlugin(AnsiblePlugin):
         return (hostnames, port)
 
 
-class BaseFileInventoryPlugin(BaseInventoryPlugin):
+class BaseInventoryPlugin(_BaseInventoryPlugin):
+    """ Parses an Inventory Source """
+
+
+class BaseFileInventoryPlugin(_BaseInventoryPlugin):
     """ Parses a File based Inventory Source"""
 
     TYPE = 'storage'
@@ -289,51 +314,44 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
-class Cacheable(object):
+class Cacheable(_plugin_exec_context.HasPluginInfo, _ConfigurablePlugin):
+    """Mixin for inventory plugins which support caching."""
 
-    _cache = CacheObject()
+    _cache: CachePluginAdjudicator
 
     @property
-    def cache(self):
+    def cache(self) -> CachePluginAdjudicator:
         return self._cache
 
-    def load_cache_plugin(self):
+    def load_cache_plugin(self) -> None:
         plugin_name = self.get_option('cache_plugin')
         cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
         cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
         self._cache = get_cache_plugin(plugin_name, **cache_options)
 
-    def get_cache_key(self, path):
-        return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
+    def get_cache_key(self, path: str) -> str:
+        return f'{self.ansible_name}_{self._get_cache_prefix(path)}'
 
-    def _get_cache_prefix(self, path):
-        """ create predictable unique prefix for plugin/inventory """
+    def _get_cache_prefix(self, path: str) -> str:
+        """Return a predictable unique key based on the given path."""
+        # DTFIX-RELEASE: choose a better hashing approach
+        return 'k' + hashlib.sha256(f'{self.ansible_name}{path}'.encode(), usedforsecurity=False).hexdigest()[:6]
 
-        m = hashlib.sha1()
-        m.update(to_bytes(self.NAME, errors='surrogate_or_strict'))
-        d1 = m.hexdigest()
+    def clear_cache(self) -> None:
+        self._cache.clear()
 
-        n = hashlib.sha1()
-        n.update(to_bytes(path, errors='surrogate_or_strict'))
-        d2 = n.hexdigest()
-
-        return 's_'.join([d1[:5], d2[:5]])
-
-    def clear_cache(self):
-        self._cache.flush()
-
-    def update_cache_if_changed(self):
+    def update_cache_if_changed(self) -> None:
         self._cache.update_cache_if_changed()
 
-    def set_cache_plugin(self):
+    def set_cache_plugin(self) -> None:
         self._cache.set_cache()
 
 
-class Constructable(object):
-
-    def _compose(self, template, variables, disable_lookups=True):
+class Constructable(_BaseInventoryPlugin):
+    def _compose(self, template, variables, disable_lookups=...):
         """ helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars"""
-        t = self.templar
+        if disable_lookups is not ...:
+            self.display.deprecated("The disable_lookups arg has no effect.", version="2.23")
 
         try:
             use_extra = self.get_option('use_extra_vars')
@@ -341,12 +359,11 @@ class Constructable(object):
             use_extra = False
 
         if use_extra:
-            t.available_variables = combine_vars(variables, self._vars)
+            self.templar.available_variables = combine_vars(variables, self._vars)
         else:
-            t.available_variables = variables
+            self.templar.available_variables = variables
 
-        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string),
-                          disable_lookups=disable_lookups)
+        return self.templar.evaluate_expression(template)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
         """ loops over compose entries to create vars for hosts """
@@ -368,10 +385,10 @@ class Constructable(object):
                 variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
             self.templar.available_variables = variables
             for group_name in groups:
-                conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
+                conditional = groups[group_name]
                 group_name = self._sanitize_group_name(group_name)
                 try:
-                    result = boolean(self.templar.template(conditional))
+                    result = self.templar.evaluate_conditional(conditional)
                 except Exception as e:
                     if strict:
                         raise AnsibleParserError("Could not add host %s to group %s: %s" % (host, group_name, to_native(e)))
@@ -405,13 +422,16 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
-                        if raw_parent_name:
-                            try:
-                                raw_parent_name = self.templar.template(raw_parent_name)
-                            except AnsibleError as e:
-                                if strict:
-                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, key, to_native(e)))
-                                continue
+
+                        try:
+                            raw_parent_name = self.templar.template(raw_parent_name)
+                        except AnsibleValueOmittedError:
+                            raw_parent_name = None
+                        except Exception as ex:
+                            if strict:
+                                raise AnsibleParserError(f'Could not generate parent group {raw_parent_name!r} for group {key!r}: {ex}') from ex
+
+                            continue
 
                         new_raw_group_names = []
                         if isinstance(key, string_types):

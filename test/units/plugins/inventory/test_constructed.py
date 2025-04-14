@@ -22,6 +22,7 @@ from __future__ import annotations
 import pytest
 
 from ansible.errors import AnsibleParserError
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.plugins.inventory.constructed import InventoryModule
 from ansible.inventory.data import InventoryData
 from ansible.template import Templar
@@ -31,9 +32,23 @@ from ansible.template import Templar
 def inventory_module():
     r = InventoryModule()
     r.inventory = InventoryData()
-    r.templar = Templar(None)
+    r.templar = Templar()
     r._options = {'leading_separator': True}
     return r
+
+
+def _trust(value):
+    """Recursively apply TrustedAsTemplate to input (simulating what wuold come out of a trusted input source like the dataloader YAML/JSON/ini parser)"""
+    if isinstance(value, dict):
+        return {_trust(k): _trust(v) for k, v in value.items()}
+
+    if isinstance(value, list):
+        return [_trust(item) for item in value]
+
+    if isinstance(value, str):
+        return TrustedAsTemplate().tag(value)
+
+    return value
 
 
 def test_group_by_value_only(inventory_module):
@@ -48,7 +63,7 @@ def test_group_by_value_only(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     assert 'my_group_name' in inventory_module.inventory.groups
     group = inventory_module.inventory.groups['my_group_name']
@@ -72,7 +87,7 @@ def test_keyed_group_separator(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     for group_name in ('farmer_old_mcdonald', 'mmmmmmmmmmcowmmmmmmmmmmbetsy'):
         assert group_name in inventory_module.inventory.groups
@@ -91,7 +106,7 @@ def test_keyed_group_empty_construction(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=True
+        _trust(keyed_groups), host.vars, host.name, strict=True
     )
     assert host.groups == []
 
@@ -109,7 +124,7 @@ def test_keyed_group_host_confusion(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=True
+        _trust(keyed_groups), host.vars, host.name, strict=True
     )
     group = inventory_module.inventory.groups['cow']
     # group cow has host of cow
@@ -132,7 +147,7 @@ def test_keyed_parent_groups(inventory_module):
     ]
     for host in [host1, host2]:
         inventory_module._add_host_to_keyed_groups(
-            keyed_groups, host.vars, host.name, strict=False
+            _trust(keyed_groups), host.vars, host.name, strict=False
         )
     assert 'region_japan' in inventory_module.inventory.groups
     assert 'region_list' in inventory_module.inventory.groups
@@ -163,10 +178,22 @@ def test_parent_group_templating(inventory_module):
             'key': 'nickname',
             'separator': '',
             'parent_group': '{{ location | default("field") }}'
+        },
+        {
+            # duplicate this one to ensure it doesn't show up in parents more than once
+            'key': 'nickname',
+            'separator': '',
+            'parent_group': '{{ location | default("field") }}'
+        },
+        {
+            'key': 'nickname',
+            'prefix': 'omitted_parent',
+            'parent_group': '{{ omit }}'
         }
+
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=True
+        _trust(keyed_groups), host.vars, host.name, strict=True
     )
     # first keyed group, "betsy" is a parent group name dynamically generated
     betsys_group = inventory_module.inventory.groups['betsy']
@@ -175,11 +202,14 @@ def test_parent_group_templating(inventory_module):
     nicknames_group = inventory_module.inventory.groups['nickname']
     assert [child.name for child in nicknames_group.child_groups] == ['betsy']
     # second keyed group actually generated the parent group of the first keyed group
+    assert nicknames_group.child_groups == [betsys_group]
     # assert that these are, in fact, the same object
-    assert nicknames_group.child_groups[0] == betsys_group
-    # second keyed group has two parents
+    assert nicknames_group.child_groups[0] is betsys_group
+    # "betsy" has two parents
     locations_group = inventory_module.inventory.groups['field']
     assert [child.name for child in locations_group.child_groups] == ['betsy']
+    assert len(inventory_module.inventory.groups['betsy'].parent_groups) == 2
+    assert set(inventory_module.inventory.groups['betsy'].parent_groups) == {locations_group, nicknames_group}
 
 
 def test_parent_group_templating_error(inventory_module):
@@ -195,12 +225,12 @@ def test_parent_group_templating_error(inventory_module):
     ]
     with pytest.raises(AnsibleParserError) as ex:
         inventory_module._add_host_to_keyed_groups(
-            keyed_groups, host.vars, host.name, strict=True
+            _trust(keyed_groups), host.vars, host.name, strict=True
         )
     assert 'Could not generate parent group' in str(ex.value)
     # invalid parent group did not raise an exception with strict=False
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     # assert group was never added with invalid parent
     assert 'betsy' not in inventory_module.inventory.groups
@@ -220,7 +250,7 @@ def test_keyed_group_exclusive_argument(inventory_module):
     ]
     with pytest.raises(AnsibleParserError) as ex:
         inventory_module._add_host_to_keyed_groups(
-            keyed_groups, host.vars, host.name, strict=True
+            _trust(keyed_groups), host.vars, host.name, strict=True
         )
     assert 'parameters are mutually exclusive' in str(ex.value)
 
@@ -237,7 +267,7 @@ def test_keyed_group_empty_value(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     for group_name in ('tag_environment_prod', 'tag_status_'):
         assert group_name in inventory_module.inventory.groups
@@ -256,7 +286,7 @@ def test_keyed_group_dict_with_default_value(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     for group_name in ('tag_environment_prod', 'tag_status_running'):
         assert group_name in inventory_module.inventory.groups
@@ -274,7 +304,7 @@ def test_keyed_group_str_no_default_value(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     # when the value is an empty string. this group is not generated
     assert "tag_" not in inventory_module.inventory.groups
@@ -293,7 +323,7 @@ def test_keyed_group_str_with_default_value(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     assert "tag_running" in inventory_module.inventory.groups
 
@@ -311,7 +341,7 @@ def test_keyed_group_list_with_default_value(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     for group_name in ('tag_test', 'tag_prod'):
         assert group_name in inventory_module.inventory.groups
@@ -330,7 +360,7 @@ def test_keyed_group_with_trailing_separator(inventory_module):
         }
     ]
     inventory_module._add_host_to_keyed_groups(
-        keyed_groups, host.vars, host.name, strict=False
+        _trust(keyed_groups), host.vars, host.name, strict=False
     )
     for group_name in ('tag_environment_prod', 'tag_status'):
         assert group_name in inventory_module.inventory.groups

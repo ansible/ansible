@@ -18,7 +18,7 @@ set +e
 parse_fail="$(ansible -i 'local[1:j],' -m ping --connection=local all -v 2>&1)"
 set -e
 
-grep -q "Failed to parse local\[1:j\], with advanced_host_list" <<< "$parse_fail"
+grep -q "Failed to parse inventory with 'advanced_host_list'" <<< "$parse_fail"
 
 # Intentionally missing comma, ensure we don't fatal.
 no_comma="$(ansible -i 'local[1:5]' -m ping --connection=local all -v 2>&1)"

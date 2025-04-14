@@ -3,39 +3,33 @@
   hosts: localhost
   gather_facts: false
   vars:
-      ansible_unicode_type_match: "<type 'ansible.parsing.yaml.objects.AnsibleUnicode'>"
       unicode_type_match: "<type 'unicode'>"
       string_type_match: "<type 'str'>"
       float_type_match: "<type 'float'>"
       list_type_match: "<type 'list'>"
-      ansible_list_type_match: "<type 'ansible.parsing.yaml.objects.AnsibleSequence'>"
       dict_type_match: "<type 'dict'>"
-      ansible_dict_type_match: "<type 'ansible.parsing.yaml.objects.AnsibleMapping'>"
-      ansible_unicode_class_match: "<class 'ansible.parsing.yaml.objects.AnsibleUnicode'>"
       unicode_class_match: "<class 'unicode'>"
       string_class_match: "<class 'str'>"
       bytes_class_match: "<class 'bytes'>"
       float_class_match: "<class 'float'>"
       list_class_match: "<class 'list'>"
-      ansible_list_class_match: "<class 'ansible.parsing.yaml.objects.AnsibleSequence'>"
       dict_class_match: "<class 'dict'>"
-      ansible_dict_class_match: "<class 'ansible.parsing.yaml.objects.AnsibleMapping'>"
       expected:
           test1_1:
               argument_errors: [
-                  "argument 'tidy_expected' is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
-                  "argument 'bust_some_stuff' is of type <class 'str'> and we were unable to convert to int: <class 'str'> cannot be converted to an int",
-                  "argument 'some_list' is of type <class 'ansible.parsing.yaml.objects.AnsibleMapping'> and we were unable to convert to list: <class 'ansible.parsing.yaml.objects.AnsibleMapping'> cannot be converted to a list",
-                  "argument 'some_dict' is of type <class 'ansible.parsing.yaml.objects.AnsibleSequence'> and we were unable to convert to dict: <class 'ansible.parsing.yaml.objects.AnsibleSequence'> cannot be converted to a dict",
-                  "argument 'some_int' is of type <class 'float'> and we were unable to convert to int: <class 'float'> cannot be converted to an int",
-                  "argument 'some_float' is of type <class 'str'> and we were unable to convert to float: <class 'str'> cannot be converted to a float",
-                  "argument 'some_bytes' is of type <class 'bytes'> and we were unable to convert to bytes: <class 'bytes'> cannot be converted to a Byte value",
-                  "argument 'some_bits' is of type <class 'str'> and we were unable to convert to bits: <class 'str'> cannot be converted to a Bit value",
+                  "argument 'tidy_expected' is of type dict and we were unable to convert to list: <class 'ansible.module_utils.datatag._AnsibleTaggedDict'> cannot be converted to a list",
+                  "argument 'bust_some_stuff' is of type str and we were unable to convert to int: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to an int",
+                  "argument 'some_list' is of type dict and we were unable to convert to list: <class 'ansible.module_utils.datatag._AnsibleTaggedDict'> cannot be converted to a list",
+                  "argument 'some_dict' is of type list and we were unable to convert to dict: <class 'ansible.module_utils.datatag._AnsibleTaggedList'> cannot be converted to a dict",
+                  "argument 'some_int' is of type float and we were unable to convert to int: <class 'ansible.module_utils.datatag._AnsibleTaggedFloat'> cannot be converted to an int",
+                  "argument 'some_float' is of type str and we were unable to convert to float: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to a float",
+                  "argument 'some_bytes' is of type bytes and we were unable to convert to bytes: <class 'ansible.module_utils.datatag._AnsibleTaggedBytes'> cannot be converted to a Byte value",
+                  "argument 'some_bits' is of type str and we were unable to convert to bits: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to a Bit value",
                   "value of test1_choices must be one of: this paddle game, the astray, this remote control, the chair, got: My dog",
                   "value of some_choices must be one of: choice1, choice2, got: choice4",
-                  "argument 'some_second_level' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.  ",
-                  "argument 'third_level' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> found in 'multi_level_option -> second_level'. and we were unable to convert to int: <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> cannot be converted to an int",
-                  "argument 'some_more_dict_options' is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> and we were unable to convert to dict: dictionary requested, could not parse JSON or key=value",
+                  "argument 'some_second_level' is of type str found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.",
+                  "argument 'third_level' is of type str found in 'multi_level_option -> second_level'. and we were unable to convert to int: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to an int",
+                  "argument 'some_more_dict_options' is of type str and we were unable to convert to dict: dictionary requested, could not parse JSON or key=value",
                   "value of 'some_more_dict_options' must be of type dict or list of dicts",
                   "dictionary requested, could not parse JSON or key=value",
                   ]

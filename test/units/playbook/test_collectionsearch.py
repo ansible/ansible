@@ -18,9 +18,11 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleParserError
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.play import Play
 from ansible.playbook.task import Task
 from ansible.playbook.block import Block
+from ansible._internal._templating._engine import TemplateEngine
 
 import pytest
 
@@ -30,7 +32,7 @@ def test_collection_static_warning(capsys):
 
     Also, make sure that users see the warning message for the referenced name.
     """
-    collection_name = "foo.{{bar}}"
+    collection_name = TrustedAsTemplate().tag("foo.{{bar}}")
     p = Play.load(dict(
         name="test play",
         hosts=['foo'],
@@ -38,9 +40,12 @@ def test_collection_static_warning(capsys):
         connection='local',
         collections=collection_name,
     ))
+    templar = TemplateEngine(None, {})
+    p.post_validate(templar)
     assert collection_name in p.collections
     std_out, std_err = capsys.readouterr()
-    assert '[WARNING]: "collections" is not templatable, but we found: %s' % collection_name in std_err
+    assert '[WARNING]: "collections" is not templatable, but we found' in std_err
+    assert collection_name in std_err
     assert '' == std_out
 
 

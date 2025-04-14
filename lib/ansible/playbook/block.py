@@ -113,6 +113,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
         return super(Block, self).preprocess_data(ds)
 
+    # FIXME: these do nothing but augment the exception message; DRY and nuke
+
     def _load_block(self, attr, ds):
         try:
             return load_list_of_tasks(
@@ -125,8 +127,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds) from ex
 
     def _load_rescue(self, attr, ds):
         try:
@@ -140,8 +142,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds) from ex
 
     def _load_always(self, attr, ds):
         try:
@@ -155,8 +157,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 loader=self._loader,
                 use_handlers=self._use_handlers,
             )
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds) from ex
 
     def _validate_always(self, attr, name, value):
         if value and not self.block:

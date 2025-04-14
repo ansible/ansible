@@ -39,4 +39,4 @@
     - assert:
         that:
           - result is failed
-          - result.results is not defined # DT needs result.results | length == 3
+          - result.results | length == 3

@@ -29,6 +29,7 @@ from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.utils.display import Display
 
 display = Display()
@@ -181,6 +182,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 else:
                     module_args = ''
 
+        module_args = TrustedAsTemplate().tag(module_args)
+
         if self.callback:
             cb = self.callback
         elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
@@ -239,11 +242,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         except KeyboardInterrupt:
             display.error('User interrupted execution')
             return False
-        except Exception as e:
-            if self.verbosity >= 3:
-                import traceback
-                display.v(traceback.format_exc())
-            display.error(to_text(e))
+        except Exception as ex:
+            display.error(ex)
             return False
 
     def emptyline(self):

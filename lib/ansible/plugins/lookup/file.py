@@ -25,7 +25,6 @@ DOCUMENTATION = """
         required: False
         default: False
     notes:
-      - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
       - this lookup does not understand 'globbing', use the fileglob lookup instead.
     seealso:
       - ref: playbook_task_paths
@@ -52,9 +51,8 @@ RETURN = """
     elements: str
 """
 
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleLookupError
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 display = Display()
@@ -74,8 +72,7 @@ class LookupModule(LookupBase):
                 lookupfile = self.find_file_in_search_path(variables, 'files', term, ignore_missing=True)
                 display.vvvv(u"File lookup using %s as file" % lookupfile)
                 if lookupfile:
-                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
-                    contents = to_text(b_contents, errors='surrogate_or_strict')
+                    contents = self._loader.get_text_file_contents(lookupfile)
                     if self.get_option('lstrip'):
                         contents = contents.lstrip()
                     if self.get_option('rstrip'):
@@ -83,8 +80,8 @@ class LookupModule(LookupBase):
                     ret.append(contents)
                 else:
                     # TODO: only add search info if abs path?
-                    raise AnsibleOptionsError("file not found, use -vvvvv to see paths searched")
-            except AnsibleError as e:
-                raise AnsibleLookupError("The 'file' lookup had an issue accessing the file '%s'" % term, orig_exc=e)
+                    raise AnsibleError("File not found. Use -vvvvv to see paths searched.")
+            except AnsibleError as ex:
+                raise AnsibleError(f"Unable to access the file {term!r}.") from ex
 
         return ret

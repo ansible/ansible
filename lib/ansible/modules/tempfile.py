@@ -90,7 +90,6 @@ path:
 
 from os import close
 from tempfile import mkstemp, mkdtemp
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
@@ -123,7 +122,7 @@ def main():
 
         module.exit_json(changed=True, path=path)
     except Exception as e:
-        module.fail_json(msg=to_native(e), exception=format_exc())
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':

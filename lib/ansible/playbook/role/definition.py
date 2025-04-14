@@ -21,14 +21,14 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.six import string_types
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
 from ansible.utils.path import unfrackpath
@@ -70,7 +70,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+        if not isinstance(ds, dict) and not isinstance(ds, string_types):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
@@ -79,12 +79,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # save the original ds for use later
         self._ds = ds
 
-        # we create a new data structure here, using the same
-        # object used internally by the YAML parsing code so we
-        # can preserve file:line:column information if it exists
-        new_ds = AnsibleMapping()
-        if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.ansible_pos = ds.ansible_pos
+        # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
+        # attributes of the task class; copy any tagged data to preserve things like origin
+        new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         # first we pull the role name out of the data structure,
         # and then use that to determine the role path (which may
@@ -127,7 +124,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # contains a variable, try and template it now
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
-            templar = Templar(loader=self._loader, variables=all_vars)
+            templar = TemplateEngine(loader=self._loader, variables=all_vars)
             role_name = templar.template(role_name)
 
         return role_name
@@ -147,7 +144,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         else:
             all_vars = dict()
 
-        templar = Templar(loader=self._loader, variables=all_vars)
+        templar = TemplateEngine(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
 
         role_tuple = None
@@ -198,6 +195,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             return (role_name, role_path)
 
         searches = (self._collection_list or []) + role_search_paths
+
         raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):

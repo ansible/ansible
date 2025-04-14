@@ -18,17 +18,24 @@
 from __future__ import annotations
 
 import os
+import pathlib
+import tempfile
 
 import unittest
-from unittest.mock import patch, mock_open
-from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
+from unittest.mock import patch
+
+import pytest
+
+from ansible.errors import AnsibleParserError, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils.common.text.converters import to_text
+from ansible._internal._datatag._tags import Origin, SourceWasEncrypted, TrustedAsTemplate
 
 from units.mock.vault_helper import TextVaultSecret
 from ansible.parsing.dataloader import DataLoader
 
 from units.mock.path import mock_unfrackpath_noop
+from units.test_utils.controller.display import emits_warnings
 
 
 class TestDataLoader(unittest.TestCase):
@@ -66,16 +73,6 @@ class TestDataLoader(unittest.TestCase):
                NOT VALID
         """, True)
         self.assertRaises(AnsibleParserError, self._loader.load_from_file, 'dummy_yaml_bad.txt')
-
-    @patch('ansible.errors.AnsibleError._get_error_lines_from_file')
-    @patch.object(DataLoader, '_get_file_contents')
-    def test_tab_error(self, mock_def, mock_get_error_lines):
-        mock_def.return_value = (u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""", True)
-        mock_get_error_lines.return_value = ("""\tblip: baz""", """..foo: bar""")
-        with self.assertRaises(AnsibleParserError) as cm:
-            self._loader.load_from_file('dummy_yaml_text.txt')
-        self.assertIn(yaml_strings.YAML_COMMON_LEADING_TAB_ERROR, str(cm.exception))
-        self.assertIn('foo: bar', str(cm.exception))
 
     @patch('ansible.parsing.dataloader.unfrackpath', mock_unfrackpath_noop)
     @patch.object(DataLoader, '_is_role')
@@ -135,11 +132,12 @@ class TestDataLoader(unittest.TestCase):
         self.assertTrue(self._loader.is_directory(os.path.dirname(__file__)))
 
     def test_get_file_contents_none_path(self):
-        self.assertRaisesRegex(AnsibleParserError, 'Invalid filename',
-                               self._loader._get_file_contents, None)
+        with pytest.raises(TypeError, match='Invalid filename'):
+            self._loader.get_text_file_contents(None)
 
     def test_get_file_contents_non_existent_path(self):
-        self.assertRaises(AnsibleFileNotFound, self._loader._get_file_contents, '/non_existent_file')
+        with pytest.raises(AnsibleFileNotFound):
+            self._loader.get_text_file_contents('/non_existent_file')
 
 
 class TestPathDwimRelativeDataLoader(unittest.TestCase):
@@ -201,6 +199,16 @@ class TestDataLoaderWithVault(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_get_text_file_contents_vaulted_yaml(self) -> None:
+        content = self._loader.get_text_file_contents(self.test_vault_data_path)
+
+        assert SourceWasEncrypted.is_tagged_on(content)
+
+    def test_get_text_file_contents_non_vaulted_file(self) -> None:
+        content = self._loader.get_text_file_contents(__file__)
+
+        assert not SourceWasEncrypted.is_tagged_on(content)
+
     def test_get_real_file_vault(self):
         real_file_path = self._loader.get_real_file(self.test_vault_data_path)
         self.assertTrue(os.path.exists(real_file_path))
@@ -217,7 +225,6 @@ class TestDataLoaderWithVault(unittest.TestCase):
     def test_get_real_file_not_a_path(self):
         self.assertRaisesRegex(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
 
-    @patch.multiple(DataLoader, path_exists=lambda s, x: True, is_file=lambda s, x: True)
     def test_parse_from_vault_1_1_file(self):
         vaulted_data = """$ANSIBLE_VAULT;1.1;AES256
 33343734386261666161626433386662623039356366656637303939306563376130623138626165
@@ -227,15 +234,17 @@ class TestDataLoaderWithVault(unittest.TestCase):
 3035
 """
 
-        with patch('builtins.open', mock_open(read_data=vaulted_data.encode('utf-8'))):
-            output = self._loader.load_from_file('dummy_vault.txt', cache='none')
+        with tempfile.NamedTemporaryFile(mode='w') as file:
+            file.write(vaulted_data)
+            file.flush()
+            output = self._loader.load_from_file(file.name, cache='none')
             self.assertEqual(output, dict(foo='bar'))
 
             # no cache used
             self.assertFalse(self._loader._FILE_CACHE)
 
             # vault cache entry written
-            output = self._loader.load_from_file('dummy_vault.txt', cache='vaulted')
+            output = self._loader.load_from_file(file.name, cache='vaulted')
             self.assertEqual(output, dict(foo='bar'))
             self.assertTrue(self._loader._FILE_CACHE)
 
@@ -243,5 +252,73 @@ class TestDataLoaderWithVault(unittest.TestCase):
             key = next(iter(self._loader._FILE_CACHE.keys()))
             modified = {'changed': True}
             self._loader._FILE_CACHE[key] = modified
-            output = self._loader.load_from_file('dummy_vault.txt', cache='vaulted')
+            output = self._loader.load_from_file(file.name, cache='vaulted')
             self.assertEqual(output, modified)
+
+
+def test_get_text_file_contents(tmp_path: pathlib.Path) -> None:
+    original_contents = 'Hello World'
+
+    temp_file = tmp_path / 'valid.txt'
+    temp_file.write_text(original_contents)
+
+    loader = DataLoader()
+    read_contents = loader.get_text_file_contents(str(temp_file))
+
+    assert read_contents == original_contents
+
+    origin = Origin.get_tag(read_contents)
+
+    assert origin.path == str(temp_file)
+    assert origin.line_num is None
+    assert origin.col_num is None
+    assert origin.description is None
+
+
+@pytest.mark.parametrize("content,encoding", (
+    (b'\xa4\xa4\xb0\xea\xa4H', 'utf-8'),
+    (b'\xa4\xa4\xb0\xea\xa4H', None),
+))
+def test_get_text_file_contents_encoding_deprecation(content: bytes, encoding: str | None, tmp_path: pathlib.Path) -> None:
+    temp = tmp_path / 'bogus_file'
+    temp.write_bytes(content)
+
+    loader = DataLoader()
+
+    if encoding:
+        # help text will imply that encoding is settable if non-empty
+        expected_warning_pattern = f"could not be decoded as {encoding!r}.*Ensure the correct encoding was specified"
+    else:
+        expected_warning_pattern = "could not be decoded as 'utf-8'.*must be UTF-8 encoded"
+
+    with emits_warnings(deprecation_pattern=expected_warning_pattern):
+        loaded = loader.get_text_file_contents(str(temp), encoding=encoding)
+
+    assert loaded == content.decode(encoding or 'utf-8', errors='surrogateescape')
+
+    assert Origin.is_tagged_on(loaded)
+    assert not SourceWasEncrypted.is_tagged_on(loaded)
+    assert not TrustedAsTemplate.is_tagged_on(loaded)
+
+
+@pytest.mark.parametrize("encoding", (
+    None,
+    'utf-8',
+    'big5',
+))
+def test_get_text_file_contents_strict(encoding: str | None) -> None:
+    text_content = '中文'
+    content = text_content.encode(encoding or 'utf-8')
+
+    with tempfile.NamedTemporaryFile(mode='wb') as temp:
+        temp.write(content)
+        temp.flush()
+
+        loader = DataLoader()
+        loaded = loader.get_text_file_contents(temp.name, encoding=encoding)
+
+        assert loaded == text_content
+
+        assert Origin.is_tagged_on(loaded)
+        assert not SourceWasEncrypted.is_tagged_on(loaded)
+        assert not TrustedAsTemplate.is_tagged_on(loaded)

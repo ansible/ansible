@@ -18,3 +18,11 @@ from __future__ import annotations
 
 # moved actual classes to __init__ kept here for backward compat with 3rd parties
 from ansible.plugins.cache import BaseCacheModule, BaseFileCacheModule  # pylint: disable=unused-import
+
+from ansible.utils.display import Display as _Display
+
+_Display().deprecated(
+    msg="The `ansible.plugins.cache.base` Python module is deprecated.",
+    help_text="Import from `ansible.plugins.cache` instead.",
+    version="2.23",
+)

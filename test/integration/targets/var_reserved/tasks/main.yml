@@ -30,4 +30,4 @@
     loop_control:
       label: '{{item.item.file}}'
     vars:
-      warning_message: "[WARNING]: {{ canary }}: {{ item.item.name }}"
+      warning_message: "[WARNING]: {{ canary }} '{{ item.item.name }}'."

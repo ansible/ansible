@@ -19,14 +19,39 @@
   import_role:
     name: setup_pexpect
 
-- name: record the test_command file
-  set_fact: test_command_file={{remote_tmp_dir | expanduser}}/test_command.py
+- name: record the test command files
+  set_fact:
+    test_command_file: "{{ remote_tmp_dir | expanduser }}/test_command.py"
+    test_non_utf8_command_file: "{{ remote_tmp_dir | expanduser }}/test_non_utf8_command.py"
 
 - name: copy script into output directory
-  copy: src=test_command.py dest={{test_command_file}} mode=0444
+  copy:
+    src: test_command.py
+    dest: "{{ test_command_file }}"
+    mode: "0444"
+
+- name: copy non-UTF8 script into output directory
+  copy:
+    src: test_non_utf8_command.py
+    dest: "{{ test_non_utf8_command_file }}"
+    mode: "0444"
 
 - name: record the output file
   set_fact: output_file={{remote_tmp_dir}}/foo.txt
+
+- name: use expect with non-UTF8 output which should fail
+  expect:
+    command: "{{ ansible_python_interpreter }} {{ test_non_utf8_command_file }}"
+    responses:
+      foo: bar
+  register: expect_result
+  ignore_errors: yes
+
+- name: verify expect with non-UTF8 output failed as expected
+  assert:
+    that:
+      - expect_result is failed
+      - expect_result.msg is contains 'Refusing to deserialize an invalid UTF8 string value'  # controller-side failure, not module-side
 
 - copy:
    content: "foo"

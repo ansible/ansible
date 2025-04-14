@@ -1,0 +1,35 @@
+first line of a file with more than 10 lines
+a line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+yet another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+short
+a line of reasonably normal length
+a line of exactly 117 chars content content content content content content content content content content conte EOL
+
+a line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+yet another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+short
+a line of reasonably normal length
+a line of exactly 117 chars content content content content content content content content content content conte EOL
+
+a line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+yet another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+short
+a line of reasonably normal length
+a line of exactly 117 chars content content content content content content content content content content conte EOL
+
+a line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+yet another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+short
+a line of reasonably normal length
+a line of exactly 117 chars content content content content content content content content content content conte EOL
+
+a line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+yet another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
+short
+a line of reasonably normal length
+a line of exactly 117 chars content content content content content content content content content content conte EOL

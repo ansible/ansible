@@ -5,25 +5,31 @@ from __future__ import annotations
 
 import random
 import string
+import warnings
 
 from collections import namedtuple
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import text_type
 from ansible.module_utils.common.text.converters import to_text, to_bytes
 from ansible.utils.display import Display
 
 PASSLIB_E = None
 PASSLIB_AVAILABLE = False
+
 try:
-    import passlib
-    import passlib.hash
-    from passlib.utils.handlers import HasRawSalt, PrefixWrapper
-    try:
-        from passlib.utils.binary import bcrypt64
-    except ImportError:
-        from passlib.utils import bcrypt64
+    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
+
+        import passlib
+        import passlib.hash
+        from passlib.utils.handlers import HasRawSalt, PrefixWrapper
+        try:
+            from passlib.utils.binary import bcrypt64
+        except ImportError:
+            from passlib.utils import bcrypt64
+
     PASSLIB_AVAILABLE = True
 except Exception as e:
     PASSLIB_E = e
@@ -43,8 +49,8 @@ def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHA
     :kwarg chars: The characters to choose from.  The default is all ascii
         letters, ascii digits, and these symbols ``.,:-_``
     """
-    if not isinstance(chars, text_type):
-        raise AnsibleAssertionError('%s (%s) is not a text_type' % (chars, type(chars)))
+    if not isinstance(chars, str):
+        raise AnsibleAssertionError(f'{chars=!r} ({type(chars)}) is not a {type(str)}.')
 
     if seed is None:
         random_generator = random.SystemRandom()
@@ -80,13 +86,14 @@ class PasslibHash(BaseHash):
         super(PasslibHash, self).__init__(algorithm)
 
         if not PASSLIB_AVAILABLE:
-            raise AnsibleError("passlib must be installed and usable to hash with '%s'" % algorithm, orig_exc=PASSLIB_E)
+            raise AnsibleError(f"The passlib Python package must be installed to hash with the {algorithm!r} algorithm.") from PASSLIB_E
+
         display.vv("Using passlib to hash input with '%s'" % algorithm)
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
         except Exception:
-            raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
+            raise AnsibleError(f"Installed passlib version {passlib.__version__} does not support the {algorithm!r} algorithm.") from None
 
     def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
         salt = self._clean_salt(salt)
@@ -150,15 +157,15 @@ class PasslibHash(BaseHash):
             elif hasattr(self.crypt_algo, 'encrypt'):
                 result = self.crypt_algo.encrypt(secret, **settings)
             else:
-                raise AnsibleError("installed passlib version %s not supported" % passlib.__version__)
-        except ValueError as e:
-            raise AnsibleError("Could not hash the secret.", orig_exc=e)
+                raise ValueError(f"Installed passlib version {passlib.__version__} is not supported.")
+        except ValueError as ex:
+            raise AnsibleError("Could not hash the secret.") from ex
 
         # passlib.hash should always return something or raise an exception.
         # Still ensure that there is always a result.
         # Otherwise an empty password might be assumed by some modules, like the user module.
         if not result:
-            raise AnsibleError("failed to hash with algorithm '%s'" % self.algorithm)
+            raise AnsibleError(f"Failed to hash with passlib using the {self.algorithm!r} algorithm.")
 
         # Hashes from passlib.hash should be represented as ascii strings of hex
         # digits so this should not traceback.  If it's not representable as such
@@ -175,4 +182,5 @@ def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, 
 def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):
     if PASSLIB_AVAILABLE:
         return PasslibHash(encrypt).hash(result, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    raise AnsibleError("Unable to encrypt nor hash, passlib must be installed", orig_exc=PASSLIB_E)
+
+    raise AnsibleError("Unable to encrypt nor hash, passlib must be installed.") from PASSLIB_E

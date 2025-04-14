@@ -14,11 +14,10 @@
             str_mustunquote: '{{ lookup("config", "str_mustunquote", plugin_type="lookup", plugin_name="types") }}'
         - assert:
             that:
-            - 'valid|type_debug == "list"'
-            - 'mustunquote|type_debug == "list"'
-            - 'notvalid|type_debug == "list"'
-            - 'totallynotvalid|type_debug == "list"'
-            - 'str_mustunquote|type_debug == "AnsibleUnsafeText"'
+            - valid|type_debug == "list"
+            - mustunquote|type_debug == "list"
+            - notvalid|type_debug == "list"
+            - totallynotvalid|type_debug == "list"
             - valid[0]|int == 1
             - mustunquote[0]|int == 1
             - "notvalid[0] == '[1'"
