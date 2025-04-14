@@ -20,20 +20,52 @@ DOCUMENTATION:
       description: Affects sorting of dictionary keys.
       default: True
       type: bool
+    default_flow_style:
+      description:
+        - If set V(True), nested collections will be serialized in the flow style.
+        - If set V(False), nested collections will be serialized in the block style.
+        - Valid values are V(None), V(True) and V(False).
+      default: None
+      type: raw
+    allow_unicode:
+      description:
+        - Allow unicode characters.
+      default: True
+      type: bool
+    default_style:
+      description:
+        - Indicates the style of the scalar.
+        - Possible values are V(None), V(''), V('\''), V('"'), V('|'), and V('>').
+      default: None
+      type: raw
+    canonical:
+      description:
+        - If set to V(True), export tag type to the output.
+        - Valid values are V(None), V(True) and V(False).
+      default: None
+      type: raw
+    width:
+      description: Set the preferred line width.
+      default: None
+      type: raw
+    line_break:
+      description: Specify the line break.
+      default: None
+      type: raw
+    encoding:
+      description: Specify the output encoding.
+      default: None
+      type: raw
+    explicit_start:
+      description: If set to V(True), adds an explicit start using "--—".
+      default: None
+      type: raw
+    explicit_end:
+      description: If set to V(True), adds an explicit end using "--—".
+      default: None
+      type: raw
   notes:
     - More options may be available, see L(PyYAML documentation, https://pyyaml.org/wiki/PyYAMLDocumentation) for details.
-
-    # TODO: find docs for these
-    #default_flow_style
-    #default_style
-    #canonical=None,
-    #width=None,
-    #line_break=None,
-    #encoding=None,
-    #explicit_start=None,
-    #explicit_end=None,
-    #version=None,
-    #tags=None
 
 EXAMPLES: |
   # dump variable in a template to create a YAML document
