@@ -405,6 +405,9 @@ def comment(text, style='plain', **kw):
         }
     }
 
+    if style not in comment_styles:
+        raise AnsibleFilterError(f"Invalid option '{style}'. Available options: {', '.join(comment_styles.keys())}")
+
     # Pointer to the right comment type
     style_params = comment_styles[style]
 

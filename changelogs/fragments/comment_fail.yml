@@ -1,0 +1,3 @@
+---
+bugfixes:
+   - comment - raise exception when an invalid value provided to comment filter.
