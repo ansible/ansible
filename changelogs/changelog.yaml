@@ -727,6 +727,24 @@ releases:
     - 2.17.10rc1_summary.yaml
     - win-wdac-audit.yml
     release_date: '2025-03-17'
+  2.17.11rc1:
+    changes:
+      bugfixes:
+      - build - Pin ``wheel`` in ``pyproject.toml`` to ensure compatibility with supported
+        ``setuptools`` versions.
+      - gather_facts action, will now add setup when 'smart' appears with other modules
+        in the FACTS_MODULES setting (#84750).
+      release_summary: '| Release Date: 2025-04-14
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.11rc1_summary.yaml
+    - gather_facts_smart_fix.yml
+    - pin-wheel.yml
+    release_date: '2025-04-14'
   2.17.1rc1:
     changes:
       bugfixes:

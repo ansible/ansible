@@ -4,6 +4,21 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-04-14
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Bugfixes
+--------
+
+- build - Pin ``wheel`` in ``pyproject.toml`` to ensure compatibility with supported ``setuptools`` versions.
+- gather_facts action, will now add setup when 'smart' appears with other modules in the FACTS_MODULES setting (#84750).
+
 v2.17.10
 ========
 
