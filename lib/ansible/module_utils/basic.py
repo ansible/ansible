@@ -53,9 +53,7 @@ try:
 except ImportError:
     HAS_SYSLOG = False
 
-# deprecated: description='types.EllipsisType is available in Python 3.10+' python_version='3.9'
-if t.TYPE_CHECKING:
-    from builtins import ellipsis
+_UNSET = t.cast(t.Any, ...)
 
 try:
     from systemd import journal, daemon as systemd_daemon
@@ -1459,7 +1457,7 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, msg: str, *, exception: BaseException | str | ellipsis | None = ..., **kwargs) -> t.NoReturn:
+    def fail_json(self, msg: str, *, exception: BaseException | str | None = _UNSET, **kwargs) -> t.NoReturn:
         """
         Return from the module with an error message and optional exception/traceback detail.
         A traceback will only be included in the result if error traceback capturing has been enabled.
