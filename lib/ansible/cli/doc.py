@@ -1170,12 +1170,16 @@ class DocCLI(CLI, RoleMixin):
         return 'version %s' % (version_added, )
 
     @staticmethod
-    def warp_fill(text, limit, initial_indent='', subsequent_indent='', **kwargs):
+    def warp_fill(text, limit, initial_indent='', subsequent_indent='', initial_extra=0, **kwargs):
         result = []
         for paragraph in text.split('\n\n'):
-            result.append(textwrap.fill(paragraph, limit, initial_indent=initial_indent, subsequent_indent=subsequent_indent,
-                                        break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs))
+            wrapped = textwrap.fill(paragraph, limit, initial_indent=initial_indent + ' ' * initial_extra, subsequent_indent=subsequent_indent,
+                                    break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs)
+            if initial_extra and wrapped.startswith(' ' * initial_extra):
+                wrapped = wrapped[initial_extra:]
+            result.append(wrapped)
             initial_indent = subsequent_indent
+            initial_extra = 0
         return '\n'.join(result)
 
     @staticmethod
@@ -1207,20 +1211,23 @@ class DocCLI(CLI, RoleMixin):
             text.append('')
 
             # TODO: push this to top of for and sort by size, create indent on largest key?
-            inline_indent = base_indent + ' ' * max((len(opt_indent) - len(o)) - len(base_indent), 2)
-            sub_indent = inline_indent + ' ' * (len(o) + 3)
+            inline_indent = ' ' * max((len(opt_indent) - len(o)) - len(base_indent), 2)
+            extra_indent = base_indent + ' ' * (len(o) + 3)
+            sub_indent = inline_indent + extra_indent
             if is_sequence(opt['description']):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
                     if entry_idx == 1:
-                        text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=inline_indent, subsequent_indent=sub_indent))
+                        text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit,
+                                    initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
                     else:
                         text.append(DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=sub_indent, subsequent_indent=sub_indent))
             else:
                 if not isinstance(opt['description'], string_types):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
-                text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=inline_indent, subsequent_indent=sub_indent))
+                text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit,
+                            initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
             del opt['description']
 
             suboptions = []
