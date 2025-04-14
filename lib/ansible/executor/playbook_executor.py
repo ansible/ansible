@@ -98,11 +98,12 @@ class PlaybookExecutor:
                 else:
                     playbook_path = playbook
                     # not fqcn, but might still be collection playbook
-                    playbook_collection = _get_collection_name_from_path(playbook) or "default_collection"
+                    playbook_collection = _get_collection_name_from_path(playbook) or AnsibleCollectionConfig.default_collection
 
                 if playbook_collection:
                     display.v("running playbook inside collection {0}".format(playbook_collection))
-                    AnsibleCollectionConfig.default_collection = playbook_collection
+                    if playbook_collection:
+                      AnsibleCollectionConfig.default_collection = playbook_collection
                 else:
                     AnsibleCollectionConfig.default_collection = None
 

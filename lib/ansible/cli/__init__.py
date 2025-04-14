@@ -545,9 +545,13 @@ class CLI(ABC):
             add_all_plugin_dirs(basedir)
             AnsibleCollectionConfig.playbook_paths = basedir
             default_collection = _get_collection_name_from_path(basedir)
+            if not default_collection:
+              default_collection = AnsibleCollectionConfig.default_collection
+
             if default_collection:
-                display.warning(u'running with default collection {0}'.format(default_collection))
-                AnsibleCollectionConfig.default_collection = default_collection
+              display.v(f'Using collection: {default_collection}')
+              AnsibleCollectionConfig.default_collection = default_collection
+
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
