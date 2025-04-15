@@ -139,7 +139,7 @@ def _launch_ssh_agent() -> None:
             return
         case 'auto':
             try:
-                ssh_agent_bin = get_bin_path('ssh-agent', required=True)
+                ssh_agent_bin = get_bin_path('ssh-agent')
             except ValueError as e:
                 raise AnsibleError('SSH_AGENT set to auto, but cannot find ssh-agent binary') from e
             ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
