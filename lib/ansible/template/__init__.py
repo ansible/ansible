@@ -28,7 +28,7 @@ if _t.TYPE_CHECKING:  # pragma: nocover
 
 
 _display: _t.Final[_Display] = _Display()
-_UNSET = _t.cast(_t.Any, ...)
+_UNSET = _t.cast(_t.Any, object())
 _TTrustable = _t.TypeVar('_TTrustable', bound=str | _io.IOBase | _t.TextIO | _t.BinaryIO)
 _TRUSTABLE_TYPES = (str, _io.IOBase)
 

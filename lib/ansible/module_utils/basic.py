@@ -53,7 +53,7 @@ try:
 except ImportError:
     HAS_SYSLOG = False
 
-_UNSET = t.cast(t.Any, ...)
+_UNSET = t.cast(t.Any, object())
 
 try:
     from systemd import journal, daemon as systemd_daemon
@@ -339,7 +339,7 @@ def _load_params():
     except Exception as ex:
         raise Exception("Failed to decode JSON module parameters.") from ex
 
-    if (ansible_module_args := params.get('ANSIBLE_MODULE_ARGS', ...)) is ...:
+    if (ansible_module_args := params.get('ANSIBLE_MODULE_ARGS', _UNSET)) is _UNSET:
         raise Exception("ANSIBLE_MODULE_ARGS not provided.")
 
     global _PARSED_MODULE_ARGS
@@ -1496,7 +1496,7 @@ class AnsibleModule(object):
 
             if isinstance(exception, str):
                 formatted_traceback = exception
-            elif exception is ... and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
+            elif exception is _UNSET and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
                 formatted_traceback = _traceback.maybe_extract_traceback(current_exception, _traceback.TracebackEvent.ERROR)
             else:
                 formatted_traceback = _traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR)
