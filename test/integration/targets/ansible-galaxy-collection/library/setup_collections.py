@@ -256,7 +256,7 @@ def run_module():
     start = datetime.datetime.now()
     result = dict(changed=True, results=[], start=str(start))
 
-    pool = threading.Pool(4)
+    pool = threading.Pool(1)
     publish_func = partial(publish_collection, module)
     try:
         result['results'] = pool.map_async(
