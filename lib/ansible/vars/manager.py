@@ -479,8 +479,9 @@ class VariableManager:
 
                 variables['play_hosts'] = deprecate_value(
                     value=variables['ansible_play_batch'],
-                    msg='Use `ansible_play_batch` instead of `play_hosts`.',
+                    msg='The `play_hosts` magic variable is deprecated.',
                     removal_version='2.23',
+                    help_text='Use `ansible_play_batch` instead.',
                 )
 
         # Set options vars
