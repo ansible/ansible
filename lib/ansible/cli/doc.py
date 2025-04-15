@@ -1354,8 +1354,7 @@ class DocCLI(CLI, RoleMixin):
             text.append("ENTRY POINT: %s %s" % (_format(entry_point, "BOLD"), desc))
             text.append('')
 
-            if 'version_added' in doc:
-                version_added = doc.pop('version_added')
+            if version_added := doc.pop('version_added', None):
                 text.append(_format("ADDED IN:", 'bold') + " %s\n" % DocCLI._format_version_added(version_added))
 
             if doc.get('description'):
