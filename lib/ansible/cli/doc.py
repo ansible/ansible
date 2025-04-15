@@ -1283,7 +1283,7 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.add_fields(text, subdata, limit, opt_indent + '  ', return_values, opt_indent)
 
     @staticmethod
-    def _add_seealso(text: list[str], seealsos: list[dict[str, t.Any]], limit: int, opt_indent: str):
+    def _add_seealso(text: list[str], seealsos: list[dict[str, t.Any]], limit: int, opt_indent: str) -> None:
         for item in seealsos:
             if 'module' in item:
                 text.append(DocCLI.warp_fill(DocCLI.tty_ify('Module %s' % item['module']),
