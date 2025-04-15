@@ -15,6 +15,7 @@ import os
 import os.path
 import re
 import textwrap
+import typing as t
 
 import yaml
 
@@ -1282,7 +1283,7 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.add_fields(text, subdata, limit, opt_indent + '  ', return_values, opt_indent)
 
     @staticmethod
-    def _add_seealso(text, seealsos, limit, opt_indent):
+    def _add_seealso(text: list[str], seealsos: list[dict[str, t.Any]], limit: int, opt_indent: str):
         for item in seealsos:
             if 'module' in item:
                 text.append(DocCLI.warp_fill(DocCLI.tty_ify('Module %s' % item['module']),
@@ -1388,19 +1389,17 @@ class DocCLI(CLI, RoleMixin):
                     text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc['attributes'][k]), opt_indent))
                 del doc['attributes']
 
-            if doc.get('notes', False):
+            if notes := doc.pop('notes', False):
                 text.append("")
                 text.append(_format("NOTES:", 'bold'))
-                for note in doc['notes']:
+                for note in notes:
                     text.append(DocCLI.warp_fill(DocCLI.tty_ify(note), limit - 6,
                                                  initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                del doc['notes']
 
-            if doc.get('seealso', False):
+            if seealso := doc.pop('seealso', False):
                 text.append("")
                 text.append(_format("SEE ALSO:", 'bold'))
-                DocCLI._add_seealso(text, doc['seealso'], limit=limit, opt_indent=opt_indent)
-                del doc['seealso']
+                DocCLI._add_seealso(text, seealso, limit=limit, opt_indent=opt_indent)
 
             # generic elements we will handle identically
             for k in ('author',):
