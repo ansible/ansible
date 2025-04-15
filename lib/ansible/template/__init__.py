@@ -28,7 +28,7 @@ if _t.TYPE_CHECKING:  # pragma: nocover
 
 
 _display: _t.Final[_Display] = _Display()
-_UNSET = _t.cast(_t.Any, ...)
+_UNSET = _t.cast(_t.Any, object())
 _TTrustable = _t.TypeVar('_TTrustable', bound=str | _io.IOBase | _t.TextIO | _t.BinaryIO)
 _TRUSTABLE_TYPES = (str, _io.IOBase)
 
@@ -171,7 +171,8 @@ class Templar:
             variables=self._engine._variables if available_variables is None else available_variables,
         )
 
-        templar._overrides = self._overrides.merge(context_overrides)
+        # backward compatibility: filter out None values from overrides, even though it is a valid value for some of them
+        templar._overrides = self._overrides.merge({key: value for key, value in context_overrides.items() if value is not None})
 
         if searchpath is not None:
             templar._engine.environment.loader.searchpath = searchpath
@@ -198,7 +199,7 @@ class Templar:
             available_variables=self._engine,
         )
 
-        kwargs = dict(
+        target_args = dict(
             searchpath=searchpath,
             available_variables=available_variables,
         )
@@ -207,13 +208,14 @@ class Templar:
         previous_overrides = self._overrides
 
         try:
-            for key, value in kwargs.items():
+            for key, value in target_args.items():
                 if value is not None:
                     target = targets[key]
                     original[key] = getattr(target, key)
                     setattr(target, key, value)
 
-            self._overrides = self._overrides.merge(context_overrides)
+            # backward compatibility: filter out None values from overrides, even though it is a valid value for some of them
+            self._overrides = self._overrides.merge({key: value for key, value in context_overrides.items() if value is not None})
 
             yield
         finally:

@@ -1,0 +1,14 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: invoke a module that returns a warning and deprecation warning
+      noisy:
+      register: result
+
+    - name: verify the warning and deprecation are visible in templating
+      assert:
+        that:
+          - result.warnings | length == 1
+          - result.warnings[0] == "This is a warning."
+          - result.deprecations | length == 1
+          - result.deprecations[0].msg == "This is a deprecation."

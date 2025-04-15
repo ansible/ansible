@@ -53,9 +53,7 @@ try:
 except ImportError:
     HAS_SYSLOG = False
 
-# deprecated: description='types.EllipsisType is available in Python 3.10+' python_version='3.9'
-if t.TYPE_CHECKING:
-    from builtins import ellipsis
+_UNSET = t.cast(t.Any, object())
 
 try:
     from systemd import journal, daemon as systemd_daemon
@@ -341,7 +339,7 @@ def _load_params():
     except Exception as ex:
         raise Exception("Failed to decode JSON module parameters.") from ex
 
-    if (ansible_module_args := params.get('ANSIBLE_MODULE_ARGS', ...)) is ...:
+    if (ansible_module_args := params.get('ANSIBLE_MODULE_ARGS', _UNSET)) is _UNSET:
         raise Exception("ANSIBLE_MODULE_ARGS not provided.")
 
     global _PARSED_MODULE_ARGS
@@ -1459,7 +1457,7 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, msg: str, *, exception: BaseException | str | ellipsis | None = ..., **kwargs) -> t.NoReturn:
+    def fail_json(self, msg: str, *, exception: BaseException | str | None = _UNSET, **kwargs) -> t.NoReturn:
         """
         Return from the module with an error message and optional exception/traceback detail.
         A traceback will only be included in the result if error traceback capturing has been enabled.
@@ -1498,7 +1496,7 @@ class AnsibleModule(object):
 
             if isinstance(exception, str):
                 formatted_traceback = exception
-            elif exception is ... and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
+            elif exception is _UNSET and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
                 formatted_traceback = _traceback.maybe_extract_traceback(current_exception, _traceback.TracebackEvent.ERROR)
             else:
                 formatted_traceback = _traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR)

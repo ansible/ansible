@@ -54,7 +54,7 @@
       assert:
         that:
           - "'1.0.1' not in foo_version.stdout"
-          - "{{ foo_version.changed }}"
+          - "foo_version.changed"
 
     - name: Test autoremove + upgrade (Idempotant)
       apt:

@@ -11,7 +11,7 @@ from ansible.module_utils._internal import _traceback, _plugin_exec_context
 from ansible.module_utils.common import messages as _messages
 from ansible.module_utils import _internal
 
-_UNSET = _t.cast(_t.Any, ...)
+_UNSET = _t.cast(_t.Any, object())
 
 
 def warn(warning: str) -> None:

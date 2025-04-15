@@ -76,7 +76,7 @@ _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 # Max for c_int
 _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
 
-_UNSET = t.cast(t.Any, ...)
+_UNSET = t.cast(t.Any, object())
 
 MOVE_TO_BOL = b'\r'
 CLEAR_TO_EOL = b'\x1b[K'
@@ -709,11 +709,6 @@ class Display(metaclass=Singleton):
                 plugin=plugin,
             ))
 
-        if not _DeferredWarningContext.deprecation_warnings_enabled():
-            return
-
-        self.warning('Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.')
-
         if source_context := _utils.SourceContext.from_value(obj):
             formatted_source_context = str(source_context)
         else:
@@ -745,6 +740,11 @@ class Display(metaclass=Singleton):
 
         # This is the post-proxy half of the `deprecated` implementation.
         # Any logic that must occur in the primary controller process needs to be implemented here.
+
+        if not _DeferredWarningContext.deprecation_warnings_enabled():
+            return
+
+        self.warning('Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.')
 
         msg = format_message(warning)
         msg = f'[DEPRECATION WARNING]: {msg}'

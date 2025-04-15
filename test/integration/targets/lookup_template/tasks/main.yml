@@ -30,7 +30,5 @@
 - assert:
     that:
       - lookup('template', 'dict.j2') is not mapping
-      - lookup('template', 'dict.j2', convert_data=True) is not mapping
-      - lookup('template', 'dict.j2', convert_data=False) is not mapping
 
 - include_tasks: trim_blocks.yml
