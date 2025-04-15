@@ -125,9 +125,8 @@ options:
     version_added: "2.5"
   encoding:
     description:
-      - The character set the target file is encoded in.
-    type:
-      str
+      - The character set in which the target file is encoded.
+    type: str
     version_added: "2.19"
 extends_documentation_fragment:
     - action_common_attributes
@@ -256,7 +255,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
-def write_changes(module, lines, encoding, dest):
+def write_changes(module, lines, dest, encoding=None):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
     with os.fdopen(tmpfd, 'w', encoding=encoding) as f:
@@ -299,7 +298,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
 
-    encoding=module.params['encoding']
+    encoding = module.params.get('encoding', None)
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
         if not create:

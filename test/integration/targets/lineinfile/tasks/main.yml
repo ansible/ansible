@@ -1422,7 +1422,7 @@
   lineinfile:
     path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
     create: True
-    line: "Test line encoded in cp1037"
+    line: "Test line encoded in cp037"
     state: present
     encoding: cp037
   register: result1
