@@ -230,10 +230,7 @@ _CALLBACK_DISPATCH_ERROR_BEHAVIOR:
   description:
     - Action to take when a callback dispatch results in an error.
   type: choices
-  choices: &choices_ignore_warn_fail
-    - ignore
-    - warn
-    - fail
+  choices: *basic-error
   env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
   version_added: '2.19'
 COLLECTIONS_SCAN_SYS_PATH:
@@ -2064,7 +2061,7 @@ _TEMPLAR_UNKNOWN_TYPE_CONVERSION:
     - This setting has no effect on the inability to store unsupported variable types as the result of templating.
     - Experimental diagnostic feature, subject to change.
   type: choices
-  choices: *choices_ignore_warn_fail
+  choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_CONVERSION}]
   version_added: '2.19'
 _TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
@@ -2074,7 +2071,7 @@ _TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
     - Action to take when an unknown type is encountered inside a template pipeline.
     - Experimental diagnostic feature, subject to change.
   type: choices
-  choices: *choices_ignore_warn_fail
+  choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED}]
   version_added: '2.19'
 _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
@@ -2086,7 +2083,7 @@ _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
     - This setting has no effect on expressions.
     - Experimental diagnostic feature, subject to change.
   type: choices
-  choices: *choices_ignore_warn_fail
+  choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
   version_added: '2.19'
 WORKER_SHUTDOWN_POLL_COUNT:
