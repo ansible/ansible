@@ -89,18 +89,24 @@ from ansible import _internal  # do not remove or defer; ensures controller-spec
 
 _internal.setup()
 
+from ansible.errors import AnsibleError, ExitCode
+
 try:
     from ansible import constants as C
     from ansible.utils.display import Display
     display = Display()
 except Exception as ex:
-    print(f'ERROR: {ex}\n\n{"".join(traceback.format_exception(ex))}', file=sys.stderr)
+    if isinstance(ex, AnsibleError):
+        ex_msg = ' '.join((ex.message, ex._help_text)).strip()
+    else:
+        ex_msg = str(ex)
+
+    print(f'ERROR: {ex_msg}\n\n{"".join(traceback.format_exception(ex))}', file=sys.stderr)
     sys.exit(5)
 
 
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, ExitCode
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
