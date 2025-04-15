@@ -8,25 +8,36 @@ from ansible.module_utils._internal import _datatag
 from ansible.module_utils.common.text import converters as _converters
 from ansible.parsing import vault as _vault
 
+_UNSET = _t.cast(_t.Any, object())
+
 
 class _AnsibleMapping(dict):
     """Backwards compatibility type."""
 
-    def __new__(cls, value):
-        return _datatag.AnsibleTagHelper.tag_copy(value, dict(value))
+    def __new__(cls, value=_UNSET, /, **kwargs):
+        if value is _UNSET:
+            return dict(**kwargs)
+
+        return _datatag.AnsibleTagHelper.tag_copy(value, dict(value, **kwargs))
 
 
 class _AnsibleUnicode(str):
     """Backwards compatibility type."""
 
-    def __new__(cls, value):
-        return _datatag.AnsibleTagHelper.tag_copy(value, str(value))
+    def __new__(cls, object=_UNSET, **kwargs):
+        if object is _UNSET:
+            return str(**kwargs)
+
+        return _datatag.AnsibleTagHelper.tag_copy(object, str(object, **kwargs))
 
 
 class _AnsibleSequence(list):
     """Backwards compatibility type."""
 
-    def __new__(cls, value):
+    def __new__(cls, value=_UNSET, /):
+        if value is _UNSET:
+            return list()
+
         return _datatag.AnsibleTagHelper.tag_copy(value, list(value))
 
 
