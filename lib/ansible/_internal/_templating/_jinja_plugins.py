@@ -8,10 +8,6 @@ import datetime
 import functools
 import typing as t
 
-from ansible.errors import (
-    AnsibleTemplatePluginError,
-)
-
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
 from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.collections import is_sequence
@@ -263,15 +259,13 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
             return ex.source
         except Exception as ex:
             # DTFIX-RELEASE: convert this to the new error/warn/ignore context manager
-            if isinstance(ex, AnsibleTemplatePluginError):
-                msg = f'Lookup failed but the error is being ignored: {ex}'
-            else:
-                msg = f'An unhandled exception occurred while running the lookup plugin {plugin_name!r}. Error was a {type(ex)}, original message: {ex}'
-
             if errors == 'warn':
-                _display.warning(msg)
+                _display.error_as_warning(
+                    msg=f'An error occurred while running the lookup plugin {plugin_name!r}.',
+                    exception=ex,
+                )
             elif errors == 'ignore':
-                _display.display(msg, log_only=True)
+                _display.display(f'An error of type {type(ex)} occurred while running the lookup plugin {plugin_name!r}: {ex}', log_only=True)
             else:
                 raise AnsibleTemplatePluginRuntimeError('lookup', plugin_name) from ex
 
