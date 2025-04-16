@@ -1051,6 +1051,21 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 
 def aptclean(m):
+    changed = False
+
+    # First run dry-run to detect if cleanup would do anything
+    dry_rc, dry_out, dry_err = m.run_command(['apt-get', 'clean', '--dry-run'])
+
+    if dry_rc == 0 and not dry_err:
+        for line in dry_out.splitlines():
+            if line.startswith('Del '):
+                # Extract the filename that would be deleted
+                filename = line.split()[1]
+                if os.path.exists(filename):
+                    changed = True
+                    break  # Stop at first match
+
+    # Now perform actual cleanup
     clean_rc, clean_out, clean_err = m.run_command(['apt-get', 'clean'])
     clean_diff = parse_diff(clean_out) if m._diff else {}
 
@@ -1058,7 +1073,8 @@ def aptclean(m):
         m.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
     if clean_err:
         m.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
-    return (clean_out, clean_err, clean_diff)
+
+    return (clean_out, clean_err, clean_diff, changed)
 
 
 def upgrade(m, mode="yes", force=False, default_release=None,
@@ -1343,12 +1359,11 @@ def main():
         )
 
     if p['clean'] is True:
-        aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
+        aptclean_stdout, aptclean_stderr, aptclean_diff, aptclean_changed = aptclean(module)
         # If there is nothing else to do exit. This will set state as
-        #  changed based on if the cache was updated.
         if not p['package'] and p['upgrade'] == 'no' and not p['deb']:
             module.exit_json(
-                changed=True,
+                changed=aptclean_changed,
                 msg=aptclean_stdout,
                 stdout=aptclean_stdout,
                 stderr=aptclean_stderr,
