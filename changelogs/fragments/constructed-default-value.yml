@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    constructed inventory - Use the ``default_value`` in a ``keyed_groups`` entry if the expression result of ``key``
+    is ``omit`` or ``None`` and not just an empty string.

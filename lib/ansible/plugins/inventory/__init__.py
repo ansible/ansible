@@ -410,6 +410,8 @@ class Constructable(_BaseInventoryPlugin):
                         variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
                         key = self._compose(keyed.get('key'), variables)
+                    except AnsibleValueOmittedError:
+                        key = None
                     except Exception as e:
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
@@ -418,7 +420,9 @@ class Constructable(_BaseInventoryPlugin):
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
                         raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|trailing_separator")
-                    if key or (key == '' and default_value_name is not None):
+
+                    use_default = (key is None or key == '') and default_value_name is not None
+                    if key or use_default:
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
@@ -434,16 +438,14 @@ class Constructable(_BaseInventoryPlugin):
                             continue
 
                         new_raw_group_names = []
-                        if isinstance(key, string_types):
-                            # if key is empty, 'default_value' will be used as group name
-                            if key == '' and default_value_name is not None:
-                                new_raw_group_names.append(default_value_name)
-                            else:
-                                new_raw_group_names.append(key)
+                        if use_default:
+                            new_raw_group_names.append(default_value_name)
+                        elif isinstance(key, string_types):
+                            new_raw_group_names.append(key)
                         elif isinstance(key, list):
                             for name in key:
                                 # if list item is empty, 'default_value' will be used as group name
-                                if name == '' and default_value_name is not None:
+                                if (name is None or name == '') and default_value_name is not None:
                                     new_raw_group_names.append(default_value_name)
                                 else:
                                     new_raw_group_names.append(name)

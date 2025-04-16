@@ -30,6 +30,9 @@ ansible-inventory -i tag_inventory.yml -i keyed_group_default_value.yml --graph 
 grep '@tag_name_host0' out.txt
 grep '@tag_environment_test' out.txt
 grep '@tag_status_running' out.txt
+grep '@omit_test_default_value' out.txt
+grep '@none_test_default_value' out.txt
+grep '@empty_test_default_value' out.txt
 
 # keyed group with default value for key's value empty (list)
 ansible-inventory -i tag_inventory.yml -i keyed_group_list_default_value.yml --graph | tee out.txt
@@ -37,6 +40,8 @@ ansible-inventory -i tag_inventory.yml -i keyed_group_list_default_value.yml --g
 grep '@host_db' out.txt
 grep '@host_web' out.txt
 grep '@host_storage' out.txt
+grep '@host_None' out.txt && exit 1
+grep '@empty_list_test_default_value' out.txt && exit 1
 
 # keyed group with default value for key's value empty (str)
 ansible-inventory -i tag_inventory.yml -i keyed_group_str_default_value.yml --graph | tee out.txt
