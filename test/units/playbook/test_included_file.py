@@ -22,6 +22,8 @@ import os
 import pytest
 
 from unittest.mock import MagicMock
+
+from ansible.inventory.host import Host
 from units.mock.loader import DictDataLoader
 
 from ansible.playbook import Play
@@ -105,8 +107,8 @@ def test_included_file_instantiation():
 
 
 def test_process_include_tasks_results(mock_iterator, mock_variable_manager):
-    hostname = "testhost1"
-    hostname2 = "testhost2"
+    host1 = Host("testhost1")
+    host2 = Host("testhost2")
 
     parent_task_ds = {'debug': 'msg=foo'}
     parent_task = Task.load(parent_task_ds)
@@ -117,8 +119,8 @@ def test_process_include_tasks_results(mock_iterator, mock_variable_manager):
 
     return_data = {'include': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
-    result1 = task_result.TaskResult(host=hostname, task=loaded_task, return_data=return_data)
-    result2 = task_result.TaskResult(host=hostname2, task=loaded_task, return_data=return_data)
+    result1 = task_result.TaskResult(host=host1, task=loaded_task, return_data=return_data, task_fields={})
+    result2 = task_result.TaskResult(host=host2, task=loaded_task, return_data=return_data, task_fields={})
     results = [result1, result2]
 
     fake_loader = DictDataLoader({'include_test.yml': ""})
@@ -127,14 +129,14 @@ def test_process_include_tasks_results(mock_iterator, mock_variable_manager):
     assert isinstance(res, list)
     assert len(res) == 1
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
-    assert res[0]._hosts == ['testhost1', 'testhost2']
+    assert res[0]._hosts == [host1, host2]
     assert res[0]._args == {}
     assert res[0]._vars == {}
 
 
 def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
-    hostname = "testhost1"
-    hostname2 = "testhost2"
+    host1 = Host("testhost1")
+    host2 = Host("testhost2")
 
     parent_task_ds = {'debug': 'msg=foo'}
     parent_task = Task.load(parent_task_ds)
@@ -150,10 +152,10 @@ def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
 
     return_data = {'include': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
-    result1 = task_result.TaskResult(host=hostname, task=loaded_task, return_data=return_data)
+    result1 = task_result.TaskResult(host=host1, task=loaded_task, return_data=return_data, task_fields={})
 
     return_data = {'include': 'other_include_test.yml'}
-    result2 = task_result.TaskResult(host=hostname2, task=loaded_child_task, return_data=return_data)
+    result2 = task_result.TaskResult(host=host2, task=loaded_child_task, return_data=return_data, task_fields={})
     results = [result1, result2]
 
     fake_loader = DictDataLoader({'include_test.yml': "",
@@ -164,8 +166,8 @@ def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[1]._filename == os.path.join(os.getcwd(), 'other_include_test.yml')
 
-    assert res[0]._hosts == ['testhost1']
-    assert res[1]._hosts == ['testhost2']
+    assert res[0]._hosts == [host1]
+    assert res[1]._hosts == [host2]
 
     assert res[0]._args == {}
     assert res[1]._args == {}
@@ -175,8 +177,8 @@ def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
 
 
 def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manager):
-    hostname = "testhost1"
-    hostname2 = "testhost2"
+    host1 = Host("testhost1")
+    host2 = Host("testhost2")
 
     parent_task_ds = {'debug': 'msg=foo'}
     parent_task1 = Task.load(parent_task_ds)
@@ -191,8 +193,8 @@ def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manage
 
     return_data = {'include': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
-    result1 = task_result.TaskResult(host=hostname, task=loaded_task1, return_data=return_data)
-    result2 = task_result.TaskResult(host=hostname2, task=loaded_task2, return_data=return_data)
+    result1 = task_result.TaskResult(host=host1, task=loaded_task1, return_data=return_data, task_fields={})
+    result2 = task_result.TaskResult(host=host2, task=loaded_task2, return_data=return_data, task_fields={})
     results = [result1, result2]
 
     fake_loader = DictDataLoader({'include_test.yml': ""})
@@ -203,8 +205,8 @@ def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manage
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[1]._filename == os.path.join(os.getcwd(), 'include_test.yml')
 
-    assert res[0]._hosts == ['testhost1']
-    assert res[1]._hosts == ['testhost2']
+    assert res[0]._hosts == [host1]
+    assert res[1]._hosts == [host2]
 
     assert res[0]._args == {}
     assert res[1]._args == {}
@@ -281,10 +283,14 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator, mock_vari
 
     result1 = task_result.TaskResult(host=hostname,
                                      task=include_role1,
-                                     return_data=include_role1_ds)
+                                     return_data=include_role1_ds,
+                                     task_fields={},
+                                     )
     result2 = task_result.TaskResult(host=hostname2,
                                      task=include_role2,
-                                     return_data=include_role2_ds)
+                                     return_data=include_role2_ds,
+                                     task_fields={},
+                                     )
     results = [result1, result2]
 
     res = IncludedFile.process_include_results(results,

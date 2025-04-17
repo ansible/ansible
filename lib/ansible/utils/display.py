@@ -983,8 +983,8 @@ class Display(metaclass=Singleton):
         msg: str,
         private: bool = False,
         seconds: int | None = None,
-        interrupt_input: c.Container[bytes] | None = None,
-        complete_input: c.Container[bytes] | None = None,
+        interrupt_input: c.Iterable[bytes] | None = None,
+        complete_input: c.Iterable[bytes] | None = None,
     ) -> bytes:
         if self._final_q:
             from ansible.executor.process.worker import current_worker
@@ -1039,8 +1039,8 @@ class Display(metaclass=Singleton):
         self,
         echo: bool = False,
         seconds: int | None = None,
-        interrupt_input: c.Container[bytes] | None = None,
-        complete_input: c.Container[bytes] | None = None,
+        interrupt_input: c.Iterable[bytes] | None = None,
+        complete_input: c.Iterable[bytes] | None = None,
     ) -> bytes:
         if self._final_q:
             raise NotImplementedError

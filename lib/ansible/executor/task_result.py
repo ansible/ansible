@@ -4,11 +4,15 @@
 
 from __future__ import annotations
 
+import dataclasses
 import typing as t
 
 from ansible import constants as C
-from ansible.parsing.dataloader import DataLoader
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
+
+if t.TYPE_CHECKING:
+    from ansible.inventory.host import Host
+    from ansible.playbook.task import Task
 
 _IGNORE = ('failed', 'skipped')
 _PRESERVE = ('attempts', 'changed', 'retries', '_ansible_no_log')
@@ -23,6 +27,16 @@ CLEAN_EXCEPTIONS = (
 )
 
 
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class ThinTaskResult:
+    """A thin version of `TaskResult` which can be sent over the worker queue."""
+
+    host_name: str
+    task_uuid: str
+    return_data: dict[str, object]
+    task_fields: dict[str, object]
+
+
 class TaskResult:
     """
     This class is responsible for interpreting the resulting data
@@ -30,19 +44,20 @@ class TaskResult:
     the result of a given task.
     """
 
-    def __init__(self, host, task, return_data, task_fields=None):
+    def __init__(self, host: Host, task: Task, return_data: dict[str, object], task_fields: dict[str, object]) -> None:
         self._host = host
         self._task = task
+        self._result = return_data
+        self._task_fields = task_fields
 
-        if isinstance(return_data, dict):
-            self._result = return_data.copy()
-        else:
-            self._result = DataLoader().load(return_data)
-
-        if task_fields is None:
-            self._task_fields = dict()
-        else:
-            self._task_fields = task_fields
+    def as_thin(self) -> ThinTaskResult:
+        """Return a `ThinTaskResult` from this instance."""
+        return ThinTaskResult(
+            host_name=self._host.name,
+            task_uuid=self._task._uuid,
+            return_data=self._result,
+            task_fields=self._task_fields,
+        )
 
     @property
     def task_name(self):
