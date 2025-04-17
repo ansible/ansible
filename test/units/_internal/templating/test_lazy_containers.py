@@ -466,8 +466,8 @@ def test_range_templating():
     templar = TemplateEngine()
 
     # ensure that an insanely large range is not listified
-    assert templar.evaluate_conditional(TRUST.tag("range(1000000000000) | type_debug == 'range'"))
-    assert isinstance(templar.template(TRUST.tag("{{ range(1000000000000) | random }}")), int)
+    assert templar.evaluate_conditional(TRUST.tag("range(2147483647) | type_debug == 'range'"))
+    assert isinstance(templar.template(TRUST.tag("{{ range(2147483647) | random }}")), int)
     assert templar.template(TRUST.tag("{{ range(3) | reverse }}")) == [2, 1, 0]
 
 
