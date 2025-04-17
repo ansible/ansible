@@ -8,9 +8,10 @@ DOCUMENTATION = '''
     short_description: Uses an Ansible INI file as inventory source.
     options:
       allowed_extensions:
-        description: What extensions this plugin will activate for.
+        description:
+            - What extensions this plugin will activate for.
+            - Currently it allows all extensions but in the future it will be set to 'ini' by default.
         version_added: "2.19"
-        default: ['ini', '']
         type: list
         elements: str
         ini:
@@ -127,8 +128,15 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         p = Path(path)
         allowed = self.get_option('allowed_extensions')
-        if valid and allowed and p.suffix[1:] not in allowed:
-            valid = False
+        if valid:
+            if allowed:
+                if p.suffix[1:] not in allowed:
+                    valid = False
+            elif p.suffix[1:] != 'ini':
+                self.display.deprecated(
+                    'Usage of ini inventory plugin with an inventory source that does not have the "ini" extension or the "allowed_extensions" option is not set',
+                    version='2.23'
+                )
         return valid
 
     def parse(self, inventory, loader, path: str, cache=True):
@@ -343,10 +351,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         # Try to process anything remaining as a series of key=value pairs.
         variables = {}
-        for t in tokens[1:]:
-            if '=' not in t:
-                self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
-            (k, v) = t.split('=', 1)
+        for to in tokens[1:]:
+            if '=' not in to:
+                self._raise_error(f"Expected key=value host variable assignment, got: {to}")
+            (k, v) = to.split('=', 1)
             variables[self._origin.tag(k)] = self._parse_value(v)
 
         return hostnames, port, variables
