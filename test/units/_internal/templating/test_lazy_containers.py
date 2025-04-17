@@ -5,6 +5,7 @@ from __future__ import annotations
 import collections.abc as c
 import copy
 import re
+import sys
 import typing as t
 
 import pytest
@@ -466,8 +467,8 @@ def test_range_templating():
     templar = TemplateEngine()
 
     # ensure that an insanely large range is not listified
-    assert templar.evaluate_conditional(TRUST.tag("range(1000000000000) | type_debug == 'range'"))
-    assert isinstance(templar.template(TRUST.tag("{{ range(1000000000000) | random }}")), int)
+    assert templar.evaluate_conditional(TRUST.tag("range(sys.maxsize) | type_debug == 'range'"))
+    assert isinstance(templar.template(TRUST.tag("{{ range(sys.maxsize) | random }}")), int)
     assert templar.template(TRUST.tag("{{ range(3) | reverse }}")) == [2, 1, 0]
 
 
