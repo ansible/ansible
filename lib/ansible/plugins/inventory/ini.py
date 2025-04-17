@@ -142,9 +142,11 @@ class InventoryModule(BaseFileInventoryPlugin):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         if self._show_deprecation:
-            self.display.deprecated(f"Parsed inventory source with invalid extension {path!r}.",
+            self.display.deprecated(
+                f"Parsed inventory source with invalid extension {path!r}.",
                 help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
-                version="2.23")
+                version="2.23"
+            )
         try:
             # Read in the hosts, groups, and variables defined in the inventory file.
             if self.loader:
