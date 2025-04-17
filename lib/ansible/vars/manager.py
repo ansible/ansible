@@ -214,24 +214,6 @@ class VariableManager:
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name != 'all'])
 
-            def _get_plugin_vars(plugin, path, entities):
-                data = {}
-                try:
-                    data = plugin.get_vars(self._loader, path, entities)
-                except AttributeError:
-                    try:
-                        for entity in entities:
-                            if isinstance(entity, Host):
-                                data |= plugin.get_host_vars(entity.name)
-                            else:
-                                data |= plugin.get_group_vars(entity.name)
-                    except AttributeError:
-                        if hasattr(plugin, 'run'):
-                            raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                        else:
-                            raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                return data
-
             # internal functions that actually do the work
             def _plugins_inventory(entities):
                 """ merges all entities by inventory source """
