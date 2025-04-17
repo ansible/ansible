@@ -45,7 +45,7 @@ DOCUMENTATION = """
           This would make the inventory plugin match previous behaviour.
 """
 
-EXAMPLES = """fmt: ini
+EXAMPLES = """# fmt: ini
 # Example 1
 [web]
 host1
