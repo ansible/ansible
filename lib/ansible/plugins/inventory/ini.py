@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
@@ -43,9 +43,9 @@ DOCUMENTATION = '''
         - Passing an empty string C('') as part of O(allowed_extensions) allows matching files without extension.
         - Making O(allowed_extensions) an empty list or C(None) will match files regardless of extension.
           This would make the inventory plugin match previous behaviour.
-'''
+"""
 
-EXAMPLES = '''# fmt: ini
+EXAMPLES = """fmt: ini
 # Example 1
 [web]
 host1
@@ -86,7 +86,7 @@ host4
 [g2]
 host4 # same host as above, but member of 2 groups, will inherit vars from both
       # inventory hostnames are unique
-'''
+"""
 
 import ast
 import re
@@ -121,6 +121,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         self.patterns: dict[str, re.Pattern] = {}
         self._origin: Origin | None = None
+        self._show_deprecation = False
 
     def verify_file(self, path):
 
@@ -133,10 +134,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 if p.suffix[1:] not in allowed:
                     valid = False
             elif p.suffix[1:] != 'ini':
-                self.display.deprecated(
-                    'Usage of ini inventory plugin with an inventory source that does not have the "ini" extension or the "allowed_extensions" option is not set',
-                    version='2.23'
-                )
+                self._show_deprecation = True
         return valid
 
     def parse(self, inventory, loader, path: str, cache=True):
@@ -178,6 +176,11 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         except Exception as ex:
             raise AnsibleParserError('Failed to parse inventory.', obj=self._origin) from ex
+
+        if self._show_deprecation:
+            self.display.deprecated(f"Parsed inventory with invalid extension {p.suffix!r}.",
+                help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
+                version="2.23")
 
     def _raise_error(self, message):
         raise AnsibleError(message)
