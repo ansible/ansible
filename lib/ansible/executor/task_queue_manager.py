@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import sys
 import tempfile
@@ -31,7 +32,7 @@ from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
 from ansible._internal._errors._handler import ErrorHandler
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import TaskResult, ThinTaskResult
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
@@ -58,11 +59,10 @@ STDERR_FILENO = 2
 display = Display()
 
 
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
-    def __init__(self, method_name, *args, **kwargs):
-        self.method_name = method_name
-        self.args = args
-        self.kwargs = kwargs
+    method_name: str
+    thin_task_result: ThinTaskResult
 
 
 class DisplaySend:
@@ -87,19 +87,11 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
         kwargs['ctx'] = multiprocessing_context
         super().__init__(*args, **kwargs)
 
-    def send_callback(self, method_name, *args, **kwargs):
-        self.put(
-            CallbackSend(method_name, *args, **kwargs),
-        )
+    def send_callback(self, method_name: str, task_result: TaskResult) -> None:
+        self.put(CallbackSend(method_name=method_name, thin_task_result=task_result.as_thin()))
 
-    def send_task_result(self, *args, **kwargs):
-        if isinstance(args[0], TaskResult):
-            tr = args[0]
-        else:
-            tr = TaskResult(*args, **kwargs)
-        self.put(
-            tr,
-        )
+    def send_task_result(self, task_result: TaskResult) -> None:
+        self.put(task_result.as_thin())
 
     def send_display(self, method, *args, **kwargs):
         self.put(

@@ -35,9 +35,8 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleTemplateError
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import TaskResult, ThinTaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, TaskQueueManager
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.handler import Handler
@@ -89,7 +88,9 @@ def _get_item_vars(result, task):
     return item_vars
 
 
-def results_thread_main(strategy):
+def results_thread_main(strategy: StrategyBase) -> None:
+    value: object
+
     while True:
         try:
             result = strategy._final_q.get()
@@ -99,13 +100,10 @@ def results_thread_main(strategy):
                 dmethod = getattr(display, result.method)
                 dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
-                for arg in result.args:
-                    if isinstance(arg, TaskResult):
-                        strategy.normalize_task_result(arg)
-                        break
-                strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
-            elif isinstance(result, TaskResult):
-                strategy.normalize_task_result(result)
+                task_result = strategy.convert_thin_task_result(result.thin_task_result)
+                strategy._tqm.send_callback(result.method_name, task_result)
+            elif isinstance(result, ThinTaskResult):
+                result = strategy.convert_thin_task_result(result)
                 with strategy._results_lock:
                     strategy._results.append(result)
             elif isinstance(result, PromptSend):
@@ -447,39 +445,33 @@ class StrategyBase:
             for target_host in host_list:
                 _set_host_facts(target_host, always_facts)
 
-    def normalize_task_result(self, task_result):
-        """Normalize a TaskResult to reference actual Host and Task objects
-        when only given the ``Host.name``, or the ``Task._uuid``
+    def convert_thin_task_result(self, thin_task_result: ThinTaskResult) -> TaskResult:
+        """Return a `TaskResult` created from a `ThinTaskResult`."""
+        host = self._inventory.get_host(thin_task_result.host_name)
+        queue_cache_entry = (host.name, thin_task_result.task_uuid)
 
-        Only the ``Host.name`` and ``Task._uuid`` are commonly sent back from
-        the ``TaskExecutor`` or ``WorkerProcess`` due to performance concerns
+        try:
+            found_task = self._queued_task_cache[queue_cache_entry]['task']
+        except KeyError:
+            # This should only happen due to an implicit task created by the
+            # TaskExecutor, restrict this behavior to the explicit use case
+            # of an implicit async_status task
+            if thin_task_result.task_fields.get('action') != 'async_status':
+                raise
 
-        Mutates the original object
-        """
+            task = Task()
+        else:
+            task = found_task.copy(exclude_parent=True, exclude_tasks=True)
+            task._parent = found_task._parent
 
-        if isinstance(task_result._host, string_types):
-            # If the value is a string, it is ``Host.name``
-            task_result._host = self._inventory.get_host(to_text(task_result._host))
+        task.from_attrs(thin_task_result.task_fields)
 
-        if isinstance(task_result._task, string_types):
-            # If the value is a string, it is ``Task._uuid``
-            queue_cache_entry = (task_result._host.name, task_result._task)
-            try:
-                found_task = self._queued_task_cache[queue_cache_entry]['task']
-            except KeyError:
-                # This should only happen due to an implicit task created by the
-                # TaskExecutor, restrict this behavior to the explicit use case
-                # of an implicit async_status task
-                if task_result._task_fields.get('action') != 'async_status':
-                    raise
-                original_task = Task()
-            else:
-                original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-                original_task._parent = found_task._parent
-            original_task.from_attrs(task_result._task_fields)
-            task_result._task = original_task
-
-        return task_result
+        return TaskResult(
+            host=host,
+            task=task,
+            return_data=thin_task_result.return_data,
+            task_fields=thin_task_result.task_fields,
+        )
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
         handlers = [h for b in reversed(iterator._play.handlers) for h in b.block]
@@ -869,7 +861,7 @@ class StrategyBase:
                     r._result['failed'] = True
 
                 for host in included_file._hosts:
-                    tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
+                    tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason), task_fields={})
                     self._tqm._stats.increment('failures', host.name)
                     self._tqm.send_callback('v2_runner_on_failed', tr)
             raise AnsibleError(reason) from e
@@ -1083,7 +1075,7 @@ class StrategyBase:
         else:
             display.vv(f"META: {header}")
 
-        res = TaskResult(target_host, task, result)
+        res = TaskResult(target_host, task, result, {})
         if skipped:
             self._tqm.send_callback('v2_runner_on_skipped', res)
         return [res]

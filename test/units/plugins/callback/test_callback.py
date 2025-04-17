@@ -52,7 +52,7 @@ class TestCallback(unittest.TestCase):
         self.assertIs(cb._display, display_mock)
 
     def test_host_label(self):
-        result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
+        result = TaskResult(host=Host('host1'), task=mock_task, return_data={}, task_fields={})
 
         self.assertEqual(CallbackBase.host_label(result), 'host1')
 
@@ -62,6 +62,7 @@ class TestCallback(unittest.TestCase):
             host=Host('host1'),
             task=mock_task,
             return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
+            task_fields={},
         )
         self.assertEqual(CallbackBase.host_label(result), 'host1 -> host2')
 
