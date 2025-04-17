@@ -40,8 +40,8 @@ DOCUMENTATION = '''
         - Enabled in configuration by default.
         - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
           The YAML inventory plugin processes variable values consistently and correctly.
-        - Passing an empty string `''` as part of O(allowed_extensions) allows matching files without extension.
-        - Making O(allowed_extensions) and empty list or None will enable 'any extension' to be considered.
+        - Passing an empty string C('') as part of O(allowed_extensions) allows matching files without extension.
+        - Making O(allowed_extensions) an empty list or C(None) will match files regardless of extension.
           This would make the inventory plugin match previous behaviour.
 '''
 
@@ -351,10 +351,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         # Try to process anything remaining as a series of key=value pairs.
         variables = {}
-        for to in tokens[1:]:
-            if '=' not in to:
-                self._raise_error(f"Expected key=value host variable assignment, got: {to}")
-            (k, v) = to.split('=', 1)
+        for token in tokens[1:]:
+            if '=' not in token:
+                self._raise_error(f"Expected key=value host variable assignment, got: {token}")
+            k, v = token.split('=', 1)
             variables[self._origin.tag(k)] = self._parse_value(v)
 
         return hostnames, port, variables
