@@ -44,6 +44,9 @@ from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.manager import _deprecate_top_level_fact
 from ansible._internal._errors import _captured
 
+if t.TYPE_CHECKING:
+    from ansible.executor.task_queue_manager import FinalQueue
+
 display = Display()
 
 
@@ -79,7 +82,7 @@ class TaskExecutor:
     class.
     """
 
-    def __init__(self, host, task: Task, job_vars, play_context, loader, shared_loader_obj, final_q, variable_manager):
+    def __init__(self, host, task: Task, job_vars, play_context, loader, shared_loader_obj, final_q: FinalQueue, variable_manager):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -362,9 +365,9 @@ class TaskExecutor:
                 task_fields['connection'] = getattr(self._connection, 'ansible_name')
 
             tr = TaskResult(
-                self._host.name,
-                self._task._uuid,
-                res,
+                host=self._host,
+                task=self._task,
+                return_data=res,
                 task_fields=task_fields,
             )
 
@@ -666,17 +669,23 @@ class TaskExecutor:
                     if result.get('failed'):
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
-                            TaskResult(self._host.name,
-                                       self._task._uuid,
-                                       result,
-                                       task_fields=self._task.dump_attrs()))
+                            TaskResult(
+                                host=self._host,
+                                task=self._task,
+                                return_data=result,
+                                task_fields=self._task.dump_attrs(),
+                            ),
+                        )
                     else:
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
-                            TaskResult(self._host.name,
-                                       self._task._uuid,
-                                       result,
-                                       task_fields=self._task.dump_attrs()))
+                            TaskResult(
+                                host=self._host,
+                                task=self._task,
+                                return_data=result,
+                                task_fields=self._task.dump_attrs(),
+                            ),
+                        )
 
             if 'ansible_facts' in result and self._task.action not in C._ACTION_DEBUG:
                 if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
@@ -757,11 +766,11 @@ class TaskExecutor:
                         self._final_q.send_callback(
                             'v2_runner_retry',
                             TaskResult(
-                                self._host.name,
-                                self._task._uuid,
-                                result,
+                                host=self._host,
+                                task=self._task,
+                                return_data=result,
                                 task_fields=self._task.dump_attrs()
-                            )
+                            ),
                         )
                         time.sleep(delay)
                         self._handler = self._get_action_handler(templar=templar)
@@ -927,9 +936,9 @@ class TaskExecutor:
                 self._final_q.send_callback(
                     'v2_runner_on_async_poll',
                     TaskResult(
-                        self._host.name,
-                        async_task._uuid,
-                        async_result,
+                        host=self._host,
+                        task=async_task,
+                        return_data=async_result,
                         task_fields=async_task.dump_attrs(),
                     ),
                 )
