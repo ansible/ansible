@@ -36,7 +36,7 @@ Function New-AnsiblePowerShellSignature {
     Creates and signed Ansible content for App Control/WDAC.
 
     .DESCRIPTION
-    This function will generate the powershell_signatures.ps1 manifest and sign
+    This function will generate the powershell_signatures.psd1 manifest and sign
     it. The manifest file includes all PowerShell/C# module_utils and
     PowerShell modules in the collection(s) specified. It will also create the
     '*.authenticode' signature file for the exec_wrapper.ps1 used inside
@@ -325,9 +325,8 @@ Function New-AnsiblePowerShellSignature {
                 }
 
                 $manifest = @(
-                    '#AnsibleVersion 1'
-                    ''
                     '@{'
+                    '    Version = 1'
                     '    HashList = @('
                     foreach ($content in $hashedPaths) {
                         # To avoid encoding problems with Authenticode and non-ASCII
@@ -350,7 +349,7 @@ Function New-AnsiblePowerShellSignature {
                     '    )'
                     '}'
                 ) -join "`n"
-                $manifestPath = [Path]::Combine($metaPath, 'powershell_signatures.ps1')
+                $manifestPath = [Path]::Combine($metaPath, 'powershell_signatures.psd1')
                 Write-Verbose "Creating and signing manifest for $c at '$manifestPath'"
                 Set-Content -LiteralPath $manifestPath -Value $manifest -NoNewline
 

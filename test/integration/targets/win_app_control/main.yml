@@ -138,6 +138,6 @@
         path: '{{ ansible_install_dir }}/{{ item }}'
         state: absent
       loop:
-      - config/powershell_signatures.ps1
+      - config/powershell_signatures.psd1
       - executor/powershell/exec_wrapper.ps1.authenticode
       delegate_to: localhost

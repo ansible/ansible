@@ -231,6 +231,7 @@ begin {
 
             # If the script is manually signed we need to ensure the signature
             # is valid and trusted by the OS policy.
+            # We must use '.ps1' so the ExternalScript WDAC check will apply.
             $tmpFile = [Path]::Combine($Script:AnsibleTempPath, "ansible-tmp-$([Guid]::NewGuid()).ps1")
             try {
                 [File]::WriteAllBytes($tmpFile, $scriptBytes)
@@ -420,27 +421,24 @@ begin {
                     throw "script is not signed or not trusted to run."
                 }
 
-                # We run in a new runspace to avoid any side effects from
-                # running the input script.
-                $ps = [PowerShell]::Create()
-                $null = $ps.AddScript(@'
-${function:<GetHashList>} = [System.Management.Automation.Language.Parser]::ParseInput(
-    $args[0],
-    $args[1],
-    [ref]$null,
-    [ref]$null).GetScriptBlock()
-'@).AddArgument($scriptInfo.Script).AddArgument($Name).AddStatement()
-                $out = $ps.AddCommand('<GetHashList>', $false).Invoke()
-
-                if ($ps.HadErrors) {
-                    throw "failure when running manifest script: $($ps.Streams.Error)"
+                $hashListAst = [Parser]::ParseInput(
+                    $scriptInfo.Script,
+                    $Name,
+                    [ref]$null,
+                    [ref]$null)
+                $manifestAst = $hashListAst.Find({ $args[0] -is [HashtableAst] }, $false)
+                if ($null -eq $manifestAst) {
+                    throw "expecting a single hashtable in the signed manifest."
                 }
 
-                if (-not ($out.Count -eq 1 -and $out[0] -is [Hashtable])) {
-                    throw "expecting hash list to be a single hashtable but got '$out'."
+                $out = $manifestAst.SafeGetValue()
+                if (-not $out.Contains('Version')) {
+                    throw "expecting hash list to contain 'Version' key."
+                }
+                if ($out.Version -ne 1) {
+                    throw "unsupported hash list Version $($out.Version), expecting 1."
                 }
 
-                $out = $out[0]
                 if (-not $out.Contains('HashList')) {
                     throw "expecting hash list to contain 'HashList' key."
                 }

@@ -593,7 +593,7 @@ def _get_powershell_signed_hashlist(
     :return: The resourcep path and ScriptInfo payload of the signed hashlist script if found.
     """
     resource = 'ansible.config' if collection is None else f"{collection}.meta"
-    signature_file = 'powershell_signatures.ps1'
+    signature_file = 'powershell_signatures.psd1'
 
     try:
         sig_data = pkgutil.get_data(resource, signature_file)
@@ -602,10 +602,6 @@ def _get_powershell_signed_hashlist(
 
     if sig_data:
         resource_path = f"{resource}.{signature_file}"
-        if not sig_data.startswith(b"#AnsibleVersion 1\n"):
-            first_line = sig_data.split(b'\n')[0].decode()
-            raise AnsibleError(f"Expecting first line of signature file '{resource_path}' to be '#AnsibleVersion 1\\n' but was {first_line!r}")
-
         return _ScriptInfo(content=sig_data, path=resource_path)
 
     return None
