@@ -106,6 +106,9 @@
     - name: run content after enabling App Control
       import_tasks: test_enabled.yml
 
+    - name: run invalid manifest tests
+      import_tasks: test_manifest.yml
+
     always:
     - name: disable policy through CiTool if present
       win_shell: CiTool.exe --remove-policy {{ policy_info.policy_id }}

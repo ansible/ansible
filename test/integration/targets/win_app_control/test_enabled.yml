@@ -202,3 +202,14 @@
     that:
     - fetch_res.checksum == copy_stat.stat.checksum
     - fetch_res.checksum == fetch_stat.stat.checksum
+
+- name: run signed module with signed module util in another collection
+  ns.module_util_ref.module:
+  register: cross_util_res
+
+- name: assert run signed module with signed module utils in another collection
+  assert:
+    that:
+    - cross_util_res.language_mode == 'FullLanguage'
+    - cross_util_res.csharp_util == 'value'
+    - "cross_util_res.powershell_util == {'language_mode': 'FullLanguage'}"

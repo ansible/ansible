@@ -396,7 +396,7 @@ $untrustedCert = [X509Certificate2]::new($UntrustedCertPath, $CertPass)
 
 $sigParams = @{
     Certificate = $cert
-    Collection = 'ansible.builtin', 'ansible.windows', 'ns.col'
+    Collection = 'ansible.builtin', 'ansible.windows', 'ns.col', 'ns.module_util_ref'
     Skip = @(
         'ns.col.skipped'
         'ns.col.inline_signed'
