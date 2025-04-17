@@ -141,6 +141,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
+        if self._show_deprecation:
+            self.display.deprecated(f"Parsed inventory source with invalid extension {path!r}.",
+                help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
+                version="2.23")
         try:
             # Read in the hosts, groups, and variables defined in the inventory file.
             if self.loader:
@@ -176,11 +180,6 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         except Exception as ex:
             raise AnsibleParserError('Failed to parse inventory.', obj=self._origin) from ex
-
-        if self._show_deprecation:
-            self.display.deprecated(f"Parsed inventory with invalid extension {p.suffix!r}.",
-                help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
-                version="2.23")
 
     def _raise_error(self, message):
         raise AnsibleError(message)
