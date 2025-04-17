@@ -49,7 +49,7 @@ def test_skippable_non_skip_exception() -> None:
     assert err.value is ex_to_raise
 
 
-@pytest.mark.parametrize("error_action", (ErrorAction.IGNORE, ErrorAction.WARN, ErrorAction.FAIL))
+@pytest.mark.parametrize("error_action", (ErrorAction.IGNORE, ErrorAction.WARNING, ErrorAction.ERROR))
 def test_skip_on_ignore_missing_skippable(error_action: ErrorAction) -> None:
     """Verify that a `_SkipException` is raised when `skip_on_ignore=True` and no `Skippable` context was used to suppress it."""
     body_ran = False
@@ -87,20 +87,20 @@ def test_ignore_passes_other_exceptions() -> None:
 
 @pytest.mark.parametrize("exception_type", (RuntimeError, NotImplementedError))
 def test_warn_success(exception_type: type[Exception], mocker: pytest_mock.MockerFixture) -> None:
-    """Verify that `ErrorAction.WARN` eats the specified error type and calls `error_as_warning` with the exception instance raised."""
+    """Verify that `ErrorAction.WARNING` eats the specified error type and calls `error_as_warning` with the exception instance raised."""
     eaw = mocker.patch.object(Display(), 'error_as_warning')
-    with ErrorHandler(ErrorAction.WARN).handle(RuntimeError, NotImplementedError):
+    with ErrorHandler(ErrorAction.WARNING).handle(RuntimeError, NotImplementedError):
         raise exception_type()
 
     assert isinstance(eaw.call_args.kwargs['exception'], exception_type)
 
 
 def test_warn_passes_other_exceptions(mocker: pytest_mock.MockerFixture) -> None:
-    """Verify that `ErrorAction.WARN` does not suppress exception types not passed to `handle`, and that `error_as_warning` is not called for them."""
+    """Verify that `ErrorAction.WARNING` does not suppress exception types not passed to `handle`, and that `error_as_warning` is not called for them."""
     eaw = mocker.patch.object(Display(), 'error_as_warning')
 
     with pytest.raises(NotImplementedError):
-        with ErrorHandler(ErrorAction.WARN).handle(TypeError, ValueError):
+        with ErrorHandler(ErrorAction.WARNING).handle(TypeError, ValueError):
             raise NotImplementedError()
 
     assert not eaw.called
@@ -108,9 +108,9 @@ def test_warn_passes_other_exceptions(mocker: pytest_mock.MockerFixture) -> None
 
 @pytest.mark.parametrize("exception_type", (AttributeError, NotImplementedError, ValueError))
 def test_fail(exception_type: type[Exception]) -> None:
-    """Verify that `ErrorAction.FAIL` passes through all exception types, regardless of what was passed to `handle`."""
+    """Verify that `ErrorAction.ERROR` passes through all exception types, regardless of what was passed to `handle`."""
     with pytest.raises(exception_type):
-        with ErrorHandler(ErrorAction.FAIL).handle(AttributeError, NotImplementedError):
+        with ErrorHandler(ErrorAction.ERROR).handle(AttributeError, NotImplementedError):
             raise exception_type()
 
 
