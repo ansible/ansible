@@ -61,6 +61,10 @@ class ActionModule(ActionBase):
                     if not filename or content:
                         continue
 
+                    if not value.get('original_filename'):
+                        value['original_filename'] = value.get('filename')
+                    filename = value.get('original_filename')
+
                     filename = self._find_needle('files', filename)
 
                     tmp_src = self._connection._shell.join_path(
