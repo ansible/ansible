@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: MIT-0
 ---
 # Collections must specify a minimum required ansible version to upload
 # to galaxy

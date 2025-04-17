@@ -320,7 +320,7 @@ class ValidRoleTests(object):
             if self.role_name == 'delete_me_skeleton':
                 expected_string = "---\n# {0} file for {1}".format(d, self.role_name)
             else:
-                expected_string = "#SPDX-License-Identifier: MIT-0\n---\n# {0} file for {1}".format(d, self.role_name)
+                expected_string = "# SPDX-License-Identifier: MIT-0\n---\n# {0} file for {1}".format(d, self.role_name)
             with open(main_yml, 'r') as f:
                 self.assertEqual(expected_string, f.read().strip())
 
