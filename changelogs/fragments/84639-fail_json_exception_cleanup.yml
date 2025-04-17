@@ -1,0 +1,3 @@
+bugfixes:
+  - Removed improper use of the `exception` argument in `fail_json()` calls in `expect` and `wait_for` modules.
+    These exceptions were not deferred and passing them prevented automatic traceback capture, violating best practices.

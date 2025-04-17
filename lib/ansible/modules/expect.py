@@ -163,7 +163,8 @@ def main():
     )
 
     if not HAS_PEXPECT:
-        module.fail_json(msg=missing_required_lib("pexpect"), exception=PEXPECT_IMP_ERR)
+        module.fail_json(msg=missing_required_lib("pexpect"))
+
 
     chdir = module.params['chdir']
     args = module.params['command']

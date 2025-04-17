@@ -286,7 +286,7 @@ class TCPConnectionInfo(object):
         self.port = int(self.module.params['port'])
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
-            module.fail_json(msg=missing_required_lib('psutil'), exception=PSUTIL_IMP_ERR)
+            module.fail_json(msg=missing_required_lib('psutil'))
 
     def _get_exclude_ips(self):
         exclude_hosts = self.module.params['exclude_hosts']
