@@ -121,7 +121,7 @@ def test_no_exceptions_to_handle():
             pass
 
 
-@pytest.mark.parametrize("value", ('ignore', 'warn', 'fail'))
+@pytest.mark.parametrize("value", ('ignore', 'warning', 'error'))
 def test_from_config_env_success(value: str, mocker: pytest_mock.MockerFixture) -> None:
     """Verify that `from_config` correctly creates handlers with the requested error action config string."""
     mocker.patch.dict(os.environ, dict(_ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR=value))
