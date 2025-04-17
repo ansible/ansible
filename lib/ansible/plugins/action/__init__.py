@@ -654,7 +654,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 res = self._remote_chmod(remote_paths, 'u+rwx')
                 if res['rc'] != 0:
                     raise AnsibleError(
-                        'Failed to set execute bit on remote files '
+                        'Failed to set permissions on remote files '
                         '(rc: {0}, err: {1})'.format(
                             res['rc'],
                             to_native(res['stderr'])))
