@@ -1,7 +1,7 @@
 import pytest
 import sys
 import importlib
-import traceback
+
 
 from ansible.modules import expect
 
