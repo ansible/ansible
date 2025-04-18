@@ -90,7 +90,7 @@ from multiprocessing import dummy as threading
 from multiprocessing import TimeoutError, Lock
 
 
-COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 180
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 300
 LOCK = Lock()
 
 
