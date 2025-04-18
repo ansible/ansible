@@ -83,6 +83,8 @@ class _ClassProperty:
 
 class FieldAttributeBase:
 
+    _post_validate_object = False
+
     fattributes = _ClassProperty()
 
     @classmethod
@@ -567,7 +569,7 @@ class FieldAttributeBase:
             return Sentinel
 
         # FIXME: compare types, not strings
-        if not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext', 'IncludeRole', 'TaskInclude'):
+        if not attribute.always_post_validate and not self.__class__._post_validate_object:
             # Intermediate objects like Play() won't have their fields validated by
             # default, as their values are often inherited by other objects and validated
             # later, so we don't want them to fail out early
