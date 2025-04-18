@@ -120,6 +120,7 @@ EXAMPLES = r"""
 
 import datetime
 import os
+import traceback
 
 PEXPECT_IMP_ERR = None
 try:
@@ -132,6 +133,10 @@ except ImportError as ex:
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.common.validation import check_type_int
+
+
+def format_exception_traceback(exc):
+    return ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
 
 def response_closure(module, question, responses):
@@ -163,7 +168,7 @@ def main():
     )
 
     if not HAS_PEXPECT:
-        module.fail_json(msg=missing_required_lib("pexpect"))
+        module.fail_json(msg=missing_required_lib("pexpect"), exception=format_exception_traceback(PEXPECT_IMP_ERR))
 
     chdir = module.params['chdir']
     args = module.params['command']

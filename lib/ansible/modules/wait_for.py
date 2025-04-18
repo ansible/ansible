@@ -234,6 +234,7 @@ import re
 import select
 import socket
 import time
+import traceback
 
 from datetime import datetime, timedelta, timezone
 
@@ -250,6 +251,10 @@ try:
     # just because we can import it on Linux doesn't mean we will use it
 except ImportError as ex:
     PSUTIL_IMP_ERR = ex
+
+
+def format_exception_traceback(exc):
+    return ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
 
 class TCPConnectionInfo(object):
@@ -286,7 +291,7 @@ class TCPConnectionInfo(object):
         self.port = int(self.module.params['port'])
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
-            module.fail_json(msg=missing_required_lib('psutil'))
+            module.fail_json(msg=missing_required_lib('psutil'), exception=format_exception_traceback(PSUTIL_IMP_ERR))
 
     def _get_exclude_ips(self):
         exclude_hosts = self.module.params['exclude_hosts']
