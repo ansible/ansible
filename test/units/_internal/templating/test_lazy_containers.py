@@ -5,6 +5,7 @@ from __future__ import annotations
 import collections.abc as c
 import copy
 import re
+import sys
 import typing as t
 
 import pytest
@@ -463,11 +464,13 @@ def test_range_templating():
     They are usually listified like other iterables when returned from a Jinja filter or method/function call, except when calling the Python `range()`
     global function directly, which allows the range object to be returned and used directly.
     """
-    templar = TemplateEngine()
+    templar = TemplateEngine(variables=dict(
+        large_value=min(1000000000000, sys.maxsize - 1)  # ensure we don't exceed ssize_t on 32-bit systems
+    ))
 
     # ensure that an insanely large range is not listified
-    assert templar.evaluate_conditional(TRUST.tag("range(1000000000000) | type_debug == 'range'"))
-    assert isinstance(templar.template(TRUST.tag("{{ range(1000000000000) | random }}")), int)
+    assert templar.evaluate_conditional(TRUST.tag("range(large_value) | type_debug == 'range'"))
+    assert isinstance(templar.template(TRUST.tag("{{ range(large_value) | random }}")), int)
     assert templar.template(TRUST.tag("{{ range(3) | reverse }}")) == [2, 1, 0]
 
 
