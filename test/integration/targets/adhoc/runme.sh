@@ -10,7 +10,7 @@ ansible --task-timeout 5 localhost -m command -a '{"cmd": "whoami"}' | grep 'rc=
 
 # ensure that legacy deserializer behaves as expected on JSON CLI args (https://github.com/ansible/ansible/issues/82600)
 # also ensure that various templated args function (non-exhaustive)
-_ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR=warn ansible '{{"localhost"}}' -m '{{"debug"}}' -a var=fromcli -e '{"fromcli":{"no_trust":{"__ansible_unsafe":"{{\"hello\"}}"},"trust":"{{ 1 }}"}}' > "${OUTPUT_DIR}/output.txt" 2>&1
+_ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR=warning ansible '{{"localhost"}}' -m '{{"debug"}}' -a var=fromcli -e '{"fromcli":{"no_trust":{"__ansible_unsafe":"{{\"hello\"}}"},"trust":"{{ 1 }}"}}' > "${OUTPUT_DIR}/output.txt" 2>&1
 grep '"no_trust": "{{."hello."}}"' "${OUTPUT_DIR}/output.txt"  # ensure that the template was not rendered
 grep '"trust": 1' "${OUTPUT_DIR}/output.txt"  # ensure that the trusted template was rendered
 grep "Encountered untrusted template" "${OUTPUT_DIR}/output.txt"  # look for the untrusted template warning text

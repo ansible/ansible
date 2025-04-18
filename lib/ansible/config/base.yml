@@ -9,6 +9,18 @@ _ANSIBLE_CONNECTION_PATH:
     - For internal use only.
   type: path
   version_added: "2.18"
+_CALLBACK_DISPATCH_ERROR_BEHAVIOR:
+  name: Callback dispatch error behavior
+  default: warning
+  description:
+    - Action to take when a callback dispatch results in an error.
+  type: choices
+  choices: &basic_error
+    error: issue a 'fatal' error and stop the play
+    warning: issue a warning but continue
+    ignore: just continue silently
+  env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
+  version_added: '2.19'
 ALLOW_BROKEN_CONDITIONALS:
   # This config option will be deprecated once it no longer has any effect (2.23).
   name: Allow broken conditionals
@@ -224,18 +236,6 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
-_CALLBACK_DISPATCH_ERROR_BEHAVIOR:
-  name: Callback dispatch error behavior
-  default: warn
-  description:
-    - Action to take when a callback dispatch results in an error.
-  type: choices
-  choices: &choices_ignore_warn_fail
-    - ignore
-    - warn
-    - fail
-  env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
-  version_added: '2.19'
 COLLECTIONS_SCAN_SYS_PATH:
   name: Scan PYTHONPATH for installed collections
   description: A boolean to enable or disable scanning the sys.path for installed collections.
@@ -268,10 +268,7 @@ COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   - When a collection is loaded that does not support the running Ansible version (with the collection metadata key `requires_ansible`).
   env: [{name: ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH}]
   ini: [{key: collections_on_ansible_version_mismatch, section: defaults}]
-  choices: &basic_error
-    error: issue a 'fatal' error and stop the play
-    warning: issue a warning but continue
-    ignore: just continue silently
+  choices: *basic_error
   default: warning
 COLOR_CHANGED:
   name: Color for 'changed' task status
@@ -2058,13 +2055,13 @@ TASK_TIMEOUT:
   version_added: '2.10'
 _TEMPLAR_UNKNOWN_TYPE_CONVERSION:
   name: Templar unknown type conversion behavior
-  default: warn
+  default: warning
   description:
     - Action to take when an unknown type is converted for variable storage during template finalization.
     - This setting has no effect on the inability to store unsupported variable types as the result of templating.
     - Experimental diagnostic feature, subject to change.
   type: choices
-  choices: *choices_ignore_warn_fail
+  choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_CONVERSION}]
   version_added: '2.19'
 _TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
@@ -2074,7 +2071,7 @@ _TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
     - Action to take when an unknown type is encountered inside a template pipeline.
     - Experimental diagnostic feature, subject to change.
   type: choices
-  choices: *choices_ignore_warn_fail
+  choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED}]
   version_added: '2.19'
 _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
@@ -2086,7 +2083,7 @@ _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
     - This setting has no effect on expressions.
     - Experimental diagnostic feature, subject to change.
   type: choices
-  choices: *choices_ignore_warn_fail
+  choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
   version_added: '2.19'
 WORKER_SHUTDOWN_POLL_COUNT:

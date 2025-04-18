@@ -985,12 +985,12 @@ def _maybe_finalize_scalar(o: t.Any) -> t.Any:
 
         match _TemplateConfig.unknown_type_conversion_handler.action:
             # we don't want to show the object value, and it can't be Origin-tagged; send the current template value for best effort
-            case ErrorAction.WARN:
+            case ErrorAction.WARNING:
                 display.warning(
                     msg=f'Type {native_type_name(o)!r} is unsupported in variable storage, converting to {native_type_name(target_type)!r}.',
                     obj=TemplateContext.current(optional=True).template_value,
                 )
-            case ErrorAction.FAIL:
+            case ErrorAction.ERROR:
                 raise AnsibleVariableTypeError.from_value(obj=TemplateContext.current(optional=True).template_value)
 
         return target_type(o)
@@ -1006,12 +1006,12 @@ def _finalize_fallback_collection(
 ) -> t.Collection[t.Any]:
     match _TemplateConfig.unknown_type_conversion_handler.action:
         # we don't want to show the object value, and it can't be Origin-tagged; send the current template value for best effort
-        case ErrorAction.WARN:
+        case ErrorAction.WARNING:
             display.warning(
                 msg=f'Type {native_type_name(o)!r} is unsupported in variable storage, converting to {native_type_name(target_type)!r}.',
                 obj=TemplateContext.current(optional=True).template_value,
             )
-        case ErrorAction.FAIL:
+        case ErrorAction.ERROR:
             raise AnsibleVariableTypeError.from_value(obj=TemplateContext.current(optional=True).template_value)
 
     return _finalize_collection(o, mode, finalizer, target_type)
