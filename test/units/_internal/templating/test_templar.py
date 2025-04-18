@@ -98,18 +98,18 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         """Ensure template trust check failures default to fatal for unit tests (set in units/conftest.py)"""
         from ansible._internal._templating._engine import TemplateTrustCheckFailedError
 
-        assert _TemplateConfig.untrusted_template_handler.action is ErrorAction.FAIL
+        assert _TemplateConfig.untrusted_template_handler.action is ErrorAction.ERROR
 
         with pytest.raises(TemplateTrustCheckFailedError):
             self.templar.template("{{ i_am_not_trusted }}")
 
     def test_trust_fail_warning_behavior(self):
-        """Validate that trust checks are non-fatal when TemplateConfig.untrusted_template_handler is set to `ErrorAction.WARN`."""
+        """Validate that trust checks are non-fatal when TemplateConfig.untrusted_template_handler is set to `ErrorAction.WARNING`."""
         untrusted_template = "{{ i_am_not_trusted }}"
 
         assert hasattr(_TemplateConfig, 'untrusted_template_handler')
 
-        with (unittest.mock.patch.object(_TemplateConfig, 'untrusted_template_handler', ErrorHandler(ErrorAction.WARN)),
+        with (unittest.mock.patch.object(_TemplateConfig, 'untrusted_template_handler', ErrorHandler(ErrorAction.WARNING)),
               unittest.mock.patch.object(Display, 'error_as_warning', return_value=None) as mock_warning):
             assert self.templar.template(untrusted_template) is untrusted_template
 
