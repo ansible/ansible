@@ -16,8 +16,8 @@ class ErrorAction(enum.Enum):
     """Action to take when an error is encountered."""
 
     IGNORE = enum.auto()
-    WARN = enum.auto()
-    FAIL = enum.auto()
+    WARNING = enum.auto()
+    ERROR = enum.auto()
 
     @classmethod
     def from_config(cls, setting: str, variables: dict[str, t.Any] | None = None) -> t.Self:
@@ -75,9 +75,9 @@ class ErrorHandler:
             yield
         except args as ex:
             match self.action:
-                case ErrorAction.WARN:
+                case ErrorAction.WARNING:
                     display.error_as_warning(msg=None, exception=ex)
-                case ErrorAction.FAIL:
+                case ErrorAction.ERROR:
                     raise
                 case _:  # ErrorAction.IGNORE
                     pass
