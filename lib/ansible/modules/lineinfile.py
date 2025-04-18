@@ -127,6 +127,7 @@ options:
     description:
       - The character set in which the target file is encoded.
     type: str
+    default: utf-8
     version_added: "2.19"
 extends_documentation_fragment:
     - action_common_attributes
@@ -575,7 +576,7 @@ def main():
             regexp=dict(type='str', aliases=['regex']),
             search_string=dict(type='str'),
             line=dict(type='str', aliases=['value']),
-            encoding=dict(type='str'),
+            encoding=dict(type='str', default='utf-8'),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
             backrefs=dict(type='bool', default=False),
