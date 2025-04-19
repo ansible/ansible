@@ -1,0 +1,38 @@
+- ssh_keygen:
+    type: "{{ item }}"
+    passphrase: passphrase
+  register: sshkey
+
+- slurp:
+    path: ~/.ssh/authorized_keys
+  register: akeys
+
+- copy:
+    content: |
+      {{ sshkey.public_key }}
+      {{ akeys.content|b64decode }}
+    dest: ~/.ssh/authorized_keys
+    mode: '0400'
+
+- block:
+    - ping:
+
+    - name: list keys from agent
+      ssh_agent:
+        action: list
+      register: keys
+
+    - assert:
+        that:
+          - keys.nkeys == ansible_loop.index
+          - keys['keys'][ansible_loop.index0].fingerprint == fingerprint
+
+    - name: key already exists in the agent
+      ping:
+  vars:
+    ansible_password: ~
+    ansible_ssh_password: ~
+    ansible_ssh_private_key_file: ~
+    ansible_ssh_private_key: '{{ sshkey.private_key }}'
+    ansible_ssh_private_key_passphrase: passphrase
+    fingerprint: '{{ sshkey.fingerprint }}'

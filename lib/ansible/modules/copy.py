@@ -291,7 +291,6 @@ import os.path
 import shutil
 import stat
 import tempfile
-import traceback
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
@@ -638,7 +637,7 @@ def main():
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'], keep_dest_attrs=not remote_src)
 
             except (IOError, OSError):
-                module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
+                module.fail_json(msg=f"Failed to copy {src!r} to {dest!r}.")
         changed = True
 
     # If neither have checksums, both src and dest are directories.

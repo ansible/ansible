@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleError
-from ansible.module_utils.common.text.converters import to_native
+from ansible.errors import AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -31,6 +31,7 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
+from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
 
 display = Display()
@@ -122,7 +123,7 @@ class Play(Base, Taggable, CollectionSearch):
                     elif not isinstance(entry, (binary_type, text_type)):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
 
-            elif not isinstance(value, (binary_type, text_type)):
+            elif not isinstance(value, (binary_type, text_type, EncryptedString)):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
@@ -167,6 +168,8 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
+    # DTFIX-FUTURE: these do nothing but augment the exception message; DRY and nuke
+
     def _load_tasks(self, attr, ds):
         """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
@@ -174,8 +177,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading tasks.", obj=self._ds) from ex
 
     def _load_pre_tasks(self, attr, ds):
         """
@@ -184,8 +187,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks.", obj=self._ds) from ex
 
     def _load_post_tasks(self, attr, ds):
         """
@@ -194,8 +197,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading post_tasks.", obj=self._ds) from ex
 
     def _load_handlers(self, attr, ds):
         """
@@ -208,8 +211,8 @@ class Play(Base, Taggable, CollectionSearch):
                 load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
                 prepend=True
             )
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading handlers.", obj=self._ds) from ex
 
     def _load_roles(self, attr, ds):
         """
@@ -223,8 +226,8 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
                                                loader=self._loader, collection_search_list=self.collections)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds) from ex
 
         roles = []
         for ri in role_includes:

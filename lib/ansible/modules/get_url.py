@@ -372,7 +372,7 @@ import os
 import re
 import shutil
 import tempfile
-import traceback
+
 from datetime import datetime, timezone
 
 from ansible.module_utils.basic import AnsibleModule
@@ -433,7 +433,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed, exception=traceback.format_exc())
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed)
     f.close()
     rsp.close()
     return tempname, info
@@ -690,8 +690,7 @@ def main():
         except Exception as e:
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc(), **result)
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), **result)
         result['changed'] = True
     else:
         result['changed'] = False

@@ -1,0 +1,36 @@
+{
+    "_meta": {
+        "hostvars": {
+            "localhost": {
+                "bool": true,
+                "date": "2024-01-01",
+                "datetime": "2024-01-01T12:01:01",
+                "dict": {},
+                "float": 3.14159,
+                "int": 42,
+                "list": [],
+                "none": null,
+                "trusted_non_template_str": "trusted non-template string should round-trip as trusted",
+                "trusted_template_str": "{{ \"trusted template string should round-trip as trusted\" }}",
+                "untrusted_non_template_str": {
+                    "__ansible_unsafe": "untrusted non-template string should round-trip as untrusted"
+                },
+                "untrusted_template_str": {
+                    "__ansible_unsafe": "{{ untrusted template string should round-trip as untrusted }}"
+                }
+            }
+        },
+        "profile": "inventory_legacy"
+    },
+    "all": {
+        "children": [
+            "ungrouped",
+            "with_untrusted"
+        ]
+    },
+    "with_untrusted": {
+        "hosts": [
+            "localhost"
+        ]
+    }
+}

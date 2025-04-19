@@ -30,10 +30,9 @@ class ActionModule(ActionBase):
 
         if module in {'yum', 'auto'}:
             try:
-                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['pkg_mgr']}}" % self._task.delegate_to)
-                else:
-                    module = self._templar.template("{{ansible_facts.pkg_mgr}}")
+                # if we delegate, we should use delegated host's facts
+                expr = "hostvars[delegate_to].ansible_facts.pkg_mgr" if self._task.delegate_to else "ansible_facts.pkg_mgr"
+                module = self._templar.resolve_variable_expression(expr, local_variables=dict(delegate_to=self._task.delegate_to))
             except Exception:
                 pass  # could not get it from template!
 

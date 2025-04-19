@@ -58,7 +58,6 @@ RETURN = r"""
 
 from urllib.parse import urlsplit
 
-from ansible.errors import AnsibleFilterError
 from ansible.utils import helpers
 
 
@@ -70,7 +69,7 @@ def split_url(value, query='', alias='urlsplit'):
     # If no option is supplied, return the entire dictionary.
     if query:
         if query not in results:
-            raise AnsibleFilterError(alias + ': unknown URL component: %s' % query)
+            raise ValueError(alias + ': unknown URL component: %s' % query)
         return results[query]
     else:
         return results

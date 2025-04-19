@@ -164,7 +164,7 @@ def test_context(
             raise Exception(f'{stdout=} {stderr=}')
     except subprocess.CalledProcessError as ex:
         if ex.returncode != 1 or ex.stderr or not ex.stdout:
-            raise
+            raise Exception(f'{ex.stdout=} {ex.stderr=} {ex.returncode=}') from ex
 
         stdout = ex.stdout
 

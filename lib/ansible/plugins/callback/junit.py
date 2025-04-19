@@ -82,12 +82,15 @@ DOCUMENTATION = """
       - enable in configuration
 """
 
+import decimal
 import os
 import time
 import re
 
-from ansible import constants as C
+from ansible import constants
+from ansible.module_utils.common.messages import ErrorSummary
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
 from ansible.utils._junit_xml import (
     TestCase,
@@ -126,7 +129,7 @@ class CallbackModule(CallbackBase):
                                      Default: True
         JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
                                      Default: False
-        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionally failing tasks are recorded as failed
+        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionally, failing tasks are recorded as failed
                                      test cases.
                                      Default: <empty>
     """
@@ -136,7 +139,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'junit'
     CALLBACK_NEEDS_ENABLED = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(CallbackModule, self).__init__()
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
@@ -150,12 +153,10 @@ class CallbackModule(CallbackBase):
         self._replace_out_of_tree_path = os.getenv('JUNIT_REPLACE_OUT_OF_TREE_PATH', None)
         self._playbook_path = None
         self._playbook_name = None
-        self._play_name = None
-        self._task_data = None
+        self._play_name: str | None = None
+        self._task_data: dict[str, TaskData] = {}
 
         self.disabled = False
-
-        self._task_data = {}
 
         if self._replace_out_of_tree_path is not None:
             self._replace_out_of_tree_path = to_text(self._replace_out_of_tree_path)
@@ -163,7 +164,7 @@ class CallbackModule(CallbackBase):
         if not os.path.exists(self._output_dir):
             os.makedirs(self._output_dir)
 
-    def _start_task(self, task):
+    def _start_task(self, task: Task) -> None:
         """ record the start of a task for one or more hosts """
 
         uuid = task._uuid
@@ -212,11 +213,11 @@ class CallbackModule(CallbackBase):
         if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
             task_data.add_host(HostData(host_uuid, host_name, status, result))
 
-    def _build_test_case(self, task_data, host_data):
+    def _build_test_case(self, task_data: TaskData, host_data: HostData) -> TestCase:
         """ build a TestCase from the given TaskData and HostData """
 
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
-        duration = host_data.finish - task_data.start
+        duration = decimal.Decimal(host_data.finish - task_data.start)
 
         if self._task_relative_path and task_data.path:
             junit_classname = to_text(os.path.relpath(to_bytes(task_data.path), to_bytes(self._task_relative_path)))
@@ -242,10 +243,12 @@ class CallbackModule(CallbackBase):
 
         test_case = TestCase(name=name, classname=junit_classname, time=duration)
 
+        error_summary: ErrorSummary
+
         if host_data.status == 'failed':
-            if 'exception' in res:
-                message = res['exception'].strip().split('\n')[-1]
-                output = res['exception']
+            if error_summary := res.get('exception'):
+                message = error_summary._format()
+                output = error_summary.formatted_traceback
                 test_case.errors.append(TestError(message=message, output=output))
             elif 'msg' in res:
                 message = res['msg']
@@ -261,7 +264,8 @@ class CallbackModule(CallbackBase):
 
         return test_case
 
-    def _cleanse_string(self, value):
+    @staticmethod
+    def _cleanse_string(value):
         """ convert surrogate escapes to the unicode replacement character to avoid XML encoding errors """
         return to_text(to_bytes(value, errors='surrogateescape'), errors='replace')
 
@@ -271,7 +275,7 @@ class CallbackModule(CallbackBase):
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
-            if task_data.action in C._ACTION_SETUP and self._include_setup_tasks_in_report == 'false':
+            if task_data.action in constants._ACTION_SETUP and self._include_setup_tasks_in_report == 'false':
                 continue
 
             for host_uuid, host_data in task_data.host_data.items():
@@ -293,16 +297,16 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_play_start(self, play):
         self._play_name = play.get_name()
 
-    def v2_runner_on_no_hosts(self, task):
+    def v2_runner_on_no_hosts(self, task: Task) -> None:
         self._start_task(task)
 
-    def v2_playbook_on_task_start(self, task, is_conditional):
+    def v2_playbook_on_task_start(self, task: Task, is_conditional: bool) -> None:
         self._start_task(task)
 
-    def v2_playbook_on_cleanup_task_start(self, task):
+    def v2_playbook_on_cleanup_task_start(self, task: Task) -> None:
         self._start_task(task)
 
-    def v2_playbook_on_handler_task_start(self, task):
+    def v2_playbook_on_handler_task_start(self, task: Task) -> None:
         self._start_task(task)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
@@ -329,17 +333,17 @@ class TaskData:
     Data about an individual task.
     """
 
-    def __init__(self, uuid, name, path, play, action):
+    def __init__(self, uuid: str, name: str, path: str, play: str, action: str) -> None:
         self.uuid = uuid
         self.name = name
         self.path = path
         self.play = play
         self.start = None
-        self.host_data = {}
+        self.host_data: dict[str, HostData] = {}
         self.start = time.time()
         self.action = action
 
-    def add_host(self, host):
+    def add_host(self, host: HostData) -> None:
         if host.uuid in self.host_data:
             if host.status == 'included':
                 # concatenate task include output from multiple items

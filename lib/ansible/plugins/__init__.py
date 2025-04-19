@@ -19,16 +19,15 @@
 
 from __future__ import annotations
 
-from abc import ABC
-
+import abc
 import types
 import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
+
+from ansible.module_utils._internal import _plugin_exec_context
 
 display = Display()
 
@@ -42,13 +41,32 @@ PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]
 
 
 def get_plugin_class(obj):
-    if isinstance(obj, string_types):
+    if isinstance(obj, str):
         return obj.lower().replace('module', '')
     else:
         return obj.__class__.__name__.lower().replace('module', '')
 
 
-class AnsiblePlugin(ABC):
+class _ConfigurablePlugin(t.Protocol):
+    """Protocol to provide type-safe access to config for plugin-related mixins."""
+
+    def get_option(self, option: str, hostvars: dict[str, object] | None = None) -> object: ...
+
+
+class _AnsiblePluginInfoMixin(_plugin_exec_context.HasPluginInfo):
+    """Mixin to provide type annotations and default values for existing PluginLoader-set load-time attrs."""
+    _original_path: str | None = None
+    _load_name: str | None = None
+    _redirected_names: list[str] | None = None
+    ansible_aliases: list[str] | None = None
+    ansible_name: str | None = None
+
+    @property
+    def plugin_type(self) -> str:
+        return self.__class__.__name__.lower().replace('module', '')
+
+
+class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.ABCMeta):
 
     # Set by plugin loader
     _load_name: str
@@ -81,7 +99,7 @@ class AnsiblePlugin(ABC):
         try:
             option_value, origin = C.config.get_config_value_and_origin(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
         except AnsibleError as e:
-            raise KeyError(to_native(e))
+            raise KeyError(str(e))
         return option_value, origin
 
     def get_option(self, option, hostvars=None):
@@ -124,10 +142,6 @@ class AnsiblePlugin(ABC):
         return option in self._options
 
     @property
-    def plugin_type(self):
-        return self.__class__.__name__.lower().replace('module', '')
-
-    @property
     def option_definitions(self):
         if (not hasattr(self, "_defs")) or self._defs is None:
             self._defs = C.config.get_configuration_definitions(plugin_type=self.plugin_type, name=self._load_name)
@@ -137,23 +151,56 @@ class AnsiblePlugin(ABC):
         # FIXME: standardize required check based on config
         pass
 
+    def __repr__(self):
+        ansible_name = getattr(self, 'ansible_name', '(unknown)')
+        load_name = getattr(self, '_load_name', '(unknown)')
+        return f'{type(self).__name__}(plugin_type={self.plugin_type!r}, {ansible_name=!r}, {load_name=!r})'
 
-class AnsibleJinja2Plugin(AnsiblePlugin):
 
-    def __init__(self, function):
-
+class AnsibleJinja2Plugin(AnsiblePlugin, metaclass=abc.ABCMeta):
+    def __init__(self, function: t.Callable) -> None:
         super(AnsibleJinja2Plugin, self).__init__()
         self._function = function
 
-    @property
-    def plugin_type(self):
-        return self.__class__.__name__.lower().replace('ansiblejinja2', '')
+        # Declare support for markers. Plugins with `False` here will never be invoked with markers for top-level arguments.
+        self.accept_args_markers = getattr(self._function, 'accept_args_markers', False)
+        self.accept_lazy_markers = getattr(self._function, 'accept_lazy_markers', False)
 
-    def _no_options(self, *args, **kwargs):
+    @property
+    @abc.abstractmethod
+    def plugin_type(self) -> str:
+        ...
+
+    def _no_options(self, *args, **kwargs) -> t.NoReturn:
         raise NotImplementedError()
 
     has_option = get_option = get_options = option_definitions = set_option = set_options = _no_options
 
     @property
-    def j2_function(self):
+    def j2_function(self) -> t.Callable:
         return self._function
+
+
+_TCallable = t.TypeVar('_TCallable', bound=t.Callable)
+
+
+def accept_args_markers(plugin: _TCallable) -> _TCallable:
+    """
+    A decorator to mark a Jinja plugin as capable of handling `Marker` values for its top-level arguments.
+    Non-decorated plugin invocation is skipped when a top-level argument is a `Marker`, with the first such value substituted as the plugin result.
+    This ensures that only plugins which understand `Marker` instances for top-level arguments will encounter them.
+    """
+    plugin.accept_args_markers = True
+
+    return plugin
+
+
+def accept_lazy_markers(plugin: _TCallable) -> _TCallable:
+    """
+    A decorator to mark a Jinja plugin as capable of handling `Marker` values retrieved from lazy containers.
+    Non-decorated plugins will trigger a `MarkerError` exception when attempting to retrieve a `Marker` from a lazy container.
+    This ensures that only plugins which understand lazy retrieval of `Marker` instances will encounter them.
+    """
+    plugin.accept_lazy_markers = True
+
+    return plugin

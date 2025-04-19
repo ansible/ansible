@@ -1,157 +1,138 @@
-# This file is part of Ansible
-# -*- coding: utf-8 -*-
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Copyright 2016, Adrian Likins <alikins@redhat.com>
-
 from __future__ import annotations
 
-import unittest
+import typing as t
 
-from ansible.errors import AnsibleError
+import pytest
 
-from ansible.module_utils.common.text.converters import to_native
-
-from ansible.parsing import vault
-from ansible.parsing.yaml.loader import AnsibleLoader
-
-# module under test
+from ansible._internal._datatag._tags import Origin
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.parsing.vault import EncryptedString
+from ansible.parsing.yaml.objects import _AnsibleMapping, _AnsibleUnicode, _AnsibleSequence
+from ansible.utils.display import _DeferredWarningContext
 from ansible.parsing.yaml import objects
 
-from units.mock.yaml_helper import YamlTestUtils
-from units.mock.vault_helper import TextVaultSecret
+
+@pytest.fixture(autouse=True, scope='function')
+def suppress_warnings() -> t.Generator[None]:
+    with _DeferredWarningContext(variables={}):
+        yield
 
 
-class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
-    def test_empty_init(self):
-        self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)
+def test_ansible_mapping() -> None:
+    from ansible.parsing.yaml.objects import AnsibleMapping
 
-    def test_empty_string_init(self):
-        seq = ''.encode('utf8')
-        self.assert_values(seq)
+    value = dict(a=1)
+    result = AnsibleMapping(value)
 
-    def test_empty_byte_string_init(self):
-        seq = b''
-        self.assert_values(seq)
-
-    def _assert_values(self, avu, seq):
-        self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
-        self.assertTrue(avu.vault is None)
-        # AnsibleVaultEncryptedUnicode without a vault should never == any string
-        self.assertNotEqual(avu, seq)
-
-    def assert_values(self, seq):
-        avu = objects.AnsibleVaultEncryptedUnicode(seq)
-        self._assert_values(avu, seq)
-
-    def test_single_char(self):
-        seq = 'a'.encode('utf8')
-        self.assert_values(seq)
-
-    def test_string(self):
-        seq = 'some letters'
-        self.assert_values(seq)
-
-    def test_byte_string(self):
-        seq = 'some letters'.encode('utf8')
-        self.assert_values(seq)
+    assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
+    assert result == value
 
 
-class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
-    def setUp(self):
-        self.good_vault_password = "hunter42"
-        good_vault_secret = TextVaultSecret(self.good_vault_password)
-        self.good_vault_secrets = [('good_vault_password', good_vault_secret)]
-        self.good_vault = vault.VaultLib(self.good_vault_secrets)
+def test_tagged_ansible_mapping() -> None:
+    from ansible.parsing.yaml.objects import AnsibleMapping
 
-        # TODO: make this use two vault secret identities instead of two vaultSecrets
-        self.wrong_vault_password = 'not-hunter42'
-        wrong_vault_secret = TextVaultSecret(self.wrong_vault_password)
-        self.wrong_vault_secrets = [('wrong_vault_password', wrong_vault_secret)]
-        self.wrong_vault = vault.VaultLib(self.wrong_vault_secrets)
+    value = Origin(description='test').tag(dict(a=1))
+    result = AnsibleMapping(value)
 
-        self.vault = self.good_vault
-        self.vault_secrets = self.good_vault_secrets
+    assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
+    assert result == value
+    assert AnsibleTagHelper.tags(result) == AnsibleTagHelper.tags(value)
 
-    def _loader(self, stream):
-        return AnsibleLoader(stream, vault_secrets=self.vault_secrets)
 
-    def test_dump_load_cycle(self):
-        aveu = self._from_plaintext('the test string for TestAnsibleVaultEncryptedUnicode.test_dump_load_cycle')
-        self._dump_load_cycle(aveu)
+def test_ansible_unicode() -> None:
+    from ansible.parsing.yaml.objects import AnsibleUnicode
 
-    def assert_values(self, avu, seq):
-        self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
+    value = 'hello'
+    result = AnsibleUnicode(value)
 
-        self.assertEqual(avu, seq)
-        self.assertTrue(avu.vault is self.vault)
-        self.assertIsInstance(avu.vault, vault.VaultLib)
+    assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
+    assert result == value
 
-    def _from_plaintext(self, seq):
-        id_secret = vault.match_encrypt_secret(self.good_vault_secrets)
-        return objects.AnsibleVaultEncryptedUnicode.from_plaintext(seq, vault=self.vault, secret=id_secret[1])
 
-    def test_empty_init(self):
-        self.assertRaises(TypeError, objects.AnsibleVaultEncryptedUnicode)
+def test_tagged_ansible_unicode() -> None:
+    from ansible.parsing.yaml.objects import AnsibleUnicode
 
-    def test_empty_string_init_from_plaintext(self):
-        seq = ''
-        avu = self._from_plaintext(seq)
-        self.assert_values(avu, seq)
+    value = Origin(description='test').tag('hello')
+    result = AnsibleUnicode(value)
 
-    def test_empty_unicode_init_from_plaintext(self):
-        seq = u''
-        avu = self._from_plaintext(seq)
-        self.assert_values(avu, seq)
+    assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
+    assert result == value
+    assert AnsibleTagHelper.tags(result) == AnsibleTagHelper.tags(value)
 
-    def test_string_from_plaintext(self):
-        seq = 'some letters'
-        avu = self._from_plaintext(seq)
-        self.assert_values(avu, seq)
 
-    def test_unicode_from_plaintext(self):
-        seq = u'some letters'
-        avu = self._from_plaintext(seq)
-        self.assert_values(avu, seq)
+def test_ansible_sequence() -> None:
+    from ansible.parsing.yaml.objects import AnsibleSequence
 
-    def test_unicode_from_plaintext_encode(self):
-        seq = u'some text here'
-        avu = self._from_plaintext(seq)
-        b_avu = avu.encode('utf-8', 'strict')
-        self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
-        self.assertEqual(b_avu, seq.encode('utf-8', 'strict'))
-        self.assertTrue(avu.vault is self.vault)
-        self.assertIsInstance(avu.vault, vault.VaultLib)
+    value = [1, 2, 3]
+    result = AnsibleSequence(value)
 
-    # TODO/FIXME: make sure bad password fails differently than 'thats not encrypted'
-    def test_empty_string_wrong_password(self):
-        seq = ''
-        self.vault = self.wrong_vault
-        avu = self._from_plaintext(seq)
+    assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
+    assert result == value
 
-        def compare(avu, seq):
-            return avu == seq
 
-        self.assertRaises(AnsibleError, compare, avu, seq)
+def test_tagged_ansible_sequence() -> None:
+    from ansible.parsing.yaml.objects import AnsibleSequence
 
-    def test_vaulted_utf8_value_37258(self):
-        seq = u"aöffü"
-        avu = self._from_plaintext(seq)
-        self.assert_values(avu, seq)
+    value = Origin(description='test').tag([1, 2, 3])
+    result = AnsibleSequence(value)
 
-    def test_str_vaulted_utf8_value_37258(self):
-        seq = u"aöffü"
-        avu = self._from_plaintext(seq)
-        assert str(avu) == to_native(seq)
+    assert type(result) is type(value)  # pylint: disable=unidiomatic-typecheck
+    assert result == value
+    assert AnsibleTagHelper.tags(result) == AnsibleTagHelper.tags(value)
+
+
+def test_ansible_vault_encrypted_unicode() -> None:
+    from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
+    value = 'ciphertext'
+    result = AnsibleVaultEncryptedUnicode(value)
+
+    assert type(result) is EncryptedString  # pylint: disable=unidiomatic-typecheck
+    assert result._ciphertext == value
+
+
+def test_tagged_ansible_vault_encrypted_unicode() -> None:
+    from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
+    value = Origin(description='test').tag('ciphertext')
+    result = AnsibleVaultEncryptedUnicode(value)
+
+    assert type(result) is EncryptedString  # pylint: disable=unidiomatic-typecheck
+    assert result._ciphertext == value
+    assert AnsibleTagHelper.tags(result) == AnsibleTagHelper.tags(value)
+
+
+def test_invalid_attribute() -> None:
+    with pytest.raises(ImportError, match="cannot import name 'bogus' from 'ansible.parsing.yaml.objects'"):
+        from ansible.parsing.yaml.objects import bogus
+
+    with pytest.raises(AttributeError, match="module 'ansible.parsing.yaml.objects' has no attribute 'bogus'"):
+        assert objects.bogus
+
+
+def test_non_ansible_attribute() -> None:
+    with pytest.raises(ImportError, match="cannot import name 't' from 'ansible.parsing.yaml.objects'"):
+        from ansible.parsing.yaml.objects import t
+
+    with pytest.raises(AttributeError, match="module 'ansible.parsing.yaml.objects' has no attribute 't'"):
+        assert objects.t
+
+
+@pytest.mark.parametrize("target_type,args,kwargs,expected", (
+    (_AnsibleMapping, (), {}, {}),
+    (_AnsibleMapping, (dict(a=1),), {}, dict(a=1)),
+    (_AnsibleMapping, (dict(a=1),), dict(b=2), dict(a=1, b=2)),
+    (_AnsibleUnicode, (), {}, ''),
+    (_AnsibleUnicode, ('Hello',), {}, 'Hello'),
+    (_AnsibleUnicode, (), dict(object='Hello'), 'Hello'),
+    (_AnsibleUnicode, (b'Hello',), {}, str(b'Hello')),
+    (_AnsibleUnicode, (b'Hello',), dict(encoding='utf-8', errors='strict'), 'Hello'),
+    (_AnsibleSequence, (), {}, []),
+    (_AnsibleSequence, ([1, 2],), {}, [1, 2]),
+))
+def test_objects(target_type: type, args: tuple, kwargs: dict, expected: object) -> None:
+    """Verify legacy objects support the same constructor args as their base types."""
+    result = target_type(*args, **kwargs)
+
+    assert isinstance(result, type(expected))
+    assert result == expected

@@ -1,148 +1,69 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import annotations
 
+import pathlib
 
-import unittest
-from unittest.mock import mock_open, patch
-from ansible.errors import AnsibleError
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
+import pytest
+
+from ansible.errors import AnsibleError, AnsibleVariableTypeError
+from ansible._internal._errors._utils import SourceContext
+from ansible._internal._datatag._tags import Origin
+
+from ..test_utils.controller.display import emits_warnings
 
 
-class TestErrors(unittest.TestCase):
+@pytest.mark.parametrize("filename, line, col, expected_filename", (
+    ('nonexistent_file.txt', 3, 4, "nonexistent.txt"),
+    ('short_file.txt', None, None, "short_file_no_line.txt"),
+    ('short_file.txt', 324762384, 3, "short_file_overflowed_line.txt"),
+    ('short_file.txt', 3, 324762384, "short_file_overflowed_col.txt"),
+    ('short_file.txt', -1, 3, "short_file_underflowed_line.txt"),
+    ('short_file.txt', 3, -1, "short_file_underflowed_col.txt"),
+    ('short_file.txt', 5, None, "short_file_no_column.txt"),
+    ('short_file.txt', 2, None, "short_file_no_column_overflowed.txt"),
+    ('empty_file.txt', 2, 1, "empty_file_unavailable.txt"),
+    ('short_file.txt', 1, 1, "short_file_no_context_left_marker.txt"),
+    ('short_file.txt', 5, 1, "short_file_left_marker.txt"),
+    ('short_file_missing_trailing_newline.txt', 7, 1, "short_file_missing_trailing_newline_left_marker.txt"),
+    ('short_file.txt', 7, 118, "short_file_last_column_right_marker.txt"),
+    ('short_file.txt', 4, 118, "short_file_truncated_target.txt"),
+    ('short_file.txt', 4, 115, "short_file_truncated_target_last_displayed_char.txt"),
+    ('short_file.txt', 4, 174, "short_file_long_line_truncated_past_target.txt"),
+    ('long_file.txt', 14, 117, "long_file_last_column_right_marker.txt"),
+    ('file_with_tabs.txt', 3, 22, "file_with_tabs_replaced_left_marker.txt"),
+))
+def test_source_context(filename: str, line: int | None, col: int | None, expected_filename: str) -> None:
+    """
+    Validate various SourceContext formatting scenarios.
+    Test case outputs are generated; set `overwrite_expected` to regenerate.
+    """
+    # set this to true to regenerate and overwrite the expected test output files
+    overwrite_expected = False
 
-    def setUp(self):
-        self.message = 'This is the error message'
-        self.unicode_message = 'This is an error with \xf0\x9f\x98\xa8 in it'
+    fixture_path = pathlib.Path(__file__).parent / 'fixtures'
 
-        self.obj = AnsibleBaseYAMLObject()
+    origin = Origin(path=str(fixture_path / 'inputs' / filename), line_num=line, col_num=col)
 
-    def test_basic_error(self):
-        e = AnsibleError(self.message)
-        self.assertEqual(e.message, self.message)
-        self.assertEqual(repr(e), self.message)
+    # DTFIX-FUTURE: assert target_line contents as well?
+    source_context = SourceContext.from_origin(origin)
+    result = '\n'.join(source_context.annotated_source_lines) + '\n'
 
-    def test_basic_unicode_error(self):
-        e = AnsibleError(self.unicode_message)
-        self.assertEqual(e.message, self.unicode_message)
-        self.assertEqual(repr(e), self.unicode_message)
+    expected_path = fixture_path / 'outputs' / expected_filename
 
-    @patch.object(AnsibleError, '_get_error_lines_from_file')
-    def test_error_with_kv(self, mock_method):
-        """ This tests a task with both YAML and k=v syntax
+    if overwrite_expected:  # pragma: nocover
+        expected_path.write_text(result)
 
-        - lineinfile: line=foo path=bar
-            line: foo
+    assert result == expected_path.read_text()
+    assert not overwrite_expected
 
-        An accurate error message and position indicator are expected.
 
-        _get_error_lines_from_file() returns (target_line, prev_line)
-        """
+def test_suppress_extended_error_deprecation() -> None:
+    with emits_warnings(deprecation_pattern='suppress_extended_error.*argument'):
+        AnsibleError(suppress_extended_error=True)  # pylint: disable=pointless-exception-statement
 
-        self.obj.ansible_pos = ('foo.yml', 2, 1)
 
-        mock_method.return_value = ['    line: foo\n', '- lineinfile: line=foo path=bar\n']
-
-        e = AnsibleError(self.message, self.obj)
-        self.assertEqual(
-            e.message,
-            ("This is the error message\n\nThe error appears to be in 'foo.yml': line 1, column 19, but may\nbe elsewhere in the "
-             "file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n- lineinfile: line=foo path=bar\n"
-             "                  ^ here\n\n"
-             "There appears to be both 'k=v' shorthand syntax and YAML in this task. Only one syntax may be used.\n")
-        )
-
-    @patch.object(AnsibleError, '_get_error_lines_from_file')
-    def test_error_with_object(self, mock_method):
-        self.obj.ansible_pos = ('foo.yml', 1, 1)
-
-        mock_method.return_value = ('this is line 1\n', '')
-        e = AnsibleError(self.message, self.obj)
-
-        self.assertEqual(
-            e.message,
-            ("This is the error message\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the "
-             "exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
-        )
-
-    def test_get_error_lines_from_file(self):
-        m = mock_open()
-        m.return_value.readlines.return_value = ['this is line 1\n']
-
-        with patch('builtins.open', m):
-            # this line will be found in the file
-            self.obj.ansible_pos = ('foo.yml', 1, 1)
-            e = AnsibleError(self.message, self.obj)
-            self.assertEqual(
-                e.message,
-                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on "
-                 "the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
-            )
-
-            with patch('ansible.errors.to_text', side_effect=IndexError('Raised intentionally')):
-                # raise an IndexError
-                self.obj.ansible_pos = ('foo.yml', 2, 1)
-                e = AnsibleError(self.message, self.obj)
-                self.assertEqual(
-                    e.message,
-                    ("This is the error message\n\nThe error appears to be in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on "
-                     "the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
-                )
-
-        m = mock_open()
-        m.return_value.readlines.return_value = ['this line has unicode \xf0\x9f\x98\xa8 in it!\n']
-
-        with patch('builtins.open', m):
-            # this line will be found in the file
-            self.obj.ansible_pos = ('foo.yml', 1, 1)
-            e = AnsibleError(self.unicode_message, self.obj)
-            self.assertEqual(
-                e.message,
-                ("This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to be in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the "
-                 "file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis line has unicode \xf0\x9f\x98\xa8 in it!\n^ "
-                 "here\n")
-            )
-
-    def test_get_error_lines_error_in_last_line(self):
-        m = mock_open()
-        m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n']
-
-        with patch('builtins.open', m):
-            # If the error occurs in the last line of the file, use the correct index to get the line
-            # and avoid the IndexError
-            self.obj.ansible_pos = ('foo.yml', 4, 1)
-            e = AnsibleError(self.message, self.obj)
-            self.assertEqual(
-                e.message,
-                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 4, column 1, but may\nbe elsewhere in the file depending on "
-                 "the exact syntax problem.\n\nThe offending line appears to be:\n\nthis is line 2\nthis is line 3\n^ here\n")
-            )
-
-    def test_get_error_lines_error_empty_lines_around_error(self):
-        """Test that trailing whitespace after the error is removed"""
-        m = mock_open()
-        m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n', '  \n', '   \n', ' ']
-
-        with patch('builtins.open', m):
-            self.obj.ansible_pos = ('foo.yml', 5, 1)
-            e = AnsibleError(self.message, self.obj)
-            self.assertEqual(
-                e.message,
-                ("This is the error message\n\nThe error appears to be in 'foo.yml': line 5, column 1, but may\nbe elsewhere in the file depending on "
-                 "the exact syntax problem.\n\nThe offending line appears to be:\n\nthis is line 2\nthis is line 3\n^ here\n")
-            )
+@pytest.mark.parametrize("obj, expected", (
+    (1, f'Type {int.__name__!r} is unsupported for variable storage.'),
+    (int, f'Type {type.__name__!r} is unsupported for variable storage.'),
+))
+def test_ansible_variable_type_error(obj: object, expected: str) -> None:
+    assert expected in str(AnsibleVariableTypeError.from_value(obj=obj))

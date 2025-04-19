@@ -38,7 +38,7 @@ import uuid
 
 from functools import partial
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.json import _get_legacy_encoder
 from ansible.module_utils.six import iteritems
 
 
@@ -127,7 +127,7 @@ class Connection(object):
             )
 
         try:
-            data = json.dumps(req, cls=AnsibleJSONEncoder, vault_to_text=True)
+            data = json.dumps(req, cls=_get_legacy_encoder(), vault_to_text=True)
         except TypeError as exc:
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with the persistent connection helper. "

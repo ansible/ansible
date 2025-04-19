@@ -62,11 +62,10 @@ def main():
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
-        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native, text_type
 
         # noinspection PyProtectedMember
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-        from ansible.utils.collection_loader import _collection_finder
+        from ansible.utils.collection_loader import _collection_finder, _to_text
 
         yaml_to_dict_cache = {}
 
@@ -76,7 +75,7 @@ def main():
 
         def parse_value(value):
             """Custom value parser for JSON deserialization that recognizes our internal ISO date format."""
-            if isinstance(value, text_type):
+            if isinstance(value, str):
                 match = iso_date_re.search(value)
 
                 if match:
@@ -88,7 +87,7 @@ def main():
             """Object hook for custom ISO date deserialization from JSON."""
             return dict((key, parse_value(value)) for key, value in data.items())
 
-        def yaml_to_dict(yaml, content_id):
+        def yaml_to_dict(yaml: str | bytes, content_id):
             """
             Return a Python dict version of the provided YAML.
             Conversion is done in a subprocess since the current Python interpreter does not have access to PyYAML.
@@ -98,18 +97,18 @@ def main():
 
             try:
                 cmd = [external_python, yaml_to_json_path]
-                proc = subprocess.Popen([to_bytes(c) for c in cmd],  # pylint: disable=consider-using-with
-                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout_bytes, stderr_bytes = proc.communicate(to_bytes(yaml))
+                proc = subprocess.Popen(cmd,  # pylint: disable=consider-using-with
+                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                stdout, stderr = proc.communicate(_to_text(yaml))
 
                 if proc.returncode != 0:
-                    raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
+                    raise Exception('command %s failed with return code %d: %s' % (cmd, proc.returncode, stderr))
 
-                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes), object_hook=object_hook)
+                data = yaml_to_dict_cache[content_id] = json.loads(stdout, object_hook=object_hook)
 
                 return data
             except Exception as ex:
-                raise Exception('internal importer error - failed to parse yaml: %s' % to_native(ex))
+                raise Exception(f'internal importer error - failed to parse yaml: {ex}')
 
         _collection_finder._meta_yml_to_dict = yaml_to_dict  # pylint: disable=protected-access
 

@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import json
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 from ansible.module_utils.facts.collector import BaseFactCollector

@@ -4,12 +4,18 @@
 
 from __future__ import annotations
 
+import dataclasses
+import typing as t
+
 from ansible import constants as C
-from ansible.parsing.dataloader import DataLoader
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
+if t.TYPE_CHECKING:
+    from ansible.inventory.host import Host
+    from ansible.playbook.task import Task
+
 _IGNORE = ('failed', 'skipped')
-_PRESERVE = ('attempts', 'changed', 'retries')
+_PRESERVE = ('attempts', 'changed', 'retries', '_ansible_no_log')
 _SUB_PRESERVE = {'_ansible_delegated_vars': ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection')}
 
 # stuff callbacks need
@@ -21,6 +27,16 @@ CLEAN_EXCEPTIONS = (
 )
 
 
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class ThinTaskResult:
+    """A thin version of `TaskResult` which can be sent over the worker queue."""
+
+    host_name: str
+    task_uuid: str
+    return_data: dict[str, object]
+    task_fields: dict[str, object]
+
+
 class TaskResult:
     """
     This class is responsible for interpreting the resulting data
@@ -28,19 +44,20 @@ class TaskResult:
     the result of a given task.
     """
 
-    def __init__(self, host, task, return_data, task_fields=None):
+    def __init__(self, host: Host, task: Task, return_data: dict[str, object], task_fields: dict[str, object]) -> None:
         self._host = host
         self._task = task
+        self._result = return_data
+        self._task_fields = task_fields
 
-        if isinstance(return_data, dict):
-            self._result = return_data.copy()
-        else:
-            self._result = DataLoader().load(return_data)
-
-        if task_fields is None:
-            self._task_fields = dict()
-        else:
-            self._task_fields = task_fields
+    def as_thin(self) -> ThinTaskResult:
+        """Return a `ThinTaskResult` from this instance."""
+        return ThinTaskResult(
+            host_name=self._host.name,
+            task_uuid=self._task._uuid,
+            return_data=self._result,
+            task_fields=self._task_fields,
+        )
 
     @property
     def task_name(self):
@@ -127,15 +144,15 @@ class TaskResult:
                     if key in self._result[sub]:
                         subset[sub][key] = self._result[sub][key]
 
-        if isinstance(self._task.no_log, bool) and self._task.no_log or self._result.get('_ansible_no_log', False):
-            x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
+        # DTFIX-FUTURE: is checking no_log here redundant now that we use _ansible_no_log everywhere?
+        if isinstance(self._task.no_log, bool) and self._task.no_log or self._result.get('_ansible_no_log'):
+            censored_result = censor_result(self._result)
 
-            # preserve full
-            for preserve in _PRESERVE:
-                if preserve in self._result:
-                    x[preserve] = self._result[preserve]
+            if results := self._result.get('results'):
+                # maintain shape for loop results so callback behavior recognizes a loop was performed
+                censored_result.update(results=[censor_result(item) if item.get('_ansible_no_log') else item for item in results])
 
-            result._result = x
+            result._result = censored_result
         elif self._result:
             result._result = module_response_deepcopy(self._result)
 
@@ -151,3 +168,10 @@ class TaskResult:
         result._result.update(subset)
 
         return result
+
+
+def censor_result(result: dict[str, t.Any]) -> dict[str, t.Any]:
+    censored_result = {key: value for key in _PRESERVE if (value := result.get(key, ...)) is not ...}
+    censored_result.update(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result")
+
+    return censored_result

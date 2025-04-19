@@ -23,14 +23,31 @@ from ansible.errors import AnsibleFileNotFound
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.display import Display
 
+import typing as t
+
+if t.TYPE_CHECKING:
+    from ansible.parsing import dataloader as _dataloader
+    from ansible import template as _template
+
 display = Display()
 
 __all__ = ['LookupBase']
 
 
 class LookupBase(AnsiblePlugin):
+    accept_args_markers: t.ClassVar[bool] = False
+    """
+    When `False`, plugin invocation is skipped when a top-level argument is a `Marker`, with the first such value substituted as the plugin result.
+    This ensures that only plugins which understand `Marker` instances for top-level arguments will encounter them.
+    """
 
-    def __init__(self, loader=None, templar=None, **kwargs):
+    accept_lazy_markers: t.ClassVar[bool] = False
+    """
+    When `False`, plugins will trigger a `MarkerError` exception when attempting to retrieve a `Marker` from a lazy container.
+    This ensures that only plugins which understand lazy retrieval of `Marker` instances will encounter them.
+    """
+
+    def __init__(self, loader: _dataloader.DataLoader | None = None, templar: _template.Templar | None = None, **kwargs) -> None:
 
         super(LookupBase, self).__init__()
 
@@ -72,7 +89,7 @@ class LookupBase(AnsiblePlugin):
         return ret
 
     @abstractmethod
-    def run(self, terms, variables=None, **kwargs):
+    def run(self, terms, variables, **kwargs):
         """
         When the playbook specifies a lookup, this method is run.  The
         arguments to the lookup become the arguments to this method.  One

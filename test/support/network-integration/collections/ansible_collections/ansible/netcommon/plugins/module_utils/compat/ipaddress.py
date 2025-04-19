@@ -1749,7 +1749,7 @@ class IPv4Network(_BaseV4, _BaseNetwork):
             self.netmask, self._prefixlen = self._make_netmask(
                 self._max_prefixlen
             )
-            # fixme: address/network test here.
+            # FIXME: address/network test here.
             return
 
         if isinstance(address, tuple):

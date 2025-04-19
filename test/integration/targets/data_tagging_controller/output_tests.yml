@@ -1,0 +1,36 @@
+# tests that require introspection of our rendered stdout
+
+# The stdout/stderr from this playbook is piped through filter.py and compared to
+# `expected_stdout.txt` and `expected_stderr.txt`- deviations in filtered output
+# will cause a test failure. To update the expected outputs, uncomment the `cp` lines
+# in this integration test and run it once locally (not via docker)- the test will
+# overwrite the `expected_stdXXX.txt` in-place (which will need to be committed, and the `cp`
+# lines re-commented).
+
+- hosts: localhost
+  gather_facts: true
+  tasks:
+  # DTFIX-FUTURE: move this and other target-side tests to a separate data_tagging_target integration test
+  - name: run our sample module and keep its output
+    tagging_sample:
+    register: demo_out
+
+  - name: reference a deprecated return value from a template, we should see a deprecation warning pointing here
+    debug:
+      msg: touching deprecated value {{ demo_out.something_old }}
+
+  - name: access a deprecated return value directly, we should see a deprecation warning pointing here
+    debug:
+      var: demo_out.something_old
+
+  - name: try to directly display something the module marked as no_log (should be masked)
+    debug:
+      var: demo_out.sensitive_module_arg
+
+  - name: try to render a template returned by the module (we don't allow this, should see the raw template)
+    debug:
+      var: demo_out.untrusted_template
+
+  - name: we can track var/template provenance from any inventory now; note that this tells us ** where ** the problem is
+    debug:
+      var: hostvar_access_deprecated
