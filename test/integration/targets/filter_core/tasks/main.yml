@@ -646,6 +646,19 @@
       - '"boo!"|comment(decoration="") == "boo!\n"'
       - '"boo!"|comment(prefix="\n", prefix_count=20) == "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n# boo!\n#"'
 
+
+- name: Invalid style value for comment
+  set_fact:
+    foo: '{{ "boo" | comment(style="invalid") }}'
+  ignore_errors: yes
+  register: invalid_style_comment
+
+- name: Verify invalid comment value fails
+  assert:
+    that:
+      - invalid_style_comment is failed
+      - "'Invalid style' in invalid_style_comment.msg"
+
 - name: Verify subelements throws on invalid obj
   set_fact:
     foo: '{{True|subelements("foo")}}'

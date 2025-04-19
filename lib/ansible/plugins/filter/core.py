@@ -26,7 +26,7 @@ from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejec
 from jinja2.environment import Environment
 
 from ansible._internal._templating import _lazy_containers
-from ansible.errors import AnsibleFilterError, AnsibleTypeError
+from ansible.errors import AnsibleFilterError, AnsibleTypeError, AnsibleTemplatePluginError
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.json import get_encoder, get_decoder
 from ansible.module_utils.six import string_types, integer_types, text_type
@@ -404,6 +404,13 @@ def comment(text, style='plain', **kw):
             'end': '-->'
         }
     }
+
+    if style not in comment_styles:
+        raise AnsibleTemplatePluginError(
+            message=f"Invalid style {style!r}.",
+            help_text=f"Available styles: {', '.join(comment_styles)}",
+            obj=style,
+        )
 
     # Pointer to the right comment type
     style_params = comment_styles[style]
