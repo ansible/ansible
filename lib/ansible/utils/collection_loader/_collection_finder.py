@@ -1183,8 +1183,8 @@ def _get_collection_name_from_path(path):
     if not path:
         return ""  # Return an empty string instead of None
 
-    # Ensure we compare full paths since pkg path will be abspath
-    path = to_native(os.path.abspath(to_bytes(path)))
+        # Ensure we compare full paths since pkg path will be abspath
+    path = _to_text(os.path.abspath(_to_bytes(path)))
     path_parts = path.split('/')
 
     if path_parts.count('ansible_collections') != 1:
@@ -1200,20 +1200,19 @@ def _get_collection_name_from_path(path):
 
     try:
         # We've got a name for it, now see if the path prefix matches what the loader sees
-        imported_pkg_path = to_native(os.path.dirname(
-            to_bytes(import_module('ansible_collections.' + candidate_collection_name).__file__)
-        ))
+        imported_pkg_path = _to_text(os.path.dirname(_to_bytes(import_module('ansible_collections.' + candidate_collection_name).__file__)))
     except ImportError:
         return ""
 
     # Reassemble the original path prefix up to the collection name
     original_path_prefix = os.path.join('/', *path_parts[0:ac_pos + 3])
-    imported_pkg_path = to_native(os.path.abspath(to_bytes(imported_pkg_path)))
+    imported_pkg_path = _to_text(os.path.abspath(_to_bytes(imported_pkg_path)))
 
     if original_path_prefix != imported_pkg_path:
         return ""
 
     return candidate_collection_name
+
 
 def _get_import_redirect(collection_meta_dict, fullname):
     if not collection_meta_dict:
