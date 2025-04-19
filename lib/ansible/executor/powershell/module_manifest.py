@@ -12,11 +12,13 @@ import pkgutil
 import secrets
 import re
 import typing as t
+
 from importlib import import_module
 
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible import constants as C
+from ansible.module_utils.common.json import Direction, get_module_encoder
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.become import BecomeBase
@@ -351,6 +353,7 @@ def _create_powershell_wrapper(
     become_plugin: BecomeBase | None,
     substyle: t.Literal["powershell", "script"],
     task_vars: dict[str, t.Any],
+    profile: str,
 ) -> bytes:
     """Creates module or script wrapper for PowerShell.
 
@@ -369,8 +372,6 @@ def _create_powershell_wrapper(
 
     :return: The input data for bootstrap_wrapper.ps1 as a byte string.
     """
-    # creates the manifest/wrapper used in PowerShell/C# modules to enable
-    # things like become and async - this is also called in action/script.py
 
     actions: list[_ManifestAction] = []
     finder = PSModuleDepFinder()
@@ -405,7 +406,7 @@ def _create_powershell_wrapper(
             'Variables': [
                 {
                     'Name': 'complex_args',
-                    'Value': module_args,
+                    'Value': _prepare_module_args(module_args, profile),
                     'Scope': 'Global',
                 },
             ],
@@ -540,3 +541,13 @@ def _get_bootstrap_input(
     bootstrap_input = json.dumps(bootstrap_manifest, ensure_ascii=True)
     exec_input = json.dumps(dataclasses.asdict(manifest))
     return f"{bootstrap_input}\n\0\0\0\0\n{exec_input}".encode()
+
+
+def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
+    """
+    Serialize the module args with the specified profile and deserialize them with the Python built-in JSON decoder.
+    This is used to facilitate serializing module args with a different encoder (profile) than is used for the manifest.
+    """
+    encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
+
+    return json.loads(json.dumps(module_args, cls=encoder))

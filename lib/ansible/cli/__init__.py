@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import locale
 import os
+import signal
 import sys
 
 
@@ -76,18 +77,7 @@ def initialize_locale():
 initialize_locale()
 
 
-from importlib.metadata import version
-from ansible.module_utils.compat.version import LooseVersion
-
-# Used for determining if the system is running a new enough Jinja2 version
-# and should only restrict on our documented minimum versions
-jinja2_version = version('jinja2')
-if jinja2_version < LooseVersion('3.1'):
-    raise SystemExit(
-        'ERROR: Ansible requires Jinja2 3.1 or newer on the controller. '
-        'Current version: %s' % jinja2_version
-    )
-
+import atexit
 import errno
 import getpass
 import subprocess
@@ -95,30 +85,42 @@ import traceback
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+from ansible import _internal  # do not remove or defer; ensures controller-specific state is set early
+
+_internal.setup()
+
+from ansible.errors import AnsibleError, ExitCode
+
 try:
     from ansible import constants as C
     from ansible.utils.display import Display
     display = Display()
-except Exception as e:
-    print('ERROR: %s' % e, file=sys.stderr)
+except Exception as ex:
+    if isinstance(ex, AnsibleError):
+        ex_msg = ' '.join((ex.message, ex._help_text)).strip()
+    else:
+        ex_msg = str(ex)
+
+    print(f'ERROR: {ex_msg}\n\n{"".join(traceback.format_exception(ex))}', file=sys.stderr)
     sys.exit(5)
+
 
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
+from ansible.module_utils.common.process import get_bin_path
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
+from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret, VaultSecretsContext
 from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
+from ansible.utils._ssh_agent import SshAgentClient
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.path import unfrackpath
-from ansible.utils.unsafe_proxy import to_unsafe_text
 from ansible.vars.manager import VariableManager
 
 try:
@@ -126,6 +128,77 @@ try:
     HAS_ARGCOMPLETE = True
 except ImportError:
     HAS_ARGCOMPLETE = False
+
+
+_SSH_AGENT_STDOUT_READ_TIMEOUT = 5  # seconds
+
+
+def _ssh_agent_timeout_handler(signum, frame):
+    raise TimeoutError
+
+
+def _launch_ssh_agent() -> None:
+    ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
+    match ssh_agent_cfg:
+        case 'none':
+            display.debug('SSH_AGENT set to none')
+            return
+        case 'auto':
+            try:
+                ssh_agent_bin = get_bin_path('ssh-agent')
+            except ValueError as e:
+                raise AnsibleError('SSH_AGENT set to auto, but cannot find ssh-agent binary') from e
+            ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
+            os.mkdir(ssh_agent_dir, 0o700)
+            sock = os.path.join(ssh_agent_dir, 'agent.sock')
+            display.vvv('SSH_AGENT: starting...')
+            try:
+                p = subprocess.Popen(
+                    [ssh_agent_bin, '-D', '-s', '-a', sock],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            except OSError as e:
+                raise AnsibleError(
+                    f'Could not start ssh-agent: {e}'
+                ) from e
+
+            if p.poll() is not None:
+                raise AnsibleError(
+                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr.read().decode()}"'
+                )
+
+            old_sigalrm_handler = signal.signal(signal.SIGALRM, _ssh_agent_timeout_handler)
+            signal.alarm(_SSH_AGENT_STDOUT_READ_TIMEOUT)
+            try:
+                stdout = p.stdout.read(13)
+            except TimeoutError:
+                stdout = b''
+            finally:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old_sigalrm_handler)
+
+            if stdout != b'SSH_AUTH_SOCK':
+                display.warning(
+                    f'The first 13 characters of stdout did not match the '
+                    f'expected SSH_AUTH_SOCK. This may not be the right binary, '
+                    f'or an incompatible agent: {stdout.decode()}'
+                )
+            display.vvv(f'SSH_AGENT: ssh-agent[{p.pid}] started and bound to {sock}')
+            atexit.register(p.terminate)
+        case _:
+            sock = ssh_agent_cfg
+
+    try:
+        with SshAgentClient(sock) as client:
+            client.list()
+    except Exception as e:
+        raise AnsibleError(
+            f'Could not communicate with ssh-agent using auth sock {sock}: {e}'
+        ) from e
+
+    os.environ['SSH_AUTH_SOCK'] = os.environ['ANSIBLE_SSH_AGENT'] = sock
 
 
 class CLI(ABC):
@@ -137,6 +210,7 @@ class CLI(ABC):
     # -S (chop long lines) -X (disable termcap init and de-init)
     LESS_OPTS = 'FRSX'
     SKIP_INVENTORY_DEFAULTS = False
+    USES_CONNECTION = False
 
     def __init__(self, args, callback=None):
         """
@@ -150,6 +224,9 @@ class CLI(ABC):
         self.parser = None
         self.callback = callback
 
+        self.show_devel_warning()
+
+    def show_devel_warning(self) -> None:
         if C.DEVEL_WARNING and __version__.endswith('dev0'):
             display.warning(
                 'You are running the development version of Ansible. You should only run Ansible from "devel" if '
@@ -221,7 +298,7 @@ class CLI(ABC):
     @staticmethod
     def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
-                            auto_prompt=True):
+                            auto_prompt=True, initialize_context=True):
         # list of tuples
         vault_secrets = []
 
@@ -318,15 +395,14 @@ class CLI(ABC):
         if last_exception and not found_vault_secret:
             raise last_exception
 
+        if initialize_context:
+            VaultSecretsContext.initialize(VaultSecretsContext(vault_secrets))
+
         return vault_secrets
 
     @staticmethod
-    def _get_secret(prompt):
-
-        secret = getpass.getpass(prompt=prompt)
-        if secret:
-            secret = to_unsafe_text(secret)
-        return secret
+    def _get_secret(prompt: str) -> str:
+        return getpass.getpass(prompt=prompt)
 
     @staticmethod
     def ask_passwords():
@@ -335,7 +411,6 @@ class CLI(ABC):
         op = context.CLIARGS
         sshpass = None
         becomepass = None
-        become_prompt = ''
 
         become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op['become_method'].upper()
 
@@ -357,7 +432,7 @@ class CLI(ABC):
         except EOFError:
             pass
 
-        return (sshpass, becomepass)
+        return sshpass, becomepass
 
     def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
         """ check for conflicting options """
@@ -528,8 +603,7 @@ class CLI(ABC):
         except KeyboardInterrupt:
             pass
 
-    @staticmethod
-    def _play_prereqs():
+    def _play_prereqs(self):
         # TODO: evaluate moving all of the code that touches ``AnsibleCollectionConfig``
         # into ``init_plugin_loader`` so that we can specifically remove
         # ``AnsibleCollectionConfig.playbook_paths`` to make it immutable after instantiation
@@ -563,6 +637,12 @@ class CLI(ABC):
                                                 ask_vault_pass=options['ask_vault_pass'],
                                                 auto_prompt=False)
         loader.set_vault_secrets(vault_secrets)
+
+        if self.USES_CONNECTION:
+            try:
+                _launch_ssh_agent()
+            except Exception as e:
+                raise AnsibleError('Failed to launch ssh agent', orig_exc=e)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))
@@ -603,10 +683,9 @@ class CLI(ABC):
         return hosts
 
     @staticmethod
-    def get_password_from_file(pwd_file):
-
+    def get_password_from_file(pwd_file: str) -> str:
         b_pwd_file = to_bytes(pwd_file)
-        secret = None
+
         if b_pwd_file == b'-':
             # ensure its read as bytes
             secret = sys.stdin.buffer.read()
@@ -626,13 +705,13 @@ class CLI(ABC):
 
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("The password script %s returned an error (rc=%s): %s" % (pwd_file, p.returncode, stderr))
+                raise AnsibleError("The password script %s returned an error (rc=%s): %s" % (pwd_file, p.returncode, to_text(stderr)))
             secret = stdout
 
         else:
             try:
-                with open(b_pwd_file, "rb") as f:
-                    secret = f.read().strip()
+                with open(b_pwd_file, "rb") as password_file:
+                    secret = password_file.read().strip()
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
 
@@ -641,7 +720,7 @@ class CLI(ABC):
         if not secret:
             raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
 
-        return to_unsafe_text(secret)
+        return to_text(secret)
 
     @classmethod
     def cli_executor(cls, args=None):
@@ -662,54 +741,22 @@ class CLI(ABC):
             else:
                 display.debug("Created the '%s' directory" % ansible_dir)
 
-            try:
-                args = [to_text(a, errors='surrogate_or_strict') for a in args]
-            except UnicodeError:
-                display.error('Command line args are not in utf-8, unable to continue.  Ansible currently only understands utf-8')
-                display.display(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
-                exit_code = 6
-            else:
-                cli = cls(args)
-                exit_code = cli.run()
-
-        except AnsibleOptionsError as e:
-            cli.parser.print_help()
-            display.error(to_text(e), wrap_text=False)
-            exit_code = 5
-        except AnsibleParserError as e:
-            display.error(to_text(e), wrap_text=False)
-            exit_code = 4
-    # TQM takes care of these, but leaving comment to reserve the exit codes
-    #    except AnsibleHostUnreachable as e:
-    #        display.error(str(e))
-    #        exit_code = 3
-    #    except AnsibleHostFailed as e:
-    #        display.error(str(e))
-    #        exit_code = 2
-        except AnsibleError as e:
-            display.error(to_text(e), wrap_text=False)
-            exit_code = 1
+            cli = cls(args)
+            exit_code = cli.run()
+        except AnsibleError as ex:
+            display.error(ex)
+            exit_code = ex._exit_code
         except KeyboardInterrupt:
             display.error("User interrupted execution")
-            exit_code = 99
-        except Exception as e:
-            if C.DEFAULT_DEBUG:
-                # Show raw stacktraces in debug mode, It also allow pdb to
-                # enter post mortem mode.
-                raise
-            have_cli_options = bool(context.CLIARGS)
-            display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
-            if not have_cli_options or have_cli_options and context.CLIARGS['verbosity'] > 2:
-                log_only = False
-                if hasattr(e, 'orig_exc'):
-                    display.vvv('\nexception type: %s' % to_text(type(e.orig_exc)))
-                    why = to_text(e.orig_exc)
-                    if to_text(e) != why:
-                        display.vvv('\noriginal msg: %s' % why)
-            else:
-                display.display("to see the full traceback, use -vvv")
-                log_only = True
-            display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
-            exit_code = 250
+            exit_code = ExitCode.KEYBOARD_INTERRUPT
+        except Exception as ex:
+            try:
+                raise AnsibleError("Unexpected Exception, this is probably a bug.") from ex
+            except AnsibleError as ex2:
+                # DTFIX-RELEASE: clean this up so we're not hacking the internals- re-wrap in an AnsibleCLIUnhandledError that always shows TB, or?
+                from ansible.module_utils._internal import _traceback
+                _traceback._is_traceback_enabled = lambda *_args, **_kwargs: True
+                display.error(ex2)
+                exit_code = ExitCode.UNKNOWN_ERROR
 
         sys.exit(exit_code)

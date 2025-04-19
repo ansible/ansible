@@ -37,8 +37,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
-from ansible.template import Templar
-from ansible.module_utils.common.text.converters import to_text
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 
 display = Display()
@@ -124,13 +123,13 @@ class StrategyModule(StrategyBase):
                                                                     _hosts=self._hosts_cache,
                                                                     _hosts_all=self._hosts_cache_all)
                         self.add_tqm_variables(task_vars, play=iterator._play)
-                        templar = Templar(loader=self._loader, variables=task_vars)
+                        templar = TemplateEngine(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables", host=host_name)
 
                         try:
                             throttle = int(templar.template(task.throttle))
-                        except Exception as e:
-                            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+                        except Exception as ex:
+                            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task.throttle) from ex
 
                         if throttle > 0:
                             same_tasks = 0
@@ -155,13 +154,7 @@ class StrategyModule(StrategyBase):
                             # corresponding action plugin
                             action = None
 
-                        try:
-                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                            display.debug("done templating", host=host_name)
-                        except Exception:
-                            # just ignore any errors during task name templating,
-                            # we don't care if it just shows the raw name
-                            display.debug("templating failed for some reason", host=host_name)
+                        task.post_validate_attribute("name", templar=templar)
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
                         if run_once:
@@ -255,11 +248,12 @@ class StrategyModule(StrategyBase):
                         iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
                     except AnsibleParserError:
                         raise
-                    except AnsibleError as e:
-                        display.error(to_text(e), wrap_text=False)
+                    except AnsibleError as ex:
+                        # FIXME: send the error to the callback; don't directly write to display here
+                        display.error(ex)
                         for r in included_file._results:
                             r._result['failed'] = True
-                            r._result['reason'] = str(e)
+                            r._result['reason'] = str(ex)
                             self._tqm._stats.increment('failures', r._host.name)
                             self._tqm.send_callback('v2_runner_on_failed', r)
                             failed_includes_hosts.add(r._host)

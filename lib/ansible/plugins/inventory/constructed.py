@@ -82,12 +82,11 @@ EXAMPLES = r"""
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError, AnsibleOptionsError
+from ansible.errors import AnsibleParserError
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
-from ansible.module_utils.common.text.converters import to_native
+from ansible.plugins.loader import cache_loader
 from ansible.utils.vars import combine_vars
-from ansible.vars.fact_cache import FactCache
 from ansible.vars.plugins import get_vars_from_inventory_sources
 
 
@@ -96,11 +95,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     NAME = 'constructed'
 
-    def __init__(self):
-
-        super(InventoryModule, self).__init__()
-
-        self._cache = FactCache()
+    # implicit trust behavior is already added by the YAML parser invoked by the loader
 
     def verify_file(self, path):
 
@@ -147,26 +142,28 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             sources = inventory.processed_sources
         except AttributeError:
             if self.get_option('use_vars_plugins'):
-                raise AnsibleOptionsError("The option use_vars_plugins requires ansible >= 2.11.")
+                raise
 
         strict = self.get_option('strict')
-        fact_cache = FactCache()
+
+        cache = cache_loader.get(C.CACHE_PLUGIN)
+
         try:
             # Go over hosts (less var copies)
             for host in inventory.hosts:
 
                 # get available variables to templar
                 hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if host in fact_cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, fact_cache[host])
+                if cache.contains(host):  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, cache.get(host))
 
                 # create composite vars
                 self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
 
                 # refetch host vars in case new ones have been created above
                 hostvars = self.get_all_host_vars(inventory.hosts[host], loader, sources)
-                if host in self._cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, self._cache[host])
+                if cache.contains(host):  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, cache.get(host))
 
                 # constructed groups based on conditionals
                 self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict, fetch_hostvars=False)
@@ -174,5 +171,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 # constructed groups based variable values
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=False)
 
-        except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e)
+        except Exception as ex:
+            raise AnsibleParserError(f"Failed to parse {path!r}.") from ex

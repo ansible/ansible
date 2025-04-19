@@ -6,14 +6,10 @@
 
 from __future__ import annotations
 
-from units.mock.procenv import ModuleTestCase
-
-import builtins
-
-realimport = builtins.__import__
+import unittest
 
 
-class TestTextifyContainers(ModuleTestCase):
+class TestTextifyContainers(unittest.TestCase):
     def test_module_utils_basic_json_dict_converters(self):
         from ansible.module_utils.basic import json_dict_unicode_to_bytes, json_dict_bytes_to_unicode
 

@@ -34,6 +34,8 @@ class PlaybookCLI(CLI):
 
     name = 'ansible-playbook'
 
+    USES_CONNECTION = True
+
     def init_parser(self):
 
         # create parser for CLI options

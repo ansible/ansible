@@ -1,0 +1,5 @@
+- command: echo $AN_ENV_VAR
+  register: result
+
+- assert:
+    that: result.stdout == an_ansible_var

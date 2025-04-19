@@ -30,26 +30,29 @@ DOCUMENTATION = """
 """
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
-from ansible.module_utils.common.text.converters import to_text
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError, AnsibleValueOmittedError
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
+from ansible.inventory.host import Host
+from ansible.playbook.task import Task
+from ansible.executor.play_iterator import PlayIterator
 
 display = Display()
 
 
 class StrategyModule(StrategyBase):
 
-    def _get_next_task_lockstep(self, hosts, iterator):
+    def _get_next_task_lockstep(self, hosts: list[Host], iterator: PlayIterator) -> list[tuple[Host, Task]]:
         """
         Returns a list of (host, task) tuples, where the task may
         be a noop task to keep the iterator in lock step across
         all hosts.
         """
+
         state_task_per_host = {}
         for host in hosts:
             state, task = iterator.get_next_task_for_host(host, peek=True)
@@ -84,7 +87,7 @@ class StrategyModule(StrategyBase):
                 iterator.set_state_for_host(host.name, state)
                 host_tasks.append((host, task))
 
-        if cur_task.action in C._ACTION_META and cur_task.args.get('_raw_params') == 'flush_handlers':
+        if cur_task._get_meta() == 'flush_handlers':
             iterator.all_tasks[iterator.cur_task:iterator.cur_task] = [h for b in iterator._play.handlers for h in b.block]
 
         return host_tasks
@@ -130,18 +133,23 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
+                    host_name = host.get_name()
+
                     display.debug("getting variables")
                     task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
                                                                 _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
                     self.add_tqm_variables(task_vars, play=iterator._play)
-                    templar = Templar(loader=self._loader, variables=task_vars)
+                    templar = TemplateEngine(loader=self._loader, variables=task_vars)
                     display.debug("done getting variables")
 
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
-                    task_action = templar.template(task.action)
+                    try:
+                        task_action = templar.template(task.action)
+                    except AnsibleValueOmittedError:
+                        raise AnsibleParserError("Omit is not valid for the `action` keyword.", obj=task.action) from None
 
                     try:
                         action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
@@ -154,7 +162,7 @@ class StrategyModule(StrategyBase):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers', 'end_role'):
+                        if task._get_meta() not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers', 'end_role'):
                             run_once = True
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
@@ -168,22 +176,20 @@ class StrategyModule(StrategyBase):
                                 break
 
                         run_once = action and getattr(action, 'BYPASS_HOST_LOOP', False) or templar.template(task.run_once)
-                        try:
-                            task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                        except Exception as e:
-                            display.debug(f"Failed to templalte task name ({task.name}), ignoring error and continuing: {e}")
 
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:
+                            task.post_validate_attribute("name", templar=templar)
+
                             if isinstance(task, Handler):
                                 self._tqm.send_callback('v2_playbook_on_handler_task_start', task)
                             else:
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             callback_sent = True
 
-                        self._blocked_hosts[host.get_name()] = True
+                        self._blocked_hosts[host_name] = True
                         self._queue_task(host, task, task_vars, play_context)
                         del task_vars
 
@@ -275,11 +281,12 @@ class StrategyModule(StrategyBase):
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
-                        except AnsibleError as e:
-                            display.error(to_text(e), wrap_text=False)
+                        except AnsibleError as ex:
+                            # FIXME: send the error to the callback; don't directly write to display here
+                            display.error(ex)
                             for r in included_file._results:
                                 r._result['failed'] = True
-                                r._result['reason'] = str(e)
+                                r._result['reason'] = str(ex)
                                 self._tqm._stats.increment('failures', r._host.name)
                                 self._tqm.send_callback('v2_runner_on_failed', r)
                                 failed_includes_hosts.add(r._host)
@@ -347,10 +354,9 @@ class StrategyModule(StrategyBase):
                     return result
                 display.debug("done checking to see if all hosts have failed")
 
-            except (IOError, EOFError) as e:
-                display.debug("got IOError/EOFError in task loop: %s" % e)
-                # most likely an abort, return failed
-                return self._tqm.RUN_UNKNOWN_ERROR
+            finally:
+                # removed unnecessary exception handler, don't want to mis-attribute the entire code block by changing indentation
+                pass
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered

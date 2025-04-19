@@ -18,8 +18,12 @@
 from __future__ import annotations
 
 import unittest
+
+import pytest
+
 from unittest.mock import patch, MagicMock
 
+from ansible.parsing.vault import VaultSecretsContext
 from units.mock.loader import DictDataLoader
 
 from ansible.release import __version__
@@ -90,6 +94,7 @@ class TestCliBuildVaultIds(unittest.TestCase):
                                         'default@one-more-password-file']))
 
 
+@pytest.mark.usefixtures("_zap_vault_secrets_context")
 class TestCliSetupVaultSecrets(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({})
@@ -246,6 +251,8 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
 
         self.assertEqual(matches[0][1].bytes, b'file1_password')
         self.assertEqual(len(matches), 1)
+
+        VaultSecretsContext._current = None
 
         res = cli.CLI.setup_vault_secrets(loader=self.fake_loader,
                                           vault_ids=[],

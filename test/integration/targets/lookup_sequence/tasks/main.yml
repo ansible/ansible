@@ -90,7 +90,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test bad kv value"
-          - ansible_failed_result.msg.startswith("Invalid type for")
+          - ansible_failed_result.msg is contains "has an invalid value"
 
 - block:
     - name: EXPECTED FAILURE - test bad simple form start value
@@ -103,7 +103,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form start value"
-          - ansible_failed_result.msg.startswith("Invalid type for")
+          - ansible_failed_result.msg is contains "has an invalid value"
 
 - block:
     - name: EXPECTED FAILURE - test bad simple form end value
@@ -116,7 +116,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form end value"
-          - ansible_failed_result.msg.startswith("Invalid type for")
+          - ansible_failed_result.msg is contains "has an invalid value"
 
 - block:
     - name: EXPECTED FAILURE - test bad simple form stride value
@@ -129,7 +129,7 @@
     - assert:
         that:
           - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form stride value"
-          - ansible_failed_result.msg.startswith("Invalid type for")
+          - ansible_failed_result.msg is contains "has an invalid value"
 
 - block:
     - name: EXPECTED FAILURE - test no count or end

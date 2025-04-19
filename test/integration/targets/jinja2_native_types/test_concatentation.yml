@@ -72,12 +72,3 @@
 - assert:
     that:
         - 'list_for_ints | int == 42'
-
-- name: loop through list to create a new list
-  set_fact:
-      list_from_list: "[{% for x in list_ints %}{{ x }},{% endfor %}]"
-
-- assert:
-    that:
-        - 'list_from_list == [4, 2]'
-        - 'list_from_list|type_debug == "list"'

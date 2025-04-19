@@ -37,7 +37,7 @@ from ansible.errors import AnsibleError
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         if not isinstance(terms, Sequence):
             raise AnsibleError("with_list expects a list")
         return terms

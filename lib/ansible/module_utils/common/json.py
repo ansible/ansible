@@ -1,84 +1,90 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2019 Ansible Project
-# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+from __future__ import annotations as _annotations
 
-from __future__ import annotations
+import enum as _enum
+import json as _stdlib_json
+import types as _types
 
-import json
-
-import datetime
-
-from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six.moves.collections_abc import Mapping
-from ansible.module_utils.common.collections import is_sequence
-
-
-def _is_unsafe(value):
-    return getattr(value, '__UNSAFE__', False) and not getattr(value, '__ENCRYPTED__', False)
+from ansible.module_utils import _internal
+from ansible.module_utils._internal import _json
+from ansible.module_utils._internal._json import _legacy_encoder
+from ansible.module_utils._internal._json import _profiles
+from ansible.module_utils._internal._json._profiles import _tagless
+from ansible.module_utils.common import warnings as _warnings
 
 
-def _is_vault(value):
-    return getattr(value, '__ENCRYPTED__', False)
+def __getattr__(name: str) -> object:
+    """Handle dynamic module members which are or will be deprecated."""
+    if name in ('AnsibleJSONEncoder', '_AnsibleJSONEncoder'):
+        # deprecated: description='deprecate legacy encoder' core_version='2.23'
+        # if not name.startswith('_'):  # avoid duplicate deprecation warning for imports from ajson
+        #     _warnings.deprecate(
+        #         msg="The `AnsibleJSONEncoder` type is deprecated.",
+        #         version="2.27",
+        #         help_text="Use a profile-based encoder instead.",  # DTFIX-RELEASE: improve this help text
+        #     )
+
+        return _get_legacy_encoder()
+
+    if name in ('AnsibleJSONDecoder', '_AnsibleJSONDecoder'):
+        # deprecated: description='deprecate legacy decoder' core_version='2.23'
+        # if not name.startswith('_'):  # avoid duplicate deprecation warning for imports from ajson
+        #     _warnings.deprecate(
+        #         msg="The `AnsibleJSONDecoder` type is deprecated.",
+        #         version="2.27",
+        #         help_text="Use a profile-based decoder instead.",  # DTFIX-RELEASE: improve this help text
+        #     )
+
+        return _tagless.Decoder
+
+    if name == 'json_dump':
+        _warnings.deprecate(
+            msg="The `json_dump` function is deprecated.",
+            version="2.23",
+            help_text="Use `json.dumps` with the appropriate `cls` instead.",
+        )
+
+        return _json_dump
+
+    raise AttributeError(name)
 
 
-def _preprocess_unsafe_encode(value):
-    """Recursively preprocess a data structure converting instances of ``AnsibleUnsafe``
-    into their JSON dict representations
+def _get_legacy_encoder() -> type[_stdlib_json.JSONEncoder]:
+    """Compatibility hack: previous module_utils AnsibleJSONEncoder impl did controller-side work, controller plugins require a more fully-featured impl."""
+    if _internal.is_controller:
+        return _internal.import_controller_module('ansible._internal._json._legacy_encoder').LegacyControllerJSONEncoder
 
-    Used in ``AnsibleJSONEncoder.iterencode``
-    """
-    if _is_unsafe(value):
-        value = {'__ansible_unsafe': to_text(value, errors='surrogate_or_strict', nonstring='strict')}
-    elif is_sequence(value):
-        value = [_preprocess_unsafe_encode(v) for v in value]
-    elif isinstance(value, Mapping):
-        value = dict((k, _preprocess_unsafe_encode(v)) for k, v in value.items())
-
-    return value
+    return _legacy_encoder.LegacyTargetJSONEncoder
 
 
-def json_dump(structure):
-    return json.dumps(structure, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
+def _json_dump(structure):
+    """JSON dumping function maintained for temporary backward compatibility."""
+    return _stdlib_json.dumps(structure, cls=_get_legacy_encoder(), sort_keys=True, indent=4)
 
 
-class AnsibleJSONEncoder(json.JSONEncoder):
-    """
-    Simple encoder class to deal with JSON encoding of Ansible internal types
-    """
+class Direction(_enum.Enum):
+    """Enumeration used to select a contextually-appropriate JSON profile for module messaging."""
 
-    def __init__(self, preprocess_unsafe=False, vault_to_text=False, **kwargs):
-        self._preprocess_unsafe = preprocess_unsafe
-        self._vault_to_text = vault_to_text
-        super(AnsibleJSONEncoder, self).__init__(**kwargs)
+    CONTROLLER_TO_MODULE = _enum.auto()
+    """Encode/decode messages from the Ansible controller to an Ansible module."""
+    MODULE_TO_CONTROLLER = _enum.auto()
+    """Encode/decode messages from an Ansible module to the Ansible controller."""
 
-    # NOTE: ALWAYS inform AWS/Tower when new items get added as they consume them downstream via a callback
-    def default(self, o):
-        if getattr(o, '__ENCRYPTED__', False):
-            # vault object
-            if self._vault_to_text:
-                value = to_text(o, errors='surrogate_or_strict')
-            else:
-                value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
-        elif getattr(o, '__UNSAFE__', False):
-            # unsafe object, this will never be triggered, see ``AnsibleJSONEncoder.iterencode``
-            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
-        elif isinstance(o, Mapping):
-            # hostvars and other objects
-            value = dict(o)
-        elif isinstance(o, (datetime.date, datetime.datetime)):
-            # date object
-            value = o.isoformat()
-        else:
-            # use default encoder
-            value = super(AnsibleJSONEncoder, self).default(o)
-        return value
 
-    def iterencode(self, o, **kwargs):
-        """Custom iterencode, primarily design to handle encoding ``AnsibleUnsafe``
-        as the ``AnsibleUnsafe`` subclasses inherit from string types and
-        ``json.JSONEncoder`` does not support custom encoders for string types
-        """
-        if self._preprocess_unsafe:
-            o = _preprocess_unsafe_encode(o)
+def get_encoder(profile: str | _types.ModuleType, /) -> type[_stdlib_json.JSONEncoder]:
+    """Return a `JSONEncoder` for the given `profile`."""
+    return _json.get_encoder_decoder(profile, _profiles.AnsibleProfileJSONEncoder)
 
-        return super(AnsibleJSONEncoder, self).iterencode(o, **kwargs)
+
+def get_decoder(profile: str | _types.ModuleType, /) -> type[_stdlib_json.JSONDecoder]:
+    """Return a `JSONDecoder` for the given `profile`."""
+    return _json.get_encoder_decoder(profile, _profiles.AnsibleProfileJSONDecoder)
+
+
+def get_module_encoder(name: str, direction: Direction, /) -> type[_stdlib_json.JSONEncoder]:
+    """Return a `JSONEncoder` for the module profile specified by `name` and `direction`."""
+    return get_encoder(_json.get_module_serialization_profile_name(name, direction == Direction.CONTROLLER_TO_MODULE))
+
+
+def get_module_decoder(name: str, direction: Direction, /) -> type[_stdlib_json.JSONDecoder]:
+    """Return a `JSONDecoder` for the module profile specified by `name` and `direction`."""
+    return get_decoder(_json.get_module_serialization_profile_name(name, direction == Direction.CONTROLLER_TO_MODULE))

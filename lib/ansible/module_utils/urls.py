@@ -1198,7 +1198,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data),
+                               data=json.dumps(data),
                                headers={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
@@ -1276,7 +1276,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
-        module.fail_json(msg=to_text(e), exception=e.import_traceback)
+        module.fail_json(msg=to_text(e))
     except urllib.error.HTTPError as e:
         r = e
         try:
@@ -1307,9 +1307,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
     except http.client.BadStatusLine as e:
         info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
-    except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+    except Exception as ex:
+        info.update(dict(msg="An unknown error occurred: %s" % to_native(ex), status=-1, exception=traceback.format_exc()))
     finally:
         tempfile.tempdir = old_tempdir
 

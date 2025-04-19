@@ -299,7 +299,6 @@ import sys
 import tempfile
 import operator
 import shlex
-import traceback
 
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -309,10 +308,10 @@ HAS_SETUPTOOLS = False
 try:
     from packaging.requirements import Requirement as parse_requirement
     HAS_PACKAGING = True
-except Exception:
+except Exception as ex:
     # This is catching a generic Exception, due to packaging on EL7 raising a TypeError on import
     HAS_PACKAGING = False
-    PACKAGING_IMP_ERR = traceback.format_exc()
+    PACKAGING_IMP_ERR = ex
     try:
         from pkg_resources import Requirement
         parse_requirement = Requirement.parse  # type: ignore[misc,assignment]

@@ -591,6 +591,9 @@ def command_integration_script(
     """Run an integration test script."""
     display.info('Running %s integration test script' % target.name)
 
+    if not os.access(target.script_path, os.X_OK):
+        raise ApplicationError(f'Unable to run non-executable script {target.script_path!r}. Did you forget to run "chmod +x" on it?')
+
     env_config = None
 
     if isinstance(args, PosixIntegrationConfig):

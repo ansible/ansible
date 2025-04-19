@@ -250,7 +250,6 @@ import pwd
 import re
 import stat
 import time
-import traceback
 from functools import partial
 from zipfile import ZipFile
 
@@ -698,7 +697,7 @@ class ZipArchive(object):
                             try:
                                 mode = AnsibleModule._symbolic_mode_to_octal(st, self.file_args['mode'])
                             except ValueError as e:
-                                self.module.fail_json(path=path, msg="%s" % to_native(e), exception=traceback.format_exc())
+                                self.module.fail_json(path=path, msg="%s" % to_native(e))
                 # Only special files require no umask-handling
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)

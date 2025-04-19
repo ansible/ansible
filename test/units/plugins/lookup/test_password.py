@@ -18,9 +18,15 @@
 
 from __future__ import annotations
 
+import warnings
+
 try:
-    import passlib
-    from passlib.handlers import pbkdf2
+    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
+
+        import passlib
+        from passlib.handlers import pbkdf2
 except ImportError:  # pragma: nocover
     passlib = None
     pbkdf2 = None
@@ -552,7 +558,7 @@ class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
     def test_encrypt_wrapped_crypt_algo(self, mock_write_file):
 
         password.os.path.exists = self.password_lookup._loader.path_exists
-        with patch.object(builtins, 'open', mock_open(read_data=self.password_lookup._loader._get_file_contents('/path/to/somewhere')[0])) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=self.password_lookup._loader.get_text_file_contents('/path/to/somewhere'))):
             results = self.password_lookup.run([u'/path/to/somewhere encrypt=ldap_sha256_crypt'], None)
 
             wrapper = getattr(passlib.hash, 'ldap_sha256_crypt')
@@ -575,7 +581,7 @@ class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
             self.assertEqual(str_parts[0], '{CRYPT}')
 
             # verify it used the right algo type
-            self.assertTrue(wrapper.verify(self.password_lookup._loader._get_file_contents('/path/to/somewhere')[0], result))
+            self.assertTrue(wrapper.verify(self.password_lookup._loader.get_text_file_contents('/path/to/somewhere'), result))
 
             # verify a password with a non default rounds value
             # generated with: echo test | mkpasswd -s --rounds 660000 -m sha-256 --salt testansiblepass.
