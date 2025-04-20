@@ -49,7 +49,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
-from ansible.release import __version__ as ansible_version
+from ansible import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
