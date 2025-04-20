@@ -6,7 +6,7 @@ from __future__ import annotations
 import platform
 import sys
 
-from ansible.module_utils.ansible_release import __version__ as ansible_version
+from ansible.release import __version__ as ansible_version
 
 
 def user_agent():
