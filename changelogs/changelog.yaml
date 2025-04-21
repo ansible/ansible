@@ -780,6 +780,17 @@ releases:
     - respawn-min-python.yml
     - win-wdac-audit.yml
     release_date: '2025-03-17'
+  2.18.5:
+    changes:
+      release_summary: '| Release Date: 2025-04-21
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.5_summary.yaml
+    release_date: '2025-04-21'
   2.18.5rc1:
     changes:
       bugfixes:
