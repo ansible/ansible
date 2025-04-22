@@ -167,9 +167,9 @@
       - waitfor is not changed
       - "waitfor.port == http_port"
 
-- name: install psutil using pip (non-Linux only)
+- name: install psutil using pip (non-Linux)
   pip:
-    name: psutil==5.8.0
+    name: psutil==5.9.8
   when: ansible_system != 'Linux'
 
 - name: Copy zombie.py
