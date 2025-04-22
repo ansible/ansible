@@ -727,6 +727,17 @@ releases:
     - 2.17.10rc1_summary.yaml
     - win-wdac-audit.yml
     release_date: '2025-03-17'
+  2.17.11:
+    changes:
+      release_summary: '| Release Date: 2025-04-21
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.11_summary.yaml
+    release_date: '2025-04-21'
   2.17.11rc1:
     changes:
       bugfixes:
