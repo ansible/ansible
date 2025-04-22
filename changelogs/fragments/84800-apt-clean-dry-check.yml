@@ -1,0 +1,2 @@
+bugfixes:
+  - "apt module: fix aptclean() to return False if there is nothing to clean (https://github.com/ansible/ansible/issues/84880)"
