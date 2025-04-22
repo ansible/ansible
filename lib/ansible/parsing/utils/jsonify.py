@@ -25,7 +25,7 @@ Display().deprecated(f'{__name__!r} is deprecated.', version='2.23', help_text='
 
 
 def jsonify(result, format=False):
-    ''' format JSON output (uncompressed or uncompressed) '''
+    """Format JSON output."""
 
     if result is None:
         return "{}"
