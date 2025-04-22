@@ -47,7 +47,7 @@ options:
         - The key from input dictionary used to generate groups.
       default_value:
         description:
-        - The default value when the host variable's value is an empty string.
+        - The default value when the host variable's value is V(None) or an empty string.
         - This option is mutually exclusive with O(keyed_groups[].trailing_separator).
         type: str
         version_added: '2.12'

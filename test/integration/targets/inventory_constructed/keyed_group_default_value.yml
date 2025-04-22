@@ -4,14 +4,6 @@ keyed_groups:
     prefix: tag
     default_value: "running"
 
-  - key: omit
-    prefix: omit_test
-    default_value: default_value
-
-  - key: invalid_var | default(None)
-    prefix: none_test
-    default_value: default_value
-
-  - key: '""'
-    prefix: empty_test
-    default_value: default_value
+  - key: tags
+    prefix: without_trailing
+    trailing_separator: false

@@ -410,8 +410,6 @@ class Constructable(_BaseInventoryPlugin):
                         variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
                         key = self._compose(keyed.get('key'), variables)
-                    except AnsibleValueOmittedError:
-                        key = None
                     except Exception as e:
                         if strict:
                             raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
@@ -452,7 +450,7 @@ class Constructable(_BaseInventoryPlugin):
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
                                 bare_name = '%s%s%s' % (gname, sep, gval)
-                                if gval == '':
+                                if gval is None or gval == '':
                                     # key's value is empty
                                     if default_value_name is not None:
                                         bare_name = '%s%s%s' % (gname, sep, default_value_name)
