@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
                         'body must be mapping, cannot be type %s' % body.__class__.__name__
                     )
                 new_body = deepcopy(body)
-                for field, value in body.items():
+                for field, value in new_body.items():
                     if not isinstance(value, _c.MutableMapping):
                         continue
                     content = value.get('content')
@@ -69,10 +69,10 @@ class ActionModule(ActionBase):
                         self._connection._shell.tmpdir,
                         os.path.basename(filename)
                     )
-                    new_body[field].update({'filename': tmp_src})
+                    value['filename'] = tmp_src
                     self._transfer_file(filename, tmp_src)
                     self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
-                kwargs['body'] = new_body
+                kwargs['body'] = body
 
             new_module_args = self._task.args | kwargs
 
