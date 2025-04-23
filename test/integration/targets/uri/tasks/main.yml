@@ -490,6 +490,12 @@
   register: result
   failed_when: result is failed or result.attempts == 1
 
+- name: Assert multipart/form-data with file and retry
+  assert:
+    that:
+      - result.json.files.file | b64decode == '_multipart/form-data_\n'
+      - result.attempts == 2
+
 - name: Validate invalid method
   uri:
     url: https://{{ httpbin_host }}/anything

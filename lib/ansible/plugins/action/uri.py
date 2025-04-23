@@ -72,7 +72,7 @@ class ActionModule(ActionBase):
                     value['filename'] = tmp_src
                     self._transfer_file(filename, tmp_src)
                     self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
-                kwargs['body'] = body
+                kwargs['body'] = new_body
 
             new_module_args = self._task.args | kwargs
 
