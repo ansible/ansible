@@ -576,8 +576,8 @@ def main():
             if checksum is None:
                 module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
         # Remove any non-alphanumeric characters, including the infamous
-        # Unicode zero-width space
-        checksum = re.sub(r'\W+', '', checksum).lower()
+        # Unicode zero-width space and also characters outside of base 16
+        checksum = re.sub(r'[\Wg-zG-Z]+', '', checksum).lower()
         # Ensure the checksum portion is a hexdigest
         try:
             int(checksum, 16)
