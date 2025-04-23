@@ -21,10 +21,10 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'pure_json'
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        self._display.display(json.dumps(result._result))
+        self._display.display(json.dumps(result.result))
 
     def v2_runner_on_ok(self, result):
-        self._display.display(json.dumps(result._result))
+        self._display.display(json.dumps(result.result))
 
     def v2_runner_on_skipped(self, result):
-        self._display.display(json.dumps(result._result))
+        self._display.display(json.dumps(result.result))

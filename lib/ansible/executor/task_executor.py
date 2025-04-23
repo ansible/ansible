@@ -20,7 +20,7 @@ from ansible.errors import (
     AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import _RawTaskResult
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary
@@ -364,7 +364,7 @@ class TaskExecutor:
             if self._connection and not isinstance(self._connection, string_types):
                 task_fields['connection'] = getattr(self._connection, 'ansible_name')
 
-            tr = TaskResult(
+            tr = _RawTaskResult(
                 host=self._host,
                 task=self._task,
                 return_data=res,
@@ -669,7 +669,7 @@ class TaskExecutor:
                     if result.get('failed'):
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
-                            TaskResult(
+                            _RawTaskResult(
                                 host=self._host,
                                 task=self._task,
                                 return_data=result,
@@ -679,7 +679,7 @@ class TaskExecutor:
                     else:
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
-                            TaskResult(
+                            _RawTaskResult(
                                 host=self._host,
                                 task=self._task,
                                 return_data=result,
@@ -765,7 +765,7 @@ class TaskExecutor:
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
                         self._final_q.send_callback(
                             'v2_runner_retry',
-                            TaskResult(
+                            _RawTaskResult(
                                 host=self._host,
                                 task=self._task,
                                 return_data=result,
@@ -935,7 +935,7 @@ class TaskExecutor:
                 time_left -= self._task.poll
                 self._final_q.send_callback(
                     'v2_runner_on_async_poll',
-                    TaskResult(
+                    _RawTaskResult(
                         host=self._host,
                         task=async_task,
                         return_data=async_result,

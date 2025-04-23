@@ -252,11 +252,11 @@ class StrategyModule(StrategyBase):
                         # FIXME: send the error to the callback; don't directly write to display here
                         display.error(ex)
                         for r in included_file._results:
-                            r._result['failed'] = True
-                            r._result['reason'] = str(ex)
-                            self._tqm._stats.increment('failures', r._host.name)
+                            r._return_data['failed'] = True
+                            r._return_data['reason'] = str(ex)
+                            self._tqm._stats.increment('failures', r.host.name)
                             self._tqm.send_callback('v2_runner_on_failed', r)
-                            failed_includes_hosts.add(r._host)
+                            failed_includes_hosts.add(r.host)
                         continue
                     else:
                         # since we skip incrementing the stats when the task result is

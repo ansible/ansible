@@ -32,7 +32,7 @@ from ansible._internal import _task
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import _RawTaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.text.converters import to_text
@@ -227,7 +227,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             init_plugin_loader(cli_collections_path)
 
         try:
-            # execute the task and build a TaskResult from the result
+            # execute the task and build a _RawTaskResult from the result
             display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
             executor_result = TaskExecutor(
                 self._host,
@@ -257,7 +257,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             # put the result on the result queue
             display.debug("sending task result for task %s" % self._task._uuid)
             try:
-                self._final_q.send_task_result(TaskResult(
+                self._final_q.send_task_result(_RawTaskResult(
                     host=self._host,
                     task=self._task,
                     return_data=executor_result,
@@ -267,7 +267,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                 try:
                     raise AnsibleError("Task result omitted due to queue send failure.") from ex
                 except Exception as ex_wrapper:
-                    self._final_q.send_task_result(TaskResult(
+                    self._final_q.send_task_result(_RawTaskResult(
                         host=self._host,
                         task=self._task,
                         return_data=ActionBase.result_dict_from_exception(ex_wrapper),  # Overriding the task result, to represent the failure
@@ -283,7 +283,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
 
             self._host.vars = dict()
             self._host.groups = []
-            self._final_q.send_task_result(TaskResult(
+            self._final_q.send_task_result(_RawTaskResult(
                 host=self._host,
                 task=self._task,
                 return_data=return_data,
@@ -295,7 +295,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    self._final_q.send_task_result(TaskResult(
+                    self._final_q.send_task_result(_RawTaskResult(
                         host=self._host,
                         task=self._task,
                         return_data=ActionBase.result_dict_from_exception(ex),
