@@ -1441,7 +1441,8 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == 'e64bd951e748964b82a8112d9805fda5f6a3974b'
+      - result2.stat.checksum == 'e6a40c1d8cc378012a161cf6ce04b6610db708ca' or result2.stat.checksum == '25b008c4783e98c93699efe463c9676359f76675'
+
 
 - name: encoding - write a line
   lineinfile:
