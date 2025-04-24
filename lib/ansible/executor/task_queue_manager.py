@@ -463,14 +463,15 @@ class TaskQueueManager:
                             version='2.23',
                             help_text='Use `v2_` prefixed callback methods instead.',
                         )
-                elif possible == 'v2_on_any':
-                    display.deprecated(
-                        msg='The `v2_on_any` callback method is deprecated.',
-                        version='2.23',
-                        help_text='Use explicit callback methods instead.',
-                    )
 
                 if method is not None and not getattr(method, '_base_impl', False):  # don't bother dispatching to the base impls
+                    if possible == 'v2_on_any':
+                        display.deprecated(
+                            msg='The `v2_on_any` callback method is deprecated.',
+                            version='2.23',
+                            help_text='Use event-specific callback methods instead.',
+                        )
+
                     methods.append(method)
 
             for method in methods:
