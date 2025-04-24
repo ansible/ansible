@@ -15,6 +15,7 @@ import json
 from collections import defaultdict
 
 from ansible.plugins.callback import CallbackBase
+from ansible.executor.task_result import CallbackTaskResult
 
 
 class CallbackModule(CallbackBase):
@@ -26,9 +27,9 @@ class CallbackModule(CallbackBase):
         super().__init__(*args, **kwargs)
         self._conntrack = defaultdict(lambda : defaultdict(int))
 
-    def _track(self, result, *args, **kwargs):
-        host = result._host.get_name()
-        task = result._task
+    def _track(self, result: CallbackTaskResult, *args, **kwargs):
+        host = result.host.get_name()
+        task = result.task
 
         self._conntrack[host][task.connection] += 1
 

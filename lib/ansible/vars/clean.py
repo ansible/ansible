@@ -42,7 +42,7 @@ def module_response_deepcopy(v):
     backwards compatibility, in case we need to extend this function
     to handle our specific needs:
 
-    * ``ansible.executor.task_result.TaskResult.clean_copy``
+    * ``ansible.executor.task_result._RawTaskResult.as_callback_task_result``
     * ``ansible.vars.clean.clean_facts``
     * ``ansible.vars.namespace_facts``
     """

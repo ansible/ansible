@@ -21,34 +21,42 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.executor.task_result import _RawTaskResult
+from ansible.inventory.host import Host
 from ansible.module_utils.common.text.converters import to_text
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.handler import Handler
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
+from ansible.vars.manager import VariableManager
 
 display = Display()
 
 
 class IncludedFile:
 
-    def __init__(self, filename, args, vars, task, is_role=False):
+    def __init__(self, filename, args, vars, task, is_role: bool = False) -> None:
         self._filename = filename
         self._args = args
         self._vars = vars
         self._task = task
-        self._hosts = []
+        self._hosts: list[Host] = []
         self._is_role = is_role
-        self._results = []
+        self._results: list[_RawTaskResult] = []
 
-    def add_host(self, host):
+    def add_host(self, host: Host) -> None:
         if host not in self._hosts:
             self._hosts.append(host)
             return
+
         raise ValueError()
 
     def __eq__(self, other):
+        if not isinstance(other, IncludedFile):
+            return False
+
         return (other._filename == self._filename and
                 other._args == self._args and
                 other._vars == self._vars and
@@ -59,23 +67,28 @@ class IncludedFile:
         return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
 
     @staticmethod
-    def process_include_results(results, iterator, loader, variable_manager):
-        included_files = []
-        task_vars_cache = {}
+    def process_include_results(
+        results: list[_RawTaskResult],
+        iterator,
+        loader: DataLoader,
+        variable_manager: VariableManager,
+    ) -> list[IncludedFile]:
+        included_files: list[IncludedFile] = []
+        task_vars_cache: dict[tuple, dict] = {}
 
         for res in results:
 
-            original_host = res._host
-            original_task = res._task
+            original_host = res.host
+            original_task = res.task
 
             if original_task.action in C._ACTION_ALL_INCLUDES:
 
                 if original_task.loop:
-                    if 'results' not in res._result:
+                    if 'results' not in res._return_data:
                         continue
-                    include_results = res._result['results']
+                    include_results = res._loop_results
                 else:
-                    include_results = [res._result]
+                    include_results = [res._return_data]
 
                 for include_result in include_results:
                     # if the task result was skipped or failed, continue

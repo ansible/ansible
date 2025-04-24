@@ -8,12 +8,11 @@ from __future__ import annotations as _annotations
 import datetime as _datetime
 import typing as _t
 
+from ansible._internal import _json
 from ansible._internal._datatag import _tags
 from ansible.module_utils._internal import _datatag
 from ansible.module_utils._internal._json import _profiles
 from ansible.parsing import vault as _vault
-
-from ... import _json
 
 
 class _Untrusted:
@@ -48,7 +47,7 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
             convert_mapping_to_dict=convert_mapping_to_dict,
             convert_sequence_to_list=convert_sequence_to_list,
             convert_custom_scalars=convert_custom_scalars,
-            allow_encrypted_string=True,
+            encrypted_string_behavior=_json.EncryptedStringBehavior.PRESERVE,
         )
 
         self.invert_trust = invert_trust

@@ -28,7 +28,7 @@ class CallbackModule(CallbackBase):
         self.requested_to_resolved = {}
 
     def v2_runner_on_ok(self, result):
-        self.requested_to_resolved[result._task.action] = result._task.resolved_action
+        self.requested_to_resolved[result.task.action] = result.task.resolved_action
 
     def v2_playbook_on_stats(self, stats):
         for requested, resolved in self.requested_to_resolved.items():

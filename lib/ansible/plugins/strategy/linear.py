@@ -40,6 +40,8 @@ from ansible.utils.display import Display
 from ansible.inventory.host import Host
 from ansible.playbook.task import Task
 from ansible.executor.play_iterator import PlayIterator
+from ansible.playbook.play_context import PlayContext
+from ansible.executor import task_result as _task_result
 
 display = Display()
 
@@ -92,7 +94,7 @@ class StrategyModule(StrategyBase):
 
         return host_tasks
 
-    def run(self, iterator, play_context):
+    def run(self, iterator, play_context: PlayContext):  # type: ignore[override]
         """
         The linear strategy is simple - get the next task and queue
         it for all hosts, then wait for the queue to drain before
@@ -100,7 +102,7 @@ class StrategyModule(StrategyBase):
         """
 
         # iterate over each task, while there is one left to run
-        result = self._tqm.RUN_OK
+        result = int(self._tqm.RUN_OK)
         work_to_do = True
 
         self._set_hosts_cache(iterator._play)
@@ -125,7 +127,7 @@ class StrategyModule(StrategyBase):
                 # flag set if task is set to any_errors_fatal
                 any_errors_fatal = False
 
-                results = []
+                results: list[_task_result._RawTaskResult] = []
                 for (host, task) in host_tasks:
                     if self._tqm._terminated:
                         break
@@ -285,11 +287,11 @@ class StrategyModule(StrategyBase):
                             # FIXME: send the error to the callback; don't directly write to display here
                             display.error(ex)
                             for r in included_file._results:
-                                r._result['failed'] = True
-                                r._result['reason'] = str(ex)
-                                self._tqm._stats.increment('failures', r._host.name)
+                                r._return_data['failed'] = True
+                                r._return_data['reason'] = str(ex)
+                                self._tqm._stats.increment('failures', r.host.name)
                                 self._tqm.send_callback('v2_runner_on_failed', r)
-                                failed_includes_hosts.add(r._host)
+                                failed_includes_hosts.add(r.host)
                         else:
                             # since we skip incrementing the stats when the task result is
                             # first processed, we do so now for each host in the list
@@ -320,9 +322,9 @@ class StrategyModule(StrategyBase):
                 unreachable_hosts = []
                 for res in results:
                     if res.is_failed():
-                        failed_hosts.append(res._host.name)
+                        failed_hosts.append(res.host.name)
                     elif res.is_unreachable():
-                        unreachable_hosts.append(res._host.name)
+                        unreachable_hosts.append(res.host.name)
 
                 if any_errors_fatal and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:

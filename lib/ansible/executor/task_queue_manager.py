@@ -32,7 +32,7 @@ from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
 from ansible._internal._errors._handler import ErrorHandler
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
-from ansible.executor.task_result import TaskResult, ThinTaskResult
+from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
@@ -48,7 +48,8 @@ from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
-from dataclasses import dataclass
+if t.TYPE_CHECKING:
+    from ansible.executor.process.worker import WorkerProcess
 
 __all__ = ['TaskQueueManager']
 
@@ -58,11 +59,13 @@ STDERR_FILENO = 2
 
 display = Display()
 
+_T = t.TypeVar('_T')
+
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
     method_name: str
-    thin_task_result: ThinTaskResult
+    wire_task_result: _WireTaskResult
 
 
 class DisplaySend:
@@ -72,7 +75,7 @@ class DisplaySend:
         self.kwargs = kwargs
 
 
-@dataclass
+@dataclasses.dataclass
 class PromptSend:
     worker_id: int
     prompt: str
@@ -87,11 +90,11 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
         kwargs['ctx'] = multiprocessing_context
         super().__init__(*args, **kwargs)
 
-    def send_callback(self, method_name: str, task_result: TaskResult) -> None:
-        self.put(CallbackSend(method_name=method_name, thin_task_result=task_result.as_thin()))
+    def send_callback(self, method_name: str, task_result: _RawTaskResult) -> None:
+        self.put(CallbackSend(method_name=method_name, wire_task_result=task_result.as_wire_task_result()))
 
-    def send_task_result(self, task_result: TaskResult) -> None:
-        self.put(task_result.as_thin())
+    def send_task_result(self, task_result: _RawTaskResult) -> None:
+        self.put(task_result.as_wire_task_result())
 
     def send_display(self, method, *args, **kwargs):
         self.put(
@@ -186,11 +189,8 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
-    def _initialize_processes(self, num):
-        self._workers = []
-
-        for i in range(num):
-            self._workers.append(None)
+    def _initialize_processes(self, num: int) -> None:
+        self._workers: list[WorkerProcess | None] = [None] * num
 
     def load_callbacks(self):
         """
@@ -430,54 +430,72 @@ class TaskQueueManager:
                 defunct = True
         return defunct
 
+    @staticmethod
+    def _first_arg_of_type(value_type: t.Type[_T], args: t.Sequence) -> _T | None:
+        return next((arg for arg in args if isinstance(arg, value_type)), None)
+
     @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
         # We always send events to stdout callback first, rest should follow config order
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
-            if getattr(callback_plugin, 'disabled', False):
+            if callback_plugin.disabled:
                 continue
 
             # a plugin can opt in to implicit tasks (such as meta). It does this
             # by declaring self.wants_implicit_tasks = True.
-            wants_implicit_tasks = getattr(callback_plugin, 'wants_implicit_tasks', False)
+            if not callback_plugin.wants_implicit_tasks and (task_arg := self._first_arg_of_type(Task, args)) and task_arg.implicit:
+                continue
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
+
             for possible in [method_name, 'v2_on_any']:
-                gotit = getattr(callback_plugin, possible, None)
-                if gotit is None:
-                    gotit = getattr(callback_plugin, possible.removeprefix('v2_'), None)
-                if gotit is not None:
-                    methods.append(gotit)
+                method = getattr(callback_plugin, possible, None)
 
-            # send clean copies
-            new_args = []
+                if method is None:
+                    method = getattr(callback_plugin, possible.removeprefix('v2_'), None)
 
-            # If we end up being given an implicit task, we'll set this flag in
-            # the loop below. If the plugin doesn't care about those, then we
-            # check and continue to the next iteration of the outer loop.
-            is_implicit_task = False
+                    if method is not None:
+                        display.deprecated(
+                            msg='The v1 callback API is deprecated.',
+                            version='2.23',
+                            help_text='Use `v2_` prefixed callback methods instead.',
+                        )
 
-            for arg in args:
-                # FIXME: add play/task cleaners
-                if isinstance(arg, TaskResult):
-                    new_args.append(arg.clean_copy())
-                # elif isinstance(arg, Play):
-                # elif isinstance(arg, Task):
-                else:
-                    new_args.append(arg)
+                if method is not None and not getattr(method, '_base_impl', False):  # don't bother dispatching to the base impls
+                    if possible == 'v2_on_any':
+                        display.deprecated(
+                            msg='The `v2_on_any` callback method is deprecated.',
+                            version='2.23',
+                            help_text='Use event-specific callback methods instead.',
+                        )
 
-                if isinstance(arg, Task) and arg.implicit:
-                    is_implicit_task = True
-
-            if is_implicit_task and not wants_implicit_tasks:
-                continue
+                    methods.append(method)
 
             for method in methods:
+                # send clean copies
+                new_args = []
+
+                for arg in args:
+                    # FIXME: add play/task cleaners
+                    if isinstance(arg, _RawTaskResult):
+                        copied_tr = arg.as_callback_task_result()
+                        new_args.append(copied_tr)
+                        # this state hack requires that no callback ever accepts > 1 TaskResult object
+                        callback_plugin._current_task_result = copied_tr
+                    else:
+                        new_args.append(arg)
+
                 with self._callback_dispatch_error_handler.handle(AnsibleCallbackError):
                     try:
                         method(*new_args, **kwargs)
+                    except AssertionError:
+                        # Using an `assert` in integration tests is useful.
+                        # Production code should never use `assert` or raise `AssertionError`.
+                        raise
                     except Exception as ex:
                         raise AnsibleCallbackError(f"Callback dispatch {method_name!r} failed for plugin {callback_plugin._load_name!r}.") from ex
+
+            callback_plugin._current_task_result = None

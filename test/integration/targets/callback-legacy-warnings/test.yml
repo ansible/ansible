@@ -1,0 +1,20 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - noisy:
+      register: noisyout
+      async: 5
+      poll: 1
+      loop: [1, 2]
+
+    - noisy:
+      async: 5
+      poll: 1
+      register: noisyout
+
+    - debug:
+      when: false
+
+    - debug:
+        var: 1/0
+      ignore_errors: true

@@ -30,6 +30,7 @@ DOCUMENTATION = """
 import os
 
 from ansible.constants import TREE_DIR
+from ansible.executor.task_result import CallbackTaskResult
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
@@ -76,14 +77,14 @@ class CallbackModule(CallbackBase):
         except (OSError, IOError) as e:
             self._display.warning(u"Unable to write to %s's file: %s" % (hostname, to_text(e)))
 
-    def result_to_tree(self, result):
-        self.write_tree_file(result._host.get_name(), self._dump_results(result._result))
+    def result_to_tree(self, result: CallbackTaskResult) -> None:
+        self.write_tree_file(result.host.get_name(), self._dump_results(result.result))
 
-    def v2_runner_on_ok(self, result):
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         self.result_to_tree(result)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors: bool = False) -> None:
         self.result_to_tree(result)
 
-    def v2_runner_on_unreachable(self, result):
+    def v2_runner_on_unreachable(self, result: CallbackTaskResult) -> None:
         self.result_to_tree(result)
