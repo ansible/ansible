@@ -25,7 +25,7 @@ import types
 import unittest
 from unittest.mock import MagicMock
 
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import CallbackTaskResult
 from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
 
@@ -52,13 +52,13 @@ class TestCallback(unittest.TestCase):
         self.assertIs(cb._display, display_mock)
 
     def test_host_label(self):
-        result = TaskResult(host=Host('host1'), task=mock_task, return_data={}, task_fields={})
+        result = CallbackTaskResult(host=Host('host1'), task=mock_task, return_data={}, task_fields={})
 
         self.assertEqual(CallbackBase.host_label(result), 'host1')
 
     def test_host_label_delegated(self):
         mock_task.delegate_to = 'host2'
-        result = TaskResult(
+        result = CallbackTaskResult(
             host=Host('host1'),
             task=mock_task,
             return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},

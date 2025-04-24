@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import enum
 import json
 import typing as t
 
@@ -19,7 +20,9 @@ from ansible.module_utils._internal._datatag import (
 from ansible.module_utils._internal._json._profiles import _tagless
 from ansible.parsing.vault import EncryptedString
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
+from ansible._internal._templating import _transform
 from ansible.module_utils import _internal
+from ansible.module_utils._internal import _datatag
 
 _T = t.TypeVar('_T')
 _sentinel = object()
@@ -52,6 +55,19 @@ class StateTrackingMixIn(HasCurrent):
         return self._stack[1:] + [self._current]
 
 
+class EncryptedStringBehavior(enum.Enum):
+    """How `AnsibleVariableVisitor` will handle instances of `EncryptedString`."""
+
+    PRESERVE = enum.auto()
+    """Preserves the unmodified `EncryptedString` instance."""
+    DECRYPT = enum.auto()
+    """Replaces the value with its decrypted plaintext."""
+    REDACT = enum.auto()
+    """Replaces the value with a placeholder string."""
+    FAIL = enum.auto()
+    """Raises an `AnsibleVariableTypeError` error."""
+
+
 class AnsibleVariableVisitor:
     """Utility visitor base class to recursively apply various behaviors and checks to variable object graphs."""
 
@@ -63,7 +79,9 @@ class AnsibleVariableVisitor:
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
         convert_custom_scalars: bool = False,
-        allow_encrypted_string: bool = False,
+        convert_to_native_values: bool = False,
+        apply_transforms: bool = False,
+        encrypted_string_behavior: EncryptedStringBehavior = EncryptedStringBehavior.DECRYPT,
     ):
         super().__init__()  # supports StateTrackingMixIn
 
@@ -72,7 +90,16 @@ class AnsibleVariableVisitor:
         self.convert_mapping_to_dict = convert_mapping_to_dict
         self.convert_sequence_to_list = convert_sequence_to_list
         self.convert_custom_scalars = convert_custom_scalars
-        self.allow_encrypted_string = allow_encrypted_string
+        self.convert_to_native_values = convert_to_native_values
+        self.apply_transforms = apply_transforms
+        self.encrypted_string_behavior = encrypted_string_behavior
+
+        if apply_transforms:
+            from ansible._internal._templating import _engine
+
+            self._template_engine = _engine.TemplateEngine()
+        else:
+            self._template_engine = None
 
         self._current: t.Any = None  # supports StateTrackingMixIn
 
@@ -113,9 +140,19 @@ class AnsibleVariableVisitor:
 
         value_type = type(value)
 
+        if self.apply_transforms and value_type in _transform._type_transform_mapping:
+            value = self._template_engine.transform(value)
+            value_type = type(value)
+
+        # DTFIX-RELEASE: need to handle native copy for keys too
+        if self.convert_to_native_values and isinstance(value, _datatag.AnsibleTaggedObject):
+            value = value._native_copy()
+            value_type = type(value)
+
         result: _T
 
         # DTFIX-RELEASE: the visitor is ignoring dict/mapping keys except for debugging and schema-aware checking, it should be doing type checks on keys
+        #                keep in mind the allowed types for keys is a more restrictive set than for values (str and taggged str only, not EncryptedString)
         # DTFIX-RELEASE: some type lists being consulted (the ones from datatag) are probably too permissive, and perhaps should not be dynamic
 
         if (result := self._early_visit(value, value_type)) is not _sentinel:
@@ -127,8 +164,14 @@ class AnsibleVariableVisitor:
         elif value_type in _ANSIBLE_ALLOWED_NON_SCALAR_COLLECTION_VAR_TYPES:
             with self:  # supports StateTrackingMixIn
                 result = AnsibleTagHelper.tag_copy(value, (self._visit(k, v) for k, v in enumerate(t.cast(t.Iterable, value))), value_type=value_type)
-        elif self.allow_encrypted_string and isinstance(value, EncryptedString):
-            return value  # type: ignore[return-value]  # DTFIX-RELEASE: this should probably only be allowed for values in dict, not keys (set, dict)
+        elif self.encrypted_string_behavior != EncryptedStringBehavior.FAIL and isinstance(value, EncryptedString):
+            match self.encrypted_string_behavior:
+                case EncryptedStringBehavior.REDACT:
+                    result = "<redacted>"  # type: ignore[assignment]
+                case EncryptedStringBehavior.PRESERVE:
+                    result = value  # type: ignore[assignment]
+                case EncryptedStringBehavior.DECRYPT:
+                    result = str(value)  # type: ignore[assignment]
         elif self.convert_mapping_to_dict and _internal.is_intermediate_mapping(value):
             with self:  # supports StateTrackingMixIn
                 result = {k: self._visit(k, v) for k, v in value.items()}  # type: ignore[assignment]

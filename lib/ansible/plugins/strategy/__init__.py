@@ -26,6 +26,7 @@ import sys
 import threading
 import time
 import typing as t
+import collections.abc as _c
 
 from collections import deque
 
@@ -35,12 +36,13 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleTemplateError
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
-from ansible.executor.task_result import TaskResult, ThinTaskResult
+from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
@@ -100,10 +102,10 @@ def results_thread_main(strategy: StrategyBase) -> None:
                 dmethod = getattr(display, result.method)
                 dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
-                task_result = strategy.convert_thin_task_result(result.thin_task_result)
+                task_result = strategy._convert_wire_task_result_to_raw(result.wire_task_result)
                 strategy._tqm.send_callback(result.method_name, task_result)
-            elif isinstance(result, ThinTaskResult):
-                result = strategy.convert_thin_task_result(result)
+            elif isinstance(result, _WireTaskResult):
+                result = strategy._convert_wire_task_result_to_raw(result)
                 with strategy._results_lock:
                     strategy._results.append(result)
             elif isinstance(result, PromptSend):
@@ -135,7 +137,7 @@ def results_thread_main(strategy: StrategyBase) -> None:
 def debug_closure(func):
     """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
     @functools.wraps(func)
-    def inner(self, iterator, one_pass=False, max_passes=None):
+    def inner(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[_RawTaskResult]:
         status_to_stats_map = (
             ('is_failed', 'failures'),
             ('is_unreachable', 'dark'),
@@ -146,12 +148,12 @@ def debug_closure(func):
         # We don't know the host yet, copy the previous states, for lookup after we process new results
         prev_host_states = iterator.host_states.copy()
 
-        results = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
-        _processed_results = []
+        results: list[_RawTaskResult] = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
+        _processed_results: list[_RawTaskResult] = []
 
         for result in results:
-            task = result._task
-            host = result._host
+            task = result.task
+            host = result.host
             _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
             task_vars = _queued_task_args['task_vars']
             play_context = _queued_task_args['play_context']
@@ -237,7 +239,7 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts: dict[str, bool] = dict()
 
-        self._results: deque[TaskResult] = deque()
+        self._results: deque[_RawTaskResult] = deque()
         self._results_lock = threading.Condition(threading.Lock())
 
         # create the result processing thread for reading results in the background
@@ -247,7 +249,7 @@ class StrategyBase:
 
         # holds the list of active (persistent) connections to be shutdown at
         # play completion
-        self._active_connections: dict[str, str] = dict()
+        self._active_connections: dict[Host, str] = dict()
 
         # Caches for get_host calls, to avoid calling excessively
         # These values should be set at the top of the ``run`` method of each
@@ -445,10 +447,10 @@ class StrategyBase:
             for target_host in host_list:
                 _set_host_facts(target_host, always_facts)
 
-    def convert_thin_task_result(self, thin_task_result: ThinTaskResult) -> TaskResult:
-        """Return a `TaskResult` created from a `ThinTaskResult`."""
-        host = self._inventory.get_host(thin_task_result.host_name)
-        queue_cache_entry = (host.name, thin_task_result.task_uuid)
+    def _convert_wire_task_result_to_raw(self, wire_task_result: _WireTaskResult) -> _RawTaskResult:
+        """Return a `_RawTaskResult` created from a `_WireTaskResult`."""
+        host = self._inventory.get_host(wire_task_result.host_name)
+        queue_cache_entry = (host.name, wire_task_result.task_uuid)
 
         try:
             found_task = self._queued_task_cache[queue_cache_entry]['task']
@@ -456,7 +458,7 @@ class StrategyBase:
             # This should only happen due to an implicit task created by the
             # TaskExecutor, restrict this behavior to the explicit use case
             # of an implicit async_status task
-            if thin_task_result.task_fields.get('action') != 'async_status':
+            if wire_task_result.task_fields.get('action') != 'async_status':
                 raise
 
             task = Task()
@@ -464,13 +466,13 @@ class StrategyBase:
             task = found_task.copy(exclude_parent=True, exclude_tasks=True)
             task._parent = found_task._parent
 
-        task.from_attrs(thin_task_result.task_fields)
+        task.from_attrs(wire_task_result.task_fields)
 
-        return TaskResult(
+        return _RawTaskResult(
             host=host,
             task=task,
-            return_data=thin_task_result.return_data,
-            task_fields=thin_task_result.task_fields,
+            return_data=wire_task_result.return_data,
+            task_fields=wire_task_result.task_fields,
         )
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
@@ -529,7 +531,7 @@ class StrategyBase:
                 yield handler
 
     @debug_closure
-    def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[TaskResult]:
+    def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[_RawTaskResult]:
         """
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
@@ -545,8 +547,8 @@ class StrategyBase:
             finally:
                 self._results_lock.release()
 
-            original_host = task_result._host
-            original_task: Task = task_result._task
+            original_host = task_result.host
+            original_task: Task = task_result.task
 
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
@@ -580,7 +582,7 @@ class StrategyBase:
                             original_host.name,
                             dict(
                                 ansible_failed_task=original_task.serialize(),
-                                ansible_failed_result=task_result._result,
+                                ansible_failed_result=task_result._return_data,
                             ),
                         )
                     else:
@@ -588,7 +590,7 @@ class StrategyBase:
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
                     self._tqm._stats.increment('ignored', original_host.name)
-                    if 'changed' in task_result._result and task_result._result['changed']:
+                    if task_result.is_changed():
                         self._tqm._stats.increment('changed', original_host.name)
                 self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
             elif task_result.is_unreachable():
@@ -610,9 +612,9 @@ class StrategyBase:
                 if original_task.loop:
                     # this task had a loop, and has more than one result, so
                     # loop over all of them instead of a single result
-                    result_items = task_result._result.get('results', [])
+                    result_items = task_result._loop_results
                 else:
-                    result_items = [task_result._result]
+                    result_items = [task_result._return_data]
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item and task_result.is_changed():
@@ -657,7 +659,7 @@ class StrategyBase:
 
                     if 'add_host' in result_item or 'add_group' in result_item:
                         item_vars = _get_item_vars(result_item, original_task)
-                        found_task_vars = self._queued_task_cache.get((original_host.name, task_result._task._uuid))['task_vars']
+                        found_task_vars = self._queued_task_cache.get((original_host.name, task_result.task._uuid))['task_vars']
                         if item_vars:
                             all_task_vars = combine_vars(found_task_vars, item_vars)
                         else:
@@ -672,17 +674,17 @@ class StrategyBase:
                                 original_task._resolve_conditional(original_task.failed_when, all_task_vars))
 
                         if original_task.loop or original_task.loop_with:
-                            new_item_result = TaskResult(
-                                task_result._host,
-                                task_result._task,
+                            new_item_result = _RawTaskResult(
+                                task_result.host,
+                                task_result.task,
                                 result_item,
-                                task_result._task_fields,
+                                task_result.task_fields,
                             )
                             self._tqm.send_callback('v2_runner_item_on_ok', new_item_result)
                             if result_item.get('changed', False):
-                                task_result._result['changed'] = True
+                                task_result._return_data['changed'] = True
                             if result_item.get('failed', False):
-                                task_result._result['failed'] = True
+                                task_result._return_data['failed'] = True
 
                     if 'ansible_facts' in result_item and original_task.action not in C._ACTION_DEBUG:
                         # if delegated fact and we are delegating facts, we need to change target host for them
@@ -730,13 +732,13 @@ class StrategyBase:
                                 else:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
-                if 'diff' in task_result._result:
+                if 'diff' in task_result._return_data:
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
                 if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
-                    if 'changed' in task_result._result and task_result._result['changed']:
+                    if task_result.is_changed():
                         self._tqm._stats.increment('changed', original_host.name)
 
                 # finally, send the ok for this task
@@ -746,7 +748,7 @@ class StrategyBase:
             if original_task.register:
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
+                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._return_data))
                 if 'invocation' in clean_copy:
                     del clean_copy['invocation']
 
@@ -797,7 +799,7 @@ class StrategyBase:
 
         return ret_results
 
-    def _copy_included_file(self, included_file):
+    def _copy_included_file(self, included_file: IncludedFile) -> IncludedFile:
         """
         A proven safe and performant way to create a copy of an included file
         """
@@ -810,7 +812,7 @@ class StrategyBase:
 
         return ti_copy
 
-    def _load_included_file(self, included_file, iterator, is_handler=False, handle_stats_and_callbacks=True):
+    def _load_included_file(self, included_file: IncludedFile, iterator, is_handler=False, handle_stats_and_callbacks=True):
         """
         Loads an included YAML file of tasks, applying the optional set of variables.
 
@@ -857,11 +859,11 @@ class StrategyBase:
             else:
                 reason = to_text(e)
             if handle_stats_and_callbacks:
-                for r in included_file._results:
-                    r._result['failed'] = True
+                for tr in included_file._results:
+                    tr._return_data['failed'] = True
 
                 for host in included_file._hosts:
-                    tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason), task_fields={})
+                    tr = _RawTaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason), task_fields={})
                     self._tqm._stats.increment('failures', host.name)
                     self._tqm.send_callback('v2_runner_on_failed', tr)
             raise AnsibleError(reason) from e
@@ -897,7 +899,7 @@ class StrategyBase:
     def _cond_not_supported_warn(self, task_name):
         display.warning("%s task does not support when conditional" % task_name)
 
-    def _execute_meta(self, task: Task, play_context, iterator, target_host):
+    def _execute_meta(self, task: Task, play_context, iterator, target_host: Host):
         task.resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
 
         # meta tasks store their args in the _raw_params field of args,
@@ -1075,7 +1077,7 @@ class StrategyBase:
         else:
             display.vv(f"META: {header}")
 
-        res = TaskResult(target_host, task, result, {})
+        res = _RawTaskResult(target_host, task, result, {})
         if skipped:
             self._tqm.send_callback('v2_runner_on_skipped', res)
         return [res]
@@ -1095,14 +1097,14 @@ class StrategyBase:
                     hosts_left.append(self._inventory.get_host(host))
         return hosts_left
 
-    def update_active_connections(self, results):
+    def update_active_connections(self, results: _c.Iterable[_RawTaskResult]) -> None:
         """ updates the current active persistent connections """
         for r in results:
-            if 'args' in r._task_fields:
-                socket_path = r._task_fields['args'].get('_ansible_socket')
+            if 'args' in r.task_fields:
+                socket_path = r.task_fields['args'].get('_ansible_socket')
                 if socket_path:
-                    if r._host not in self._active_connections:
-                        self._active_connections[r._host] = socket_path
+                    if r.host not in self._active_connections:
+                        self._active_connections[r.host] = socket_path
 
 
 class NextAction(object):

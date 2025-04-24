@@ -21,7 +21,7 @@ DOCUMENTATION = """
 
 from ansible import constants as C
 from ansible import context
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import CallbackTaskResult
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -47,39 +47,39 @@ class CallbackModule(CallbackBase):
         self._task_type_cache = {}
         super(CallbackModule, self).__init__()
 
-    def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors: bool = False) -> None:
         host_label = self.host_label(result)
 
-        if self._last_task_banner != result._task._uuid:
-            self._print_task_banner(result._task)
+        if self._last_task_banner != result.task._uuid:
+            self._print_task_banner(result.task)
 
         self._handle_warnings_and_exception(result)
 
         # FIXME: this method should not exist, delegate "suggested keys to display" to the plugin or something... As-is, the placement of this
         #          call obliterates `results`, which causes a task summary to be printed on loop failures, which we don't do anywhere else.
-        self._clean_results(result._result, result._task.action)
+        self._clean_results(result.result, result.task.action)
 
-        if result._task.loop and 'results' in result._result:
+        if result.task.loop and 'results' in result.result:
             self._process_items(result)
         else:
             if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
-                self._print_task_path(result._task)
-            msg = "fatal: [%s]: FAILED! => %s" % (host_label, self._dump_results(result._result))
+                self._print_task_path(result.task)
+            msg = "fatal: [%s]: FAILED! => %s" % (host_label, self._dump_results(result.result))
             self._display.display(msg, color=C.COLOR_ERROR, stderr=self.get_option('display_failed_stderr'))
 
         if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
-    def v2_runner_on_ok(self, result: TaskResult) -> None:
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         host_label = self.host_label(result)
 
-        if isinstance(result._task, TaskInclude):
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+        if isinstance(result.task, TaskInclude):
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
             return
-        elif result._result.get('changed', False):
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+        elif result.result.get('changed', False):
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
 
             msg = "changed: [%s]" % (host_label,)
             color = C.COLOR_CHANGED
@@ -87,52 +87,52 @@ class CallbackModule(CallbackBase):
             if not self.get_option('display_ok_hosts'):
                 return
 
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
 
             msg = "ok: [%s]" % (host_label,)
             color = C.COLOR_OK
 
         self._handle_warnings_and_exception(result)
 
-        if result._task.loop and 'results' in result._result:
+        if result.task.loop and 'results' in result.result:
             self._process_items(result)
         else:
-            self._clean_results(result._result, result._task.action)
+            self._clean_results(result.result, result.task.action)
 
             if self._run_is_verbose(result):
-                msg += " => %s" % (self._dump_results(result._result),)
+                msg += " => %s" % (self._dump_results(result.result),)
             self._display.display(msg, color=color)
 
-    def v2_runner_on_skipped(self, result: TaskResult) -> None:
+    def v2_runner_on_skipped(self, result: CallbackTaskResult) -> None:
         if self.get_option('display_skipped_hosts'):
 
-            self._clean_results(result._result, result._task.action)
+            self._clean_results(result.result, result.task.action)
 
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
 
             self._handle_warnings_and_exception(result)
 
-            if result._task.loop is not None and 'results' in result._result:
+            if result.task.loop is not None and 'results' in result.result:
                 self._process_items(result)
 
-            msg = "skipping: [%s]" % result._host.get_name()
+            msg = "skipping: [%s]" % result.host.get_name()
             if self._run_is_verbose(result):
-                msg += " => %s" % self._dump_results(result._result)
+                msg += " => %s" % self._dump_results(result.result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
-    def v2_runner_on_unreachable(self, result: TaskResult) -> None:
-        if self._last_task_banner != result._task._uuid:
-            self._print_task_banner(result._task)
+    def v2_runner_on_unreachable(self, result: CallbackTaskResult) -> None:
+        if self._last_task_banner != result.task._uuid:
+            self._print_task_banner(result.task)
 
         self._handle_warnings_and_exception(result)
 
         host_label = self.host_label(result)
-        msg = "fatal: [%s]: UNREACHABLE! => %s" % (host_label, self._dump_results(result._result))
+        msg = "fatal: [%s]: UNREACHABLE! => %s" % (host_label, self._dump_results(result.result))
         self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.get_option('display_failed_stderr'))
 
-        if result._task.ignore_unreachable:
+        if result.task.ignore_unreachable:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_playbook_on_no_hosts_matched(self):
@@ -222,29 +222,29 @@ class CallbackModule(CallbackBase):
 
         self._display.banner(msg)
 
-    def v2_on_file_diff(self, result):
-        if result._task.loop and 'results' in result._result:
-            for res in result._result['results']:
+    def v2_on_file_diff(self, result: CallbackTaskResult) -> None:
+        if result.task.loop and 'results' in result.result:
+            for res in result.result['results']:
                 if 'diff' in res and res['diff'] and res.get('changed', False):
                     diff = self._get_diff(res['diff'])
                     if diff:
-                        if self._last_task_banner != result._task._uuid:
-                            self._print_task_banner(result._task)
+                        if self._last_task_banner != result.task._uuid:
+                            self._print_task_banner(result.task)
                         self._display.display(diff)
-        elif 'diff' in result._result and result._result['diff'] and result._result.get('changed', False):
-            diff = self._get_diff(result._result['diff'])
+        elif 'diff' in result.result and result.result['diff'] and result.result.get('changed', False):
+            diff = self._get_diff(result.result['diff'])
             if diff:
-                if self._last_task_banner != result._task._uuid:
-                    self._print_task_banner(result._task)
+                if self._last_task_banner != result.task._uuid:
+                    self._print_task_banner(result.task)
                 self._display.display(diff)
 
-    def v2_runner_item_on_ok(self, result: TaskResult) -> None:
+    def v2_runner_item_on_ok(self, result: CallbackTaskResult) -> None:
         host_label = self.host_label(result)
-        if isinstance(result._task, TaskInclude):
+        if isinstance(result.task, TaskInclude):
             return
-        elif result._result.get('changed', False):
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+        elif result.result.get('changed', False):
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
 
             msg = 'changed'
             color = C.COLOR_CHANGED
@@ -252,47 +252,47 @@ class CallbackModule(CallbackBase):
             if not self.get_option('display_ok_hosts'):
                 return
 
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
 
             msg = 'ok'
             color = C.COLOR_OK
 
         self._handle_warnings_and_exception(result)
 
-        msg = "%s: [%s] => (item=%s)" % (msg, host_label, self._get_item_label(result._result))
-        self._clean_results(result._result, result._task.action)
+        msg = "%s: [%s] => (item=%s)" % (msg, host_label, self._get_item_label(result.result))
+        self._clean_results(result.result, result.task.action)
         if self._run_is_verbose(result):
-            msg += " => %s" % self._dump_results(result._result)
+            msg += " => %s" % self._dump_results(result.result)
         self._display.display(msg, color=color)
 
-    def v2_runner_item_on_failed(self, result: TaskResult) -> None:
-        if self._last_task_banner != result._task._uuid:
-            self._print_task_banner(result._task)
+    def v2_runner_item_on_failed(self, result: CallbackTaskResult) -> None:
+        if self._last_task_banner != result.task._uuid:
+            self._print_task_banner(result.task)
 
         self._handle_warnings_and_exception(result)
 
         host_label = self.host_label(result)
 
         msg = "failed: [%s]" % (host_label,)
-        self._clean_results(result._result, result._task.action)
+        self._clean_results(result.result, result.task.action)
         self._display.display(
-            msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)),
+            msg + " (item=%s) => %s" % (self._get_item_label(result.result), self._dump_results(result.result)),
             color=C.COLOR_ERROR,
             stderr=self.get_option('display_failed_stderr')
         )
 
-    def v2_runner_item_on_skipped(self, result: TaskResult) -> None:
+    def v2_runner_item_on_skipped(self, result: CallbackTaskResult) -> None:
         if self.get_option('display_skipped_hosts'):
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+            if self._last_task_banner != result.task._uuid:
+                self._print_task_banner(result.task)
 
             self._handle_warnings_and_exception(result)
 
-            self._clean_results(result._result, result._task.action)
-            msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
+            self._clean_results(result.result, result.task.action)
+            msg = "skipping: [%s] => (item=%s) " % (result.host.get_name(), self._get_item_label(result.result))
             if self._run_is_verbose(result):
-                msg += " => %s" % self._dump_results(result._result)
+                msg += " => %s" % self._dump_results(result.result)
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
@@ -377,37 +377,37 @@ class CallbackModule(CallbackBase):
         if context.CLIARGS['check'] and self.get_option('check_mode_markers'):
             self._display.banner("DRY RUN")
 
-    def v2_runner_retry(self, result):
-        task_name = result.task_name or result._task
+    def v2_runner_retry(self, result: CallbackTaskResult) -> None:
+        task_name = result.task_name or result.task
         host_label = self.host_label(result)
-        msg = "FAILED - RETRYING: [%s]: %s (%d retries left)." % (host_label, task_name, result._result['retries'] - result._result['attempts'])
+        msg = "FAILED - RETRYING: [%s]: %s (%d retries left)." % (host_label, task_name, result.result['retries'] - result.result['attempts'])
         if self._run_is_verbose(result, verbosity=2):
-            msg += "Result was: %s" % self._dump_results(result._result)
+            msg += "Result was: %s" % self._dump_results(result.result)
         self._display.display(msg, color=C.COLOR_DEBUG)
 
-    def v2_runner_on_async_poll(self, result):
-        host = result._host.get_name()
-        jid = result._result.get('ansible_job_id')
-        started = result._result.get('started')
-        finished = result._result.get('finished')
+    def v2_runner_on_async_poll(self, result: CallbackTaskResult) -> None:
+        host = result.host.get_name()
+        jid = result.result.get('ansible_job_id')
+        started = result.result.get('started')
+        finished = result.result.get('finished')
         self._display.display(
             'ASYNC POLL on %s: jid=%s started=%s finished=%s' % (host, jid, started, finished),
             color=C.COLOR_DEBUG
         )
 
-    def v2_runner_on_async_ok(self, result):
-        host = result._host.get_name()
-        jid = result._result.get('ansible_job_id')
+    def v2_runner_on_async_ok(self, result: CallbackTaskResult) -> None:
+        host = result.host.get_name()
+        jid = result.result.get('ansible_job_id')
         self._display.display("ASYNC OK on %s: jid=%s" % (host, jid), color=C.COLOR_DEBUG)
 
-    def v2_runner_on_async_failed(self, result):
-        host = result._host.get_name()
+    def v2_runner_on_async_failed(self, result: CallbackTaskResult) -> None:
+        host = result.host.get_name()
 
         # Attempt to get the async job ID. If the job does not finish before the
         # async timeout value, the ID may be within the unparsed 'async_result' dict.
-        jid = result._result.get('ansible_job_id')
-        if not jid and 'async_result' in result._result:
-            jid = result._result['async_result'].get('ansible_job_id')
+        jid = result.result.get('ansible_job_id')
+        if not jid and 'async_result' in result.result:
+            jid = result.result['async_result'].get('ansible_job_id')
         self._display.display("ASYNC FAILED on %s: jid=%s" % (host, jid), color=C.COLOR_DEBUG)
 
     def v2_playbook_on_notify(self, handler, host):

@@ -27,6 +27,7 @@ from json import dumps
 
 from ansible import constants as C
 from ansible import context
+from ansible._internal import _json
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -284,3 +285,25 @@ def validate_variable_name(name: object) -> None:
         help_text='Variable names must be strings starting with a letter or underscore character, and contain only letters, numbers and underscores.',
         obj=name,
     )
+
+
+def transform_to_native_types(
+    value: object,
+    redact: bool = True,
+) -> object:
+    """
+    Recursively transform the given value to Python native types.
+    Potentially sensitive values such as individually vaulted variables will be redacted unless ``redact=False`` is passed.
+    Which values are considered potentially sensitive may change in future releases.
+    Types which cannot be converted to Python native types will result in an error.
+    """
+    avv = _json.AnsibleVariableVisitor(
+        convert_mapping_to_dict=True,
+        convert_sequence_to_list=True,
+        convert_custom_scalars=True,
+        convert_to_native_values=True,
+        apply_transforms=True,
+        encrypted_string_behavior=_json.EncryptedStringBehavior.REDACT if redact else _json.EncryptedStringBehavior.DECRYPT,
+    )
+
+    return avv.visit(value)

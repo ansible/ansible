@@ -86,12 +86,14 @@ import decimal
 import os
 import time
 import re
+import typing as t
 
 from ansible import constants
-from ansible.module_utils.common.messages import ErrorSummary
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
+from ansible.executor.task_result import CallbackTaskResult
+from ansible.playbook.included_file import IncludedFile
 from ansible.utils._junit_xml import (
     TestCase,
     TestError,
@@ -184,22 +186,22 @@ class CallbackModule(CallbackBase):
 
         self._task_data[uuid] = TaskData(uuid, name, path, play, action)
 
-    def _finish_task(self, status, result):
+    def _finish_task(self, status: str, result: IncludedFile | CallbackTaskResult) -> None:
         """ record the results of a task for a single host """
 
-        task_uuid = result._task._uuid
+        if isinstance(result, CallbackTaskResult):
+            task_uuid = result.task._uuid
+            host_uuid = result.host._uuid
+            host_name = result.host.name
 
-        if hasattr(result, '_host'):
-            host_uuid = result._host._uuid
-            host_name = result._host.name
+            if self._fail_on_change == 'true' and status == 'ok' and result.result.get('changed', False):
+                status = 'failed'
         else:
+            task_uuid = result._task._uuid
             host_uuid = 'include'
             host_name = 'include'
 
         task_data = self._task_data[task_uuid]
-
-        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
-            status = 'failed'
 
         # ignore failure if expected and toggle result if asked for
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
@@ -233,7 +235,8 @@ class CallbackModule(CallbackBase):
         if host_data.status == 'included':
             return TestCase(name=name, classname=junit_classname, time=duration, system_out=str(host_data.result))
 
-        res = host_data.result._result
+        task_result = t.cast(CallbackTaskResult, host_data.result)
+        res = task_result.result
         rc = res.get('rc', 0)
         dump = self._dump_results(res, indent=0)
         dump = self._cleanse_string(dump)
@@ -243,10 +246,8 @@ class CallbackModule(CallbackBase):
 
         test_case = TestCase(name=name, classname=junit_classname, time=duration)
 
-        error_summary: ErrorSummary
-
         if host_data.status == 'failed':
-            if error_summary := res.get('exception'):
+            if error_summary := task_result.exception:
                 message = error_summary._format()
                 output = error_summary.formatted_traceback
                 test_case.errors.append(TestError(message=message, output=output))
@@ -309,19 +310,19 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task: Task) -> None:
         self._start_task(task)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors=False) -> None:
         if ignore_errors and self._fail_on_ignore != 'true':
             self._finish_task('ok', result)
         else:
             self._finish_task('failed', result)
 
-    def v2_runner_on_ok(self, result):
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         self._finish_task('ok', result)
 
-    def v2_runner_on_skipped(self, result):
+    def v2_runner_on_skipped(self, result: CallbackTaskResult) -> None:
         self._finish_task('skipped', result)
 
-    def v2_playbook_on_include(self, included_file):
+    def v2_playbook_on_include(self, included_file: IncludedFile) -> None:
         self._finish_task('included', included_file)
 
     def v2_playbook_on_stats(self, stats):
@@ -347,7 +348,7 @@ class TaskData:
         if host.uuid in self.host_data:
             if host.status == 'included':
                 # concatenate task include output from multiple items
-                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+                host.result = f'{self.host_data[host.uuid].result}\n{host.result}'
             else:
                 raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
 
@@ -359,7 +360,7 @@ class HostData:
     Data about an individual host.
     """
 
-    def __init__(self, uuid, name, status, result):
+    def __init__(self, uuid: str, name: str, status: str, result: IncludedFile | CallbackTaskResult | str) -> None:
         self.uuid = uuid
         self.name = name
         self.status = status

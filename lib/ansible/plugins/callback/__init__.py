@@ -24,15 +24,14 @@ import re
 import sys
 import textwrap
 import typing as t
+import collections.abc as _c
 
 from typing import TYPE_CHECKING
 
-from collections.abc import MutableMapping
 from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils._internal import _datatag
-from ansible.module_utils.common.messages import ErrorSummary
 from ansible._internal._yaml import _dumper
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.color import stringc
@@ -44,7 +43,7 @@ from ansible._internal._templating import _engine
 import yaml
 
 if TYPE_CHECKING:
-    from ansible.executor.task_result import TaskResult
+    from ansible.executor.task_result import CallbackTaskResult
 
 global_display = Display()
 
@@ -57,6 +56,19 @@ _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations')
 _YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 # regex representation of libyaml/pyyaml of a space followed by a break character
 _SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
+
+
+_T_callable = t.TypeVar("_T_callable", bound=t.Callable)
+
+
+def _callback_base_impl(wrapped: _T_callable) -> _T_callable:
+    """
+    Decorator for the no-op methods on the `CallbackBase` base class.
+    Used to avoid unnecessary dispatch overhead to no-op base callback methods.
+    """
+    wrapped._base_impl = True
+
+    return wrapped
 
 
 class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
@@ -87,6 +99,8 @@ class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
     def _register_representers(cls) -> None:
         super()._register_representers()
 
+        # exact type checks occur first against representers, then subclasses against multi-representers
+        cls.add_representer(str, cls._pretty_represent_str)
         cls.add_multi_representer(str, cls._pretty_represent_str)
 
 
@@ -140,12 +154,17 @@ class CallbackBase(AnsiblePlugin):
     custom actions.
     """
 
-    def __init__(self, display=None, options=None):
+    def __init__(self, display: Display | None = None, options: dict[str, t.Any] | None = None) -> None:
+        super().__init__()
+
         if display:
             self._display = display
         else:
             self._display = global_display
 
+        # FUTURE: fix double-loading of non-collection stdout callback plugins that don't set CALLBACK_NEEDS_ENABLED
+
+        # FUTURE: this code is jacked for 2.x- it should just use the type names and always assume 2.0+ for normal cases
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')
@@ -155,7 +174,8 @@ class CallbackBase(AnsiblePlugin):
         self.disabled = False
         self.wants_implicit_tasks = False
 
-        self._plugin_options = {}
+        self._plugin_options: dict[str, t.Any] = {}
+
         if options is not None:
             self.set_options(options)
 
@@ -163,6 +183,8 @@ class CallbackBase(AnsiblePlugin):
             'changed', 'failed', 'skipped', 'invocation', 'skip_reason',
             'ansible_loop_var', 'ansible_index_var', 'ansible_loop',
         )
+
+        self._current_task_result: CallbackTaskResult | None = None
 
     # helper for callbacks, so they don't all have to include deepcopy
     _copy_result = deepcopy
@@ -185,25 +207,30 @@ class CallbackBase(AnsiblePlugin):
         self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
     @staticmethod
-    def host_label(result):
-        """Return label for the hostname (& delegated hostname) of a task
-        result.
-        """
-        label = "%s" % result._host.get_name()
-        if result._task.delegate_to and result._task.delegate_to != result._host.get_name():
+    def host_label(result: CallbackTaskResult) -> str:
+        """Return label for the hostname (& delegated hostname) of a task result."""
+        label = result.host.get_name()
+        if result.task.delegate_to and result.task.delegate_to != result.host.get_name():
             # show delegated host
-            label += " -> %s" % result._task.delegate_to
+            label += " -> %s" % result.task.delegate_to
             # in case we have 'extra resolution'
-            ahost = result._result.get('_ansible_delegated_vars', {}).get('ansible_host', result._task.delegate_to)
-            if result._task.delegate_to != ahost:
+            ahost = result.result.get('_ansible_delegated_vars', {}).get('ansible_host', result.task.delegate_to)
+            if result.task.delegate_to != ahost:
                 label += "(%s)" % ahost
         return label
 
-    def _run_is_verbose(self, result, verbosity=0):
-        return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
-                and result._result.get('_ansible_verbose_override', False) is False)
+    def _run_is_verbose(self, result: CallbackTaskResult, verbosity: int = 0) -> bool:
+        return ((self._display.verbosity > verbosity or result.result.get('_ansible_verbose_always', False) is True)
+                and result.result.get('_ansible_verbose_override', False) is False)
 
-    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False, serialize=True):
+    def _dump_results(
+        self,
+        result: _c.Mapping[str, t.Any],
+        indent: int | None = None,
+        sort_keys: bool = True,
+        keep_invocation: bool = False,
+        serialize: bool = True,
+    ) -> str:
         try:
             result_format = self.get_option('result_format')
         except KeyError:
@@ -253,10 +280,12 @@ class CallbackBase(AnsiblePlugin):
             # that want to further modify the result, or use custom serialization
             return abridged_result
 
+        # DTFIX-RELEASE: Switch to stock json/yaml serializers here? We should always have a transformed plain-types result.
+
         if result_format == 'json':
             return json.dumps(abridged_result, cls=_fallback_to_str.Encoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
-        elif result_format == 'yaml':
+        if result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior
             # default behavior for yaml is to prettify results
             lossy = pretty_results in (None, True)
@@ -281,22 +310,28 @@ class CallbackBase(AnsiblePlugin):
                 ' ' * (indent or 4)
             )
 
-    def _handle_warnings(self, res: dict[str, t.Any]) -> None:
+        # DTFIX-RELEASE: add test to exercise this case
+        raise ValueError(f'Unsupported result_format {result_format!r}.')
+
+    def _handle_warnings(self, res: _c.MutableMapping[str, t.Any]) -> None:
         """Display warnings and deprecation warnings sourced by task execution."""
-        for warning in res.pop('warnings', []):
-            # DTFIX-RELEASE: what to do about propagating wrap_text from the original display.warning call?
-            self._display._warning(warning, wrap_text=False)
+        if res.pop('warnings', None) and self._current_task_result and (warnings := self._current_task_result.warnings):
+            # display warnings from the current task result if `warnings` was not removed from `result` (or made falsey)
+            for warning in warnings:
+                # DTFIX-RELEASE: what to do about propagating wrap_text from the original display.warning call?
+                self._display._warning(warning, wrap_text=False)
 
-        for warning in res.pop('deprecations', []):
-            self._display._deprecated(warning)
+        if res.pop('deprecations', None) and self._current_task_result and (deprecations := self._current_task_result.deprecations):
+            # display deprecations from the current task result if `deprecations` was not removed from `result` (or made falsey)
+            for deprecation in deprecations:
+                self._display._deprecated(deprecation)
 
-    def _handle_exception(self, result: dict[str, t.Any], use_stderr: bool = False) -> None:
-        error_summary: ErrorSummary | None
+    def _handle_exception(self, result: _c.MutableMapping[str, t.Any], use_stderr: bool = False) -> None:
+        if result.pop('exception', None) and self._current_task_result and (exception := self._current_task_result.exception):
+            # display exception from the current task result if `exception` was not removed from `result` (or made falsey)
+            self._display._error(exception, wrap_text=False, stderr=use_stderr)
 
-        if error_summary := result.pop('exception', None):
-            self._display._error(error_summary, wrap_text=False, stderr=use_stderr)
-
-    def _handle_warnings_and_exception(self, result: TaskResult) -> None:
+    def _handle_warnings_and_exception(self, result: CallbackTaskResult) -> None:
         """Standardized handling of warnings/deprecations and exceptions from a task/item result."""
         # DTFIX-RELEASE: make/doc/porting-guide a public version of this method?
         try:
@@ -304,8 +339,8 @@ class CallbackBase(AnsiblePlugin):
         except KeyError:
             use_stderr = False
 
-        self._handle_warnings(result._result)
-        self._handle_exception(result._result, use_stderr=use_stderr)
+        self._handle_warnings(result.result)
+        self._handle_exception(result.result, use_stderr=use_stderr)
 
     def _serialize_diff(self, diff):
         try:
@@ -322,7 +357,8 @@ class CallbackBase(AnsiblePlugin):
 
         if result_format == 'json':
             return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
-        elif result_format == 'yaml':
+
+        if result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior
             # default behavior for yaml is to prettify results
             lossy = pretty_results in (None, True)
@@ -337,6 +373,9 @@ class CallbackBase(AnsiblePlugin):
                 ),
                 '    '
             )
+
+        # DTFIX-RELEASE: add test to exercise this case
+        raise ValueError(f'Unsupported result_format {result_format!r}.')
 
     def _get_diff(self, difflist):
 
@@ -356,7 +395,7 @@ class CallbackBase(AnsiblePlugin):
             if 'before' in diff and 'after' in diff:
                 # format complex structures into 'files'
                 for x in ['before', 'after']:
-                    if isinstance(diff[x], MutableMapping):
+                    if isinstance(diff[x], _c.Mapping):
                         diff[x] = self._serialize_diff(diff[x])
                     elif diff[x] is None:
                         diff[x] = ''
@@ -398,7 +437,7 @@ class CallbackBase(AnsiblePlugin):
                 ret.append(diff['prepared'])
         return u''.join(ret)
 
-    def _get_item_label(self, result):
+    def _get_item_label(self, result: _c.Mapping[str, t.Any]) -> t.Any:
         """ retrieves the value to be displayed as a label for an item entry from a result object"""
         if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
@@ -406,9 +445,9 @@ class CallbackBase(AnsiblePlugin):
             item = result.get('_ansible_item_label', result.get('item'))
         return item
 
-    def _process_items(self, result):
+    def _process_items(self, result: CallbackTaskResult) -> None:
         # just remove them as now they get handled by individual callbacks
-        del result._result['results']
+        del result.result['results']
 
     def _clean_results(self, result, task_name):
         """ removes data from results for display """
@@ -434,74 +473,97 @@ class CallbackBase(AnsiblePlugin):
     def set_play_context(self, play_context):
         pass
 
+    @_callback_base_impl
     def on_any(self, *args, **kwargs):
         pass
 
+    @_callback_base_impl
     def runner_on_failed(self, host, res, ignore_errors=False):
         pass
 
+    @_callback_base_impl
     def runner_on_ok(self, host, res):
         pass
 
+    @_callback_base_impl
     def runner_on_skipped(self, host, item=None):
         pass
 
+    @_callback_base_impl
     def runner_on_unreachable(self, host, res):
         pass
 
+    @_callback_base_impl
     def runner_on_no_hosts(self):
         pass
 
+    @_callback_base_impl
     def runner_on_async_poll(self, host, res, jid, clock):
         pass
 
+    @_callback_base_impl
     def runner_on_async_ok(self, host, res, jid):
         pass
 
+    @_callback_base_impl
     def runner_on_async_failed(self, host, res, jid):
         pass
 
+    @_callback_base_impl
     def playbook_on_start(self):
         pass
 
+    @_callback_base_impl
     def playbook_on_notify(self, host, handler):
         pass
 
+    @_callback_base_impl
     def playbook_on_no_hosts_matched(self):
         pass
 
+    @_callback_base_impl
     def playbook_on_no_hosts_remaining(self):
         pass
 
+    @_callback_base_impl
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
+    @_callback_base_impl
     def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
         pass
 
+    @_callback_base_impl
     def playbook_on_setup(self):
         pass
 
+    @_callback_base_impl
     def playbook_on_import_for_host(self, host, imported_file):
         pass
 
+    @_callback_base_impl
     def playbook_on_not_import_for_host(self, host, missing_file):
         pass
 
+    @_callback_base_impl
     def playbook_on_play_start(self, name):
         pass
 
+    @_callback_base_impl
     def playbook_on_stats(self, stats):
         pass
 
+    @_callback_base_impl
     def on_file_diff(self, host, diff):
         pass
 
     # V2 METHODS, by default they call v1 counterparts if possible
+    @_callback_base_impl
     def v2_on_any(self, *args, **kwargs):
         self.on_any(args, kwargs)
 
-    def v2_runner_on_failed(self, result: TaskResult, ignore_errors: bool = False) -> None:
+    @_callback_base_impl
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors: bool = False) -> None:
         """Process results of a failed task.
 
         Note: The value of 'ignore_errors' tells Ansible whether to
@@ -512,7 +574,7 @@ class CallbackBase(AnsiblePlugin):
         issues (for example, missing packages), or syntax errors.
 
         :param result: The parameters of the task and its results.
-        :type result: TaskResult
+        :type result: CallbackTaskResult
         :param ignore_errors: Whether Ansible should continue \
             running tasks on the host where the task failed.
         :type ignore_errors: bool
@@ -520,147 +582,172 @@ class CallbackBase(AnsiblePlugin):
         :return: None
         :rtype: None
         """
-        host = result._host.get_name()
-        self.runner_on_failed(host, result._result, ignore_errors)
+        host = result.host.get_name()
+        self.runner_on_failed(host, result.result, ignore_errors)
 
-    def v2_runner_on_ok(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         """Process results of a successful task.
 
         :param result: The parameters of the task and its results.
-        :type result: TaskResult
+        :type result: CallbackTaskResult
 
         :return: None
         :rtype: None
         """
-        host = result._host.get_name()
-        self.runner_on_ok(host, result._result)
+        host = result.host.get_name()
+        self.runner_on_ok(host, result.result)
 
-    def v2_runner_on_skipped(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_on_skipped(self, result: CallbackTaskResult) -> None:
         """Process results of a skipped task.
 
         :param result: The parameters of the task and its results.
-        :type result: TaskResult
+        :type result: CallbackTaskResult
 
         :return: None
         :rtype: None
         """
         if C.DISPLAY_SKIPPED_HOSTS:
-            host = result._host.get_name()
-            self.runner_on_skipped(host, self._get_item_label(getattr(result._result, 'results', {})))
+            host = result.host.get_name()
+            self.runner_on_skipped(host, self._get_item_label(getattr(result.result, 'results', {})))
 
-    def v2_runner_on_unreachable(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_on_unreachable(self, result: CallbackTaskResult) -> None:
         """Process results of a task if a target node is unreachable.
 
         :param result: The parameters of the task and its results.
-        :type result: TaskResult
+        :type result: CallbackTaskResult
 
         :return: None
         :rtype: None
         """
-        host = result._host.get_name()
-        self.runner_on_unreachable(host, result._result)
+        host = result.host.get_name()
+        self.runner_on_unreachable(host, result.result)
 
-    def v2_runner_on_async_poll(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_on_async_poll(self, result: CallbackTaskResult) -> None:
         """Get details about an unfinished task running in async mode.
 
         Note: The value of the `poll` keyword in the task determines
         the interval at which polling occurs and this method is run.
 
         :param result: The parameters of the task and its status.
-        :type result: TaskResult
+        :type result: CallbackTaskResult
 
         :rtype: None
         :rtype: None
         """
-        host = result._host.get_name()
-        jid = result._result.get('ansible_job_id')
+        host = result.host.get_name()
+        jid = result.result.get('ansible_job_id')
         # FIXME, get real clock
         clock = 0
-        self.runner_on_async_poll(host, result._result, jid, clock)
+        self.runner_on_async_poll(host, result.result, jid, clock)
 
-    def v2_runner_on_async_ok(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_on_async_ok(self, result: CallbackTaskResult) -> None:
         """Process results of a successful task that ran in async mode.
 
         :param result: The parameters of the task and its results.
-        :type result: TaskResult
+        :type result: CallbackTaskResult
 
         :return: None
         :rtype: None
         """
-        host = result._host.get_name()
-        jid = result._result.get('ansible_job_id')
-        self.runner_on_async_ok(host, result._result, jid)
+        host = result.host.get_name()
+        jid = result.result.get('ansible_job_id')
+        self.runner_on_async_ok(host, result.result, jid)
 
-    def v2_runner_on_async_failed(self, result):
-        host = result._host.get_name()
+    @_callback_base_impl
+    def v2_runner_on_async_failed(self, result: CallbackTaskResult) -> None:
+        host = result.host.get_name()
         # Attempt to get the async job ID. If the job does not finish before the
         # async timeout value, the ID may be within the unparsed 'async_result' dict.
-        jid = result._result.get('ansible_job_id')
-        if not jid and 'async_result' in result._result:
-            jid = result._result['async_result'].get('ansible_job_id')
-        self.runner_on_async_failed(host, result._result, jid)
+        jid = result.result.get('ansible_job_id')
+        if not jid and 'async_result' in result.result:
+            jid = result.result['async_result'].get('ansible_job_id')
+        self.runner_on_async_failed(host, result.result, jid)
 
+    @_callback_base_impl
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
 
+    @_callback_base_impl
     def v2_playbook_on_notify(self, handler, host):
         self.playbook_on_notify(host, handler)
 
+    @_callback_base_impl
     def v2_playbook_on_no_hosts_matched(self):
         self.playbook_on_no_hosts_matched()
 
+    @_callback_base_impl
     def v2_playbook_on_no_hosts_remaining(self):
         self.playbook_on_no_hosts_remaining()
 
+    @_callback_base_impl
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.playbook_on_task_start(task.name, is_conditional)
 
     # FIXME: not called
+    @_callback_base_impl
     def v2_playbook_on_cleanup_task_start(self, task):
         pass  # no v1 correspondence
 
+    @_callback_base_impl
     def v2_playbook_on_handler_task_start(self, task):
         pass  # no v1 correspondence
 
+    @_callback_base_impl
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
     # FIXME: not called
-    def v2_playbook_on_import_for_host(self, result, imported_file):
-        host = result._host.get_name()
+    @_callback_base_impl
+    def v2_playbook_on_import_for_host(self, result: CallbackTaskResult, imported_file) -> None:
+        host = result.host.get_name()
         self.playbook_on_import_for_host(host, imported_file)
 
     # FIXME: not called
-    def v2_playbook_on_not_import_for_host(self, result, missing_file):
-        host = result._host.get_name()
+    @_callback_base_impl
+    def v2_playbook_on_not_import_for_host(self, result: CallbackTaskResult, missing_file) -> None:
+        host = result.host.get_name()
         self.playbook_on_not_import_for_host(host, missing_file)
 
+    @_callback_base_impl
     def v2_playbook_on_play_start(self, play):
         self.playbook_on_play_start(play.name)
 
+    @_callback_base_impl
     def v2_playbook_on_stats(self, stats):
         self.playbook_on_stats(stats)
 
-    def v2_on_file_diff(self, result):
-        if 'diff' in result._result:
-            host = result._host.get_name()
-            self.on_file_diff(host, result._result['diff'])
+    @_callback_base_impl
+    def v2_on_file_diff(self, result: CallbackTaskResult) -> None:
+        if 'diff' in result.result:
+            host = result.host.get_name()
+            self.on_file_diff(host, result.result['diff'])
 
+    @_callback_base_impl
     def v2_playbook_on_include(self, included_file):
         pass  # no v1 correspondence
 
-    def v2_runner_item_on_ok(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_item_on_ok(self, result: CallbackTaskResult) -> None:
         pass
 
-    def v2_runner_item_on_failed(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_item_on_failed(self, result: CallbackTaskResult) -> None:
         pass
 
-    def v2_runner_item_on_skipped(self, result: TaskResult) -> None:
+    @_callback_base_impl
+    def v2_runner_item_on_skipped(self, result: CallbackTaskResult) -> None:
         pass
 
-    def v2_runner_retry(self, result):
+    @_callback_base_impl
+    def v2_runner_retry(self, result: CallbackTaskResult) -> None:
         pass
 
+    @_callback_base_impl
     def v2_runner_on_start(self, host, task):
         """Event used when host begins execution of a task
 

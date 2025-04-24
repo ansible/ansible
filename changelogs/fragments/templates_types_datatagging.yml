@@ -173,6 +173,9 @@ deprecated_features:
   - file loading - Loading text files with ``DataLoader`` containing data that cannot be decoded under the expected encoding is deprecated.
     In most cases the encoding must be UTF-8, although some plugins allow choosing a different encoding.
     Previously, invalid data was silently wrapped in Unicode surrogate escape sequences, often resulting in later errors or other data corruption.
+  - callback plugins - The v1 callback API (callback methods not prefixed with `v2_`) is deprecated.
+    Use `v2_` prefixed methods instead.
+  - callback plugins - The `v2_on_any` callback method is deprecated. Use specific callback methods instead.
 
 removed_features:
   - modules - Modules returning non-UTF8 strings now result in an error.
