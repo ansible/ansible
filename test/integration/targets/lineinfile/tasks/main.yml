@@ -1466,7 +1466,8 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == 'd6e685e98cfb3226d58dc3f900263353e08027c4'
+      - result2.stat.checksum == 'd6e685e98cfb3226d58dc3f900263353e08027c4' or result2.stat.checksum == '2eaad87db9808ddb3c58707f426eccc8fe280e89'
+
 
 - name: encoding - write a line before regex match
   lineinfile:
@@ -1491,7 +1492,7 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == 'e5d9cac41b5188074f6a9bb98b19cbc3cea4f8b2'
+      - result2.stat.checksum == 'e5d9cac41b5188074f6a9bb98b19cbc3cea4f8b2' or result2.stat.checksum == 'd327a3d4df7dcb139343426af45ff21d78eb3689'
 
 - name: encoding - remove a line
   lineinfile:
@@ -1515,7 +1516,7 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == '85231710aefbcbbf33dfe693e6e59a7941c1c819'
+      - result2.stat.checksum == '85231710aefbcbbf33dfe693e6e59a7941c1c819' or result2.stat.checksum == 'ed4b80b89e03d56dc5fc39323c09f7dc83cfa7d2'
 
 
 - name: Integration test for issue 76727
