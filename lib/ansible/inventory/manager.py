@@ -30,6 +30,7 @@ from random import shuffle
 
 from ansible import constants as C
 from ansible._internal import _json, _wrapt
+from ansible._internal._json import EncryptedStringBehavior
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
@@ -787,7 +788,7 @@ class _InventoryDataWrapper(_wrapt.ObjectProxy):
         return _json.AnsibleVariableVisitor(
             trusted_as_template=self._target_plugin.trusted_by_default,
             origin=self._default_origin,
-            allow_encrypted_string=True,
+            encrypted_string_behavior=EncryptedStringBehavior.PRESERVE,
         )
 
     def set_variable(self, entity: str, varname: str, value: t.Any) -> None:
