@@ -321,6 +321,10 @@ releases:
         or consider use of the ``truthy`` and ``falsy`` tests.
       - cache plugins - The `ansible.plugins.cache.base` Python module is deprecated.
         Use `ansible.plugins.cache` instead.
+      - callback plugins - The `v2_on_any` callback method is deprecated. Use specific
+        callback methods instead.
+      - callback plugins - The v1 callback API (callback methods not prefixed with
+        `v2_`) is deprecated. Use `v2_` prefixed methods instead.
       - conditionals - Conditionals using Jinja templating delimiters (e.g., ``{{``,
         ``{%``) should be rewritten as expressions without delimiters, unless the
         entire conditional value is a single template that resolves to a trusted string
@@ -781,3 +785,26 @@ releases:
     - windows-exec.yml
     - winrm-kinit-pexpect.yml
     release_date: '2025-04-14'
+  2.19.0b2:
+    changes:
+      bugfixes:
+      - Remove use of `required` parameter in `get_bin_path` which has been deprecated.
+      - ansible-doc - fix indentation for first line of descriptions of suboptions
+        and sub-return values (https://github.com/ansible/ansible/pull/84690).
+      - ansible-doc - fix line wrapping for first line of description of options and
+        return values (https://github.com/ansible/ansible/pull/84690).
+      minor_changes:
+      - comment filter - Improve the error message shown when an invalid ``style``
+        argument is provided.
+      release_summary: '| Release Date: 2025-04-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.0b2_summary.yaml
+    - 84690-ansible-doc-indent-wrapping.yml
+    - comment_fail.yml
+    - get_bin_path-remove-use-of-deprecated-param.yml
+    release_date: '2025-04-23'
