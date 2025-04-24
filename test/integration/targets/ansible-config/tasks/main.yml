@@ -141,3 +141,17 @@
       when:
         - item[1] in gs[item[0]]
       loop: '{{gs_keys | product(gs_all) }}'
+
+- name: test ansible-config init for valid private and no hidden
+  vars:
+    config_keys: "{{ config_dump['stdout'] | from_json | selectattr('name', 'defined') }}"
+  block:
+    - name: run config full dump
+      shell: ansible-config dump -t all -f json
+      register: config_dump
+
+    - name: validate we get 'internal' but not hidden (_Z_)
+      assert:
+        that:
+          - config_keys | selectattr('name',  'match', '_.*') | length > 0
+          - config_keys | selectattr('name', 'match', '_Z_.*') | length == 0

@@ -480,9 +480,9 @@ class ConfigManager(object):
         else:
             ret = self._plugins.get(plugin_type, {}).get(name, {})
 
-        if ignore_private:
+        if ignore_private:  # ignore 'test' config entries, they should not change runtime behaviors
             for cdef in list(ret.keys()):
-                if cdef.startswith('_'):
+                if cdef.startswith('_Z_'):
                     del ret[cdef]
         return ret
 
