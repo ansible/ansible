@@ -18,7 +18,7 @@
     that:
       - wrapper_stats.stat.executable is true
       - wrapper_stats.stat.readable is true
-      - wrapper_stats.stat.writable is true
+      - wrapper_stats.stat.writeable is true
 
 - name: Explode the wrapper
   command: "{{ generated_wrapper }} explode"
