@@ -122,11 +122,11 @@ class TestVariableManager(unittest.TestCase):
         mock_play = MagicMock()
 
         mock_play.get_vars.return_value = dict(
-            test_vars_files=[ __file__ ]
+            test_vars_files=[__file__]
         )
 
         mock_play.get_roles.return_value = []
-        mock_play.get_vars_files.return_value = [ "{{ test_vars_files }}" ]
+        mock_play.get_vars_files.return_value = ["{{ test_vars_files }}"]
 
         mock_inventory = MagicMock()
         v = VariableManager(inventory=mock_inventory, loader=fake_loader)
