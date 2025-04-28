@@ -49,7 +49,7 @@ yumdnf_argument_spec = dict(
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
         sslverify=dict(type='bool', default=True),
-        sslverifystatus=dict(type='bool', default=False)
+        sslverifystatus=dict(type='bool', default=False),
         lock_timeout=dict(type='int', default=30),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
