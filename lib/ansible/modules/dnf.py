@@ -198,6 +198,13 @@ options:
     type: bool
     default: "yes"
     version_added: "2.13"
+  sslverifystatus:
+    description:
+      - Enables or disables SSL certificate revocation status checking for the repository server.
+      - This should be set to V(false) if the repository server does not support OCSP stapling.
+    type: bool
+    default: "no"
+    version_added: "2.15"
   allow_downgrade:
     description:
       - Specify if the named package and version is allowed to downgrade
@@ -509,7 +516,7 @@ class DnfModule(YumDnf):
             results=[]
         )
 
-    def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/', sslverify=True):
+    def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/', sslverify=True, sslverifystatus=False):
         """Configure the dnf Base object."""
 
         conf = base.conf
@@ -540,6 +547,7 @@ class DnfModule(YumDnf):
 
         # Set certificate validation
         conf.sslverify = sslverify
+        conf.sslverifystatus = sslverifystatus
 
         # Set installroot
         conf.installroot = installroot
@@ -631,10 +639,10 @@ class DnfModule(YumDnf):
                 repo.gpgcheck = False
                 repo.repo_gpgcheck = False
 
-    def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify):
+    def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify, sslverifystatus):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
-        self._configure_base(base, conf_file, disable_gpg_check, installroot, sslverify)
+        self._configure_base(base, conf_file, disable_gpg_check, installroot, sslverify, sslverifystatus)
 
         base.setup_loggers()
         base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
@@ -1213,7 +1221,7 @@ class DnfModule(YumDnf):
         if self.update_cache and not self.names and not self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot, self.sslverify
+                self.enablerepo, self.installroot, self.sslverify, self.sslverifystatus
             )
             self.module.exit_json(
                 msg="Cache updated",
@@ -1231,7 +1239,7 @@ class DnfModule(YumDnf):
         if self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot, self.sslverify
+                self.enablerepo, self.installroot, self.sslverify, self.sslverifystatus
             )
             self.list_items(self.list)
         else:
@@ -1244,7 +1252,7 @@ class DnfModule(YumDnf):
                 )
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot, self.sslverify
+                self.enablerepo, self.installroot, self.sslverify, self.sslverifystatus
             )
 
             if self.with_modules:

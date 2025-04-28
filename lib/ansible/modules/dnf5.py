@@ -168,6 +168,12 @@ options:
       - This should be set to V(false) if one of the configured repositories is using an untrusted or self-signed certificate.
     type: bool
     default: "yes"
+  sslverifystatus:
+    description:
+      - Enables or disables SSL certificate revocation status checking for the repository server.
+      - This should be set to V(false) if the repository server does not support OCSP stapling.
+    type: bool
+    default: "no"
   allow_downgrade:
     description:
       - Specify if the named package and version is allowed to downgrade
@@ -617,6 +623,7 @@ class Dnf5Module(YumDnf):
             conf.pkg_gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
+        conf.sslverifystatus = self.sslverifystatus
         conf.clean_requirements_on_remove = self.autoremove
         conf.installroot = self.installroot
         conf.use_host_config = True  # needed for installroot
