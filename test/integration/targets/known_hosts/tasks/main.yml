@@ -77,7 +77,7 @@
   shell: 
     cmd: rm -rf ~/.ssh/ && mv -f ~/.ssh_bak/ ~/.ssh/
 
-- name: assert that the key was added and no exception was thrown
+- name: assert that the key was added and no exception thrown
   assert:
     that:
     - 'result is changed'

@@ -175,7 +175,7 @@ def enforce_state(module, params):
                 inf = None
             else:
                 module.fail_json(msg="Failed to read %s: %s" % (path, str(e)))
-        
+
         ensure_default_ssh_directory(module, path)
 
         try:
@@ -202,9 +202,9 @@ def ensure_default_ssh_directory(module, path):
     """Ensure the default ssh directory exists
 
     This is a helper function to ensure that the ~/.ssh directory exists
-    when path is not customized. 
+    when path is not customized.
     """
-    if os.path.expanduser(path) != os.path.expanduser("~/.ssh/known_hosts"):
+    if path != os.path.expanduser("~/.ssh/known_hosts"):
         return
     if os.path.exists(os.path.dirname(path)):
         return

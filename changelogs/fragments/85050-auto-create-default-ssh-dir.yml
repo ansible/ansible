@@ -1,0 +1,2 @@
+minor_changes:
+  - allow known_hosts module auto-create the default ``~/.ssh/`` directory (https://github.com/ansible/ansible/issues/84952)
