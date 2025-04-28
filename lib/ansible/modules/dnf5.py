@@ -174,6 +174,7 @@ options:
       - This should be set to V(false) if the repository server does not support OCSP stapling.
     type: bool
     default: "no"
+    version_added: 2.19
   allow_downgrade:
     description:
       - Specify if the named package and version is allowed to downgrade
