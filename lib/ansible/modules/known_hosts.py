@@ -212,6 +212,8 @@ def ensure_default_ssh_directory(module, path):
     try:
         os.mkdir(os.path.dirname(path), 0o700)
     except OSError as e:
+        if e.errno == errno.EEXIST:  # return if some other creates the dir at this time
+            return
         module.fail_json(msg="Failed to create directory %s: %s" % (path, to_native(e)))
 
 
