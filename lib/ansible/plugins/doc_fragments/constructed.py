@@ -53,7 +53,7 @@ options:
         version_added: '2.12'
       trailing_separator:
         description:
-        - Set this option to V(false) to omit the O(keyed_groups[].separator) after the host variable when the value is an empty string.
+        - Set this option to V(false) to omit the O(keyed_groups[].separator) after the host variable when the value is V(None) or an empty string.
         - This option is mutually exclusive with O(keyed_groups[].default_value).
         type: bool
         default: true
