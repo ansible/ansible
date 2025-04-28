@@ -568,7 +568,7 @@ class FieldAttributeBase:
             # only import_role is checked here because import_tasks never reaches this point
             return Sentinel
 
-        # FIXME: compare types, not strings
+        # Skip post validation unless always_post_validate is True, or the object requires post validation.
         if not attribute.always_post_validate and not self._post_validate_object:
             # Intermediate objects like Play() won't have their fields validated by
             # default, as their values are often inherited by other objects and validated
