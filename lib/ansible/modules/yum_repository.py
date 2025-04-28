@@ -340,7 +340,6 @@ options:
     description:
       - Defines whether SSL certificate revocation status checking should be done for the repository server.
     type: bool
-    default: false
   state:
     description:
       - State of the repo file.
