@@ -61,6 +61,27 @@
     - 'known_hosts.stdout_lines[5].startswith("# example.net")'
     - 'known_hosts.stdout_lines[-1].strip() == example_org_rsa_key.strip()'
 
+# https://github.com/ansible/ansible/issues/84952
+# test addition when ~/.ssh/ directory missing and path=default
+- name: move ~/.ssh/ directory away
+  command: mv ~/.ssh/ ~/.ssh_bak/
+
+- name: add a new host with default path
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+  register: result
+
+- name: move ~/.ssh/ directory back
+  shell: 
+    cmd: rm -rf ~/.ssh/ && mv -f ~/.ssh_bak/ ~/.ssh/
+
+- name: assert that the key was added and no exception was thrown
+  assert:
+    that:
+    - 'result is changed'
+
 # test idempotence of addition
 
 - name: add the same host in check mode

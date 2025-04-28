@@ -38,7 +38,8 @@ options:
   path:
     description:
       - The known_hosts file to edit.
-      - The known_hosts file will be created if needed. The rest of the path must exist prior to running the module.
+      - The known_hosts file will be created if needed. For custom path, the rest of the path must exist prior to running the module.
+        For default path, the ~/.ssh/ directory will be auto-created if missing.
     default: "~/.ssh/known_hosts"
     type: path
   hash_host:
@@ -174,6 +175,9 @@ def enforce_state(module, params):
                 inf = None
             else:
                 module.fail_json(msg="Failed to read %s: %s" % (path, str(e)))
+        
+        ensure_default_ssh_directory(module, path)
+
         try:
             with tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path), delete=False) as outf:
                 if inf is not None:
@@ -192,6 +196,23 @@ def enforce_state(module, params):
         results['changed'] = True
 
     return results
+
+
+def ensure_default_ssh_directory(module, path):
+    """Ensure the default ssh directory exists
+
+    This is a helper function to ensure that the ~/.ssh directory exists
+    when path is not customized. 
+    """
+    if os.path.expanduser(path) != os.path.expanduser("~/.ssh/known_hosts"):
+        return
+    if os.path.exists(os.path.dirname(path)):
+        return
+
+    try:
+        os.mkdir(os.path.dirname(path), 0o700)
+    except OSError as e:
+        module.fail_json(msg="Failed to create directory %s: %s" % (path, to_native(e)))
 
 
 def sanity_check(module, host, key, sshkeygen):
