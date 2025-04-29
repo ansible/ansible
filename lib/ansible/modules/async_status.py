@@ -68,7 +68,7 @@ EXAMPLES = r"""
   ansible.builtin.async_status:
     jid: '{{ dnf_sleeper.ansible_job_id }}'
   register: job_result
-  until: job_result.finished
+  until: job_result is finished
   retries: 100
   delay: 10
 
