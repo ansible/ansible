@@ -797,7 +797,7 @@ class Dnf5Module(YumDnf):
         if self.module.check_mode:
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
-        else:
+        elif changed:
             transaction.download()
             if not self.download_only:
                 transaction.set_description("ansible dnf5 module")
