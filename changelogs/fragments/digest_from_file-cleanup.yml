@@ -1,0 +1,2 @@
+minor_changes:
+- AnsibleModule.digest_from_file - Cleanup function to use context manager and improved blocksize calculation

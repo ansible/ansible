@@ -55,7 +55,7 @@ from collections.abc import (
     Set,
     MutableSet,
 )
-from functools import reduce
+from functools import reduce, partial
 
 try:
     import syslog
@@ -1620,13 +1620,11 @@ class AnsibleModule(object):
                 self.fail_json(msg="Could not hash file '%s' with algorithm '%s'. Available algorithms: %s" %
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
-        blocksize = 64 * 1024
-        infile = open(os.path.realpath(b_filename), 'rb')
-        block = infile.read(blocksize)
-        while block:
-            digest_method.update(block)
-            block = infile.read(blocksize)
-        infile.close()
+        blocksize = (64 * 1024) // digest_method.block_size * digest_method.block_size
+        digest_update = digest_method.update
+        with open(os.path.realpath(b_filename), 'rb') as f:
+            for b_block in iter(partial(f.read, blocksize), b''):
+                digest_update(b_block)
         return digest_method.hexdigest()
 
     def md5(self, filename):
