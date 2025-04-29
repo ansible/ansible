@@ -1,0 +1,2 @@
+minor_changes:
+  - cron module - Optimize the cron module to handle some special cases.

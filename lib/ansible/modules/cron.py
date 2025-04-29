@@ -352,15 +352,29 @@ class CronTab(object):
     def update_job(self, name, job):
         return self._update_job(name, job, self.do_add_job)
 
-    def do_add_job(self, lines, comment, job):
-        lines.append(comment)
+    def do_add_job(self, lines, comment, job, old_job=None):
+        if len(lines) == 0 or lines[-1] != comment:
+            lines.append(comment)
 
-        lines.append("%s" % (job))
+        if len(lines) == 0 or lines[-1] != job:
+            lines.append("%s" % (job))
+
+    def insert_job(self, name, job):
+        return self._update_job(name, job, self.do_insert_job)
+    
+    def do_insert_job(self, lines, comment, job, old_job=None):
+        self.do_add_job(lines, comment, job)
+
+        if old_job:
+            lines.append("%s" % (old_job))
 
     def remove_job(self, name):
         return self._update_job(name, "", self.do_remove_job)
 
-    def do_remove_job(self, lines, comment, job):
+    def do_remove_job(self, lines, comment, job, old_job=None):
+        # not remove comment line
+        if old_job and re.match(r'%s' % self.ansible, old_job):
+            lines.append(old_job)
         return None
 
     def add_env(self, decl, insertafter=None, insertbefore=None):
@@ -411,11 +425,17 @@ class CronTab(object):
         for l in self.lines:
             if comment is not None:
                 if comment == name:
+                    if re.match(r'%s' % self.ansible, l):
+                        return [comment, None]
                     return [comment, l]
                 else:
                     comment = None
             elif re.match(r'%s' % self.ansible, l):
                 comment = re.sub(r'%s' % self.ansible, '', l)
+        
+        # comment is at last line
+        if comment and comment == name:
+            return [comment, None]
 
         # failing that, attempt to find job by exact match
         if job:
@@ -426,9 +446,15 @@ class CronTab(object):
                         self.lines.insert(i, self.do_comment(name))
                         return [self.lines[i], l, True]
                     # if a leading blank ansible header AND job has a name, update header
-                    elif name and self.lines[i - 1] == self.do_comment(None):
+                    elif name and self.lines[i - 1] == self.do_comment(""):
                         self.lines[i - 1] = self.do_comment(name)
-                        return [self.lines[i - 1], l, True]
+                        if i == 0:
+                            self.lines = self.lines[i + 1:]
+                        return [self.do_comment(name), l, True]
+                    elif name and i == 0:
+                        self.lines.insert(i, self.do_comment(name))
+                        self.lines = self.lines[:-1]
+                        return [self.do_comment(name), l, True]
 
         return []
 
@@ -482,11 +508,13 @@ class CronTab(object):
         newlines = []
         comment = None
 
-        for l in self.lines:
+        for i, l in enumerate(self.lines):
             if comment is not None:
-                addlinesfunction(newlines, comment, job)
+                addlinesfunction(newlines, comment, job, l)
                 comment = None
             elif l == ansiblename:
+                if i == (len(self.lines) - 1):
+                    addlinesfunction(newlines, ansiblename, job, None)
                 comment = l
             else:
                 newlines.append(l)
@@ -701,6 +729,9 @@ def main():
 
             if len(old_job) == 0:
                 crontab.add_job(name, job)
+                changed = True
+            if len(old_job) > 0 and old_job[1] is None:
+                crontab.insert_job(name, job)
                 changed = True
             if len(old_job) > 0 and old_job[1] != job:
                 crontab.update_job(name, job)
