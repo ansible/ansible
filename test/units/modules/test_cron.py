@@ -9,7 +9,7 @@ from ansible.modules.cron import CronTab
 
 class TestModule:
     def get_bin_path(self, args, required=False):
-        ''' do nothing, just avoid exception '''
+        """ do nothing, just avoid exception """
         pass
 
 

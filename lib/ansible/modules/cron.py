@@ -361,7 +361,7 @@ class CronTab(object):
 
     def insert_job(self, name, job):
         return self._update_job(name, job, self.do_insert_job)
-    
+
     def do_insert_job(self, lines, comment, job, old_job=None):
         self.do_add_job(lines, comment, job)
 
@@ -432,7 +432,7 @@ class CronTab(object):
                     comment = None
             elif re.match(r'%s' % self.ansible, l):
                 comment = re.sub(r'%s' % self.ansible, '', l)
-        
+
         # comment is at last line
         if comment and comment == name:
             return [comment, None]
