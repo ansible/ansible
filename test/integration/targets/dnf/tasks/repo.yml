@@ -19,6 +19,9 @@
       assert:
         that:
             - "'results' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_before
     # ============================================================================
     - name: Install dinginessentail-1.0-1 again
       dnf:
@@ -40,6 +43,13 @@
       assert:
         that:
             - "'msg' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_after
+
+    - assert:
+        that:
+          - dnf_history_lines_before.stdout == dnf_history_lines_after.stdout
     # ============================================================================
     - name: Install dinginessentail again (noop, module is idempotent)
       dnf:
