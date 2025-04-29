@@ -21,6 +21,10 @@ options:
     repo:
         description:
             - git, SSH, or HTTP(S) protocol address of the git repository.
+            - Avoid embedding usernames and passwords within Git repository URLs.
+              This practice is insecure and can lead to unauthorized access to your repositories.
+              For secure authentication, configure SSH keys (recommended) or use a credential helper.
+              See Git documentation on SSH keys/credential helpers for instructions.
         type: str
         required: true
         aliases: [ name ]

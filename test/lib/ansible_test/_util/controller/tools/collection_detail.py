@@ -1,4 +1,5 @@
 """Retrieve collection detail."""
+
 from __future__ import annotations
 
 import json

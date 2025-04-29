@@ -1,4 +1,5 @@
 """Sanity test for Markdown files."""
+
 from __future__ import annotations
 
 import pathlib

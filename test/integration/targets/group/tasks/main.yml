@@ -1,25 +1,9 @@
 # Test code for the group module.
-# (c) 2017, James Tanner <tanner.jc@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-- name: skip broken distros
-  meta: end_host
-  when: ansible_distribution == 'Alpine'
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - import_tasks: tests.yml
 - import_tasks: test_create_group_min_max.yml
-  when: ansible_facts.system == 'Linux'
+  when:
+    - ansible_facts.system == 'Linux'
+    - ansible_distribution != 'Alpine'

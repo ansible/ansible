@@ -143,7 +143,7 @@ EXAMPLES = """
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/somerepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
 """
 
@@ -475,7 +475,10 @@ class UbuntuSourcesList(SourcesList):
         self.apt_key_bin = self.module.get_bin_path('apt-key', required=False)
         self.gpg_bin = self.module.get_bin_path('gpg', required=False)
         if not self.apt_key_bin and not self.gpg_bin:
-            self.module.fail_json(msg='Either apt-key or gpg binary is required, but neither could be found')
+            msg = 'Either apt-key or gpg binary is required, but neither could be found.' \
+                  'The apt-key CLI has been deprecated and removed in modern Debian and derivatives, ' \
+                  'you might want to use "deb822_repository" instead.'
+            self.module.fail_json(msg)
 
     def __deepcopy__(self, memo=None):
         return UbuntuSourcesList(self.module)

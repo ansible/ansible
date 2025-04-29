@@ -1,4 +1,5 @@
 """Ansible specific plyint plugin for checking deprecations."""
+
 # (c) 2018, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # -*- coding: utf-8 -*-

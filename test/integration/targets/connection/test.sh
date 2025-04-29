@@ -20,3 +20,4 @@ else
 fi
 
 ansible-playbook test_reset_connection.yml -i "${INVENTORY}" "$@"
+ansible-playbook test_reset_connection_templated.yml -i "${INVENTORY}" "$@"

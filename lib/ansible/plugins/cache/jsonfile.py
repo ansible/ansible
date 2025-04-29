@@ -40,23 +40,17 @@ DOCUMENTATION = """
         type: integer
 """
 
-import codecs
 import json
+import pathlib
 
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseFileCacheModule
 
 
 class CacheModule(BaseFileCacheModule):
-    """
-    A caching module backed by json files.
-    """
+    """A caching module backed by json files."""
 
-    def _load(self, filepath):
-        # Valid JSON is always UTF-8 encoded.
-        with codecs.open(filepath, 'r', encoding='utf-8') as f:
-            return json.load(f, cls=AnsibleJSONDecoder)
+    def _load(self, filepath: str) -> object:
+        return json.loads(pathlib.Path(filepath).read_text())
 
-    def _dump(self, value, filepath):
-        with codecs.open(filepath, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+    def _dump(self, value: object, filepath: str) -> None:
+        pathlib.Path(filepath).write_text(json.dumps(value))

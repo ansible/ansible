@@ -1,4 +1,5 @@
 """Sanity test to check integration test aliases."""
+
 from __future__ import annotations
 
 import dataclasses

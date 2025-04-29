@@ -30,8 +30,7 @@ from __future__ import annotations
 
 import fnmatch
 import sys
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts import timeout
 from ansible.module_utils.facts import collector
@@ -113,7 +112,13 @@ class CollectorMetaDataCollector(collector.BaseFactCollector):
         self.module_setup = module_setup
 
     def collect(self, module=None, collected_facts=None):
+        # NOTE: deprecate/remove once DT lands
+        # we can return this data, but should not be top level key
         meta_facts = {'gather_subset': self.gather_subset}
+
+        # NOTE: this is just a boolean indicator that 'facts were gathered'
+        # and should be moved to the 'gather_facts' action plugin
+        # probably revised to handle modules/subsets combos
         if self.module_setup:
             meta_facts['module_setup'] = self.module_setup
         return meta_facts

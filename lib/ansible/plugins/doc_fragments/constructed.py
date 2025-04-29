@@ -79,4 +79,8 @@ options:
     type: boolean
     default: True
     version_added: '2.11'
+notes:
+  - Inventories are not finalized at this stage, so the auto populated C(all) and C(ungrouped) groups will
+    only reflect what previous inventory sources explicitly added to them.
+  - Runtime 'magic variables' are not available during inventory construction. For example, C(groups) and C(hostvars) do not exist yet.
 """

@@ -24,7 +24,7 @@
   assert:
     that:
       - "getmac_result.rc == 0"
-      - "getmac_result.stdout"
+      - "getmac_result.stdout | length > 0"
       - (ansible_connection == 'ssh') | ternary(getmac_result.stderr is defined, not getmac_result.stderr)
       - "getmac_result is not failed"
       - "getmac_result is changed"
@@ -37,7 +37,6 @@
   assert:
     that:
       - "ipconfig_result.rc == 0"
-      - "ipconfig_result.stdout"
       - "'Physical Address' in ipconfig_result.stdout"
       - (ansible_connection == 'ssh') | ternary(ipconfig_result.stderr is defined, not ipconfig_result.stderr)
       - "ipconfig_result is not failed"
@@ -52,7 +51,7 @@
   assert:
     that:
       - "ipconfig_invalid_result.rc != 0"
-      - "ipconfig_invalid_result.stdout" # ipconfig displays errors on stdout.
+      - "ipconfig_invalid_result.stdout | length > 0" # ipconfig displays errors on stdout.
 #      - "not ipconfig_invalid_result.stderr"
       - "ipconfig_invalid_result is failed"
       - "ipconfig_invalid_result is changed"
@@ -67,7 +66,7 @@
     that:
       - "unknown_result.rc != 0"
       - "not unknown_result.stdout"
-      - "unknown_result.stderr" # An unknown command displays error on stderr.
+      - "unknown_result.stderr | length > 0" # An unknown command displays error on stderr.
       - "unknown_result is failed"
       - "unknown_result is changed"
 

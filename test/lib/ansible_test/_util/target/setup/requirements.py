@@ -1,4 +1,5 @@
 """A tool for installing test requirements on the controller and target host."""
+
 from __future__ import annotations
 
 # pylint: disable=wrong-import-position
@@ -85,7 +86,7 @@ def bootstrap(pip: str, options: dict[str, t.Any]) -> None:
         try:
             download_file(url, temp_path)
         except Exception as ex:
-            raise ApplicationError(('''
+            raise ApplicationError(("""
 Download failed: %s
 
 The bootstrap script can be manually downloaded and saved to: %s
@@ -93,7 +94,7 @@ The bootstrap script can be manually downloaded and saved to: %s
 If you're behind a proxy, consider commenting on the following GitHub issue:
 
 https://github.com/ansible/ansible/issues/77304
-''' % (ex, cache_path)).strip())
+""" % (ex, cache_path)).strip())
 
         shutil.move(temp_path, cache_path)
 
@@ -290,6 +291,7 @@ class ApplicationError(Exception):
 
 class SubprocessError(ApplicationError):
     """A command returned a non-zero status."""
+
     def __init__(self, cmd, status, stdout, stderr):  # type: (t.List[str], int, str, str) -> None
         message = 'A command failed with status %d: %s' % (status, shlex.join(cmd))
 

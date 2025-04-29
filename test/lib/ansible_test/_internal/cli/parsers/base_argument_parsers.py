@@ -1,4 +1,5 @@
 """Base classes for the primary parsers for composite command line arguments."""
+
 from __future__ import annotations
 
 import abc

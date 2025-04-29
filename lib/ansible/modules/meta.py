@@ -22,8 +22,13 @@ options:
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
         - V(refresh_inventory) (added in Ansible 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
           re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
-          or, if available for your specific inventory datasource (e.g. aws), you can use the an inventory plugin instead of an inventory script).
-          This is mainly useful when additional hosts are created and users wish to use them instead of using the M(ansible.builtin.add_host) module.
+          or, if available for your specific inventory datasource (for example P(amazon.aws.aws_ec2#inventory)), you can use the an inventory plugin instead
+          of an inventory script). This is mainly useful when additional hosts are created and users wish to use them instead of using the
+          M(ansible.builtin.add_host) module.
+        - Note that neither V(refresh_inventory) nor the M(ansible.builtin.add_host) add hosts to the hosts the current play iterates over.
+          However, if needed, you can explicitly delegate tasks to new hosts with C(delegate_to). Generally,
+          C(delegate_to) can be used against hosts regardless of whether they are in the inventory or not, as long as
+          the value supplied is sufficient for the connection plugin to access the host.
         - V(noop) (added in Ansible 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use.
         - V(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
           including the fact cache.

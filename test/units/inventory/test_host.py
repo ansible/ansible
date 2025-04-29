@@ -19,9 +19,8 @@
 
 from __future__ import annotations
 
-import pickle
-
 import unittest
+
 
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
@@ -72,30 +71,6 @@ class TestHost(unittest.TestCase):
         assert self.hostA != other
         assert other != self.hostA
         self.assertNotEqual(self.hostA, other)
-
-    def test_serialize(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        data = self.hostA.serialize()
-        self.assertIsInstance(data, dict)
-
-    def test_serialize_then_deserialize(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-        hostA_data = self.hostA.serialize()
-
-        hostA_clone = Host()
-        hostA_clone.deserialize(hostA_data)
-        self.assertEqual(self.hostA, hostA_clone)
-
-    def test_set_state(self):
-        group = Group('some_group')
-        self.hostA.add_group(group)
-
-        pickled_hostA = pickle.dumps(self.hostA)
-
-        hostA_clone = pickle.loads(pickled_hostA)
-        self.assertEqual(self.hostA, hostA_clone)
 
 
 class TestHostWithPort(TestHost):

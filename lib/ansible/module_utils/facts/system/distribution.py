@@ -8,8 +8,7 @@ from __future__ import annotations
 import os
 import platform
 import re
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
@@ -208,7 +207,7 @@ class DistributionFiles:
 
         return dist_file_facts
 
-    # TODO: FIXME: split distro file parsing into its own module or class
+    # FIXME: split distro file parsing into its own module or class
     def parse_distribution_file_Slackware(self, name, data, path, collected_facts):
         slackware_facts = {}
         if 'Slackware' not in data:
@@ -319,7 +318,7 @@ class DistributionFiles:
 
     def parse_distribution_file_Debian(self, name, data, path, collected_facts):
         debian_facts = {}
-        if 'Debian' in data or 'Raspbian' in data:
+        if any(distro in data for distro in ('Debian', 'Raspbian')):
             debian_facts['distribution'] = 'Debian'
             release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
@@ -398,6 +397,8 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'LMDE' in data:
+            debian_facts['distribution'] = 'Linux Mint Debian Edition'
         else:
             return False, debian_facts
 
@@ -515,9 +516,10 @@ class Distribution(object):
                                 'EuroLinux', 'Kylin Linux Advanced Server', 'MIRACLE'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC', 'Linux Mint Debian Edition'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
-                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap', 'ALP-Dolomite', 'SL-Micro'],
+                              'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap', 'ALP-Dolomite', 'SL-Micro',
+                              'openSUSE MicroOS'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
                      'Mandrake': ['Mandrake', 'Mandriva'],
                      'Solaris': ['Solaris', 'Nexenta', 'OmniOS', 'OpenIndiana', 'SmartOS'],
@@ -570,7 +572,6 @@ class Distribution(object):
             distribution_facts.update(dist_file_facts)
 
         distro = distribution_facts['distribution']
-
         # look for a os family alias for the 'distribution', if there isnt one, use 'distribution'
         distribution_facts['os_family'] = self.OS_FAMILY.get(distro, None) or distro
 

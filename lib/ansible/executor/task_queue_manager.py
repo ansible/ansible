@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import sys
 import tempfile
@@ -27,35 +28,44 @@ import multiprocessing.queues
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
+from ansible._internal._errors._handler import ErrorHandler
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
+from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common.text.converters import to_text, to_native
+from ansible.module_utils.common.text.converters import to_native
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.vars.hostvars import HostVars
-from ansible.vars.reserved import warn_if_reserved
+from ansible.vars.manager import VariableManager
 from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
-from dataclasses import dataclass
+if t.TYPE_CHECKING:
+    from ansible.executor.process.worker import WorkerProcess
 
 __all__ = ['TaskQueueManager']
 
+STDIN_FILENO = 0
+STDOUT_FILENO = 1
+STDERR_FILENO = 2
+
 display = Display()
 
+_T = t.TypeVar('_T')
 
+
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
-    def __init__(self, method_name, *args, **kwargs):
-        self.method_name = method_name
-        self.args = args
-        self.kwargs = kwargs
+    method_name: str
+    wire_task_result: _WireTaskResult
 
 
 class DisplaySend:
@@ -65,7 +75,7 @@ class DisplaySend:
         self.kwargs = kwargs
 
 
-@dataclass
+@dataclasses.dataclass
 class PromptSend:
     worker_id: int
     prompt: str
@@ -80,19 +90,11 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
         kwargs['ctx'] = multiprocessing_context
         super().__init__(*args, **kwargs)
 
-    def send_callback(self, method_name, *args, **kwargs):
-        self.put(
-            CallbackSend(method_name, *args, **kwargs),
-        )
+    def send_callback(self, method_name: str, task_result: _RawTaskResult) -> None:
+        self.put(CallbackSend(method_name=method_name, wire_task_result=task_result.as_wire_task_result()))
 
-    def send_task_result(self, *args, **kwargs):
-        if isinstance(args[0], TaskResult):
-            tr = args[0]
-        else:
-            tr = TaskResult(*args, **kwargs)
-        self.put(
-            tr,
-        )
+    def send_task_result(self, task_result: _RawTaskResult) -> None:
+        self.put(task_result.as_wire_task_result())
 
     def send_display(self, method, *args, **kwargs):
         self.put(
@@ -122,27 +124,38 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     """
 
-    RUN_OK = 0
-    RUN_ERROR = 1
-    RUN_FAILED_HOSTS = 2
-    RUN_UNREACHABLE_HOSTS = 4
-    RUN_FAILED_BREAK_PLAY = 8
-    RUN_UNKNOWN_ERROR = 255
+    RUN_OK = ExitCode.SUCCESS
+    RUN_ERROR = ExitCode.GENERIC_ERROR
+    RUN_FAILED_HOSTS = ExitCode.HOST_FAILED
+    RUN_UNREACHABLE_HOSTS = ExitCode.HOST_UNREACHABLE
+    RUN_FAILED_BREAK_PLAY = 8  # never leaves PlaybookExecutor.run
+    RUN_UNKNOWN_ERROR = 255  # never leaves PlaybookExecutor.run, intentionally includes the bit value for 8
 
-    def __init__(self, inventory, variable_manager, loader, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False, forks=None):
+    _callback_dispatch_error_handler = ErrorHandler.from_config('_CALLBACK_DISPATCH_ERROR_BEHAVIOR')
 
+    def __init__(
+        self,
+        inventory: InventoryData,
+        variable_manager: VariableManager,
+        loader: DataLoader,
+        passwords: dict[str, str | None],
+        stdout_callback: str | None = None,
+        run_additional_callbacks: bool = True,
+        run_tree: bool = False,
+        forks: int | None = None,
+    ) -> None:
         self._inventory = inventory
         self._variable_manager = variable_manager
         self._loader = loader
         self._stats = AggregateStats()
         self.passwords = passwords
-        self._stdout_callback = stdout_callback
+        self._stdout_callback: str | None | CallbackBase = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree = run_tree
         self._forks = forks or 5
 
         self._callbacks_loaded = False
-        self._callback_plugins = []
+        self._callback_plugins: list[CallbackBase] = []
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
@@ -155,13 +168,20 @@ class TaskQueueManager:
         self._terminated = False
 
         # dictionaries to keep track of failed/unreachable hosts
-        self._failed_hosts = dict()
-        self._unreachable_hosts = dict()
+        self._failed_hosts: dict[str, t.Literal[True]] = dict()
+        self._unreachable_hosts: dict[str, t.Literal[True]] = dict()
 
         try:
             self._final_q = FinalQueue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
+
+        try:
+            # Done in tqm, and not display, because this is only needed for commands that execute tasks
+            for fd in (STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO):
+                os.set_inheritable(fd, False)
+        except Exception as ex:
+            self.warning(f"failed to set stdio as non inheritable: {ex}")
 
         self._callback_lock = threading.Lock()
 
@@ -169,11 +189,8 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
-    def _initialize_processes(self, num):
-        self._workers = []
-
-        for i in range(num):
-            self._workers.append(None)
+    def _initialize_processes(self, num: int) -> None:
+        self._workers: list[WorkerProcess | None] = [None] * num
 
     def load_callbacks(self):
         """
@@ -281,8 +298,7 @@ class TaskQueueManager:
             self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(play=play)
-        templar = Templar(loader=self._loader, variables=all_vars)
-        warn_if_reserved(all_vars, templar.environment.globals.keys())
+        templar = TemplateEngine(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
         new_play.post_validate(templar)
@@ -385,25 +401,25 @@ class TaskQueueManager:
                     except AttributeError:
                         pass
 
-    def clear_failed_hosts(self):
+    def clear_failed_hosts(self) -> None:
         self._failed_hosts = dict()
 
-    def get_inventory(self):
+    def get_inventory(self) -> InventoryData:
         return self._inventory
 
-    def get_variable_manager(self):
+    def get_variable_manager(self) -> VariableManager:
         return self._variable_manager
 
-    def get_loader(self):
+    def get_loader(self) -> DataLoader:
         return self._loader
 
     def get_workers(self):
         return self._workers[:]
 
-    def terminate(self):
+    def terminate(self) -> None:
         self._terminated = True
 
-    def has_dead_workers(self):
+    def has_dead_workers(self) -> bool:
 
         # [<WorkerProcess(WorkerProcess-2, stopped[SIGKILL])>,
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
@@ -414,56 +430,72 @@ class TaskQueueManager:
                 defunct = True
         return defunct
 
+    @staticmethod
+    def _first_arg_of_type(value_type: t.Type[_T], args: t.Sequence) -> _T | None:
+        return next((arg for arg in args if isinstance(arg, value_type)), None)
+
     @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
+        # We always send events to stdout callback first, rest should follow config order
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
-            if getattr(callback_plugin, 'disabled', False):
+            if callback_plugin.disabled:
                 continue
 
             # a plugin can opt in to implicit tasks (such as meta). It does this
             # by declaring self.wants_implicit_tasks = True.
-            wants_implicit_tasks = getattr(callback_plugin, 'wants_implicit_tasks', False)
+            if not callback_plugin.wants_implicit_tasks and (task_arg := self._first_arg_of_type(Task, args)) and task_arg.implicit:
+                continue
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
+
             for possible in [method_name, 'v2_on_any']:
-                gotit = getattr(callback_plugin, possible, None)
-                if gotit is None:
-                    gotit = getattr(callback_plugin, possible.removeprefix('v2_'), None)
-                if gotit is not None:
-                    methods.append(gotit)
+                method = getattr(callback_plugin, possible, None)
 
-            # send clean copies
-            new_args = []
+                if method is None:
+                    method = getattr(callback_plugin, possible.removeprefix('v2_'), None)
 
-            # If we end up being given an implicit task, we'll set this flag in
-            # the loop below. If the plugin doesn't care about those, then we
-            # check and continue to the next iteration of the outer loop.
-            is_implicit_task = False
+                    if method is not None:
+                        display.deprecated(
+                            msg='The v1 callback API is deprecated.',
+                            version='2.23',
+                            help_text='Use `v2_` prefixed callback methods instead.',
+                        )
 
-            for arg in args:
-                # FIXME: add play/task cleaners
-                if isinstance(arg, TaskResult):
-                    new_args.append(arg.clean_copy())
-                # elif isinstance(arg, Play):
-                # elif isinstance(arg, Task):
-                else:
-                    new_args.append(arg)
+                if method is not None and not getattr(method, '_base_impl', False):  # don't bother dispatching to the base impls
+                    if possible == 'v2_on_any':
+                        display.deprecated(
+                            msg='The `v2_on_any` callback method is deprecated.',
+                            version='2.23',
+                            help_text='Use event-specific callback methods instead.',
+                        )
 
-                if isinstance(arg, Task) and arg.implicit:
-                    is_implicit_task = True
-
-            if is_implicit_task and not wants_implicit_tasks:
-                continue
+                    methods.append(method)
 
             for method in methods:
-                try:
-                    method(*new_args, **kwargs)
-                except Exception as e:
-                    # TODO: add config toggle to make this fatal or not?
-                    display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
-                    from traceback import format_tb
-                    from sys import exc_info
-                    display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+                # send clean copies
+                new_args = []
+
+                for arg in args:
+                    # FIXME: add play/task cleaners
+                    if isinstance(arg, _RawTaskResult):
+                        copied_tr = arg.as_callback_task_result()
+                        new_args.append(copied_tr)
+                        # this state hack requires that no callback ever accepts > 1 TaskResult object
+                        callback_plugin._current_task_result = copied_tr
+                    else:
+                        new_args.append(arg)
+
+                with self._callback_dispatch_error_handler.handle(AnsibleCallbackError):
+                    try:
+                        method(*new_args, **kwargs)
+                    except AssertionError:
+                        # Using an `assert` in integration tests is useful.
+                        # Production code should never use `assert` or raise `AssertionError`.
+                        raise
+                    except Exception as ex:
+                        raise AnsibleCallbackError(f"Callback dispatch {method_name!r} failed for plugin {callback_plugin._load_name!r}.") from ex
+
+            callback_plugin._current_task_result = None

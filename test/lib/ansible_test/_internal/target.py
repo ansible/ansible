@@ -1,4 +1,5 @@
 """Test target identification, iteration and inclusion/exclusion."""
+
 from __future__ import annotations
 
 import collections

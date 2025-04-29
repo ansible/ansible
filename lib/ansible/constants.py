@@ -166,7 +166,6 @@ INTERNAL_STATIC_VARS = frozenset(
         "inventory_hostname_short",
         "groups",
         "group_names",
-        "omit",
         "hostvars",
         "playbook_dir",
         "play_hosts",

@@ -144,6 +144,15 @@ ZG9ja2VyIGltYWdlOgoKYW5zaWJsZS9hbnNpYmxlQHNoYTI1NjpmYTVkZWY4YzI5NGZjNTA4MTNh
 ZjEzMWMwYjU3Mzc1OTRkODUyYWJhYzljYmU3YmEzOGUxN2JmMWM4NDc2ZjNmCg==
 
 --===============3996062709511591449==
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
+Content-Disposition: form-data; name="file7"; filename="client.txt"
+
+client.pem and client.key were retrieved from httptester docker image:
+
+ansible/ansible@sha256:fa5def8c294fc50813af131c0b5737594d852abac9cbe7ba38e17bf1c8476f3f
+
+--===============3996062709511591449==
 Content-Type: text/plain
 Content-Disposition: form-data; name="form_field_1"
 

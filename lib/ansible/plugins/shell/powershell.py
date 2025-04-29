@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: powershell
 version_added: historical
 short_description: Windows PowerShell
@@ -12,25 +12,97 @@ description:
 - Can also be used when using 'ssh' as a connection plugin and the C(DefaultShell) has been configured to PowerShell.
 extends_documentation_fragment:
 - shell_windows
-'''
+"""
 
 import base64
 import os
 import re
 import shlex
-import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
+from ansible.executor.powershell.module_manifest import _get_powershell_script
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
 # This is weird, we are matching on byte sequences that match the utf-16-be
-# matches for '_x(a-fA-F0-9){4}_'. The \x00 and {8} will match the hex sequence
-# when it is encoded as utf-16-be.
-_STRING_DESERIAL_FIND = re.compile(rb"\x00_\x00x([\x00(a-fA-F0-9)]{8})\x00_")
+# matches for '_x(a-fA-F0-9){4}_'. The \x00 and {4} will match the hex sequence
+# when it is encoded as utf-16-be byte sequence.
+_STRING_DESERIAL_FIND = re.compile(rb"\x00_\x00x((?:\x00[a-fA-F0-9]){4})\x00_")
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
+
+
+def _replace_stderr_clixml(stderr: bytes) -> bytes:
+    """Replace CLIXML with stderr data.
+
+    Tries to replace an embedded CLIXML string with the actual stderr data. If
+    it fails to parse the CLIXML data, it will return the original data. This
+    will replace any line inside the stderr string that contains a valid CLIXML
+    sequence.
+
+    :param bytes stderr: The stderr to try and decode.
+
+    :returns: The stderr with the decoded CLIXML data or the original data.
+    """
+    clixml_header = b"#< CLIXML\r\n"
+
+    if stderr.find(clixml_header) == -1:
+        return stderr
+
+    lines: list[bytes] = []
+    is_clixml = False
+    for line in stderr.splitlines(True):
+        if is_clixml:
+            is_clixml = False
+
+            # If the line does not contain the closing CLIXML tag, we just
+            # add the found header line and this line without trying to parse.
+            end_idx = line.find(b"</Objs>")
+            if end_idx == -1:
+                lines.append(clixml_header)
+                lines.append(line)
+                continue
+
+            clixml = line[: end_idx + 7]
+            remaining = line[end_idx + 7 :]
+
+            # While we expect the stderr to be UTF-8 encoded, we fallback to
+            # the most common "ANSI" codepage used by Windows cp437 if it is
+            # not valid UTF-8.
+            try:
+                clixml.decode("utf-8")
+            except UnicodeDecodeError:
+                # cp427 can decode any sequence and once we have the string, we
+                # can encode any cp427 chars to UTF-8.
+                clixml_text = clixml.decode("cp437")
+                clixml = clixml_text.encode("utf-8")
+
+            try:
+                decoded_clixml = _parse_clixml(clixml)
+                lines.append(decoded_clixml)
+                if remaining:
+                    lines.append(remaining)
+
+            except Exception:
+                # Any errors and we just add the original CLIXML header and
+                # line back in.
+                lines.append(clixml_header)
+                lines.append(line)
+
+        elif line == clixml_header:
+            # The next line should contain the full CLIXML data.
+            is_clixml = True
+
+        else:
+            lines.append(line)
+
+    # This should never happen but if there was a CLIXML header without a newline
+    # following it, we need to add it back.
+    if is_clixml:
+        lines.append(clixml_header)
+
+    return b"".join(lines)
 
 
 def _parse_clixml(data: bytes, stream: str = "Error") -> bytes:
@@ -149,9 +221,9 @@ class ShellModule(ShellBase):
     def remove(self, path, recurse=False):
         path = self._escape(self._unquote(path))
         if recurse:
-            return self._encode_script('''Remove-Item '%s' -Force -Recurse;''' % path)
+            return self._encode_script("""Remove-Item '%s' -Force -Recurse;""" % path)
         else:
-            return self._encode_script('''Remove-Item '%s' -Force;''' % path)
+            return self._encode_script("""Remove-Item '%s' -Force;""" % path)
 
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         # Windows does not have an equivalent for the system temp files, so
@@ -161,12 +233,12 @@ class ShellModule(ShellBase):
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = self._escape(tmpdir if tmpdir else self.get_option('remote_tmp'))
 
-        script = f'''
+        script = f"""
         {self._CONSOLE_ENCODING}
         $tmp_path = [System.Environment]::ExpandEnvironmentVariables('{basetmpdir}')
         $tmp = New-Item -Type Directory -Path $tmp_path -Name '{basefile}'
         Write-Output -InputObject $tmp.FullName
-        '''
+        """
         return self._encode_script(script.strip())
 
     def expand_user(self, user_home_path, username=''):
@@ -184,7 +256,7 @@ class ShellModule(ShellBase):
 
     def exists(self, path):
         path = self._escape(self._unquote(path))
-        script = '''
+        script = """
             If (Test-Path '%s')
             {
                 $res = 0;
@@ -195,12 +267,12 @@ class ShellModule(ShellBase):
             }
             Write-Output '$res';
             Exit $res;
-         ''' % path
+         """ % path
         return self._encode_script(script)
 
     def checksum(self, path, *args, **kwargs):
         path = self._escape(self._unquote(path))
-        script = '''
+        script = """
             If (Test-Path -PathType Leaf '%(path)s')
             {
                 $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
@@ -216,11 +288,11 @@ class ShellModule(ShellBase):
             {
                 Write-Output "1";
             }
-        ''' % dict(path=path)
+        """ % dict(path=path)
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
+        bootstrap_wrapper = _get_powershell_script("bootstrap_wrapper.ps1")
 
         # pipelining bypass
         if cmd == '':
@@ -231,18 +303,35 @@ class ShellModule(ShellBase):
         cmd_parts = shlex.split(cmd, posix=False)
         cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
-            if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
-                # we're running a module via the bootstrap wrapper
-                cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
-            return wrapper_cmd
+            if arg_path:
+                # Running a module without the exec_wrapper and with an argument
+                # file.
+                script_path = self._unquote(cmd_parts[0])
+                if not script_path.lower().endswith('.ps1'):
+                    script_path += '.ps1'
+
+                cmd_parts.insert(0, '-File')
+                cmd_parts[1] = f'"{script_path}"'
+                if arg_path:
+                    cmd_parts.append(f'"{arg_path}"')
+
+                wrapper_cmd = " ".join(_common_args + cmd_parts)
+                return wrapper_cmd
+
+            else:
+                # Running a module with ANSIBLE_KEEP_REMOTE_FILES=true, the script
+                # arg is actually the input manifest JSON to provide to the bootstrap
+                # wrapper.
+                wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
+                return wrapper_cmd
+
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:
             # The module is assumed to be a binary
             cmd_parts[0] = self._unquote(cmd_parts[0])
             cmd_parts.append(arg_path)
-        script = '''
+        script = """
             Try
             {
                 %s
@@ -277,7 +366,7 @@ class ShellModule(ShellBase):
                 Echo $_obj | ConvertTo-Json -Compress -Depth 99
                 Exit 1
             }
-        ''' % (env_string, ' '.join(cmd_parts))
+        """ % (env_string, ' '.join(cmd_parts))
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):

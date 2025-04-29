@@ -23,10 +23,9 @@ import os
 import os.path
 import stat
 import tempfile
-import traceback
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -412,6 +411,11 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
+        # ensure user is not setting internal parameters
+        for internal in ('_original_basename', '_diff_peek'):
+            if self._task.args.get(internal, None) is not None:
+                raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
+
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
@@ -465,10 +469,9 @@ class ActionModule(ActionBase):
             try:
                 # find in expected paths
                 source = self._find_needle('files', source)
-            except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_text(e)
-                result['exception'] = traceback.format_exc()
+            except AnsibleError as ex:
+                result.update(self.result_dict_from_exception(ex))
+
                 return self._ensure_invocation(result)
 
             if trailing_slash != source.endswith(os.path.sep):

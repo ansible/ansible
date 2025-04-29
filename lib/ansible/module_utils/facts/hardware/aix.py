@@ -45,6 +45,7 @@ class AIXHardware(Hardware):
         vgs_facts = self.get_vgs_facts()
         mount_facts = self.get_mount_facts()
         devices_facts = self.get_device_facts()
+        uptime_facts = self.get_uptime_facts()
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
@@ -52,6 +53,7 @@ class AIXHardware(Hardware):
         hardware_facts.update(vgs_facts)
         hardware_facts.update(mount_facts)
         hardware_facts.update(devices_facts)
+        hardware_facts.update(uptime_facts)
 
         return hardware_facts
 
@@ -122,6 +124,38 @@ class AIXHardware(Hardware):
             memory_facts['swapfree_mb'] = int(swaptotal_mb * (100 - percused) / 100)
 
         return memory_facts
+
+    def get_uptime_facts(self):
+        uptime_facts = {}
+        # On AIX, there are no options to get the uptime directly in seconds.
+        # Your options are to parse the output of "who", "uptime", or "ps".
+        # Only "ps" always provides a field with seconds.
+        ps_bin = self.module.get_bin_path("ps")
+        if ps_bin is None:
+            return uptime_facts
+
+        ps_cmd = [ps_bin, "-p", "1", "-o", "etime="]
+
+        rc, out, err = self.module.run_command(ps_cmd)
+        if rc != 0:
+            return uptime_facts
+
+        # Parse out
+        if out:
+            lines = out.splitlines()
+            data = lines[0].replace(':', '-').split('-')
+            try:
+                days = int(data[0])
+                hours = int(data[1])
+                minutes = int(data[2])
+                seconds = int(data[3])
+            except (IndexError, ValueError):
+                return uptime_facts
+            # Calculate uptime in seconds
+            uptime_seconds = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds
+            uptime_facts['uptime_seconds'] = int(uptime_seconds)
+
+        return uptime_facts
 
     def get_dmi_facts(self):
         dmi_facts = {}

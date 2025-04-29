@@ -23,13 +23,13 @@ OPTIONS (= indicates it is required):
         type: dict
         options:
 
-        - subtest2          Another suboption.
+        - subtest2  Another suboption.
           default: null
           type: float
           added in: version 1.1.0
         suboptions:
 
-        - subtest          A suboption.
+        - subtest  A suboption.
           default: null
           type: int
           added in: version 1.1.0 of testns.testcol
@@ -67,7 +67,7 @@ RETURN VALUES:
         type: dict
         contains:
 
-        - suboption          A suboption.
+        - suboption  A suboption.
           choices: [ARF, BARN, c_without_capital_first_letter]
           type: str
           added in: version 1.4.0 of testns.testcol

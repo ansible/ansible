@@ -1,0 +1,19 @@
+DOCUMENTATION:
+  name: tagged_with
+  author: Ansible Core
+  version_added: "2.19"
+  short_description: does the value have the specified data tag
+  description:
+    - Check if the provided value has the specified data tag.
+  options:
+    _input:
+      description: A value.
+      type: raw
+
+EXAMPLES: |
+    is_data_tagged: "{{ my_variable is ansible._protomatter.tagged_with('Origin') }}"
+
+RETURN:
+  _value:
+    description: Returns C(True) if the value has the specified data tag, otherwise C(False).
+    type: boolean

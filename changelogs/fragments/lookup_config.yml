@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - config - various fixes to config lookup plugin (https://github.com/ansible/ansible/pull/84398).

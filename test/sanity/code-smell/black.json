@@ -1,0 +1,14 @@
+{
+    "prefixes": [
+        "lib/ansible/_internal/",
+        "lib/ansible/module_utils/_internal/",
+        "lib/ansible/utils/collection_loader/__init__.py",
+        "test/sanity/code-smell/black."
+    ],
+    "extensions": [
+        ".py"
+    ],
+    "split_targets": true,
+    "error_code": "ansible-test",
+    "output": "path-message"
+}

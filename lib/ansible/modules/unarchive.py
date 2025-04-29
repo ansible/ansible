@@ -241,6 +241,7 @@ uid:
 
 import binascii
 import codecs
+import ctypes
 import fnmatch
 import grp
 import os
@@ -249,7 +250,6 @@ import pwd
 import re
 import stat
 import time
-import traceback
 from functools import partial
 from zipfile import ZipFile
 
@@ -261,6 +261,13 @@ from ansible.module_utils.urls import fetch_file
 
 from shlex import quote
 from zipfile import BadZipFile
+
+try:
+    from functools import cache
+except ImportError:
+    # Python < 3.9
+    from functools import lru_cache
+    cache = lru_cache(maxsize=None)
 
 # String from tar that shows the tar contents are different from the
 # filesystem
@@ -277,6 +284,18 @@ INVALID_GROUP_RE = re.compile(r': Invalid group')
 SYMLINK_DIFF_RE = re.compile(r': Symlink differs$')
 CONTENT_DIFF_RE = re.compile(r': Contents differ$')
 SIZE_DIFF_RE = re.compile(r': Size differs$')
+
+
+@cache
+def _y2038_impacted():
+    """Determine if the system has 64-bit time_t."""
+    if hasattr(ctypes, "c_time_t"):  # Python >= 3.12
+        return ctypes.sizeof(ctypes.c_time_t) < 8
+    try:
+        time.gmtime(2**31)
+    except OverflowError:
+        return True
+    return False
 
 
 def crc32(path, buffer_size):
@@ -414,6 +433,8 @@ class ZipArchive(object):
             try:
                 if int(match.groups()[0]) < 1980:
                     date_time = epoch_date_time
+                elif int(match.groups()[0]) >= 2038 and _y2038_impacted():
+                    date_time = (2038, 1, 1, 0, 0, 0, 0, 0, 0)
                 elif int(match.groups()[0]) > 2107:
                     date_time = (2107, 12, 31, 23, 59, 59, 0, 0, 0)
                 else:
@@ -676,7 +697,7 @@ class ZipArchive(object):
                             try:
                                 mode = AnsibleModule._symbolic_mode_to_octal(st, self.file_args['mode'])
                             except ValueError as e:
-                                self.module.fail_json(path=path, msg="%s" % to_native(e), exception=traceback.format_exc())
+                                self.module.fail_json(path=path, msg="%s" % to_native(e))
                 # Only special files require no umask-handling
                 elif ztype == '?':
                     mode = self._permstr_to_octal(permstr, 0)

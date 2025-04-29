@@ -1,4 +1,6 @@
 ---
+# DTFIX-RELEASE: add test to ensure that top-level fact deprecation warnings are being issued properly on access
+
 - hosts: facthost7
   tags: [ 'fact_negation' ]
   connection: local
@@ -433,7 +435,7 @@
     - name: Test reading facts from default fact_path
       assert:
         that:
-          - '"{{ ansible_local.testfact.fact_dir }}" == "default"'
+          - 'ansible_local.testfact.fact_dir == "default"'
 
 - hosts: facthost9
   tags: [ 'fact_local']
@@ -444,7 +446,7 @@
     - name: Test reading facts from custom fact_path
       assert:
         that:
-          - '"{{ ansible_local.testfact.fact_dir }}" == "custom"'
+          - 'ansible_local.testfact.fact_dir == "custom"'
 
 - hosts: facthost20
   tags: [ 'fact_facter_ohai' ]

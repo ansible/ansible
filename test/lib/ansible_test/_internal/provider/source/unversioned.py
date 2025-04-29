@@ -1,4 +1,5 @@
 """Fallback source provider when no other provider matches the content root."""
+
 from __future__ import annotations
 
 import os

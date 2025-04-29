@@ -22,7 +22,7 @@
     name: '{{ upgrade_packages }}'
     state: latest
   when:
-    - upgrade_packages | default([])
+    - upgrade_packages | default([]) is truthy
 
 - name: create SVN home folder
   file:

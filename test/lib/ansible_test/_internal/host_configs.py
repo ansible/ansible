@@ -1,4 +1,5 @@
 """Configuration for the test hosts requested by the user."""
+
 from __future__ import annotations
 
 import abc

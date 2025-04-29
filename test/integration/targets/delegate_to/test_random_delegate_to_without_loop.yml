@@ -5,7 +5,7 @@
         name: 'host{{ item }}'
         groups:
           - test
-      loop: '{{ range(10) }}'
+      loop: '{{ range(10) | list }}'
 
     - set_fact:
         dv: '{{ ansible_delegated_vars[ansible_host]["ansible_host"] }}'

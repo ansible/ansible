@@ -61,16 +61,11 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-
-        # NOTE: can remove if with_ is removed
-        if not isinstance(terms, list):
-            terms = [terms]
-
         results = []
         for term in terms:
             # Expect any type of Mapping, notably hostvars
             if not isinstance(term, Mapping):
-                raise AnsibleError("with_dict expects a dict")
+                raise AnsibleError(f"the 'dict' lookup plugin expects a dictionary, got '{term}' of type {type(term)})")
 
             results.extend(self._flatten_hash_to_list(term))
         return results

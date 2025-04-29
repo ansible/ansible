@@ -1,4 +1,5 @@
 """Support code for working without a supported CI provider."""
+
 from __future__ import annotations
 
 import os

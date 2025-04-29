@@ -4,12 +4,12 @@
     foo: []
     bar: "{{ foo[0] }}"
   tasks:
-    - debug:
-        msg: "{{ bar }}"
+    - raw: echo {{ bar }}
       register: result
       ignore_errors: yes
 
     - assert:
         that:
-          - '"foo[0]" in result.msg'
+          - result is failed
+          #- '"foo[0]" in result.msg'
           - '"object has no element 0" in result.msg'

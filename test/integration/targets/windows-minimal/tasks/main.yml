@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: sample config for traceback behavior
+  set_fact:
+    traceback_on_error: |
+      {{ lookup('ansible._protomatter.config', 'DISPLAY_TRACEBACK') is contains 'error' }}
+
 - name: test win_ping
   action: win_ping
   register: win_ping_result
@@ -64,7 +69,7 @@
       - win_ping_crash_result is failed
       - win_ping_crash_result is not changed
       - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
-      - '"throw \"boom\"" in win_ping_crash_result.exception'
+      - not traceback_on_error or "throw \"boom\"" in win_ping_crash_result.exception
 
 - name: verify that shortname _raw_params works
   win_shell: echo "name=foo"
@@ -117,3 +122,28 @@
     - >-
       pipeline_disabled_res.stdout is search('\"ping\": \"' ~ ping_data ~ '\"')
     - pipeline_disabled_files.stdout_lines == ["AnsiballZ_win_ping.ps1"]
+
+- name: test module with no exec wrapper
+  test_no_exec_wrapper:
+  register: no_exec_wrapper
+
+- name: assert test module with no exec wrapper
+  assert:
+    that:
+    - no_exec_wrapper is not failed
+    - no_exec_wrapper.args | length == 1
+    - '"_ansible_check_mode=False" in no_exec_wrapper.arg0'
+    - no_exec_wrapper.path != ""
+
+- name: check if the script and args file still exist
+  win_stat:
+    path: '{{ item }}'
+  register: no_exec_wrapper_files
+  loop:
+  - '{{ no_exec_wrapper.path }}'
+  - '{{ no_exec_wrapper.args[0] }}'
+
+- name: assert no exec wrapper files still exist
+  assert:
+    that:
+    - no_exec_wrapper_files.results | map(attribute='stat.exists') | list == [False, False]

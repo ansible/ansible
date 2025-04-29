@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - sunos - remove hard coding of virtinfo command in facts gathering code (https://github.com/ansible/ansible/pull/84357).

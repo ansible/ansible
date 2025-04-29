@@ -1,0 +1,19 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: invoke an action that fires a deprecation and returns a deprecated value
+      action_with_dep:
+      register: action_result
+
+    - name: touch the deprecated value
+      debug:
+        var: action_result.deprecated_thing
+      register: debug_result
+
+    - name: validate the presence of the deprecation warnings
+      assert:
+        that:
+          - action_result.deprecations | length == 1
+          - action_result.deprecations[0].msg is contains "did a deprecated thing"
+          - debug_result.deprecations | length == 1
+          - debug_result.deprecations[0].msg is contains "Deprecated thing is deprecated."

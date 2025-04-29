@@ -184,7 +184,7 @@ def get_test_scenarios() -> list[TestScenario]:
             # Starting with Fedora 40, use of /usr/sbin/unix-chkpwd fails under Ubuntu 24.04 due to AppArmor.
             # This prevents SSH logins from completing due to unix-chkpwd failing to look up the user with getpwnam.
             # Disabling the 'unix-chkpwd' profile works around the issue, but does not solve the underlying problem.
-            disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name == 'fedora40'
+            disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name.startswith('fedora')
 
             cgroup_version = get_docker_info(engine).cgroup_version
 
@@ -394,7 +394,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
 def prepare_prime_podman_storage() -> list[str]:
     """Partially prime podman storage and return a command to complete the remainder."""
-    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull quay.io/bedrock/alpine:3.16.2']
+    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull public.ecr.aws/docker/library/alpine:3.21.2']
 
     test_containers = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.local/share/containers').expanduser()
 

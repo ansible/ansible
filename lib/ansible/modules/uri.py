@@ -61,6 +61,7 @@ options:
         or list of tuples into an C(application/x-www-form-urlencoded) string. (Added in v2.7)
       - If O(body_format) is set to V(form-multipart) it will convert a dictionary
         into C(multipart/form-multipart) body. (Added in v2.10)
+      - If C(body_format) is set to V(form-multipart) the option 'multipart_encoding' allows to change multipart file encoding. (Added in v2.19)
     type: raw
   body_format:
     description:
@@ -105,18 +106,6 @@ options:
       - The webservice bans or rate-limits clients that cause any HTTP 401 errors.
     type: bool
     default: no
-  follow_redirects:
-    description:
-      - Whether or not the URI module should follow redirects.
-    type: str
-    default: safe
-    choices:
-      all: Will follow all redirects.
-      none: Will not follow any redirects.
-      safe: Only redirects doing GET or HEAD requests will be followed.
-      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
-      'no': (DEPRECATED, removed in 2.22) alias of V(none).
-      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
   creates:
     description:
       - A filename, when it already exists, this step will not be run.
@@ -234,6 +223,7 @@ options:
 extends_documentation_fragment:
   - action_common_attributes
   - files
+  - url.url_redirect
 attributes:
     check_mode:
         support: none
@@ -262,7 +252,7 @@ EXAMPLES = r"""
     url: http://www.example.com
     return_content: true
   register: this
-  failed_when: this is failed or "'AWESOME' not in this.content"
+  failed_when: "this is failed or 'AWESOME' not in this.content"
 
 - name: Create a JIRA issue
   ansible.builtin.uri:
@@ -308,10 +298,12 @@ EXAMPLES = r"""
       file1:
         filename: /bin/true
         mime_type: application/octet-stream
+        multipart_encoding: base64
       file2:
         content: text based file content
         filename: fake.txt
         mime_type: text/plain
+        multipart_encoding: 7or8bit
       text_form_field: value
 
 - name: Connect to website using a previously stored cookie
@@ -440,19 +432,27 @@ url:
   sample: https://www.ansible.com/
 """
 
+import http
 import json
 import os
 import re
 import shutil
 import tempfile
+from datetime import datetime, timezone
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import binary_type, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
+from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
+from ansible.module_utils.urls import (
+    fetch_url,
+    get_response_filename,
+    parse_content_type,
+    prepare_multipart,
+    url_argument_spec,
+    url_redirect_argument_spec,
+)
 
 JSON_CANDIDATES = {'json', 'javascript'}
 
@@ -503,27 +503,6 @@ def write_file(module, dest, content, resp):
 
     if os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-
-
-def absolute_location(url, location):
-    """Attempts to create an absolute URL based on initial URL, and
-    next URL, specifically in the case of a ``Location`` header.
-    """
-
-    if '://' in location:
-        return location
-
-    elif location.startswith('/'):
-        parts = urlsplit(url)
-        base = url.replace(parts[2], '')
-        return '%s%s' % (base, location)
-
-    elif not location.startswith('/'):
-        base = os.path.dirname(url)
-        return '%s/%s' % (base, location)
-
-    else:
-        return location
 
 
 def kv_list(data):
@@ -579,7 +558,10 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     kwargs = {}
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = datetime.fromtimestamp(
+            os.path.getmtime(dest),
+            tz=timezone.utc,
+        )
 
     if module.params.get('follow_redirects') in ('no', 'yes'):
         module.deprecate(
@@ -606,6 +588,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
 def main():
     argument_spec = url_argument_spec()
     argument_spec['url']['required'] = True
+    argument_spec.update(url_redirect_argument_spec())
     argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
@@ -692,12 +675,12 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
-    start = utcnow()
+    start = datetime.now(timezone.utc)
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
                   decompress, ciphers, use_netrc)
 
-    elapsed = (utcnow() - start).seconds
+    elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'
@@ -733,6 +716,8 @@ def main():
             # there was no content, but the error read()
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
+        except http.client.HTTPException as http_err:
+            module.fail_json(msg=f"HTTP Error while fetching {url}: {to_native(http_err)}")
     elif r:
         content = r
     else:
@@ -767,7 +752,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = absolute_location(url, uresp['location'])
+        uresp['location'] = urljoin(url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, binary_type):

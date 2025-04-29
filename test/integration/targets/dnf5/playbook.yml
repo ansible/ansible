@@ -2,9 +2,26 @@
   tasks:
     - block:
         - command: "dnf install -y 'dnf-command(copr)'"
-        - command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
-        - command: dnf install -y -x condor python3-libdnf5
+        - name: Test against dnf5 nightly build to detect any issues early
+          command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
 
+        - name: Ensure module deps are not installed
+          command: dnf remove -y python3-libdnf5
+
+        - name: Test the auto_install_module_deps option
+          dnf5:
+            name: sos
+            auto_install_module_deps: false
+          register: r
+          ignore_errors: true
+
+        - assert:
+            that:
+              - r is failed
+              - r.msg is contains("Could not import the libdnf5 python module")
+
+        # Now the first dnf5 task in the dnf role should auto install python3-libdnf5 as
+        # auto_install_module_deps is true by default.
         - include_role:
             name: dnf
           vars:

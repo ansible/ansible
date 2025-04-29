@@ -62,10 +62,27 @@ DOCUMENTATION = """
               - name: ansible_password
               - name: ansible_ssh_pass
               - name: ansible_ssh_password
+      password_mechanism:
+          description: Mechanism to use for handling ssh password prompt
+          type: string
+          default: ssh_askpass
+          choices:
+              - ssh_askpass
+              - sshpass
+              - disable
+          version_added: '2.19'
+          env:
+              - name: ANSIBLE_SSH_PASSWORD_MECHANISM
+          ini:
+              - {key: password_mechanism, section: ssh_connection}
+          vars:
+              - name: ansible_ssh_password_mechanism
       sshpass_prompt:
           description:
-              - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+              - Password prompt that C(sshpass)/C(SSH_ASKPASS) should search for.
+              - Supported by sshpass 1.06 and up when O(password_mechanism) set to V(sshpass).
               - Defaults to C(Enter PIN for) when pkcs11_provider is set.
+              - Defaults to C(assword) when O(password_mechanism) set to V(ssh_askpass).
           default: ''
           type: string
           ini:
@@ -248,7 +265,6 @@ DOCUMENTATION = """
           vars:
             - name: ansible_pipelining
             - name: ansible_ssh_pipelining
-
       private_key_file:
           description:
               - Path to private key file to use for authentication.
@@ -264,7 +280,27 @@ DOCUMENTATION = """
           cli:
             - name: private_key_file
               option: '--private-key'
-
+      private_key:
+          description:
+            - Private key contents in PEM format. Requires the C(SSH_AGENT) configuration to be enabled.
+          type: string
+          env:
+            - name: ANSIBLE_PRIVATE_KEY
+          vars:
+            - name: ansible_private_key
+            - name: ansible_ssh_private_key
+          version_added: '2.19'
+      private_key_passphrase:
+          description:
+            - Private key passphrase, dependent on O(private_key).
+            - This does NOT have any effect when used with O(private_key_file).
+          type: string
+          env:
+            - name: ANSIBLE_PRIVATE_KEY_PASSPHRASE
+          vars:
+            - name: ansible_private_key_passphrase
+            - name: ansible_ssh_private_key_passphrase
+          version_added: '2.19'
       control_path:
         description:
           - This is the location to save SSH's ControlPath sockets, it uses SSH's variable substitution.
@@ -357,7 +393,6 @@ DOCUMENTATION = """
         type: string
         description:
           - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
-          - Requires sshpass version 1.06+, sshpass must support the -P option.
         env: [{name: ANSIBLE_PKCS11_PROVIDER}]
         ini:
           - {key: pkcs11_provider, section: ssh_connection}
@@ -366,32 +401,50 @@ DOCUMENTATION = """
 """
 
 import collections.abc as c
+import argparse
 import errno
+import contextlib
 import fcntl
 import hashlib
 import io
+import json
 import os
+import pathlib
 import pty
 import re
 import selectors
 import shlex
+import shutil
 import subprocess
+import sys
+import tempfile
 import time
 import typing as t
-
 from functools import wraps
+from multiprocessing.shared_memory import SharedMemory
+
+from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
     AnsibleError,
     AnsibleFileNotFound,
 )
-from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
-from ansible.plugins.shell.powershell import _parse_clixml
+from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils._ssh_agent import SshAgentClient, _key_data_into_crypto_objects
+
+try:
+    from cryptography.hazmat.primitives import serialization
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+else:
+    HAS_CRYPTOGRAPHY = True
+
 
 display = Display()
 
@@ -407,6 +460,11 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
 
 SSHPASS_AVAILABLE = None
 SSH_DEBUG = re.compile(r'^debug\d+: .*')
+
+_HAS_RESOURCE_TRACK = sys.version_info[:2] >= (3, 13)
+
+PKCS11_DEFAULT_PROMPT = 'Enter PIN for '
+SSH_ASKPASS_DEFAULT_PROMPT = 'assword'
 
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
@@ -450,6 +508,7 @@ def _handle_error(
                               'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
                     raise AnsibleError('{0} {1}'.format(msg, details))
                 msg = '{0} {1}'.format(msg, details)
+            raise AnsibleConnectionFailure(msg)
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
@@ -496,9 +555,10 @@ def _ssh_retry(
         remaining_tries = int(self.get_option('reconnection_retries')) + 1
         cmd_summary = u"%s..." % to_text(args[0])
         conn_password = self.get_option('password') or self._play_context.password
+        is_sshpass = self.get_option('password_mechanism') == 'sshpass'
         for attempt in range(remaining_tries):
             cmd = t.cast(list[bytes], args[0])
-            if attempt != 0 and conn_password and isinstance(cmd, list):
+            if attempt != 0 and is_sshpass and conn_password and isinstance(cmd, list):
                 # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
                 self.sshpass_pipe = os.pipe()
                 cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
@@ -517,7 +577,7 @@ def _ssh_retry(
                 except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
                     cmd = t.cast(list[bytes], args[0])
-                    if conn_password and isinstance(cmd, list):
+                    if is_sshpass and conn_password and isinstance(cmd, list):
                         # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
                         self.sshpass_pipe = os.pipe()
                         cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
@@ -558,6 +618,24 @@ def _ssh_retry(
     return wrapped
 
 
+def _clean_shm(func):
+    def inner(self, *args, **kwargs):
+        try:
+            ret = func(self, *args, **kwargs)
+        finally:
+            if self.shm:
+                self.shm.close()
+                with contextlib.suppress(FileNotFoundError):
+                    self.shm.unlink()
+                if not _HAS_RESOURCE_TRACK:
+                    # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
+                    # There is a resource tracking issue where the resource is deleted, but tracking still has a record
+                    # This will effectively overwrite the record and remove it
+                    SharedMemory(name=self.shm.name, create=True, size=1).unlink()
+        return ret
+    return inner
+
+
 class Connection(ConnectionBase):
     """ ssh based connections """
 
@@ -573,6 +651,8 @@ class Connection(ConnectionBase):
         self.user = self._play_context.remote_user
         self.control_path: str | None = None
         self.control_path_dir: str | None = None
+        self.shm: SharedMemory | None = None
+        self.sshpass_pipe: tuple[int, int] | None = None
 
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
@@ -582,6 +662,13 @@ class Connection(ConnectionBase):
             self.always_pipeline_modules = True
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.allow_executable = False
+
+        # parser to discover 'passed options', used later on for pipelining resolution
+        self._tty_parser = argparse.ArgumentParser()
+        self._tty_parser.add_argument('-t', action='count')
+        self._tty_parser.add_argument('-o', action='append')
+
+        self._populated_agent: pathlib.Path | None = None
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -614,17 +701,10 @@ class Connection(ConnectionBase):
     def _sshpass_available() -> bool:
         global SSHPASS_AVAILABLE
 
-        # We test once if sshpass is available, and remember the result. It
-        # would be nice to use distutils.spawn.find_executable for this, but
-        # distutils isn't always available; shutils.which() is Python3-only.
+        # We test once if sshpass is available, and remember the result.
 
         if SSHPASS_AVAILABLE is None:
-            try:
-                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                p.communicate()
-                SSHPASS_AVAILABLE = True
-            except OSError:
-                SSHPASS_AVAILABLE = False
+            SSHPASS_AVAILABLE = shutil.which('sshpass') is not None
 
         return SSHPASS_AVAILABLE
 
@@ -664,6 +744,52 @@ class Connection(ConnectionBase):
         display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
 
+    def _populate_agent(self) -> pathlib.Path:
+        """Adds configured private key identity to the SSH agent. Returns a path to a file containing the public key."""
+        if self._populated_agent:
+            return self._populated_agent
+
+        if (auth_sock := C.config.get_config_value('SSH_AGENT')) == 'none':
+            raise AnsibleError('Cannot utilize private_key with SSH_AGENT disabled')
+
+        key_data = self.get_option('private_key')
+        passphrase = self.get_option('private_key_passphrase')
+
+        private_key, public_key, fingerprint = _key_data_into_crypto_objects(
+            to_bytes(key_data),
+            to_bytes(passphrase) if passphrase else None,
+        )
+
+        with SshAgentClient(auth_sock) as client:
+            if public_key not in client:
+                display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
+                client.add(
+                    private_key,
+                    f'[added by ansible: PID={os.getpid()}, UID={os.getuid()}, EUID={os.geteuid()}, TIME={time.time()}]',
+                    C.config.get_config_value('SSH_AGENT_KEY_LIFETIME'),
+                )
+            else:
+                display.vvv(f'SSH: SSH_AGENT {fingerprint} exists in agent', host=self.host)
+        # Write the public key to disk, to be provided as IdentityFile.
+        # This allows ssh to pick an explicit key in the agent to use,
+        # preventing ssh from attempting all keys in the agent.
+        pubkey_path = self._populated_agent = pathlib.Path(C.DEFAULT_LOCAL_TMP).joinpath(
+            fingerprint.replace('/', '-') + '.pub'
+        )
+        if os.path.exists(pubkey_path):
+            return pubkey_path
+
+        with tempfile.NamedTemporaryFile(dir=C.DEFAULT_LOCAL_TMP, delete=False) as f:
+            f.write(public_key.public_bytes(
+                encoding=serialization.Encoding.OpenSSH,
+                format=serialization.PublicFormat.OpenSSH
+            ))
+        # move atomically to prevent race conditions, silently succeeds if the target exists
+        os.rename(f.name, pubkey_path)
+        os.chmod(pubkey_path, mode=0o400)
+
+        return self._populated_agent
+
     def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         """
         Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
@@ -677,17 +803,18 @@ class Connection(ConnectionBase):
 
         b_command = []
         conn_password = self.get_option('password') or self._play_context.password
+        pkcs11_provider = self.get_option("pkcs11_provider")
+        password_mechanism = self.get_option('password_mechanism')
 
         #
         # First, the command to invoke
         #
 
-        # If we want to use password authentication, we have to set up a pipe to
+        # If we want to use sshpass for password authentication, we have to set up a pipe to
         # write the password to sshpass.
-        pkcs11_provider = self.get_option("pkcs11_provider")
-        if conn_password or pkcs11_provider:
+        if password_mechanism == 'sshpass' and (conn_password or pkcs11_provider):
             if not self._sshpass_available():
-                raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
+                raise AnsibleError("to use the password_mechanism=sshpass, you must install the sshpass program")
             if not conn_password and pkcs11_provider:
                 raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
 
@@ -697,7 +824,7 @@ class Connection(ConnectionBase):
             password_prompt = self.get_option('sshpass_prompt')
             if not password_prompt and pkcs11_provider:
                 # Set default password prompt for pkcs11_provider to make it clear its a PIN
-                password_prompt = 'Enter PIN for '
+                password_prompt = PKCS11_DEFAULT_PROMPT
 
             if password_prompt:
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
@@ -720,12 +847,12 @@ class Connection(ConnectionBase):
         # sftp batch mode allows us to correctly catch failed transfers, but can
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
-        # if not using controlpersist and using sshpass
+        # if not using controlpersist and using password auth
         b_args: t.Iterable[bytes]
         if subsystem == 'sftp' and self.get_option('sftp_batch_mode'):
             if conn_password:
                 b_args = [b'-o', b'BatchMode=no']
-                self._add_args(b_command, b_args, u'disable batch mode for sshpass')
+                self._add_args(b_command, b_args, u'disable batch mode for password auth')
             b_command += [b'-b', b'-']
 
         if display.verbosity:
@@ -748,8 +875,17 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self.get_option('private_key_file')
-        if key:
+        if self.get_option('private_key'):
+            try:
+                key = self._populate_agent()
+            except Exception as e:
+                raise AnsibleAuthenticationFailure(
+                    'Failed to add configured private key into ssh-agent',
+                    orig_exc=e,
+                )
+            b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', to_bytes(f'IdentityFile="{key}"', errors='surrogate_or_strict'))
+            self._add_args(b_command, b_args, "ANSIBLE_PRIVATE_KEY/private_key set")
+        elif key := self.get_option('private_key_file'):
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
@@ -833,16 +969,13 @@ class Connection(ConnectionBase):
         try:
             fh.write(to_bytes(in_data))
             fh.close()
-        except (OSError, IOError) as e:
+        except (OSError, IOError) as ex:
             # The ssh connection may have already terminated at this point, with a more useful error
             # Only raise AnsibleConnectionFailure if the ssh process is still alive
             time.sleep(0.001)
             ssh_process.poll()
             if getattr(ssh_process, 'returncode', None) is None:
-                raise AnsibleConnectionFailure(
-                    'Data could not be sent to remote host "%s". Make sure this host can be reached '
-                    'over ssh: %s' % (self.host, to_native(e)), orig_exc=e
-                )
+                raise AnsibleConnectionFailure(f'Data could not be sent to remote host {self.host!r}. Make sure this host can be reached over SSH.') from ex
 
         display.debug(u'Sent initial data (%d bytes)' % len(in_data))
 
@@ -906,6 +1039,57 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
+    def _init_shm(self) -> dict[str, t.Any]:
+        env = os.environ.copy()
+        popen_kwargs: dict[str, t.Any] = {}
+
+        if self.get_option('password_mechanism') != 'ssh_askpass':
+            return popen_kwargs
+
+        conn_password = self.get_option('password') or self._play_context.password
+        pkcs11_provider = self.get_option("pkcs11_provider")
+        if not conn_password and pkcs11_provider:
+            raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
+
+        if not conn_password:
+            return popen_kwargs
+
+        kwargs = {}
+        if _HAS_RESOURCE_TRACK:
+            # deprecated: description='track argument for SharedMemory always available' python_version='3.12'
+            kwargs['track'] = False
+        self.shm = shm = SharedMemory(create=True, size=16384, **kwargs)  # type: ignore[arg-type]
+
+        sshpass_prompt = self.get_option('sshpass_prompt')
+        if not sshpass_prompt and pkcs11_provider:
+            sshpass_prompt = PKCS11_DEFAULT_PROMPT
+        elif not sshpass_prompt:
+            sshpass_prompt = SSH_ASKPASS_DEFAULT_PROMPT
+
+        data = json.dumps({
+            'password': conn_password,
+            'prompt': sshpass_prompt,
+        }).encode('utf-8')
+        shm.buf[:len(data)] = bytearray(data)
+        shm.close()
+
+        env['_ANSIBLE_SSH_ASKPASS_SHM'] = str(self.shm.name)
+        adhoc = pathlib.Path(sys.argv[0]).with_name('ansible')
+        env['SSH_ASKPASS'] = str(adhoc) if adhoc.is_file() else 'ansible'
+
+        # SSH_ASKPASS_REQUIRE was added in openssh 8.4, prior to 8.4 there must be no tty, and DISPLAY must be set
+        env['SSH_ASKPASS_REQUIRE'] = 'force'
+        if not env.get('DISPLAY'):
+            # If the user has DISPLAY set, assume it is there for a reason
+            env['DISPLAY'] = '-'
+
+        popen_kwargs['env'] = env
+        # start_new_session runs setsid which detaches the tty to support the use of ASKPASS prior to openssh 8.4
+        popen_kwargs['start_new_session'] = True
+
+        return popen_kwargs
+
+    @_clean_shm
     def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         """
         Starts the command and communicates with it until it ends.
@@ -914,6 +1098,9 @@ class Connection(ConnectionBase):
         # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
         display_cmd = u' '.join(shlex.quote(to_text(c)) for c in cmd)
         display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
+
+        conn_password = self.get_option('password') or self._play_context.password
+        password_mechanism = self.get_option('password_mechanism')
 
         # Start the given command. If we don't need to pipeline data, we can try
         # to use a pseudo-tty (ssh will have been invoked with -tt). If we are
@@ -927,17 +1114,16 @@ class Connection(ConnectionBase):
         else:
             cmd = list(map(to_bytes, cmd))
 
-        conn_password = self.get_option('password') or self._play_context.password
+        popen_kwargs = self._init_shm()
+
+        if self.sshpass_pipe:
+            popen_kwargs['pass_fds'] = self.sshpass_pipe
 
         if not in_data:
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
                 master, slave = pty.openpty()
-                if PY3 and conn_password:
-                    # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
-                else:
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
@@ -945,21 +1131,13 @@ class Connection(ConnectionBase):
 
         if not p:
             try:
-                if PY3 and conn_password:
-                    # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
-                else:
-                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = p.stdin  # type: ignore[assignment] # stdin will be set and not None due to the calls above
             except (OSError, IOError) as e:
                 raise AnsibleError('Unable to execute ssh command line on a controller due to: %s' % to_native(e))
 
-        # If we are using SSH password authentication, write the password into
-        # the pipe we opened in _build_command.
-
-        if conn_password:
+        if password_mechanism == 'sshpass' and conn_password:
             os.close(self.sshpass_pipe[0])
             try:
                 os.write(self.sshpass_pipe[1], to_bytes(conn_password) + b'\n')
@@ -1047,7 +1225,7 @@ class Connection(ConnectionBase):
                         if poll is not None:
                             break
                         self._terminate_process(p)
-                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                        raise AnsibleConnectionFailure('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
 
                     display.vvvvv(f'SSH: Timeout ({timeout}s) waiting for the output', host=self.host)
 
@@ -1178,10 +1356,15 @@ class Connection(ConnectionBase):
             p.stdout.close()
             p.stderr.close()
 
-        if self.get_option('host_key_checking'):
-            if cmd[0] == b"sshpass" and p.returncode == 6:
-                raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support '
-                                   'this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
+        conn_password = self.get_option('password') or self._play_context.password
+        hostkey_fail = any((
+            (cmd[0] == b"sshpass" and p.returncode == 6),
+            b"read_passphrase: can't open /dev/tty" in b_stderr,
+            b"Host key verification failed" in b_stderr,
+        ))
+        if password_mechanism and self.get_option('host_key_checking') and conn_password and hostkey_fail:
+            raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled. '
+                               'Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         controlpersisterror = b'Bad configuration option: ControlPersist' in b_stderr or b'unknown configuration option: ControlPersist' in b_stderr
         if p.returncode != 0 and controlpersisterror:
@@ -1329,8 +1512,8 @@ class Connection(ConnectionBase):
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         # When running on Windows, stderr may contain CLIXML encoded output
-        if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):
-            stderr = _parse_clixml(stderr)
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            stderr = _replace_stderr_clixml(stderr)
 
         return (returncode, stdout, stderr)
 
@@ -1396,3 +1579,41 @@ class Connection(ConnectionBase):
 
     def close(self) -> None:
         self._connected = False
+
+    @property
+    def has_tty(self):
+        return self._is_tty_requested()
+
+    def _is_tty_requested(self):
+
+        # check if we require tty (only from our args, cannot see options in configuration files)
+        opts = []
+        for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):
+            attr = self.get_option(opt)
+            if attr is not None:
+                opts.extend(self._split_ssh_args(attr))
+
+        args, dummy = self._tty_parser.parse_known_args(opts)
+
+        if args.t:
+            return True
+
+        for arg in args.o or []:
+            if '=' in arg:
+                val = arg.split('=', 1)
+            else:
+                val = arg.split(maxsplit=1)
+
+            if val[0].lower().strip() == 'requesttty':
+                if val[1].lower().strip() in ('yes', 'force'):
+                    return True
+
+        return False
+
+    def is_pipelining_enabled(self, wrap_async=False):
+        """ override parent method and ensure we don't request a tty """
+
+        if self._is_tty_requested():
+            return False
+        else:
+            return super(Connection, self).is_pipelining_enabled(wrap_async)

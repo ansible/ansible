@@ -9,8 +9,9 @@ import pathlib
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
+from ansible._internal._datatag._tags import SourceWasEncrypted
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
 
@@ -142,9 +143,8 @@ class ActionModule(ActionBase):
             result['message'] = err_msg
         elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
             merge_hashes = self.hash_behaviour == 'merge'
-            for key, value in results.items():
-                old_value = task_vars.get(key, None)
-                results[key] = combine_vars(old_value, value, merge=merge_hashes)
+            existing_variables = {k: v for k, v in task_vars.items() if k in results}
+            results = combine_vars(existing_variables, results, merge=merge_hashes)
 
         result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
@@ -168,9 +168,9 @@ class ActionModule(ActionBase):
                 )
                 self.source_dir = path_to_use
         else:
-            if hasattr(self._task._ds, '_data_source'):
+            if (origin := self._task._origin) and origin.path:  # origin.path is not present for ad-hoc tasks
                 current_dir = (
-                    "/".join(self._task._ds._data_source.split('/')[:-1])
+                    "/".join(origin.path.split('/')[:-1])
                 )
                 self.source_dir = path.join(current_dir, self.source_dir)
 
@@ -234,14 +234,13 @@ class ActionModule(ActionBase):
             failed = True
             err_msg = ('{0} does not have a valid extension: {1}'.format(to_native(filename), ', '.join(self.valid_extensions)))
         else:
-            b_data, show_content = self._loader._get_file_contents(filename)
-            data = to_text(b_data, errors='surrogate_or_strict')
+            data = self._loader.load_from_file(filename, cache='none', trusted_as_template=True)
 
-            self.show_content &= show_content  # mask all results if any file was encrypted
+            self.show_content &= not SourceWasEncrypted.is_tagged_on(data)
 
-            data = self._loader.load(data, file_name=filename, show_content=show_content)
-            if not data:
+            if data is None:  # support empty files, but not falsey values
                 data = dict()
+
             if not isinstance(data, dict):
                 failed = True
                 err_msg = ('{0} must be stored as a dictionary/hash'.format(to_native(filename)))

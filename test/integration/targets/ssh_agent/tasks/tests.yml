@@ -1,0 +1,49 @@
+- slurp:
+    path: ~/.ssh/authorized_keys
+  register: akeys
+
+- debug:
+    msg: '{{ akeys.content|b64decode }}'
+
+- command: ansible-playbook -i {{ ansible_inventory_sources|first|quote }} -vvv {{ role_path }}/auto.yml
+  environment:
+    ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
+    ANSIBLE_SSH_AGENT: auto
+  register: auto
+
+- command: ps {{ ps_flags }} -opid
+  register: pids
+  # Some distros will exit with rc=1 if no processes were returned
+  vars:
+    ps_flags: '{{ "" if ansible_distribution == "Alpine" else "-x" }}'
+
+- assert:
+    that:
+      - >-
+        'started and bound to' in auto.stdout
+      - >-
+        'SSH: SSH_AGENT adding' in auto.stdout
+      - >-
+        'exists in agent' in auto.stdout
+      - pids|map('trim')|select('eq', pid) == []
+  vars:
+    pid: '{{ auto.stdout|regex_findall("ssh-agent\[(\d+)\]")|first }}'
+
+- command: ssh-agent -D -s -a '{{ tmpdir.path }}/agent.sock'
+  async: 30
+  poll: 0
+
+- command: ansible-playbook -i {{ ansible_inventory_sources|first|quote }} -vvv {{ role_path }}/auto.yml
+  environment:
+    ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
+    ANSIBLE_SSH_AGENT: '{{ tmpdir.path }}/agent.sock'
+  register: existing
+
+- assert:
+    that:
+      - >-
+        'started and bound to' not in existing.stdout
+      - >-
+        'SSH: SSH_AGENT adding' in existing.stdout
+      - >-
+        'exists in agent' in existing.stdout
