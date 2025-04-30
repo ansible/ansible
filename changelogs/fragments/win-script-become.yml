@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    script - Fix up become support for Windows scripts when become was set through host variables and not on the task
+    directly - https://github.com/ansible/ansible/issues/85076
