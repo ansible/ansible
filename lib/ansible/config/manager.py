@@ -676,6 +676,13 @@ class ConfigManager(object):
 
         return value, origin
 
+    def get_config_default(self, config: str, plugin_type: str | None = None, plugin_name: str | None = None) -> t.Any:
+        defs = self.get_configuration_definitions(plugin_type=plugin_type, name=plugin_name)
+        try:
+            return defs[config].get('default', None)
+        except KeyError:
+            raise AnsibleError(f'The requested entry {_get_entry(plugin_type, plugin_name, config)} was not defined in configuration and has no default.')
+
     def initialize_plugin_configuration_definitions(self, plugin_type, name, defs):
 
         if plugin_type not in self._plugins:

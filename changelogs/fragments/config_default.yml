@@ -1,0 +1,2 @@
+minor_changes:
+  - added get_config_default method to configuration manager
