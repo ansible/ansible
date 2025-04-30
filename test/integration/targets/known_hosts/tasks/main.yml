@@ -63,8 +63,15 @@
 
 # https://github.com/ansible/ansible/issues/84952
 # test addition when ~/.ssh/ directory missing and path=default
+- name: check if ~/.ssh exists
+  stat:
+    path: ~/.ssh
+  register: default_ssh_dir
+
 - name: move ~/.ssh/ directory away
   command: mv ~/.ssh/ ~/.ssh_bak/
+  when: default_ssh_dir.stat.exists
+  register: backup_default_ssh_dir
 
 - name: add a new host with default path
   known_hosts:
@@ -72,10 +79,14 @@
     key: "{{ example_org_rsa_key }}"
     state: present
   register: result
+  ignore_errors: True
 
-- name: move ~/.ssh/ directory back
-  shell: 
-    cmd: rm -rf ~/.ssh/ && mv -f ~/.ssh_bak/ ~/.ssh/
+- name: remove ~/.ssh/ directory created by known_hosts module
+  command: rm -r ~/.ssh
+
+- name: move ~/.ssh_bak/ back
+  command: mv ~/.ssh_bak/ ~/.ssh/
+  when: backup_default_ssh_dir is changed
 
 - name: assert that the key was added and no exception thrown
   assert:
