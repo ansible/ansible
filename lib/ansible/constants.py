@@ -82,7 +82,34 @@ class _DeprecatedSequenceConstant(Sequence):
         return self._value[y]
 
 
+def _force_preload():
+    """ read all available constants, used for config dumps """
+    # NOTE: previous templating dependencies should already be covered, order does not matter anymore
+    for setting in config.get_configuration_definitions():
+        set_constant(setting, config.get_config_value(setting, variables=vars()))
+
+
+def __getattr__(config_constant):
+    """ Module level 'getter' that populates constants on demand and avoids having to preload them """
+
+    if config_constant not in globals():
+        try:
+            value = config.get_config_value(config_constant, variables=globals())
+        except Exception as e:
+            raise AttributeError(e)
+
+        globals()[config_constant] = value
+
+        # emit any warnings or deprecations
+        handle_config_noise()
+
+    return globals()[config_constant]
+
+
 # CONSTANTS ### yes, actual ones
+
+# required by others so these should always be instanciated first, order is imporant!
+__INITIALIZE = ['ANSIBLE_HOME', 'REJECT_EXTS']
 
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
@@ -242,9 +269,10 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
 
-# emit any warnings or deprecations
-handle_config_noise()
+# we always initialize these constants as others depend on them for basic config templating.
+for c in __INITIALIZE:
+    # NOTE: We should create a dep system to avoid a hardcoded list,
+    #       previously relied on the order in base.yml.
+    #       now relies on order in hardcoded constant in this file.
+    __getattr__(c)
