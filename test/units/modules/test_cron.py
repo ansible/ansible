@@ -37,7 +37,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment(name),
                 job
             ],
-            id="no-comment-with-single-task",
+            id="no-comment-with-single-job",
         ),
         pytest.param(
             [
@@ -47,7 +47,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment(name),
                 job
             ],
-            id="no-comment-with-single-task",
+            id="comment-with-no-job",
         ),
         pytest.param(
             [
@@ -58,7 +58,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment(name),
                 job
             ],
-            id="fix-empty-comment",
+            id="fix-empty-comment-at-last",
         ),
         pytest.param(
             [
@@ -83,7 +83,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment("hhhh"),
                 "*/10 * * * * echo hhhh"
             ],
-            id="first-task-with-no-comment",
+            id="first-job-with-no-comment",
         ),
         pytest.param(
             [
@@ -101,7 +101,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment("hhhh"),
                 "*/10 * * * * echo hhhh"
             ],
-            id="middle-task-with-no-comment",
+            id="middle-job-with-no-comment",
         ),
         pytest.param(
             [
@@ -115,7 +115,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment("hhhh"),
                 "*/10 * * * * echo hhhh"
             ],
-            id="first-comment-with-no-task",
+            id="first-comment-with-no-job",
         ),
         pytest.param(
             [
@@ -129,7 +129,7 @@ crontab = CronTab(TestModule(), cron_file="/etc/cron.d/crontab")
                 crontab.do_comment(name),
                 job,
             ],
-            id="last-comment-with-no-task",
+            id="last-comment-with-no-job",
         ),
     ],
 )
@@ -172,7 +172,7 @@ def test_crontab_add_job(lines, expected):
                 crontab.do_comment("hhhh"),
                 "*/10 * * * * echo hhhh",
             ],
-            id="remove-comment-with-no-task-at-first",
+            id="remove-comment-with-no-job-at-first",
         ),
         pytest.param(
             [
@@ -184,7 +184,7 @@ def test_crontab_add_job(lines, expected):
                 crontab.do_comment("hhhh"),
                 "*/10 * * * * echo hhhh",
             ],
-            id="remove-comment-with-no-task-at-last",
+            id="remove-comment-with-no-job-at-last",
         ),
         pytest.param(
             [
@@ -200,7 +200,7 @@ def test_crontab_add_job(lines, expected):
                 crontab.do_comment("xyz"),
                 "*/10 * * * * echo xyz",
             ],
-            id="remove-comment-with-no-task-in-middle",
+            id="remove-comment-with-no-job-in-middle",
         ),
     ]
 )
