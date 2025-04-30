@@ -910,9 +910,9 @@ class TaskExecutor:
                 # have issues which result in a half-written/unparseable result
                 # file on disk, which manifests to the user as a timeout happening
                 # before it's time to timeout.
-                if (int(async_result.get('finished', 0)) == 1 or
-                        ('failed' in async_result and async_result.get('_ansible_parsed', False)) or
-                        'skipped' in async_result):
+                if (async_result.get('finished', False) or
+                   (async_result.get('failed', False) and async_result.get('_ansible_parsed', False)) or
+                   async_result.get('skipped', False)):
                     break
             except Exception as e:
                 # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
@@ -941,7 +941,7 @@ class TaskExecutor:
                     ),
                 )
 
-        if int(async_result.get('finished', 0)) != 1:
+        if not async_result.get('finished', False):
             if async_result.get('_ansible_parsed'):
                 return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val, async_result=async_result)
             else:

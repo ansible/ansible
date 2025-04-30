@@ -149,7 +149,7 @@ def _run_module(wrapped_cmd, jid):
 
     # DTFIX-FUTURE: needs rework for serialization profiles
 
-    jwrite({"started": 1, "finished": 0, "ansible_job_id": jid})
+    jwrite({"started": True, "finished": False, "ansible_job_id": jid})
 
     result = {}
 
@@ -203,7 +203,7 @@ def _run_module(wrapped_cmd, jid):
     except (OSError, IOError):
         e = sys.exc_info()[1]
         result = {
-            "failed": 1,
+            "failed": True,
             "cmd": wrapped_cmd,
             "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
@@ -214,7 +214,7 @@ def _run_module(wrapped_cmd, jid):
 
     except (ValueError, Exception):
         result = {
-            "failed": 1,
+            "failed": True,
             "cmd": wrapped_cmd,
             "data": outdata,  # temporary notice only
             "stderr": stderr,
@@ -260,7 +260,7 @@ def main():
         _make_temp_dir(jobdir)
     except Exception as e:
         end({
-            "failed": 1,
+            "failed": True,
             "msg": "could not create directory: %s - %s" % (jobdir, to_text(e)),
             "exception": to_text(traceback.format_exc()),  # NB: task executor compat will coerce to the correct dataclass type
         }, 1)
@@ -293,7 +293,7 @@ def main():
                     continue
 
             notice("Return async_wrapper task started.")
-            end({"failed": 0, "started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
+            end({"failed": False, "started": True, "finished": False, "ansible_job_id": jid, "results_file": job_path,
                  "_ansible_suppress_tmpdir_delete": (not preserve_tmp)}, 0)
         else:
             # The actual wrapper process

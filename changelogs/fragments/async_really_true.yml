@@ -1,0 +1,5 @@
+bugfixes:
+- async_wrapper will now use actual booleans vs underlying int 1/0
+- async_status will now use actual booleans vs underlying int 1/0
+- finished test will now use actual booleans vs underlying int 1/0
+- started tests will now use actual booleans vs underlying int 1/0
