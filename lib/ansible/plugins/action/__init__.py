@@ -634,12 +634,12 @@ class ActionBase(ABC):
         # done. Make the files +x if we're asked to, and return.
         if not self._is_become_unprivileged():
             if execute:
-                # Can't depend on the file being transferred with execute permissions.
+                # Can't depend on the file being transferred with required permissions.
                 # Only need user perms because no become was used here
-                res = self._remote_chmod(remote_paths, 'u+x')
+                res = self._remote_chmod(remote_paths, 'u+rwx')
                 if res['rc'] != 0:
                     raise AnsibleError(
-                        'Failed to set execute bit on remote files '
+                        'Failed to set permissions on remote files '
                         '(rc: {0}, err: {1})'.format(
                             res['rc'],
                             to_native(res['stderr'])))
@@ -680,10 +680,10 @@ class ActionBase(ABC):
             return remote_paths
 
         # Step 3b: Set execute if we need to. We do this before anything else
-        # because some of the methods below might work but not let us set +x
-        # as part of them.
+        # because some of the methods below might work but not let us set
+        # permissions as part of them.
         if execute:
-            res = self._remote_chmod(remote_paths, 'u+x')
+            res = self._remote_chmod(remote_paths, 'u+rwx')
             if res['rc'] != 0:
                 raise AnsibleError(
                     'Failed to set file mode or acl on remote temporary files '

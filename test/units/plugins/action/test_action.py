@@ -401,7 +401,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': 'and here',
         }
         assertThrowRegex(
-            'Failed to set execute bit on remote files',
+            'Failed to set permissions on remote files',
             execute=True)
 
         # Step 3: we are becoming unprivileged
@@ -416,7 +416,7 @@ class TestActionBase(unittest.TestCase):
         }
         assertSuccess()
 
-        # Step 3b: chmod +x if we need to
+        # Step 3b: chmod +rwx if we need to
         # To get here, setfacl failed, so mock it as such.
         action_base._remote_set_user_facl.return_value = {
             'rc': 1,
