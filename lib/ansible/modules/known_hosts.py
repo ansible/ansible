@@ -206,15 +206,16 @@ def ensure_default_ssh_directory(module, path):
     """
     if path != os.path.expanduser("~/.ssh/known_hosts"):
         return
-    if os.path.exists(os.path.dirname(path)):
+
+    ssh_dir = os.path.dirname(path)
+    if os.path.exists(ssh_dir):
         return
 
     try:
-        os.mkdir(os.path.dirname(path), 0o700)
+        os.mkdir(ssh_dir, int('0700', 8))
+        module.set_mode_if_different(ssh_dir, int('0700', 8), False)
     except OSError as e:
-        if e.errno == errno.EEXIST:  # return if some other creates the dir at this time
-            return
-        module.fail_json(msg="Failed to create directory %s: %s" % (path, to_native(e)))
+        module.fail_json(msg="Failed to create directory %s: %s" % (ssh_dir, to_native(e)))
 
 
 def sanity_check(module, host, key, sshkeygen):
