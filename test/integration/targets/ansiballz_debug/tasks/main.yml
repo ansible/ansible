@@ -8,6 +8,18 @@
   set_fact:
     generated_wrapper: "{{ (wrapper.stdout | regex_search('PUT .*? TO (/.*?/AnsiballZ_ping.py)', '\\1'))[0] }}"
 
+- name: Check permissions
+  stat:
+    path: '{{ generated_wrapper }}'
+  register: wrapper_stats
+
+- name: Ensure permissions
+  assert:
+    that:
+      - wrapper_stats.stat.executable is true
+      - wrapper_stats.stat.readable is true
+      - wrapper_stats.stat.writeable is true
+
 - name: Explode the wrapper
   command: "{{ generated_wrapper }} explode"
   register: explode
