@@ -1422,9 +1422,9 @@
   lineinfile:
     path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
     create: True
-    line: "Test line encoded in cp037"
+    line: "Test line encoded in cp273"
     state: present
-    encoding: cp037
+    encoding: cp273
   register: result1
 
 - name: assert that the file was created
@@ -1441,7 +1441,7 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == 'e6a40c1d8cc378012a161cf6ce04b6610db708ca' or result2.stat.checksum == '25b008c4783e98c93699efe463c9676359f76675'
+      - result2.stat.checksum == 'e0bf2bdca94727d03483a9adab66543bcec4b99a'
 
 
 - name: encoding - write a line
@@ -1449,7 +1449,7 @@
     line: "Another test line."
     state: present
     path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
-    encoding: cp037
+    encoding: cp273
   register: result1
 
 - name: assert that the file was changed.
@@ -1466,7 +1466,7 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == 'd6e685e98cfb3226d58dc3f900263353e08027c4' or result2.stat.checksum == '2eaad87db9808ddb3c58707f426eccc8fe280e89'
+      - result2.stat.checksum == '1ac77f83a69c53b54fc16111694abe07e5a6703b'
 
 
 - name: encoding - write a line before regex match
@@ -1475,7 +1475,7 @@
     state: present
     insertbefore: "^Another test line.$"
     path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
-    encoding: cp037
+    encoding: cp273
   register: result1
 
 - name: assert that the file was changed.
@@ -1492,14 +1492,14 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == 'e5d9cac41b5188074f6a9bb98b19cbc3cea4f8b2' or result2.stat.checksum == 'd327a3d4df7dcb139343426af45ff21d78eb3689'
+      - result2.stat.checksum == 'e48e3177e79d16871dcfc25a92333fa92d4f40bd'
 
 - name: encoding - remove a line
   lineinfile:
     regexp: "^Another test line.$"
     state: absent
     path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
-    encoding: cp037
+    encoding: cp273
   register: result1
 
 - name: assert that the file was changed.
@@ -1516,7 +1516,7 @@
   assert:
     that:
       - result2.stat.exists
-      - result2.stat.checksum == '85231710aefbcbbf33dfe693e6e59a7941c1c819' or result2.stat.checksum == 'ed4b80b89e03d56dc5fc39323c09f7dc83cfa7d2'
+      - result2.stat.checksum == 'fd917ecb76b768a9e87d1a5c65f7fae4f0f2b4ea'
 
 
 - name: Integration test for issue 76727
