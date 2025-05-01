@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import sys
-
 DOCUMENTATION = r"""
 ---
 module: async_status
@@ -16,6 +14,11 @@ description:
 - This module is also supported for Windows targets.
 version_added: "0.5"
 options:
+  _async_dir:
+    description:
+    - Internal use only, this is set by Ansible automatically.
+    type: path
+    required: true
   jid:
     description:
     - Job or task identifier
@@ -110,6 +113,7 @@ erased:
 
 import json
 import os
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
 

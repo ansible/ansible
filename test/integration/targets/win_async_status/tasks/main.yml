@@ -1,0 +1,93 @@
+- name: run async task
+  win_ping:
+  async: 30
+  poll: 2
+  register: async_res
+
+- name: assert run async task
+  assert:
+    that:
+    - async_res is finished
+    - async_res is successful
+    - async_res.ping == 'pong'
+
+- name: run async task - check mode
+  win_ping:
+  async: 30
+  poll: 2
+  register: async_res_check
+  check_mode: true
+
+- name: assert run async task - check mode
+  assert:
+    that:
+    - async_res_check is finished
+    - async_res_check is successful
+    - async_res_check.ping == 'pong'
+
+- name: expect failure with invalid async JID
+  async_status:
+    jid: invalid
+  register: invalid_jid
+  failed_when:
+  - invalid_jid is not failed
+  - invalid_jid.msg is not search('could not find job')
+
+- name: run async task that is fire and forget
+  win_ping:
+  async: 30
+  poll: 0
+  register: fnf_task
+
+- name: get status of fire and forget task
+  async_status:
+    jid: '{{ fnf_task.ansible_job_id }}'
+  register: fnf_result
+  until: fnf_result is finished
+  retries: 10
+  delay: 1
+
+- name: check if fire and forget log file is still present
+  win_stat:
+    path: '{{ fnf_result.results_file }}'
+  register: fnf_file
+
+- name: assert fire and forget task was successful
+  assert:
+    that:
+    - fnf_result is finished
+    - fnf_result is started
+    - fnf_result.ping == 'pong'
+    - fnf_file.stat.exists == true
+
+- name: cleanup fire and forget log file
+  async_status:
+    jid: '{{ fnf_task.ansible_job_id }}'
+    mode: cleanup
+  register: fnf_cleanup
+
+- name: check if fire and forget log file is deleted
+  win_stat:
+    path: '{{ fnf_result.results_file }}'
+  register: fnf_file_cleanup
+
+- name: assert fire and forget task cleanup was successful
+  assert:
+    that:
+    - fnf_cleanup.erased == fnf_result.results_file
+    - fnf_file_cleanup.stat.exists == false
+
+- name: check async_status can handle nested return data
+  async_test:
+  register: async_nested_result
+  async: 30
+  poll: 2
+
+- name: assert async_status can handle nested return data
+  assert:
+    that:
+    - async_nested_result is finished
+    - >-
+      async_nested_result.nested_hashtable == {'key': 'value'}
+    - >-
+      async_nested_result.nested_array == ['string value', {'key': 'value'}]

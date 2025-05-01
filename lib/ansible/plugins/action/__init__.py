@@ -280,7 +280,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 # for each subsystem.
                 win_collection = 'ansible.windows'
                 rewrite_collection_names = ['ansible.builtin', 'ansible.legacy', '']
-                # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
+                # win_stat, win_file, win_copy, and win_ping are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
                 # NB: we only rewrite the module if it's not being called by the user (eg, an action calling something else)
@@ -288,8 +288,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 if leaf_module_name in ('stat', 'file', 'copy', 'ping') and \
                         collection_name in rewrite_collection_names and self._task.action != module_name:
                     module_name = '%s.win_%s' % (win_collection, leaf_module_name)
-                elif leaf_module_name == 'async_status' and collection_name in rewrite_collection_names:
-                    module_name = '%s.%s' % (win_collection, leaf_module_name)
 
                 # TODO: move this tweak down to the modules, not extensible here
                 # Remove extra quotes surrounding path parameters before sending to module.

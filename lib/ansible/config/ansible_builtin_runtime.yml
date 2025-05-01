@@ -4096,8 +4096,6 @@ plugin_routing:
       redirect: ansible.posix.selinux
     sysctl:
       redirect: ansible.posix.sysctl
-    async_status.ps1:
-      redirect: ansible.windows.async_status
     setup.ps1:
       redirect: ansible.windows.setup
     slurp.ps1:

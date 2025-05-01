@@ -1,0 +1,2 @@
+minor_changes:
+  - Migrated ``async_status.ps1`` from the ``ansible.windows`` collection back into Ansible.
