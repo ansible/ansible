@@ -17,6 +17,7 @@ from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
 from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleUndefinedConfigEntry, AnsibleRequiredOptionError
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
@@ -96,6 +97,10 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
     basedir = None
     if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
         basedir = origin
+
+    # save tags
+    tags = value
+    AnsibleTagHelper.tag_copy(value, tags)
 
     if value_type:
         value_type = value_type.lower()
@@ -187,7 +192,8 @@ def ensure_type(value, value_type, origin=None, origin_ftype=None):
         if errmsg:
             raise ValueError(f'Invalid type provided for {errmsg!r}: {value!r}')
 
-    return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
+    # restore tags
+    return AnsibleTagHelper.tag_copy(tags, to_text(value, errors='surrogate_or_strict', nonstring='passthru'))
 
 
 # FIXME: see if this can live in utils/path

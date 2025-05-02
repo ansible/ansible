@@ -620,6 +620,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
         kwargs = {}
+        # TODO: preserve tags?
         if wanted_name == 'str' and isinstance(wanted_type, string_types):
             kwargs['param'] = list(parameters.keys())[0]
 
