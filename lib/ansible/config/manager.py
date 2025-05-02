@@ -109,10 +109,10 @@ def ensure_type(value: t.Any, value_type: str, origin:  str | None = None, origi
 
     if value is not None:
         match value_type:
-            case ('boolean', 'bool'):
+            case 'boolean' | 'bool':
                 value = boolean(value, strict=False)
 
-            case ('integer', 'int'):
+            case 'integer' | 'int':
                 if not isinstance(value, int):
                     try:
                         if (decimal_value := decimal.Decimal(value)) == (int_part := int(decimal_value)):
@@ -145,7 +145,7 @@ def ensure_type(value: t.Any, value_type: str, origin:  str | None = None, origi
                 else:
                     errmsg = 'path'
 
-            case ('tmp', 'temppath', 'tmppath'):
+            case 'tmp' | 'temppath' | 'tmppath':
                 if isinstance(value, string_types):
                     value = resolve_path(value, basedir=basedir)
                     if not os.path.exists(value):
@@ -174,11 +174,11 @@ def ensure_type(value: t.Any, value_type: str, origin:  str | None = None, origi
                 else:
                     errmsg = 'pathlist'
 
-            case ('dict', 'dictionary'):  # TODO: add elements/subconfig processing
+            case 'dict' | 'dictionary':  # TODO: add elements/subconfig processing
                 if not isinstance(value, Mapping):
                     errmsg = 'dictionary'
 
-            case ('str', 'string'):
+            case 'str' | 'string':
                 if isinstance(value, (string_types, bool, int, float, complex)):
                     value = to_text(value, errors='surrogate_or_strict')
                     if origin_ftype and origin_ftype == 'ini':
@@ -205,8 +205,12 @@ def resolve_path(path, basedir=None):
     return unfrackpath(path, follow=False, basedir=basedir)
 
 
-# FIXME: generic file type?
 def get_config_type(cfile):
+    """
+        Used to know if we need to unquote strings if config source was ini.
+        We cannot use generic file type as .cfg must count as ini.
+        Python files can also be config source, but never used for this case, as it only affects 'base'.
+    """
 
     ftype = None
     if cfile is not None:
@@ -228,8 +232,8 @@ def get_ini_config_value(p, entry):
     if p is not None:
         try:
             value = p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True)
-        except Exception:  # FIXME: actually report issues here
-            pass
+        except Exception:
+            raise AnsibleError(f"Unable to read {entry!r} from {p!r}")
     return value
 
 
