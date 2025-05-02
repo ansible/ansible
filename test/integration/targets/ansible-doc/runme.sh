@@ -281,3 +281,10 @@ test "$(ansible-doc -l -t module --playbook-dir ./ 2>&1 1>/dev/null |grep -c "no
 
 echo "testing without playbook dir, builtin should return"
 ansible-doc -t filter split -v 2>&1 |grep "${GREP_OPTS[@]}" -v histerical
+
+# Test --list_files succeeds
+for ptype in cache inventory lookup vars filter module role
+do
+    ansible-doc -t $ptype -F
+    ansible-doc -t $ptype -F -j
+done

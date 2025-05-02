@@ -1,0 +1,9 @@
+bugfixes:
+- >-
+  ``ansible-doc --list_files --json`` - fix JSON conversion error for bytes plugin paths.
+- >-
+  ``ansible-doc --list_files --type role`` - fix displaying the role name and path.
+minor_changes:
+- >-
+  ``ansible-doc --list_files --type role --json`` now displays the role name and path,
+  instead of the same data as ``ansible-doc --list --type role --json``.

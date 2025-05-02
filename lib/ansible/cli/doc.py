@@ -312,6 +312,21 @@ class RoleMixin(object):
 
         return (fqcn, doc)
 
+    @property
+    def _filtered_roles(self) -> set[tuple[str, str, str]]:
+        """
+        Retrieve all standalone and collection roles.
+        If a collection filter is specified, only roles in the collection will be returned.
+        """
+        roles_path = self._get_roles_path()
+        collection_filter = self._get_collection_filter()
+        if not collection_filter:
+            roles = self._find_all_normal_roles(roles_path)
+        else:
+            roles = set()
+        collroles = self._find_all_collection_roles(collection_filter=collection_filter)
+        return roles | collroles
+
     def _create_role_list(self, fail_on_errors=True):
         """Return a dict describing the listing of all roles with arg specs.
 
@@ -342,18 +357,8 @@ class RoleMixin(object):
                },
             }
         """
-        roles_path = self._get_roles_path()
-        collection_filter = self._get_collection_filter()
-        if not collection_filter:
-            roles = self._find_all_normal_roles(roles_path)
-        else:
-            roles = set()
-        collroles = self._find_all_collection_roles(collection_filter=collection_filter)
-
         result = {}
-
-        for role, collection, role_path in (roles | collroles):
-
+        for role, collection, role_path in self._filtered_roles:
             try:
                 meta = self._load_metadata(role, role_path, collection)
             except Exception as e:
@@ -371,6 +376,15 @@ class RoleMixin(object):
             fqcn, summary = self._build_summary(role, collection, meta, argspec)
             result[fqcn] = summary
 
+        return result
+
+    def _create_role_list_files(self) -> dict[str, str]:
+        """Create dict of role, path pairs for --list_files."""
+        result = {}
+        for role_name, role_collection, role_path, in self._filtered_roles:
+            if role_collection:
+                role_name = f"{role_collection}.{role_name}"
+            result[role_name] = role_path
         return result
 
     def _create_role_doc(self, role_names, entry_point=None, fail_on_errors=True):
@@ -800,7 +814,7 @@ class DocCLI(CLI, RoleMixin):
         if content == 'dir':
             results = self._get_plugin_list_descriptions(loader)
         elif content == 'files':
-            results = {k: self.plugins[k][0] for k in self.plugins.keys()}
+            results = {k: to_text(self.plugins[k][0], errors='surrogate_or_strict') for k in self.plugins.keys()}
         else:
             results = {k: {} for k in self.plugins.keys()}
             self.plugin_list = set()  # reset for next iteration
@@ -934,7 +948,10 @@ class DocCLI(CLI, RoleMixin):
             if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
             elif plugin_type == 'role':
-                docs = self._create_role_list(fail_on_errors=False)
+                if context.CLIARGS['list_files']:
+                    docs = self._create_role_list_files()
+                else:
+                    docs = self._create_role_list(fail_on_errors=False)
             else:
                 docs = self._list_plugins(plugin_type, content)
         else:
@@ -986,7 +1003,10 @@ class DocCLI(CLI, RoleMixin):
             elif plugin_type == 'role':
                 if context.CLIARGS['list_dir'] and docs:
                     self._display_available_roles(docs)
-                elif docs:
+                elif listing and docs:
+                    max_name = len(max(docs, key=len))
+                    text.extend([f"{name.ljust(max_name + 1)}{path}\n" for name, path in docs.items()])
+                else:
                     self._display_role_doc(docs)
 
             elif docs:
