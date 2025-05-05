@@ -68,7 +68,7 @@ def _get_config_label(plugin_type: str, plugin_name: str, config: str) -> str:
 
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 # TODO: deprecate 'origin' and 'origin_ftype' as this can now be done via DT
-def ensure_type(value: t.Any, value_type: str, origin:  str | None = None, origin_ftype: str | None = None) -> t.Any:
+def ensure_type(value: t.Any, value_type: str, origin: str | None = None, origin_ftype: str | None = None) -> t.Any:
     """ return a configuration variable with casting
     :arg value: The value to ensure correct typing of
     :kwarg value_type: The type of the value.  This can be any of the following strings:
