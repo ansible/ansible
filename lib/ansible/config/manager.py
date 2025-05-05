@@ -226,14 +226,24 @@ def get_config_type(cfile):
 
 
 # FIXME: can move to module_utils for use for ini plugins also?
-def get_ini_config_value(p, entry):
+def get_ini_config_value(p, entry, expected_type=None):
     """ returns the value of last ini entry found """
     value = None
+    s = entry.get('section', 'defaults')
+    k = entry.get('key', '')
     if p is not None:
         try:
-            value = p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True)
-        except Exception:  # FIXME: actually report issues here
-            pass
+            match expected_type:
+                case 'bool' | 'boolean':
+                    value = p.getboolean(s, k)
+                case 'int' | 'integer':
+                    value = p.getint(s, k)
+                case 'float':
+                    value = p.getfloat(s, k)
+                case _:
+                    value = p.get(s, k, raw=True)
+        except (configparser.NoOptionError, configparser.NoSectionError) as e:
+            pass  # section or key dont exist, we can ignore
     return value
 
 
@@ -613,7 +623,7 @@ class ConfigManager(object):
                         for entry in defs[config][ftype]:
                             # load from config
                             if ftype == 'ini':
-                                temp_value = get_ini_config_value(self._parsers[cfile], entry)
+                                temp_value = get_ini_config_value(self._parsers[cfile], entry, defs[config].get('type'))
                             elif ftype == 'yaml':
                                 raise AnsibleError('YAML configuration type has not been implemented yet')
                             else:
