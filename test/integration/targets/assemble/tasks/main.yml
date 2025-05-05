@@ -65,8 +65,6 @@
     path: "{{remote_tmp_dir}}/assembled1"
   register: check_it2
 
-- debug: var=check_it2
-
 - name: it should exsit now
   assert:
     that:
