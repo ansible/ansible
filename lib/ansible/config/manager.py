@@ -242,8 +242,13 @@ def get_ini_config_value(p, entry, expected_type=None):
                     value = p.getfloat(s, k)
                 case _:
                     value = p.get(s, k, raw=True)
+        except ValueError as e:
+            try:  # incorrect or unmatched type, try to load raw
+                value = p.get(s, k, raw=True)
+            except Exception as e:
+                pass  # no luck, give up, some other source might work
         except (configparser.NoOptionError, configparser.NoSectionError) as e:
-            pass  # section or key dont exist, we can ignore
+            pass  # section or key dont exist, not required, we can ignore
     return value
 
 
