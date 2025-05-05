@@ -229,12 +229,10 @@ def get_config_type(cfile):
 def get_ini_config_value(p, entry):
     """ returns the value of last ini entry found """
     if p is not None:
-        s = entry.get('section', 'defaults')
-        k = entry.get('key', '')
         try:
-            return p.get(s, k, raw=True, fallback=None)
+            return p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True, fallback=None)
         except (configparser.NoOptionError, configparser.NoSectionError):
-            pass  # section or key dont exist, not required, we can ignore
+            return None  # section or key dont exist, not required, we can ignore
 
 
 def find_ini_config_file(warnings=None):
