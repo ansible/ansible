@@ -232,8 +232,8 @@ def get_ini_config_value(p, entry):
     if p is not None:
         try:
             value = p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True)
-        except Exception:
-            raise AnsibleError(f"Unable to read {entry!r} from {p!r}")
+        except Exception:  # FIXME: actually report issues here
+            pass
     return value
 
 
