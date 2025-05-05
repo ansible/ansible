@@ -212,6 +212,7 @@ def main():
             decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     changed = False
