@@ -226,30 +226,15 @@ def get_config_type(cfile):
 
 
 # FIXME: can move to module_utils for use for ini plugins also?
-def get_ini_config_value(p, entry, expected_type=None):
+def get_ini_config_value(p, entry):
     """ returns the value of last ini entry found """
-    value = None
-    s = entry.get('section', 'defaults')
-    k = entry.get('key', '')
     if p is not None:
+        s = entry.get('section', 'defaults')
+        k = entry.get('key', '')
         try:
-            match expected_type:
-                case 'bool' | 'boolean':
-                    value = p.getboolean(s, k)
-                case 'int' | 'integer':
-                    value = p.getint(s, k)
-                case 'float':
-                    value = p.getfloat(s, k)
-                case _:
-                    value = p.get(s, k, raw=True)
-        except ValueError as e:
-            try:  # incorrect or unmatched type, try to load raw
-                value = p.get(s, k, raw=True)
-            except Exception as e:
-                pass  # no luck, give up, some other source might work
-        except (configparser.NoOptionError, configparser.NoSectionError) as e:
+            return p.get(s, k, raw=True, fallback=None)
+        except (configparser.NoOptionError, configparser.NoSectionError):
             pass  # section or key dont exist, not required, we can ignore
-    return value
 
 
 def find_ini_config_file(warnings=None):
@@ -628,7 +613,7 @@ class ConfigManager(object):
                         for entry in defs[config][ftype]:
                             # load from config
                             if ftype == 'ini':
-                                temp_value = get_ini_config_value(self._parsers[cfile], entry, defs[config].get('type'))
+                                temp_value = get_ini_config_value(self._parsers[cfile], entry)
                             elif ftype == 'yaml':
                                 raise AnsibleError('YAML configuration type has not been implemented yet')
                             else:
