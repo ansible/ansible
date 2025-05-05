@@ -20,21 +20,21 @@
 
     - name: get the latest stable redis server release
       get_url:
-        url: http://download.redis.io/redis-stable.tar.gz
+        url: https://download.redis.io/releases/redis-7.4.3.tar.gz
         dest: ./
 
     - name: unzip download
       unarchive:
-        src: redis-stable.tar.gz
+        src: redis-7.4.3.tar.gz
         dest: ./
 
     - command: "{{ make }}"
       args:
-        chdir: redis-stable
+        chdir: redis-7.4.3
 
     - name: copy the executable into the path
       copy:
-        src: "redis-stable/src/{{ item }}"
+        src: "redis-7.4.3/src/{{ item }}"
         dest: /usr/local/bin/
         mode: 755
       become: yes
