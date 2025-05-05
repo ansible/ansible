@@ -42,7 +42,6 @@ def _ansiballz_main(
     module_fqn: str,
     params: str,
     profile: str,
-    plugin_info_dict: dict[str, object],
     date_time: datetime.datetime,
     coverage_config: str | None,
     coverage_output: str | None,
@@ -142,7 +141,6 @@ def _ansiballz_main(
         run_module(
             json_params=json_params,
             profile=profile,
-            plugin_info_dict=plugin_info_dict,
             module_fqn=module_fqn,
             modlib_path=modlib_path,
             coverage_config=coverage_config,
@@ -230,13 +228,12 @@ def _ansiballz_main(
             run_module(
                 json_params=json_params,
                 profile=profile,
-                plugin_info_dict=plugin_info_dict,
                 module_fqn=module_fqn,
                 modlib_path=modlib_path,
             )
 
         else:
-            print('WARNING: Unknown debug command.  Doing nothing.')
+            print(f'FATAL: Unknown debug command {command!r}.  Doing nothing.')
 
     #
     # See comments in the debug() method for information on debugging

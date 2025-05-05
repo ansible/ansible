@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import typing as t
+
 import pytest
 
 from ansible.module_utils._internal import _traceback
@@ -18,7 +20,7 @@ pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
 def test_dedupe_with_traceback(module_env_mocker: ModuleEnvMocker) -> None:
     module_env_mocker.set_traceback_config([_traceback.TracebackEvent.DEPRECATED])
-    deprecate_args = dict(msg="same", version="1.2.3", collection_name="blar.blar")
+    deprecate_args: dict[str, t.Any] = dict(msg="same", version="1.2.3", collection_name="blar.blar")
 
     # DeprecationMessageDetail dataclass object hash is the dedupe key; presence of differing tracebacks or SourceContexts affects de-dupe
 

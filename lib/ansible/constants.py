@@ -10,9 +10,7 @@ from string import ascii_letters, digits
 
 from ansible.config.manager import ConfigManager
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
-from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
 # initialize config manager/config data to read/store global settings
@@ -20,66 +18,9 @@ from ansible.utils.fqcn import add_internal_fqcns
 config = ConfigManager()
 
 
-def _warning(msg):
-    """ display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write """
-    try:
-        from ansible.utils.display import Display
-        Display().warning(msg)
-    except Exception:
-        import sys
-        sys.stderr.write(' [WARNING] %s\n' % (msg))
-
-
-def _deprecated(msg, version):
-    """ display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write """
-    try:
-        from ansible.utils.display import Display
-        Display().deprecated(msg, version=version)
-    except Exception:
-        import sys
-        sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
-
-
-def handle_config_noise(display=None):
-
-    if display is not None:
-        w = display.warning
-        d = display.deprecated
-    else:
-        w = _warning
-        d = _deprecated
-
-    while config.WARNINGS:
-        warn = config.WARNINGS.pop()
-        w(warn)
-
-    while config.DEPRECATED:
-        # tuple with name and options
-        dep = config.DEPRECATED.pop(0)
-        msg = config.get_deprecated_msg_from_config(dep[1])
-        # use tabs only for ansible-doc?
-        msg = msg.replace("\t", "")
-        d(f"{dep[0]} option. {msg}", version=dep[1]['version'])
-
-
 def set_constant(name, value, export=vars()):
     """ sets constants and returns resolved options dict """
     export[name] = value
-
-
-class _DeprecatedSequenceConstant(Sequence):
-    def __init__(self, value, msg, version):
-        self._value = value
-        self._msg = msg
-        self._version = version
-
-    def __len__(self):
-        _deprecated(self._msg, self._version)
-        return len(self._value)
-
-    def __getitem__(self, y):
-        _deprecated(self._msg, self._version)
-        return self._value[y]
 
 
 # CONSTANTS ### yes, actual ones
@@ -245,6 +186,3 @@ MAGIC_VARIABLE_MAPPING = dict(
 # POPULATE SETTINGS FROM CONFIG ###
 for setting in config.get_configuration_definitions():
     set_constant(setting, config.get_config_value(setting, variables=vars()))
-
-# emit any warnings or deprecations
-handle_config_noise()

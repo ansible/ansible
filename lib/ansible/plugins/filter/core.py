@@ -115,7 +115,10 @@ def to_bool(value: object) -> bool:
     result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
 
     # NB: update the doc string to reflect reality once this fallback is removed
-    display.deprecated(f'The `bool` filter coerced invalid value {value!r} ({native_type_name(value)}) to {result!r}.', version='2.23')
+    display.deprecated(
+        msg=f'The `bool` filter coerced invalid value {value!r} ({native_type_name(value)}) to {result!r}.',
+        version='2.23',
+    )
 
     return result
 

@@ -3,14 +3,12 @@
 
 from __future__ import annotations
 
-import dataclasses
 import os
 import pathlib
 import subprocess
 import sys
 import typing as t
 
-from ansible.module_utils._internal import _plugin_exec_context
 from ansible.module_utils.common.text.converters import to_bytes
 
 _ANSIBLE_PARENT_PATH = pathlib.Path(__file__).parents[3]
@@ -99,7 +97,6 @@ if __name__ == '__main__':
 
     json_params = {json_params!r}
     profile = {profile!r}
-    plugin_info_dict = {plugin_info_dict!r}
     module_fqn = {module_fqn!r}
     modlib_path = {modlib_path!r}
 
@@ -110,19 +107,15 @@ if __name__ == '__main__':
     _ansiballz.run_module(
         json_params=json_params,
         profile=profile,
-        plugin_info_dict=plugin_info_dict,
         module_fqn=module_fqn,
         modlib_path=modlib_path,
         init_globals=dict(_respawned=True),
     )
 """
 
-    plugin_info = _plugin_exec_context.PluginExecContext.get_current_plugin_info()
-
     respawn_code = respawn_code_template.format(
         json_params=basic._ANSIBLE_ARGS,
         profile=basic._ANSIBLE_PROFILE,
-        plugin_info_dict=dataclasses.asdict(plugin_info),
         module_fqn=module_fqn,
         modlib_path=modlib_path,
     )

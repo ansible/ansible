@@ -201,9 +201,9 @@ class CollectionSignatureError(Exception):
 
 # FUTURE: expose actual verify result details for a collection on this object, maybe reimplement as dataclass on py3.8+
 class CollectionVerifyResult:
-    def __init__(self, collection_name):  # type: (str) -> None
-        self.collection_name = collection_name  # type: str
-        self.success = True  # type: bool
+    def __init__(self, collection_name: str) -> None:
+        self.collection_name = collection_name
+        self.success = True
 
 
 def verify_local_collection(local_collection, remote_collection, artifacts_manager):

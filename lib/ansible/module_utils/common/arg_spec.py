@@ -22,6 +22,7 @@ from ansible.module_utils.common.parameters import (
 
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.warnings import deprecate, warn
+from ansible.module_utils.common import messages as _messages
 
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
@@ -300,9 +301,13 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
         for d in result._deprecations:
-            deprecate(d['msg'],
-                      version=d.get('version'), date=d.get('date'),
-                      collection_name=d.get('collection_name'))
+            # DTFIX-FUTURE: pass an actual deprecator instead of one derived from collection_name
+            deprecate(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+                msg=d['msg'],
+                version=d.get('version'),
+                date=d.get('date'),
+                deprecator=_messages.PluginInfo._from_collection_name(d.get('collection_name')),
+            )
 
         for w in result._warnings:
             warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))

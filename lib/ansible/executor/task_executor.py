@@ -22,8 +22,7 @@ from ansible.errors import (
 )
 from ansible.executor.task_result import _RawTaskResult
 from ansible._internal._datatag import _utils
-from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
-from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary
+from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary, PluginInfo
 from ansible.module_utils.datatag import native_type_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -640,8 +639,8 @@ class TaskExecutor:
                 if self._task.timeout:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
-                with PluginExecContext(self._handler):
-                    result = self._handler.run(task_vars=vars_copy)
+
+                result = self._handler.run(task_vars=vars_copy)
 
             # DTFIX-RELEASE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
             except (AnsibleActionFail, AnsibleActionSkip) as e:
@@ -844,13 +843,12 @@ class TaskExecutor:
                     if not isinstance(deprecation, DeprecationSummary):
                         # translate non-DeprecationMessageDetail message dicts
                         try:
-                            if deprecation.pop('collection_name', ...) is not ...:
+                            if (collection_name := deprecation.pop('collection_name', ...)) is not ...:
                                 # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
+                                # CAUTION: This deprecation cannot be enabled until the replacement (deprecator) has been documented, and the schema finalized.
                                 # self.deprecated('The `collection_name` key in the `deprecations` dictionary is deprecated.', version='2.27')
-                                pass
+                                deprecation.update(deprecator=PluginInfo._from_collection_name(collection_name))
 
-                            # DTFIX-RELEASE: when plugin isn't set, do it at the boundary where we receive the module/action results
-                            #                that may even allow us to never set it in modules/actions directly and to populate it at the boundary
                             deprecation = DeprecationSummary(
                                 details=(
                                     Detail(msg=deprecation.pop('msg')),

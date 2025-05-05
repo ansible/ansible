@@ -45,6 +45,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         # Initialize and validate options
         self._read_config_data(path)
 
+        self.load_cache_plugin()
+
         # Exercise cache
         cache_key = self.get_cache_key(path)
         attempt_to_read_cache = self.get_option('cache') and cache

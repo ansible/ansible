@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import atexit
-import dataclasses
 import importlib.util
 import json
 import os
@@ -15,17 +14,14 @@ import sys
 import typing as t
 
 from . import _errors
-from ._plugin_exec_context import PluginExecContext, HasPluginInfo
 from .. import basic
 from ..common.json import get_module_encoder, Direction
-from ..common.messages import PluginInfo
 
 
 def run_module(
     *,
     json_params: bytes,
     profile: str,
-    plugin_info_dict: dict[str, object],
     module_fqn: str,
     modlib_path: str,
     init_globals: dict[str, t.Any] | None = None,
@@ -38,7 +34,6 @@ def run_module(
         _run_module(
             json_params=json_params,
             profile=profile,
-            plugin_info_dict=plugin_info_dict,
             module_fqn=module_fqn,
             modlib_path=modlib_path,
             init_globals=init_globals,
@@ -80,7 +75,6 @@ def _run_module(
     *,
     json_params: bytes,
     profile: str,
-    plugin_info_dict: dict[str, object],
     module_fqn: str,
     modlib_path: str,
     init_globals: dict[str, t.Any] | None = None,
@@ -92,12 +86,11 @@ def _run_module(
     init_globals = init_globals or {}
     init_globals.update(_module_fqn=module_fqn, _modlib_path=modlib_path)
 
-    with PluginExecContext(_ModulePluginWrapper(PluginInfo._from_dict(plugin_info_dict))):
-        # Run the module. By importing it as '__main__', it executes as a script.
-        runpy.run_module(mod_name=module_fqn, init_globals=init_globals, run_name='__main__', alter_sys=True)
+    # Run the module. By importing it as '__main__', it executes as a script.
+    runpy.run_module(mod_name=module_fqn, init_globals=init_globals, run_name='__main__', alter_sys=True)
 
-        # An Ansible module must print its own results and exit. If execution reaches this point, that did not happen.
-        raise RuntimeError('New-style module did not handle its own exit.')
+    # An Ansible module must print its own results and exit. If execution reaches this point, that did not happen.
+    raise RuntimeError('New-style module did not handle its own exit.')
 
 
 def _handle_exception(exception: BaseException, profile: str) -> t.NoReturn:
@@ -112,22 +105,3 @@ def _handle_exception(exception: BaseException, profile: str) -> t.NoReturn:
     print(json.dumps(result, cls=encoder))  # pylint: disable=ansible-bad-function
 
     sys.exit(1)  # pylint: disable=ansible-bad-function
-
-
-@dataclasses.dataclass(frozen=True)
-class _ModulePluginWrapper(HasPluginInfo):
-    """Modules aren't plugin instances; this adapter implements the `HasPluginInfo` protocol to allow `PluginExecContext` infra to work with modules."""
-
-    plugin: PluginInfo
-
-    @property
-    def _load_name(self) -> str:
-        return self.plugin.requested_name
-
-    @property
-    def ansible_name(self) -> str:
-        return self.plugin.resolved_name
-
-    @property
-    def plugin_type(self) -> str:
-        return self.plugin.type

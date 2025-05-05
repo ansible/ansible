@@ -10,7 +10,6 @@ import os
 import signal
 import sys
 
-
 # We overload the ``ansible`` adhoc command to provide the functionality for
 # ``SSH_ASKPASS``. This code is here, and not in ``adhoc.py`` to bypass
 # unnecessary code. The program provided to ``SSH_ASKPASS`` can only be invoked
@@ -106,6 +105,7 @@ except Exception as ex:
 
 
 from ansible import context
+from ansible.utils import display as _display
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import string_types
@@ -122,6 +122,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.path import unfrackpath
 from ansible.vars.manager import VariableManager
+from ansible.module_utils._internal import _deprecator
 
 try:
     import argcomplete
@@ -257,7 +258,7 @@ class CLI(ABC):
         else:
             display.v(u"No config file found; using defaults")
 
-        C.handle_config_noise(display)
+        _display._report_config_warnings(_deprecator.ANSIBLE_CORE_DEPRECATOR)
 
     @staticmethod
     def split_vault_id(vault_id):

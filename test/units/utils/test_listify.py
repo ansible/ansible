@@ -22,4 +22,7 @@ def test_listify_lookup_plugin_terms(test_input: t.Any, expected: t.Any, mocker:
 
     assert listify_lookup_plugin_terms(test_input) == expected
 
-    deprecated.assert_called_once_with(msg='"listify_lookup_plugin_terms" is obsolete and in most cases unnecessary', version='2.23')
+    deprecated.assert_called_once_with(
+        msg='"listify_lookup_plugin_terms" is obsolete and in most cases unnecessary',
+        version='2.23',
+    )

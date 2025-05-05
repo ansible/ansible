@@ -18,6 +18,9 @@ from ..module_utils.datatag import native_type_name
 from ansible._internal._datatag import _tags
 from .._internal._errors import _utils
 
+if t.TYPE_CHECKING:
+    from ansible.plugins import loader as _t_loader
+
 
 class ExitCode(enum.IntEnum):
     SUCCESS = 0  # used by TQM, must be bit-flag safe
@@ -374,8 +377,9 @@ class _AnsibleActionDone(AnsibleAction):
 class AnsiblePluginError(AnsibleError):
     """Base class for Ansible plugin-related errors that do not need AnsibleError contextual data."""
 
-    def __init__(self, message=None, plugin_load_context=None):
-        super(AnsiblePluginError, self).__init__(message)
+    def __init__(self, message: str | None = None, plugin_load_context: _t_loader.PluginLoadContext | None = None, help_text: str | None = None) -> None:
+        super(AnsiblePluginError, self).__init__(message, help_text=help_text)
+
         self.plugin_load_context = plugin_load_context
 
 

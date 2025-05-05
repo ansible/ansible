@@ -12,7 +12,6 @@ from ansible.utils.display import Display
 from ._access import NotifiableAccessContextBase
 from ._utils import TemplateContext
 
-
 display = Display()
 
 
@@ -57,10 +56,10 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
             display._deprecated_with_plugin_info(
                 msg=msg,
                 help_text=item.deprecated.help_text,
-                version=item.deprecated.removal_version,
-                date=item.deprecated.removal_date,
+                version=item.deprecated.version,
+                date=item.deprecated.date,
                 obj=item.template,
-                plugin=item.deprecated.plugin,
+                deprecator=item.deprecated.deprecator,
             )
 
         return result
