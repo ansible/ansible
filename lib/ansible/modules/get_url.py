@@ -87,7 +87,7 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum|url>, for example C(checksum="sha256:D98291AC[...]B6DC7B97",
+        Format: <algorithm>:<checksum|url>, for example C(checksum="sha256:D98291AC[...]B6DC7B97"),
         C(checksum="sha256:http://example.com/path/sha256sum.txt").'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
