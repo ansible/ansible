@@ -4,6 +4,41 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0b3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2025-05-06
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-config will now show internal, but not test configuration entries. This allows for debugging but still denoting the configurations as internal use only (_ prefix).
+- ansible-test - Improved ``pylint`` checks for Ansible-specific deprecation functions.
+- ansible-test - Use the ``-t`` option to set the stop timeout when stopping a container. This avoids use of the ``--time`` option which was deprecated in Docker v28.0.
+- collection metadata - The collection loader now parses scalar values from ``meta/runtime.yml`` as strings. This avoids issues caused by unquoted values such as versions or dates being parsed as types other than strings.
+- deprecation warnings - Deprecation warning APIs automatically capture the identity of the deprecating plugin. The ``collection_name`` argument is only required to correctly attribute deprecations that occur in module_utils or other non-plugin code.
+- deprecation warnings - Improved deprecation messages to more clearly indicate the affected content, including plugin name when available.
+- deprecations - Collection name strings not of the form ``ns.coll`` passed to deprecation API functions will result in an error.
+- deprecations - Removed support for specifying deprecation dates as a ``datetime.date``, which was included in an earlier 2.19 pre-release.
+- deprecations - Some argument names to ``deprecate_value`` for consistency with existing APIs. An earlier 2.19 pre-release included a ``removal_`` prefix on the ``date`` and ``version`` arguments.
+- modules - The ``AnsibleModule.deprecate`` function no longer sends deprecation messages to the target host's logging system.
+
+Deprecated Features
+-------------------
+
+- Passing a ``warnings` or ``deprecations`` key to ``exit_json`` or ``fail_json`` is deprecated. Use ``AnsibleModule.warn`` or ``AnsibleModule.deprecate`` instead.
+- plugins - Accessing plugins with ``_``-prefixed filenames without the ``_`` prefix is deprecated.
+
+Bugfixes
+--------
+
+- Ansible will now ensure predictable permissions on remote artifacts, until now it only ensured executable and relied on system masks for the rest.
+- dnf5 - avoid generating excessive transaction entries in the dnf5 history (https://github.com/ansible/ansible/issues/85046)
+
 v2.19.0b2
 =========
 
@@ -96,7 +131,6 @@ Minor Changes
 - cron - Provide additional error information while writing cron file (https://github.com/ansible/ansible/issues/83223).
 - csvfile - let the config system do the typecasting (https://github.com/ansible/ansible/pull/82263).
 - display - Deduplication of warning and error messages considers the full content of the message (including source and traceback contexts, if enabled). This may result in fewer messages being omitted.
-- display - The ``collection_name`` arg to ``Display.deprecated`` no longer has any effect. Information about the calling plugin is automatically captured by the display infrastructure, included in the displayed messages, and made available to callbacks.
 - distribution - Added openSUSE MicroOS to Suse OS family (#84685).
 - dnf5, apt - add ``auto_install_module_deps`` option (https://github.com/ansible/ansible/issues/84206)
 - docs - add collection name in message from which the module is being deprecated (https://github.com/ansible/ansible/issues/84116).
@@ -116,7 +150,6 @@ Minor Changes
 - module_utils - Add ``NoReturn`` type annotations to functions which never return.
 - modules - PowerShell modules can now receive ``datetime.date``, ``datetime.time`` and ``datetime.datetime`` values as ISO 8601 strings.
 - modules - PowerShell modules can now receive strings sourced from inline vault-encrypted strings.
-- modules - The ``collection_name`` arg to Python module-side ``deprecate`` methods no longer has any effect. Information about the calling module is automatically captured by the warning infrastructure and included in the module result.
 - modules - Unhandled exceptions during Python module execution are now returned as structured data from the target. This allows the new traceback handling to be applied to exceptions raised on targets.
 - pipelining logic has mostly moved to connection plugins so they can decide/override settings.
 - plugin error handling - When raising exceptions in an exception handler, be sure to use ``raise ... from`` as appropriate. This supersedes the use of the ``AnsibleError`` arg ``orig_exc`` to represent the cause. Specifying ``orig_exc`` as the cause is still permitted. Failure to use ``raise ... from`` when ``orig_exc`` is set will result in a warning. Additionally, if the two cause exceptions do not match, a warning will be issued.
