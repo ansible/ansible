@@ -20,6 +20,7 @@ from ansible.release import __version__
 fuzzy_match_basenames: set[str] = {'COPYING'}
 """Account for PEP639 differences in the placement of some files."""
 
+
 def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
     """Return a list of files which should be present in the sdist."""
     ignore_patterns = (
