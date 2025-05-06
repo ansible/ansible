@@ -566,7 +566,12 @@ class TemplateEngine:
         )
 
         if _TemplateConfig.allow_broken_conditionals:
-            _display.deprecated(msg=msg, obj=conditional, help_text=self._BROKEN_CONDITIONAL_ALLOWED_FRAGMENT, version='2.23')
+            _display.deprecated(
+                msg=msg,
+                obj=conditional,
+                help_text=self._BROKEN_CONDITIONAL_ALLOWED_FRAGMENT,
+                version='2.23',
+            )
 
             return bool_result
 

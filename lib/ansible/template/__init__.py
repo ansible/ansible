@@ -388,7 +388,7 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
         value=ansible_managed,
         msg="The `ansible_managed` variable is deprecated.",
         help_text="Define and use a custom variable instead.",
-        removal_version='2.23',
+        version='2.23',
     )
 
     temp_vars = dict(

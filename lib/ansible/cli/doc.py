@@ -1335,7 +1335,6 @@ class DocCLI(CLI, RoleMixin):
                     'This was unintentionally allowed when plugin attributes were added, '
                     'but the feature does not map well to role argument specs.',
                     version='2.20',
-                    collection_name='ansible.builtin',
                 )
                 text.append("")
                 text.append(_format("ATTRIBUTES:", 'bold'))

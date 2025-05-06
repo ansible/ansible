@@ -230,8 +230,8 @@ class LookupModule(LookupBase):
             display.vvvv("url lookup connecting to %s" % term)
             if self.get_option('follow_redirects') in ('yes', 'no'):
                 display.deprecated(
-                    "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
-                    version='2.22'
+                    msg="Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+                    version='2.22',
                 )
             try:
                 response = open_url(

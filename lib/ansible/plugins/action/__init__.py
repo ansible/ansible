@@ -318,13 +318,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         final_environment: dict[str, t.Any] = {}
         self._compute_environment_string(final_environment)
 
-        # `modify_module` adapts PluginInfo to allow target-side use of `PluginExecContext` since modules aren't plugins
-        plugin = PluginInfo(
-            requested_name=module_name,
-            resolved_name=result.resolved_fqcn,
-            type='module',
-        )
-
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for _dummy in (1, 2):
             try:
@@ -338,7 +331,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     async_timeout=self._task.async_val,
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
-                    plugin=plugin,
                     become_plugin=self._connection.become,
                 )
 

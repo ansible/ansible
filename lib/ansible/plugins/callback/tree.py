@@ -34,6 +34,7 @@ from ansible.executor.task_result import CallbackTaskResult
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
+from ansible.module_utils._internal import _deprecator
 
 
 class CallbackModule(CallbackBase):
@@ -48,7 +49,12 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._display.deprecated('The tree callback plugin is deprecated.', version='2.23')
+
+        self._display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+            msg='The tree callback plugin is deprecated.',
+            version='2.23',
+            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
+        )
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ override to set self.tree """

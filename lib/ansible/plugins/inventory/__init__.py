@@ -28,7 +28,7 @@ from collections.abc import Mapping
 from ansible import template as _template
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleValueOmittedError
 from ansible.inventory.group import to_safe_group_name as original_safe
-from ansible.module_utils._internal import _plugin_exec_context
+from ansible.module_utils._internal import _plugin_info
 from ansible.parsing.utils.addresses import parse_address
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins import AnsiblePlugin, _ConfigurablePlugin
@@ -314,7 +314,7 @@ class BaseFileInventoryPlugin(_BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
-class Cacheable(_plugin_exec_context.HasPluginInfo, _ConfigurablePlugin):
+class Cacheable(_plugin_info.HasPluginInfo, _ConfigurablePlugin):
     """Mixin for inventory plugins which support caching."""
 
     _cache: CachePluginAdjudicator

@@ -47,10 +47,6 @@ minor_changes:
   - to_json / to_nice_json filters - The filters accept a ``profile`` argument, which defaults to ``tagless``.
   - undef jinja function - The ``undef`` jinja function now raises an error if a non-string hint is given.
     Attempting to use an undefined hint also results in an error, ensuring incorrect use of the function can be distinguished from the function's normal behavior.
-  - display - The ``collection_name`` arg to ``Display.deprecated`` no longer has any effect.
-    Information about the calling plugin is automatically captured by the display infrastructure, included in the displayed messages, and made available to callbacks.
-  - modules - The ``collection_name`` arg to Python module-side ``deprecate`` methods no longer has any effect.
-    Information about the calling module is automatically captured by the warning infrastructure and included in the module result.
 
 breaking_changes:
   - loops - Omit placeholders no longer leak between loop item templating and task templating.
