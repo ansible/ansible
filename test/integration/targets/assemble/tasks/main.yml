@@ -44,7 +44,7 @@
     path: "{{remote_tmp_dir}}/assembled1"
   register: check_it
 
-- name: it should not exsit, yet
+- name: it should not exist, yet
   assert:
     that:
       - not check_it.stat.exists
@@ -65,7 +65,7 @@
     path: "{{remote_tmp_dir}}/assembled1"
   register: check_it2
 
-- name: it should exsit now
+- name: it should exist now
   assert:
     that:
       - check_it2.stat.exists
