@@ -1,11 +1,11 @@
 """Public API for data tagging."""
 from __future__ import annotations as _annotations
 
-import datetime as _datetime
 import typing as _t
 
-from ._internal import _plugin_exec_context, _datatag
+from ._internal import _datatag, _deprecator
 from ._internal._datatag import _tags
+from .common import messages as _messages
 
 _T = _t.TypeVar('_T')
 
@@ -14,28 +14,28 @@ def deprecate_value(
     value: _T,
     msg: str,
     *,
+    version: str | None = None,
+    date: str | None = None,
+    collection_name: str | None = None,
+    deprecator: _messages.PluginInfo | None = None,
     help_text: str | None = None,
-    removal_date: str | _datetime.date | None = None,
-    removal_version: str | None = None,
 ) -> _T:
     """
     Return `value` tagged with the given deprecation details.
     The types `None` and `bool` cannot be deprecated and are returned unmodified.
     Raises a `TypeError` if `value` is not a supported type.
-    If `removal_date` is a string, it must be in the form `YYYY-MM-DD`.
-    This function is only supported in contexts where an Ansible plugin/module is executing.
+    Most callers do not need to provide `collection_name` or `deprecator` -- but provide only one if needed.
+    Specify `version` or `date`, but not both.
+    If `date` is provided, it should be in the form `YYYY-MM-DD`.
     """
-    if isinstance(removal_date, str):
-        # The `fromisoformat` method accepts other ISO 8601 formats than `YYYY-MM-DD` starting with Python 3.11.
-        # That should be considered undocumented behavior of `deprecate_value` rather than an intentional feature.
-        removal_date = _datetime.date.fromisoformat(removal_date)
+    _skip_stackwalk = True
 
     deprecated = _tags.Deprecated(
         msg=msg,
         help_text=help_text,
-        removal_date=removal_date,
-        removal_version=removal_version,
-        plugin=_plugin_exec_context.PluginExecContext.get_current_plugin_info(),
+        date=date,
+        version=version,
+        deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
     )
 
     return deprecated.tag(value)

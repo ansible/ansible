@@ -4,14 +4,11 @@
 
 from __future__ import annotations as _annotations
 
-import datetime as _datetime
 import typing as _t
 
-from ansible.module_utils._internal import _traceback, _plugin_exec_context
+from ansible.module_utils._internal import _traceback, _deprecator
 from ansible.module_utils.common import messages as _messages
 from ansible.module_utils import _internal
-
-_UNSET = _t.cast(_t.Any, object())
 
 
 def warn(warning: str) -> None:
@@ -28,22 +25,23 @@ def warn(warning: str) -> None:
 def deprecate(
     msg: str,
     version: str | None = None,
-    date: str | _datetime.date | None = None,
-    collection_name: str | None = _UNSET,
+    date: str | None = None,
+    collection_name: str | None = None,
     *,
+    deprecator: _messages.PluginInfo | None = None,
     help_text: str | None = None,
     obj: object | None = None,
 ) -> None:
     """
-    Record a deprecation warning to be returned with the module result.
+    Record a deprecation warning.
     The `obj` argument is only useful in a controller context; it is ignored for target-side callers.
+    Most callers do not need to provide `collection_name` or `deprecator` -- but provide only one if needed.
+    Specify `version` or `date`, but not both.
+    If `date` is a string, it must be in the form `YYYY-MM-DD`.
     """
-    if isinstance(date, _datetime.date):
-        date = str(date)
+    _skip_stackwalk = True
 
-    # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
-    # if collection_name is not _UNSET:
-    #     deprecate('The `collection_name` argument to `deprecate` is deprecated.', version='2.27')
+    deprecator = _deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name)
 
     if _internal.is_controller:
         _display = _internal.import_controller_module('ansible.utils.display').Display()
@@ -53,6 +51,8 @@ def deprecate(
             date=date,
             help_text=help_text,
             obj=obj,
+            # skip passing collection_name; get_best_deprecator already accounted for it when present
+            deprecator=deprecator,
         )
 
         return
@@ -64,7 +64,7 @@ def deprecate(
         formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED),
         version=version,
         date=date,
-        plugin=_plugin_exec_context.PluginExecContext.get_current_plugin_info(),
+        deprecator=deprecator,
     )] = None
 
 

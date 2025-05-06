@@ -28,10 +28,8 @@ class ActionModule(ActionBase):
 
             # TODO: remove in favor of controller side argspec detecting valid arguments
             # network facts modules must support gather_subset
-            try:
-                name = self._connection.ansible_name.removeprefix('ansible.netcommon.')
-            except AttributeError:
-                name = self._connection._load_name.split('.')[-1]
+            name = self._connection.ansible_name.removeprefix('ansible.netcommon.')
+
             if name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
                 if subset not in ('all', ['all'], None):

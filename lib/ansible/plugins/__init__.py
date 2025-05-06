@@ -20,24 +20,26 @@
 from __future__ import annotations
 
 import abc
+import functools
 import types
 import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
+from ansible.utils import display as _display
 
-from ansible.module_utils._internal import _plugin_exec_context
+from ansible.module_utils._internal import _plugin_info
 
 display = Display()
 
 if t.TYPE_CHECKING:
-    from .loader import PluginPathContext
+    from . import loader as _t_loader
 
 # Global so that all instances of a PluginLoader will share the caches
 MODULE_CACHE = {}  # type: dict[str, dict[str, types.ModuleType]]
-PATH_CACHE = {}  # type: dict[str, list[PluginPathContext] | None]
-PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]]]
+PATH_CACHE = {}  # type: dict[str, list[_t_loader.PluginPathContext] | None]
+PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, _t_loader.PluginPathContext]]]
 
 
 def get_plugin_class(obj):
@@ -50,10 +52,10 @@ def get_plugin_class(obj):
 class _ConfigurablePlugin(t.Protocol):
     """Protocol to provide type-safe access to config for plugin-related mixins."""
 
-    def get_option(self, option: str, hostvars: dict[str, object] | None = None) -> object: ...
+    def get_option(self, option: str, hostvars: dict[str, object] | None = None) -> t.Any: ...
 
 
-class _AnsiblePluginInfoMixin(_plugin_exec_context.HasPluginInfo):
+class _AnsiblePluginInfoMixin(_plugin_info.HasPluginInfo):
     """Mixin to provide type annotations and default values for existing PluginLoader-set load-time attrs."""
     _original_path: str | None = None
     _load_name: str | None = None
@@ -102,6 +104,14 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
             raise KeyError(str(e))
         return option_value, origin
 
+    @functools.cached_property
+    def __plugin_info(self):
+        """
+        Internal cached property to retrieve `PluginInfo` for this plugin instance.
+        Only for use by the `AnsiblePlugin` base class.
+        """
+        return _plugin_info.get_plugin_info(self)
+
     def get_option(self, option, hostvars=None):
 
         if option not in self._options:
@@ -117,7 +127,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
 
     def set_option(self, option, value):
         self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
-        C.handle_config_noise(display)
+        _display._report_config_warnings(self.__plugin_info)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """
@@ -134,7 +144,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         if self.allow_extras and var_options and '_extras' in var_options:
             # these are largely unvalidated passthroughs, either plugin or underlying API will validate
             self._options['_extras'] = var_options['_extras']
-        C.handle_config_noise(display)
+        _display._report_config_warnings(self.__plugin_info)
 
     def has_option(self, option):
         if not self._options:

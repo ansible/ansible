@@ -43,7 +43,6 @@
   vars:
     some_var: Hello
     expected_plugin_info:
-      requested_name: requested_name
       resolved_name: resolved_name
       type: type
 
@@ -101,9 +100,9 @@
 - name: test the unmask filter
   assert:
     that:
-      - deprecation_warning.deprecations[0].plugin | type_debug == 'dict'
-      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask("PluginInfo")).plugin | type_debug == "PluginInfo"
-      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask(["PluginInfo"])).plugin | type_debug == "PluginInfo"
+      - deprecation_warning.deprecations[0].deprecator | type_debug == 'dict'
+      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask("PluginInfo")).deprecator | type_debug == "PluginInfo"
+      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask(["PluginInfo"])).deprecator | type_debug == "PluginInfo"
       - 1 | ansible._protomatter.unmask("PluginInfo") == 1
       - missing_var | ansible._protomatter.unmask("PluginInfo") is undefined
 

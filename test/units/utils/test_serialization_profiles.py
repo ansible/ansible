@@ -79,6 +79,9 @@ def test_cache_persistence_schema() -> None:
     """
     # DTFIX-RELEASE: update tests to ensure new fields on contracts will fail this test if they have defaults which are omitted from serialization
     #                one possibility: monkeypatch the default field value omission away so that any new field will invalidate the schema
+
+    # DTFIX-RELEASE: ensure all types/attrs included in _profiles._common_module_response_types are represented here, since they can appear in cached responses
+
     expected_schema_id = 1
     expected_schema_hash = "bf52e60cf1d25a3f8b6bfdf734781ee07cfe46e94189d2f538815c5000b617c6"
 

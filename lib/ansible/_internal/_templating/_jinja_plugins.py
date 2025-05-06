@@ -9,7 +9,6 @@ import functools
 import typing as t
 
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
-from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible._internal._datatag._tags import TrustedAsTemplate
@@ -111,7 +110,7 @@ class JinjaPluginIntercept(c.MutableMapping):
                 return first_marker
 
         try:
-            with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers), PluginExecContext(executing_plugin=instance):
+            with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
                 return instance.j2_function(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
         except MarkerError as ex:
             return ex.source
@@ -212,10 +211,7 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
     wantlist = lookup_kwargs.pop('wantlist', False)
     errors = lookup_kwargs.pop('errors', 'strict')
 
-    with (
-        JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers),
-        PluginExecContext(executing_plugin=instance),
-    ):
+    with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
         try:
             if _TemplateConfig.allow_embedded_templates:
                 # for backwards compat, only trust constant templates in lookup terms

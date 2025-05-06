@@ -83,7 +83,7 @@ message_instances = [
     make_summary(ErrorSummary, Detail(msg="bla"), formatted_traceback="tb"),
     make_summary(WarningSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb"),
     make_summary(DeprecationSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb", version="1.2.3"),
-    PluginInfo(requested_name='a.b.c', resolved_name='a.b.c', type='module'),
+    PluginInfo(resolved_name='a.b.c', type='module'),
 ]
 
 
@@ -215,7 +215,7 @@ def test_tag_types() -> None:
 
 def test_deprecated_invalid_date_type() -> None:
     with pytest.raises(TypeError):
-        Deprecated(msg="test", removal_date="wrong")  # type: ignore
+        Deprecated(msg="test", date=42)  # type: ignore
 
 
 def test_tag_with_invalid_tag_type() -> None:
@@ -356,8 +356,8 @@ class TestDatatagTarget(AutoParamSupport):
     later = t.cast(t.Self, Later(locals()))
 
     tag_instances_with_reprs: t.Annotated[t.List[t.Tuple[AnsibleDatatagBase, str]], ParamDesc(["value", "expected_repr"])] = [
-        (Deprecated(msg="hi mom, I am deprecated", removal_date=datetime.date(2023, 1, 2), removal_version="42.42"),
-         "Deprecated(msg='hi mom, I am deprecated', removal_date='2023-01-02', removal_version='42.42')"),
+        (Deprecated(msg="hi mom, I am deprecated", date='2023-01-02', version="42.42"),
+         "Deprecated(msg='hi mom, I am deprecated', date='2023-01-02', version='42.42')"),
         (Deprecated(msg="minimal"), "Deprecated(msg='minimal')")
     ]
 
@@ -573,8 +573,8 @@ class TestDatatagTarget(AutoParamSupport):
         t.List[t.Tuple[t.Type[AnsibleDatatagBase], t.Dict[str, object]]], ParamDesc(["tag_type", "init_kwargs"])
     ] = [
         (Deprecated, dict(msg=ExampleSingletonTag().tag(''))),
-        (Deprecated, dict(removal_date=ExampleSingletonTag().tag(''), msg='')),
-        (Deprecated, dict(removal_version=ExampleSingletonTag().tag(''), msg='')),
+        (Deprecated, dict(date=ExampleSingletonTag().tag(''), msg='')),
+        (Deprecated, dict(version=ExampleSingletonTag().tag(''), msg='')),
     ]
 
     @pytest.mark.autoparam(later.test_dataclass_tag_base_field_validation_fail_instances)
@@ -589,8 +589,8 @@ class TestDatatagTarget(AutoParamSupport):
         t.List[t.Tuple[t.Type[AnsibleDatatagBase], t.Dict[str, object]]], ParamDesc(["tag_type", "init_kwargs"])
     ] = [
         (Deprecated, dict(msg='')),
-        (Deprecated, dict(msg='', removal_date=datetime.date.today())),
-        (Deprecated, dict(msg='', removal_version='')),
+        (Deprecated, dict(msg='', date='2025-01-01')),
+        (Deprecated, dict(msg='', version='')),
     ]
 
     @pytest.mark.autoparam(later.test_dataclass_tag_base_field_validation_pass_instances)

@@ -25,6 +25,8 @@ from collections import defaultdict
 from collections.abc import Mapping, MutableMapping
 
 from ansible import constants as C
+from ansible.module_utils._internal import _deprecator
+from ansible.module_utils._internal._datatag import _tags
 from ansible.errors import (AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound,
                             AnsibleAssertionError, AnsibleValueOmittedError)
 from ansible.inventory.host import Host
@@ -32,7 +34,6 @@ from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.six import text_type
-from ansible.module_utils.datatag import deprecate_value
 from ansible.parsing.dataloader import DataLoader
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.plugins.loader import cache_loader
@@ -50,8 +51,12 @@ if t.TYPE_CHECKING:
 display = Display()
 
 # deprecated: description='enable top-level facts deprecation' core_version='2.20'
-# _DEPRECATE_TOP_LEVEL_FACT_MSG = sys.intern('Top-level facts are deprecated, use `ansible_facts` instead.')
-# _DEPRECATE_TOP_LEVEL_FACT_REMOVAL_VERSION = sys.intern('2.22')
+# _DEPRECATE_TOP_LEVEL_FACT_TAG = _tags.Deprecated(
+#     msg='Top-level facts are deprecated.',
+#     version='2.24',
+#     deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+#     help_text='Use `ansible_facts` instead.',
+# )
 
 
 def _deprecate_top_level_fact(value: t.Any) -> t.Any:
@@ -61,7 +66,7 @@ def _deprecate_top_level_fact(value: t.Any) -> t.Any:
     Unique tag instances are required to achieve the correct de-duplication within a top-level templating operation.
     """
     # deprecated: description='enable top-level facts deprecation' core_version='2.20'
-    # return deprecate_value(value, _DEPRECATE_TOP_LEVEL_FACT_MSG, removal_version=_DEPRECATE_TOP_LEVEL_FACT_REMOVAL_VERSION)
+    # return _DEPRECATE_TOP_LEVEL_FACT_TAG.tag(value)
     return value
 
 
@@ -95,6 +100,13 @@ class VariableManager:
 
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
+
+    _PLAY_HOSTS_DEPRECATED_TAG = _tags.Deprecated(
+        msg='The `play_hosts` magic variable is deprecated.',
+        version='2.23',
+        deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+        help_text='Use `ansible_play_batch` instead.',
+    )
 
     def __init__(self, loader: DataLoader | None = None, inventory: InventoryManager | None = None, version_info: dict[str, str] | None = None) -> None:
         self._nonpersistent_fact_cache: defaultdict[str, dict] = defaultdict(dict)
@@ -477,12 +489,8 @@ class VariableManager:
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
                 variables['ansible_play_batch'] = [x for x in _hosts if x not in play._removed_hosts]
 
-                variables['play_hosts'] = deprecate_value(
-                    value=variables['ansible_play_batch'],
-                    msg='The `play_hosts` magic variable is deprecated.',
-                    removal_version='2.23',
-                    help_text='Use `ansible_play_batch` instead.',
-                )
+                # use a static tag instead of `deprecate_value` to avoid stackwalk in a hot code path
+                variables['play_hosts'] = self._PLAY_HOSTS_DEPRECATED_TAG.tag(variables['ansible_play_batch'])
 
         # Set options vars
         for option, option_value in self._options_vars.items():

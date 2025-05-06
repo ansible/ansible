@@ -29,7 +29,6 @@ def get_bin_path(arg, opt_dirs=None, required=None):
         deprecate(
             msg="The `required` parameter in `get_bin_path` API is deprecated.",
             version="2.21",
-            collection_name="ansible.builtin",
         )
 
     paths = []

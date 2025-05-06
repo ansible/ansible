@@ -240,6 +240,7 @@ class PylintTest(SanitySingleVersion):
         # plugin: deprecated (ansible-test)
         if data_context().content.collection:
             plugin_options.update({'--collection-name': data_context().content.collection.full_name})
+            plugin_options.update({'--collection-path': os.path.join(data_context().content.collection.root, data_context().content.collection.directory)})
 
             if collection_detail and collection_detail.version:
                 plugin_options.update({'--collection-version': collection_detail.version})

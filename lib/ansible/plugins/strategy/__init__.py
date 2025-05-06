@@ -822,12 +822,12 @@ class StrategyBase:
         """
         if handle_stats_and_callbacks:
             display.deprecated(
-                "Reporting play recap stats and running callbacks functionality for "
-                "``include_tasks`` in ``StrategyBase._load_included_file`` is deprecated. "
-                "See ``https://github.com/ansible/ansible/pull/79260`` for guidance on how to "
-                "move the reporting into specific strategy plugins to account for "
-                "``include_role`` tasks as well.",
-                version="2.21"
+                msg="Reporting play recap stats and running callbacks functionality for "
+                    "``include_tasks`` in ``StrategyBase._load_included_file`` is deprecated. "
+                    "See ``https://github.com/ansible/ansible/pull/79260`` for guidance on how to "
+                    "move the reporting into specific strategy plugins to account for "
+                    "``include_role`` tasks as well.",
+                version="2.21",
             )
         display.debug("loading included file: %s" % included_file._filename)
         try:

@@ -6,6 +6,6 @@ from ansible.utils.display import Display
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
-        Display().deprecated("Hello World!")
+        Display().deprecated("Hello World!", version='2.9999')
 
         return []

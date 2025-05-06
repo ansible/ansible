@@ -17,6 +17,7 @@ from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.executor.task_result import CallbackTaskResult
+from ansible.module_utils._internal import _deprecator
 
 
 class CallbackModule(CallbackBase):
@@ -32,7 +33,12 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._display.deprecated('The oneline callback plugin is deprecated.', version='2.23')
+
+        self._display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+            msg='The oneline callback plugin is deprecated.',
+            version='2.23',
+            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
+        )
 
     def _command_generic_msg(self, hostname, result, caption):
         stdout = result.get('stdout', '').replace('\n', '\\n').replace('\r', '\\r')

@@ -39,7 +39,6 @@ from io import BytesIO
 from ansible._internal import _locking
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _dataclass_validation
-from ansible.module_utils.common.messages import PluginInfo
 from ansible.module_utils.common.yaml import yaml_load
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.json import Direction, get_module_encoder
@@ -56,6 +55,7 @@ from ansible.template import Templar
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
 from ansible.module_utils._internal import _json, _ansiballz
 from ansible.module_utils import basic as _basic
+from ansible.module_utils.common import messages as _messages
 
 if t.TYPE_CHECKING:
     from ansible import template as _template
@@ -434,7 +434,13 @@ class ModuleUtilLocatorBase:
             else:
                 msg += '.'
 
-            display.deprecated(msg, removal_version, removed, removal_date, self._collection_name)
+            display.deprecated(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+                msg=msg,
+                version=removal_version,
+                removed=removed,
+                date=removal_date,
+                deprecator=_messages.PluginInfo._from_collection_name(self._collection_name),
+            )
         if 'redirect' in routing_entry:
             self.redirected = True
             source_pkg = '.'.join(name_parts)
@@ -944,7 +950,6 @@ class _CachedModule:
 def _find_module_utils(
         *,
         module_name: str,
-        plugin: PluginInfo,
         b_module_data: bytes,
         module_path: str,
         module_args: dict[object, object],
@@ -1020,7 +1025,9 @@ def _find_module_utils(
         # People should start writing collections instead of modules in roles so we
         # may never fix this
         display.debug('ANSIBALLZ: Could not determine module FQN')
-        remote_module_fqn = 'ansible.modules.%s' % module_name
+        # FIXME: add integration test to validate that builtins and legacy modules with the same name are tracked separately by the caching mechanism
+        # FIXME: surrogate FQN should be unique per source path- role-packaged modules with name collisions can still be aliased
+        remote_module_fqn = 'ansible.legacy.%s' % module_name
 
     if module_substyle == 'python':
         date_time = datetime.datetime.now(datetime.timezone.utc)
@@ -1126,7 +1133,6 @@ def _find_module_utils(
             module_fqn=remote_module_fqn,
             params=encoded_params,
             profile=module_metadata.serialization_profile,
-            plugin_info_dict=dataclasses.asdict(plugin),
             date_time=date_time,
             coverage_config=coverage_config,
             coverage_output=coverage_output,
@@ -1236,7 +1242,6 @@ def _extract_interpreter(b_module_data):
 def modify_module(
         *,
         module_name: str,
-        plugin: PluginInfo,
         module_path,
         module_args,
         templar,
@@ -1277,7 +1282,6 @@ def modify_module(
 
     module_bits = _find_module_utils(
         module_name=module_name,
-        plugin=plugin,
         b_module_data=b_module_data,
         module_path=module_path,
         module_args=module_args,

@@ -95,9 +95,9 @@ class TestErrors(unittest.TestCase):
         fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
 
         pl = PluginLoader('test', '', 'test', 'test_plugin')
-        one = pl._load_module_source('import_fixture', os.path.join(fixture_path, 'import_fixture.py'))
+        one = pl._load_module_source(python_module_name='import_fixture', path=os.path.join(fixture_path, 'import_fixture.py'))
         # This line wouldn't even succeed if we didn't short circuit on finding a duplicate name
-        two = pl._load_module_source('import_fixture', '/path/to/import_fixture.py')
+        two = pl._load_module_source(python_module_name='import_fixture', path='/path/to/import_fixture.py')
 
         self.assertEqual(one, two)
 

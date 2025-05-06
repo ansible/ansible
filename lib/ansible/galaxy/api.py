@@ -138,7 +138,7 @@ def g_connect(versions):
                     'The v2 Ansible Galaxy API is deprecated and no longer supported. '
                     'Ensure that you have configured the ansible-galaxy CLI to utilize an '
                     'updated and supported version of Ansible Galaxy.',
-                    version='2.20'
+                    version='2.20',
                 )
 
             return method(self, *args, **kwargs)

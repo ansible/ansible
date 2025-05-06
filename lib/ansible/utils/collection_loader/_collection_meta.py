@@ -24,11 +24,13 @@ def _meta_yml_to_dict(yaml_string_data: bytes | str, content_id):
     import yaml
 
     try:
-        from yaml import CSafeLoader as SafeLoader
+        from yaml import CBaseLoader as BaseLoader
     except (ImportError, AttributeError):
-        from yaml import SafeLoader  # type: ignore[assignment]
+        from yaml import BaseLoader  # type: ignore[assignment]
 
-    routing_dict = yaml.load(yaml_string_data, Loader=SafeLoader)
+    # Using BaseLoader ensures that all scalars are strings.
+    # Doing so avoids parsing unquoted versions as floats, dates as datetime.date, etc.
+    routing_dict = yaml.load(yaml_string_data, Loader=BaseLoader)
     if not routing_dict:
         routing_dict = {}
     if not isinstance(routing_dict, Mapping):

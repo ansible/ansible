@@ -5,7 +5,7 @@
 
 - assert:
     that:
-      # filter names are prefixed with a unique hash value to prevent shadowing of other plugins
-      - filter_name | regex_search('^ansible\.plugins\.filter\.[0-9]+_test_filter$') is truthy
+      # filter names include a unique hash value to prevent shadowing of other plugins
+      - filter_name | regex_search('^ansible\.plugins\.filter\.test_filter_[0-9]+$') is truthy
       - lookup_name == 'ansible.plugins.lookup.lookup_name'
       - test_name_ok

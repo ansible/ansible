@@ -218,3 +218,12 @@ test/units/modules/test_apt.py mypy-3.8:name-match
 test/units/modules/test_mount_facts.py mypy-3.8:index
 test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
 test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/lookup/deprecated.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/action/do_deprecated_stuff.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/module_utils/deprecated_utils.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-no-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-invalid-deprecated-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-date-not-permitted  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-unnecessary-collection-name  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-collection-name-not-permitted  # required to verify plugin against core

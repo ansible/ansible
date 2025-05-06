@@ -56,7 +56,10 @@ class DeprecatedArgument:
 
         from ansible.utils.display import Display
 
-        Display().deprecated(f'The {option!r} argument is deprecated.', version=self.version)
+        Display().deprecated(  # pylint: disable=ansible-invalid-deprecated-version
+            msg=f'The {option!r} argument is deprecated.',
+            version=self.version,
+        )
 
 
 class ArgumentParser(argparse.ArgumentParser):

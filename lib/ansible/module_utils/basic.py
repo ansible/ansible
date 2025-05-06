@@ -75,7 +75,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._internal import _traceback, _errors, _debugging
+from ._internal import _traceback, _errors, _debugging, _deprecator
 
 from .common.text.converters import (
     to_native,
@@ -509,16 +509,31 @@ class AnsibleModule(object):
         warn(warning)
         self.log('[WARNING] %s' % warning)
 
-    def deprecate(self, msg, version=None, date=None, collection_name=None):
-        if version is not None and date is not None:
-            raise AssertionError("implementation error -- version and date must not both be set")
-        deprecate(msg, version=version, date=date)
-        # For compatibility, we accept that neither version nor date is set,
-        # and treat that the same as if version would not have been set
-        if date is not None:
-            self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
-        else:
-            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
+    def deprecate(
+        self,
+        msg: str,
+        version: str | None = None,
+        date: str | None = None,
+        collection_name: str | None = None,
+        *,
+        deprecator: _messages.PluginInfo | None = None,
+        help_text: str | None = None,
+    ) -> None:
+        """
+        Record a deprecation warning to be returned with the module result.
+        Most callers do not need to provide `collection_name` or `deprecator` -- but provide only one if needed.
+        Specify `version` or `date`, but not both.
+        If `date` is a string, it must be in the form `YYYY-MM-DD`.
+        """
+        _skip_stackwalk = True
+
+        deprecate(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+            msg=msg,
+            version=version,
+            date=date,
+            deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
+            help_text=help_text,
+        )
 
     def load_file_common_arguments(self, params, path=None):
         """
@@ -1404,6 +1419,7 @@ class AnsibleModule(object):
             self.cleanup(path)
 
     def _return_formatted(self, kwargs):
+        _skip_stackwalk = True
 
         self.add_path_info(kwargs)
 
@@ -1411,6 +1427,13 @@ class AnsibleModule(object):
             kwargs['invocation'] = {'module_args': self.params}
 
         if 'warnings' in kwargs:
+            self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+                msg='Passing `warnings` to `exit_json` or `fail_json` is deprecated.',
+                version='2.23',
+                help_text='Use `AnsibleModule.warn` instead.',
+                deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+            )
+
             if isinstance(kwargs['warnings'], list):
                 for w in kwargs['warnings']:
                     self.warn(w)
@@ -1422,17 +1445,38 @@ class AnsibleModule(object):
             kwargs['warnings'] = warnings
 
         if 'deprecations' in kwargs:
+            self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+                msg='Passing `deprecations` to `exit_json` or `fail_json` is deprecated.',
+                version='2.23',
+                help_text='Use `AnsibleModule.deprecate` instead.',
+                deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+            )
+
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
-                        self.deprecate(d[0], version=d[1])
+                    if isinstance(d, (KeysView, Sequence)) and len(d) == 2:
+                        self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-invalid-deprecated-version
+                            msg=d[0],
+                            version=d[1],
+                            deprecator=_deprecator.get_best_deprecator(),
+                        )
                     elif isinstance(d, Mapping):
-                        self.deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
-                                       collection_name=d.get('collection_name'))
+                        self.deprecate(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+                            msg=d['msg'],
+                            version=d.get('version'),
+                            date=d.get('date'),
+                            deprecator=_deprecator.get_best_deprecator(collection_name=d.get('collection_name')),
+                        )
                     else:
-                        self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
+                        self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-deprecated-no-version
+                            msg=d,
+                            deprecator=_deprecator.get_best_deprecator(),
+                        )
             else:
-                self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
+                self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-deprecated-no-version
+                    msg=kwargs['deprecations'],
+                    deprecator=_deprecator.get_best_deprecator(),
+                )
 
         deprecations = get_deprecations()
         if deprecations:
@@ -1452,6 +1496,7 @@ class AnsibleModule(object):
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """
+        _skip_stackwalk = True
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -1473,6 +1518,8 @@ class AnsibleModule(object):
         When `exception` is not specified, a formatted traceback will be retrieved from the current exception.
         If no exception is pending, the current call stack will be used instead.
         """
+        _skip_stackwalk = True
+
         msg = str(msg)  # coerce to str instead of raising an error due to an invalid type
 
         kwargs.update(

@@ -13,7 +13,7 @@ import dataclasses as _dataclasses
 # deprecated: description='typing.Self exists in Python 3.11+' python_version='3.10'
 from ..compat import typing as _t
 
-from ansible.module_utils._internal import _datatag
+from ansible.module_utils._internal import _datatag, _validation
 
 if _sys.version_info >= (3, 10):
     # Using slots for reduced memory usage and improved performance.
@@ -27,12 +27,26 @@ else:
 class PluginInfo(_datatag.AnsibleSerializableDataclass):
     """Information about a loaded plugin."""
 
-    requested_name: str
-    """The plugin name as requested, before resolving, which may be partially or fully qualified."""
     resolved_name: str
     """The resolved canonical plugin name; always fully-qualified for collection plugins."""
     type: str
     """The plugin type."""
+
+    _COLLECTION_ONLY_TYPE: _t.ClassVar[str] = 'collection'
+    """This is not a real plugin type. It's a placeholder for use by a `PluginInfo` instance which references a collection without a plugin."""
+
+    @classmethod
+    def _from_collection_name(cls, collection_name: str | None) -> _t.Self | None:
+        """Returns an instance with the special `collection` type to refer to a non-plugin or ambiguous caller within a collection."""
+        if not collection_name:
+            return None
+
+        _validation.validate_collection_name(collection_name)
+
+        return cls(
+            resolved_name=collection_name,
+            type=cls._COLLECTION_ONLY_TYPE,
+        )
 
 
 @_dataclasses.dataclass(**_dataclass_kwargs)
@@ -75,34 +89,37 @@ class WarningSummary(SummaryBase):
 class DeprecationSummary(WarningSummary):
     """Deprecation summary with details (possibly derived from an exception __cause__ chain) and an optional traceback."""
 
-    version: _t.Optional[str] = None
+    deprecator: _t.Optional[PluginInfo] = None
+    """
+    The identifier for the content which is being deprecated.
+    """
+
     date: _t.Optional[str] = None
-    plugin: _t.Optional[PluginInfo] = None
+    """
+    The date after which a new release of `deprecator` will remove the feature described by `msg`.
+    Ignored if `deprecator` is not provided.
+    """
 
-    @property
-    def collection_name(self) -> _t.Optional[str]:
-        if not self.plugin:
-            return None
-
-        parts = self.plugin.resolved_name.split('.')
-
-        if len(parts) < 2:
-            return None
-
-        collection_name = '.'.join(parts[:2])
-
-        # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
-        # from ansible.module_utils.datatag import deprecate_value
-        # collection_name = deprecate_value(collection_name, 'The `collection_name` property is deprecated.', removal_version='2.27')
-
-        return collection_name
+    version: _t.Optional[str] = None
+    """
+    The version of `deprecator` which will remove the feature described by `msg`.
+    Ignored if `deprecator` is not provided.
+    Ignored if `date` is provided.
+    """
 
     def _as_simple_dict(self) -> _t.Dict[str, _t.Any]:
         """Returns a dictionary representation of the deprecation object in the format exposed to playbooks."""
+        from ansible.module_utils._internal._deprecator import INDETERMINATE_DEPRECATOR  # circular import from messages
+
+        if self.deprecator and self.deprecator != INDETERMINATE_DEPRECATOR:
+            collection_name = '.'.join(self.deprecator.resolved_name.split('.')[:2])
+        else:
+            collection_name = None
+
         result = self._as_dict()
         result.update(
             msg=self._format(),
-            collection_name=self.collection_name,
+            collection_name=collection_name,
         )
 
         return result

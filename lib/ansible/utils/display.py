@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import dataclasses
-import datetime
 
 try:
     import curses
@@ -50,9 +49,10 @@ from functools import wraps
 from struct import unpack, pack
 
 from ansible import constants as C
+from ansible.constants import config
 from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive, AnsibleError
 from ansible._internal._errors import _utils
-from ansible.module_utils._internal import _ambient_context, _plugin_exec_context
+from ansible.module_utils._internal import _ambient_context, _deprecator
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, SummaryBase, PluginInfo
@@ -75,8 +75,6 @@ _LIBC.wcwidth.argtypes = (ctypes.c_wchar,)
 _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 # Max for c_int
 _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
-
-_UNSET = t.cast(t.Any, object())
 
 MOVE_TO_BOL = b'\r'
 CLEAR_TO_EOL = b'\x1b[K'
@@ -555,7 +553,7 @@ class Display(metaclass=Singleton):
         msg: str,
         version: str | None = None,
         removed: bool = False,
-        date: str | datetime.date | None = None,
+        date: str | None = None,
         collection_name: str | None = None,
     ) -> str:
         """Return a deprecation message and help text for non-display purposes (e.g., exception messages)."""
@@ -570,7 +568,7 @@ class Display(metaclass=Singleton):
             version=version,
             removed=removed,
             date=date,
-            plugin=_plugin_exec_context.PluginExecContext.get_current_plugin_info(),
+            deprecator=PluginInfo._from_collection_name(collection_name),
         )
 
         if removed:
@@ -582,57 +580,63 @@ class Display(metaclass=Singleton):
 
     def _get_deprecation_message_with_plugin_info(
         self,
+        *,
         msg: str,
-        version: str | None = None,
+        version: str | None,
         removed: bool = False,
-        date: str | datetime.date | None = None,
-        plugin: PluginInfo | None = None,
+        date: str | None,
+        deprecator: PluginInfo | None,
     ) -> str:
         """Internal use only. Return a deprecation message and help text for display."""
-        msg = msg.strip()
-
-        if msg and msg[-1] not in ['!', '?', '.']:
-            msg += '.'
+        # DTFIX-RELEASE: the logic for omitting date/version doesn't apply to the payload, so it shows up in vars in some cases when it should not
 
         if removed:
             removal_fragment = 'This feature was removed'
-            help_text = 'Please update your playbooks.'
         else:
             removal_fragment = 'This feature will be removed'
-            help_text = ''
 
-        if plugin:
-            from_fragment = f'from the {self._describe_plugin_info(plugin)}'
+        if not deprecator or deprecator.type == _deprecator.INDETERMINATE_DEPRECATOR.type:
+            collection = None
+            plugin_fragment = ''
+        elif deprecator.type == _deprecator.PluginInfo._COLLECTION_ONLY_TYPE:
+            collection = deprecator.resolved_name
+            plugin_fragment = ''
+        else:
+            parts = deprecator.resolved_name.split('.')
+            plugin_name = parts[-1]
+            # DTFIX-RELEASE: normalize 'modules' -> 'module' before storing it so we can eliminate the normalization here
+            plugin_type = "module" if deprecator.type in ("module", "modules") else f'{deprecator.type} plugin'
+
+            collection = '.'.join(parts[:2]) if len(parts) > 2 else None
+            plugin_fragment = f'{plugin_type} {plugin_name!r}'
+
+        if collection and plugin_fragment:
+            plugin_fragment += ' in'
+
+        if collection == 'ansible.builtin':
+            collection_fragment = 'ansible-core'
+        elif collection:
+            collection_fragment = f'collection {collection!r}'
+        else:
+            collection_fragment = ''
+
+        if not collection:
+            when_fragment = 'in the future' if not removed else ''
+        elif date:
+            when_fragment = f'in a release after {date}'
+        elif version:
+            when_fragment = f'version {version}'
+        else:
+            when_fragment = 'in a future release' if not removed else ''
+
+        if plugin_fragment or collection_fragment:
+            from_fragment = 'from'
         else:
             from_fragment = ''
 
-        if date:
-            when = 'in a release after {0}.'.format(date)
-        elif version:
-            when = 'in version {0}.'.format(version)
-        else:
-            when = 'in a future release.'
+        deprecation_msg = ' '.join(f for f in [removal_fragment, from_fragment, plugin_fragment, collection_fragment, when_fragment] if f) + '.'
 
-        message_text = ' '.join(f for f in [msg, removal_fragment, from_fragment, when, help_text] if f)
-
-        return message_text
-
-    @staticmethod
-    def _describe_plugin_info(plugin_info: PluginInfo) -> str:
-        """Return a brief description of the plugin info, including name(s) and type."""
-        name = repr(plugin_info.resolved_name)
-        clarification = f' (requested as {plugin_info.requested_name!r})' if plugin_info.requested_name != plugin_info.resolved_name else ''
-
-        if plugin_info.type in ("module", "modules"):
-            # DTFIX-RELEASE: pluginloader or AnsiblePlugin needs a "type desc" property that doesn't suffer from legacy "inconsistencies" like this
-            plugin_type = "module"
-        elif plugin_info.type == "collection":
-            # not a real plugin type, but used for tombstone errors generated by plugin loader
-            plugin_type = plugin_info.type
-        else:
-            plugin_type = f'{plugin_info.type} plugin'
-
-        return f'{name} {plugin_type}{clarification}'
+        return _join_sentences(msg, deprecation_msg)
 
     def _wrap_message(self, msg: str, wrap_text: bool) -> str:
         if wrap_text and self._wrap_stderr:
@@ -661,19 +665,23 @@ class Display(metaclass=Singleton):
         msg: str,
         version: str | None = None,
         removed: bool = False,
-        date: str | datetime.date | None = None,
-        collection_name: str | None = _UNSET,
+        date: str | None = None,
+        collection_name: str | None = None,
         *,
+        deprecator: PluginInfo | None = None,
         help_text: str | None = None,
         obj: t.Any = None,
     ) -> None:
-        """Display a deprecation warning message, if enabled."""
-        # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
-        # if collection_name is not _UNSET:
-        #     self.deprecated('The `collection_name` argument to `deprecated` is deprecated.', version='2.27')
-
+        """
+        Display a deprecation warning message, if enabled.
+        Most callers do not need to provide `collection_name` or `deprecator` -- but provide only one if needed.
+        Specify `version` or `date`, but not both.
+        If `date` is a string, it must be in the form `YYYY-MM-DD`.
+        """
         # DTFIX-RELEASE: are there any deprecation calls where the feature is switching from enabled to disabled, rather than being removed entirely?
         # DTFIX-RELEASE: are there deprecated features which should going through deferred deprecation instead?
+
+        _skip_stackwalk = True
 
         self._deprecated_with_plugin_info(
             msg=msg,
@@ -682,32 +690,36 @@ class Display(metaclass=Singleton):
             date=date,
             help_text=help_text,
             obj=obj,
-            plugin=_plugin_exec_context.PluginExecContext.get_current_plugin_info(),
+            deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
         )
 
     def _deprecated_with_plugin_info(
         self,
-        msg: str,
-        version: str | None = None,
-        removed: bool = False,
-        date: str | datetime.date | None = None,
         *,
-        help_text: str | None = None,
-        obj: t.Any = None,
-        plugin: PluginInfo | None = None,
+        msg: str,
+        version: str | None,
+        removed: bool = False,
+        date: str | None,
+        help_text: str | None,
+        obj: t.Any,
+        deprecator: PluginInfo | None,
     ) -> None:
         """
         This is the internal pre-proxy half of the `deprecated` implementation.
         Any logic that must occur on workers needs to be implemented here.
         """
+        _skip_stackwalk = True
+
         if removed:
-            raise AnsibleError(self._get_deprecation_message_with_plugin_info(
+            formatted_msg = self._get_deprecation_message_with_plugin_info(
                 msg=msg,
                 version=version,
                 removed=removed,
                 date=date,
-                plugin=plugin,
-            ))
+                deprecator=deprecator,
+            )
+
+            raise AnsibleError(formatted_msg)
 
         if source_context := _utils.SourceContext.from_value(obj):
             formatted_source_context = str(source_context)
@@ -723,8 +735,8 @@ class Display(metaclass=Singleton):
                 ),
             ),
             version=version,
-            date=str(date) if isinstance(date, datetime.date) else date,
-            plugin=plugin,
+            date=date,
+            deprecator=deprecator,
             formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED),
         )
 
@@ -1225,20 +1237,70 @@ def _get_message_lines(message: str, help_text: str | None, formatted_source_con
     return message_lines
 
 
-def format_message(summary: SummaryBase) -> str:
-    details: t.Sequence[Detail]
+def _join_sentences(first: str | None, second: str | None) -> str:
+    """Join two sentences together."""
+    first = (first or '').strip()
+    second = (second or '').strip()
 
-    if isinstance(summary, DeprecationSummary):
-        details = [detail if idx else dataclasses.replace(
+    if first and first[-1] not in ('!', '?', '.'):
+        first += '.'
+
+    if second and second[-1] not in ('!', '?', '.'):
+        second += '.'
+
+    if first and not second:
+        return first
+
+    if not first and second:
+        return second
+
+    return ' '.join((first, second))
+
+
+def format_message(summary: SummaryBase) -> str:
+    details: c.Sequence[Detail] = summary.details
+
+    if isinstance(summary, DeprecationSummary) and details:
+        # augment the first detail element for deprecations to include additional diagnostic info and help text
+        detail_list = list(details)
+        detail = detail_list[0]
+
+        deprecation_msg = _display._get_deprecation_message_with_plugin_info(
+            msg=detail.msg,
+            version=summary.version,
+            date=summary.date,
+            deprecator=summary.deprecator,
+        )
+
+        detail_list[0] = dataclasses.replace(
             detail,
-            msg=_display._get_deprecation_message_with_plugin_info(
-                msg=detail.msg,
-                version=summary.version,
-                date=summary.date,
-                plugin=summary.plugin,
-            ),
-        ) for idx, detail in enumerate(summary.details)]
-    else:
-        details = summary.details
+            msg=deprecation_msg,
+            help_text=detail.help_text,
+        )
+
+        details = detail_list
 
     return _format_error_details(details, summary.formatted_traceback)
+
+
+def _report_config_warnings(deprecator: PluginInfo) -> None:
+    """Called by config to report warnings/deprecations collected during a config parse."""
+    while config.WARNINGS:
+        warn = config.WARNINGS.pop()
+        _display.warning(warn)
+
+    while config.DEPRECATED:
+        # tuple with name and options
+        dep = config.DEPRECATED.pop(0)
+        msg = config.get_deprecated_msg_from_config(dep[1]).replace("\t", "")
+
+        _display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-invalid-deprecated-version
+            msg=f"{dep[0]} option. {msg}",
+            version=dep[1]['version'],
+            deprecator=deprecator,
+        )
+
+
+# emit any warnings or deprecations
+# in the event config fails before display is up, we'll lose warnings -- but that's OK, since everything is broken anyway
+_report_config_warnings(_deprecator.ANSIBLE_CORE_DEPRECATOR)
