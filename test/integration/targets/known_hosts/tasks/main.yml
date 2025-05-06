@@ -83,6 +83,7 @@
 
 - name: remove ~/.ssh/ directory created by known_hosts module
   command: rm -r ~/.ssh
+  ignore_errors: True
 
 - name: move ~/.ssh_bak/ back
   command: mv ~/.ssh_bak/ ~/.ssh/
