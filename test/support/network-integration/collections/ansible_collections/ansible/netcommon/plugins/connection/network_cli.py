@@ -221,14 +221,14 @@ options:
     default: false
     vars:
     - name: ansible_terminal_initial_prompt_checkall
-  terminal_initial_prompt_newline:
+  terminal_inital_prompt_newline:
     type: boolean
     description:
     - This boolean flag, that when set to I(True) will send newline in the response
       if any of values in I(terminal_initial_prompt) is matched.
     default: true
     vars:
-    - name: ansible_terminal_initial_prompt_newline
+    - name: ansible_terminal_inital_prompt_newline
   network_cli_retries:
     description:
     - Number of attempts to connect to remote host. The delay time between the retires
@@ -673,8 +673,8 @@ class Connection(NetworkConnectionBase):
                 or self._terminal.terminal_initial_answer
             )
             newline = (
-                self.get_option("terminal_initial_prompt_newline")
-                or self._terminal.terminal_initial_prompt_newline
+                self.get_option("terminal_inital_prompt_newline")
+                or self._terminal.terminal_inital_prompt_newline
             )
             check_all = (
                 self.get_option("terminal_initial_prompt_checkall") or False

@@ -58,7 +58,7 @@ class TerminalBase(ABC):
     terminal_initial_answer = None
 
     #: Send newline after prompt match
-    terminal_initial_prompt_newline = True
+    terminal_inital_prompt_newline = True
 
     def __init__(self, connection):
         self._connection = connection
