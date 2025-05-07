@@ -317,11 +317,6 @@ remote_url_changed:
     returned: success
     type: bool
     sample: True
-warnings:
-    description: List of warnings if requested features were not available due to a too old git version.
-    returned: error
-    type: str
-    sample: git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
     description: Contains the new path of .git directory if it is changed.
     returned: success
@@ -1240,7 +1235,7 @@ def main():
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
 
-    result = dict(changed=False, warnings=list())
+    result = dict(changed=False)
 
     if module.params['accept_hostkey']:
         if ssh_opts is not None:

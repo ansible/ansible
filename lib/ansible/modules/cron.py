@@ -618,7 +618,6 @@ def main():
 
     changed = False
     res_args = dict()
-    warnings = list()
 
     if cron_file:
 
@@ -627,8 +626,8 @@ def main():
 
         cron_file_basename = os.path.basename(cron_file)
         if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
-            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
-                            ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
+            module.warn('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
+                        ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
@@ -693,7 +692,7 @@ def main():
         if do_install:
             for char in ['\r', '\n']:
                 if char in job.strip('\r\n'):
-                    warnings.append('Job should not contain line breaks')
+                    module.warn('Job should not contain line breaks')
                     break
 
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
@@ -734,7 +733,6 @@ def main():
     res_args = dict(
         jobs=crontab.get_jobnames(),
         envs=crontab.get_envnames(),
-        warnings=warnings,
         changed=changed
     )
 
