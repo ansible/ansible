@@ -722,6 +722,7 @@ class Dnf5Module(YumDnf):
             if self.security:
                 types.append("security")
             advisory_query.filter_type(types)
+            conf.skip_unavailable = True  # ignore packages that are of a different type, for backwards compat
             settings.set_advisory_filter(advisory_query)
 
         goal = libdnf5.base.Goal(base)
