@@ -22,6 +22,8 @@ from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
+    AnsibleCandidate,
+    AnsibleRequirement,
 )
 from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
@@ -86,6 +88,10 @@ class CollectionDependencyProvider(AbstractProvider):
         self._make_req_from_dict = functools.partial(
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
+        )
+        self._get_ansible_requirement = functools.partial(
+            AnsibleRequirement.from_collection,
+            concrete_artifacts_manager,
         )
         self._preferred_candidates = set(preferred_candidates or ())
         self._with_deps = with_deps
@@ -188,10 +194,15 @@ class CollectionDependencyProvider(AbstractProvider):
         to find concrete candidates for this requirement. If there's a
         pre-installed candidate, it's prepended in front of others.
         """
-        return [
-            match for match in self._find_matches(list(requirements[identifier]))
-            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
-        ]
+        results = []
+        for match in self._find_matches(list(requirements[identifier])):
+            if any(match.ver == incompat.ver for incompat in incompatibilities[identifier]):
+                continue
+
+            # hack for backward compatible error handling
+            match._parent = list(requirements[identifier])[0]._parent
+            results.append(match)
+        return results
 
     def _find_matches(self, requirements: list[Requirement]) -> list[Candidate]:
         # FIXME: The first requirement may be a Git repo followed by
@@ -203,6 +214,11 @@ class CollectionDependencyProvider(AbstractProvider):
         # The fqcn is guaranteed to be the same
         version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
         version_req += "This is an issue with the collection."
+
+        if first_req.type == "requires_ansible":
+            if all(req.supports_ansible for req in requirements):
+                return [AnsibleCandidate]
+            return []
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
@@ -384,9 +400,11 @@ class CollectionDependencyProvider(AbstractProvider):
         # NOTE: This is a set of Pipenv-inspired optimizations. Ref:
         # https://github.com/sarugaku/passa/blob/2ac00f1/src/passa/models/providers.py#L58-L74
         if (
-                requirement.is_virtual or
-                candidate.is_virtual or
-                requirement.ver == '*'
+                requirement.is_virtual
+                or candidate.is_virtual
+                or requirement.ver == '*'
+                or requirement.type == 'requires_ansible'
+                or candidate.type == 'requires_ansible'
         ):
             return True
 
@@ -395,12 +413,15 @@ class CollectionDependencyProvider(AbstractProvider):
             requirements=requirement.ver,
         )
 
-    def get_dependencies(self, candidate: Candidate) -> list[Requirement]:
+    def get_dependencies(self, candidate: Candidate) -> t.Iterator[Requirement]:
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \
                   specifies as its dependencies.
         """
+        if candidate.type == "requires_ansible":
+            return
+
         # FIXME: If there's several galaxy servers set, there may be a
         # FIXME: situation when the metadata of the same collection
         # FIXME: differs. So how do we resolve this case? Priority?
@@ -419,10 +440,12 @@ class CollectionDependencyProvider(AbstractProvider):
         #
         # NOTE: Virtual candidates should always return dependencies
         # NOTE: because they are ephemeral and non-installable.
-        if not self._with_deps and not candidate.is_virtual:
-            return []
+        for dep_name, dep_req in req_map.items():
+            if not (self._with_deps or candidate.is_virtual):
+                continue
+            dependency = self._make_req_from_dict({'name': dep_name, 'version': dep_req})
+            dependency._parent = candidate
+            yield dependency
 
-        return [
-            self._make_req_from_dict({'name': dep_name, 'version': dep_req})
-            for dep_name, dep_req in req_map.items()
-        ]
+        if (requires_ansible := self._get_ansible_requirement(candidate)):
+            yield requires_ansible

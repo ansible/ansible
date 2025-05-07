@@ -26,11 +26,14 @@ if t.TYPE_CHECKING:
         '_ComputedReqKindsMixin',
     )
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.plugins.loader import _does_collection_support_ansible_version
+from ansible.release import __version__ as _ANSIBLE_RUNTIME_VERSION
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -190,6 +193,11 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
+        # This is used by requires_ansible requirement error handling.
+        # ResolutionImpossible causes have access to the parent,
+        # i.e. the incompatible collection containing the metadata,
+        # but not its origin.
+        self._parent: Candidate | None = None
 
     def __hash__(self) -> int:
         return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
@@ -543,7 +551,7 @@ class _ComputedReqKindsMixin:
 
     @property
     def canonical_package_id(self) -> str:
-        if not self.is_virtual:
+        if not self.is_virtual or self.type == "requires_ansible":
             return to_native(self.fqcn)
 
         return (
@@ -657,3 +665,37 @@ class Candidate(
 
         signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
         return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))
+
+
+class AnsibleRequirement(Requirement):
+    @property
+    def supports_ansible(self):
+        """Whether the requires_ansible metadata is compatible with the ansible-core version."""
+        return _does_collection_support_ansible_version(self.ver, _ANSIBLE_RUNTIME_VERSION)
+
+    @classmethod
+    def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate):
+        """
+        Create a Requirement from a collection's requires_ansible metadata.
+        """
+        if candidate.is_virtual or C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == 'ignore':
+            return None
+
+        if candidate.type == 'galaxy':
+            requires_ansible = (candidate.src.requires_ansible.get(candidate.fqcn) or {}).get(candidate.ver)
+        else:
+            requires_ansible = concrete_art_mgr.get_direct_requires_ansible(candidate)
+
+        if requires_ansible is None:
+            display.warning(f"{candidate!s} does not have requires_ansible metadata.")
+            return None
+
+        # Passing the "fqcn" attribute so __unicode__ doesn't need to be overridden.
+        res = cls("ansible-core", requires_ansible, None, "requires_ansible", None)
+        res._parent = candidate
+        return res
+
+
+AnsibleCandidate = Candidate(
+    "ansible-core", _ANSIBLE_RUNTIME_VERSION, None, "requires_ansible", None
+)
