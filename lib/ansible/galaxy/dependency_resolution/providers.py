@@ -17,8 +17,11 @@ if t.TYPE_CHECKING:
 
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
+    _ANSIBLE_CANDIDATE_VERSION,
     Candidate,
     Requirement,
+    AnsibleRequirement,
+
 )
 from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
@@ -83,6 +86,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
         self._make_req_from_dict = functools.partial(
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
+        )
+        self._get_ansible_requirement = functools.partial(
+            AnsibleRequirement.from_collection,
+            concrete_artifacts_manager,
         )
         self._preferred_candidates = set(preferred_candidates or ())
         self._with_deps = with_deps
@@ -238,6 +245,11 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # The fqcn is guaranteed to be the same
         version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
         version_req += "This is an issue with the collection."
+
+        if first_req.type == "requires_ansible":
+            if all(req.supports_ansible for req in requirements):
+                return [Candidate("Ansible", _ANSIBLE_CANDIDATE_VERSION, None, "requires_ansible", None)]
+            return []
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
@@ -431,6 +443,9 @@ class CollectionDependencyProviderBase(AbstractProvider):
         :returns: A collection of requirements that `candidate` \
                   specifies as its dependencies.
         """
+        if candidate.type == "requires_ansible":
+            return []
+
         # FIXME: If there's several galaxy servers set, there may be a
         # FIXME: situation when the metadata of the same collection
         # FIXME: differs. So how do we resolve this case? Priority?
@@ -449,14 +464,16 @@ class CollectionDependencyProviderBase(AbstractProvider):
         #
         # NOTE: Virtual candidates should always return dependencies
         # NOTE: because they are ephemeral and non-installable.
-        if not self._with_deps and not candidate.is_virtual:
-            return []
+        for dep_name, dep_req in req_map.items():
+            if not (self._with_deps or candidate.is_virtual):
+                continue
+            dependency = self._make_req_from_dict({'name': dep_name, 'version': dep_req})
+            dependency._parent = candidate  # Used by requires_ansible error handling, to display whether the error was caused by direct request or dependency
+            yield dependency
 
-        return [
-            self._make_req_from_dict({'name': dep_name, 'version': dep_req})
-            for dep_name, dep_req in req_map.items()
-        ]
-
+        if (requires_ansible := self._get_ansible_requirement(candidate)):
+            requires_ansible._parent = candidate
+            yield requires_ansible
 
 # Classes to handle resolvelib API changes between minor versions for 0.X
 class CollectionDependencyProvider050(CollectionDependencyProviderBase):

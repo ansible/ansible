@@ -288,6 +288,9 @@ class GalaxyAPI:
         if not no_cache:
             self._cache = _load_cache(self._b_cache_path)
 
+        # For efficiency, this metadata is populated when listing collection versions.
+        self.requires_ansible = {}
+
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
     def __str__(self):
@@ -844,7 +847,9 @@ class GalaxyAPI:
 
         versions = []
         while True:
-            versions += [v['version'] for v in data[results_key]]
+            for v in data[results_key]:
+                versions.append(v["version"])
+                self.requires_ansible.setdefault(f"{namespace}.{name}", {})[v["version"]] = v.get("requires_ansible")
 
             next_link = data
             for path in pagination_path:

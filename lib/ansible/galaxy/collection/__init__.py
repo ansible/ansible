@@ -1827,6 +1827,10 @@ def _resolve_depenency_map(
         'installed by default unless a specific version is requested. '
         'To enable pre-releases globally, use --pre.'
     )
+    requires_ansible_hint = '' if C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == 'ignore' else (
+        'Hint: To disregard whether the collection supports the current version of '
+        'Ansible, configure COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore".'
+    )
 
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
@@ -1844,16 +1848,21 @@ def _resolve_depenency_map(
             max_rounds=2000000,  # NOTE: same constant pip uses
         ).mapping
     except CollectionDependencyResolutionImpossible as dep_exc:
-        conflict_causes = (
-            '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
-                req=req_inf.requirement,
-                dep_origin='direct request'
-                if req_inf.parent is None
-                else 'dependency of {parent!s}'.
-                format(parent=req_inf.parent),
-            )
-            for req_inf in dep_exc.causes
-        )
+        conflict_causes = []
+        for req_inf in dep_exc.causes:
+            if req_inf.requirement.type == "requires_ansible":
+                collection = f"{req_inf.parent.fqcn!s}:{req_inf.parent.ver!s}"
+                dep_origin = 'direct request' if req_inf.parent._parent is None else f'dependency of {req_inf.parent._parent!s}'
+            else:
+                collection = f"{req_inf.requirement.fqcn!s}:{req_inf.requirement.ver!s}"
+                dep_origin = 'direct request' if req_inf.parent is None else f'dependency of {req_inf.parent!s}'
+
+            cause = f"* {collection} ({dep_origin})"
+            if req_inf.requirement.type == "requires_ansible":
+                cause += f" requires {req_inf.requirement.fqcn!s} {req_inf.requirement.ver!s}"
+
+            conflict_causes.append(cause)
+
         error_msg_lines = list(chain(
             (
                 'Failed to resolve the requested '
@@ -1862,6 +1871,8 @@ def _resolve_depenency_map(
             ),
             conflict_causes,
         ))
+        if any(req_inf.requirement.type == "requires_ansible" for req_inf in dep_exc.causes):
+            error_msg_lines.append(requires_ansible_hint)
         error_msg_lines.append(pre_release_hint)
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyInconsistentCandidate as dep_exc:

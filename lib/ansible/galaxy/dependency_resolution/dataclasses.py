@@ -26,15 +26,19 @@ if t.TYPE_CHECKING:
         '_ComputedReqKindsMixin',
     )
 
+from ansible import release
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.plugins.loader import _does_collection_support_ansible_version
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.version import SemanticVersion, LooseVersion
 
 
+_ANSIBLE_CANDIDATE_VERSION = SemanticVersion.from_loose_version(LooseVersion(release.__version__)).vstring
 _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
@@ -180,6 +184,7 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
+        self._parent = None
 
     def __hash__(self):
         return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
@@ -517,7 +522,7 @@ class _ComputedReqKindsMixin:
 
     @property
     def canonical_package_id(self):
-        if not self.is_virtual:
+        if not self.is_virtual or self.is_ansible:
             return to_native(self.fqcn)
 
         return (
@@ -527,7 +532,11 @@ class _ComputedReqKindsMixin:
 
     @property
     def is_virtual(self):
-        return self.is_scm or self.is_subdirs
+        return self.is_scm or self.is_subdirs or self.is_ansible
+
+    @property
+    def is_ansible(self):
+        return self.type == "requires_ansible"
 
     @property
     def is_file(self):
@@ -631,3 +640,51 @@ class Candidate(
 
         signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
         return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))
+
+
+class AnsibleRequirement(Requirement):
+    @property
+    def supports_ansible(self):
+        """
+        A boolean indicating whether the optional requires_ansible collection metadata is compatible with the running ansible version.
+        If the version is unspecified/None/"", it is assumed to be compatible to match runtime behavior.
+        """
+        # TODO: consider adding a toggle to make requires_ansible required.
+        # Besides being a documentation issue, missing metadata can cause a couple issues for galaxy type collections:
+        # - If no versions of the collection support the ansible version, an ancient version
+        #   missing the metadata would be selected instead of the latest.
+        # - Galaxy v2 servers and old GalaxyNG servers don't supply this metadata even when
+        #   the collection documents it.
+        if self.ver in ('', None) and C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH != 'ignore':
+            warning = (
+                "" if self._parent.type != 'galaxy' or self._parent.src.api_server == "https://galaxy.ansible.com/api/"
+                else f"Galaxy server {self._parent.src.api_server} didn't return 'requires_ansible' metadata for {self._parent!r} or "
+            )
+            display.warning(
+                f"{warning}{self._parent!r} has not documented 'requires_ansible' in the meta/runtime.yml. "
+                f"Assuming compatibility with Ansible {_ANSIBLE_CANDIDATE_VERSION}."
+            )
+        return (
+            _does_collection_support_ansible_version(self.ver or '', _ANSIBLE_CANDIDATE_VERSION)
+            or C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == "ignore"
+        )
+
+    @classmethod
+    def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate):
+        """
+        Create a Requirement from a collection's requires_ansible metadata.
+        """
+        # Note: This should be called in/after calling find_matches.
+        # The candidate.src.requires_ansible cache is populated in find_matches.
+        # The concrete artifact data is avaiable after the temporary artifact is downloaded or built.
+        if candidate.is_virtual:
+            return None
+
+        if candidate.type == 'galaxy':
+            requires_ansible = (candidate.src.requires_ansible.get(candidate.fqcn) or {}).get(candidate.ver)
+        else:
+            requires_ansible = concrete_art_mgr.get_direct_requires_ansible(candidate)
+
+        res = cls("Ansible", requires_ansible, None, "requires_ansible", None)
+        res._parent = candidate
+        return res

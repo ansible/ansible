@@ -205,3 +205,9 @@ collection_list:
     version: 4.5.6
     dependencies:
       ns_with_wildcard_dep.name_with_wildcard_dep: 5.6.7-beta.3
+
+  - namespace: ns_requires_ansible
+    name: name_requires_ansible
+    version: 1.0.0
+    runtime: |-
+      requires_ansible: "<{{ ansible_version.major }}.{{ ansible_version.minor }}"
