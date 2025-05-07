@@ -228,7 +228,7 @@ options:
       if any of values in I(terminal_initial_prompt) is matched.
     default: true
     vars:
-    - name: ansible_terminal_inital_prompt_newline
+    - name: ansible_terminal_initial_prompt_newline
   network_cli_retries:
     description:
     - Number of attempts to connect to remote host. The delay time between the retires
