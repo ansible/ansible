@@ -1,0 +1,7 @@
+DOCUMENTATION:
+  name: groupby
+  version_added: "2.19"
+  short_description: builtin Jinja groupby filter
+  description:
+    - The builtin Jinja groupby filter.
+    - See U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-filters.groupby) for the input options, return value, and examples.

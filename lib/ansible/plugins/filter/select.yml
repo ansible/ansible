@@ -1,0 +1,7 @@
+DOCUMENTATION:
+  name: select
+  version_added: "2.19"
+  short_description: builtin Jinja select filter
+  description:
+    - The builtin Jinja select filter.
+    - See U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-filters.select) for the input options, return value, and examples.

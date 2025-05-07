@@ -1,0 +1,7 @@
+DOCUMENTATION:
+  name: selectattr
+  version_added: "2.19"
+  short_description: builtin Jinja selectattr filter
+  description:
+    - The builtin Jinja selectattr filter.
+    - See U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-filters.selectattr) for the input options, return value, and examples.
