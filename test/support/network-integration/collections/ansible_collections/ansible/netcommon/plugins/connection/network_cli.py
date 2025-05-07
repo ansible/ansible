@@ -221,7 +221,7 @@ options:
     default: false
     vars:
     - name: ansible_terminal_initial_prompt_checkall
-  terminal_inital_prompt_newline:
+  terminal_initial_prompt_newline:
     type: boolean
     description:
     - This boolean flag, that when set to I(True) will send newline in the response
@@ -673,8 +673,8 @@ class Connection(NetworkConnectionBase):
                 or self._terminal.terminal_initial_answer
             )
             newline = (
-                self.get_option("terminal_inital_prompt_newline")
-                or self._terminal.terminal_inital_prompt_newline
+                self.get_option("terminal_initial_prompt_newline")
+                or self._terminal.terminal_initial_prompt_newline
             )
             check_all = (
                 self.get_option("terminal_initial_prompt_checkall") or False
