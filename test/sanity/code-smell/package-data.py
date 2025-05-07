@@ -16,6 +16,9 @@ import zipfile
 
 from ansible.release import __version__
 
+fuzzy_match_basenames: set[str] = {'COPYING'}
+"""Account for PEP639 differences in the placement of some files."""
+
 
 def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
     """Return a list of files which should be present in the sdist."""
@@ -57,6 +60,7 @@ def collect_wheel_files(complete_file_list: list[str]) -> list[str]:
     for path in complete_file_list:
         if path.startswith('licenses/'):
             license_files.append(os.path.relpath(path, 'licenses'))
+            fuzzy_match_basenames.add(os.path.basename(path))
 
         if path.startswith('lib/ansible/'):
             prefix = 'lib'
@@ -139,14 +143,32 @@ def list_wheel(path: pathlib.Path) -> list[str]:
     return paths
 
 
+def filter_fuzzy_matches(missing: set[str], extra: set[str]) -> None:
+    """
+    Removes entries from `missing` and `extra` that share a common basename that also appears in `fuzzy_match_basenames`.
+    Accounts for variable placement of non-runtime files by different versions of setuptools.
+    """
+    if not (missing or extra):
+        return
+
+    # calculate a set of basenames that appear in both missing and extra that are also marked as possibly needing fuzzy matching
+    corresponding_fuzzy_basenames = {os.path.basename(p) for p in missing}.intersection(os.path.basename(p) for p in extra).intersection(fuzzy_match_basenames)
+
+    # filter successfully fuzzy-matched entries from missing and extra
+    missing.difference_update({p for p in missing if os.path.basename(p) in corresponding_fuzzy_basenames})
+    extra.difference_update({p for p in extra if os.path.basename(p) in corresponding_fuzzy_basenames})
+
+
 def check_files(source: str, expected: list[str], actual: list[str]) -> list[str]:
     """Verify the expected files exist and no extra files exist."""
-    missing = sorted(set(expected) - set(actual))
-    extra = sorted(set(actual) - set(expected))
+    missing = set(expected) - set(actual)
+    extra = set(actual) - set(expected)
+
+    filter_fuzzy_matches(missing, extra)
 
     errors = (
-        [f'{path}: missing from {source}' for path in missing] +
-        [f'{path}: unexpected in {source}' for path in extra]
+        [f'{path}: missing from {source}' for path in sorted(missing)] +
+        [f'{path}: unexpected in {source}' for path in sorted(extra)]
     )
 
     return errors
