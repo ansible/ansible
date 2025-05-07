@@ -814,10 +814,8 @@ def main():
         elif requirements:
             cmd.extend(['-r', requirements])
         else:
-            module.exit_json(
-                changed=False,
-                warnings=["No valid name or requirements file found."],
-            )
+            module.warn("No valid name or requirements file found.")
+            module.exit_json(changed=False)
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
