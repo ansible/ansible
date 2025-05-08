@@ -39,8 +39,8 @@ class RequirementCandidates():
 
     def func_wrapper(self, func):
         def run(*args, **kwargs):
-            self.candidates = func(*args, **kwargs)
-            return self.candidates
+            self.candidates.append(func(*args, **kwargs))
+            return self.candidates[-1]
         return run
 
 
@@ -81,6 +81,11 @@ def collection_artifact(request, tmp_path_factory):
         galaxy_obj.seek(0)
         galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
         galaxy_obj.truncate()
+
+    os.mkdir(os.path.join(collection_path, 'meta'))
+    runtime = os.path.join(collection_path, 'meta/runtime.yml')
+    with open(runtime, 'wb') as runtime_obj:
+        runtime_obj.write(b"requires_ansible: '>=2.8.0'\n")
 
     # Create a file with +x in the collection so we can test the permissions
     execute_path = os.path.join(collection_path, 'runme.sh')
@@ -635,7 +640,12 @@ def test_build_requirement_from_name_single_version(galaxy_server, monkeypatch, 
     assert actual.name == u'collection'
     assert actual.src == galaxy_server
     assert actual.ver == u'2.0.0'
-    assert [c.ver for c in matches.candidates] == [u'2.0.0']
+    assert len(matches.candidates) == 2
+    assert len(matches.candidates[0]) == 1
+    assert len(matches.candidates[1]) == 1
+    assert matches.candidates[0][0].fqcn == u'namespace.collection'
+    assert matches.candidates[0][0].ver == u'2.0.0'
+    assert matches.candidates[1][0].fqcn == u'Ansible'
 
     assert mock_get_info.call_count == 1
     assert mock_get_info.mock_calls[0][1] == ('namespace', 'collection', '2.0.0')
@@ -672,7 +682,13 @@ def test_build_requirement_from_name_multiple_versions_one_match(galaxy_server, 
     assert actual.name == u'collection'
     assert actual.src == galaxy_server
     assert actual.ver == u'2.0.1'
-    assert [c.ver for c in matches.candidates] == [u'2.0.1']
+
+    assert len(matches.candidates) == 2
+    assert len(matches.candidates[0]) == 1
+    assert len(matches.candidates[1]) == 1
+    assert matches.candidates[0][0].fqcn == u'namespace.collection'
+    assert matches.candidates[0][0].ver == u'2.0.1'
+    assert matches.candidates[1][0].fqcn == u'Ansible'
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -714,8 +730,14 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
     assert actual.name == u'collection'
     assert actual.src == galaxy_server
     assert actual.ver == u'2.0.5'
+
+    assert len(matches.candidates) == 2
+    assert len(matches.candidates[0]) == 5
+    assert len(matches.candidates[1]) == 1
+    assert all(c.fqcn == u'namespace.collection' for c in matches.candidates[0])
     # should be ordered latest to earliest
-    assert [c.ver for c in matches.candidates] == [u'2.0.5', u'2.0.4', u'2.0.3', u'2.0.1', u'2.0.0']
+    assert [c.ver for c in matches.candidates[0]] == [u'2.0.5', u'2.0.4', u'2.0.3', u'2.0.1', u'2.0.0']
+    assert matches.candidates[1][0].fqcn == u'Ansible'
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -818,7 +840,7 @@ def test_install_collection(collection_artifact, monkeypatch):
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'meta', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == S_IRWXU_RXG_RXO
@@ -854,7 +876,7 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'meta', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
     assert mock_display.call_count == 2
@@ -885,7 +907,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'meta', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
@@ -924,7 +946,7 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'meta', b'playbooks', b'plugins', b'roles',
                             b'runme.sh']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
