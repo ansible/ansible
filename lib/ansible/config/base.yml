@@ -1199,15 +1199,6 @@ DEFAULT_VARS_PLUGIN_PATH:
   ini:
   - {key: vars_plugins, section: defaults}
   type: pathspec
-# TODO: unused?
-#DEFAULT_VAR_COMPRESSION_LEVEL:
-#  default: 0
-#  description: 'TODO: write it'
-#  env: [{name: ANSIBLE_VAR_COMPRESSION_LEVEL}]
-#  ini:
-#  - {key: var_compression_level, section: defaults}
-#  type: integer
-#  yaml: {key: defaults.var_compression_level}
 DEFAULT_VAULT_ID_MATCH:
   name: Force vault id match
   default: False
@@ -1480,15 +1471,6 @@ GALAXY_COLLECTIONS_PATH_WARNING:
   ini:
     - {key: collections_path_warning, section: galaxy}
   version_added: "2.16"
-# TODO: unused?
-#GALAXY_SCMS:
-#  name: Galaxy SCMS
-#  default: git, hg
-#  description: Available galaxy source control management systems.
-#  env: [{name: ANSIBLE_GALAXY_SCMS}]
-#  ini:
-#  - {key: scms, section: galaxy}
-#  type: list
 GALAXY_SERVER:
   default: https://galaxy.ansible.com
   description: "URL to prepend when roles don't specify the full URI, assume they are referencing this server as the source."
