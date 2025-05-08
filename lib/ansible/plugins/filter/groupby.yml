@@ -25,6 +25,8 @@ DOCUMENTATION:
       description: The case sensitivity used when evaluating the attribute's value.
       type: bool
       default: false
+  seealso:
+    - U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-filters.groupby)
 EXAMPLES: |
 
     # simple example

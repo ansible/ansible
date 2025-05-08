@@ -19,6 +19,8 @@ DOCUMENTATION:
       type: bool
       required: false
       default: false
+  seealso:
+    - U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-filters.default)
 EXAMPLES: |
 
     # simple example

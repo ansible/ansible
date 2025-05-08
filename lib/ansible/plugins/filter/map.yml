@@ -1,0 +1,39 @@
+DOCUMENTATION:
+  name: map
+  version_added: "jinja"
+  short_description: Process a list of objects
+  description:
+    - Iterate over a list of objects and apply a filter or retrieve an attribute
+
+  positional: _input, filter, _arguments
+  options:
+    _input:
+      description: Mandatory input expression.
+      type: list
+      required: true
+    _filter:
+      description: Name of filter to apply
+      type: string
+    _arguments:
+      description: Optional arguments to filter
+      type: list
+    attribute:
+      description: Attribute to retrieve or process, can be a string or integer.
+      type: raw
+    default:
+      description: Default value to use when attribute is missing.
+      type: raw
+  seealso:
+    - U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-filters.map)
+EXAMPLES: |
+
+    # get book authors
+    {{ books | (attribute='author', default='Anonymous') }}
+
+    # normalize authors to lowercase
+    {{ authors | map('lower') }}
+
+RETURN:
+  _value:
+    description: A list of processed objects
+    type: list
