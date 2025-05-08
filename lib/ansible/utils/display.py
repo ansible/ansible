@@ -1285,6 +1285,10 @@ def format_message(summary: SummaryBase) -> str:
 
 def _report_config_warnings(deprecator: PluginInfo) -> None:
     """Called by config to report warnings/deprecations collected during a config parse."""
+    while config._errors:
+        msg, exception = config._errors.pop()
+        _display.error_as_warning(msg=msg, exception=exception)
+
     while config.WARNINGS:
         warn = config.WARNINGS.pop()
         _display.warning(warn)

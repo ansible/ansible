@@ -757,7 +757,7 @@ DEFAULT_HASH_BEHAVIOUR:
   - {key: hash_behaviour, section: defaults}
 DEFAULT_HOST_LIST:
   name: Inventory Source
-  default: /etc/ansible/hosts
+  default: [/etc/ansible/hosts]
   description: Comma-separated list of Ansible inventory sources
   env:
     - name: ANSIBLE_INVENTORY
@@ -1054,7 +1054,7 @@ DEFAULT_ROLES_PATH:
   yaml: {key: defaults.roles_path}
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
-  default: fuse, nfs, vboxsf, ramfs, 9p, vfat
+  default: [fuse, nfs, vboxsf, ramfs, 9p, vfat]
   description:
     - "Some filesystems do not support safe operations and/or return inconsistent errors,
        this setting makes Ansible 'tolerate' those in the list without causing fatal errors."
@@ -1199,15 +1199,6 @@ DEFAULT_VARS_PLUGIN_PATH:
   ini:
   - {key: vars_plugins, section: defaults}
   type: pathspec
-# TODO: unused?
-#DEFAULT_VAR_COMPRESSION_LEVEL:
-#  default: 0
-#  description: 'TODO: write it'
-#  env: [{name: ANSIBLE_VAR_COMPRESSION_LEVEL}]
-#  ini:
-#  - {key: var_compression_level, section: defaults}
-#  type: integer
-#  yaml: {key: defaults.var_compression_level}
 DEFAULT_VAULT_ID_MATCH:
   name: Force vault id match
   default: False
@@ -1333,7 +1324,7 @@ DISPLAY_SKIPPED_HOSTS:
   type: boolean
 DISPLAY_TRACEBACK:
   name: Control traceback display
-  default: never
+  default: [never]
   description: When to include tracebacks in extended error messages
   env:
     - name: ANSIBLE_DISPLAY_TRACEBACK
@@ -1480,15 +1471,6 @@ GALAXY_COLLECTIONS_PATH_WARNING:
   ini:
     - {key: collections_path_warning, section: galaxy}
   version_added: "2.16"
-# TODO: unused?
-#GALAXY_SCMS:
-#  name: Galaxy SCMS
-#  default: git, hg
-#  description: Available galaxy source control management systems.
-#  env: [{name: ANSIBLE_GALAXY_SCMS}]
-#  ini:
-#  - {key: scms, section: galaxy}
-#  type: list
 GALAXY_SERVER:
   default: https://galaxy.ansible.com
   description: "URL to prepend when roles don't specify the full URI, assume they are referencing this server as the source."
@@ -1731,7 +1713,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(REJECT_EXTS + ('.orig', '.cfg', '.retry'))}}"
+  default: "{{ REJECT_EXTS + ['.orig', '.cfg', '.retry'] }}"
   description: List of extensions to ignore when using a directory as an inventory source.
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
@@ -1788,7 +1770,7 @@ INJECT_FACTS_AS_VARS:
   version_added: "2.5"
 MODULE_IGNORE_EXTS:
   name: Module ignore extensions
-  default: "{{(REJECT_EXTS + ('.yaml', '.yml', '.ini'))}}"
+  default: "{{ REJECT_EXTS + ['.yaml', '.yml', '.ini'] }}"
   description:
     - List of extensions to ignore when looking for modules to load.
     - This is for rejecting script and binary module fallback extensions.
