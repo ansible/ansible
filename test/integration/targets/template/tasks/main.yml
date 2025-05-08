@@ -19,6 +19,15 @@
 - set_fact:
     output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 
+- name: render a template which has no content
+  template:
+    src: none.j2
+    dest: '{{ output_dir }}/none.templated'
+
+- name: verify a template with no content renders as an empty string
+  assert:
+    that: "{{ lookup('file', output_dir ~ '/none.templated') == '' }}"
+
 - name: get default group
   shell: id -gn
   register: group
