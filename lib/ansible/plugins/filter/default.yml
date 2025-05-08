@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: default
+  version_added: "jinja"
+  short_description: Default value
+  description:
+    - Value to return depending if the previous expression results in an undefined error.
+  positional: _input
+  options:
+    _input:
+      description: Mandatory expression.
+      type: raw
+      required: true
+    boolean:
+      description: Expand the cases in which the default value is retruned to include 'boolean falses'.
+      type: bool
+      required: false
+      default: false
+EXAMPLES: |
+
+    # basic usage
+    {{ notdefined | default('myvalue') }}
+
+    # boolean
+    {{ false |default('myvalue', true) }}
+
+RETURN:
+  _value:
+    description: The default value provided
+    type: raw
