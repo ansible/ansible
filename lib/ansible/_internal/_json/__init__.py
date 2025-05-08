@@ -152,7 +152,7 @@ class AnsibleVariableVisitor:
         result: _T
 
         # DTFIX-RELEASE: the visitor is ignoring dict/mapping keys except for debugging and schema-aware checking, it should be doing type checks on keys
-        #                keep in mind the allowed types for keys is a more restrictive set than for values (str and taggged str only, not EncryptedString)
+        #                keep in mind the allowed types for keys is a more restrictive set than for values (str and tagged str only, not EncryptedString)
         # DTFIX-RELEASE: some type lists being consulted (the ones from datatag) are probably too permissive, and perhaps should not be dynamic
 
         if (result := self._early_visit(value, value_type)) is not _sentinel:

@@ -1002,7 +1002,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # tells the module to ignore options that are not in its argspec.
         module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
 
-        # allow user to insert string to add context to remote loggging
+        # allow user to insert string to add context to remote logging
         module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
