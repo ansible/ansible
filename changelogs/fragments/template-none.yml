@@ -1,2 +1,2 @@
 bugfixes:
-  - template module - Templates which render as ``None`` now render as an empty string, as they did in previous releases.
+  - template action - Template files where the entire file's output renders as ``None`` are no longer emitted as the string "None", but instead render to an empty file as in previous releases.
