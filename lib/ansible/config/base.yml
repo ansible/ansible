@@ -1713,7 +1713,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(REJECT_EXTS + ('.orig', '.cfg', '.retry'))}}"
+  default: "{{ REJECT_EXTS + ['.orig', '.cfg', '.retry'] }}"
   description: List of extensions to ignore when using a directory as an inventory source.
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
@@ -1770,7 +1770,7 @@ INJECT_FACTS_AS_VARS:
   version_added: "2.5"
 MODULE_IGNORE_EXTS:
   name: Module ignore extensions
-  default: "{{(REJECT_EXTS + ('.yaml', '.yml', '.ini'))}}"
+  default: "{{ REJECT_EXTS + ['.yaml', '.yml', '.ini'] }}"
   description:
     - List of extensions to ignore when looking for modules to load.
     - This is for rejecting script and binary module fallback extensions.
