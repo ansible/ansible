@@ -7,7 +7,11 @@ DOCUMENTATION:
   positional: _input
   options:
     _input:
-      description: Mandatory expression.
+      description: Mandatory input expression.
+      type: raw
+      required: true
+    default_value:
+      description: Value to return
       type: raw
       required: true
     boolean:
@@ -17,10 +21,10 @@ DOCUMENTATION:
       default: false
 EXAMPLES: |
 
-    # basic usage
-    {{ notdefined | default('myvalue') }}
+    # simple example
+    {{ notdefined | default('default_value') }}
 
-    # boolean
+    # also return on boolean false
     {{ false |default('myvalue', true) }}
 
 RETURN:
