@@ -132,6 +132,9 @@ class ActionModule(ActionBase):
             data_templar = self._templar.copy_with_new_env(searchpath=searchpath, available_variables=temp_vars)
             resultant = data_templar.template(template_data, escape_backslashes=False, overrides=overrides)
 
+            if resultant is None:
+                resultant = ''
+
             new_task = self._task.copy()
             # mode is either the mode from task.args or the mode of the source file if the task.args
             # mode == 'preserve'

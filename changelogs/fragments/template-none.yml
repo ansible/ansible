@@ -1,0 +1,2 @@
+bugfixes:
+  - template module - Templates which render as ``None`` now render as an empty string, as they did in previous releases.
