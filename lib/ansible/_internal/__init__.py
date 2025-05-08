@@ -18,7 +18,7 @@ def get_controller_serialize_map() -> dict[type, t.Callable]:
     return {
         _lazy_containers._AnsibleLazyTemplateDict: _profiles._JSONSerializationProfile.discard_tags,
         _lazy_containers._AnsibleLazyTemplateList: _profiles._JSONSerializationProfile.discard_tags,
-        EncryptedString: str,  # preserves tags since this is an intance of EncryptedString; if tags should be discarded from str, another entry will handle it
+        EncryptedString: str,  # preserves tags since this is an instance of EncryptedString; if tags should be discarded from str, another entry will handle it
     }
 
 
