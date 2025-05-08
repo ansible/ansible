@@ -60,7 +60,7 @@ COLOR_CODES = {
     'magenta': u'0;35', 'bright magenta': u'1;35',
     'normal': u'0',
 }
-REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
+REJECT_EXTS = ['.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst']  # this is concatenated with other config settings as lists; cannot be tuple
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
 
