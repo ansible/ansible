@@ -436,15 +436,14 @@ class CollectionDependencyProviderBase(AbstractProvider):
             requirements=requirement.ver,
         )
 
-    def get_dependencies(self, candidate):
-        # type: (Candidate) -> list[Candidate]
+    def get_dependencies(self, candidate: Candidate) -> t.Generator[Requirement]:
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \
                   specifies as its dependencies.
         """
         if candidate.type == "requires_ansible":
-            return []
+            return
 
         # FIXME: If there's several galaxy servers set, there may be a
         # FIXME: situation when the metadata of the same collection
@@ -474,6 +473,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         if (requires_ansible := self._get_ansible_requirement(candidate)):
             requires_ansible._parent = candidate
             yield requires_ansible
+
 
 # Classes to handle resolvelib API changes between minor versions for 0.X
 class CollectionDependencyProvider050(CollectionDependencyProviderBase):
