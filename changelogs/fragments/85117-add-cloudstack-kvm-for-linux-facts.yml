@@ -1,0 +1,2 @@
+bugfixes:
+  - add "CloudStack KVM Hypervisor" for linux vm in virtual facts 
