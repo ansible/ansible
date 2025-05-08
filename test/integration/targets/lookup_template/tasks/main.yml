@@ -32,3 +32,7 @@
       - lookup('template', 'dict.j2') is not mapping
 
 - include_tasks: trim_blocks.yml
+
+- name: Verify templates with no rendered content return `None`
+  assert:
+    that: "{{ lookup('template', 'none.j2') is none }}"
