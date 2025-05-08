@@ -1,9 +1,9 @@
 DOCUMENTATION:
   name: default
   version_added: "jinja"
-  short_description: Default value
+  short_description: Provide a default value.
   description:
-    - Value to return depending if the previous expression results in an undefined error.
+    - If the input value is undefined, provide a default value instead.
   positional: _input
   options:
     _input:

@@ -1,0 +1,43 @@
+DOCUMENTATION:
+  name: groupby
+  version_added: "jinja"
+  short_description: Group objects by attribute
+  description:
+    - Group a sequence of objects by an attribute using Python's `itertools.groupby`.
+    - The attribute can use dot notation for nested access, like ``"address.city"``.
+    - Unlike Python's ``groupby``, the values are sorted first so only one group is returned for each unique value.
+
+  positional: _input
+  options:
+    _input:
+      description: Mandatory input expression.
+      type: raw
+      required: true
+    attribute:
+      description: Attribute on which to group by, it may be a string or integer.
+      type: raw
+      required: true
+    default_value:
+      description: Default value to use for grouping when attribute is missing.
+      type: raw
+      required: true
+    case_sensitive:
+      description: The case sensitivity used when evaluating the attribute's value.
+      type: bool
+      default: false
+EXAMPLES: |
+
+    # simple example
+    {{ persons | groupby('city') }}
+
+    # default to 'Online' if no city provided
+    {{ persons |groupby('city', default_value='Online') }}
+
+    # McCaffe not same as MCCaffe
+    {{ persons |groupby('nick', case_sensitive=true) }}
+
+RETURN:
+  _value:
+    description: A list of lists of grouped objects
+    type: list
+    elements: list
