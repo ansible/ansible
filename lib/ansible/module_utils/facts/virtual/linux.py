@@ -151,7 +151,7 @@ class LinuxVirtual(Virtual):
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
         product_family = get_file_content('/sys/devices/virtual/dmi/id/product_family')
 
-        if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
+        if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV', 'CloudStack KVM Hypervisor'):
             guest_tech.add('kvm')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'kvm'
