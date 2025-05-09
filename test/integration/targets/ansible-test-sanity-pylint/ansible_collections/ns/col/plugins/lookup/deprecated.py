@@ -83,3 +83,10 @@ def do_stuff() -> None:
     foreign_global_display.deprecated('', version='2.0.0', collection_name='ns.col')
     _display.deprecated('', version='2.0.0', collection_name='ns.col')
     give_me_a_func()("hello")  # not detected
+
+    # don't validate date/version/collection_name if all are dynamic
+    a_msg = 'message not checked'
+    a_date = 'date not checked'
+    a_version = 'version not checked'
+    a_collection_name = 'mismatched'
+    _display.deprecated(msg=a_msg, date=a_date, version=a_version, collection_name=a_collection_name)

@@ -39,6 +39,10 @@ class DeprecationCallArgs:
     removed: object = None  # only on Display.deprecated
     value: object = None  # only on deprecate_value
 
+    def all_args_dynamic(self) -> bool:
+        """True if all args are dynamic or None, otherwise False."""
+        return all(arg is None or isinstance(arg, astroid.NodeNG) for arg in dataclasses.asdict(self).values())
+
 
 class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
     """Checks for deprecated calls to ensure proper usage."""
@@ -346,6 +350,10 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
             self.add_message('ansible-deprecated-date-not-permitted', node=node, args=(name,))
             return
 
+        if call_args.all_args_dynamic():
+            # assume collection maintainers know what they're doing if all args are dynamic
+            return
+
         if call_args.version and call_args.date:
             self.add_message('ansible-deprecated-both-version-and-date', node=node, args=(name,))
             return
@@ -407,10 +415,13 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
                 self.add_message('ansible-deprecated-unnecessary-collection-name', node=node, args=('deprecator', name,))
                 return
 
+        if args.all_args_dynamic():
+            # assume collection maintainers know what they're doing if all args are dynamic
+            return
+
         expected_collection_name = 'ansible.builtin' if self.is_ansible_core else self.collection_name
 
         if args.collection_name and args.collection_name != expected_collection_name:
-            # if collection_name is provided and a constant, report when it does not match the expected name
             self.add_message('wrong-collection-deprecated', node=node, args=(args.collection_name, name))
 
     def check_version(self, node: astroid.Call, name: str, args: DeprecationCallArgs) -> None:
