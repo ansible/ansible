@@ -1,0 +1,2 @@
+minor_changes:
+  - Support setting module_defaults to a template that evaluates to a dictionary or omit.

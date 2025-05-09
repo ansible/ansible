@@ -85,6 +85,12 @@ class PromptSend:
     complete_input: t.Iterable[bytes] = None
 
 
+class ActionGroups:
+    def __init__(self, action_groups=None, group_actions=None):
+        self.action_groups = action_groups
+        self.group_actions = group_actions
+
+
 class FinalQueue(multiprocessing.queues.SimpleQueue):
     def __init__(self, *args, **kwargs):
         kwargs['ctx'] = multiprocessing_context
@@ -104,6 +110,11 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
     def send_prompt(self, **kwargs):
         self.put(
             PromptSend(**kwargs),
+        )
+
+    def send_action_groups(self, action_groups, group_actions):
+        self.put(
+            ActionGroups(action_groups=action_groups, group_actions=group_actions)
         )
 
 

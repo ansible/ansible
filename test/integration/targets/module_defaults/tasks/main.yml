@@ -1,14 +1,16 @@
 - name: main block
   vars:
     test_file: /tmp/ansible-test.module_defaults.foo
-  module_defaults:
-    debug:
-      msg: test {{ "default" }}
-    file:
-      path: '{{ test_file }}'
+    dynamic_module_defaults:
+      debug:
+        msg: test {{ "default" }}
+      file:
+        path: '{{ test_file }}'
+  module_defaults: "{{ dynamic_module_defaults }}"
   block:
     - debug:
       register: foo
+      module_defaults: "{{ test_omit | default(omit) }}"
 
     - local_action:
         module: debug

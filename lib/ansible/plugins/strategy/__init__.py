@@ -37,7 +37,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, TaskQueueManager
+from ansible.executor.task_queue_manager import ActionGroups, CallbackSend, DisplaySend, PromptSend, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.handler import Handler
@@ -47,6 +47,7 @@ from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal._task import action_groups, group_actions
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
@@ -126,6 +127,12 @@ def results_thread_main(strategy: StrategyBase) -> None:
                     except AnsibleError as e:
                         value = e
                 strategy._workers[result.worker_id].worker_queue.put(value)
+            elif isinstance(result, ActionGroups):
+                for worker_cache, shared_cache in [(result.action_groups, action_groups), (result.group_actions, group_actions)]:
+                    for entity, last in worker_cache.items():
+                        prev = set(shared_cache.get(entity) or [])
+                        if (new := set(last).difference(prev)):
+                            shared_cache.setdefault(entity, []).extend(new)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):

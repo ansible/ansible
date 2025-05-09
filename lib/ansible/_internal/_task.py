@@ -18,6 +18,11 @@ if t.TYPE_CHECKING:
     from ansible.playbook.task import Task
 
 
+# FIXME: put these here at random
+action_groups: dict[str, list[str]] = {}
+group_actions: dict[str, list[str]] = {}
+
+
 @dataclasses.dataclass
 class TaskContext(AmbientContextBase):
     """Ambient context that wraps task execution on workers. It provides access to the currently executing task."""

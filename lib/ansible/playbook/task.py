@@ -144,8 +144,43 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return task.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def _post_validate_module_defaults(self, attr: str, value: t.Any, templar: TemplateEngine) -> t.Any:
-        """Override module_defaults post validation to disable templating, which is handled by args post validation."""
-        return value
+        """Override module_defaults post validation to short circuit templating, which is handled by args post validation."""
+        finalized = AnsibleTagHelper.tag_copy(value, [])
+
+        for module_defaults in value:
+            _module_defaults = templar.resolve_to_container(module_defaults, options=TemplateOptions(value_for_omit={}))
+
+            if not isinstance(_module_defaults, dict):
+                raise AnsibleParserError(
+                    f"module_defaults must be a list of dictionaries, not {type(_module_defaults)._native_type}. "
+                    # Note: environment has the same limitation. Allow nested lists and flatten them like tags instead?
+                    f"A templated value must be a dictionary since the template string is cast to a list.",
+                    obj=value
+                )
+
+            finalized.append(AnsibleTagHelper.tag_copy(_module_defaults, {}))
+            for entry in _module_defaults:
+                _entry = templar.resolve_to_container(entry)
+                _value = templar.resolve_to_container(_module_defaults[entry])
+
+                if not isinstance(_value, dict):
+                    raise AnsibleParserError(f"module_defaults arguments must be a dictionary", obj=value)
+
+                if _entry.startswith("group/"):
+                    resolved_entry = "group/" + self._resolve_group(_entry.split("group/")[-1])[0]
+                else:
+                    resolved_entry = self._resolve_action(_entry)
+                    if '.' not in resolved_entry:
+                        builtin_subset = f"ansible.builtin.{resolved_entry}"
+                        if (builtin := self._resolve_action(builtin_subset, mandatory=False)):
+                            finalized[-1][builtin] = _module_defaults[entry]
+
+                finalized[-1][resolved_entry] = _module_defaults[entry]
+
+        if self.play._action_groups or self.play._group_actions:
+            display._final_q.send_action_groups(action_groups=self.play._action_groups, group_actions=self.play._group_actions)
+
+        return finalized
 
     def _post_validate_args(self, attr: str, value: t.Any, templar: TemplateEngine) -> dict[str, t.Any]:
         try:
