@@ -8,12 +8,17 @@ DOCUMENTATION = """
     options:
       plugin:
         description: the load name of the plugin
+      plugin_expression:
+        description: an expression that must be trusted whose default resolves to 2
+        default: 1 + 1
     extends_documentation_fragment:
       - constructed
+      - fragment_with_expression
 """
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible._internal import _testing
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
@@ -26,6 +31,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         config = self._read_config_data(path)
+
+        with _testing.hard_fail_context("ensure config defaults are trusted and runnable as expressions") as ctx:
+            ctx.check(self._compose(self.get_option('plugin_expression'), variables={}) == 2)
+            ctx.check(self._compose(self.get_option('fragment_expression'), variables={}) == 4)
 
         strict = self.get_option('strict')
         try:
