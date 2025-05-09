@@ -154,7 +154,8 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
             unknown_fragments.append(fragment_slug)
             continue
 
-        fragment_yaml = getattr(fragment_class, fragment_var, None)
+        # trust-tagged source propagates to loaded values; expressions and templates in config require trust
+        fragment_yaml = _tags.TrustedAsTemplate().tag(getattr(fragment_class, fragment_var, None))
         if fragment_yaml is None:
             if fragment_var != 'DOCUMENTATION':
                 # if it's asking for something specific that's missing, that's an error
