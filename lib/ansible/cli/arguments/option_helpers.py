@@ -535,13 +535,17 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
     def tag_value(value: str) -> object:
         result = func(value)
 
-        if result is value:
+        if result is value or func is str:
             # Values which are not mutated are automatically trusted for templating.
             # The `is` reference equality is critically important, as other types may only alter the tags, so object equality is
             # not sufficient to prevent them being tagged as trusted when they should not.
+            # Explicitly include all usages using the `str` type factory since it strips tags.
             result = TrustedAsTemplate().tag(result)
 
-        return Origin(description=f'<CLI option {name!r}>').tag(result)
+        if not (origin := Origin.get_tag(value)):
+            origin = Origin(description=f'<CLI option {name!r}>')
+
+        return origin.tag(result)
 
     tag_value._name = name  # simplify debugging by attaching the argument name to the function
 

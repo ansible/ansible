@@ -16,6 +16,7 @@ import typing as t
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
+from ansible._internal._datatag import _tags
 from ansible.errors import AnsibleOptionsError, AnsibleError, AnsibleUndefinedConfigEntry, AnsibleRequiredOptionError
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.module_utils.common.sentinel import Sentinel
@@ -699,6 +700,9 @@ class ConfigManager:
                 self.DEPRECATED.append((config, defs[config].get('deprecated')))
         else:
             raise AnsibleUndefinedConfigEntry(f'No config definition exists for {_get_config_label(plugin_type, plugin_name, config)}.')
+
+        if not _tags.Origin.is_tagged_on(value):
+            value = _tags.Origin(description=f'<Config {origin}>').tag(value)
 
         return value, origin
 
