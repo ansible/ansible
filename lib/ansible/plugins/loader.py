@@ -505,7 +505,8 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
-                documentation_source = getattr(module, 'DOCUMENTATION', '')
+                # trust-tagged source propagates to loaded values; expressions and templates in config require trust
+                documentation_source = _tags.TrustedAsTemplate().tag(getattr(module, 'DOCUMENTATION', ''))
                 try:
                     dstring = yaml.load(_tags.Origin(path=path).tag(documentation_source), Loader=AnsibleLoader)
                 except ParserError as e:
