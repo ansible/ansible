@@ -266,8 +266,6 @@ def main():
                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
-            if module.check_mode:
-                os.unlink(result['backup_file'])
 
         if not module.check_mode:
             module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
