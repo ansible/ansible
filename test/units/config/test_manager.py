@@ -14,8 +14,9 @@ import pytest
 
 from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible._internal._datatag._tags import Origin
+from ansible._internal._datatag._tags import Origin, VaultedValue
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from units.mock.vault_helper import VaultTestHelper
 
 curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
@@ -196,6 +197,19 @@ def test_ensure_type_temppath(value: object, type: str, tmp_path: pathlib.Path) 
     assert os.path.isdir(path)
     assert value in path
     assert os.listdir(path) == []
+
+
+def test_ensure_type_vaulted(_vault_secrets_context: VaultTestHelper) -> None:
+    raw = "secretvalue"
+    origin = Origin(description='test')
+    es = _vault_secrets_context.make_encrypted_string(raw)
+    es = origin.tag(es)
+    result = ensure_type(es, 'str')
+
+    assert isinstance(result, str)
+    assert result == raw
+    assert VaultedValue.is_tagged_on(result)
+    assert Origin.get_tag(result) is origin
 
 
 class TestConfigManager:

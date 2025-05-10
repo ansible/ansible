@@ -51,6 +51,14 @@ GALAXY_SERVER_ADDITIONAL = {
 }
 
 
+@t.runtime_checkable
+class _EncryptedStringProtocol(t.Protocol):
+    """Protocol representing an `EncryptedString`, since it cannot be imported here."""
+    # DTFIX-FUTURE: collapse this with the one in collection loader, once we can
+
+    def _decrypt(self) -> str: ...
+
+
 def _get_config_label(plugin_type: str, plugin_name: str, config: str) -> str:
     """Return a label for the given config."""
     entry = f'{config!r}'
@@ -204,6 +212,9 @@ def _ensure_type(value: object, value_type: str | None, origin: str | None = Non
 
             if isinstance(value, (bool, int, float, complex)):
                 return str(value)
+
+            if isinstance(value, _EncryptedStringProtocol):
+                return value._decrypt()
 
         case _:
             # FIXME: define and document a pass-through value_type (None, 'raw', 'object', '', ...) and then deprecate acceptance of unknown types
