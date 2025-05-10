@@ -10,12 +10,12 @@ from ansible.parsing.vault import VaultHelper, EncryptedString
 from ansible._internal._yaml._errors import AnsibleYAMLParserError
 from ansible.parsing.utils.yaml import from_yaml
 
-from ..vault.test_vault import make_vault_ciphertext
+from ...mock.vault_helper import VaultTestHelper
 
 
-def test_from_yaml_json_only(_vault_secrets_context) -> None:
+def test_from_yaml_json_only(_vault_secrets_context: VaultTestHelper) -> None:
     """Ensure that from_yaml properly yields an `EncryptedString` instance for legacy-profile JSON with encoded vaulted values."""
-    ciphertext = make_vault_ciphertext('mom')
+    ciphertext = _vault_secrets_context.make_vault_ciphertext('mom')
 
     data = json.dumps(dict(hi=dict(
         __ansible_vault=ciphertext,
@@ -28,8 +28,8 @@ def test_from_yaml_json_only(_vault_secrets_context) -> None:
     assert VaultHelper.get_ciphertext(result['hi'], with_tags=False) == ciphertext
 
 
-def test_from_yaml(_vault_secrets_context) -> None:
-    ciphertext = make_vault_ciphertext('mom')
+def test_from_yaml(_vault_secrets_context: VaultTestHelper) -> None:
+    ciphertext = _vault_secrets_context.make_vault_ciphertext('mom')
 
     data = f'hi: !vault |\n{textwrap.indent(ciphertext, "  ")}'
 

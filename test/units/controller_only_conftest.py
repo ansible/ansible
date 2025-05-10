@@ -3,11 +3,14 @@ from __future__ import annotations
 import typing as t
 
 import pytest
+
 from pytest_mock import MockerFixture
 
 from ansible._internal._errors._handler import ErrorHandler, ErrorAction
 from ansible.parsing.vault import VaultSecretsContext, VaultSecret
 from ansible._internal._templating._engine import _TemplateConfig
+from units.mock.vault_helper import VaultTestHelper
+
 
 # DTFIX-RELEASE: it'd be nice not to need to sync all controller-only fixtures here, but sunder values are excluded from `import *`,
 #  and if we don't sunder the fixtures, they'll be unused args. Could also be handled with a managed import, module getattr, or others.
@@ -36,13 +39,13 @@ def _empty_vault_secrets_context(_zap_vault_secrets_context) -> t.Generator[None
 
 
 @pytest.fixture
-def _vault_secrets_context(_zap_vault_secrets_context) -> t.Generator[None]:
-    """A fixture that provides a `VaultSecretsContext` populated with a single default secret under the default id."""
+def _vault_secrets_context(_zap_vault_secrets_context) -> t.Generator[VaultTestHelper]:
+    """A fixture that initializes `VaultSecretsContext` with a single secret under the default ID and returns a `VaultTestHelper`."""
     secret = VaultSecret(b'secretbytesblah')
 
     VaultSecretsContext.initialize(VaultSecretsContext(secrets=[('default', secret)]))
 
-    yield
+    yield VaultTestHelper()
 
 
 @pytest.fixture
