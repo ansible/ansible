@@ -12,6 +12,7 @@ import typing as t
 @t.runtime_checkable
 class _EncryptedStringProtocol(t.Protocol):
     """Protocol representing an `EncryptedString`, since it cannot be imported here."""
+
     # DTFIX-FUTURE: collapse this with the one in config, once we can
 
     def _decrypt(self) -> str: ...
