@@ -150,11 +150,23 @@ class ActionModule(ActionBase):
             # like become and environment args
             if getattr(self._connection._shell, "_IS_WINDOWS", False):
                 # FUTURE: use a more public method to get the exec payload
-                pc = self._task
+                become = False
+                become_method = None
+                become_user = None
+                become_pass = None
+                become_flags = None
+                if self._connection.become:
+                    become_plugin = self._connection.become
+                    become = True
+                    become_method = become_plugin.name
+                    become_user = become_plugin.get_option('become_user', playcontext=self._play_context)
+                    become_pass = become_plugin.get_option('become_pass', playcontext=self._play_context)
+                    become_flags = become_plugin.get_option('become_flags', playcontext=self._play_context)
+
                 exec_data = ps_manifest._create_powershell_wrapper(
                     to_bytes(script_cmd), source, {}, env_dict, self._task.async_val,
-                    pc.become, pc.become_method, pc.become_user,
-                    self._play_context.become_pass, pc.become_flags, "script", task_vars, None
+                    become, become_method, become_user,
+                    become_pass, become_flags, "script", task_vars, None
                 )
                 # build the necessary exec wrapper command
                 # FUTURE: this still doesn't let script work on Windows with non-pipelined connections or
