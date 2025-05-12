@@ -76,6 +76,7 @@ DEFAULT_SUBSET = None
 CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars')
 # NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
+REJECTABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'filter', 'httpapi', 'inventory', 'lookup', 'netconf', 'module', 'shell', 'test', 'vars')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 INTERNAL_STATIC_VARS = frozenset(

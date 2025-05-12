@@ -1600,20 +1600,21 @@ def _load_plugin_filter():
         version = to_text(version)
         version = version.strip()
 
-        # Modules and action plugins share the same reject list since the difference between the
-        # two isn't visible to the users
-        if version == u'1.0':
-            try:
-                filters['ansible.modules'] = frozenset(filter_data['module_rejectlist'])
-            except TypeError:
-                display.warning(u'Unable to parse the plugin filter file {0} as'
-                                u' module_rejectlist is not a list.'
-                                u' Skipping.'.format(filter_cfg))
-                return filters
-            filters['ansible.plugins.action'] = filters['ansible.modules']
-        else:
-            display.warning(u'The plugin filter file, {0} was a version not recognized by this'
-                            u' version of Ansible. Skipping.'.format(filter_cfg))
+        match version:
+            case '1.0':
+                try:
+                    for plugin_type in C.REJECTABLE_PLUGINS:
+                        if plugin_type == 'module':  # modules are always 'special'
+                            filters[f'ansible.{plugin_type}s'] = frozenset(filter_data.get(f'{plugin_type}_rejectlist', []))
+                        else:
+                            filters[f'ansible.plugins.{plugin_type}'] = frozenset(filter_data.get(f'{plugin_type}_rejectlist', []))
+                except TypeError as e:
+                    display.warning(f'Skipping {plugin_type}_rejectlist in file {filter_cfg!r} as it is not a list: {e!r}')
+
+                # Modules and action plugins share the same reject list since the difference between the two isn't visible to the users
+                filters['ansible.plugins.action'] = filters.get('ansible.modules', [])
+            case _:
+                display.warning(f'Skipping plugin filter file, {filter_cfg!r} as the version is not recognized by this version of Ansible.')
     else:
         if user_set:
             display.warning(u'The plugin filter file, {0} does not exist.'
