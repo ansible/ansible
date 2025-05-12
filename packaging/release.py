@@ -61,6 +61,11 @@ def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, cap
 
 
 @t.overload
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: bool) -> CompletedProcess | None:
+    ...
+
+
+@t.overload
 def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str) -> None:
     ...
 
@@ -349,14 +354,6 @@ class ReleaseArtifact:
     digest_algorithm: str
 
 
-@dataclasses.dataclass(frozen=True)
-class ReleaseAnnouncement:
-    """Contents of a release announcement."""
-
-    subject: str
-    body: str
-
-
 # endregion
 # region Utilities
 
@@ -477,7 +474,7 @@ def git(*args: t.Any) -> None:
     ...
 
 
-def git(*args: t.Any, capture_output: t.Literal[True] | t.Literal[False] = False) -> CompletedProcess | None:
+def git(*args: t.Any, capture_output: bool = False) -> CompletedProcess | None:
     """Run the specified git command."""
     return run("git", *args, env=None, cwd=CHECKOUT_DIR, capture_output=capture_output)
 
@@ -943,7 +940,7 @@ def describe_release_artifact(version: Version, item: dict[str, t.Any], validate
     """Return release artifact details extracted from the given PyPI data."""
     package_type = item["packagetype"]
 
-    # The artifact URL is documented as stable, so is safe to put in release notes and announcements.
+    # The artifact URL is documented as stable, so is safe to put in release notes.
     # See: https://github.com/pypi/warehouse/blame/c95be4a1055f4b36a8852715eb80318c81fc00ca/docs/api-reference/integration-guide.rst#L86-L90
     url = item["url"]
 
@@ -1021,57 +1018,9 @@ def create_github_release_notes(upstream: Remote, repository: str, version: Vers
     return release_notes
 
 
-def create_release_announcement(upstream: Remote, repository: str, version: Version, validate: bool) -> ReleaseAnnouncement:
-    """Create and return a release announcement message."""
-    env = create_template_environment()
-    subject_template = env.from_string(RELEASE_ANNOUNCEMENT_SUBJECT_TEMPLATE)
-    body_template = env.from_string(RELEASE_ANNOUNCEMENT_BODY_TEMPLATE)
-
-    today = datetime.datetime.now(tz=datetime.timezone.utc).date()
-
-    variables = dict(
-        version=version,
-        info=dict(
-            name="ansible-core",
-            short=f"{version.major}.{version.minor}",
-            releases=get_release_artifact_details(repository, version, validate),
-        ),
-        next_rc=get_next_release_date(datetime.date(2021, 8, 9), 28, today),
-        next_ga=get_next_release_date(datetime.date(2021, 8, 16), 28, today),
-        rc=version.pre and version.pre[0] == "rc",
-        beta=version.pre and version.pre[0] == "b",
-        alpha=version.pre and version.pre[0] == "a",
-        major=version.micro == 0,
-        upstream=upstream,
-    )
-
-    if version.pre and version.pre[0] in ("a", "b"):
-        display.warning("The release announcement template does not populate the date for the next release.")
-
-    subject = subject_template.render(**variables).strip()
-    body = body_template.render(**variables).strip()
-
-    message = ReleaseAnnouncement(
-        subject=subject,
-        body=body,
-    )
-
-    return message
-
-
 # endregion
 # region Templates
 
-
-FINAL_RELEASE_ANNOUNCEMENT_RECIPIENTS = [
-    "ansible-announce@googlegroups.com",
-    "ansible-project@googlegroups.com",
-    "ansible-devel@googlegroups.com",
-]
-
-PRE_RELEASE_ANNOUNCEMENT_RECIPIENTS = [
-    "ansible-devel@googlegroups.com",
-]
 
 GITHUB_RELEASE_NOTES_TEMPLATE = """
 # Changelog
@@ -1086,83 +1035,10 @@ See the [full changelog]({{ changelog }}) for the changes included in this relea
 {%- endfor %}
 """
 
-# These release templates were adapted from sivel's release announcement script.
-# See: https://gist.github.com/sivel/937bc2862a9677d8db875f3b10744d8c
-
-RELEASE_ANNOUNCEMENT_SUBJECT_TEMPLATE = """
-New release{% if rc %} candidate{% elif beta %} beta{% elif alpha %} alpha{% endif %}: {{ info.name }} {{ version }}
-"""
-
-# NOTE: Gmail will automatically wrap the plain text version when sending.
-#       There's no need to perform wrapping ahead of time for normal sentences.
-#       However, lines with special formatting should be kept short to avoid unwanted wrapping.
-RELEASE_ANNOUNCEMENT_BODY_TEMPLATE = """
-Hi all- we're happy to announce the{{ " " }}
-{%- if rc -%}
-following release candidate
-{%- elif beta -%}
-beta release of
-{%- elif alpha -%}
-alpha release of
-{%- else -%}
-general release of
-{%- endif -%}:
-
-{{ info.name }} {{ version }}
-
-
-How to get it
--------------
-
-$ python3 -m pip install --user {{ info.name }}=={{ version }}
-
-The release artifacts can be found here:
-{% for release in info.releases %}
-# {{ release.package_label }}: {{ release.size }} bytes
-# {{ release.digest_algorithm }}: {{ release.digest }}
-{{ release.url }}
-{%- endfor %}
-
-
-What's new
-----------
-
-{% if major %}
-This release is a major release.
-{%- else -%}
-This release is a maintenance release containing numerous bugfixes.
-{% endif %}
-The full changelog can be found here:
-
-https://github.com/{{ upstream.user }}/{{ upstream.repo }}/blob/v{{ version }}/changelogs/CHANGELOG-v{{ info.short }}.rst
-
-
-Schedule for future releases
-----------------------------
-{% if rc %}
-The release candidate will become a general availability release on {{ next_ga.strftime('%-d %B %Y') }}.
-{% elif beta %}
-Subject to the need for additional beta releases, the first release candidate is scheduled for X.
-{% elif alpha %}
-Subject to the need for additional alpha releases, the first release beta is scheduled for X.
-{% else %}
-The next release candidate is planned to be released on {{ next_rc.strftime('%-d %B %Y') }}. The next general availability release will be one week after.
-{% endif %}
-
-Porting help
-------------
-
-If you discover any errors or if any of your working playbooks break when you upgrade, please use the following link to report the regression:
-
-https://github.com/{{ upstream.user }}/{{ upstream.repo }}/issues/new/choose
-
-In your issue, be sure to mention the version that works and the one that doesn't.
-
-Thanks!
-"""
 
 # endregion
 # region Commands
+
 
 command = CommandFramework(
     repository=dict(metavar="REPO", choices=tuple(PYPI_ENDPOINTS), default="pypi", help="PyPI repository to use: %(choices)s [%(default)s]"),
@@ -1170,7 +1046,6 @@ command = CommandFramework(
     pre=dict(exclusive="version", help="increment version to the specified pre-release (aN, bN, rcN)"),
     final=dict(exclusive="version", action="store_true", help="increment version to the next final release"),
     commit=dict(help="commit to tag"),
-    mailto=dict(name="--mailto", action="store_true", help="write announcement to mailto link instead of console"),
     validate=dict(name="--no-validate", action="store_false", help="disable validation of PyPI artifacts against local ones"),
     prompt=dict(name="--no-prompt", action="store_false", help="disable interactive prompt before publishing with twine"),
     setuptools=dict(name='--no-setuptools', action="store_false", help="disable updating setuptools upper bound"),
@@ -1195,9 +1070,8 @@ Releases must be performed using an up-to-date checkout of a fork of the Ansible
 4. Run the `complete` command [2], then:
    a. Submit the GitHub release opened in the browser.
    b. Submit the PR opened in the browser.
-   c. Send the release announcement opened in your browser.
-   d. Wait for CI to pass.
-   e. Merge the PR.
+   c. Wait for CI to pass.
+   d. Merge the PR.
 
 [1] Use the `--final`, `--pre` or `--version` option for control over the version.
 [2] During the `publish` step, `twine` may prompt for credentials.
@@ -1326,7 +1200,7 @@ def create_release_pr(allow_stale: bool = False) -> None:
 
 # noinspection PyUnusedLocal
 @command
-def complete(repository: str, mailto: bool = True, allow_dirty: bool = False) -> None:
+def complete(repository: str, allow_dirty: bool = False) -> None:
     """Complete a release after the prepared changes have been merged."""
     command.run(
         check_state,
@@ -1336,7 +1210,6 @@ def complete(repository: str, mailto: bool = True, allow_dirty: bool = False) ->
         tag_release,
         post_version,
         create_post_pr,
-        release_announcement,
     )
 
 
@@ -1525,35 +1398,6 @@ def create_post_pr(allow_stale: bool = False) -> None:
     )
 
     create_pull_request(pr)
-
-
-@command
-def release_announcement(repository: str, version: str | None = None, mailto: bool = True, validate: bool = True) -> None:
-    """Generate a release announcement for the current or specified version."""
-    parsed_version = get_ansible_version(version, mode=VersionMode.STRIP_POST)
-    upstream = get_remotes().upstream
-    message = create_release_announcement(upstream, repository, parsed_version, validate)
-    recipient_list = PRE_RELEASE_ANNOUNCEMENT_RECIPIENTS if parsed_version.is_prerelease else FINAL_RELEASE_ANNOUNCEMENT_RECIPIENTS
-    recipients = ", ".join(recipient_list)
-
-    if mailto:
-        to = urllib.parse.quote(recipients)
-
-        params = dict(
-            subject=message.subject,
-            body=message.body,
-        )
-
-        query_string = urllib.parse.urlencode(params)
-        url = f"mailto:{to}?{query_string}"
-
-        display.show("Opening email client through default web browser ...")
-        webbrowser.open(url)
-    else:
-        print(f"TO: {recipients}")
-        print(f"SUBJECT: {message.subject}")
-        print()
-        print(message.body)
 
 
 # endregion
