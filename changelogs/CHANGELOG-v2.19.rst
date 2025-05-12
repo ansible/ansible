@@ -4,6 +4,39 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0b4
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2025-05-12
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- facts - add "CloudStack KVM Hypervisor" for Linux VM in virtual facts (https://github.com/ansible/ansible/issues/85089).
+- modules - use ``AnsibleModule.warn`` instead of passing ``warnings`` to ``exit_json`` or ``fail_json`` which is deprecated.
+
+Bugfixes
+--------
+
+- ansible-test - Updated the ``pylint`` sanity test to skip some deprecation validation checks when all arguments are dynamic.
+- config - Preserve or apply Origin tag to values returned by config.
+- config - Prevented fatal errors when ``MODULE_IGNORE_EXTS`` configuration was set.
+- config - Templating failures on config defaults now issue a warning. Previously, failures silently returned an unrendered and untrusted template to the caller.
+- config - ``ensure_type`` correctly propagates trust and other tags on returned values.
+- config - ``ensure_type`` now converts mappings to ``dict`` when requested, instead of returning the mapping.
+- config - ``ensure_type`` now converts sequences to ``list`` when requested, instead of returning the sequence.
+- config - ``ensure_type`` now correctly errors when ``pathlist`` or ``pathspec`` types encounter non-string list items.
+- config - ``ensure_type`` now reports an error when ``bytes`` are provided for any known ``value_type``. Previously, the behavior was undefined, but often resulted in an unhandled exception or incorrect return type.
+- config - ``ensure_type`` with expected type ``int`` now properly converts ``True`` and ``False`` values to ``int``. Previously, these values were silently returned unmodified.
+- convert_bool.boolean API conversion function - Unhashable values passed to ``boolean`` behave like other non-boolean convertible values, returning False or raising ``TypeError`` depending on the value of ``strict``. Previously, unhashable values always raised ``ValueError`` due to an invalid set membership check.
+- dnf5 - when ``bugfix`` and/or ``security`` is specified, skip packages that do not have any such updates, even for new versions of libdnf5 where this functionality changed and it is considered failure
+- plugin loader - Apply template trust to strings loaded from plugin configuration definitions and doc fragments.
+- template action - Template files where the entire file's output renders as ``None`` are no longer emitted as the string "None", but instead render to an empty file as in previous releases.
+
 v2.19.0b3
 =========
 
@@ -327,7 +360,7 @@ Bugfixes
 - get_url - fix honoring ``filename`` from the ``content-disposition`` header even when the type is ``inline`` (https://github.com/ansible/ansible/issues/83690)
 - host_group_vars - fixed defining the 'key' variable if the get_vars method is called with cache=False (https://github.com/ansible/ansible/issues/84384)
 - include_vars - fix including previously undefined hash variables with hash_behaviour merge (https://github.com/ansible/ansible/issues/84295).
-- iptables - Allows the wait paramater to be used with iptables chain creation (https://github.com/ansible/ansible/issues/84490)
+- iptables - Allows the wait parameter to be used with iptables chain creation (https://github.com/ansible/ansible/issues/84490)
 - linear strategy - fix executing ``end_role`` meta tasks for each host, instead of handling these as implicit run_once tasks (https://github.com/ansible/ansible/issues/84660).
 - local connection plugin - Become timeout errors now include all received data. Previously, the most recently-received data was discarded.
 - local connection plugin - Ensure ``become`` success validation always occurs, even when an active plugin does not set ``prompt``.
