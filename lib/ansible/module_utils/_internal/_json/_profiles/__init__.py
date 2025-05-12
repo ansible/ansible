@@ -203,6 +203,8 @@ class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
 
     @classmethod
     def handle_key(cls, k: t.Any) -> t.Any:
+        # NOTE: Since JSON requires string keys, there is no support for preserving tags on dictionary keys during serialization.
+
         if not isinstance(k, str):  # DTFIX-FUTURE: optimize this to use all known str-derived types in type map / allowed types
             raise TypeError(f'Key of type {type(k).__name__!r} is not JSON serializable by the {cls.profile_name!r} profile.')
 
