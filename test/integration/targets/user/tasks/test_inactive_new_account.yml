@@ -11,7 +11,7 @@
     password_expire_account_disable: 15
 
 - name: Verify inactive setting for Linux
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
   block:
     - name: LINUX | Get inactive value for ansibulluser
       getent:
@@ -46,7 +46,7 @@
   register: return_user_information
 
 - name: Verify updated inactive setting for Linux
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
   block:
     - name: LINUX | Get inactive value for ansibulluser
       getent:

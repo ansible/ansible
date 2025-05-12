@@ -38,7 +38,7 @@
         msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
         that:
           - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
 
 - name: Verify un expiration date for BSD
   block:

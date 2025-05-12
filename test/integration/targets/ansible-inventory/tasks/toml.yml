@@ -49,4 +49,3 @@
       - file:
           name: unicode_inventory.toml
           state: absent
-  when: ansible_python.version.major|int == 3

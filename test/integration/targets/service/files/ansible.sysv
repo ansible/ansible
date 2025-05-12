@@ -22,12 +22,9 @@
 [ -x /usr/sbin/ansible_test_service ] || exit 0
 
 DEBIAN_VERSION=/etc/debian_version
-SUSE_RELEASE=/etc/SuSE-release
 # Source function library.
 if [ -f $DEBIAN_VERSION ]; then
     . /lib/lsb/init-functions
-elif [ -f $SUSE_RELEASE -a -r /etc/rc.status ]; then
-    . /etc/rc.status
 else
     . /etc/rc.d/init.d/functions
 fi
@@ -45,10 +42,7 @@ RETVAL=0
 
 start() {
     echo -n "Starting ansible test daemon: "
-    if [ -f $SUSE_RELEASE ]; then
-        startproc -p /var/run/${SERVICE}.pid -f /usr/sbin/ansible_test_service
-        rc_status -v
-    elif [ -e $DEBIAN_VERSION ]; then
+    if [ -e $DEBIAN_VERSION ]; then
         if [ -f $LOCKFILE ]; then
             echo -n "already started, lock file found"
             RETVAL=1
@@ -67,10 +61,7 @@ start() {
 
 stop() {
     echo -n "Stopping ansible test daemon: "
-    if [ -f $SUSE_RELEASE ]; then
-        killproc -TERM /usr/sbin/ansible_test_service
-        rc_status -v
-    elif [ -f $DEBIAN_VERSION ]; then
+    if [ -f $DEBIAN_VERSION ]; then
         # Added this since Debian's start-stop-daemon doesn't support spawned processes
         if ps -ef | grep "/usr/sbin/ansible_test_service" | grep -v grep | awk '{print $2}' | xargs kill &> /dev/null; then
             echo -n "OK"
@@ -101,11 +92,7 @@ case "$1" in
         $1
         ;;
     status)
-        if [ -f $SUSE_RELEASE ]; then
-            echo -n "Checking for ansible test service "
-            checkproc /usr/sbin/ansible_test_service
-            rc_status -v
-        elif [ -f $DEBIAN_VERSION ]; then
+        if [ -f $DEBIAN_VERSION ]; then
             if [ -f $LOCKFILE ]; then
                 RETVAL=0
                 echo "ansible test is running."

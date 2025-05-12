@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- when: not (ansible_distribution == 'Fedora' and ansible_distribution_version is version(41, '>=') and not (dnf5 | default(False)))
+- when: dnf5 | default(False)
   block:
   - block:
       - include_tasks: dnf.yml
