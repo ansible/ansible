@@ -43,11 +43,11 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.play import _action_groups, _group_actions
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible._internal._templating._engine import TemplateEngine
-from ansible._internal._task import action_groups, group_actions
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
@@ -128,7 +128,7 @@ def results_thread_main(strategy: StrategyBase) -> None:
                         value = e
                 strategy._workers[result.worker_id].worker_queue.put(value)
             elif isinstance(result, ActionGroups):
-                for worker_cache, shared_cache in [(result.action_groups, action_groups), (result.group_actions, group_actions)]:
+                for worker_cache, shared_cache in [(result.action_groups, _action_groups), (result.group_actions, _group_actions)]:
                     for entity, last in worker_cache.items():
                         prev = set(shared_cache.get(entity) or [])
                         if (new := set(last).difference(prev)):

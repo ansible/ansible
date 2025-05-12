@@ -144,8 +144,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         return task.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def _post_validate_module_defaults(self, attr: str, value: t.Any, templar: TemplateEngine) -> t.Any:
-        """Override module_defaults post validation to short circuit templating, which is handled by args post validation."""
-        finalized = AnsibleTagHelper.tag_copy(value, [])
+        """Template and resolve all actions/modules/groups in module_defaults. Argument validation is handled by args post validation."""
+        finalized = []
 
         for module_defaults in value:
             _module_defaults = templar.resolve_to_container(module_defaults, options=TemplateOptions(value_for_omit={}))
@@ -153,12 +153,12 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             if not isinstance(_module_defaults, dict):
                 raise AnsibleParserError(
                     f"module_defaults must be a list of dictionaries, not {type(_module_defaults)._native_type}. "
-                    # Note: environment has the same limitation. Allow nested lists and flatten them like tags instead?
-                    f"A templated value must be a dictionary since the template string is cast to a list.",
+                    # FIXME: environment has the same limitation. Allow nested lists and flatten them like tags instead?
+                    "A templated value must be a dictionary since the template string is cast to a list.",
                     obj=value
                 )
 
-            finalized.append(AnsibleTagHelper.tag_copy(_module_defaults, {}))
+            finalized.append({})
             for entry in _module_defaults:
                 _entry = templar.resolve_to_container(entry)
                 _value = templar.resolve_to_container(_module_defaults[entry])

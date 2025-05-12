@@ -21,7 +21,6 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
-from ansible._internal import _task
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -39,6 +38,10 @@ display = Display()
 
 
 __all__ = ['Play']
+
+
+_action_groups: dict[str, list[str]] = {}
+_group_actions: dict[str, list[str]] = {}
 
 
 class Play(Base, Taggable, CollectionSearch):
@@ -95,8 +98,8 @@ class Play(Base, Taggable, CollectionSearch):
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
-        self._action_groups = _task.action_groups
-        self._group_actions = _task.group_actions
+        self._action_groups = _action_groups
+        self._group_actions = _group_actions
 
     def __repr__(self):
         return self.get_name()
