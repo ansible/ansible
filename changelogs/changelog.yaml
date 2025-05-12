@@ -819,3 +819,38 @@ releases:
     - gather_facts_smart_fix.yml
     - pin-wheel.yml
     release_date: '2025-04-14'
+  2.18.6rc1:
+    changes:
+      bugfixes:
+      - Ansible will now ensure predictable permissions on remote artifacts, until
+        now it only ensured executable and relied on system masks for the rest.
+      - ansible-doc - fix indentation for first line of descriptions of suboptions
+        and sub-return values (https://github.com/ansible/ansible/pull/84690).
+      - ansible-doc - fix line wrapping for first line of description of options and
+        return values (https://github.com/ansible/ansible/pull/84690).
+      - dnf5 - avoid generating excessive transaction entries in the dnf5 history
+        (https://github.com/ansible/ansible/issues/85046)
+      - dnf5 - when ``bugfix`` and/or ``security`` is specified, skip packages that
+        do not have any such updates, even for new versions of libdnf5 where this
+        functionality changed and it is considered failure
+      - script - Fix up become support for Windows scripts when become was set through
+        host variables and not on the task directly - https://github.com/ansible/ansible/issues/85076
+      minor_changes:
+      - ansible-test - Use the ``-t`` option to set the stop timeout when stopping
+        a container. This avoids use of the ``--time`` option which was deprecated
+        in Docker v28.0.
+      release_summary: '| Release Date: 2025-05-12
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.6rc1_summary.yaml
+    - 84690-ansible-doc-indent-wrapping.yml
+    - 85046-dnf5-history-entries.yml
+    - ansible-test-container-stop.yml
+    - dnf5-advisory-type.yml
+    - ensure_remote_perms.yml
+    - win-script-become.yml
+    release_date: '2025-05-12'
