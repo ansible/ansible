@@ -4,6 +4,29 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-05-12
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Replace FreeBSD 14.0 remote with FreeBSD 14.1.
+- ansible-test - Use the ``-t`` option to set the stop timeout when stopping a container. This avoids use of the ``--time`` option which was deprecated in Docker v28.0.
+
+Bugfixes
+--------
+
+- Ansible will now ensure predictable permissions on remote artifacts, until now it only ensured executable and relied on system masks for the rest.
+- ansible-doc - fix indentation for first line of descriptions of suboptions and sub-return values (https://github.com/ansible/ansible/pull/84690).
+- ansible-doc - fix line wrapping for first line of description of options and return values (https://github.com/ansible/ansible/pull/84690).
+- script - Fix up become support for Windows scripts when become was set through host variables and not on the task directly - https://github.com/ansible/ansible/issues/85076
+
 v2.17.11
 ========
 

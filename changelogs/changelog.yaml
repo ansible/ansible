@@ -756,6 +756,36 @@ releases:
     - gather_facts_smart_fix.yml
     - pin-wheel.yml
     release_date: '2025-04-14'
+  2.17.12rc1:
+    changes:
+      bugfixes:
+      - Ansible will now ensure predictable permissions on remote artifacts, until
+        now it only ensured executable and relied on system masks for the rest.
+      - ansible-doc - fix indentation for first line of descriptions of suboptions
+        and sub-return values (https://github.com/ansible/ansible/pull/84690).
+      - ansible-doc - fix line wrapping for first line of description of options and
+        return values (https://github.com/ansible/ansible/pull/84690).
+      - script - Fix up become support for Windows scripts when become was set through
+        host variables and not on the task directly - https://github.com/ansible/ansible/issues/85076
+      minor_changes:
+      - ansible-test - Replace FreeBSD 14.0 remote with FreeBSD 14.1.
+      - ansible-test - Use the ``-t`` option to set the stop timeout when stopping
+        a container. This avoids use of the ``--time`` option which was deprecated
+        in Docker v28.0.
+      release_summary: '| Release Date: 2025-05-12
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.12rc1_summary.yaml
+    - 84690-ansible-doc-indent-wrapping.yml
+    - ansible-test-container-stop.yml
+    - ansible-test-platform-updates.yml
+    - ensure_remote_perms.yml
+    - win-script-become.yml
+    release_date: '2025-05-12'
   2.17.1rc1:
     changes:
       bugfixes:
