@@ -206,11 +206,8 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 def write_changes(module, contents, path,encoding=None):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    # with os.fdopen(tmpfd, 'wb') as tf:
-    #     tf.write(contents)
     with os.fdopen(tmpfd,'w',encoding=encoding) as tf:
         tf.writelines(contents)
-
 
     validate = module.params.get('validate', None)
     valid = not validate
@@ -286,13 +283,9 @@ def main():
         original = None
         lines = []
     else:
-        # with open(path, 'rb') as f:
-        #     original = f.read()
         with open(path,'r',encoding=encoding) as f:
             original=f.read()
             lines = original.splitlines(True)
-            # lines = [s for s in original]
-        # lines = original.splitlines(True)
 
     diff = {'before': '',
             'after': '',
@@ -304,12 +297,9 @@ def main():
 
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
-    # block = to_bytes(params['block'])
-    # marker = to_bytes(params['marker'])
     block = to_text(params['block'])
     marker = to_text(params['marker'])
     present = params['state'] == 'present'
-    # blank_line = [b(os.linesep)]
     blank_line = [(os.linesep)]
 
     if not present and not path_exists:
@@ -320,26 +310,17 @@ def main():
 
     if insertafter not in (None, 'EOF'):
         insertre = re.compile(to_text(insertafter, errors='surrogate_or_strict'))
-        # insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
     elif insertbefore not in (None, 'BOF'):
         insertre = re.compile(to_text(insertbefore, errors='surrogate_or_strict'))
-        # insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
     else:
         insertre = None
 
-    # marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
-    # marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     marker0 = re.sub((r'{mark}'), (params['marker_begin']), marker) + (os.linesep)
     marker1 = re.sub((r'{mark}'), (params['marker_end']), marker) + (os.linesep)
-
-    # diff['marker0'] = marker0
-    # diff['marker1'] = marker1
 
     if present and block:
         if not block.endswith((os.linesep)):
             block += (os.linesep)
-        # if not block.endswith(b(os.linesep)):
-        #     block += b(os.linesep)
         blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
@@ -383,8 +364,6 @@ def main():
     if n0 > 0:
         if not lines[n0 - 1].endswith((os.linesep)):
             lines[n0 - 1] += (os.linesep)
-        # if not lines[n0 - 1].endswith(b(os.linesep)):
-        #     lines[n0 - 1] += b(os.linesep)
 
     # Before the block: check if we need to prepend a blank line
     # If yes, we need to add the blank line if we are not at the beginning of the file
@@ -392,7 +371,6 @@ def main():
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
           if n0 != 0 and lines[n0 - 1] != (os.linesep):
-        # if n0 != 0 and lines[n0 - 1] != b(os.linesep):
             lines[n0:n0] = blank_line
             n0 += 1
 
@@ -408,10 +386,6 @@ def main():
         # if line_after_block < len(lines) and lines[line_after_block] != b(os.linesep):
             lines[line_after_block:line_after_block] = blank_line
 
-    # if lines:
-    #     result = b''.join(lines)
-    # else:
-    #     result = b''
     if lines:
         result = ''.join(lines)
     else:
@@ -439,7 +413,6 @@ def main():
             backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
         real_path = os.path.realpath(params['path'])
-        # write_changes(module, result, real_path)
         write_changes(module, result, real_path,encoding)
 
     if module.check_mode and not path_exists:
