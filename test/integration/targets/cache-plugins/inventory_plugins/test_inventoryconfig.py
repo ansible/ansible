@@ -12,6 +12,7 @@ DOCUMENTATION = """
 """
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.template import trust_as_template
 
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
@@ -21,11 +22,23 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def populate(self, hosts):
         for host in list(hosts.keys()):
             self.inventory.add_host(host, group='all')
+
             for hostvar, hostval in hosts[host].items():
                 self.inventory.set_variable(host, hostvar, hostval)
 
     def get_hosts(self):
-        return {'host1': {'one': 'two'}, 'host2': {'three': 'four'}}
+        return dict(
+            host1=dict(
+                one='two',
+                my_template=trust_as_template("{{ one }}"),
+                verify='two',
+            ),
+            host2=dict(
+                three='four',
+                my_template=trust_as_template("{{ three }}"),
+                verify='four',
+            ),
+        )
 
     def verify_file(self, path):
         return path.endswith('.inventoryconfig.yml')
@@ -43,6 +56,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         attempt_to_read_cache = cache_setting and cache
         cache_needs_update = cache_setting and not cache
+
+        results = {}
 
         # attempt to read the cache if inventory isn't being refreshed and the user has caching enabled
         if attempt_to_read_cache:
