@@ -20,11 +20,8 @@ def is_url(value, schemes=None):
 
     isit = is_uri(value, schemes)
     if isit:
-        try:
-            x = urlparse(value)
-            isit = bool(x.netloc or x.scheme == 'file')
-        except Exception as e:
-            isit = False
+        x = urlparse(value)
+        isit = bool(x.netloc or x.scheme == 'file')
     return isit
 
 

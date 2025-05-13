@@ -49,37 +49,41 @@ def timedout(result):
     """ Test if task result yields a time out"""
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'timedout' test expects a dictionary")
-    return result.get('timedout', False) and bool(result['timedout'].get('period', False))
+
+    return bool(result.get('timedout') and bool(result['timedout'].get('period')))
 
 
 def failed(result):
     """ Test if task result yields failed """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'failed' test expects a dictionary")
-    return result.get('failed', False)
+
+    return bool(result.get('failed'))
 
 
 def success(result):
     """ Test if task result yields success """
-    return not failed(result)
+    return not bool(failed(result))
 
 
 def unreachable(result):
     """ Test if task result yields unreachable """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'unreachable' test expects a dictionary")
-    return result.get('unreachable', False)
+
+    return bool(result.get('unreachable'))
 
 
 def reachable(result):
     """ Test if task result yields reachable """
-    return not unreachable(result)
+    return bool(not unreachable(result))
 
 
 def changed(result):
     """ Test if task result yields changed """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'changed' test expects a dictionary")
+
     if 'changed' not in result:
         changed = False
         if (
@@ -88,29 +92,32 @@ def changed(result):
             isinstance(result['results'][0], MutableMapping)
         ):
             for res in result['results']:
-                if res.get('changed', False):
+                if res.get('changed'):
                     changed = True
                     break
     else:
-        changed = result.get('changed', False)
-    return changed
+        changed = result.get('changed')
+
+    return bool(changed)
 
 
 def skipped(result):
     """ Test if task result yields skipped """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'skipped' test expects a dictionary")
-    return result.get('skipped', False)
+
+    return bool(result.get('skipped'))
 
 
 def started(result):
     """ Test if async task has started """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'started' test expects a dictionary")
+
     if 'started' in result:
         # For async tasks, return status
         # NOTE: The value of started is 0 or 1, not False or True :-/
-        return result.get('started', 0) == 1
+        return bool(result.get('started'))
     else:
         # For non-async tasks, warn user, but return as if started
         display.warning("The 'started' test expects an async task, but a non-async task was tested")
@@ -121,10 +128,11 @@ def finished(result):
     """ Test if async task has finished """
     if not isinstance(result, MutableMapping):
         raise errors.AnsibleFilterError("The 'finished' test expects a dictionary")
+
     if 'finished' in result:
         # For async tasks, return status
         # NOTE: The value of finished is 0 or 1, not False or True :-/
-        return result.get('finished', 0) == 1
+        return bool(result.get('finished'))
     else:
         # For non-async tasks, warn user, but return as if finished
         display.warning("The 'finished' test expects an async task, but a non-async task was tested")
