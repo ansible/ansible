@@ -1,11 +1,5 @@
 from __future__ import annotations
 
-import functools
-import json
-import json.encoder
-import json.decoder
-import typing as t
-
 from ansible._internal._datatag._tags import Origin
 from .._wrapt import ObjectProxy
 
