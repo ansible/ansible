@@ -5,8 +5,6 @@
     no_parse_message: "No inventory was parsed, only implicit localhost is available"
     expected_host_name: host1
     base_environment:
-      ANSIBLE_INVENTORY_CACHE: true
-      ANSIBLE_INVENTORY_CACHE_PLUGIN: dummy_cache
       ANSIBLE_FORCE_COLOR: 0
     legacy_cache:
       DUMMY_CACHE_SKIP_SUPER: 1
