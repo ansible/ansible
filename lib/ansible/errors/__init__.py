@@ -364,7 +364,7 @@ class AnsibleActionFail(AnsibleAction):
 
         result_overrides = {'failed': True, 'msg': message}
         # deprecated: description='use sys.exception()' python_version='3.11'
-        if sys.exc_info()[1]:  # DTFIX-RELEASE: remove this hack once TaskExecutor is no longer shucking AnsibleActionFail and returning its result
+        if sys.exc_info()[1]:  # DTFIX-FUTURE: remove this hack once TaskExecutor is no longer shucking AnsibleActionFail and returning its result
             result_overrides['exception'] = traceback.format_exc()
 
         self.result.update(result_overrides)

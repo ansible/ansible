@@ -367,7 +367,7 @@ def run_command(path: str, options: list[str], origin: Origin) -> tuple[str, str
     if stderr and not stderr.endswith('\n'):
         stderr += '\n'
 
-    # DTFIX-RELEASE: another use case for the "not quite help text, definitely not message" diagnostic output on errors
+    # DTFIX-FUTURE: another use case for the "not quite help text, definitely not message" diagnostic output on errors
     stderr_help_text = f'Standard error from inventory script:\n{stderr}' if stderr.strip() else None
 
     if sp.returncode != 0:

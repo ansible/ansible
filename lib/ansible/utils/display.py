@@ -588,7 +588,7 @@ class Display(metaclass=Singleton):
         deprecator: PluginInfo | None,
     ) -> str:
         """Internal use only. Return a deprecation message and help text for display."""
-        # DTFIX-RELEASE: the logic for omitting date/version doesn't apply to the payload, so it shows up in vars in some cases when it should not
+        # DTFIX-FUTURE: the logic for omitting date/version doesn't apply to the payload, so it shows up in vars in some cases when it should not
 
         if removed:
             removal_fragment = 'This feature was removed'

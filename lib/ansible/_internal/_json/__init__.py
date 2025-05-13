@@ -1,6 +1,6 @@
 """Internal utilities for serialization and deserialization."""
 
-# DTFIX-RELEASE: most of this isn't JSON specific, find a better home
+# DTFIX-FUTURE: most of this isn't JSON specific, find a better home
 
 from __future__ import annotations
 

@@ -195,7 +195,7 @@ class _AnsibleLazyTemplateMixin:
         Return an iterable that wraps each of the given elements in a lazy wrapper.
         Only elements wrapped this way will receive lazy processing when retrieved from the collection.
         """
-        # DTFIX-RELEASE: check relative performance of method-local vs stored generator expressions on implementations of this method
+        # DTFIX-FUTURE: check relative performance of method-local vs stored generator expressions on implementations of this method
         raise NotImplementedError()  # pragma: nocover
 
     def _proxy_or_render_lazy_value(self, key: t.Any, value: t.Any) -> t.Any:
@@ -346,13 +346,13 @@ class _AnsibleLazyTemplateDict(_AnsibleTaggedDict, _AnsibleLazyTemplateMixin):
         return super().__ne__(other)
 
     def __or__(self, other):
-        # DTFIX-RELEASE: support preservation of laziness when possible like we do for list
+        # DTFIX-FUTURE: support preservation of laziness when possible like we do for list
         # Both sides end up going through _proxy_or_render_lazy_value, so there's no Templar preservation needed.
         # In the future this could be made more lazy when both Templar instances are the same, or if per-value Templar tracking was used.
         return super().__or__(other)
 
     def __ror__(self, other):
-        # DTFIX-RELEASE: support preservation of laziness when possible like we do for list
+        # DTFIX-FUTURE: support preservation of laziness when possible like we do for list
         # Both sides end up going through _proxy_or_render_lazy_value, so there's no Templar preservation needed.
         # In the future this could be made more lazy when both Templar instances are the same, or if per-value Templar tracking was used.
         return super().__ror__(other)
