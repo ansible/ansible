@@ -37,6 +37,12 @@ _ANSIBLE_TAGGED_OBJECT_SLOTS = tuple(('_ansible_tags_mapping',))
 # shared empty frozenset for default values
 _empty_frozenset: t.FrozenSet = frozenset()
 
+# Technical Notes
+#
+# Tagged values compare (and thus hash) the same as their base types, so a value that differs only by its tags will appear identical to non-tag-aware code.
+# This will affect storage and update of tagged values in dictionary keys, sets, etc. While tagged values can be used as keys in hashable collections,
+# updating a key usually requires removal and re-addition.
+
 
 class AnsibleTagHelper:
     """Utility methods for working with Ansible data tags."""
@@ -914,10 +920,12 @@ class _AnsibleTaggedTuple(tuple, AnsibleTaggedObject):
         return super()._copy_collection()
 
 
-# This set gets augmented with additional types when some controller-only types are imported.
-# While we could proxy or subclass builtin singletons, they're idiomatically compared with "is" reference
-# equality, which we can't customize.
 _untaggable_types = {type(None), bool}
+"""
+Attempts to apply tags to values of these types will be silently ignored.
+While we could proxy or subclass builtin singletons, they're idiomatically compared with "is" reference equality, which we can't customize.
+This set gets augmented with additional types when some controller-only types are imported.
+"""
 
 # noinspection PyProtectedMember
 _ANSIBLE_ALLOWED_VAR_TYPES = frozenset({type(None), bool}) | set(AnsibleTaggedObject._tagged_type_map) | set(AnsibleTaggedObject._tagged_type_map.values())

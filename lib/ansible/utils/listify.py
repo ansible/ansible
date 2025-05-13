@@ -26,10 +26,12 @@ __all__ = ['listify_lookup_plugin_terms']
 
 
 def listify_lookup_plugin_terms(terms, templar=None, fail_on_undefined=True):
-    display.deprecated(
-        msg='"listify_lookup_plugin_terms" is obsolete and in most cases unnecessary',
-        version='2.23',
-    )
+    # deprecated: description="Calling listify_lookup_plugin_terms function is not necessary; the function should be deprecated." core_version="2.23"
+    # display.deprecated(
+    #     msg='The "listify_lookup_plugin_terms" function is not required for lookup terms to be templated.',
+    #     version='2.27',
+    #     help_text='If needed, implement custom `strip` or list-wrapping in the caller.',
+    # )
 
     if isinstance(terms, str):
         terms = terms.strip()
