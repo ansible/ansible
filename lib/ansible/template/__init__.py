@@ -98,7 +98,7 @@ class Templar:
     @property
     def basedir(self) -> str:
         """The basedir from DataLoader."""
-        # DTFIX-RELEASE: come up with a better way to handle this so it can be deprecated
+        # DTFIX-FUTURE: come up with a better way to handle this so it can be deprecated
         return self._engine.basedir
 
     @property

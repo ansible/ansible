@@ -124,5 +124,4 @@ class AnsibleModuleCapturedError(AnsibleResultCapturedError):
 
 @dataclasses.dataclass(**_dataclass_kwargs)
 class CapturedErrorSummary(ErrorSummary):
-    # DTFIX-RELEASE: where to put this, name, etc. since it shows up in results, it's not exactly private (and contains a type ref to an internal type)
     error_type: type[AnsibleResultCapturedError] | None = None

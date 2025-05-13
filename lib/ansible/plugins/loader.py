@@ -795,7 +795,7 @@ class PluginLoader:
                 except Exception as ex:
                     plugin_load_context.raw_error_list.append(ex)
 
-                    # DTFIX-RELEASE: can we deprecate/remove these stringified versions?
+                    # DTFIX-FUTURE: can we deprecate/remove these stringified versions?
                     if isinstance(ex, ImportError):
                         plugin_load_context.import_error_list.append(ex)
                     else:
@@ -955,7 +955,7 @@ class PluginLoader:
         redirected_names: list[str] | None = None,
         resolved: str | None = None,
     ) -> None:
-        # DTFIX-RELEASE: clean this up- standardize types, document, split/remove redundant bits
+        # DTFIX-FUTURE: clean this up- standardize types, document, split/remove redundant bits
 
         # set extra info on the module, in case we want it later
         obj._original_path = path

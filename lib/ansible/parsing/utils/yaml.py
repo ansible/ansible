@@ -48,6 +48,6 @@ def from_yaml(
         try:
             return yaml.load(data, Loader=AnsibleLoader)  # type: ignore[arg-type]
         except Exception as yaml_ex:
-            # DTFIX-RELEASE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
+            # DTFIX-FUTURE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
             #        we'd need to pass data to handle_exception so it could be used as the content instead of reading from disk
             AnsibleYAMLParserError.handle_exception(yaml_ex, origin=origin)

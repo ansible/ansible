@@ -203,7 +203,6 @@ class SourceContext:
         if origin and origin.path:
             return cls.from_origin(origin)
 
-        # DTFIX-RELEASE: redaction context may not be sufficient to avoid secret disclosure without SensitiveData and other enhancements
         if value is None:
             truncated_value = None
             annotated_source_lines = []

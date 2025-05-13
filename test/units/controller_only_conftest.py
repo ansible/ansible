@@ -12,7 +12,7 @@ from ansible._internal._templating._engine import _TemplateConfig
 from units.mock.vault_helper import VaultTestHelper
 
 
-# DTFIX-RELEASE: it'd be nice not to need to sync all controller-only fixtures here, but sunder values are excluded from `import *`,
+# DTFIX-FUTURE: it'd be nice not to need to sync all controller-only fixtures here, but sunder values are excluded from `import *`,
 #  and if we don't sunder the fixtures, they'll be unused args. Could also be handled with a managed import, module getattr, or others.
 __all__ = ['_empty_vault_secrets_context', '_ignore_untrusted_template', '_vault_secrets_context', '_zap_vault_secrets_context']
 

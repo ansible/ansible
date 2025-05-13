@@ -115,7 +115,7 @@ class JinjaPluginIntercept(c.MutableMapping):
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
-            raise AnsibleTemplatePluginRuntimeError(instance.plugin_type, instance.ansible_name) from ex  # DTFIX-RELEASE: which name to use? use plugin info?
+            raise AnsibleTemplatePluginRuntimeError(instance.plugin_type, instance.ansible_name) from ex  # DTFIX-FUTURE: which name to use? use plugin info?
 
     def _wrap_test(self, instance: AnsibleJinja2Plugin) -> t.Callable:
         """Intercept point for all test plugins to ensure that args are properly templated/lazified."""
@@ -127,7 +127,6 @@ class JinjaPluginIntercept(c.MutableMapping):
             if not isinstance(result, bool):
                 template = TemplateContext.current().template_value
 
-                # DTFIX-RELEASE: which name to use? use plugin info?
                 _display.deprecated(
                     msg=f"The test plugin {instance.ansible_name!r} returned a non-boolean result of type {type(result)!r}. "
                     "Test plugins must have a boolean result.",
@@ -254,7 +253,7 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
-            # DTFIX-RELEASE: convert this to the new error/warn/ignore context manager
+            # DTFIX-FUTURE: convert this to the new error/warn/ignore context manager
             if errors == 'warn':
                 _display.error_as_warning(
                     msg=f'An error occurred while running the lookup plugin {plugin_name!r}.',

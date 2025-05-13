@@ -12,7 +12,7 @@ from __future__ import annotations as _annotations
 # _Display().deprecated(
 #     msg='The `ansible.parsing.ajson` module is deprecated.',
 #     version='2.27',
-#     help_text="",  # DTFIX-RELEASE: complete this help text
+#     help_text="",  # DTFIX-FUTURE: complete this help text
 # )
 
 # Imported for backward compat

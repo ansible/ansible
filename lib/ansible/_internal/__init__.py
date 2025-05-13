@@ -45,7 +45,7 @@ def setup() -> None:
     """No-op function to ensure that side-effect only imports of this module are not flagged/removed as 'unused'."""
 
 
-# DTFIX-RELEASE: this is really fragile- disordered/incorrect imports (among other things) can mess it up. Consider a hosting-env-managed context
+# DTFIX-FUTURE: this is really fragile- disordered/incorrect imports (among other things) can mess it up. Consider a hosting-env-managed context
 #  with an enum with at least Controller/Target/Unknown values, and possibly using lazy-init module shims or some other mechanism to allow controller-side
 #  notification/augmentation of this kind of metadata.
 _internal.get_controller_serialize_map = get_controller_serialize_map

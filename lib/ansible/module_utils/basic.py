@@ -1399,7 +1399,7 @@ class AnsibleModule(object):
         # deprecate(
         #     msg="The `AnsibleModule.jsonify' method is deprecated.",
         #     version="2.27",
-        #     # help_text="",  # DTFIX-RELEASE: fill in this help text
+        #     # help_text="",  # DTFIX-FUTURE: fill in this help text
         # )
 
         try:

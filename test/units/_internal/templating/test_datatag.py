@@ -78,7 +78,7 @@ class TestDatatagTemplar(_TestDatatagTarget):
 
     @pytest.fixture(name="value")
     def lazy_value(self, non_lazy_value, request: pytest.FixtureRequest, template_context):
-        value_type = None  # DTFIX-RELEASE: get from request when needed, can't easily add to the static fixture list- the generator cases are not being tested
+        value_type = None  # DTFIX-FUTURE: get from request when needed, can't easily add to the static fixture list- the generator cases are not being tested
         if value_type:
             if isinstance(non_lazy_value, c.Mapping):
                 generator = ((k, v) for k, v in non_lazy_value.items())

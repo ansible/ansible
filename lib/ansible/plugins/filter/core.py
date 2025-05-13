@@ -338,7 +338,7 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
 @accept_args_markers
 def mandatory(a: object, msg: str | None = None) -> object:
     """Make a variable mandatory."""
-    # DTFIX-RELEASE: deprecate this filter; there are much better ways via undef, etc...
+    # DTFIX-FUTURE: deprecate this filter; there are much better ways via undef, etc...
     #                also remember to remove unit test checking for _undefined_name
     if isinstance(a, UndefinedMarker):
         if msg is not None:
@@ -654,7 +654,7 @@ def _cleansed_groupby(*args, **kwargs):
 
     return res
 
-# DTFIX-RELEASE: make these dumb wrappers more dynamic
+# DTFIX-FUTURE: make these dumb wrappers more dynamic
 
 
 @accept_args_markers

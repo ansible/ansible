@@ -1,4 +1,4 @@
-# DTFIX-RELEASE: finish the full precedence decscription in DT docs and include it here
+# DTFIX-FUTURE: finish the full precedence decscription in DT docs and include it here
 
 - name: validate templated raw params from the action statement and the args keyword are merged
   echo: '{{ vp }}'
@@ -125,7 +125,7 @@
     that: |
       res.action_args == {"a": "from_action_args", "b": "from_action_module_kv", "c": "from_discrete_args", "d": "from_task_args", "e": "from_vp"}
 
-# DTFIX-RELEASE: ensure that we're testing the new behavior we want before nuking some/all of these "asserting broken/weird behavior" test cases
+# DTFIX-FUTURE: ensure that we're testing the new behavior we want before nuking some/all of these "asserting broken/weird behavior" test cases
 # Nonsensical cases, asserting existing weird-ish behavior
 
 - name: (nonsensical, validating existing behavior) raw vp args template result gets stringified in _raw_params after shell k=v arg removal if k=v args remain

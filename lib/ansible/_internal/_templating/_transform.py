@@ -33,7 +33,6 @@ def warning_summary(value: WarningSummary) -> str:
 
 def deprecation_summary(value: DeprecationSummary) -> dict[str, t.Any]:
     """Render DeprecationSummary as dict values for backward-compatibility with pre-2.19 TaskResult.deprecations."""
-    # DTFIX-RELEASE: reconsider which deprecation fields should be exposed here, taking into account that collection_name is to be deprecated
     result = value._as_simple_dict()
     result.pop('details')
 

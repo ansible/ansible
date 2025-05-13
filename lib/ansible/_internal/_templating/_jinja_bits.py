@@ -309,7 +309,7 @@ class AnsibleTemplate(Template):
     _python_source_temp_path: pathlib.Path | None = None
 
     def __del__(self):
-        # DTFIX-RELEASE: this still isn't working reliably; something else must be keeping the template object alive
+        # DTFIX-FUTURE: this still isn't working reliably; something else must be keeping the template object alive
         if self._python_source_temp_path:
             self._python_source_temp_path.unlink(missing_ok=True)
 
@@ -591,7 +591,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     @property
     def lexer(self) -> AnsibleLexer:
         """Return/cache an AnsibleLexer with settings from the current AnsibleEnvironment"""
-        # DTFIX-RELEASE: optimization - we should pre-generate the default cached lexer before forking, not leave it to chance (e.g. simple playbooks)
+        # DTFIX-FUTURE: optimization - we should pre-generate the default cached lexer before forking, not leave it to chance (e.g. simple playbooks)
         key = tuple(getattr(self, name) for name in _TEMPLATE_OVERRIDE_FIELD_NAMES)
 
         lex = self._lexer_cache.get(key)
@@ -615,7 +615,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         Without this, `_wrap_filter` will wrap `args` and `kwargs` in templating lazy containers.
         This provides consistency with plugin output handling by preventing auto-templating of trusted templates passed in native containers.
         """
-        # DTFIX-RELEASE: need better logic to handle non-list/non-dict inputs for args/kwargs
+        # DTFIX-FUTURE: need better logic to handle non-list/non-dict inputs for args/kwargs
         args = _AnsibleLazyTemplateMixin._try_create(list(args or []), LazyOptions.SKIP_TEMPLATES)
         kwargs = _AnsibleLazyTemplateMixin._try_create(kwargs, LazyOptions.SKIP_TEMPLATES)
 
@@ -635,7 +635,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         Without this, `_wrap_test` will wrap `args` and `kwargs` in templating lazy containers.
         This provides consistency with plugin output handling by preventing auto-templating of trusted templates passed in native containers.
         """
-        # DTFIX-RELEASE: need better logic to handle non-list/non-dict inputs for args/kwargs
+        # DTFIX-FUTURE: need better logic to handle non-list/non-dict inputs for args/kwargs
         args = _AnsibleLazyTemplateMixin._try_create(list(args or []), LazyOptions.SKIP_TEMPLATES)
         kwargs = _AnsibleLazyTemplateMixin._try_create(kwargs, LazyOptions.SKIP_TEMPLATES)
 
@@ -706,7 +706,6 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         # this code is complemented by our tweaked CodeGenerator _output_const_repr that ensures that literal constants
         # in templates aren't double-repr'd in the generated code
         if len(node_list) == 1:
-            # DTFIX-RELEASE: determine if we should do managed access here (we *should* have hit them all during templating/resolve, but ?)
             return node_list[0]
 
         # In order to ensure that all markers are tripped, do a recursive finalize before we repr (otherwise we can end up
@@ -861,9 +860,6 @@ def _flatten_and_lazify_vars(mapping: c.Mapping) -> t.Iterable[c.Mapping]:
         for m in mapping.maps:
             yield from _flatten_and_lazify_vars(m)
     elif mapping_type is _AnsibleLazyTemplateDict:
-        if not mapping:
-            # DTFIX-RELEASE: handle or remove?
-            raise Exception("we didn't think it was possible to have an empty lazy here...")
         yield mapping
     elif mapping_type in (dict, _AnsibleTaggedDict):
         # don't propagate empty dictionary layers
@@ -887,10 +883,6 @@ def _new_context(
     layers = []
 
     if jinja_locals:
-        # DTFIX-RELEASE: if we can't trip this in coverage, kill it off?
-        if type(jinja_locals) is not dict:  # pylint: disable=unidiomatic-typecheck
-            raise NotImplementedError("locals must be a dict")
-
         # Omit values set to Jinja's internal `missing` sentinel; they are locals that have not yet been
         # initialized in the current context, and should not be exposed to child contexts. e.g.: {% import 'a' as b with context %}.
         # The `b` local will be `missing` in the `a` context and should not be propagated as a local to the child context we're creating.
