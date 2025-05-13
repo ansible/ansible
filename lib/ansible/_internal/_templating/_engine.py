@@ -75,7 +75,7 @@ class TemplateOptions:
     value_for_omit: object = Omit
     escape_backslashes: bool = True
     preserve_trailing_newlines: bool = True
-    # DTFIX-RELEASE: these aren't really overrides anymore, rename the dataclass and this field
+    # DTFIX-FUTURE: these aren't really overrides anymore, rename the dataclass and this field
     #                also mention in docstring this has no effect unless used to template a string
     overrides: TemplateOverrides = TemplateOverrides.DEFAULT
 
@@ -122,7 +122,6 @@ class TemplateEngine:
         return new_engine
 
     def extend(self, marker_behavior: MarkerBehavior | None = None) -> t.Self:
-        # DTFIX-RELEASE: bikeshed name, supported features
         new_templar = type(self)(
             loader=self._loader,
             variables=self._variables,
@@ -235,7 +234,7 @@ class TemplateEngine:
 
     def template(
         self,
-        variable: t.Any,  # DTFIX-RELEASE: once we settle the new/old API boundaries, rename this (here and in other methods)
+        variable: t.Any,  # DTFIX-FUTURE: once we settle the new/old API boundaries, rename this (here and in other methods)
         *,
         options: TemplateOptions = TemplateOptions.DEFAULT,
         mode: TemplateMode = TemplateMode.DEFAULT,

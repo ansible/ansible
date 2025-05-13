@@ -313,7 +313,7 @@ class InventoryManager(object):
                             ex.obj = origin
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': ex})
                     except Exception as ex:
-                        # DTFIX-RELEASE: fix this error handling to correctly deal with messaging
+                        # DTFIX-FUTURE: fix this error handling to correctly deal with messaging
                         try:
                             # omit line number to prevent contextual display of script or possibly sensitive info
                             raise AnsibleError(str(ex), obj=origin) from ex

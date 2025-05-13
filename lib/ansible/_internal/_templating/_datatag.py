@@ -79,7 +79,7 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
             # DTFIX-FUTURE: ascend the template stack to try and find the nearest string source template
             origin = Origin.get_tag(template)
 
-            # DTFIX-RELEASE: this should probably use a synthesized description value on the tag
+            # DTFIX-FUTURE: this should probably use a synthesized description value on the tag
             #              it is reachable from the data_tagging_controller test: ../playbook_output_validator/filter.py actual_stdout.txt actual_stderr.txt
             # -[DEPRECATION WARNING]: `something_old` is deprecated, don't use it! This feature will be removed in version 1.2.3.
             # +[DEPRECATION WARNING]: While processing '<<container>>': `something_old` is deprecated, don't use it! This feature will be removed in ...

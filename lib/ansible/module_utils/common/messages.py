@@ -67,7 +67,7 @@ class SummaryBase(_datatag.AnsibleSerializableDataclass):
 
     def _format(self) -> str:
         """Returns a string representation of the details."""
-        # DTFIX-RELEASE: eliminate this function and use a common message squashing utility such as get_chained_message on instances of this type
+        # DTFIX-FUTURE: eliminate this function and use a common message squashing utility such as get_chained_message on instances of this type
         return ': '.join(detail.msg for detail in self.details)
 
     def _post_validate(self) -> None:

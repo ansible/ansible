@@ -5,7 +5,6 @@ import collections.abc as c
 import typing as t
 
 
-# DTFIX-RELEASE: bikeshed "intermediate"
 INTERMEDIATE_MAPPING_TYPES = (c.Mapping,)
 """
 Mapping types which are supported for recursion and runtime usage, such as in serialization and templating.
@@ -25,13 +24,11 @@ ITERABLE_SCALARS_NOT_TO_ITERATE_FIXME = (str, bytes)
 
 def is_intermediate_mapping(value: object) -> bool:
     """Returns `True` if `value` is a type supported for projection to a Python `dict`, otherwise returns `False`."""
-    # DTFIX-RELEASE: bikeshed name
     return isinstance(value, INTERMEDIATE_MAPPING_TYPES)
 
 
 def is_intermediate_iterable(value: object) -> bool:
     """Returns `True` if `value` is a type supported for projection to a Python `list`, otherwise returns `False`."""
-    # DTFIX-RELEASE: bikeshed name
     return isinstance(value, INTERMEDIATE_ITERABLE_TYPES) and not isinstance(value, ITERABLE_SCALARS_NOT_TO_ITERATE_FIXME)
 
 

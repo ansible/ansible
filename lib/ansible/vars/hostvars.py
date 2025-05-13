@@ -113,5 +113,5 @@ class HostVarsVars(c.Mapping):
         return self
 
 
-# DTFIX-RELEASE: is there a better way to add this to the ignorable types in the module_utils code
+# DTFIX-FUTURE: is there a better way to add this to the ignorable types in the module_utils code
 _datatag._untaggable_types.update({HostVars, HostVarsVars})

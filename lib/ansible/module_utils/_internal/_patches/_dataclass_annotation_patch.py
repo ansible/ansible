@@ -1,7 +1,5 @@
 """Patches for builtin `dataclasses` module."""
 
-# deprecated: description='verify ClassVar support in dataclasses has been fixed in Python before removing this patching code', python_version='3.13'
-
 from __future__ import annotations
 
 import dataclasses
@@ -26,7 +24,7 @@ class DataclassesIsTypePatch(CallablePatch):
         @dataclasses.dataclass
         class CheckClassVar:
             # this is the broken case requiring patching: ClassVar dot-referenced from a module that is not `typing` is treated as an instance field
-            # DTFIX-RELEASE: add link to CPython bug report to-be-filed (or update associated deprecation comments if we don't)
+            # DTFIX-FUTURE: file/link CPython bug report, deprecate this patch if/when it's fixed in CPython
             a_classvar: _ts.ClassVar[int]  # type: ignore[name-defined]
             a_field: int
 

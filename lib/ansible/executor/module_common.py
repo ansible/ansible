@@ -166,7 +166,7 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 
 class ModuleDepFinder(ast.NodeVisitor):
-    # DTFIX-RELEASE: add support for ignoring imports with a "controller only" comment, this will allow replacing import_controller_module with standard imports
+    # DTFIX-FUTURE: add support for ignoring imports with a "controller only" comment, this will allow replacing import_controller_module with standard imports
     def __init__(self, module_fqn, tree, is_pkg_init=False, *args, **kwargs):
         """
         Walk the ast tree for the python module.
@@ -618,7 +618,7 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         if pkg_path:
             origin = Origin(path=os.path.join(pkg_path, src_path))
         else:
-            # DTFIX-RELEASE: not sure if this case is even reachable
+            # DTFIX-FUTURE: not sure if this case is even reachable
             origin = Origin(description=f'<synthetic collection package for {collection_pkg_name}!r>')
 
         self.source_code = origin.tag(src)

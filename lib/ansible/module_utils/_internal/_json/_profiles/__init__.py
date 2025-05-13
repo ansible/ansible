@@ -376,7 +376,7 @@ Additional warnings at other boundaries may be needed to give users an opportuni
 """
 # DTFIX-FUTURE: add strict UTF8 string encoding checking to serialization profiles (to match the checks performed during deserialization)
 # DTFIX-RELEASE: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
-# DTFIX-RELEASE: this config setting should probably be deprecated
+# DTFIX-FUTURE: this config setting should probably be deprecated
 
 
 def _create_encoding_check_error() -> Exception:

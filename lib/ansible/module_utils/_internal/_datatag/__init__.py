@@ -47,11 +47,6 @@ _empty_frozenset: t.FrozenSet = frozenset()
 class AnsibleTagHelper:
     """Utility methods for working with Ansible data tags."""
 
-    # DTFIX-RELEASE: bikeshed the name and location of this class, also, related, how much more of it should be exposed as public API?
-    #        it may make sense to move this into another module, but the implementations should remain here (so they can be used without circular imports here)
-    #        if they're in a separate module, is a class even needed, or should they be globals?
-    # DTFIX-RELEASE: add docstrings to all non-override methods in this class
-
     @staticmethod
     def untag(value: _T, *tag_types: t.Type[AnsibleDatatagBase]) -> _T:
         """
@@ -111,7 +106,7 @@ class AnsibleTagHelper:
         if issubclass(the_type, AnsibleTaggedObject):
             the_type = type_or_value._native_type
 
-        # DTFIX-RELEASE: provide a way to report the real type for debugging purposes
+        # DTFIX-FUTURE: provide a knob to optionally report the real type for debugging purposes
         return the_type
 
     @staticmethod
@@ -348,7 +343,7 @@ class AnsibleSerializableDataclass(AnsibleSerializable, metaclass=abc.ABCMeta):
 
     def _as_dict(self) -> t.Dict[str, t.Any]:
         # omit None values when None is the field default
-        # DTFIX-RELEASE: this implementation means we can never change the default on fields which have None for their default
+        # DTFIX-FUTURE: this implementation means we can never change the default on fields which have None for their default
         #          other defaults can be changed -- but there's no way to override this behavior either way for other default types
         #          it's a trip hazard to have the default logic here, rather than per field (or not at all)
         #          consider either removing the filtering or requiring it to be explicitly set per field using dataclass metadata
@@ -357,7 +352,7 @@ class AnsibleSerializableDataclass(AnsibleSerializable, metaclass=abc.ABCMeta):
 
     @classmethod
     def _from_dict(cls, d: t.Dict[str, t.Any]) -> t.Self:
-        # DTFIX-RELEASE: optimize this to avoid the dataclasses fields metadata and get_origin stuff at runtime
+        # DTFIX-FUTURE: optimize this to avoid the dataclasses fields metadata and get_origin stuff at runtime
         type_hints = t.get_type_hints(cls)
         mutated_dict: dict[str, t.Any] | None = None
 
@@ -530,7 +525,6 @@ class CollectionWithMro(c.Collection, t.Protocol):
     __mro__: tuple[type, ...]
 
 
-# DTFIX-RELEASE: This should probably reside elsewhere.
 def is_non_scalar_collection_type(value: type) -> t.TypeGuard[type[CollectionWithMro]]:
     """Returns True if the value is a non-scalar collection type, otherwise returns False."""
     return issubclass(value, c.Collection) and not issubclass(value, str) and not issubclass(value, bytes)
@@ -884,7 +878,6 @@ class _AnsibleTaggedList(list, AnsibleTaggedObject):
     # Propagation of tags in these cases is left to the caller, based on needs specific to their use case.
 
 
-# DTFIX-RELEASE: do we want frozenset too?
 class _AnsibleTaggedSet(set, AnsibleTaggedObject):
     __slots__ = _ANSIBLE_TAGGED_OBJECT_SLOTS
 

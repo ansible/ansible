@@ -24,7 +24,7 @@ except ImportError:
 else:
     HAS_YAML = True
 
-# DTFIX-RELEASE: refactor this to share the implementation with the controller version
+# DTFIX-FUTURE: refactor this to share the implementation with the controller version
 #              use an abstract base class, with __init_subclass__ for representer registration, and instance methods for overridable representers
 #              then tests can be consolidated intead of having two nearly identical copies
 

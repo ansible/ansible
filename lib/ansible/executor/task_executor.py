@@ -530,7 +530,7 @@ class TaskExecutor:
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with delegation
         # and undefined vars (correct values are in cvars later on and connection plugins, if still error, blows up there)
 
-        # DTFIX-RELEASE: this should probably be declaratively handled in post_validate (or better, get rid of play_context)
+        # DTFIX-FUTURE: this should probably be declaratively handled in post_validate (or better, get rid of play_context)
         if context_validation_error is not None:
             raiseit = True
             if self._task.delegate_to:
@@ -539,7 +539,7 @@ class TaskExecutor:
                     if isinstance(context_validation_error.__cause__, AnsibleUndefinedVariable):
                         raiseit = False
                 elif isinstance(context_validation_error, AnsibleUndefinedVariable):
-                    # DTFIX-RELEASE: should not be possible to hit this now (all are AnsibleFieldAttributeError)?
+                    # DTFIX-FUTURE: should not be possible to hit this now (all are AnsibleFieldAttributeError)?
                     raiseit = False
             if raiseit:
                 raise context_validation_error  # pylint: disable=raising-bad-type
@@ -731,7 +731,7 @@ class TaskExecutor:
             if 'skipped' not in result:
                 condname = 'changed'
 
-                # DTFIX-RELEASE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
+                # DTFIX-FUTURE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
                 #  and when (for loops on the second and later iterations) cannot see the normalized error shapes. This, and the current impl of the expression
                 #  handling here causes a number of problems:
                 #  * any error in one of the post-task exec expressions is silently ignored and detail lost (eg: `failed_when: syntax ERROR @$123`)

@@ -81,8 +81,8 @@ class DataLoader:
     def load(
             self,
             data: str,
-            file_name: str | None = None,  # DTFIX-RELEASE: consider deprecating this in favor of tagging Origin on data
-            show_content: bool = True,  # DTFIX-RELEASE: consider future deprecation, but would need RedactAnnotatedSourceContext public
+            file_name: str | None = None,  # DTFIX-FUTURE: consider deprecating this in favor of tagging Origin on data
+            show_content: bool = True,  # DTFIX-FUTURE: consider future deprecation, but would need RedactAnnotatedSourceContext public
             json_only: bool = False,
     ) -> t.Any:
         """Backwards compat for now"""

@@ -402,7 +402,7 @@ def check_type_list(value):
     if isinstance(value, list):
         return value
 
-    # DTFIX-RELEASE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
+    # DTFIX-FUTURE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
     if isinstance(value, string_types):
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):

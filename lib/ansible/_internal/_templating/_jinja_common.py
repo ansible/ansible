@@ -197,8 +197,6 @@ class TruncationMarker(Marker):
     It will only be visible if the previous `Marker` was ignored/replaced instead of being tripped, which would raise an exception.
     """
 
-    # DTFIX-RELEASE: make this a singleton?
-
     __slots__ = ()
 
     def __init__(self) -> None:
@@ -255,7 +253,7 @@ class VaultExceptionMarker(ExceptionMarker):
     __slots__ = ('_marker_undecryptable_ciphertext', '_marker_undecryptable_reason', '_marker_undecryptable_traceback')
 
     def __init__(self, ciphertext: str, reason: str, traceback: str | None) -> None:
-        # DTFIX-RELEASE: when does this show up, should it contain more details?
+        # DTFIX-FUTURE: when does this show up, should it contain more details?
         #          see also CapturedExceptionMarker for a similar issue
         super().__init__(hint='A vault exception marker was tripped.')
 
@@ -314,7 +312,7 @@ class JinjaCallContext(NotifiableAccessContextBase):
 
 def validate_arg_type(name: str, value: t.Any, allowed_type_or_types: type | tuple[type, ...], /) -> None:
     """Validate the type of the given argument while preserving context for Marker values."""
-    # DTFIX-RELEASE: find a home for this as a general-purpose utliity method and expose it after some API review
+    # DTFIX-FUTURE: find a home for this as a general-purpose utliity method and expose it after some API review
     if isinstance(value, allowed_type_or_types):
         return
 

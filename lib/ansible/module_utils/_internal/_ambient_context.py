@@ -19,9 +19,9 @@ class AmbientContextBase:
     __slots__ = ('_contextvar_token',)
 
     # DTFIX-FUTURE: subclasses need to be able to opt-in to blocking nested contexts of the same type (basically optional per-callstack singleton behavior)
-    # DTFIX-RELEASE: this class should enforce strict nesting of contexts; overlapping context lifetimes leads to incredibly difficult to
+    # DTFIX-FUTURE: this class should enforce strict nesting of contexts; overlapping context lifetimes leads to incredibly difficult to
     #        debug situations with undefined behavior, so it should fail fast.
-    # DTFIX-RELEASE: make frozen=True dataclass subclasses work (fix the mutability of the contextvar instance)
+    # DTFIX-FUTURE: make frozen=True dataclass subclasses work (fix the mutability of the contextvar instance)
 
     _contextvar: t.ClassVar[contextvars.ContextVar]  # pylint: disable=declare-non-slot  # pylint bug, see https://github.com/pylint-dev/pylint/issues/9950
     _contextvar_token: contextvars.Token
@@ -49,7 +49,7 @@ class AmbientContextBase:
             raise ReferenceError(f"A required {cls.__name__} context is not active.") from None
 
     def __enter__(self) -> t.Self:
-        # DTFIX-RELEASE: actively block multiple entry
+        # DTFIX-FUTURE: actively block multiple entry
         self._contextvar_token = self.__class__._contextvar.set(self)
         return self
 

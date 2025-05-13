@@ -245,7 +245,7 @@ def jsonify(data, **kwargs):
     # deprecate(
     #     msg="The `jsonify` function is deprecated.",
     #     version="2.27",
-    #     # help_text="",  # DTFIX-RELEASE: fill in this help text
+    #     # help_text="",  # DTFIX-FUTURE: fill in this help text
     # )
 
     return json.dumps(data, cls=_common_json._get_legacy_encoder(), _decode_bytes=True, **kwargs)
@@ -257,7 +257,7 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
         Specialized for json return because this only handles, lists, tuples,
         and dict container types (the containers that the json module returns)
     """
-    # DTFIX-RELEASE: deprecate
+    # DTFIX-FUTURE: deprecate
 
     if isinstance(d, text_type):
         return to_bytes(d, encoding=encoding, errors=errors)
@@ -277,7 +277,7 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
     Specialized for json return because this only handles, lists, tuples,
     and dict container types (the containers that the json module returns)
     """
-    # DTFIX-RELEASE: deprecate
+    # DTFIX-FUTURE: deprecate
 
     if isinstance(d, binary_type):
         # Warning, can traceback
