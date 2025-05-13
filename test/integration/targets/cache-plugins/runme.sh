@@ -2,7 +2,8 @@
 
 set -eux
 
-source virtualenv.sh
+# Test Fact Caching
+
 export ANSIBLE_CACHE_PLUGIN="dummy_cache"
 
 # test set_fact with cacheable: true
@@ -19,6 +20,13 @@ ansible-playbook inspect_cache.yml --tags gather_facts "$@"
 
 unset ANSIBLE_CACHE_PLUGIN
 
+# Test Inventory Caching
+
+export ANSIBLE_INVENTORY_CACHE=true
+export ANSIBLE_INVENTORY_CACHE_PLUGIN=dummy_cache
+
 # Legacy cache plugins need to be updated to use set_options/get_option to be compatible with inventory plugins.
 # Inventory plugins load cache options with the config manager.
 ansible-playbook test_inventory_cache.yml "$@"
+
+ansible-playbook inspect_inventory_cache.yml -i test.inventoryconfig.yml "$@"
