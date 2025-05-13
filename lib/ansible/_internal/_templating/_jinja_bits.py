@@ -71,6 +71,11 @@ from ansible.vars.hostvars import HostVars, HostVarsVars
 from ...module_utils.datatag import native_type_name
 
 JINJA2_OVERRIDE = '#jinja2:'
+"""
+String values prefixed with this sequence are interpreted as templates, even without template delimiters.
+The values following this prefix up to the first newline are parsed as Jinja2 template overrides.
+To include this literal value at the start of a string, a space or other character must precede it.
+"""
 
 display = Display()
 
