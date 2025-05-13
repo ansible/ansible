@@ -1,0 +1,4 @@
+---
+file_path: /tmp/test.txt
+file_content: Hello, Ansible!
+file_mode: '0644'

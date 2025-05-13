@@ -1,0 +1,6 @@
+---
+- name: Use create_file role
+  hosts: localhost
+  connection: local
+  roles:
+    - my_own_namespace.yandex_cloud_elk.create_file

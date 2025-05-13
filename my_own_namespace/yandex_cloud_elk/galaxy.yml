@@ -1,0 +1,16 @@
+namespace: my_own_namespace
+name: yandex_cloud_elk
+version: 1.0.0
+readme: README.md
+authors:
+  - DVBychkov (@dvbychkov)
+description: A collection for creating text files on remote hosts
+license: GPL-3.0-or-later
+tags:
+  - file
+  - text
+dependencies: {}
+repository: https://github.com/dvbychkov/my_own_collection
+documentation: https://github.com/dvbychkov/my_own_collection/tree/main/docs
+homepage: https://github.com/dvbychkov/my_own_collection
+issues: https://github.com/dvbychkov/my_own_collection/issues

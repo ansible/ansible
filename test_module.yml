@@ -1,0 +1,10 @@
+---
+- name: Test my_own_module
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a test file
+      my_own_module:
+        path: /tmp/test.txt
+        content: Hello, Ansible!
+        mode: '0644'
