@@ -504,7 +504,9 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
 
     def infer_ansible_module(self, node: astroid.AssignAttr, *_args, **_kwargs) -> c.Iterator[astroid.typing.InferenceResult]:
         """Infer an AnsibleModule instance node from the given assignment."""
-        if isinstance(node.parent, astroid.Assign) and isinstance(node.parent.parent, astroid.FunctionDef) and isinstance(node.parent.value, astroid.Name):
+        if isinstance(node.parent, astroid.Assign) and isinstance(node.parent.type_annotation, astroid.Name):
+            inferred = self.infer_name(node.parent.type_annotation)
+        elif isinstance(node.parent, astroid.Assign) and isinstance(node.parent.parent, astroid.FunctionDef) and isinstance(node.parent.value, astroid.Name):
             inferred = self.infer_name(node.parent.value)
         elif isinstance(node.parent, astroid.AnnAssign) and isinstance(node.parent.annotation, astroid.Name):
             inferred = self.infer_name(node.parent.annotation)

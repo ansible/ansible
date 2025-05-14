@@ -103,6 +103,9 @@ def do_stuff() -> None:
     wrapper = MyOtherAliasedWrapper(AnsibleModule({}))
     wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
 
+    wrapper = MyTypeCommentWrapper(AnsibleModule({}))
+    wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
+
 
 class MyWrapper:
     def __init__(self, thing) -> None:
@@ -122,3 +125,8 @@ class MyOtherWrapper:
 class MyOtherAliasedWrapper:
     def __init__(self, thing: AliasedAnsibleModule) -> None:
         self.module = thing
+
+
+class MyTypeCommentWrapper:
+    def __init__(self, thing) -> None:
+        self.module = thing  # type: AnsibleModule
