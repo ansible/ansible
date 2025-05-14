@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import collections.abc as c
 import dataclasses
 import datetime
 import functools
@@ -264,6 +263,20 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
                 break
 
         for name in reversed(names):
+            if isinstance(inferred, astroid.Instance):
+                try:
+                    attr = next(iter(inferred.getattr(name)), None)
+                except astroid.AttributeInferenceError:
+                    break
+
+                if isinstance(attr, astroid.AssignAttr):
+                    inferred = self.get_ansible_module(attr)
+                    continue
+
+                if isinstance(attr, astroid.FunctionDef):
+                    inferred = attr
+                    continue
+
             if not isinstance(inferred, (astroid.Module, astroid.ClassDef)):
                 inferred = None
                 break
@@ -502,7 +515,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
 
         raise TypeError(type(value))
 
-    def infer_ansible_module(self, node: astroid.AssignAttr, *_args, **_kwargs) -> c.Iterator[astroid.typing.InferenceResult]:
+    def get_ansible_module(self, node: astroid.AssignAttr) -> astroid.Instance | None:
         """Infer an AnsibleModule instance node from the given assignment."""
         if isinstance(node.parent, astroid.Assign) and isinstance(node.parent.type_annotation, astroid.Name):
             inferred = self.infer_name(node.parent.type_annotation)
@@ -514,18 +527,13 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
             inferred = None
 
         if isinstance(inferred, astroid.ClassDef) and inferred.name == 'AnsibleModule':
-            instance = inferred.instantiate_class()
+            return inferred.instantiate_class()
 
-            yield instance
-            return
-
-        raise astroid.UseInferenceDefault()
+        return None
 
     def register(self) -> None:
         """Register this plugin."""
         self.linter.register_checker(self)
-
-        astroid.MANAGER.register_transform(astroid.AssignAttr, astroid.inference_tip(self.infer_ansible_module))
 
 
 def register(linter: pylint.lint.PyLinter) -> None:
