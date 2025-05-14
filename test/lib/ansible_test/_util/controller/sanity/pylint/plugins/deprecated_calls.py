@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import collections.abc as c
 import dataclasses
 import datetime
 import functools
@@ -282,25 +283,46 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
     def infer_name(self, node: astroid.Name) -> astroid.NodeNG | None:
         """Infer the node referenced by the given name, or `None` if it cannot be unambiguously inferred."""
         scope = node.scope()
-        name = None
+        inferred: astroid.NodeNG | None = None
+        name = node.name
 
         while scope:
             try:
-                assignment = scope[node.name]
+                assignment = scope[name]
             except KeyError:
                 scope = scope.parent.scope() if scope.parent else None
                 continue
 
             if isinstance(assignment, astroid.AssignName) and isinstance(assignment.parent, astroid.Assign):
-                name = assignment.parent.value
+                inferred = assignment.parent.value
+            elif (
+                isinstance(scope, astroid.FunctionDef)
+                and isinstance(assignment, astroid.AssignName)
+                and isinstance(assignment.parent, astroid.Arguments)
+                and assignment.parent.annotations
+            ):
+                idx, _node = assignment.parent.find_argname(name)
+
+                if idx is not None:
+                    try:
+                        annotation = assignment.parent.annotations[idx]
+                    except IndexError:
+                        pass
+                    else:
+                        if isinstance(annotation, astroid.Name):
+                            name = annotation.name
+                            continue
+            elif isinstance(assignment, astroid.ClassDef):
+                inferred = assignment
             elif isinstance(assignment, astroid.ImportFrom):
                 if module := self.get_module(assignment):
+                    name = assignment.real_name(name)
                     scope = module.scope()
                     continue
 
             break
 
-        return name
+        return inferred
 
     def get_module(self, node: astroid.ImportFrom) -> astroid.Module | None:
         """Import the requested module if possible and cache the result."""
@@ -480,7 +502,30 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
 
         raise TypeError(type(value))
 
+    def infer_ansible_module(self, node: astroid.AssignAttr, *_args, **_kwargs) -> c.Iterator[astroid.typing.InferenceResult]:
+        """Infer an AnsibleModule instance node from the given assignment."""
+        if isinstance(node.parent, astroid.Assign) and isinstance(node.parent.parent, astroid.FunctionDef) and isinstance(node.parent.value, astroid.Name):
+            inferred = self.infer_name(node.parent.value)
+        elif isinstance(node.parent, astroid.AnnAssign) and isinstance(node.parent.annotation, astroid.Name):
+            inferred = self.infer_name(node.parent.annotation)
+        else:
+            inferred = None
+
+        if isinstance(inferred, astroid.ClassDef) and inferred.name == 'AnsibleModule':
+            instance = inferred.instantiate_class()
+
+            yield instance
+            return
+
+        raise astroid.UseInferenceDefault()
+
+    def register(self) -> None:
+        """Register this plugin."""
+        self.linter.register_checker(self)
+
+        astroid.MANAGER.register_transform(astroid.AssignAttr, astroid.inference_tip(self.infer_ansible_module))
+
 
 def register(linter: pylint.lint.PyLinter) -> None:
     """Required method to auto-register this checker."""
-    linter.register_checker(AnsibleDeprecatedChecker(linter))
+    AnsibleDeprecatedChecker(linter).register()
