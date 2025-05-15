@@ -1,5 +1,6 @@
 # do not add a cryptography or pyopenssl constraint to this file, they require special handling, see get_cryptography_requirements in python_requirements.py
 # do not add a coverage constraint to this file, it is handled internally by ansible-test
+covdefaults >= 2.3.0 # sane default configuration for coveragepy
 pypsrp < 1.0.0  # in case the next major version is too big of a change
 pywinrm >= 0.5.0  # support for WSManFaultError and type annotation
 pytest >= 4.5.0  # pytest 4.5.0 added support for --strict-markers

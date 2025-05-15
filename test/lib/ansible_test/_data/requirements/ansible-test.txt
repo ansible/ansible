@@ -1,2 +1,3 @@
 # The test-constraints sanity test verifies this file, but changes must be made manually to keep it in up-to-date.
+covdefaults == 2.3.0
 coverage == 7.6.1 ; python_version >= '3.8' and python_version <= '3.13'
