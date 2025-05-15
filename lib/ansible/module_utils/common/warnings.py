@@ -13,7 +13,7 @@ from ansible.module_utils import _internal
 
 def warn(warning: str) -> None:
     """Record a warning to be returned with the module result."""
-    # DTFIX-RELEASE: shim to controller display warning like `deprecate`
+    # DTFIX1: shim to controller display warning like `deprecate`
     _global_warnings[_messages.WarningSummary(
         details=(
             _messages.Detail(msg=warning),
@@ -70,7 +70,7 @@ def deprecate(
 
 def get_warning_messages() -> tuple[str, ...]:
     """Return a tuple of warning messages accumulated over this run."""
-    # DTFIX-RELEASE: add future deprecation comment
+    # DTFIX7: add future deprecation comment
     return tuple(item._format() for item in _global_warnings)
 
 
@@ -79,7 +79,7 @@ _DEPRECATION_MESSAGE_KEYS = frozenset({'msg', 'date', 'version', 'collection_nam
 
 def get_deprecation_messages() -> tuple[dict[str, _t.Any], ...]:
     """Return a tuple of deprecation warning messages accumulated over this run."""
-    # DTFIX-RELEASE: add future deprecation comment
+    # DTFIX7: add future deprecation comment
     return tuple({key: value for key, value in item._as_simple_dict().items() if key in _DEPRECATION_MESSAGE_KEYS} for item in _global_deprecations)
 
 

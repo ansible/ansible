@@ -164,7 +164,7 @@ class InventoryCLI(CLI):
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
 
-            # DTFIX-RELEASE: need shared infra to smuggle custom kwargs to dumpers, since yaml.dump cannot (as of PyYAML 6.0.1)
+            # DTFIX0: need shared infra to smuggle custom kwargs to dumpers, since yaml.dump cannot (as of PyYAML 6.0.1)
             dumper = functools.partial(AnsibleDumper, dump_vault_tags=True)
             results = to_text(yaml.dump(stuff, Dumper=dumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:

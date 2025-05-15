@@ -9,7 +9,7 @@ _T_co = _t.TypeVar('_T_co', covariant=True)
 class SequenceProxy(_c.Sequence[_T_co]):
     """A read-only sequence proxy."""
 
-    # DTFIX-RELEASE: needs unit test coverage
+    # DTFIX5: needs unit test coverage
 
     __slots__ = ('__value',)
 

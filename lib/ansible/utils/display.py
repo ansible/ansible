@@ -604,7 +604,7 @@ class Display(metaclass=Singleton):
         else:
             parts = deprecator.resolved_name.split('.')
             plugin_name = parts[-1]
-            # DTFIX-RELEASE: normalize 'modules' -> 'module' before storing it so we can eliminate the normalization here
+            # DTFIX1: normalize 'modules' -> 'module' before storing it so we can eliminate the normalization here
             plugin_type = "module" if deprecator.type in ("module", "modules") else f'{deprecator.type} plugin'
 
             collection = '.'.join(parts[:2]) if len(parts) > 2 else None
@@ -678,8 +678,8 @@ class Display(metaclass=Singleton):
         Specify `version` or `date`, but not both.
         If `date` is a string, it must be in the form `YYYY-MM-DD`.
         """
-        # DTFIX-RELEASE: are there any deprecation calls where the feature is switching from enabled to disabled, rather than being removed entirely?
-        # DTFIX-RELEASE: are there deprecated features which should going through deferred deprecation instead?
+        # DTFIX3: are there any deprecation calls where the feature is switching from enabled to disabled, rather than being removed entirely?
+        # DTFIX3: are there deprecated features which should going through deferred deprecation instead?
 
         _skip_stackwalk = True
 
@@ -761,7 +761,7 @@ class Display(metaclass=Singleton):
         msg = format_message(warning)
         msg = f'[DEPRECATION WARNING]: {msg}'
 
-        # DTFIX-RELEASE: what should we do with wrap_message?
+        # DTFIX3: what should we do with wrap_message?
         msg = self._wrap_message(msg=msg, wrap_text=True)
 
         if self._deduplicate(msg, self._deprecations):
@@ -800,7 +800,7 @@ class Display(metaclass=Singleton):
 
         if warning_ctx := _DeferredWarningContext.current(optional=True):
             warning_ctx.capture(warning)
-            # DTFIX-RELEASE: what to do about propagating wrap_text?
+            # DTFIX3: what to do about propagating wrap_text?
             return
 
         self._warning(warning, wrap_text=not formatted)
@@ -818,7 +818,7 @@ class Display(metaclass=Singleton):
         if self._deduplicate(msg, self._warns):
             return
 
-        # DTFIX-RELEASE: what should we do with wrap_message?
+        # DTFIX3: what should we do with wrap_message?
         msg = self._wrap_message(msg=msg, wrap_text=wrap_text)
 
         self.display(msg, color=C.config.get_config_value('COLOR_WARN'), stderr=True, caplevel=-2)
@@ -916,7 +916,7 @@ class Display(metaclass=Singleton):
         if self._deduplicate(msg, self._errors):
             return
 
-        # DTFIX-RELEASE: what should we do with wrap_message?
+        # DTFIX3: what should we do with wrap_message?
         msg = self._wrap_message(msg=msg, wrap_text=wrap_text)
 
         self.display(msg, color=C.config.get_config_value('COLOR_ERROR'), stderr=stderr, caplevel=-1)

@@ -658,7 +658,7 @@ metadata_versions: dict[t.Any, type[ModuleMetadata]] = {
 
 
 def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
-    # DTFIX-RELEASE: while module metadata works, this feature isn't fully baked and should be turned off before release
+    # DTFIX2: while module metadata works, this feature isn't fully baked and should be turned off before release
     metadata_nodes: list[ast.Assign] = []
 
     for node in module.body:
@@ -928,7 +928,7 @@ class _BuiltModule:
 class _CachedModule:
     """Cached Python module created by AnsiballZ."""
 
-    # DTFIX-RELEASE: secure this (locked down pickle, don't use pickle, etc.)
+    # DTFIX5: secure this (locked down pickle, don't use pickle, etc.)
 
     zip_data: bytes
     metadata: ModuleMetadata

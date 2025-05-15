@@ -642,7 +642,7 @@ class TaskExecutor:
 
                 result = self._handler.run(task_vars=vars_copy)
 
-            # DTFIX-RELEASE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
+            # DTFIX0: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
             except (AnsibleActionFail, AnsibleActionSkip) as e:
                 return e.result
             except AnsibleConnectionFailure as e:

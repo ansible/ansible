@@ -375,7 +375,7 @@ Future code changes should further restrict bytes to string conversions to elimi
 Additional warnings at other boundaries may be needed to give users an opportunity to resolve the issues before they become errors.
 """
 # DTFIX-FUTURE: add strict UTF8 string encoding checking to serialization profiles (to match the checks performed during deserialization)
-# DTFIX-RELEASE: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
+# DTFIX3: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
 # DTFIX-FUTURE: this config setting should probably be deprecated
 
 

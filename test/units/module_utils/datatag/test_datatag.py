@@ -531,7 +531,7 @@ class TestDatatagTarget(AutoParamSupport):
 
         round_tripped_value = copy.deepcopy(value)
 
-        # DTFIX-RELEASE: ensure items in collections are copies
+        # DTFIX5: ensure items in collections are copies
 
         assert_round_trip(value, round_tripped_value, via_copy=True)
 
@@ -545,7 +545,7 @@ class TestDatatagTarget(AutoParamSupport):
         if not isinstance(native_copy, int):
             assert native_copy is not value._native_copy()
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert native_copy == value
         assert native_copy == value._native_copy()
@@ -557,7 +557,7 @@ class TestDatatagTarget(AutoParamSupport):
 
         round_tripped_value = copy.copy(value)
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert_round_trip(value, round_tripped_value, via_copy=True)
 
@@ -565,7 +565,7 @@ class TestDatatagTarget(AutoParamSupport):
     def test_instance_copy_roundtrip(self, value: CopyProtocol):
         round_tripped_value = value.copy()
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert_round_trip(value, round_tripped_value)
 
