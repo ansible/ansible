@@ -72,10 +72,10 @@ def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]])
     from ansible_test._internal.coverage_util import COVERAGE_VERSIONS
     from ansible_test._internal.util import version_to_str
 
-    expected_lines = set((
+    expected_lines = {
         f"coverage == {item.coverage_version} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
         for item in COVERAGE_VERSIONS
-    ))
+    }
 
     for idx, requirement in enumerate(requirements):
         lineno, line, match = requirement
@@ -92,8 +92,10 @@ def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]])
 
 def parse_requirements(lines):
     # see https://www.python.org/dev/peps/pep-0508/#names
-    pattern = re.compile(r'^(?P<name>[A-Z0-9][A-Z0-9._-]*[A-Z0-9]|[A-Z0-9])(?P<extras> *\[[^]]*])?(?P<constraints>[^;#]*)(?P<markers>[^#]*)(?P<comment>.*)$',
-                         re.IGNORECASE)
+    pattern = re.compile(
+        pattern=r'^(?P<name>[A-Z0-9][A-Z0-9._-]*[A-Z0-9]|[A-Z0-9])(?P<extras> *\[[^]]*])?(?P<constraints>[^;#]*)(?P<markers>[^#]*)(?P<comment>.*)$',
+        flags=re.IGNORECASE,
+    )
 
     matches = [(lineno, line, pattern.search(line)) for lineno, line in enumerate(lines, start=1)]
     requirements = []

@@ -33,13 +33,10 @@ def main() -> None:
     contexts = (
         MyPyContext('ansible-test', ['test/lib/ansible_test/'], controller_python_versions),
         MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/'], remote_only_python_versions),
-
         MyPyContext('ansible-core', ['lib/ansible/'], controller_python_versions),
         MyPyContext('ansible-core', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
-
         MyPyContext('ansible-core', ['test/units/'], controller_python_versions),
         MyPyContext('ansible-core', ['test/units/modules/', 'test/units/module_utils/'], remote_only_python_versions),
-
         MyPyContext('packaging', ['packaging/'], controller_python_versions),
     )
 
@@ -61,14 +58,16 @@ def main() -> None:
 
         match = re.search(r'^(?P<message>.*) {2}\[(?P<code>.*)]$', message.message)
 
-        messages.append(SanityMessage(
-            message=match.group('message'),
-            path=message.path,
-            line=message.line,
-            column=message.column,
-            level=message.level,
-            code=match.group('code'),
-        ))
+        messages.append(
+            SanityMessage(
+                message=match.group('message'),
+                path=message.path,
+                line=message.line,
+                column=message.column,
+                level=message.level,
+                code=match.group('code'),
+            )
+        )
 
     # FUTURE: provide a way for script based tests to report non-error messages (in this case, notices)
 
@@ -172,14 +171,17 @@ def test_context(
 
     parsed = parse_to_list_of_dict(pattern, stdout or '')
 
-    messages = [SanityMessage(
-        level=r['level'],
-        message=r['message'],
-        path=r['path'],
-        line=int(r['line']),
-        column=int(r.get('column') or '0'),
-        code='',  # extracted from error level messages later
-    ) for r in parsed]
+    messages = [
+        SanityMessage(
+            level=r['level'],
+            message=r['message'],
+            path=r['path'],
+            line=int(r['line']),
+            column=int(r.get('column') or '0'),
+            code='',  # extracted from error level messages later
+        )
+        for r in parsed
+    ]
 
     return messages
 

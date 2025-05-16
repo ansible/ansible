@@ -167,10 +167,7 @@ def check_files(source: str, expected: list[str], actual: list[str]) -> list[str
 
     filter_fuzzy_matches(missing, extra)
 
-    errors = (
-        [f'{path}: missing from {source}' for path in sorted(missing)] +
-        [f'{path}: unexpected in {source}' for path in sorted(extra)]
-    )
+    errors = [f'{path}: missing from {source}' for path in sorted(missing)] + [f'{path}: unexpected in {source}' for path in sorted(extra)]
 
     return errors
 
