@@ -213,6 +213,7 @@ def populate_subparser_actions(parser: argparse.ArgumentParser, shared_option_na
 @dataclasses.dataclass(frozen=True)
 class ActionDoc:
     """Documentation for an action."""
+
     desc: str | None
     options: tuple[str, ...]
     arg: str | None
@@ -231,11 +232,13 @@ def get_action_docs(parser: argparse.ArgumentParser) -> list[ActionDoc]:
         args = action.dest.upper() if isinstance(action, argparse._StoreAction) else None
 
         if args or action.option_strings:
-            action_docs.append(ActionDoc(
-                desc=action.help,
-                options=tuple(action.option_strings),
-                arg=args,
-            ))
+            action_docs.append(
+                ActionDoc(
+                    desc=action.help,
+                    options=tuple(action.option_strings),
+                    arg=args,
+                )
+            )
 
     return action_docs
 
