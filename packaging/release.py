@@ -51,23 +51,19 @@ def path_to_str(value: t.Any) -> str:
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[True]) -> CompletedProcess:
-    ...
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[True]) -> CompletedProcess: ...
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[False]) -> None:
-    ...
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: t.Literal[False]) -> None: ...
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: bool) -> CompletedProcess | None:
-    ...
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str, capture_output: bool) -> CompletedProcess | None: ...
 
 
 @t.overload
-def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str) -> None:
-    ...
+def run(*args: t.Any, env: dict[str, t.Any] | None, cwd: pathlib.Path | str) -> None: ...
 
 
 def run(
@@ -460,18 +456,15 @@ class VersionMode(enum.Enum):
 
 
 @t.overload
-def git(*args: t.Any, capture_output: t.Literal[True]) -> CompletedProcess:
-    ...
+def git(*args: t.Any, capture_output: t.Literal[True]) -> CompletedProcess: ...
 
 
 @t.overload
-def git(*args: t.Any, capture_output: t.Literal[False]) -> None:
-    ...
+def git(*args: t.Any, capture_output: t.Literal[False]) -> None: ...
 
 
 @t.overload
-def git(*args: t.Any) -> None:
-    ...
+def git(*args: t.Any) -> None: ...
 
 
 def git(*args: t.Any, capture_output: bool = False) -> CompletedProcess | None:
@@ -1160,8 +1153,8 @@ release_summary: |
 def generate_changelog() -> None:
     """Generate the changelog and validate the results."""
     changelog_requirements = (
-        ANSIBLE_CHANGELOG_REQUIREMENTS_FILE.read_text() +
-        ANSIBLE_REQUIREMENTS_FILE.read_text()  # TODO: consider pinning the ansible requirements and dependencies
+        ANSIBLE_CHANGELOG_REQUIREMENTS_FILE.read_text()
+        + ANSIBLE_REQUIREMENTS_FILE.read_text()  # TODO: consider pinning the ansible requirements and dependencies
     )
 
     env = ensure_venv(changelog_requirements)
