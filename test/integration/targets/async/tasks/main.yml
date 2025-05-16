@@ -141,8 +141,6 @@
     - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
     - async_result is finished
-    - async_result.changed == 0
-    - async_result.changed == false
     - async_result is not changed
     - async_result.finished
     - async_result.changed is false
