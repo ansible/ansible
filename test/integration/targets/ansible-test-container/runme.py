@@ -1034,7 +1034,7 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id == '22.04')
+        return True
 
     @classmethod
     def install_docker(cls) -> bool:
