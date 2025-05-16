@@ -50,9 +50,7 @@
       - file_names == ['foo-unarchive-777.txt']
   vars:
     file_names: "{{ unarchive_dir03.files | map(attribute='path') | map('basename') }}"
-  when:
-    - "ansible_facts.os_family == 'RedHat'"
-    - ansible_facts.distribution_major_version is version('7', '>=')
+  when: ansible_facts.os_family == 'RedHat'
 
 - name: Check mutually exclusive parameters
   unarchive:

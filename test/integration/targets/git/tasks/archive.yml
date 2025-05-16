@@ -24,9 +24,7 @@
 - name: ARCHIVE | Assert that archive files exist
   assert:
     that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
-  when:
-    - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version is version('7', '>=')
+  when: ansible_os_family == 'RedHat'
 
 - name: ARCHIVE | Clear checkout_dir
   file:
@@ -61,9 +59,7 @@
 - name: ARCHIVE | Assert that archive files exist
   assert:
     that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
-  when:
-    - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version is version('7', '>=')
+  when: ansible_os_family == 'RedHat'
 
 - name: ARCHIVE | Inspect archive file
   command:

@@ -1,6 +1,6 @@
 # https://github.com/ansible/ansible/issues/71916
 - name: Test setting expiration for a user account that does not have an /etc/shadow entry
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
   block:
     - name: Remove ansibulluser
       user:

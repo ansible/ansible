@@ -1,5 +1,5 @@
 - name: Run tests
-  when: ansible_facts.distribution in ['CentOS', 'Fedora']
+  when: ansible_facts.distribution == 'Fedora'
   block:
     - name: ensure {{ yum_repository_test_package }} is uninstalled to begin with
       action: "{{ ansible_facts.pkg_mgr }}"

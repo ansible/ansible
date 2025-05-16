@@ -513,63 +513,7 @@
     name: "{{ pip_test_packages }}"
     state: absent
 
-# https://github.com/ansible/ansible/issues/47198
-# distribute is a legacy package that will fail on newer Python 3 versions
-- block:
-  - name: make sure the virtualenv does not exist
-    file:
-      state: absent
-      name: "{{ remote_tmp_dir }}/pipenv"
-
-  - name: install distribute in the virtualenv
-    pip:
-      # using -c for constraints is not supported as long as tests are executed using the centos6 container
-      # since the pip version in the venv is not upgraded and is too old (6.0.8)
-      name:
-        - distribute
-        - setuptools<45  # setuptools 45 and later require python 3.5 or later
-      virtualenv: "{{ remote_tmp_dir }}/pipenv"
-      state: present
-
-  - name: try to remove distribute
-    pip:
-      state: "absent"
-      name: "distribute"
-      virtualenv: "{{ remote_tmp_dir }}/pipenv"
-    ignore_errors: yes
-    register: remove_distribute
-
-  - name: inspect the cmd
-    assert:
-      that: "'distribute' in remove_distribute.cmd"
-  when: ansible_python.version.major == 2
-
-### test virtualenv_command begin ###
-
-- name: Test virtualenv command with arguments
-  when: ansible_python.version.major == 2
-  block:
-    - name: make sure the virtualenv does not exist
-      file:
-        state: absent
-        name: "{{ remote_tmp_dir }}/pipenv"
-
-    # ref: https://github.com/ansible/ansible/issues/52275
-    - name: install using virtualenv_command with arguments
-      pip:
-        name: "{{ pip_test_package }}"
-        virtualenv: "{{ remote_tmp_dir }}/pipenv"
-        virtualenv_command: "{{ command.stdout_lines[0] | basename }} --verbose"
-        state: present
-      register: version13
-
-    - name: ensure install using virtualenv_command with arguments was successful
-      assert:
-        that:
-          - "version13 is success"
-
 - name: Test virtualenv command with venv formatting
-  when: ansible_python.version.major > 2
   block:
     - name: Clean up the virtualenv
       file:
@@ -589,8 +533,6 @@
       assert:
         that:
           - "version14 is changed"
-
-### test virtualenv_command end ###
 
 # https://github.com/ansible/ansible/issues/68592
 # Handle pre-release version numbers in check_mode for already-installed

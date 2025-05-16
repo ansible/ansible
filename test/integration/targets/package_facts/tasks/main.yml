@@ -3,13 +3,8 @@
 
 - name: Prep package_fact tests - Debian Family
   block:
-    - name: install python apt bindings - python2
-      package: name="python-apt" state=present
-      when: ansible_python.version.major|int == 2
-
     - name: install python apt bindings - python3
       package: name="python3-apt" state=present
-      when: ansible_python.version.major|int == 3
 
     - name: Gather package facts
       package_facts:
@@ -71,25 +66,6 @@
         that: ansible_facts.packages is defined
   when: (ansible_os_family == "RedHat")
 
-- name: Run package_fact tests - SUSE/OpenSUSE Family
-  block:
-    - name: install python rpm bindings - python2
-      package: name="rpm-python" state=present
-      when: ansible_python.version.major|int == 2
-
-    - name: install python rpm bindings - python3
-      package: name="python3-rpm" state=present
-      when: ansible_python.version.major|int == 3
-
-    - name: Gather package facts
-      package_facts:
-        manager: rpm
-
-    - name: check for ansible_facts.packages exists
-      assert:
-        that: ansible_facts.packages is defined
-  when: (ansible_os_family == "openSUSE Leap") or (ansible_os_family == "Suse")
-
 - name: Same as those above, but based on pkg_mgr, tests aliases
   block:
     - name: Gather package facts
@@ -101,7 +77,7 @@
         that:
           - ansible_facts.packages is defined
           - ansible_facts.packages | length > 1
-  when: ansible_facts['os_family'] in ["openSUSE Leap", "Suse", "RedHat", "Debian"]
+  when: ansible_facts['os_family'] in ["RedHat", "Debian"]
 
 # Check that auto detection works also
 - name: Gather package facts

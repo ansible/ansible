@@ -102,11 +102,8 @@
   set_fact:
     package_distros:
         - RedHat
-        - CentOS
-        - ScientificLinux
         - Fedora
         - Ubuntu
-        - Debian
 
 - block:
     - name: remove at package

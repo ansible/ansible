@@ -40,13 +40,6 @@
         sudoers_etc: /etc
       when: ansible_distribution != 'FreeBSD'
 
-    - name: Undo OpenSUSE
-      lineinfile:
-        path: "{{ sudoers_etc }}/sudoers"
-        regexp: '^### Defaults targetpw'
-        line: 'Defaults targetpw'
-        backrefs: yes
-
     - name: Nuke custom sudoers file
       file:
         path: "{{ sudoers_etc }}/sudoers.d/unpriv1"

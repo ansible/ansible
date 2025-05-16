@@ -4,9 +4,6 @@ git_archive_extensions:
     - tar
     - tgz
     - zip
-  RedHat6:
-    - tar
-    - zip
 
 git_required_packages:
   default:
