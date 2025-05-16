@@ -43,7 +43,7 @@ def main():
             continue
 
         ext = os.path.splitext(path)[1]
-        if ext in ('.yml', ) and any(path.startswith(yaml_directory) for yaml_directory in allow_yaml):
+        if ext in ('.yml',) and any(path.startswith(yaml_directory) for yaml_directory in allow_yaml):
             continue
 
         if ext not in allowed_extensions:
