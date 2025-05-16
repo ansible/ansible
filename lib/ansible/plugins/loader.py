@@ -1611,10 +1611,13 @@ def _load_plugin_filter():
                 except TypeError as e:
                     display.warning(f'Skipping {plugin_type}_rejectlist in file {filter_cfg!r} as it is not a list: {e!r}')
 
-                # Modules and action plugins share the same reject list since the difference between the two isn't visible to the users
-                filters['ansible.plugins.action'] = filters.get('ansible.modules', [])
+                if filters:
+                    # Modules and action plugins share the same reject list since the difference between the two isn't visible to the users
+                    filters['ansible.plugins.action'] = filters.get('ansible.modules', [])
+                else:
+                    raise AnsibleError(f'The plugin filter file, {filter_cfg!r}, exists but has no valid entries.')
             case _:
-                display.warning(f'Skipping plugin filter file, {filter_cfg!r} as the version is not recognized by this version of Ansible.')
+                raise AnsibleError(f'The plugin filter file, {filter_cfg!r}, is incompatible with this version of Ansible.')
     else:
         if user_set:
             display.warning(u'The plugin filter file, {0} does not exist.'
