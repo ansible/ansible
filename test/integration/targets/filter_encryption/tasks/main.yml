@@ -40,17 +40,16 @@
     that: inline_undecryptable is failed
 
 
-- name: check vaulting
   assert:
     that:
       - data1_plaintext|vault(data1_password, salt=data1_salt) == data1_vaulted_string_with_id
       - data1_plaintext|vault(data1_password, salt=data1_salt) is not ansible._protomatter.tagged_with('VaultedValue')
       - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) is ansible._protomatter.tagged_with('VaultedValue')
 
-- name: check round-trip without salt
-  assert:
-    that:
-      - data2_plaintext|vault(data2_password, vault_id=data2_vault_id)|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+  - name: check round-trip without salt
+    assert:
+      that:
+        - data2_plaintext|vault(data2_password, vault_id=data2_vault_id, method_name='aes256')|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
 
 - name: check unvaulting
   assert:
@@ -115,3 +114,11 @@
 
 - assert:
     that: debugout is failed
+
+- name: check unvaulting
+  assert:
+    that:
+      - data1_vaulted_string_with_id|unvault(data1_password) == data1_plaintext
+      - data1_vaulted|unvault(data1_password) == data1_plaintext
+      - data2_vaulted_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+      - data2_vaulted_string_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext

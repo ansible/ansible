@@ -1846,3 +1846,10 @@ become_loader = PluginLoader(
     C.BECOME_PLUGIN_PATH,
     'become_plugins'
 )
+vault_loader = PluginLoader(
+    'Vault',
+    'ansible.plugins.vault',
+    C.VAULT_PLUGIN_PATH,
+    'vault_plugins',
+    required_base_class='VaultBase',
+)

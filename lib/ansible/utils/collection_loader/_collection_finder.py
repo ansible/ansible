@@ -889,10 +889,10 @@ class _AnsibleInternalRedirectLoader:
 
 class AnsibleCollectionRef:
     # FUTURE: introspect plugin loaders to get these dynamically?
-    VALID_REF_TYPES = frozenset(_to_text(r) for r in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection',
-                                                      'doc_fragments', 'filter', 'httpapi', 'inventory', 'lookup',
-                                                      'module_utils', 'modules', 'netconf', 'role', 'shell', 'strategy',
-                                                      'terminal', 'test', 'vars', 'playbook'])
+    VALID_REF_TYPES = frozenset(to_text(r) for r in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection',
+                                                     'doc_fragments', 'filter', 'httpapi', 'inventory', 'lookup',
+                                                     'module_utils', 'modules', 'netconf', 'playbook', 'role', 'shell',
+                                                     'strategy', 'terminal', 'test', 'vars', 'vault'])
 
     # FIXME: tighten this up to match Python identifier reqs, etc
     VALID_SUBDIRS_RE = re.compile(_to_text(r'^\w+(\.\w+)*$'))
