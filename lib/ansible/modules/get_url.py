@@ -441,12 +441,17 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     # if the entire content-length of data was not read. We need to do that validation here, unless a 'chunked'
     # transfer-encoding was used, in which case we will not know content-length because it will not be returned.
     # But in that case, HTTPResponse will behave correctly and recognize an IncompleteRead.
-    if 'content-length' in info:
-        st = os.stat(tempname)
-        cl = int(info['content-length'])
-        if st.st_size != cl:
-            diff = cl - st.st_size
-            module.fail_json(msg=f'Incomplete read, failed to read remaining {diff} bytes')
+
+    is_gzip = True if 'content-encoding' in info and info['content-encoding'] == 'gzip' else False
+
+    if not module.check_mode and 'content-length' in info:
+        # If data is decompressed, then content-length won't match the amount of data we've read, so skip.
+        if not is_gzip or (is_gzip and not decompress):
+            st = os.stat(tempname)
+            cl = int(info['content-length'])
+            if st.st_size != cl:
+                diff = cl - st.st_size
+                module.fail_json(msg=f'Incomplete read, ({rsp.length=}, {cl=}, {st.st_size=}) failed to read remaining {diff} bytes')
 
     return tempname, info
 
