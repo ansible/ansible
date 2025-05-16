@@ -16,12 +16,6 @@
     - client.pem
     - client.key
 
-- name: Suse - Retrieve test cacert
-  get_url:
-    url: "http://ansible.http.tests/cacert.pem"
-    dest: "/etc/pki/trust/anchors/ansible.pem"
-  when: ansible_os_family == 'Suse'
-
 - name: Debian/Alpine - Retrieve test cacert
   get_url:
     url: "http://ansible.http.tests/cacert.pem"
@@ -32,9 +26,9 @@
   command: update-ca-trust extract
   when: ansible_os_family == 'RedHat'
 
-- name: Debian/Alpine/Suse - Update ca certificates
+- name: Debian/Alpine - Update ca certificates
   command: update-ca-certificates
-  when: ansible_os_family in ['Debian', 'Alpine', 'Suse']
+  when: ansible_os_family in ['Debian', 'Alpine']
 
 - name: Update cacert
   when: ansible_os_family in ['FreeBSD', 'Darwin']

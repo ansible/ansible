@@ -1,7 +1,6 @@
 user_home_prefix:
   Linux: '/home'
   FreeBSD: '/home'
-  SunOS: '/home'
   Darwin: '/Users'
 
 status_command:
@@ -9,5 +8,4 @@ status_command:
   FreeBSD: 'pw user show ansibulluser'
 
 default_user_group:
-  openSUSE Leap: users
   MacOSX: staff
