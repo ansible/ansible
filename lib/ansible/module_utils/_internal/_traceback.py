@@ -6,8 +6,9 @@
 from __future__ import annotations
 
 import enum
-import inspect
 import traceback
+
+from . import _stack
 
 
 class TracebackEvent(enum.Enum):
@@ -16,6 +17,7 @@ class TracebackEvent(enum.Enum):
     ERROR = enum.auto()
     WARNING = enum.auto()
     DEPRECATED = enum.auto()
+    DEPRECATED_VALUE = enum.auto()  # implies DEPRECATED
 
 
 def traceback_for() -> list[str]:
@@ -31,21 +33,21 @@ def is_traceback_enabled(event: TracebackEvent) -> bool:
 def maybe_capture_traceback(event: TracebackEvent) -> str | None:
     """
     Optionally capture a traceback for the current call stack, formatted as a string, if the specified traceback event is enabled.
-    The current and previous frames are omitted to mask the expected call pattern from error/warning handlers.
+    Frames marked with the `_skip_stackwalk` local are omitted.
     """
+    _skip_stackwalk = True
+
     if not is_traceback_enabled(event):
         return None
 
     tb_lines = []
 
-    if current_frame := inspect.currentframe():
+    if frame_info := _stack.caller_frame():
         # DTFIX-FUTURE: rewrite target-side tracebacks to point at controller-side paths?
-        frames = inspect.getouterframes(current_frame)
-        ignore_frame_count = 2  # ignore this function and its caller
         tb_lines.append('Traceback (most recent call last):\n')
-        tb_lines.extend(traceback.format_stack(frames[ignore_frame_count].frame))
+        tb_lines.extend(traceback.format_stack(frame_info.frame))
     else:
-        tb_lines.append('Traceback unavailable.\n')
+        tb_lines.append('(frame not found)\n')  # pragma: nocover
 
     return ''.join(tb_lines)
 

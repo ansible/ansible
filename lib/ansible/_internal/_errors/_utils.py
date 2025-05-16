@@ -3,17 +3,12 @@ from __future__ import annotations
 import dataclasses
 import itertools
 import pathlib
-import sys
 import textwrap
 import typing as t
 
-from ansible.module_utils.common.messages import Detail, ErrorSummary
 from ansible._internal._datatag._tags import Origin
-from ansible.module_utils._internal import _ambient_context, _traceback
-from ansible import errors
-
-if t.TYPE_CHECKING:
-    from ansible.utils.display import Display
+from ansible._internal._errors import _error_factory
+from ansible.module_utils._internal import _ambient_context, _event_utils
 
 
 class RedactAnnotatedSourceContext(_ambient_context.AmbientContextBase):
@@ -22,152 +17,9 @@ class RedactAnnotatedSourceContext(_ambient_context.AmbientContextBase):
     """
 
 
-def _dedupe_and_concat_message_chain(message_parts: list[str]) -> str:
-    message_parts = list(reversed(message_parts))
-
-    message = message_parts.pop(0)
-
-    for message_part in message_parts:
-        # avoid duplicate messages where the cause was already concatenated to the exception message
-        if message_part.endswith(message):
-            message = message_part
-        else:
-            message = concat_message(message_part, message)
-
-    return message
-
-
-def _collapse_error_details(error_details: t.Sequence[Detail]) -> list[Detail]:
-    """
-    Return a potentially modified error chain, with redundant errors collapsed into previous error(s) in the chain.
-    This reduces the verbosity of messages by eliminating repetition when multiple errors in the chain share the same contextual information.
-    """
-    previous_error = error_details[0]
-    previous_warnings: list[str] = []
-    collapsed_error_details: list[tuple[Detail, list[str]]] = [(previous_error, previous_warnings)]
-
-    for error in error_details[1:]:
-        details_present = error.formatted_source_context or error.help_text
-        details_changed = error.formatted_source_context != previous_error.formatted_source_context or error.help_text != previous_error.help_text
-
-        if details_present and details_changed:
-            previous_error = error
-            previous_warnings = []
-            collapsed_error_details.append((previous_error, previous_warnings))
-        else:
-            previous_warnings.append(error.msg)
-
-    final_error_details: list[Detail] = []
-
-    for error, messages in collapsed_error_details:
-        final_error_details.append(dataclasses.replace(error, msg=_dedupe_and_concat_message_chain([error.msg] + messages)))
-
-    return final_error_details
-
-
-def _get_cause(exception: BaseException) -> BaseException | None:
-    # deprecated: description='remove support for orig_exc (deprecated in 2.23)' core_version='2.27'
-
-    if not isinstance(exception, errors.AnsibleError):
-        return exception.__cause__
-
-    if exception.__cause__:
-        if exception.orig_exc and exception.orig_exc is not exception.__cause__:
-            _get_display().warning(
-                msg=f"The `orig_exc` argument to `{type(exception).__name__}` was given, but differed from the cause given by `raise ... from`.",
-            )
-
-        return exception.__cause__
-
-    if exception.orig_exc:
-        # encourage the use of `raise ... from` before deprecating `orig_exc`
-        _get_display().warning(msg=f"The `orig_exc` argument to `{type(exception).__name__}` was given without using `raise ... from orig_exc`.")
-
-        return exception.orig_exc
-
-    return None
-
-
-class _TemporaryDisplay:
-    # DTFIX-FUTURE: generalize this and hide it in the display module so all users of Display can benefit
-
-    @staticmethod
-    def warning(*args, **kwargs):
-        print(f'FALLBACK WARNING: {args} {kwargs}', file=sys.stderr)
-
-    @staticmethod
-    def deprecated(*args, **kwargs):
-        print(f'FALLBACK DEPRECATION: {args} {kwargs}', file=sys.stderr)
-
-
-def _get_display() -> Display | _TemporaryDisplay:
-    try:
-        from ansible.utils.display import Display
-    except ImportError:
-        return _TemporaryDisplay()
-
-    return Display()
-
-
-def _create_error_summary(exception: BaseException, event: _traceback.TracebackEvent | None = None) -> ErrorSummary:
-    from . import _captured  # avoid circular import due to AnsibleError import
-
-    current_exception: BaseException | None = exception
-    error_details: list[Detail] = []
-
-    if event:
-        formatted_traceback = _traceback.maybe_extract_traceback(exception, event)
-    else:
-        formatted_traceback = None
-
-    while current_exception:
-        if isinstance(current_exception, errors.AnsibleError):
-            include_cause_message = current_exception._include_cause_message
-            edc = Detail(
-                msg=current_exception._original_message.strip(),
-                formatted_source_context=current_exception._formatted_source_context,
-                help_text=current_exception._help_text,
-            )
-        else:
-            include_cause_message = True
-            edc = Detail(
-                msg=str(current_exception).strip(),
-            )
-
-        error_details.append(edc)
-
-        if isinstance(current_exception, _captured.AnsibleCapturedError):
-            detail = current_exception.error_summary
-            error_details.extend(detail.details)
-
-            if formatted_traceback and detail.formatted_traceback:
-                formatted_traceback = (
-                    f'{detail.formatted_traceback}\n'
-                    f'The {current_exception.context} exception above was the direct cause of the following controller exception:\n\n'
-                    f'{formatted_traceback}'
-                )
-
-        if not include_cause_message:
-            break
-
-        current_exception = _get_cause(current_exception)
-
-    return ErrorSummary(details=tuple(error_details), formatted_traceback=formatted_traceback)
-
-
-def concat_message(left: str, right: str) -> str:
-    """Normalize `left` by removing trailing punctuation and spaces before appending new punctuation and `right`."""
-    return f'{left.rstrip(". ")}: {right}'
-
-
-def get_chained_message(exception: BaseException) -> str:
-    """
-    Return the full chain of exception messages by concatenating the cause(s) until all are exhausted.
-    """
-    error_summary = _create_error_summary(exception)
-    message_parts = [edc.msg for edc in error_summary.details]
-
-    return _dedupe_and_concat_message_chain(message_parts)
+def format_exception_message(exception: BaseException) -> str:
+    """Return the full chain of exception messages by concatenating the cause(s) until all are exhausted."""
+    return _event_utils.format_event_brief_message(_error_factory.ControllerEventFactory.from_exception(exception, False))
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)

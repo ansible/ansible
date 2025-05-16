@@ -1,0 +1,23 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_facts_modules: [ fail1, success1, fail2 ]
+  tasks:
+    - name: Gather parallel and serially
+      gather_facts:
+        parallel: '{{ item }}'
+      ignore_errors: true
+      register: result
+      loop: [true, false]
+
+    - assert:
+        that:
+          - result.results | length == 2
+          - result.results[item] is failed
+          - result.results[item].exception is match "(?s)Traceback .* The following modules failed to execute"
+          - result.results[item].failed_modules | length == 2
+          - result.results[item].failed_modules.fail1.exception is match "(?s)Traceback .*the fail1 module went bang"
+          - result.results[item].failed_modules.fail2.exception is match "(?s)Traceback .*the fail2 module went bang"
+      loop:
+        - 0
+        - 1

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import pytest
 
+from ansible._internal._errors import _error_factory
+
 from ansible.errors import AnsibleError
-from ansible._internal._errors._utils import _create_error_summary, get_chained_message
-from ansible.module_utils.common.messages import ErrorSummary
 from ansible._internal._datatag._tags import Origin
-from ansible.utils.display import format_message
+from ansible._internal._errors._utils import format_exception_message
+from ansible.utils.display import _format_message
+from ansible.module_utils._internal import _messages
 
 
 def raise_exceptions(exceptions: list[BaseException]) -> None:
@@ -190,10 +192,10 @@ def test_error_messages(exceptions: list[BaseException], expected_message_chain:
     with pytest.raises(Exception) as error:
         raise_exceptions(exceptions)
 
-    error_details = _create_error_summary(error.value).details
+    event = _error_factory.ControllerEventFactory.from_exception(error.value, False)
 
-    message_chain = get_chained_message(error.value)
-    formatted_message = format_message(ErrorSummary(details=error_details))
+    message_chain = format_exception_message(error.value)
+    formatted_message = _format_message(_messages.ErrorSummary(event=event), False)
 
     assert message_chain == expected_message_chain
     assert formatted_message.strip() == (expected_formatted_message or expected_message_chain)

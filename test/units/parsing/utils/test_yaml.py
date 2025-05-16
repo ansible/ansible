@@ -5,8 +5,8 @@ import tempfile
 
 import pytest
 
-from ansible._internal._errors._utils import get_chained_message
 from ansible.errors import AnsibleJSONParserError
+from ansible._internal._errors._utils import format_exception_message
 from ansible._internal._datatag._tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 
@@ -30,7 +30,7 @@ def test_json_parser_error() -> None:
 
     assert error.value.message == expected_message
     assert error.value._original_message == expected_message
-    assert get_chained_message(error.value) == expected_message
+    assert format_exception_message(error.value) == expected_message
     assert str(error.value) == expected_message
 
     assert error.value.obj == Origin(path=str(source_path), line_num=line, col_num=col)

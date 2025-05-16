@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ..common import messages as _messages
+from . import _messages
 
 
 class HasPluginInfo(t.Protocol):

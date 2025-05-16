@@ -6,7 +6,7 @@ import json
 import typing as t
 
 from ansible.module_utils import _internal
-from ansible.module_utils.common import messages as _messages
+from ansible.module_utils._internal import _messages
 from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
     AnsibleSerializableWrapper,
@@ -87,7 +87,8 @@ For controller-to-module, type behavior is profile dependent.
 _common_module_response_types: frozenset[type[AnsibleSerializable]] = frozenset(
     {
         _messages.PluginInfo,
-        _messages.Detail,
+        _messages.Event,
+        _messages.EventChain,
         _messages.ErrorSummary,
         _messages.WarningSummary,
         _messages.DeprecationSummary,

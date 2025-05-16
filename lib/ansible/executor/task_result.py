@@ -12,7 +12,7 @@ import typing as t
 from ansible import constants
 from ansible.utils import vars as _vars
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
-from ansible.module_utils.common import messages as _messages
+from ansible.module_utils._internal import _messages
 from ansible._internal import _collection_proxy
 
 if t.TYPE_CHECKING:
@@ -20,7 +20,7 @@ if t.TYPE_CHECKING:
     from ansible.playbook.task import Task
 
 _IGNORE = ('failed', 'skipped')
-_PRESERVE = {'attempts', 'changed', 'retries', '_ansible_no_log'}
+_PRESERVE = {'attempts', 'changed', 'retries', '_ansible_no_log', 'exception', 'warnings', 'deprecations'}
 _SUB_PRESERVE = {'_ansible_delegated_vars': {'ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'}}
 
 # stuff callbacks need

@@ -1368,7 +1368,7 @@ class DocCLI(CLI, RoleMixin):
                     try:
                         text.append(yaml_dump(doc.pop('examples'), indent=2, default_flow_style=False))
                     except Exception as e:
-                        raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+                        raise AnsibleParserError("Unable to parse examples section.") from e
 
         return text
 
@@ -1406,7 +1406,7 @@ class DocCLI(CLI, RoleMixin):
                 try:
                     text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True, collection_name=collection_name))
                 except KeyError as e:
-                    raise AnsibleError("Invalid deprecation documentation structure", orig_exc=e)
+                    raise AnsibleError("Invalid deprecation documentation structure.") from e
             else:
                 text.append("%s" % doc['deprecated'])
             del doc['deprecated']

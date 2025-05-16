@@ -3,11 +3,13 @@ from __future__ import annotations as _annotations
 
 import typing as _t
 
-from ._internal import _datatag, _deprecator
+from ._internal import _datatag, _deprecator, _traceback, _messages
 from ._internal._datatag import _tags
-from .common import messages as _messages
 
 _T = _t.TypeVar('_T')
+
+
+deprecator_from_collection_name = _deprecator.deprecator_from_collection_name
 
 
 def deprecate_value(
@@ -36,6 +38,7 @@ def deprecate_value(
         date=date,
         version=version,
         deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
+        formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED_VALUE),
     )
 
     return deprecated.tag(value)
