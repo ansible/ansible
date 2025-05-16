@@ -1,0 +1,38 @@
+- block:
+  - name: Clean up before running tests
+    apt:
+      name:
+        - packageone
+        - packagetwo
+      state: absent
+    ignore_errors: true
+
+  - name: Install packageone from deb URL and make sure it installs depend
+    apt:
+      deb: https://github.com/Akasurde/ansible_pull_test_repo/raw/refs/heads/main/packageone.deb
+      state: present
+    register: packageone_installed
+
+  - name: Check if packagetwo is installed as part of packageone installation
+    shell: dpkg -l | grep packagetwo
+    register: packagetwo_installed
+
+  - name: Check if the packagetwo is marked as auto
+    shell: apt-mark showauto
+    register: packagetwo_auto
+
+  - name: Make sure packageone and packagetwo is installed
+    assert:
+      that:
+        - packageone_installed.changed
+        - packagetwo_installed.rc == 0
+        - "'packagetwo' in packagetwo_auto.stdout"
+
+  always:
+    - name: Remove packageone and packagetwo
+      apt:
+        name:
+          - packageone
+          - packagetwo
+        state: absent
+      ignore_errors: true

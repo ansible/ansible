@@ -690,26 +690,42 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed_manually(m, packages):
+def mark_installed(m, packages, state="manual"):
     if not packages:
         return
 
+    if state == "manual":
+        mark_state = "unmarkauto"
+        mark_msg = "manually"
+    elif state == "auto":
+        mark_state = "markauto"
+        mark_msg = "auto"
+    else:
+        m.fail_json(msg="Invalid state: %s" % state)
     apt_mark_cmd_path = m.get_bin_path("apt-mark")
 
     # https://github.com/ansible/ansible/issues/40531
     if apt_mark_cmd_path is None:
-        m.warn("Could not find apt-mark binary, not marking package(s) as manually installed.")
+        m.warn("Could not find apt-mark binary, not marking package(s) as %s installed." % mark_msg)
         return
 
-    cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
+    cmd = "%s %s %s" % (apt_mark_cmd_path, state, ' '.join(packages))
     rc, out, err = m.run_command(cmd)
 
-    if APT_MARK_INVALID_OP in err or APT_MARK_INVALID_OP_DEB6 in err:
-        cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
+    if any(x in err for x in [APT_MARK_INVALID_OP, APT_MARK_INVALID_OP_DEB6]):
+        cmd = "%s %s %s" % (apt_mark_cmd_path, mark_state, ' '.join(packages))
         rc, out, err = m.run_command(cmd)
 
     if rc != 0:
         m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+
+
+def mark_installed_manually(m, packages):
+    mark_installed(m, packages, state="manual")
+
+
+def mark_installed_auto(m, packages):
+    mark_installed(m, packages, state="auto")
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
@@ -912,6 +928,9 @@ def install_deb(
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)
+        # Mark the dependencies as auto installed
+        # https://github.com/ansible/ansible/issues/78123
+        mark_installed_auto(m, deps_to_install)
         changed = retvals.get('changed', False)
 
     if pkgs_to_install:
