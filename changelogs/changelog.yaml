@@ -819,6 +819,17 @@ releases:
     - gather_facts_smart_fix.yml
     - pin-wheel.yml
     release_date: '2025-04-14'
+  2.18.6:
+    changes:
+      release_summary: '| Release Date: 2025-05-19
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.6_summary.yaml
+    release_date: '2025-05-19'
   2.18.6rc1:
     changes:
       bugfixes:
