@@ -756,6 +756,17 @@ releases:
     - gather_facts_smart_fix.yml
     - pin-wheel.yml
     release_date: '2025-04-14'
+  2.17.12:
+    changes:
+      release_summary: '| Release Date: 2025-05-19
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.12_summary.yaml
+    release_date: '2025-05-19'
   2.17.12rc1:
     changes:
       bugfixes:
