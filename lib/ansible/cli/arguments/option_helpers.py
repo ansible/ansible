@@ -243,7 +243,7 @@ def _git_repo_info(repo_path):
                     repo_path = gitdir
                 else:
                     repo_path = os.path.join(repo_path[:-4], gitdir)
-            except (IOError, AttributeError):
+            except (OSError, AttributeError):
                 return ''
         with open(os.path.join(repo_path, "HEAD")) as f:
             line = f.readline().rstrip("\n")

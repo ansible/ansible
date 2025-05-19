@@ -1132,8 +1132,8 @@ def main():
             res_args['extract_results'] = handler.unarchive()
             if res_args['extract_results']['rc'] != 0:
                 module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
-        except IOError:
-            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+        except OSError as ex:
+            module.fail_json(f"Failed to unpack {src!r} to {dest!r}.", exception=ex, **res_args)
         else:
             res_args['changed'] = True
 
@@ -1150,8 +1150,8 @@ def main():
 
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-            except (IOError, OSError) as e:
-                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
+            except OSError as ex:
+                module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
 
             if '/' in filename:
                 top_folder_path = filename.split('/')[0]
@@ -1165,8 +1165,8 @@ def main():
                 file_args['path'] = "%s/%s" % (dest, f)
                 try:
                     res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-                except (IOError, OSError) as e:
-                    module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
+                except OSError as ex:
+                    module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive

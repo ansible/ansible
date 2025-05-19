@@ -180,8 +180,8 @@ class ActionModule(ActionBase):
                     try:
                         with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
                             f.write(remote_data)
-                    except (IOError, OSError) as e:
-                        raise AnsibleActionFail("Failed to fetch the file: %s" % e)
+                    except OSError as ex:
+                        raise AnsibleActionFail("Failed to fetch the file.") from ex
                 new_checksum = secure_hash(dest)
                 # For backwards compatibility. We'll return None on FIPS enabled systems
                 try:

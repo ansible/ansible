@@ -19,7 +19,6 @@ if DESIRED_RLIMIT_NOFILE < CURRENT_RLIMIT_NOFILE:
 
 import base64
 import contextlib
-import errno
 import io
 import json
 import os
@@ -349,18 +348,13 @@ def remove_tree(path):  # type: (str) -> None
     """Remove the specified directory tree."""
     try:
         shutil.rmtree(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
 
 
 def make_dirs(path):  # type: (str) -> None
     """Create a directory at path, including any necessary parent directories."""
-    try:
-        os.makedirs(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.EEXIST:
-            raise
+    os.makedirs(to_bytes(path), exist_ok=True)
 
 
 def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]

@@ -50,8 +50,8 @@ class LocalFactCollector(BaseFactCollector):
                     rc, out, err = module.run_command(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
-                except (IOError, OSError) as e:
-                    failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
+                except OSError as ex:
+                    failed = f'Could not execute fact script {fn!r}: {ex}'
 
                 if failed is not None:
                     local[fact_base] = failed

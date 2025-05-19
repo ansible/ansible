@@ -522,8 +522,8 @@ def main():
     if os.path.isfile(src):
         try:
             checksum_src = module.sha1(src)
-        except (OSError, IOError) as e:
-            module.warn("Unable to calculate src checksum, assuming change: %s" % to_native(e))
+        except OSError as ex:
+            module.warn(f"Unable to calculate src checksum, assuming change: {ex}")
         try:
             # Backwards compat only.  This will be None in FIPS mode
             md5sum_src = module.md5(src)
@@ -636,8 +636,8 @@ def main():
                 # at this point we should always have tmp file
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'], keep_dest_attrs=not remote_src)
 
-            except (IOError, OSError):
-                module.fail_json(msg=f"Failed to copy {src!r} to {dest!r}.")
+            except OSError as ex:
+                module.fail_json(msg=f"Failed to copy {src!r} to {dest!r}.", exception=ex)
         changed = True
 
     # If neither have checksums, both src and dest are directories.

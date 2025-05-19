@@ -31,8 +31,8 @@ def get_sysctl(module, prefixes):
 
         try:
             rc, out, err = module.run_command(cmd)
-        except (IOError, OSError) as e:
-            module.warn('Unable to read sysctl: %s' % to_text(e))
+        except OSError as ex:
+            module.warn(f'Unable to read sysctl: {ex}')
             rc = 1
 
         if rc == 0:

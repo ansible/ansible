@@ -217,7 +217,7 @@ class DataLoader:
         except FileNotFoundError as ex:
             # DTFIX-FUTURE: why not just let the builtin one fly?
             raise AnsibleFileNotFound("Unable to retrieve file contents.", file_name=file_name) from ex
-        except (IOError, OSError) as ex:
+        except OSError as ex:
             raise AnsibleParserError(f"An error occurred while trying to read the file {file_name!r}.") from ex
 
         data = Origin(path=file_name).tag(data)
@@ -448,7 +448,7 @@ class DataLoader:
 
             return real_path
 
-        except (IOError, OSError) as ex:
+        except OSError as ex:
             raise AnsibleParserError(f"an error occurred while trying to read the file {to_text(real_path)!r}.") from ex
 
     def cleanup_tmp_file(self, file_path: str) -> None:

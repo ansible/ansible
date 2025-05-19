@@ -129,7 +129,7 @@ class LinuxVirtual(Virtual):
                 for line in get_file_lines('/proc/xen/capabilities'):
                     if "control_d" in line:
                         is_xen_host = True
-            except IOError:
+            except OSError:
                 pass
 
             if is_xen_host:
