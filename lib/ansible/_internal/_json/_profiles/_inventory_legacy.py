@@ -12,7 +12,7 @@ from . import _legacy
 class _InventoryVariableVisitor(_legacy._LegacyVariableVisitor, _json.StateTrackingMixIn):
     """State-tracking visitor implementation that only applies trust to `_meta.hostvars` and `vars` inventory values."""
 
-    # DTFIX-RELEASE: does the variable visitor need to support conversion of sequence/mapping for inventory?
+    # DTFIX5: does the variable visitor need to support conversion of sequence/mapping for inventory?
 
     @property
     def _allow_trust(self) -> bool:

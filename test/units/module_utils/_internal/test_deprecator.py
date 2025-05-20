@@ -7,7 +7,7 @@ import ansible
 import pathlib
 import pytest
 
-from ansible.module_utils.common.messages import PluginInfo
+from ansible.module_utils._internal import _messages
 from ansible.module_utils._internal import _deprecator
 
 
@@ -43,8 +43,8 @@ def do_stuff():
     ('ansible.nonplugin_something', _deprecator.ANSIBLE_CORE_DEPRECATOR.resolved_name, _deprecator.ANSIBLE_CORE_DEPRECATOR.type),
     # collections plugin callers
     ('ansible_collections.foo.bar.plugins.modules.module_thing', 'foo.bar.module_thing', 'module'),
-    ('ansible_collections.foo.bar.plugins.filter.somefilter', 'foo.bar', PluginInfo._COLLECTION_ONLY_TYPE),
-    ('ansible_collections.foo.bar.plugins.test.sometest', 'foo.bar', PluginInfo._COLLECTION_ONLY_TYPE),
+    ('ansible_collections.foo.bar.plugins.filter.somefilter', 'foo.bar', _deprecator._COLLECTION_ONLY_TYPE),
+    ('ansible_collections.foo.bar.plugins.test.sometest', 'foo.bar', _deprecator._COLLECTION_ONLY_TYPE),
     # indeterminate callers (e.g. collection module_utils- must specify since they might be calling on behalf of another
     ('ansible_collections.foo.bar.plugins.module_utils.something',
      _deprecator.INDETERMINATE_DEPRECATOR.resolved_name, _deprecator.INDETERMINATE_DEPRECATOR.type),
@@ -62,7 +62,7 @@ def test_get_caller_plugin_info(python_fq_name: str, expected_resolved_name: str
 
     loader.exec_module(mod)
 
-    pi: PluginInfo = mod.do_stuff()
+    pi: _messages.PluginInfo = mod.do_stuff()
 
     if not expected_resolved_name and not expected_plugin_type:
         assert pi is None

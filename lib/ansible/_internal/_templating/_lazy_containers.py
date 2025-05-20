@@ -549,7 +549,7 @@ class _AnsibleLazyAccessTuple(_AnsibleTaggedTuple, _AnsibleLazyTemplateMixin):
     created as a results of managed access.
     """
 
-    # DTFIX-RELEASE: ensure we have tests that explicitly verify this behavior
+    # DTFIX5: ensure we have tests that explicitly verify this behavior
 
     # nonempty __slots__ not supported for subtype of 'tuple'
 

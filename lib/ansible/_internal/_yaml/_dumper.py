@@ -32,7 +32,7 @@ class _BaseDumper(SafeDumper, metaclass=abc.ABCMeta):
 class AnsibleDumper(_BaseDumper):
     """A simple stub class that allows us to add representers for our custom types."""
 
-    # DTFIX-RELEASE: need a better way to handle serialization controls during YAML dumping
+    # DTFIX0: need a better way to handle serialization controls during YAML dumping
     def __init__(self, *args, dump_vault_tags: bool | None = None, **kwargs):
         super().__init__(*args, **kwargs)
 

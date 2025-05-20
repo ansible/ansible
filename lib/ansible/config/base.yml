@@ -1335,6 +1335,7 @@ DISPLAY_TRACEBACK:
     - error
     - warning
     - deprecated
+    - deprecated_value
     - always
     - never
   version_added: "2.19"

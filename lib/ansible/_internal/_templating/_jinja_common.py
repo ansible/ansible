@@ -9,7 +9,7 @@ import typing as t
 from jinja2 import UndefinedError, StrictUndefined, TemplateRuntimeError
 from jinja2.utils import missing
 
-from ansible.module_utils.common.messages import ErrorSummary, Detail
+from ...module_utils._internal import _messages
 from ansible.constants import config
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTypeError
 from ansible._internal._errors._handler import ErrorHandler
@@ -250,28 +250,18 @@ class UndecryptableVaultError(_captured.AnsibleCapturedError):
 class VaultExceptionMarker(ExceptionMarker):
     """A `Marker` value that represents an error accessing a vaulted value during templating."""
 
-    __slots__ = ('_marker_undecryptable_ciphertext', '_marker_undecryptable_reason', '_marker_undecryptable_traceback')
+    __slots__ = ('_marker_undecryptable_ciphertext', '_marker_event')
 
-    def __init__(self, ciphertext: str, reason: str, traceback: str | None) -> None:
-        # DTFIX-FUTURE: when does this show up, should it contain more details?
-        #          see also CapturedExceptionMarker for a similar issue
+    def __init__(self, ciphertext: str, event: _messages.Event) -> None:
         super().__init__(hint='A vault exception marker was tripped.')
 
         self._marker_undecryptable_ciphertext = ciphertext
-        self._marker_undecryptable_reason = reason
-        self._marker_undecryptable_traceback = traceback
+        self._marker_event = event
 
     def _as_exception(self) -> Exception:
         return UndecryptableVaultError(
             obj=self._marker_undecryptable_ciphertext,
-            error_summary=ErrorSummary(
-                details=(
-                    Detail(
-                        msg=self._marker_undecryptable_reason,
-                    ),
-                ),
-                formatted_traceback=self._marker_undecryptable_traceback,
-            ),
+            event=self._marker_event,
         )
 
     def _disarm(self) -> str:
@@ -280,7 +270,7 @@ class VaultExceptionMarker(ExceptionMarker):
 
 def get_first_marker_arg(args: c.Sequence, kwargs: dict[str, t.Any]) -> Marker | None:
     """Utility method to inspect plugin args and return the first `Marker` encountered, otherwise `None`."""
-    # DTFIX-RELEASE: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
+    # DTFIX0: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
     for arg in iter_marker_args(args, kwargs):
         return arg
 
@@ -289,7 +279,7 @@ def get_first_marker_arg(args: c.Sequence, kwargs: dict[str, t.Any]) -> Marker |
 
 def iter_marker_args(args: c.Sequence, kwargs: dict[str, t.Any]) -> t.Generator[Marker]:
     """Utility method to iterate plugin args and yield any `Marker` encountered."""
-    # DTFIX-RELEASE: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
+    # DTFIX0: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
     for arg in itertools.chain(args, kwargs.values()):
         if isinstance(arg, Marker):
             yield arg

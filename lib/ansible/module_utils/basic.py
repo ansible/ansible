@@ -75,7 +75,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._internal import _traceback, _errors, _debugging, _deprecator
+from ._internal import _traceback, _errors, _debugging, _deprecator, _messages
 
 from .common.text.converters import (
     to_native,
@@ -161,7 +161,6 @@ from ansible.module_utils.common.validation import (
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
-from ansible.module_utils.common import messages as _messages
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
     deprecate,
@@ -1528,16 +1527,25 @@ class AnsibleModule(object):
         )
 
         if isinstance(exception, BaseException):
-            # Include a `_messages.ErrorDetail` in the result.
-            # The `msg` is included in the list of errors to ensure it is not lost when looking only at `exception` from the result.
+            # Include a `_messages.Event` in the result.
+            # The `msg` is included in the chain to ensure it is not lost when looking only at `exception` from the result.
 
-            error_summary = _errors.create_error_summary(exception)
-            error_summary = _dataclasses.replace(error_summary, details=(_messages.Detail(msg=msg),) + error_summary.details)
-
-            kwargs.update(exception=error_summary)
+            kwargs.update(
+                exception=_messages.ErrorSummary(
+                    event=_messages.Event(
+                        msg=msg,
+                        formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR),
+                        chain=_messages.EventChain(
+                            msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
+                            traceback_reason="The above exception was the direct cause of the following error:",
+                            event=_errors.EventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+                        ),
+                    ),
+                ),
+            )
         elif _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR):
             # Include only a formatted traceback string in the result.
-            # The controller will combine this with `msg` to create an `_messages.ErrorDetail`.
+            # The controller will combine this with `msg` to create an `_messages.ErrorSummary`.
 
             formatted_traceback: str | None
 

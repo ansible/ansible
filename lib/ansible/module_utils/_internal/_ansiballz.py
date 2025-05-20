@@ -13,7 +13,7 @@ import runpy
 import sys
 import typing as t
 
-from . import _errors
+from . import _errors, _traceback, _messages
 from .. import basic
 from ..common.json import get_module_encoder, Direction
 
@@ -97,7 +97,9 @@ def _handle_exception(exception: BaseException, profile: str) -> t.NoReturn:
     """Handle the given exception."""
     result = dict(
         failed=True,
-        exception=_errors.create_error_summary(exception),
+        exception=_messages.ErrorSummary(
+            event=_errors.EventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+        ),
     )
 
     encoder = get_module_encoder(profile, Direction.MODULE_TO_CONTROLLER)

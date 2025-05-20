@@ -17,7 +17,7 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
     @classmethod
     def post_init(cls) -> None:
         cls.serialize_map = {
-            # DTFIX-RELEASE: support serialization of every type that is supported in the Ansible variable type system
+            # DTFIX5: support serialization of every type that is supported in the Ansible variable type system
             set: cls.serialize_as_list,
             tuple: cls.serialize_as_list,
             _datetime.date: cls.serialize_as_isoformat,

@@ -381,7 +381,7 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
     )
 
     ansible_managed = _time.strftime(managed_str, _time.localtime(template_stat.st_mtime))
-    # DTFIX-RELEASE: this should not be tag_copy, it should either be an origin copy or some kind of derived origin
+    # DTFIX7: this should not be tag_copy, it should either be an origin copy or some kind of derived origin
     ansible_managed = _datatag.AnsibleTagHelper.tag_copy(managed_default, ansible_managed)
     ansible_managed = trust_as_template(ansible_managed)
     ansible_managed = _module_utils_datatag.deprecate_value(

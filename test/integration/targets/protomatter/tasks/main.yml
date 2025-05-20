@@ -50,7 +50,7 @@
   assert:
     that:
       - "'[1, 2]' | ansible._protomatter.python_literal_eval == [1, 2]"
-      # DTFIX-RELEASE: This test requires fixing plugin captured error handling first.
+      # DTFIX5: This test requires fixing plugin captured error handling first.
       #                Once fixed, the error handling test below can be replaced by this assert.
       # - "'x[1, 2]' | ansible._protomatter.python_literal_eval | true_type == 'CapturedExceptionMarker'"
       - "'x[1, 2]' | ansible._protomatter.python_literal_eval(ignore_errors=True) == 'x[1, 2]'"
@@ -144,11 +144,11 @@
       - transformed.warnings | length > 0
       - transformed.warnings[0] | type_debug == 'str'
       - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0] | type_debug == 'WarningSummary'
-      - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0].details[0] | type_debug == 'Detail'
+      - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0].event | type_debug == 'Event'
       - transformed.deprecations | length > 0
       - transformed.deprecations[0] | type_debug == 'dict'
-      - (transformed.deprecations | ansible._protomatter.unmask(['DeprecationSummary']))[0].details[0] | type_debug == 'Detail'
+      - (transformed.deprecations | ansible._protomatter.unmask(['DeprecationSummary']))[0].event | type_debug == 'Event'
       # unmask the wrong type, ensure that the default transform still occurs
       - (transformed.warnings | ansible._protomatter.unmask('EncryptedString'))[0] | type_debug == 'str'
       # unmask at a higher level, validate that it propagates to child lazies
-      - (transformed | ansible._protomatter.unmask(['WarningSummary'])).warnings[0].details[0] | type_debug == 'Detail'
+      - (transformed | ansible._protomatter.unmask(['WarningSummary'])).warnings[0].event | type_debug == 'Event'

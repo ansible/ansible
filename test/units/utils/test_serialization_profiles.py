@@ -56,13 +56,13 @@ basic_values = (
     {frozenset((1, 2)): "three"},  # hashable non-scalar key
 )
 
-# DTFIX-RELEASE: we need tests for recursion, specifically things like custom sequences and mappings when:
+# DTFIX5: we need tests for recursion, specifically things like custom sequences and mappings when:
 #                1) using the legacy serializer
 #                2) containing types in the type map, such as tagged values
 #                e.g. -- does trust inversion get applied to a value inside a custom sequence or mapping
 
 tag_values = {
-    Deprecated: Deprecated(msg='x'),  # DTFIX-RELEASE: we need more exhaustive testing of the values supported by this tag to ensure schema ID is robust
+    Deprecated: Deprecated(msg='x'),  # DTFIX5: we need more exhaustive testing of the values supported by this tag to ensure schema ID is robust
     TrustedAsTemplate: TrustedAsTemplate(),
     Origin: Origin(path='/tmp/x', line_num=1, col_num=2, description='y'),
     VaultedValue: VaultedValue(ciphertext='x'),
@@ -77,10 +77,10 @@ def test_cache_persistence_schema() -> None:
     This test is only as comprehensive as these unit tests, so ensure profile data types are thoroughly covered.
     If additional capabilities are added to the cache_persistence profile which are not tested, they will go undetected, leading to runtime failures.
     """
-    # DTFIX-RELEASE: update tests to ensure new fields on contracts will fail this test if they have defaults which are omitted from serialization
+    # DTFIX5: update tests to ensure new fields on contracts will fail this test if they have defaults which are omitted from serialization
     #                one possibility: monkeypatch the default field value omission away so that any new field will invalidate the schema
 
-    # DTFIX-RELEASE: ensure all types/attrs included in _profiles._common_module_response_types are represented here, since they can appear in cached responses
+    # DTFIX5: ensure all types/attrs included in _profiles._common_module_response_types are represented here, since they can appear in cached responses
 
     expected_schema_id = 1
     expected_schema_hash = "bf52e60cf1d25a3f8b6bfdf734781ee07cfe46e94189d2f538815c5000b617c6"
@@ -318,7 +318,7 @@ class ProfileHelper:
 
 additional_test_parameters: list[_TestParameters] = []
 
-# DTFIX-RELEASE: need better testing for containers, especially for tagged values in containers
+# DTFIX5: need better testing for containers, especially for tagged values in containers
 
 additional_test_parameters.extend(ProfileHelper(_fallback_to_str._Profile.profile_name).create_parameters_from_values(
     b'\x00',  # valid utf-8 strict, JSON escape sequence required

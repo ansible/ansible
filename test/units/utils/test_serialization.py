@@ -1,4 +1,4 @@
-# DTFIX-RELEASE: review this test for removal, should have been superseded by test_serialization_profiles.py
+# DTFIX5: review this test for removal, should have been superseded by test_serialization_profiles.py
 #  some tests will need to be under module_utils to verify target-only Python versions
 #  if kept, de-dupe
 from __future__ import annotations

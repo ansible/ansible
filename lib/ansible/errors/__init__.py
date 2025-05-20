@@ -17,6 +17,7 @@ from ansible.module_utils.common.text.converters import to_text
 from ..module_utils.datatag import native_type_name
 from ansible._internal._datatag import _tags
 from .._internal._errors import _utils
+from ansible.module_utils._internal import _text_utils
 
 if t.TYPE_CHECKING:
     from ansible.plugins import loader as _t_loader
@@ -73,7 +74,7 @@ class AnsibleError(Exception):
             message = str(message)
 
         if self._default_message and message:
-            message = _utils.concat_message(self._default_message, message)
+            message = _text_utils.concat_message(self._default_message, message)
         elif self._default_message:
             message = self._default_message
         elif not message:
@@ -108,12 +109,10 @@ class AnsibleError(Exception):
     @property
     def message(self) -> str:
         """
-        If `include_cause_message` is False, return the original message.
-        Otherwise, return the original message with cause message(s) appended, stopping on (and including) the first non-AnsibleError.
-        The recursion is due to `AnsibleError.__str__` calling this method, which uses `str` on child exceptions to create the cause message.
-        Recursion stops on the first non-AnsibleError since those exceptions do not implement the custom `__str__` behavior.
+        Return the original message with cause message(s) appended.
+        The cause will not be followed on any `AnsibleError` with `_include_cause_message=False`.
         """
-        return _utils.get_chained_message(self)
+        return _utils.format_exception_message(self)
 
     @message.setter
     def message(self, val) -> None:

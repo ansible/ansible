@@ -149,7 +149,7 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
         vault_id = to_text(b_tmpheader[3].strip())
 
     b_ciphertext = b''.join(b_tmpdata[1:])
-    # DTFIX-RELEASE: possible candidate for propagate_origin
+    # DTFIX7: possible candidate for propagate_origin
     b_ciphertext = AnsibleTagHelper.tag_copy(b_vaulttext_envelope, b_ciphertext)
 
     return b_ciphertext, b_version, cipher_name, vault_id
@@ -222,7 +222,7 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
 
 def _unhexlify(b_data):
     try:
-        # DTFIX-RELEASE: possible candidate for propagate_origin
+        # DTFIX7: possible candidate for propagate_origin
         return AnsibleTagHelper.tag_copy(b_data, unhexlify(b_data))
     except (BinasciiError, TypeError) as ex:
         raise AnsibleVaultFormatError('Vault format unhexlify error.', obj=b_data) from ex
@@ -712,7 +712,7 @@ class VaultLib:
                 # secret = self.secrets[vault_secret_id]
                 display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
-                # DTFIX-RELEASE: possible candidate for propagate_origin
+                # DTFIX7: possible candidate for propagate_origin
                 b_plaintext = AnsibleTagHelper.tag_copy(vaulttext, b_plaintext)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id

@@ -21,10 +21,10 @@ minor_changes:
     except when the undefined value is the default of ``undef()`` with no arguments. Previously, any existing undefined hint would be ignored.
   - templating - Embedding ``range()`` values in containers such as lists will result in an error on use.
     Previously the value would be converted to a string representing the range parameters, such as ``range(0, 3)``.
-  - Jinja plugins - Plugins can declare support for undefined values.  # DTFIX-RELEASE: examples, porting guide entry
+  - Jinja plugins - Plugins can declare support for undefined values.  # DTFIX5: examples, porting guide entry
   - templating - Variables of type ``set`` and ``tuple`` are now converted to ``list`` when exiting the final pass of templating.
   - templating - Access to an undefined variable from inside a lookup, filter, or test (which raises MarkerError) no longer ends processing of the current template.
-    The triggering undefined value is returned as the result of the offending plugin invocation, and the template continues to execute. # DTFIX-RELEASE: porting guide entry, samples needed
+    The triggering undefined value is returned as the result of the offending plugin invocation, and the template continues to execute. # DTFIX5: porting guide entry, samples needed
   - plugin error handling - When raising exceptions in an exception handler, be sure to use ``raise ... from`` as appropriate.
     This supersedes the use of the ``AnsibleError`` arg ``orig_exc`` to represent the cause.
     Specifying ``orig_exc`` as the cause is still permitted.
@@ -76,16 +76,16 @@ breaking_changes:
     Lookup plugins are responsible for tagging strings containing templates to allow evaluation as a template.
   - assert - The ``quiet`` argument must be a commonly-accepted boolean value.
     Previously, unrecognized values were silently treated as False.
-  - plugins - Any plugin that sources or creates templates must properly tag them as trusted. # DTFIX-RELEASE: porting guide entry for "how?" Don't forget to mention inventory plugin ``trusted_by_default`` config.
+  - plugins - Any plugin that sources or creates templates must properly tag them as trusted. # DTFIX5: porting guide entry for "how?" Don't forget to mention inventory plugin ``trusted_by_default`` config.
   - first_found lookup - When specifying ``files`` or ``paths`` as a templated list containing undefined values, the undefined list elements will be discarded with a warning.
     Previously, the entire list would be discarded without any warning.
   - templating - The result of the ``range()`` global function cannot be returned from a template- it should always be passed to a filter (e.g., ``random``).
     Previously, range objects returned from an intermediate template were always converted to a list, which is inconsistent with inline consumption of range objects.
-  - plugins - Custom Jinja plugins that accept undefined top-level arguments must opt in to receiving them.  # DTFIX-RELEASE: porting guide entry + backcompat behavior description
+  - plugins - Custom Jinja plugins that accept undefined top-level arguments must opt in to receiving them.  # DTFIX5: porting guide entry + backcompat behavior description
   - plugins - Custom Jinja plugins that use ``environment.getitem`` to retrieve undefined values will now trigger a ``MarkerError`` exception.
-    This exception must be handled to allow the plugin to return a ``Marker``, or the plugin must opt-in to accepting ``Marker`` values.  # DTFIX-RELEASE: mention the decorator
+    This exception must be handled to allow the plugin to return a ``Marker``, or the plugin must opt-in to accepting ``Marker`` values.  # DTFIX5: mention the decorator
   - templating - Many Jinja plugins (filters, lookups, tests) and methods previously silently ignored undefined inputs, which often masked subtle errors.
-    Passing an undefined argument to a Jinja plugin or method that does not declare undefined support now results in an undefined value.  # DTFIX-RELEASE: common examples, porting guide, `is defined`, `is undefined`, etc; porting guide should also mention that overly-broad exception handling may mask Undefined errors; also that lazy handling of Undefined can invoke a plugin and bomb out in the middle where it was previously never invoked (plugins with side effects, just don't)
+    Passing an undefined argument to a Jinja plugin or method that does not declare undefined support now results in an undefined value.  # DTFIX5: common examples, porting guide, `is defined`, `is undefined`, etc; porting guide should also mention that overly-broad exception handling may mask Undefined errors; also that lazy handling of Undefined can invoke a plugin and bomb out in the middle where it was previously never invoked (plugins with side effects, just don't)
   - lookup plugins - Lookup plugins called as `with_(lookup)` will no longer have the `_subdir` attribute set.
   - lookup plugins - ``terms`` will always be passed to ``run`` as the first positional arg, where previously it was sometimes passed as a keyword arg when using ``with_`` syntax.
   - modules - Ansible modules using ``sys.excepthook`` must use a standard ``try/except`` instead.
