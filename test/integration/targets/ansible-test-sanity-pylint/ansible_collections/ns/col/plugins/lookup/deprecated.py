@@ -19,6 +19,7 @@ import ansible.module_utils.common.warnings
 
 from ansible.module_utils import datatag
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule as AliasedAnsibleModule
 from ansible.module_utils.basic import deprecate
 from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import deprecate as basic_deprecate
@@ -33,7 +34,6 @@ other_global_display = x_display.Display()
 foreign_global_display = x_display._display
 
 # extra lines below to allow for adding more imports without shifting the line numbers of the code that follows
-#
 #
 #
 #
@@ -90,3 +90,43 @@ def do_stuff() -> None:
     a_version = 'version not checked'
     a_collection_name = 'mismatched'
     _display.deprecated(msg=a_msg, date=a_date, version=a_version, collection_name=a_collection_name)
+
+    wrapper = MyWrapper(AnsibleModule({}))
+    wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
+
+    wrapper = MyAliasedWrapper(AnsibleModule({}))
+    wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
+
+    wrapper = MyOtherWrapper(AnsibleModule({}))
+    wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
+
+    wrapper = MyOtherAliasedWrapper(AnsibleModule({}))
+    wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
+
+    wrapper = MyTypeCommentWrapper(AnsibleModule({}))
+    wrapper.module.deprecate('', version='2.0.0', collection_name='ns.col')
+
+
+class MyWrapper:
+    def __init__(self, thing) -> None:
+        self.module: AnsibleModule = thing
+
+
+class MyAliasedWrapper:
+    def __init__(self, thing) -> None:
+        self.module: AliasedAnsibleModule = thing
+
+
+class MyOtherWrapper:
+    def __init__(self, thing: AnsibleModule) -> None:
+        self.module = thing
+
+
+class MyOtherAliasedWrapper:
+    def __init__(self, thing: AliasedAnsibleModule) -> None:
+        self.module = thing
+
+
+class MyTypeCommentWrapper:
+    def __init__(self, thing) -> None:
+        self.module = thing  # type: AnsibleModule
