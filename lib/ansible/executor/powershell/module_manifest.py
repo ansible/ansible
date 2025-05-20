@@ -584,13 +584,11 @@ def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[st
 def _get_powershell_signed_hashlist(
     collection: str | None = None,
 ) -> _ScriptInfo | None:
-    """Get the signed hashlist script Ansible or a collection.
-
-    Gets the signed hashlist script stored in either the Ansible package or for
+    """Gets the signed hashlist script stored in either the Ansible package or for
     the collection specified.
 
     :param collection: The collection namespace to get the signed hashlist for or None for the builtin.
-    :return: The resourcep path and ScriptInfo payload of the signed hashlist script if found.
+    :return: The _ScriptInfo payload of the signed hashlist script if found, None if not.
     """
     resource = 'ansible.config' if collection is None else f"{collection}.meta"
     signature_file = 'powershell_signatures.psd1'

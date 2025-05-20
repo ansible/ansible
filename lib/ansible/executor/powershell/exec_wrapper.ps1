@@ -710,10 +710,8 @@ end {
     }
     finally {
         $actionPipeline.Dispose()
-        foreach ($tempScript in $Script:AnsibleTempScripts) {
-            if (Test-Path -LiteralPath $tempScript) {
-                Remove-Item -LiteralPath $tempScript -Force
-            }
+        if ($Script:AnsibleTempScripts) {
+            Remove-Item -LiteralPath $Script:AnsibleTempScripts -Force -ErrorAction Continue
         }
     }
 }

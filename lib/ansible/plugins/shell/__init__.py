@@ -36,6 +36,7 @@ _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class _ShellCommand:
+    """Internal type returned by shell subsystems that may require both an execution payload and a command (eg powershell)."""
     command: str
     input_data: bytes | None = None
 
