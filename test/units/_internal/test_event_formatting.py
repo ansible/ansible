@@ -22,7 +22,7 @@ def test_traceback_formatting() -> None:
     except Exception as ex:
         saved_ex = ex
 
-    event = _error_factory.ControllerEventFactory.from_exception(saved_ex, True)
+    event = _error_factory.ControllerEventFactory.from_exception(saved_ex, True)  # pylint: disable=used-before-assignment
     ansible_tb = format_event_traceback(event)
     python_tb = ''.join(traceback.format_exception(saved_ex))
 
