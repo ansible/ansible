@@ -44,7 +44,7 @@
     - that: 1 == 1
     - that: a_var == "one"
     - that: '{{ a_var == "one" }}'
-# DTFIX-RELEASE: loops are not lazily templated, so this is not possible today, but could be in the future
+# DTFIX1: loops are not lazily templated, so this is not possible today, but could be in the future
 #    - that: |
 #        "hi mom" == '{{ "hi mom" }}'
     - that:

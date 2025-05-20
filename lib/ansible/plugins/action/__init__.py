@@ -20,12 +20,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ansible import constants as C
-from ansible._internal._errors import _captured
+from ansible._internal._errors import _captured, _error_factory
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
-from ansible._internal._errors import _utils
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
-from ansible.module_utils._internal import _traceback
+from ansible.module_utils._internal import _traceback, _event_utils, _messages
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
@@ -41,7 +40,6 @@ from ansible import _internal
 from ansible._internal._templating import _engine
 
 from .. import _AnsiblePluginInfoMixin
-from ...module_utils.common.messages import PluginInfo
 
 display = Display()
 
@@ -1445,14 +1443,41 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         else:
             result = {}
 
-        error_summary = _utils._create_error_summary(exception, _traceback.TracebackEvent.ERROR)
+        event = _error_factory.ControllerEventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
 
         result.update(
             failed=True,
-            exception=error_summary,
+            exception=_messages.ErrorSummary(
+                event=event,
+            ),
         )
 
         if 'msg' not in result:
-            result.update(msg=_utils._dedupe_and_concat_message_chain([md.msg for md in error_summary.details]))
+            result.update(msg=_event_utils.format_event_brief_message(event))
+
+        return result
+
+    def _result_dict_from_captured_errors(
+        self,
+        msg: str,
+        *,
+        errors: list[_messages.ErrorSummary] | None = None,
+    ) -> dict[str, t.Any]:
+        """Return a failed task result dict from the given error message and captured errors."""
+        _skip_stackwalk = True
+
+        event = _messages.Event(
+            msg=msg,
+            formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR),
+            events=tuple(error.event for error in errors) if errors else None,
+        )
+
+        result = dict(
+            failed=True,
+            exception=_messages.ErrorSummary(
+                event=event,
+            ),
+            msg=_event_utils.format_event_brief_message(event),
+        )
 
         return result

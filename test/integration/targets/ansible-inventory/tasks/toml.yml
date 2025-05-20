@@ -16,7 +16,7 @@
       - '"some_bool = true" in toml_in.stdout'
       - '"some_list = [" in toml_in.stdout'
 
-# DTFIX-RELEASE: plug in variable visitor on TOML output and re-enable this test
+# DTFIX3: plug in variable visitor on TOML output and re-enable this test
 #- name: "test option: --toml with valid group name"
 #  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
 #  register: result

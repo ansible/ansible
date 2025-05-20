@@ -96,7 +96,7 @@ try:
     display = Display()
 except Exception as ex:
     if isinstance(ex, AnsibleError):
-        ex_msg = ' '.join((ex.message, ex._help_text)).strip()
+        ex_msg = ' '.join((ex.message, ex._help_text or '')).strip()
     else:
         ex_msg = str(ex)
 
@@ -639,7 +639,7 @@ class CLI(ABC):
             try:
                 _launch_ssh_agent()
             except Exception as e:
-                raise AnsibleError('Failed to launch ssh agent', orig_exc=e)
+                raise AnsibleError('Failed to launch ssh agent.') from e
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))

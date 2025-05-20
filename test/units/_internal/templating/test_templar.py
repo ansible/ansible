@@ -50,6 +50,7 @@ from ansible._internal._templating._engine import TemplateEngine, TemplateOption
 from ansible._internal._templating._jinja_bits import AnsibleEnvironment, AnsibleContext, is_possibly_template, is_possibly_all_template
 from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior
 from ansible._internal._templating._utils import TemplateContext
+from ansible.module_utils._internal import _event_utils
 from ansible.utils.display import Display, _DeferredWarningContext
 from units.mock.loader import DictDataLoader
 from units.test_utils.controller.display import emits_warnings
@@ -422,7 +423,7 @@ def test_evaluate_expression_errors(expr: str, error_type: type[Exception]):
 @pytest.mark.parametrize("conditional,expected,variables", [
     ("1 == 2", False, None),
     ("test2_name | default(True)", True, None),
-    # DTFIX-RELEASE: more success cases?
+    # DTFIX5: more success cases?
 ])
 def test_evaluate_conditional(conditional: str, expected: t.Any, variables: dict[str, t.Any] | None):
     assert TemplateEngine().evaluate_conditional(TRUST.tag(conditional)) == expected
@@ -510,7 +511,7 @@ def test_is_possibly_template_false(value: str) -> None:
 
 
 def test_stop_on_container() -> None:
-    # DTFIX-RELEASE: add more test cases
+    # DTFIX5: add more test cases
     assert TemplateEngine().resolve_to_container(TRUST.tag('{{ [ 1 ] }}')) == [1]
 
 
@@ -576,7 +577,7 @@ def test_finalize_generator(value: t.Any, expected: t.Any) -> None:
         yielder=yielder,
     ))
 
-    # DTFIX-RELEASE: we still need to deal with the "Encountered unsupported" warnings these generate
+    # DTFIX5: we still need to deal with the "Encountered unsupported" warnings these generate
     assert templar.template(TRUST.tag(value)) == expected
 
 
@@ -1040,9 +1041,9 @@ def test_deprecated_dedupe_and_source():
     dep_warnings = dwc.get_deprecation_warnings()
 
     assert len(dep_warnings) == 3
-    assert 'deprecated_string' in dep_warnings[0]._format()
-    assert 'indirect1 and deprecated_list and deprecated_dict' in dep_warnings[1]._format()
-    assert 'd1 and d2' in dep_warnings[2]._format()
+    assert 'deprecated_string' in _event_utils.format_event_brief_message(dep_warnings[0].event)
+    assert 'indirect1 and deprecated_list and deprecated_dict' in _event_utils.format_event_brief_message(dep_warnings[1].event)
+    assert 'd1 and d2' in _event_utils.format_event_brief_message(dep_warnings[2].event)
 
 
 def test_jinja_const_template_leak(template_context: TemplateContext) -> None:

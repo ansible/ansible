@@ -34,6 +34,7 @@ from unittest.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils._internal import _messages
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing import vault
 from ansible.parsing.vault import EncryptedString, VaultSecretsContext, AnsibleVaultError, VaultHelper
@@ -939,12 +940,12 @@ origin = Origin(path="/test")
 @pytest.mark.parametrize("value, expected_ciphertext", (
     (origin.tag(EncryptedString(ciphertext="ciphertext")), "ciphertext"),
     (origin.tag(VaultedValue(ciphertext="ciphertext").tag("something")), "ciphertext"),
-    (make_marker(VaultExceptionMarker, ciphertext=origin.tag("ciphertext"), reason="", traceback=""), "ciphertext"),
+    (make_marker(VaultExceptionMarker, ciphertext=origin.tag("ciphertext"), event=_messages.Event(msg="")), "ciphertext"),
     (make_marker(TruncationMarker), None),
     ("not vaulted", None),
 ))
 def test_vaulthelper_get_ciphertext(value: t.Any, expected_ciphertext: str | None) -> None:
-    """Validate `get_ciphertext` helper reponses and tag preservation behavior."""
+    """Validate `get_ciphertext` helper responses and tag preservation behavior."""
     expected_tags = {origin} if expected_ciphertext is not None else set()
 
     tagged_ciphertext = VaultHelper.get_ciphertext(value, with_tags=True)

@@ -22,8 +22,8 @@ from ansible.errors import (
 )
 from ansible.executor.task_result import _RawTaskResult
 from ansible._internal._datatag import _utils
-from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary, PluginInfo
-from ansible.module_utils.datatag import native_type_name
+from ansible.module_utils._internal import _messages
+from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_text, to_native
@@ -642,7 +642,7 @@ class TaskExecutor:
 
                 result = self._handler.run(task_vars=vars_copy)
 
-            # DTFIX-RELEASE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
+            # DTFIX0: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
             except (AnsibleActionFail, AnsibleActionSkip) as e:
                 return e.result
             except AnsibleConnectionFailure as e:
@@ -825,11 +825,11 @@ class TaskExecutor:
         if warnings := result.get('warnings'):
             if isinstance(warnings, list):
                 for warning in warnings:
-                    if not isinstance(warning, WarningSummary):
+                    if not isinstance(warning, _messages.WarningSummary):
                         # translate non-WarningMessageDetail messages
-                        warning = WarningSummary(
-                            details=(
-                                Detail(msg=str(warning)),
+                        warning = _messages.WarningSummary(
+                            event=_messages.Event(
+                                msg=str(warning),
                             ),
                         )
 
@@ -840,18 +840,18 @@ class TaskExecutor:
         if deprecations := result.get('deprecations'):
             if isinstance(deprecations, list):
                 for deprecation in deprecations:
-                    if not isinstance(deprecation, DeprecationSummary):
+                    if not isinstance(deprecation, _messages.DeprecationSummary):
                         # translate non-DeprecationMessageDetail message dicts
                         try:
                             if (collection_name := deprecation.pop('collection_name', ...)) is not ...:
                                 # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
                                 # CAUTION: This deprecation cannot be enabled until the replacement (deprecator) has been documented, and the schema finalized.
                                 # self.deprecated('The `collection_name` key in the `deprecations` dictionary is deprecated.', version='2.27')
-                                deprecation.update(deprecator=PluginInfo._from_collection_name(collection_name))
+                                deprecation.update(deprecator=deprecator_from_collection_name(collection_name))
 
-                            deprecation = DeprecationSummary(
-                                details=(
-                                    Detail(msg=deprecation.pop('msg')),
+                            deprecation = _messages.DeprecationSummary(
+                                event=_messages.Event(
+                                    msg=deprecation.pop('msg'),
                                 ),
                                 **deprecation,
                             )

@@ -280,7 +280,7 @@ class CallbackBase(AnsiblePlugin):
             # that want to further modify the result, or use custom serialization
             return abridged_result
 
-        # DTFIX-RELEASE: Switch to stock json/yaml serializers here? We should always have a transformed plain-types result.
+        # DTFIX0: Switch to stock json/yaml serializers here? We should always have a transformed plain-types result.
 
         if result_format == 'json':
             return json.dumps(abridged_result, cls=_fallback_to_str.Encoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
@@ -310,7 +310,7 @@ class CallbackBase(AnsiblePlugin):
                 ' ' * (indent or 4)
             )
 
-        # DTFIX-RELEASE: add test to exercise this case
+        # DTFIX5: add test to exercise this case
         raise ValueError(f'Unsupported result_format {result_format!r}.')
 
     def _handle_warnings(self, res: _c.MutableMapping[str, t.Any]) -> None:
@@ -318,7 +318,7 @@ class CallbackBase(AnsiblePlugin):
         if res.pop('warnings', None) and self._current_task_result and (warnings := self._current_task_result.warnings):
             # display warnings from the current task result if `warnings` was not removed from `result` (or made falsey)
             for warning in warnings:
-                # DTFIX-RELEASE: what to do about propagating wrap_text from the original display.warning call?
+                # DTFIX3: what to do about propagating wrap_text from the original display.warning call?
                 self._display._warning(warning, wrap_text=False)
 
         if res.pop('deprecations', None) and self._current_task_result and (deprecations := self._current_task_result.deprecations):
@@ -333,7 +333,7 @@ class CallbackBase(AnsiblePlugin):
 
     def _handle_warnings_and_exception(self, result: CallbackTaskResult) -> None:
         """Standardized handling of warnings/deprecations and exceptions from a task/item result."""
-        # DTFIX-RELEASE: make/doc/porting-guide a public version of this method?
+        # DTFIX5: make/doc/porting-guide a public version of this method?
         try:
             use_stderr = self.get_option('display_failed_stderr')
         except KeyError:
@@ -374,7 +374,7 @@ class CallbackBase(AnsiblePlugin):
                 '    '
             )
 
-        # DTFIX-RELEASE: add test to exercise this case
+        # DTFIX5: add test to exercise this case
         raise ValueError(f'Unsupported result_format {result_format!r}.')
 
     def _get_diff(self, difflist):

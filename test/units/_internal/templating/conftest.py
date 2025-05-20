@@ -6,6 +6,7 @@ import pytest
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common._utils import get_all_subclasses
+from ansible.module_utils._internal import _messages
 from ansible._internal._templating._jinja_common import Marker, TruncationMarker, CapturedExceptionMarker, VaultExceptionMarker
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._utils import TemplateContext
@@ -34,7 +35,7 @@ def marker(request, template_context: TemplateContext) -> t.Iterator[Marker]:
     if issubclass(request_type, TruncationMarker):
         yield request_type()
     elif issubclass(request_type, VaultExceptionMarker):
-        yield VaultExceptionMarker(ciphertext='a ciphertext', reason='a reason', traceback='a traceback')
+        yield VaultExceptionMarker(ciphertext='a ciphertext', event=_messages.Event(msg='a msg'))
     elif issubclass(request_type, CapturedExceptionMarker):
         try:
             try:

@@ -243,7 +243,7 @@
           - "{{role_path}}/vars"
 
   - name: ensure vars subdir is searched for var-named actions
-    # DTFIX-RELEASE: the following *should* work, but since task.action is not templated by TE, it does not
+    # DTFIX5: the following *should* work, but since task.action is not templated by TE, it does not
 #    action: '{{ "debug_v" ~ "ar_alias" }}'
 #    args:
 #      var: item

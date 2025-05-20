@@ -340,6 +340,7 @@ class AnsibleSerializableDateTime(AnsibleSerializableWrapper[datetime.datetime])
 @dataclasses.dataclass(**_tag_dataclass_kwargs)
 class AnsibleSerializableDataclass(AnsibleSerializable, metaclass=abc.ABCMeta):
     _validation_allow_subclasses = True
+    _validation_auto_enabled = True
 
     def _as_dict(self) -> t.Dict[str, t.Any]:
         # omit None values when None is the field default
@@ -369,7 +370,11 @@ class AnsibleSerializableDataclass(AnsibleSerializable, metaclass=abc.ABCMeta):
     def __init_subclass__(cls, **kwargs) -> None:
         super(AnsibleSerializableDataclass, cls).__init_subclass__(**kwargs)  # cannot use super() without arguments when using slots
 
-        _dataclass_validation.inject_post_init_validation(cls, cls._validation_allow_subclasses)  # code gen a real __post_init__ method
+        if cls._validation_auto_enabled:
+            try:
+                _dataclass_validation.inject_post_init_validation(cls, cls._validation_allow_subclasses)  # code gen a real __post_init__ method
+            except Exception as ex:
+                raise Exception(f'Validation code generation failed on {cls}.') from ex
 
 
 class Tripwire:

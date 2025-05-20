@@ -127,8 +127,6 @@ class ActionModule(ActionBase):
                 # TODO: use gather_timeout to cut module execution if module itself does not support gather_timeout
                 res = self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False)
                 if res.get('failed', False):
-                    # DTFIX-RELEASE: this trashes the individual failure details and does not work with the new error handling; need to do something to
-                    # invoke per-item error handling- perhaps returning this as a synthetic loop result?
                     failed[fact_module] = res
                 elif res.get('skipped', False):
                     skipped[fact_module] = res
@@ -161,8 +159,6 @@ class ActionModule(ActionBase):
                     res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
-                            # DTFIX-RELEASE: this trashes the individual failure details and does not work with the new error handling; need to do something to
-                            # invoke per-item error handling- perhaps returning this as a synthetic loop result?
                             failed[module] = res
                         elif res.get('skipped', False):
                             skipped[module] = res
@@ -180,15 +176,18 @@ class ActionModule(ActionBase):
             self._task.async_val = async_val
 
         if skipped:
-            result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
+            result['msg'] = f"The following modules were skipped: {', '.join(skipped.keys())}."
             result['skipped_modules'] = skipped
             if len(skipped) == len(modules):
                 result['skipped'] = True
 
         if failed:
-            result['failed'] = True
-            result['msg'] = "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
             result['failed_modules'] = failed
+
+            result.update(self._result_dict_from_captured_errors(
+                msg=f"The following modules failed to execute: {', '.join(failed.keys())}.",
+                errors=[r['exception'] for r in failed.values()],
+            ))
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True

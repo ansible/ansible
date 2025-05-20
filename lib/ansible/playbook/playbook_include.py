@@ -164,5 +164,5 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if len(items) == 0:
             raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
 
-        # DTFIX-RELEASE: investigate this as a possible "problematic strip"
+        # DTFIX3: investigate this as a possible "problematic strip"
         new_ds['import_playbook'] = AnsibleTagHelper.tag_copy(v, items[0].strip())

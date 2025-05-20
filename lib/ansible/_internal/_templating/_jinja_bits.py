@@ -502,7 +502,7 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
     return exception_to_raise
 
 
-# DTFIX-RELEASE: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
+# DTFIX3: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
 #                also update the protomatter integration test once this is done (the test was written differently since this wasn't done yet)
 
 _BUILTIN_FILTER_ALIASES: dict[str, str] = {}
@@ -975,7 +975,7 @@ def _finalize_list(o: t.Any, mode: FinalizeMode) -> t.Iterator[t.Any]:
 
 
 def _maybe_finalize_scalar(o: t.Any) -> t.Any:
-    # DTFIX-RELEASE: this should check all supported scalar subclasses, not just JSON ones (also, does the JSON serializer handle these cases?)
+    # DTFIX5: this should check all supported scalar subclasses, not just JSON ones (also, does the JSON serializer handle these cases?)
     for target_type in _json_subclassable_scalar_types:
         if not isinstance(o, target_type):
             continue
@@ -1025,7 +1025,7 @@ def _finalize_collection(
 
 def _finalize_template_result(o: t.Any, mode: FinalizeMode) -> t.Any:
     """Recurse the template result, rendering any encountered templates, converting containers to non-lazy versions."""
-    # DTFIX-RELEASE: add tests to ensure this method doesn't drift from allowed types
+    # DTFIX5: add tests to ensure this method doesn't drift from allowed types
     o_type = type(o)
 
     # DTFIX-FUTURE: provide an optional way to check for trusted templates leaking out of templating (injected, but not passed through templar.template)

@@ -40,6 +40,7 @@ from ansible._internal import _locking
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _dataclass_validation
 from ansible.module_utils.common.yaml import yaml_load
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.json import Direction, get_module_encoder
 from ansible.release import __version__, __author__
@@ -55,7 +56,6 @@ from ansible.template import Templar
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
 from ansible.module_utils._internal import _json, _ansiballz
 from ansible.module_utils import basic as _basic
-from ansible.module_utils.common import messages as _messages
 
 if t.TYPE_CHECKING:
     from ansible import template as _template
@@ -439,7 +439,7 @@ class ModuleUtilLocatorBase:
                 version=removal_version,
                 removed=removed,
                 date=removal_date,
-                deprecator=_messages.PluginInfo._from_collection_name(self._collection_name),
+                deprecator=deprecator_from_collection_name(self._collection_name),
             )
         if 'redirect' in routing_entry:
             self.redirected = True
@@ -658,7 +658,7 @@ metadata_versions: dict[t.Any, type[ModuleMetadata]] = {
 
 
 def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
-    # DTFIX-RELEASE: while module metadata works, this feature isn't fully baked and should be turned off before release
+    # DTFIX2: while module metadata works, this feature isn't fully baked and should be turned off before release
     metadata_nodes: list[ast.Assign] = []
 
     for node in module.body:
@@ -928,7 +928,7 @@ class _BuiltModule:
 class _CachedModule:
     """Cached Python module created by AnsiballZ."""
 
-    # DTFIX-RELEASE: secure this (locked down pickle, don't use pickle, etc.)
+    # DTFIX5: secure this (locked down pickle, don't use pickle, etc.)
 
     zip_data: bytes
     metadata: ModuleMetadata

@@ -4,7 +4,7 @@ import contextlib
 import re
 import typing as t
 
-from ansible.module_utils.common.messages import WarningSummary, DeprecationSummary
+from ansible.module_utils._internal import _messages
 from ansible.utils.display import _DeferredWarningContext
 
 
@@ -23,7 +23,7 @@ def emits_warnings(
     warnings = ctx.get_warnings()
 
     if ignore_boilerplate:
-        warnings = [warning for warning in warnings if not warning.details[0].msg.startswith('Deprecation warnings can be disabled by setting')]
+        warnings = [warning for warning in warnings if not warning.event.msg.startswith('Deprecation warnings can be disabled by setting')]
 
     _check_messages('Warning', warning_pattern, warnings, allow_unmatched_message)
     _check_messages('Deprecation', deprecation_pattern, deprecations, allow_unmatched_message)
@@ -32,7 +32,7 @@ def emits_warnings(
 def _check_messages(
     label: str,
     patterns: list[str] | str | None,
-    entries: list[WarningSummary] | list[DeprecationSummary],
+    entries: list[_messages.WarningSummary] | list[_messages.DeprecationSummary],
     allow_unmatched_message: bool,
 ) -> None:
     if patterns is None:

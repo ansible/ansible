@@ -90,6 +90,8 @@ import typing as t
 
 from ansible import constants
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils._internal import _event_utils
+from ansible._internal import _event_formatting
 from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
 from ansible.executor.task_result import CallbackTaskResult
@@ -248,8 +250,8 @@ class CallbackModule(CallbackBase):
 
         if host_data.status == 'failed':
             if error_summary := task_result.exception:
-                message = error_summary._format()
-                output = error_summary.formatted_traceback
+                message = _event_utils.format_event_brief_message(error_summary.event)
+                output = _event_formatting.format_event_traceback(error_summary.event)
                 test_case.errors.append(TestError(message=message, output=output))
             elif 'msg' in res:
                 message = res['msg']

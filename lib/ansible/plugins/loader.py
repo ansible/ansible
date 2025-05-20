@@ -26,6 +26,7 @@ from ansible import __version__ as ansible_version
 from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
@@ -40,7 +41,6 @@ from . import _AnsiblePluginInfoMixin
 from .filter import AnsibleJinja2Filter
 from .test import AnsibleJinja2Test
 from .._internal._plugins import _cache
-from ..module_utils.common.messages import PluginInfo
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 
@@ -202,7 +202,7 @@ class PluginLoadContext(object):
             msg=warning_text,
             date=removal_date,
             version=removal_version,
-            deprecator=PluginInfo._from_collection_name(collection_name),
+            deprecator=deprecator_from_collection_name(collection_name),
         )
 
         self.deprecated = True
@@ -611,7 +611,7 @@ class PluginLoader:
                     version=removal_version,
                     date=removal_date,
                     removed=True,
-                    deprecator=PluginInfo._from_collection_name(acr.collection),
+                    deprecator=deprecator_from_collection_name(acr.collection),
                 )
                 plugin_load_context.date = removal_date
                 plugin_load_context.version = removal_version
@@ -1396,7 +1396,7 @@ class Jinja2Loader(PluginLoader):
                     msg=warning_text,
                     version=removal_version,
                     date=removal_date,
-                    deprecator=PluginInfo._from_collection_name(acr.collection),
+                    deprecator=deprecator_from_collection_name(acr.collection),
                 )
 
             # check removal
@@ -1412,7 +1412,7 @@ class Jinja2Loader(PluginLoader):
                     version=removal_version,
                     date=removal_date,
                     removed=True,
-                    deprecator=PluginInfo._from_collection_name(acr.collection),
+                    deprecator=deprecator_from_collection_name(acr.collection),
                 )
 
                 raise AnsiblePluginRemovedError(exc_msg)

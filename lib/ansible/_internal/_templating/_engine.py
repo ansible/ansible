@@ -186,7 +186,7 @@ class TemplateEngine:
     @property
     def available_variables(self) -> dict[str, t.Any] | ChainMap[str, t.Any]:
         """Available variables this instance will use when templating."""
-        # DTFIX-RELEASE: ensure that we're always accessing this as a shallow container-level snapshot, and eliminate uses of anything
+        # DTFIX3: ensure that we're always accessing this as a shallow container-level snapshot, and eliminate uses of anything
         #  that directly mutates this value. _new_context may resolve this for us?
         if self._variables is None:
             self._variables = self._variables_factory() if self._variables_factory else {}

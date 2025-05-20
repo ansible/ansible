@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from ansible.module_utils.common.messages import PluginInfo
-from ansible.module_utils.datatag import deprecate_value
+from ansible.module_utils.datatag import deprecate_value, deprecator_from_collection_name
 
 
 def get_deprecation_kwargs() -> list[dict[str, object]]:
@@ -10,9 +9,9 @@ def get_deprecation_kwargs() -> list[dict[str, object]]:
         dict(
             msg="Deprecation that passes deprecator and datetime.date.",
             date='2034-01-02',
-            deprecator=PluginInfo._from_collection_name('bla.bla'),
+            deprecator=deprecator_from_collection_name('bla.bla'),
         ),
-        dict(msg="Deprecation that passes deprecator and string date.", date='2034-01-02', deprecator=PluginInfo._from_collection_name('bla.bla')),
+        dict(msg="Deprecation that passes deprecator and string date.", date='2034-01-02', deprecator=deprecator_from_collection_name('bla.bla')),
         dict(msg="Deprecation that passes no deprecator, collection name, or date/version."),
     ]
 

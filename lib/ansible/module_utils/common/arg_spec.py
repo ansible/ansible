@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils.common.parameters import (
     _ADDITIONAL_CHECKS,
     _get_legal_inputs,
@@ -22,7 +23,6 @@ from ansible.module_utils.common.parameters import (
 
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.warnings import deprecate, warn
-from ansible.module_utils.common import messages as _messages
 
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
@@ -306,7 +306,7 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
                 msg=d['msg'],
                 version=d.get('version'),
                 date=d.get('date'),
-                deprecator=_messages.PluginInfo._from_collection_name(d.get('collection_name')),
+                deprecator=deprecator_from_collection_name(d.get('collection_name')),
             )
 
         for w in result._warnings:

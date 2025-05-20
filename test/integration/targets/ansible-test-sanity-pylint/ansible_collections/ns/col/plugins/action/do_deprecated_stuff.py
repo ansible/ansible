@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import _display
-from ansible.module_utils.common.messages import PluginInfo
 
 # extra lines below to allow for adding more imports without shifting the line numbers of the code that follows
 #
@@ -15,7 +15,7 @@ from ansible.module_utils.common.messages import PluginInfo
 class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         result = super(ActionModule, self).run(tmp, task_vars)
-        deprecator = PluginInfo._from_collection_name('ns.col')
+        deprecator = deprecator_from_collection_name('ns.col')
 
         # ansible-deprecated-version - only ansible-core can encounter this
         _display.deprecated(msg='ansible-deprecated-no-version')

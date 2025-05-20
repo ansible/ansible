@@ -60,6 +60,7 @@ class DeprecatedAccessAuditContext(NotifiableAccessContextBase):
                 date=item.deprecated.date,
                 obj=item.template,
                 deprecator=item.deprecated.deprecator,
+                formatted_traceback=item.deprecated.formatted_traceback,
             )
 
         return result

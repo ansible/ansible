@@ -4,7 +4,7 @@ import dataclasses
 import typing as t
 
 from ansible.errors import AnsibleRuntimeError
-from ansible.module_utils.common.messages import ErrorSummary, Detail, _dataclass_kwargs
+from ansible.module_utils._internal import _messages
 
 
 class AnsibleCapturedError(AnsibleRuntimeError):
@@ -16,24 +16,20 @@ class AnsibleCapturedError(AnsibleRuntimeError):
         self,
         *,
         obj: t.Any = None,
-        error_summary: ErrorSummary,
+        event: _messages.Event,
     ) -> None:
         super().__init__(
             obj=obj,
         )
 
-        self._error_summary = error_summary
-
-    @property
-    def error_summary(self) -> ErrorSummary:
-        return self._error_summary
+        self._event = event
 
 
 class AnsibleResultCapturedError(AnsibleCapturedError):
     """An exception representing error detail captured in a foreign context where an action/module result dictionary is involved."""
 
-    def __init__(self, error_summary: ErrorSummary, result: dict[str, t.Any]) -> None:
-        super().__init__(error_summary=error_summary)
+    def __init__(self, event: _messages.Event, result: dict[str, t.Any]) -> None:
+        super().__init__(event=event)
 
         self._result = result
 
@@ -41,7 +37,7 @@ class AnsibleResultCapturedError(AnsibleCapturedError):
     def maybe_raise_on_result(cls, result: dict[str, t.Any]) -> None:
         """Normalize the result and raise an exception if the result indicated failure."""
         if error_summary := cls.normalize_result_exception(result):
-            raise error_summary.error_type(error_summary, result)
+            raise error_summary.error_type(error_summary.event, result)
 
     @classmethod
     def find_first_remoted_error(cls, exception: BaseException) -> t.Self | None:
@@ -76,17 +72,18 @@ class AnsibleResultCapturedError(AnsibleCapturedError):
 
         if isinstance(exception, CapturedErrorSummary):
             error_summary = exception
-        elif isinstance(exception, ErrorSummary):
+        elif isinstance(exception, _messages.ErrorSummary):
             error_summary = CapturedErrorSummary(
-                details=exception.details,
-                formatted_traceback=cls._normalize_traceback(exception.formatted_traceback),
+                event=exception.event,
                 error_type=cls,
             )
         else:
             # translate non-ErrorDetail errors
             error_summary = CapturedErrorSummary(
-                details=(Detail(msg=str(result.get('msg', 'Unknown error.'))),),
-                formatted_traceback=cls._normalize_traceback(exception),
+                event=_messages.Event(
+                    msg=str(result.get('msg', 'Unknown error.')),
+                    formatted_traceback=cls._normalize_traceback(exception),
+                ),
                 error_type=cls,
             )
 
@@ -122,6 +119,6 @@ class AnsibleModuleCapturedError(AnsibleResultCapturedError):
     context = 'target'
 
 
-@dataclasses.dataclass(**_dataclass_kwargs)
-class CapturedErrorSummary(ErrorSummary):
+@dataclasses.dataclass(**_messages._dataclass_kwargs)
+class CapturedErrorSummary(_messages.ErrorSummary):
     error_type: type[AnsibleResultCapturedError] | None = None

@@ -1,0 +1,16 @@
+- name: Gather facts with tracebacks enabled
+  shell: ansible-playbook {{role_path}}/test_gather_facts.yml
+  environment:
+    ANSIBLE_DISPLAY_TRACEBACK: error
+  register: with_traceback
+
+- assert:
+    that:
+      - with_traceback.stdout is contains "Sub-Event 1 of 2"
+      - with_traceback.stdout is contains "Sub-Event 2 of 2"
+      - with_traceback.stdout is contains "Sub-Traceback 1 of 2"
+      - with_traceback.stdout is contains "Sub-Traceback 2 of 2"
+      - with_traceback.stdout is search "(?s)Traceback .*/action/gather_facts\.py"
+      - with_traceback.stdout is search "(?s)Traceback .* The following modules failed to execute"
+      - with_traceback.stdout is search "(?s)Traceback .* the fail1 module went bang"
+      - with_traceback.stdout is search "(?s)Traceback .* the fail2 module went bang"

@@ -879,10 +879,7 @@ class Connection(ConnectionBase):
             try:
                 key = self._populate_agent()
             except Exception as e:
-                raise AnsibleAuthenticationFailure(
-                    'Failed to add configured private key into ssh-agent',
-                    orig_exc=e,
-                )
+                raise AnsibleAuthenticationFailure('Failed to add configured private key into ssh-agent.') from e
             b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', to_bytes(f'IdentityFile="{key}"', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, "ANSIBLE_PRIVATE_KEY/private_key set")
         elif key := self.get_option('private_key_file'):

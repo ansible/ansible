@@ -14,12 +14,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ansible.module_utils._internal import _deprecator
-from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary, PluginInfo
-from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width, format_message
+from ansible.module_utils.datatag import deprecator_from_collection_name
+from ansible.module_utils._internal import _deprecator, _errors, _messages
+from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width, _format_message
 from ansible.utils.multiprocessing import context as multiprocessing_context
-
-from units.mock.messages import make_summary
 
 
 @pytest.fixture
@@ -123,7 +121,7 @@ def test_Display_display_warn_fork(display_resource):
         display = Display()
         display.set_queue(queue)
         display.warning('foo')
-        queue.send_display.assert_called_once_with('_warning', make_summary(WarningSummary, Detail(msg='foo')), wrap_text=True)
+        queue.send_display.assert_called_once_with('_warning', _messages.WarningSummary(event=_messages.Event(msg='foo')), wrap_text=True)
 
     p = multiprocessing_context.Process(target=test)
     p.start()
@@ -153,12 +151,20 @@ def test_format_message_deprecation_with_multiple_details() -> None:
     Verify that a DeprecationSummary with multiple Detail entries can be formatted.
     No existing code generates deprecations with multiple details, but a future deprecation exception type would need to make use of this.
     """
-    result = format_message(DeprecationSummary(
-        details=(
-            Detail(msg='Ignoring ExceptionX.', help_text='Plugins must handle it internally.'),
-            Detail(msg='Something went wrong.', formatted_source_context='Origin: /some/path\n\n...'),
+    event = _messages.Event(
+        msg='Ignoring ExceptionX.',
+        help_text='Plugins must handle it internally.',
+        chain=_messages.EventChain(
+            msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
+            traceback_reason='',  # not used in this test
+            event=_messages.Event(
+                msg='Something went wrong.',
+                formatted_source_context='Origin: /some/path\n\n...',
+            ),
         ),
-    ))
+    )
+
+    result = _format_message(_messages.DeprecationSummary(event=event), False)
 
     assert result == '''Ignoring ExceptionX. This feature will be removed in the future: Something went wrong.
 
@@ -175,15 +181,15 @@ Origin: /some/path
 
 
 A_DATE = datetime.date(2025, 1, 1)
-CORE = PluginInfo._from_collection_name('ansible.builtin')
-CORE_MODULE = PluginInfo(resolved_name='ansible.builtin.ping', type='module')
-CORE_PLUGIN = PluginInfo(resolved_name='ansible.builtin.debug', type='action')
-COLL = PluginInfo._from_collection_name('ns.col')
-COLL_MODULE = PluginInfo(resolved_name='ns.col.ping', type='module')
-COLL_PLUGIN = PluginInfo(resolved_name='ns.col.debug', type='action')
+CORE = deprecator_from_collection_name('ansible.builtin')
+CORE_MODULE = _messages.PluginInfo(resolved_name='ansible.builtin.ping', type='module')
+CORE_PLUGIN = _messages.PluginInfo(resolved_name='ansible.builtin.debug', type='action')
+COLL = deprecator_from_collection_name('ns.col')
+COLL_MODULE = _messages.PluginInfo(resolved_name='ns.col.ping', type='module')
+COLL_PLUGIN = _messages.PluginInfo(resolved_name='ns.col.debug', type='action')
 INDETERMINATE = _deprecator.INDETERMINATE_DEPRECATOR
-LEGACY_MODULE = PluginInfo(resolved_name='ping', type='module')
-LEGACY_PLUGIN = PluginInfo(resolved_name='debug', type='action')
+LEGACY_MODULE = _messages.PluginInfo(resolved_name='ping', type='module')
+LEGACY_PLUGIN = _messages.PluginInfo(resolved_name='debug', type='action')
 
 
 @pytest.mark.parametrize('kwargs, expected', (

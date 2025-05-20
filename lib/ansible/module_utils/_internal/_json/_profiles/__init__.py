@@ -6,7 +6,7 @@ import json
 import typing as t
 
 from ansible.module_utils import _internal
-from ansible.module_utils.common import messages as _messages
+from ansible.module_utils._internal import _messages
 from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
     AnsibleSerializableWrapper,
@@ -87,7 +87,8 @@ For controller-to-module, type behavior is profile dependent.
 _common_module_response_types: frozenset[type[AnsibleSerializable]] = frozenset(
     {
         _messages.PluginInfo,
-        _messages.Detail,
+        _messages.Event,
+        _messages.EventChain,
         _messages.ErrorSummary,
         _messages.WarningSummary,
         _messages.DeprecationSummary,
@@ -375,7 +376,7 @@ Future code changes should further restrict bytes to string conversions to elimi
 Additional warnings at other boundaries may be needed to give users an opportunity to resolve the issues before they become errors.
 """
 # DTFIX-FUTURE: add strict UTF8 string encoding checking to serialization profiles (to match the checks performed during deserialization)
-# DTFIX-RELEASE: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
+# DTFIX3: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
 # DTFIX-FUTURE: this config setting should probably be deprecated
 
 

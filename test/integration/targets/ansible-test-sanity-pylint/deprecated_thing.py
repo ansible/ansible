@@ -4,12 +4,12 @@ It triggers sanity test failures that can only occur for ansible-core, which nee
 """
 from __future__ import annotations
 
-from ansible.module_utils.common.messages import PluginInfo
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils.common.warnings import deprecate
 
 
 def do_stuff() -> None:
-    deprecator = PluginInfo._from_collection_name('ansible.builtin')
+    deprecator = deprecator_from_collection_name('ansible.builtin')
 
     deprecate(msg='ansible-deprecated-version', version='2.18')
     deprecate(msg='ansible-deprecated-no-version')
