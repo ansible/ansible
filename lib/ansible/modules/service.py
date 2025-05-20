@@ -153,6 +153,12 @@ EXAMPLES = r"""
     name: network
     state: restarted
     args: eth0
+
+- name: Restart nginx service in the jail called 'myjail' in FreeBSD
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+    args: -j myjail
 """
 
 RETURN = r"""#"""
@@ -1005,7 +1011,15 @@ class FreeBsdService(Service):
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'onestatus'))
+        cmd = f"{self.svc_cmd} "
+
+        # Jail name takes precedence over other arguments
+        if self.arguments.startswith(('-j', '-v')):
+            cmd += f"{self.arguments} {self.name} onestatus"
+        else:
+            cmd += f"{self.name} onestatus {self.arguments}"
+
+        rc, stdout, dummy = self.execute_command(cmd)
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1025,15 +1039,15 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, 'rcvar'))
-        try:
-            rcvars = shlex.split(stdout, comments=True)
-        except Exception:
-            # TODO: add a warning to the output with the failure
-            pass
+        cmd = f"{self.svc_cmd} "
+        # Jail name and verbose takes precedence over other arguments
+        if self.arguments.startswith(('-j', '-v')):
+            cmd += f"{self.arguments} {self.name} rcvar"
+        else:
+            cmd += f"{self.name} rcvar {self.arguments}"
 
-        if not rcvars:
-            self.module.fail_json(msg="unable to determine rcvar", stdout=stdout, stderr=stderr)
+        rc, stdout, stderr = self.execute_command(cmd)
+        rcvars = shlex.split(stdout, comments=True)
 
         # In rare cases, i.e. sendmail, rcvar can return several key=value pairs
         # Usually there is just one, however.  In other rare cases, i.e. uwsgi,
@@ -1090,7 +1104,13 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        ret = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.arguments, self.name, self.action))
+        cmd = f"{self.svc_cmd} "
+        # Jail name and verbose take precedence over other arguments
+        if self.arguments.startswith(('-j', '-v')):
+            cmd += f"{self.arguments} {self.name} {self.action}"
+        else:
+            cmd += f"{self.name} {self.action} {self.arguments}"
+        ret = self.execute_command(cmd)
 
         if self.sleep:
             time.sleep(self.sleep)
