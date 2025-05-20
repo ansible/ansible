@@ -33,7 +33,7 @@ def warn(
         event=_messages.Event(
             msg=warning,
             help_text=help_text,
-            formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.WARNING),
+            formatted_traceback=_traceback.maybe_capture_traceback(warning, _traceback.TracebackEvent.WARNING),
         ),
     )
 
@@ -79,7 +79,7 @@ def deprecate(
         event=_messages.Event(
             msg=msg,
             help_text=help_text,
-            formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED),
+            formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.DEPRECATED),
         ),
         version=version,
         date=date,

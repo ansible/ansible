@@ -1468,7 +1468,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         event = _messages.Event(
             msg=msg,
-            formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR),
+            formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR),
             events=tuple(error.event for error in errors) if errors else None,
         )
 
