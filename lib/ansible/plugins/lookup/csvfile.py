@@ -103,7 +103,6 @@ RETURN = """
     elements: str
 """
 
-import codecs
 import csv
 
 from collections.abc import MutableSequence
@@ -111,68 +110,22 @@ from collections.abc import MutableSequence
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.six import PY2
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-
-
-class CSVRecoder:
-    """
-    Iterator that reads an encoded stream and encodes the input to UTF-8
-    """
-    def __init__(self, f, encoding='utf-8'):
-        self.reader = codecs.getreader(encoding)(f)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return next(self.reader).encode("utf-8")
-
-    next = __next__   # For Python 2
-
-
-class CSVReader:
-    """
-    A CSV reader which will iterate over lines in the CSV file "f",
-    which is encoded in the given encoding.
-    """
-
-    def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        if PY2:
-            f = CSVRecoder(f, encoding)
-        else:
-            f = codecs.getreader(encoding)(f)
-
-        self.reader = csv.reader(f, dialect=dialect, **kwds)
-
-    def __next__(self):
-        row = next(self.reader)
-        return [to_text(s) for s in row]
-
-    next = __next__  # For Python 2
-
-    def __iter__(self):
-        return self
 
 
 class LookupModule(LookupBase):
 
     def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
-
         try:
-            f = open(to_bytes(filename), 'rb')
-            creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
-
-            for row in creader:
-                if len(row) and row[keycol] == key:
-                    return row[col]
+            with open(filename, encoding=encoding) as f:
+                for row in csv.reader(f, dialect=csv.excel, delimiter=delimiter):
+                    if row and row[keycol] == key:
+                        return row[col]
         except Exception as e:
-            raise AnsibleError("csvfile: %s" % to_native(e))
+            raise AnsibleError("csvfile lookup") from e
 
         return dflt
 
     def run(self, terms, variables=None, **kwargs):
-
         ret = []
 
         self.set_options(var_options=variables, direct=kwargs)
