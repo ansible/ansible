@@ -1,15 +1,15 @@
  - when: ansible_os_family == "RedHat"
    block:
 
-   - name: Retrieve a list of gpg keys are installed for package checking
+   - name: List the installed GPG keys
      shell: rpm -q gpg-pubkey | sort
      register: list_of_pubkeys
 
-   - name: Retrieve the gpg keys used to verify packages
+   - name: Retrieve the installed GPG keys
      command: rpm -q --qf %{description} gpg-pubkey
      register: pubkeys
 
-   - name: Save gpg keys to a file
+   - name: Save the retrieved GPG keys to a file
      copy:
        content: "{{ pubkeys['stdout'] }}"
        dest: "{{ remote_tmp_dir + '/pubkeys' }}"
@@ -19,16 +19,16 @@
 
    always:
 
-   - name: Remove all keys from key ring
+   - name: Remove all GPG keys from key ring
      shell: rpm -q gpg-pubkey | xargs rpm -e
 
-   - name: Restore the gpg keys normally installed on the system
+   - name: Restore the previously installed GPG keys
      command: rpm --import {{ (remote_tmp_dir + '/pubkeys') | quote }}
 
-   - name: Retrieve a list of gpg keys are installed for package checking
+   - name: List the installed GPG keys
      shell: rpm -q gpg-pubkey | sort
      register: new_list_of_pubkeys
 
-   - name: Confirm that we've restored all the pubkeys
+   - name: Verify the GPG keys have been restored
      assert:
        that: list_of_pubkeys["stdout"] == new_list_of_pubkeys["stdout"]
