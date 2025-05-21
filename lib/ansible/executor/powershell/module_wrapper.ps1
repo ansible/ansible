@@ -98,7 +98,9 @@ if ($ForModule) {
     $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 }
 else {
-    # For script files we want to ensure we load it as UTF-8
+    # For script files we want to ensure we load it as UTF-8. We don't set this
+    # for modules as they are loaded from memory whereas a script is loaded
+    # from disk as part of the script being run than by us.
     Set-WinPSDefaultFileEncoding
 }
 
