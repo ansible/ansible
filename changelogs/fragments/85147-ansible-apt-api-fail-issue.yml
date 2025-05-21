@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - fixes a bug in the apt module where installing a specific version of a package (like mypkg=1.2.3) fails if other versions are pinned with a higher APT priority (>1001). (https://github.com/ansible/ansible/issues/85147)
