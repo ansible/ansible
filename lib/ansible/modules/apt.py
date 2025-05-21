@@ -690,18 +690,17 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed(m, packages, state="manual"):
+def mark_installed(m, packages, manual=True):
     if not packages:
         return
 
-    if state == "manual":
+    if manual:
         mark_state = "unmarkauto"
         mark_msg = "manually"
-    elif state == "auto":
+    elif not manual:
         mark_state = "markauto"
         mark_msg = "auto"
-    else:
-        m.fail_json(msg="Invalid state: %s" % state)
+
     apt_mark_cmd_path = m.get_bin_path("apt-mark")
 
     # https://github.com/ansible/ansible/issues/40531
@@ -721,11 +720,11 @@ def mark_installed(m, packages, state="manual"):
 
 
 def mark_installed_manually(m, packages):
-    mark_installed(m, packages, state="manual")
+    mark_installed(m, packages)
 
 
 def mark_installed_auto(m, packages):
-    mark_installed(m, packages, state="auto")
+    mark_installed(m, packages, manual=False)
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
