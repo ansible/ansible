@@ -708,7 +708,7 @@ def mark_installed(m, packages, manual=True):
         m.warn("Could not find apt-mark binary, not marking package(s) as %s installed." % mark_msg)
         return
 
-    cmd = "%s %s %s" % (apt_mark_cmd_path, state, ' '.join(packages))
+    cmd = "%s %s %s" % (apt_mark_cmd_path, mark_state, ' '.join(packages))
     rc, out, err = m.run_command(cmd)
 
     if any(x in err for x in [APT_MARK_INVALID_OP, APT_MARK_INVALID_OP_DEB6]):
