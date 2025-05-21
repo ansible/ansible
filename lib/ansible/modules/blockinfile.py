@@ -401,7 +401,7 @@ def main():
         if module.boolean(params['backup']) and path_exists:
             backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
-        real_path = os.path.realpath(params['path'])
+        real_path = os.path.realpath(os.path.abspath(params['path']))
         write_changes(module, result, real_path)
 
     if module.check_mode and not path_exists:
