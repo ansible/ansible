@@ -113,7 +113,7 @@ try {
     }
     $execWrapper = @{
         name = 'exec_wrapper-async.ps1'
-        script = $execAction.Script
+        script = $execAction.ScriptInfo.Script
         params = $execAction.Parameters
     } | ConvertTo-Json -Compress -Depth 99
     $asyncInput = "$execWrapper`n`0`0`0`0`n$($execAction.InputData)"

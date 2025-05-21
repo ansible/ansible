@@ -474,8 +474,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd, sudoable=False)
+        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -906,8 +906,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
-        cmd = self._connection._shell.expand_user(expand_path)
-        data = self._low_level_execute_command(cmd, sudoable=False)
+        cmd = self._connection._shell._expand_user2(expand_path)
+        data = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]

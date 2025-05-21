@@ -99,6 +99,9 @@ test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
 test/integration/targets/template/templates/encoding_1252.j2 no-unwanted-characters
 test/integration/targets/unicode/unicode.yml no-smart-quotes
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
+test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 pslint:PSCustomUseLiteralPath  # We want to use wildcard matching with -Path
+test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
+test/integration/targets/win_app_control/files/Set-ManifestSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
 test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
