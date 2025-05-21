@@ -115,13 +115,10 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
-        try:
-            with open(filename, encoding=encoding) as f:
-                for row in csv.reader(f, dialect=csv.excel, delimiter=delimiter):
-                    if row and row[keycol] == key:
-                        return row[col]
-        except Exception as e:
-            raise AnsibleError("csvfile lookup") from e
+        with open(filename, encoding=encoding) as f:
+            for row in csv.reader(f, dialect=csv.excel, delimiter=delimiter):
+                if row and row[keycol] == key:
+                    return row[col]
 
         return dflt
 
@@ -145,23 +142,20 @@ class LookupModule(LookupBase):
             key = kv['_raw_params']
 
             # parameters override per term using k/v
-            try:
-                reset_params = False
-                for name, value in kv.items():
-                    if name == '_raw_params':
-                        continue
-                    if name not in paramvals:
-                        raise AnsibleAssertionError('%s is not a valid option' % name)
+            reset_params = False
+            for name, value in kv.items():
+                if name == '_raw_params':
+                    continue
+                if name not in paramvals:
+                    raise AnsibleAssertionError(f'{name!r} is not a valid option')
 
-                    self._deprecate_inline_kv()
-                    self.set_option(name, value)
-                    reset_params = True
+                self._deprecate_inline_kv()
+                self.set_option(name, value)
+                reset_params = True
 
-                if reset_params:
-                    paramvals = self.get_options()
+            if reset_params:
+                paramvals = self.get_options()
 
-            except (ValueError, AssertionError) as e:
-                raise AnsibleError(e)
 
             # default is just placeholder for real tab
             if paramvals['delimiter'] == 'TAB':
@@ -171,8 +165,7 @@ class LookupModule(LookupBase):
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'], paramvals['keycol'])
             if var is not None:
                 if isinstance(var, MutableSequence):
-                    for v in var:
-                        ret.append(v)
+                    ret.extend(var)
                 else:
                     ret.append(var)
 
