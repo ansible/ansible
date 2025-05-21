@@ -9,6 +9,7 @@ using namespace System.Linq
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
 using namespace System.Management.Automation.Security
+using namespace System.Reflection
 using namespace System.Security.Cryptography
 using namespace System.Text
 
@@ -53,6 +54,10 @@ begin {
     $ErrorActionPreference = "Stop"
     $ProgressPreference = "SilentlyContinue"
 
+    if ($PSCommandPath -and (Test-Path -LiteralPath $PSCommandPath)) {
+        Remove-Item -LiteralPath $PSCommandPath -Force
+    }
+
     # Try and set the console encoding to UTF-8 allowing Ansible to read the
     # output of the wrapper as UTF-8 bytes.
     try {
@@ -89,6 +94,9 @@ begin {
     }
 
     # $Script:AnsibleManifest = @{}  # Defined in process/end.
+    $Script:AnsibleShouldConstrain = [SystemPolicy]::GetSystemLockdownPolicy() -eq 'Enforce'
+    $Script:AnsibleTrustedHashList = [HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $Script:AnsibleUnsupportedHashList = [HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $Script:AnsibleWrapperWarnings = [List[string]]::new()
     $Script:AnsibleTempPath = @(
         # Wrapper defined tmpdir
@@ -110,6 +118,8 @@ begin {
             $false
         }
     } | Select-Object -First 1
+    $Script:AnsibleTempScripts = [List[string]]::new()
+    $Script:AnsibleClrFacadeSet = $false
 
     Function Convert-JsonObject {
         param(
@@ -147,7 +157,11 @@ begin {
 
             [Parameter()]
             [switch]
-            $IncludeScriptBlock
+            $IncludeScriptBlock,
+
+            [Parameter()]
+            [switch]
+            $SkipHashCheck
         )
 
         if (-not $Script:AnsibleManifest.scripts.Contains($Name)) {
@@ -172,11 +186,93 @@ begin {
                 [ref]$null).GetScriptBlock()
         }
 
-        [PSCustomObject]@{
+        $outputValue = [PSCustomObject]@{
             Name = $Name
             Script = $scriptContents
             Path = $scriptInfo.path
             ScriptBlock = $sbk
+            ShouldConstrain = $false
+        }
+
+        if (-not $Script:AnsibleShouldConstrain) {
+            $outputValue
+            return
+        }
+
+        if (-not $SkipHashCheck) {
+            $sha256 = [SHA256]::Create()
+            $scriptHash = [BitConverter]::ToString($sha256.ComputeHash($scriptBytes)).Replace("-", "")
+            $sha256.Dispose()
+
+            if ($Script:AnsibleUnsupportedHashList.Contains($scriptHash)) {
+                $err = [ErrorRecord]::new(
+                    [Exception]::new("Provided script for '$Name' is marked as unsupported in CLM mode."),
+                    "ScriptUnsupported",
+                    [ErrorCategory]::SecurityError,
+                    $Name)
+                $PSCmdlet.ThrowTerminatingError($err)
+            }
+            elseif ($Script:AnsibleTrustedHashList.Contains($scriptHash)) {
+                $outputValue
+                return
+            }
+        }
+
+        # If we have reached here we are running in a locked down environment
+        # and the script is not trusted in the signed hashlists. Check if it
+        # contains the authenticode signature and verify that using PowerShell.
+        # [SystemPolicy]::GetFilePolicyEnforcement(...) is a new API but only
+        # present in Server 2025+ so we need to rely on the known behaviour of
+        # Get-Command to fail with CommandNotFoundException if the script is
+        # not allowed to run.
+        $outputValue.ShouldConstrain = $true
+        if ($scriptContents -like "*`r`n# SIG # Begin signature block`r`n*") {
+            Set-WinPSDefaultFileEncoding
+
+            # If the script is manually signed we need to ensure the signature
+            # is valid and trusted by the OS policy.
+            # We must use '.ps1' so the ExternalScript WDAC check will apply.
+            $tmpFile = [Path]::Combine($Script:AnsibleTempPath, "ansible-tmp-$([Guid]::NewGuid()).ps1")
+            try {
+                [File]::WriteAllBytes($tmpFile, $scriptBytes)
+                $cmd = Get-Command -Name $tmpFile -CommandType ExternalScript -ErrorAction Stop
+
+                # Get-Command caches the file contents after loading which we
+                # use to verify it was not modified before the signature check.
+                $expectedScript = $cmd.OriginalEncoding.GetString($scriptBytes)
+                if ($expectedScript -ne $cmd.ScriptContents) {
+                    $err = [ErrorRecord]::new(
+                        [Exception]::new("Script has been modified during signature check."),
+                        "ScriptModifiedTrusted",
+                        [ErrorCategory]::SecurityError,
+                        $Name)
+                    $PSCmdlet.ThrowTerminatingError($err)
+                }
+
+                $outputValue.ShouldConstrain = $false
+            }
+            catch [CommandNotFoundException] {
+                $null = $null  # No-op but satisfies the linter.
+            }
+            finally {
+                if (Test-Path -LiteralPath $tmpFile) {
+                    Remove-Item -LiteralPath $tmpFile -Force
+                }
+            }
+        }
+
+        if ($outputValue.ShouldConstrain -and $IncludeScriptBlock) {
+            # If the script is untrusted and a scriptblock was requested we
+            # error out as the sbk would have run in FLM.
+            $err = [ErrorRecord]::new(
+                [Exception]::new("Provided script for '$Name' is not trusted to run."),
+                "ScriptNotTrusted",
+                [ErrorCategory]::SecurityError,
+                $Name)
+            $PSCmdlet.ThrowTerminatingError($err)
+        }
+        else {
+            $outputValue
         }
     }
 
@@ -223,7 +319,7 @@ begin {
             $IncludeScriptBlock
         )
 
-        $sbk = Get-AnsibleScript -Name exec_wrapper.ps1 -IncludeScriptBlock:$IncludeScriptBlock
+        $scriptInfo = Get-AnsibleScript -Name exec_wrapper.ps1 -IncludeScriptBlock:$IncludeScriptBlock
         $params = @{
             # TempPath may contain env vars that change based on the runtime
             # environment. Ensure we use that and not the $script:AnsibleTempPath
@@ -244,8 +340,7 @@ begin {
         }
 
         [PSCustomObject]@{
-            Script = $sbk.Script
-            ScriptBlock = $sbk.ScriptBlock
+            ScriptInfo = $scriptInfo
             Parameters = $params
             InputData = $inputData
         }
@@ -279,11 +374,16 @@ begin {
 
         $isBasicUtil = $false
         $csharpModules = foreach ($moduleName in $Name) {
-            (Get-AnsibleScript -Name $moduleName).Script
+            $scriptInfo = Get-AnsibleScript -Name $moduleName
 
+            if ($scriptInfo.ShouldConstrain) {
+                throw "C# module util '$Name' is not trusted and cannot be loaded."
+            }
             if ($moduleName -eq 'Ansible.Basic.cs') {
                 $isBasicUtil = $true
             }
+
+            $scriptInfo.Script
         }
 
         $fakeModule = [PSCustomObject]@{
@@ -300,6 +400,112 @@ begin {
             # Ansible.Basic.cs is a special case where we need to provide it
             # with the wrapper warnings list so it injects it into the result.
             [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $Script:AnsibleWrapperWarnings
+        }
+    }
+
+    Function Import-SignedHashList {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory, ValueFromPipeline)]
+            [string]
+            $Name
+        )
+
+        process {
+            try {
+                # We skip the hash check to ensure we verify based on the
+                # authenticode signature and not whether it's trusted by an
+                # existing signed hash list.
+                $scriptInfo = Get-AnsibleScript -Name $Name -SkipHashCheck
+                if ($scriptInfo.ShouldConstrain) {
+                    throw "script is not signed or not trusted to run."
+                }
+
+                $hashListAst = [Parser]::ParseInput(
+                    $scriptInfo.Script,
+                    $Name,
+                    [ref]$null,
+                    [ref]$null)
+                $manifestAst = $hashListAst.Find({ $args[0] -is [HashtableAst] }, $false)
+                if ($null -eq $manifestAst) {
+                    throw "expecting a single hashtable in the signed manifest."
+                }
+
+                $out = $manifestAst.SafeGetValue()
+                if (-not $out.Contains('Version')) {
+                    throw "expecting hash list to contain 'Version' key."
+                }
+                if ($out.Version -ne 1) {
+                    throw "unsupported hash list Version $($out.Version), expecting 1."
+                }
+
+                if (-not $out.Contains('HashList')) {
+                    throw "expecting hash list to contain 'HashList' key."
+                }
+
+                $out.HashList | ForEach-Object {
+                    if ($_ -isnot [hashtable] -or -not $_.ContainsKey('Hash') -or $_.Hash -isnot [string] -or $_.Hash.Length -ne 64) {
+                        throw "expecting hash list to contain hashtable with Hash key with a value of a SHA256 strings."
+                    }
+
+                    if ($_.Mode -eq 'Trusted') {
+                        $null = $Script:AnsibleTrustedHashList.Add($_.Hash)
+                    }
+                    elseif ($_.Mode -eq 'Unsupported') {
+                        # Allows us to provide a better error when trying to run
+                        # something in CLM that is marked as unsupported.
+                        $null = $Script:AnsibleUnsupportedHashList.Add($_.Hash)
+                    }
+                    else {
+                        throw "expecting hash list entry for $($_.Hash) to contain a mode of 'Trusted' or 'Unsupported' but got '$($_.Mode)'."
+                    }
+                }
+            }
+            catch {
+                $_.ErrorDetails = [ErrorDetails]::new("Failed to process signed manifest '$Name': $_")
+                $PSCmdlet.WriteError($_)
+            }
+        }
+    }
+
+    Function New-TempAnsibleFile {
+        [OutputType([string])]
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [string]
+            $FileName,
+
+            [Parameter(Mandatory)]
+            [string]
+            $Content
+        )
+
+        $name = [Path]::GetFileNameWithoutExtension($FileName)
+        $ext = [Path]::GetExtension($FileName)
+        $newName = "$($name)-$([Guid]::NewGuid())$ext"
+
+        $path = Join-Path -Path $Script:AnsibleTempPath $newName
+        Set-WinPSDefaultFileEncoding
+        [File]::WriteAllText($path, $Content, [UTF8Encoding]::new($false))
+
+        $path
+    }
+
+    Function Set-WinPSDefaultFileEncoding {
+        [CmdletBinding()]
+        param ()
+
+        # WinPS defaults to the locale encoding when loading a script from the
+        # file path but in Ansible we expect it to always be UTF-8 without a
+        # BOM. This lazily sets an internal field so pwsh reads it as UTF-8.
+        # If we don't do this then scripts saved as UTF-8 on the Ansible
+        # controller will not run as expected.
+        if ($PSVersionTable.PSVersion -lt '6.0' -and -not $Script:AnsibleClrFacadeSet) {
+            $clrFacade = [PSObject].Assembly.GetType('System.Management.Automation.ClrFacade')
+            $defaultEncodingField = $clrFacade.GetField('_defaultEncoding', [BindingFlags]'NonPublic, Static')
+            $defaultEncodingField.SetValue($null, [UTF8Encoding]::new($false))
+            $Script:AnsibleClrFacadeSet = $true
         }
     }
 
@@ -414,6 +620,10 @@ begin {
             $Script:AnsibleManifest = $Manifest
         }
 
+        if ($Script:AnsibleShouldConstrain) {
+            $Script:AnsibleManifest.signed_hashlist | Import-SignedHashList
+        }
+
         $actionInfo = Get-NextAnsibleAction
         $actionParams = $actionInfo.Parameters
 
@@ -500,5 +710,8 @@ end {
     }
     finally {
         $actionPipeline.Dispose()
+        if ($Script:AnsibleTempScripts) {
+            Remove-Item -LiteralPath $Script:AnsibleTempScripts -Force -ErrorAction Ignore
+        }
     }
 }

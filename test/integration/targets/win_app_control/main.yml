@@ -1,0 +1,146 @@
+- name: run App Control tests on Windows
+  hosts: windows
+  gather_facts: false
+  collections:
+  # This is important so that the temp ansible.windows is chosen over the ansible-test path
+  # which will not be signed
+  - ansible.windows
+
+  handlers:
+  - name: remove openauthenticode
+    shell: Uninstall-PSResource -Name OpenAuthenticode -Version 0.6.1
+    args:
+      executable: pwsh
+    delegate_to: localhost
+
+  tasks:
+  - name: make sure expected facts are set
+    assert:
+      that:
+      - ansible_install_dir is defined
+      - local_tmp_dir is defined
+
+  - name: get OS version
+    win_shell: (Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion.ToString()
+    register: os_version
+
+  - name: setup and test block for 2019 and later
+    when:
+    - os_version.stdout | trim is version('10.0.17763', '>=')  # 2019+
+    block:
+    - name: get test remote tmp dir
+      import_role:
+        name: ../setup_remote_tmp_dir
+
+    - name: get current user
+      win_shell: '[Environment]::UserName'
+      register: current_user_raw
+
+    - name: set current user fact
+      set_fact:
+        current_user: '{{ current_user_raw.stdout | trim }}'
+
+    - name: setup App Control
+      import_tasks: setup.yml
+
+    - name: run content before enabling App Control
+      import_tasks: test_not_enabled.yml
+
+    - name: enable App Control
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+
+        $tmpPath = '{{ remote_tmp_dir }}'
+
+        $policyPath = Join-Path $tmpPath policy.xml
+        $certPath = Join-Path $tmpPath signing.cer
+        $policyName = 'Ansible_AppControl_Test'
+
+        Copy-Item "$env:windir\schemas\CodeIntegrity\ExamplePolicies\DefaultWindows_Enforced.xml" $policyPath
+        Set-CIPolicyIdInfo -FilePath $policyPath -PolicyName $policyName -PolicyId (New-Guid)
+        Set-CIPolicyVersion -FilePath $policyPath -Version "1.0.0.0"
+
+        Add-SignerRule -FilePath $policyPath -CertificatePath $certPath -User
+        Set-RuleOption -FilePath $policyPath -Option 0          # Enabled:UMCI
+        Set-RuleOption -FilePath $policyPath -Option 3 -Delete  # Enabled:Audit Mode
+        Set-RuleOption -FilePath $policyPath -Option 11 -Delete # Disabled:Script Enforcement
+        Set-RuleOption -FilePath $policyPath -Option 19         # Enabled:Dynamic Code Security
+
+        # Using $tmpPath has this step fail
+        $policyBinPath = "$env:windir\System32\CodeIntegrity\SiPolicy.p7b"
+        $null = ConvertFrom-CIPolicy -XmlFilePath $policyPath -BinaryFilePath $policyBinPath
+
+        $ciTool = Get-Command -Name CiTool.exe -ErrorAction SilentlyContinue
+        $policyId = $null
+        if ($ciTool) {
+            $setInfo = & $ciTool --update-policy $policyBinPath *>&1
+            if ($LASTEXITCODE) {
+                throw "citool.exe --update-policy failed ${LASTEXITCODE}: $setInfo"
+            }
+
+            $policyId = & $ciTool --list-policies --json |
+                ConvertFrom-Json |
+                Select-Object -ExpandProperty Policies |
+                Where-Object FriendlyName -eq $policyName |
+                Select-Object -ExpandProperty PolicyID
+        }
+        else {
+            $rc = Invoke-CimMethod -Namespace root\Microsoft\Windows\CI -ClassName PS_UpdateAndCompareCIPolicy -MethodName Update -Arguments @{
+                FilePath = $policyBinPath
+            }
+            if ($rc.ReturnValue) {
+                throw "PS_UpdateAndCompareCIPolicy Update failed $($rc.ReturnValue)"
+            }
+        }
+
+        @{
+            policy_id = $policyId
+            path = $policyBinPath
+        } | ConvertTo-Json
+      register: policy_info_raw
+
+    - name: set policy info fact
+      set_fact:
+        policy_info: '{{ policy_info_raw.stdout | from_json }}'
+
+    - name: run content after enabling App Control
+      import_tasks: test_enabled.yml
+
+    - name: run invalid manifest tests
+      import_tasks: test_manifest.yml
+
+    always:
+    - name: disable policy through CiTool if present
+      win_shell: CiTool.exe --remove-policy {{ policy_info.policy_id }}
+      when:
+      - policy_info is defined
+      - policy_info.policy_id is truthy
+
+    - name: remove App Control policy
+      win_file:
+        path: '{{ policy_info.path }}'
+        state: absent
+      register: policy_removal
+      when:
+      - policy_info is defined
+
+    - name: reboot after removing policy file
+      win_reboot:
+      when: policy_removal is changed
+
+    - name: remove certificates
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+
+        Remove-Item -LiteralPath 'Cert:\LocalMachine\Root\{{ cert_info.ca_thumbprint }}' -Force
+        Remove-Item -LiteralPath 'Cert:\LocalMachine\TrustedPublisher\{{ cert_info.thumbprint }}' -Force
+      when: cert_info is defined
+
+    - name: remove signed Ansible content
+      file:
+        path: '{{ ansible_install_dir }}/{{ item }}'
+        state: absent
+      loop:
+      - config/powershell_signatures.psd1
+      - executor/powershell/exec_wrapper.ps1.authenticode
+      delegate_to: localhost

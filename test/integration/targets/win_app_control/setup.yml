@@ -1,0 +1,116 @@
+- name: setup test facts
+  set_fact:
+    cert_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
+
+- name: setup WDAC certificates
+  win_shell: |
+    $ErrorActionPreference = 'Stop'
+
+    $testPrefix = 'Ansible-WDAC'
+    $certPassword = ConvertTo-SecureString -String '{{ cert_pw }}' -Force -AsPlainText
+    $remoteTmpDir = '{{ remote_tmp_dir }}'
+
+    $enhancedKeyUsage = [Security.Cryptography.OidCollection]::new()
+    $null = $enhancedKeyUsage.Add('1.3.6.1.5.5.7.3.3')  # Code Signing
+    $caParams = @{
+        Extension = @(
+            [Security.Cryptography.X509Certificates.X509BasicConstraintsExtension]::new($true, $false, 0, $true),
+            [Security.Cryptography.X509Certificates.X509KeyUsageExtension]::new('KeyCertSign', $false),
+            [Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension ]::new($enhancedKeyUsage, $false)
+        )
+        CertStoreLocation = 'Cert:\CurrentUser\My'
+        NotAfter = (Get-Date).AddDays(1)
+        Type = 'Custom'
+    }
+    $ca = New-SelfSignedCertificate @caParams -Subject "CN=$testPrefix-Root"
+
+    $certParams = @{
+        CertStoreLocation = 'Cert:\CurrentUser\My'
+        KeyUsage = 'DigitalSignature'
+        TextExtension = @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+        Type = 'Custom'
+    }
+    $cert = New-SelfSignedCertificate @certParams -Subject "CN=$testPrefix-Signed" -Signer $ca
+    $null = $cert | Export-PfxCertificate -Password $certPassword -FilePath "$remoteTmpDir\signing.pfx"
+    $cert.Export('Cert') | Set-Content -LiteralPath "$remoteTmpDir\signing.cer" -Encoding Byte
+
+    $certUntrusted = New-SelfSignedCertificate @certParams -Subject "CN=$testPrefix-Untrusted"
+    $null = $certUntrusted | Export-PfxCertificate -Password $certPassword -FilePath "$remoteTmpDir\untrusted.pfx"
+
+    $caWithoutKey = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($ca.Export('Cert'))
+    $certWithoutKey = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($cert.Export('Cert'))
+
+    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($ca.Thumbprint)" -DeleteKey -Force
+    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($cert.Thumbprint)" -DeleteKey -Force
+    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($certUntrusted.Thumbprint)" -DeleteKey -Force
+
+    $root = Get-Item Cert:\LocalMachine\Root
+    $root.Open('ReadWrite')
+    $root.Add($caWithoutKey)
+    $root.Dispose()
+
+    $trustedPublisher = Get-Item Cert:\LocalMachine\TrustedPublisher
+    $trustedPublisher.Open('ReadWrite')
+    $trustedPublisher.Add($certWithoutKey)
+    $trustedPublisher.Dispose()
+
+    @{
+        ca_thumbprint = $caWithoutKey.Thumbprint
+        thumbprint = $certWithoutKey.Thumbprint
+        untrusted_thumbprint = $certUntrusted.Thumbprint
+    } | ConvertTo-Json
+  register: cert_info_raw
+  become: true
+  become_method: runas
+  vars:
+    ansible_become_user: '{{ ansible_user }}'
+    ansible_become_pass: '{{ ansible_password | default(ansible_test_connection_password) }}'
+
+- name: parse raw cert_info
+  set_fact:
+    cert_info: "{{ cert_info_raw.stdout | from_json }}"
+
+- name: fetch signing certificates
+  fetch:
+    src: '{{ remote_tmp_dir }}\{{ item }}.pfx'
+    dest: '{{ local_tmp_dir }}/wdac-{{ item }}.pfx'
+    flat: yes
+  loop:
+  - signing
+  - untrusted
+
+- name: install OpenAuthenticode
+  shell: |
+    if (-not (Get-Module -Name OpenAuthenticode -ListAvailable | Where-Object Version -ge '0.5.0')) {
+        $url = 'https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/win_app_control/openauthenticode.0.6.1.nupkg'
+        Invoke-WebRequest -Uri $url -OutFile '{{ local_tmp_dir }}/openauthenticode.0.6.1.nupkg'
+
+        Register-PSResourceRepository -Name AnsibleTemp -Trusted -Uri '{{ local_tmp_dir }}'
+        try {
+            Install-PSResource -Name OpenAuthenticode -Repository AnsibleTemp
+        } finally {
+            Unregister-PSResourceRepository -Name AnsibleTemp
+        }
+
+        $true
+    } else {
+        $false
+    }
+  args:
+    executable: pwsh
+  register: open_auth_install
+  changed_when: open_auth_install.stdout | bool
+  notify: remove openauthenticode
+  delegate_to: localhost
+
+- name: sign Ansible content
+  script: >-
+    New-AnsiblePowerShellSignature.ps1
+    -CollectionPath {{ local_tmp_dir ~ "/ansible_collections/ns/col" | quote }}
+    -CertPath {{ local_tmp_dir ~ "/wdac-signing.pfx" | quote }}
+    -UntrustedCertPath {{ local_tmp_dir ~ "/wdac-untrusted.pfx" | quote }}
+    -CertPass {{ cert_pw | quote }}
+    -Verbose
+  environment:
+    NO_COLOR: '1'
+  delegate_to: localhost

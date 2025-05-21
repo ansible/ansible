@@ -1,0 +1,215 @@
+- name: run signed module
+  ns.col.signed:
+    input: café
+  register: signed_res
+
+- name: assert run signed module
+  assert:
+    that:
+    - signed_res.language_mode == 'FullLanguage'
+    - signed_res.test == 'signed'
+    - signed_res.whoami == current_user
+    - signed_res.ünicode == 'café'
+
+- name: run inline signed module
+  ns.col.inline_signed:
+    input: café
+  register: inline_signed_res
+
+- name: assert run inline signed module
+  assert:
+    that:
+    - inline_signed_res.language_mode == 'FullLanguage'
+    - inline_signed_res.test == 'inline_signed'
+    - inline_signed_res.whoami == current_user
+    - inline_signed_res.ünicode == 'café'
+
+- name: run inline signed module that is not trusted
+  ns.col.inline_signed_not_trusted:
+    input: café
+  register: inline_signed_not_trusted_res
+
+- name: assert run inline signed module
+  assert:
+    that:
+    - inline_signed_not_trusted_res.language_mode == 'ConstrainedLanguage'
+    - inline_signed_not_trusted_res.test == 'inline_signed_not_trusted'
+    - inline_signed_not_trusted_res.whoami == current_user
+    - inline_signed_not_trusted_res.ünicode == 'café'
+
+- name: run signed module to test exec wrapper scope
+  ns.col.scope:
+  register: scoped_res
+
+- name: assert run signed module to test exec wrapper scope
+  assert:
+    that:
+    - scoped_res.missing_using_namespace == True
+    - scoped_res.module_using_namespace == 'System.Management.Automation.Language.Parser'
+    - scoped_res.script_var == 'foo'
+
+- name: run module marked as skipped
+  ns.col.skipped:
+    input: café
+  register: skipped_res
+
+- name: assert run module marked as skipped
+  assert:
+    that:
+    - skipped_res.language_mode == 'ConstrainedLanguage'
+    - skipped_res.test == 'skipped'
+    - skipped_res.whoami == current_user
+    - skipped_res.ünicode == 'café'
+
+- name: run module marked as skipped with a failure
+  ns.col.skipped:
+    should_fail: true
+  register: skipped_fail_res
+  ignore_errors: true
+
+- name: assert run module marked as skipped with a failure
+  assert:
+    that:
+    - skipped_fail_res is failed
+    - >-
+      skipped_fail_res.msg == "Unhandled exception while executing module: exception here"
+    - skipped_fail_res.exception is search("At .*\\\\ansible_collections\.ns\.col\.plugins\.modules\.skipped-.*\.ps1")
+
+- name: run module marked as unsupported
+  ns.col.unsupported:
+  register: unsupported_res
+  failed_when:
+  - unsupported_res.failed == False
+  - >-
+    unsupported_res.msg is not contains("Provided script for 'ansible_collections.ns.col.plugins.modules.unsupported.ps1' is marked as unsupported in CLM mode.")
+
+- name: run module with signed utils
+  ns.col.signed_module_util:
+  register: signed_util_res
+
+- name: assert run module with signed utils
+  assert:
+    that:
+    - signed_util_res.language_mode == 'FullLanguage'
+    - signed_util_res.builtin_powershell_util == 'value'
+    - signed_util_res.csharp_util == 'value'
+    - signed_util_res.powershell_util.language_mode == 'FullLanguage'
+
+- name: run module with unsigned C# util
+  ns.col.unsigned_csharp_util:
+  register: unsigned_csharp_util_res
+  failed_when:
+  - unsigned_csharp_util_res.failed == False
+  - >-
+    unsigned_csharp_util_res.msg is not contains("C# module util 'ansible_collections.ns.col.plugins.module_utils.CSharpUnsigned.cs' is not trusted and cannot be loaded.")
+
+- name: run module with unsigned Pwsh util
+  ns.col.unsigned_pwsh_util:
+  register: unsigned_pwsh_util_res
+  failed_when:
+  - unsigned_pwsh_util_res.failed == False
+  - >-
+    unsigned_pwsh_util_res.msg is not contains("PowerShell module util 'ansible_collections.ns.col.plugins.module_utils.PwshUnsigned.cs' is not trusted and cannot be loaded.")
+
+- name: run unsigned module with utils
+  ns.col.unsigned_module_with_util:
+  register: unsigned_module_with_util_res
+  failed_when:
+  - unsigned_module_with_util_res.failed == False
+  - >-
+    unsigned_module_with_util_res.msg is not contains("Cannot run untrusted PowerShell script 'ns.col.unsigned_with_util.ps1' in ConstrainedLanguage mode with module util imports.")
+
+- name: run script role
+  import_role:
+    name: ns.col.app_control_script
+
+- name: assert script role result
+  assert:
+    that:
+    - signed_res.rc == 0
+    - (signed_res.stdout | from_json).language_mode == 'FullLanguage'
+    - (signed_res.stdout | from_json).whoami == current_user
+    - (signed_res.stdout | from_json).ünicode == 'café'
+    - unsigned_res.rc == 0
+    - (unsigned_res.stdout | from_json).language_mode == 'ConstrainedLanguage'
+    - (unsigned_res.stdout | from_json).whoami == current_user
+    - (unsigned_res.stdout | from_json).ünicode == 'café'
+
+- name: signed module with become
+  ns.col.signed:
+    input: café
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  register: become_res
+
+- name: assert run signed module with become
+  assert:
+    that:
+    - become_res.language_mode == 'FullLanguage'
+    - become_res.test == 'signed'
+    - become_res.whoami == 'SYSTEM'
+    - become_res.ünicode == 'café'
+
+- name: signed module with async
+  ns.col.signed:
+    input: café
+  async: 60
+  poll: 3
+  register: async_res
+
+- name: assert run signed module with async
+  assert:
+    that:
+    - async_res.language_mode == 'FullLanguage'
+    - async_res.test == 'signed'
+    - async_res.whoami == current_user
+    - async_res.ünicode == 'café'
+
+- name: copy file
+  win_copy:
+    src: New-AnsiblePowerShellSignature.ps1
+    dest: '{{ remote_tmp_dir }}/New-AnsiblePowerShellSignature.ps1'
+  register: copy_res
+
+- name: get remote hash of copied file
+  win_stat:
+    path: '{{ remote_tmp_dir }}/New-AnsiblePowerShellSignature.ps1'
+    get_checksum: true
+  register: copy_stat
+
+- name: assert copy file
+  assert:
+    that:
+    - copy_res.checksum == copy_stat.stat.checksum
+
+- name: fetch file
+  fetch:
+    src: '{{ remote_tmp_dir }}/New-AnsiblePowerShellSignature.ps1'
+    dest: '{{ local_tmp_dir }}/New-AnsiblePowerShellSignature.ps1'
+    flat: true
+  register: fetch_res
+
+- name: get local hash of fetch file
+  stat:
+    path: '{{ local_tmp_dir }}/New-AnsiblePowerShellSignature.ps1'
+    get_checksum: true
+  delegate_to: localhost
+  register: fetch_stat
+
+- name: assert fetch file
+  assert:
+    that:
+    - fetch_res.checksum == copy_stat.stat.checksum
+    - fetch_res.checksum == fetch_stat.stat.checksum
+
+- name: run signed module with signed module util in another collection
+  ns.module_util_ref.module:
+  register: cross_util_res
+
+- name: assert run signed module with signed module utils in another collection
+  assert:
+    that:
+    - cross_util_res.language_mode == 'FullLanguage'
+    - cross_util_res.csharp_util == 'value'
+    - "cross_util_res.powershell_util == {'language_mode': 'FullLanguage'}"

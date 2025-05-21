@@ -97,6 +97,10 @@ $ps = [PowerShell]::Create()
 if ($ForModule) {
     $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 }
+else {
+    # For script files we want to ensure we load it as UTF-8
+    Set-WinPSDefaultFileEncoding
+}
 
 foreach ($variable in $Variables) {
     $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
@@ -112,12 +116,31 @@ foreach ($env in $Environment.GetEnumerator()) {
 $null = $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement()
 
 $scriptInfo = Get-AnsibleScript -Name $Script
+if ($scriptInfo.ShouldConstrain) {
+    # Fail if there are any module utils, in the future we may allow unsigned
+    # PowerShell utils in CLM but for now we don't.
+    if ($PowerShellModules -or $CSharpModules) {
+        throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with module util imports."
+    }
 
-if ($PowerShellModules) {
-    foreach ($utilName in $PowerShellModules) {
-        $utilInfo = Get-AnsibleScript -Name $utilName
+    # If the module is marked as needing to be constrained then we set the
+    # language mode to ConstrainedLanguage so that when parsed inside the
+    # Runspace it will run in CLM. We need to run it from a filepath as in
+    # CLM we cannot call the methods needed to create the ScriptBlock and we
+    # need to be in CLM to downgrade the language mode.
+    $null = $ps.AddScript('$ExecutionContext.SessionState.LanguageMode = "ConstrainedLanguage"').AddStatement()
+    $scriptPath = New-TempAnsibleFile -FileName $Script -Content $scriptInfo.Script
+    $null = $ps.AddCommand($scriptPath, $false).AddStatement()
+}
+else {
+    if ($PowerShellModules) {
+        foreach ($utilName in $PowerShellModules) {
+            $utilInfo = Get-AnsibleScript -Name $utilName
+            if ($utilInfo.ShouldConstrain) {
+                throw "PowerShell module util '$utilName' is not trusted and cannot be loaded."
+            }
 
-        $null = $ps.AddScript(@'
+            $null = $ps.AddScript(@'
 param ($Name, $Script)
 
 $moduleName = [System.IO.Path]::GetFileNameWithoutExtension($Name)
@@ -130,32 +153,33 @@ $sbk = [System.Management.Automation.Language.Parser]::ParseInput(
 New-Module -Name $moduleName -ScriptBlock $sbk |
     Import-Module -WarningAction SilentlyContinue -Scope Global
 '@, $true)
-        $null = $ps.AddParameters(
-            @{
-                Name = $utilName
-                Script = $utilInfo.Script
-            }
-        ).AddStatement()
+            $null = $ps.AddParameters(
+                @{
+                    Name = $utilName
+                    Script = $utilInfo.Script
+                }
+            ).AddStatement()
+        }
     }
-}
 
-if ($CSharpModules) {
-    # C# utils are process wide so just load them here.
-    Import-CSharpUtil -Name $CSharpModules
-}
+    if ($CSharpModules) {
+        # C# utils are process wide so just load them here.
+        Import-CSharpUtil -Name $CSharpModules
+    }
 
-# We invoke it through a command with useLocalScope $false to
-# ensure the code runs with it's own $script: scope. It also
-# cleans up the StackTrace on errors by not showing the stub
-# execution line and starts immediately at the module "cmd".
-$null = $ps.AddScript(@'
+    # We invoke it through a command with useLocalScope $false to
+    # ensure the code runs with it's own $script: scope. It also
+    # cleans up the StackTrace on errors by not showing the stub
+    # execution line and starts immediately at the module "cmd".
+    $null = $ps.AddScript(@'
 ${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::ParseInput(
     $args[0],
     $args[1],
     [ref]$null,
     [ref]$null).GetScriptBlock()
 '@).AddArgument($scriptInfo.Script).AddArgument($Script).AddStatement()
-$null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
+    $null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
+}
 
 if ($Breakpoints) {
     $ps.Runspace.Debugger.SetBreakpoints($Breakpoints)

@@ -40,7 +40,7 @@ param([ScriptBlock]$ScriptBlock, $Param)
 & $ScriptBlock.Ast.GetScriptBlock() @Param
 '@).AddParameters(
     @{
-        ScriptBlock = $execInfo.ScriptBlock
+        ScriptBlock = $execInfo.ScriptInfo.ScriptBlock
         Param = $execInfo.Parameters
     })
 

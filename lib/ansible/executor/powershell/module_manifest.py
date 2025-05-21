@@ -30,6 +30,7 @@ from ansible.plugins.loader import ps_module_utils_loader
 class _ExecManifest:
     scripts: dict[str, _ScriptInfo] = dataclasses.field(default_factory=dict)
     actions: list[_ManifestAction] = dataclasses.field(default_factory=list)
+    signed_hashlist: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -54,6 +55,11 @@ class PSModuleDepFinder(object):
     def __init__(self) -> None:
         # This is also used by validate-modules to get a module's required utils in base and a collection.
         self.scripts: dict[str, _ScriptInfo] = {}
+        self.signed_hashlist: set[str] = set()
+
+        if builtin_hashlist := _get_powershell_signed_hashlist():
+            self.signed_hashlist.add(builtin_hashlist.path)
+            self.scripts[builtin_hashlist.path] = builtin_hashlist
 
         self._util_deps: dict[str, set[str]] = {}
 
@@ -118,6 +124,15 @@ class PSModuleDepFinder(object):
     ) -> set[str]:
         lines = module_data.split(b'\n')
         module_utils: set[tuple[str, str, bool]] = set()
+
+        if fqn and fqn.startswith("ansible_collections."):
+            submodules = fqn.split('.')
+            collection_name = '.'.join(submodules[:3])
+
+            collection_hashlist = _get_powershell_signed_hashlist(collection_name)
+            if collection_hashlist and collection_hashlist.path not in self.signed_hashlist:
+                self.signed_hashlist.add(collection_hashlist.path)
+                self.scripts[collection_hashlist.path] = collection_hashlist
 
         if powershell:
             checks = [
@@ -315,6 +330,10 @@ def _bootstrap_powershell_script(
         )
     )
 
+    if hashlist := _get_powershell_signed_hashlist():
+        exec_manifest.signed_hashlist.append(hashlist.path)
+        exec_manifest.scripts[hashlist.path] = hashlist
+
     bootstrap_wrapper = _get_powershell_script("bootstrap_wrapper.ps1")
     bootstrap_input = _get_bootstrap_input(exec_manifest)
     if has_input:
@@ -338,6 +357,14 @@ def _get_powershell_script(
     code = pkgutil.get_data(package_name, name)
     if code is None:
         raise AnsibleFileNotFound(f"Could not find powershell script '{package_name}.{name}'")
+
+    try:
+        sig_data = pkgutil.get_data(package_name, f"{name}.authenticode")
+    except FileNotFoundError:
+        sig_data = None
+
+    if sig_data:
+        code = code + b"\r\n" + b"\r\n".join(sig_data.splitlines()) + b"\r\n"
 
     return code
 
@@ -501,6 +528,7 @@ def _create_powershell_wrapper(
     exec_manifest = _ExecManifest(
         scripts=finder.scripts,
         actions=actions,
+        signed_hashlist=list(finder.signed_hashlist),
     )
 
     return _get_bootstrap_input(
@@ -551,3 +579,27 @@ def _prepare_module_args(module_args: dict[str, t.Any], profile: str) -> dict[st
     encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
 
     return json.loads(json.dumps(module_args, cls=encoder))
+
+
+def _get_powershell_signed_hashlist(
+    collection: str | None = None,
+) -> _ScriptInfo | None:
+    """Gets the signed hashlist script stored in either the Ansible package or for
+    the collection specified.
+
+    :param collection: The collection namespace to get the signed hashlist for or None for the builtin.
+    :return: The _ScriptInfo payload of the signed hashlist script if found, None if not.
+    """
+    resource = 'ansible.config' if collection is None else f"{collection}.meta"
+    signature_file = 'powershell_signatures.psd1'
+
+    try:
+        sig_data = pkgutil.get_data(resource, signature_file)
+    except FileNotFoundError:
+        sig_data = None
+
+    if sig_data:
+        resource_path = f"{resource}.{signature_file}"
+        return _ScriptInfo(content=sig_data, path=resource_path)
+
+    return None
