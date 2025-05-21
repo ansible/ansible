@@ -91,6 +91,8 @@ stages:
               test: rhel/9.2@3.9
             - name: RHEL 9.2 py311
               test: rhel/9.2@3.11
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.3
               test: freebsd/13.3
           groups:
@@ -105,6 +107,8 @@ stages:
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.3
               test: freebsd/13.3
           groups:
@@ -122,6 +126,8 @@ stages:
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: Ubuntu 22.04
               test: ubuntu/22.04
           groups:
