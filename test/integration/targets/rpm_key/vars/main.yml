@@ -1,0 +1,8 @@
+test_key_url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-10
+test_key_path: "{{ remote_tmp_dir + '/RPM-GPG-KEY-EPEL-10' }}"
+test_rpm_url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/scitokens-cpp-devel-1.1.3-2.el10_1.x86_64.rpm
+test_rpm_path: "{{ remote_tmp_dir + '/test.rpm' }}"
+sub_key_url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/openbao-gpg-pub-20240618.asc
+invalid_fingerprint: 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111
+primary_fingerprint: 66D1 5FDD 8728 7219 C8E1 5478 D200 CD70 2853 E6D0
+sub_key_fingerprint: E617 DCD4 065C 2AFC 0B2C F7A7 BA8B C08C 0F69 1F94
