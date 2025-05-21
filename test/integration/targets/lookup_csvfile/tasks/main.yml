@@ -86,6 +86,7 @@
     that:
       - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2') == []
       - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2 default=what?') == "what?"
+      - lookup('csvfile', 'notfound', file='people.csv', delimiter=',', col=2, default=['a', 'b']) == 'a,b'
 
 - name: Pass wrong terms value fails parse_kv
   set_fact:
