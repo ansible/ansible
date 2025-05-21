@@ -697,9 +697,11 @@ def mark_installed(m, packages, manual=True):
     if manual:
         mark_state = "unmarkauto"
         mark_msg = "manually"
+        mark_op = "manual"
     elif not manual:
         mark_state = "markauto"
         mark_msg = "auto"
+        mark_op = "auto"
 
     apt_mark_cmd_path = m.get_bin_path("apt-mark")
 
@@ -708,7 +710,7 @@ def mark_installed(m, packages, manual=True):
         m.warn("Could not find apt-mark binary, not marking package(s) as %s installed." % mark_msg)
         return
 
-    cmd = "%s %s %s" % (apt_mark_cmd_path, mark_state, ' '.join(packages))
+    cmd = "%s %s %s" % (apt_mark_cmd_path, mark_op, ' '.join(packages))
     rc, out, err = m.run_command(cmd)
 
     if any(x in err for x in [APT_MARK_INVALID_OP, APT_MARK_INVALID_OP_DEB6]):
