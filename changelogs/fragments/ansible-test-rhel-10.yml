@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add RHEL 10.0 as a remote platform for testing.

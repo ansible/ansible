@@ -3,6 +3,13 @@
     apt:
       name: acl
     when: ansible_distribution in ('Ubuntu')
+    register: setup_acl
+
+  - name: Install the acl package on RedHat
+    dnf:
+      name: acl
+    when: ansible_distribution in ('RedHat')
+    register: setup_acl
 
   - block:
     - name: Testing ACLs
@@ -30,6 +37,18 @@
         - "'other::r--' in acls.stdout_lines"
 
   always:
+    - name: Remove the acl package on Ubuntu
+      apt:
+        name: acl
+        state: absent
+      when: setup_acl is changed and ansible_distribution in ('Ubuntu')
+
+    - name: Remove the acl package on RedHat
+      dnf:
+        name: acl
+        state: absent
+      when: setup_acl is changed and ansible_distribution in ('RedHat')
+
     - name: Clean up
       file:
         path: "~/test.txt"

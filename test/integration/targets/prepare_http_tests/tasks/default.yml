@@ -1,5 +1,5 @@
 - name: RedHat - Enable the dynamic CA configuration feature
-  command: update-ca-trust force-enable
+  command: update-ca-trust
   when: ansible_os_family == 'RedHat' and ansible_distribution != "Fedora"
 
 - name: RedHat - Retrieve test cacert

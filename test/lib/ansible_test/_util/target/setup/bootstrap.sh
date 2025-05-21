@@ -281,10 +281,41 @@ bootstrap_remote_rhel_9()
     done
 }
 
+bootstrap_remote_rhel_10()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        gcc
+        ${py_pkg_prefix}-devel
+        ${py_pkg_prefix}-pip
+        "
+
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-pyyaml
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        dnf install -q -y ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+}
+
 bootstrap_remote_rhel()
 {
     case "${platform_version}" in
         9.*) bootstrap_remote_rhel_9 ;;
+        10.*) bootstrap_remote_rhel_10 ;;
     esac
 }
 

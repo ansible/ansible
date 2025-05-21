@@ -1,2 +1,34 @@
- - include_tasks: 'rpm_key.yaml'
-   when: ansible_os_family == "RedHat"
+ - when: ansible_os_family == "RedHat"
+   block:
+
+   - name: List the installed GPG keys
+     shell: rpm -q gpg-pubkey | sort
+     register: list_of_pubkeys
+
+   - name: Retrieve the installed GPG keys
+     command: rpm -q --qf %{description} gpg-pubkey
+     register: pubkeys
+
+   - name: Save the retrieved GPG keys to a file
+     copy:
+       content: "{{ pubkeys['stdout'] }}"
+       dest: "{{ remote_tmp_dir + '/pubkeys' }}"
+       mode: 0600
+
+   - include_tasks: rpm_key.yaml
+
+   always:
+
+   - name: Remove all GPG keys from key ring
+     shell: rpm -q gpg-pubkey | xargs rpm -e
+
+   - name: Restore the previously installed GPG keys
+     command: rpm --import {{ (remote_tmp_dir + '/pubkeys') | quote }}
+
+   - name: List the installed GPG keys
+     shell: rpm -q gpg-pubkey | sort
+     register: new_list_of_pubkeys
+
+   - name: Verify the GPG keys have been restored
+     assert:
+       that: list_of_pubkeys["stdout"] == new_list_of_pubkeys["stdout"]

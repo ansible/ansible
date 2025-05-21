@@ -32,5 +32,7 @@
   package:
     name: iptables
     state: present
+    # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
+    exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
 
 - import_tasks: chain_management.yml
