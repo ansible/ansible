@@ -107,7 +107,7 @@ import csv
 
 from collections.abc import MutableSequence
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 
@@ -147,7 +147,7 @@ class LookupModule(LookupBase):
                 if name == '_raw_params':
                     continue
                 if name not in paramvals:
-                    raise AnsibleAssertionError(f'{name!r} is not a valid option')
+                    raise ValueError(f'{name!r} is not a valid option')
 
                 self._deprecate_inline_kv()
                 self.set_option(name, value)
