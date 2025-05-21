@@ -129,7 +129,13 @@ class ShellBase(AnsiblePlugin):
         cmd = ['test', '-e', self.quote(path)]
         return ' '.join(cmd)
 
-    def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None) -> str:
+    def mkdtemp(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> str:
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
 
@@ -171,7 +177,13 @@ class ShellBase(AnsiblePlugin):
 
         return cmd
 
-    def _mkdtemp2(self, basefile=None, system=False, mode=0o700, tmpdir=None) -> _ShellCommand:
+    def _mkdtemp2(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> _ShellCommand:
         """Gets command info to create a temporary directory.
 
         This is an internal API that should not be used publicly.
@@ -185,7 +197,11 @@ class ShellBase(AnsiblePlugin):
         cmd = self.mkdtemp(basefile=basefile, system=system, mode=mode, tmpdir=tmpdir)
         return _ShellCommand(command=cmd, input_data=None)
 
-    def expand_user(self, user_home_path, username='') -> str:
+    def expand_user(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> str:
         """ Return a command to expand tildes in a path
 
         It can be either "~" or "~username". We just ignore $HOME
@@ -206,7 +222,11 @@ class ShellBase(AnsiblePlugin):
 
         return 'echo %s' % user_home_path
 
-    def _expand_user2(self, user_home_path, username='') -> _ShellCommand:
+    def _expand_user2(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> _ShellCommand:
         """Gets command to expand user path.
 
         This is an internal API that should not be used publicly.

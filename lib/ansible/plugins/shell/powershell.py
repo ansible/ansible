@@ -225,7 +225,13 @@ class ShellModule(ShellBase):
         else:
             return self._encode_script("""Remove-Item '%s' -Force;""" % path)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None) -> str:
+    def mkdtemp(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> str:
         # This is not called in Ansible anymore but it is kept for backwards
         # compatibility in case other action plugins outside Ansible calls this.
         if not basefile:
@@ -241,7 +247,13 @@ class ShellModule(ShellBase):
         """
         return self._encode_script(script.strip())
 
-    def _mkdtemp2(self, basefile=None, system=False, mode=None, tmpdir=None) -> _ShellCommand:
+    def _mkdtemp2(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> _ShellCommand:
         # Windows does not have an equivalent for the system temp files, so
         # the param is ignored
         if not basefile:
@@ -260,7 +272,11 @@ class ShellModule(ShellBase):
             input_data=stdin,
         )
 
-    def expand_user(self, user_home_path, username='') -> str:
+    def expand_user(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> str:
         # This is not called in Ansible anymore but it is kept for backwards
         # compatibility in case other actions plugins outside Ansible called this.
         user_home_path = self._unquote(user_home_path)
@@ -272,7 +288,11 @@ class ShellModule(ShellBase):
             script = "Write-Output '%s'" % self._escape(user_home_path)
         return self._encode_script(f"{self._CONSOLE_ENCODING}; {script}")
 
-    def _expand_user2(self, user_home_path, username='') -> _ShellCommand:
+    def _expand_user2(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> _ShellCommand:
         user_home_path = self._unquote(user_home_path)
         script, stdin = _bootstrap_powershell_script("powershell_expand_user.ps1", {
             'Path': user_home_path,
