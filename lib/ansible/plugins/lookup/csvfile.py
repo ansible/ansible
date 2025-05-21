@@ -156,7 +156,6 @@ class LookupModule(LookupBase):
             if reset_params:
                 paramvals = self.get_options()
 
-
             # default is just placeholder for real tab
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
