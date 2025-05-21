@@ -30,7 +30,7 @@ def is_traceback_enabled(event: TracebackEvent) -> bool:
     return _is_traceback_enabled(event)
 
 
-def maybe_capture_traceback(event: TracebackEvent) -> str | None:
+def maybe_capture_traceback(msg: str, event: TracebackEvent) -> str | None:
     """
     Optionally capture a traceback for the current call stack, formatted as a string, if the specified traceback event is enabled.
     Frames marked with the `_skip_stackwalk` local are omitted.
@@ -46,6 +46,7 @@ def maybe_capture_traceback(event: TracebackEvent) -> str | None:
         # DTFIX-FUTURE: rewrite target-side tracebacks to point at controller-side paths?
         tb_lines.append('Traceback (most recent call last):\n')
         tb_lines.extend(traceback.format_stack(frame_info.frame))
+        tb_lines.append(f'Message: {msg}\n')
     else:
         tb_lines.append('(frame not found)\n')  # pragma: nocover
 

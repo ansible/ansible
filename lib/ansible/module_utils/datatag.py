@@ -38,7 +38,7 @@ def deprecate_value(
         date=date,
         version=version,
         deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
-        formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED_VALUE),
+        formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.DEPRECATED_VALUE),
     )
 
     return deprecated.tag(value)

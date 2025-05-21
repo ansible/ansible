@@ -699,7 +699,7 @@ class Display(metaclass=Singleton):
             help_text=help_text,
             obj=obj,
             deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
-            formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.DEPRECATED),
+            formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.DEPRECATED),
         )
 
     def _deprecated_with_plugin_info(
@@ -801,7 +801,7 @@ class Display(metaclass=Singleton):
                 msg=msg,
                 help_text=help_text,
                 formatted_source_context=formatted_source_context,
-                formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.WARNING),
+                formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING),
             ),
         )
 
@@ -886,7 +886,7 @@ class Display(metaclass=Singleton):
         if msg:
             event = _messages.Event(
                 msg=msg,
-                formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.WARNING),
+                formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING),
                 chain=_messages.EventChain(
                     msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
                     traceback_reason="The above exception was the direct cause of the following warning:",
@@ -918,7 +918,7 @@ class Display(metaclass=Singleton):
         else:
             event = _messages.Event(
                 msg=msg,
-                formatted_traceback=_traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR),
+                formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR),
             )
 
         error = _messages.ErrorSummary(
