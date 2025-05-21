@@ -437,6 +437,10 @@ class Display(metaclass=Singleton):
         if not isinstance(msg, str):
             raise TypeError(f'Display message must be str, not: {msg.__class__.__name__}')
 
+        # Convert Windows newlines to Unix newlines.
+        # Some environments, such as Azure Pipelines, render `\r` as an additional `\n`.
+        msg = msg.replace('\r\n', '\n')
+
         nocolor = msg
 
         if not log_only:
