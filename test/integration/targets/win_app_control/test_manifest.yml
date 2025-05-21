@@ -25,7 +25,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': script is not signed or not trusted to run."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': script is not signed or not trusted to run.")
 
 - name: create manifest with no Hashtable
   ansible.builtin.import_tasks: create_manifest.yml
@@ -39,7 +39,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting a single hashtable in the signed manifest."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting a single hashtable in the signed manifest.")
 
 - name: create manifest with no Version
   ansible.builtin.import_tasks: create_manifest.yml
@@ -53,7 +53,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain 'Version' key."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain 'Version' key.")
 
 - name: create manifest with invalid Version
   ansible.builtin.import_tasks: create_manifest.yml
@@ -67,7 +67,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': unsupported hash list Version 2, expecting 1."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': unsupported hash list Version 2, expecting 1.")
 
 - name: create manifest with no HashList
   ansible.builtin.import_tasks: create_manifest.yml
@@ -81,7 +81,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain 'HashList' key."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain 'HashList' key.")
 
 - name: create manifest with no Hash subkey
   ansible.builtin.import_tasks: create_manifest.yml
@@ -95,7 +95,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain hashtable with Hash key with a value of a SHA256 strings."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain hashtable with Hash key with a value of a SHA256 strings.")
 
 - name: create manifest with invalid Hash subkey value
   ansible.builtin.import_tasks: create_manifest.yml
@@ -109,7 +109,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain hashtable with Hash key with a value of a SHA256 strings."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list to contain hashtable with Hash key with a value of a SHA256 strings.")
 
 - name: create manifest with no Mode subkey
   ansible.builtin.import_tasks: create_manifest.yml
@@ -123,7 +123,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list entry for " ~ module_hash ~ " to contain a mode of 'Trusted' or 'Unsupported' but got ''."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list entry for " ~ module_hash ~ " to contain a mode of 'Trusted' or 'Unsupported' but got ''.")
 
 - name: create manfiest with invalid Mode subkey value
   ansible.builtin.import_tasks: create_manifest.yml
@@ -137,7 +137,7 @@
   failed_when:
   - res.failed == False
   - >-
-    res.msg != "failure during exec_wrapper: Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list entry for " ~ module_hash ~ " to contain a mode of 'Trusted' or 'Unsupported' but got 'Other'."
+    res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list entry for " ~ module_hash ~ " to contain a mode of 'Trusted' or 'Unsupported' but got 'Other'.")
 
 - name: create manifest with unsafe expressions
   ansible.builtin.import_tasks: create_manifest.yml

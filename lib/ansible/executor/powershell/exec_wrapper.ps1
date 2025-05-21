@@ -711,7 +711,7 @@ end {
     finally {
         $actionPipeline.Dispose()
         if ($Script:AnsibleTempScripts) {
-            Remove-Item -LiteralPath $Script:AnsibleTempScripts -Force -ErrorAction Continue
+            Remove-Item -LiteralPath $Script:AnsibleTempScripts -Force -ErrorAction Ignore
         }
     }
 }
