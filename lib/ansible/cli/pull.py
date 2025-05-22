@@ -271,6 +271,8 @@ class PullCLI(CLI):
                                                               repo_opts, limit_opts)
         for ev in context.CLIARGS['extra_vars']:
             cmd += ' -e %s' % shlex.quote(ev)
+        for env_var in context.CLIARGS.get('environment', []):
+            cmd += ' ' + shlex.join(('-E', str(dict(env_var))))
 
         # Nap?
         if context.CLIARGS['sleep']:
@@ -318,6 +320,8 @@ class PullCLI(CLI):
 
         for ev in context.CLIARGS['extra_vars']:
             cmd += ' -e %s' % shlex.quote(ev)
+        for env_var in context.CLIARGS.get('environment', []):
+            cmd += ' -E %s' % shlex.quote(str(dict(env_var)))
 
         if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
