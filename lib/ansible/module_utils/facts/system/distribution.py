@@ -316,6 +316,8 @@ class DistributionFiles:
             variant_id = variant_id_match.group(1)
             if variant_id == 'server-sap':
                 suse_facts['distribution'] = 'SLES_SAP'
+            elif variant_id == 'sles-sap':
+                suse_facts['distribution'] = 'SLES_SAP'
             elif variant_id == 'transactional':
                 suse_facts['distribution'] = 'SL-Micro'
         else:
