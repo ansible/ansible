@@ -1010,16 +1010,21 @@ class FreeBsdService(Service):
 
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
-    def get_service_status(self):
-        cmd = f"{self.svc_cmd} "
+    def run_service_cmd(self, status=None):
+        if not status:
+            return (None, '', '')
 
+        cmd = f"{self.svc_cmd} "
         # Jail name takes precedence over other arguments
         if self.arguments.startswith(('-j', '-v')):
-            cmd += f"{self.arguments} {self.name} onestatus"
+            cmd += f"{self.arguments} {self.name} {status}"
         else:
-            cmd += f"{self.name} onestatus {self.arguments}"
+            cmd += f"{self.name} {status} {self.arguments}"
+        return self.execute_command(cmd)
 
-        rc, stdout, dummy = self.execute_command(cmd)
+    def get_service_status(self):
+        rc, stdout, _dummy = self.run_service_cmd(status="onestatus")
+
         if self.name == "pf":
             self.running = "Enabled" in stdout
         else:
@@ -1039,14 +1044,7 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        cmd = f"{self.svc_cmd} "
-        # Jail name and verbose takes precedence over other arguments
-        if self.arguments.startswith(('-j', '-v')):
-            cmd += f"{self.arguments} {self.name} rcvar"
-        else:
-            cmd += f"{self.name} rcvar {self.arguments}"
-
-        rc, stdout, stderr = self.execute_command(cmd)
+        rc, stdout, _dummy = self.run_service_cmd(status="rcvar")
         rcvars = shlex.split(stdout, comments=True)
 
         # In rare cases, i.e. sendmail, rcvar can return several key=value pairs
@@ -1082,7 +1080,7 @@ class FreeBsdService(Service):
                     self.module.fail_json(msg="unable to set rcvar using sysrc", stdout=change_stdout, stderr=change_stderr)
 
                 # sysrc does not exit with code 1 on permission error => validate successful change using service(8)
-                rc, check_stdout, check_stderr = self.execute_command("%s %s %s" % (self.svc_cmd, self.name, "enabled"))
+                rc, _dummy, _dummy = self.run_service_cmd(status="enabled")
                 if self.enable != (rc == 0):  # rc = 0 indicates enabled service, rc = 1 indicates disabled service
                     self.module.fail_json(msg="unable to set rcvar: sysrc did not change value", stdout=change_stdout, stderr=change_stderr)
 
@@ -1104,13 +1102,7 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        cmd = f"{self.svc_cmd} "
-        # Jail name and verbose take precedence over other arguments
-        if self.arguments.startswith(('-j', '-v')):
-            cmd += f"{self.arguments} {self.name} {self.action}"
-        else:
-            cmd += f"{self.name} {self.action} {self.arguments}"
-        ret = self.execute_command(cmd)
+        ret, _dummy, _dummy = self.run_service_cmd(status=self.action)
 
         if self.sleep:
             time.sleep(self.sleep)
