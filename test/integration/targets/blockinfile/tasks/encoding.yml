@@ -1,4 +1,4 @@
-- name: Add block to BOF
+- name: Create a new file and add block
   ansible.builtin.blockinfile:
     path: "{{ remote_tmp_dir_test }}/encoding_file.txt"
     block: |
@@ -11,7 +11,7 @@
     encoding: cp273
   register: add_block_bof
 
-- name: Add block to EOF
+- name: add block at end of file
   ansible.builtin.blockinfile:
     path: "{{ remote_tmp_dir_test }}/encoding_file.txt"
     block: |
@@ -36,7 +36,6 @@
       - 'add_block_eof.msg == "Block inserted"'
       - result1.stat.exists
       - result1.stat.checksum == '724f92d56c2bdaf8e701359e71091bce898af988'
-  ignore_errors: yes
 
 - name: Add block after Line
   blockinfile:
@@ -75,7 +74,6 @@
       - 'insert_before_line.msg == "Block inserted"'
       - result1.stat.exists
       - result1.stat.checksum == '11af61de9ed9e9182eee8a2c271921d0dd1992c9'
-  ignore_errors: yes  
 
 - name: Delete the custom Block 
   ansible.builtin.blockinfile:
@@ -97,4 +95,3 @@
       - 'delete_custom_block.msg == "Block removed"'
       - result1.stat.exists
       - result1.stat.checksum == '6e192ae0a60a7f0e6299a2918b6e6708a59b8183'
-  ignore_errors: yes  

@@ -261,7 +261,7 @@ def main():
     params = module.params
     path = params['path']
 
-    encoding=module.params.get('encoding',None)
+    encoding=module.params.get('encoding', None)
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
