@@ -314,9 +314,7 @@ class DistributionFiles:
         variant_id_match = re.search(r'^VARIANT_ID="?([^"\n]*)"?', data, re.MULTILINE)
         if variant_id_match:
             variant_id = variant_id_match.group(1)
-            if variant_id == 'server-sap':
-                suse_facts['distribution'] = 'SLES_SAP'
-            elif variant_id == 'sles-sap':
+            if variant_id in ('server-sap', 'sles-sap'):
                 suse_facts['distribution'] = 'SLES_SAP'
             elif variant_id == 'transactional':
                 suse_facts['distribution'] = 'SL-Micro'
