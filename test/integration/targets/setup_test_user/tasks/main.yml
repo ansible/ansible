@@ -13,14 +13,22 @@
       paths:
         - tasks
 
+- set_fact:
+    delete_users: "{{ (delete_users | default([])) + [test_user_name] }}"
+
 - name: create test user
   user:
     name: "{{ test_user_name }}"
     group: "{{ test_user_group or omit }}"
+    groups: "{{ test_user_groups or omit }}"
     password: "{{ test_user_hashed_password or omit }}"
   register: test_user
   notify:
     - delete test user
+
+- name: maybe configure sudo
+  include_tasks: sudo_config.yml
+  when: test_user_allow_sudo != False
 
 - name: run whoami as the test user
   shell: whoami

@@ -1,4 +1,5 @@
 """Converters for use as the type argument for arparse's add_argument method."""
+
 from __future__ import annotations
 
 import argparse

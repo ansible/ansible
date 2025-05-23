@@ -1,4 +1,5 @@
 """Wrapper around argcomplete providing bug fixes and additional features."""
+
 from __future__ import annotations
 
 import argparse

@@ -5,7 +5,7 @@
   when: inventory_hostname == 'testhost2'
 
 - name: EXPECTED FAILURE ejinja eval of a var that should not exist
-  debug: msg="{{ test }}"
+  ping: data="{{ test }}"
 
 - name: testhost should never reach here as testhost2 failure above should end play
   debug:

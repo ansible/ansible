@@ -1,0 +1,34 @@
+plugin: ansible.builtin.generator
+hosts:
+    name: "{{ operation }}_{{ application }}_{{ environment }}_runner"
+    parents:
+      - name: "{{ operation }}_{{ application }}_{{ environment }}"
+        parents:
+          - name: "{{ operation }}_{{ application }}"
+            parents:
+              - name: "{{ operation }}"
+              - name: "{{ application }}"
+          - name: "{{ application }}_{{ environment }}"
+            parents:
+              - name: "{{ application }}"
+                vars:
+                  application: "{{ application }}"
+              - name: "{{ environment }}"
+                vars:
+                  environment: "{{ environment }}"
+                  my_dict:
+                    hello: "{{ defined_on_play }}"
+                  my_list:
+                    - "{{ defined_on_play }}"
+      - name: runner
+layers:
+    operation:
+        - build
+        - launch
+    environment:
+        - dev
+        - test
+        - prod
+    application:
+        - web
+        - api

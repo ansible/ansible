@@ -1,0 +1,59 @@
+- name: Run a module while preserving the generated AnsiballZ wrapper
+  command: ansible -m ping localhost -vvv
+  environment:
+    ANSIBLE_KEEP_REMOTE_FILES: 1
+  register: wrapper
+
+- name: Locate the generated AnsiballZ wrapper
+  set_fact:
+    generated_wrapper: "{{ (wrapper.stdout | regex_search('PUT .*? TO (/.*?/AnsiballZ_ping.py)', '\\1'))[0] }}"
+
+- name: Check permissions
+  stat:
+    path: '{{ generated_wrapper }}'
+  register: wrapper_stats
+
+- name: Ensure permissions
+  assert:
+    that:
+      - wrapper_stats.stat.executable is true
+      - wrapper_stats.stat.readable is true
+      - wrapper_stats.stat.writeable is true
+
+- name: Explode the wrapper
+  command: "{{ generated_wrapper }} explode"
+  register: explode
+
+- name: Locate the exploded results
+  set_fact:
+    exploded_dir: "{{ (explode.stdout | regex_search('^Module expanded into:\n(.*)$', '\\1', multiline=True))[0] }}"
+
+- name: Spot check the exploded results contents
+  assert:
+    that:
+      - (exploded_dir + '/args') is file
+      - (exploded_dir + '/ansible/modules/ping.py') is file
+
+- name: Execute the wrapper
+  command: "{{ generated_wrapper }} execute"
+  register: execute
+
+- name: Deserialize the result
+  set_fact:
+    result: "{{ execute.stdout | from_json }}"
+
+- name: Spot check the result
+  assert:
+    that:
+      - result.invocation.module_args.data == "pong"
+      - result.ping == "pong"
+
+- name: Remove wrapper
+  file:
+    path: "{{ generated_wrapper }}"
+    state: absent
+
+- name: Remove exploded files
+  file:
+    path: "{{ exploded_dir }}"
+    state: absent

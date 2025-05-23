@@ -1,4 +1,5 @@
 """Functions for accessing docker via the docker cli."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -49,7 +50,7 @@ DOCKER_COMMANDS = [
     'podman',
 ]
 
-UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:3.1.0'
+UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:3.2.0'
 
 # Max number of open files in a docker container.
 # Passed with --ulimit option to the docker run command.
@@ -721,9 +722,10 @@ def docker_rm(args: CommonConfig, container_id: str) -> None:
     """Remove the specified container."""
     try:
         # Stop the container with SIGKILL immediately, then remove the container.
-        # Podman supports the `--time` option on `rm`, but only since version 4.0.0.
-        # Docker does not support the `--time` option on `rm`.
-        docker_command(args, ['stop', '--time', '0', container_id], capture=True)
+        # Docker supports `--timeout` for stop. The `--time` option was deprecated in v28.0.
+        # Podman supports `--time` for stop. The `--timeout` option was deprecated in 1.9.0.
+        # Both Docker and Podman support the `-t` option for stop.
+        docker_command(args, ['stop', '-t', '0', container_id], capture=True)
         docker_command(args, ['rm', container_id], capture=True)
     except SubprocessError as ex:
         # Both Podman and Docker report an error if the container does not exist.

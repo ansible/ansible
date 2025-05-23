@@ -1,4 +1,5 @@
 """Command line parsing for all commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -89,6 +90,16 @@ def do_commands(
         type=int,
         default=display.columns,
         help='truncate some long output (0=disabled) (default: auto)',
+    )
+
+    common.add_argument(
+        '--display-traceback',
+        dest='display_traceback',
+        metavar='TB',
+        type=str,
+        default='never',
+        choices=('error', 'warning', 'deprecated', 'always', 'never'),
+        help='set ANSIBLE_DISPLAY_TRACEBACK (%(choices)s) (default: %(default)s)',
     )
 
     common.add_argument(

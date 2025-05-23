@@ -350,7 +350,7 @@ class LookupModule(LookupBase):
 
         return relpath, params
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         ret = []
 
         for term in terms:

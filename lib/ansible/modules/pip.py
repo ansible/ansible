@@ -299,7 +299,6 @@ import sys
 import tempfile
 import operator
 import shlex
-import traceback
 
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -309,10 +308,10 @@ HAS_SETUPTOOLS = False
 try:
     from packaging.requirements import Requirement as parse_requirement
     HAS_PACKAGING = True
-except Exception:
+except Exception as ex:
     # This is catching a generic Exception, due to packaging on EL7 raising a TypeError on import
     HAS_PACKAGING = False
-    PACKAGING_IMP_ERR = traceback.format_exc()
+    PACKAGING_IMP_ERR = ex
     try:
         from pkg_resources import Requirement
         parse_requirement = Requirement.parse  # type: ignore[misc,assignment]
@@ -815,10 +814,8 @@ def main():
         elif requirements:
             cmd.extend(['-r', requirements])
         else:
-            module.exit_json(
-                changed=False,
-                warnings=["No valid name or requirements file found."],
-            )
+            module.warn("No valid name or requirements file found.")
+            module.exit_json(changed=False)
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:

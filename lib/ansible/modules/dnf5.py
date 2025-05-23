@@ -364,6 +364,8 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
+# Through dnf5-5.2.12 all exceptions raised through swig became RuntimeError
+LIBDNF5_ERROR = RuntimeError
 
 
 def is_installed(base, spec):
@@ -378,10 +380,20 @@ def is_installed(base, spec):
         # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
         # due to settings.set_with_filenames(True) being default.
         settings.set_with_binaries(False)
+        # Disable checking whether SPEC is provided by an installed package.
+        # Consider following real scenario from the rpmfusion repo:
+        #   * the `ffmpeg-libs` package is installed and provides `libavcodec-freeworld`
+        #   * but `libavcodec-freeworld` is NOT installed (???)
+        #   * due to `set_with_provides(True)` being default `is_installed(base, "libavcodec-freeworld")`
+        #     would  "unexpectedly" return True
+        # We disable provides only for this `is_installed` check, for actual installation we leave the default
+        # setting to mirror the dnf cmdline behavior.
+        settings.set_with_provides(False)
     except AttributeError:
         # dnf5 < 5.2.0.0
         settings.group_with_name = True
         settings.with_binaries = False
+        settings.with_provides = False
 
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
@@ -411,7 +423,7 @@ def is_newer_version_installed(base, spec):
 
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except (RuntimeError, StopIteration):
+    except (LIBDNF5_ERROR, StopIteration):
         return False
 
     spec_version = spec_nevra.get_version()
@@ -505,11 +517,18 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
+        global LIBDNF5_ERROR
         has_dnf = True
         try:
             import libdnf5  # type: ignore[import]
         except ImportError:
             has_dnf = False
+
+        try:
+            import libdnf5.exception  # type: ignore[import-not-found]
+            LIBDNF5_ERROR = libdnf5.exception.Error
+        except (ImportError, AttributeError):
+            pass
 
         if has_dnf:
             return
@@ -564,7 +583,7 @@ class Dnf5Module(YumDnf):
 
         try:
             base.load_config()
-        except RuntimeError as e:
+        except LIBDNF5_ERROR as e:
             self.module.fail_json(
                 msg=str(e),
                 conf_file=self.conf_file,
@@ -588,7 +607,14 @@ class Dnf5Module(YumDnf):
         elif self.best is not None:
             conf.best = self.best
         conf.install_weak_deps = self.install_weak_deps
-        conf.gpgcheck = not self.disable_gpg_check
+        try:
+            # raises AttributeError only on getter if not available
+            conf.pkg_gpgcheck   # pylint: disable=pointless-statement
+        except AttributeError:
+            # dnf5 < 5.2.7.0
+            conf.gpgcheck = not self.disable_gpg_check
+        else:
+            conf.pkg_gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
         conf.clean_requirements_on_remove = self.autoremove
@@ -696,6 +722,7 @@ class Dnf5Module(YumDnf):
             if self.security:
                 types.append("security")
             advisory_query.filter_type(types)
+            conf.skip_unavailable = True  # ignore packages that are of a different type, for backwards compat
             settings.set_advisory_filter(advisory_query)
 
         goal = libdnf5.base.Goal(base)
@@ -720,7 +747,7 @@ class Dnf5Module(YumDnf):
             for spec in self.names:
                 try:
                     goal.add_remove(spec, settings)
-                except RuntimeError as e:
+                except LIBDNF5_ERROR as e:
                     self.module.fail_json(msg=str(e), failures=[], rc=1)
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
@@ -729,7 +756,7 @@ class Dnf5Module(YumDnf):
         goal.set_allow_erasing(self.allowerasing)
         try:
             transaction = goal.resolve()
-        except RuntimeError as e:
+        except LIBDNF5_ERROR as e:
             self.module.fail_json(msg=str(e), failures=[], rc=1)
 
         if transaction.get_problems():
@@ -771,7 +798,7 @@ class Dnf5Module(YumDnf):
         if self.module.check_mode:
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
-        else:
+        elif changed:
             transaction.download()
             if not self.download_only:
                 transaction.set_description("ansible dnf5 module")

@@ -1,0 +1,11 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - block:
+        - name: Setup
+          fail:
+      rescue:
+        - name: "Error handler"
+          include_role:
+            name: "error_handler"

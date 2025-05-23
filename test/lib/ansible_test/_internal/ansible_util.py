@@ -1,4 +1,5 @@
 """Miscellaneous utility functions and classes specific to ansible cli tools."""
+
 from __future__ import annotations
 
 import json
@@ -99,6 +100,7 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',
         ANSIBLE_RETRY_FILES_ENABLED='false',
+        ANSIBLE_DISPLAY_TRACEBACK=args.display_traceback,
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
         ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel

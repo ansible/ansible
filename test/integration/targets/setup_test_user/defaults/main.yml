@@ -1,0 +1,5 @@
+# true/false/nopasswd
+test_user_allow_sudo: false
+test_user_name: ansibletest0
+test_user_group: ~
+test_user_groups: ~

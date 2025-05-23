@@ -17,8 +17,9 @@
 
 from __future__ import annotations
 
-import ansible.module_utils.compat.typing as t
+import typing as t
 import contextlib
+
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector

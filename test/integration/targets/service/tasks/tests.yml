@@ -138,17 +138,17 @@
   register: reload_result
   # don't do this on systems with systemd because it triggers error:
   #   Unable to reload service ansible_test: ansible_test.service is not active, cannot reload.
-  when: service_type != "systemd"
+  when: ansible_service_mgr != "systemd"
 
 - name: assert that the service was reloaded
   assert:
     that:
       - "reload_result.state == 'started'"
       - "reload_result is changed"
-  when: service_type != "systemd"
+  when: ansible_service_mgr != "systemd"
 
 - name: "test for #42786 (sysvinit)"
-  when: service_type == "sysv"
+  when: ansible_service_mgr == "sysv"
   block:
     - name: "sysvinit (#42786): check state, 'enable' parameter isn't set"
       service: use=sysvinit name=ansible_test state=started

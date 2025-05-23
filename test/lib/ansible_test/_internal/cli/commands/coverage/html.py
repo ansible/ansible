@@ -1,4 +1,5 @@
 """Command line parsing for the `coverage html` command."""
+
 from __future__ import annotations
 
 import argparse

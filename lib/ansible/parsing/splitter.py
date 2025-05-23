@@ -22,6 +22,8 @@ import re
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.parsing.quoting import unquote
 
 
@@ -51,6 +53,13 @@ def parse_kv(args, check_raw=False):
     to a new parameter called '_raw_params'. If check_raw is not enabled,
     they will simply be ignored.
     """
+
+    tags = []
+    if origin_tag := Origin.get_tag(args):
+        # NB: adjusting the column number is left as an exercise for the reader
+        tags.append(origin_tag)
+    if trusted_tag := TrustedAsTemplate.get_tag(args):
+        tags.append(trusted_tag)
 
     args = to_text(args, nonstring='passthru')
 
@@ -89,6 +98,12 @@ def parse_kv(args, check_raw=False):
         # them to a special option for use later by the shell/command module
         if len(raw_params) > 0:
             options[u'_raw_params'] = join_args(raw_params)
+
+    if tags:
+        options = {AnsibleTagHelper.tag(k, tags): AnsibleTagHelper.tag(v, tags) for k, v in options.items()}
+
+    if origin_tag:
+        options = origin_tag.tag(options)
 
     return options
 

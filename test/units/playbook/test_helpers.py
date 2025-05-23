@@ -21,6 +21,9 @@ import os
 
 import unittest
 from unittest.mock import MagicMock
+
+import pytest
+
 from units.mock.loader import DictDataLoader
 
 from ansible import errors
@@ -30,10 +33,6 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role.include import RoleInclude
-from ansible.plugins.loader import init_plugin_loader
-
-
-init_plugin_loader()
 
 
 class MixinForMocks(object):
@@ -79,6 +78,7 @@ class MixinForMocks(object):
                                                    """})
 
 
+@pytest.mark.usefixtures('collection_loader')
 class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def setUp(self):
         self._setup()
@@ -242,7 +242,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         # default for Handler
         self.assertEqual(res[0].listen, [])
 
-    # TODO/FIXME: this doesn't seen right
+    # FIXME: this doesn't seem right
     #  figure out how to get the non-static errors to be raised, this seems to just ignore everything
     def test_one_include_not_static(self):
         ds = [{
@@ -259,7 +259,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(res[0], Task)
         self.assertEqual(res[0].args['_raw_params'], '/dev/null/includes/static_test_include.yml')
 
-    # TODO/FIXME: This two get stuck trying to make a mock_block into a TaskInclude
+    # FIXME: This two get stuck trying to make a mock_block into a TaskInclude
 #    def test_one_include(self):
 #        ds = [{'include': 'other_test_include.yml'}]
 #        res = helpers.load_list_of_tasks(ds, play=self.mock_play,
@@ -331,6 +331,7 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
             self.assertIsInstance(r, RoleInclude)
 
 
+@pytest.mark.usefixtures('collection_loader')
 class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
     def setUp(self):
         self._setup()

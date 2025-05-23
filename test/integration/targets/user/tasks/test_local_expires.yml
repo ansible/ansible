@@ -54,7 +54,7 @@
           - getent_shadow['local_ansibulluser'][6] == '29281'
       tags:
         - user_test_local_mode
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
 
 - name: Unexpire user
   user:
@@ -82,7 +82,7 @@
           - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
       tags:
         - user_test_local_mode
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
 
 - name: Verify un expiration date for Linux/BSD
   block:
@@ -104,7 +104,7 @@
           - user_test_local_expires4 is not changed
       tags:
         - user_test_local_mode
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'FreeBSD']
 
 # Test setting no expiration when creating a new account
 # https://github.com/ansible/ansible/issues/44155
@@ -162,7 +162,7 @@
           - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
       tags:
         - user_test_local_mode
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
 
 # Test setting epoch 0 expiration when creating a new account, then removing the expiry
 # https://github.com/ansible/ansible/issues/47114
@@ -241,7 +241,7 @@
           - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
       tags:
         - user_test_local_mode
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
 
 # Test expiration with a very large negative number. This should have the same
 # result as setting -1.
@@ -278,4 +278,4 @@
           - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
       tags:
         - user_test_local_mode
-  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  when: ansible_facts.os_family in ['RedHat', 'Debian']

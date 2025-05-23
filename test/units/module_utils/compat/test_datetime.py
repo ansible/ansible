@@ -2,23 +2,29 @@ from __future__ import annotations
 
 import datetime
 
-from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp, UTC
+import pytest
+
+from ansible.module_utils.compat import datetime as compat_datetime
+
+
+pytestmark = pytest.mark.usefixtures('capfd')  # capture deprecation warnings
 
 
 def test_utc():
-    assert UTC.tzname(None) == 'UTC'
-    assert UTC.utcoffset(None) == datetime.timedelta(0)
-    assert UTC.dst(None) is None
+    assert compat_datetime.UTC.tzname(None) == 'UTC'
+    assert compat_datetime.UTC.utcoffset(None) == datetime.timedelta(0)
+
+    assert compat_datetime.UTC.dst(None) is None
 
 
 def test_utcnow():
-    assert utcnow().tzinfo is UTC
+    assert compat_datetime.utcnow().tzinfo is compat_datetime.UTC
 
 
 def test_utcfometimestamp_zero():
-    dt = utcfromtimestamp(0)
+    dt = compat_datetime.utcfromtimestamp(0)
 
-    assert dt.tzinfo is UTC
+    assert dt.tzinfo is compat_datetime.UTC
     assert dt.year == 1970
     assert dt.month == 1
     assert dt.day == 1

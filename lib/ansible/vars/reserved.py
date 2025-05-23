@@ -17,21 +17,23 @@
 
 from __future__ import annotations
 
+import collections.abc as c
+
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 
 display = Display()
 
 
-def get_reserved_names(include_private=True):
+def get_reserved_names(include_private: bool = True) -> set[str]:
     """ this function returns the list of reserved names associated with play objects"""
 
-    public = set()
+    public = set(TemplateEngine().environment.globals.keys())
     private = set()
-    result = set()
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = [Play, Role, Block, Task]
@@ -58,10 +60,12 @@ def get_reserved_names(include_private=True):
     else:
         result = public
 
+    result.discard('gather_subset')
+
     return result
 
 
-def warn_if_reserved(myvars, additional=None):
+def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None = None) -> None:
     """ this function warns if any variable passed conflicts with internally reserved names """
 
     if additional is None:
@@ -71,11 +75,12 @@ def warn_if_reserved(myvars, additional=None):
 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
+
     for varname in varnames.intersection(reserved):
-        display.warning('Found variable using reserved name: %s' % varname)
+        display.warning(f'Found variable using reserved name {varname!r}.')
 
 
-def is_reserved_name(name):
+def is_reserved_name(name: str) -> bool:
     return name in _RESERVED_NAMES
 
 

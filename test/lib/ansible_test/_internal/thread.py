@@ -1,4 +1,5 @@
 """Python threading tools."""
+
 from __future__ import annotations
 
 import collections.abc as c

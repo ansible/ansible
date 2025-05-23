@@ -1,0 +1,23 @@
+- hosts: local
+  gather_facts: no
+  tasks:
+    - assert:
+        that:
+          - value_bool == True
+          - value_int == 1
+          - value_float == 1.2
+          - value_complex == "1j"  # complex falls back to str
+          - value_str_single_quote == 'single'
+          - value_str_double_quote == "double"
+          - value_bytes_single_quote == 'single'  # bytes implicitly converted to str
+          - value_bytes_double_quote == "double"  # bytes implicitly converted to str
+          - value_ellipsis == '...'  # Ellipsis falls back to str
+          - 'value_dict == {"a": "b" }'
+          - value_list == [1, 2]
+          - value_tuple == [1, 2]  # tuples implicitly converted to lists
+          - value_set == [1, 2]  # sets implicitly converted to lists
+          - value_empty_set == []  # sets implicitly converted to lists
+          - value_none is none
+          - value_invalid == 'invalid'
+          - value_list_with_fallbacks == ['...', '1j', [], [1, 2], 'x']
+          - value_invalid_decimal_literal == 'host-01.internal'  # literal_eval issues a SyntaxWarning, which is hidden

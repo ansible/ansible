@@ -42,7 +42,7 @@ ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=always ansible-playbook -i ../../inventory
 ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never ansible-playbook -i ../../inventory "$@" strategy.yml
 
 # test extra vars
-ansible-inventory -i testhost, -i ./extra_vars_constructed.yml --list -e 'from_extras=hey ' "$@"|grep '"example": "hellohey"'
+ansible-inventory -i testhost, -i ./extra_vars_constructed.yml --list -e 'from_extras=hey ' "$@"|grep ': "hellohey"'
 
 # test host vars from previous inventory sources
 ansible-inventory -i ./inv_with_host_vars.yml -i ./host_vars_constructed.yml --graph "$@" | tee out.txt
@@ -106,6 +106,7 @@ fi
 
 # ensure we don't traceback on inventory due to variables with int as key
 ansible-inventory  -i inv_with_int.yml --list "$@"
+
 
 # test in subshell relative paths work mid play for extra vars in inventory refresh
 {

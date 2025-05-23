@@ -11,9 +11,7 @@ import functools
 import json
 import os
 import pathlib
-import platform
 import pwd
-import re
 import secrets
 import shlex
 import shutil
@@ -184,7 +182,7 @@ def get_test_scenarios() -> list[TestScenario]:
             # Starting with Fedora 40, use of /usr/sbin/unix-chkpwd fails under Ubuntu 24.04 due to AppArmor.
             # This prevents SSH logins from completing due to unix-chkpwd failing to look up the user with getpwnam.
             # Disabling the 'unix-chkpwd' profile works around the issue, but does not solve the underlying problem.
-            disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name == 'fedora40'
+            disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name.startswith('fedora')
 
             cgroup_version = get_docker_info(engine).cgroup_version
 
@@ -394,7 +392,7 @@ def run_test(scenario: TestScenario) -> TestResult:
 
 def prepare_prime_podman_storage() -> list[str]:
     """Partially prime podman storage and return a command to complete the remainder."""
-    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull quay.io/bedrock/alpine:3.16.2']
+    prime_storage_command = ['rm -rf ~/.local/share/containers; STORAGE_DRIVER=overlay podman pull public.ecr.aws/docker/library/alpine:3.21.2']
 
     test_containers = pathlib.Path(f'~{UNPRIVILEGED_USER_NAME}/.local/share/containers').expanduser()
 
@@ -1003,25 +1001,6 @@ class DnfBootstrapper(Bootstrapper):
         if cls.install_docker():
             packages.append('moby-engine')
 
-        if os_release.id == 'fedora' and os_release.version_id == '36':
-            # In Fedora 36 the current version of netavark, 1.2.0, causes TCP connect to hang between rootfull containers.
-            # The previously tested version, 1.1.0, did not have this issue.
-            # Unfortunately, with the release of 1.2.0 the 1.1.0 package was removed from the repositories.
-            # Thankfully the 1.0.2 version is available and also works, so we'll use that here until a fixed version is available.
-            # See: https://github.com/containers/netavark/issues/491
-            packages.append('netavark-1.0.2')
-
-        if os_release.id == 'fedora' and os_release.version_id == '39':
-            # In Fedora 39, the current version of containerd, 1.6.23, prevents Docker from working.
-            # The previously tested version, 1.6.19, did not have this issue.
-            # See: https://bugzilla.redhat.com/show_bug.cgi?id=2237396
-            arch = platform.machine()
-
-            run_command(
-                'dnf', 'install', '-y',
-                f'https://kojipkgs.fedoraproject.org/packages/containerd/1.6.19/2.fc39/{arch}/containerd-1.6.19-2.fc39.{arch}.rpm'
-            )
-
         if os_release.id == 'rhel':
             # As of the release of RHEL 9.1, installing podman on RHEL 9.0 results in a non-fatal error at install time:
             #
@@ -1046,19 +1025,6 @@ class DnfBootstrapper(Bootstrapper):
         if cls.install_docker():
             run_command('systemctl', 'start', 'docker')
 
-        if os_release.id == 'rhel' and os_release.version_id.startswith('8.'):
-            # RHEL 8 defaults to using runc instead of crun.
-            # Unfortunately runc seems to have issues with podman remote.
-            # Specifically, it tends to cause conmon to burn CPU until it reaches the specified exit delay.
-            # So we'll just change the system default to crun instead.
-            # Unfortunately we can't do this with the `--runtime` option since that doesn't work with podman remote.
-
-            conf = pathlib.Path('/usr/share/containers/containers.conf').read_text()
-
-            conf = re.sub('^runtime .*', 'runtime = "crun"', conf, flags=re.MULTILINE)
-
-            pathlib.Path('/etc/containers/containers.conf').write_text(conf)
-
         super().run()
 
 
@@ -1068,7 +1034,7 @@ class AptBootstrapper(Bootstrapper):
     @classmethod
     def install_podman(cls) -> bool:
         """Return True if podman will be installed."""
-        return not (os_release.id == 'ubuntu' and os_release.version_id in {'20.04', '22.04'})
+        return True
 
     @classmethod
     def install_docker(cls) -> bool:

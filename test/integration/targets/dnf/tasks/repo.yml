@@ -19,6 +19,9 @@
       assert:
         that:
             - "'results' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_before
     # ============================================================================
     - name: Install dinginessentail-1.0-1 again
       dnf:
@@ -40,6 +43,13 @@
       assert:
         that:
             - "'msg' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_after
+
+    - assert:
+        that:
+          - dnf_history_lines_before.stdout == dnf_history_lines_after.stdout
     # ============================================================================
     - name: Install dinginessentail again (noop, module is idempotent)
       dnf:
@@ -587,3 +597,35 @@
           - provides-binary
           - package-name
         state: absent
+
+# https://github.com/ansible/ansible/issues/84578
+- name: Test installing a package that is listed in `provides` in different package
+  block:
+    - dnf:
+        name: provides-package
+        state: present
+
+    - command: rpm -q provided-package
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+
+    - dnf:
+        name: provided-package
+        state: present
+      register: r
+
+    - assert:
+        that:
+          - r is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides-package
+        - provided-package

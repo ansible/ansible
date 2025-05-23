@@ -66,7 +66,7 @@
 - assert:
       that:
           - result is failed
-          - 'result is search("Could not find the requested service {{ fake_service }}")'
+          - result is search("Could not find the requested service " + fake_service)
 
 - name: the module must fail in check_mode as well when a service is not found
   systemd:
@@ -79,7 +79,7 @@
 - assert:
       that:
           - result is failed
-          - 'result is search("Could not find the requested service {{ fake_service }}")'
+          - result is search("Could not find the requested service " + fake_service)
 
 - name: check that the module works even when systemd is offline (eg in chroot)
   systemd:

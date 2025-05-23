@@ -117,10 +117,6 @@ DOCUMENTATION = """
             - kerberos usage mode.
             - The managed option means Ansible will obtain kerberos ticket.
             - While the manual one means a ticket must already have been obtained by the user.
-            - If having issues with Ansible freezing when trying to obtain the
-              Kerberos ticket, you can either set this to V(manual) and obtain
-              it outside Ansible or install C(pexpect) through pip and try
-              again.
         choices: [managed, manual]
         vars:
           - name: ansible_winrm_kinit_mode
@@ -186,6 +182,7 @@ except ImportError:
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -222,19 +219,6 @@ try:
 except ImportError as e:
     HAS_XMLTODICT = False
     XMLTODICT_IMPORT_ERR = e
-
-HAS_PEXPECT = False
-try:
-    import pexpect
-    # echo was added in pexpect 3.3+ which is newer than the RHEL package
-    # we can only use pexpect for kerb auth if echo is a valid kwarg
-    # https://github.com/ansible/ansible/issues/43462
-    if hasattr(pexpect, 'spawn'):
-        argspec = getfullargspec(pexpect.spawn.__init__)
-        if 'echo' in argspec.args:
-            HAS_PEXPECT = True
-except ImportError as e:
-    pass
 
 # used to try and parse the hostname and detect if IPv6 is being used
 try:
@@ -350,6 +334,7 @@ class Connection(ConnectionBase):
     def _kerb_auth(self, principal: str, password: str) -> None:
         if password is None:
             password = ""
+        b_password = to_bytes(password, encoding='utf-8', errors='surrogate_or_strict')
 
         self._kerb_ccache = tempfile.NamedTemporaryFile()
         display.vvvvv("creating Kerberos CC at %s" % self._kerb_ccache.name)
@@ -376,60 +361,28 @@ class Connection(ConnectionBase):
 
         kinit_cmdline.append(principal)
 
-        # pexpect runs the process in its own pty so it can correctly send
-        # the password as input even on MacOS which blocks subprocess from
-        # doing so. Unfortunately it is not available on the built in Python
-        # so we can only use it if someone has installed it
-        if HAS_PEXPECT:
-            proc_mechanism = "pexpect"
-            command = kinit_cmdline.pop(0)
-            password = to_text(password, encoding='utf-8',
-                               errors='surrogate_or_strict')
+        display.vvvv(f"calling kinit for principal {principal}")
 
-            display.vvvv("calling kinit with pexpect for principal %s"
-                         % principal)
-            try:
-                child = pexpect.spawn(command, kinit_cmdline, timeout=60,
-                                      env=krb5env, echo=False)
-            except pexpect.ExceptionPexpect as err:
-                err_msg = "Kerberos auth failure when calling kinit cmd " \
-                          "'%s': %s" % (command, to_native(err))
-                raise AnsibleConnectionFailure(err_msg)
+        # It is important to use start_new_session which spawns the process
+        # with setsid() to avoid it inheriting the current tty. On macOS it
+        # will force it to read from stdin rather than the tty.
+        try:
+            p = subprocess.Popen(
+                kinit_cmdline,
+                start_new_session=True,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=krb5env,
+            )
 
-            try:
-                child.expect(".*:")
-                child.sendline(password)
-            except OSError as err:
-                # child exited before the pass was sent, Ansible will raise
-                # error based on the rc below, just display the error here
-                display.vvvv("kinit with pexpect raised OSError: %s"
-                             % to_native(err))
+        except OSError as err:
+            err_msg = "Kerberos auth failure when calling kinit cmd " \
+                      "'%s': %s" % (self._kinit_cmd, to_native(err))
+            raise AnsibleConnectionFailure(err_msg)
 
-            # technically this is the stdout + stderr but to match the
-            # subprocess error checking behaviour, we will call it stderr
-            stderr = child.read()
-            child.wait()
-            rc = child.exitstatus
-        else:
-            proc_mechanism = "subprocess"
-            b_password = to_bytes(password, encoding='utf-8',
-                                  errors='surrogate_or_strict')
-
-            display.vvvv("calling kinit with subprocess for principal %s"
-                         % principal)
-            try:
-                p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     env=krb5env)
-
-            except OSError as err:
-                err_msg = "Kerberos auth failure when calling kinit cmd " \
-                          "'%s': %s" % (self._kinit_cmd, to_native(err))
-                raise AnsibleConnectionFailure(err_msg)
-
-            stdout, stderr = p.communicate(b_password + b'\n')
-            rc = p.returncode != 0
+        stdout, stderr = p.communicate(b_password + b'\n')
+        rc = p.returncode
 
         if rc != 0:
             # one last attempt at making sure the password does not exist
@@ -437,8 +390,7 @@ class Connection(ConnectionBase):
             exp_msg = to_native(stderr.strip())
             exp_msg = exp_msg.replace(to_native(password), "<redacted>")
 
-            err_msg = "Kerberos auth failure for principal %s with %s: %s" \
-                      % (principal, proc_mechanism, exp_msg)
+            err_msg = f"Kerberos auth failure for principal {principal}: {exp_msg}"
             raise AnsibleConnectionFailure(err_msg)
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
@@ -627,7 +579,7 @@ class Connection(ConnectionBase):
     def _winrm_exec(
         self,
         command: str,
-        args: t.Iterable[bytes] = (),
+        args: t.Iterable[bytes | str] = (),
         from_exec: bool = False,
         stdin_iterator: t.Iterable[tuple[bytes, bool]] = None,
     ) -> tuple[int, bytes, bytes]:
@@ -652,9 +604,7 @@ class Connection(ConnectionBase):
                     self._winrm_write_stdin(command_id, stdin_iterator)
 
             except Exception as ex:
-                display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
-                                % (type(ex).__name__, to_text(ex)))
-                display.debug(traceback.format_exc())
+                display.error_as_warning("ERROR DURING WINRM SEND INPUT. Attempting to recover.", ex)
                 stdin_push_failed = True
 
             # Even on a failure above we try at least once to get the output
@@ -771,7 +721,16 @@ class Connection(ConnectionBase):
 
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
+
+        encoded_prefix = self._shell._encode_script('', as_list=False, strict_mode=False, preserve_rc=False)
+        if cmd.startswith(encoded_prefix) or cmd.startswith("type "):
+            # Avoid double encoding the script, the first means we are already
+            # running the standard PowerShell command, the latter is used for
+            # the no pipeline case where it uses type to pipe the script into
+            # powershell which is known to work without re-encoding as pwsh.
+            cmd_parts = cmd.split(" ")
+        else:
+            cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
 
         # TODO: display something meaningful here
         display.vvv("EXEC (via pipeline wrapper)")
@@ -784,7 +743,15 @@ class Connection(ConnectionBase):
         return self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=stdin_iterator)
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
-    def _put_file_stdin_iterator(self, in_path: str, out_path: str, buffer_size: int = 250000) -> t.Iterable[tuple[bytes, bool]]:
+    def _put_file_stdin_iterator(
+        self,
+        initial_stdin: bytes,
+        in_path: str,
+        out_path: str,
+        buffer_size: int = 250000,
+    ) -> t.Iterable[tuple[bytes, bool]]:
+        yield initial_stdin, False
+
         in_size = os.path.getsize(to_bytes(in_path, errors='surrogate_or_strict'))
         offset = 0
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
@@ -806,40 +773,16 @@ class Connection(ConnectionBase):
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
-        script_template = u"""
-            begin {{
-                $path = '{0}'
+        copy_script, copy_script_stdin = _bootstrap_powershell_script('winrm_put_file.ps1', {
+            'Path': out_path,
+        }, has_input=True)
+        cmd_parts = self._shell._encode_script(copy_script, as_list=True, strict_mode=False, preserve_rc=False)
 
-                $DebugPreference = "Continue"
-                $ErrorActionPreference = "Stop"
-                Set-StrictMode -Version 2
-
-                $fd = [System.IO.File]::Create($path)
-
-                $sha1 = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
-
-                $bytes = @() #initialize for empty file case
-            }}
-            process {{
-               $bytes = [System.Convert]::FromBase64String($input)
-               $sha1.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) | Out-Null
-               $fd.Write($bytes, 0, $bytes.Length)
-            }}
-            end {{
-                $sha1.TransformFinalBlock($bytes, 0, 0) | Out-Null
-
-                $hash = [System.BitConverter]::ToString($sha1.Hash).Replace("-", "").ToLowerInvariant()
-
-                $fd.Close()
-
-                Write-Output "{{""sha1"":""$hash""}}"
-            }}
-        """
-
-        script = script_template.format(self._shell._escape(out_path))
-        cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False, preserve_rc=False)
-
-        status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
+        status_code, b_stdout, b_stderr = self._winrm_exec(
+            cmd_parts[0],
+            cmd_parts[1:],
+            stdin_iterator=self._put_file_stdin_iterator(copy_script_stdin, in_path, out_path),
+        )
         stdout = to_text(b_stdout)
         stderr = to_text(b_stderr)
 
@@ -873,36 +816,14 @@ class Connection(ConnectionBase):
             offset = 0
             while True:
                 try:
-                    script = """
-                        $path = '%(path)s'
-                        If (Test-Path -LiteralPath $path -PathType Leaf)
-                        {
-                            $buffer_size = %(buffer_size)d
-                            $offset = %(offset)d
-
-                            $stream = New-Object -TypeName IO.FileStream($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
-                            $stream.Seek($offset, [System.IO.SeekOrigin]::Begin) > $null
-                            $buffer = New-Object -TypeName byte[] $buffer_size
-                            $bytes_read = $stream.Read($buffer, 0, $buffer_size)
-                            if ($bytes_read -gt 0) {
-                                $bytes = $buffer[0..($bytes_read - 1)]
-                                [System.Convert]::ToBase64String($bytes)
-                            }
-                            $stream.Close() > $null
-                        }
-                        ElseIf (Test-Path -LiteralPath $path -PathType Container)
-                        {
-                            Write-Host "[DIR]";
-                        }
-                        Else
-                        {
-                            Write-Error "$path does not exist";
-                            Exit 1;
-                        }
-                    """ % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
+                    script, in_data = _bootstrap_powershell_script('winrm_fetch_file.ps1', {
+                        'Path': in_path,
+                        'BufferSize': buffer_size,
+                        'Offset': offset,
+                    })
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
                     cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
-                    status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
+                    status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._wrapper_payload_stream(in_data))
                     stdout = to_text(b_stdout)
                     stderr = to_text(b_stderr)
 

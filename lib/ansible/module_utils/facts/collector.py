@@ -31,8 +31,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 import platform
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts import timeout
 

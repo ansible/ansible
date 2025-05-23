@@ -32,6 +32,34 @@
       - raw_out.stdout_lines[4] == "winrm"
       - raw_out.stdout_lines[5] == "string - \U0001F4A9"
 
+  - name: test error record stderr
+    raw: |
+      Write-Error -Message error1 -ErrorId MyId1
+
+      $exp = [ArgumentException]::new("error exception")
+      Write-Error -Exception $exp -Message 'error details' -ErrorId MyId2
+    register: raw_err
+
+  - name: assert error record stderr
+    assert:
+      that:
+      - raw_err.stdout == ""
+      - >-
+        "error1\r\n    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException\r\n    + FullyQualifiedErrorId : MyId1" in raw_err.stderr
+      - >-
+        "error details\r\n    + CategoryInfo          : NotSpecified: (:) [Write-Error], ArgumentException\r\n    + FullyQualifiedErrorId : MyId2" in raw_err.stderr
+
+  - name: test subprocess stderr and rc
+    raw: powershell.exe -command '$host.UI.WriteErrorLine(''stderr 1''); $host.UI.WriteErrorLine(''stderr 2''); $host.UI.WriteErrorLine(''stderr 3''); exit 2'
+    register: raw_stderr
+    failed_when: raw_stderr.rc != 2
+
+  - name: assert test subprocess stderr and rc
+    assert:
+      that:
+      - raw_stderr.stdout == ""
+      - raw_stderr.stderr == "stderr 1\r\nstderr 2\r\nstderr 3\r\n"
+
   - name: test out become with psrp
     win_whoami:
     register: whoami_out

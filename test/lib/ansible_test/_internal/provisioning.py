@@ -1,4 +1,5 @@
 """Provision hosts for running tests."""
+
 from __future__ import annotations
 
 import collections.abc as c

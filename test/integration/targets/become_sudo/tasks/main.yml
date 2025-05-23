@@ -1,0 +1,84 @@
+- name: create unprivileged become user pair
+  include_role:
+    name: setup_become_user_pair
+    public: true
+
+- name: capture config values
+  set_fact:
+    # this needs to be looked up and stored before setting ansible_become_flags
+    default_become_flags: "{{ lookup('config', 'become_flags', plugin_type='become', plugin_name='sudo') }}"
+    intermediate_flags: --intermediate-user {{ intermediate_user_name | quote }}
+
+- name: deploy sudo shim
+  copy:
+    src: sudoshim.sh
+    dest: /tmp/sudoshim.sh
+    mode: a+rx
+
+- name: apply shared become vars to all tasks that use the sudo test shim
+  vars:
+    ansible_become: yes
+    ansible_become_method: sudo
+    ansible_become_user: '{{ target_user_name }}'
+    ansible_become_password: '{{ intermediate_user_password }}'
+    ansible_become_exe: /tmp/sudoshim.sh
+    ansible_become_flags: '{{ default_become_flags }} {{ intermediate_flags }}'
+    ansible_local_become_strip_preamble: true
+  block:
+    - name: basic success check
+      raw: whoami
+      register: success
+      # NOTE: The ssh connection plugin does not properly strip noise from raw stdout, unlike the local connection plugin.
+      #       Once that is fixed, this can be changed to a comparison against stdout, not stdout_lines[-1].
+      failed_when: success.stdout_lines[-1] != target_user_name
+
+    - name: validate that a password prompt is being used and that the shim is invalidating the sudo timestamp
+      vars:
+        ansible_become_password: BOGUSPASS
+      raw: exit 99
+      ignore_errors: true
+      register: bogus_password
+
+    - assert:
+        that:
+          - bogus_password.msg is contains "Incorrect sudo password" or bogus_password.msg is contains "Duplicate become password prompt encountered"
+
+    - name: request sudo chdir to a nonexistent root dir; expected failure
+      raw: echo himom
+      vars:
+        ansible_sudo_chdir: /nonexistent_dir
+      ignore_errors: true
+      register: nonexistent_chdir
+
+    - assert:
+        that:
+          - nonexistent_chdir is failed
+          # deal with inconsistent failure behavior across different connection plugins
+          - (nonexistent_chdir.msg ~ (nonexistent_chdir.stdout | default('')) ~ (nonexistent_chdir.stderr | default(''))) is search "cd.*/nonexistent_dir"
+
+    - name: request sudo chdir to /; cwd should successfully be / before sudo runs
+      raw: echo "CWD IS <$(pwd)>"
+      vars:
+        ansible_sudo_chdir: /
+      register: chdir_root
+
+    - assert:
+        that:
+          - chdir_root.stdout is contains 'CWD IS </>'
+
+    - name: become with custom sudo `--` flags (similar to defaults)
+      vars:
+        ansible_become_flags: --set-home --stdin --non-interactive {{ intermediate_flags }}
+      raw: whoami
+      register: custom_flags
+
+    - name: become with no user
+      vars:
+        ansible_become_user: ""
+      raw: whoami
+      register: no_user
+
+    - assert:
+        that:
+          - custom_flags.stdout.strip() == test_user_name
+          - no_user.stdout.strip() == "root"

@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - include_vars:
+      file: ../vars/set_host_variable.yml

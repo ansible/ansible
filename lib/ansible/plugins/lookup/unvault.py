@@ -34,7 +34,6 @@ RETURN = """
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.common.text.converters import to_text
 from ansible.utils.display import Display
 
 display = Display()
@@ -55,10 +54,7 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'files', term)
             display.vvvv(u"Unvault lookup found %s" % lookupfile)
             if lookupfile:
-                actual_file = self._loader.get_real_file(lookupfile, decrypt=True)
-                with open(actual_file, 'rb') as f:
-                    b_contents = f.read()
-                ret.append(to_text(b_contents))
+                ret.append(self._loader.get_text_file_contents(lookupfile))
             else:
                 raise AnsibleParserError('Unable to find file matching "%s" ' % term)
 

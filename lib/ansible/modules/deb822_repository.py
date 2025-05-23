@@ -230,7 +230,6 @@ import os
 import re
 import tempfile
 import textwrap
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import missing_required_lib
@@ -248,9 +247,9 @@ HAS_DEBIAN = True
 DEBIAN_IMP_ERR = None
 try:
     from debian.deb822 import Deb822  # type: ignore[import]
-except ImportError:
+except ImportError as ex:
     HAS_DEBIAN = False
-    DEBIAN_IMP_ERR = traceback.format_exc()
+    DEBIAN_IMP_ERR = ex
 
 KEYRINGS_DIR = '/etc/apt/keyrings'
 

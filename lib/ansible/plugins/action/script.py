@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import re
 import shlex
 
@@ -48,9 +49,8 @@ class ActionModule(ActionBase):
                 'chdir': {'type': 'str'},
                 'executable': {'type': 'str'},
             },
-            required_one_of=[
-                ['_raw_params', 'cmd']
-            ]
+            required_one_of=[['_raw_params', 'cmd']],
+            mutually_exclusive=[['_raw_params', 'cmd']],
         )
 
         result = super(ActionModule, self).run(tmp, task_vars)
@@ -88,7 +88,7 @@ class ActionModule(ActionBase):
             # Split out the script as the first item in raw_params using
             # shlex.split() in order to support paths and files with spaces in the name.
             # Any arguments passed to the script will be added back later.
-            raw_params = to_native(new_module_args.get('_raw_params', ''), errors='surrogate_or_strict')
+            raw_params = new_module_args['_raw_params'] or new_module_args['cmd']
             parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
             source = parts[0]
 
@@ -152,9 +152,16 @@ class ActionModule(ActionBase):
                 # FUTURE: use a more public method to get the exec payload
                 pc = self._task
                 exec_data = ps_manifest._create_powershell_wrapper(
-                    to_bytes(script_cmd), source, {}, env_dict, self._task.async_val,
-                    pc.become, pc.become_method, pc.become_user,
-                    self._play_context.become_pass, pc.become_flags, "script", task_vars, None
+                    name=f"ansible.builtin.script.{pathlib.Path(source).stem}",
+                    module_data=to_bytes(script_cmd),
+                    module_path=source,
+                    module_args={},
+                    environment=env_dict,
+                    async_timeout=self._task.async_val,
+                    become_plugin=self._connection.become,
+                    substyle="script",
+                    task_vars=task_vars,
+                    profile='legacy',  # the profile doesn't really matter since the module args dict is empty
                 )
                 # build the necessary exec wrapper command
                 # FUTURE: this still doesn't let script work on Windows with non-pipelined connections or

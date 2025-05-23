@@ -1,4 +1,5 @@
 """Completion finder which brings together custom options and completion logic."""
+
 from __future__ import annotations
 
 import abc

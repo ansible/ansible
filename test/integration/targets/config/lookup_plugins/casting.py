@@ -52,7 +52,7 @@ class LookupModule(LookupBase):
         for cast in (list, int, bool, str):
             option = 'test_%s' % str(cast).replace("<class '", '').replace("'>", '')
             value = self.get_option(option)
-            if value is None or type(value) is cast:
+            if value is None or isinstance(value, cast):
                 continue
             raise Exception('%s is not a %s: got %s/%s' % (option, cast, type(value), value))
 

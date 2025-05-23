@@ -1,4 +1,5 @@
 """Command line parsing for the `windows-integration` command."""
+
 from __future__ import annotations
 
 import argparse

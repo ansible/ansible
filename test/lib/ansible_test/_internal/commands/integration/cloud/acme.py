@@ -1,4 +1,5 @@
 """ACME plugin for integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -28,7 +29,7 @@ class ACMEProvider(CloudProvider):
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
             self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
         else:
-            self.image = 'quay.io/ansible/acme-test-container:2.1.0'
+            self.image = 'quay.io/ansible/acme-test-container:2.3.0'
 
         self.uses_docker = True
 

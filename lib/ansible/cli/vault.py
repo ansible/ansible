@@ -138,11 +138,12 @@ class VaultCLI(CLI):
             raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
         if options.action == 'encrypt_string':
-            if '-' in options.args or not options.args or options.encrypt_string_stdin_name:
+            if '-' in options.args or options.encrypt_string_stdin_name or (not options.args and not options.encrypt_string_prompt):
+                # prompting from stdin and reading from stdin are mutually exclusive, if stdin is still provided, it is ignored
                 self.encrypt_string_read_stdin = True
 
-            # TODO: prompting from stdin and reading from stdin seem mutually exclusive, but verify that.
             if options.encrypt_string_prompt and self.encrypt_string_read_stdin:
+                # should only trigger if prompt + either - or encrypt string stdin name were provided
                 raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
 
         return options
@@ -227,6 +228,7 @@ class VaultCLI(CLI):
                                          vault_ids=new_vault_ids,
                                          vault_password_files=new_vault_password_files,
                                          ask_vault_pass=context.CLIARGS['ask_vault_pass'],
+                                         initialize_context=False,
                                          create_new_password=True)
 
             if not new_vault_secrets:
@@ -258,7 +260,7 @@ class VaultCLI(CLI):
             display.display("Reading plaintext input from stdin", stderr=True)
 
         for f in context.CLIARGS['args'] or ['-']:
-            # Fixme: use the correct vau
+            # FIXME: use the correct vau
             self.editor.encrypt_file(f, self.encrypt_secret,
                                      vault_id=self.encrypt_vault_id,
                                      output_file=context.CLIARGS['output_file'])

@@ -533,7 +533,7 @@ f_ansible_galaxy_status \
 
     ansible-galaxy collection list -p ./install dirty.wraughten.name "$@" 2>&1 | tee out.txt || echo "expected failure"
 
-    grep 'ERROR! Invalid collection name' out.txt
+    grep '\[ERROR\]: Invalid collection name' out.txt
 
 f_ansible_galaxy_status \
     "collection list path not found"

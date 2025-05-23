@@ -1,4 +1,5 @@
 """Command line parsing for the `integration` command."""
+
 from __future__ import annotations
 
 import argparse

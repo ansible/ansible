@@ -7,20 +7,14 @@
 from __future__ import annotations
 
 import errno
-import json
 import pytest
 
 from unittest.mock import mock_open, patch
 
 from ansible.module_utils import basic
-from ansible.module_utils.common.text.converters import to_bytes
 import builtins
 
-
-@pytest.fixture
-def no_args_module_exec():
-    with patch.object(basic, '_ANSIBLE_ARGS', b'{"ANSIBLE_MODULE_ARGS": {}}'):
-        yield  # we're patching the global module object, so nothing to yield
+from ansible.module_utils.testing import patch_module_args
 
 
 def no_args_module(selinux_enabled=None, selinux_mls_enabled=None):
@@ -34,7 +28,7 @@ def no_args_module(selinux_enabled=None, selinux_mls_enabled=None):
 
 
 # test AnsibleModule selinux wrapper methods
-@pytest.mark.usefixtures('no_args_module_exec')
+@pytest.mark.usefixtures('stdin')
 class TestSELinuxMU:
     def test_selinux_enabled(self):
         # test selinux unavailable
@@ -131,11 +125,13 @@ class TestSELinuxMU:
                 am.selinux_context(path='/foo/bar')
 
     def test_is_special_selinux_path(self):
-        args = to_bytes(json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos",
-                                                             '_ansible_remote_tmp': "/tmp",
-                                                             '_ansible_keep_remote_files': False})))
+        args = dict(
+            _ansible_selinux_special_fs="nfs,nfsd,foos",
+            _ansible_remote_tmp="/tmp",
+            _ansible_keep_remote_files=False,
+        )
 
-        with patch.object(basic, '_ANSIBLE_ARGS', args):
+        with patch_module_args(args):
             am = basic.AnsibleModule(
                 argument_spec=dict(),
             )

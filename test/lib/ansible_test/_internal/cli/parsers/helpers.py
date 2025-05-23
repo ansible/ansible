@@ -1,4 +1,5 @@
 """Helper functions for composite parsers."""
+
 from __future__ import annotations
 
 from ...constants import (

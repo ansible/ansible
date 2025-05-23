@@ -15,6 +15,7 @@ DOCUMENTATION = """
       - result_format_callback
 """
 
+from ansible.executor.task_result import CallbackTaskResult
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
 
@@ -40,39 +41,41 @@ class CallbackModule(CallbackBase):
 
         return buf + "\n"
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors: bool = False) -> None:
+        self._handle_warnings_and_exception(result)
 
-        self._handle_exception(result._result)
-        self._handle_warnings(result._result)
-
-        if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
+        if result.task.action in C.MODULE_NO_JSON and 'module_stderr' not in result.result:
+            self._display.display(self._command_generic_msg(result.host.get_name(), result.result, "FAILED"), color=C.COLOR_ERROR)
         else:
-            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_ERROR)
+            self._display.display("%s | FAILED! => %s" % (result.host.get_name(), self._dump_results(result.result, indent=4)), color=C.COLOR_ERROR)
 
-    def v2_runner_on_ok(self, result):
-        self._clean_results(result._result, result._task.action)
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
+        self._handle_warnings_and_exception(result)
 
-        self._handle_warnings(result._result)
+        self._clean_results(result.result, result.task.action)
 
-        if result._result.get('changed', False):
+        if result.result.get('changed', False):
             color = C.COLOR_CHANGED
             state = 'CHANGED'
         else:
             color = C.COLOR_OK
             state = 'SUCCESS'
 
-        if result._task.action in C.MODULE_NO_JSON and 'ansible_job_id' not in result._result:
-            self._display.display(self._command_generic_msg(result._host.get_name(), result._result, state), color=color)
+        if result.task.action in C.MODULE_NO_JSON and 'ansible_job_id' not in result.result:
+            self._display.display(self._command_generic_msg(result.host.get_name(), result.result, state), color=color)
         else:
-            self._display.display("%s | %s => %s" % (result._host.get_name(), state, self._dump_results(result._result, indent=4)), color=color)
+            self._display.display("%s | %s => %s" % (result.host.get_name(), state, self._dump_results(result.result, indent=4)), color=color)
 
-    def v2_runner_on_skipped(self, result):
-        self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)
+    def v2_runner_on_skipped(self, result: CallbackTaskResult) -> None:
+        self._handle_warnings_and_exception(result)
 
-    def v2_runner_on_unreachable(self, result):
-        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE)
+        self._display.display("%s | SKIPPED" % (result.host.get_name()), color=C.COLOR_SKIP)
+
+    def v2_runner_on_unreachable(self, result: CallbackTaskResult) -> None:
+        self._handle_warnings_and_exception(result)
+
+        self._display.display("%s | UNREACHABLE! => %s" % (result.host.get_name(), self._dump_results(result.result, indent=4)), color=C.COLOR_UNREACHABLE)
 
     def v2_on_file_diff(self, result):
-        if 'diff' in result._result and result._result['diff']:
-            self._display.display(self._get_diff(result._result['diff']))
+        if 'diff' in result.result and result.result['diff']:
+            self._display.display(self._get_diff(result.result['diff']))

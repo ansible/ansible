@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import pytest
 
+from ansible.module_utils import _internal
 from ansible.module_utils.common.text.converters import jsonify
 
 
@@ -13,12 +14,12 @@ from ansible.module_utils.common.text.converters import jsonify
     'test_input,expected',
     [
         (1, '1'),
-        (u'string', u'"string"'),
-        (u'くらとみ', u'"\\u304f\\u3089\\u3068\\u307f"'),
-        (u'café', u'"caf\\u00e9"'),
-        (b'string', u'"string"'),
-        (False, u'false'),
-        (u'string'.encode('utf-8'), u'"string"'),
+        ('string', '"string"'),
+        ('くらとみ', '"\\u304f\\u3089\\u3068\\u307f"'),
+        ('café', '"caf\\u00e9"'),
+        pytest.param(b'string', '"string"', marks=pytest.mark.skipif(_internal.is_controller, reason="bytes not supported by controller")),
+        (False, 'false'),
+        pytest.param('string'.encode('utf-8'), '"string"', marks=pytest.mark.skipif(_internal.is_controller, reason="bytes not supported by controller")),
     ]
 )
 def test_jsonify(test_input, expected):

@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 from ansible import constants as C
 from ansible.playbook.task import Task
 from ansible.plugins.action.gather_facts import ActionModule as GatherFactsAction
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.executor import module_common
 
 from units.mock.loader import DictDataLoader
@@ -36,7 +36,7 @@ class TestNetworkFacts(unittest.TestCase):
     connection = MagicMock()
     fake_loader = DictDataLoader({
     })
-    templar = Templar(loader=fake_loader)
+    templar = TemplateEngine(loader=fake_loader)
 
     def setUp(self):
         pass
@@ -52,9 +52,9 @@ class TestNetworkFacts(unittest.TestCase):
         self.task.args = {}
 
         plugin = GatherFactsAction(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=None)
-        get_module_args = MagicMock()
+        get_module_args = MagicMock(return_value={})
         plugin._get_module_args = get_module_args
-        plugin._execute_module = MagicMock()
+        plugin._execute_module = MagicMock(return_value={})
 
         res = plugin.run(task_vars=self.fqcn_task_vars)
 
@@ -78,9 +78,9 @@ class TestNetworkFacts(unittest.TestCase):
         self.task.args = {}
 
         plugin = GatherFactsAction(self.task, self.connection, self.play_context, loader=None, templar=self.templar, shared_loader_obj=None)
-        get_module_args = MagicMock()
+        get_module_args = MagicMock(return_value={})
         plugin._get_module_args = get_module_args
-        plugin._execute_module = MagicMock()
+        plugin._execute_module = MagicMock(return_value={})
 
         res = plugin.run(task_vars=self.fqcn_task_vars)
 
