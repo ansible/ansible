@@ -1010,16 +1010,13 @@ class FreeBsdService(Service):
 
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
-    def run_service_cmd(self, status=None):
-        if not status:
-            return (None, '', '')
-
-        cmd = f"{self.svc_cmd} "
-        # Jail name takes precedence over other arguments
+    def run_service_cmd(self, *, status: str) -> Tuple[int, str, str]:
+        """Run a service command with various options considering jail parameter."""
+        # Jail name or verbose takes precedence over other arguments
         if self.arguments.startswith(('-j', '-v')):
-            cmd += f"{self.arguments} {self.name} {status}"
+            cmd = shlex.join([self.svc_cmd, self.arguments, self.name, status])
         else:
-            cmd += f"{self.name} {status} {self.arguments}"
+            cmd = shlex.join([self.svc_cmd, self.name, status, self.arguments])
         return self.execute_command(cmd)
 
     def get_service_status(self):
@@ -1102,12 +1099,12 @@ class FreeBsdService(Service):
         if self.action == "reload":
             self.action = "onereload"
 
-        ret, _dummy, _dummy = self.run_service_cmd(status=self.action)
+        ret, stdout, stderr = self.run_service_cmd(status=self.action)
 
         if self.sleep:
             time.sleep(self.sleep)
 
-        return ret
+        return ret, stdout, stderr
 
 
 class DragonFlyBsdService(FreeBsdService):
