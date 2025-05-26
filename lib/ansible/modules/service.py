@@ -173,6 +173,7 @@ import shlex
 import subprocess
 import tempfile
 import time
+import typing as t
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -1010,7 +1011,7 @@ class FreeBsdService(Service):
 
         self.sysrc_cmd = self.module.get_bin_path('sysrc')
 
-    def run_service_cmd(self, *, status: str) -> Tuple[int, str, str]:
+    def run_service_cmd(self, *, status: str) -> t.Tuple[int, str, str]:
         """Run a service command with various options considering jail parameter."""
         # Jail name or verbose takes precedence over other arguments
         if self.arguments.startswith(('-j', '-v')):
