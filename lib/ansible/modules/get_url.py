@@ -442,7 +442,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     # transfer-encoding was used, in which case we will not know content-length because it will not be returned.
     # But in that case, HTTPResponse will behave correctly and recognize an IncompleteRead.
 
-    is_gzip = True if 'content-encoding' in info and info['content-encoding'] == 'gzip' else False
+    is_gzip = info.get('content-encoding') == 'gzip'
 
     if not module.check_mode and 'content-length' in info:
         # If data is decompressed, then content-length won't match the amount of data we've read, so skip.
