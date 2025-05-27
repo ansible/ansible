@@ -201,7 +201,7 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'virtualbox'
                 found_virt = True
 
-        if bios_vendor in ('Amazon EC2', 'DigitalOcean', 'Hetzner'):
+        if bios_vendor in ('Amazon EC2', 'DigitalOcean', 'Hetzner', 'Linode'):
             guest_tech.add('kvm')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'kvm'
