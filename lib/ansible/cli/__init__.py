@@ -413,7 +413,7 @@ class CLI(ABC):
         sshpass = None
         becomepass = None
 
-        become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op['become_method'].upper()
+        become_prompt_method = op['become_method'].upper()
 
         try:
             become_prompt = "%s password: " % become_prompt_method
