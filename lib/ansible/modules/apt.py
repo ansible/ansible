@@ -511,16 +511,19 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
         # 990 is the priority used in `apt-get -t`
         policy.create_pin('Release', pkgname, release, 990)
     if version_cmp == "=":
-        # Installing a specific version from command line overrides all pinning
-        # We don't mimic this exactly, but instead set a priority which is higher than all APT built-in pin priorities.
-        policy.create_pin('Version', pkgname, version, 1001)
+        # Installing a specific version from command line overrides all pinning.
+        # We try to match that behavior by selecting that version explicitly,
+        # even if other pins have higher priority.
+        pkg = cache[pkgname]
+        for cand in pkg.version_list:
+            if fnmatch.fnmatch(cand.ver_str, version):
+                return cand.ver_str
+        return None  # Version not found at all
+
+    # No explicit version — follow candidate policy
     pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
-        return None
-    if version_cmp == "=" and not fnmatch.fnmatch(pkgver.ver_str, version):
-        # Even though we put in a pin policy, it can be ignored if there is no
-        # possible candidate.
         return None
     return pkgver.ver_str
 
