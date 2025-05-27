@@ -1,0 +1,2 @@
+minor_changes:
+  - "apt_repository - remove Python 2 support"

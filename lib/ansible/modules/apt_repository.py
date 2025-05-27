@@ -88,8 +88,8 @@ options:
         description:
             - Whether to automatically try to install the Python apt library or not, if it is not already installed.
               Without this library, the module does not work.
-            - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
-            - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
+            - Runs C(apt-get install python3-apt).
+            - Only works with the system Python. If you are using a Python on the remote that is not
               the system Python, set O(install_python_apt=false) and ensure that the Python apt library
               for your Python version is installed some other way.
         type: bool
@@ -98,8 +98,7 @@ author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
 requirements:
-   - python-apt (python 2)
-   - python3-apt (python 3)
+   - python3-apt
    - apt-key or gpg
 """
 
@@ -232,14 +231,15 @@ class SourcesList(object):
         self.files_mapping = {}  # internal DS for tracking symlinks
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
-        self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
+        self.default_file = apt_pkg.config.find_file('Dir::Etc::sourcelist')
 
         # read sources.list if it exists
         if os.path.isfile(self.default_file):
             self.load(self.default_file)
 
         # read sources.list.d
-        for file in glob.iglob('%s/*.list' % self._apt_cfg_dir('Dir::Etc::sourceparts')):
+        self.sources_dir = apt_pkg.config.find_dir('Dir::Etc::sourceparts')
+        for file in glob.iglob(f'{self.sources_dir}/*.list'):
             if os.path.islink(file):
                 self.files_mapping[file] = os.readlink(file)
             self.load(file)
@@ -255,7 +255,7 @@ class SourcesList(object):
         if '/' in filename:
             return filename
         else:
-            return os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+            return os.path.abspath(os.path.join(self.sources_dir, filename))
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
@@ -312,28 +312,6 @@ class SourcesList(object):
             raise InvalidSource(line)
 
         return valid, enabled, source, comment
-
-    @staticmethod
-    def _apt_cfg_file(filespec):
-        """
-        Wrapper for `apt_pkg` module for running with Python 2.5
-        """
-        try:
-            result = apt_pkg.config.find_file(filespec)
-        except AttributeError:
-            result = apt_pkg.Config.FindFile(filespec)
-        return result
-
-    @staticmethod
-    def _apt_cfg_dir(dirspec):
-        """
-        Wrapper for `apt_pkg` module for running with Python 2.5
-        """
-        try:
-            result = apt_pkg.config.find_dir(dirspec)
-        except AttributeError:
-            result = apt_pkg.Config.FindDir(dirspec)
-        return result
 
     def load(self, file):
         group = []
