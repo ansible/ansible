@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import importlib.metadata
 import inspect
 import operator
 import argparse
@@ -15,8 +16,6 @@ import time
 import typing as t
 
 import yaml
-
-from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
@@ -313,7 +312,7 @@ def version(prog=None):
     result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
     result.append("  executable location = %s" % sys.argv[0])
     result.append("  python version = %s (%s)" % (''.join(sys.version.splitlines()), to_native(sys.executable)))
-    result.append("  jinja version = %s" % j2_version)
+    result.append(f"  jinja version = {importlib.metadata.version('jinja2')}")
     result.append(f"  pyyaml version = {yaml.__version__} ({libyaml_fragment})")
 
     return "\n".join(result)

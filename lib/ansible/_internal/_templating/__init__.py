@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from jinja2 import __version__ as _jinja2_version
+import importlib.metadata
+
+_jinja2_version = importlib.metadata.version('jinja2')
 
 # DTFIX-FUTURE: sanity test to ensure this doesn't drift from requirements
 _MINIMUM_JINJA_VERSION = (3, 1)
