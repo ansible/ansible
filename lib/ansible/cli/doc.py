@@ -878,7 +878,7 @@ class DocCLI(CLI, RoleMixin):
         loader: t.Any,
         fragment_loader: t.Any,
         jinja_builtins: dict[str, Jinja2BuiltinMetadata],
-    ) -> tuple[dict, dict | None, str | None, dict | None]:
+    ) -> tuple[dict, str | None, dict | None, dict | None]:
         try:
             return get_plugin_docs(plugin_name, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
         except Exception:
