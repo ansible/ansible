@@ -1475,8 +1475,8 @@ def main():
                             force=force_yes,
                             fail_on_autoremove=fail_on_autoremove,
                             dpkg_options=p['dpkg_options'],
-                            lock_timeout=p['lock_timeout'],
-                )
+                            lock_timeout=p['lock_timeout']
+                            )
 
             unfiltered_packages = p['package'] or ()
             packages = [package.strip() for package in unfiltered_packages if package != '*']
