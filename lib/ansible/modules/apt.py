@@ -517,8 +517,8 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
         # even if other pins have higher priority.
         pkg = cache[pkgname]
         for cand in pkg.version_list:
-            if fnmatch.fnmatch(cand.VerStr, version):
-                return cand.VerStr
+            if fnmatch.fnmatch(cand.ver_str, version):
+                return cand.ver_str
         return None  # Version not found at all
 
     # No explicit version — follow candidate policy
