@@ -61,11 +61,10 @@
           - "'is not signed' in res.msg"
 
   always:
-    - name: Remove rpm-sign and attr (and test package if it got installed)
+    - name: Remove rpm-sign and test package if it got installed
       dnf:
         name:
           - rpm-sign
-          - attr
           - "{{ pkg_name }}"
         state: absent
 
