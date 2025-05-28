@@ -26,6 +26,7 @@ IGNORE = {
     'cache': ('base', ),
 }
 
+
 @dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
 class _PluginInfo:
     """Information about a plugin."""

@@ -1074,6 +1074,7 @@ def _finalize_template_result(o: t.Any, mode: FinalizeMode) -> t.Any:
 @dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
 class Jinja2BuiltinMetadata:
     """Jinja2 builtin filter and test metadata."""
+
     name: str
     """Name of the plugin."""
     doc: str | None = None
@@ -1082,14 +1083,9 @@ class Jinja2BuiltinMetadata:
 
 def get_jinja2_builtin_filters() -> list[Jinja2BuiltinMetadata]:
     """Returns a list of builtin Jinja2 filters."""
-    return [
-        Jinja2BuiltinMetadata(name=n, doc=f.__doc__)
-        for n, f in Environment().filters.items()
-    ]
+    return [Jinja2BuiltinMetadata(name=n, doc=f.__doc__) for n, f in Environment().filters.items()]
+
 
 def get_jinja2_builtin_tests() -> list[Jinja2BuiltinMetadata]:
     """Returns a list of builtin Jinja2 tests."""
-    return [
-        Jinja2BuiltinMetadata(name=n, doc=f.__doc__)
-        for n, f in Environment().tests.items()
-    ]
+    return [Jinja2BuiltinMetadata(name=n, doc=f.__doc__) for n, f in Environment().tests.items()]
