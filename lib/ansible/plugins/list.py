@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 
+import dataclasses
 import os
 
 from ansible import context
@@ -14,6 +15,7 @@ from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
 from ansible.utils.collection_loader._collection_finder import _get_collection_path
+from ansible._internal._templating._jinja_bits import get_jinja2_builtin_filters, get_jinja2_builtin_tests
 
 display = Display()
 
@@ -23,6 +25,18 @@ IGNORE = {
     'module': ('async_wrapper', ),
     'cache': ('base', ),
 }
+
+@dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
+class _PluginInfo:
+    """Information about a plugin."""
+    name: str
+    """The fully qualified name of the plugin."""
+    path: bytes | None
+    """The path to the plugin file, or None if not available."""
+    plugin_obj: object | None = None
+    """The loaded plugin object, or None if not loaded."""
+    is_jinja_plugin: bool = False
+    """Whether the plugin shadows a Jinja2 plugin (filter or test)."""
 
 
 def get_composite_name(collection, name, path, depth):
@@ -116,21 +130,39 @@ def _list_j2_plugins_from_file(collection, plugin_path, ptype, plugin_name):
     return file_plugins
 
 
-def list_collection_plugins(ptype, collections, search_paths=None):
+def list_collection_plugins(ptype: str, collections: dict[str, bytes], search_paths: list[str] | None = None) -> dict[str, tuple[bytes, object | None]]:
+    # Kept for backwards compatibility.
+    return {
+        name: (info.path, info.plugin_obj)
+        for name, info in _list_collection_plugins_with_info(ptype, collections).items()
+    }
+
+
+def _list_collection_plugins_with_info(
+    ptype: str,
+    collections: dict[str, bytes],
+) -> dict[str, _PluginInfo]:
     # TODO: update to use importlib.resources
 
-    # starts at  {plugin_name: filepath, ...}, but changes at the end
-    plugins = {}
     try:
         ploader = getattr(loader, '{0}_loader'.format(ptype))
     except AttributeError:
         raise AnsibleError(f"Cannot list plugins, incorrect plugin type {ptype!r} supplied.") from None
 
+    builtin_jinja_plugins = set()
+    plugin_paths = {}
+
     # get plugins for each collection
-    for collection in collections.keys():
+    for collection, path in collections.items():
         if collection == 'ansible.builtin':
             # dirs from ansible install, but not configured paths
             dirs = [d.path for d in ploader._get_paths_with_context() if d.internal]
+
+            if ptype == 'filter':
+                builtin_jinja_plugins = set(f"ansible.builtin.{p.name}" for p in get_jinja2_builtin_filters())
+            elif ptype == 'test':
+                builtin_jinja_plugins = set(f"ansible.builtin.{p.name}" for p in get_jinja2_builtin_tests())
+
         elif collection == 'ansible.legacy':
             # configured paths + search paths (should include basedirs/-M)
             dirs = [d.path for d in ploader._get_paths_with_context() if not d.internal]
@@ -139,7 +171,7 @@ def list_collection_plugins(ptype, collections, search_paths=None):
         else:
             # search path in this case is for locating collection itselfA
             b_ptype = to_bytes(C.COLLECTION_PTYPE_COMPAT.get(ptype, ptype))
-            dirs = [to_native(os.path.join(collections[collection], b'plugins', b_ptype))]
+            dirs = [to_native(os.path.join(path, b'plugins', b_ptype))]
             # acr = AnsibleCollectionRef.try_parse_fqcr(collection, ptype)
             # if acr:
             #     dirs = acr.subdirs
@@ -147,30 +179,56 @@ def list_collection_plugins(ptype, collections, search_paths=None):
 
             #     raise Exception('bad acr for %s, %s' % (collection, ptype))
 
-        plugins.update(_list_plugins_from_paths(ptype, dirs, collection))
+        plugin_paths.update(_list_plugins_from_paths(ptype, dirs, collection))
 
-    #  return plugin and it's class object, None for those not verifiable or failing
+    plugins = {}
     if ptype in ('module',):
         # no 'invalid' tests for modules
-        for plugin in plugins.keys():
-            plugins[plugin] = (plugins[plugin], None)
+        for plugin, plugin_path in plugin_paths.items():
+            plugins[plugin] = _PluginInfo(name=plugin, path=plugin_path)
     else:
         # detect invalid plugin candidates AND add loaded object to return data
-        for plugin in list(plugins.keys()):
+        for plugin, plugin_path in plugin_paths.items():
             pobj = None
             try:
                 pobj = ploader.get(plugin, class_only=True)
             except Exception as e:
-                display.vvv("The '{0}' {1} plugin could not be loaded from '{2}': {3}".format(plugin, ptype, plugins[plugin], to_native(e)))
+                display.vvv("The '{0}' {1} plugin could not be loaded from '{2}': {3}".format(plugin, ptype, plugin_path, to_native(e)))
 
-            # sets final {plugin_name: (filepath, class|NONE if not loaded), ...}
-            plugins[plugin] = (plugins[plugin], pobj)
+            plugins[plugin] = _PluginInfo(
+                name=plugin,
+                path=plugin_path,
+                plugin_obj=pobj,
+                is_jinja_plugin=plugin in builtin_jinja_plugins,
+            )
 
-    # {plugin_name: (filepath, class), ...}
+        for plugin in builtin_jinja_plugins:
+            # Add in any builtin Jinja2 plugins that have not been shadowed in Ansible.
+            if plugin in plugins:
+                continue
+
+            plugins[plugin] = _PluginInfo(
+                name=plugin,
+                path=None,
+                is_jinja_plugin=True,
+            )
+
     return plugins
 
 
-def list_plugins(ptype, collections=None, search_paths=None):
+def list_plugins(ptype: str, collections: list[str] | None = None, search_paths: list[str] | None = None) -> dict[str, tuple[bytes, object | None]]:
+    # Kept for backwards compatibility.
+    return {
+        name: (info.path, info.plugin_obj)
+        for name, info in _list_plugins_with_info(ptype, collections, search_paths).items()
+    }
+
+
+def _list_plugins_with_info(
+    ptype: str,
+    collections: list[str] = None,
+    search_paths: list[str] | None = None,
+) -> dict[str, _PluginInfo]:
     if isinstance(collections, str):
         collections = [collections]
 
@@ -195,7 +253,7 @@ def list_plugins(ptype, collections=None, search_paths=None):
                     raise AnsibleError(f"Cannot use supplied collection {collection!r}.") from ex
 
     if plugin_collections:
-        plugins.update(list_collection_plugins(ptype, plugin_collections))
+        plugins.update(_list_collection_plugins_with_info(ptype, plugin_collections))
 
     return plugins
 
