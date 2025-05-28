@@ -39,6 +39,7 @@ RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
     520,  # Galaxy rate limit error code (Cloudflare unknown error)
     HTTPStatus.BAD_GATEWAY,  # Common error from galaxy that may represent any number of transient backend issues
 }
+_DEFAULT_NORMALIZED_SERVER = 'https://galaxy.ansible.com/api/'
 
 
 def cache_lock(func):
@@ -86,7 +87,7 @@ def g_connect(versions):
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (self.name, n_url)
 
                 if self.api_server == 'https://galaxy.ansible.com' or self.api_server == 'https://galaxy.ansible.com/':
-                    n_url = 'https://galaxy.ansible.com/api/'
+                    n_url = _DEFAULT_NORMALIZED_SERVER
 
                 try:
                     data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg, cache=True)

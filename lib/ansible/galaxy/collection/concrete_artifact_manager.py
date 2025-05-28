@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from contextlib import contextmanager, suppress
 from functools import cache
 from hashlib import sha256
+from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urldefrag
 from shutil import rmtree
@@ -784,10 +785,9 @@ def _tarfile_extract(
 @cache
 def _get_runtime_from_dir(b_path: bytes) -> object:
     """Load the meta/runtime.yml from a collection directory."""
-    runtime_path = os.path.join(b_path, b"meta", b"runtime.yml")
+    runtime_path = Path(b_path.decode()) / "meta" / "runtime.yml"
     with suppress(OSError):
-        with open(runtime_path, 'r') as fd:
-            return yaml_load(fd)
+        return yaml_load(runtime_path.read_text())
 
 
 @cache

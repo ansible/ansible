@@ -28,7 +28,7 @@ if t.TYPE_CHECKING:
 
 from ansible import release
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.api import GalaxyAPI, _DEFAULT_NORMALIZED_SERVER
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
@@ -184,7 +184,6 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
-        self._parent = None
 
     def __hash__(self):
         return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
@@ -657,7 +656,7 @@ class AnsibleRequirement(Requirement):
         #   the collection documents it.
         if self.ver in ('', None) and C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH != 'ignore':
             warning = (
-                "" if self._parent.type != 'galaxy' or self._parent.src.api_server == "https://galaxy.ansible.com/api/"
+                "" if self._parent.type != 'galaxy' or self._parent.src.api_server == _DEFAULT_NORMALIZED_SERVER
                 else f"Galaxy server {self._parent.src.api_server} didn't return 'requires_ansible' metadata for {self._parent!r} or "
             )
             display.warning(
