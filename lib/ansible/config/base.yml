@@ -2036,6 +2036,19 @@ TASK_TIMEOUT:
   - {key: task_timeout, section: defaults}
   type: integer
   version_added: '2.10'
+_TEMPLAR_SANDBOX_MODE:
+  name: Control Jinja template sandbox behavior
+  default: default
+  description:
+    - The default Jinja sandbox behavior blocks template access to all `_` prefixed object attributes and known collection mutation methods (e.g., `dict.clear()`, `list.append()`).
+  type: choices
+  choices:
+    - default
+    - allow_unsafe_attributes
+  env: [{name: _ANSIBLE_TEMPLAR_SANDBOX_MODE}]
+  deprecated:
+    why: controlling sandbox behavior is a temporary workaround
+    version: '2.23'
 _TEMPLAR_UNKNOWN_TYPE_CONVERSION:
   name: Templar unknown type conversion behavior
   default: warning
