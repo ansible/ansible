@@ -590,7 +590,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
             return template_obj
 
     def is_safe_attribute(self, obj: t.Any, attr: str, value: t.Any) -> bool:
-        # deprecated: description="remove relaxed template sandbox mode support", core_version="2.23"
+        # deprecated: description="remove relaxed template sandbox mode support" core_version="2.23"
         if _TemplateConfig.sandbox_mode == _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES:
             return True
 
