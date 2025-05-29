@@ -4,3 +4,5 @@ parent_package: libcaca-dev
 child_package: libslang2-dev
 build_dep_package: tree
 policy_rc_package: unscd
+hello_architecture: amd64
+python_apt_package: python3-apt

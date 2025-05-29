@@ -1,9 +1,9 @@
 # UNINSTALL 'python3-apt'
 #  The `apt` module has the smarts to auto-install `python3-apt`.  To test, we
 #  will first uninstall `python3-apt`.
-- name: uninstall python3-apt with apt
+- name: uninstall {{ python_apt_package }} with apt
   apt:
-    pkg: python3-apt
+    pkg: "{{ python_apt_package }}"
     state: absent
     purge: yes
   register: apt_result
@@ -25,7 +25,7 @@
     - '"If run normally this module can auto-install it" in apt_result.msg'
 
 - name: check with dpkg
-  shell: dpkg -s python3-apt
+  shell: "dpkg -s {{ python_apt_package }}"
   register: dpkg_result
   ignore_errors: true
 
@@ -42,8 +42,8 @@
       - r.msg is contains("Could not import the python3-apt module")
 
 # UNINSTALL 'hello'
-#   With 'python-apt' uninstalled, the first call to 'apt' should install
-#   python-apt without updating the cache.
+#   With 'python3-apt' uninstalled, the first call to 'apt' should install
+#   python3-apt without updating the cache.
 - name: uninstall {{ package_name }} with apt and prevent updating the cache
   apt:
     pkg: "{{ package_name }}"
@@ -53,7 +53,7 @@
   register: apt_result
 
 - name: check {{ package_name }} with dpkg
-  shell: dpkg-query -l {{ package_name }}
+  shell: "dpkg-query -l {{ package_name }}"
   failed_when: False
   register: dpkg_result
 
@@ -67,15 +67,15 @@
 - name: Test installing fnmatch package
   apt:
     name:
-      - hel?o
-      - he?lo
+      - ansible-hel?o
+      - ansible-he?lo
   register: apt_install_fnmatch
 
 - name: Test uninstalling fnmatch package
   apt:
     name:
-      - hel?o
-      - he?lo
+      - ansible-hel?o
+      - ansible-he?lo
     state: absent
   register: apt_uninstall_fnmatch
 
@@ -121,14 +121,14 @@
 
 - name: uninstall apt bindings with apt again
   apt:
-    pkg: [python-apt, python3-apt]
+    pkg: "{{ python3_apt_package }}"
     state: absent
     purge: yes
 
-# UNINSTALL 'hello'
-#   With 'python-apt' uninstalled, the first call to 'apt' should install
+# UNINSTALL 'ansible-hello'
+#   With 'python3-apt' uninstalled, the first call to 'apt' should install
 #   python-apt.
-- name: uninstall hello with apt
+- name: uninstall {{ package_name }} with apt
   apt:
     pkg: "{{ package_name }}"
     state: absent
@@ -188,7 +188,7 @@
         - "'stdout_lines' in apt_result"
 
 # INSTALL AGAIN
-- name: install {{ package_name }} with apt
+- name: install {{ package_name }} with apt again
   apt:
     pkg: "{{ package_name }}"
     state: present
@@ -200,7 +200,7 @@
         - "not apt_result.changed"
 
 # UNINSTALL AGAIN
-- name: uninstall {{ package_name }} with apt
+- name: uninstall {{ package_name }} with apt again
   apt:
     pkg: "{{ package_name }}"
     state: absent
@@ -208,7 +208,7 @@
   register: apt_result
 
 # INSTALL WITH VERSION WILDCARD
-- name: install {{ package_name }} with apt with version
+- name: install {{ package_name }} with apt with wildcard
   apt:
     name: "{{ package_name }}=2.*"
     state: present
@@ -227,11 +227,11 @@
 
 - name: check {{ package_name }} version
   shell: dpkg -s {{ package_name }} | grep Version | awk '{print $2}'
-  register: hello_version
+  register: ansible_hello_version
 
 - name: check {{ package_name }} architecture
   shell: dpkg -s {{ package_name }} | grep Architecture | awk '{print $2}'
-  register: hello_architecture
+  register: ansible_hello_architecture
 
 - name: uninstall {{ package_name }} with apt
   apt:
@@ -279,12 +279,12 @@
 
 - name: install deb file
   apt:
-    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ ansible_hello_version.stdout }}_{{ ansible_hello_architecture.stdout }}.deb"
   register: apt_initial
 
 - name: install deb file again
   apt:
-    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ ansible_hello_version.stdout }}_{{ ansible_hello_architecture.stdout }}.deb"
   register: apt_secondary
 
 - name: verify installation of ansible-hello
@@ -301,7 +301,7 @@
 
 - name: install deb file from URL
   apt:
-    deb: "https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
+    deb: "https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture }}.deb"
   register: apt_url
 
 - name: verify installation of hello
@@ -317,11 +317,11 @@
 
 - name: force install of deb
   apt:
-    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ ansible_hello_version.stdout }}_{{ ansible_hello_architecture.stdout }}.deb"
     force: true
   register: dpkg_force
 
-- name: verify installation of ansible-hello  
+- name: verify installation of ansible-hello
   assert:
     that:
         - "dpkg_force.changed"
@@ -493,23 +493,23 @@
     state: absent
 
 # https://github.com/ansible/ansible/issues/65325
-- name: Download and install old version of {{ package_name }} (to test allow_change_held_packages option)
+- name: Download and install old version of hello (to test allow_change_held_packages option)
   apt:
-    deb: "https://ci-files.testing.ansible.com/test/integration/targets/apt/{{ package_name }}_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
+    deb: "https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture }}.deb"
   notify:
-    - remove package {{ package_name }}
+    - remove package hello
 
-- name: Put {{ package_name }} on hold
-  shell: apt-mark hold {{ package_name }}
+- name: Put hello on hold
+  shell: apt-mark hold hello
 
 - name: Get hold list
   shell: apt-mark showhold
   register: allow_change_held_packages_hold
 
-- name: Check that the package {{ package_name }} is on the hold list
+- name: Check that the package hello is on the hold list
   assert:
     that:
-      - "'{{ package_name }}' in allow_change_held_packages_hold.stdout"
+      - "'hello' in allow_change_held_packages_hold.stdout"
 
 - name: Try updating package to the latest version (allow_change_held_packages=no)
   apt:
@@ -564,8 +564,8 @@
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
 
 # Remove pkg on hold
-- name: Put {{ package_name }} on hold
-  shell: apt-mark hold {{ package_name }}
+- name: Put hello on hold
+  shell: apt-mark hold hello
 
 - name: Get hold list
   shell: apt-mark showhold
