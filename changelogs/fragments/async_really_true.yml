@@ -1,4 +1,2 @@
 bugfixes:
-- async_status, module - changed to use real booleans as returns instead of 1 and 0 ints as booleans.
-- finished, test plugin - switched to use actual booleans for comparisson from using 1 and 0 ints as booleans.
-- started, test plugin -  swtiched to use actual booleans for comparisson from using 1 and 0 ints as booleans.
+- async_status module - The ``started`` and ``finished`` return values are now ``True`` or ``False`` instead of ``1`` or ``0``.

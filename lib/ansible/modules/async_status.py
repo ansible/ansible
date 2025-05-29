@@ -29,7 +29,7 @@ options:
     choices: [ cleanup, status ]
     default: status
 notes:
-  - In ansible-core 2.19, return fields that were using 0/1 (int) were updated to be 'false'/'true' (bool) values instead.
+  - The RV(started) and RV(finished) return values were updated to return V(True) or V(False) instead of V(1) or V(0) in ansible-core 2.19.
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
