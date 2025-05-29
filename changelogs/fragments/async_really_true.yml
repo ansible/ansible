@@ -1,5 +1,4 @@
 bugfixes:
-- async_wrapper will now use actual booleans vs underlying int 1/0
-- async_status will now use actual booleans vs underlying int 1/0
-- finished test will now use actual booleans vs underlying int 1/0
-- started tests will now use actual booleans vs underlying int 1/0
+- async_status, module - changed to use real booleans as returns instead of 1 and 0 ints as booleans.
+- finished, test plugin - switched to use actual booleans for comparisson from using 1 and 0 ints as booleans.
+- started, test plugin -  swtiched to use actual booleans for comparisson from using 1 and 0 ints as booleans.
