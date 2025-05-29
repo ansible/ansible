@@ -86,3 +86,14 @@ ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansibl
 ansible-playbook test_unreachable_become_timeout.yml "$@"
 
 ANSIBLE_ROLES_PATH=../ ansible-playbook "$@" -i ../../inventory test_ssh_askpass.yml
+
+# ensure that SSH client verbosity is independent of Ansible verbosity - no `debugN:` lines at high Ansible verbosity
+ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv | grep -v 'debug.:'
+
+# enable SSH client verbosity level 1 via env; ensure debugN: but no debug2 or debug3 lines
+ANSIBLE_SSH_VERBOSITY=1 ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv | grep 'debug.:' | grep -v 'debug(2|3):'
+
+# enable SSH client verbosity level 3 via var; ensure debug3 lines
+ansible ssh -m raw -a whoami -i test_connection.inventory -vvvvv -e ansible_ssh_verbosity=3 2>&1 | grep 'debug3:'
+
+echo PASS
