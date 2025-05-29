@@ -471,6 +471,8 @@
       - "2|from_yaml_all == 2"
       - "unsafe_fruit|from_yaml == {'bananas': 'yellow', 'apples': 'red'}"
       - "unsafe_fruit_all|from_yaml_all|list == [{'bananas': 'yellow'}, {'apples': 'red'}]"
+      - None | from_yaml is none
+      - None | from_yaml_all == []
   vars:
     unsafe_fruit: !unsafe |
       ---

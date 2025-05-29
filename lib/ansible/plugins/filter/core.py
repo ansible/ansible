@@ -256,6 +256,9 @@ def from_yaml(data):
 
 
 def from_yaml_all(data):
+    if data is None:
+        return []  # backward compatibility; ensure consistent result between classic/native Jinja for None/empty string input
+
     if isinstance(data, string_types):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
