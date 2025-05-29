@@ -12,7 +12,7 @@ from ansible.errors import AnsibleError
 
 def unmask(value: object, type_names: str | list[str]) -> object:
     """
-    Internal filter to suppress automatic type transformation in Jinja (e.g., WarningMessageDetail, DeprecationMessageDetail, ErrorDetail).
+    Internal filter to suppress automatic type transformation in Jinja (e.g., WarningSummary, DeprecationSummary, ErrorSummary).
     Lazy collection caching is in play - the first attempt to access a value in a given lazy container must be with unmasking in place, or the transformed value
     will already be cached.
     """
