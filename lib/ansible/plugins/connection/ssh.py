@@ -398,6 +398,17 @@ DOCUMENTATION = """
           - {key: pkcs11_provider, section: ssh_connection}
         vars:
           - name: ansible_ssh_pkcs11_provider
+      verbosity:
+        version_added: '2.19'
+        default: 0
+        type: int
+        description:
+          - Requested verbosity level for the SSH CLI.
+        env: [{name: ANSIBLE_SSH_VERBOSITY}]
+        ini:
+          - {key: verbosity, section: ssh_connection}
+        vars:
+          - name: ansible_ssh_verbosity
 """
 
 import collections.abc as c
@@ -855,8 +866,8 @@ class Connection(ConnectionBase):
                 self._add_args(b_command, b_args, u'disable batch mode for password auth')
             b_command += [b'-b', b'-']
 
-        if display.verbosity:
-            b_command.append(b'-' + (b'v' * display.verbosity))
+        if (verbosity := self.get_option('verbosity')) > 0:
+            b_command.append(b'-' + (b'v' * verbosity))
 
         # Next, we add ssh_args
         ssh_args = self.get_option('ssh_args')
