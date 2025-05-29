@@ -216,6 +216,9 @@ def regex_escape(string, re_type='python'):
 
 
 def from_yaml(data):
+    if data is None:
+        return None
+
     if isinstance(data, string_types):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
@@ -223,10 +226,15 @@ def from_yaml(data):
         if _is_unsafe(data):
             data = data._strip_unsafe()
         return yaml_load(text_type(to_text(data, errors='surrogate_or_strict')))
+
+    display.deprecated(f"The from_yaml filter ignored non-string input of type {type(data)!r}.", version='2.23')
     return data
 
 
 def from_yaml_all(data):
+    if data is None:
+        return []  # backward compatibility; ensure consistent result between classic/native Jinja for None/empty string input
+
     if isinstance(data, string_types):
         # The ``text_type`` call here strips any custom
         # string wrapper class, so that CSafeLoader can
@@ -234,6 +242,8 @@ def from_yaml_all(data):
         if _is_unsafe(data):
             data = data._strip_unsafe()
         return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
+
+    display.deprecated(f"The from_yaml_all filter ignored non-string input of type {type(data)!r}.", version='2.23')
     return data
 
 
