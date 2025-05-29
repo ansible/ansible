@@ -1855,8 +1855,8 @@ def _resolve_depenency_map(
                 if req_inf.requirement.supports_ansible:
                     continue
                 collection = str(req_inf.parent)
-                if collection in _dependency_origin:
-                    dep_origin = f"dependency of {_dependency_origin[collection]}"
+                if req_inf.parent in _dependency_origin:
+                    dep_origin = f"dependency of {_dependency_origin[req_inf.parent]}"
                 else:
                     dep_origin = "direct request"
             else:

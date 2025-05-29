@@ -44,9 +44,12 @@ RESOLVELIB_LOWERBOUND = SemanticVersion("0.5.3")
 RESOLVELIB_UPPERBOUND = SemanticVersion("2.0.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
-# ResolutionImpossible does not share the full dependency tree of a failed requirement, only the parent.
-# This is used by requires_ansible error handling to display the origin of the incompatible collection.
-_dependency_origin: dict[str, Candidate] = {}
+
+# This is used by requires_ansible requirement error handling.
+# ResolutionImpossible causes have access to the parent,
+# i.e. the incompatible collection containing the metadata,
+# but not its origin.
+_dependency_origin: dict[Requirement, Candidate] = {}
 
 
 class CollectionDependencyProviderBase(AbstractProvider):
@@ -471,7 +474,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             if not (self._with_deps or candidate.is_virtual):
                 continue
             dependency = self._make_req_from_dict({'name': dep_name, 'version': dep_req})
-            _dependency_origin[f"{dependency}"] = candidate
+            _dependency_origin[dependency] = candidate
             yield dependency
 
         if (requires_ansible := self._get_ansible_requirement(candidate)):
