@@ -355,7 +355,7 @@ from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
 # Through dnf5-5.2.12 all exceptions raised through swig became RuntimeError
-LIBDNF5_ERROR = RuntimeError
+LIBDNF5_ERRORS = RuntimeError
 
 
 def is_installed(base, spec):
@@ -413,7 +413,9 @@ def is_newer_version_installed(base, spec):
 
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except (LIBDNF5_ERROR, StopIteration):
+    except LIBDNF5_ERRORS:
+        return False
+    except StopIteration:
         return False
 
     spec_version = spec_nevra.get_version()
@@ -505,7 +507,7 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
-        global LIBDNF5_ERROR
+        global LIBDNF5_ERRORS
         has_dnf = True
         try:
             import libdnf5  # type: ignore[import]
@@ -514,7 +516,7 @@ class Dnf5Module(YumDnf):
 
         try:
             import libdnf5.exception  # type: ignore[import-not-found]
-            LIBDNF5_ERROR = libdnf5.exception.Error
+            LIBDNF5_ERRORS = (libdnf5.exception.Error, libdnf5.exception.NonLibdnf5Exception)
         except (ImportError, AttributeError):
             pass
 
@@ -560,15 +562,7 @@ class Dnf5Module(YumDnf):
         if self.conf_file:
             conf.config_file_path = self.conf_file
 
-        try:
-            base.load_config()
-        except LIBDNF5_ERROR as e:
-            self.module.fail_json(
-                msg=str(e),
-                conf_file=self.conf_file,
-                failures=[],
-                rc=1,
-            )
+        base.load_config()
 
         if self.releasever is not None:
             variables = base.get_vars()
@@ -724,19 +718,13 @@ class Dnf5Module(YumDnf):
                         goal.add_install(spec, settings)
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
-                try:
-                    goal.add_remove(spec, settings)
-                except LIBDNF5_ERROR as e:
-                    self.module.fail_json(msg=str(e), failures=[], rc=1)
+                goal.add_remove(spec, settings)
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
 
         goal.set_allow_erasing(self.allowerasing)
-        try:
-            transaction = goal.resolve()
-        except LIBDNF5_ERROR as e:
-            self.module.fail_json(msg=str(e), failures=[], rc=1)
+        transaction = goal.resolve()
 
         if transaction.get_problems():
             failures = []
@@ -807,7 +795,11 @@ class Dnf5Module(YumDnf):
 
 
 def main():
-    Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
+    module = AnsibleModule(**yumdnf_argument_spec)
+    try:
+        Dnf5Module(module).run()
+    except LIBDNF5_ERRORS as e:
+        module.fail_json(msg=str(e), failures=[], rc=1)
 
 
 if __name__ == "__main__":
