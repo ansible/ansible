@@ -176,7 +176,6 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.inference_context = astroid.context.InferenceContext()
         self.module_cache: dict[str, astroid.Module] = {}
 
     @functools.cached_property
@@ -241,7 +240,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         inferred: astroid.typing.InferenceResult | None = None
 
         while target:
-            if inferred := astroid.util.safe_infer(target, self.inference_context):
+            if inferred := astroid.util.safe_infer(target):
                 break
 
             if isinstance(target, astroid.Call):
