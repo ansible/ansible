@@ -1,0 +1,18 @@
+Source: ansible-hello-traditional
+Section: devel
+Priority: optional
+Maintainer: Ansible Core Developers <core@ansible.com>
+Standards-Version: 4.3.0
+Homepage: https://github.com/ansible/ansible
+Rules-Requires-Root: binary-targets
+
+Package: ansible-hello-traditional
+Version: 1.0.0
+Architecture: all
+Depends: ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info
+Provides: ansible-hello
+Conflicts: ansible-hello
+Replaces: ansible-hello
+Description: example package not using any helper package
+ This is the same as the ansible-hello package, except it does not use
+ debhelper (hence the "traditional" suffix).

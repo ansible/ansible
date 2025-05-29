@@ -9,16 +9,16 @@
   register: apt_result
 
 # In check mode, auto-install of `python3-apt` must fail
-- name: test fail uninstall hello without required apt deps in check mode
+- name: test fail uninstall {{ package_name }} without required apt deps in check mode
   apt:
-    pkg: hello
+    pkg: "{{ package_name }}"
     state: absent
     purge: yes
   register: apt_result
   check_mode: yes
   ignore_errors: yes
 
-- name: verify fail uninstall hello without required apt deps in check mode
+- name: verify fail uninstall {{ package_name }} without required apt deps in check mode
   assert:
     that:
     - apt_result is failed
@@ -31,7 +31,7 @@
 
 - name: Test the auto_install_module_deps option
   apt:
-    pkg: hello
+    pkg: "{{ package_name }}"
     auto_install_module_deps: false
   register: r
   ignore_errors: true
@@ -44,20 +44,20 @@
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
 #   python-apt without updating the cache.
-- name: uninstall hello with apt and prevent updating the cache
+- name: uninstall {{ package_name }} with apt and prevent updating the cache
   apt:
-    pkg: hello
+    pkg: "{{ package_name }}"
     state: absent
     purge: yes
     update_cache: no
   register: apt_result
 
-- name: check hello with dpkg
-  shell: dpkg-query -l hello
+- name: check {{ package_name }} with dpkg
+  shell: dpkg-query -l {{ package_name }}
   failed_when: False
   register: dpkg_result
 
-- name: verify uninstall hello with apt and prevent updating the cache
+- name: verify uninstall {{ package_name }} with apt and prevent updating the cache
   assert:
     that:
     - "'changed' in apt_result"
@@ -129,16 +129,19 @@
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
 #   python-apt.
 - name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes
+  apt:
+    pkg: "{{ package_name }}"
+    state: absent
+    purge: yes
   register: apt_result
   until: apt_result is success
 
-- name: check hello with dpkg
-  shell: dpkg-query -l hello
+- name: check {{ package_name }} with dpkg
+  shell: dpkg-query -l {{ package_name }}
   failed_when: False
   register: dpkg_result
 
-- name: verify uninstallation of hello
+- name: verify uninstallation of {{ package_name }}
   assert:
     that:
     - "'changed' in apt_result"
@@ -146,8 +149,11 @@
     - "dpkg_result.rc == 1"
 
 # UNINSTALL AGAIN
-- name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes
+- name: uninstall {{ package_name }} with apt
+  apt:
+    pkg: "{{ package_name }}"
+    state: absent
+    purge: yes
   register: apt_result
 
 - name: verify no change on re-uninstall
@@ -156,16 +162,18 @@
         - "not apt_result.changed"
 
 # INSTALL
-- name: install hello with apt
-  apt: name=hello state=present
+- name: install {{ package_name }} with apt
+  apt:
+    pkg: "{{ package_name }}"
+    state: present
   register: apt_result
 
-- name: check hello with dpkg
-  shell: dpkg-query -l hello
+- name: check {{ package_name }} with dpkg
+  shell: dpkg-query -l {{ package_name }}
   failed_when: False
   register: dpkg_result
 
-- name: verify installation of hello
+- name: verify installation of {{ package_name }}
   assert:
     that:
         - "apt_result.changed"
@@ -180,8 +188,10 @@
         - "'stdout_lines' in apt_result"
 
 # INSTALL AGAIN
-- name: install hello with apt
-  apt: name=hello state=present
+- name: install {{ package_name }} with apt
+  apt:
+    pkg: "{{ package_name }}"
+    state: present
   register: apt_result
 
 - name: verify no change on re-install
@@ -190,94 +200,108 @@
         - "not apt_result.changed"
 
 # UNINSTALL AGAIN
-- name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes
+- name: uninstall {{ package_name }} with apt
+  apt:
+    pkg: "{{ package_name }}"
+    state: absent
+    purge: yes
   register: apt_result
 
 # INSTALL WITH VERSION WILDCARD
-- name: install hello with apt
-  apt: name=hello=2.* state=present
+- name: install {{ package_name }} with apt with version
+  apt:
+    name: "{{ package_name }}=2.*"
+    state: present
   register: apt_result
 
-- name: check hello with wildcard with  dpkg
-  shell: dpkg-query -l hello
+- name: check {{ package_name }} with wildcard with dpkg
+  shell: dpkg-query -l {{ package_name }}
   failed_when: False
   register: dpkg_result
 
-- name: verify installation of hello
+- name: verify installation of {{ package_name }}
   assert:
     that:
         - "apt_result.changed"
         - "dpkg_result.rc == 0"
 
-- name: check hello version
-  shell: dpkg -s hello | grep Version | awk '{print $2}'
+- name: check {{ package_name }} version
+  shell: dpkg -s {{ package_name }} | grep Version | awk '{print $2}'
   register: hello_version
 
-- name: check hello architecture
-  shell: dpkg -s hello | grep Architecture | awk '{print $2}'
+- name: check {{ package_name }} architecture
+  shell: dpkg -s {{ package_name }} | grep Architecture | awk '{print $2}'
   register: hello_architecture
 
-- name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes
+- name: uninstall {{ package_name }} with apt
+  apt:
+    pkg: "{{ package_name }}"
+    state: absent
+    purge: yes
 
 # INSTALL WITHOUT REMOVALS
-- name: Install hello, that conflicts with hello-traditional
+- name: Install {{ package_name }}, that conflicts with {{ package_name }}-traditional
   apt:
-    pkg: hello
+    pkg: "{{ package_name }}"
     state: present
     update_cache: no
 
-- name: check hello
-  shell: dpkg-query -l hello
+- name: check {{ package_name }}
+  shell: dpkg-query -l {{ package_name }}
   register: dpkg_result
 
-- name: verify installation of hello
+- name: verify installation of {{ package_name }}
   assert:
     that:
         - "apt_result.changed"
         - "dpkg_result.rc == 0"
 
-- name: Try installing hello-traditional, that conflicts with hello
+- name: Try installing {{ package_name }}-traditional, that conflicts with {{ package_name }}
   apt:
-    pkg: hello-traditional
+    pkg: "{{ package_name }}-traditional"
     state: present
     fail_on_autoremove: yes
   ignore_errors: yes
   register: apt_result
 
-- name: verify failure of installing hello-traditional, because it is required to remove hello to install.
+- name: verify failure of installing {{ package_name }}-traditional, because it is required to remove {{ package_name }} to install.
   assert:
     that:
       - apt_result is failed
       - '"Packages need to be removed but remove is disabled." in apt_result.msg'
 
-- name: uninstall hello with apt
+- name: uninstall {{ package_name }} with apt
   apt:
-    pkg: hello
+    pkg: "{{ package_name }}"
     state: absent
     purge: yes
     update_cache: no
 
 - name: install deb file
-  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  apt:
+    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
   register: apt_initial
 
 - name: install deb file again
-  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  apt:
+    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
   register: apt_secondary
 
-- name: verify installation of hello
+- name: verify installation of ansible-hello
   assert:
     that:
         - "apt_initial.changed"
         - "not apt_secondary.changed"
 
-- name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes
+- name: uninstall ansible-hello with apt
+  apt:
+    pkg: "{{ package_name }}"
+    state: absent
+    purge: yes
 
 - name: install deb file from URL
-  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
+  apt:
+    deb: "https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   register: apt_url
 
 - name: verify installation of hello
@@ -286,20 +310,27 @@
         - "apt_url.changed"
 
 - name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes
+  apt:
+    pkg: "hello"
+    state: absent
+    purge: yes
 
 - name: force install of deb
-  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb" force=true
+  apt:
+    deb: "/tmp/repo/dists/stable/main/binary-all/ansible-hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+    force: true
   register: dpkg_force
 
-- name: verify installation of hello
+- name: verify installation of ansible-hello  
   assert:
     that:
         - "dpkg_force.changed"
 
 # NEGATIVE: upgrade all packages while providing additional packages to install
 - name: provide additional packages to install while upgrading all installed packages
-  apt: pkg=*,test state=latest
+  apt:
+    pkg: ["*", "test"]
+    state: latest
   ignore_errors: True
   register: apt_result
 
@@ -310,10 +341,15 @@
         - "apt_result.failed"
 
 - name: autoclean during install
-  apt: pkg=hello state=present autoclean=yes
+  apt:
+    pkg: "{{ package_name }}"
+    state: present
+    autoclean: yes
 
 - name: undo previous install
-  apt: pkg=hello state=absent
+  apt:
+    pkg: "{{ package_name }}"
+    state: absent
 
 # https://github.com/ansible/ansible/issues/23155
 - name: create a repo file
@@ -341,29 +377,29 @@
 # https://github.com/ansible/ansible/issues/28907
 - name: Install parent package
   apt:
-    name: libcaca-dev
+    name: "{{ parent_package }}"
 
 - name: Install child package
   apt:
-    name: libslang2-dev
+    name: "{{ child_package }}"
 
-- shell: apt-mark showmanual | grep libcaca-dev
+- shell: apt-mark showmanual | grep "{{ parent_package }}"
   ignore_errors: yes
   register: parent_output
 
 - name: Check that parent package is marked as installed manually
   assert:
     that:
-      - "'libcaca-dev' in parent_output.stdout"
+      - "'{{ parent_package }}' in parent_output.stdout"
 
-- shell: apt-mark showmanual | grep libslang2-dev
+- shell: apt-mark showmanual | grep "{{ child_package }}"
   ignore_errors: yes
   register: child_output
 
 - name: Check that child package is marked as installed manually
   assert:
     that:
-      - "'libslang2-dev' in child_output.stdout"
+      - "'{{ child_package }}' in child_output.stdout"
 
 - name: Clean up
   apt:
@@ -371,13 +407,13 @@
     state: absent
   vars:
     pkgs:
-      - libcaca-dev
-      - libslang2-dev
+      - "{{ parent_package }}"
+      - "{{ child_package }}"
 
 # # https://github.com/ansible/ansible/issues/38995
 - name: build-dep for a package
   apt:
-    name: tree
+    name: "{{ build_dep_package }}"
     state: build-dep
   register: apt_result
 
@@ -388,7 +424,7 @@
 
 - name: build-dep for a package (idempotency)
   apt:
-    name: tree
+    name: "{{ build_dep_package }}"
     state: build-dep
   register: apt_result
 
@@ -399,24 +435,24 @@
 
 # check policy_rc_d parameter
 
-- name: Install unscd but forbid service start
+- name: Install {{ policy_rc_package }} but forbid service start
   apt:
-    name: unscd
+    name: "{{ policy_rc_package }}"
     policy_rc_d: 101
 
-- name: Stop unscd service
+- name: Stop {{ policy_rc_package }} service
   service:
-    name: unscd
+    name: "{{ policy_rc_package }}"
     state: stopped
   register: service_unscd_stop
 
-- name: unscd service shouldn't have been stopped by previous task
+- name: "{{ policy_rc_package }} service shouldn't have been stopped by previous task"
   assert:
     that: service_unscd_stop is not changed
 
-- name: Uninstall unscd
+- name: Uninstall {{ policy_rc_package }}
   apt:
-    name: unscd
+    name: "{{ policy_rc_package }}"
     policy_rc_d: 101
 
 - name: Create incorrect /usr/sbin/policy-rc.d
@@ -425,18 +461,18 @@
     content: apt integration test
     mode: 0755
 
-- name: Install unscd but forbid service start
+- name: Install {{ policy_rc_package }} but forbid service start
   apt:
-    name: unscd
+    name: "{{ policy_rc_package }}"
     policy_rc_d: 101
 
-- name: Stop unscd service
+- name: Stop {{ policy_rc_package }} service
   service:
-    name: unscd
+    name: "{{ policy_rc_package }}"
     state: stopped
   register: service_unscd_stop
 
-- name: unscd service shouldn't have been stopped by previous task
+- name: "{{ policy_rc_package }} service shouldn't have been stopped by previous task"
   assert:
     that: service_unscd_stop is not changed
 
@@ -457,32 +493,33 @@
     state: absent
 
 # https://github.com/ansible/ansible/issues/65325
-- name: Download and install old version of hello (to test allow_change_held_packages option)
-  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
+- name: Download and install old version of {{ package_name }} (to test allow_change_held_packages option)
+  apt:
+    deb: "https://ci-files.testing.ansible.com/test/integration/targets/apt/{{ package_name }}_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   notify:
-    - remove package hello
+    - remove package {{ package_name }}
 
-- name: Put hello on hold
-  shell: apt-mark hold hello
+- name: Put {{ package_name }} on hold
+  shell: apt-mark hold {{ package_name }}
 
 - name: Get hold list
   shell: apt-mark showhold
   register: allow_change_held_packages_hold
 
-- name: Check that the package hello is on the hold list
+- name: Check that the package {{ package_name }} is on the hold list
   assert:
     that:
-      - "'hello' in allow_change_held_packages_hold.stdout"
+      - "'{{ package_name }}' in allow_change_held_packages_hold.stdout"
 
 - name: Try updating package to the latest version (allow_change_held_packages=no)
   apt:
-    name: hello
+    name: "{{ package_name }}"
     state: latest
   ignore_errors: True
   register: allow_change_held_packages_failed_update
 
 - name: Get the version of the package
-  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  shell: dpkg -s {{ package_name }} | grep Version | awk '{print $2}'
   register: allow_change_held_packages_hello_version
 
 - name: Verify that the package was not updated (apt returns with an error)
@@ -494,13 +531,13 @@
 
 - name: Try updating package to the latest version (allow_change_held_packages=yes)
   apt:
-    name: hello
+    name: "{{ package_name }}"
     state: latest
     allow_change_held_packages: yes
   register: allow_change_held_packages_successful_update
 
 - name: Get the version of the package
-  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  shell: dpkg -s {{ package_name }} | grep Version | awk '{print $2}'
   register: allow_change_held_packages_hello_version
 
 - name: Verify that the package was updated
@@ -511,13 +548,13 @@
 
 - name: Try updating package to the latest version again
   apt:
-    name: hello
+    name: "{{ package_name }}"
     state: latest
     allow_change_held_packages: yes
   register: allow_change_held_packages_no_update
 
 - name: Get the version of the package
-  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  shell: dpkg -s {{ package_name }} | grep Version | awk '{print $2}'
   register: allow_change_held_packages_hello_version_again
 
 - name: Verify that the package was not updated
@@ -527,27 +564,27 @@
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
 
 # Remove pkg on hold
-- name: Put hello on hold
-  shell: apt-mark hold hello
+- name: Put {{ package_name }} on hold
+  shell: apt-mark hold {{ package_name }}
 
 - name: Get hold list
   shell: apt-mark showhold
   register: hello_hold
 
-- name: Check that the package hello is on the hold list
+- name: Check that the package {{ package_name }} is on the hold list
   assert:
     that:
-      - "'hello' in hello_hold.stdout"
+      - "'{{ package_name }}' in hello_hold.stdout"
 
-- name: Try removing package hello
+- name: Try removing package {{ package_name }}
   apt:
-    name: hello
+    name: "{{ package_name }}"
     state: absent
   register: package_removed
   ignore_errors: true
 
 - name: verify the package is not removed with dpkg
-  shell: dpkg -l hello
+  shell: dpkg -l {{ package_name }}
   register: dpkg_result
 
 - name: Verify that package was not removed
@@ -558,13 +595,13 @@
 
 - name: Try removing package (allow_change_held_packages=yes)
   apt:
-    name: hello
+    name: "{{ package_name }}"
     state: absent
     allow_change_held_packages: yes
   register: package_removed
 
 - name: verify the package is removed with dpkg
-  shell: dpkg -l hello
+  shell: dpkg -l {{ package_name }}
   register: dpkg_result
   ignore_errors: true
 

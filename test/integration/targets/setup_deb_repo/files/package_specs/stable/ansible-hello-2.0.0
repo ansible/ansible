@@ -1,0 +1,16 @@
+Source: ansible-hello
+Section: devel
+Priority: optional
+Maintainer: Ansible Core Developers <core@ansible.com>
+Standards-Version: 4.3.0
+Build-Depends: debhelper-compat (= 9)
+Homepage: https://github.com/ansible/ansible
+Rules-Requires-Root: no
+
+Package: ansible-hello
+Version: 2.0.0
+Architecture: all
+Conflicts: ansible-hello-traditional
+Replaces: ansible-hello-traditional
+Description: example package based on GNU hello
+

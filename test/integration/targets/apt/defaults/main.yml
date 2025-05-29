@@ -1,1 +1,6 @@
 hello_old_version: 2.10-2ubuntu2
+package_name: ansible-hello
+parent_package: libcaca-dev
+child_package: libslang2-dev
+build_dep_package: tree
+policy_rc_package: unscd
