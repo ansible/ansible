@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+echo 'bogus stderr output' >&2
+echo 'SSH_AUTH_S'
+
+exit 42
