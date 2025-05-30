@@ -10,6 +10,7 @@ from importlib.resources import files  # pylint: disable=unused-import
 HAS_IMPORTLIB_RESOURCES = True
 
 _Display().deprecated(
-    msg="The `ansible.compat.importlib_resources` module is deprecated. Use `importlib.resources` from Python standard library instead.",
+    msg="The `ansible.compat.importlib_resources` module is deprecated.",
+    help_text="Use `importlib.resources` from the Python standard library instead.",
     version="2.23",
 )
