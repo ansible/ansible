@@ -1,14 +1,14 @@
 - set_fact:
     dnf_log_files:
       - /var/log/dnf5.log
-  when: ansible_distribution == 'Fedora'
+  when: dnf5
 
 - set_fact:
     dnf_log_files:
       - /var/log/dnf.log
       - /var/log/dnf.rpm.log
       - /var/log/dnf.librepo.log
-  when: ansible_distribution == 'RedHat'
+  when: not dnf5
 
 - name: Check logging enabled
   block:

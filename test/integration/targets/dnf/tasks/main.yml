@@ -1,7 +1,10 @@
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- when: ansible_distribution == 'Fedora'
+- set_fact:
+    dnf5: "{{ (ansible_distribution == 'RedHat' and ansible_distribution_major_version | int > 10) or ansible_distribution == 'Fedora' }}"
+
+- when: dnf5
   block:
     - command: "dnf install -y 'dnf-command(copr)'"
     - name: Test against dnf5 nightly build to detect any issues early
