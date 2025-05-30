@@ -903,7 +903,7 @@ class Display(metaclass=Singleton):
                 formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING),
                 chain=_messages.EventChain(
                     msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
-                    traceback_reason="The above exception was the direct cause of the following warning:",
+                    traceback_reason=_errors.TRACEBACK_REASON_EXCEPTION_DIRECT_WARNING,
                     event=event,
                 ),
             )
