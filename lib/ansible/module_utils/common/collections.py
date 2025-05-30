@@ -104,7 +104,7 @@ def count(seq):
     deprecated and replaced when support for Python < 2.7 is dropped.
     """
     _warnings.deprecate(
-        msg="The `ansible.module_utils.common.collections.count` method is deprecated.",
+        msg="The `ansible.module_utils.common.collections.count` function is deprecated.",
         version="2.23",
         help_text="Use `collections.Counter` from the Python standard library instead.",
     )
