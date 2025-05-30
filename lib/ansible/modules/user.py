@@ -1229,7 +1229,7 @@ class User(object):
                     r_list = select.select([master_out_fd, master_err_fd], [], [], 1)[0]
                     now = datetime.now()
                     if (now - start).seconds > timeout:
-                        return (1, '', f'Timeout after {timeout} while reading passphrase for SSH key')
+                        return 1, '', 'Timeout after %d while reading passphrase for SSH key' % timeout
                     for fd in r_list:
                         if fd == master_out_fd:
                             chunk = os.read(master_out_fd, 10240)
