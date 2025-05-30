@@ -43,7 +43,7 @@ from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.plugins.loader import init_plugin_loader
-from ansible._internal._templating._jinja_common import _TemplateConfig
+from ansible._internal._templating._jinja_common import _TemplateConfig, _SandboxMode
 from ansible._internal._templating._jinja_plugins import _lookup
 from ansible._internal._templating import _jinja_plugins
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
@@ -1058,3 +1058,19 @@ def test_jinja_const_template_finalized() -> None:
     with _DeferredWarningContext(variables={}):  # suppress warning from usage of embedded template
         with unittest.mock.patch.object(_TemplateConfig, 'allow_embedded_templates', True):
             assert not _JinjaConstTemplate.is_tagged_on(TemplateEngine().template(TRUST.tag("{{ '{{ 1 }}' }}")))
+
+
+@pytest.mark.parametrize("template,expected", (
+    ("{% set x=[] %}{% set _=x.append(42) %}{{ x }}", [42]),
+    ("{{ (32).__or__(64) }}", 96),
+    ("{% set x={'foo': 42} %}{% set _=x.clear() %}{{ x }}", {}),
+))
+def test_unsafe_attr_access(template: str, expected: object) -> None:
+    """Verify that unsafe attribute access fails by default and works when explicitly configured."""
+    assert _TemplateConfig.sandbox_mode == _SandboxMode.DEFAULT
+
+    with pytest.raises(AnsibleUndefinedVariable):
+        TemplateEngine().template(TRUST.tag(template))
+
+    with unittest.mock.patch.object(_TemplateConfig, 'sandbox_mode', _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES):
+        assert TemplateEngine().template(TRUST.tag(template)) == expected

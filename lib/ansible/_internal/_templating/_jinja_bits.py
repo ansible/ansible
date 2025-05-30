@@ -49,6 +49,7 @@ from ._jinja_common import (
     TruncationMarker,
     validate_arg_type,
     JinjaCallContext,
+    _SandboxMode,
 )
 from ._jinja_plugins import JinjaPluginIntercept, _query, _lookup, _now, _wrap_plugin_output, get_first_marker_arg, _DirectCall, _jinja_const_template_warning
 from ._lazy_containers import (
@@ -587,6 +588,13 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
                 template_obj._python_source_temp_path = ctx.python_source_temp_path  # facilitate deletion of the temp file when template_obj is deleted
 
             return template_obj
+
+    def is_safe_attribute(self, obj: t.Any, attr: str, value: t.Any) -> bool:
+        # deprecated: description="remove relaxed template sandbox mode support" core_version="2.23"
+        if _TemplateConfig.sandbox_mode == _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES:
+            return True
+
+        return super().is_safe_attribute(obj, attr, value)
 
     @property
     def lexer(self) -> AnsibleLexer:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import collections.abc as c
+import enum
 import inspect
 import itertools
 import typing as t
@@ -24,10 +25,16 @@ from ...module_utils.datatag import native_type_name
 _patch_jinja()  # apply Jinja2 patches before types are declared that are dependent on the changes
 
 
+class _SandboxMode(enum.Enum):
+    DEFAULT = enum.auto()
+    ALLOW_UNSAFE_ATTRIBUTES = enum.auto()
+
+
 class _TemplateConfig:
     allow_embedded_templates: bool = config.get_config_value("ALLOW_EMBEDDED_TEMPLATES")
     allow_broken_conditionals: bool = config.get_config_value('ALLOW_BROKEN_CONDITIONALS')
     jinja_extensions: list[str] = config.get_config_value('DEFAULT_JINJA2_EXTENSIONS')
+    sandbox_mode: _SandboxMode = _SandboxMode.__members__[config.get_config_value('_TEMPLAR_SANDBOX_MODE').upper()]
 
     unknown_type_encountered_handler = ErrorHandler.from_config('_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED')
     unknown_type_conversion_handler = ErrorHandler.from_config('_TEMPLAR_UNKNOWN_TYPE_CONVERSION')
