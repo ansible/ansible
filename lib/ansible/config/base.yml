@@ -1962,6 +1962,14 @@ SSH_AGENT:
   env: [{name: ANSIBLE_SSH_AGENT}]
   ini: [{key: ssh_agent, section: connection}]
   version_added: '2.19'
+SSH_AGENT_EXECUTABLE:
+  name: Executable to start for the ansible-managed SSH agent
+  description: When ``SSH_AGENT`` is ``auto``, the path or name of the ssh agent executable to start.
+  default: ssh-agent
+  type: str
+  env: [ { name: ANSIBLE_SSH_AGENT_EXECUTABLE } ]
+  ini: [ { key: ssh_agent_executable, section: connection } ]
+  version_added: '2.19'
 SSH_AGENT_KEY_LIFETIME:
   name: Set a maximum lifetime when adding identities to an agent
   description: For keys inserted into an agent defined by ``SSH_AGENT``, define a lifetime, in seconds, that the key may remain
