@@ -36,7 +36,7 @@
     - assert:
         that:
           - incompatible.failed
-          - not incompatible.msg.startswith("The command action failed to execute in the expected time frame")
+          - not incompatible.msg is contains 'Timed out after'
           - '"Failed to resolve the requested dependencies map" in incompatible.stderr'
           - '"* namespace1.name1:1.0.9 (direct request)" in incompatible.stderr'
           - '"* namespace1.name1:0.0.5 (dependency of ns.coll:1.0.0)" in incompatible.stderr'
