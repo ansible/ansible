@@ -157,7 +157,11 @@ class LookupModule(LookupBase):
                 # argument.
                 # FIXME: why isn't this a chainmap with a sacrificial bottom layer?
                 vars = deepcopy(variables)
-                vars.update(generate_ansible_template_vars(term, fullpath=lookupfile))
+                vars.update(generate_ansible_template_vars(
+                    path=term,
+                    fullpath=lookupfile,
+                    include_ansible_managed='ansible_managed' not in vars,
+                ))
                 vars.update(lookup_template_vars)
 
                 overrides = dict(

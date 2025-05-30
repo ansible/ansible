@@ -352,7 +352,12 @@ class Templar:
         )
 
 
-def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_path: str | None = None) -> dict[str, object]:
+def generate_ansible_template_vars(
+    path: str,
+    fullpath: str | None = None,
+    dest_path: str | None = None,
+    include_ansible_managed: bool = True,
+) -> dict[str, object]:
     """
     Generate and return a dictionary with variable metadata about the template specified by `fullpath`.
     If `fullpath` is `None`, `path` will be used instead.
@@ -370,27 +375,6 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
     except KeyError:
         template_uid = template_stat.st_uid
 
-    managed_default = _constants.config.get_config_value('DEFAULT_MANAGED_STR')
-
-    managed_str = managed_default.format(
-        # IMPORTANT: These values must be constant strings to avoid template injection.
-        #            Use Jinja template expressions where variables are needed.
-        host="{{ template_host }}",
-        uid="{{ template_uid }}",
-        file="{{ template_path }}",
-    )
-
-    ansible_managed = _time.strftime(managed_str, _time.localtime(template_stat.st_mtime))
-    # DTFIX7: this should not be tag_copy, it should either be an origin copy or some kind of derived origin
-    ansible_managed = _datatag.AnsibleTagHelper.tag_copy(managed_default, ansible_managed)
-    ansible_managed = trust_as_template(ansible_managed)
-    ansible_managed = _module_utils_datatag.deprecate_value(
-        value=ansible_managed,
-        msg="The `ansible_managed` variable is deprecated.",
-        help_text="Define and use a custom variable instead.",
-        version='2.23',
-    )
-
     temp_vars = dict(
         template_host=_os.uname()[1],
         template_path=path,
@@ -399,8 +383,25 @@ def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_
         template_run_date=_datetime.datetime.now(),
         template_destpath=dest_path,
         template_fullpath=fullpath,
-        ansible_managed=ansible_managed,
     )
+
+    if include_ansible_managed:  # only inject the config default value if the variable wasn't set
+        managed_default = _constants.config.get_config_value('DEFAULT_MANAGED_STR')
+
+        managed_str = managed_default.format(
+            # IMPORTANT: These values must be constant strings to avoid template injection.
+            #            Use Jinja template expressions where variables are needed.
+            host="{{ template_host }}",
+            uid="{{ template_uid }}",
+            file="{{ template_path }}",
+        )
+
+        ansible_managed = _time.strftime(managed_str, _time.localtime(template_stat.st_mtime))
+        # DTFIX7: this should not be tag_copy, it should either be an origin copy or some kind of derived origin
+        ansible_managed = _datatag.AnsibleTagHelper.tag_copy(managed_default, ansible_managed)
+        ansible_managed = trust_as_template(ansible_managed)
+
+        temp_vars['ansible_managed'] = ansible_managed
 
     return temp_vars
 
