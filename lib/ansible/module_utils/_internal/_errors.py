@@ -13,6 +13,8 @@ from . import _messages
 MSG_REASON_DIRECT_CAUSE: _t.Final[str] = '<<< caused by >>>'
 MSG_REASON_HANDLING_CAUSE: _t.Final[str] = '<<< while handling >>>'
 
+TRACEBACK_REASON_EXCEPTION_DIRECT_WARNING: _t.Final[str] = 'The above exception was the direct cause of the following warning:'
+
 
 class EventFactory:
     """Factory for creating `Event` instances from `BaseException` instances on targets."""

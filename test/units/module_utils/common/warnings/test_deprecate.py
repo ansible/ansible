@@ -10,19 +10,43 @@ import typing as t
 
 import pytest
 
-from ansible.module_utils._internal import _traceback
+from ansible.module_utils._internal import _traceback, _messages, _deprecator
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import deprecate
+from ansible.module_utils.testing import patch_module_args
 from units.mock.module import ModuleEnvMocker
 
-pytestmark = pytest.mark.usefixtures("module_env_mocker")
+pytestmark = pytest.mark.usefixtures("as_target", "module_env_mocker")
+
+
+def test_deprecate() -> None:
+    deprecate('Deprecation message')
+    assert warnings.get_deprecation_messages() == (dict(msg='Deprecation message', collection_name=None, version=None),)
+    assert warnings.get_deprecations() == [_messages.DeprecationSummary(
+        event=_messages.Event(msg='Deprecation message'),
+        deprecator=_deprecator.INDETERMINATE_DEPRECATOR,
+    )]
+
+
+def test_deprecate_via_module() -> None:
+    with patch_module_args():
+        am = AnsibleModule(argument_spec={})
+
+    am.deprecate('Deprecation message')
+
+    assert warnings.get_deprecation_messages() == (dict(msg='Deprecation message', collection_name=None, version=None),)
+    assert warnings.get_deprecations() == [_messages.DeprecationSummary(
+        event=_messages.Event(msg='Deprecation message'),
+        deprecator=_deprecator.INDETERMINATE_DEPRECATOR,
+    )]
 
 
 def test_dedupe_with_traceback(module_env_mocker: ModuleEnvMocker) -> None:
     module_env_mocker.set_traceback_config([_traceback.TracebackEvent.DEPRECATED])
     deprecate_args: dict[str, t.Any] = dict(msg="same", version="1.2.3", collection_name="blar.blar")
 
-    # DeprecationMessageDetail dataclass object hash is the dedupe key; presence of differing tracebacks or SourceContexts affects de-dupe
+    # DeprecationSummary dataclass object hash is the dedupe key; presence of differing tracebacks or SourceContexts affects de-dupe
 
     for _i in range(0, 10):
         # same location, same traceback- should be collapsed to one message

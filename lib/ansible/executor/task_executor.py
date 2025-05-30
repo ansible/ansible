@@ -806,7 +806,7 @@ class TaskExecutor:
             if isinstance(deprecations, list):
                 for deprecation in deprecations:
                     if not isinstance(deprecation, _messages.DeprecationSummary):
-                        # translate non-DeprecationMessageDetail message dicts
+                        # translate non-DeprecationSummary message dicts
                         try:
                             if (collection_name := deprecation.pop('collection_name', ...)) is not ...:
                                 # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'

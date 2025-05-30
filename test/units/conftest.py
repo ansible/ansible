@@ -27,6 +27,7 @@ else:
     from .controller_only_conftest import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
 from ansible.module_utils import _internal as _module_utils_internal
+from ansible.module_utils._internal import _traceback as _module_utils_internal_traceback
 
 
 def pytest_configure(config: pytest.Config):
@@ -83,3 +84,4 @@ def pytest_collection_finish(session: pytest.Session):
 def as_target(mocker: pytest_mock.MockerFixture) -> None:
     """Force execution in the context of a target host instead of the controller."""
     mocker.patch.object(_module_utils_internal, 'is_controller', False)
+    mocker.patch.object(_module_utils_internal_traceback, '_is_traceback_enabled', _module_utils_internal_traceback._is_module_traceback_enabled)

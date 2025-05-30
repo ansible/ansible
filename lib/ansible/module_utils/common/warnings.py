@@ -6,7 +6,7 @@ from __future__ import annotations as _annotations
 
 import typing as _t
 
-from ansible.module_utils._internal import _traceback, _deprecator, _event_utils, _messages
+from ansible.module_utils._internal import _traceback, _deprecator, _event_utils, _messages, _errors
 from ansible.module_utils import _internal
 
 
@@ -34,6 +34,45 @@ def warn(
             msg=warning,
             help_text=help_text,
             formatted_traceback=_traceback.maybe_capture_traceback(warning, _traceback.TracebackEvent.WARNING),
+        ),
+    )
+
+    _global_warnings[warning] = None
+
+
+def error_as_warning(
+    msg: str | None,
+    exception: BaseException,
+    *,
+    help_text: str | None = None,
+    obj: object = None,
+) -> None:
+    """Display an exception as a warning."""
+    _skip_stackwalk = True
+
+    if _internal.is_controller:
+        _display = _internal.import_controller_module('ansible.utils.display').Display()
+        _display.error_as_warning(
+            msg=msg,
+            exception=exception,
+            help_text=help_text,
+            obj=obj,
+        )
+
+        return
+
+    event = _errors.EventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.WARNING))
+
+    warning = _messages.WarningSummary(
+        event=_messages.Event(
+            msg=msg,
+            help_text=help_text,
+            formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING),
+            chain=_messages.EventChain(
+                msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
+                traceback_reason=_errors.TRACEBACK_REASON_EXCEPTION_DIRECT_WARNING,
+                event=event,
+            ),
         ),
     )
 

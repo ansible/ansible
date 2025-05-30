@@ -164,6 +164,7 @@ from ansible.module_utils.common._utils import get_all_subclasses as _get_all_su
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
     deprecate,
+    error_as_warning,
     get_deprecations,
     get_warnings,
     warn,
@@ -504,9 +505,34 @@ class AnsibleModule(object):
 
         return self._tmpdir
 
-    def warn(self, warning):
-        warn(warning)
-        self.log('[WARNING] %s' % warning)
+    def warn(
+        self,
+        warning: str,
+        *,
+        help_text: str | None = None,
+    ) -> None:
+        _skip_stackwalk = True
+
+        warn(
+            warning=warning,
+            help_text=help_text,
+        )
+
+    def error_as_warning(
+        self,
+        msg: str | None,
+        exception: BaseException,
+        *,
+        help_text: str | None = None,
+    ) -> None:
+        """Display an exception as a warning."""
+        _skip_stackwalk = True
+
+        error_as_warning(
+            msg=msg,
+            exception=exception,
+            help_text=help_text,
+        )
 
     def deprecate(
         self,
