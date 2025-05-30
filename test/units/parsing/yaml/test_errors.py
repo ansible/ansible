@@ -11,7 +11,7 @@ import pytest
 import pytest_mock
 
 from ansible import constants as C
-from ansible._internal._errors._utils import format_exception_message
+from ansible._internal._errors._error_utils import format_exception_message
 from ansible._internal._datatag._tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 from ansible._internal._yaml._errors import AnsibleYAMLParserError

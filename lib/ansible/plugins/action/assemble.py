@@ -25,8 +25,8 @@ import re
 import tempfile
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.errors import AnsibleActionFail
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
@@ -83,7 +83,7 @@ class ActionModule(ActionBase):
 
         self._supports_check_mode = False
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         if task_vars is None:
@@ -104,13 +104,9 @@ class ActionModule(ActionBase):
 
             if boolean(remote_src, strict=False):
                 # call assemble via ansible.legacy to allow library/ overrides of the module without collection search
-                result.update(self._execute_module(module_name='ansible.legacy.assemble', task_vars=task_vars))
-                raise _AnsibleActionDone()
-            else:
-                try:
-                    src = self._find_needle('files', src)
-                except AnsibleError as e:
-                    raise AnsibleActionFail(to_native(e))
+                return self._execute_module(module_name='ansible.legacy.assemble', task_vars=task_vars)
+
+            src = self._find_needle('files', src)
 
             if not os.path.isdir(src):
                 raise AnsibleActionFail(u"Source (%s) is not a directory" % src)
@@ -153,13 +149,9 @@ class ActionModule(ActionBase):
                 res = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
                 if diff:
                     res['diff'] = diff
-                result.update(res)
+                return res
             else:
-                result.update(self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars))
+                return self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
 
-        except AnsibleAction as e:
-            result.update(e.result)
         finally:
             self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result

@@ -13,6 +13,7 @@ from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
+from ansible._internal._errors import _error_utils
 
 
 class ActionModule(ActionBase):
@@ -184,7 +185,7 @@ class ActionModule(ActionBase):
         if failed:
             result['failed_modules'] = failed
 
-            result.update(self._result_dict_from_captured_errors(
+            result.update(_error_utils.result_dict_from_captured_errors(
                 msg=f"The following modules failed to execute: {', '.join(failed.keys())}.",
                 errors=[r['exception'] for r in failed.values()],
             ))

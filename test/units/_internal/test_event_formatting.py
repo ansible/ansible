@@ -4,26 +4,23 @@ import traceback
 
 from ansible._internal._errors import _error_factory
 from ansible._internal._event_formatting import format_event_traceback
+from units.mock.error_helper import raise_exceptions
+
+import pytest
 
 
 def test_traceback_formatting() -> None:
     """Verify our traceback formatting mimics the Python traceback formatting."""
-    try:
-        try:
-            try:
-                try:
-                    raise Exception('one')
-                except Exception as ex:
-                    raise Exception('two') from ex
-            except Exception:
-                raise Exception('three')
-        except Exception as ex:
-            raise Exception('four') from ex
-    except Exception as ex:
-        saved_ex = ex
+    with pytest.raises(Exception) as error:
+        raise_exceptions((
+            Exception('a'),
+            Exception('b'),
+            Exception('c'),
+            Exception('d'),
+        ))
 
-    event = _error_factory.ControllerEventFactory.from_exception(saved_ex, True)  # pylint: disable=used-before-assignment
+    event = _error_factory.ControllerEventFactory.from_exception(error.value, True)
     ansible_tb = format_event_traceback(event)
-    python_tb = ''.join(traceback.format_exception(saved_ex))
+    python_tb = ''.join(traceback.format_exception(error.value))
 
     assert ansible_tb == python_tb

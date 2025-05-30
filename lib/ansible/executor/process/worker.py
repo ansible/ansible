@@ -25,28 +25,24 @@ import textwrap
 import traceback
 import types
 import typing as t
+
 from multiprocessing.queues import Queue
 
-from ansible import context
 from ansible._internal import _task
-from ansible.errors import AnsibleConnectionFailure, AnsibleError
+from ansible._internal._errors import _error_utils
+from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
 from ansible.executor.task_result import _RawTaskResult
 from ansible.inventory.host import Host
-from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import init_plugin_loader
 from ansible.utils.context_objects import CLIArgs
-from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.vars.manager import VariableManager
-
-from jinja2.exceptions import TemplateNotFound
 
 __all__ = ['WorkerProcess']
 
@@ -204,120 +200,49 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         signify that they are ready for their next task.
         """
 
-        # import cProfile, pstats, StringIO
-        # pr = cProfile.Profile()
-        # pr.enable()
-
         global current_worker
+
         current_worker = self
 
-        if multiprocessing_context.get_start_method() != 'fork':
-            # This branch is unused currently, as we hardcode fork
-            # TODO
-            # * move into a setup func run in `run`, before `_detach`
-            # * playbook relative content
-            # * display verbosity
-            # * ???
-            context.CLIARGS = self._cliargs
-            # Initialize plugin loader after parse, so that the init code can utilize parsed arguments
-            cli_collections_path = context.CLIARGS.get('collections_path') or []
-            if not is_sequence(cli_collections_path):
-                # In some contexts ``collections_path`` is singular
-                cli_collections_path = [cli_collections_path]
-            init_plugin_loader(cli_collections_path)
+        executor_result = TaskExecutor(
+            self._host,
+            self._task,
+            self._task_vars,
+            self._play_context,
+            self._loader,
+            self._shared_loader_obj,
+            self._final_q,
+            self._variable_manager,
+        ).run()
+
+        self._host.vars = dict()
+        self._host.groups = []
+
+        for name, stdio in (('stdout', sys.stdout), ('stderr', sys.stderr)):
+            if data := stdio.getvalue():  # type: ignore[union-attr]
+                display.warning(
+                    (
+                        f'WorkerProcess for [{self._host}/{self._task}] errantly sent data directly to {name} instead of using Display:\n'
+                        f'{textwrap.indent(data[:256], "    ")}\n'
+                    ),
+                    formatted=True
+                )
 
         try:
-            # execute the task and build a _RawTaskResult from the result
-            display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
-            executor_result = TaskExecutor(
-                self._host,
-                self._task,
-                self._task_vars,
-                self._play_context,
-                self._loader,
-                self._shared_loader_obj,
-                self._final_q,
-                self._variable_manager,
-            ).run()
-
-            display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
-            self._host.vars = dict()
-            self._host.groups = []
-
-            for name, stdio in (('stdout', sys.stdout), ('stderr', sys.stderr)):
-                if data := stdio.getvalue():  # type: ignore[union-attr]
-                    display.warning(
-                        (
-                            f'WorkerProcess for [{self._host}/{self._task}] errantly sent data directly to {name} instead of using Display:\n'
-                            f'{textwrap.indent(data[:256], "    ")}\n'
-                        ),
-                        formatted=True
-                    )
-
-            # put the result on the result queue
-            display.debug("sending task result for task %s" % self._task._uuid)
-            try:
-                self._final_q.send_task_result(_RawTaskResult(
-                    host=self._host,
-                    task=self._task,
-                    return_data=executor_result,
-                    task_fields=self._task.dump_attrs(),
-                ))
-            except Exception as ex:
-                try:
-                    raise AnsibleError("Task result omitted due to queue send failure.") from ex
-                except Exception as ex_wrapper:
-                    self._final_q.send_task_result(_RawTaskResult(
-                        host=self._host,
-                        task=self._task,
-                        return_data=ActionBase.result_dict_from_exception(ex_wrapper),  # Overriding the task result, to represent the failure
-                        task_fields={},  # The failure pickling may have been caused by the task attrs, omit for safety
-                    ))
-
-            display.debug("done sending task result for task %s" % self._task._uuid)
-
-        except AnsibleConnectionFailure as ex:
-            return_data = ActionBase.result_dict_from_exception(ex)
-            return_data.pop('failed')
-            return_data.update(unreachable=True)
-
-            self._host.vars = dict()
-            self._host.groups = []
             self._final_q.send_task_result(_RawTaskResult(
                 host=self._host,
                 task=self._task,
-                return_data=return_data,
+                return_data=executor_result,
                 task_fields=self._task.dump_attrs(),
             ))
-
         except Exception as ex:
-            if not isinstance(ex, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(ex, TemplateNotFound):
-                try:
-                    self._host.vars = dict()
-                    self._host.groups = []
-                    self._final_q.send_task_result(_RawTaskResult(
-                        host=self._host,
-                        task=self._task,
-                        return_data=ActionBase.result_dict_from_exception(ex),
-                        task_fields=self._task.dump_attrs(),
-                    ))
-                except Exception:
-                    display.debug(u"WORKER EXCEPTION: %s" % to_text(ex))
-                    display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
-                finally:
-                    self._clean_up()
-
-        display.debug("WORKER PROCESS EXITING")
-
-        # pr.disable()
-        # s = StringIO.StringIO()
-        # sortby = 'time'
-        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        # ps.print_stats()
-        # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
-        #     f.write(s.getvalue())
-
-    def _clean_up(self) -> None:
-        # NOTE: see note in init about forks
-        # ensure we cleanup all temp files for this worker
-        self._loader.cleanup_all_tmp_files()
+            try:
+                raise AnsibleError("Task result omitted due to queue send failure.") from ex
+            except Exception as ex_wrapper:
+                self._final_q.send_task_result(_RawTaskResult(
+                    host=self._host,
+                    task=self._task,
+                    # ignore the real task result and don't allow result object contribution from the exception (in case the pickling error was related)
+                    return_data=_error_utils.result_dict_from_exception(ex_wrapper),
+                    task_fields={},  # The failure pickling may have been caused by the task attrs, omit for safety
+                ))
