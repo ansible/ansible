@@ -21,7 +21,7 @@ import pathlib
 import re
 import shlex
 
-from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
             mutually_exclusive=[['_raw_params', 'cmd']],
         )
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         try:
@@ -105,16 +105,11 @@ class ActionModule(ActionBase):
                 # check mode is supported if 'creates' or 'removes' are provided
                 # the task has already been skipped if a change would not occur
                 if new_module_args['creates'] or new_module_args['removes']:
-                    result['changed'] = True
-                    raise _AnsibleActionDone(result=result)
+                    return dict(changed=True)
                 # If the script doesn't return changed in the result, it defaults to True,
                 # but since the script may override 'changed', just skip instead of guessing.
                 else:
-                    result['changed'] = False
-                    raise AnsibleActionSkip('Check mode is not supported for this task.', result=result)
-
-            # now we execute script, always assume changed.
-            result['changed'] = True
+                    raise AnsibleActionSkip('Check mode is not supported for this task.', result=dict(changed=False))
 
             # transfer the file to a remote tmp location
             tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
@@ -168,14 +163,12 @@ class ActionModule(ActionBase):
                 # full manual exec of KEEP_REMOTE_FILES
                 script_cmd = self._connection._shell.build_module_command(env_string='', shebang='#!powershell', cmd='')
 
-            result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
+            # now we execute script, always assume changed.
+            result = dict(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir), changed=True)
 
             if 'rc' in result and result['rc'] != 0:
-                raise AnsibleActionFail('non-zero return code')
+                raise AnsibleActionFail('non-zero return code', result=result)
 
-        except AnsibleAction as e:
-            result.update(e.result)
+            return result
         finally:
             self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result

@@ -1,0 +1,61 @@
+- name: run a task which times out
+  command: sleep 10
+  timeout: 1
+  register: result
+  ignore_errors: yes
+
+- name: verify the task timed out
+  assert:
+    that:
+      - result is failed
+      - result is timedout
+      - result.timedout.period == 1
+      - result.msg is contains "Timed out after 1 second"
+
+- name: run a task with a negative timeout
+  command: sleep 3
+  timeout: -1
+  register: result
+  ignore_errors: yes
+
+- name: verify the task failed
+  assert:
+    that:
+      - result is failed
+      - result is not timedout
+      - result.msg is contains "Timeout -1 is invalid"
+
+- name: run a task with a timeout that is too large
+  command: sleep 3
+  timeout: 100000001
+  register: result
+  ignore_errors: yes
+
+- name: verify the task failed
+  assert:
+    that:
+      - result is failed
+      - result is not timedout
+      - result.msg is contains "Timeout 100000001 is invalid"
+
+- name: run a task with a zero timeout
+  command: sleep 3
+  timeout: 0
+  register: result
+
+- name: verify the task did not time out
+  assert:
+    that:
+      - result is not timedout
+      - result.delta is search '^0:00:0[3-9]\.'  # delta must be between 3 and 9 seconds
+
+- name: run a task with a large timeout that is not triggered
+  command: sleep 3
+  timeout: 100000000
+  register: result
+
+- name: verify the task did not time out
+  assert:
+    that:
+      - result is not timedout
+      - result.delta is search '^0:00:0[3-9]\.'  # delta must be between 3 and 9 seconds

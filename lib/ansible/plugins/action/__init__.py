@@ -20,11 +20,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ansible import constants as C
-from ansible._internal._errors import _captured, _error_factory
+from ansible._internal._errors import _captured, _error_utils
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
-from ansible.module_utils._internal import _traceback, _event_utils, _messages
+from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
@@ -1252,7 +1252,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             except AnsibleError as ansible_ex:
                 sentinel = object()
 
-                data = self.result_dict_from_exception(ansible_ex)
+                data = _error_utils.result_dict_from_exception(ansible_ex)
                 data.update(
                     _ansible_parsed=False,
                     module_stdout=res.get('stdout', ''),
@@ -1433,50 +1433,3 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-    @staticmethod
-    def result_dict_from_exception(exception: BaseException) -> dict[str, t.Any]:
-        """Return a failed task result dict from the given exception."""
-        if ansible_remoted_error := _captured.AnsibleResultCapturedError.find_first_remoted_error(exception):
-            result = ansible_remoted_error._result.copy()
-        else:
-            result = {}
-
-        event = _error_factory.ControllerEventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
-
-        result.update(
-            failed=True,
-            exception=_messages.ErrorSummary(
-                event=event,
-            ),
-        )
-
-        if 'msg' not in result:
-            result.update(msg=_event_utils.format_event_brief_message(event))
-
-        return result
-
-    def _result_dict_from_captured_errors(
-        self,
-        msg: str,
-        *,
-        errors: list[_messages.ErrorSummary] | None = None,
-    ) -> dict[str, t.Any]:
-        """Return a failed task result dict from the given error message and captured errors."""
-        _skip_stackwalk = True
-
-        event = _messages.Event(
-            msg=msg,
-            formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR),
-            events=tuple(error.event for error in errors) if errors else None,
-        )
-
-        result = dict(
-            failed=True,
-            exception=_messages.ErrorSummary(
-                event=event,
-            ),
-            msg=_event_utils.format_event_brief_message(event),
-        )
-
-        return result

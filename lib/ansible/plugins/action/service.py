@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from ansible.errors import AnsibleAction, AnsibleActionFail
+from ansible.errors import AnsibleActionFail
 from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.plugins.action import ActionBase
 
@@ -39,7 +39,7 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
         self._supports_async = True
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         module = self._task.args.get('use', 'auto').lower()
@@ -84,14 +84,10 @@ class ActionModule(ActionBase):
                     module = 'ansible.legacy.' + module
 
                 self._display.vvvv("Running %s" % module)
-                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+                return self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val)
             else:
                 raise AnsibleActionFail('Could not detect which service manager to use. Try gathering facts or setting the "use" option.')
 
-        except AnsibleAction as e:
-            result.update(e.result)
         finally:
             if not self._task.async_val:
                 self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result

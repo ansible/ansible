@@ -51,7 +51,7 @@ from struct import unpack, pack
 from ansible import constants as C
 from ansible.constants import config
 from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive, AnsibleError
-from ansible._internal._errors import _utils, _error_factory
+from ansible._internal._errors import _error_utils, _error_factory
 from ansible._internal import _event_formatting
 from ansible.module_utils._internal import _ambient_context, _deprecator, _messages
 from ansible.module_utils.common.text.converters import to_bytes, to_text
@@ -731,7 +731,7 @@ class Display(metaclass=Singleton):
 
             raise AnsibleError(formatted_msg)
 
-        if source_context := _utils.SourceContext.from_value(obj):
+        if source_context := _error_utils.SourceContext.from_value(obj):
             formatted_source_context = str(source_context)
         else:
             formatted_source_context = None
@@ -791,7 +791,7 @@ class Display(metaclass=Singleton):
         # This is the pre-proxy half of the `warning` implementation.
         # Any logic that must occur on workers needs to be implemented here.
 
-        if source_context := _utils.SourceContext.from_value(obj):
+        if source_context := _error_utils.SourceContext.from_value(obj):
             formatted_source_context = str(source_context)
         else:
             formatted_source_context = None
@@ -877,15 +877,29 @@ class Display(metaclass=Singleton):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
-    def error_as_warning(self, msg: str | None, exception: BaseException) -> None:
+    def error_as_warning(
+        self,
+        msg: str | None,
+        exception: BaseException,
+        *,
+        help_text: str | None = None,
+        obj: t.Any = None,
+    ) -> None:
         """Display an exception as a warning."""
         _skip_stackwalk = True
 
         event = _error_factory.ControllerEventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.WARNING))
 
         if msg:
+            if source_context := _error_utils.SourceContext.from_value(obj):
+                formatted_source_context = str(source_context)
+            else:
+                formatted_source_context = None
+
             event = _messages.Event(
                 msg=msg,
+                help_text=help_text,
+                formatted_source_context=formatted_source_context,
                 formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING),
                 chain=_messages.EventChain(
                     msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,

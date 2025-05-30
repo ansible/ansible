@@ -40,7 +40,7 @@
 
   - assert:
       that:
-      - timeout_cmd.msg == 'The win_shell action failed to execute in the expected time frame (5) and was terminated'
+      - timeout_cmd.msg is contains 'Timed out after'
 
   - name: Test WinRM HTTP connection
     win_ping:

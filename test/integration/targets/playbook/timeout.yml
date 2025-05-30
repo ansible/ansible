@@ -9,5 +9,5 @@
     - assert:
         that:
             - time is failed
-            - '"The shell action failed to execute in the expected time frame" in time["msg"]'
+            - time.msg is contains 'Timed out after'
             - '"timedout" in time'

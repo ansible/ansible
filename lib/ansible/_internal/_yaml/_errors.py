@@ -7,7 +7,7 @@ import typing as t
 from yaml import MarkedYAMLError
 from yaml.constructor import ConstructorError
 
-from ansible._internal._errors import _utils
+from ansible._internal._errors import _error_utils
 from ansible.errors import AnsibleParserError
 from ansible._internal._datatag._tags import Origin
 
@@ -34,7 +34,7 @@ class AnsibleYAMLParserError(AnsibleParserError):
         if isinstance(exception, MarkedYAMLError):
             origin = origin.replace(line_num=exception.problem_mark.line + 1, col_num=exception.problem_mark.column + 1)
 
-        source_context = _utils.SourceContext.from_origin(origin)
+        source_context = _error_utils.SourceContext.from_origin(origin)
 
         target_line = source_context.target_line or ''  # for these cases, we don't need to distinguish between None and empty string
 
@@ -66,12 +66,12 @@ class AnsibleYAMLParserError(AnsibleParserError):
         # There may be cases where there is a valid tab in a line that has other errors.
         # That's OK, users should "fix" their tab usage anyway -- at which point later error handling logic will hopefully find the real issue.
         elif (tab_idx := target_line.find('\t')) >= 0:
-            source_context = _utils.SourceContext.from_origin(origin.replace(col_num=tab_idx + 1))
+            source_context = _error_utils.SourceContext.from_origin(origin.replace(col_num=tab_idx + 1))
             message = "Tabs are usually invalid in YAML."
 
         # Check for unquoted templates.
         elif match := re.search(r'^\s*(?:-\s+)*(?:[\w\s]+:\s+)?(?P<value>\{\{.*}})', target_line):
-            source_context = _utils.SourceContext.from_origin(origin.replace(col_num=match.start('value') + 1))
+            source_context = _error_utils.SourceContext.from_origin(origin.replace(col_num=match.start('value') + 1))
             message = 'This may be an issue with missing quotes around a template block.'
             # FIXME: Use the captured value to show the actual fix required.
             help_text = """
@@ -95,7 +95,7 @@ Should be:
             # look for an unquoted colon in the value
             and (colon_match := re.search(r':($| )', target_fragment))
         ):
-            source_context = _utils.SourceContext.from_origin(origin.replace(col_num=value_match.start('value') + colon_match.start() + 1))
+            source_context = _error_utils.SourceContext.from_origin(origin.replace(col_num=value_match.start('value') + colon_match.start() + 1))
             message = 'Colons in unquoted values must be followed by a non-space character.'
             # FIXME: Use the captured value to show the actual fix required.
             help_text = """
@@ -114,7 +114,7 @@ Should be:
             first, last = suspected_value[0], suspected_value[-1]
 
             if first != last:  # "foo" in bar
-                source_context = _utils.SourceContext.from_origin(origin.replace(col_num=match.start('value') + 1))
+                source_context = _error_utils.SourceContext.from_origin(origin.replace(col_num=match.start('value') + 1))
                 message = 'Values starting with a quote must end with the same quote.'
                 # FIXME: Use the captured value to show the actual fix required, and use that same logic to improve the origin further.
                 help_text = """
@@ -127,7 +127,7 @@ Should be:
     raw: '"foo" in bar'
 """
             elif first == last and target_line.count(first) > 2:  # "foo" and "bar"
-                source_context = _utils.SourceContext.from_origin(origin.replace(col_num=match.start('value') + 1))
+                source_context = _error_utils.SourceContext.from_origin(origin.replace(col_num=match.start('value') + 1))
                 message = 'Values starting with a quote must end with the same quote, and not contain that quote.'
                 # FIXME: Use the captured value to show the actual fix required, and use that same logic to improve the origin further.
                 help_text = """

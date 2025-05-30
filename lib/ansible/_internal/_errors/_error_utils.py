@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import abc
+import collections.abc as _c
 import dataclasses
 import itertools
 import pathlib
@@ -8,18 +10,30 @@ import typing as t
 
 from ansible._internal._datatag._tags import Origin
 from ansible._internal._errors import _error_factory
-from ansible.module_utils._internal import _ambient_context, _event_utils
+from ansible.module_utils._internal import _ambient_context, _event_utils, _messages, _traceback
+
+
+class ContributesToTaskResult(metaclass=abc.ABCMeta):
+    """Exceptions may include this mixin to contribute task result dictionary data directly to the final result."""
+
+    @property
+    @abc.abstractmethod
+    def result_contribution(self) -> _c.Mapping[str, object]:
+        """Mapping of results to apply to the task result."""
+
+    @property
+    def omit_exception_key(self) -> bool:
+        """Non-error exceptions (e.g., `AnsibleActionSkip`) must return `True` to ensure omission of the `exception` key."""
+        return False
+
+    @property
+    def omit_failed_key(self) -> bool:
+        """Exceptions representing non-failure scenarios (e.g., `skipped`, `unreachable`) must return `True` to ensure omisson of the `failed` key."""
+        return False
 
 
 class RedactAnnotatedSourceContext(_ambient_context.AmbientContextBase):
-    """
-    When active, this context will redact annotated source lines, showing only the origin.
-    """
-
-
-def format_exception_message(exception: BaseException) -> str:
-    """Return the full chain of exception messages by concatenating the cause(s) until all are exhausted."""
-    return _event_utils.format_event_brief_message(_error_factory.ControllerEventFactory.from_exception(exception, False))
+    """When active, this context will redact annotated source lines, showing only the origin."""
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -159,3 +173,68 @@ class SourceContext:
             annotated_source_lines=annotated_source_lines,
             target_line=lines[-1].rstrip('\n'),  # universal newline default mode on `open` ensures we'll never see anything but \n
         )
+
+
+def format_exception_message(exception: BaseException) -> str:
+    """Return the full chain of exception messages by concatenating the cause(s) until all are exhausted."""
+    return _event_utils.format_event_brief_message(_error_factory.ControllerEventFactory.from_exception(exception, False))
+
+
+def result_dict_from_exception(exception: BaseException, accept_result_contribution: bool = False) -> dict[str, object]:
+    """Return a failed task result dict from the given exception."""
+    event = _error_factory.ControllerEventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
+
+    result: dict[str, object] = {}
+    omit_failed_key = False
+    omit_exception_key = False
+
+    if accept_result_contribution:
+        while exception:
+            if isinstance(exception, ContributesToTaskResult):
+                result = dict(exception.result_contribution)
+                omit_failed_key = exception.omit_failed_key
+                omit_exception_key = exception.omit_exception_key
+                break
+
+            exception = exception.__cause__
+
+    if omit_failed_key:
+        result.pop('failed', None)
+    else:
+        result.update(failed=True)
+
+    if omit_exception_key:
+        result.pop('exception', None)
+    else:
+        result.update(exception=_messages.ErrorSummary(event=event))
+
+    if 'msg' not in result:
+        # if nothing contributed `msg`, generate one from the exception messages
+        result.update(msg=_event_utils.format_event_brief_message(event))
+
+    return result
+
+
+def result_dict_from_captured_errors(
+    msg: str,
+    *,
+    errors: list[_messages.ErrorSummary] | None = None,
+) -> dict[str, object]:
+    """Return a failed task result dict from the given error message and captured errors."""
+    _skip_stackwalk = True
+
+    event = _messages.Event(
+        msg=msg,
+        formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR),
+        events=tuple(error.event for error in errors) if errors else None,
+    )
+
+    result = dict(
+        failed=True,
+        exception=_messages.ErrorSummary(
+            event=event,
+        ),
+        msg=_event_utils.format_event_brief_message(event),
+    )
+
+    return result

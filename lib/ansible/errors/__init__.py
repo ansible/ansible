@@ -3,20 +3,17 @@
 
 from __future__ import annotations
 
+import collections.abc as _c
 import enum
-import traceback
-import sys
 import types
 import typing as t
-
-from collections.abc import Sequence
 
 from json import JSONDecodeError
 
 from ansible.module_utils.common.text.converters import to_text
 from ..module_utils.datatag import native_type_name
 from ansible._internal._datatag import _tags
-from .._internal._errors import _utils
+from .._internal._errors import _error_utils
 from ansible.module_utils._internal import _text_utils
 
 if t.TYPE_CHECKING:
@@ -112,7 +109,7 @@ class AnsibleError(Exception):
         Return the original message with cause message(s) appended.
         The cause will not be followed on any `AnsibleError` with `_include_cause_message=False`.
         """
-        return _utils.format_exception_message(self)
+        return _error_utils.format_exception_message(self)
 
     @message.setter
     def message(self, val) -> None:
@@ -120,8 +117,8 @@ class AnsibleError(Exception):
 
     @property
     def _formatted_source_context(self) -> str | None:
-        with _utils.RedactAnnotatedSourceContext.when(not self._show_content):
-            if source_context := _utils.SourceContext.from_value(self.obj):
+        with _error_utils.RedactAnnotatedSourceContext.when(not self._show_content):
+            if source_context := _error_utils.SourceContext.from_value(self.obj):
                 return str(source_context)
 
         return None
@@ -237,8 +234,20 @@ class AnsibleModuleError(AnsibleRuntimeError):
     """A module failed somehow."""
 
 
-class AnsibleConnectionFailure(AnsibleRuntimeError):
-    """The transport / connection_plugin had a fatal error."""
+class AnsibleConnectionFailure(AnsibleRuntimeError, _error_utils.ContributesToTaskResult):
+    """
+    The transport / connection_plugin had a fatal error.
+
+    This exception provides a result dictionary via the ContributesToTaskResult mixin.
+    """
+
+    @property
+    def result_contribution(self) -> t.Mapping[str, object]:
+        return dict(unreachable=True)
+
+    @property
+    def omit_failed_key(self) -> bool:
+        return True
 
 
 class AnsibleAuthenticationFailure(AnsibleConnectionFailure):
@@ -318,7 +327,7 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
         else:
             message += "Could not find file"
 
-        if self.paths and isinstance(self.paths, Sequence):
+        if self.paths and isinstance(self.paths, _c.Sequence):
             searched = to_text('\n\t'.join(self.paths))
             if message:
                 message += "\n"
@@ -330,47 +339,76 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
                                                   suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
 
 
-# These Exceptions are temporary, using them as flow control until we can get a better solution.
-# DO NOT USE as they will probably be removed soon.
-# We will port the action modules in our tree to use a context manager instead.
-class AnsibleAction(AnsibleRuntimeError):
+class AnsibleAction(AnsibleRuntimeError, _error_utils.ContributesToTaskResult):
     """Base Exception for Action plugin flow control."""
 
     def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=..., orig_exc=None, result=None):
-        super(AnsibleAction, self).__init__(message=message, obj=obj, show_content=show_content,
-                                            suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
-        if result is None:
-            self.result = {}
-        else:
-            self.result = result
+        super().__init__(message=message, obj=obj, show_content=show_content, suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
+
+        self._result = result or {}
+
+    @property
+    def result_contribution(self) -> _c.Mapping[str, object]:
+        return self._result
+
+    @property
+    def result(self) -> dict[str, object]:
+        """Backward compatibility property returning a mutable dictionary."""
+        return dict(self.result_contribution)
 
 
 class AnsibleActionSkip(AnsibleAction):
-    """An action runtime skip."""
+    """
+    An action runtime skip.
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=..., orig_exc=None, result=None):
-        super(AnsibleActionSkip, self).__init__(message=message, obj=obj, show_content=show_content,
-                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
-        self.result.update({'skipped': True, 'msg': message})
+    This exception provides a result dictionary via the ContributesToTaskResult mixin.
+    """
+
+    @property
+    def result_contribution(self) -> _c.Mapping[str, object]:
+        return self._result | dict(
+            skipped=True,
+            msg=self.message,
+        )
+
+    @property
+    def omit_failed_key(self) -> bool:
+        return True
+
+    @property
+    def omit_exception_key(self) -> bool:
+        return True
 
 
 class AnsibleActionFail(AnsibleAction):
-    """An action runtime failure."""
+    """
+    An action runtime failure.
 
-    def __init__(self, message="", obj=None, show_content=True, suppress_extended_error=..., orig_exc=None, result=None):
-        super(AnsibleActionFail, self).__init__(message=message, obj=obj, show_content=show_content,
-                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
+    This exception provides a result dictionary via the ContributesToTaskResult mixin.
+    """
 
-        result_overrides = {'failed': True, 'msg': message}
-        # deprecated: description='use sys.exception()' python_version='3.11'
-        if sys.exc_info()[1]:  # DTFIX-FUTURE: remove this hack once TaskExecutor is no longer shucking AnsibleActionFail and returning its result
-            result_overrides['exception'] = traceback.format_exc()
+    @property
+    def result_contribution(self) -> _c.Mapping[str, object]:
+        return self._result | dict(
+            failed=True,
+            msg=self.message,
+        )
 
-        self.result.update(result_overrides)
 
+class _ActionDone(AnsibleAction):
+    """
+    Imports as `_AnsibleActionDone` are deprecated. An action runtime early exit.
 
-class _AnsibleActionDone(AnsibleAction):
-    """An action runtime early exit."""
+    This exception provides a result dictionary via the ContributesToTaskResult mixin.
+    """
+
+    @property
+    def omit_failed_key(self) -> bool:
+        return not self._result.get('failed')
+
+    @property
+    def omit_exception_key(self) -> bool:
+        return not self._result.get('failed')
 
 
 class AnsiblePluginError(AnsibleError):
@@ -421,13 +459,23 @@ def __getattr__(name: str) -> t.Any:
     """Inject import-time deprecation warnings."""
     from ..utils.display import Display
 
-    if name == 'AnsibleFilterTypeError':
-        Display().deprecated(
-            msg="Importing 'AnsibleFilterTypeError' is deprecated.",
-            help_text=f"Import {AnsibleTypeError.__name__!r} instead.",
-            version="2.23",
-        )
+    match name:
+        case 'AnsibleFilterTypeError':
+            Display().deprecated(
+                msg=f"Importing {name!r} is deprecated.",
+                help_text=f"Import {AnsibleTypeError.__name__!r} instead.",
+                version="2.23",
+            )
 
-        return AnsibleTypeError
+            return AnsibleTypeError
+
+        case '_AnsibleActionDone':
+            Display().deprecated(
+                msg=f"Importing {name!r} is deprecated.",
+                help_text="Return directly from action plugins instead.",
+                version="2.23",
+            )
+
+            return _ActionDone
 
     raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

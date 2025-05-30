@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import collections.abc as _c
 import dataclasses
 import typing as t
 
+from ansible._internal._errors import _error_utils
 from ansible.errors import AnsibleRuntimeError
 from ansible.module_utils._internal import _messages
 
@@ -25,30 +27,27 @@ class AnsibleCapturedError(AnsibleRuntimeError):
         self._event = event
 
 
-class AnsibleResultCapturedError(AnsibleCapturedError):
-    """An exception representing error detail captured in a foreign context where an action/module result dictionary is involved."""
+class AnsibleResultCapturedError(AnsibleCapturedError, _error_utils.ContributesToTaskResult):
+    """
+    An exception representing error detail captured in a foreign context where an action/module result dictionary is involved.
+
+    This exception provides a result dictionary via the ContributesToTaskResult mixin.
+    """
 
     def __init__(self, event: _messages.Event, result: dict[str, t.Any]) -> None:
         super().__init__(event=event)
 
         self._result = result
 
+    @property
+    def result_contribution(self) -> _c.Mapping[str, object]:
+        return self._result
+
     @classmethod
     def maybe_raise_on_result(cls, result: dict[str, t.Any]) -> None:
         """Normalize the result and raise an exception if the result indicated failure."""
         if error_summary := cls.normalize_result_exception(result):
             raise error_summary.error_type(error_summary.event, result)
-
-    @classmethod
-    def find_first_remoted_error(cls, exception: BaseException) -> t.Self | None:
-        """Find the first captured module error in the cause chain, starting with the given exception, returning None if not found."""
-        while exception:
-            if isinstance(exception, cls):
-                return exception
-
-            exception = exception.__cause__
-
-        return None
 
     @classmethod
     def normalize_result_exception(cls, result: dict[str, t.Any]) -> CapturedErrorSummary | None:

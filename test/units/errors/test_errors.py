@@ -5,7 +5,7 @@ import pathlib
 import pytest
 
 from ansible.errors import AnsibleError, AnsibleVariableTypeError
-from ansible._internal._errors._utils import SourceContext
+from ansible._internal._errors._error_utils import SourceContext
 from ansible._internal._datatag._tags import Origin
 
 from ..test_utils.controller.display import emits_warnings
