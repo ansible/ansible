@@ -3,7 +3,7 @@
 set -eux
 
 # run type tests
-ansible -a 'sleep 5' --task-timeout 1 localhost |grep 'The command action failed to execute in the expected time frame (1) and was terminated'
+ansible -a 'sleep 5' --task-timeout 1 localhost |grep 'Timed out after'
 
 # -a parsing with json
 ansible --task-timeout 5 localhost -m command -a '{"cmd": "whoami"}' | grep 'rc=0'

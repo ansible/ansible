@@ -7,7 +7,6 @@ import os
 import time
 import json
 import pathlib
-import signal
 import subprocess
 import sys
 
@@ -17,7 +16,7 @@ import typing as t
 from ansible import constants as C
 from ansible.cli import scripts
 from ansible.errors import (
-    AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip, AnsibleTaskError,
+    AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
 from ansible.executor.task_result import _RawTaskResult
@@ -31,7 +30,6 @@ from ansible.module_utils.connection import write_to_stream
 from ansible.module_utils.six import string_types
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
-from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible._internal._templating._jinja_plugins import _invoke_lookup, _DirectCall
 from ansible._internal._templating._engine import TemplateEngine
@@ -41,7 +39,7 @@ from ansible.utils.display import Display, _DeferredWarningContext
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.manager import _deprecate_top_level_fact
-from ansible._internal._errors import _captured
+from ansible._internal._errors import _captured, _task_timeout, _error_utils
 
 if t.TYPE_CHECKING:
     from ansible.executor.task_queue_manager import FinalQueue
@@ -52,24 +50,6 @@ display = Display()
 RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]
 
 __all__ = ['TaskExecutor']
-
-
-class TaskTimeoutError(BaseException):
-    def __init__(self, message="", frame=None):
-
-        if frame is not None:
-            orig = frame
-            root = pathlib.Path(__file__).parent
-            while not pathlib.Path(frame.f_code.co_filename).is_relative_to(root):
-                frame = frame.f_back
-
-            self.frame = 'Interrupted at %s called from %s' % (orig, frame)
-
-        super(TaskTimeoutError, self).__init__(message)
-
-
-def task_timeout(signum, frame):
-    raise TaskTimeoutError(frame=frame)
 
 
 class TaskExecutor:
@@ -176,7 +156,7 @@ class TaskExecutor:
 
             return res
         except Exception as ex:
-            result = ActionBase.result_dict_from_exception(ex)
+            result = _error_utils.result_dict_from_exception(ex)
 
             self._task.update_result_no_log(self._task_templar, result)
 
@@ -442,11 +422,11 @@ class TaskExecutor:
                 result = self._execute_internal(templar, variables)
                 self._apply_task_result_compat(result, warning_ctx)
                 _captured.AnsibleActionCapturedError.maybe_raise_on_result(result)
-            except Exception as ex:
+            except (Exception, _task_timeout.TaskTimeoutError) as ex:  # TaskTimeoutError is BaseException
                 try:
                     raise AnsibleTaskError(obj=self._task.get_ds()) from ex
                 except AnsibleTaskError as atex:
-                    result = ActionBase.result_dict_from_exception(atex)
+                    result = _error_utils.result_dict_from_exception(atex, accept_result_contribution=True)
                     result.setdefault('changed', False)
 
             self._task.update_result_no_log(templar, result)
@@ -636,24 +616,9 @@ class TaskExecutor:
         for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
-                if self._task.timeout:
-                    old_sig = signal.signal(signal.SIGALRM, task_timeout)
-                    signal.alarm(self._task.timeout)
-
-                result = self._handler.run(task_vars=vars_copy)
-
-            # DTFIX0: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
-            except (AnsibleActionFail, AnsibleActionSkip) as e:
-                return e.result
-            except AnsibleConnectionFailure as e:
-                return dict(unreachable=True, msg=to_text(e))
-            except TaskTimeoutError as e:
-                msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
-                return dict(failed=True, msg=msg, timedout={'frame': e.frame, 'period': self._task.timeout})
+                with _task_timeout.TaskTimeoutError.alarm_timeout(self._task.timeout):
+                    result = self._handler.run(task_vars=vars_copy)
             finally:
-                if self._task.timeout:
-                    signal.alarm(0)
-                    old_sig = signal.signal(signal.SIGALRM, old_sig)
                 self._handler.cleanup()
             display.debug("handler run complete")
 

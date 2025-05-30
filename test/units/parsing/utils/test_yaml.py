@@ -6,7 +6,7 @@ import tempfile
 import pytest
 
 from ansible.errors import AnsibleJSONParserError
-from ansible._internal._errors._utils import format_exception_message
+from ansible._internal._errors._error_utils import format_exception_message
 from ansible._internal._datatag._tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 

@@ -6,19 +6,10 @@ from ansible._internal._errors import _error_factory
 
 from ansible.errors import AnsibleError
 from ansible._internal._datatag._tags import Origin
-from ansible._internal._errors._utils import format_exception_message
+from ansible._internal._errors._error_utils import format_exception_message
 from ansible.utils.display import _format_message
 from ansible.module_utils._internal import _messages
-
-
-def raise_exceptions(exceptions: list[BaseException]) -> None:
-    if len(exceptions) > 1:
-        try:
-            raise_exceptions(exceptions[1:])
-        except Exception as ex:
-            raise exceptions[0] from ex
-
-    raise exceptions[0]
+from units.mock.error_helper import raise_exceptions
 
 
 _shared_cause = Exception('shared cause')

@@ -20,7 +20,7 @@ from jinja2.defaults import (
 
 from ansible import constants as C
 from ansible.config.manager import ensure_type
-from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleActionFail
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -39,7 +39,7 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         # Options type validation
@@ -167,13 +167,8 @@ class ActionModule(ActionBase):
                                                                         loader=self._loader,
                                                                         templar=self._templar,
                                                                         shared_loader_obj=self._shared_loader_obj)
-                result.update(copy_action.run(task_vars=task_vars))
+                return copy_action.run(task_vars=task_vars)
             finally:
                 shutil.rmtree(to_bytes(local_tempdir, errors='surrogate_or_strict'))
-
-        except AnsibleAction as e:
-            result.update(e.result)
         finally:
             self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result
