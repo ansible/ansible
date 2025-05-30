@@ -457,6 +457,7 @@ uid:
 
 
 import ctypes.util
+from datetime import datetime
 import grp
 import calendar
 import os
@@ -1219,11 +1220,16 @@ class User(object):
                                      env=env)
                 out_buffer = b''
                 err_buffer = b''
+                first_prompt = b'Enter passphrase'
+                second_prompt = b'Enter same passphrase again'
+                prompt = first_prompt
+                start = datetime.now()
+                timeout = 900
                 while p.poll() is None:
                     r_list = select.select([master_out_fd, master_err_fd], [], [], 1)[0]
-                    first_prompt = b'Enter passphrase (empty for no passphrase):'
-                    second_prompt = b'Enter same passphrase again'
-                    prompt = first_prompt
+                    now = datetime.now()
+                    if (now - start).seconds > timeout:
+                        return 1, '', 'Timeout after %d while reading passphrase for SSH key' % timeout
                     for fd in r_list:
                         if fd == master_out_fd:
                             chunk = os.read(master_out_fd, 10240)
