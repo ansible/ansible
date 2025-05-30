@@ -794,7 +794,13 @@ class DocCLI(CLI, RoleMixin):
         loader = DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
-        self.plugins.update(list_plugins(plugin_type, coll_filter))
+        plugin_list = list_plugins(plugin_type, coll_filter)
+
+        # Remove the internal ansible._protomatter plugins if getting all plugins
+        if not coll_filter:
+            plugin_list = {k: v for k, v in plugin_list.items() if not k.startswith('ansible._protomatter.')}
+
+        self.plugins.update(plugin_list)
 
         # get appropriate content depending on option
         if content == 'dir':

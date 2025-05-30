@@ -191,3 +191,19 @@
     - assert:
         that:
           - "'plugin broken_docs has malformed documentation' in r.msg"
+
+    - name: check ansible._protomatter excluded from output by default
+      command: ansible-doc -t filter --list
+      register: result
+
+    - assert:
+        that:
+          - result.stdout_lines | select("match", "^ansible\\._protomatter\\.") | length == 0
+
+    - name: check ansible._protomatter is shown when requested
+      command: ansible-doc ansible._protomatter -t filter --list
+      register: result
+
+    - assert:
+        that:
+          - result.stdout_lines | select("match", "^ansible\\._protomatter\\.") | length == result.stdout_lines | length
