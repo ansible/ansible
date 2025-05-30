@@ -101,9 +101,9 @@ class Connection(ConnectionBase):
         display.debug("opening command with Popen()")
 
         if isinstance(cmd, (text_type, binary_type)):
-            cmd = to_bytes(cmd)
+            cmd = to_text(cmd)
         else:
-            cmd = map(to_bytes, cmd)
+            cmd = map(to_text, cmd)
 
         pty_primary = None
         stdin = subprocess.PIPE
