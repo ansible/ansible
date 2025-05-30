@@ -64,27 +64,6 @@
     - apt_result is not changed
     - "dpkg_result.rc == 1"
 
-- name: Test installing fnmatch package
-  apt:
-    name:
-      - ansible-hel?o
-      - ansible-he?lo
-  register: apt_install_fnmatch
-
-- name: Test uninstalling fnmatch package
-  apt:
-    name:
-      - ansible-hel?o
-      - ansible-he?lo
-    state: absent
-  register: apt_uninstall_fnmatch
-
-- name: verify fnmatch
-  assert:
-    that:
-      - apt_install_fnmatch is changed
-      - apt_uninstall_fnmatch is changed
-
 - name: Test update_cache 1 (check mode)
   apt:
     update_cache: true
@@ -118,6 +97,27 @@
       - apt_update_cache_1 is changed
       - apt_update_cache_2_check_mode is not changed
       - apt_update_cache_2 is not changed
+
+- name: Test installing fnmatch package
+  apt:
+    name:
+      - ansible-hel?o
+      - ansible-he?lo
+  register: apt_install_fnmatch
+
+- name: Test uninstalling fnmatch package
+  apt:
+    name:
+      - ansible-hel?o
+      - ansible-he?lo
+    state: absent
+  register: apt_uninstall_fnmatch
+
+- name: verify fnmatch
+  assert:
+    that:
+      - apt_install_fnmatch is changed
+      - apt_uninstall_fnmatch is changed
 
 - name: uninstall apt bindings with apt again
   apt:
