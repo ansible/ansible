@@ -116,7 +116,6 @@ def started(result):
 
     if 'started' in result:
         # For async tasks, return status
-        # NOTE: The value of started is 0 or 1, not False or True :-/
         return bool(result.get('started'))
     else:
         # For non-async tasks, warn user, but return as if started
@@ -131,7 +130,6 @@ def finished(result):
 
     if 'finished' in result:
         # For async tasks, return status
-        # NOTE: The value of finished is 0 or 1, not False or True :-/
         return bool(result.get('finished'))
     else:
         # For non-async tasks, warn user, but return as if finished

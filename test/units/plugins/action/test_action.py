@@ -107,7 +107,7 @@ class TestActionBase(unittest.TestCase):
         mock_task.async_val = None
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
-        self.assertEqual(results, dict())
+        self.assertEqual(results, {})
 
         mock_task.async_val = 0
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
