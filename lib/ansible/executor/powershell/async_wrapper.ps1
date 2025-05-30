@@ -135,8 +135,8 @@ try {
     # We need to write the result file before the process is started to ensure
     # it can read the file.
     $result = @{
-        started = 1
-        finished = 0
+        started = $true
+        finished = $false
         results_file = $resultsPath
         ansible_job_id = $localJid
         _ansible_suppress_tmpdir_delete = $true
