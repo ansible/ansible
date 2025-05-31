@@ -218,8 +218,8 @@
     - name: Check Jinja2 filters have a short description on list without any filter
       assert:
         that:
-        - filter_list_all['ansible.builtin.default'] is contains("builtin Jinja plugin default")
-        - filter_list_all['ansible.builtin.sum'] is contains("builtin Jinja plugin sum")
+        - filter_list_all['ansible.builtin.default'] is contains("the passed default value")
+        - filter_list_all['ansible.builtin.sum'] is contains("sum of a sequence")
 
     - name: List only ansible.builtin filter plugins
       command: ansible-doc ansible.builtin -t filter --list --json
@@ -231,8 +231,8 @@
     - name: Check Jinja2 filters have a short description on list with builtin filter
       assert:
         that:
-        - filter_list_builtin['ansible.builtin.default'] is contains("builtin Jinja plugin default")
-        - filter_list_builtin['ansible.builtin.sum'] is contains("builtin Jinja plugin sum")
+        - filter_list_builtin['ansible.builtin.default'] is contains("the passed default value")
+        - filter_list_builtin['ansible.builtin.sum'] is contains("sum of a sequence")
 
     - name: List only ansible.builtin filter plugin files
       command: ansible-doc ansible.builtin -t filter --list_files
@@ -251,8 +251,9 @@
     - name: Assert jinja2 filter docs shadowed by Ansible
       assert:
         that:
-        - filter_jinja2_default.stdout is search("\\s+FILTER default\\s+")
-        - filter_jinja2_default.stdout is search("The builtin Jinja filter plugin default")
+        - filter_jinja2_default.stdout is search("\\s+FILTER ansible.builtin.default\\s+")
+        - filter_jinja2_default.stdout is search("the Jinja builtin filter plugin 'default'")
+        - filter_jinja2_default.stdout is search("the passed default value")
         - filter_jinja2_default.stdout is search("https://jinja\\.palletsprojects\\.com/.*")
 
     - name: Get jinja2 filter docs not shadowed by Ansible
@@ -262,8 +263,9 @@
     - name: Assert jinja2 filter docs not shadowed by Ansible
       assert:
         that:
-        - filter_jinja2_sum.stdout is search("\\s+FILTER sum\\s+")
-        - filter_jinja2_sum.stdout is search("The builtin Jinja filter plugin sum")
+        - filter_jinja2_sum.stdout is search("\\s+FILTER ansible.builtin.sum\\s+")
+        - filter_jinja2_sum.stdout is search("the Jinja builtin filter plugin 'sum'")
+        - filter_jinja2_sum.stdout is search("sum of a sequence")
         - filter_jinja2_sum.stdout is search("https://jinja\\.palletsprojects\\.com/.*")
 
     - name: List all test plugins without any filter
@@ -276,7 +278,7 @@
     - name: Check Jinja2 tests have a short description on list without any filter
       assert:
         that:
-        - test_list_all['ansible.builtin.number'] is contains("builtin Jinja plugin number")
+        - test_list_all['ansible.builtin.number'] is contains("is a number")
 
     - name: List only ansible.builtin test plugins
       command: ansible-doc ansible.builtin -t test --list --json
@@ -288,7 +290,7 @@
     - name: Check Jinja2 tests have a short description on list with builtin tests
       assert:
         that:
-        - test_list_builtin['ansible.builtin.number'] is contains("builtin Jinja plugin number")
+        - test_list_builtin['ansible.builtin.number'] is contains("is a number")
 
     - name: List only ansible.builtin test plugin files
       command: ansible-doc ansible.builtin -t test --list_files
@@ -306,6 +308,19 @@
     - name: Assert jinja2 test docs
       assert:
         that:
-        - test_jinja2_number.stdout is search("\\s+TEST number\\s+")
-        - test_jinja2_number.stdout is search("The builtin Jinja test plugin number")
+        - test_jinja2_number.stdout is search("\\s+TEST ansible.builtin.number\\s+")
+        - test_jinja2_number.stdout is search("the Jinja builtin test plugin 'number'")
+        - test_jinja2_number.stdout is contains("is a number")
         - test_jinja2_number.stdout is search("https://jinja\\.palletsprojects\\.com/.*")
+
+    - name: Get jinja2 test docs for an unqualified builtin
+      command: ansible-doc number -t test
+      register: test_jinja2_number_short
+
+    - name: Assert jinja2 test docs
+      assert:
+        that:
+        - test_jinja2_number_short.stdout is search("\\s+TEST ansible.builtin.number\\s+")
+        - test_jinja2_number_short.stdout is search("the Jinja builtin test plugin 'number'")
+        - test_jinja2_number_short.stdout is contains("is a number")
+        - test_jinja2_number_short.stdout is search("https://jinja\\.palletsprojects\\.com/.*")

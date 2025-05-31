@@ -15,7 +15,7 @@ from ansible.module_utils.common.text.converters import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
 from ansible.utils.collection_loader._collection_finder import _get_collection_path
-from ansible._internal._templating._jinja_bits import get_jinja2_builtin_filters, get_jinja2_builtin_tests
+from ansible._internal._templating._jinja_plugins import get_jinja_builtin_plugin_descriptions
 
 display = Display()
 
@@ -28,16 +28,17 @@ IGNORE = {
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
-class _PluginInfo:
+class _PluginDocMetadata:
     """Information about a plugin."""
+
     name: str
     """The fully qualified name of the plugin."""
-    path: bytes | None
+    path: bytes | None = None
     """The path to the plugin file, or None if not available."""
     plugin_obj: object | None = None
     """The loaded plugin object, or None if not loaded."""
-    is_jinja_plugin: bool = False
-    """Whether the plugin shadows a Jinja2 plugin (filter or test)."""
+    jinja_builtin_short_description: str | None = None
+    """The short description of the plugin if it is a Jinja builtin, otherwise None."""
 
 
 def get_composite_name(collection, name, path, depth):
@@ -142,7 +143,7 @@ def list_collection_plugins(ptype: str, collections: dict[str, bytes], search_pa
 def _list_collection_plugins_with_info(
     ptype: str,
     collections: dict[str, bytes],
-) -> dict[str, _PluginInfo]:
+) -> dict[str, _PluginDocMetadata]:
     # TODO: update to use importlib.resources
 
     try:
@@ -150,7 +151,7 @@ def _list_collection_plugins_with_info(
     except AttributeError:
         raise AnsibleError(f"Cannot list plugins, incorrect plugin type {ptype!r} supplied.") from None
 
-    builtin_jinja_plugins = set()
+    builtin_jinja_plugins = {}
     plugin_paths = {}
 
     # get plugins for each collection
@@ -159,10 +160,8 @@ def _list_collection_plugins_with_info(
             # dirs from ansible install, but not configured paths
             dirs = [d.path for d in ploader._get_paths_with_context() if d.internal]
 
-            if ptype == 'filter':
-                builtin_jinja_plugins = set(f"ansible.builtin.{p.name}" for p in get_jinja2_builtin_filters())
-            elif ptype == 'test':
-                builtin_jinja_plugins = set(f"ansible.builtin.{p.name}" for p in get_jinja2_builtin_tests())
+            if ptype in ('filter', 'test'):
+                builtin_jinja_plugins = get_jinja_builtin_plugin_descriptions(ptype)
 
         elif collection == 'ansible.legacy':
             # configured paths + search paths (should include basedirs/-M)
@@ -186,7 +185,7 @@ def _list_collection_plugins_with_info(
     if ptype in ('module',):
         # no 'invalid' tests for modules
         for plugin, plugin_path in plugin_paths.items():
-            plugins[plugin] = _PluginInfo(name=plugin, path=plugin_path)
+            plugins[plugin] = _PluginDocMetadata(name=plugin, path=plugin_path)
     else:
         # detect invalid plugin candidates AND add loaded object to return data
         for plugin, plugin_path in plugin_paths.items():
@@ -196,23 +195,18 @@ def _list_collection_plugins_with_info(
             except Exception as e:
                 display.vvv("The '{0}' {1} plugin could not be loaded from '{2}': {3}".format(plugin, ptype, plugin_path, to_native(e)))
 
-            plugins[plugin] = _PluginInfo(
+            plugins[plugin] = _PluginDocMetadata(
                 name=plugin,
                 path=plugin_path,
                 plugin_obj=pobj,
-                is_jinja_plugin=plugin in builtin_jinja_plugins,
+                jinja_builtin_short_description=builtin_jinja_plugins.get(plugin),
             )
 
-        for plugin in builtin_jinja_plugins:
-            # Add in any builtin Jinja2 plugins that have not been shadowed in Ansible.
-            if plugin in plugins:
-                continue
-
-            plugins[plugin] = _PluginInfo(
-                name=plugin,
-                path=None,
-                is_jinja_plugin=True,
-            )
+        # Add in any builtin Jinja2 plugins that have not been shadowed in Ansible.
+        plugins.update(
+            (plugin_name, _PluginDocMetadata(name=plugin_name, jinja_builtin_short_description=plugin_description))
+            for plugin_name, plugin_description in builtin_jinja_plugins.items() if plugin_name not in plugins
+        )
 
     return plugins
 
@@ -229,7 +223,7 @@ def _list_plugins_with_info(
     ptype: str,
     collections: list[str] = None,
     search_paths: list[str] | None = None,
-) -> dict[str, _PluginInfo]:
+) -> dict[str, _PluginDocMetadata]:
     if isinstance(collections, str):
         collections = [collections]
 

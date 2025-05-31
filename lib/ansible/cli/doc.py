@@ -37,7 +37,7 @@ from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
-from ansible.plugins.list import _list_plugins_with_info, _PluginInfo
+from ansible.plugins.list import _list_plugins_with_info, _PluginDocMetadata
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -46,7 +46,7 @@ from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
 from ansible.template import trust_as_template
 from ansible._internal import _json
-from ansible._internal._templating._jinja_bits import get_jinja2_builtin_filters, get_jinja2_builtin_tests, Jinja2BuiltinMetadata
+from ansible._internal._templating import _jinja_plugins
 
 display = Display()
 
@@ -791,8 +791,6 @@ class DocCLI(CLI, RoleMixin):
         return coll_filter
 
     def _list_plugins(self, plugin_type, content):
-
-        results = {}
         DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
@@ -813,15 +811,14 @@ class DocCLI(CLI, RoleMixin):
 
         return results
 
-    def _get_plugins_docs(self, plugin_type: str, names: collections.abc.Iterable[str], fail_ok=False, fail_on_errors=True) -> dict[str, dict]:
-
+    def _get_plugins_docs(self, plugin_type: str, names: collections.abc.Iterable[str], fail_ok: bool = False, fail_on_errors: bool = True) -> dict[str, dict]:
         loader = DocCLI._prep_loader(plugin_type)
 
-        jinja2_builtins = {}
-        if plugin_type == 'filter':
-            jinja2_builtins = {f"ansible.builtin.{p.name}": p for p in get_jinja2_builtin_filters()}
-        elif plugin_type == 'test':
-            jinja2_builtins = {f"ansible.builtin.{p.name}": p for p in get_jinja2_builtin_tests()}
+        if plugin_type in ('filter', 'test'):
+            jinja2_builtins = _jinja_plugins.get_jinja_builtin_plugin_descriptions(plugin_type)
+            jinja2_builtins.update({name.split('.')[-1]: value for name, value in jinja2_builtins.items()})  # add short-named versions for lookup
+        else:
+            jinja2_builtins = {}
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
@@ -877,27 +874,28 @@ class DocCLI(CLI, RoleMixin):
         plugin_type: str,
         loader: t.Any,
         fragment_loader: t.Any,
-        jinja_builtins: dict[str, Jinja2BuiltinMetadata],
+        jinja_builtins: dict[str, str],
     ) -> tuple[dict, str | None, dict | None, dict | None]:
         try:
             return get_plugin_docs(plugin_name, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
         except Exception:
-            if info := jinja_builtins.get(plugin_name, None):
+            if (desc := jinja_builtins.get(plugin_name, ...)) is not ...:
+                short_name = plugin_name.split('.')[-1]
+                long_name = f'ansible.builtin.{short_name}'
                 # Dynamically build a doc stub for any Jinja2 builtin plugin we haven't
                 # explicitly documented.
-                doc = {
-                    'collection': 'ansible.builtin',
-                    'plugin_name': info.name,
-                    'filename': '',
-                    'short_description': f"builtin Jinja {plugin_type} plugin {info.name}",
-                    "description": [
-                        f"The builtin Jinja {plugin_type} plugin {info.name}",
-                        f"See U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-{plugin_type}s.{info.name})",
+                doc = dict(
+                    collection='ansible.builtin',
+                    plugin_name=long_name,
+                    filename='',
+                    short_description=desc,
+                    description=[
+                        desc,
+                        '',
+                        f"This is the Jinja builtin {plugin_type} plugin {short_name!r}.",
+                        f"See: U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-{plugin_type}s.{short_name})",
                     ],
-                }
-
-                if info.doc:
-                    doc['description'].insert(1, info.doc)
+                )
 
                 return doc, None, None, None
 
@@ -1151,7 +1149,7 @@ class DocCLI(CLI, RoleMixin):
 
         return text
 
-    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginInfo]) -> dict[str, str]:
+    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, str]:
 
         descs = {}
         for plugin, plugin_info in plugins.items():
@@ -1163,7 +1161,6 @@ class DocCLI(CLI, RoleMixin):
                 filename = Path(to_native(plugin_info.path))
                 try:
                     doc = read_docstub(filename)
-
                 except Exception as e:
                     docerror = e
 
@@ -1182,13 +1179,12 @@ class DocCLI(CLI, RoleMixin):
 
                 # Do a final fallback to see if the plugin is a shadowed Jinja2 plugin
                 # without any explicit documentation.
-                if doc is None and plugin_info.is_jinja_plugin:
-                    plugin_name = plugin.split('.')[-1]
-                    descs[plugin] = f"builtin Jinja plugin {plugin_name}"
+                if doc is None and plugin_info.jinja_builtin_short_description:
+                    descs[plugin] = plugin_info.jinja_builtin_short_description
                     continue
 
                 if docerror:
-                    display.warning("%s has a documentation formatting error: %s" % (plugin, docerror))
+                    display.error_as_warning(f"{plugin} has a documentation formatting error.", exception=docerror)
                     continue
 
             if not doc or not isinstance(doc, dict):
