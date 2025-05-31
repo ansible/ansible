@@ -33,6 +33,8 @@ options:
         - V(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
           including the fact cache.
         - V(clear_host_errors) (added in Ansible 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts.
+        - V(enable_stepping) (added in Ansible 2.16) enables task stepping.  This will cause ansible to stop on each task, and ask if
+          it should execute that task.
         - V(end_play) (added in Ansible 2.2) causes the play to end without failing the host(s). Note that this affects all hosts.
         - V(reset_connection) (added in Ansible 2.3) interrupts a persistent connection (i.e. ssh + control persist)
         - V(end_host) (added in Ansible 2.8) is a per-host variation of V(end_play). Causes the play to end for the current host without failing it.
@@ -43,7 +45,8 @@ options:
           play scope, all handlers added via the role are unaffected and are still executed if notified. It is an error
           to call V(end_role) from outside of a role or from a handler. Note that V(end_role) does not have an effect to
           the parent roles or roles that depend (via dependencies in meta/main.yml) on a role executing V(end_role).
-    choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection, end_batch, end_role ]
+    choices: [ clear_facts, clear_host_errors, enable_stepping, end_host, end_play, flush_handlers,
+      noop, refresh_inventory, reset_connection, end_batch, end_role ]
     required: true
 extends_documentation_fragment:
     - action_common_attributes

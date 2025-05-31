@@ -952,6 +952,9 @@ class StrategyBase:
             self._inventory.refresh_inventory()
             self._set_hosts_cache(iterator._play)
             msg = "inventory successfully refreshed"
+        elif meta_action == 'enable_stepping':
+            self._step = True
+            msg = "stepping enabled"
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
