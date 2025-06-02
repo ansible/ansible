@@ -48,13 +48,13 @@ def secure_hash(filename, hash_func=sha1):
     digest = hash_func()
     blocksize = 64 * 1024
     try:
-        with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as infile:
+        with open(filename, 'rb') as infile:
             block = infile.read(blocksize)
             while block:
                 digest.update(block)
                 block = infile.read(blocksize)
     except OSError as ex:
-        raise AnsibleError(f"error while accessing the file {filename!r}") from ex
+        raise AnsibleError(f"Error while accessing the file {filename!r}.") from ex
     return digest.hexdigest()
 
 

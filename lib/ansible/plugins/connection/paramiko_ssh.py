@@ -568,7 +568,7 @@ class Connection(ConnectionBase):
         try:
             self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except OSError as ex:
-            raise AnsibleError(f"failed to transfer file to {out_path!r}") from ex
+            raise AnsibleError(f"Failed to transfer file to {out_path!r}.") from ex
 
     def _connect_sftp(self) -> paramiko.sftp_client.SFTPClient:
 
@@ -594,7 +594,7 @@ class Connection(ConnectionBase):
         try:
             self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except OSError as ex:
-            raise AnsibleError(f"failed to transfer file from {in_path!r}") from ex
+            raise AnsibleError(f"Failed to transfer file from {in_path!r}.") from ex
 
     def _any_keys_added(self) -> bool:
 

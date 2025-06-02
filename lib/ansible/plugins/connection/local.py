@@ -272,7 +272,7 @@ class Connection(ConnectionBase):
         except shutil.Error:
             raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_native(in_path), to_native(out_path)))
         except OSError as ex:
-            raise AnsibleError(f"failed to transfer file to {out_path!r}") from ex
+            raise AnsibleError(f"Failed to transfer file to {out_path!r}.") from ex
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
         """ fetch a file from local to local -- for compatibility """

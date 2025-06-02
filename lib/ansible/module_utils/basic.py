@@ -499,7 +499,7 @@ class AnsibleModule(object):
             except OSError as ex:
                 raise Exception(
                     f"Failed to create remote module tmp path at dir {basedir!r} "
-                    f"with prefix {basefile!r}",
+                    f"with prefix {basefile!r}.",
                 ) from ex
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
@@ -661,7 +661,7 @@ class AnsibleModule(object):
         try:
             ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
         except OSError as ex:
-            self.fail_json(path=path, msg='failed to retrieve selinux context', exception=ex)
+            self.fail_json(path=path, msg='Failed to retrieve selinux context.', exception=ex)
         if ret[0] == -1:
             return context
         # Limit split to 4 because the selevel, the last in the list,
@@ -1660,7 +1660,7 @@ class AnsibleModule(object):
             try:
                 self.preserved_copy(fn, backupdest)
             except (shutil.Error, OSError) as ex:
-                raise Exception(f'Could not make backup of {fn!r} to {backupdest!r}') from ex
+                raise Exception(f'Could not make backup of {fn!r} to {backupdest!r}.') from ex
 
         return backupdest
 
@@ -1791,17 +1791,17 @@ class AnsibleModule(object):
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
                                     raise Exception(
-                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {b_tmp_dest_name!r}'
+                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {b_tmp_dest_name!r}.'
                                     ) from ex
                         except (shutil.Error, OSError) as ex:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                raise Exception(f'Failed to replace file: {src!r} to {dest!r}') from ex
+                                raise Exception(f'Failed to replace file: {src!r} to {dest!r}.') from ex
                     finally:
                         self.cleanup(b_tmp_dest_name)
             else:
-                raise Exception(f'Could not replace file: {src!r} to {dest!r}') from ex
+                raise Exception(f'Could not replace file: {src!r} to {dest!r}.') from ex
 
         if creating:
             # make sure the file has the correct permissions
@@ -1832,7 +1832,7 @@ class AnsibleModule(object):
                 with open(src, 'rb') as in_src:
                     shutil.copyfileobj(in_src, out_dest)
         except (shutil.Error, OSError) as ex:
-            raise Exception(f'Could not write data to file {dest!r} from {src!r}') from ex
+            raise Exception(f'Could not write data to file {dest!r} from {src!r}.') from ex
 
     def _clean_args(self, args):
 

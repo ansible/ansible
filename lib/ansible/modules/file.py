@@ -528,7 +528,7 @@ def ensure_absent(path):
                     pass
                 except OSError as ex:
                     module.fail_json(
-                        msg="Unlinking failed",
+                        msg="Unlinking failed.",
                         path=path,
                         exception=ex,
                     )

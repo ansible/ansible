@@ -108,7 +108,7 @@ class BaseFileCacheModule(BaseCacheModule):
             try:
                 os.makedirs(self._cache_dir)
             except OSError as ex:
-                raise AnsibleError(f"error in {self.plugin_name!r} cache plugin while trying to create cache dir {self._cache_dir!r}") from ex
+                raise AnsibleError(f"Error in {self.plugin_name!r} cache plugin while trying to create cache dir {self._cache_dir!r}.") from ex
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
@@ -160,12 +160,12 @@ class BaseFileCacheModule(BaseCacheModule):
             try:
                 self._dump(value, tmpfile_path)
             except OSError as ex:
-                display.error_as_warning(f"error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}", exception=ex)
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}.", exception=ex)
             try:
                 os.rename(tmpfile_path, cachefile)
                 os.chmod(cachefile, mode=S_IRWU_RG_RO)
             except OSError as ex:
-                display.error_as_warning(f"error in {self.plugin_name!r} cache plugin while trying to move {tmpfile_path!r} to {cachefile!r}", exception=ex)
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to move {tmpfile_path!r} to {cachefile!r}.", exception=ex)
         finally:
             try:
                 os.unlink(tmpfile_path)
@@ -183,7 +183,7 @@ class BaseFileCacheModule(BaseCacheModule):
         except FileNotFoundError:
             return False
         except OSError as ex:
-            display.error_as_warning(f"error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}", exception=ex)
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
 
             return False
 
@@ -225,7 +225,7 @@ class BaseFileCacheModule(BaseCacheModule):
         except FileNotFoundError:
             return False
         except OSError as ex:
-            display.error_as_warning(f"error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}", exception=ex)
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
 
     def delete(self, key):
         try:

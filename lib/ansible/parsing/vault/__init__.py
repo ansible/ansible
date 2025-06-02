@@ -414,7 +414,7 @@ class FileVaultSecret(VaultSecret):
             with open(filename, "rb") as f:
                 vault_pass = f.read().strip()
         except OSError as ex:
-            raise AnsibleError(f"Could not read vault password file {filename!r}") from ex
+            raise AnsibleError(f"Could not read vault password file {filename!r}.") from ex
 
         b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass)
 

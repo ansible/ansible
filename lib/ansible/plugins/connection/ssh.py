@@ -1143,7 +1143,7 @@ class Connection(ConnectionBase):
                                      stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = p.stdin  # type: ignore[assignment] # stdin will be set and not None due to the calls above
             except OSError as ex:
-                raise AnsibleError('Unable to execute ssh command line on a controller') from ex
+                raise AnsibleError('Unable to execute ssh command line on a controller.') from ex
 
         if password_mechanism == 'sshpass' and conn_password:
             os.close(self.sshpass_pipe[0])

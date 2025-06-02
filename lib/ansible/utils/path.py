@@ -87,7 +87,7 @@ def makedirs_safe(path, mode=None):
             else:
                 os.makedirs(b_rpath, exist_ok=True)
         except OSError as ex:
-            raise AnsibleError(f"Unable to create local directories: {rpath!r}") from ex
+            raise AnsibleError(f"Unable to create local directories {rpath!r}.") from ex
 
 
 def basedir(source):

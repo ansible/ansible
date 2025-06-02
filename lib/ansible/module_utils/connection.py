@@ -137,8 +137,8 @@ class Connection(object):
             out = self.send(data)
         except OSError as ex:
             raise ConnectionError(
-                f'unable to connect to socket {self.socket_path!r}. See Troubleshooting socket path issues '
-                'in the Network Debug and Troubleshooting Guide'
+                f'Unable to connect to socket {self.socket_path!r}. See Troubleshooting socket path issues '
+                'in the Network Debug and Troubleshooting Guide.'
             ) from ex
 
         try:
@@ -193,8 +193,8 @@ class Connection(object):
         except OSError as ex:
             sf.close()
             raise ConnectionError(
-                f'unable to connect to socket {self.socket_path!r}. See the socket path issue category in '
-                'Network Debug and Troubleshooting Guide',
+                f'Unable to connect to socket {self.socket_path!r}. See the socket path issue category in '
+                'Network Debug and Troubleshooting Guide.',
             ) from ex
 
         sf.close()
