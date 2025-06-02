@@ -523,7 +523,7 @@ def main():
         try:
             checksum_src = module.sha1(src)
         except OSError as ex:
-            module.warn(f"Unable to calculate src checksum, assuming change: {ex}")
+            module.error_as_warning("Unable to calculate src checksum, assuming change.", exception=ex)
         try:
             # Backwards compat only.  This will be None in FIPS mode
             md5sum_src = module.md5(src)

@@ -189,7 +189,7 @@ def cleanup(module, path, result=None):
         except OSError as ex:
             # don't error on possible race conditions, but keep warning
             if result is not None:
-                module.warn(f'Unable to remove temp file {path!r}: {ex}')
+                module.error_as_warning(f'Unable to remove temp file {path!r}.', exception=ex)
 
 
 def main():

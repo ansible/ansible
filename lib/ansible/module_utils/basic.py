@@ -481,9 +481,9 @@ class AnsibleModule(object):
                 try:
                     os.makedirs(basedir, mode=0o700)
                 except OSError as ex:
-                    self.warn(
-                        f"Unable to use {basedir!r} as temporary directory, "
-                        f"falling back to system: {to_native(ex)!r}"
+                    self.error_as_warning(
+                        f"Unable to use {basedir!r} as temporary directory, falling back to system default.",
+                        exception=ex,
                     )
                     basedir = None
                 else:

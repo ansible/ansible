@@ -572,7 +572,7 @@ def main():
                     try:
                         st = os.lstat(fsname)
                     except OSError as ex:
-                        module.warn(f"Skipped entry {fsname!r} due to this access issue: {ex}\n")
+                        module.error_as_warning(f"Skipped entry {fsname!r} due to this access issue.", exception=ex)
                         skipped[fsname] = str(ex)
                         has_warnings = True
                         continue
