@@ -1050,7 +1050,7 @@ def _finalize_template_result(o: t.Any, mode: FinalizeMode) -> t.Any:
     if o_type in _FINALIZE_FAST_PATH_EXACT_ITERABLE_TYPES:  # silently convert known sequence types to list
         return _finalize_collection(o, mode, _finalize_list, list)
 
-    if o_type in Marker.concrete_subclasses:  # this early return assumes handle_marker follows our variable type rules
+    if o_type in Marker._concrete_subclasses:  # this early return assumes handle_marker follows our variable type rules
         return TemplateContext.current().templar.marker_behavior.handle_marker(o)
 
     if mode is not FinalizeMode.TOP_LEVEL:  # unsupported type (do not raise)

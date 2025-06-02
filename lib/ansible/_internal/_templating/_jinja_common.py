@@ -62,7 +62,7 @@ class Marker(StrictUndefined, Tripwire):
 
     __slots__ = ('_marker_template_source',)
 
-    concrete_subclasses: t.ClassVar[set[type[Marker]]] = set()
+    _concrete_subclasses: t.ClassVar[set[type[Marker]]] = set()
 
     def __init__(
         self,
@@ -136,7 +136,7 @@ class Marker(StrictUndefined, Tripwire):
     def __init_subclass__(cls, **kwargs) -> None:
         if not inspect.isabstract(cls):
             _untaggable_types.add(cls)
-            cls.concrete_subclasses.add(cls)
+            cls._concrete_subclasses.add(cls)
 
     @classmethod
     def _init_class(cls):
@@ -278,10 +278,7 @@ class VaultExceptionMarker(ExceptionMarker):
 def get_first_marker_arg(args: c.Sequence, kwargs: dict[str, t.Any]) -> Marker | None:
     """Utility method to inspect plugin args and return the first `Marker` encountered, otherwise `None`."""
     # DTFIX0: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
-    for arg in iter_marker_args(args, kwargs):
-        return arg
-
-    return None
+    return next(iter_marker_args(args, kwargs), None)
 
 
 def iter_marker_args(args: c.Sequence, kwargs: dict[str, t.Any]) -> t.Generator[Marker]:
@@ -301,7 +298,7 @@ class JinjaCallContext(NotifiableAccessContextBase):
     _mask = True
 
     def __init__(self, accept_lazy_markers: bool) -> None:
-        self._type_interest = frozenset() if accept_lazy_markers else frozenset(Marker.concrete_subclasses)
+        self._type_interest = frozenset() if accept_lazy_markers else frozenset(Marker._concrete_subclasses)
 
     def _notify(self, o: Marker) -> t.NoReturn:
         o.trip()
