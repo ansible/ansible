@@ -9,12 +9,14 @@ from __future__ import annotations
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import collections.abc
 import importlib
 import pkgutil
 import os
 import os.path
 import re
 import textwrap
+import typing as t
 
 import yaml
 
@@ -35,7 +37,7 @@ from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
-from ansible.plugins.list import list_plugins
+from ansible.plugins.list import _list_plugins_with_info, _PluginDocMetadata
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -44,6 +46,7 @@ from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
 from ansible.template import trust_as_template
 from ansible._internal import _json
+from ansible._internal._templating import _jinja_plugins
 
 display = Display()
 
@@ -788,41 +791,47 @@ class DocCLI(CLI, RoleMixin):
         return coll_filter
 
     def _list_plugins(self, plugin_type, content):
-
-        results = {}
-        self.plugins = {}
-        loader = DocCLI._prep_loader(plugin_type)
+        DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
-        plugin_list = list_plugins(plugin_type, coll_filter)
+        plugins = _list_plugins_with_info(plugin_type, coll_filter)
 
         # Remove the internal ansible._protomatter plugins if getting all plugins
         if not coll_filter:
-            plugin_list = {k: v for k, v in plugin_list.items() if not k.startswith('ansible._protomatter.')}
-
-        self.plugins.update(plugin_list)
+            plugins = {k: v for k, v in plugins.items() if not k.startswith('ansible._protomatter.')}
 
         # get appropriate content depending on option
         if content == 'dir':
-            results = self._get_plugin_list_descriptions(loader)
+            results = self._get_plugin_list_descriptions(plugins)
         elif content == 'files':
-            results = {k: self.plugins[k][0] for k in self.plugins.keys()}
+            results = {k: v.path for k, v in plugins.items()}
         else:
-            results = {k: {} for k in self.plugins.keys()}
+            results = {k: {} for k in plugins.keys()}
             self.plugin_list = set()  # reset for next iteration
 
         return results
 
-    def _get_plugins_docs(self, plugin_type, names, fail_ok=False, fail_on_errors=True):
-
+    def _get_plugins_docs(self, plugin_type: str, names: collections.abc.Iterable[str], fail_ok: bool = False, fail_on_errors: bool = True) -> dict[str, dict]:
         loader = DocCLI._prep_loader(plugin_type)
+
+        if plugin_type in ('filter', 'test'):
+            jinja2_builtins = _jinja_plugins.get_jinja_builtin_plugin_descriptions(plugin_type)
+            jinja2_builtins.update({name.split('.')[-1]: value for name, value in jinja2_builtins.items()})  # add short-named versions for lookup
+        else:
+            jinja2_builtins = {}
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
         for plugin in names:
-            doc = {}
+            doc: dict[str, t.Any] = {}
             try:
-                doc, plainexamples, returndocs, metadata = get_plugin_docs(plugin, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
+                doc, plainexamples, returndocs, metadata = self._get_plugin_docs_with_jinja2_builtins(
+                    plugin,
+                    plugin_type,
+                    loader,
+                    fragment_loader,
+                    jinja2_builtins,
+                )
             except AnsiblePluginNotFound as e:
                 display.warning(to_native(e))
                 continue
@@ -858,6 +867,39 @@ class DocCLI(CLI, RoleMixin):
             plugin_docs[plugin] = docs
 
         return plugin_docs
+
+    def _get_plugin_docs_with_jinja2_builtins(
+        self,
+        plugin_name: str,
+        plugin_type: str,
+        loader: t.Any,
+        fragment_loader: t.Any,
+        jinja_builtins: dict[str, str],
+    ) -> tuple[dict, str | None, dict | None, dict | None]:
+        try:
+            return get_plugin_docs(plugin_name, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
+        except Exception:
+            if (desc := jinja_builtins.get(plugin_name, ...)) is not ...:
+                short_name = plugin_name.split('.')[-1]
+                long_name = f'ansible.builtin.{short_name}'
+                # Dynamically build a doc stub for any Jinja2 builtin plugin we haven't
+                # explicitly documented.
+                doc = dict(
+                    collection='ansible.builtin',
+                    plugin_name=long_name,
+                    filename='',
+                    short_description=desc,
+                    description=[
+                        desc,
+                        '',
+                        f"This is the Jinja builtin {plugin_type} plugin {short_name!r}.",
+                        f"See: U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-{plugin_type}s.{short_name})",
+                    ],
+                )
+
+                return doc, None, None, None
+
+            raise
 
     def _get_roles_path(self):
         """
@@ -1007,10 +1049,10 @@ class DocCLI(CLI, RoleMixin):
     def get_all_plugins_of_type(plugin_type):
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         paths = loader._get_paths_with_context()
-        plugins = {}
+        plugins = []
         for path_context in paths:
-            plugins.update(list_plugins(plugin_type))
-        return sorted(plugins.keys())
+            plugins += _list_plugins_with_info(plugin_type).keys()
+        return sorted(plugins)
 
     @staticmethod
     def get_plugin_metadata(plugin_type, plugin_name):
@@ -1107,18 +1149,20 @@ class DocCLI(CLI, RoleMixin):
 
         return text
 
-    def _get_plugin_list_descriptions(self, loader):
+    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, str]:
 
         descs = {}
-        for plugin in self.plugins.keys():
+        for plugin, plugin_info in plugins.items():
             # TODO: move to plugin itself i.e: plugin.get_desc()
             doc = None
-            filename = Path(to_native(self.plugins[plugin][0]))
+
             docerror = None
-            try:
-                doc = read_docstub(filename)
-            except Exception as e:
-                docerror = e
+            if plugin_info.path:
+                filename = Path(to_native(plugin_info.path))
+                try:
+                    doc = read_docstub(filename)
+                except Exception as e:
+                    docerror = e
 
             # plugin file was empty or had error, lets try other options
             if doc is None:
@@ -1133,9 +1177,15 @@ class DocCLI(CLI, RoleMixin):
                     except Exception as e:
                         docerror = e
 
-            if docerror:
-                display.warning("%s has a documentation formatting error: %s" % (plugin, docerror))
-                continue
+                # Do a final fallback to see if the plugin is a shadowed Jinja2 plugin
+                # without any explicit documentation.
+                if doc is None and plugin_info.jinja_builtin_short_description:
+                    descs[plugin] = plugin_info.jinja_builtin_short_description
+                    continue
+
+                if docerror:
+                    display.error_as_warning(f"{plugin} has a documentation formatting error.", exception=docerror)
+                    continue
 
             if not doc or not isinstance(doc, dict):
                 desc = 'UNDOCUMENTED'
