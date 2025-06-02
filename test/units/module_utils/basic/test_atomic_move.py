@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 import errno
-import json
 from itertools import product
 
 import pytest
@@ -189,6 +188,7 @@ def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, 
 
     with pytest.raises(Exception, match='is not writable by the current user'):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
+
 
 @pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
 def test_rename_perms_fail_temp_succeeds(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
