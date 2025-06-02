@@ -17,8 +17,6 @@ from __future__ import annotations
 
 import re
 
-from ansible.module_utils.common.text.converters import to_text
-
 
 def get_sysctl(module, prefixes):
 
