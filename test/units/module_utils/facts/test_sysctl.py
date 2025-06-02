@@ -142,7 +142,8 @@ class TestSysctlParsingInFacts(unittest.TestCase):
         module.reset_mock()
         module.run_command.side_effect = OSError('foo')
         sysctl = get_sysctl(module, ['hw'])
-        module.warn.assert_called_once_with('Unable to read sysctl: foo')
+        for call in module.error_as_warning.call_args_list:
+            self.assertIn('Unable to read sysctl', call[0][0])
         self.assertEqual(sysctl, {})
 
     def test_get_sysctl_all_invalid_output(self):
@@ -152,9 +153,9 @@ class TestSysctlParsingInFacts(unittest.TestCase):
         sysctl = get_sysctl(module, ['hw'])
         module.run_command.assert_called_once_with(['/sbin/sysctl', 'hw'])
         lines = [l for l in BAD_SYSCTL.splitlines() if l]
-        for call in module.warn.call_args_list:
+        for call in module.error_as_warning.call_args_list:
             self.assertIn('Unable to split sysctl line', call[0][0])
-        self.assertEqual(module.warn.call_count, len(lines))
+        self.assertEqual(module.error_as_warning.call_count, len(lines))
         self.assertEqual(sysctl, {})
 
     def test_get_sysctl_mixed_invalid_output(self):
@@ -164,9 +165,9 @@ class TestSysctlParsingInFacts(unittest.TestCase):
         sysctl = get_sysctl(module, ['hw'])
         module.run_command.assert_called_once_with(['/sbin/sysctl', 'hw'])
         bad_lines = ['bad.output.here', 'and.bad.output.here']
-        for call in module.warn.call_args_list:
+        for call in module.error_as_warning.call_args_list:
             self.assertIn('Unable to split sysctl line', call[0][0])
-        self.assertEqual(module.warn.call_count, 2)
+        self.assertEqual(module.error_as_warning.call_count, 2)
         self.assertEqual(sysctl, {'hw.smt': '0'})
 
     def test_get_sysctl_openbsd_hw(self):

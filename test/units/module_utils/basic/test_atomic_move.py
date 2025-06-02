@@ -172,7 +172,6 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     with pytest.raises(Exception, match='Could not replace file') as err:
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
-    assert err.value.args[0].startswith('Could not replace file')
     assert isinstance(err.value.__cause__, OSError)
     assert err.value.__cause__.errno == errno.EIO
     assert err.value.__cause__.strerror == 'failing with EIO'
@@ -188,15 +187,8 @@ def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, 
     atomic_mocks['mkstemp'].side_effect = OSError()
     atomic_am.selinux_enabled.return_value = False
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(Exception, match='is not writable by the current user'):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
-
-    out, err = capfd.readouterr()
-    results = json.loads(out)
-
-    assert 'is not writable by the current user' in results['msg']
-    assert results['failed']
-
 
 @pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])
 def test_rename_perms_fail_temp_succeeds(atomic_am, atomic_mocks, fake_stat, mocker, selinux):
