@@ -11,7 +11,7 @@
     content: |
       x86_64
     dest: /etc/dnf/vars/arch
-  when: dnf5|default(false)
+  when: dnf5
 
 - block:
     - name: test that only evr is compared, avoiding a situation when a specific arch would be considered as a "newer" package

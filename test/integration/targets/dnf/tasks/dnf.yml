@@ -896,4 +896,4 @@
           - '"No matches were found for the following plugin name patterns while disabling libdnf5 plugins: " in disable_plugin_result.msg'
           - '"nonexisting" in enable_plugin_result.msg'
           - '"nonexisting" in disable_plugin_result.msg'
-  when: dnf5|default(false)
+  when: dnf5

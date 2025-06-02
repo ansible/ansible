@@ -128,7 +128,7 @@
       register: res
 
     - vars:
-        pkg_state: '{{ "Downgrade:" if dnf5|default(false) else "Installed:" }}'
+        pkg_state: '{{ "Downgrade:" if dnf5 else "Installed:" }}'
       assert:
         that:
           - res is changed
@@ -181,7 +181,7 @@
       register: res
 
     - vars:
-          pkg_state: '{{ "Downgrade:" if dnf5|default(false) else "Installed:" }}'
+          pkg_state: '{{ "Downgrade:" if dnf5 else "Installed:" }}'
       assert:
         that:
           - res is changed
@@ -309,7 +309,7 @@
       # skip_broken and skip_unavailable.
       # TODO: for this test to pass on dnf5 the skip_unavailable option would have to be
       # added to the dnf5 module and used here instead of skip_broken.
-      when: not dnf5|default(false)
+      when: not dnf5
 
   always:
     - name: Remove all test packages installed
