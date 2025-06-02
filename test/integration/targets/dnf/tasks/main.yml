@@ -1,64 +1,74 @@
-# test code for the dnf module
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- set_fact:
+    dnf5: "{{ (ansible_distribution == 'RedHat' and ansible_distribution_major_version | int > 10) or ansible_distribution == 'Fedora' }}"
 
-- when: dnf5 | default(False)
+- when: dnf5
   block:
-  - block:
-      - include_tasks: dnf.yml
-      - include_tasks: skip_broken_and_nobest.yml
-      - block:
-          - include_tasks: filters.yml
-          - include_tasks: filters_check_mode.yml
-        tags:
-          - filters
-      - include_tasks: gpg.yml
-      - include_tasks: repo.yml
-      - include_tasks: dnf_group_remove.yml
-      - include_tasks: dnfinstallroot.yml
-      - include_tasks: logging.yml
-      - include_tasks: cacheonly.yml
-      - include_tasks: multilib.yml
-    when: ansible_distribution in ['Fedora', 'RedHat']
+    - command: "dnf install -y 'dnf-command(copr)'"
+    - name: Test against dnf5 nightly build to detect any issues early
+      command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
 
-  # Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
-  - include_tasks: dnfreleasever.yml
-    when: ansible_distribution == 'Fedora'
+    - name: Ensure module deps are not installed
+      command: dnf remove -y python3-libdnf5
 
-  - when:
-      - ansible_distribution == 'RedHat'
-      - not dnf5|default(false)
-    block:
-      # FUTURE - look at including AppStream support in our local repo
-      - name: list modules
-        command: dnf module list -q
-        register: module_list
+    - name: Test the auto_install_module_deps option
+      dnf5:
+        name: sos
+        auto_install_module_deps: false
+      register: r
+      ignore_errors: true
 
-      # A module that only has a single version
-      - name: Find a module that meets our testing needs
-        set_fact:
-          astream_name: '@{{ module.name }}:{{ module.version }}/{{ module.profile }}'
-          astream_name_no_stream: '@{{ module.name }}/{{ module.profile }}'
-        vars:
-          module: '{{ module_list.stdout|get_first_single_version_module }}'
+    - assert:
+        that:
+          - r is failed
+          - r.msg is contains("Could not import the libdnf5 python module")
 
-      - include_tasks: modularity.yml
-        tags:
-          - dnf_modularity
-    rescue:
-      # Just in case something crazy happens when listing or parsing modules
-      - meta: noop
+    # Now the first dnf5 task in the integration tests should auto install python3-libdnf5 as
+    # auto_install_module_deps is true by default.
+
+- when: ansible_distribution in ['RedHat', 'Fedora']
+  block:
+    - include_tasks: dnf.yml
+    - include_tasks: skip_broken_and_nobest.yml
+    - block:
+        - include_tasks: filters.yml
+        - include_tasks: filters_check_mode.yml
+      tags:
+        - filters
+    - include_tasks: gpg.yml
+    - include_tasks: repo.yml
+    - include_tasks: dnf_group_remove.yml
+    - include_tasks: dnfinstallroot.yml
+    - include_tasks: logging.yml
+    - include_tasks: cacheonly.yml
+    - include_tasks: multilib.yml
+
+# Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
+- include_tasks: dnfreleasever.yml
+  when: ansible_distribution == 'Fedora'
+
+- when:
+    - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version | int == 9
+  block:
+    # FUTURE - look at including AppStream support in our local repo
+    - name: list modules
+      command: dnf module list -q
+      register: module_list
+
+    # A module that only has a single version
+    - name: Find a module that meets our testing needs
+      set_fact:
+        astream_name: '@{{ module.name }}:{{ module.version }}/{{ module.profile }}'
+        astream_name_no_stream: '@{{ module.name }}/{{ module.profile }}'
+      vars:
+        module: '{{ module_list.stdout|get_first_single_version_module }}'
+
+    - include_tasks: modularity.yml
+      tags:
+        - dnf_modularity
+  rescue:
+    # Just in case something crazy happens when listing or parsing modules
+    - meta: noop
