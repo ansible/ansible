@@ -44,7 +44,7 @@ DOCUMENTATION:
       description: The C(item) and C(key) separator to be used in the serialized output,
                    default may change depending on O(indent) and Python version.
       default: "[',', ': ']"
-      type: tuple
+      type: list
     skipkeys:
       description: If V(True), keys that are not basic Python types will be skipped.
       default: False
