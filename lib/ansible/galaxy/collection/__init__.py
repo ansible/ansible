@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from io import BytesIO
 from importlib.metadata import distribution
+from importlib.resources import files
 from itertools import chain
 
 try:
@@ -85,7 +86,6 @@ if t.TYPE_CHECKING:
     FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
 import ansible.constants as C
-from ansible.compat.importlib_resources import files
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
@@ -1433,9 +1433,6 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
     :param path: Collection dirs layout search path.
     :param artifacts_manager: Artifacts manager.
     """
-    if files is None:
-        raise AnsibleError('importlib_resources is not installed and is required')
-
     if path_filter and not is_sequence(path_filter):
         path_filter = [path_filter]
     if namespace_filter and not is_sequence(namespace_filter):
