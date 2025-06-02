@@ -361,7 +361,7 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
             # if we already moved the .git dir, roll it back
             if os.path.exists(repo_dir):
                 shutil.move(repo_dir, old_repo_dir)
-            module.fail_json(msg='Unable to move git dir.', exception=ex)
+            raise Exception('Unable to move git dir.') from ex
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):

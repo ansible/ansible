@@ -497,11 +497,10 @@ class AnsibleModule(object):
             try:
                 tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
             except OSError as ex:
-                self.fail_json(
+                raise Exception(
                     f"Failed to create remote module tmp path at dir {basedir!r} "
                     f"with prefix {basefile!r}",
-                    exception=ex,
-                )
+                ) from ex
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
@@ -1661,7 +1660,7 @@ class AnsibleModule(object):
             try:
                 self.preserved_copy(fn, backupdest)
             except (shutil.Error, OSError) as ex:
-                self.fail_json(f'Could not make backup of {fn!r} to {backupdest!r}', exception=ex)
+                raise Exception(f'Could not make backup of {fn!r} to {backupdest!r}') from ex
 
         return backupdest
 
@@ -1751,10 +1750,9 @@ class AnsibleModule(object):
                     if unsafe_writes:
                         self._unsafe_writes(b_src, b_dest)
                     else:
-                        self.fail_json(
-                            f'The destination directory {os.path.dirname(dest)!r} is not writable by the current user.',
-                            exception=ex,
-                        )
+                        raise Exception(
+                            f'The destination directory {os.path.dirname(dest)!r} is not writable by the current user.'
+                        ) from ex
 
                 if tmp_dest_name:
                     b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
@@ -1792,18 +1790,14 @@ class AnsibleModule(object):
                                 if unsafe_writes and ex.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(
-                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {b_tmp_dest_name!r}',
-                                        exception=ex,
-                                    )
+                                    raise Exception(
+                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {b_tmp_dest_name!r}'
+                                    ) from ex
                         except (shutil.Error, OSError) as ex:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                self.fail_json(
-                                    f'Failed to replace file: {src!r} to {dest!r}',
-                                    exception=ex,
-                                )
+                                raise Exception(f'Failed to replace file: {src!r} to {dest!r}') from ex
                     finally:
                         self.cleanup(b_tmp_dest_name)
             else:
@@ -1838,10 +1832,7 @@ class AnsibleModule(object):
                 with open(src, 'rb') as in_src:
                     shutil.copyfileobj(in_src, out_dest)
         except (shutil.Error, OSError) as ex:
-            self.fail_json(
-                f'Could not write data to file {dest!r} from {src!r}',
-                exception=ex,
-            )
+            raise Exception(f'Could not write data to file {dest!r} from {src!r}') from ex
 
     def _clean_args(self, args):
 

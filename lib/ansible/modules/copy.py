@@ -637,7 +637,7 @@ def main():
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'], keep_dest_attrs=not remote_src)
 
             except OSError as ex:
-                module.fail_json(msg=f"Failed to copy {src!r} to {dest!r}.", exception=ex)
+                raise Exception(f"Failed to copy {src!r} to {dest!r}.") from ex
         changed = True
 
     # If neither have checksums, both src and dest are directories.

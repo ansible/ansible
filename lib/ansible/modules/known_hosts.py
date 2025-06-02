@@ -171,7 +171,7 @@ def enforce_state(module, params):
         except FileNotFoundError:
             inf = None
         except OSError as ex:
-            module.fail_json(f"Failed to read {path!r}.", exception=ex)
+            raise Exception(f"Failed to read {path!r}.") from ex
         try:
             with tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path), delete=False) as outf:
                 if inf is not None:
@@ -183,7 +183,7 @@ def enforce_state(module, params):
                 if state == 'present':
                     outf.write(key)
         except OSError as ex:
-            module.fail_json(f"Failed to write to file {path!r}.", exception=ex)
+            raise Exception(f"Failed to write to file {path!r}.") from ex
         else:
             module.atomic_move(outf.name, path)
 
@@ -219,7 +219,7 @@ def sanity_check(module, host, key, sshkeygen):
             outf.write(key)
             outf.flush()
         except OSError as ex:
-            module.fail_json(f"Failed to write to temporary file {outf.name!r}.", exception=ex)
+            raise Exception(f"Failed to write to temporary file {outf.name!r}.") from ex
 
         sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
         rc, stdout, stderr = module.run_command(sshkeygen_command)

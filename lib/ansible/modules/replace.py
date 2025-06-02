@@ -257,7 +257,7 @@ def main():
             with open(path, 'rb') as f:
                 contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
         except OSError as ex:
-            module.fail_json(f"Unable to read the contents of {path!r}.", exception=ex)
+            raise Exception(f"Unable to read the contents of {path!r}.") from ex
 
     pattern = u''
     if params['after'] and params['before']:

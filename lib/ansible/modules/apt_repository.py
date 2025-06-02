@@ -334,7 +334,7 @@ class SourcesList(object):
                 try:
                     fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
                 except OSError as ex:
-                    self.module.fail_json(msg=f'Unable to create temp file at {d!r} for apt source.', exception=ex)
+                    raise Exception(f'Unable to create temp file at {d!r} for apt source.') from ex
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
@@ -351,7 +351,7 @@ class SourcesList(object):
                     try:
                         f.write(line)
                     except OSError as ex:
-                        self.module.fail_json(msg=f"Failed to write to file {tmp_path!r}.", exception=ex)
+                        raise Exception(f"Failed to write to file {tmp_path!r}.") from ex
                 if filename in self.files_mapping:
                     # Write to symlink target instead of replacing symlink as a normal file
                     self.module.atomic_move(tmp_path, self.files_mapping[filename])
@@ -754,7 +754,7 @@ def main():
 
         except OSError as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
-            module.fail_json(msg=to_native(ex), exception=ex)
+            raise ex
 
     module.exit_json(changed=changed, repo=repo, sources_added=sources_added, sources_removed=sources_removed, state=state, diff=diff)
 
