@@ -109,7 +109,7 @@ def main():
         else:
             msg = "unable to slurp file"
 
-        module.fail_json(msg, exception=ex)
+        raise Exception(msg) from ex
 
     module.exit_json(content=data, source=source, encoding='base64')
 
