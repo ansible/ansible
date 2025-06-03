@@ -458,7 +458,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_parents(self):
         return self._parents
 
-
     def get_dep_chain(self):
         dep_chain = []
         for parent in self._parents:
