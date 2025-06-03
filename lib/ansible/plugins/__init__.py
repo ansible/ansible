@@ -189,28 +189,3 @@ class AnsibleJinja2Plugin(AnsiblePlugin, metaclass=abc.ABCMeta):
     @property
     def j2_function(self) -> t.Callable:
         return self._function
-
-
-_TCallable = t.TypeVar('_TCallable', bound=t.Callable)
-
-
-def accept_args_markers(plugin: _TCallable) -> _TCallable:
-    """
-    A decorator to mark a Jinja plugin as capable of handling `Marker` values for its top-level arguments.
-    Non-decorated plugin invocation is skipped when a top-level argument is a `Marker`, with the first such value substituted as the plugin result.
-    This ensures that only plugins which understand `Marker` instances for top-level arguments will encounter them.
-    """
-    plugin.accept_args_markers = True
-
-    return plugin
-
-
-def accept_lazy_markers(plugin: _TCallable) -> _TCallable:
-    """
-    A decorator to mark a Jinja plugin as capable of handling `Marker` values retrieved from lazy containers.
-    Non-decorated plugins will trigger a `MarkerError` exception when attempting to retrieve a `Marker` from a lazy container.
-    This ensures that only plugins which understand lazy retrieval of `Marker` instances will encounter them.
-    """
-    plugin.accept_lazy_markers = True
-
-    return plugin

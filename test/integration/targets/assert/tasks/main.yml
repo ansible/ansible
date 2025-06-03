@@ -44,15 +44,27 @@
     - that: 1 == 1
     - that: a_var == "one"
     - that: '{{ a_var == "one" }}'
-# DTFIX1: loops are not lazily templated, so this is not possible today, but could be in the future
-#    - that: |
-#        "hi mom" == '{{ "hi mom" }}'
     - that:
         - 1 == 1
         - 2 == 2
         - a_var == "one"
         - '{{ a_var == "one" }}'
 
+- name: arg splat loopable failure case
+  assert: '{{ item }}'
+  args:
+    quiet: yes
+  ignore_errors: true
+  loop:
+    - that: |
+        "hi mom" == '{{ "hi mom" }}'  # not implemented; requires lazy loop templating
+  register: loop_fail
+
+- name: check results from previous assert failures
+  assert:
+    that:
+      - loop_fail is failed
+      - loop_fail.results[0].msg is contains "untrusted"
 
 - name: arg splat fail cases
   assert: '{{ item }}'

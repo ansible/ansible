@@ -280,8 +280,6 @@ class CallbackBase(AnsiblePlugin):
             # that want to further modify the result, or use custom serialization
             return abridged_result
 
-        # DTFIX0: Switch to stock json/yaml serializers here? We should always have a transformed plain-types result.
-
         if result_format == 'json':
             return json.dumps(abridged_result, cls=_fallback_to_str.Encoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 

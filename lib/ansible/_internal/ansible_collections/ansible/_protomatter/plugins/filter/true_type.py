@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ansible.plugins import accept_args_markers
+from ansible.template import accept_args_markers
 
 
 @accept_args_markers

@@ -34,7 +34,7 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native, to_
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins import accept_args_markers, accept_lazy_markers
+from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
 from ansible.utils.display import Display
 from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
@@ -824,5 +824,3 @@ class FilterModule(object):
             'reject': wrapped_reject,
             'rejectattr': wrapped_rejectattr,
         }
-
-# DTFIX1: document protomatter plugins, or hide them from ansible-doc/galaxy (not related to this code, but needed some place to put this comment)

@@ -31,7 +31,7 @@ from ansible import errors
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible._internal._templating._jinja_common import Marker, UndefinedMarker
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.plugins import accept_args_markers
+from ansible.template import accept_args_markers
 from ansible.parsing.vault import is_encrypted_file, VaultHelper, VaultLib
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion

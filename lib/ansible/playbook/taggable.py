@@ -45,9 +45,6 @@ class Taggable:
             return ds
 
         if isinstance(ds, str):
-            # DTFIX0: this allows each individual tag to be templated, but prevents the use of commas in templates, is that what we want?
-            # DTFIX0: this can return empty tags (including a list of nothing but empty tags), is that correct?
-            # DTFIX0: the original code seemed to attempt to preserve `ds` if there were no commas, but it never ran, what should it actually do?
             return [AnsibleTagHelper.tag_copy(ds, item.strip()) for item in ds.split(',')]
 
         raise AnsibleError('tags must be specified as a list', obj=ds)
