@@ -41,6 +41,8 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
             '__ansible_vault': _functools.partial(cls.unsupported_target_type_error, '__ansible_vault'),
         }
 
+        cls.handle_key = cls._handle_key_str_fallback  # type: ignore[method-assign]  # legacy stdlib-compatible key behavior
+
 
 class Encoder(_profiles.AnsibleProfileJSONEncoder):
     _profile = _Profile

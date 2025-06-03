@@ -152,6 +152,8 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
             '__ansible_vault': cls.deserialize_vault,
         }
 
+        cls.handle_key = cls._handle_key_str_fallback  # type: ignore[method-assign]  # legacy stdlib-compatible key behavior
+
     @classmethod
     def pre_serialize(cls, encoder: Encoder, o: _t.Any) -> _t.Any:
         # DTFIX7: these conversion args probably aren't needed
@@ -164,16 +166,6 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
         avv = cls.visitor_type(trusted_as_template=decoder._trusted_as_template, origin=decoder._origin)
 
         return avv.visit(o)
-
-    @classmethod
-    def handle_key(cls, k: _t.Any) -> _t.Any:
-        if isinstance(k, str):
-            return k
-
-        # DTFIX3: decide if this is a deprecation warning, error, or what?
-        #  Non-string variable names have been disallowed by set_fact and other things since at least 2021.
-        # DTFIX5: document why this behavior is here, also verify the legacy tagless use case doesn't need this same behavior
-        return str(k)
 
 
 class Encoder(_profiles.AnsibleProfileJSONEncoder):

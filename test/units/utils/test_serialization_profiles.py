@@ -54,6 +54,10 @@ basic_values = (
     CustomMapping(dict(a=1)),
     {(1, 2): "three"},  # hashable non-scalar key
     {frozenset((1, 2)): "three"},  # hashable non-scalar key
+    {1: "two"},  # int key
+    {1.1: "two"},  # float key
+    {True: "two"},  # bool key
+    {None: "two"},  # None key
 )
 
 # DTFIX5: we need tests for recursion, specifically things like custom sequences and mappings when:
@@ -83,7 +87,7 @@ def test_cache_persistence_schema() -> None:
     # DTFIX5: ensure all types/attrs included in _profiles._common_module_response_types are represented here, since they can appear in cached responses
 
     expected_schema_id = 1
-    expected_schema_hash = "bf52e60cf1d25a3f8b6bfdf734781ee07cfe46e94189d2f538815c5000b617c6"
+    expected_schema_hash = "0bc4bec94abe6ec0f62fc9f45ea1099ea65b13f00a5e5de1699e0dbcf0de2b2c"
 
     test_hash = hashlib.sha256()
     test_hash.update(pathlib.Path(DataSet.PROFILE_DIR / _cache_persistence._Profile.profile_name).with_suffix('.txt').read_bytes())

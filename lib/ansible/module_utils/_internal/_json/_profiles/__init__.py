@@ -204,12 +204,26 @@ class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
 
     @classmethod
     def handle_key(cls, k: t.Any) -> t.Any:
+        """Validation/conversion hook before a dict key is serialized. The default implementation only accepts str-typed keys."""
         # NOTE: Since JSON requires string keys, there is no support for preserving tags on dictionary keys during serialization.
 
         if not isinstance(k, str):  # DTFIX-FUTURE: optimize this to use all known str-derived types in type map / allowed types
             raise TypeError(f'Key of type {type(k).__name__!r} is not JSON serializable by the {cls.profile_name!r} profile.')
 
         return k
+
+    @classmethod
+    def _handle_key_str_fallback(cls, k: t.Any) -> t.Any:
+        """Legacy implementations should use this key handler for backward compatibility with stdlib JSON key conversion quirks."""
+        # DTFIX-FUTURE: optimized exact-type table lookup first
+
+        if isinstance(k, str):
+            return k
+
+        if k is None or isinstance(k, (int, float)):
+            return json.dumps(k)
+
+        raise TypeError(f'Key of type {type(k).__name__!r} is not JSON serializable by the {cls.profile_name!r} profile.')
 
     @classmethod
     def default(cls, o: t.Any) -> t.Any:
