@@ -9,9 +9,6 @@ releases:
         in TOML format.
       - assert - The ``quiet`` argument must be a commonly-accepted boolean value.
         Previously, unrecognized values were silently treated as False.
-      - callback plugins - The structure of the ``exception``, ``warnings`` and ``deprecations``
-        values visible to callbacks has changed. Callbacks that inspect or serialize
-        these values may require special handling.
       - conditionals - Conditional expressions that result in non-boolean values are
         now an error by default. Such results often indicate unintentional use of
         templates where they are not supported, resulting in a conditional that is
@@ -39,7 +36,7 @@ releases:
         loop items after templating and be used as an ``omit`` for task templating.
         Now, values resolving to ``omit`` are dropped immediately when loop items
         are templated. To turn missing values into an ``omit`` for task templating,
-        use ``| default(omit)``. This solution is backwards compatible with previous
+        use ``| default(omit)``. This solution is backward-compatible with previous
         versions of ansible-core.
       - modules - Ansible modules using ``sys.excepthook`` must use a standard ``try/except``
         instead.
@@ -247,9 +244,6 @@ releases:
         used by a task that does not override them. Previously, all module defaults
         for all modules were templated for every task.
       - module respawn - limit to supported Python versions
-      - omitting task args - Use of omit for task args now properly falls back to
-        args of lower precedence, such as module defaults. Previously an omitted value
-        would obliterate values of lower precedence.
       - package_facts module when using 'auto' will return the first package manager
         found that provides an output, instead of just the first one, as this can
         be foreign and not have any packages.
@@ -360,8 +354,6 @@ releases:
       - plugin error handling - The ``AnsibleError`` constructor arg ``suppress_extended_error``
         is deprecated. Using ``suppress_extended_error=True`` has the same effect
         as ``show_content=False``.
-      - plugins - The ``listify_lookup_plugin_terms`` function is obsolete and in
-        most cases no longer needed.
       - template lookup - The jinja2_native option is no longer used in the Ansible
         Core code base. Jinja2 native mode is now the default and only option.
       - templating - Support for enabling Jinja2 extensions (not plugins) has been
@@ -375,15 +367,6 @@ releases:
         is deprecated. Set `dump_vault_tags` to explicitly specify the desired behavior.
       - tree callback - The ``tree`` callback and its associated ad-hoc CLI args (``-t``,
         ``--tree``) are deprecated.
-      known_issues:
-      - templating - Any string value starting with ``#jinja2:`` which is templated
-        will always be interpreted as Jinja2 configuration overrides. To include this
-        literal value at the start of a string, a space or other character must precede
-        it.
-      - variables - Tagged values cannot be used for dictionary keys in many circumstances.
-      - variables - The values ``None``, ``True`` and ``False`` cannot be tagged because
-        they are singletons. Attempts to apply tags to these values will be silently
-        ignored.
       major_changes:
       - Jinja plugins - Jinja builtin filter and test plugins are now accessible via
         their fully-qualified names ``ansible.builtin.{name}``.
@@ -395,7 +378,7 @@ releases:
         files.
       - variables - The type system underlying Ansible's variable storage has been
         significantly overhauled and formalized. Attempts to store unsupported Python
-        object types in variables will now result in an error.
+        object types in variables now more consistently yields early warnings or errors.
       - variables - To support new Ansible features, many variable objects are now
         represented by subclasses of their respective native Python types. In most
         cases, they behave indistinguishably from their original types, but some Python
@@ -911,3 +894,116 @@ releases:
     - remove-warnings-retval.yml
     - template-none.yml
     release_date: '2025-05-12'
+  2.19.0b5:
+    changes:
+      bugfixes:
+      - Core Jinja test plugins - Builtin test plugins now always return ``bool``
+        to avoid spurious deprecation warnings for some malformed inputs.
+      - ansible-test - Disabled the ``bad-super-call`` pylint rule due to false positives.
+      - ansible-test - Fix incorrect handling of options with optional args (e.g.
+        ``--color``), when followed by other options which are omitted during arg
+        filtering (e.g. ``--docker``). Previously it was possible for non-option arguments
+        to be incorrectly omitted in these cases. (https://github.com/ansible/ansible/issues/85173)
+      - ansible-test - Improve type inference for pylint deprecated checks to accommodate
+        some type annotations.
+      - async_status module - The ``started`` and ``finished`` return values are now
+        ``True`` or ``False`` instead of ``1`` or ``0``.
+      - constructed inventory - Use the ``default_value`` or ``trailing_separator``
+        in a ``keyed_groups`` entry if the expression result of ``key`` is ``None``
+        and not just an empty string.
+      - dnf5 - handle all libdnf5 specific exceptions (https://github.com/ansible/ansible/issues/84634)
+      - error handling - Error details and tracebacks from connection and built-in
+        action exceptions are preserved. Previously, much of the detail was lost or
+        mixed into the error message.
+      - from_yaml_all filter - `None` and empty string inputs now always return an
+        empty list. Previously, `None` was returned in Jinja native mode and empty
+        list in classic mode.
+      - local connection plugin - The command-line used to create subprocesses is
+        now always ``str`` to avoid issues with debuggers and profilers.
+      - ssh agent - Fixed several potential startup hangs for badly-behaved or overloaded
+        ssh agents.
+      - task timeout - Specifying a negative task timeout now results in an error.
+      deprecated_features:
+      - The ``ShellModule.checksum`` method is now deprecated and will be removed
+        in ansible-core 2.23. Use ``ActionBase._execute_remote_stat()`` instead.
+      - The ``ansible.module_utils.common.collections.count()`` function is deprecated
+        and will be removed in ansible-core 2.23. Use ``collections.Counter()`` from
+        the Python standard library instead.
+      - '``ansible.compat.importlib_resources`` is deprecated and will be removed
+        in ansible-core 2.23. Use ``importlib.resources`` from the Python standard
+        library instead.'
+      minor_changes:
+      - Improved SUSE distribution detection in distribution.py by parsing VARIANT_ID
+        from /etc/os-release for identifying SLES_SAP and SL-Micro. Falls back to
+        /etc/products.d/baseproduct symlink for older systems.
+      - Remove unnecessary shebang from the ``hostname`` module.
+      - Use ``importlib.metadata.version()`` to detect Jinja version as jinja2.__version__
+        is deprecated and will be removed in Jinja 3.3.
+      - ansible-doc - Return dynamic stub when reporting on Jinja filters and tests
+        not explicitly documented in Ansible
+      - ansible-doc - Skip listing the internal ``ansible._protomatter`` plugins unless
+        explicitly requested
+      - ansible-test - Add RHEL 10.0 as a remote platform for testing.
+      - apt_repository - remove Python 2 support
+      - csvfile lookup - remove Python 2 compat
+      - display - Add ``help_text`` and ``obj`` to ``Display.error_as_warning``.
+      - display - Replace Windows newlines (``\r\n``) in display output with Unix
+        newlines (``\n``). This ensures proper display of strings sourced from Windows
+        hosts in environments which treat ``\r`` as ``\n``, such as Azure Pipelines.
+      - facts - add "Linode" for Linux VM in virtual facts
+      - module_utils - Add ``AnsibleModule.error_as_warning``.
+      - module_utils - Add ``ansible.module_utils.common.warnings.error_as_warning``.
+      - module_utils - Add optional ``help_text`` argument to ``AnsibleModule.warn``.
+      - ssh agent - Added ``SSH_AGENT_EXECUTABLE`` config to allow override of ssh-agent.
+      - ssh connection plugin - Added ``verbosity`` config to decouple SSH debug output
+        verbosity from Ansible verbosity. Previously, the Ansible verbosity value
+        was always applied to the SSH client command-line, leading to excessively
+        verbose output. Set the ``ANSIBLE_SSH_VERBOSITY`` envvar or ``ansible_ssh_verbosity``
+        Ansible variable to a positive integer to increase SSH client verbosity.
+      - task timeout - Specifying a timeout greater than 100,000,000 now results in
+        an error.
+      - templating - Added ``_ANSIBLE_TEMPLAR_SANDBOX_MODE=allow_unsafe_attributes``
+        environment variable to disable Jinja template attribute sandbox. (https://github.com/ansible/ansible/issues/85202)
+      - windows - Added support for ``#AnsibleRequires -Wrapper`` to request a PowerShell
+        module be run through the execution wrapper scripts without any module utils
+        specified.
+      - windows - Added support for running signed modules and scripts with a Windows
+        host protected by Windows App Control/WDAC. This is a tech preview and the
+        interface may be subject to change.
+      - windows - Script modules will preserve UTF-8 encoding when executing the script.
+      release_summary: '| Release Date: 2025-06-03
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.0b5_summary.yaml
+    - 84634-dnf5-all-exceptions.yml
+    - 85184-add-linode-for-linux-facts.yml
+    - ansible-doc-jinja-builtins.yml
+    - ansible-doc-protomatter.yml
+    - ansible-test-delegation-options.yml
+    - ansible-test-pylint-fix-inference.yml
+    - ansible-test-rhel-10.yml
+    - apt_repository-remove-py2-compat.yml
+    - async_really_true.yml
+    - constructed-default-value.yml
+    - deprecate-compat-importlib-resources.yml
+    - deprecate-shell-checksum.yml
+    - detect-variantid-suse.yaml
+    - display-windows-newline.yml
+    - from_yaml_all.yml
+    - jinja2-__version__-deprecated.yml
+    - local_popen_text.yml
+    - lookup-csvfile-remove-py2-compat.yml
+    - module_utils-common-collections-counter-deprecated.yml
+    - module_utils_warnings.yml
+    - sandbox_config.yml
+    - ssh_agent_misc.yml
+    - ssh_verbosity.yml
+    - task-error-and-timeout.yml
+    - truthy_tests.yml
+    - unnecessary-shebang.yml
+    - windows-app-control.yml
+    release_date: '2025-06-03'
