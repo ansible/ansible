@@ -277,13 +277,12 @@ class VaultExceptionMarker(ExceptionMarker):
 
 def get_first_marker_arg(args: c.Sequence, kwargs: dict[str, t.Any]) -> Marker | None:
     """Utility method to inspect plugin args and return the first `Marker` encountered, otherwise `None`."""
-    # DTFIX0: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
+    # CAUTION: This function is exposed in public API as ansible.template.get_first_marker_arg.
     return next(iter_marker_args(args, kwargs), None)
 
 
 def iter_marker_args(args: c.Sequence, kwargs: dict[str, t.Any]) -> t.Generator[Marker]:
     """Utility method to iterate plugin args and yield any `Marker` encountered."""
-    # DTFIX0: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
     for arg in itertools.chain(args, kwargs.values()):
         if isinstance(arg, Marker):
             yield arg
