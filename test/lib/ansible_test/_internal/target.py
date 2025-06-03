@@ -578,7 +578,7 @@ class IntegrationTarget(CompletionTarget):
         aliases_path = os.path.join(path, 'aliases')
 
         if aliases_path in file_paths:
-            static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
+            static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True, strip=True))
         else:
             static_aliases = tuple()
 

@@ -294,7 +294,7 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
     return result
 
 
-def read_lines_without_comments(path: str, remove_blank_lines: bool = False, optional: bool = False) -> list[str]:
+def read_lines_without_comments(path: str, remove_blank_lines: bool = False, optional: bool = False, strip: bool = False) -> list[str]:
     """
     Returns lines from the specified text file with comments removed.
     Comments are any content from a hash symbol to the end of a line.
@@ -309,6 +309,9 @@ def read_lines_without_comments(path: str, remove_blank_lines: bool = False, opt
 
     if remove_blank_lines:
         lines = [line for line in lines if line]
+
+    if strip:
+        lines = [line.strip() for line in lines]
 
     return lines
 
