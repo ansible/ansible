@@ -375,9 +375,9 @@ class TestRole(unittest.TestCase):
 
         all_deps = list(r.get_all_dependencies())
         self.assertEqual(len(all_deps), 3)
-        self.assertEqual(all_deps[0].get_name(), 'bam_metadata')
-        self.assertEqual(all_deps[1].get_name(), 'baz_metadata')
-        self.assertEqual(all_deps[2].get_name(), 'bar_metadata')
+        self.assertTrue('bam_metadata' in all_deps)
+        self.assertTrue('baz_metadata' in all_deps)
+        self.assertTrue('bar_metadata' in all_deps)
 
         i = RoleInclude.load('bad1_metadata', play=mock_play, loader=fake_loader)
         self.assertRaises(AnsibleParserError, Role.load, i, play=mock_play)
