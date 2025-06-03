@@ -4,6 +4,63 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0b5
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2025-06-03
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- Improved SUSE distribution detection in distribution.py by parsing VARIANT_ID from /etc/os-release for identifying SLES_SAP and SL-Micro. Falls back to /etc/products.d/baseproduct symlink for older systems.
+- Remove unnecessary shebang from the ``hostname`` module.
+- Use ``importlib.metadata.version()`` to detect Jinja version as jinja2.__version__ is deprecated and will be removed in Jinja 3.3.
+- ansible-doc - Return dynamic stub when reporting on Jinja filters and tests not explicitly documented in Ansible
+- ansible-doc - Skip listing the internal ``ansible._protomatter`` plugins unless explicitly requested
+- ansible-test - Add RHEL 10.0 as a remote platform for testing.
+- apt_repository - remove Python 2 support
+- csvfile lookup - remove Python 2 compat
+- display - Add ``help_text`` and ``obj`` to ``Display.error_as_warning``.
+- display - Replace Windows newlines (``\r\n``) in display output with Unix newlines (``\n``). This ensures proper display of strings sourced from Windows hosts in environments which treat ``\r`` as ``\n``, such as Azure Pipelines.
+- facts - add "Linode" for Linux VM in virtual facts
+- module_utils - Add ``AnsibleModule.error_as_warning``.
+- module_utils - Add ``ansible.module_utils.common.warnings.error_as_warning``.
+- module_utils - Add optional ``help_text`` argument to ``AnsibleModule.warn``.
+- ssh agent - Added ``SSH_AGENT_EXECUTABLE`` config to allow override of ssh-agent.
+- ssh connection plugin - Added ``verbosity`` config to decouple SSH debug output verbosity from Ansible verbosity. Previously, the Ansible verbosity value was always applied to the SSH client command-line, leading to excessively verbose output. Set the ``ANSIBLE_SSH_VERBOSITY`` envvar or ``ansible_ssh_verbosity`` Ansible variable to a positive integer to increase SSH client verbosity.
+- task timeout - Specifying a timeout greater than 100,000,000 now results in an error.
+- templating - Added ``_ANSIBLE_TEMPLAR_SANDBOX_MODE=allow_unsafe_attributes`` environment variable to disable Jinja template attribute sandbox. (https://github.com/ansible/ansible/issues/85202)
+- windows - Added support for ``#AnsibleRequires -Wrapper`` to request a PowerShell module be run through the execution wrapper scripts without any module utils specified.
+- windows - Added support for running signed modules and scripts with a Windows host protected by Windows App Control/WDAC. This is a tech preview and the interface may be subject to change.
+- windows - Script modules will preserve UTF-8 encoding when executing the script.
+
+Deprecated Features
+-------------------
+
+- The ``ShellModule.checksum`` method is now deprecated and will be removed in ansible-core 2.23. Use ``ActionBase._execute_remote_stat()`` instead.
+- The ``ansible.module_utils.common.collections.count()`` function is deprecated and will be removed in ansible-core 2.23. Use ``collections.Counter()`` from the Python standard library instead.
+- ``ansible.compat.importlib_resources`` is deprecated and will be removed in ansible-core 2.23. Use ``importlib.resources`` from the Python standard library instead.
+
+Bugfixes
+--------
+
+- Core Jinja test plugins - Builtin test plugins now always return ``bool`` to avoid spurious deprecation warnings for some malformed inputs.
+- ansible-test - Disabled the ``bad-super-call`` pylint rule due to false positives.
+- ansible-test - Fix incorrect handling of options with optional args (e.g. ``--color``), when followed by other options which are omitted during arg filtering (e.g. ``--docker``). Previously it was possible for non-option arguments to be incorrectly omitted in these cases. (https://github.com/ansible/ansible/issues/85173)
+- ansible-test - Improve type inference for pylint deprecated checks to accommodate some type annotations.
+- async_status module - The ``started`` and ``finished`` return values are now ``True`` or ``False`` instead of ``1`` or ``0``.
+- constructed inventory - Use the ``default_value`` or ``trailing_separator`` in a ``keyed_groups`` entry if the expression result of ``key`` is ``None`` and not just an empty string.
+- dnf5 - handle all libdnf5 specific exceptions (https://github.com/ansible/ansible/issues/84634)
+- error handling - Error details and tracebacks from connection and built-in action exceptions are preserved. Previously, much of the detail was lost or mixed into the error message.
+- from_yaml_all filter - `None` and empty string inputs now always return an empty list. Previously, `None` was returned in Jinja native mode and empty list in classic mode.
+- local connection plugin - The command-line used to create subprocesses is now always ``str`` to avoid issues with debuggers and profilers.
+- ssh agent - Fixed several potential startup hangs for badly-behaved or overloaded ssh agents.
+- task timeout - Specifying a negative task timeout now results in an error.
+
 v2.19.0b4
 =========
 
@@ -108,7 +165,7 @@ Major Changes
 - Jinja plugins - Jinja builtin filter and test plugins are now accessible via their fully-qualified names ``ansible.builtin.{name}``.
 - Task Execution / Forks - Forks no longer inherit stdio from the parent ``ansible-playbook`` process. ``stdout``, ``stderr``, and ``stdin`` within a worker are detached from the terminal, and non-functional. All needs to access stdio from a fork for controller side plugins requires use of ``Display``.
 - ansible-test - Packages beneath ``module_utils`` can now contain ``__init__.py`` files.
-- variables - The type system underlying Ansible's variable storage has been significantly overhauled and formalized. Attempts to store unsupported Python object types in variables will now result in an error.
+- variables - The type system underlying Ansible's variable storage has been significantly overhauled and formalized. Attempts to store unsupported Python object types in variables now more consistently yields early warnings or errors.
 - variables - To support new Ansible features, many variable objects are now represented by subclasses of their respective native Python types. In most cases, they behave indistinguishably from their original types, but some Python libraries do not handle builtin object subclasses properly. Custom plugins that interact with such libraries may require changes to convert and pass the native types.
 
 Minor Changes
@@ -215,7 +272,6 @@ Breaking Changes / Porting Guide
 
 - Support for the ``toml`` library has been removed from TOML inventory parsing and dumping. Use ``tomli`` for parsing on Python 3.10. Python 3.11 and later have built-in support for parsing. Use ``tomli-w`` to support outputting inventory in TOML format.
 - assert - The ``quiet`` argument must be a commonly-accepted boolean value. Previously, unrecognized values were silently treated as False.
-- callback plugins - The structure of the ``exception``, ``warnings`` and ``deprecations`` values visible to callbacks has changed. Callbacks that inspect or serialize these values may require special handling.
 - conditionals - Conditional expressions that result in non-boolean values are now an error by default. Such results often indicate unintentional use of templates where they are not supported, resulting in a conditional that is always true. When this option is enabled, conditional expressions which are a literal ``None`` or empty string will evaluate as true, for backwards compatibility. The error can be temporarily changed to a deprecation warning by enabling the ``ALLOW_BROKEN_CONDITIONALS`` config option.
 - first_found lookup - When specifying ``files`` or ``paths`` as a templated list containing undefined values, the undefined list elements will be discarded with a warning. Previously, the entire list would be discarded without any warning.
 - internals - The ``AnsibleLoader`` and ``AnsibleDumper`` classes for working with YAML are now factory functions and cannot be extended.
@@ -223,7 +279,7 @@ Breaking Changes / Porting Guide
 - inventory - Invalid variable names provided by inventories result in an inventory parse failure. This behavior is now consistent with other variable name usages throughout Ansible.
 - lookup plugins - Lookup plugins called as `with_(lookup)` will no longer have the `_subdir` attribute set.
 - lookup plugins - ``terms`` will always be passed to ``run`` as the first positional arg, where previously it was sometimes passed as a keyword arg when using ``with_`` syntax.
-- loops - Omit placeholders no longer leak between loop item templating and task templating. Previously, ``omit`` placeholders could remain embedded in loop items after templating and be used as an ``omit`` for task templating. Now, values resolving to ``omit`` are dropped immediately when loop items are templated. To turn missing values into an ``omit`` for task templating, use ``| default(omit)``. This solution is backwards compatible with previous versions of ansible-core.
+- loops - Omit placeholders no longer leak between loop item templating and task templating. Previously, ``omit`` placeholders could remain embedded in loop items after templating and be used as an ``omit`` for task templating. Now, values resolving to ``omit`` are dropped immediately when loop items are templated. To turn missing values into an ``omit`` for task templating, use ``| default(omit)``. This solution is backward-compatible with previous versions of ansible-core.
 - modules - Ansible modules using ``sys.excepthook`` must use a standard ``try/except`` instead.
 - plugins - Any plugin that sources or creates templates must properly tag them as trusted.
 - plugins - Custom Jinja plugins that accept undefined top-level arguments must opt in to receiving them.
@@ -264,7 +320,6 @@ Deprecated Features
 - paramiko - The paramiko connection plugin has been deprecated with planned removal in 2.21.
 - playbook variables - The ``play_hosts`` variable has been deprecated, use ``ansible_play_batch`` instead.
 - plugin error handling - The ``AnsibleError`` constructor arg ``suppress_extended_error`` is deprecated. Using ``suppress_extended_error=True`` has the same effect as ``show_content=False``.
-- plugins - The ``listify_lookup_plugin_terms`` function is obsolete and in most cases no longer needed.
 - template lookup - The jinja2_native option is no longer used in the Ansible Core code base. Jinja2 native mode is now the default and only option.
 - templating - Support for enabling Jinja2 extensions (not plugins) has been deprecated.
 - templating - The ``ansible_managed`` variable available for certain templating scenarios, such as the ``template`` action and ``template`` lookup has been deprecated. Define and use a custom variable instead of relying on ``ansible_managed``.
@@ -377,7 +432,6 @@ Bugfixes
 - module arg templating - When using a templated raw task arg and a templated ``args`` keyword, args are now merged. Previously use of templated raw task args silently ignored all values from the templated ``args`` keyword.
 - module defaults - Module defaults are no longer templated unless they are used by a task that does not override them. Previously, all module defaults for all modules were templated for every task.
 - module respawn - limit to supported Python versions
-- omitting task args - Use of omit for task args now properly falls back to args of lower precedence, such as module defaults. Previously an omitted value would obliterate values of lower precedence.
 - package_facts module when using 'auto' will return the first package manager found that provides an output, instead of just the first one, as this can be foreign and not have any packages.
 - psrp - Improve stderr parsing when running raw commands that emit error records or stderr lines.
 - regex_search filter - Corrected return value documentation to reflect None (not empty string) for no match.
@@ -407,10 +461,3 @@ Bugfixes
 - user module now avoids changing ownership of files symlinked in provided home dir skeleton
 - vars lookup - The ``default`` substitution only applies when trying to look up a variable which is not defined. If the variable is defined, but templates to an undefined value, the ``default`` substitution will not apply. Use the ``default`` filter to coerce those values instead.
 - wait_for_connection - a warning was displayed if any hosts used a local connection (https://github.com/ansible/ansible/issues/84419)
-
-Known Issues
-------------
-
-- templating - Any string value starting with ``#jinja2:`` which is templated will always be interpreted as Jinja2 configuration overrides. To include this literal value at the start of a string, a space or other character must precede it.
-- variables - Tagged values cannot be used for dictionary keys in many circumstances.
-- variables - The values ``None``, ``True`` and ``False`` cannot be tagged because they are singletons. Attempts to apply tags to these values will be silently ignored.
