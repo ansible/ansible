@@ -555,7 +555,7 @@
     that:
       - "'what in the WORLD is up?'|password_hash|length in (120, 106)"
       - password_hash_1 is failed
-      - "'Failed to encrypt the password' in password_hash_1.msg"
+      - "'salt_size must be an integer' in password_hash_1.msg"
       - password_hash_2 is failed
       - "'is not in the list of supported passlib algorithms' in password_hash_2.msg"
       - password_hash_3 is failed
