@@ -149,6 +149,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible._internal._templating import _jinja_common
 from ansible._internal._templating import _jinja_plugins
+from ansible import template as _template
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 from ansible.module_utils.datatag import native_type_name
@@ -222,7 +223,7 @@ class LookupModule(LookupBase):
         return total_search
 
     def run(self, terms: list, variables=None, **kwargs):
-        if (first_marker := _jinja_common.get_first_marker_arg((), kwargs)) is not None:
+        if (first_marker := _template.get_first_marker_arg((), kwargs)) is not None:
             first_marker.trip()
 
         if _jinja_plugins._LookupContext.current().invoked_as_with:

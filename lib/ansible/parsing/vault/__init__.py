@@ -1520,7 +1520,7 @@ class VaultHelper:
             tags = AnsibleTagHelper.tags(ciphertext)  # ciphertext has tags but value does not
         elif value_type is EncryptedString:
             ciphertext = value._ciphertext
-        elif value_type in _jinja_common.Marker.concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
+        elif value_type in _jinja_common.Marker._concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
             ciphertext = None
         elif vaulted_value := VaultedValue.get_tag(value):
             ciphertext = vaulted_value.ciphertext
