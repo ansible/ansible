@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native, to_bytes
-from ansible.plugins import accept_args_markers
-from ansible._internal._templating._jinja_common import get_first_marker_arg, VaultExceptionMarker
+from ansible._internal._templating._jinja_common import VaultExceptionMarker
 from ansible._internal._datatag._tags import VaultedValue
 from ansible.parsing.vault import is_encrypted, VaultSecret, VaultLib, VaultHelper
+from ansible import template as _template
 from ansible.utils.display import Display
 
 display = Display()
@@ -43,12 +43,12 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
     return vault
 
 
-@accept_args_markers
+@_template.accept_args_markers
 def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
     if isinstance(vault, VaultExceptionMarker):
         vault = vault._disarm()
 
-    if (first_marker := get_first_marker_arg((vault, secret, vault_id, vaultid), {})) is not None:
+    if (first_marker := _template.get_first_marker_arg((vault, secret, vault_id, vaultid), {})) is not None:
         return first_marker
 
     if not isinstance(secret, (str, bytes)):

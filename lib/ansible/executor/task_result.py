@@ -230,8 +230,6 @@ class _RawTaskResult(_BaseTaskResult):
 class CallbackTaskResult(_BaseTaskResult):
     """Public contract of TaskResult """
 
-    # DTFIX1: find a better home for this since it's public API
-
     @property
     def _result(self) -> _c.MutableMapping[str, t.Any]:
         """Use the `result` property when supporting only ansible-core 2.19 or later."""
