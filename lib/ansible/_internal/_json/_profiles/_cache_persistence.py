@@ -48,6 +48,7 @@ class _Profile(_profiles._JSONSerializationProfile):
 
         cls.handle_key = cls._handle_key_str_fallback  # legacy stdlib-compatible key behavior
 
+
 class Encoder(_profiles.AnsibleProfileJSONEncoder):
     _profile = _Profile
 

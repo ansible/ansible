@@ -26,7 +26,7 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
             _datetime.datetime: cls.serialize_as_isoformat,  # legacy _json_encode_fallback behavior *and* legacy parameters.py does this before serialization
         }
 
-        cls.handle_key = cls._handle_key_str_fallback  # legacy stdlib-compatible key behavior
+        cls.handle_key = cls._handle_key_str_fallback  # type: ignore[method-assign]  # legacy stdlib-compatible key behavior
 
 
 class Encoder(_profiles.AnsibleProfileJSONEncoder):

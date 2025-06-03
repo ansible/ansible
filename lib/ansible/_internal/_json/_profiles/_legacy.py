@@ -152,7 +152,7 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
             '__ansible_vault': cls.deserialize_vault,
         }
 
-        cls.handle_key = cls._handle_key_str_fallback   # legacy stdlib-compatible key behavior
+        cls.handle_key = cls._handle_key_str_fallback  # type: ignore[method-assign]  # legacy stdlib-compatible key behavior
 
     @classmethod
     def pre_serialize(cls, encoder: Encoder, o: _t.Any) -> _t.Any:
