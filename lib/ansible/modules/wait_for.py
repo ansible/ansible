@@ -76,6 +76,7 @@ options:
     description:
       - Can be used to match a string in either a file or a socket connection.
       - Defaults to a multiline regex.
+      - When inspecting a system log file and a static string, remember that Ansible by default logs it's own actions there, see notes and examples.
     type: str
     version_added: "1.4"
   exclude_hosts:
@@ -105,13 +106,12 @@ attributes:
     platform:
         platforms: posix
 notes:
-  - The ability to use search_regex with a port connection was added in Ansible 1.7.
-  - Prior to Ansible 2.4, testing for the absence of a directory or UNIX socket did not work correctly.
-  - Prior to Ansible 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
   - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
     can't be modified or created by the remote user either.
   - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
     so operations on the path using other modules may not work exactly as expected.
+  - When using a static string for search on a system log, take into account Ansible modules log their own activity there too, add a regex construct
+    to the string to avoid self matching.  For example, to match 'this thing', you can write 'this t[h]ing'.
 seealso:
 - module: ansible.builtin.wait_for_connection
 - module: ansible.windows.win_wait_for
@@ -155,6 +155,11 @@ EXAMPLES = r"""
   ansible.builtin.wait_for:
     path: /tmp/foo
     search_regex: completed
+
+- name: Wait until the string "tomcat up" is in syslog, use regex character set to avoid self match
+  ansible.builtin.wait_for:
+    path: /var/log/syslog
+    search_regex: 'tomcat [u]p'
 
 - name: Wait until regex pattern matches in the file /tmp/foo and print the matched group
   ansible.builtin.wait_for:
