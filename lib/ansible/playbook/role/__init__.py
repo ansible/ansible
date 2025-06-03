@@ -476,7 +476,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         dep_chain = [] if dep_chain is None else dep_chain
 
         deps = self.get_cached_deps()
-        if deps == None:
+        if deps is None:
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
 
