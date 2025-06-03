@@ -44,6 +44,12 @@ options:
     version_added: "2.3"
   get_checksum:
     version_added: "1.8"
+  get_selinux_context:
+    description:
+      - Get file SELinux context.
+    type: bool
+    default: no
+    version_added: "2.20"
 extends_documentation_fragment:
   -  action_common_attributes
   -  checksum_common
@@ -352,6 +358,12 @@ stat:
             type: str
             sample: "381700746"
             version_added: 2.3
+        selinux_context:
+            description: TODO
+            returned: TODO
+            type: TODO
+            sample: TODO
+            version_added: TODO
 """
 
 import errno
@@ -449,6 +461,7 @@ def main():
     get_attr = module.params.get('get_attributes')
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
+    get_selinux_context = module.params.get('get_selinux_context')
 
     # main stat data
     try:
@@ -516,6 +529,10 @@ def main():
         for x in ('version', 'attributes', 'attr_flags'):
             if x in out:
                 output[x] = out[x]
+
+    # try to get SELinux context
+    if get_selinux_context:
+        output['selinux_context'] = module.selinux_context(b_path)
 
     module.exit_json(changed=False, stat=output)
 
