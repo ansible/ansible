@@ -546,9 +546,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_direct_dependencies(self):
         return self._dependencies[:]
 
-    def __hash__(self):
-        return hash((self._role_collection, self._role_path, self._role_name))
-
     def get_all_dependencies(self):
         """
         Returns a list of all deps, built recursively from all child dependencies,
@@ -556,11 +553,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         """
         if self._all_dependencies is None:
 
-            self._all_dependencies = set()
+            self._all_dependencies = []
             for dep in self.get_direct_dependencies():
                 for child_dep in dep.get_all_dependencies():
-                    self._all_dependencies.add(child_dep)
-                self._all_dependencies.add(dep)
+                    if child_dep not in self._all_dependencies:
+                        self._all_dependencies.append(child_dep)
+                if dep not in self._all_dependencies:
+                    self._all_dependencies.append(dep)
 
         return self._all_dependencies
 
