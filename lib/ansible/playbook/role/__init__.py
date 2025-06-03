@@ -130,6 +130,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._handler_blocks = []
         self._compiled_handler_blocks = None
         self._default_vars = dict()
+        self._default_vars_full = None # this dict includes all default vars, including the full dep chain vars
         self._role_vars = dict()
         self._had_task_run = dict()
         self._completed = dict()
@@ -479,14 +480,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
 
-        default_vars = dict()
-        for dep in deps:
-            default_vars = combine_vars(default_vars, dep.get_default_vars())
-        if dep_chain:
-            for parent in dep_chain:
-                default_vars = combine_vars(default_vars, parent._default_vars)
-        default_vars = combine_vars(default_vars, self._default_vars)
-        return default_vars
+        if self._default_vars_full is None:
+            self._default_vars_full = dict()
+            for dep in deps:
+                self._default_vars_full = combine_vars(self._default_vars_full, dep.get_default_vars())
+            if dep_chain:
+                for parent in dep_chain:
+                    self._default_vars_full = combine_vars(self._default_vars_full, parent._default_vars)
+            self._default_vars_full = combine_vars(self._default_vars_full, self._default_vars)
+        return self._default_vars_full
 
     def get_inherited_vars(self, dep_chain=None, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
@@ -521,7 +523,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         # get exported variables from meta/dependencies
         seen = []
-        for dep in self.get_all_dependencies():
+
+        deps = self.get_cached_deps()
+        if deps == None:
+            deps = self.get_all_dependencies()
+            self.add_deps_to_cache(deps)
+
+        for dep in deps:
             # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
             if dep not in seen:
