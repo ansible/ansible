@@ -59,7 +59,6 @@ def secure_hash(filename, hash_func=sha1):
     return digest.hexdigest()
 
 
-# The checksum algorithm must match with the algorithm in ShellModule.checksum() method
 checksum = secure_hash
 checksum_s = secure_hash_s
 

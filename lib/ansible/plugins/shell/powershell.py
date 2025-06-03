@@ -24,6 +24,10 @@ import ntpath
 from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script, _get_powershell_script
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.plugins.shell import ShellBase, _ShellCommand
+from ansible.utils.display import Display
+
+
+display = Display()
 
 # This is weird, we are matching on byte sequences that match the utf-16-be
 # matches for '_x(a-fA-F0-9){4}_'. The \x00 and {4} will match the hex sequence
@@ -320,6 +324,10 @@ class ShellModule(ShellBase):
         return self._encode_script(script)
 
     def checksum(self, path, *args, **kwargs):
+        display.deprecated(
+            "The 'ShellModule.checksum' method is deprecated. Use 'ActionBase._execute_remote_stat()' instead.",
+            version="2.23"
+        )
         path = self._escape(self._unquote(path))
         script = """
             If (Test-Path -PathType Leaf '%(path)s')
