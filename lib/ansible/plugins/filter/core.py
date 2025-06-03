@@ -824,5 +824,3 @@ class FilterModule(object):
             'reject': wrapped_reject,
             'rejectattr': wrapped_rejectattr,
         }
-
-# DTFIX1: document protomatter plugins, or hide them from ansible-doc/galaxy (not related to this code, but needed some place to put this comment)
