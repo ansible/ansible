@@ -373,7 +373,7 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r._metadata.allow_duplicates, True)
         self.assertEqual(r._metadata.galaxy_info, dict(a=1, b=2, c=3))
 
-        all_deps = r.get_all_dependencies()
+        all_deps = list(r.get_all_dependencies())
         self.assertEqual(len(all_deps), 3)
         self.assertEqual(all_deps[0].get_name(), 'bam_metadata')
         self.assertEqual(all_deps[1].get_name(), 'baz_metadata')
