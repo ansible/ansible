@@ -39,6 +39,11 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
+# global cache for role dependencies
+# Key: collection.path.role_name
+# Value: list of role dependencies
+dep_cache = {}
+
 __all__ = ['Role', 'hash_params']
 
 # TODO: this should be a utility function, but can't be a member of
@@ -453,6 +458,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_parents(self):
         return self._parents
 
+
     def get_dep_chain(self):
         dep_chain = []
         for parent in self._parents:
@@ -460,11 +466,22 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep_chain.append(parent)
         return dep_chain
 
+    def get_cached_deps(self):
+        return dep_cache.get(f"{self._role_collection}.{self._role_path}.{self._role_name}", None)
+
+    def add_deps_to_cache(self, deps):
+        dep_cache[f"{self._role_collection}.{self._role_path}.{self._role_name}"] = deps
+
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
 
+        deps = self.get_cached_deps()
+        if deps == None:
+            deps = self.get_all_dependencies()
+            self.add_deps_to_cache(deps)
+
         default_vars = dict()
-        for dep in self.get_all_dependencies():
+        for dep in deps:
             default_vars = combine_vars(default_vars, dep.get_default_vars())
         if dep_chain:
             for parent in dep_chain:
@@ -530,6 +547,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_direct_dependencies(self):
         return self._dependencies[:]
 
+    def __hash__(self):
+        return hash((self._role_collection, self._role_path, self._role_name))
+
     def get_all_dependencies(self):
         """
         Returns a list of all deps, built recursively from all child dependencies,
@@ -537,11 +557,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         """
         if self._all_dependencies is None:
 
-            self._all_dependencies = []
+            self._all_dependencies = set()
             for dep in self.get_direct_dependencies():
                 for child_dep in dep.get_all_dependencies():
-                    self._all_dependencies.append(child_dep)
-                self._all_dependencies.append(dep)
+                    self._all_dependencies.add(child_dep)
+                self._all_dependencies.add(dep)
 
         return self._all_dependencies
 

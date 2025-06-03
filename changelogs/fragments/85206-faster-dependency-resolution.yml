@@ -1,0 +1,9 @@
+---
+
+minor_changes:
+- >-
+  Role dependencies now get cached instead of recalculed during each Task
+- >-
+  Role dependencies now get stored in a set to get rid of redundancies in the dependency tree
+
+...
