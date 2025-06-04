@@ -283,7 +283,7 @@ def main():
         original = None
         lines = []
     else:
-        with open(path, 'r', encoding=encoding) as f:
+        with open(path, 'r', encoding=encoding, newline='') as f:
             original = f.read()
             lines = original.splitlines(True)
 
