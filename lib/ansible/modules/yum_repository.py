@@ -505,7 +505,7 @@ class YumRepo:
             except OSError as ex:
                 self.module.fail_json(
                     msg=f"Problems handling file {self.dest!r}.",
-                    details=to_native(ex),
+                    details=str(ex),
                     exception=ex,
                 )
         else:

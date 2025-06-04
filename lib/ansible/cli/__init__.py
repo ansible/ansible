@@ -651,8 +651,8 @@ class CLI(ABC):
             ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
             try:
                 ansible_dir.mkdir(mode=0o700, exist_ok=True)
-            except OSError as exc:
-                display.error_as_warning(f"Failed to create the directory {ansible_dir!r}.", exc)
+            except OSError as ex:
+                display.error_as_warning(f"Failed to create the directory {ansible_dir!r}.", ex)
             else:
                 display.debug("Created the '%s' directory" % ansible_dir)
 

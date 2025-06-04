@@ -101,13 +101,13 @@ def main():
             data = base64.b64encode(source_fh.read())
     except OSError as ex:
         if ex.errno == errno.ENOENT:
-            msg = f"file not found: {source!r}"
+            msg = f"File not found: {source}"
         elif ex.errno == errno.EACCES:
-            msg = f"file is not readable: {source!r}"
+            msg = f"File is not readable: {source}"
         elif ex.errno == errno.EISDIR:
-            msg = f"source is a directory and must be a file: {source!r}"
+            msg = f"Source is a directory and must be a file: {source}"
         else:
-            msg = "unable to slurp file"
+            msg = "Unable to slurp file: {source}"
 
         module.fail_json(msg, exception=ex)
 

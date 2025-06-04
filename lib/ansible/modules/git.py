@@ -830,7 +830,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         module.fail_json(
             msg='Current repo does not have a valid reference to a '
             'separate Git dir or it refers to the invalid path',
-            details=to_text(ex),
+            details=str(ex),
             exception=ex,
         )
     # Read .git/HEAD for the name of the branch.
@@ -1297,7 +1297,7 @@ def main():
             module.fail_json(
                 msg='Current repo does not have a valid reference to a '
                 'separate Git dir or it refers to the invalid path',
-                details=to_text(ex),
+                details=str(ex),
                 exception=ex,
             )
         gitconfig = os.path.join(repo_path, 'config')

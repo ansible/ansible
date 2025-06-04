@@ -558,7 +558,7 @@ class UbuntuSourcesList(SourcesList):
                                 f.write(stdout)
                             self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
                         except OSError as ex:
-                            self.module.fail_json(msg='Unable to add required signing key.', rc=rc, stderr=stderr, error=to_native(ex), exception=ex)
+                            self.module.fail_json(msg='Unable to add required signing key.', rc=rc, stderr=stderr, error=str(ex), exception=ex)
 
             # apt source file
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))

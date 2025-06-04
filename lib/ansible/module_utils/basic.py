@@ -482,7 +482,7 @@ class AnsibleModule(object):
                     os.makedirs(basedir, mode=0o700)
                 except OSError as ex:
                     self.error_as_warning(
-                        f"Unable to use {basedir!r} as temporary directory, falling back to system default.",
+                        msg=f"Unable to use {basedir!r} as temporary directory, falling back to system default.",
                         exception=ex,
                     )
                     basedir = None
@@ -1791,17 +1791,17 @@ class AnsibleModule(object):
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
                                     raise Exception(
-                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {b_tmp_dest_name!r}.'
+                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {to_text(b_tmp_dest_name)!r}.'
                                     ) from ex
                         except (shutil.Error, OSError) as ex:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                raise Exception(f'Failed to replace file: {src!r} to {dest!r}.') from ex
+                                raise Exception(f'Failed to replace {dest!r} with {src!r}.') from ex
                     finally:
                         self.cleanup(b_tmp_dest_name)
             else:
-                raise Exception(f'Could not replace file: {src!r} to {dest!r}.') from ex
+                raise Exception(f'Could not replace {dest!r} with {src!r}.') from ex
 
         if creating:
             # make sure the file has the correct permissions
@@ -2119,13 +2119,11 @@ class AnsibleModule(object):
 
             rc = cmd.returncode
         except OSError as ex:
-            self.log(f"Error Executing CMD:{self._clean_args(args)} Exception: {ex}")
             if handle_exceptions:
-                self.fail_json(rc=ex.errno, stdout=b'', stderr=b'', msg=to_native(ex), cmd=self._clean_args(args), exception=ex)
+                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
                 raise
         except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
             if handle_exceptions:
                 self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
             else:

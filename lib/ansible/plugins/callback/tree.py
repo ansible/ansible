@@ -74,7 +74,7 @@ class CallbackModule(CallbackBase):
         try:
             makedirs_safe(self.tree)
         except OSError as ex:
-            self._display.error_as_warning(f"Unable to access or create the configured directory: {self.tree!r}", exception=ex)
+            self._display.error_as_warning(f"Unable to access or create the configured directory {self.tree!r}.", exception=ex)
 
         try:
             path = to_bytes(os.path.join(self.tree, hostname))
