@@ -69,7 +69,7 @@ display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_ALLOWLIST = frozenset(('AES256','AES256v2'))
+CIPHER_ALLOWLIST = frozenset(('AES256', 'AES256v2'))
 CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
