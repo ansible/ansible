@@ -44,7 +44,7 @@ DOCUMENTATION:
       description: The C(item) and C(key) separator to be used in the serialized output,
                    default may change depending on O(indent) and Python version.
       default:
-        - ','
+        - ', '
         - ': '
       type: list
       elements: str
