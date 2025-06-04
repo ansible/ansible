@@ -7,6 +7,7 @@ from __future__ import annotations
 import decimal
 import json
 import os
+import typing as _t
 
 from ast import literal_eval
 from ansible.module_utils._internal import _no_six
@@ -294,7 +295,7 @@ def check_required_if(requirements, parameters, options_context=None):
     return results
 
 
-def check_missing_parameters(parameters, required_parameters=None):
+def check_missing_parameters(parameters: dict[str, _t.Any], required_parameters: _t.Sequence[str] | None = None) -> list[str]:
     """This is for checking for required params when we can not check via
     argspec because we need more information than is simply given in the argspec.
 
@@ -305,7 +306,7 @@ def check_missing_parameters(parameters, required_parameters=None):
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
-    missing_params = []
+    missing_params: list[str] = []
     if required_parameters is None:
         return missing_params
 
@@ -323,7 +324,7 @@ def check_missing_parameters(parameters, required_parameters=None):
 # FIXME: The param and prefix parameters here are coming from AnsibleModule._check_type_string()
 #        which is using those for the warning messaged based on string conversion warning settings.
 #        Not sure how to deal with that here since we don't have config state to query.
-def check_type_str(value, allow_conversion=True, param=None, prefix=''):
+def check_type_str(value: _t.Any, allow_conversion: bool = True, param: str | None = None, prefix: str = '') -> str:
     """Verify that the value is a string or convert to a string.
 
     Since unexpected changes can sometimes happen when converting to a string,
@@ -350,11 +351,11 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     raise TypeError(to_native(msg))
 
 
-def _check_type_str_no_conversion(value) -> str:
+def _check_type_str_no_conversion(value: _t.Any) -> str:
     return check_type_str(value, allow_conversion=False)
 
 
-def check_type_list(value):
+def check_type_list(value: _t.Any) -> list:
     """Verify that the value is a list or convert to a list
 
     A comma separated string will be split into a list. Raises a :class:`TypeError`
@@ -378,7 +379,7 @@ def check_type_list(value):
     raise TypeError('%s cannot be converted to a list' % type(value))
 
 
-def _check_type_list_strict(value):
+def _check_type_list_strict(value: _t.Any) -> list:
     # FUTURE: this impl should replace `check_type_list`
     if isinstance(value, list):
         return value
@@ -386,7 +387,7 @@ def _check_type_list_strict(value):
     return [value]
 
 
-def check_type_dict(value):
+def check_type_dict(value: _t.Any) -> dict:
     """Verify that value is a dict or convert it to a dict and return it.
 
     Raises :class:`TypeError` if unable to convert to a dict
@@ -414,7 +415,7 @@ def check_type_dict(value):
         elif '=' in value:
             fields = []
             field_buffer = []
-            in_quote = False
+            in_quote: _t.Literal[False, '\'', '"'] = False
             in_escape = False
             for c in value.strip():
                 if in_escape:
@@ -423,7 +424,7 @@ def check_type_dict(value):
                 elif c == '\\':
                     in_escape = True
                 elif not in_quote and c in ('\'', '"'):
-                    in_quote = c
+                    in_quote = _t.cast(_t.Literal['\'', '"'], c)
                 elif in_quote and in_quote == c:
                     in_quote = False
                 elif not in_quote and c in (',', ' '):
@@ -448,7 +449,7 @@ def check_type_dict(value):
     raise TypeError('%s cannot be converted to a dict' % type(value))
 
 
-def check_type_bool(value):
+def check_type_bool(value: _t.Any) -> bool:
     """Verify that the value is a bool or convert it to a bool and return it.
 
     Raises :class:`TypeError` if unable to convert to a bool
@@ -467,7 +468,7 @@ def check_type_bool(value):
     raise TypeError('%s cannot be converted to a bool' % type(value))
 
 
-def check_type_int(value):
+def check_type_int(value: _t.Any) -> int:
     """Verify that the value is an integer and return it or convert the value
     to an integer and return it
 
@@ -488,7 +489,7 @@ def check_type_int(value):
     return value
 
 
-def check_type_float(value):
+def check_type_float(value: _t.Any) -> float:
     """Verify that value is a float or convert it to a float and return it
 
     Raises :class:`TypeError` if unable to convert to a float
@@ -505,7 +506,7 @@ def check_type_float(value):
     return value
 
 
-def check_type_path(value,):
+def check_type_path(value: _t.Any) -> str:
     """Verify the provided value is a string or convert it to a string,
     then return the expanded path
     """
@@ -513,12 +514,12 @@ def check_type_path(value,):
     return os.path.expanduser(os.path.expandvars(value))
 
 
-def check_type_raw(value):
+def check_type_raw(value: _t.Any) -> _t.Any:
     """Returns the raw value"""
     return value
 
 
-def check_type_bytes(value):
+def check_type_bytes(value: _t.Any) -> int:
     """Convert a human-readable string value to bytes
 
     Raises :class:`TypeError` if unable to convert the value
@@ -529,7 +530,7 @@ def check_type_bytes(value):
         raise TypeError('%s cannot be converted to a Byte value' % type(value))
 
 
-def check_type_bits(value):
+def check_type_bits(value: _t.Any) -> int:
     """Convert a human-readable string bits value to bits in integer.
 
     Example: ``check_type_bits('1Mb')`` returns integer 1048576.
@@ -542,7 +543,7 @@ def check_type_bits(value):
         raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
 
-def check_type_jsonarg(value):
+def check_type_jsonarg(value: _t.Any) -> str | bytes:
     """
     JSON serialize dict/list/tuple, strip str and bytes.
     Previously required for cases where Ansible/Jinja classic-mode literal eval pass could inadvertently deserialize objects.

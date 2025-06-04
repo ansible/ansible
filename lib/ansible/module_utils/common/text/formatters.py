@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 
+from ansible.module_utils.compat import typing as _t
 from ansible.module_utils._internal import _no_six
 
 SIZE_RANGES = {
@@ -33,7 +34,7 @@ VALID_UNITS = {
 }
 
 
-def lenient_lowercase(lst):
+def lenient_lowercase(lst: _t.Iterable[_t.Any]) -> list[_t.Any]:
     """Lowercase elements of a list.
 
     If an element is not a string, pass it through untouched.
@@ -47,7 +48,7 @@ def lenient_lowercase(lst):
     return lowered
 
 
-def human_to_bytes(number, default_unit=None, isbits=False):
+def human_to_bytes(number: str, default_unit: str | None = None, isbits: bool = False) -> int:
     """Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument.
 
     example: human_to_bytes('10M') <=> human_to_bytes(10, 'M').
@@ -111,7 +112,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     return int(round(num * limit))
 
 
-def bytes_to_human(size, isbits=False, unit=None):
+def bytes_to_human(size: int, isbits: bool = False, unit: str | None = None) -> str:
     base = 'Bytes'
     if isbits:
         base = 'bits'

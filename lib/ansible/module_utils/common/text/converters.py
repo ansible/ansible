@@ -157,8 +157,8 @@ def to_bytes(
                 # surrogate_then_escape and errors was surrogateescape
 
                 # Slow but works
-                return_string = obj.encode('utf-8', 'surrogateescape')
-                return_string = return_string.decode('utf-8', 'replace')
+                return_bytes = obj.encode('utf-8', 'surrogateescape')
+                return_string = return_bytes.decode('utf-8', 'replace')
                 return return_string.encode(encoding, 'replace')
             raise
 
@@ -319,7 +319,7 @@ def to_text(
 to_native = to_text
 
 
-def jsonify(data, **kwargs):
+def jsonify(data: _t.Any, **kwargs) -> str:
     from ansible.module_utils.common import json as _common_json
     # from ansible.module_utils.common.warnings import deprecate
 
@@ -333,7 +333,7 @@ def jsonify(data, **kwargs):
     return json.dumps(data, cls=_common_json._get_legacy_encoder(), _decode_bytes=True, **kwargs)
 
 
-def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
+def container_to_bytes(d: _t.Any, encoding: str = 'utf-8', errors='surrogate_or_strict') -> _t.Any:
     """ Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -353,7 +353,7 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
         return d
 
 
-def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
+def container_to_text(d: _t.Any, encoding: str = 'utf-8', errors='surrogate_or_strict') -> _t.Any:
     """Recursively convert dict keys and values to text str
 
     Specialized for json return because this only handles, lists, tuples,
