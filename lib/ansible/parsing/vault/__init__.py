@@ -69,8 +69,8 @@ display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_ALLOWLIST = frozenset((u'AES256',))
-CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
+CIPHER_ALLOWLIST = frozenset(('AES256','AES256v2'))
+CIPHER_WRITE_ALLOWLIST = frozenset(('AES256v2',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
@@ -615,7 +615,7 @@ class VaultLib:
             raise AnsibleError("input is already encrypted")
 
         if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_ALLOWLIST:
-            self.cipher_name = u"AES256"
+            self.cipher_name = "AES256v2"
 
         try:
             this_cipher = CIPHER_MAPPING[self.cipher_name]()
@@ -1134,12 +1134,12 @@ class VaultAES256:
             raise AnsibleError(NEED_CRYPTO_LIBRARY)
 
     @staticmethod
-    def _create_key_cryptography(b_password, b_salt, key_length, iv_length):
+    def _create_key_cryptography(b_password, b_salt, key_length, iv_length, iterations):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=2 * key_length + iv_length,
             salt=b_salt,
-            iterations=10000,
+            iterations=iterations,
             backend=CRYPTOGRAPHY_BACKEND)
         b_derivedkey = kdf.derive(b_password)
 
@@ -1147,7 +1147,7 @@ class VaultAES256:
 
     @classmethod
     @functools.cache  # Concurrent first-use by multiple threads will all execute the method body.
-    def _gen_key_initctr(cls, b_password, b_salt):
+    def _gen_key_initctr(cls, b_password, b_salt, iterations):
         # 16 for AES 128, 32 for AES256
         key_length = 32
 
@@ -1155,7 +1155,7 @@ class VaultAES256:
             # AES is a 128-bit block cipher, so IVs and counter nonces are 16 bytes
             iv_length = algorithms.AES.block_size // 8
 
-            b_derivedkey = cls._create_key_cryptography(b_password, b_salt, key_length, iv_length)
+            b_derivedkey = cls._create_key_cryptography(b_password, b_salt, key_length, iv_length, iterations)
             b_iv = b_derivedkey[(key_length * 2):(key_length * 2) + iv_length]
         else:
             raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in initctr)')
@@ -1201,7 +1201,7 @@ class VaultAES256:
             b_salt = to_bytes(salt)
 
         b_password = secret.bytes
-        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
+        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, 600_000)
 
         if HAS_CRYPTOGRAPHY:
             b_hmac, b_ciphertext = cls._encrypt_cryptography(b_plaintext, b_key1, b_key2, b_iv)
@@ -1264,12 +1264,24 @@ class VaultAES256:
         # creates a Cipher() with b_key1, a Mode.CTR() with b_iv, and a HMAC() with sign key b_key2
         b_password = secret.bytes
 
-        b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt)
+        error = None
+        for iterations in (600_000, 10_000):
+            b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, )
 
-        if HAS_CRYPTOGRAPHY:
-            b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
+            if HAS_CRYPTOGRAPHY:
+                try:
+                    b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv, iterations)
+                except Exception as e:
+                    error = e
+                    print(e, type(e))
+
+                if b_plaintext:
+                    break
+            else:
+                raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
         else:
-            raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
+            if error is not None:
+                raise e
 
         return b_plaintext
 
@@ -1278,6 +1290,7 @@ class VaultAES256:
 # naturally byte-oriented
 CIPHER_MAPPING = {
     u'AES256': VaultAES256,
+    u'AES256v2': VaultAES256,
 }
 
 
