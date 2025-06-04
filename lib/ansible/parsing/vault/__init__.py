@@ -1266,22 +1266,20 @@ class VaultAES256:
 
         error = None
         for iterations in (600_000, 10_000):
-            b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, )
+            b_key1, b_key2, b_iv = cls._gen_key_initctr(b_password, b_salt, iterations)
 
             if HAS_CRYPTOGRAPHY:
                 try:
-                    b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv, iterations)
+                    b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
+                    break
                 except Exception as e:
                     error = e
                     print(e, type(e))
-
-                if b_plaintext:
-                    break
             else:
                 raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
         else:
             if error is not None:
-                raise e
+                raise error
 
         return b_plaintext
 
