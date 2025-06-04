@@ -84,7 +84,10 @@ class _ClassProperty:
 class FieldAttributeBase:
 
     _post_validate_object = False
-
+    """
+    `False` skips FieldAttribute post-validation on intermediate objects and mixins for attributes without `always_post_validate`.
+    Leaf objects (e.g., `Task`) should set this attribute `True` to opt-in to post-validation.
+    """
     fattributes = _ClassProperty()
 
     @classmethod
