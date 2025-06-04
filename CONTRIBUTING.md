@@ -1,4 +1,4 @@
-# CONTRIBUTION RULES
+
 
 Note that while we plan to enforce these rules as they are added, a lot of code was produced before they existed and we don't normally reprocess all of it, but opportunistically update it to meet the rules as we update it for other reasons.
 
@@ -63,7 +63,7 @@ The existing `warning` and `deprecated` methods on the `Display` object now supp
 
 ## Jinja plugin errors
 
-In Jinja plugins, the `AnsibleFilterError` and `AnsibleLookupError` exception types are no longer needed. Instead, use whatever exception type is appropriate for the error condition.
+In Jinja plugins, the `AnsibleFilterError` and `AnsibleLookupError` exception types are no longer needed. Instead, use whatever exception type is appropriate for the error condition. For example, if you detect an incompatible type, raise a `TypeError`.
 
 # Public surface area
 
@@ -103,11 +103,11 @@ For new code and updates to existing code, including unit tests.
 
 ## Docstrings
 
-Explain what the annotated code does, but don't create structured entries for parameters.
-
-Anything considered a public API must have a docstring. Internal code should, and it often makes sense for unit tests, too.
-
 We don't generate API docs, and haven't selected a tool or format for structured documentation of parameters, so stick to prose for now.
+
+* Anything considered a public API must have a docstring. Internal code should, and it often makes sense for unit tests, too.
+* Explain what the annotated code does, but don't create structured entries for parameters.
+* Use double quotes instead of single quotes.
 
 ## Line breaks in source text
 
@@ -121,15 +121,15 @@ Include native type annotations on function/method arguments and return types, u
 
 Some extra rules for type hints:
 
-  - Use `object` over `t.Any`
-  - Use typing's `Never` for those that don't return
+* Use `object` over `t.Any`
+* Use typing's `Never` for those that don't return
 
 
 ## Format strings
 
 Use f-strings instead of `%` strings or `str.format`, except for logging where formatting is deferred.
 
-## Quoting strings
+### Quoting in strings
 
 Use the `!r` format qualifier to quote a value instead of manually quoting.
 
