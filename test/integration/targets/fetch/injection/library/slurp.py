@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOCUMENTATION = """
     module: fakeslurp
-    short_desciptoin: fake slurp module
+    short_description: fake slurp module
     description:
         - this is a fake slurp module
     options:

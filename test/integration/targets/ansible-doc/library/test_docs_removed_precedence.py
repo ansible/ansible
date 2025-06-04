@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_removed_precedence
 short_description: Test module
@@ -15,13 +15,13 @@ deprecated:
   why: Updated module released with more functionality
   removed_at_date: '2022-06-01'
   removed_in: '2.14'
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

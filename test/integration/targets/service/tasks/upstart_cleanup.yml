@@ -11,7 +11,7 @@
       loop: '{{ upstart_files }}'
 
     - name: assert that upstart init files were removed
-      raw: 'test -e {{ item }}'
+      raw: 'test -e {{ item }}'
       loop: '{{ upstart_files }}'
       register: file_exists
       failed_when: file_exists is not failed

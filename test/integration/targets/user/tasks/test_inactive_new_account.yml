@@ -1,0 +1,41 @@
+- block:
+    - name: Remove ansibulluser
+      user:
+        name: ansibulluser
+        state: absent
+
+    - name: Create user account with inactive set to 15
+      user:
+        name: ansibulluser
+        state: present
+        password_expire_account_disable: 15
+
+    - name: Get inactive value for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure inactive is set to 15
+      assert:
+        msg: "expiry is supposed to be empty or 15, not {{ getent_shadow['ansibulluser'][7] }}"
+        that:
+          - not getent_shadow['ansibulluser'][7] or getent_shadow['ansibulluser'][7] | int != 15
+
+    - name: Update user account with inactive set to 10
+      user:
+        name: ansibulluser
+        state: present
+        password_expire_account_disable: 10
+
+    - name: Get inactive value for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure inactive is set to 10
+      assert:
+        msg: "expiry is supposed to be empty or 10, not {{ getent_shadow['ansibulluser'][7] }}"
+        that:
+          - not getent_shadow['ansibulluser'][7] or getent_shadow['ansibulluser'][7] | int != 10
+
+  when: ansible_facts.os_family in ['RedHat', 'Debian']

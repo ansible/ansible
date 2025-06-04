@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: yaml
     version_added: "2.4"
     short_description: Uses a specific YAML file as an inventory source.
@@ -31,8 +31,8 @@ DOCUMENTATION = '''
           - section: inventory_plugin_yaml
             key: yaml_valid_extensions
 
-'''
-EXAMPLES = '''
+"""
+EXAMPLES = """
 all: # keys must be unique, i.e. only one 'hosts' per group
     hosts:
         test1:
@@ -63,7 +63,7 @@ all: # keys must be unique, i.e. only one 'hosts' per group
                 test1 # same host as above, additional group membership
             vars:
                 group_last_var: value
-'''
+"""
 
 import os
 
@@ -81,6 +81,8 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     NAME = 'yaml'
 
+    # implicit trust behavior is already added by the YAML parser invoked by the loader
+
     def __init__(self):
 
         super(InventoryModule, self).__init__()
@@ -95,13 +97,13 @@ class InventoryModule(BaseFileInventoryPlugin):
         return valid
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
 
         try:
-            data = self.loader.load_from_file(path, cache=False)
+            data = self.loader.load_from_file(path, cache='none', trusted_as_template=True)
         except Exception as e:
             raise AnsibleParserError(e)
 
@@ -170,9 +172,9 @@ class InventoryModule(BaseFileInventoryPlugin):
         return group
 
     def _parse_host(self, host_pattern):
-        '''
+        """
         Each host key can be a pattern, try to process it and add variables as needed
-        '''
+        """
         try:
             (hostnames, port) = self._expand_hostpattern(host_pattern)
         except TypeError:

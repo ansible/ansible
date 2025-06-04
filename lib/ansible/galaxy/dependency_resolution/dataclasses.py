@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import typing as t
 
 from collections import namedtuple
@@ -25,6 +26,8 @@ if t.TYPE_CHECKING:
         '_ComputedReqKindsMixin',
     )
 
+import ansible
+import ansible.release
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
@@ -39,6 +42,7 @@ _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
 _SOURCE_METADATA_FILE = b'GALAXY.yml'
+_ANSIBLE_PACKAGE_PATH = pathlib.Path(ansible.__file__).parent
 
 display = Display()
 
@@ -224,6 +228,13 @@ class _ComputedReqKindsMixin:
         if dir_path.endswith(to_bytes(os.path.sep)):
             dir_path = dir_path.rstrip(to_bytes(os.path.sep))
         if not _is_collection_dir(dir_path):
+            dir_pathlib = pathlib.Path(to_text(dir_path))
+
+            # special handling for bundled collections without manifests, e.g., ansible._protomatter
+            if dir_pathlib.is_relative_to(_ANSIBLE_PACKAGE_PATH):
+                req_name = f'{dir_pathlib.parent.name}.{dir_pathlib.name}'
+                return cls(req_name, ansible.release.__version__, dir_path, 'dir', None)
+
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.
@@ -578,10 +589,9 @@ class _ComputedReqKindsMixin:
 
         See https://github.com/ansible/ansible/pull/81606 for extra context.
         """
-        version_string = self.ver[0]
-        return version_string.isdigit() or not (
-            version_string == '*' or
-            version_string.startswith(('<', '>', '!='))
+        version_spec_start_char = self.ver[0]
+        return version_spec_start_char.isdigit() or not (
+            version_spec_start_char.startswith(('<', '>', '!', '*'))
         )
 
     @property

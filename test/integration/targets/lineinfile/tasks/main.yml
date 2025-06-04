@@ -875,7 +875,7 @@
     path:  "{{ remote_tmp_dir }}/testempty.txt"
   register: oneline_insbefore_file
 
-- name: Assert that insertebefore worked properly with a one line file
+- name: Assert that insertbefore worked properly with a one line file
   assert:
     that:
       - oneline_insbefore_test1 is changed
@@ -964,9 +964,6 @@
     warning_message: >-
       The search string is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
-
-- name: meta
-  meta: end_play
 
 ###################################################################
 ## Issue #58923
@@ -1418,3 +1415,34 @@
       - testend1 is changed
       - testend2 is changed
       - testend_file.stat.checksum == 'ef36116966836ce04f6b249fd1837706acae4e19'
+
+- name: Integration test for issue 76727
+  block:
+  - name: Create a symbolic link for the test file
+    file:
+      src: "{{ remote_tmp_dir }}/test.txt"
+      dest: "{{ remote_tmp_dir }}/test-76727.txt"
+      state: link
+
+  - name: Insert a line and back it up
+    lineinfile:
+      dest: "{{ remote_tmp_dir }}/test-76727.txt"
+      state: present
+      line: "#Line for issue 76727"
+      backup: yes
+    register: result1
+
+  - name: Stat the backup file
+    stat:
+      path: "{{ result1.backup }}"
+    register: result2
+
+  - name: Assert that the line was inserted and backup is created
+    assert:
+      that:
+        - result1 is changed
+        - result2.stat.exists
+
+- name: Integration test for issue 72929
+  import_tasks: acls.yml
+  when: ansible_system == 'Linux'

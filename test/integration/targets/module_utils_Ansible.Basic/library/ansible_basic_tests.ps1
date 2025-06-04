@@ -155,6 +155,7 @@ $tests = @{
         "_ansible_shell_executable": "ignored",
         "_ansible_socket": "ignored",
         "_ansible_syslog_facility": "ignored",
+        "_ansible_target_log_info": "ignored",
         "_ansible_tmpdir": "$($m_tmpdir -replace "\\", "\\")",
         "_ansible_verbosity": 3,
         "_ansible_version": "2.8.0"
@@ -1318,6 +1319,37 @@ test_no_log - Invoked with:
                 @{msg = "message"; date = "2020-01-01"; collection_name = $null },
                 @{msg = "message w collection"; date = "2020-01-02"; collection_name = "ansible.builtin" }
             )
+        }
+        $actual | Assert-DictionaryEqual -Expected $expected
+    }
+
+    "Run with exec wrapper warnings" = {
+        [Ansible.Basic.AnsibleModule]::_WrapperWarnings = [System.Collections.Generic.List[string]]@('Warning 1', 'Warning 2')
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+            $m.Warn("Warning 3")
+
+            $failed = $false
+            try {
+                $m.ExitJson()
+            }
+            catch [System.Management.Automation.RuntimeException] {
+                $failed = $true
+                $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+                $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+            }
+            $failed | Assert-Equal -Expected $true
+        }
+        finally {
+            [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $null
+        }
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{}
+            }
+            warnings = @("Warning 3", "Warning 1", "Warning 2")
         }
         $actual | Assert-DictionaryEqual -Expected $expected
     }
@@ -3020,6 +3052,34 @@ test_no_log - Invoked with:
         $actual.Keys.Count | Assert-Equal -Expected 2
         $actual.changed | Assert-Equal -Expected $false
         $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $complex_args }
+    }
+
+    "Required if for unset option" = {
+        $spec = @{
+            options = @{
+                state = @{ choices = "absent", "present" }
+                name = @{}
+                path = @{}
+            }
+            required_if = @(, @("state", "absent", @("name", "path")))
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{}
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equal -Expected $true
+
+        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.changed | Assert-Equal -Expected $false
+        $actual.invocation | Assert-DictionaryEqual -Expected @{ module_args = $complex_args }
     }
 
     "PS Object in return result" = {

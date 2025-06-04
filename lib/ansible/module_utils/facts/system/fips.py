@@ -1,23 +1,10 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # Determine if a system is in 'fips' mode
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.utils import get_file_content
 
@@ -30,9 +17,9 @@ class FipsFactCollector(BaseFactCollector):
 
     def collect(self, module=None, collected_facts=None):
         # NOTE: this is populated even if it is not set
-        fips_facts = {}
-        fips_facts['fips'] = False
-        data = get_file_content('/proc/sys/crypto/fips_enabled')
-        if data and data == '1':
+        fips_facts = {
+            'fips': False
+        }
+        if get_file_content('/proc/sys/crypto/fips_enabled') == '1':
             fips_facts['fips'] = True
         return fips_facts

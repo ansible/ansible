@@ -1,2 +1,2 @@
 rstcheck < 6  # newer versions have too many dependencies
-antsibull-changelog
+antsibull-changelog == 0.29.0  # newer versions have additional dependencies

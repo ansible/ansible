@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: generator
     version_added: "2.6"
     short_description: Uses Jinja2 to construct hosts and groups from patterns
@@ -32,9 +32,9 @@ DOCUMENTATION = '''
         description:
           - A dictionary of layers, with the key being the layer name, used as a variable name in the C(host)
             C(name) and C(parents) keys. Each layer value is a list of possible values for that layer.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
     # inventory.config file in YAML format
     # remember to enable this inventory plugin in the ansible.cfg before using
     # View the output using `ansible-inventory -i inventory.config --list`
@@ -68,7 +68,7 @@ EXAMPLES = '''
         application:
             - web
             - api
-'''
+"""
 
 import os
 
@@ -83,6 +83,8 @@ class InventoryModule(BaseInventoryPlugin):
     """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'generator'
+
+    # implicit trust behavior is already added by the YAML parser invoked by the loader
 
     def __init__(self):
 
@@ -100,15 +102,18 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def template(self, pattern, variables):
-        self.templar.available_variables = variables
-        return self.templar.do_template(pattern)
+        # Allow pass-through of data structures for templating later (if applicable).
+        # This limitation was part of the original plugin implementation and was updated to maintain feature parity with the new templating API.
+        if not isinstance(pattern, str):
+            return pattern
+
+        return self.templar.copy_with_new_env(available_variables=variables).template(pattern)
 
     def add_parents(self, inventory, child, parents, template_vars):
         for parent in parents:
-            try:
-                groupname = self.template(parent['name'], template_vars)
-            except (AttributeError, ValueError):
-                raise AnsibleParserError("Element %s has a parent with no name element" % child['name'])
+            groupname = self.template(parent.get('name'), template_vars)
+            if not groupname:
+                raise AnsibleParserError(f"Element {child} has a parent with no name.")
             if groupname not in inventory.groups:
                 inventory.add_group(groupname)
             group = inventory.groups[groupname]
@@ -118,7 +123,7 @@ class InventoryModule(BaseInventoryPlugin):
             self.add_parents(inventory, groupname, parent.get('parents', []), template_vars)
 
     def parse(self, inventory, loader, path, cache=False):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 

@@ -7,7 +7,7 @@ from functools import wraps
 
 
 def lock_decorator(attr='missing_lock_attr', lock=None):
-    '''This decorator is a generic implementation that allows you
+    """This decorator is a generic implementation that allows you
     to either use a pre-defined instance attribute as the location
     of the lock, or to explicitly pass a lock object.
 
@@ -25,7 +25,7 @@ def lock_decorator(attr='missing_lock_attr', lock=None):
 
         @lock_decorator(lock=threading.Lock())
         def some_method(...):
-    '''
+    """
     def outer(func):
         @wraps(func)
         def inner(*args, **kwargs):

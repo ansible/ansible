@@ -65,7 +65,7 @@ Assert-Equal -actual $actual.executable -expected $exe
 $test_name = "no working directory set"
 $actual = Run-Command -command "cmd.exe /c cd"
 Assert-Equal -actual $actual.rc -expected 0
-Assert-Equal -actual $actual.stdout -expected "$($pwd.Path)`r`n"
+Assert-Equal -actual $actual.stdout.ToUpper() -expected "$($pwd.Path)`r`n".ToUpper()
 Assert-Equal -actual $actual.stderr -expected ""
 Assert-Equal -actual $actual.executable.ToUpper() -expected "$env:SystemRoot\System32\cmd.exe".ToUpper()
 

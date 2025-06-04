@@ -83,7 +83,7 @@ class JsonRpcServer(object):
             result = to_text(result)
         if not isinstance(result, text_type):
             response["result_type"] = "pickle"
-            result = to_text(pickle.dumps(result, protocol=0))
+            result = to_text(pickle.dumps(result), errors='surrogateescape')
         response['result'] = result
         return response
 

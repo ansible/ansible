@@ -4,7 +4,7 @@
   become: no
 
   tasks:
-    - name: non-integer for duraction (EXPECTED FAILURE)
+    - name: non-integer for duration (EXPECTED FAILURE)
       pause:
         seconds: hello
       register: result

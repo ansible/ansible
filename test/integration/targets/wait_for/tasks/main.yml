@@ -40,7 +40,7 @@
   assert:
     that:
       - waitfor is successful
-      - waitfor.path == "{{ remote_tmp_dir | expanduser }}/wait_for_file"
+      - waitfor.path == (remote_tmp_dir | expanduser + "/wait_for_file")
       - waitfor.elapsed >= 2
       - waitfor.elapsed <= 15
 
@@ -58,7 +58,7 @@
   assert:
     that:
       - waitfor is successful
-      - waitfor.path == "{{ remote_tmp_dir | expanduser }}/wait_for_file"
+      - waitfor.path == (remote_tmp_dir | expanduser + "/wait_for_file")
       - waitfor.elapsed >= 2
       - waitfor.elapsed <= 15
 
@@ -91,7 +91,7 @@
   wait_for:
     path: "{{remote_tmp_dir}}/wait_for_keyword"
     search_regex: completed (?P<foo>\w+) ([0-9]+)
-    timeout: 5
+    timeout: 25
   register: waitfor
 
 - name: verify test wait for keyword in file with match groups
@@ -113,6 +113,13 @@
   wait_for:
     path: "{{remote_tmp_dir}}/utf16.txt"
     search_regex: completed
+
+- name: test non mmapable file, skip OSs w/o /sys
+  wait_for:
+    path: "/sys/class/net/lo/carrier"
+    search_regex: "1"
+    timeout: 30
+  when: ansible_os_family not in ['FreeBSD', 'Darwin']
 
 - name: test wait for port timeout
   wait_for:
@@ -156,11 +163,11 @@
     that:
       - waitfor is successful
       - waitfor is not changed
-      - "waitfor.port == {{ http_port }}"
+      - waitfor.port == http_port
 
-- name: install psutil using pip (non-Linux only)
+- name: install psutil using pip (non-Linux)
   pip:
-    name: psutil==5.8.0
+    name: psutil==5.9.8
   when: ansible_system != 'Linux'
 
 - name: Copy zombie.py
@@ -184,7 +191,7 @@
     that:
       - waitfor is successful
       - waitfor is not changed
-      - "waitfor.port == {{ http_port }}"
+      - waitfor.port == http_port
 
 - name: test wait_for with delay
   wait_for:

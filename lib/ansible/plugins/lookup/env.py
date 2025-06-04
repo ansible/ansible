@@ -30,22 +30,17 @@ EXAMPLES = """
   ansible.builtin.debug:
     msg: "'{{ lookup('ansible.builtin.env', 'HOME') }}' is the HOME environment variable."
 
-- name: Before 2.13, how to set default value if the variable is not defined.
-        This cannot distinguish between USR undefined and USR=''.
+- name: Before 2.13, how to set default value if the variable is not defined
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USR')|default('nobody', True) }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE') | default('World', True) }}"
 
-- name: Example how to set default value if the variable is not defined, ignores USR=''
+- name: Example how to set default value if the variable is not defined
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USR', default='nobody') }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default='World') }}"
 
-- name: Set default value to Undefined, if the variable is not defined
+- name: Fail if the variable is not defined by setting default value to 'undef()'
   ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USR', default=Undefined) }} is the user."
-
-- name: Set default value to undef(), if the variable is not defined
-  ansible.builtin.debug:
-    msg: "{{ lookup('ansible.builtin.env', 'USR', default=undef()) }} is the user."
+    msg: "Hello {{ lookup('ansible.builtin.env', 'UNDEFINED_VARIABLE', default=undef()) }}"
 """
 
 RETURN = """
@@ -55,24 +50,32 @@ RETURN = """
     type: list
 """
 
-from jinja2.runtime import Undefined
+import os
 
-from ansible.errors import AnsibleUndefinedVariable
+
 from ansible.plugins.lookup import LookupBase
-from ansible.utils import py3compat
+from ansible._internal._templating._jinja_bits import _undef, _DEFAULT_UNDEF
+from ansible._internal._datatag._tags import Origin
 
 
 class LookupModule(LookupBase):
-    def run(self, terms, variables, **kwargs):
+    accept_args_markers = True  # the `default` arg can accept undefined values
 
+    def run(self, terms, variables=None, **kwargs):
         self.set_options(var_options=variables, direct=kwargs)
 
         ret = []
         d = self.get_option('default')
+
         for term in terms:
             var = term.split()[0]
-            val = py3compat.environ.get(var, d)
-            if isinstance(val, Undefined):
-                raise AnsibleUndefinedVariable('The "env" lookup, found an undefined variable: %s' % var)
+            val = os.environ.get(var, d)
+
+            if val is _DEFAULT_UNDEF:
+                val = _undef(f'The environment variable {var!r} is not set.')
+            else:
+                val = Origin(description=f"<environment variable {var!r}>").try_tag(val)
+
             ret.append(val)
+
         return ret

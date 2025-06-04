@@ -3,16 +3,16 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: no_callable
 short_description: No callale test module
 description: No callable test module.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

@@ -109,9 +109,9 @@ def _camel_to_snake(name, reversible=False):
 
 
 def dict_merge(a, b):
-    '''recursively merges dicts. not just simple a['key'] = b['key'], if
+    """recursively merges dicts. not just simple a['key'] = b['key'], if
     both a and b have a key whose value is a dict then dict_merge is called
-    on both values and the result stored in the returned dictionary.'''
+    on both values and the result stored in the returned dictionary."""
     if not isinstance(b, dict):
         return b
     result = deepcopy(a)

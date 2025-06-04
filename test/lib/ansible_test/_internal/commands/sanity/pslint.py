@@ -1,4 +1,5 @@
 """Sanity test using PSScriptAnalyzer."""
+
 from __future__ import annotations
 
 import json

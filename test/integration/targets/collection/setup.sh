@@ -12,6 +12,9 @@
 #
 # 3) Sanity tests which are multi-version require an ignore entry per Python version.
 #    This script replicates these ignore entries for each supported Python version based on the ignored path.
+#
+# 4) Windows tests need access to the ansible.windows vendored collection.
+#    This script copies any of the existing collections in ANSIBLE_COLLECTIONS_PATH to the temporary directory.
 
 set -eu -o pipefail
 
@@ -24,6 +27,10 @@ WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
 cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
-cd "${WORK_DIR}/ansible_collections/ns/col"
+cd "${WORK_DIR}/ansible_collections/ns/${COLLECTION_NAME:-col}"
+
+if [ "${ANSIBLE_COLLECTIONS_PATH:+set}" = "set" ]; then
+    cp -aL "${ANSIBLE_COLLECTIONS_PATH}"/ansible_collections/* "${WORK_DIR}/ansible_collections"
+fi
 
 "${TEST_DIR}/../collection/update-ignore.py"

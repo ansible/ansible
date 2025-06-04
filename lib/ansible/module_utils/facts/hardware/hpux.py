@@ -40,6 +40,9 @@ class HPUXHardware(Hardware):
     def populate(self, collected_facts=None):
         hardware_facts = {}
 
+        # TODO: very inefficient calls to machinfo,
+        # should just make one and then deal with finding the data (see facts/sysctl)
+        # but not going to change unless there is hp/ux for testing
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
         hw_facts = self.get_hw_facts()

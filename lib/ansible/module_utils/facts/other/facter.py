@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import json
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -22,8 +21,14 @@ class FacterFactCollector(BaseFactCollector):
                                                   namespace=namespace)
 
     def find_facter(self, module):
-        facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
-        cfacter_path = module.get_bin_path('cfacter', opt_dirs=['/opt/puppetlabs/bin'])
+        facter_path = module.get_bin_path(
+            'facter',
+            opt_dirs=['/opt/puppetlabs/bin']
+        )
+        cfacter_path = module.get_bin_path(
+            'cfacter',
+            opt_dirs=['/opt/puppetlabs/bin']
+        )
 
         # Prefer to use cfacter if available
         if cfacter_path is not None:
@@ -73,7 +78,6 @@ class FacterFactCollector(BaseFactCollector):
         try:
             facter_dict = json.loads(facter_output)
         except Exception:
-            # FIXME: maybe raise a FactCollectorError with some info attrs?
-            pass
+            module.warn("Failed to parse facter facts")
 
         return facter_dict

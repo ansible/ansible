@@ -1,3 +1,0 @@
----
-minor_changes:
-  - filter plugin - Add the count and mandatory_count parameters in the regex_replace filter

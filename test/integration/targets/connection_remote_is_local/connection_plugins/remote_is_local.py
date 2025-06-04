@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: remote_is_local
     short_description: remote is local
     description:
@@ -14,7 +14,7 @@ DOCUMENTATION = '''
         - connection_pipelining
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
-'''
+"""
 
 
 from ansible.plugins.connection.local import Connection as LocalConnection

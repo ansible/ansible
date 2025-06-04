@@ -19,8 +19,7 @@ from __future__ import annotations
 
 import sys
 import glob
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.utils import get_file_lines
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -82,7 +81,10 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                                         fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('hp-ux'):
             cmd = module.get_bin_path('ioscan')
-            fcmsu_cmd = module.get_bin_path('fcmsutil', opt_dirs=['/opt/fcms/bin'])
+            fcmsu_cmd = module.get_bin_path(
+                'fcmsutil',
+                opt_dirs=['/opt/fcms/bin'],
+            )
             # go ahead if we have both commands available
             if cmd and fcmsu_cmd:
                 # ioscan / get list of available fibre-channel devices (fcd)

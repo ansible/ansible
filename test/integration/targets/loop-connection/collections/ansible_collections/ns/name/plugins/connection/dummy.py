@@ -1,13 +1,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: dummy
 short_description: Used for loop-connection tests
 description:
 - See above
 author: ansible (@core)
-'''
+"""
 
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase

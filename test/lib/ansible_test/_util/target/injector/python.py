@@ -6,12 +6,15 @@ import importlib.util
 import os
 import sys
 
+NETWORKING_CLI_STUB_SCRIPT = 'ansible_connection_cli_stub.py'
+
 
 def main():
     """Main entry point."""
     name = os.path.basename(__file__)
     args = [sys.executable]
 
+    ansible_lib_root = os.environ.get('ANSIBLE_TEST_ANSIBLE_LIB_ROOT')
     coverage_config = os.environ.get('COVERAGE_CONF')
     coverage_output = os.environ.get('COVERAGE_FILE')
 
@@ -33,6 +36,8 @@ def main():
         args += ['-m', 'pytest']
     elif name == 'importer.py':
         args += [find_program(name, False)]
+    elif name == NETWORKING_CLI_STUB_SCRIPT:
+        args += [os.path.join(ansible_lib_root, 'cli/scripts', NETWORKING_CLI_STUB_SCRIPT)]
     else:
         args += [find_program(name, True)]
 

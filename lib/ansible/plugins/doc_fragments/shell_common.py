@@ -34,7 +34,7 @@ options:
   system_tmpdirs:
     description:
        - "List of valid system temporary directories on the managed machine for Ansible to validate
-         O(remote_tmp) against, when specific permissions are needed.  These must be world
+         O(remote_tmp) against, when specific permissions are needed. These must be world
          readable, writable, and executable. This list should only contain directories which the
          system administrator has pre-created with the proper ownership and permissions otherwise
          security issues can arise."
@@ -51,7 +51,7 @@ options:
       - name: ansible_system_tmpdirs
   async_dir:
     description:
-       - Directory in which ansible will keep async job information
+       - Directory in which ansible will keep async job information.
     default: '~/.ansible_async'
     env: [{name: ANSIBLE_ASYNC_DIR}]
     ini:
@@ -59,14 +59,6 @@ options:
         key: async_dir
     vars:
       - name: ansible_async_dir
-  environment:
-    type: list
-    elements: dictionary
-    default: [{}]
-    description:
-      - List of dictionaries of environment variables and their values to use when executing commands.
-    keyword:
-      - name: environment
   admin_users:
     type: list
     elements: string

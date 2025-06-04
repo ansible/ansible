@@ -61,9 +61,12 @@ def upload_files(codecov_bin: pathlib.Path, files: t.Tuple[CoverageFile, ...], d
     for file in files:
         cmd = [
             str(codecov_bin),
-            '--name', file.name,
-            '--file', str(file.path),
+            '--name',
+            file.name,
+            '--file',
+            str(file.path),
         ]
+
         for flag in file.flags:
             cmd.extend(['--flags', flag])
 

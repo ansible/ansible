@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: pip
 short_description: Manages Python library dependencies
@@ -28,21 +28,21 @@ options:
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
-        File can be specified as a relative path if using the chdir option.
+        File can be specified as a relative path if using the O(chdir) option.
     type: str
   virtualenv:
     description:
       - An optional path to a I(virtualenv) directory to install into.
-        It cannot be specified together with the 'executable' parameter
+        It cannot be specified together with the O(executable) parameter
         (added in 2.1).
         If the virtualenv does not exist, it will be created before installing
-        packages. The optional virtualenv_site_packages, virtualenv_command,
-        and virtualenv_python options affect the creation of the virtualenv.
+        packages. The optional O(virtualenv_site_packages), O(virtualenv_command),
+        and O(virtualenv_python) options affect the creation of the virtualenv.
     type: path
   virtualenv_site_packages:
     description:
       - Whether the virtual environment will inherit packages from the
-        global site-packages directory.  Note that if this setting is
+        global C(site-packages) directory. Note that if this setting is
         changed on an already existing virtual environment it will not
         have any effect, the environment must be deleted and newly
         created.
@@ -68,14 +68,14 @@ options:
     version_added: "2.0"
   state:
     description:
-      - The state of module
-      - The 'forcereinstall' option is only available in Ansible 2.1 and above.
+      - The state of module.
+      - The V(forcereinstall) option is only available in Ansible 2.1 and above.
     type: str
     choices: [ absent, forcereinstall, latest, present ]
     default: present
   extra_args:
     description:
-      - Extra arguments passed to pip.
+      - Extra arguments passed to C(pip).
     type: str
     version_added: "1.0"
   editable:
@@ -86,18 +86,18 @@ options:
     version_added: "2.0"
   chdir:
     description:
-      - cd into this directory before running the command
+      - cd into this directory before running the command.
     type: path
     version_added: "1.3"
   executable:
     description:
-      - The explicit executable or pathname for the pip executable,
+      - The explicit executable or pathname for the C(pip) executable,
         if different from the Ansible Python interpreter. For
         example V(pip3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
       - Mutually exclusive with O(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
-      - The setuptools package must be installed for both the Ansible Python interpreter
+      - The C(setuptools) package must be installed for both the Ansible Python interpreter
         and for the version of Python specified by this option.
     type: path
     version_added: "1.3"
@@ -105,11 +105,18 @@ options:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., "0077") and you want to pip install
+        restrictive umask by default (e.g., C(0077)) and you want to C(pip install)
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode as an octal string, (e.g., "0022").
+        to specify desired umask mode as an octal string, (e.g., C(0022)).
     type: str
     version_added: "2.1"
+  break_system_packages:
+    description:
+      - Allow C(pip) to modify an externally-managed Python installation as defined by PEP 668.
+      - This is typically required when installing packages outside a virtual environment on modern systems.
+    type: bool
+    default: false
+    version_added: "2.17"
 extends_documentation_fragment:
   -  action_common_attributes
 attributes:
@@ -120,6 +127,8 @@ attributes:
     platform:
         platforms: posix
 notes:
+   - Python installations marked externally-managed (as defined by PEP668) cannot be updated by pip versions >= 23.0.1 without the use of
+     a virtual environment or setting the O(break_system_packages) option.
    - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
      the virtualenv needs to be created.
@@ -136,9 +145,9 @@ requirements:
 - setuptools or packaging
 author:
 - Matt Wright (@mattupstate)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Install bottle python package
   ansible.builtin.pip:
     name: bottle
@@ -233,9 +242,29 @@ EXAMPLES = '''
     name: bottle
     umask: "0022"
   become: True
-'''
 
-RETURN = '''
+- name: Run a module inside a virtual environment
+  block:
+    - name: Ensure the virtual environment exists
+      pip:
+        name: psutil
+        virtualenv: "{{ venv_dir }}"
+        # On Debian-based systems the correct python*-venv package must be installed to use the `venv` module.
+        virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+    - name: Run a module inside the virtual environment
+      wait_for:
+        port: 22
+      vars:
+        # Alternatively, use a block to affect multiple tasks, or use set_fact to affect the remainder of the playbook.
+        ansible_python_interpreter: "{{ venv_python }}"
+
+  vars:
+    venv_dir: /tmp/pick-a-better-venv-path
+    venv_python: "{{ venv_dir }}/bin/python"
+"""
+
+RETURN = """
 cmd:
   description: pip command used by the module
   returned: success
@@ -261,7 +290,7 @@ virtualenv:
   returned: success, if a virtualenv path was provided
   type: str
   sample: "/tmp/virtualenv"
-'''
+"""
 
 import argparse
 import os
@@ -270,7 +299,6 @@ import sys
 import tempfile
 import operator
 import shlex
-import traceback
 
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -280,10 +308,10 @@ HAS_SETUPTOOLS = False
 try:
     from packaging.requirements import Requirement as parse_requirement
     HAS_PACKAGING = True
-except Exception:
+except Exception as ex:
     # This is catching a generic Exception, due to packaging on EL7 raising a TypeError on import
     HAS_PACKAGING = False
-    PACKAGING_IMP_ERR = traceback.format_exc()
+    PACKAGING_IMP_ERR = ex
     try:
         from pkg_resources import Requirement
         parse_requirement = Requirement.parse  # type: ignore[misc,assignment]
@@ -295,7 +323,6 @@ except Exception:
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.six import PY3
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -389,7 +416,7 @@ def _get_cmd_options(module, cmd):
 
 
 def _get_packages(module, pip, chdir):
-    '''Return results of pip command to get packages.'''
+    """Return results of pip command to get packages."""
     # Try 'pip list' command first.
     command = pip + ['list', '--format=freeze']
     locale = get_best_parsable_locale(module)
@@ -407,7 +434,7 @@ def _get_packages(module, pip, chdir):
 
 
 def _is_present(module, req, installed_pkgs, pkg_command):
-    '''Return whether or not package is installed.'''
+    """Return whether or not package is installed."""
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
@@ -422,15 +449,7 @@ def _is_present(module, req, installed_pkgs, pkg_command):
 
 
 def _get_pip(module, env=None, executable=None):
-    # Older pip only installed under the "/usr/bin/pip" name.  Many Linux
-    # distros install it there.
-    # By default, we try to use pip required for the current python
-    # interpreter, so people can use pip to install modules dependencies
-    candidate_pip_basenames = ('pip2', 'pip')
-    if PY3:
-        # pip under python3 installs the "/usr/bin/pip3" name
-        candidate_pip_basenames = ('pip3',)
-
+    candidate_pip_basenames = ('pip3',)
     pip = None
     if executable is not None:
         if os.path.isabs(executable):
@@ -571,13 +590,10 @@ def setup_virtualenv(module, env, chdir, out, err):
     if not _is_venv_command(module.params['virtualenv_command']):
         if virtualenv_python:
             cmd.append('-p%s' % virtualenv_python)
-        elif PY3:
-            # Ubuntu currently has a patch making virtualenv always
-            # try to use python2.  Since Ubuntu16 works without
-            # python2 installed, this is a problem.  This code mimics
-            # the upstream behaviour of using the python which invoked
-            # virtualenv to determine which python is used inside of
-            # the virtualenv (when none are specified).
+        else:
+            # This code mimics the upstream behaviour of using the python
+            # which invoked virtualenv to determine which python is used
+            # inside of the virtualenv (when none are specified).
             cmd.append('-p%s' % sys.executable)
 
     # if venv or pyvenv are used and virtualenv_python is defined, then
@@ -683,6 +699,7 @@ def main():
             chdir=dict(type='path'),
             executable=dict(type='path'),
             umask=dict(type='str'),
+            break_system_packages=dict(type='bool', default=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
@@ -787,15 +804,18 @@ def main():
         if extra_args:
             cmd.extend(shlex.split(extra_args))
 
+        if module.params['break_system_packages']:
+            # Using an env var instead of the `--break-system-packages` option, to avoid failing under pip 23.0.0 and earlier.
+            # See: https://github.com/pypa/pip/pull/11780
+            os.environ['PIP_BREAK_SYSTEM_PACKAGES'] = '1'
+
         if name:
             cmd.extend(to_native(p) for p in packages)
         elif requirements:
             cmd.extend(['-r', requirements])
         else:
-            module.exit_json(
-                changed=False,
-                warnings=["No valid name or requirements file found."],
-            )
+            module.warn("No valid name or requirements file found.")
+            module.exit_json(changed=False)
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:

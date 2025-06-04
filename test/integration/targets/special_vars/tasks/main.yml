@@ -89,7 +89,7 @@
   include_role:
     name: include_parent_role_vars
 
-- name: check that ansible_parent_role_names is normally unset when not included/imported (after both import and inlcude)
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after both import and include)
   assert:
     that:
       - "ansible_parent_role_names is undefined"

@@ -1,6 +1,7 @@
 - vars:
     venv_cmd: "{{ ansible_python_interpreter ~ ' -m venv' }}"
     venv_dest: "{{ galaxy_dir }}/test_venv_{{ resolvelib_version }}"
+    test_name: galaxy_ng
   block:
     - name: install another version of resolvelib that is supported by ansible-galaxy
       pip:
@@ -20,7 +21,6 @@
 
     - include_tasks: install.yml
       vars:
-        test_name: galaxy_ng
         test_id: '{{ test_name }} (resolvelib {{ resolvelib_version }})'
         test_server: '{{ galaxy_ng_server }}'
         test_api_server: '{{ galaxy_ng_server }}'

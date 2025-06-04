@@ -1,4 +1,5 @@
 """Composite argument key-value parsers used by other parsers."""
+
 from __future__ import annotations
 
 import typing as t
@@ -17,6 +18,7 @@ from ...completion import (
 
 from ...util import (
     REMOTE_ARCHITECTURES,
+    WINDOWS_CONNECTIONS,
 )
 
 from ...host_configs import (
@@ -177,6 +179,7 @@ class WindowsRemoteKeyValueParser(KeyValueParser):
         return dict(
             provider=ChoicesParser(REMOTE_PROVIDERS),
             arch=ChoicesParser(REMOTE_ARCHITECTURES),
+            connection=ChoicesParser(WINDOWS_CONNECTIONS),
         )
 
     def document(self, state: DocumentationState) -> t.Optional[str]:
@@ -186,6 +189,7 @@ class WindowsRemoteKeyValueParser(KeyValueParser):
         state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
             f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
             f'  arch={ChoicesParser(REMOTE_ARCHITECTURES).document(state)}',
+            f'  connection={ChoicesParser(WINDOWS_CONNECTIONS).document(state)}',
         ])
 
         return f'{{{section_name}}}'

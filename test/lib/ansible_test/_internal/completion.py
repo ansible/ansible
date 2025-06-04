@@ -1,4 +1,5 @@
 """Loading, parsing and storing of completion configurations."""
+
 from __future__ import annotations
 
 import abc
@@ -245,6 +246,8 @@ class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig
 @dataclasses.dataclass(frozen=True)
 class WindowsRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote Windows platforms."""
+
+    connection: str = ''
 
 
 TCompletionConfig = t.TypeVar('TCompletionConfig', bound=CompletionConfig)

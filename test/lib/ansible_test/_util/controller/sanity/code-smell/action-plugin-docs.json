@@ -7,7 +7,9 @@
         "plugins/action/"
     ],
     "extensions": [
-        ".py"
+        ".py",
+        ".yml",
+        ".yaml"
     ],
     "output": "path-message"
 }

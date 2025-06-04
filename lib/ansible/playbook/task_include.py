@@ -19,10 +19,10 @@ from __future__ import annotations
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
-from ansible.utils.sentinel import Sentinel
 
 __all__ = ['TaskInclude']
 
@@ -58,12 +58,12 @@ class TaskInclude(Task):
         return task
 
     def check_options(self, task, data):
-        '''
+        """
         Method for options validation to use in 'load_data' for TaskInclude and HandlerTaskInclude
         since they share the same validations. It is not named 'validate_options' on purpose
         to prevent confusion with '_validate_*" methods. Note that the task passed might be changed
         as a side-effect of this method.
-        '''
+        """
         my_arg_names = frozenset(task.args.keys())
 
         # validate bad args, otherwise we silently ignore
@@ -74,7 +74,7 @@ class TaskInclude(Task):
         if not task.args.get('_raw_params'):
             task.args['_raw_params'] = task.args.pop('file', None)
             if not task.args['_raw_params']:
-                raise AnsibleParserError('No file specified for %s' % task.action)
+                raise AnsibleParserError('No file specified for %s' % task.action, obj=data)
 
         apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action not in C._ACTION_INCLUDE_TASKS:
@@ -104,10 +104,10 @@ class TaskInclude(Task):
         return new_me
 
     def build_parent_block(self):
-        '''
+        """
         This method is used to create the parent block for the included tasks
         when ``apply`` is specified
-        '''
+        """
         apply_attrs = self.args.pop('apply', {})
         if apply_attrs:
             apply_attrs['block'] = []

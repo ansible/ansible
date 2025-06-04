@@ -4,19 +4,22 @@
   hosts: testhost
   gather_facts: no
   tasks:
+    - include_vars: secretvars.yml
+      no_log: true
+
     - name: args should be logged in the absence of no_log
-      shell: echo "LOG_ME_TASK_SUCCEEDED"
+      shell: echo "{{log_me_prefix}}TASK_SUCCEEDED"
 
     - name: failed args should be logged in the absence of no_log
-      shell: echo "LOG_ME_TASK_FAILED"
+      shell: echo "{{log_me_prefix}}TASK_FAILED"
       failed_when: true
       ignore_errors: true
 
     - name: item args should be logged in the absence of no_log
       shell: echo {{ item }}
-      with_items: [ "LOG_ME_ITEM", "LOG_ME_SKIPPED", "LOG_ME_ITEM_FAILED" ]
-      when: item != "LOG_ME_SKIPPED"
-      failed_when: item == "LOG_ME_ITEM_FAILED"
+      with_items: [ "{{log_me_prefix}}ITEM", "{{log_me_prefix}}SKIPPED", "{{log_me_prefix}}ITEM_FAILED" ]
+      when: item != log_me_prefix ~ "SKIPPED"
+      failed_when: item == log_me_prefix ~ "ITEM_FAILED"
       ignore_errors: true
 
     - name: args should not be logged when task-level no_log set
@@ -61,7 +64,7 @@
         no_log: true
 
       - name: args should be logged when task-level no_log overrides play-level
-        shell: echo "LOG_ME_OVERRIDE"
+        shell: echo "{{log_me_prefix}}OVERRIDE"
         no_log: false
 
       - name: Add a fake host for next play

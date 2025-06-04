@@ -25,5 +25,5 @@
   stat:
     path: "{{ remote_tmp_dir_test }}/unreadable/createme/file.txt"
   register: path_created
-  failed_when: path_created.exists is false
+  failed_when: path_created.stat.exists is false
   when: "ansible_user_id == 'root'"

@@ -1,0 +1,9 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [include_role : does-not-exist] *******************************************
+fatal: [testhost]: FAILED! => {"changed": false, "reason": "the role 'does-not-exist' was not found in TEST_PATH/roles:/<<HOMEDIR>>/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:TEST_PATH"}
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

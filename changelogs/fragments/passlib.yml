@@ -1,0 +1,3 @@
+---
+removed_features:
+  - encrypt - passing unsupported passlib hashtype now raises AnsibleFilterError.

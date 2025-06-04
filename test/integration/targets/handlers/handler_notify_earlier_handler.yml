@@ -1,0 +1,33 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: test implicit flush_handlers tasks pick up notifications done by handlers themselves
+      command: echo
+      notify: h2
+  handlers:
+    - name: h1
+      debug:
+        msg: h1_ran
+
+    - name: h2
+      debug:
+        msg: h2_ran
+      changed_when: true
+      notify: h1
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: test implicit flush_handlers tasks pick up notifications done by handlers themselves
+      command: echo
+      notify: h3
+  handlers:
+    - name: h3
+      debug:
+        msg: h3_ran
+      changed_when: true
+      notify: h4
+
+    - name: h4
+      debug:
+        msg: h4_ran

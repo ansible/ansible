@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: jsonfile
     short_description: JSON formatted files.
     description:
@@ -37,12 +37,12 @@ DOCUMENTATION = '''
           - key: fact_caching_timeout
             section: defaults
         type: integer
-'''
+"""
 
 import codecs
 import json
 
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
+from ansible.module_utils.common.json import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseFileCacheModule
 
 

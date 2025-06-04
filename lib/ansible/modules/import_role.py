@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 author: Ansible Core Team (@ansible)
 module: import_role
@@ -59,7 +59,7 @@ options:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play.
       - Variables are exposed to the play at playbook parsing time, and available to earlier roles and tasks as well unlike C(include_role).
-      - The default depends on the configuration option :ref:`default_private_role_vars`.
+      - The default depends on the configuration option R(DEFAULT_PRIVATE_ROLE_VARS, DEFAULT_PRIVATE_ROLE_VARS).
     type: bool
     default: yes
     version_added: '2.17'
@@ -85,11 +85,11 @@ seealso:
 - module: ansible.builtin.import_tasks
 - module: ansible.builtin.include_role
 - module: ansible.builtin.include_tasks
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - hosts: all
   tasks:
     - ansible.builtin.import_role:
@@ -110,8 +110,8 @@ EXAMPLES = r'''
       ansible.builtin.import_role:
         name: myrole
       when: not idontwanttorun
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 # This module does not return anything except tasks to execute.
-'''
+"""

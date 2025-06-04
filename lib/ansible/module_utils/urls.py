@@ -12,7 +12,7 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 
-'''
+"""
 The **urls** utils module offers a replacement for the urllib python library.
 
 urllib is the python stdlib way to retrieve files from the Internet but it
@@ -25,11 +25,12 @@ to replace urllib with a more secure library. However, all third party libraries
 require that the library be installed on the managed machine. That is an extra step
 for users making use of a module. If possible, avoid third party libraries by using
 this code instead.
-'''
+"""
 
 from __future__ import annotations
 
 import base64
+import email.encoders
 import email.mime.application
 import email.mime.multipart
 import email.mime.nonmultipart
@@ -223,10 +224,10 @@ UnixHTTPSConnection = None
 if HAS_SSL:
     @contextmanager
     def unix_socket_patch_httpconnection_connect():
-        '''Monkey patch ``http.client.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
+        """Monkey patch ``http.client.HTTPConnection.connect`` to be ``UnixHTTPConnection.connect``
         so that when calling ``super(UnixHTTPSConnection, self).connect()`` we get the
         correct behavior of creating self.sock for the unix socket
-        '''
+        """
         _connect = http.client.HTTPConnection.connect
         http.client.HTTPConnection.connect = UnixHTTPConnection.connect
         yield
@@ -270,7 +271,7 @@ if HAS_SSL:
 
 
 class UnixHTTPConnection(http.client.HTTPConnection):
-    '''Handles http requests to a unix socket file'''
+    """Handles http requests to a unix socket file"""
 
     def __init__(self, unix_socket):
         self._unix_socket = unix_socket
@@ -290,7 +291,7 @@ class UnixHTTPConnection(http.client.HTTPConnection):
 
 
 class UnixHTTPHandler(urllib.request.HTTPHandler):
-    '''Handler for Unix urls'''
+    """Handler for Unix urls"""
 
     def __init__(self, unix_socket, **kwargs):
         super().__init__(**kwargs)
@@ -301,29 +302,29 @@ class UnixHTTPHandler(urllib.request.HTTPHandler):
 
 
 class ParseResultDottedDict(dict):
-    '''
+    """
     A dict that acts similarly to the ParseResult named tuple from urllib
-    '''
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dict__ = self
 
     def as_list(self):
-        '''
+        """
         Generate a list from this dict, that looks like the ParseResult named tuple
-        '''
+        """
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
 
 def generic_urlparse(parts):
-    '''
+    """
     Returns a dictionary of url parts as parsed by urlparse,
     but accounts for the fact that older versions of that
     library do not support named attributes (ie. .netloc)
 
     This method isn't of much use any longer, but is kept
     in a minimal state for backwards compat.
-    '''
+    """
     result = ParseResultDottedDict(parts._asdict())
     result.update({
         'username': parts.username,
@@ -340,13 +341,16 @@ def extract_pem_certs(data):
 
 
 def get_response_filename(response):
-    url = response.geturl()
-    path = urlparse(url)[2]
-    filename = os.path.basename(path.rstrip('/')) or None
-    if filename:
-        filename = unquote(filename)
+    if filename := response.headers.get_param('filename', header='content-disposition'):
+        filename = os.path.basename(filename)
+    else:
+        url = response.geturl()
+        path = urlparse(url)[2]
+        filename = os.path.basename(path.rstrip('/')) or None
+        if filename:
+            filename = unquote(filename)
 
-    return response.headers.get_param('filename', header='content-disposition') or filename
+    return filename
 
 
 def parse_content_type(response):
@@ -496,6 +500,12 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
         context.set_ciphers(':'.join(map(to_native, ciphers)))
 
     if client_cert:
+        # TLS 1.3 needs this to be set to True to allow post handshake cert
+        # authentication. This functionality was added in Python 3.8 and was
+        # backported to 3.6.7, and 3.7.1 so needs a check for now.
+        if hasattr(context, "post_handshake_auth"):
+            context.post_handshake_auth = True
+
         context.load_cert_chain(client_cert, keyfile=client_key)
 
     return context
@@ -625,6 +635,74 @@ def rfc2822_date_string(timetuple, zone='-0000'):
          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
         timetuple[0], timetuple[3], timetuple[4], timetuple[5],
         zone)
+
+
+def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc):
+    headers = {}
+    handlers = []
+
+    parsed = urlparse(url)
+    if parsed.scheme == 'ftp':
+        return url, headers, handlers
+
+    username = url_username
+    password = url_password
+
+    if username:
+        netloc = parsed.netloc
+    elif '@' in parsed.netloc:
+        credentials, netloc = parsed.netloc.split('@', 1)
+        if ':' in credentials:
+            username, password = credentials.split(':', 1)
+        else:
+            username = credentials
+            password = ''
+        username = unquote(username)
+        password = unquote(password)
+
+        # reconstruct url without credentials
+        url = urlunparse(parsed._replace(netloc=netloc))
+
+    if use_gssapi:
+        if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
+            handlers.append(HTTPGSSAPIAuthHandler(username, password))
+        else:
+            imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
+                                               url='https://pypi.org/project/gssapi/')
+            raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
+
+    elif username and not force_basic_auth:
+        passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+
+        # this creates a password manager
+        passman.add_password(None, netloc, username, password)
+
+        # because we have put None at the start it will always
+        # use this username/password combination for  urls
+        # for which `theurl` is a super-url
+        authhandler = urllib.request.HTTPBasicAuthHandler(passman)
+        digest_authhandler = urllib.request.HTTPDigestAuthHandler(passman)
+
+        # create the AuthHandler
+        handlers.append(authhandler)
+        handlers.append(digest_authhandler)
+
+    elif username and force_basic_auth:
+        headers["Authorization"] = basic_auth_header(username, password)
+
+    elif use_netrc:
+        try:
+            rc = netrc.netrc(os.environ.get('NETRC'))
+            login = rc.authenticators(parsed.hostname)
+        except IOError:
+            login = None
+
+        if login:
+            username, dummy, password = login
+            if username and password:
+                headers["Authorization"] = basic_auth_header(username, password)
+
+    return url, headers, handlers
 
 
 class Request:
@@ -766,62 +844,9 @@ class Request:
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        parsed = urlparse(url)
-        if parsed.scheme != 'ftp':
-            username = url_username
-            password = url_password
-
-            if username:
-                netloc = parsed.netloc
-            elif '@' in parsed.netloc:
-                credentials, netloc = parsed.netloc.split('@', 1)
-                if ':' in credentials:
-                    username, password = credentials.split(':', 1)
-                else:
-                    username = credentials
-                    password = ''
-
-                # reconstruct url without credentials
-                url = urlunparse(parsed._replace(netloc=netloc))
-
-            if use_gssapi:
-                if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
-                    handlers.append(HTTPGSSAPIAuthHandler(username, password))
-                else:
-                    imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
-                                                       url='https://pypi.org/project/gssapi/')
-                    raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
-
-            elif username and not force_basic_auth:
-                passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-
-                # this creates a password manager
-                passman.add_password(None, netloc, username, password)
-
-                # because we have put None at the start it will always
-                # use this username/password combination for  urls
-                # for which `theurl` is a super-url
-                authhandler = urllib.request.HTTPBasicAuthHandler(passman)
-                digest_authhandler = urllib.request.HTTPDigestAuthHandler(passman)
-
-                # create the AuthHandler
-                handlers.append(authhandler)
-                handlers.append(digest_authhandler)
-
-            elif username and force_basic_auth:
-                headers["Authorization"] = basic_auth_header(username, password)
-
-            elif use_netrc:
-                try:
-                    rc = netrc.netrc(os.environ.get('NETRC'))
-                    login = rc.authenticators(parsed.hostname)
-                except IOError:
-                    login = None
-
-                if login:
-                    username, dummy, password = login
-                    if username and password:
-                        headers["Authorization"] = basic_auth_header(username, password)
+        url, auth_headers, auth_handlers = _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc)
+        headers.update(auth_headers)
+        handlers.extend(auth_handlers)
 
         if not use_proxy:
             proxyhandler = urllib.request.ProxyHandler({})
@@ -965,11 +990,11 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
              unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
-    '''
+    """
     Sends a request via HTTP(S) or FTP using urllib (Python3)
 
     Does not require the module environment
-    '''
+    """
     method = method or ('POST' if data else 'GET')
     return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
                           force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
@@ -1021,6 +1046,7 @@ def prepare_multipart(fields):
             filename = None
         elif isinstance(value, Mapping):
             filename = value.get('filename')
+            multipart_encoding_str = value.get('multipart_encoding') or 'base64'
             content = value.get('content')
             if not any((filename, content)):
                 raise ValueError('at least one of filename or content must be provided')
@@ -1032,14 +1058,16 @@ def prepare_multipart(fields):
                 except Exception:
                     mime = 'application/octet-stream'
             main_type, sep, sub_type = mime.partition('/')
+
         else:
             raise TypeError(
                 'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
             )
 
         if not content and filename:
+            multipart_encoding = set_multipart_encoding(multipart_encoding_str)
             with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
-                part = email.mime.application.MIMEApplication(f.read())
+                part = email.mime.application.MIMEApplication(f.read(), _encoder=multipart_encoding)
                 del part['Content-Type']
                 part.add_header('Content-Type', '%s/%s' % (main_type, sub_type))
         else:
@@ -1078,10 +1106,23 @@ def prepare_multipart(fields):
     )
 
 
+def set_multipart_encoding(encoding):
+    """Takes an string with specific encoding type for multipart data.
+    Will return reference to function from email.encoders library.
+    If given string key doesn't exist it will raise a ValueError"""
+    encoders_dict = {
+        "base64": email.encoders.encode_base64,
+        "7or8bit": email.encoders.encode_7or8bit
+    }
+    if encoders_dict.get(encoding):
+        return encoders_dict.get(encoding)
+    else:
+        raise ValueError("multipart_encoding must be one of %s." % repr(encoders_dict.keys()))
+
+
 #
 # Module-related functions
 #
-
 
 def basic_auth_header(username, password):
     """Takes a username and password and returns a byte string suitable for
@@ -1093,10 +1134,10 @@ def basic_auth_header(username, password):
 
 
 def url_argument_spec():
-    '''
+    """
     Creates an argument spec that can be used with any module
     that will be requesting content via urllib/urllib2
-    '''
+    """
     return dict(
         url=dict(type='str'),
         force=dict(type='bool', default=False),
@@ -1109,6 +1150,16 @@ def url_argument_spec():
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
         use_gssapi=dict(type='bool', default=False),
+    )
+
+
+def url_redirect_argument_spec():
+    """
+    Creates an addition arugment spec to `url_argument_spec`
+    for  `follow_redirects` argument
+    """
+    return dict(
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
     )
 
 
@@ -1147,7 +1198,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data),
+                               data=json.dumps(data),
                                headers={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
@@ -1225,7 +1276,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
-        module.fail_json(msg=to_text(e), exception=e.import_traceback)
+        module.fail_json(msg=to_text(e))
     except urllib.error.HTTPError as e:
         r = e
         try:
@@ -1256,9 +1307,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
     except http.client.BadStatusLine as e:
         info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
-    except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+    except Exception as ex:
+        info.update(dict(msg="An unknown error occurred: %s" % to_native(ex), status=-1, exception=traceback.format_exc()))
     finally:
         tempfile.tempdir = old_tempdir
 
@@ -1309,7 +1359,7 @@ def _split_multiext(name, min=3, max=4, count=2):
 def fetch_file(module, url, data=None, headers=None, method=None,
                use_proxy=True, force=False, last_mod_time=None, timeout=10,
                unredirected_headers=None, decompress=True, ciphers=None):
-    '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
+    """Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1327,7 +1377,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg ciphers: (optional) List of ciphers to use
 
     :returns: A string, the path to the downloaded file.
-    '''
+    """
     # download file
     bufsize = 65536
     parts = urlparse(url)

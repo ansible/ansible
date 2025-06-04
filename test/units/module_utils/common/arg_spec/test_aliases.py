@@ -67,7 +67,7 @@ ALIAS_TEST_CASES = [
 
 
 # id, argument spec, parameters, expected parameters, error
-ALIAS_TEST_CASES_INVALID = [
+ALIAS_TEST_CASES_INVALID: list[tuple[str, dict, dict, dict, str]] = [
     (
         "alias-invalid",
         {'path': {'aliases': 'bad'}},

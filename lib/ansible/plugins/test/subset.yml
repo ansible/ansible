@@ -19,7 +19,7 @@ DOCUMENTATION:
       required: True
 EXAMPLES: |
   big: [1,2,3,4,5]
-  sml: [3,4]
+  small: [3,4]
   issmallinbig: '{{ small is subset(big) }}'
 RETURN:
   _value:

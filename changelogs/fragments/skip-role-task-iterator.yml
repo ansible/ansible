@@ -1,0 +1,2 @@
+minor_changes:
+  - PlayIterator - do not return tasks from already executed roles so specific strategy plugins do not have to do the filtering of such tasks themselves

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: file
 version_added: historical
@@ -63,9 +63,9 @@ options:
   force:
     description:
     - >
-      Force the creation of the symlinks in two cases: the source file does
+      Force the creation of the links in two cases: if the link type is symbolic and the source file does
       not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-      O(path) file and create a symlink to the O(src) file in place of it).
+      O(path) file and create a link to the O(src) file in place of it).
     type: bool
     default: no
   follow:
@@ -73,7 +73,7 @@ options:
     - This flag indicates that filesystem links, if they exist, should be followed.
     - O(follow=yes) and O(state=link) can modify O(src) when combined with parameters such as O(mode).
     - Previous to Ansible 2.5, this was V(false) by default.
-    - While creating a symlink with a non-existent destination, set O(follow) to V(false) to avoid a warning message related to permission issues.
+    - While creating a symlink with a non-existent destination, set O(follow=false) to avoid a warning message related to permission issues.
       The warning message is added to notify the user that we can not set permissions to the non-existent destination.
     type: bool
     default: yes
@@ -123,9 +123,9 @@ attributes:
 author:
 - Ansible Core Team
 - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Change file ownership, group and permissions
   ansible.builtin.file:
     path: /etc/foo.conf
@@ -214,8 +214,8 @@ EXAMPLES = r'''
     path: /etc/foo
     state: absent
 
-'''
-RETURN = r'''
+"""
+RETURN = r"""
 dest:
     description: Destination file/path, equal to the value passed to O(path).
     returned: O(state=touch), O(state=hard), O(state=link)
@@ -226,12 +226,11 @@ path:
     returned: O(state=absent), O(state=directory), O(state=file)
     type: str
     sample: /path/to/file.txt
-'''
+"""
 
 import errno
 import os
 import shutil
-import sys
 import time
 
 from pwd import getpwnam, getpwuid
@@ -239,7 +238,7 @@ from grp import getgrnam, getgrgid
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-
+from ansible.module_utils.common.sentinel import Sentinel
 
 # There will only be a single AnsibleModule object per module
 module = None
@@ -255,19 +254,6 @@ class AnsibleModuleError(Exception):
 
 class ParameterError(AnsibleModuleError):
     pass
-
-
-class Sentinel(object):
-    def __new__(cls, *args, **kwargs):
-        return cls
-
-
-def _ansible_excepthook(exc_type, exc_value, tb):
-    # Using an exception allows us to catch it if the calling code knows it can recover
-    if issubclass(exc_type, AnsibleModuleError):
-        module.fail_json(**exc_value.results)
-    else:
-        sys.__excepthook__(exc_type, exc_value, tb)
 
 
 def additional_parameter_handling(params):
@@ -307,17 +293,21 @@ def additional_parameter_handling(params):
 
     # make sure the target path is a directory when we're doing a recursive operation
     if params['recurse'] and params['state'] != 'directory':
-        raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
-                                      "path": params["path"]})
+        module.fail_json(
+            msg="recurse option requires state to be 'directory'",
+            path=params["path"]
+        )
 
     # Fail if 'src' but no 'state' is specified
     if params['src'] and params['state'] not in ('link', 'hard'):
-        raise ParameterError(results={'msg': "src option requires state to be 'link' or 'hard'",
-                                      'path': params['path']})
+        module.fail_json(
+            msg="src option requires state to be 'link' or 'hard'",
+            path=params['path']
+        )
 
 
 def get_state(path):
-    ''' Find out current state '''
+    """ Find out current state """
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     try:
@@ -377,8 +367,8 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
     except RuntimeError as e:
         # on Python3 "RecursionError" is raised which is derived from "RuntimeError"
         # TODO once this function is moved into the common file utilities, this should probably raise more general exception
-        raise AnsibleModuleError(
-            results={'msg': "Could not recursively set attributes on %s. Original error was: '%s'" % (to_native(b_path), to_native(e))}
+        module.fail_json(
+            msg=f"Could not recursively set attributes on {to_native(b_path)}. Original error was: '{to_native(e)}'"
         )
 
     return changed
@@ -419,17 +409,17 @@ def initial_diff(path, state, prev_state):
 def get_timestamp_for_time(formatted_time, time_format):
     if formatted_time == 'preserve':
         return None
-    elif formatted_time == 'now':
+    if formatted_time == 'now':
         return Sentinel
-    else:
-        try:
-            struct = time.strptime(formatted_time, time_format)
-            struct_time = time.mktime(struct)
-        except (ValueError, OverflowError) as e:
-            raise AnsibleModuleError(results={'msg': 'Error while obtaining timestamp for time %s using format %s: %s'
-                                              % (formatted_time, time_format, to_native(e, nonstring='simplerepr'))})
+    try:
+        struct = time.strptime(formatted_time, time_format)
+        struct_time = time.mktime(struct)
+    except (ValueError, OverflowError) as e:
+        module.fail_json(
+            msg=f"Error while obtaining timestamp for time {formatted_time} using format {time_format}: {to_native(e, nonstring='simplerepr')}",
+        )
 
-        return struct_time
+    return struct_time
 
 
 def update_timestamp_for_file(path, mtime, atime, diff=None):
@@ -486,18 +476,19 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
                 diff['before']['atime'] = previous_atime
                 diff['after']['atime'] = atime
     except OSError as e:
-        raise AnsibleModuleError(results={'msg': 'Error while updating modification or access time: %s'
-                                          % to_native(e, nonstring='simplerepr'), 'path': path})
+        module.fail_json(
+            msg=f"Error while updating modification or access time: {to_native(e, nonstring='simplerepr')}",
+            path=path
+        )
     return True
 
 
 def keep_backward_compatibility_on_timestamps(parameter, state):
     if state in ['file', 'hard', 'directory', 'link'] and parameter is None:
         return 'preserve'
-    elif state == 'touch' and parameter is None:
+    if state == 'touch' and parameter is None:
         return 'now'
-    else:
-        return parameter
+    return parameter
 
 
 def execute_diff_peek(path):
@@ -530,14 +521,18 @@ def ensure_absent(path):
                 try:
                     shutil.rmtree(b_path, ignore_errors=False)
                 except Exception as e:
-                    raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e)})
+                    module.fail_json(
+                        msg=f"rmtree failed: {to_native(e)}"
+                    )
             else:
                 try:
                     os.unlink(b_path)
                 except OSError as e:
                     if e.errno != errno.ENOENT:  # It may already have been removed
-                        raise AnsibleModuleError(results={'msg': "unlinking failed: %s " % to_native(e),
-                                                          'path': path})
+                        module.fail_json(
+                            msg=f"unlinking failed: {to_native(e)}",
+                            path=path
+                        )
 
         result.update({'path': path, 'changed': True, 'diff': diff, 'state': 'absent'})
     else:
@@ -566,9 +561,10 @@ def execute_touch(path, follow, timestamps):
             open(b_path, 'wb').close()
             changed = True
         except (OSError, IOError) as e:
-            raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
-                                              % to_native(e, nonstring='simplerepr'),
-                                              'path': path})
+            module.fail_json(
+                msg=f"Error, could not touch target: {to_native(e, nonstring='simplerepr')}",
+                path=path
+            )
     # Update the attributes on the file
     diff = initial_diff(path, 'touch', prev_state)
     file_args = module.load_file_common_arguments(module.params)
@@ -606,8 +602,11 @@ def ensure_file_attributes(path, follow, timestamps):
 
     if prev_state not in ('file', 'hard'):
         # file is not absent and any other state is a conflict
-        raise AnsibleModuleError(results={'msg': 'file (%s) is %s, cannot continue' % (path, prev_state),
-                                          'path': path, 'state': prev_state})
+        module.fail_json(
+            msg=f"file ({path}) is {prev_state}, cannot continue",
+            path=path,
+            state=prev_state
+        )
 
     diff = initial_diff(path, 'file', prev_state)
     changed = module.set_fs_attributes_if_different(file_args, False, diff, expand=False)
@@ -664,15 +663,18 @@ def ensure_directory(path, follow, recurse, timestamps):
                     changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
                     changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
         except Exception as e:
-            raise AnsibleModuleError(results={'msg': 'There was an issue creating %s as requested:'
-                                                     ' %s' % (curpath, to_native(e)),
-                                              'path': path})
+            module.fail_json(
+                msg=f"There was an issue creating {curpath} as requested: {to_native(e)}",
+                path=path
+            )
         return {'path': path, 'changed': changed, 'diff': diff}
 
     elif prev_state != 'directory':
         # We already know prev_state is not 'absent', therefore it exists in some form.
-        raise AnsibleModuleError(results={'msg': '%s already exists as a %s' % (path, prev_state),
-                                          'path': path})
+        module.fail_json(
+            msg=f"{path} already exists as a {prev_state}",
+            path=path
+        )
 
     #
     # previous state == directory
@@ -714,31 +716,39 @@ def ensure_symlink(path, src, follow, force, timestamps):
 
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
     if not force and src is not None and not os.path.exists(b_absrc):
-        raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
-                                                 ' really want to create the link: %s' % absrc,
-                                          'path': path, 'src': src})
+        module.fail_json(
+            msg="src file does not exist, use 'force=yes' if you"
+                f" really want to create the link: {absrc}",
+            path=path,
+            src=src
+        )
 
     if prev_state == 'directory':
         if not force:
-            raise AnsibleModuleError(results={'msg': 'refusing to convert from %s to symlink for %s'
-                                                     % (prev_state, path),
-                                              'path': path})
+            module.fail_json(
+                msg=f'refusing to convert from {prev_state} to symlink for {path}',
+                path=path
+            )
         elif os.listdir(b_path):
             # refuse to replace a directory that has files in it
-            raise AnsibleModuleError(results={'msg': 'the directory %s is not empty, refusing to'
-                                                     ' convert it' % path,
-                                              'path': path})
+            module.fail_json(
+                msg=f'the directory {path} is not empty, refusing to convert it',
+                path=path
+            )
     elif prev_state in ('file', 'hard') and not force:
-        raise AnsibleModuleError(results={'msg': 'refusing to convert from %s to symlink for %s'
-                                                 % (prev_state, path),
-                                          'path': path})
+        module.fail_json(
+            msg=f'refusing to convert from {prev_state} to symlink for {path}',
+            path=path
+        )
 
     diff = initial_diff(path, 'link', prev_state)
     changed = False
 
     if prev_state in ('hard', 'file', 'directory', 'absent'):
         if src is None:
-            raise AnsibleModuleError(results={'msg': 'src is required for creating new symlinks'})
+            module.fail_json(
+                msg='src is required for creating new symlinks',
+            )
         changed = True
     elif prev_state == 'link':
         if src is not None:
@@ -748,7 +758,11 @@ def ensure_symlink(path, src, follow, force, timestamps):
                 diff['after']['src'] = src
                 changed = True
     else:
-        raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
+        module.fail_json(
+            msg='unexpected position reached',
+            dest=path,
+            src=src
+        )
 
     if changed and not module.check_mode:
         if prev_state != 'absent':
@@ -764,16 +778,18 @@ def ensure_symlink(path, src, follow, force, timestamps):
             except OSError as e:
                 if os.path.exists(b_tmppath):
                     os.unlink(b_tmppath)
-                raise AnsibleModuleError(results={'msg': 'Error while replacing: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
+                module.fail_json(
+                    msg=f"Error while replacing: {to_native(e, nonstring='simplerepr')}",
+                    path=path
+                )
         else:
             try:
                 os.symlink(b_src, b_path)
             except OSError as e:
-                raise AnsibleModuleError(results={'msg': 'Error while linking: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
+                module.fail_json(
+                    msg=f"Error while linking: {to_native(e, nonstring='simplerepr')}",
+                    path=path
+                )
 
     if module.check_mode and not os.path.exists(b_path):
         return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
@@ -808,12 +824,18 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     # src is the source of a hardlink.  We require it if we are creating a new hardlink.
     # We require path in the argument_spec so we know it is present at this point.
     if prev_state != 'hard' and src is None:
-        raise AnsibleModuleError(results={'msg': 'src is required for creating new hardlinks'})
+        module.fail_json(
+            msg='src is required for creating new hardlinks'
+        )
 
     # Even if the link already exists, if src was specified it needs to exist.
     # The inode number will be compared to ensure the link has the correct target.
     if src is not None and not os.path.exists(b_src):
-        raise AnsibleModuleError(results={'msg': 'src does not exist', 'dest': path, 'src': src})
+        module.fail_json(
+            msg='src does not exist',
+            dest=path,
+            src=src
+        )
 
     diff = initial_diff(path, 'hard', prev_state)
     changed = False
@@ -827,26 +849,39 @@ def ensure_hardlink(path, src, follow, force, timestamps):
             diff['after']['src'] = src
             changed = True
     elif prev_state == 'hard':
-        if src is not None and not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+        if src is not None and os.stat(b_path).st_ino != os.stat(b_src).st_ino:
             changed = True
             if not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
-                                                  'dest': path, 'src': src})
+                module.fail_json(
+                    msg='Cannot link, different hard link exists at destination',
+                    dest=path,
+                    src=src
+                )
     elif prev_state == 'file':
         changed = True
         if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link, %s exists at destination' % prev_state,
-                                              'dest': path, 'src': src})
+            module.fail_json(
+                msg=f'Cannot link, {prev_state} exists at destination',
+                dest=path,
+                src=src
+            )
     elif prev_state == 'directory':
         changed = True
         if os.path.exists(b_path):
             if os.stat(b_path).st_ino == os.stat(b_src).st_ino:
                 return {'path': path, 'changed': False}
             elif not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link: different hard link exists at destination',
-                                                  'dest': path, 'src': src})
+                module.fail_json(
+                    msg='Cannot link: different hard link exists at destination',
+                    dest=path,
+                    src=src
+                )
     else:
-        raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
+        module.fail_json(
+            msg='unexpected position reached',
+            dest=path,
+            src=src
+        )
 
     if changed and not module.check_mode:
         if prev_state != 'absent':
@@ -867,16 +902,20 @@ def ensure_hardlink(path, src, follow, force, timestamps):
             except OSError as e:
                 if os.path.exists(b_tmppath):
                     os.unlink(b_tmppath)
-                raise AnsibleModuleError(results={'msg': 'Error while replacing: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
+                module.fail_json(
+                    msg=f"Error while replacing: {to_native(e, nonstring='simplerepr')}",
+                    path=path
+                )
         else:
             try:
+                if follow and os.path.islink(b_src):
+                    b_src = os.readlink(b_src)
                 os.link(b_src, b_path)
             except OSError as e:
-                raise AnsibleModuleError(results={'msg': 'Error while linking: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
+                module.fail_json(
+                    msg=f"Error while linking: {to_native(e, nonstring='simplerepr')}",
+                    path=path
+                )
 
     if module.check_mode and not os.path.exists(b_path):
         return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
@@ -938,48 +977,52 @@ def main():
         supports_check_mode=True,
     )
 
-    # When we rewrite basic.py, we will do something similar to this on instantiating an AnsibleModule
-    sys.excepthook = _ansible_excepthook
-    additional_parameter_handling(module.params)
-    params = module.params
+    try:
+        additional_parameter_handling(module.params)
+        params = module.params
 
-    state = params['state']
-    recurse = params['recurse']
-    force = params['force']
-    follow = params['follow']
-    path = params['path']
-    src = params['src']
+        state = params['state']
+        recurse = params['recurse']
+        force = params['force']
+        follow = params['follow']
+        path = params['path']
+        src = params['src']
 
-    if module.check_mode and state != 'absent':
-        file_args = module.load_file_common_arguments(module.params)
-        if file_args['owner']:
-            check_owner_exists(module, file_args['owner'])
-        if file_args['group']:
-            check_group_exists(module, file_args['group'])
+        if module.check_mode and state != 'absent':
+            file_args = module.load_file_common_arguments(module.params)
+            if file_args['owner']:
+                check_owner_exists(module, file_args['owner'])
+            if file_args['group']:
+                check_group_exists(module, file_args['group'])
 
-    timestamps = {}
-    timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
-    timestamps['modification_time_format'] = params['modification_time_format']
-    timestamps['access_time'] = keep_backward_compatibility_on_timestamps(params['access_time'], state)
-    timestamps['access_time_format'] = params['access_time_format']
+        timestamps = {}
+        timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
+        timestamps['modification_time_format'] = params['modification_time_format']
+        timestamps['access_time'] = keep_backward_compatibility_on_timestamps(params['access_time'], state)
+        timestamps['access_time_format'] = params['access_time_format']
 
-    # short-circuit for diff_peek
-    if params['_diff_peek'] is not None:
-        appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
-        module.exit_json(path=path, changed=False, appears_binary=appears_binary)
+        # short-circuit for diff_peek
+        if params['_diff_peek'] is not None:
+            appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
+            module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
-    if state == 'file':
-        result = ensure_file_attributes(path, follow, timestamps)
-    elif state == 'directory':
-        result = ensure_directory(path, follow, recurse, timestamps)
-    elif state == 'link':
-        result = ensure_symlink(path, src, follow, force, timestamps)
-    elif state == 'hard':
-        result = ensure_hardlink(path, src, follow, force, timestamps)
-    elif state == 'touch':
-        result = execute_touch(path, follow, timestamps)
-    elif state == 'absent':
-        result = ensure_absent(path)
+        if state == 'file':
+            result = ensure_file_attributes(path, follow, timestamps)
+        elif state == 'directory':
+            result = ensure_directory(path, follow, recurse, timestamps)
+        elif state == 'link':
+            result = ensure_symlink(path, src, follow, force, timestamps)
+        elif state == 'hard':
+            result = ensure_hardlink(path, src, follow, force, timestamps)
+        elif state == 'touch':
+            result = execute_touch(path, follow, timestamps)
+        elif state == 'absent':
+            result = ensure_absent(path)
+    except AnsibleModuleError as ex:
+        module.fail_json(**ex.results)
+
+    if not module._diff:
+        result.pop('diff', None)
 
     module.exit_json(**result)
 

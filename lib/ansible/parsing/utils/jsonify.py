@@ -19,9 +19,13 @@ from __future__ import annotations
 
 import json
 
+from ansible.utils.display import Display
+
+Display().deprecated(f'{__name__!r} is deprecated.', version='2.23', help_text='Call `json.dumps` directly instead.')
+
 
 def jsonify(result, format=False):
-    ''' format JSON output (uncompressed or uncompressed) '''
+    """Format JSON output."""
 
     if result is None:
         return "{}"

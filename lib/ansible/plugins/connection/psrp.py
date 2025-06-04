@@ -13,7 +13,7 @@ description:
   underlying transport but instead runs in a PowerShell interpreter.
 version_added: "2.7"
 requirements:
-- pypsrp>=0.4.0 (Python library)
+- pypsrp>=0.4.0, <1.0.0 (Python library)
 extends_documentation_fragment:
     - connection_pipelining
 options:
@@ -308,11 +308,13 @@ import base64
 import json
 import logging
 import os
+import shlex
 import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.errors import AnsibleFileNotFound
+from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
@@ -324,12 +326,11 @@ from ansible.utils.hashing import sha1
 HAS_PYPSRP = True
 PYPSRP_IMP_ERR = None
 try:
-    import pypsrp
     from pypsrp.complex_objects import GenericComplexObject, PSInvocationState, RunspacePoolState
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
-    from pypsrp.wsman import WSMan, AUTH_KWARGS
+    from pypsrp.wsman import WSMan
     from requests.exceptions import ConnectionError, ConnectTimeout
 except ImportError as err:
     HAS_PYPSRP = False
@@ -344,9 +345,8 @@ class Connection(ConnectionBase):
     module_implementation_preferences = ('.ps1', '.exe', '')
     allow_executable = False
     has_pipelining = True
-    allow_extras = True
 
-    # Satifies mypy as this connection only ever runs with this plugin
+    # Satisfies mypy as this connection only ever runs with this plugin
     _shell: PowerShellPlugin
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
@@ -433,8 +433,10 @@ class Connection(ConnectionBase):
                                              sudoable=sudoable)
 
         pwsh_in_data: bytes | str | None = None
+        script_args: list[str] | None = None
 
-        if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
+        common_args_prefix = " ".join(_common_args)
+        if cmd.startswith(f"{common_args_prefix} -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
             # decode the script and execute it in the runspace instead of
             # starting a new interpreter to save on time
@@ -459,6 +461,17 @@ class Connection(ConnectionBase):
                 display.vvv("PSRP: EXEC (via pipeline wrapper)")
             else:
                 display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
+
+        elif cmd.startswith(f"{common_args_prefix} -File "):  # trailing space is on purpose
+            # Used when executing a script file, we will execute it in the runspace process
+            # instead on a new subprocess
+            script = 'param([string]$Path, [Parameter(ValueFromRemainingArguments)][string[]]$ScriptArgs) & $Path @ScriptArgs'
+
+            # Using shlex isn't perfect but it's good enough.
+            cmd = cmd[len(common_args_prefix) + 7:]
+            script_args = shlex.split(cmd)
+            display.vvv(f"PSRP: EXEC {cmd}")
+
         else:
             # In other cases we want to execute the cmd as the script. We add on the 'exit $LASTEXITCODE' to ensure the
             # rc is propagated back to the connection plugin.
@@ -466,7 +479,11 @@ class Connection(ConnectionBase):
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(script, pwsh_in_data)
+        rc, stdout, stderr = self._exec_psrp_script(
+            script=script,
+            input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
+            arguments=script_args,
+        )
         return rc, stdout, stderr
 
     def put_file(self, in_path: str, out_path: str) -> None:
@@ -475,101 +492,9 @@ class Connection(ConnectionBase):
         out_path = self._shell._unquote(out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
 
-        copy_script = '''begin {
-    $ErrorActionPreference = "Stop"
-    $WarningPreference = "Continue"
-    $path = $MyInvocation.UnboundArguments[0]
-    $fd = [System.IO.File]::Create($path)
-    $algo = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
-    $bytes = @()
-
-    $bindingFlags = [System.Reflection.BindingFlags]'NonPublic, Instance'
-    Function Get-Property {
-        <#
-        .SYNOPSIS
-        Gets the private/internal property specified of the object passed in.
-        #>
-        Param (
-            [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-            [System.Object]
-            $Object,
-
-            [Parameter(Mandatory=$true, Position=1)]
-            [System.String]
-            $Name
-        )
-
-        $Object.GetType().GetProperty($Name, $bindingFlags).GetValue($Object, $null)
-    }
-
-    Function Set-Property {
-        <#
-        .SYNOPSIS
-        Sets the private/internal property specified on the object passed in.
-        #>
-        Param (
-            [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-            [System.Object]
-            $Object,
-
-            [Parameter(Mandatory=$true, Position=1)]
-            [System.String]
-            $Name,
-
-            [Parameter(Mandatory=$true, Position=2)]
-            [AllowNull()]
-            [System.Object]
-            $Value
-        )
-
-        $Object.GetType().GetProperty($Name, $bindingFlags).SetValue($Object, $Value, $null)
-    }
-
-    Function Get-Field {
-        <#
-        .SYNOPSIS
-        Gets the private/internal field specified of the object passed in.
-        #>
-        Param (
-            [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-            [System.Object]
-            $Object,
-
-            [Parameter(Mandatory=$true, Position=1)]
-            [System.String]
-            $Name
-        )
-
-        $Object.GetType().GetField($Name, $bindingFlags).GetValue($Object)
-    }
-
-    # MaximumAllowedMemory is required to be set to so we can send input data that exceeds the limit on a PS
-    # Runspace. We use reflection to access/set this property as it is not accessible publicly. This is not ideal
-    # but works on all PowerShell versions I've tested with. We originally used WinRS to send the raw bytes to the
-    # host but this falls flat if someone is using a custom PS configuration name so this is a workaround. This
-    # isn't required for smaller files so if it fails we ignore the error and hope it wasn't needed.
-    # https://github.com/PowerShell/PowerShell/blob/c8e72d1e664b1ee04a14f226adf655cced24e5f0/src/System.Management.Automation/engine/serialization.cs#L325
-    try {
-        $Host | Get-Property 'ExternalHost' | `
-            Get-Field '_transportManager' | `
-            Get-Property 'Fragmentor' | `
-            Get-Property 'DeserializationContext' | `
-            Set-Property 'MaximumAllowedMemory' $null
-    } catch {}
-}
-process {
-    $bytes = [System.Convert]::FromBase64String($input)
-    $algo.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) > $null
-    $fd.Write($bytes, 0, $bytes.Length)
-}
-end {
-    $fd.Close()
-
-    $algo.TransformFinalBlock($bytes, 0, 0) > $null
-    $hash = [System.BitConverter]::ToString($algo.Hash).Replace('-', '').ToLowerInvariant()
-    Write-Output -InputObject "{`"sha1`":`"$hash`"}"
-}
-'''
+        script, in_data = _bootstrap_powershell_script('psrp_put_file.ps1', {
+            'Path': out_path,
+        }, has_input=True)
 
         # Get the buffer size of each fragment to send, subtract 82 for the fragment, message, and other header info
         # fields that PSRP adds. Adjust to size of the base64 encoded bytes length.
@@ -582,6 +507,8 @@ end {
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
 
         def read_gen():
+            yield from in_data.decode().splitlines()
+
             offset = 0
 
             with open(b_in_path, 'rb') as src_fd:
@@ -600,7 +527,7 @@ end {
                 if offset == 0:  # empty file
                     yield [""]
 
-        rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path])
+        rc, stdout, stderr = self._exec_psrp_script(script, read_gen())
 
         if rc != 0:
             raise AnsibleError(to_native(stderr))
@@ -624,6 +551,7 @@ end {
 
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
+        b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
 
         # because we are dealing with base64 data we need to get the max size
         # of the bytes that the base64 size would equal
@@ -631,69 +559,38 @@ end {
                            (self.runspace.connection.max_payload_size / 4 * 3))
         buffer_size = max_b64_size - (max_b64_size % 1024)
 
-        # setup the file stream with read only mode
-        setup_script = '''$ErrorActionPreference = "Stop"
-$path = '%s'
+        script, in_data = _bootstrap_powershell_script('psrp_fetch_file.ps1', {
+            'Path': in_path,
+            'BufferSize': buffer_size,
+        })
 
-if (Test-Path -Path $path -PathType Leaf) {
-    $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
-        $path,
-        [System.IO.FileMode]::Open,
-        [System.IO.FileAccess]::Read,
-        [System.IO.FileShare]::Read
-    )
-    $buffer_size = %d
-} elseif (Test-Path -Path $path -PathType Container) {
-    Write-Output -InputObject "[DIR]"
-} else {
-    Write-Error -Message "$path does not exist"
-    $host.SetShouldExit(1)
-}''' % (self._shell._escape(in_path), buffer_size)
+        ps = PowerShell(self.runspace)
+        ps.add_script(script)
+        ps.begin_invoke(in_data.decode().splitlines())
 
-        # read the file stream at the offset and return the b64 string
-        read_script = '''$ErrorActionPreference = "Stop"
-$fs.Seek(%d, [System.IO.SeekOrigin]::Begin) > $null
-$buffer = New-Object -TypeName byte[] -ArgumentList $buffer_size
-$bytes_read = $fs.Read($buffer, 0, $buffer_size)
+        # Call poll once to get the first output telling us if it's a file/dir/failure
+        ps.poll_invoke()
 
-if ($bytes_read -gt 0) {
-    $bytes = $buffer[0..($bytes_read - 1)]
-    Write-Output -InputObject ([System.Convert]::ToBase64String($bytes))
-}'''
+        if ps.output:
+            if ps.output.pop(0) == '[DIR]':
+                # to be consistent with other connection plugins, we assume the caller has created the target dir
+                return
 
-        # need to run the setup script outside of the local scope so the
-        # file stream stays active between fetch operations
-        rc, stdout, stderr = self._exec_psrp_script(setup_script,
-                                                    use_local_scope=False)
+            with open(b_out_path, 'wb') as out_file:
+                while True:
+                    while ps.output:
+                        data = base64.b64decode(ps.output.pop(0))
+                        out_file.write(data)
+
+                    if ps.state == PSInvocationState.RUNNING:
+                        ps.poll_invoke()
+                    else:
+                        break
+
+        ps.end_invoke()
+        rc, stdout, stderr = self._parse_pipeline_result(ps)
         if rc != 0:
-            raise AnsibleError("failed to setup file stream for fetch '%s': %s"
-                               % (out_path, to_native(stderr)))
-        elif stdout.strip() == '[DIR]':
-            # to be consistent with other connection plugins, we assume the caller has created the target dir
-            return
-
-        b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
-        # to be consistent with other connection plugins, we assume the caller has created the target dir
-        offset = 0
-        with open(b_out_path, 'wb') as out_file:
-            while True:
-                display.vvvvv("PSRP FETCH %s to %s (offset=%d" %
-                              (in_path, out_path, offset), host=self._psrp_host)
-                rc, stdout, stderr = self._exec_psrp_script(read_script % offset)
-                if rc != 0:
-                    raise AnsibleError("failed to transfer file to '%s': %s"
-                                       % (out_path, to_native(stderr)))
-
-                data = base64.b64decode(stdout.strip())
-                out_file.write(data)
-                if len(data) < buffer_size:
-                    break
-                offset += len(data)
-
-            rc, stdout, stderr = self._exec_psrp_script("$fs.Close()")
-            if rc != 0:
-                display.warning("failed to close remote file stream of file "
-                                "'%s': %s" % (in_path, to_native(stderr)))
+            raise AnsibleError(f"failed to transfer file to '{out_path}': {to_text(stderr)}")
 
     def close(self) -> None:
         if self.runspace and self.runspace.state == RunspacePoolState.OPENED:
@@ -707,7 +604,6 @@ if ($bytes_read -gt 0) {
     def _build_kwargs(self) -> None:
         self._psrp_host = self.get_option('remote_addr')
         self._psrp_user = self.get_option('remote_user')
-        self._psrp_pass = self.get_option('remote_password')
 
         protocol = self.get_option('protocol')
         port = self.get_option('port')
@@ -719,101 +615,55 @@ if ($bytes_read -gt 0) {
         elif port is None:
             port = 5986 if protocol == 'https' else 5985
 
-        self._psrp_protocol = protocol
         self._psrp_port = int(port)
-
-        self._psrp_path = self.get_option('path')
         self._psrp_auth = self.get_option('auth')
+        self._psrp_configuration_name = self.get_option('configuration_name')
+
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
         cert_trust_path = self.get_option('ca_cert')
         if cert_validation == 'ignore':
-            self._psrp_cert_validation = False
+            psrp_cert_validation = False
         elif cert_trust_path is not None:
-            self._psrp_cert_validation = cert_trust_path
+            psrp_cert_validation = cert_trust_path
         else:
-            self._psrp_cert_validation = True
-
-        self._psrp_connection_timeout = self.get_option('connection_timeout')  # Can be None
-        self._psrp_read_timeout = self.get_option('read_timeout')  # Can be None
-        self._psrp_message_encryption = self.get_option('message_encryption')
-        self._psrp_proxy = self.get_option('proxy')
-        self._psrp_ignore_proxy = boolean(self.get_option('ignore_proxy'))
-        self._psrp_operation_timeout = int(self.get_option('operation_timeout'))
-        self._psrp_max_envelope_size = int(self.get_option('max_envelope_size'))
-        self._psrp_configuration_name = self.get_option('configuration_name')
-        self._psrp_reconnection_retries = int(self.get_option('reconnection_retries'))
-        self._psrp_reconnection_backoff = float(self.get_option('reconnection_backoff'))
-
-        self._psrp_certificate_key_pem = self.get_option('certificate_key_pem')
-        self._psrp_certificate_pem = self.get_option('certificate_pem')
-        self._psrp_credssp_auth_mechanism = self.get_option('credssp_auth_mechanism')
-        self._psrp_credssp_disable_tlsv1_2 = self.get_option('credssp_disable_tlsv1_2')
-        self._psrp_credssp_minimum_version = self.get_option('credssp_minimum_version')
-        self._psrp_negotiate_send_cbt = self.get_option('negotiate_send_cbt')
-        self._psrp_negotiate_delegate = self.get_option('negotiate_delegate')
-        self._psrp_negotiate_hostname_override = self.get_option('negotiate_hostname_override')
-        self._psrp_negotiate_service = self.get_option('negotiate_service')
-
-        supported_args = []
-        for auth_kwarg in AUTH_KWARGS.values():
-            supported_args.extend(auth_kwarg)
-        extra_args = {v.replace('ansible_psrp_', '') for v in self.get_option('_extras')}
-        unsupported_args = extra_args.difference(supported_args)
-
-        for arg in unsupported_args:
-            display.warning("ansible_psrp_%s is unsupported by the current "
-                            "psrp version installed" % arg)
+            psrp_cert_validation = True
 
         self._psrp_conn_kwargs = dict(
-            server=self._psrp_host, port=self._psrp_port,
-            username=self._psrp_user, password=self._psrp_pass,
-            ssl=self._psrp_protocol == 'https', path=self._psrp_path,
-            auth=self._psrp_auth, cert_validation=self._psrp_cert_validation,
-            connection_timeout=self._psrp_connection_timeout,
-            encryption=self._psrp_message_encryption, proxy=self._psrp_proxy,
-            no_proxy=self._psrp_ignore_proxy,
-            max_envelope_size=self._psrp_max_envelope_size,
-            operation_timeout=self._psrp_operation_timeout,
-            certificate_key_pem=self._psrp_certificate_key_pem,
-            certificate_pem=self._psrp_certificate_pem,
-            credssp_auth_mechanism=self._psrp_credssp_auth_mechanism,
-            credssp_disable_tlsv1_2=self._psrp_credssp_disable_tlsv1_2,
-            credssp_minimum_version=self._psrp_credssp_minimum_version,
-            negotiate_send_cbt=self._psrp_negotiate_send_cbt,
-            negotiate_delegate=self._psrp_negotiate_delegate,
-            negotiate_hostname_override=self._psrp_negotiate_hostname_override,
-            negotiate_service=self._psrp_negotiate_service,
+            server=self._psrp_host,
+            port=self._psrp_port,
+            username=self._psrp_user,
+            password=self.get_option('remote_password'),
+            ssl=protocol == 'https',
+            path=self.get_option('path'),
+            auth=self._psrp_auth,
+            cert_validation=psrp_cert_validation,
+            connection_timeout=self.get_option('connection_timeout'),
+            encryption=self.get_option('message_encryption'),
+            proxy=self.get_option('proxy'),
+            no_proxy=boolean(self.get_option('ignore_proxy')),
+            max_envelope_size=self.get_option('max_envelope_size'),
+            operation_timeout=self.get_option('operation_timeout'),
+            read_timeout=self.get_option('read_timeout'),
+            reconnection_retries=self.get_option('reconnection_retries'),
+            reconnection_backoff=float(self.get_option('reconnection_backoff')),
+            certificate_key_pem=self.get_option('certificate_key_pem'),
+            certificate_pem=self.get_option('certificate_pem'),
+            credssp_auth_mechanism=self.get_option('credssp_auth_mechanism'),
+            credssp_disable_tlsv1_2=self.get_option('credssp_disable_tlsv1_2'),
+            credssp_minimum_version=self.get_option('credssp_minimum_version'),
+            negotiate_send_cbt=self.get_option('negotiate_send_cbt'),
+            negotiate_delegate=self.get_option('negotiate_delegate'),
+            negotiate_hostname_override=self.get_option('negotiate_hostname_override'),
+            negotiate_service=self.get_option('negotiate_service'),
         )
-
-        # Check if PSRP version supports newer read_timeout argument (needs pypsrp 0.3.0+)
-        if hasattr(pypsrp, 'FEATURES') and 'wsman_read_timeout' in pypsrp.FEATURES:
-            self._psrp_conn_kwargs['read_timeout'] = self._psrp_read_timeout
-        elif self._psrp_read_timeout is not None:
-            display.warning("ansible_psrp_read_timeout is unsupported by the current psrp version installed, "
-                            "using ansible_psrp_connection_timeout value for read_timeout instead.")
-
-        # Check if PSRP version supports newer reconnection_retries argument (needs pypsrp 0.3.0+)
-        if hasattr(pypsrp, 'FEATURES') and 'wsman_reconnections' in pypsrp.FEATURES:
-            self._psrp_conn_kwargs['reconnection_retries'] = self._psrp_reconnection_retries
-            self._psrp_conn_kwargs['reconnection_backoff'] = self._psrp_reconnection_backoff
-        else:
-            if self._psrp_reconnection_retries is not None:
-                display.warning("ansible_psrp_reconnection_retries is unsupported by the current psrp version installed.")
-            if self._psrp_reconnection_backoff is not None:
-                display.warning("ansible_psrp_reconnection_backoff is unsupported by the current psrp version installed.")
-
-        # add in the extra args that were set
-        for arg in extra_args.intersection(supported_args):
-            option = self.get_option('_extras')['ansible_psrp_%s' % arg]
-            self._psrp_conn_kwargs[arg] = option
 
     def _exec_psrp_script(
         self,
         script: str,
         input_data: bytes | str | t.Iterable | None = None,
         use_local_scope: bool = True,
-        arguments: t.Iterable[str] | None = None,
+        arguments: t.Iterable[t.Any] | None = None,
     ) -> tuple[int, bytes, bytes]:
         # Check if there's a command on the current pipeline that still needs to be closed.
         if self._last_pipeline:
@@ -881,6 +731,23 @@ if ($bytes_read -gt 0) {
         for error in pipeline.streams.error:
             # the error record is not as fully fleshed out like we usually get
             # in PS, we will manually create it here
+            # NativeCommandError and NativeCommandErrorMessage are special
+            # cases used for stderr from a subprocess, we will just print the
+            # error message
+            if error.fq_error == 'NativeCommandErrorMessage' and not error.target_name:
+                # This can be removed once Server 2016 is EOL and no longer
+                # supported. PS 5.1 on 2016 will emit 1 error record under
+                # NativeCommandError being the first line, subsequent records
+                # are the raw stderr up to 4096 chars. Each entry is the raw
+                # stderr value without any newlines appended so we just use the
+                # value as is. We know it's 2016 as the target_name is empty in
+                # this scenario.
+                stderr_list.append(str(error))
+                continue
+            elif error.fq_error in ['NativeCommandError', 'NativeCommandErrorMessage']:
+                stderr_list.append(f"{error}\r\n")
+                continue
+
             command_name = "%s : " % error.command_name if error.command_name else ''
             position = "%s\r\n" % error.invocation_position_message if error.invocation_position_message else ''
             error_msg = "%s%s\r\n%s" \
@@ -891,11 +758,11 @@ if ($bytes_read -gt 0) {
             stacktrace = error.script_stacktrace
             if display.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
-            stderr_list.append(error_msg)
+            stderr_list.append(f"{error_msg}\r\n")
 
         if len(self.host.ui.stderr) > 0:
             stderr_list += self.host.ui.stderr
-        stderr = u"\r\n".join([to_text(o) for o in stderr_list])
+        stderr = "".join([to_text(o) for o in stderr_list])
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
         display.vvvvv("PSRP STDOUT: %s" % stdout, host=self._psrp_host)

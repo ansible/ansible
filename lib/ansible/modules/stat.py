@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: stat
 version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
-     - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
+     - Retrieves facts for a file similar to the Linux/Unix C(stat) command.
      - For Windows targets, use the M(ansible.windows.win_stat) module instead.
 options:
   path:
@@ -25,27 +25,10 @@ options:
       - Whether to follow symlinks.
     type: bool
     default: no
-  get_checksum:
-    description:
-      - Whether to return a checksum of the file.
-    type: bool
-    default: yes
-    version_added: "1.8"
-  checksum_algorithm:
-    description:
-      - Algorithm to determine checksum of file.
-      - Will throw an error if the host is unable to use specified algorithm.
-      - The remote host has to support the hashing method specified, V(md5)
-        can be unavailable if the host is FIPS-140 compliant.
-    type: str
-    choices: [ md5, sha1, sha224, sha256, sha384, sha512 ]
-    default: sha1
-    aliases: [ checksum, checksum_algo ]
-    version_added: "2.0"
   get_mime:
     description:
-      - Use file magic and return data about the nature of the file. this uses
-        the 'file' utility found on most Linux/Unix systems.
+      - Use file magic and return data about the nature of the file. This uses
+        the C(file) utility found on most Linux/Unix systems.
       - This will add both RV(stat.mimetype) and RV(stat.charset) fields to the return, if possible.
       - In Ansible 2.3 this option changed from O(mime) to O(get_mime) and the default changed to V(true).
     type: bool
@@ -59,8 +42,11 @@ options:
     default: yes
     aliases: [ attr, attributes ]
     version_added: "2.3"
+  get_checksum:
+    version_added: "1.8"
 extends_documentation_fragment:
   -  action_common_attributes
+  -  checksum_common
 attributes:
     check_mode:
         support: full
@@ -72,9 +58,9 @@ seealso:
 - module: ansible.builtin.file
 - module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
 - name: Get stats of a file
@@ -137,9 +123,9 @@ EXAMPLES = r'''
   ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 stat:
     description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
@@ -366,7 +352,7 @@ stat:
             type: str
             sample: "381700746"
             version_added: 2.3
-'''
+"""
 
 import errno
 import grp

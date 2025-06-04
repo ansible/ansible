@@ -115,12 +115,12 @@ class TestCaseDictMerge:
 class TestCaseAzureIncidental:
 
     def test_dict_merge_invalid_dict(self):
-        ''' if b is not a dict, return b '''
+        """ if b is not a dict, return b """
         res = dict_merge({}, None)
         assert res is None
 
     def test_merge_sub_dicts(self):
-        '''merge sub dicts '''
+        """merge sub dicts """
         a = {'a': {'a1': 1}}
         b = {'a': {'b1': 2}}
         c = {'a': {'a1': 1, 'b1': 2}}

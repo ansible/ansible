@@ -1,4 +1,5 @@
 """Miscellaneous utility functions and classes."""
+
 from __future__ import annotations
 
 import abc
@@ -134,6 +135,46 @@ class Architecture:
 REMOTE_ARCHITECTURES = list(value for key, value in Architecture.__dict__.items() if not key.startswith('__'))
 
 
+WINDOWS_CONNECTION_VARIABLES: dict[str, t.Any] = {
+    'psrp+http': dict(
+        ansible_port=5985,
+        ansible_psrp_protocol='http',
+        use_password=True,
+    ),
+    'psrp+https': dict(
+        ansible_port=5986,
+        ansible_psrp_protocol='https',
+        ansible_psrp_cert_validation='ignore',
+        use_password=True,
+    ),
+    'ssh+key': dict(
+        ansible_port=22,
+        ansible_shell_type='powershell',
+        use_password=False,
+    ),
+    'ssh+password': dict(
+        ansible_port=22,
+        ansible_shell_type='powershell',
+        use_password=True,
+    ),
+    'winrm+http': dict(
+        ansible_port=5985,
+        ansible_winrm_scheme='http',
+        ansible_winrm_transport='ntlm',
+        use_password=True,
+    ),
+    'winrm+https': dict(
+        ansible_port=5986,
+        ansible_winrm_scheme='https',
+        ansible_winrm_server_cert_validation='ignore',
+        use_password=True,
+    ),
+}
+"""Dictionary of Windows connection types and variables required to use them."""
+
+WINDOWS_CONNECTIONS = list(WINDOWS_CONNECTION_VARIABLES)
+
+
 def is_valid_identifier(value: str) -> bool:
     """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
     return value.isidentifier() and not keyword.iskeyword(value)
@@ -213,12 +254,29 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
     """Return a filtered version of the given command line arguments."""
     remaining = 0
     result = []
+    pass_through_args: list[str] = []
+    pass_through_explicit = False
+    pass_through_implicit = False
 
     for arg in args:
-        if not arg.startswith('-') and remaining:
-            remaining -= 1
+        if pass_through_explicit:
+            pass_through_args.append(arg)
             continue
 
+        if arg == '--':
+            pass_through_explicit = True
+            continue
+
+        if not arg.startswith('-') and remaining:
+            remaining -= 1
+            pass_through_implicit = not remaining
+            continue
+
+        if not arg.startswith('-') and pass_through_implicit:
+            pass_through_args.append(arg)
+            continue
+
+        pass_through_implicit = False
         remaining = 0
 
         parts = arg.split('=', 1)
@@ -229,6 +287,9 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
             continue
 
         result.append(arg)
+
+    if pass_through_args:
+        result += ['--'] + pass_through_args
 
     return result
 
@@ -930,14 +991,7 @@ class SubprocessError(ApplicationError):
         error_callback: t.Optional[c.Callable[[SubprocessError], None]] = None,
     ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
-
-        if stderr:
-            message += '>>> Standard Error\n'
-            message += '%s%s\n' % (stderr.strip(), Display.clear)
-
-        if stdout:
-            message += '>>> Standard Output\n'
-            message += '%s%s\n' % (stdout.strip(), Display.clear)
+        message += format_command_output(stdout, stderr)
 
         self.cmd = cmd
         self.message = message
@@ -981,6 +1035,21 @@ class HostConnectionError(ApplicationError):
             self._callback()
 
 
+def format_command_output(stdout: str | None, stderr: str | None) -> str:
+    """Return a formatted string containing the given stdout and stderr (if any)."""
+    message = ''
+
+    if stderr and (stderr := stderr.strip()):
+        message += '>>> Standard Error\n'
+        message += f'{stderr}{Display.clear}\n'
+
+    if stdout and (stdout := stdout.strip()):
+        message += '>>> Standard Output\n'
+        message += f'{stdout}{Display.clear}\n'
+
+    return message
+
+
 def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
@@ -998,7 +1067,7 @@ def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = Subpro
 def parse_to_list_of_dict(pattern: str, value: str) -> list[dict[str, str]]:
     """Parse lines from the given value using the specified pattern and return the extracted list of key/value pair dictionaries."""
     matched = []
-    unmatched = []
+    unmatched: list[str] = []
 
     for line in value.splitlines():
         match = re.search(pattern, line)

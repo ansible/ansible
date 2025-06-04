@@ -10,50 +10,17 @@ from string import ascii_letters, digits
 
 from ansible.config.manager import ConfigManager
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
-from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
-
-def _warning(msg):
-    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
-    try:
-        from ansible.utils.display import Display
-        Display().warning(msg)
-    except Exception:
-        import sys
-        sys.stderr.write(' [WARNING] %s\n' % (msg))
-
-
-def _deprecated(msg, version):
-    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
-    try:
-        from ansible.utils.display import Display
-        Display().deprecated(msg, version=version)
-    except Exception:
-        import sys
-        sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
+# initialize config manager/config data to read/store global settings
+# and generate 'pseudo constants' for app consumption.
+config = ConfigManager()
 
 
 def set_constant(name, value, export=vars()):
-    ''' sets constants and returns resolved options dict '''
+    """ sets constants and returns resolved options dict """
     export[name] = value
-
-
-class _DeprecatedSequenceConstant(Sequence):
-    def __init__(self, value, msg, version):
-        self._value = value
-        self._msg = msg
-        self._version = version
-
-    def __len__(self):
-        _deprecated(self._msg, self._version)
-        return len(self._value)
-
-    def __getitem__(self, y):
-        _deprecated(self._msg, self._version)
-        return self._value[y]
 
 
 # CONSTANTS ### yes, actual ones
@@ -93,7 +60,7 @@ COLOR_CODES = {
     'magenta': u'0;35', 'bright magenta': u'1;35',
     'normal': u'0',
 }
-REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
+REJECT_EXTS = ['.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst']  # this is concatenated with other config settings as lists; cannot be tuple
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
 
@@ -111,11 +78,50 @@ CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
+INTERNAL_STATIC_VARS = frozenset(
+    [
+        "ansible_async_path",
+        "ansible_collection_name",
+        "ansible_config_file",
+        "ansible_dependent_role_names",
+        "ansible_diff_mode",
+        "ansible_config_file",
+        "ansible_facts",
+        "ansible_forks",
+        "ansible_inventory_sources",
+        "ansible_limit",
+        "ansible_play_batch",
+        "ansible_play_hosts",
+        "ansible_play_hosts_all",
+        "ansible_play_role_names",
+        "ansible_playbook_python",
+        "ansible_role_name",
+        "ansible_role_names",
+        "ansible_run_tags",
+        "ansible_skip_tags",
+        "ansible_verbosity",
+        "ansible_version",
+        "inventory_dir",
+        "inventory_file",
+        "inventory_hostname",
+        "inventory_hostname_short",
+        "groups",
+        "group_names",
+        "hostvars",
+        "playbook_dir",
+        "play_hosts",
+        "role_name",
+        "role_names",
+        "role_path",
+        "role_uuid",
+        "role_names",
+    ]
+)
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                                'ansible.windows.win_shell', 'raw', 'script')))
-MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                           'ansible.windows.win_shell', 'raw')))
+WIN_MOVED = ['ansible.windows.win_command', 'ansible.windows.win_shell']
+MODULE_REQUIRE_ARGS_SIMPLE = ['command', 'raw', 'script', 'shell', 'win_command', 'win_shell']
+MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(MODULE_REQUIRE_ARGS_SIMPLE) + WIN_MOVED)
+MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'shell', 'win_shell', 'raw')) + WIN_MOVED)
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 SYNTHETIC_COLLECTIONS = ('ansible.builtin', 'ansible.legacy')
 TREE_DIR = None
@@ -178,11 +184,5 @@ MAGIC_VARIABLE_MAPPING = dict(
 )
 
 # POPULATE SETTINGS FROM CONFIG ###
-config = ConfigManager()
-
-# Generate constants from config
 for setting in config.get_configuration_definitions():
     set_constant(setting, config.get_config_value(setting, variables=vars()))
-
-for warn in config.WARNINGS:
-    _warning(warn)

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: uri
 short_description: Interacts with webservices
@@ -22,19 +22,19 @@ options:
       - 'When a list is provided, all ciphers are joined in order with V(:)'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
-      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions.
     type: list
     elements: str
     version_added: '2.14'
   decompress:
     description:
-      - Whether to attempt to decompress gzip content-encoded responses
+      - Whether to attempt to decompress gzip content-encoded responses.
     type: bool
     default: true
     version_added: '2.14'
   url:
     description:
-      - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
+      - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path.
     type: str
     required: true
   dest:
@@ -58,17 +58,18 @@ options:
         to V(json) it will take an already formatted JSON string or convert a data structure
         into JSON.
       - If O(body_format) is set to V(form-urlencoded) it will convert a dictionary
-        or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
+        or list of tuples into an C(application/x-www-form-urlencoded) string. (Added in v2.7)
       - If O(body_format) is set to V(form-multipart) it will convert a dictionary
-        into 'multipart/form-multipart' body. (Added in v2.10)
+        into C(multipart/form-multipart) body. (Added in v2.10)
+      - If C(body_format) is set to V(form-multipart) the option 'multipart_encoding' allows to change multipart file encoding. (Added in v2.19)
     type: raw
   body_format:
     description:
       - The serialization format of the body. When set to V(json), V(form-multipart), or V(form-urlencoded), encodes
-        the body argument, if needed, and automatically sets the Content-Type header accordingly.
+        the body argument, if needed, and automatically sets the C(Content-Type) header accordingly.
       - As of v2.3 it is possible to override the C(Content-Type) header, when
         set to V(json) or V(form-urlencoded) via the O(headers) option.
-      - The 'Content-Type' header cannot be overridden when using V(form-multipart)
+      - The C(Content-Type) header cannot be overridden when using V(form-multipart).
       - V(form-urlencoded) was added in v2.7.
       - V(form-multipart) was added in v2.10.
     type: str
@@ -86,7 +87,7 @@ options:
     description:
       - Whether or not to return the body of the response as a "content" key in
         the dictionary result no matter it succeeded or failed.
-      - Independently of this option, if the reported Content-type is "application/json", then the JSON is
+      - Independently of this option, if the reported C(Content-Type) is C(application/json), then the JSON is
         always loaded into a key called RV(ignore:json) in the dictionary results.
     type: bool
     default: no
@@ -105,17 +106,6 @@ options:
       - The webservice bans or rate-limits clients that cause any HTTP 401 errors.
     type: bool
     default: no
-  follow_redirects:
-    description:
-      - Whether or not the URI module should follow redirects. V(all) will follow all redirects.
-        V(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. V(none) will not follow
-        any redirects. Note that V(true) and V(false) choices are accepted for backwards compatibility,
-        where V(true) is the equivalent of V(all) and V(false) is the equivalent of V(safe). V(true) and V(false)
-        are deprecated and will be removed in some future version of Ansible.
-    type: str
-    choices: ['all', 'no', 'none', 'safe', 'urllib2', 'yes']
-    default: safe
   creates:
     description:
       - A filename, when it already exists, this step will not be run.
@@ -154,7 +144,7 @@ options:
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
-      - This file can also include the key as well, and if the key is included, O(client_key) is not required
+      - This file can also include the key as well, and if the key is included, O(client_key) is not required.
     type: path
     version_added: '2.4'
   client_key:
@@ -165,7 +155,7 @@ options:
     version_added: '2.4'
   ca_path:
     description:
-      - PEM formatted file that contains a CA certificate to be used for validation
+      - PEM formatted file that contains a CA certificate to be used for validation.
     type: path
     version_added: '2.11'
   src:
@@ -194,7 +184,7 @@ options:
     default: true
   unix_socket:
     description:
-    - Path to Unix domain socket to use for connection
+    - Path to Unix domain socket to use for connection.
     type: path
     version_added: '2.8'
   http_agent:
@@ -224,15 +214,16 @@ options:
     version_added: '2.11'
   use_netrc:
     description:
-      - Determining whether to use credentials from ``~/.netrc`` file
-      - By default .netrc is used with Basic authentication headers
-      - When set to False, .netrc credentials are ignored
+      - Determining whether to use credentials from C(~/.netrc) file.
+      - By default C(.netrc) is used with Basic authentication headers.
+      - When V(false), C(.netrc) credentials are ignored.
     type: bool
     default: true
     version_added: '2.14'
 extends_documentation_fragment:
   - action_common_attributes
   - files
+  - url.url_redirect
 attributes:
     check_mode:
         support: none
@@ -249,9 +240,9 @@ seealso:
 - module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Check that you can connect (GET) to a page and it returns a status 200
   ansible.builtin.uri:
     url: http://www.example.com
@@ -261,7 +252,7 @@ EXAMPLES = r'''
     url: http://www.example.com
     return_content: true
   register: this
-  failed_when: this is failed or "'AWESOME' not in this.content"
+  failed_when: "this is failed or 'AWESOME' not in this.content"
 
 - name: Create a JIRA issue
   ansible.builtin.uri:
@@ -307,10 +298,12 @@ EXAMPLES = r'''
       file1:
         filename: /bin/true
         mime_type: application/octet-stream
+        multipart_encoding: base64
       file2:
         content: text based file content
         filename: fake.txt
         mime_type: text/plain
+        multipart_encoding: 7or8bit
       text_form_field: value
 
 - name: Connect to website using a previously stored cookie
@@ -386,9 +379,9 @@ EXAMPLES = r'''
   uri:
     url: https://example.org
     ciphers: '@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 # The return information includes all the HTTP headers in lower-case.
 content:
   description: The response body content.
@@ -437,22 +430,29 @@ url:
   returned: always
   type: str
   sample: https://www.ansible.com/
-'''
+"""
 
+import http
 import json
 import os
 import re
 import shutil
-import sys
 import tempfile
+from datetime import datetime, timezone
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
-from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
+from ansible.module_utils.six import binary_type, iteritems, string_types
+from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
 from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
+from ansible.module_utils.urls import (
+    fetch_url,
+    get_response_filename,
+    parse_content_type,
+    prepare_multipart,
+    url_argument_spec,
+    url_redirect_argument_spec,
+)
 
 JSON_CANDIDATES = {'json', 'javascript'}
 
@@ -505,29 +505,8 @@ def write_file(module, dest, content, resp):
         os.remove(tmpsrc)
 
 
-def absolute_location(url, location):
-    """Attempts to create an absolute URL based on initial URL, and
-    next URL, specifically in the case of a ``Location`` header.
-    """
-
-    if '://' in location:
-        return location
-
-    elif location.startswith('/'):
-        parts = urlsplit(url)
-        base = url.replace(parts[2], '')
-        return '%s%s' % (base, location)
-
-    elif not location.startswith('/'):
-        base = os.path.dirname(url)
-        return '%s/%s' % (base, location)
-
-    else:
-        return location
-
-
 def kv_list(data):
-    ''' Convert data into a list of key-value tuples '''
+    """ Convert data into a list of key-value tuples """
     if data is None:
         return None
 
@@ -541,7 +520,7 @@ def kv_list(data):
 
 
 def form_urlencoded(body):
-    ''' Convert data into a form-urlencoded string '''
+    """ Convert data into a form-urlencoded string """
     if isinstance(body, string_types):
         return body
 
@@ -579,13 +558,22 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     kwargs = {}
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = datetime.fromtimestamp(
+            os.path.getmtime(dest),
+            tz=timezone.utc,
+        )
+
+    if module.params.get('follow_redirects') in ('no', 'yes'):
+        module.deprecate(
+            "Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+            version='2.22'
+        )
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           ciphers=ciphers, use_netrc=use_netrc, **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, force=module.params['force'], **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -599,6 +587,8 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
 
 def main():
     argument_spec = url_argument_spec()
+    argument_spec['url']['required'] = True
+    argument_spec.update(url_redirect_argument_spec())
     argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
@@ -685,12 +675,12 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
-    start = utcnow()
+    start = datetime.now(timezone.utc)
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
                   decompress, ciphers, use_netrc)
 
-    elapsed = (utcnow() - start).seconds
+    elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'
@@ -719,13 +709,15 @@ def main():
 
     if maybe_output:
         try:
-            if PY3 and (r.fp is None or r.closed):
+            if r.fp is None or r.closed:
                 raise TypeError
             content = r.read()
         except (AttributeError, TypeError):
             # there was no content, but the error read()
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
+        except http.client.HTTPException as http_err:
+            module.fail_json(msg=f"HTTP Error while fetching {url}: {to_native(http_err)}")
     elif r:
         content = r
     else:
@@ -760,7 +752,7 @@ def main():
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = absolute_location(url, uresp['location'])
+        uresp['location'] = urljoin(url, uresp['location'])
 
     # Default content_encoding to try
     if isinstance(content, binary_type):
@@ -770,8 +762,7 @@ def main():
                 js = json.loads(u_content)
                 uresp['json'] = js
             except Exception:
-                if PY2:
-                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+                ...
     else:
         u_content = None
 

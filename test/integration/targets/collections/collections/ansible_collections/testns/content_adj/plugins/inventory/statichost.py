@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     inventory: statichost
     short_description: Add a single host
     description: Add a single host
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       hostname:
         description: Toggle display of stderr even when script was successful
         required: True
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
@@ -32,7 +32,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self._hosts = set()
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accessibility check '''
+        """ Verify if file is usable by this plugin, base does minimal accessibility check """
 
         if not path.endswith('.statichost.yml') and not path.endswith('.statichost.yaml'):
             return False
@@ -44,6 +44,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         # Initialize and validate options
         self._read_config_data(path)
+
+        self.load_cache_plugin()
 
         # Exercise cache
         cache_key = self.get_cache_key(path)

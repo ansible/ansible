@@ -13,4 +13,4 @@
             run_once: true
         rescue:
           - debug:
-              msg: "Attemp 1 failed!"
+              msg: "Attempt 1 failed!"

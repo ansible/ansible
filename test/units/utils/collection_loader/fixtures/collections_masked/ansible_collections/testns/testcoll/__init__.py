@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # pragma: nocover
 
 
-raise Exception('this code should never execute')
+raise Exception('this code should never execute')  # pragma: nocover

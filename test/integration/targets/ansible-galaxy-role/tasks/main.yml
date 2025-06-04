@@ -25,14 +25,17 @@
 - name: Valid role archive
   command: "tar cf {{ remote_tmp_dir }}/valid-role.tar {{ remote_tmp_dir }}/role.d"
 
-- name: Invalid file
-  copy:
-    content: ""
+- name: Add invalid symlink
+  file:
+    state: link
+    src: "~/invalid"
     dest: "{{ remote_tmp_dir }}/role.d/tasks/~invalid.yml"
+    force: yes
 
-- name: Invalid file
-  copy:
-    content: ""
+- name: Add another invalid symlink
+  file:
+    state: link
+    src: "/"
     dest: "{{ remote_tmp_dir }}/role.d/tasks/invalid$name.yml"
 
 - name: Valid requirements file
@@ -66,3 +69,4 @@
   command: ansible-galaxy role remove invalid-testrole
 
 - import_tasks: dir-traversal.yml
+- import_tasks: valid-role-symlinks.yml

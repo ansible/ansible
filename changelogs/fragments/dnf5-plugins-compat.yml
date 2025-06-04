@@ -1,0 +1,2 @@
+bugfixes:
+  - "dnf5 - fix traceback when ``enable_plugins``/``disable_plugins`` is used on ``python3-libdnf5`` versions that do not support this functionality"

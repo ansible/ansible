@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: reboot
 short_description: Reboot a machine
 notes:
@@ -100,9 +100,9 @@ seealso:
 author:
     - Matt Davis (@nitzmahone)
     - Sam Doran (@samdoran)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Unconditionally reboot the machine with all defaults
   ansible.builtin.reboot:
 
@@ -124,9 +124,9 @@ EXAMPLES = r'''
   ansible.builtin.reboot:
     msg: "Rebooting machine in 5 seconds"
 
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 rebooted:
   description: true if the machine was rebooted
   returned: always
@@ -137,4 +137,4 @@ elapsed:
   returned: always
   type: int
   sample: 23
-'''
+"""

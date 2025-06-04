@@ -3,9 +3,23 @@
 # Description: Modifies the environment for running Ansible from a checkout
 # Usage: . ./hacking/env-setup [-q]
 
+# Set PYTHON_BIN
+if not set -q PYTHON_BIN
+    for exe in python3 python
+        if command -v $exe > /dev/null
+            set -gx PYTHON_BIN (command -v $exe)
+            break
+        end
+    end
+    if not set -q PYTHON_BIN
+        echo "No valid Python found"
+        exit 1
+    end
+end
+
 # Retrieve the path of the current directory where the script resides
 set HACKING_DIR (dirname (status -f))
-set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+set FULL_PATH ($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
 
 # Set quiet flag
@@ -50,39 +64,11 @@ else if not string match -qr $PREFIX_MANPATH'($|:)' $MANPATH
     set -gx MANPATH "$PREFIX_MANPATH:$MANPATH"
 end
 
-# Set PYTHON_BIN
-if not set -q PYTHON_BIN
-    for exe in python3 python
-        if command -v $exe > /dev/null
-            set -gx PYTHON_BIN (command -v $exe)
-            break
-        end
-    end
-    if not set -q PYTHON_BIN
-        echo "No valid Python found"
-        exit 1
-    end
-end
-
-# Generate egg_info so that pkg_resources works
-function gen_egg_info
-    # Check if ansible*.egg-info directory exists and remove if found
-    if test -d $PREFIX_PYTHONPATH/ansible*.egg-info
-        rm -rf $PREFIX_PYTHONPATH/ansible*.egg-info
-    end
-    # Execute setup.py egg_info using the chosen Python interpreter
-    eval $PYTHON_BIN setup.py egg_info
-end
-
 pushd $ANSIBLE_HOME
 if test -n "$QUIET"
-    # Run gen_egg_info in the background and redirect output to /dev/null
-    gen_egg_info &> /dev/null
     # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';' &> /dev/null
 else
-    # Run gen_egg_info
-    gen_egg_info
     # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';'
     # Display setup details

@@ -9088,6 +9088,8 @@ plugin_routing:
       tombstone:
         removal_date: "2023-05-16"
         warning_text: Use include_tasks or import_tasks instead.
+    yum:
+      redirect: ansible.builtin.dnf
   become:
     doas:
       redirect: community.general.doas

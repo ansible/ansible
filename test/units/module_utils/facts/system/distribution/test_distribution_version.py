@@ -10,7 +10,7 @@ import os
 import pytest
 from itertools import product
 
-from ansible.module_utils.six.moves import builtins
+import builtins
 
 # the module we are actually testing (sort of)
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector

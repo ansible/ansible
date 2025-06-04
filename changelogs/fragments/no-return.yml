@@ -1,0 +1,2 @@
+minor_changes:
+  - module_utils - Add ``NoReturn`` type annotations to functions which never return.

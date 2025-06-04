@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.modules.systemd import parse_systemctl_show
 
 

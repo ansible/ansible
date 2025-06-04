@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: ping
 version_added: historical
@@ -40,12 +40,12 @@ options: {}
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Test we can logon to 'webservers' and execute python with json lib.
 ansible webservers -m ping
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

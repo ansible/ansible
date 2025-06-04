@@ -1,6 +1,0 @@
-dnf_log_files:
-    - /var/log/dnf.log
-    - /var/log/dnf.rpm.log
-    - /var/log/dnf.librepo.log
-
-skip_broken_repo_baseurl: "https://ci-files.testing.ansible.com/test/integration/targets/dnf/skip-broken/RPMS/"

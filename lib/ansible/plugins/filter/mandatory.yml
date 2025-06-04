@@ -1,7 +1,7 @@
 DOCUMENTATION:
   name: mandatory
   version_added: "historical"
-  short_description: make a variable's existance mandatory
+  short_description: make a variable's existence mandatory
   description:
     - Depending on context undefined variables can be ignored or skipped, this ensures they force an error.
   positional: _input

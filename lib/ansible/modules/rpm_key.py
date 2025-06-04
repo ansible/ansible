@@ -8,14 +8,14 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: rpm_key
 author:
   - Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
-  - Adds or removes (rpm --import) a gpg key to your rpm database.
+  - Adds or removes C(rpm --import) a gpg key to your rpm database.
 version_added: "1.3"
 options:
     key:
@@ -40,7 +40,8 @@ options:
       description:
         - The long-form fingerprint of the key being imported.
         - This will be used to verify the specified key.
-      type: str
+      type: list
+      elements: str
       version_added: 2.9
 extends_documentation_fragment:
     - action_common_attributes
@@ -51,9 +52,9 @@ attributes:
         support: none
     platform:
         platforms: rhel
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Import a key from a url
   ansible.builtin.rpm_key:
     state: present
@@ -73,9 +74,16 @@ EXAMPLES = '''
   ansible.builtin.rpm_key:
     key: /path/to/RPM-GPG-KEY.dag.txt
     fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
-'''
 
-RETURN = r'''#'''
+- name: Verify the key, using multiple fingerprints, before import
+  ansible.builtin.rpm_key:
+    key: /path/to/RPM-GPG-KEY.dag.txt
+    fingerprint:
+      - EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
+      - 19B7 913E 6284 8E3F 4D78 D6B4 ECD9 1AB2 2EB6 8D86
+"""
+
+RETURN = r"""#"""
 
 import re
 import os.path
@@ -105,8 +113,12 @@ class RpmKey(object):
         state = module.params['state']
         key = module.params['key']
         fingerprint = module.params['fingerprint']
+        fingerprints = set()
+
         if fingerprint:
-            fingerprint = fingerprint.replace(' ', '').upper()
+            if not isinstance(fingerprint, list):
+                fingerprint = [fingerprint]
+            fingerprints = set(f.replace(' ', '').upper() for f in fingerprint)
 
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
@@ -131,11 +143,12 @@ class RpmKey(object):
             else:
                 if not keyfile:
                     self.module.fail_json(msg="When importing a key, a valid file must be given")
-                if fingerprint:
-                    has_fingerprint = self.getfingerprint(keyfile)
-                    if fingerprint != has_fingerprint:
+                if fingerprints:
+                    keyfile_fingerprints = self.getfingerprints(keyfile)
+                    if not fingerprints.issubset(keyfile_fingerprints):
                         self.module.fail_json(
-                            msg="The specified fingerprint, '%s', does not match the key fingerprint '%s'" % (fingerprint, has_fingerprint)
+                            msg=("The specified fingerprint, '%s', "
+                                 "does not match any key fingerprints in '%s'") % (fingerprints, keyfile_fingerprints)
                         )
                 self.import_key(keyfile)
                 if should_cleanup_keyfile:
@@ -159,9 +172,8 @@ class RpmKey(object):
             self.module.fail_json(msg="Not a public key: %s" % url)
         tmpfd, tmpname = tempfile.mkstemp()
         self.module.add_cleanup_file(tmpname)
-        tmpfile = os.fdopen(tmpfd, "w+b")
-        tmpfile.write(key)
-        tmpfile.close()
+        with os.fdopen(tmpfd, "w+b") as tmpfile:
+            tmpfile.write(key)
         return tmpname
 
     def normalize_keyid(self, keyid):
@@ -183,11 +195,15 @@ class RpmKey(object):
 
         self.module.fail_json(msg="Unexpected gpg output")
 
-    def getfingerprint(self, keyfile):
+    def getfingerprints(self, keyfile):
         stdout, stderr = self.execute_command([
             self.gpg, '--no-tty', '--batch', '--with-colons',
-            '--fixed-list-mode', '--with-fingerprint', keyfile
+            '--fixed-list-mode', '--import', '--import-options', 'show-only',
+            '--dry-run', keyfile
         ])
+
+        fingerprints = set()
+
         for line in stdout.splitlines():
             line = line.strip()
             if line.startswith('fpr:'):
@@ -199,7 +215,10 @@ class RpmKey(object):
                 #
                 # "fpr :: Fingerprint (fingerprint is in field 10)"
                 #
-                return line.split(':')[9]
+                fingerprints.add(line.split(':')[9])
+
+        if fingerprints:
+            return fingerprints
 
         self.module.fail_json(msg="Unexpected gpg output")
 
@@ -239,7 +258,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             key=dict(type='str', required=True, no_log=False),
-            fingerprint=dict(type='str'),
+            fingerprint=dict(type='list', elements='str'),
             validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=True,

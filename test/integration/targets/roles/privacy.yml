@@ -1,0 +1,82 @@
+# use this to debug issues
+#- debug: msg={{ is_private ~ ', ' ~ is_default ~ ', ' ~ privacy|default('nope')}}
+
+- hosts: localhost
+  name: test global privacy setting
+  gather_facts: false
+  roles:
+    - a
+  pre_tasks:
+
+    - name: 'test roles: privacy'
+      assert:
+        that:
+          - is_private and privacy is undefined or not is_private and privacy is defined
+          - not is_default or is_default and privacy is defined
+
+- hosts: localhost
+  name: test import_role privacy
+  gather_facts: false
+  tasks:
+    - import_role: name=a
+
+    - name: role is private, var should be undefined
+      assert:
+        that:
+          - is_private and privacy is undefined or not is_private and privacy is defined
+          - not is_default or is_default and privacy is defined
+
+- hosts: localhost
+  name: test public no always overrides global on import_role
+  gather_facts: false
+  tasks:
+    - import_role: name=a public=no
+
+    - name: role is private, var should be undefined
+      assert:
+        that:
+          - privacy is undefined
+
+- hosts: localhost
+  name: test public yes always overrides global on import_role
+  gather_facts: false
+  tasks:
+    - import_role: name=a public=yes
+
+    - name: role is private, var should be undefined
+      assert:
+        that:
+          - privacy is defined
+
+- hosts: localhost
+  name: test global privacy setting on includes
+  gather_facts: false
+  tasks:
+    - include_role: name=a
+
+    - name: test include_role privacy
+      assert:
+        that:
+          - not is_default and (is_private and privacy is undefined or not is_private and privacy is defined) or is_default and privacy is undefined
+
+- hosts: localhost
+  name: test public yes always overrides global privacy setting on includes
+  gather_facts: false
+  tasks:
+    - include_role: name=a public=yes
+
+    - name: test include_role privacy
+      assert:
+        that:
+          - privacy is defined
+
+- hosts: localhost
+  name: test public no always overrides global privacy setting on includes
+  gather_facts: false
+  tasks:
+    - include_role: name=a public=no
+
+    - name: test include_role privacy
+      assert:
+        that:
+          - privacy is undefined

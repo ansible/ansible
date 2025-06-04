@@ -14,6 +14,7 @@
                     "type": "raw"
                 }
             },
+            "plugin_name": "testns.testcol.yolo",
             "seealso": [
                 {
                     "module": "ansible.builtin.test"

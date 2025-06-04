@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.module_utils.six.moves.collections_abc import Sequence
+from collections.abc import Sequence
 from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
 
@@ -23,32 +23,17 @@ class SeqStub:
 Sequence.register(SeqStub)
 
 
-class FakeAnsibleVaultEncryptedUnicode(Sequence):
-    __ENCRYPTED__ = True
-
-    def __init__(self, data):
-        self.data = data
-
-    def __getitem__(self, index):
-        raise NotImplementedError()  # pragma: nocover
-
-    def __len__(self):
-        raise NotImplementedError()  # pragma: nocover
-
-
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
-TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS) + (FakeAnsibleVaultEncryptedUnicode(u'foo'),)
+TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS)
 
-TEST_ITEMS_NON_SEQUENCES = (
+TEST_ITEMS_NON_SEQUENCES: tuple = (
     {}, object(), frozenset(),
     4, 0.,
 ) + TEST_STRINGS
 
-TEST_ITEMS_SEQUENCES = (
+TEST_ITEMS_SEQUENCES: tuple = (
     [], (),
     SeqStub(),
-)
-TEST_ITEMS_SEQUENCES = TEST_ITEMS_SEQUENCES + (
     # Iterable effectively containing nested random data:
     TEST_ITEMS_NON_SEQUENCES,
 )

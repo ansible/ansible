@@ -87,7 +87,6 @@ options:
         - section: url_lookup
           key: force_basic_auth
   follow_redirects:
-    description: String of urllib2, all/yes, safe, none to determine how redirects are followed
     type: string
     version_added: "2.10"
     default: 'urllib2'
@@ -98,13 +97,6 @@ options:
     ini:
         - section: url_lookup
           key: follow_redirects
-    choices:
-        - urllib2
-        - all
-        - 'yes'
-        - safe
-        - none
-        - 'no'
   use_gssapi:
     description:
     - Use GSSAPI handler of requests
@@ -185,6 +177,8 @@ options:
     ini:
         - section: url_lookup
           key: ciphers
+extends_documentation_fragment:
+  - url.url_redirect
 """
 
 EXAMPLES = """
@@ -234,6 +228,11 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             display.vvvv("url lookup connecting to %s" % term)
+            if self.get_option('follow_redirects') in ('yes', 'no'):
+                display.deprecated(
+                    msg="Using 'yes' or 'no' for 'follow_redirects' parameter is deprecated.",
+                    version='2.22',
+                )
             try:
                 response = open_url(
                     term, validate_certs=self.get_option('validate_certs'),

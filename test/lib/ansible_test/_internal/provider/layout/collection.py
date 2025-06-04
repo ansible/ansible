@@ -1,4 +1,5 @@
 """Layout provider for Ansible collections."""
+
 from __future__ import annotations
 
 import os

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: wait_for_connection
 short_description: Waits until remote system is reachable/usable
@@ -14,7 +14,8 @@ description:
 - Waits for a total of O(timeout) seconds.
 - Retries the transport connection after a timeout of O(connect_timeout).
 - Tests the transport connection every O(sleep) seconds.
-- This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+- This module makes use of internal ansible transport (and configuration) and the M(ansible.builtin.ping)/M(ansible.windows.win_ping)
+  modules to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
 version_added: '2.3'
 options:
@@ -61,9 +62,9 @@ seealso:
 - module: community.windows.win_wait_for_process
 author:
 - Dag Wieers (@dagwieers)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Wait 600 seconds for target connection to become reachable/usable
   ansible.builtin.wait_for_connection:
 
@@ -109,12 +110,12 @@ EXAMPLES = r'''
 
   - name: Gather facts for first time
     ansible.builtin.setup:
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 elapsed:
   description: The number of seconds that elapsed waiting for the connection to appear.
   returned: always
   type: float
   sample: 23.1
-'''
+"""

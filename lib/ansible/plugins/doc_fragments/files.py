@@ -11,12 +11,12 @@ class ModuleDocFragment(object):
 
     # Note: mode is overridden by the copy and template modules so if you change the description
     # here, you should also change it there.
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   mode:
     description:
     - The permissions the resulting filesystem object should have.
-    - For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers.
+    - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must give Ansible enough information to parse them correctly.
       For consistent results, quote octal numbers (for example, V('644') or V('1777')) so Ansible receives
       a string and can do its own conversion from string into number.
@@ -33,7 +33,7 @@ options:
     type: raw
   owner:
     description:
-    - Name of the user that should own the filesystem object, as would be fed to I(chown).
+    - Name of the user that should own the filesystem object, as would be fed to C(chown).
     - When left unspecified, it uses the current user unless you are root, in which
       case it can preserve the previous ownership.
     - Specifying a numeric username will be assumed to be a user ID and not a username. Avoid numeric usernames to avoid this confusion.
@@ -41,7 +41,7 @@ options:
     type: str
   group:
     description:
-    - Name of the group that should own the filesystem object, as would be fed to I(chown).
+    - Name of the group that should own the filesystem object, as would be fed to C(chown).
     - When left unspecified, it uses the current group of the current user unless you are root,
       in which case it can preserve the previous ownership.
     type: str
@@ -82,10 +82,10 @@ options:
   attributes:
     description:
     - The attributes the resulting filesystem object should have.
-    - To get supported flags look at the man page for I(chattr) on the target system.
-    - This string should contain the attributes in the same order as the one displayed by I(lsattr).
+    - To get supported flags look at the man page for C(chattr) on the target system.
+    - This string should contain the attributes in the same order as the one displayed by C(lsattr).
     - The C(=) operator is assumed as default, otherwise C(+) or C(-) operators need to be included in the string.
     type: str
     aliases: [ attr ]
     version_added: '2.3'
-'''
+"""

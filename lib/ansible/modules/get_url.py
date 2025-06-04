@@ -6,14 +6,14 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: get_url
 short_description: Downloads files from HTTP, HTTPS, or FTP to node
 description:
      - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
        server I(must) have direct access to the remote resource.
-     - By default, if an environment variable C(<protocol>_proxy) is set on
+     - By default, if an environment variable E(<protocol>_proxy) is set on
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see R(setting the environment,playbooks_environment)),
@@ -27,23 +27,23 @@ version_added: '0.6'
 options:
   ciphers:
     description:
-      - SSL/TLS Ciphers to use for the request
-      - 'When a list is provided, all ciphers are joined in order with V(:)'
+      - SSL/TLS Ciphers to use for the request.
+      - 'When a list is provided, all ciphers are joined in order with C(:).'
       - See the L(OpenSSL Cipher List Format,https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT)
         for more details.
-      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions
+      - The available ciphers is dependent on the Python and OpenSSL/LibreSSL versions.
     type: list
     elements: str
     version_added: '2.14'
   decompress:
     description:
-      - Whether to attempt to decompress gzip content-encoded responses
+      - Whether to attempt to decompress gzip content-encoded responses.
     type: bool
     default: true
     version_added: '2.14'
   url:
     description:
-      - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+      - HTTP, HTTPS, or FTP URL in the form C((http|https|ftp)://[user[:pass]]@host.domain[:port]/path).
     type: str
     required: true
   dest:
@@ -60,9 +60,9 @@ options:
   tmp_dest:
     description:
       - Absolute path of where temporary file is downloaded to.
-      - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
+      - When run on Ansible 2.5 or greater, path defaults to ansible's C(remote_tmp) setting.
       - When run on Ansible prior to 2.5, it defaults to E(TMPDIR), E(TEMP) or E(TMP) env variables or a platform specific value.
-      - U(https://docs.python.org/3/library/tempfile.html#tempfile.tempdir)
+      - U(https://docs.python.org/3/library/tempfile.html#tempfile.tempdir).
     type: path
     version_added: '2.1'
   force:
@@ -87,18 +87,20 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
-        checksum="sha256:http://example.com/path/sha256sum.txt"'
+        Format: <algorithm>:<checksum|url>, for example C(checksum="sha256:D98291AC[...]B6DC7B97"),
+        C(checksum="sha256:http://example.com/path/sha256sum.txt").'
       - If you worry about portability, only the sha1 algorithm is available
         on all platforms and python versions.
-      - The Python ``hashlib`` module is responsible for providing the available algorithms.
+      - The Python C(hashlib) module is responsible for providing the available algorithms.
         The choices vary based on Python version and OpenSSL version.
-      - On systems running in FIPS compliant mode, the ``md5`` algorithm may be unavailable.
+      - On systems running in FIPS compliant mode, the C(md5) algorithm may be unavailable.
       - Additionally, if a checksum is passed to this parameter, and the file exist under
         the O(dest) location, the C(destination_checksum) would be calculated, and if
         checksum equals C(destination_checksum), the file download would be skipped
-        (unless O(force) is V(true)). If the checksum does not equal C(destination_checksum),
+        (unless O(force=true)). If the checksum does not equal C(destination_checksum),
         the destination file is deleted.
+      - If the checksum URL requires username and password, O(url_username) and O(url_password) are used
+        to download the checksum file.
     type: str
     default: ''
     version_added: "2.0"
@@ -185,16 +187,16 @@ options:
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
       - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
-        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+        E(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is I(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
     default: no
     version_added: '2.11'
   use_netrc:
     description:
-      - Determining whether to use credentials from ``~/.netrc`` file
-      - By default .netrc is used with Basic authentication headers
-      - When set to False, .netrc credentials are ignored
+      - Determining whether to use credentials from C(~/.netrc) file.
+      - By default C(.netrc) is used with Basic authentication headers.
+      - When V(false), C(.netrc) credentials are ignored.
     type: bool
     default: true
     version_added: '2.14'
@@ -217,9 +219,9 @@ seealso:
 - module: ansible.windows.win_get_url
 author:
 - Jan-Piet Mens (@jpmens)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Download foo.conf
   ansible.builtin.get_url:
     url: http://example.com/path/file.conf
@@ -270,9 +272,9 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     username: bar
     password: '{{ mysecret }}'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 backup_file:
     description: name of backup file created after download
     returned: changed and if backup=yes
@@ -363,17 +365,18 @@ url:
     returned: always
     type: str
     sample: https://www.ansible.com/
-'''
+"""
 
+import email.message
 import os
 import re
 import shutil
 import tempfile
-import traceback
+
+from datetime import datetime, timezone
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -396,10 +399,10 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     Return (tempfile, info about the request)
     """
 
-    start = utcnow()
+    start = datetime.now(timezone.utc)
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
                           unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-    elapsed = (utcnow() - start).seconds
+    elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
@@ -430,30 +433,23 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         shutil.copyfileobj(rsp, f)
     except Exception as e:
         os.remove(tempname)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed, exception=traceback.format_exc())
+        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed)
     f.close()
     rsp.close()
     return tempname, info
 
 
 def extract_filename_from_headers(headers):
+    """Extracts a filename from the given dict of HTTP headers.
+
+    Returns the filename if successful, else None.
     """
-    Extracts a filename from the given dict of HTTP headers.
-
-    Looks for the content-disposition header and applies a regex.
-    Returns the filename if successful, else None."""
-    cont_disp_regex = 'attachment; ?filename="?([^"]+)'
-    res = None
-
-    if 'content-disposition' in headers:
-        cont_disp = headers['content-disposition']
-        match = re.match(cont_disp_regex, cont_disp)
-        if match:
-            res = match.group(1)
-            # Try preventing any funny business.
-            res = os.path.basename(res)
-
-    return res
+    msg = email.message.Message()
+    msg['content-disposition'] = headers.get('content-disposition', '')
+    if filename := msg.get_param('filename', header='content-disposition'):
+        # Avoid directory traversal
+        filename = os.path.basename(filename)
+    return filename
 
 
 def is_url(checksum):
@@ -462,6 +458,37 @@ def is_url(checksum):
     supported_schemes = ('http', 'https', 'ftp', 'file')
 
     return urlsplit(checksum).scheme in supported_schemes
+
+
+def parse_digest_lines(filename, lines):
+    """Returns a list of tuple containing the filename and digest depending upon
+      the lines provided
+
+    Args:
+        filename (str): Name of the filename, used only when the digest is one-liner
+        lines (list): A list of lines containing filenames and checksums
+    """
+    checksum_map = []
+    BSD_DIGEST_LINE = re.compile(r'^(\w+) ?\((?P<path>.+)\) ?= (?P<digest>[\w.]+)$')
+    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+) ([ *])(?P<path>.+)$')
+
+    if len(lines) == 1 and len(lines[0].split()) == 1:
+        # Only a single line with a single string
+        # treat it as a checksum only file
+        checksum_map.append((lines[0], filename))
+        return checksum_map
+    # The assumption here is the file is in the format of
+    # checksum filename
+    for line in lines:
+        match = BSD_DIGEST_LINE.match(line)
+        if match:
+            checksum_map.append((match.group('digest'), match.group('path')))
+        else:
+            match = GNU_DIGEST_LINE.match(line)
+            if match:
+                checksum_map.append((match.group('digest'), match.group('path').lstrip("./")))
+
+    return checksum_map
 
 
 # ==============================================================
@@ -531,31 +558,13 @@ def main():
         if is_url(checksum):
             checksum_url = checksum
             # download checksum file to checksum_tmpsrc
-            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
-                                                     unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
+            checksum_tmpsrc, _dummy = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest,
+                                              unredirected_headers=unredirected_headers, ciphers=ciphers, use_netrc=use_netrc)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
-            checksum_map = []
             filename = url_filename(url)
-            if len(lines) == 1 and len(lines[0].split()) == 1:
-                # Only a single line with a single string
-                # treat it as a checksum only file
-                checksum_map.append((lines[0], filename))
-            else:
-                # The assumption here is the file is in the format of
-                # checksum filename
-                for line in lines:
-                    # Split by one whitespace to keep the leading type char ' ' (whitespace) for text and '*' for binary
-                    parts = line.split(" ", 1)
-                    if len(parts) == 2:
-                        # Remove the leading type char, we expect
-                        if parts[1].startswith((" ", "*",)):
-                            parts[1] = parts[1][1:]
-
-                        # Append checksum and path without potential leading './'
-                        checksum_map.append((parts[0], parts[1].lstrip("./")))
-
+            checksum_map = parse_digest_lines(filename=filename, lines=lines)
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
             for cksum in (s for (s, f) in checksum_map if f == filename):
@@ -599,7 +608,7 @@ def main():
         # If the file already exists, prepare the last modified time for the
         # request.
         mtime = os.path.getmtime(dest)
-        last_mod_time = utcfromtimestamp(mtime)
+        last_mod_time = datetime.fromtimestamp(mtime, timezone.utc)
 
         # If the checksum does not match we have to force the download
         # because last_mod_time may be newer than on remote
@@ -607,11 +616,11 @@ def main():
             force = True
 
     # download to tmpsrc
-    start = utcnow()
+    start = datetime.now(timezone.utc)
     method = 'HEAD' if module.check_mode else 'GET'
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
                            unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers, use_netrc=use_netrc)
-    result['elapsed'] = (utcnow() - start).seconds
+    result['elapsed'] = (datetime.now(timezone.utc) - start).seconds
     result['src'] = tmpsrc
 
     # Now the request has completed, we can finally generate the final
@@ -661,6 +670,16 @@ def main():
                              result['checksum_src'] != result['checksum_dest'])
         module.exit_json(msg=info.get('msg', ''), **result)
 
+    # If a checksum was provided, ensure that the temporary file matches this checksum
+    # before moving it to the destination.
+    if checksum != '':
+        tmpsrc_checksum = module.digest_from_file(tmpsrc, algorithm)
+
+        if checksum != tmpsrc_checksum:
+            os.remove(tmpsrc)
+            module.fail_json(msg=f"The checksum for {tmpsrc} did not match {checksum}; it was {tmpsrc_checksum}.", **result)
+
+    # Copy temporary file to destination if necessary
     backup_file = None
     if result['checksum_src'] != result['checksum_dest']:
         try:
@@ -671,20 +690,12 @@ def main():
         except Exception as e:
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc(), **result)
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), **result)
         result['changed'] = True
     else:
         result['changed'] = False
         if os.path.exists(tmpsrc):
             os.remove(tmpsrc)
-
-    if checksum != '':
-        destination_checksum = module.digest_from_file(dest, algorithm)
-
-        if checksum != destination_checksum:
-            os.remove(dest)
-            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
 
     # allow file attribute changes
     file_args = module.load_file_common_arguments(module.params, path=dest)

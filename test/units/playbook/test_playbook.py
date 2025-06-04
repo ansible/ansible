@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.errors import AnsibleParserError
 from ansible.playbook import Playbook
 from ansible.vars.manager import VariableManager

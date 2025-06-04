@@ -34,19 +34,19 @@ from ansible.module_utils.facts import ansible_collector
 
 
 def get_all_facts(module):
-    '''compat api for ansible 2.2/2.3 module_utils.facts.get_all_facts method
+    """compat api for ansible 2.2/2.3 module_utils.facts.get_all_facts method
 
     Expects module to be an instance of AnsibleModule, with a 'gather_subset' param.
 
     returns a dict mapping the bare fact name ('default_ipv4' with no 'ansible_' namespace) to
-    the fact value.'''
+    the fact value."""
 
     gather_subset = module.params['gather_subset']
     return ansible_facts(module, gather_subset=gather_subset)
 
 
 def ansible_facts(module, gather_subset=None):
-    '''Compat api for ansible 2.0/2.2/2.3 module_utils.facts.ansible_facts method
+    """Compat api for ansible 2.0/2.2/2.3 module_utils.facts.ansible_facts method
 
     2.3/2.3 expects a gather_subset arg.
     2.0/2.1 does not except a gather_subset arg
@@ -57,7 +57,7 @@ def ansible_facts(module, gather_subset=None):
 
     returns a dict mapping the bare fact name ('default_ipv4' with no 'ansible_' namespace) to
     the fact value.
-    '''
+    """
 
     gather_subset = gather_subset or module.params.get('gather_subset', ['all'])
     gather_timeout = module.params.get('gather_timeout', 10)

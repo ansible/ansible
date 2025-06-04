@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "2.4"
   short_description: date formating
   description:
-    - Using Python's C(strftime) function, take a data formating string and a date/time to create a formated date.
+    - Using Python's C(strftime) function, take a data formating string and a date/time to create a formatted date.
   notes:
     - This is a passthrough to Python's C(stftime), for a complete set of formatting options go to https://strftime.org/.
   positional: _input, second, utc
@@ -21,6 +21,7 @@ DOCUMENTATION:
       description: Whether time supplied is in UTC.
       type: bool
       default: false
+      version_added: '2.14'
 
 EXAMPLES: |
   # for a complete set of features go to  https://strftime.org/
@@ -39,7 +40,7 @@ EXAMPLES: |
 
   # Use arbitrary epoch value
   {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
-  {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+  {{ '%Y-%m-%d' | strftime(seconds=1441357287, utc=true) }} # => 2015-09-04
 
 RETURN:
   _value:

@@ -3,19 +3,16 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
     name: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
     description:
         - TOML based inventory format
         - File MUST have a valid '.toml' file extension
-    notes:
-        - >
-          Requires one of the following python libraries: 'toml', 'tomli', or 'tomllib'
-'''
+"""
 
-EXAMPLES = r'''# fmt: toml
+EXAMPLES = r"""# fmt: toml
 # Example 1
 [all.vars]
 has_java = false
@@ -84,114 +81,26 @@ host4 = {}
 
 [g2.hosts]
 host4 = {}
-'''
+"""
 
 import os
-import typing as t
+import tomllib
 
 from collections.abc import MutableMapping, MutableSequence
-from functools import partial
 
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleRuntimeError
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.six import string_types, text_type
-from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError
+from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.six import string_types
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
-
-HAS_TOML = False
-try:
-    import toml
-    HAS_TOML = True
-except ImportError:
-    pass
-
-HAS_TOMLIW = False
-try:
-    import tomli_w  # type: ignore[import]
-    HAS_TOMLIW = True
-except ImportError:
-    pass
-
-HAS_TOMLLIB = False
-try:
-    import tomllib  # type: ignore[import]
-    HAS_TOMLLIB = True
-except ImportError:
-    try:
-        import tomli as tomllib  # type: ignore[no-redef]
-        HAS_TOMLLIB = True
-    except ImportError:
-        pass
 
 display = Display()
 
 
-# dumps
-if HAS_TOML and hasattr(toml, 'TomlEncoder'):
-    # toml>=0.10.0
-    class AnsibleTomlEncoder(toml.TomlEncoder):
-        def __init__(self, *args, **kwargs):
-            super(AnsibleTomlEncoder, self).__init__(*args, **kwargs)
-            # Map our custom YAML object types to dump_funcs from ``toml``
-            self.dump_funcs.update({
-                AnsibleSequence: self.dump_funcs.get(list),
-                AnsibleUnicode: self.dump_funcs.get(str),
-                AnsibleUnsafeBytes: self.dump_funcs.get(str),
-                AnsibleUnsafeText: self.dump_funcs.get(str),
-            })
-    toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())  # type: t.Callable[[t.Any], str]
-else:
-    # toml<0.10.0
-    # tomli-w
-    def toml_dumps(data):  # type: (t.Any) -> str
-        if HAS_TOML:
-            return toml.dumps(convert_yaml_objects_to_native(data))
-        elif HAS_TOMLIW:
-            return tomli_w.dumps(convert_yaml_objects_to_native(data))
-        raise AnsibleRuntimeError(
-            'The python "toml" or "tomli-w" library is required when using the TOML output format'
-        )
-
-# loads
-if HAS_TOML:
-    # prefer toml if installed, since it supports both encoding and decoding
-    toml_loads = toml.loads  # type: ignore[assignment]
-    TOMLDecodeError = toml.TomlDecodeError  # type: t.Any
-elif HAS_TOMLLIB:
-    toml_loads = tomllib.loads  # type: ignore[assignment]
-    TOMLDecodeError = tomllib.TOMLDecodeError  # type: t.Any  # type: ignore[no-redef]
-
-
-def convert_yaml_objects_to_native(obj):
-    """Older versions of the ``toml`` python library, and tomllib, don't have
-    a pluggable way to tell the encoder about custom types, so we need to
-    ensure objects that we pass are native types.
-
-    Used with:
-      - ``toml<0.10.0`` where ``toml.TomlEncoder`` is missing
-      - ``tomli`` or ``tomllib``
-
-    This function recurses an object and ensures we cast any of the types from
-    ``ansible.parsing.yaml.objects`` into their native types, effectively cleansing
-    the data before we hand it over to the toml library.
-
-    This function doesn't directly check for the types from ``ansible.parsing.yaml.objects``
-    but instead checks for the types those objects inherit from, to offer more flexibility.
-    """
-    if isinstance(obj, dict):
-        return dict((k, convert_yaml_objects_to_native(v)) for k, v in obj.items())
-    elif isinstance(obj, list):
-        return [convert_yaml_objects_to_native(v) for v in obj]
-    elif isinstance(obj, text_type):
-        return text_type(obj)
-    else:
-        return obj
-
-
 class InventoryModule(BaseFileInventoryPlugin):
     NAME = 'toml'
+
+    trusted_by_default = True  # we need the inventory system to mark trust for us, since we're not manually traversing var assignments
 
     def _parse_group(self, group, group_data):
         if group_data is not None and not isinstance(group_data, MutableMapping):
@@ -246,33 +155,14 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
         try:
-            (b_data, private) = self.loader._get_file_contents(file_name)
-            return toml_loads(to_text(b_data, errors='surrogate_or_strict'))
-        except TOMLDecodeError as e:
-            raise AnsibleParserError(
-                'TOML file (%s) is invalid: %s' % (file_name, to_native(e)),
-                orig_exc=e
-            )
-        except (IOError, OSError) as e:
-            raise AnsibleParserError(
-                "An error occurred while trying to read the file '%s': %s" % (file_name, to_native(e)),
-                orig_exc=e
-            )
-        except Exception as e:
-            raise AnsibleParserError(
-                "An unexpected error occurred while parsing the file '%s': %s" % (file_name, to_native(e)),
-                orig_exc=e
-            )
+            return tomllib.loads(self.loader.get_text_file_contents(file_name))
+        except tomllib.TOMLDecodeError as ex:
+            raise AnsibleParserError(f'TOML file {file_name!r} is invalid.') from ex
+        except Exception as ex:
+            raise AnsibleParserError(f'An error occurred while parsing the file {file_name!r}.') from ex
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' parses the inventory file '''
-        if not HAS_TOMLLIB and not HAS_TOML:
-            # tomllib works here too, but we don't call it out in the error,
-            # since you either have it or not as part of cpython stdlib >= 3.11
-            raise AnsibleParserError(
-                'The TOML inventory plugin requires the python "toml", or "tomli" library'
-            )
-
+        """ parses the inventory file """
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
 

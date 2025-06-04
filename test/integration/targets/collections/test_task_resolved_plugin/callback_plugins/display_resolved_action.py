@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: display_resolved_action
     type: aggregate
     short_description: Displays the requested and resolved actions at the end of a playbook.
@@ -11,7 +11,7 @@ DOCUMENTATION = '''
         - Displays the requested and resolved actions in the format "requested == resolved".
     requirements:
       - Enable in configuration.
-'''
+"""
 
 from ansible.plugins.callback import CallbackBase
 
@@ -27,8 +27,8 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__(*args, **kwargs)
         self.requested_to_resolved = {}
 
-    def v2_playbook_on_task_start(self, task, is_conditional):
-        self.requested_to_resolved[task.action] = task.resolved_action
+    def v2_runner_on_ok(self, result):
+        self.requested_to_resolved[result.task.action] = result.task.resolved_action
 
     def v2_playbook_on_stats(self, stats):
         for requested, resolved in self.requested_to_resolved.items():

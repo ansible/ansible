@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: check_mode_attribute_2
 short_description: Test for check mode attribute 2
 description: Test for check mode attribute 2.
@@ -20,10 +20,10 @@ attributes:
     support: none
   platform:
     platforms: all
-'''
+"""
 
-EXAMPLES = '''#'''
-RETURN = ''''''
+EXAMPLES = """#"""
+RETURN = """"""
 
 from ansible.module_utils.basic import AnsibleModule
 

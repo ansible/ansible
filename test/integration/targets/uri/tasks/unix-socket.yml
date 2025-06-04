@@ -14,7 +14,7 @@
     unix_socket: '{{ remote_tmp_dir }}/http.sock'
   register: unix_socket_http
 
-- name: Test https connection to unix socket with valdiate_certs=false
+- name: Test https connection to unix socket with validate_certs=false
   uri:
     url: https://localhost/get
     unix_socket: '{{ remote_tmp_dir }}/https.sock'

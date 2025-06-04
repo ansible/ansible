@@ -9,7 +9,7 @@ from __future__ import annotations
 class ModuleDocFragment:
 
     # Common options for Ansible.ModuleUtils.WebRequest
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   method:
     description:
@@ -47,7 +47,7 @@ options:
     description:
     - Specify how many times the module will redirect a connection to an
       alternative URI before the connection fails.
-    - If set to V(0) or O(follow_redirects) is set to V(none), or V(safe) when
+    - If set to V(0) or O(follow_redirects) is set to V(null), or V(safe) when
       not doing a C(GET) or C(HEAD) it prevents all redirection.
     default: 50
     type: int
@@ -67,8 +67,8 @@ options:
     type: bool
   client_cert:
     description:
-    - The path to the client certificate (.pfx) that is used for X509
-      authentication. This path can either be the path to the C(pfx) on the
+    - The path to the client certificate C(.pfx) that is used for X509
+      authentication. This path can either be the path to the C(.pfx) on the
       filesystem or the PowerShell certificate path
       C(Cert:\CurrentUser\My\<thumbprint>).
     - The WinRM connection must be authenticated with C(CredSSP) or C(become)
@@ -119,8 +119,7 @@ options:
   proxy_url:
     description:
     - An explicit proxy to use for the request.
-    - By default, the request will use the IE defined proxy unless O(use_proxy)
-      is set to V(no).
+    - By default, the request will use the IE defined proxy unless O(use_proxy=no).
     type: str
   proxy_username:
     description:
@@ -146,4 +145,4 @@ options:
     type: bool
 seealso:
 - module: community.windows.win_inet_proxy
-'''
+"""

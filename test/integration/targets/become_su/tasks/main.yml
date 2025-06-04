@@ -1,0 +1,63 @@
+- name: create unprivileged user pair
+  include_role:
+    name: setup_become_user_pair
+    public: true  # this exports target_user_name, target_user_password, intermediate_user_name
+  vars:
+    intermediate_user_groups: "{{ 'staff,admin' if ansible_os_family == 'Darwin' else omit }}"  # this works, but requires a TTY; disabled MacOS su testing in CI for now via aliases
+
+- name: deploy su shim
+  copy:
+    src: sushim.sh
+    dest: /tmp/sushim.sh
+    mode: a+rx
+
+- name: ensure su is setuid on Alpine
+  file:
+    path: /bin/su
+    mode: +s
+  when: ansible_os_family == 'Alpine'
+
+- name: test su scenarios where a password prompt must be encountered
+  vars:
+    ansible_become: yes
+    ansible_become_method: su
+    ansible_become_exe: /tmp/sushim.sh
+    ansible_become_flags: --intermediate-user {{ intermediate_user_name | quote }}  # the default plugin flags are empty
+    ansible_become_user: "{{ target_user_name }}"
+    ansible_become_password: "{{ target_user_password }}"
+  block:
+    - name: basic success check
+      raw: whoami
+      register: success
+      # NOTE: The ssh connection plugin does not properly strip noise from raw stdout, unlike the local connection plugin.
+      #       Once that is fixed, this can be changed to a comparison against stdout, not stdout_lines[-1].
+      failed_when: success.stdout_lines[-1] != target_user_name
+
+    - name: validate that a password prompt is being used
+      vars:
+        ansible_become_password: BOGUSPASS
+      raw: exit 99
+      ignore_errors: yes
+      register: bogus_password
+
+    - assert:
+        that:
+          - |  # account for different failure behavior between local and ssh
+            bogus_password.msg is contains "Incorrect su password" or 
+            bogus_password.msg is contains "Premature end of stream waiting for become success." or
+            (bogus_password.stdout | default('')) is contains "Sorry"
+
+    - name: test wrong su prompt expected
+      raw: echo hi mom from $(whoami)
+      register: wrong_su_prompt
+      vars:
+        ansible_su_prompt_l10n: NOT_A_VALID_PROMPT
+        ansible_local_become_success_timeout: 3  # actual become success timeout
+        ansible_ssh_timeout: 3  # connection timeout, which results in an N+2 second select timeout
+      ignore_unreachable: yes
+
+    - assert:
+        that:
+          - wrong_su_prompt is unreachable
+          - ansible_connection != "local" or wrong_su_prompt.msg is contains "Timed out waiting for become success or become password prompt"
+          - ansible_connection != "ssh" or wrong_su_prompt.msg is contains "waiting for privilege escalation prompt"

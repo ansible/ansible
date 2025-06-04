@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: test_perrcert
 short_description: Test getting the peer certificate of a HTTP response
@@ -16,15 +16,15 @@ options:
     type: str
 author:
 - Ansible Project
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 #
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 #
-'''
+"""
 
 import base64
 

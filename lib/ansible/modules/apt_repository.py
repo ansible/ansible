@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: apt_repository
 short_description: Add and remove APT repositories
@@ -41,13 +41,13 @@ options:
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d.
+            - The octal mode for newly created files in C(sources.list.d).
             - Default is what system uses (probably 0644).
         type: raw
         version_added: "1.6"
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
+            - Run the equivalent of C(apt-get update) when a change occurs. Cache updates are run after making changes.
         type: bool
         default: "yes"
         aliases: [ update-cache ]
@@ -72,9 +72,9 @@ options:
         version_added: '1.8'
     filename:
         description:
-            - Sets the name of the source list file in sources.list.d.
+            - Sets the name of the source list file in C(sources.list.d).
               Defaults to a file name based on the repository source url.
-              The .list extension will be automatically added.
+              The C(.list) extension will be automatically added.
         type: str
         version_added: '2.1'
     codename:
@@ -88,22 +88,21 @@ options:
         description:
             - Whether to automatically try to install the Python apt library or not, if it is not already installed.
               Without this library, the module does not work.
-            - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
-            - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
-               the system Python, set O(install_python_apt=false) and ensure that the Python apt library
-               for your Python version is installed some other way.
+            - Runs C(apt-get install python3-apt).
+            - Only works with the system Python. If you are using a Python on the remote that is not
+              the system Python, set O(install_python_apt=false) and ensure that the Python apt library
+              for your Python version is installed some other way.
         type: bool
         default: true
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
 requirements:
-   - python-apt (python 2)
-   - python3-apt (python 3)
+   - python3-apt
    - apt-key or gpg
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Add specified repository into sources list
   ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
@@ -143,11 +142,11 @@ EXAMPLES = '''
 
     - name: somerepo | apt source
       ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/myrepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/somerepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
         state: present
-'''
+"""
 
-RETURN = '''
+RETURN = """
 repo:
   description: A source string for the repository
   returned: always
@@ -167,22 +166,22 @@ sources_removed:
   type: list
   sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
   version_added: "2.15"
-'''
+"""
 
 import copy
 import glob
 import json
 import os
 import re
+import secrets
 import sys
 import tempfile
-import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_url
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
@@ -201,7 +200,6 @@ except ImportError:
     HAVE_PYTHON_APT = False
 
 APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyrings']
-DEFAULT_SOURCES_PERM = 0o0644
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
@@ -230,20 +228,24 @@ class SourcesList(object):
     def __init__(self, module):
         self.module = module
         self.files = {}  # group sources by file
+        self.files_mapping = {}  # internal DS for tracking symlinks
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
-        self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
+        self.default_file = apt_pkg.config.find_file('Dir::Etc::sourcelist')
 
         # read sources.list if it exists
         if os.path.isfile(self.default_file):
             self.load(self.default_file)
 
         # read sources.list.d
-        for file in glob.iglob('%s/*.list' % self._apt_cfg_dir('Dir::Etc::sourceparts')):
+        self.sources_dir = apt_pkg.config.find_dir('Dir::Etc::sourceparts')
+        for file in glob.iglob(f'{self.sources_dir}/*.list'):
+            if os.path.islink(file):
+                self.files_mapping[file] = os.readlink(file)
             self.load(file)
 
     def __iter__(self):
-        '''Simple iterator to go over all sources. Empty, non-source, and other not valid lines will be skipped.'''
+        """Simple iterator to go over all sources. Empty, non-source, and other not valid lines will be skipped."""
         for file, sources in self.files.items():
             for n, valid, enabled, source, comment in sources:
                 if valid:
@@ -253,7 +255,7 @@ class SourcesList(object):
         if '/' in filename:
             return filename
         else:
-            return os.path.abspath(os.path.join(self._apt_cfg_dir('Dir::Etc::sourceparts'), filename))
+            return os.path.abspath(os.path.join(self.sources_dir, filename))
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
@@ -311,28 +313,6 @@ class SourcesList(object):
 
         return valid, enabled, source, comment
 
-    @staticmethod
-    def _apt_cfg_file(filespec):
-        '''
-        Wrapper for `apt_pkg` module for running with Python 2.5
-        '''
-        try:
-            result = apt_pkg.config.find_file(filespec)
-        except AttributeError:
-            result = apt_pkg.Config.FindFile(filespec)
-        return result
-
-    @staticmethod
-    def _apt_cfg_dir(dirspec):
-        '''
-        Wrapper for `apt_pkg` module for running with Python 2.5
-        '''
-        try:
-            result = apt_pkg.config.find_dir(dirspec)
-        except AttributeError:
-            result = apt_pkg.Config.FindDir(dirspec)
-        return result
-
     def load(self, file):
         group = []
         f = open(file, 'r')
@@ -372,7 +352,11 @@ class SourcesList(object):
                         f.write(line)
                     except IOError as ex:
                         self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(ex)))
-                self.module.atomic_move(tmp_path, filename)
+                if filename in self.files_mapping:
+                    # Write to symlink target instead of replacing symlink as a normal file
+                    self.module.atomic_move(tmp_path, self.files_mapping[filename])
+                else:
+                    self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
                 if filename in self.new_repos:
@@ -407,17 +391,17 @@ class SourcesList(object):
         return new
 
     def modify(self, file, n, enabled=None, source=None, comment=None):
-        '''
+        """
         This function to be used with iterator, so we don't care of invalid sources.
         If source, enabled, or comment is None, original value from line ``n`` will be preserved.
-        '''
+        """
         valid, enabled_old, source_old, comment_old = self.files[file][n][1:]
         self.files[file][n] = (n, valid, self._choice(enabled, enabled_old), self._choice(source, source_old), self._choice(comment, comment_old))
 
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
         # If we have more than one entry, we will enable them all - no advanced logic, remember.
-        self.module.log('ading source file: %s | %s | %s' % (source_new, comment_new, file))
+        self.module.log('adding source file: %s | %s | %s' % (source_new, comment_new, file))
         found = False
         for filename, n, enabled, source, comment in self:
             if source == source_new:
@@ -459,6 +443,7 @@ class UbuntuSourcesList(SourcesList):
     # prefer api.launchpad.net over launchpad.net/api
     # see: https://github.com/ansible/ansible/pull/81978#issuecomment-1767062178
     LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
+    PPA_URI = 'https://ppa.launchpadcontent.net'
 
     def __init__(self, module):
         self.module = module
@@ -468,7 +453,10 @@ class UbuntuSourcesList(SourcesList):
         self.apt_key_bin = self.module.get_bin_path('apt-key', required=False)
         self.gpg_bin = self.module.get_bin_path('gpg', required=False)
         if not self.apt_key_bin and not self.gpg_bin:
-            self.module.fail_json(msg='Either apt-key or gpg binary is required, but neither could be found')
+            msg = 'Either apt-key or gpg binary is required, but neither could be found.' \
+                  'The apt-key CLI has been deprecated and removed in modern Debian and derivatives, ' \
+                  'you might want to use "deb822_repository" instead.'
+            self.module.fail_json(msg)
 
     def __deepcopy__(self, memo=None):
         return UbuntuSourcesList(self.module)
@@ -490,14 +478,14 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, self.codename)
+        line = 'deb %s/%s/%s/ubuntu %s main' % (self.PPA_URI, ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
     def _key_already_exists(self, key_fingerprint):
 
         if self.apt_key_bin:
             locale = get_best_parsable_locale(self.module)
-            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
+            APT_ENV = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale, LANGUAGE=locale)
             self.module.run_command_environ_update = APT_ENV
             rc, out, err = self.module.run_command([self.apt_key_bin, 'export', key_fingerprint], check_rc=True)
             found = bool(not err or 'nothing exported' not in err)
@@ -609,7 +597,7 @@ class UbuntuSourcesList(SourcesList):
 
 
 def revert_sources_list(sources_before, sources_after, sourceslist_before):
-    '''Revert the sourcelist files to their previous state.'''
+    """Revert the sourcelist files to their previous state."""
 
     # First remove any new files that were created:
     for filename in set(sources_after.keys()).difference(sources_before.keys()):
@@ -657,13 +645,13 @@ def main():
         #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
         #    system locations)
 
-        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+        apt_pkg_name = 'python3-apt'
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
             module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
-        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
@@ -731,29 +719,38 @@ def main():
 
     if changed and not module.check_mode:
         try:
+            err = ''
             sourceslist.save()
             if update_cache:
-                err = ''
                 update_cache_retries = module.params.get('update_cache_retries')
                 update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
-                randomize = random.randint(0, 1000) / 1000.0
+                randomize = secrets.randbelow(1000) / 1000.0
 
+                cache = apt.Cache()
                 for retry in range(update_cache_retries):
                     try:
-                        cache = apt.Cache()
                         cache.update()
                         break
-                    except apt.cache.FetchFailedException as e:
-                        err = to_native(e)
+                    except apt.cache.FetchFailedException as fetch_failed_exc:
+                        err = fetch_failed_exc
+                        module.warn(
+                            f"Failed to update cache after {retry + 1} due "
+                            f"to {to_native(fetch_failed_exc)} retry, retrying"
+                        )
 
                     # Use exponential backoff with a max fail count, plus a little bit of randomness
                     delay = 2 ** retry + randomize
                     if delay > update_cache_retry_max_delay:
                         delay = update_cache_retry_max_delay + randomize
                     time.sleep(delay)
+                    module.warn(f"Sleeping for {int(round(delay))} seconds, before attempting to update the cache again")
                 else:
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
-                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+                    msg = (
+                        f"Failed to update apt cache after {update_cache_retries} retries: "
+                        f"{err if err else 'unknown reason'}"
+                    )
+                    module.fail_json(msg=msg)
 
         except (OSError, IOError) as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)

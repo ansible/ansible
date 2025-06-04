@@ -6,77 +6,48 @@
 from __future__ import annotations
 
 import json
+import typing as t
 
-from yaml import YAMLError
+import yaml
 
-from ansible.errors import AnsibleParserError
-from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
-from ansible.module_utils.common.text.converters import to_native
+from ansible.errors import AnsibleJSONParserError
+from ansible._internal._errors import _error_utils
+from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
-from ansible.parsing.ajson import AnsibleJSONDecoder
+from ansible._internal._yaml._errors import AnsibleYAMLParserError
+from ansible._internal._datatag._tags import Origin
+from ansible._internal._json._profiles import _legacy
 
 
-__all__ = ('from_yaml',)
+def from_yaml(
+    data: str,
+    file_name: str | None = None,
+    show_content: bool = True,
+    vault_secrets: list[tuple[str, VaultSecret]] | None = None,  # deprecated: description='Deprecate vault_secrets, it has no effect.' core_version='2.23'
+    json_only: bool = False,
+) -> t.Any:
+    """Creates a Python data structure from the given data, which can be either a JSON or YAML string."""
+    # FUTURE: provide Ansible-specific top-level APIs to expose JSON and YAML serialization/deserialization to hide the error handling logic
+    #         once those are in place, defer deprecate this entire function
 
+    origin = Origin.get_or_create_tag(data, file_name)
 
-def _handle_error(json_exc, yaml_exc, file_name, show_content):
-    '''
-    Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
-    file name/position where a YAML exception occurred, and raises an AnsibleParserError
-    to display the syntax exception information.
-    '''
+    data = origin.tag(data)
 
-    # if the YAML exception contains a problem mark, use it to construct
-    # an object the error class can use to display the faulty line
-    err_obj = None
-    if hasattr(yaml_exc, 'problem_mark'):
-        err_obj = AnsibleBaseYAMLObject()
-        err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
-
-    n_yaml_syntax_error = YAML_SYNTAX_ERROR % to_native(getattr(yaml_exc, 'problem', u''))
-    n_err_msg = 'We were unable to read either as JSON nor YAML, these are the errors we got from each:\n' \
-                'JSON: %s\n\n%s' % (to_native(json_exc), n_yaml_syntax_error)
-
-    raise AnsibleParserError(n_err_msg, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
-
-
-def _safe_load(stream, file_name=None, vault_secrets=None):
-    ''' Implements yaml.safe_load(), except using our custom loader class. '''
-
-    loader = AnsibleLoader(stream, file_name, vault_secrets)
-    try:
-        return loader.get_single_data()
-    finally:
+    with _error_utils.RedactAnnotatedSourceContext.when(not show_content):
         try:
-            loader.dispose()
-        except AttributeError:
-            pass  # older versions of yaml don't have dispose function, ignore
-
-
-def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None, json_only=False):
-    '''
-    Creates a python datastructure from the given data, which can be either
-    a JSON or YAML string.
-    '''
-    new_data = None
-
-    try:
-        # in case we have to deal with vaults
-        AnsibleJSONDecoder.set_secrets(vault_secrets)
-
-        # we first try to load this data as JSON.
-        # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
-        new_data = json.loads(data, cls=AnsibleJSONDecoder)
-    except Exception as json_exc:
+            # we first try to load this data as JSON.
+            # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
+            return json.loads(data, cls=_legacy.Decoder)
+        except Exception as ex:
+            json_ex = ex
 
         if json_only:
-            raise AnsibleParserError(to_native(json_exc), orig_exc=json_exc)
+            AnsibleJSONParserError.handle_exception(json_ex, origin=origin)
 
-        # must not be JSON, let the rest try
         try:
-            new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
-        except YAMLError as yaml_exc:
-            _handle_error(json_exc, yaml_exc, file_name, show_content)
-
-    return new_data
+            return yaml.load(data, Loader=AnsibleLoader)  # type: ignore[arg-type]
+        except Exception as yaml_ex:
+            # DTFIX-FUTURE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
+            #        we'd need to pass data to handle_exception so it could be used as the content instead of reading from disk
+            AnsibleYAMLParserError.handle_exception(yaml_ex, origin=origin)

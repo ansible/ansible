@@ -14,7 +14,7 @@ DOCUMENTATION:
 
 EXAMPLES: |
   vars:
-    my_etc_hosts_exists: "{{ '/etc/hosts' is exist }}"
+    my_etc_hosts_exists: "{{ '/etc/hosts' is exists }}"
     list_of_local_files_to_copy_to_remote: "{{ list_of_all_possible_files | select('exists') }}"
 
 RETURN:

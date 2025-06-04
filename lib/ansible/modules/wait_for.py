@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: wait_for
 short_description: Waits for a condition before continuing
@@ -120,9 +120,9 @@ author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)
     - Andrii Radyk (@AnderEnder)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Sleep for 300 seconds and continue with play
   ansible.builtin.wait_for:
     timeout: 300
@@ -187,20 +187,22 @@ EXAMPLES = r'''
     host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
     delay: 10
-  connection: local
+    timeout: 300
+  delegate_to: localhost
 
-# Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
+# Same as above but using config lookup for the target,
+# most plugins use 'remote_addr', but ssh uses 'host'
 - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
   ansible.builtin.wait_for:
     port: 22
-    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    host: "{{ lookup('config', 'host', plugin_name='ssh', plugin_type='connection') }}"
     search_regex: OpenSSH
     delay: 10
-  vars:
-    ansible_connection: local
-'''
+    timeout: 300
+  delegate_to: localhost
+"""
 
-RETURN = r'''
+RETURN = r"""
 elapsed:
   description: The number of seconds that elapsed while waiting
   returned: always
@@ -220,11 +222,10 @@ match_groupdict:
     {
       'group': 'match'
     }
-'''
+"""
 
 import binascii
 import contextlib
-import datetime
 import errno
 import math
 import mmap
@@ -233,12 +234,12 @@ import re
 import select
 import socket
 import time
-import traceback
+
+from datetime import datetime, timedelta, timezone
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.compat.datetime import utcnow
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
 
 HAS_PSUTIL = False
@@ -247,8 +248,8 @@ try:
     import psutil
     HAS_PSUTIL = True
     # just because we can import it on Linux doesn't mean we will use it
-except ImportError:
-    PSUTIL_IMP_ERR = traceback.format_exc()
+except ImportError as ex:
+    PSUTIL_IMP_ERR = ex
 
 
 class TCPConnectionInfo(object):
@@ -532,7 +533,7 @@ def main():
         except Exception:
             module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
-    start = utcnow()
+    start = datetime.now(timezone.utc)
 
     if delay:
         time.sleep(delay)
@@ -541,9 +542,9 @@ def main():
         time.sleep(timeout)
     elif state in ['absent', 'stopped']:
         # first wait for the stop condition
-        end = start + datetime.timedelta(seconds=timeout)
+        end = start + timedelta(seconds=timeout)
 
-        while utcnow() < end:
+        while datetime.now(timezone.utc) < end:
             if path:
                 try:
                     if not os.access(b_path, os.F_OK):
@@ -560,7 +561,7 @@ def main():
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
         else:
-            elapsed = utcnow() - start
+            elapsed = datetime.now(timezone.utc) - start
             if port:
                 module.fail_json(msg=msg or "Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
             elif path:
@@ -568,15 +569,15 @@ def main():
 
     elif state in ['started', 'present']:
         # wait for start condition
-        end = start + datetime.timedelta(seconds=timeout)
-        while utcnow() < end:
+        end = start + timedelta(seconds=timeout)
+        while datetime.now(timezone.utc) < end:
             if path:
                 try:
                     os.stat(b_path)
                 except OSError as e:
                     # If anything except file not present, throw an error
                     if e.errno != 2:
-                        elapsed = utcnow() - start
+                        elapsed = datetime.now(timezone.utc) - start
                         module.fail_json(msg=msg or "Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
                     # file doesn't exist yet, so continue
                 else:
@@ -584,23 +585,38 @@ def main():
                     if not b_compiled_search_re:
                         # nope, succeed!
                         break
+
                     try:
                         with open(b_path, 'rb') as f:
-                            with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
-                                search = b_compiled_search_re.search(mm)
+                            try:
+                                with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
+                                    search = b_compiled_search_re.search(mm)
+                                    if search:
+                                        if search.groupdict():
+                                            match_groupdict = search.groupdict()
+                                        if search.groups():
+                                            match_groups = search.groups()
+                                        break
+                            except (ValueError, OSError) as e:
+                                module.debug('wait_for failed to use mmap on "%s": %s. Falling back to file read().' % (path, to_native(e)))
+                                # cannot mmap this file, try normal read
+                                search = re.search(b_compiled_search_re, f.read())
                                 if search:
                                     if search.groupdict():
                                         match_groupdict = search.groupdict()
                                     if search.groups():
                                         match_groups = search.groups()
-
                                     break
+                            except Exception as e:
+                                module.warn('wait_for failed on "%s", unexpected exception(%s): %s.).' % (path, to_native(e.__class__), to_native(e)))
                     except IOError:
                         pass
             elif port:
-                alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
+                alt_connect_timeout = math.ceil(
+                    _timedelta_total_seconds(end - datetime.now(timezone.utc)),
+                )
                 try:
-                    s = socket.create_connection((host, port), min(connect_timeout, alt_connect_timeout))
+                    s = socket.create_connection((host, int(port)), min(connect_timeout, alt_connect_timeout))
                 except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
@@ -609,8 +625,12 @@ def main():
                     if b_compiled_search_re:
                         b_data = b''
                         matched = False
-                        while utcnow() < end:
-                            max_timeout = math.ceil(_timedelta_total_seconds(end - utcnow()))
+                        while datetime.now(timezone.utc) < end:
+                            max_timeout = math.ceil(
+                                _timedelta_total_seconds(
+                                    end - datetime.now(timezone.utc),
+                                ),
+                            )
                             readable = select.select([s], [], [], max_timeout)[0]
                             if not readable:
                                 # No new data.  Probably means our timeout
@@ -654,7 +674,7 @@ def main():
 
         else:   # while-else
             # Timeout expired
-            elapsed = utcnow() - start
+            elapsed = datetime.now(timezone.utc) - start
             if port:
                 if search_regex:
                     module.fail_json(msg=msg or "Timeout when waiting for search string %s in %s:%s" % (search_regex, host, port), elapsed=elapsed.seconds)
@@ -668,19 +688,19 @@ def main():
 
     elif state == 'drained':
         # wait until all active connections are gone
-        end = start + datetime.timedelta(seconds=timeout)
+        end = start + timedelta(seconds=timeout)
         tcpconns = TCPConnectionInfo(module)
-        while utcnow() < end:
+        while datetime.now(timezone.utc) < end:
             if tcpconns.get_active_connections_count() == 0:
                 break
 
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
         else:
-            elapsed = utcnow() - start
+            elapsed = datetime.now(timezone.utc) - start
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
-    elapsed = utcnow() - start
+    elapsed = datetime.now(timezone.utc) - start
     module.exit_json(state=state, port=port, search_regex=search_regex, match_groups=match_groups, match_groupdict=match_groupdict, path=path,
                      elapsed=elapsed.seconds)
 

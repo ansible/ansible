@@ -22,28 +22,16 @@ from collections import defaultdict
 
 from unittest import mock
 
-from units.compat import unittest
+import unittest
 from ansible.errors import AnsibleError
 from ansible.utils.vars import combine_vars, merge_hash
-from ansible.vars.manager import VarsWithSources
 
 
 class TestVariableUtils(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     combine_vars_merge_data = (
         dict(
             a=dict(a=1),
             b=dict(b=2),
-            result=dict(a=1, b=2),
-        ),
-        dict(
-            a=dict(a=1),
-            b=VarsWithSources().new_vars_with_sources(dict(b=2), dict(b='task vars')),
             result=dict(a=1, b=2),
         ),
         dict(
@@ -62,11 +50,6 @@ class TestVariableUtils(unittest.TestCase):
             a=dict(a=1),
             b=dict(b=2),
             result=dict(a=1, b=2)
-        ),
-        dict(
-            a=dict(a=1),
-            b=VarsWithSources().new_vars_with_sources(dict(b=2), dict(b='task vars')),
-            result=dict(a=1, b=2),
         ),
         dict(
             a=dict(a=1, c=dict(foo='bar')),

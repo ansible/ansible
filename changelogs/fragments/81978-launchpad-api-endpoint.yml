@@ -1,3 +1,0 @@
----
-minor_changes:
-  - apt_repository.py - use api.launchpad.net endpoint instead of launchpad.net/api

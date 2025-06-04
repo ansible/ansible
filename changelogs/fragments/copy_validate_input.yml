@@ -1,0 +1,2 @@
+bugfixes:
+  - copy action now prevents user from setting internal options.

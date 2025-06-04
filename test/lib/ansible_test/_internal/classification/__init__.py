@@ -1,4 +1,5 @@
 """Classify changes in Ansible code."""
+
 from __future__ import annotations
 
 import collections
@@ -674,11 +675,6 @@ class PathMapper:
 
         # Early classification that needs to occur before common classification belongs here.
 
-        if path.startswith('test/units/compat/'):
-            return {
-                'units': 'test/units/',
-            }
-
         if dirname == '.azure-pipelines/commands':
             test_map = {
                 'cloud.sh': 'integration:cloud/',
@@ -839,8 +835,6 @@ class PathMapper:
                 'MANIFEST.in',
                 'pyproject.toml',
                 'requirements.txt',
-                'setup.cfg',
-                'setup.py',
             ):
                 return packaging
 

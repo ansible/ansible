@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from units.compat import unittest
+import unittest
 from ansible.plugins.lookup.ini import _parse_params
 
 

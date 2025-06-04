@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: blockinfile
 short_description: Insert/update/remove a text block surrounded by marker lines
@@ -33,7 +33,7 @@ options:
   marker:
     description:
     - The marker line template.
-    - C({mark}) will be replaced with the values in O(marker_begin) (default="BEGIN") and O(marker_end) (default="END").
+    - C({mark}) will be replaced with the values in O(marker_begin) (default=C(BEGIN)) and O(marker_end) (default=C(END)).
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
     - Multi-line markers are not supported and will result in the block being repeatedly inserted on subsequent playbook runs.
     - A newline is automatically appended by the module to O(marker_begin) and O(marker_end).
@@ -50,12 +50,10 @@ options:
     description:
     - If specified and no begin/ending O(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; V(EOF) for inserting the block at the end of the file.
-    - If specified regular expression has no matches, V(EOF) will be used instead.
+    - If specified regular expression has no matches or no value is passed, V(EOF) will be used instead.
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
       This behaviour was added in ansible-core 2.14.
     type: str
-    choices: [ EOF, '*regex*' ]
-    default: EOF
   insertbefore:
     description:
     - If specified and no begin/ending O(marker) lines are found, the block will be inserted before the last match of specified regular expression.
@@ -64,7 +62,6 @@ options:
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
       This behaviour was added in ansible-core 2.14.
     type: str
-    choices: [ BOF, '*regex*' ]
   create:
     description:
     - Create a new file if it does not exist.
@@ -106,7 +103,7 @@ options:
     default: no
     version_added: '2.16'
 notes:
-  - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
+  - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
   - Option O(ignore:follow) has been removed in Ansible 2.5, because this module modifies the contents of the file
     so O(ignore:follow=no) does not make sense.
@@ -128,9 +125,9 @@ attributes:
       platforms: posix
     vault:
       support: none
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config prepending and appending a new line
   ansible.builtin.blockinfile:
@@ -190,7 +187,7 @@ EXAMPLES = r'''
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
 
-'''
+"""
 
 import re
 import os
@@ -203,9 +200,8 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(tmpfd, 'wb')
-    f.write(contents)
-    f.close()
+    with os.fdopen(tmpfd, 'wb') as tf:
+        tf.write(contents)
 
     validate = module.params.get('validate', None)
     valid = not validate
@@ -268,7 +264,7 @@ def main():
             module.fail_json(rc=257,
                              msg='Path %s does not exist !' % path)
         destpath = os.path.dirname(path)
-        if not os.path.exists(destpath) and not module.check_mode:
+        if destpath and not os.path.exists(destpath) and not module.check_mode:
             try:
                 os.makedirs(destpath)
             except OSError as e:

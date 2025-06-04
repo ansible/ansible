@@ -8,7 +8,7 @@ from __future__ import annotations
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 options:
   url:
     description:
@@ -38,7 +38,7 @@ options:
   url_username:
     description:
       - The username for use in HTTP basic authentication.
-      - This parameter can be used without O(url_password) for sites that allow empty passwords
+      - This parameter can be used without O(url_password) for sites that allow empty passwords.
     type: str
   url_password:
     description:
@@ -66,9 +66,25 @@ options:
         authentication.
       - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
       - Credentials for GSSAPI can be specified with O(url_username)/O(url_password) or with the GSSAPI env var
-        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+        E(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is B(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
     default: no
     version_added: '2.11'
+"""
+
+    URL_REDIRECT = r'''
+options:
+  follow_redirects:
+    description:
+      - Whether or not the URI module should follow redirects.
+    type: str
+    default: safe
+    choices:
+      all: Will follow all redirects.
+      none: Will not follow any redirects.
+      safe: Only redirects doing GET or HEAD requests will be followed.
+      urllib2: Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+      'no': (DEPRECATED, removed in 2.22) alias of V(none).
+      'yes': (DEPRECATED, removed in 2.22) alias of V(all).
 '''

@@ -5,7 +5,7 @@ import pathlib
 import pytest
 import typing as t
 
-if t.TYPE_CHECKING:  # pragma: no cover
+if t.TYPE_CHECKING:  # pragma: nocover
     # noinspection PyProtectedMember
     from ansible_test._internal.diff import FileDiff
 

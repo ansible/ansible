@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: bad
 short_description: Bad lookup
 description: A bad lookup.
 author:
   - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - debug:
     msg: "{{ lookup('ns.col.bad') }}"
-'''
+"""
 
-RETURN = ''' # '''
+RETURN = """ # """
 
 from ansible.plugins.lookup import LookupBase
 from ansible import constants  # pylint: disable=unused-import

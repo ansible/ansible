@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: fetch
 short_description: Fetch files from remote nodes
@@ -28,8 +28,8 @@ options:
   dest:
     description:
     - A directory to save the file into.
-    - For example, if the O(dest) directory is C(/backup) a O(src) file named C(/etc/profile) on host
-      C(host.example.com), would be saved into C(/backup/host.example.com/etc/profile).
+    - For example, if O(dest=/backup), then O(src=/etc/profile) on host
+      C(host.example.com), would save the file into C(/backup/host.example.com/etc/profile).
       The host name is based on the inventory name.
     required: yes
   fail_on_missing:
@@ -95,9 +95,9 @@ seealso:
 author:
 - Ansible Core Team
 - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Store file into /tmp/fetched/host.example.com/tmp/somefile
   ansible.builtin.fetch:
     src: /tmp/somefile
@@ -120,4 +120,4 @@ EXAMPLES = r'''
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
     flat: yes
-'''
+"""

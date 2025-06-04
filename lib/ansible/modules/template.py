@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: template
 version_added: historical
@@ -60,9 +60,9 @@ attributes:
       support: full
     vault:
       support: full
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Template a file to /etc/file.conf
   ansible.builtin.template:
     src: /mytemplates/foo.j2
@@ -85,7 +85,7 @@ EXAMPLES = r'''
     dest: /etc/named.conf
     group: named
     setype: named_conf_t
-    mode: 0640
+    mode: '0640'
 
 - name: Create a DOS-style text file from a template
   ansible.builtin.template:
@@ -108,9 +108,9 @@ EXAMPLES = r'''
     mode: '0600'
     validate: /usr/sbin/sshd -t -f %s
     backup: yes
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 dest:
     description: Destination file/path, equal to the value passed to I(dest).
     returned: success
@@ -161,4 +161,4 @@ src:
     returned: changed
     type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
-'''
+"""

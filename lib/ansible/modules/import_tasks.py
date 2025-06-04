@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 author: Ansible Core Team (@ansible)
 module: import_tasks
@@ -44,11 +44,11 @@ seealso:
 - module: ansible.builtin.import_role
 - module: ansible.builtin.include_role
 - module: ansible.builtin.include_tasks
-- ref: playbooks_reuse_includes
+- ref: playbooks_reuse
   description: More information related to including and importing playbooks, roles and tasks.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - hosts: all
   tasks:
     - ansible.builtin.debug:
@@ -69,8 +69,8 @@ EXAMPLES = r'''
     - name: Apply conditional to all imported tasks
       ansible.builtin.import_tasks: stuff.yaml
       when: hostvar is defined
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 # This module does not return anything except tasks to execute.
-'''
+"""

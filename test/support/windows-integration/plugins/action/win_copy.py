@@ -153,7 +153,7 @@ def _walk_dirs(topdir, loader, decrypt=True, base_path=None, local_follow=False,
                                 new_parents.add((parent_stat.st_dev, parent_stat.st_ino))
 
                             if (dir_stats.st_dev, dir_stats.st_ino) in new_parents:
-                                # This was a a circular symlink.  So add it as
+                                # This was a circular symlink.  So add it as
                                 # a symlink
                                 r_files['symlinks'].append({"src": os.readlink(dirpath), "dest": dest_dirpath})
                             else:
@@ -217,17 +217,15 @@ class ActionModule(ActionBase):
     WIN_PATH_SEPARATOR = "\\"
 
     def _create_content_tempfile(self, content):
-        ''' Create a tempfile containing defined content '''
+        """ Create a tempfile containing defined content """
         fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
-        f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
-            f.write(content)
+            with os.fdopen(fd, 'wb') as f:
+                f.write(content)
         except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
-        finally:
-            f.close()
         return content_tempfile
 
     def _create_zip_tempfile(self, files, directories):
@@ -328,7 +326,7 @@ class ActionModule(ActionBase):
         return module_return
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 

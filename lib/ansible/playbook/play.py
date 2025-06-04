@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from ansible import constants as C
 from ansible import context
+from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
-from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -28,10 +28,10 @@ from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
-from ansible.playbook.role import Role, hash_params
+from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
-from ansible.vars.manager import preprocess_vars
+from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
 
 display = Display()
@@ -57,11 +57,9 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
-
-    # defaults to be deprecated, should be 'None' in future
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    gather_timeout = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    fact_path = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    gather_timeout = NonInheritableFieldAttribute(isa='int', default=None, always_post_validate=True)
+    fact_path = NonInheritableFieldAttribute(isa='string', default=None)
 
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
@@ -102,21 +100,14 @@ class Play(Base, Taggable, CollectionSearch):
     def __repr__(self):
         return self.get_name()
 
-    @property
-    def ROLE_CACHE(self):
-        """Backwards compat for custom strategies using ``play.ROLE_CACHE``
-        """
-        display.deprecated(
-            'Play.ROLE_CACHE is deprecated in favor of Play.role_cache, or StrategyBase._get_cached_role',
-            version='2.18',
-        )
-        cache = {}
-        for path, roles in self.role_cache.items():
-            for role in roles:
-                name = role.get_name()
-                hashed_params = hash_params(role._get_hash_dict())
-                cache.setdefault(name, {})[hashed_params] = role
-        return cache
+    def _get_cached_role(self, role):
+        role_path = role.get_role_path()
+        role_cache = self.role_cache[role_path]
+        try:
+            idx = role_cache.index(role)
+            return role_cache[idx]
+        except ValueError:
+            raise AnsibleError(f'Cannot locate {role.get_name()} in role cache')
 
     def _validate_hosts(self, attribute, name, value):
         # Only validate 'hosts' if a value was passed in to original data set.
@@ -132,11 +123,11 @@ class Play(Base, Taggable, CollectionSearch):
                     elif not isinstance(entry, (binary_type, text_type)):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
 
-            elif not isinstance(value, (binary_type, text_type)):
+            elif not isinstance(value, (binary_type, text_type, EncryptedString)):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
-        ''' return the name of the Play '''
+        """ return the name of the Play """
         if self.name:
             return self.name
 
@@ -155,9 +146,9 @@ class Play(Base, Taggable, CollectionSearch):
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
-        '''
+        """
         Adjusts play datastructure to cleanup old/legacy items
-        '''
+        """
 
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
@@ -177,55 +168,57 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
+    # DTFIX-FUTURE: these do nothing but augment the exception message; DRY and nuke
+
     def _load_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading tasks.", obj=self._ds) from ex
 
     def _load_pre_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks.", obj=self._ds) from ex
 
     def _load_post_tasks(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
-        '''
+        """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading post_tasks.", obj=self._ds) from ex
 
     def _load_handlers(self, attr, ds):
-        '''
+        """
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
-        '''
+        """
         try:
             return self._extend_value(
                 self.handlers,
                 load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
                 prepend=True
             )
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading handlers.", obj=self._ds) from ex
 
     def _load_roles(self, attr, ds):
-        '''
+        """
         Loads and returns a list of RoleInclude objects from the datastructure
         list of role definitions and creates the Role from those objects
-        '''
+        """
 
         if ds is None:
             ds = []
@@ -233,8 +226,8 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
                                                loader=self._loader, collection_search_list=self.collections)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds) from ex
 
         roles = []
         for ri in role_includes:
@@ -245,6 +238,9 @@ class Play(Base, Taggable, CollectionSearch):
         return self.roles
 
     def _load_vars_prompt(self, attr, ds):
+        # avoid circular dep
+        from ansible.vars.manager import preprocess_vars
+
         new_ds = preprocess_vars(ds)
         vars_prompts = []
         if new_ds is not None:
@@ -258,13 +254,13 @@ class Play(Base, Taggable, CollectionSearch):
         return vars_prompts
 
     def _compile_roles(self):
-        '''
+        """
         Handles the role compilation step, returning a flat list of tasks
         with the lowest level dependencies first. For example, if a role R
         has a dependency D1, which also has a dependency D2, the tasks from
         D2 are merged first, followed by D1, and lastly by the tasks from
         the parent role R last. This is done for all roles in the Play.
-        '''
+        """
 
         block_list = []
 
@@ -279,10 +275,10 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile_roles_handlers(self):
-        '''
+        """
         Handles the role handler compilation step, returning a flat list of Handlers
         This is done for all roles in the Play.
-        '''
+        """
 
         block_list = []
 
@@ -295,25 +291,39 @@ class Play(Base, Taggable, CollectionSearch):
         return block_list
 
     def compile(self):
-        '''
+        """
         Compiles and returns the task list for this play, compiled from the
         roles (which are themselves compiled recursively) and/or the list of
         tasks specified in the play.
-        '''
-
+        """
         # create a block containing a single flush handlers meta
         # task, so we can be sure to run handlers at certain points
         # of the playbook execution
-        flush_block = Block.load(
-            data={'meta': 'flush_handlers'},
-            play=self,
-            variable_manager=self._variable_manager,
-            loader=self._loader
-        )
+        flush_block = Block(play=self)
 
-        for task in flush_block.block:
-            task.implicit = True
+        t = Task(block=flush_block)
+        t.action = 'meta'
+        t.resolved_action = 'ansible.builtin.meta'
+        t.args['_raw_params'] = 'flush_handlers'
+        t.implicit = True
+        t.set_loader(self._loader)
 
+        if self.tags:
+            # Avoid calling flush_handlers in case the whole play is skipped on tags,
+            # this could be performance improvement since calling flush_handlers on
+            # large inventories could be expensive even if no hosts are notified
+            # since we call flush_handlers per host.
+            # Block.filter_tagged_tasks ignores evaluating tags on implicit meta
+            # tasks so we need to explicitly call Task.evaluate_tags here.
+            t.tags = self.tags
+            if t.evaluate_tags(self.only_tags, self.skip_tags, all_vars=self.vars):
+                flush_block.block = [t]
+        else:
+            flush_block.block = [t]
+
+        # NOTE keep flush_handlers tasks even if a section has no regular tasks,
+        #      there may be notified handlers from the previous section
+        #      (typically when a handler notifies a handler defined before)
         block_list = []
         if self.force_handlers:
             noop_task = Task()
@@ -323,18 +333,33 @@ class Play(Base, Taggable, CollectionSearch):
             noop_task.set_loader(self._loader)
 
             b = Block(play=self)
-            b.block = self.pre_tasks or [noop_task]
+            if self.pre_tasks:
+                b.block = self.pre_tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             tasks = self._compile_roles() + self.tasks
             b = Block(play=self)
-            b.block = tasks or [noop_task]
+            if tasks:
+                b.block = tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             b = Block(play=self)
-            b.block = self.post_tasks or [noop_task]
+            if self.post_tasks:
+                b.block = self.post_tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 

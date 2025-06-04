@@ -17,12 +17,12 @@
 #############################################
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: v2_vars_plugin
     version_added: "2.10"
     short_description: load host and group vars
     description:
-      - 3rd party vars plugin to test loading host and group vars without requiring whitelisting and with a plugin-specific stage option
+      - Third party vars plugin to test loading host and group vars without enabling and with a plugin-specific stage option
     options:
       stage:
         choices: ['all', 'inventory', 'task']
@@ -32,7 +32,7 @@ DOCUMENTATION = '''
             section: other_vars_plugin
         env:
           - name: ANSIBLE_VARS_PLUGIN_STAGE
-'''
+"""
 
 from ansible.plugins.vars import BaseVarsPlugin
 

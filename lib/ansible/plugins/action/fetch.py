@@ -33,7 +33,7 @@ display = Display()
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for fetch operations '''
+        """ handler for fetch operations """
         if task_vars is None:
             task_vars = dict()
 
@@ -41,7 +41,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         try:
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 raise AnsibleActionSkip('check mode not (yet) supported for this module')
 
             source = self._task.args.get('src', None)
@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
             validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             msg = ''
-            # validate source and dest are strings FIXME: use basic.py and module specs
+            # FIXME: validate source and dest are strings; use basic.py and module specs
             if not isinstance(source, string_types):
                 msg = "Invalid type supplied for source option, it must be a string"
 
@@ -149,6 +149,10 @@ class ActionModule(ActionBase):
                     # destination filename
                     base = os.path.basename(source_local)
                     dest = os.path.join(dest, base)
+
+                    if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')):
+                        raise AnsibleActionFail(
+                            f"calculated dest '{dest}' is an existing directory, use another path that does not point to an existing directory")
                 if not dest.startswith("/"):
                     # if dest does not start with "/", we'll assume a relative path
                     dest = self._loader.path_dwim(dest)
@@ -174,9 +178,8 @@ class ActionModule(ActionBase):
                     self._connection.fetch_file(source, dest)
                 else:
                     try:
-                        f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
-                        f.write(remote_data)
-                        f.close()
+                        with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
+                            f.write(remote_data)
                     except (IOError, OSError) as e:
                         raise AnsibleActionFail("Failed to fetch the file: %s" % e)
                 new_checksum = secure_hash(dest)

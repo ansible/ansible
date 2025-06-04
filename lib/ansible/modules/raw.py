@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: raw
 short_description: Executes a low-down and dirty command
@@ -70,9 +70,9 @@ seealso:
 author:
     - Ansible Core Team
     - Michael DeHaan
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Bootstrap a host without python2 installed
   ansible.builtin.raw: dnf install -y python2 python2-dnf libselinux-python
 
@@ -86,4 +86,4 @@ EXAMPLES = r'''
 
 - name: List user accounts on a Windows system
   ansible.builtin.raw: Get-WmiObject -Class Win32_UserAccount
-'''
+"""

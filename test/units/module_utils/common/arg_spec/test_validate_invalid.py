@@ -8,7 +8,6 @@ import pytest
 
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator, ValidationResult
 from ansible.module_utils.errors import AnsibleValidationErrorMultiple
-from ansible.module_utils.six import PY2
 
 
 # Each item is id, argument_spec, parameters, expected, unsupported parameters, error test string
@@ -90,7 +89,7 @@ INVALID_SPECS = [
         {'numbers': [55, 33, 34, {'key': 'value'}]},
         {'numbers': [55, 33, 34]},
         set(),
-        "Elements value for option 'numbers' is of type <class 'dict'> and we were unable to convert to int: <class 'dict'> cannot be converted to an int"
+        "Elements value for option 'numbers' is of type dict and we were unable to convert to int"
     ),
     (
         'required',
@@ -122,9 +121,6 @@ def test_invalid_spec(arg_spec, parameters, expected, unsupported, error):
 
     with pytest.raises(AnsibleValidationErrorMultiple) as exc_info:
         raise result.errors
-
-    if PY2:
-        error = error.replace('class', 'type')
 
     assert isinstance(result, ValidationResult)
     assert error in exc_info.value.msg

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import errno
 import fcntl
+import functools
 import os
 import random
 import shlex
@@ -27,10 +28,17 @@ import subprocess
 import sys
 import tempfile
 import warnings
+import typing as t
 
 from binascii import hexlify
 from binascii import unhexlify
 from binascii import Error as BinasciiError
+
+from ansible.module_utils._internal._datatag import (
+    AnsibleTagHelper, AnsibleTaggedObject, _AnsibleTagsMapping, _EmptyROInternalTagsMapping, _EMPTY_INTERNAL_TAGS_MAPPING,
+)
+from ansible._internal._templating import _jinja_common
+from ansible._internal._datatag._tags import Origin, VaultedValue, TrustedAsTemplate
 
 HAS_CRYPTOGRAPHY = False
 CRYPTOGRAPHY_BACKEND = None
@@ -61,8 +69,8 @@ display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES256',))
-CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
+CIPHER_ALLOWLIST = frozenset((u'AES256',))
+CIPHER_WRITE_ALLOWLIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
 
@@ -103,15 +111,17 @@ def is_encrypted(data):
     return False
 
 
-def is_encrypted_file(file_obj, start_pos=0, count=-1):
+def is_encrypted_file(file_obj, start_pos=0, count=len(b_HEADER)):
     """Test if the contents of a file obj are a vault encrypted data blob.
 
     :arg file_obj: A file object that will be read from.
     :kwarg start_pos: A byte offset in the file to start reading the header
         from.  Defaults to 0, the beginning of the file.
     :kwarg count: Read up to this number of bytes from the file to determine
-        if it looks like encrypted vault data.  The default is -1, read to the
-        end of file.
+        if it looks like encrypted vault data. The default is the size of the
+        the vault header, which is what is needed most times.
+        For some IO classes, or files that don't begin with the vault itself,
+        set to -1 to read to the end of file.
     :returns: True if the file looks like a vault file. Otherwise, False.
     """
     # read the header and reset the file stream to where it started
@@ -139,11 +149,13 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
         vault_id = to_text(b_tmpheader[3].strip())
 
     b_ciphertext = b''.join(b_tmpdata[1:])
+    # DTFIX7: possible candidate for propagate_origin
+    b_ciphertext = AnsibleTagHelper.tag_copy(b_vaulttext_envelope, b_ciphertext)
 
     return b_ciphertext, b_version, cipher_name, vault_id
 
 
-def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filename=None):
+def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
     """Parse the vaulttext envelope
 
     When data is saved, it has a header prepended and is formatted into 80
@@ -151,11 +163,8 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
     and then removes the header and the inserted newlines.  The string returned
     is suitable for processing by the Cipher classes.
 
-    :arg b_vaulttext: byte str containing the data from a save file
-    :kwarg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
-    :kwarg filename: The filename that the data came from.  This is only
-        used to make better error messages in case the data cannot be
-        decrypted. This is optional.
+    :arg b_vaulttext_envelope: byte str containing the data from a save file
+    :arg default_vault_id: The vault_id name to use if the vaulttext does not provide one.
     :returns: A tuple of byte str of the vaulttext suitable to pass to parse_vaultext,
         a byte str of the vault format version,
         the name of the cipher used, and the vault_id.
@@ -166,12 +175,8 @@ def parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None, filena
 
     try:
         return _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id)
-    except Exception as exc:
-        msg = "Vault envelope format error"
-        if filename:
-            msg += ' in %s' % (filename)
-        msg += ': %s' % exc
-        raise AnsibleVaultFormatError(msg)
+    except Exception as ex:
+        raise AnsibleVaultFormatError("Vault envelope format error.", obj=b_vaulttext_envelope) from ex
 
 
 def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=None):
@@ -217,9 +222,10 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
 
 def _unhexlify(b_data):
     try:
-        return unhexlify(b_data)
-    except (BinasciiError, TypeError) as exc:
-        raise AnsibleVaultFormatError('Vault format unhexlify error: %s' % exc)
+        # DTFIX7: possible candidate for propagate_origin
+        return AnsibleTagHelper.tag_copy(b_data, unhexlify(b_data))
+    except (BinasciiError, TypeError) as ex:
+        raise AnsibleVaultFormatError('Vault format unhexlify error.', obj=b_data) from ex
 
 
 def _parse_vaulttext(b_vaulttext):
@@ -245,25 +251,24 @@ def parse_vaulttext(b_vaulttext):
         return _parse_vaulttext(b_vaulttext)
     except AnsibleVaultFormatError:
         raise
-    except Exception as exc:
-        msg = "Vault vaulttext format error: %s" % exc
-        raise AnsibleVaultFormatError(msg)
+    except Exception as ex:
+        raise AnsibleVaultFormatError("Vault vaulttext format error.", obj=b_vaulttext) from ex
 
 
 def verify_secret_is_not_empty(secret, msg=None):
-    '''Check the secret against minimal requirements.
+    """Check the secret against minimal requirements.
 
     Raises: AnsibleVaultPasswordError if the password does not meet requirements.
 
     Currently, only requirement is that the password is not None or an empty string.
-    '''
+    """
     msg = msg or 'Invalid vault password was provided'
     if not secret:
         raise AnsibleVaultPasswordError(msg)
 
 
 class VaultSecret:
-    '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
+    """Opaque/abstract objects for a single vault secret. ie, a password or a key."""
 
     def __init__(self, _bytes=None):
         # FIXME: ? that seems wrong... Unset etc?
@@ -271,10 +276,10 @@ class VaultSecret:
 
     @property
     def bytes(self):
-        '''The secret as a bytestring.
+        """The secret as a bytestring.
 
         Sub classes that store text types will need to override to encode the text to bytes.
-        '''
+        """
         return self._bytes
 
     def load(self):
@@ -333,7 +338,7 @@ class PromptVaultSecret(VaultSecret):
 
 
 def script_is_client(filename):
-    '''Determine if a vault secret script is a client script that can be given --vault-id args'''
+    """Determine if a vault secret script is a client script that can be given --vault-id args"""
 
     # if password script is 'something-client' or 'something-client.[sh|py|rb|etc]'
     # script_name can still have '.' or could be entire filename if there is no ext
@@ -347,7 +352,7 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    ''' Get secret from file content or execute file and get secret from stdout '''
+    """ Get secret from file content or execute file and get secret from stdout """
 
     # we unfrack but not follow the full path/context to possible vault script
     # so when the script uses 'adjacent' file for configuration or similar
@@ -356,6 +361,9 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
     this_path = unfrackpath(filename, follow=False)
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
+
+    if os.path.isdir(this_path):
+        raise AnsibleError(f"The vault password file provided '{this_path}' can not be a directory")
 
     # it is a script?
     if loader.is_executable(this_path):
@@ -409,7 +417,7 @@ class FileVaultSecret(VaultSecret):
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
 
-        b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass, filename)
+        b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass)
 
         vault_pass = b_vault_data.strip(b'\r\n')
 
@@ -514,7 +522,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
 
 
 def match_secrets(secrets, target_vault_ids):
-    '''Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets'''
+    """Find all VaultSecret objects that are mapped to any of the target_vault_ids in secrets"""
     if not secrets:
         return []
 
@@ -523,10 +531,10 @@ def match_secrets(secrets, target_vault_ids):
 
 
 def match_best_secret(secrets, target_vault_ids):
-    '''Find the best secret from secrets that matches target_vault_ids
+    """Find the best secret from secrets that matches target_vault_ids
 
     Since secrets should be ordered so the early secrets are 'better' than later ones, this
-    just finds all the matches, then returns the first secret'''
+    just finds all the matches, then returns the first secret"""
     matches = match_secrets(secrets, target_vault_ids)
     if matches:
         return matches[0]
@@ -555,7 +563,7 @@ def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
 
 
 def match_encrypt_secret(secrets, encrypt_vault_id=None):
-    '''Find the best/first/only secret in secrets to use for encrypting'''
+    """Find the best/first/only secret in secrets to use for encrypting"""
 
     display.vvvv(u'encrypt_vault_id=%s' % to_text(encrypt_vault_id))
     # See if the --encrypt-vault-id matches a vault-id
@@ -606,7 +614,7 @@ class VaultLib:
         if is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
+        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_ALLOWLIST:
             self.cipher_name = u"AES256"
 
         try:
@@ -628,58 +636,44 @@ class VaultLib:
                                                 vault_id=vault_id)
         return b_vaulttext
 
-    def decrypt(self, vaulttext, filename=None, obj=None):
-        '''Decrypt a piece of vault encrypted data.
-
-        :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
-            ascii text format this can be either a byte str or unicode string.
-        :kwarg filename: a filename that the data came from.  This is only
-            used to make better error messages in case the data cannot be
-            decrypted.
-        :returns: a byte string containing the decrypted data and the vault-id that was used
-
-        '''
-        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename, obj=obj)
-        return plaintext
-
-    def decrypt_and_get_vault_id(self, vaulttext, filename=None, obj=None):
+    def decrypt(self, vaulttext):
         """Decrypt a piece of vault encrypted data.
 
         :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
             ascii text format this can be either a byte str or unicode string.
-        :kwarg filename: a filename that the data came from.  This is only
-            used to make better error messages in case the data cannot be
-            decrypted.
-        :returns: a byte string containing the decrypted data and the vault-id vault-secret that was used
-
+        :returns: a byte string containing the decrypted data
         """
-        b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
+        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext)
+        return plaintext
+
+    def decrypt_and_get_vault_id(self, vaulttext):
+        """Decrypt a piece of vault encrypted data.
+
+        :arg vaulttext: a string to decrypt.  Since vault encrypted data is an
+            ascii text format this can be either a byte str or unicode string.
+        :returns: a byte string containing the decrypted data and the vault-id vault-secret that was used
+        """
+        origin = Origin.get_tag(vaulttext)
+
+        b_vaulttext = to_bytes(vaulttext, nonstring='error')  # enforce vaulttext is str/bytes, keep type check if removing type conversion
 
         if self.secrets is None:
-            msg = "A vault password must be specified to decrypt data"
-            if filename:
-                msg += " in file %s" % to_native(filename)
-            raise AnsibleVaultError(msg)
+            raise AnsibleVaultError("A vault password must be specified to decrypt data.", obj=vaulttext)
 
         if not is_encrypted(b_vaulttext):
-            msg = "input is not vault encrypted data. "
-            if filename:
-                msg += "%s is not a vault encrypted file" % to_native(filename)
-            raise AnsibleError(msg)
+            raise AnsibleVaultError("Input is not vault encrypted data.", obj=vaulttext)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
-        if cipher_name in CIPHER_WHITELIST:
+        if cipher_name in CIPHER_ALLOWLIST:
             this_cipher = CIPHER_MAPPING[cipher_name]()
         else:
-            raise AnsibleError("{0} cipher could not be found".format(cipher_name))
-
-        b_plaintext = None
+            raise AnsibleVaultError(f"Cipher {cipher_name!r} could not be found.", obj=vaulttext)
 
         if not self.secrets:
-            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found')
+            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found.', obj=vaulttext)
 
         # WARNING: Currently, the vault id is not required to match the vault id in the vault blob to
         #          decrypt a vault properly. The vault id in the vault blob is not part of the encrypted
@@ -692,15 +686,13 @@ class VaultLib:
         # we check it first.
 
         vault_id_matchers = []
-        vault_id_used = None
-        vault_secret_used = None
 
         if vault_id:
             display.vvvvv(u'Found a vault_id (%s) in the vaulttext' % to_text(vault_id))
             vault_id_matchers.append(vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), to_text(filename)))
+                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), to_text(origin)))
             else:
                 display.vvvvv(u'Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % to_text(vault_id))
 
@@ -714,45 +706,32 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(filename)))
+            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(origin)))
 
             try:
                 # secret = self.secrets[vault_secret_id]
                 display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
+                # DTFIX7: possible candidate for propagate_origin
+                b_plaintext = AnsibleTagHelper.tag_copy(vaulttext, b_plaintext)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
                     vault_secret_used = vault_secret
                     file_slug = ''
-                    if filename:
-                        file_slug = ' of "%s"' % filename
+                    if origin:
+                        file_slug = ' of "%s"' % origin
                     display.vvvvv(
                         u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id))
                     )
                     break
-            except AnsibleVaultFormatError as exc:
-                exc.obj = obj
-                msg = u"There was a vault format error"
-                if filename:
-                    msg += u' in %s' % (to_text(filename))
-                msg += u': %s' % to_text(exc)
-                display.warning(msg, formatted=True)
+            except AnsibleVaultFormatError:
                 raise
             except AnsibleError as e:
                 display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (to_text(vault_secret_id), to_text(filename), e))
+                             (to_text(vault_secret_id), to_text(origin), e))
                 continue
         else:
-            msg = "Decryption failed (no vault secrets were found that could decrypt)"
-            if filename:
-                msg += " on %s" % to_native(filename)
-            raise AnsibleVaultError(msg)
-
-        if b_plaintext is None:
-            msg = "Decryption failed"
-            if filename:
-                msg += " on %s" % to_native(filename)
-            raise AnsibleError(msg)
+            raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt).", obj=vaulttext)
 
         return b_plaintext, vault_id_used, vault_secret_used
 
@@ -911,7 +890,7 @@ class VaultEditor:
         ciphertext = self.read_data(filename)
 
         try:
-            plaintext = self.vault.decrypt(ciphertext, filename=filename)
+            plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
@@ -951,14 +930,14 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
+        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
         # (vault_id=default, while a different vault-id decrypted)
 
         # we want to get rid of files encrypted with the AES cipher
-        force_save = (cipher_name not in CIPHER_WRITE_WHITELIST)
+        force_save = (cipher_name not in CIPHER_WRITE_ALLOWLIST)
 
         # Keep the same vault-id (and version) as in the header
         self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext, force_save=force_save, vault_id=vault_id)
@@ -969,7 +948,7 @@ class VaultEditor:
         vaulttext = to_text(b_vaulttext)
 
         try:
-            plaintext = self.vault.decrypt(vaulttext, filename=filename)
+            plaintext = self.vault.decrypt(vaulttext)
             return plaintext
         except AnsibleError as e:
             raise AnsibleVaultError("%s for %s" % (to_native(e), to_native(filename)))
@@ -1019,10 +998,12 @@ class VaultEditor:
 
         try:
             if filename == '-':
-                data = sys.stdin.buffer.read()
+                data = Origin(description='<stdin>').tag(sys.stdin.buffer.read())
             else:
+                filename = os.path.abspath(filename)
+
                 with open(filename, "rb") as fh:
-                    data = fh.read()
+                    data = Origin(path=filename).tag(fh.read())
         except Exception as e:
             msg = to_native(e)
             if not msg:
@@ -1165,6 +1146,7 @@ class VaultAES256:
         return b_derivedkey
 
     @classmethod
+    @functools.cache  # Concurrent first-use by multiple threads will all execute the method body.
     def _gen_key_initctr(cls, b_password, b_salt):
         # 16 for AES 128, 32 for AES256
         key_length = 32
@@ -1297,3 +1279,258 @@ class VaultAES256:
 CIPHER_MAPPING = {
     u'AES256': VaultAES256,
 }
+
+
+class VaultSecretsContext:
+    """Provides context-style access to vault secrets."""
+    _current: t.ClassVar[t.Self | None] = None
+
+    def __init__(self, secrets: list[tuple[str, VaultSecret]]) -> None:
+        self.secrets = secrets
+
+    @classmethod
+    def initialize(cls, value: t.Self) -> None:
+        """
+        Initialize VaultSecretsContext with the specified instance and secrets (since it's not a lazy or per-thread context).
+        This method will fail if called more than once.
+        """
+        if cls._current:
+            raise RuntimeError(f"The {cls.__name__} context is already initialized.")
+
+        cls._current = value
+
+    @classmethod
+    def current(cls, optional: bool = False) -> t.Self:
+        """Access vault secrets, if initialized, ala `AmbientContextBase.current()`."""
+        if not cls._current and not optional:
+            raise ReferenceError(f"A required {cls.__name__} context is not active.")
+
+        return cls._current
+
+
+@t.final
+class EncryptedString(AnsibleTaggedObject):
+    """
+    An encrypted string which supports tagging and on-demand decryption.
+    All methods provided by Python's built-in `str` are supported, all of which operate on the decrypted value.
+    Any attempt to use this value when it cannot be decrypted will raise an exception.
+    Despite supporting `str` methods, access to an instance of this type through templating is recommended over direct access.
+    """
+
+    __slots__ = ('_ciphertext', '_plaintext', '_ansible_tags_mapping')
+
+    _subclasses_native_type: t.ClassVar[bool] = False
+    _empty_tags_as_native: t.ClassVar[bool] = False
+
+    _ciphertext: str
+    _plaintext: str | None
+    _ansible_tags_mapping: _AnsibleTagsMapping | _EmptyROInternalTagsMapping
+
+    def __init__(self, *, ciphertext: str) -> None:
+        if type(ciphertext) is not str:  # pylint: disable=unidiomatic-typecheck
+            raise TypeError(f'ciphertext must be {str} instead of {type(ciphertext)}')
+
+        object.__setattr__(self, '_ciphertext', ciphertext)
+        object.__setattr__(self, '_plaintext', None)
+        object.__setattr__(self, '_ansible_tags_mapping', _EMPTY_INTERNAL_TAGS_MAPPING)
+
+    @classmethod
+    def _instance_factory(cls, value: t.Any, tags_mapping: _AnsibleTagsMapping) -> EncryptedString:
+        instance = EncryptedString.__new__(EncryptedString)
+
+        # In 2.18 and earlier, vaulted values were not trusted.
+        # This maintains backwards compatibility with that.
+        # Additionally, supporting templating on vaulted values could be problematic for a few cases:
+        # 1) There's no way to compose YAML tags, so you can't use `!unsafe` and `!vault` together.
+        # 2) It would make composing `EncryptedString` with a possible future `TemplateString` more difficult.
+        tags_mapping.pop(TrustedAsTemplate, None)
+
+        object.__setattr__(instance, '_ciphertext', value._ciphertext)
+        object.__setattr__(instance, '_plaintext', value._plaintext)
+        object.__setattr__(instance, '_ansible_tags_mapping', tags_mapping)
+
+        return instance
+
+    def __setstate__(self, state: tuple[None, dict[str, t.Any]]) -> None:
+        for key, value in state[1].items():
+            object.__setattr__(self, key, value)
+
+    def __delattr__(self, item: str) -> t.NoReturn:
+        raise AttributeError(f'{self.__class__.__name__!r} object is read-only')
+
+    def __setattr__(self, key: str, value: object) -> t.NoReturn:
+        raise AttributeError(f'{self.__class__.__name__!r} object is read-only')
+
+    @classmethod
+    def _init_class(cls) -> None:
+        """
+        Add proxies for the specified `str` methods.
+        These proxies operate on the plaintext, which is decrypted on-demand.
+        """
+        cls._native_type = cls
+
+        operator_method_names = (
+            '__eq__',
+            '__ge__',
+            '__gt__',
+            '__le__',
+            '__lt__',
+            '__ne__',
+        )
+
+        method_names = (
+            '__add__',
+            '__contains__',
+            '__format__',
+            '__getitem__',
+            '__hash__',
+            '__iter__',
+            '__len__',
+            '__mod__',
+            '__mul__',
+            '__rmod__',
+            '__rmul__',
+            'capitalize',
+            'casefold',
+            'center',
+            'count',
+            'encode',
+            'endswith',
+            'expandtabs',
+            'find',
+            'format',
+            'format_map',
+            'index',
+            'isalnum',
+            'isalpha',
+            'isascii',
+            'isdecimal',
+            'isdigit',
+            'isidentifier',
+            'islower',
+            'isnumeric',
+            'isprintable',
+            'isspace',
+            'istitle',
+            'isupper',
+            'join',
+            'ljust',
+            'lower',
+            'lstrip',
+            'maketrans',  # static, but implemented for simplicty/consistency
+            'partition',
+            'removeprefix',
+            'removesuffix',
+            'replace',
+            'rfind',
+            'rindex',
+            'rjust',
+            'rpartition',
+            'rsplit',
+            'rstrip',
+            'split',
+            'splitlines',
+            'startswith',
+            'strip',
+            'swapcase',
+            'title',
+            'translate',
+            'upper',
+            'zfill',
+        )
+
+        for method_name in operator_method_names:
+            setattr(cls, method_name, functools.partialmethod(cls._proxy_str_operator_method, getattr(str, method_name)))
+
+        for method_name in method_names:
+            setattr(cls, method_name, functools.partialmethod(cls._proxy_str_method, getattr(str, method_name)))
+
+    def _decrypt(self) -> str:
+        """
+        Attempt to decrypt the ciphertext and return the plaintext, which will be cached.
+        If decryption fails an exception will be raised and no result will be cached.
+        """
+        if self._plaintext is None:
+            vault = VaultLib(secrets=VaultSecretsContext.current().secrets)
+            # use the utility method to ensure that origin tags are available
+            plaintext = to_text(vault.decrypt(VaultHelper.get_ciphertext(self, with_tags=True)))  # raises if the ciphertext cannot be decrypted
+
+            # propagate source value tags plus VaultedValue for round-tripping ciphertext
+            plaintext = AnsibleTagHelper.tag(plaintext, AnsibleTagHelper.tags(self) | {VaultedValue(ciphertext=self._ciphertext)})
+
+            object.__setattr__(self, '_plaintext', plaintext)
+
+        return self._plaintext
+
+    def _as_dict(self) -> t.Dict[str, t.Any]:
+        return dict(
+            value=self._ciphertext,
+            tags=list(self._ansible_tags_mapping.values()),
+        )
+
+    def _native_copy(self) -> str:
+        return AnsibleTagHelper.untag(self._decrypt())
+
+    def _proxy_str_operator_method(self, method: t.Callable, other) -> t.Any:
+        obj = self._decrypt()
+
+        if type(other) is EncryptedString:  # pylint: disable=unidiomatic-typecheck
+            other = other._decrypt()
+
+        return method(obj, other)
+
+    def _proxy_str_method(self, method: t.Callable, *args, **kwargs) -> t.Any:
+        obj = self._decrypt()
+        return method(obj, *args, **kwargs)
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}(ciphertext={self._ciphertext!r})'
+
+    def __str__(self) -> str:
+        return self._decrypt()
+
+    def __float__(self) -> float:
+        return float(self._decrypt())
+
+    def __int__(self) -> int:
+        return int(self._decrypt())
+
+    def __radd__(self, other: t.Any) -> str:
+        return other + self._decrypt()
+
+    def __fspath__(self) -> str:
+        return self._decrypt()
+
+
+class VaultHelper:
+    """Vault specific utility methods."""
+
+    @staticmethod
+    def get_ciphertext(value: t.Any, *, with_tags: bool) -> str | None:
+        """
+        If the given value is an `EncryptedString`, `VaultExceptionMarker` or tagged with `VaultedValue`, return the ciphertext, otherwise return `None`.
+        Tags on the value other than `VaultedValue` will be included on the ciphertext if `with_tags` is `True`, otherwise it will be tagless.
+        """
+        value_type = type(value)
+        ciphertext: str | None
+        tags = AnsibleTagHelper.tags(value)
+
+        if value_type is _jinja_common.VaultExceptionMarker:
+            ciphertext = value._marker_undecryptable_ciphertext
+            tags = AnsibleTagHelper.tags(ciphertext)  # ciphertext has tags but value does not
+        elif value_type is EncryptedString:
+            ciphertext = value._ciphertext
+        elif value_type in _jinja_common.Marker._concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
+            ciphertext = None
+        elif vaulted_value := VaultedValue.get_tag(value):
+            ciphertext = vaulted_value.ciphertext
+        else:
+            ciphertext = None
+
+        if ciphertext:
+            if with_tags:
+                ciphertext = VaultedValue.untag(AnsibleTagHelper.tag(ciphertext, tags))
+            else:
+                ciphertext = AnsibleTagHelper.untag(ciphertext)
+
+        return ciphertext

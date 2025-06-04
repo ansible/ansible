@@ -1,0 +1,2 @@
+minor_changes:
+  - Remove unnecessary shebang from the ``hostname`` module.

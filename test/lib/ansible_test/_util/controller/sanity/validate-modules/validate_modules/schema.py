@@ -67,6 +67,17 @@ def collection_name(v, error_code=None):
     return v
 
 
+def fqcn(v, error_code=None):
+    if not isinstance(v, string_types):
+        raise _add_ansible_error_code(
+            Invalid('Module/plugin name must be a string'), error_code or 'invalid-documentation')
+    m = FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(v)
+    if not m:
+        raise _add_ansible_error_code(
+            Invalid('Module/plugin name must be of format `<namespace>.<collection>.<name>(.<subname>)*`'), error_code or 'invalid-documentation')
+    return v
+
+
 def deprecation_versions():
     """Create a list of valid version for deprecation entries, current+4"""
     major, minor = [int(version) for version in __version__.split('.')[0:2]]
@@ -82,6 +93,22 @@ def version(for_collection=False):
 
 def date(error_code=None):
     return Any(isodate, error_code=error_code)
+
+
+def require_only_one(keys):
+    def f(obj):
+        found = None
+        for k in obj.keys():
+            if k in keys:
+                if found is None:
+                    found = k
+                else:
+                    raise Invalid('Found conflicting keys, must contain only one of {}'.format(keys))
+        if found is None:
+            raise Invalid('Must contain one of {}'.format(keys))
+
+        return obj
+    return f
 
 
 # Roles can also be referenced by semantic markup
@@ -180,11 +207,11 @@ seealso_schema = Schema(
     [
         Any(
             {
-                Required('module'): Any(*string_types),
+                Required('module'): fqcn,
                 'description': doc_string,
             },
             {
-                Required('plugin'): Any(*string_types),
+                Required('plugin'): fqcn,
                 Required('plugin_type'): Any(*DOCUMENTABLE_PLUGINS),
                 'description': doc_string,
             },
@@ -297,6 +324,7 @@ def argument_spec_schema(for_collection):
                 [is_callable, list_string_types],
             ),
             'choices': Any([object], (object,)),
+            'context': dict,
             'required': bool,
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
@@ -487,10 +515,17 @@ def check_option_choices(v):
         type_checker, type_name = get_type_checker({'type': v.get('elements')})
     else:
         type_checker, type_name = get_type_checker(v)
+
     if type_checker is None:
         return v
 
-    for value in v_choices:
+    if isinstance(v_choices, dict):
+        # choices are still a list (the keys) but dict form serves to document each choice.
+        iterate = v_choices.keys()
+    else:
+        iterate = v_choices
+
+    for value in iterate:
         try:
             type_checker(value)
         except Exception as exc:
@@ -542,7 +577,7 @@ def list_dict_option_schema(for_collection, plugin_type):
     basic_option_schema = {
         Required('description'): doc_string_or_strings,
         'required': bool,
-        'choices': list,
+        'choices': Any(list, {object: doc_string_or_strings}),
         'aliases': Any(list_string_types),
         'version_added': version(for_collection),
         'version_added_collection': collection_name,
@@ -560,7 +595,9 @@ def list_dict_option_schema(for_collection, plugin_type):
                     {
                         # This definition makes sure everything has the correct types/values
                         'why': doc_string,
-                        'alternatives': doc_string,
+                        # TODO: phase out either plural or singular, 'alt' is exclusive group
+                        Exclusive('alternative', 'alt'): doc_string,
+                        Exclusive('alternatives', 'alt'): doc_string,
                         # vod stands for 'version or date'; this is the name of the exclusive group
                         Exclusive('removed_at_date', 'vod'): date(),
                         Exclusive('version', 'vod'): version(for_collection),
@@ -569,7 +606,7 @@ def list_dict_option_schema(for_collection, plugin_type):
                     {
                         # This definition makes sure that everything we require is there
                         Required('why'): Any(*string_types),
-                        'alternatives': Any(*string_types),
+                        Required(Any('alternatives', 'alternative')): Any(*string_types),
                         Required(Any('removed_at_date', 'version')): Any(*string_types),
                         Required('collection_name'): Any(*string_types),
                     },
@@ -753,12 +790,15 @@ def return_schema(for_collection, plugin_type='module'):
 
 
 def deprecation_schema(for_collection):
+
     main_fields = {
         Required('why'): doc_string,
-        Required('alternative'): doc_string,
-        Required('removed_from_collection'): collection_name,
-        'removed': Any(True),
+        'alternative': doc_string,
+        'alternatives': doc_string,
     }
+
+    if for_collection:
+        main_fields.update({Required('removed_from_collection'): collection_name, 'removed': Any(True)})
 
     date_schema = {
         Required('removed_at_date'): date(),
@@ -783,6 +823,7 @@ def deprecation_schema(for_collection):
     if for_collection:
         result = All(
             result,
+            require_only_one(['alternative', 'alternatives']),
             partial(check_removal_version,
                     version_field='removed_in',
                     collection_name_field='removed_from_collection',

@@ -146,6 +146,7 @@
                     "version_added_collection": "testns.testcol2"
                 }
             },
+            "plugin_name": "testns.testcol.notjsonfile",
             "short_description": "JSON formatted files.",
             "version_added": "0.7.0",
             "version_added_collection": "testns.testcol"

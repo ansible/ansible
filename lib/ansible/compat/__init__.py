@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-'''
+"""
 Compat library for ansible.  This contains compatibility definitions for older python
 When we need to import a module differently depending on python version, do it
 here.  Then in the code we can simply import from compat in order to get what we want.
-'''
+"""
 from __future__ import annotations

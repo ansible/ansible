@@ -50,7 +50,7 @@ def test_play_context(mocker, parser, reset_cli_args):
     assert play_context.password == ''
     assert play_context.private_key_file == C.DEFAULT_PRIVATE_KEY_FILE
     assert play_context.timeout == C.DEFAULT_TIMEOUT
-    assert play_context.verbosity == 2
+    assert getattr(play_context, 'verbosity', None) is None
     assert play_context.check_mode is True
 
     mock_play = mocker.MagicMock()

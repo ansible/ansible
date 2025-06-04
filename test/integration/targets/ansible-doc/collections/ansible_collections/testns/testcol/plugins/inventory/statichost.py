@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     inventory: statichost
     short_description: Add a single host
     description: Add a single host
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       hostname:
         description: Toggle display of stderr even when script was successful
         required: True
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 

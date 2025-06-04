@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: test_docs_returns
 short_description: Test module
@@ -10,12 +10,12 @@ description:
     - Test module
 author:
     - Ansible Core Team
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
-RETURN = '''
+RETURN = """
 z_last:
     description: A last result.
     type: str
@@ -37,7 +37,7 @@ a_first:
     description: A first result.
     type: str
     returned: success
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule

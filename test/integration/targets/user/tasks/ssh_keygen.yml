@@ -1,0 +1,100 @@
+- name: user generating ssh keys tests
+  become: true
+  vars:
+    home: "{{ (ansible_facts['os_family'] == 'Darwin')|ternary('/Users/ansibulluser/', '/home/ansibulluser/')}}"
+    ssh_key_file: .ssh/ansible_test_rsa
+    pub_file: '{{ssh_key_file}}.pub'
+    key_files:
+      - '{{ssh_key_file}}'
+      - '{{pub_file}}'
+  block:
+  - name: Ensure clean/non existsing ansibulluser
+    user: name=ansibulluser state=absent
+
+  - name: Test creating ssh key creation
+    block:
+    - name: Create user with ssh key
+      user:
+        name: ansibulluser
+        state: present
+        generate_ssh_key: yes
+        ssh_key_file: '{{ ssh_key_file}}'
+
+    - name: check files exist
+      stat:
+        path: '{{home ~ item}}'
+      register: stat_keys
+      loop: '{{ key_files }}'
+
+    - name: ensure they exist
+      assert:
+        that:
+          - stat_keys.results[item].stat.exists
+      loop: [0, 1]
+
+    always:
+    - name: Clean ssh keys
+      file: path={{ home ~ item }} state=absent
+      loop: '{{ key_files }}'
+
+    - name: Ensure clean/non existsing ansibulluser
+      user: name=ansibulluser state=absent
+
+  - name: Ensure we don't break on conflicts
+    block:
+    - name: flag file for test
+      tempfile:
+      register: flagfile
+
+    - name: precreate public .ssh
+      file: path={{home ~ '.ssh'}} state=directory
+
+    - name: setup public key linked to flag file
+      file: path={{home ~ pub_file}} src={{flagfile.path}} state=link
+
+    - name: Create user with ssh key
+      user:
+        name: ansibulluser
+        state: present
+        generate_ssh_key: yes
+        ssh_key_file: '{{ ssh_key_file }}'
+      ignore_errors: true
+      register: user_no_force
+
+    - stat: path={{home ~ pub_file}}
+      register: check_pub
+
+    - name: ensure we didn't overwrite
+      assert:
+        that:
+          - check_pub.stat.exists
+          - check_pub.stat.islnk
+          - check_pub.stat.uid == 0
+
+    - name: Create user with ssh key
+      user:
+        name: ansibulluser
+        state: present
+        generate_ssh_key: yes
+        ssh_key_file: '{{ ssh_key_file }}'
+        force: true
+      ignore_errors: true
+      register: user_force
+
+    - stat: path={{home ~ pub_file}}
+      register: check_pub2
+
+    - name: ensure we failed since we didn't force overwrite
+      assert:
+        that:
+          - user_force is success
+          - check_pub2.stat.exists
+          - not check_pub2.stat.islnk
+          - check_pub2.stat.uid != 0
+    always:
+    - name: Clean up files
+      file: path={{ home ~ item }} state=absent
+      loop: '{{ key_files + [flagfile.path] }}'
+
+    - name: Ensure clean/non existsing ansibulluser
+      user: name=ansibulluser state=absent

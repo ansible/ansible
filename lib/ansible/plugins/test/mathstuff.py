@@ -36,15 +36,15 @@ def isnotanumber(x):
 
 
 def contains(seq, value):
-    '''Opposite of the ``in`` test, allowing use as a test in filters like ``selectattr``
+    """Opposite of the ``in`` test, allowing use as a test in filters like ``selectattr``
 
     .. versionadded:: 2.8
-    '''
+    """
     return value in seq
 
 
 class TestModule:
-    ''' Ansible math jinja2 tests '''
+    """ Ansible math jinja2 tests """
 
     def tests(self):
         return {

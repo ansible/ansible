@@ -27,8 +27,7 @@ display = Display()
 class MultiGalaxyAPIProxy:
     """A proxy that abstracts talking to multiple Galaxy instances."""
 
-    def __init__(self, apis, concrete_artifacts_manager, offline=False):
-        # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager, bool) -> None
+    def __init__(self, apis: t.Iterable[GalaxyAPI], concrete_artifacts_manager: ConcreteArtifactsManager, offline: bool = False) -> None:
         """Initialize the target APIs list."""
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
@@ -38,22 +37,21 @@ class MultiGalaxyAPIProxy:
     def is_offline_mode_requested(self):
         return self._offline
 
-    def _assert_that_offline_mode_is_not_requested(self):  # type: () -> None
+    def _assert_that_offline_mode_is_not_requested(self) -> None:
         if self.is_offline_mode_requested:
             raise NotImplementedError("The calling code is not supposed to be invoked in 'offline' mode.")
 
-    def _get_collection_versions(self, requirement):
-        # type: (Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]
+    def _get_collection_versions(self, requirement: Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]:
         """Helper for get_collection_versions.
 
         Yield api, version pairs for all APIs,
         and reraise the last error if no valid API was found.
         """
         if self._offline:
-            return []
+            return
 
         found_api = False
-        last_error = None  # type: Exception | None
+        last_error: Exception | None = None
 
         api_lookup_order = (
             (requirement.src, )
@@ -86,8 +84,7 @@ class MultiGalaxyAPIProxy:
         if not found_api and last_error is not None:
             raise last_error
 
-    def get_collection_versions(self, requirement):
-        # type: (Requirement) -> t.Iterable[tuple[str, GalaxyAPI]]
+    def get_collection_versions(self, requirement: Requirement) -> t.Iterable[tuple[str, GalaxyAPI]]:
         """Get a set of unique versions for FQCN on Galaxy servers."""
         if requirement.is_concrete_artifact:
             return {
@@ -110,8 +107,7 @@ class MultiGalaxyAPIProxy:
             )
         )
 
-    def get_collection_version_metadata(self, collection_candidate):
-        # type: (Candidate) -> CollectionVersionMetadata
+    def get_collection_version_metadata(self, collection_candidate: Candidate) -> CollectionVersionMetadata:
         """Retrieve collection metadata of a given candidate."""
         self._assert_that_offline_mode_is_not_requested()
 
@@ -160,8 +156,7 @@ class MultiGalaxyAPIProxy:
 
         raise last_err
 
-    def get_collection_dependencies(self, collection_candidate):
-        # type: (Candidate) -> dict[str, str]
+    def get_collection_dependencies(self, collection_candidate: Candidate) -> dict[str, str]:
         # FIXME: return Requirement instances instead?
         """Retrieve collection dependencies of a given candidate."""
         if collection_candidate.is_concrete_artifact:
@@ -177,13 +172,12 @@ class MultiGalaxyAPIProxy:
             dependencies
         )
 
-    def get_signatures(self, collection_candidate):
-        # type: (Candidate) -> list[str]
+    def get_signatures(self, collection_candidate: Candidate) -> list[str]:
         self._assert_that_offline_mode_is_not_requested()
         namespace = collection_candidate.namespace
         name = collection_candidate.name
         version = collection_candidate.ver
-        last_err = None  # type: Exception | None
+        last_err: Exception | None = None
 
         api_lookup_order = (
             (collection_candidate.src, )

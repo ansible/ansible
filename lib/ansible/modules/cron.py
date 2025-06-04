@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: cron
 short_description: Manage cron.d and crontab entries
@@ -18,19 +18,19 @@ description:
   - Use this module to manage crontab and environment variables entries. This module allows
     you to create environment variables and named crontab entries, update, or delete them.
   - 'When crontab jobs are managed: the module includes one line with the description of the
-    crontab entry C("#Ansible: <name>") corresponding to the "name" passed to the module,
-    which is used by future ansible/module calls to find/check the state. The "name"
-    parameter should be unique, and changing the "name" value will result in a new cron
+    crontab entry C("#Ansible: <name>") corresponding to the O(name) passed to the module,
+    which is used by future ansible/module calls to find/check the state. The O(name)
+    parameter should be unique, and changing the O(name) value will result in a new cron
     task being created (or a different one being removed).'
   - When environment variables are managed, no comment line is added, but, when the module
-    needs to find/check the state, it uses the "name" parameter to find the environment
+    needs to find/check the state, it uses the O(name) parameter to find the environment
     variable definition line.
-  - When using symbols such as %, they must be properly escaped.
+  - When using symbols such as C(%), they must be properly escaped.
 version_added: "0.9"
 options:
   name:
     description:
-      - Description of a crontab entry or, if env is set, the name of environment variable.
+      - Description of a crontab entry or, if O(env) is set, the name of environment variable.
       - This parameter is always required as of ansible-core 2.12.
     type: str
     required: yes
@@ -41,7 +41,7 @@ options:
     type: str
   job:
     description:
-      - The command to execute or, if env is set, the value of environment variable.
+      - The command to execute or, if O(env) is set, the value of environment variable.
       - The command should not contain line breaks.
       - Required if O(state=present).
     type: str
@@ -58,10 +58,10 @@ options:
         The assumption is that this file is exclusively managed by the module,
         do not use if the file contains multiple entries, NEVER use for /etc/crontab.
       - If this is a relative path, it is interpreted with respect to C(/etc/cron.d).
-      - Many linux distros expect (and some require) the filename portion to consist solely
+      - Many Linux distros expect (and some require) the filename portion to consist solely
         of upper- and lower-case letters, digits, underscores, and hyphens.
-      - Using this parameter requires you to specify the O(user) as well, unless O(state) is not V(present).
-      - Either this parameter or O(name) is required
+      - Using this parameter requires you to specify the O(user) as well, unless O(state=absent).
+      - Either this parameter or O(name) is required.
     type: path
   backup:
     description:
@@ -72,33 +72,39 @@ options:
   minute:
     description:
       - Minute when the job should run (V(0-59), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   hour:
     description:
       - Hour when the job should run (V(0-23), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   day:
     description:
       - Day of the month the job should run (V(1-31), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run (V(1-12), V(*), V(*/2), and so on).
+      - Month of the year the job should run (V(JAN-DEC) or V(1-12), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run (V(0-6) for Sunday-Saturday, V(*), and so on).
+      - Day of the week that the job should run (V(SUN-SAT) or V(0-6), V(*), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
     aliases: [ dow ]
   special_time:
     description:
       - Special time specification nickname.
+      - Cannot be combined with O(minute), O(hour), O(day), O(month) or O(weekday).
     type: str
     choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
@@ -131,6 +137,9 @@ options:
     version_added: "2.1"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
+notes:
+  - If you are experiencing permissions issues with cron and MacOS,
+    you should see the official MacOS documentation for further information.
 author:
   - Dane Summers (@dsummersl)
   - Mike Grozak (@rhaido)
@@ -147,9 +156,9 @@ attributes:
     platform:
         support: full
         platforms: posix
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Ensure a job that runs at 2 and 5 exists. Creates an entry like "0 5,2 * * ls -alh > /dev/null"
   ansible.builtin.cron:
     name: "check dirs"
@@ -202,9 +211,9 @@ EXAMPLES = r'''
     name: APP_HOME
     env: yes
     state: absent
-'''
+"""
 
-RETURN = r'''#'''
+RETURN = r"""#"""
 
 import os
 import platform
@@ -214,6 +223,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import S_IRWU_RWG_RWO
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
@@ -258,17 +268,16 @@ class CronTab(object):
         if self.cron_file:
             # read the cronfile
             try:
-                f = open(self.b_cron_file, 'rb')
-                self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
-                self.lines = self.n_existing.splitlines()
-                f.close()
+                with open(self.b_cron_file, 'rb') as f:
+                    self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
+                    self.lines = self.n_existing.splitlines()
             except IOError:
                 # cron file does not exist
                 return
             except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
-            # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
+            # FIXME: using safely quoted shell for now, but this really should be two non-shell calls instead.
             (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
@@ -307,7 +316,7 @@ class CronTab(object):
             fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
-            os.chmod(path, int('0644', 8))
+            os.chmod(path, S_IRWU_RWG_RWO)
             fileh = os.fdopen(filed, 'wb')
 
         fileh.write(to_bytes(self.render()))
@@ -319,12 +328,12 @@ class CronTab(object):
 
         # Add the entire crontab back to the user crontab
         if not self.cron_file:
-            # quoting shell args for now but really this should be two non-shell calls.  FIXME
+            # FIXME: quoting shell args for now but really this should be two non-shell calls.
             (rc, out, err) = self.module.run_command(self._write_execute(path), use_unsafe_shell=True)
             os.unlink(path)
 
             if rc != 0:
-                self.module.fail_json(msg=err)
+                self.module.fail_json(msg=f"Failed to install new cronfile: {path}", stderr=err, stdout=out, rc=rc)
 
         # set SELinux permissions
         if self.module.selinux_enabled() and self.cron_file:
@@ -609,7 +618,6 @@ def main():
 
     changed = False
     res_args = dict()
-    warnings = list()
 
     if cron_file:
 
@@ -618,8 +626,8 @@ def main():
 
         cron_file_basename = os.path.basename(cron_file)
         if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
-            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
-                            ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
+            module.warn('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
+                        ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
@@ -642,7 +650,7 @@ def main():
 
     if special_time and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
-        module.fail_json(msg="You must specify time and date fields or special time.")
+        module.fail_json(msg="You cannot combine special_time with any of the time or day/date parameters.")
 
     # cannot support special_time on solaris
     if special_time and platform.system() == 'SunOS':
@@ -684,7 +692,7 @@ def main():
         if do_install:
             for char in ['\r', '\n']:
                 if char in job.strip('\r\n'):
-                    warnings.append('Job should not contain line breaks')
+                    module.warn('Job should not contain line breaks')
                     break
 
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
@@ -725,7 +733,6 @@ def main():
     res_args = dict(
         jobs=crontab.get_jobnames(),
         envs=crontab.get_envnames(),
-        warnings=warnings,
         changed=changed
     )
 

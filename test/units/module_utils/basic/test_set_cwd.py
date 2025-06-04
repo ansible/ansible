@@ -4,21 +4,20 @@
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 
-from units.compat.mock import patch
-from ansible.module_utils.common.text.converters import to_bytes
+from unittest.mock import patch
 
 from ansible.module_utils import basic
+from ansible.module_utils.testing import patch_module_args
 
 
 class TestAnsibleModuleSetCwd:
 
     def test_set_cwd(self, monkeypatch):
 
-        '''make sure /tmp is used'''
+        """make sure /tmp is used"""
 
         def mock_getcwd():
             return '/tmp'
@@ -31,8 +30,9 @@ class TestAnsibleModuleSetCwd:
 
         monkeypatch.setattr(os, 'getcwd', mock_getcwd)
         monkeypatch.setattr(os, 'access', mock_access)
-        monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}})))
-        with patch('time.time', return_value=42):
+
+        with patch_module_args(), \
+             patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
         result = am._set_cwd()
@@ -40,7 +40,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_self_tmpdir(self, monkeypatch):
 
-        '''pwd is not readable, use instance's tmpdir property'''
+        """pwd is not readable, use instance's tmpdir property"""
 
         def mock_getcwd():
             return '/tmp'
@@ -67,8 +67,9 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'chdir', mock_chdir)
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
-        monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}})))
-        with patch('time.time', return_value=42):
+
+        with patch_module_args(), \
+             patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
         am._tmpdir = '/tmp2'
@@ -77,7 +78,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_home(self, monkeypatch):
 
-        '''cwd and instance tmpdir are unreadable, use home'''
+        """cwd and instance tmpdir are unreadable, use home"""
 
         def mock_getcwd():
             return '/tmp'
@@ -104,8 +105,9 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'chdir', mock_chdir)
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
-        monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}})))
-        with patch('time.time', return_value=42):
+
+        with patch_module_args(), \
+             patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
         am._tmpdir = '/tmp2'
@@ -114,7 +116,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_gettempdir(self, monkeypatch):
 
-        '''fallback to tempfile.gettempdir'''
+        """fallback to tempfile.gettempdir"""
 
         thisdir = None
 
@@ -143,8 +145,9 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'chdir', mock_chdir)
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
-        monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}})))
-        with patch('time.time', return_value=42):
+
+        with patch_module_args(), \
+             patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
         am._tmpdir = '/tmp2'
@@ -154,7 +157,7 @@ class TestAnsibleModuleSetCwd:
 
     def test_set_cwd_unreadable_use_None(self, monkeypatch):
 
-        '''all paths are unreable, should return None and not an exception'''
+        """all paths are unreable, should return None and not an exception"""
 
         def mock_getcwd():
             return '/tmp'
@@ -180,8 +183,9 @@ class TestAnsibleModuleSetCwd:
         monkeypatch.setattr(os, 'chdir', mock_chdir)
         monkeypatch.setattr(os, 'access', mock_access)
         monkeypatch.setattr(os.path, 'expandvars', mock_expandvars)
-        monkeypatch.setattr(basic, '_ANSIBLE_ARGS', to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}})))
-        with patch('time.time', return_value=42):
+
+        with patch_module_args(), \
+             patch('time.time', return_value=42):
             am = basic.AnsibleModule(argument_spec={})
 
         am._tmpdir = '/tmp2'

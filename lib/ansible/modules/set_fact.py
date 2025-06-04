@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: set_fact
 short_description: Set host variable(s) and fact(s).
@@ -66,7 +66,7 @@ notes:
     - Because of the nature of tasks, set_fact will produce 'static' values for a variable.
       Unlike normal 'lazy' variables, the value gets evaluated and templated on assignment.
     - Some boolean values (yes, no, true, false) will always be converted to boolean type,
-      unless C(DEFAULT_JINJA2_NATIVE) is enabled.  This is done so the C(var=value) booleans,
+      This is done so the C(var=value) booleans,
       otherwise it would only be able to create strings, but it also prevents using those values to create YAML strings.
       Using the setting will restrict k=v to strings, but will allow you to specify string or boolean in YAML.
     - "To create lists/arrays or dictionary/hashes use YAML notation C(var: [val1, val2])."
@@ -77,9 +77,9 @@ seealso:
   description: More information related to variable precedence and which type of variable wins over others.
 author:
 - Dag Wieers (@dagwieers)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Setting host facts using key=value pairs, this format can only create strings or booleans
   ansible.builtin.set_fact: one_fact="something" other_fact="{{ local_var }}"
 
@@ -116,4 +116,4 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     two_dict: {'something': here2, 'other': somewhere}
     two_list: [1,2,3]
-'''
+"""

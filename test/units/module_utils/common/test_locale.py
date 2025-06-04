@@ -4,13 +4,13 @@
 
 from __future__ import annotations
 
-from units.compat.mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
 
 
 class TestLocale:
-    """Tests for get_best_paresable_locale"""
+    """Tests for get_best_parsable_locale"""
 
     mock_module = MagicMock()
     mock_module.get_bin_path = MagicMock(return_value='/usr/bin/locale')

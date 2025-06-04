@@ -68,7 +68,7 @@ class ActionModule(ActionBase):
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             display.vvv("wait_for_connection: skipping for check_mode")
             return dict(skipped=True)
 
@@ -76,7 +76,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         def ping_module_test(connect_timeout):
-            ''' Test ping module, if available '''
+            """ Test ping module, if available """
             display.vvv("wait_for_connection: attempting ping module test")
             # re-run interpreter discovery if we ran it in the first iteration
             if self._discovered_interpreter_key:

@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_wait_for
 version_added: '2.4'
@@ -96,9 +96,9 @@ seealso:
 - module: win_wait_for_process
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
   win_wait_for:
     port: 8000
@@ -137,9 +137,9 @@ EXAMPLES = r'''
     port: 1234
     state: absent
     sleep: 10
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 wait_attempts:
   description: The number of attempts to poll the file or port before module
     finishes.
@@ -152,4 +152,4 @@ elapsed:
   returned: always
   type: float
   sample: 2.1406487
-'''
+"""

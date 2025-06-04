@@ -373,12 +373,12 @@ class VarTestMaker(object):
         self.write_playbook()
 
     def run(self):
-        '''
+        """
         if self.dynamic_inventory:
             cmd = 'ansible-playbook -c local -i inventory/hosts site.yml'
         else:
             cmd = 'ansible-playbook -c local -i inventory site.yml'
-        '''
+        """
         cmd = 'ansible-playbook -c local -i inventory site.yml'
         if 'extra_vars' in self.features:
             cmd += ' --extra-vars="findme=extra_vars"'
@@ -430,7 +430,7 @@ def main():
         'ini_host_vars_file',
         'ini_host',
         'pb_group_vars_file_child',
-        # 'ini_group_vars_file_child', #FIXME: this contradicts documented precedence pb group vars files should override inventory ones
+        # 'ini_group_vars_file_child', # FIXME: this contradicts documented precedence pb group vars files should override inventory ones
         'pb_group_vars_file_parent',
         'ini_group_vars_file_parent',
         'pb_group_vars_file_all',

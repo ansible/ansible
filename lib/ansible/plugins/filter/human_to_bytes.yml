@@ -3,12 +3,12 @@ DOCUMENTATION:
   version_added: "historical"
   short_description: Get bytes from string
   description:
-    - Convert a human readable byte or bit string into a number bytes.
+    - Convert a human-readable byte or bit string into a number bytes.
   positional: _input, default_unit, isbits
   options:
     _input:
-      description: Human readable description of a number of bytes.
-      type: int
+      description: human-readable description of a number of bytes.
+      type: string
       required: true
     default_unit:
       description: Unit to assume when input does not specify it.
@@ -27,6 +27,15 @@ EXAMPLES: |
 
   # this is an error, wants bits, got bytes
   ERROR: '{{ "1.15 GB" | human_to_bytes(isbits=true) }}'
+  
+  # size => 2684354560
+  size: '{{ "2.5 gigabyte" | human_to_bytes }}'
+  
+  # size => 1073741824
+  size: '{{ "1 Gigabyte" | human_to_bytes }}'
+
+  # this is an error, because gigggabyte is not a valid unit
+  size: '{{ "1 gigggabyte" | human_to_bytes }}'
 
 RETURN:
   _value:

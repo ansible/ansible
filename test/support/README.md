@@ -8,4 +8,4 @@ In almost every case, pull requests affecting files under this directory
 will be closed.
 
 **You are likely looking for something under
-https://github.com/ansible-collections/ instead.**
+<https://github.com/ansible-collections/> instead.**

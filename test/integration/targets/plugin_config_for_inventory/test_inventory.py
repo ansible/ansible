@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: test_inventory
     plugin_type: inventory
     authors:
@@ -42,15 +42,15 @@ DOCUMENTATION = '''
             type: str
             default: prefix_
             required: False
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # Example command line: ansible-inventory --list -i test_inventory.yml
 
 plugin: test_inventory
 departments:
   - paris
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin
 

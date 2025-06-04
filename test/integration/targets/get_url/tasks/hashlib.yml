@@ -17,4 +17,3 @@
   loop: "{{ algorithms.keys() }}"
   loop_control:
     loop_var: algorithm
-  when: ansible_python_version.startswith('3.') or not algorithm.startswith('sha3_')

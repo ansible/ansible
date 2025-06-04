@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: package
 version_added: 2.0
@@ -15,7 +15,7 @@ author:
     - Ansible Core Team
 short_description: Generic OS package manager
 description:
-    - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.yum), M(ansible.builtin.apt), ...).
+    - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.dnf), M(ansible.builtin.apt), ...).
       It is convenient to use in an heterogeneous environment of machines without having to create a specific task for
       each package manager. M(ansible.builtin.package) calls behind the module for the package manager used by the operating system
       discovered by the module M(ansible.builtin.setup).  If M(ansible.builtin.setup) was not yet run, M(ansible.builtin.package) will run it.
@@ -28,7 +28,8 @@ options:
     description:
       - Package name, or package specifier with version.
       - Syntax varies with package manager. For example V(name-1.0) or V(name=1.0).
-      - Package names also vary with package manager; this module will not "translate" them per distro. For example V(libyaml-dev), V(libyaml-devel).
+      - Package names also vary with package manager; this module will not "translate" them per distribution. For example V(libyaml-dev), V(libyaml-devel).
+      - To operate on several packages this can accept a comma separated string of packages or a list of packages, depending on the underlying package manager.
     required: true
   state:
     description:
@@ -37,8 +38,9 @@ options:
     required: true
   use:
     description:
-      - The required package manager module to use (V(yum), V(apt), and so on). The default V(auto) will use existing facts or try to autodetect it.
+      - The required package manager module to use (V(dnf), V(apt), and so on). The default V(auto) will use existing facts or try to auto-detect it.
       - You should only use this field if the automatic selection is not working for some reason.
+      - Since version 2.17 you can use the C(ansible_package_use) variable to override the automatic detection, but this option still takes precedence.
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
@@ -64,8 +66,8 @@ attributes:
 notes:
     - While M(ansible.builtin.package) abstracts package managers to ease dealing with multiple distributions, package name often differs for the same software.
 
-'''
-EXAMPLES = '''
+"""
+EXAMPLES = """
 - name: Install ntpdate
   ansible.builtin.package:
     name: ntpdate
@@ -89,4 +91,4 @@ EXAMPLES = '''
     name: httpd
     state: present
     use: dnf
-'''
+"""

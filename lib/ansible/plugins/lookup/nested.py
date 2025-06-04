@@ -46,32 +46,16 @@ RETURN = """
     type: list
 """
 
-from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.listify import listify_lookup_plugin_terms
 
 
 class LookupModule(LookupBase):
-
-    def _lookup_variables(self, terms, variables):
-        results = []
-        for x in terms:
-            try:
-                intermediate = listify_lookup_plugin_terms(x, templar=self._templar, fail_on_undefined=True)
-            except UndefinedError as e:
-                raise AnsibleUndefinedVariable("One of the nested variables was undefined. The error was: %s" % e)
-            results.append(intermediate)
-        return results
-
     def run(self, terms, variables=None, **kwargs):
-
-        terms = self._lookup_variables(terms, variables)
-
         my_list = terms[:]
         my_list.reverse()
-        result = []
+
         if len(my_list) == 0:
             raise AnsibleError("with_nested requires at least one element in the nested list")
         result = my_list.pop()

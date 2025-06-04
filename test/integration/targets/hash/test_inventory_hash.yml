@@ -10,7 +10,7 @@
 
     - name: debug hash behaviour result
       debug:
-        var: "{{ lookup('env', 'ANSIBLE_HASH_BEHAVIOUR') }}"
+        var: lookup('env', 'ANSIBLE_HASH_BEHAVIOUR')
         verbosity: 2
 
     - name: assert hash behaviour is merge or replace

@@ -192,13 +192,14 @@ def compare_unordered_lists(a, b):
       - unordered lists
       - unhashable elements
     """
-    return len(a) == len(b) and all(x in b for x in a)
+    return len(a) == len(b) and all(x in b for x in a) and all(x in a for x in b)
 
 
 class NoArgsAnsibleModule(AnsibleModule):
     """AnsibleModule that does not actually load params. This is used to get access to the
     methods within AnsibleModule without having to fake a bunch of data
     """
+
     def _load_params(self):
         self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}
 

@@ -54,7 +54,7 @@ class OpenBSDHardware(Hardware):
         hardware_facts.update(self.get_dmi_facts())
         hardware_facts.update(self.get_uptime_facts())
 
-        # storage devices notorioslly prone to hang/block so they are under a timeout
+        # storage devices notoriously prone to hang/block so they are under a timeout
         try:
             hardware_facts.update(self.get_mount_facts())
         except timeout.TimeoutError:
@@ -113,6 +113,9 @@ class OpenBSDHardware(Hardware):
     def get_uptime_facts(self):
         # On openbsd, we need to call it with -n to get this value as an int.
         sysctl_cmd = self.module.get_bin_path('sysctl')
+        if sysctl_cmd is None:
+            return {}
+
         cmd = [sysctl_cmd, '-n', 'kern.boottime']
 
         rc, out, err = self.module.run_command(cmd)

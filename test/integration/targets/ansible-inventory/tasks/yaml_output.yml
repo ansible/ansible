@@ -1,12 +1,13 @@
-- block:
+- vars:
+    inv: '{{limited.stdout|from_yaml}}'
+    output_dir: '{{ lookup("env", "OUTPUT_DIR", default=undef()) }}'
+  delegate_to: localhost
+  block:
   - name: check baseline
-    command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list --yaml
-    register: limited
+    shell: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml' --list --yaml > '{{ output_dir }}/yaml_inv.yml'
 
-  - name: ensure something in host list
-    assert:
-      that:
-        - "'something' in inv['all']['children']['somegroup']['hosts']"
+  - name: run validation playbook
+    command: ansible-playbook -i '{{ output_dir }}/yaml_inv.yml' post_inventory.yml
 
   - name: check that limit removes host
     command: ansible-inventory -i '{{ role_path }}/files/valid_sample.yml'  --limit '!something' --list --yaml
@@ -29,6 +30,3 @@
         - "'hosts' in inv['all']['children']['parent_3']"
         - "'test1' in inv['all']['children']['parent_1']['children']['test_group1']['hosts']"
         - "'hosts' not in inv['all']['children']['parent_2']['children']['test_group1']"
-  vars:
-    inv: '{{limited.stdout|from_yaml}}'
-  delegate_to: localhost

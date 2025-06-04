@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - user - Create Buildroot subclass as alias to Busybox (https://github.com/ansible/ansible/issues/83665).

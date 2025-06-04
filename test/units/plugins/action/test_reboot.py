@@ -26,6 +26,8 @@ def module_task(mocker, task_args):
     task.action = 'reboot'
     task.args = task_args
     task.async_val = False
+    task.check_mode = False
+    task.diff = False
     return task
 
 

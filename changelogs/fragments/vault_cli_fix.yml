@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault will now correctly handle `--prompt`, previously it would issue an error about stdin if no 2nd argument was passed

@@ -6,35 +6,49 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import os
-import random
 import re
+import secrets
 import shlex
 import stat
 import tempfile
+import typing as t
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ansible import constants as C
+from ansible._internal._errors import _captured, _error_utils
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
-from ansible.executor.module_common import modify_module
+from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
+from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.common.json import Direction, get_module_encoder, get_module_decoder
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
+from ansible import _internal
+from ansible._internal._templating import _engine
+
+from .. import _AnsiblePluginInfoMixin
 
 display = Display()
+
+if t.TYPE_CHECKING:
+    from ansible.parsing.dataloader import DataLoader
+    from ansible.playbook.play_context import PlayContext
+    from ansible.playbook.task import Task
+    from ansible.plugins.connection import ConnectionBase
+    from ansible.template import Templar
 
 
 def _validate_utf8_json(d):
@@ -49,14 +63,13 @@ def _validate_utf8_json(d):
             _validate_utf8_json(o)
 
 
-class ActionBase(ABC):
-
-    '''
+class ActionBase(ABC, _AnsiblePluginInfoMixin):
+    """
     This class is the base class for all action plugins, and defines
     code common to all actions. The base class handles the connection
     by putting/getting files and executing commands based on the current
     action in use.
-    '''
+    """
 
     # A set of valid arguments
     _VALID_ARGS = frozenset([])  # type: frozenset[str]
@@ -67,22 +80,24 @@ class ActionBase(ABC):
     _requires_connection = True
     _supports_check_mode = True
     _supports_async = False
+    supports_raw_params = False
 
-    def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
+    def __init__(self, task: Task, connection: ConnectionBase, play_context: PlayContext, loader: DataLoader, templar: Templar, shared_loader_obj=None):
         self._task = task
         self._connection = connection
         self._play_context = play_context
         self._loader = loader
         self._templar = templar
-        self._shared_loader_obj = shared_loader_obj
+
+        from ansible.plugins import loader as plugin_loaders  # avoid circular global import since PluginLoader needs ActionBase
+
+        self._shared_loader_obj = plugin_loaders  # shared_loader_obj was just a ref to `ansible.plugins.loader` anyway; this lets us inherit its type
         self._cleanup_remote_tmp = False
 
         # interpreter discovery state
-        self._discovered_interpreter_key = None
+        self._discovered_interpreter_key: str | None = None
         self._discovered_interpreter = False
-        self._discovery_deprecation_warnings = []
-        self._discovery_warnings = []
-        self._used_interpreter = None
+        self._used_interpreter: str | None = None
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -104,22 +119,19 @@ class ActionBase(ABC):
 
         * Module parameters.  These are stored in self._task.args
         """
-
-        # does not default to {'changed': False, 'failed': False}, as it breaks async
+        # does not default to {'changed': False, 'failed': False}, as it used to break async
         result = {}
 
         if tmp is not None:
-            result['warning'] = ['ActionModule.run() no longer honors the tmp parameter. Action'
-                                 ' plugins should set self._connection._shell.tmpdir to share'
-                                 ' the tmpdir']
+            display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
+                            ' plugins should set self._connection._shell.tmpdir to share'
+                            ' the tmpdir.')
         del tmp
 
         if self._task.async_val and not self._supports_async:
-            raise AnsibleActionFail('async is not supported for this task.')
+            raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
         elif self._task.check_mode and not self._supports_check_mode:
-            raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async_val and self._task.check_mode:
-            raise AnsibleActionFail('check mode and async cannot be used on same task.')
+            raise AnsibleActionSkip('This action (%s) does not support check mode.' % self._task.action)
 
         # Error if invalid argument is passed
         if self._VALID_ARGS:
@@ -148,7 +160,7 @@ class ActionBase(ABC):
         Be cautious when directly passing ``new_module_args`` directly to a
         module invocation, as it will contain the defaults, and not only
         the args supplied from the task. If you do this, the module
-        should not define ``mututally_exclusive`` or similar.
+        should not define ``mutually_exclusive`` or similar.
 
         This code is roughly copied from the ``validate_argument_spec``
         action plugin for use by other action plugins.
@@ -179,7 +191,7 @@ class ActionBase(ABC):
             if isinstance(error, UnsupportedError):
                 msg = f"Unsupported parameters for ({self._load_name}) module: {msg}"
 
-            raise AnsibleActionFail(msg)
+            raise AnsibleActionFail(msg, obj=self._task.args)
 
         return validation_result, new_module_args
 
@@ -194,6 +206,28 @@ class ActionBase(ABC):
         """
         if force or not self._task.async_val:
             self._remove_tmp_path(self._connection._shell.tmpdir)
+
+    @classmethod
+    @contextlib.contextmanager
+    @_internal.experimental
+    def get_finalize_task_args_context(cls) -> t.Any:
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Wraps task arg finalization with (optional) stateful context.
+        The context manager is entered during `Task.post_validate_args, and may yield a single value to be passed
+        as `context` to Task.finalize_task_arg for each task arg.
+        """
+        yield None
+
+    @classmethod
+    @_internal.experimental
+    def finalize_task_arg(cls, name: str, value: t.Any, templar: _engine.TemplateEngine, context: t.Any) -> t.Any:
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Called for each task arg to allow for custom templating.
+        The optional `context` value is sourced from `Task.get_finalize_task_args_context`.
+        """
+        return templar.template(value)
 
     def get_plugin_option(self, plugin, option, default=None):
         """Helper to get an option from a plugin without having to use
@@ -220,11 +254,11 @@ class ActionBase(ABC):
             return True
         return False
 
-    def _configure_module(self, module_name, module_args, task_vars):
-        '''
+    def _configure_module(self, module_name, module_args, task_vars) -> tuple[_BuiltModule, str]:
+        """
         Handles the loading and templating of the module code through the
         modify_module() function.
-        '''
+        """
         if self._task.delegate_to:
             use_vars = task_vars.get('ansible_delegated_vars')[self._task.delegate_to]
         else:
@@ -278,38 +312,29 @@ class ActionBase(ABC):
             raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
-        final_environment = dict()
+        final_environment: dict[str, t.Any] = {}
         self._compute_environment_string(final_environment)
 
-        become_kwargs = {}
-        if self._connection.become:
-            become_kwargs['become'] = True
-            become_kwargs['become_method'] = self._connection.become.name
-            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
-                                                                              playcontext=self._play_context)
-            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
-                                                                                  playcontext=self._play_context)
-            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
-                                                                               playcontext=self._play_context)
-
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
-        for dummy in (1, 2):
+        for _dummy in (1, 2):
             try:
-                (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
-                                                                            task_vars=use_vars,
-                                                                            module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION',
-                                                                                                                         variables=task_vars),
-                                                                            async_timeout=self._task.async_val,
-                                                                            environment=final_environment,
-                                                                            remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
-                                                                            **become_kwargs)
+                module_bits = modify_module(
+                    module_name=module_name,
+                    module_path=module_path,
+                    module_args=module_args,
+                    templar=self._templar,
+                    task_vars=use_vars,
+                    module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION', variables=task_vars),
+                    async_timeout=self._task.async_val,
+                    environment=final_environment,
+                    remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
+                    become_plugin=self._connection.become,
+                )
+
                 break
             except InterpreterDiscoveryRequiredError as idre:
-                self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
-                    action=self,
-                    interpreter_name=idre.interpreter_name,
-                    discovery_mode=idre.discovery_mode,
-                    task_vars=use_vars))
+                self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
+                                                                    discovery_mode=idre.discovery_mode, task_vars=use_vars)
 
                 # update the local task_vars with the discovered interpreter (which might be None);
                 # we'll propagate back to the controller in the task result
@@ -329,12 +354,12 @@ class ActionBase(ABC):
                 else:
                     task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
-        return (module_style, module_shebang, module_data, module_path)
+        return module_bits, module_path
 
     def _compute_environment_string(self, raw_environment_out=None):
-        '''
+        """
         Builds the environment string to be used when executing the remote task.
-        '''
+        """
 
         final_environment = dict()
         if self._task.environment is not None:
@@ -365,52 +390,28 @@ class ActionBase(ABC):
         return self._connection._shell.env_prefix(**final_environment)
 
     def _early_needs_tmp_path(self):
-        '''
+        """
         Determines if a tmp path should be created before the action is executed.
-        '''
+        """
 
         return getattr(self, 'TRANSFERS_FILES', False)
 
-    def _is_pipelining_enabled(self, module_style, wrap_async=False):
-        '''
-        Determines if we are required and can do pipelining
-        '''
-
-        try:
-            is_enabled = self._connection.get_option('pipelining')
-        except (KeyError, AttributeError, ValueError):
-            is_enabled = self._play_context.pipelining
-
-        # winrm supports async pipeline
-        # TODO: make other class property 'has_async_pipelining' to separate cases
-        always_pipeline = self._connection.always_pipeline_modules
-
-        # su does not work with pipelining
-        # TODO: add has_pipelining class prop to become plugins
-        become_exception = (self._connection.become.name if self._connection.become else '') != 'su'
-
-        # any of these require a true
-        conditions = [
-            self._connection.has_pipelining,    # connection class supports it
-            is_enabled or always_pipeline,      # enabled via config or forced via connection (eg winrm)
-            module_style == "new",              # old style modules do not support pipelining
-            not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
-            not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
-            become_exception,
-        ]
-
-        return all(conditions)
+    def _is_pipelining_enabled(self, module_style: str, wrap_async: bool = False) -> bool:
+        """
+        Determines if we are required and can do pipelining, only 'new' style modules can support pipelining
+        """
+        return bool(module_style == 'new' and self._connection.is_pipelining_enabled(wrap_async))
 
     def _get_admin_users(self):
-        '''
+        """
         Returns a list of admin users that are configured for the current shell
         plugin
-        '''
+        """
 
         return self.get_shell_option('admin_users', ['root'])
 
     def _get_remote_addr(self, tvars):
-        ''' consistently get the 'remote_address' for the action plugin '''
+        """ consistently get the 'remote_address' for the action plugin """
         remote_addr = tvars.get('delegated_vars', {}).get('ansible_host', tvars.get('ansible_host', tvars.get('inventory_hostname', None)))
         for variation in ('remote_addr', 'host'):
             try:
@@ -424,7 +425,7 @@ class ActionBase(ABC):
         return remote_addr
 
     def _get_remote_user(self):
-        ''' consistently get the 'remote_user' for the action plugin '''
+        """ consistently get the 'remote_user' for the action plugin """
         # TODO: use 'current user running ansible' as fallback when moving away from play_context
         # pwd.getpwuid(os.getuid()).pw_name
         remote_user = None
@@ -439,10 +440,10 @@ class ActionBase(ABC):
         return remote_user
 
     def _is_become_unprivileged(self):
-        '''
+        """
         The user is not the same as the connection user and is not part of the
         shell configured admin users
-        '''
+        """
         # if we don't use become then we know we aren't switching to a
         # different unprivileged user
         if not self._connection.become:
@@ -456,9 +457,9 @@ class ActionBase(ABC):
         return bool(become_user and become_user not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
-        '''
+        """
         Create and return a temporary path on a remote box.
-        '''
+        """
 
         # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
         # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
@@ -472,8 +473,8 @@ class ActionBase(ABC):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd, sudoable=False)
+        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -519,11 +520,11 @@ class ActionBase(ABC):
         return rc
 
     def _should_remove_tmp_path(self, tmp_path):
-        '''Determine if temporary path should be deleted or kept by user request/config'''
+        """Determine if temporary path should be deleted or kept by user request/config"""
         return tmp_path and self._cleanup_remote_tmp and not C.DEFAULT_KEEP_REMOTE_FILES and "-tmp-" in tmp_path
 
     def _remove_tmp_path(self, tmp_path, force=False):
-        '''Remove a temporary path we created. '''
+        """Remove a temporary path we created. """
 
         if tmp_path is None and self._connection._shell.tmpdir:
             tmp_path = self._connection._shell.tmpdir
@@ -558,18 +559,19 @@ class ActionBase(ABC):
         self._connection.put_file(local_path, remote_path)
         return remote_path
 
-    def _transfer_data(self, remote_path, data):
-        '''
+    def _transfer_data(self, remote_path: str | bytes, data: str | bytes) -> str | bytes:
+        """
         Copies the module data out to the temporary module path.
-        '''
+        """
 
-        if isinstance(data, dict):
-            data = jsonify(data)
+        if isinstance(data, str):
+            data = data.encode(errors='surrogateescape')
+        elif not isinstance(data, bytes):
+            raise TypeError('data must be either a string or bytes')
 
         afd, afile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         afo = os.fdopen(afd, 'wb')
         try:
-            data = to_bytes(data, errors='surrogate_or_strict')
             afo.write(data)
         except Exception as e:
             raise AnsibleError("failure writing module data to temporary file for transfer: %s" % to_native(e))
@@ -636,12 +638,12 @@ class ActionBase(ABC):
         # done. Make the files +x if we're asked to, and return.
         if not self._is_become_unprivileged():
             if execute:
-                # Can't depend on the file being transferred with execute permissions.
+                # Can't depend on the file being transferred with required permissions.
                 # Only need user perms because no become was used here
-                res = self._remote_chmod(remote_paths, 'u+x')
+                res = self._remote_chmod(remote_paths, 'u+rwx')
                 if res['rc'] != 0:
                     raise AnsibleError(
-                        'Failed to set execute bit on remote files '
+                        'Failed to set permissions on remote files '
                         '(rc: {0}, err: {1})'.format(
                             res['rc'],
                             to_native(res['stderr'])))
@@ -682,10 +684,10 @@ class ActionBase(ABC):
             return remote_paths
 
         # Step 3b: Set execute if we need to. We do this before anything else
-        # because some of the methods below might work but not let us set +x
-        # as part of them.
+        # because some of the methods below might work but not let us set
+        # permissions as part of them.
         if execute:
-            res = self._remote_chmod(remote_paths, 'u+x')
+            res = self._remote_chmod(remote_paths, 'u+rwx')
             if res['rc'] != 0:
                 raise AnsibleError(
                     'Failed to set file mode or acl on remote temporary files '
@@ -804,41 +806,41 @@ class ActionBase(ABC):
                 to_native(res['stderr']), become_link))
 
     def _remote_chmod(self, paths, mode, sudoable=False):
-        '''
+        """
         Issue a remote chmod command
-        '''
+        """
         cmd = self._connection._shell.chmod(paths, mode)
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
     def _remote_chown(self, paths, user, sudoable=False):
-        '''
+        """
         Issue a remote chown command
-        '''
+        """
         cmd = self._connection._shell.chown(paths, user)
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
     def _remote_chgrp(self, paths, group, sudoable=False):
-        '''
+        """
         Issue a remote chgrp command
-        '''
+        """
         cmd = self._connection._shell.chgrp(paths, group)
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
     def _remote_set_user_facl(self, paths, user, mode, sudoable=False):
-        '''
+        """
         Issue a remote call to setfacl
-        '''
+        """
         cmd = self._connection._shell.set_user_facl(paths, user, mode)
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
     def _execute_remote_stat(self, path, all_vars, follow, tmp=None, checksum=True):
-        '''
+        """
         Get information from remote file.
-        '''
+        """
         if tmp is not None:
             display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
                             ' plugins should set self._connection._shell.tmpdir to share'
@@ -878,7 +880,7 @@ class ActionBase(ABC):
         return mystat['stat']
 
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
-        ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
+        """ takes a remote path and performs tilde/$HOME expansion on the remote host """
 
         # We only expand ~/path and ~username/path
         if not path.startswith('~'):
@@ -903,8 +905,8 @@ class ActionBase(ABC):
                 expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
-        cmd = self._connection._shell.expand_user(expand_path)
-        data = self._low_level_execute_command(cmd, sudoable=False)
+        cmd = self._connection._shell._expand_user2(expand_path)
+        data = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -932,9 +934,9 @@ class ActionBase(ABC):
         return expanded
 
     def _strip_success_message(self, data):
-        '''
+        """
         Removes the BECOME-SUCCESS message from the data.
-        '''
+        """
         if data.strip().startswith('BECOME-SUCCESS-'):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
@@ -974,9 +976,6 @@ class ActionBase(ABC):
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
-        # what to do when parameter values are converted to strings
-        module_args['_ansible_string_conversion_action'] = C.STRING_CONVERSION_ACTION
-
         # give the module the socket for persistent connections
         module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
         if not module_args['_ansible_socket']:
@@ -1000,11 +999,16 @@ class ActionBase(ABC):
         # tells the module to ignore options that are not in its argspec.
         module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
 
+        # allow user to insert string to add context to remote logging
+        module_args['_ansible_target_log_info'] = C.config.get_config_value('TARGET_LOG_INFO', variables=task_vars)
+
+        module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
+
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):
-        '''
+        """
         Transfer and run a module along with its arguments.
-        '''
+        """
         if tmp is not None:
             display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
                             ' should set self._connection._shell.tmpdir to share the tmpdir')
@@ -1046,7 +1050,8 @@ class ActionBase(ABC):
             self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
-        (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        module_bits, module_path = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        (module_style, shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
         display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
@@ -1082,7 +1087,8 @@ class ActionBase(ABC):
                     args_data += '%s=%s ' % (k, shlex.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
-                self._transfer_data(args_file_path, json.dumps(module_args))
+                profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
+                self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
             display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
@@ -1105,15 +1111,15 @@ class ActionBase(ABC):
 
         if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
-            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(
-                module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
+            (async_module_bits, async_module_path) = self._configure_module(module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
+            (shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
             async_limit = self._task.async_val
-            async_jid = f'j{random.randint(0, 999999999999)}'
+            async_jid = f'j{secrets.randbelow(999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
@@ -1155,14 +1161,14 @@ class ActionBase(ABC):
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
 
         # parse the main result
-        data = self._parse_returned_data(res)
+        data = self._parse_returned_data(res, module_bits.serialization_profile)
 
         # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
         if data.pop("_ansible_suppress_tmpdir_delete", False):
             self._cleanup_remote_tmp = False
 
-        # NOTE: yum returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
+        # NOTE: dnf returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
         if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], string_types)):
             data['ansible_module_results'] = data['results']
             del data['results']
@@ -1196,76 +1202,71 @@ class ActionBase(ABC):
 
             data['ansible_facts'][self._discovered_interpreter_key] = self._discovered_interpreter
 
-        if self._discovery_warnings:
-            if data.get('warnings') is None:
-                data['warnings'] = []
-            data['warnings'].extend(self._discovery_warnings)
-
-        if self._discovery_deprecation_warnings:
-            if data.get('deprecations') is None:
-                data['deprecations'] = []
-            data['deprecations'].extend(self._discovery_deprecation_warnings)
-
-        # mark the entire module results untrusted as a template right here, since the current action could
-        # possibly template one of these values.
-        data = wrap_var(data)
-
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _parse_returned_data(self, res):
+    def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''), objects_only=True)
+            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
+
             for w in warnings:
                 display.warning(w)
 
-            data = json.loads(filtered_output)
+            decoder = get_module_decoder(profile, Direction.MODULE_TO_CONTROLLER)
 
-            if C.MODULE_STRICT_UTF8_RESPONSE and not data.pop('_ansible_trusted_utf8', None):
-                try:
-                    _validate_utf8_json(data)
-                except UnicodeEncodeError:
-                    # When removing this, also remove the loop and latin-1 from ansible.module_utils.common.text.converters.jsonify
-                    display.deprecated(
-                        f'Module "{self._task.resolved_action or self._task.action}" returned non UTF-8 data in '
-                        'the JSON response. This will become an error in the future',
-                        version='2.18',
-                    )
+            data = json.loads(filtered_output, cls=decoder)
 
-            data['_ansible_parsed'] = True
-        except ValueError:
-            # not valid json, lets try to capture error
-            data = dict(failed=True, _ansible_parsed=False)
-            data['module_stdout'] = res.get('stdout', u'')
-            if 'stderr' in res:
-                data['module_stderr'] = res['stderr']
-                if res['stderr'].startswith(u'Traceback'):
-                    data['exception'] = res['stderr']
+            _captured.AnsibleModuleCapturedError.normalize_result_exception(data)
 
-            # in some cases a traceback will arrive on stdout instead of stderr, such as when using ssh with -tt
-            if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
-                data['exception'] = data['module_stdout']
+            data.update(_ansible_parsed=True)  # this must occur after normalize_result_exception, since it checks the type of data to ensure it's a dict
+        except ValueError as ex:
+            message = "Module result deserialization failed."
+            help_text = ""
+            include_cause_message = True
 
-            # The default
-            data['msg'] = "MODULE FAILURE"
-
-            # try to figure out if we are missing interpreter
             if self._used_interpreter is not None:
-                interpreter = re.escape(self._used_interpreter.lstrip('!#'))
-                match = re.compile('%s: (?:No such file or directory|not found)' % interpreter)
-                if match.search(data['module_stderr']) or match.search(data['module_stdout']):
-                    data['msg'] = "The module failed to execute correctly, you probably need to set the interpreter."
+                interpreter = self._used_interpreter.lstrip('!#')
+                # "not found" case is currently not tested; it was once reproducible
+                # see: https://github.com/ansible/ansible/pull/53534
+                not_found_err_re = re.compile(rf'{re.escape(interpreter)}: (?:No such file or directory|not found|command not found)')
 
-            # always append hint
-            data['msg'] += '\nSee stdout/stderr for the exact error'
+                if not_found_err_re.search(res.get('stderr', '')) or not_found_err_re.search(res.get('stdout', '')):
+                    message = f"The module interpreter {interpreter!r} was not found."
+                    help_text = 'Consider overriding the configured interpreter path for this host. '
+                    include_cause_message = False  # cause context *might* be useful in the traceback, but the JSON deserialization failure message is not
 
-            if 'rc' in res:
-                data['rc'] = res['rc']
+            try:
+                # Because the underlying action API is built on result dicts instead of exceptions (for all but the most catastrophic failures),
+                # we're using a tweaked version of the module exception handler to get new ErrorDetail-backed errors from this part of the code.
+                # Ideally this would raise immediately on failure, but this would likely break actions that assume `ActionBase._execute_module()`
+                # does not raise on module failure.
+
+                error = AnsibleError(
+                    message=message,
+                    help_text=help_text + "See stdout/stderr for the returned output.",
+                )
+
+                error._include_cause_message = include_cause_message
+
+                raise error from ex
+            except AnsibleError as ansible_ex:
+                sentinel = object()
+
+                data = _error_utils.result_dict_from_exception(ansible_ex)
+                data.update(
+                    _ansible_parsed=False,
+                    module_stdout=res.get('stdout', ''),
+                    module_stderr=res.get('stderr', sentinel),
+                    rc=res.get('rc', sentinel),
+                )
+
+                data = {k: v for k, v in data.items() if v is not sentinel}
+
         return data
 
     # FIXME: move to connection base
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
-        '''
+        """
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
         run the module code or python directly when pipelining.
@@ -1278,7 +1279,7 @@ class ActionBase(ABC):
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
         :kwarg chdir: cd into this directory before executing the command.
-        '''
+        """
 
         display.debug("_low_level_execute_command(): starting")
         # if not cmd:
@@ -1344,7 +1345,7 @@ class ActionBase(ABC):
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
-    def _get_diff_data(self, destination, source, task_vars, content, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, content=None, source_file=True):
 
         # Note: Since we do not diff the source and destination before we transform from bytes into
         # text the diff between source and destination may not be accurate.  To fix this, we'd need
@@ -1374,7 +1375,7 @@ class ActionBase(ABC):
             elif peek_result.get('size') and C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
-                display.debug(u"Slurping the file %s" % source)
+                display.debug(u"Slurping the file %s" % destination)
                 dest_result = self._execute_module(
                     module_name='ansible.legacy.slurp', module_args=dict(path=destination),
                     task_vars=task_vars, persist_files=True)
@@ -1421,11 +1422,11 @@ class ActionBase(ABC):
         return diff
 
     def _find_needle(self, dirname, needle):
-        '''
+        """
             find a needle in haystack of paths, optionally using 'dirname' as a subdir.
             This will build the ordered list of paths to search and pass them to dwim
             to get back the first existing file found.
-        '''
+        """
 
         # dwim already deals with playbook basedirs
         path_stack = self._task.get_search_path()

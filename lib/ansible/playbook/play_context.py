@@ -65,11 +65,11 @@ RESET_VARS = (
 
 class PlayContext(Base):
 
-    '''
+    """
     This class is used to consolidate the connection information for
     hosts in a play and child tasks, where the task may override some
     connection/authentication information.
-    '''
+    """
 
     # base
     module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
@@ -88,7 +88,7 @@ class PlayContext(Base):
     # networking modules
     network_os = FieldAttribute(isa='string')
 
-    # docker FIXME: remove these
+    # FIXME: docker - remove these
     docker_extra_args = FieldAttribute(isa='string')
 
     # ???
@@ -103,31 +103,11 @@ class PlayContext(Base):
     become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
     prompt = FieldAttribute(isa='string')
 
-    # general flags
-    only_tags = FieldAttribute(isa='set', default=set)
-    skip_tags = FieldAttribute(isa='set', default=set)
-
     start_at_task = FieldAttribute(isa='string')
     step = FieldAttribute(isa='bool', default=False)
 
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
     force_handlers = FieldAttribute(isa='bool', default=False)
-
-    @property
-    def verbosity(self):
-        display.deprecated(
-            "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
-            version="2.18"
-        )
-        return self._internal_verbosity
-
-    @verbosity.setter
-    def verbosity(self, value):
-        display.deprecated(
-            "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
-            version="2.18"
-        )
-        self._internal_verbosity = value
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
@@ -174,11 +154,11 @@ class PlayContext(Base):
         self.force_handlers = play.force_handlers
 
     def set_attributes_from_cli(self):
-        '''
+        """
         Configures this connection information instance with data from
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
-        '''
+        """
         if context.CLIARGS.get('timeout', False):
             self.timeout = int(context.CLIARGS['timeout'])
 
@@ -191,14 +171,14 @@ class PlayContext(Base):
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
 
     def set_task_and_variable_override(self, task, variables, templar):
-        '''
+        """
         Sets attributes from the task if they are set, which will override
         those from the play.
 
         :arg task: the task object with the parameters that were set on it
         :arg variables: variables from inventory
         :arg templar: templar instance if templating variables is needed
-        '''
+        """
 
         new_info = self.copy()
 
@@ -217,8 +197,7 @@ class PlayContext(Base):
             # In the case of a loop, the delegated_to host may have been
             # templated based on the loop variable, so we try and locate
             # the host name in the delegated variable dictionary here
-            delegated_host_name = templar.template(task.delegate_to)
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(task.delegate_to, dict())
 
             delegated_transport = C.DEFAULT_TRANSPORT
             for transport_var in C.MAGIC_VARIABLE_MAPPING.get('connection'):
@@ -234,8 +213,8 @@ class PlayContext(Base):
                 if address_var in delegated_vars:
                     break
             else:
-                display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
-                delegated_vars['ansible_host'] = delegated_host_name
+                display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % task.delegate_to)
+                delegated_vars['ansible_host'] = task.delegate_to
 
             # reset the port back to the default if none was specified, to prevent
             # the delegated host from inheriting the original host's setting
@@ -316,10 +295,6 @@ class PlayContext(Base):
             display.warning('The "%s" connection plugin has an improperly configured remote target value, '
                             'forcing "inventory_hostname" templated value instead of the string' % new_info.connection)
 
-        # set no_log to default if it was not previously set
-        if new_info.no_log is None:
-            new_info.no_log = C.DEFAULT_NO_LOG
-
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
@@ -332,10 +307,10 @@ class PlayContext(Base):
         self._become_plugin = plugin
 
     def update_vars(self, variables):
-        '''
+        """
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         In case users need to access from the play, this is a legacy from runner.
-        '''
+        """
 
         for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
             try:

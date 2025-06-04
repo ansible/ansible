@@ -1,0 +1,3 @@
+---
+removed_features:
+  - removed deprecated pycompat24 and compat.importlib.

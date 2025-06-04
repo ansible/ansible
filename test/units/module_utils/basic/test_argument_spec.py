@@ -8,17 +8,18 @@ from __future__ import annotations
 
 import json
 import os
+import typing as t
 
 import pytest
 
-from units.compat.mock import MagicMock
+from unittest.mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
-from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
-from ansible.module_utils.six import integer_types, string_types
-from ansible.module_utils.six.moves import builtins
+import builtins
 
+
+pytestmark = pytest.mark.usefixtures("module_env_mocker")
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
@@ -70,16 +71,15 @@ VALID_SPECS = (
     ({'arg': {'type': 'int'}}, {'arg': 1, 'invalid': True, '_ansible_ignore_unknown_opts': True}, 1),
 )
 
-INVALID_SPECS = (
+INVALID_SPECS: tuple[tuple[dict[str, t.Any], dict[str, t.Any], str], ...] = (
     # Type is int; unable to convert this string
-    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to an int".format(type('bad'))),
+    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, "is of type str and we were unable to convert to int"),
     # Type is list elements is int; unable to convert this string
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to "
-                                                                        "an int".format(type('int'))),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "is of type str and we were unable to convert to int"),
     # Type is int; unable to convert float
-    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'int'}}, {'arg': 42.1}, "is of type float and we were unable to convert to int:"),
     # Type is list, elements is int; unable to convert float
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "is of type float and we were unable to convert to int:"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
     # type is a list, elements is callable that fails to convert
@@ -216,7 +216,7 @@ def test_validator_basic_types(argspec, expected, stdin):
 
     if 'type' in argspec['arg']:
         if argspec['arg']['type'] == 'int':
-            type_ = integer_types
+            type_ = int
         else:
             type_ = getattr(builtins, argspec['arg']['type'])
     else:
@@ -233,7 +233,7 @@ def test_validator_function(mocker, stdin):
     argspec = {'arg': {'type': MOCK_VALIDATOR_SUCCESS}}
     am = basic.AnsibleModule(argspec)
 
-    assert isinstance(am.params['arg'], integer_types)
+    assert isinstance(am.params['arg'], int)
     assert am.params['arg'] == 27
 
 
@@ -243,9 +243,9 @@ def test_validate_basic_auth_arg(mocker, stdin):
         argument_spec=basic_auth_argument_spec()
     )
     am = basic.AnsibleModule(**kwargs)
-    assert isinstance(am.params['api_username'], string_types)
-    assert isinstance(am.params['api_password'], string_types)
-    assert isinstance(am.params['api_url'], string_types)
+    assert isinstance(am.params['api_username'], str)
+    assert isinstance(am.params['api_password'], str)
+    assert isinstance(am.params['api_url'], str)
     assert isinstance(am.params['validate_certs'], bool)
 
 
@@ -255,8 +255,8 @@ def test_validate_rate_limit_argument_spec(mocker, stdin):
         argument_spec=rate_limit_argument_spec()
     )
     am = basic.AnsibleModule(**kwargs)
-    assert isinstance(am.params['rate'], integer_types)
-    assert isinstance(am.params['rate_limit'], integer_types)
+    assert isinstance(am.params['rate'], int)
+    assert isinstance(am.params['rate_limit'], int)
 
 
 @pytest.mark.parametrize('stdin', RETRY_VALID_ARGS, indirect=['stdin'])
@@ -265,7 +265,7 @@ def test_validate_retry_argument_spec(mocker, stdin):
         argument_spec=retry_argument_spec()
     )
     am = basic.AnsibleModule(**kwargs)
-    assert isinstance(am.params['retries'], integer_types)
+    assert isinstance(am.params['retries'], int)
     assert isinstance(am.params['retry_pause'], float)
 
 
@@ -275,7 +275,7 @@ def test_validator_string_type(mocker, stdin):
     argspec = {'arg': {'type': str}}
     am = basic.AnsibleModule(argspec)
 
-    assert isinstance(am.params['arg'], string_types)
+    assert isinstance(am.params['arg'], str)
     assert am.params['arg'] == '123'
 
 
@@ -402,10 +402,8 @@ class TestComplexArgSpecs:
         assert am.params['bar3'][1] == 'test/'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
-    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec, monkeypatch):
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
         """Test a deprecated alias"""
-        monkeypatch.setattr(warnings, '_global_deprecations', [])
-
         am = basic.AnsibleModule(**complex_argspec)
 
         assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']
@@ -416,8 +414,8 @@ class TestComplexArgSpecs:
         """Test choices with list"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['bar_str'], list)
-        assert isinstance(am.params['bar_str'][0], string_types)
-        assert isinstance(am.params['bar_str'][1], string_types)
+        assert isinstance(am.params['bar_str'][0], str)
+        assert isinstance(am.params['bar_str'][1], str)
         assert am.params['bar_str'][0] == '867'
         assert am.params['bar_str'][1] == '5309'
 
@@ -496,7 +494,7 @@ class TestComplexOptions:
     )
 
     # (Parameters, failure message)
-    FAILING_PARAMS_LIST = (
+    FAILING_PARAMS_LIST: tuple[tuple[dict[str, list[dict[str, t.Any]]], str], ...] = (
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
@@ -519,7 +517,7 @@ class TestComplexOptions:
     )
 
     # (Parameters, failure message)
-    FAILING_PARAMS_DICT = (
+    FAILING_PARAMS_DICT: tuple[tuple[dict[str, dict[str, t.Any]], str], ...] = (
         # Missing required option
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option

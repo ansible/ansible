@@ -15,8 +15,6 @@ if [ "${res}" -eq 0 ] ; then
     exit 1
 fi
 
-set -ux
-
 ansible-playbook -i inventory "$@" always_block.yml | tee out.txt | grep 'any_errors_fatal_always_block_start'
 res=$?
 cat out.txt
@@ -24,8 +22,6 @@ cat out.txt
 if [ "${res}" -ne 0 ] ; then
     exit 1
 fi
-
-set -ux
 
 for test_name in test_include_role test_include_tasks; do
   ansible-playbook -i inventory "$@" -e test_name=$test_name 50897.yml | tee out.txt | grep 'any_errors_fatal_this_should_never_be_reached'
@@ -35,3 +31,19 @@ for test_name in test_include_role test_include_tasks; do
       exit 1
   fi
 done
+
+set -e
+
+ansible-playbook -i inventory "$@" 31543.yml | tee out.txt
+[ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
+
+ansible-playbook -i inventory "$@" 36308.yml | tee out.txt
+[ "$(grep -c 'handler1 ran' out.txt)" -eq 1 ]
+
+ansible-playbook -i inventory "$@" 73246.yml | tee out.txt
+[ "$(grep -c 'PASSED' out.txt)" -eq 1 ]
+
+ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
+[ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
+[ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
+[ "$(grep -c 'recovered' out.txt)" -eq 2 ]

@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: httptester_kinit
 short_description: Get Kerberos ticket
@@ -20,15 +20,15 @@ options:
     type: str
 author:
 - Ansible Project
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 #
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 #
-'''
+"""
 
 import contextlib
 import errno

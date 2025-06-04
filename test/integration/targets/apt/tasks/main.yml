@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: skip test on unsupported platforms
+  meta: end_play
+  when: ansible_distribution not in ('Ubuntu', 'Debian')
+
 - block:
   - import_tasks: 'apt.yml'
 
   - import_tasks: 'url-with-deps.yml'
 
   - import_tasks: 'apt-multiarch.yml'
-    when:
-      - ansible_userspace_architecture != apt_foreign_arch
 
   - import_tasks: 'apt-builddep.yml'
 
@@ -36,5 +38,15 @@
           name: "{{ repodir }}"
           state: absent
 
-  when:
-    - ansible_distribution in ('Ubuntu', 'Debian')
+  always:
+    - name: Check if the target is managed by ansible-test
+      stat:
+        path: /etc/ansible-test.bootstrap
+      register: marker
+
+    - name: Ensure the EXTERNALLY-MANAGED marker is not present on the target
+      command: |
+        {{ ansible_python_interpreter | quote }}
+        -c
+        'import sysconfig; import pathlib; (pathlib.Path(sysconfig.get_path("stdlib")) / "EXTERNALLY-MANAGED").unlink(missing_ok=True);'
+      when: marker.stat.exists

@@ -15,6 +15,7 @@ from abc import abstractmethod
 from functools import wraps
 
 from ansible import constants as C
+from ansible.errors import AnsibleValueOmittedError
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import AnsiblePlugin
@@ -35,6 +36,12 @@ P = t.ParamSpec('P')
 T = t.TypeVar('T')
 
 
+class ConnectionKwargs(t.TypedDict):
+    task_uuid: str
+    ansible_playbook_pid: str
+    shell: t.NotRequired[ShellBase]
+
+
 def ensure_connect(
     func: c.Callable[t.Concatenate[ConnectionBase, P], T],
 ) -> c.Callable[t.Concatenate[ConnectionBase, P], T]:
@@ -47,9 +54,9 @@ def ensure_connect(
 
 
 class ConnectionBase(AnsiblePlugin):
-    '''
+    """
     A base class for connections to contain common code.
-    '''
+    """
 
     has_pipelining = False
     has_native_async = False  # eg, winrm
@@ -71,10 +78,8 @@ class ConnectionBase(AnsiblePlugin):
     def __init__(
         self,
         play_context: PlayContext,
-        new_stdin: io.TextIOWrapper | None = None,
-        shell: ShellBase | None = None,
         *args: t.Any,
-        **kwargs: t.Any,
+        **kwargs: t.Unpack[ConnectionKwargs],
     ) -> None:
 
         super(ConnectionBase, self).__init__()
@@ -83,9 +88,6 @@ class ConnectionBase(AnsiblePlugin):
         if not hasattr(self, '_play_context'):
             # Backwards compat: self._play_context isn't really needed, using set_options/get_option
             self._play_context = play_context
-        # Delete once the deprecation period is over for WorkerProcess._new_stdin
-        if not hasattr(self, '__new_stdin'):
-            self.__new_stdin = new_stdin
         if not hasattr(self, '_display'):
             # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
@@ -95,36 +97,25 @@ class ConnectionBase(AnsiblePlugin):
         self._connected = False
         self._socket_path: str | None = None
 
-        # helper plugins
+        # we always must have shell
+        if not (shell := kwargs.get('shell')):
+            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
+            shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
         self._shell = shell
 
-        # we always must have shell
-        if not self._shell:
-            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
-            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
-
         self.become: BecomeBase | None = None
-
-    @property
-    def _new_stdin(self) -> io.TextIOWrapper | None:
-        display.deprecated(
-            "The connection's stdin object is deprecated. "
-            "Call display.prompt_until(msg) instead.",
-            version='2.19',
-        )
-        return self.__new_stdin
 
     def set_become_plugin(self, plugin: BecomeBase) -> None:
         self.become = plugin
 
     @property
     def connected(self) -> bool:
-        '''Read-only property holding whether the connection to the remote host is active or closed.'''
+        """Read-only property holding whether the connection to the remote host is active or closed."""
         return self._connected
 
     @property
     def socket_path(self) -> str | None:
-        '''Read-only property holding the connection socket path for this remote host'''
+        """Read-only property holding the connection socket path for this remote host"""
         return self._socket_path
 
     @staticmethod
@@ -247,10 +238,10 @@ class ConnectionBase(AnsiblePlugin):
         display.warning("Reset is not implemented for this connection")
 
     def update_vars(self, variables: dict[str, t.Any]) -> None:
-        '''
+        """
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         In case users need to access from the play, this is a legacy from runner.
-        '''
+        """
         for varname in C.COMMON_CONNECTION_VARS:
             value = None
             if varname in variables:
@@ -285,6 +276,50 @@ class ConnectionBase(AnsiblePlugin):
                 display.debug('Set connection var {0} to {1}'.format(varname, value))
                 variables[varname] = value
 
+    def _resolve_option_variables(self, variables, templar):
+        """
+        Return a dict of variable -> templated value, for any variables that
+        that match options registered by this plugin.
+        """
+        # create dict of 'templated vars'
+        var_options = {
+            '_extras': {},
+        }
+        for var_name in C.config.get_plugin_vars('connection', self._load_name):
+            if var_name in variables:
+                try:
+                    var_options[var_name] = templar.template(variables[var_name])
+                except AnsibleValueOmittedError:
+                    pass
+
+        # add extras if plugin supports them
+        if getattr(self, 'allow_extras', False):
+            for var_name in variables:
+                if var_name.startswith(f'ansible_{self.extras_prefix}_') and var_name not in var_options:
+                    try:
+                        var_options['_extras'][var_name] = templar.template(variables[var_name])
+                    except AnsibleValueOmittedError:
+                        pass
+
+        return var_options
+
+    def is_pipelining_enabled(self, wrap_async: bool = False) -> bool:
+
+        is_enabled = False
+        if self.has_pipelining and (not self.become or self.become.pipelining):
+            try:
+                is_enabled = self.get_option('pipelining')
+            except KeyError:
+                is_enabled = getattr(self._play_context, 'pipelining', False)
+
+        # TODO: deprecate always_pipeline_modules and has_native_async in favor for each plugin overriding this function
+        conditions = [
+            is_enabled or self.always_pipeline_modules,       # enabled via config or forced via connection (eg winrm)
+            not C.DEFAULT_KEEP_REMOTE_FILES,                  # user wants remote files
+            not wrap_async or self.has_native_async,          # async does not normally support pipelining unless it does (eg winrm)
+        ]
+        return all(conditions)
+
 
 class NetworkConnectionBase(ConnectionBase):
     """
@@ -298,11 +333,10 @@ class NetworkConnectionBase(ConnectionBase):
     def __init__(
         self,
         play_context: PlayContext,
-        new_stdin: io.TextIOWrapper | None = None,
         *args: t.Any,
         **kwargs: t.Any,
     ) -> None:
-        super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        super(NetworkConnectionBase, self).__init__(play_context, *args, **kwargs)
         self._messages: list[tuple[str, str]] = []
         self._conn_closed = False
 
@@ -356,9 +390,9 @@ class NetworkConnectionBase(ConnectionBase):
         return self._local.fetch_file(in_path, out_path)
 
     def reset(self) -> None:
-        '''
+        """
         Reset the connection
-        '''
+        """
         if self._socket_path:
             self.queue_message('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
             self.close()
@@ -390,14 +424,14 @@ class NetworkConnectionBase(ConnectionBase):
                 pass
 
     def _update_connection_state(self) -> None:
-        '''
+        """
         Reconstruct the connection socket_path and check if it exists
 
         If the socket path exists then the connection is active and set
         both the _socket_path value to the path and the _connected value
         to True.  If the socket path doesn't exist, leave the socket path
         value to None and the _connected value to False
-        '''
+        """
         ssh = connection_loader.get('ssh', class_only=True)
         control_path = ssh._create_control_path(
             self._play_context.remote_addr, self._play_context.port,

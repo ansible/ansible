@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-inventory - index available_hosts for major performance boost when dumping large inventories

@@ -1,4 +1,5 @@
 """Common utility code that depends on CommonConfig."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -65,6 +66,7 @@ CHECK_YAML_VERSIONS: dict[str, t.Any] = {}
 
 class ExitHandler:
     """Simple exit handler implementation."""
+
     _callbacks: list[tuple[t.Callable, tuple[t.Any, ...], dict[str, t.Any]]] = []
 
     @staticmethod
@@ -175,6 +177,7 @@ class CommonConfig:
         self.debug: bool = args.debug
         self.truncate: int = args.truncate
         self.redact: bool = args.redact
+        self.display_traceback: str = args.display_traceback
 
         self.display_stderr: bool = False
 
@@ -269,7 +272,10 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
             tempfile_fd.write(to_bytes(content))
             tempfile_fd.flush()
 
-            yield tempfile_fd.name
+            try:
+                yield tempfile_fd.name
+            finally:
+                pass
 
 
 def write_json_test_results(
@@ -300,6 +306,7 @@ def get_injector_path() -> str:
     injector_names = sorted(list(ANSIBLE_BIN_SYMLINK_MAP) + [
         'importer.py',
         'pytest',
+        'ansible_connection_cli_stub.py',
     ])
 
     scripts = (
@@ -406,7 +413,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     # injected_interpreter could be a script from the system or our own wrapper created for the --venv option
     shebang_interpreter = sys.executable
 
-    code = textwrap.dedent('''
+    code = textwrap.dedent("""
     #!%s
 
     from __future__ import annotations
@@ -417,7 +424,7 @@ def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> N
     python = '%s'
 
     execv(python, [python] + argv[1:])
-    ''' % (shebang_interpreter, interpreter)).lstrip()
+    """ % (shebang_interpreter, interpreter)).lstrip()
 
     write_text_file(injected_interpreter, code)
 

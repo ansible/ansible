@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: legacy_module
 short_description: A module to test a task's resolved action name.
@@ -14,7 +14,7 @@ options: {}
 author: Ansible Core Team
 notes:
   - Supports C(check_mode).
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 

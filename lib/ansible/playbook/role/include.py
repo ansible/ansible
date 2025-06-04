@@ -19,10 +19,8 @@ from __future__ import annotations
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.role.definition import RoleDefinition
-from ansible.module_utils.common.text.converters import to_native
 
 
 __all__ = ['RoleInclude']
@@ -42,8 +40,8 @@ class RoleInclude(RoleDefinition, Delegatable):
     @staticmethod
     def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=None):
 
-        if not (isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)):
-            raise AnsibleParserError("Invalid role definition: %s" % to_native(data))
+        if not (isinstance(data, string_types) or isinstance(data, dict)):
+            raise AnsibleParserError("Invalid role definition.", obj=data)
 
         if isinstance(data, string_types) and ',' in data:
             raise AnsibleError("Invalid old style role requirement: %s" % data)

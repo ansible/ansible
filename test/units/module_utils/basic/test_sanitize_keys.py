@@ -49,7 +49,7 @@ def _run_comparison(obj):
 
 
 def test_sanitize_keys_dict():
-    """ Test that santize_keys works with a dict. """
+    """ Test that sanitize_keys works with a dict. """
 
     d = [
         None,

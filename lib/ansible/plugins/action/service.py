@@ -16,9 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-
-from ansible.errors import AnsibleAction, AnsibleActionFail
-from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.errors import AnsibleActionFail
+from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.plugins.action import ActionBase
 
 
@@ -35,22 +34,21 @@ class ActionModule(ActionBase):
     BUILTIN_SVC_MGR_MODULES = set(['openwrt_init', 'service', 'systemd', 'sysvinit'])
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for package operations '''
+        """ handler for package operations """
 
         self._supports_check_mode = True
         self._supports_async = True
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         module = self._task.args.get('use', 'auto').lower()
 
         if module == 'auto':
             try:
-                if self._task.delegate_to:  # if we delegate, we should use delegated host's facts
-                    module = self._templar.template("{{hostvars['%s']['ansible_facts']['service_mgr']}}" % self._task.delegate_to)
-                else:
-                    module = self._templar.template('{{ansible_facts.service_mgr}}')
+                # if we delegate, we should use delegated host's facts
+                expr = "hostvars[delegate_to].ansible_facts.service_mgr" if self._task.delegate_to else "ansible_facts.service_mgr"
+                module = self._templar.resolve_variable_expression(expr, local_variables=dict(delegate_to=self._task.delegate_to))
             except Exception:
                 pass  # could not get it from template!
 
@@ -79,24 +77,17 @@ class ActionModule(ActionBase):
 
                 # get defaults for specific module
                 context = self._shared_loader_obj.module_loader.find_plugin_with_context(module, collection_list=self._task.collections)
-                new_module_args = get_action_args_with_defaults(
-                    context.resolved_fqcn, new_module_args, self._task.module_defaults, self._templar,
-                    action_groups=self._task._parent._play._action_groups
-                )
+                new_module_args = _apply_action_arg_defaults(context.resolved_fqcn, self._task, new_module_args, self._templar)
 
                 # collection prefix known internal modules to avoid collisions from collections search, while still allowing library/ overrides
                 if module in self.BUILTIN_SVC_MGR_MODULES:
                     module = 'ansible.legacy.' + module
 
                 self._display.vvvv("Running %s" % module)
-                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+                return self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val)
             else:
                 raise AnsibleActionFail('Could not detect which service manager to use. Try gathering facts or setting the "use" option.')
 
-        except AnsibleAction as e:
-            result.update(e.result)
         finally:
             if not self._task.async_val:
                 self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result

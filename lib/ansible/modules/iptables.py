@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: iptables
 short_description: Modify iptables rules
@@ -37,9 +37,9 @@ notes:
 options:
   table:
     description:
-      - This option specifies the packet matching table which the command should operate on.
+      - This option specifies the packet matching table on which the command should operate.
       - If the kernel is configured with automatic module loading, an attempt will be made
-         to load the appropriate module for that table if it is not already there.
+        to load the appropriate module for that table if it is not already there.
     type: str
     choices: [ filter, nat, mangle, raw, security ]
     default: filter
@@ -67,7 +67,7 @@ options:
     description:
       - Which version of the IP protocol this rule should apply to.
     type: str
-    choices: [ ipv4, ipv6 ]
+    choices: [ ipv4, ipv6, both ]
     default: ipv4
   chain:
     description:
@@ -133,9 +133,9 @@ options:
     description:
       - Specifies a match to use, that is, an extension module that tests for
         a specific property.
-      - The set of matches make up the condition under which a target is invoked.
+      - The set of matches makes up the condition under which a target is invoked.
       - Matches are evaluated first to last if specified as an array and work in short-circuit
-        fashion, i.e. if one extension yields false, evaluation will stop.
+        fashion, in other words if one extension yields false, the evaluation will stop.
     type: list
     elements: str
     default: []
@@ -143,7 +143,7 @@ options:
     description:
       - This specifies the target of the rule; i.e., what to do if the packet matches it.
       - The target can be a user-defined chain (other than the one
-        this rule is in), one of the special builtin targets which decide the
+        this rule is in), one of the special builtin targets that decide the
         fate of the packet immediately, or an extension (see EXTENSIONS
         below).
       - If this option is omitted in a rule (and the goto parameter
@@ -152,26 +152,26 @@ options:
     type: str
   gateway:
     description:
-      - This specifies the IP address of host to send the cloned packets.
-      - This option is only valid when O(jump) is set to V(TEE).
+      - This specifies the IP address of the host to send the cloned packets.
+      - This option is only valid when O(jump=TEE).
     type: str
     version_added: "2.8"
   log_prefix:
     description:
-      - Specifies a log text for the rule. Only make sense with a LOG jump.
+      - Specifies a log text for the rule. Only makes sense with a LOG jump.
     type: str
     version_added: "2.5"
   log_level:
     description:
       - Logging level according to the syslogd-defined priorities.
       - The value can be strings or numbers from 1-8.
-      - This parameter is only applicable if O(jump) is set to V(LOG).
+      - This parameter is only applicable if O(jump=LOG).
     type: str
     version_added: "2.8"
     choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
   goto:
     description:
-      - This specifies that the processing should continue in a user specified chain.
+      - This specifies that the processing should continue in a user-specified chain.
       - Unlike the jump argument return will not continue processing in
         this chain but instead in the chain that called us via jump.
     type: str
@@ -199,7 +199,7 @@ options:
         of fragmented packets.
       - Since there is no way to tell the source or destination ports of such
         a packet (or ICMP type), such a packet will not match any rules which specify them.
-      - When the "!" argument precedes fragment argument, the rule will only match head fragments,
+      - When the "!" argument precedes the fragment argument, the rule will only match head fragments,
         or unfragmented packets.
     type: str
   set_counters:
@@ -242,13 +242,13 @@ options:
     type: str
   to_destination:
     description:
-      - This specifies a destination address to use with C(DNAT).
+      - This specifies a destination address to use with O(ctstate=DNAT).
       - Without this, the destination address is never altered.
     type: str
     version_added: "2.1"
   to_source:
     description:
-      - This specifies a source address to use with C(SNAT).
+      - This specifies a source address to use with O(ctstate=SNAT).
       - Without this, the source address is never altered.
     type: str
     version_added: "2.2"
@@ -265,6 +265,7 @@ options:
     description:
       - This allows specifying a DSCP mark to be added to packets.
         It takes either an integer or hex value.
+      - If the parameter is set, O(jump) is set to V(DSCP).
       - Mutually exclusive with O(set_dscp_mark_class).
     type: str
     version_added: "2.1"
@@ -272,6 +273,7 @@ options:
     description:
       - This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark.
+      - If the parameter is set, O(jump) is set to V(DSCP).
       - Mutually exclusive with O(set_dscp_mark).
     type: str
     version_added: "2.1"
@@ -288,7 +290,7 @@ options:
     default: []
   src_range:
     description:
-      - Specifies the source IP range to match in the iprange module.
+      - Specifies the source IP range to match the iprange module.
     type: str
     version_added: "2.8"
   dst_range:
@@ -298,8 +300,8 @@ options:
     version_added: "2.8"
   match_set:
     description:
-      - Specifies a set name which can be defined by ipset.
-      - Must be used together with the match_set_flags parameter.
+      - Specifies a set name that can be defined by ipset.
+      - Must be used together with the O(match_set_flags) parameter.
       - When the V(!) argument is prepended then it inverts the rule.
       - Uses the iptables set extension.
     type: str
@@ -307,10 +309,11 @@ options:
   match_set_flags:
     description:
       - Specifies the necessary flags for the match_set parameter.
-      - Must be used together with the match_set parameter.
+      - Must be used together with the O(match_set) parameter.
       - Uses the iptables set extension.
+      - Choices V(dst,dst) and V(src,src) added in version 2.17.
     type: str
-    choices: [ "src", "dst", "src,dst", "dst,src" ]
+    choices: [ "src", "dst", "src,dst", "dst,src", "dst,dst", "src,src" ]
     version_added: "2.11"
   limit:
     description:
@@ -326,27 +329,27 @@ options:
     version_added: "2.1"
   uid_owner:
     description:
-      - Specifies the UID or username to use in match by owner rule.
+      - Specifies the UID or username to use in the match by owner rule.
       - From Ansible 2.6 when the C(!) argument is prepended then the it inverts
         the rule to apply instead to all users except that one specified.
     type: str
     version_added: "2.1"
   gid_owner:
     description:
-      - Specifies the GID or group to use in match by owner rule.
+      - Specifies the GID or group to use in the match by owner rule.
     type: str
     version_added: "2.9"
   reject_with:
     description:
       - 'Specifies the error packet type to return while rejecting. It implies
-        "jump: REJECT".'
+        C(jump=REJECT).'
     type: str
     version_added: "2.1"
   icmp_type:
     description:
       - This allows specification of the ICMP type, which can be a numeric
         ICMP type, type/code pair, or one of the ICMP type names shown by the
-        command 'iptables -p icmp -h'
+        command C(iptables -p icmp -h).
     type: str
     version_added: "2.2"
   flush:
@@ -363,7 +366,7 @@ options:
       - Only built-in chains can have policies.
       - This parameter requires the O(chain) parameter.
       - If you specify this parameter, all other parameters will be ignored.
-      - This parameter is used to set default policy for the given O(chain).
+      - This parameter is used to set the default policy for the given O(chain).
         Do not confuse this with O(jump) parameter.
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
@@ -384,16 +387,16 @@ options:
     version_added: "2.13"
   numeric:
     description:
-      - This parameter controls the running of the list -action of iptables, which is used internally by the module
-      - Does not affect the actual functionality. Use this if iptables hangs when creating chain or altering policy
-      - If V(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action
-      - Listing is used internally for example when setting a policy or creting of a chain
+      - This parameter controls the running of the list -action of iptables, which is used internally by the module.
+      - Does not affect the actual functionality. Use this if iptables hang when creating a chain or altering policy.
+      - If V(true), then iptables skips the DNS-lookup of the IP addresses in a chain when it uses the list -action.
+      - Listing is used internally for example when setting a policy or creating a chain.
     type: bool
     default: false
     version_added: "2.15"
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Block specific IP
   ansible.builtin.iptables:
     chain: INPUT
@@ -540,7 +543,7 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
-'''
+"""
 
 import re
 
@@ -561,6 +564,7 @@ BINS = dict(
 ICMP_TYPE_OPTIONS = dict(
     ipv4='--icmp-type',
     ipv6='--icmpv6-type',
+    both='--icmp-type --icmpv6-type',
 )
 
 
@@ -611,7 +615,6 @@ def append_wait(rule, param, flag):
 
 def construct_rule(params):
     rule = []
-    append_wait(rule, params['wait'], '-w')
     append_param(rule, params['protocol'], '-p', False)
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
@@ -635,11 +638,16 @@ def construct_rule(params):
     append_param(rule, params['destination_port'], '--destination-port', False)
     append_param(rule, params['to_ports'], '--to-ports', False)
     append_param(rule, params['set_dscp_mark'], '--set-dscp', False)
+    if params.get('set_dscp_mark') and params.get('jump').lower() != 'dscp':
+        append_jump(rule, params['set_dscp_mark'], 'DSCP')
+
     append_param(
         rule,
         params['set_dscp_mark_class'],
         '--set-dscp-class',
         False)
+    if params.get('set_dscp_mark_class') and params.get('jump').lower() != 'dscp':
+        append_jump(rule, params['set_dscp_mark_class'], 'DSCP')
     append_match_flag(rule, params['syn'], '--syn', True)
     if 'conntrack' in params['match']:
         append_csv(rule, params['ctstate'], '--ctstate')
@@ -673,6 +681,9 @@ def construct_rule(params):
     append_param(rule, params['gid_owner'], '--gid-owner', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
+        append_jump(rule, params['set_dscp_mark_class'], 'DSCP')
+        append_jump(rule, params['set_dscp_mark'], 'DSCP')
+
     append_param(rule, params['reject_with'], '--reject-with', False)
     append_param(
         rule,
@@ -690,6 +701,8 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     cmd.extend([action, params['chain']])
     if action == '-I' and params['rule_num']:
         cmd.extend([params['rule_num']])
+    if params['wait']:
+        cmd.extend(['-w', params['wait']])
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
@@ -770,7 +783,7 @@ def main():
             table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             action=dict(type='str', default='append', choices=['append', 'insert']),
-            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
+            ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6', 'both']),
             chain=dict(type='str'),
             rule_num=dict(type='str'),
             protocol=dict(type='str'),
@@ -810,7 +823,10 @@ def main():
             src_range=dict(type='str'),
             dst_range=dict(type='str'),
             match_set=dict(type='str'),
-            match_set_flags=dict(type='str', choices=['src', 'dst', 'src,dst', 'dst,src']),
+            match_set_flags=dict(
+                type='str',
+                choices=['src', 'dst', 'src,dst', 'dst,src', 'src,src', 'dst,dst']
+            ),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
@@ -827,9 +843,14 @@ def main():
             ['set_dscp_mark', 'set_dscp_mark_class'],
             ['flush', 'policy'],
         ),
+        required_by=dict(
+            set_dscp_mark=('jump',),
+            set_dscp_mark_class=('jump',),
+        ),
         required_if=[
             ['jump', 'TEE', ['gateway']],
             ['jump', 'tee', ['gateway']],
+            ['flush', False, ['chain']],
         ]
     )
     args = dict(
@@ -842,90 +863,97 @@ def main():
         rule=' '.join(construct_rule(module.params)),
         state=module.params['state'],
         chain_management=module.params['chain_management'],
+        wait=module.params['wait'],
     )
 
-    ip_version = module.params['ip_version']
-    iptables_path = module.get_bin_path(BINS[ip_version], True)
+    ip_version = ['ipv4', 'ipv6'] if module.params['ip_version'] == 'both' else [module.params['ip_version']]
+    iptables_path = [module.get_bin_path('iptables', True) if ip_version == 'ipv4' else module.get_bin_path('ip6tables', True) for ip_version in ip_version]
 
-    # Check if chain option is required
-    if args['flush'] is False and args['chain'] is None:
-        module.fail_json(msg="Either chain or flush parameter must be specified.")
+    both_changed = False
 
-    if module.params.get('log_prefix', None) or module.params.get('log_level', None):
-        if module.params['jump'] is None:
-            module.params['jump'] = 'LOG'
-        elif module.params['jump'] != 'LOG':
-            module.fail_json(msg="Logging options can only be used with the LOG jump target.")
+    for path in iptables_path:
+        if module.params.get('log_prefix', None) or module.params.get('log_level', None):
+            if module.params['jump'] is None:
+                module.params['jump'] = 'LOG'
+            elif module.params['jump'] != 'LOG':
+                module.fail_json(msg="Logging options can only be used with the LOG jump target.")
 
-    # Check if wait option is supported
-    iptables_version = LooseVersion(get_iptables_version(iptables_path, module))
+        # Check if wait option is supported
+        iptables_version = LooseVersion(get_iptables_version(path, module))
 
-    if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
-        if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
-            module.params['wait'] = ''
-    else:
-        module.params['wait'] = None
+        if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
+            if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
+                module.params['wait'] = ''
+        else:
+            module.params['wait'] = None
 
-    # Flush the table
-    if args['flush'] is True:
-        args['changed'] = True
-        if not module.check_mode:
-            flush_table(iptables_path, module, module.params)
+        # Flush the table
+        if args['flush'] is True:
+            args['changed'] = True
+            both_changed = True
+            if not module.check_mode:
+                flush_table(path, module, module.params)
 
-    # Set the policy
-    elif module.params['policy']:
-        current_policy = get_chain_policy(iptables_path, module, module.params)
-        if not current_policy:
-            module.fail_json(msg='Can\'t detect current policy')
+        # Set the policy
+        elif module.params['policy']:
+            current_policy = get_chain_policy(path, module, module.params)
+            if not current_policy:
+                module.fail_json(msg='Can\'t detect current policy')
 
-        changed = current_policy != module.params['policy']
-        args['changed'] = changed
-        if changed and not module.check_mode:
-            set_chain_policy(iptables_path, module, module.params)
+            changed = current_policy != module.params['policy']
+            args['changed'] = changed
+            both_changed = both_changed or changed
+            if changed and not module.check_mode:
+                set_chain_policy(path, module, module.params)
 
-    # Delete the chain if there is no rule in the arguments
-    elif (args['state'] == 'absent') and not args['rule']:
-        chain_is_present = check_chain_present(
-            iptables_path, module, module.params
-        )
-        args['changed'] = chain_is_present
-
-        if (chain_is_present and args['chain_management'] and not module.check_mode):
-            delete_chain(iptables_path, module, module.params)
-
-    else:
-        # Create the chain if there are no rule arguments
-        if (args['state'] == 'present') and not args['rule']:
+        # Delete the chain if there is no rule in the arguments
+        elif (args['state'] == 'absent') and not args['rule']:
             chain_is_present = check_chain_present(
-                iptables_path, module, module.params
+                path, module, module.params
             )
-            args['changed'] = not chain_is_present
+            args['changed'] = chain_is_present
+            both_changed = both_changed or chain_is_present
 
-            if (not chain_is_present and args['chain_management'] and not module.check_mode):
-                create_chain(iptables_path, module, module.params)
+            if (chain_is_present and args['chain_management'] and not module.check_mode):
+                delete_chain(path, module, module.params)
 
         else:
-            insert = (module.params['action'] == 'insert')
-            rule_is_present = check_rule_present(
-                iptables_path, module, module.params
-            )
+            # Create the chain if there are no rule arguments
+            if (args['state'] == 'present') and not args['rule']:
+                chain_is_present = check_chain_present(
+                    path, module, module.params
+                )
+                args['changed'] = not chain_is_present
+                both_changed = both_changed or not chain_is_present
 
-            should_be_present = (args['state'] == 'present')
-            # Check if target is up to date
-            args['changed'] = (rule_is_present != should_be_present)
-            if args['changed'] is False:
-                # Target is already up to date
-                module.exit_json(**args)
+                if (not chain_is_present and args['chain_management'] and not module.check_mode):
+                    create_chain(path, module, module.params)
 
-            # Modify if not check_mode
-            if not module.check_mode:
-                if should_be_present:
-                    if insert:
-                        insert_rule(iptables_path, module, module.params)
+            else:
+                insert = (module.params['action'] == 'insert')
+                rule_is_present = check_rule_present(
+                    path, module, module.params
+                )
+
+                should_be_present = (args['state'] == 'present')
+                # Check if target is up to date
+                args['changed'] = (rule_is_present != should_be_present)
+                both_changed = both_changed or (rule_is_present != should_be_present)
+                if args['changed'] is False:
+                    # Target is already up to date
+                    continue
+
+                # Modify if not check_mode
+                if not module.check_mode:
+                    if should_be_present:
+                        if insert:
+                            insert_rule(path, module, module.params)
+                        else:
+                            append_rule(path, module, module.params)
                     else:
-                        append_rule(iptables_path, module, module.params)
-                else:
-                    remove_rule(iptables_path, module, module.params)
+                        remove_rule(path, module, module.params)
+
+    args['changed'] = both_changed
 
     module.exit_json(**args)
 

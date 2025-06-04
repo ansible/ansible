@@ -1,11 +1,10 @@
 include COPYING
-include bin/*
 include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
 include licenses/*.txt
 include requirements.txt
 recursive-include packaging *.py *.j2
 recursive-include test/integration *
-recursive-include test/sanity *.in *.json *.py *.txt
+recursive-include test/sanity *.in *.json *.py *.txt *.ini
 recursive-include test/support *.py *.ps1 *.psm1 *.cs *.md
 recursive-include test/units *

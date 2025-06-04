@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: getent
 short_description: A wrapper to the unix getent utility
@@ -58,9 +58,9 @@ notes:
    - Not all databases support enumeration, check system documentation for details.
 author:
 - Brian Coca (@bcoca)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Get root user info
   ansible.builtin.getent:
     database: passwd
@@ -97,9 +97,9 @@ EXAMPLES = '''
 - ansible.builtin.debug:
     var: ansible_facts.getent_shadow
 
-'''
+"""
 
-RETURN = '''
+RETURN = """
 ansible_facts:
   description: Facts to add to ansible_facts.
   returned: always
@@ -109,12 +109,10 @@ ansible_facts:
       description:
         - A list of results or a single result as a list of the fields the db provides
         - The list elements depend on the database queried, see getent man page for the structure
-        - Starting at 2.11 it now returns multiple duplicate entries, previouslly it only returned the last one
+        - Starting at 2.11 it now returns multiple duplicate entries, previously it only returned the last one
       returned: always
       type: list
-'''
-
-import traceback
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
@@ -156,7 +154,7 @@ def main():
     try:
         rc, out, err = module.run_command(cmd)
     except Exception as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg=to_native(e))
 
     msg = "Unexpected failure!"
     dbtree = 'getent_%s' % database

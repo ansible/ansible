@@ -19,9 +19,10 @@ from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.sentinel import Sentinel
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import FieldAttribute
-from ansible.template import Templar
-from ansible.utils.sentinel import Sentinel
+from ansible._internal._templating._engine import TemplateEngine
 
 
 def _flatten_tags(tags: list) -> list:
@@ -42,16 +43,17 @@ class Taggable:
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
-        elif isinstance(ds, string_types):
-            return [x.strip() for x in ds.split(',')]
-        else:
-            raise AnsibleError('tags must be specified as a list', obj=ds)
+
+        if isinstance(ds, str):
+            return [AnsibleTagHelper.tag_copy(ds, item.strip()) for item in ds.split(',')]
+
+        raise AnsibleError('tags must be specified as a list', obj=ds)
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        ''' this checks if the current item should be executed depending on tag options '''
+        """ this checks if the current item should be executed depending on tag options """
 
         if self.tags:
-            templar = Templar(loader=self._loader, variables=all_vars)
+            templar = TemplateEngine(loader=self._loader, variables=all_vars)
             obj = self
             while obj is not None:
                 if (_tags := getattr(obj, "_tags", Sentinel)) is not Sentinel:

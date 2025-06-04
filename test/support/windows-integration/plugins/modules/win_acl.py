@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_acl
 version_added: "2.0"
@@ -82,9 +82,9 @@ author:
 - Phil Schwartz (@schwartzmx)
 - Trond Hindenes (@trondhindenes)
 - Hans-Joachim Kliemeck (@h0nIg)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Restrict write and execute access to User Fed-Phil
   win_acl:
     user: Fed-Phil
@@ -129,4 +129,4 @@ EXAMPLES = r'''
     rights: Read,Write,Modify,FullControl,Delete
     type: deny
     state: present
-'''
+"""

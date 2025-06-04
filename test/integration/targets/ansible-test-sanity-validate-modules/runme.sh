@@ -8,6 +8,16 @@ ansible-test sanity --test validate-modules --color --truncate 0 --failure-ok --
 diff -u "${TEST_DIR}/expected.txt" actual-stdout.txt
 grep -F -f "${TEST_DIR}/expected.txt" actual-stderr.txt
 
+cd ../col
+ansible-test sanity --test runtime-metadata
+
+cd ../failure
+if ansible-test sanity --test runtime-metadata 2>&1 | tee out.txt; then
+  echo "runtime-metadata in failure should be invalid"
+  exit 1
+fi
+grep out.txt -e 'extra keys not allowed'
+
 cd ../ps_only
 
 if ! command -V pwsh; then

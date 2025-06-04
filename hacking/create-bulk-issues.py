@@ -35,6 +35,7 @@ class Issue:
     body: str
     project: str
     labels: list[str] | None = None
+    assignee: str | None = None
 
     def create(self) -> str:
         cmd = ['gh', 'issue', 'create', '--title', self.title, '--body', self.body, '--project', self.project]
@@ -43,8 +44,18 @@ class Issue:
             for label in self.labels:
                 cmd.extend(('--label', label))
 
-        process = subprocess.run(cmd, capture_output=True, check=True)
-        url = process.stdout.decode().strip()
+        if self.assignee:
+            cmd.extend(('--assignee', self.assignee))
+
+        try:
+            process = subprocess.run(cmd, capture_output=True, check=True, text=True)
+        except subprocess.CalledProcessError as ex:
+            print('>>> Note')
+            print(f"You may need to run 'gh auth refresh -s project' if 'gh' reports it cannot find the project {self.project!r} when it exists.")
+            print(f'>>> Standard Output\n{ex.stdout.strip()}\n>>> Standard Error\n{ex.stderr.strip()}\n>>> Exception')
+            raise
+
+        url = process.stdout.strip()
         return url
 
 
@@ -54,6 +65,7 @@ class Feature:
     summary: str
     component: str
     labels: list[str] | None = None
+    assignee: str | None = None
 
     @staticmethod
     def from_dict(data: dict[str, t.Any]) -> Feature:
@@ -61,6 +73,7 @@ class Feature:
         summary = data.get('summary')
         component = data.get('component')
         labels = data.get('labels')
+        assignee = data.get('assignee')
 
         if not isinstance(title, str):
             raise RuntimeError(f'`title` is not `str`: {title}')
@@ -71,6 +84,9 @@ class Feature:
         if not isinstance(component, str):
             raise RuntimeError(f'`component` is not `str`: {component}')
 
+        if not isinstance(assignee, (str, type(None))):
+            raise RuntimeError(f'`assignee` is not `str`: {assignee}')
+
         if not isinstance(labels, list) or not all(isinstance(item, str) for item in labels):
             raise RuntimeError(f'`labels` is not `list[str]`: {labels}')
 
@@ -79,6 +95,7 @@ class Feature:
             summary=summary,
             component=component,
             labels=labels,
+            assignee=assignee,
         )
 
     def create_issue(self, project: str) -> Issue:
@@ -102,6 +119,7 @@ Feature Idea
             body=body.strip(),
             project=project,
             labels=self.labels,
+            assignee=self.assignee,
         )
 
 
@@ -297,7 +315,21 @@ def create_deprecation_parser(subparser) -> None:
 
 
 def create_feature_parser(subparser) -> None:
-    parser: argparse.ArgumentParser = subparser.add_parser('feature')
+    epilog = """
+Example source YAML:
+
+default:
+  component: ansible-test
+  labels:
+    - ansible-test
+    - feature
+  assignee: "@me"
+features:
+  - title: Some title goes here
+    summary: A summary goes here.
+"""
+
+    parser: argparse.ArgumentParser = subparser.add_parser('feature', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.set_defaults(type=FeatureArgs)
     parser.set_defaults(command=feature_command)
 

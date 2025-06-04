@@ -1,4 +1,5 @@
 """Provides compatibility with first-generation host delegation options in ansible-test."""
+
 from __future__ import annotations
 
 import argparse
@@ -93,7 +94,10 @@ class PythonVersionUnspecifiedError(ApplicationError):
     """A Python version was not specified for a context which is unknown, thus the Python version is unknown."""
 
     def __init__(self, context: str) -> None:
-        super().__init__(f'A Python version was not specified for environment `{context}`. Use the `--python` option to specify a Python version.')
+        super().__init__(
+            f'Environment `{context}` is unknown. Use a predefined environment instead. '
+            f'Alternatively, to use an unknown environment, use the `--python` option to specify a Python version.'
+        )
 
 
 class ControllerNotSupportedError(ApplicationError):

@@ -54,6 +54,18 @@
   register: pass_checksum
   with_sequence: start=0 end=4 format=pass%d
 
+
+- name: test basic auth with urlencoded
+  register: result
+  uri:
+    url: 'https://foo%40example.com:test%40@{{ httpbin_host }}/basic-auth/foo%40example.com/test%40'
+
+- name: Ensure basic auth credentials where URL-decoded
+  assert:
+    that:
+      - result.json.authenticated
+      - result.json.user == 'foo@example.com'
+
 - name: fetch pass_json
   uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
   register: fetch_pass_json
@@ -87,6 +99,19 @@
   with_together:
     - "{{fail_checksum.results}}"
     - "{{fail.results}}"
+
+- name: Request IncompleteRead from localhost
+  uri:
+    return_content: yes
+    url: http://localhost:{{ http_port }}/chunked
+  register: r
+  ignore_errors: true
+
+- name: Check if IncompleteRead raises error
+  assert:
+    that:
+      - r.failed
+      - "'HTTP Error while fetching' in r.msg"
 
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
@@ -202,7 +227,7 @@
 - name: Assert location header
   assert:
     that:
-      - 'result.location|default("") == "https://{{ httpbin_host }}/relative-redirect/1"'
+      - 'result.location|default("") == "https://" + httpbin_host + "/relative-redirect/1"'
 
 - name: Check SSL with redirect
   uri:
@@ -212,7 +237,7 @@
 - name: Assert SSL with redirect
   assert:
     that:
-      - 'result.url|default("") == "https://{{ httpbin_host }}/get"'
+      - 'result.url|default("") == "https://" + httpbin_host + "/get"'
 
 - name: redirect to bad SSL site
   uri:
@@ -220,7 +245,7 @@
   register: result
   ignore_errors: true
 
-- name: Ensure bad SSL site reidrect fails
+- name: Ensure bad SSL site redirect fails
   assert:
     that:
       - result is failed
@@ -423,6 +448,9 @@
         content: text based file content
         filename: fake.txt
         mime_type: text/plain
+      file3:
+        filename: formdata.txt
+        multipart_encoding: '7or8bit'
       text_form_field1: value1
       text_form_field2:
         content: value2
@@ -432,8 +460,9 @@
 - name: Assert multipart/form-data
   assert:
     that:
-      - multipart.json.files.file1 == '_multipart/form-data_\n'
+      - multipart.json.files.file1 | b64decode == '_multipart/form-data_\n'
       - multipart.json.files.file2 == 'text based file content'
+      - multipart.json.files.file3 == '_multipart/form-data_\r\n'
       - multipart.json.form.text_form_field1 == 'value1'
       - multipart.json.form.text_form_field2 == 'value2'
 
@@ -446,7 +475,7 @@
     body:
       integer_value: 1
   register: multipart_invalid
-  failed_when: 'multipart_invalid.msg != "failed to parse body as form-multipart: value must be a string, or mapping, cannot be type int"'
+  failed_when: '"failed to parse body as form-multipart: value must be a string, or mapping, cannot be type" not in multipart_invalid.msg'
 
 - name: Validate invalid method
   uri:
@@ -590,7 +619,7 @@
 - name: assert that keys were sanitized
   assert:
     that:
-      - sanitize_keys.json.args['key-********'] == 'value-********'
+    - sanitize_keys.json.args['key-********'] == 'value-********'
 
 - name: Test gzip encoding
   uri:
@@ -632,6 +661,22 @@
   assert:
     that:
       - "'content' in file_out.stdout"
+
+- name: Test downloading cached file
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+
+- name: Test downloading cached file to existing file results in "304 Not Modified"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    status_code: [304]
+
+- name: Test downloading cached file to existing file with "force"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    force: true
 
 - name: Clean up
   file:
@@ -687,13 +732,26 @@
       environment:
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+        OPENSSL_CONF: '{{ krb5_openssl_conf }}'
   when: krb5_config is defined
 
 - name: Test ciphers
   import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
 
 - name: Test use_netrc.yml
   import_tasks: use_netrc.yml
 
 - name: Test unix socket
   import_tasks: install-socat-and-test-unix-socket.yml
+
+- name: ensure skip action
+  uri:
+    url: http://example.com
+  check_mode: True
+  register: uri_check
+
+- name: check that we skipped at action
+  assert:
+    that:
+      - uri_check.msg == "This action (uri) does not support check mode."

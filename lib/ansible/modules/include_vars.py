@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 author: Allen Sanabria (@linuxdynasty)
 module: include_vars
@@ -21,20 +21,20 @@ options:
   file:
     description:
       - The file name from which variables should be loaded.
-      - If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
+      - If the path is relative, it will look for the file in C(vars/) subdirectory of a role or relative to playbook.
     type: path
     version_added: "2.2"
   dir:
     description:
       - The directory name from which the variables should be loaded.
-      - If the path is relative and the task is inside a role, it will look inside the role's vars/ subdirectory.
+      - If the path is relative and the task is inside a role, it will look inside the role's C(vars/) subdirectory.
       - If the path is relative and not inside a role, it will be parsed relative to the playbook.
     type: path
     version_added: "2.2"
   name:
     description:
       - The name of a variable into which assign the included vars.
-      - If omitted (null) they will be made top level vars.
+      - If omitted (V(null)) they will be made top level vars.
     type: str
     version_added: "2.2"
   depth:
@@ -81,8 +81,8 @@ options:
     version_added: "2.12"
   free-form:
     description:
-      - This module allows you to specify the 'file' option directly without any other options.
-      - There is no 'free-form' option, this is just an indicator, see example below.
+      - This module allows you to specify the O(file) option directly without any other options.
+      - There is no O(ignore:free-form) option, this is just an indicator, see example below.
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
@@ -112,9 +112,9 @@ seealso:
 - module: ansible.builtin.set_fact
 - ref: playbooks_delegation
   description: More information related to task delegation.
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
   ansible.builtin.include_vars:
     file: stuff.yaml
@@ -179,9 +179,9 @@ EXAMPLES = r'''
       - 'yaml'
       - 'yml'
       - 'json'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 ansible_facts:
   description: Variables that were included and their values
   returned: success
@@ -193,4 +193,4 @@ ansible_included_var_files:
   type: list
   sample: [ /path/to/file.json, /path/to/file.yaml ]
   version_added: '2.4'
-'''
+"""

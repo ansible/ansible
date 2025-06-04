@@ -9,11 +9,11 @@ from __future__ import annotations
 class ModuleDocFragment(object):
 
     # Standard template documentation fragment, use by template and win_template.
-    DOCUMENTATION = r'''
+    DOCUMENTATION = r"""
 description:
-- Templates are processed by the L(Jinja2 templating language,http://jinja.pocoo.org/docs/).
+- Templates are processed by the L(Jinja2 templating language,https://jinja.palletsprojects.com/en/stable/).
 - Documentation on the template formatting can be found in the
-  L(Template Designer Documentation,http://jinja.pocoo.org/docs/templates/).
+  L(Template Designer Documentation,https://jinja.palletsprojects.com/en/stable/templates/).
 - Additional variables listed below can be used in templates.
 - C(ansible_managed) (configurable via the C(defaults) section of C(ansible.cfg)) contains a string which can be used to
   describe the template name, host, modification time of the template file and the owner uid.
@@ -117,4 +117,4 @@ notes:
   This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
 - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>)
   on Linux.
-'''
+"""

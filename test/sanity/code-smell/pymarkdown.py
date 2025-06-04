@@ -1,4 +1,5 @@
 """Sanity test for Markdown files."""
+
 from __future__ import annotations
 
 import pathlib
@@ -14,8 +15,10 @@ def main() -> None:
 
     cmd = [
         sys.executable,
-        '-m', 'pymarkdown',
-        '--config', pathlib.Path(__file__).parent / 'pymarkdown.config.json',
+        '-m',
+        'pymarkdown',
+        '--config',
+        pathlib.Path(__file__).parent / 'pymarkdown.config.json',
         '--strict-config',
         'scan',
     ] + paths
@@ -55,7 +58,7 @@ def parse_to_list_of_dict(pattern: re.Pattern, value: str) -> list[dict[str, t.A
             unmatched.append(line)
 
     if unmatched:
-        raise Exception('Pattern {pattern!r} did not match values:\n' + '\n'.join(unmatched))
+        raise Exception(f'Pattern {pattern!r} did not match values:\n' + '\n'.join(unmatched))
 
     return matched
 

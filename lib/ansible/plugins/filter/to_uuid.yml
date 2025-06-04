@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "2.9"
   short_description: namespaced UUID generator
   description:
-    - Use to generate namespeced Universal Unique ID.
+    - Use to generate namespaced Universal Unique ID.
   positional: _input, namespace
   options:
     _input:

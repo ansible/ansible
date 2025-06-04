@@ -41,6 +41,7 @@ from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
+from ansible.utils.path import is_subpath, unfrackpath
 
 display = Display()
 
@@ -184,13 +185,11 @@ class GalaxyRole(object):
             info_path = os.path.join(self.path, self.META_INSTALL)
             if os.path.isfile(info_path):
                 try:
-                    f = open(info_path, 'r')
-                    self._install_info = yaml_load(f)
+                    with open(info_path, 'r') as f:
+                        self._install_info = yaml_load(f)
                 except Exception:
                     display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
-                finally:
-                    f.close()
         return self._install_info
 
     @property
@@ -255,7 +254,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent(), timeout=60)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -296,7 +295,7 @@ class GalaxyRole(object):
                     # are no versions in the list, we'll grab the head
                     # of the master branch
                     if len(role_versions) > 0:
-                        loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
+                        loose_versions = [v for a in role_versions if (v := LooseVersion()) and v.parse(a.get('name') or '') is None]
                         try:
                             loose_versions.sort()
                         except TypeError:
@@ -385,6 +384,8 @@ class GalaxyRole(object):
                         else:
                             os.makedirs(self.path)
 
+                        resolved_archive = unfrackpath(archive_parent_dir, follow=False)
+
                         # We strip off any higher-level directories for all of the files
                         # contained within the tar file here. The default is 'github_repo-target'.
                         # Gerrit instances, on the other hand, does not have a parent directory at all.
@@ -392,43 +393,37 @@ class GalaxyRole(object):
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
-                            if member.isreg() or member.issym():
-                                for attr in ('name', 'linkname'):
-                                    attr_value = getattr(member, attr, None)
-                                    if not attr_value:
-                                        continue
-                                    n_attr_value = to_native(attr_value)
-                                    n_archive_parent_dir = to_native(archive_parent_dir)
-                                    n_parts = n_attr_value.replace(n_archive_parent_dir, "", 1).split(os.sep)
-                                    n_final_parts = []
-                                    for n_part in n_parts:
-                                        # TODO if the condition triggers it produces a broken installation.
-                                        # It will create the parent directory as an empty file and will
-                                        # explode if the directory contains valid files.
-                                        # Leaving this as is since the whole module needs a rewrite.
-                                        #
-                                        # Check if we have any files with illegal names,
-                                        # and display a warning if so. This could help users
-                                        # to debug a broken installation.
-                                        if not n_part:
-                                            continue
-                                        if n_part == '..':
-                                            display.warning(f"Illegal filename '{n_part}': '..' is not allowed")
-                                            continue
-                                        if n_part.startswith('~'):
-                                            display.warning(f"Illegal filename '{n_part}': names cannot start with '~'")
-                                            continue
-                                        if '$' in n_part:
-                                            display.warning(f"Illegal filename '{n_part}': names cannot contain '$'")
-                                            continue
-                                        n_final_parts.append(n_part)
-                                    setattr(member, attr, os.path.join(*n_final_parts))
+                            if not (member.isreg() or member.issym()):
+                                continue
 
-                                if _check_working_data_filter():
-                                    # deprecated: description='extract fallback without filter' python_version='3.11'
-                                    role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                            for attr in ('name', 'linkname'):
+                                if not (attr_value := getattr(member, attr, None)):
+                                    continue
+
+                                if attr == 'linkname':
+                                    # Symlinks are relative to the link
+                                    relative_to = os.path.dirname(getattr(member, 'name', ''))
                                 else:
-                                    role_tar_file.extract(member, to_native(self.path))
+                                    # Normalize paths that start with the archive dir
+                                    attr_value = attr_value.replace(archive_parent_dir, "", 1)
+                                    attr_value = os.path.join(*attr_value.split(os.sep))  # remove leading os.sep
+                                    relative_to = ''
+
+                                full_path = os.path.join(resolved_archive, relative_to, attr_value)
+                                if not is_subpath(full_path, resolved_archive, real=True):
+                                    err = f"Invalid {attr} for tarfile member: path {full_path} is not a subpath of the role {resolved_archive}"
+                                    raise AnsibleError(err)
+
+                                relative_path_dir = os.path.join(resolved_archive, relative_to)
+                                relative_path = os.path.join(*full_path.replace(relative_path_dir, "", 1).split(os.sep))
+                                setattr(member, attr, relative_path)
+
+                            if _check_working_data_filter():
+                                # deprecated: description='extract fallback without filter' python_version='3.11'
+                                role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
+                            else:
+                                # Remove along with manual path filter once Python 3.12 is minimum supported version
+                                role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
@@ -473,12 +468,10 @@ class GalaxyRole(object):
                 meta_path = os.path.join(self.path, meta_requirements)
                 if os.path.isfile(meta_path):
                     try:
-                        f = open(meta_path, 'r')
-                        self._requirements = yaml_load(f)
+                        with open(meta_path, 'r') as f:
+                            self._requirements = yaml_load(f)
                     except Exception:
                         display.vvvvv("Unable to load requirements for %s" % self.name)
-                    finally:
-                        f.close()
 
                     break
 

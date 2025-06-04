@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     name: deprecated_with_docs
     short_description: test lookup
     description: test lookup
@@ -16,10 +16,10 @@ DOCUMENTATION = '''
         removed_in: "2.16"
         removed_from_collection: "ansible.legacy"
     options: {}
-'''
+"""
 
-EXAMPLE = '''
-'''
+EXAMPLE = """
+"""
 
-RETURN = '''
-'''
+RETURN = """
+"""

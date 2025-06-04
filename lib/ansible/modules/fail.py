@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: fail
 short_description: Fail with custom message
@@ -52,11 +52,11 @@ seealso:
 - module: ansible.builtin.meta
 author:
 - Dag Wieers (@dagwieers)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Example using fail and when together
   ansible.builtin.fail:
     msg: The system may not be provisioned according to the CMDB status.
   when: cmdb_status != "to-be-staged"
-'''
+"""

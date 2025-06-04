@@ -1,3 +1,0 @@
----
-bugfixes:
-- interpreter_discovery - handle AnsibleError exception raised while interpreter discovery (https://github.com/ansible/ansible/issues/78264).

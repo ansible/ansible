@@ -6,7 +6,7 @@ DOCUMENTATION:
   aliases: [skip]
   description:
     - Tests if task was skipped
-    - This test checks for the existance of a C(skipped) key in the input dictionary and that it is V(True) if present
+    - This test checks for the existence of a C(skipped) key in the input dictionary and that it is V(True) if present
   options:
     _input:
       description: registered result from an Ansible task

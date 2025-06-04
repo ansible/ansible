@@ -16,8 +16,6 @@
 
 from __future__ import annotations
 
-from os.path import basename
-
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -26,7 +24,7 @@ from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
 from ansible.module_utils.six import string_types
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 
 __all__ = ['IncludeRole']
 
@@ -63,7 +61,7 @@ class IncludeRole(TaskInclude):
         self._role_path = None
 
     def get_name(self):
-        ''' return the name of the task '''
+        """ return the name of the task """
         return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
@@ -81,16 +79,16 @@ class IncludeRole(TaskInclude):
             available_variables = variable_manager.get_vars(play=myplay, task=self)
         else:
             available_variables = {}
-        templar = Templar(loader=loader, variables=available_variables)
+        templar = TemplateEngine(loader=loader, variables=available_variables)
         from_files = templar.template(self._from_files)
 
         # build role
         actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
-                                from_include=True, validate=self.rolespec_validate, public=self.public)
+                                from_include=True, validate=self.rolespec_validate, public=self.public, static=self.statically_loaded)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
-        if self.statically_loaded or self.public:
-            myplay.roles.append(actual_role)
+        # add role to play
+        myplay.roles.append(actual_role)
 
         # save this for later use
         self._role_path = actual_role._role_path
@@ -122,10 +120,6 @@ class IncludeRole(TaskInclude):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        # dyanmic role!
-        if ir.action in C._ACTION_INCLUDE_ROLE:
-            ir.static = False
-
         # Validate options
         my_arg_names = frozenset(ir.args.keys())
 
@@ -145,7 +139,7 @@ class IncludeRole(TaskInclude):
             args_value = ir.args.get(key)
             if not isinstance(args_value, string_types):
                 raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
-            ir._from_files[from_key] = basename(args_value)
+            ir._from_files[from_key] = args_value
 
         # apply is only valid for includes, not imports as they inherit directly
         apply_attrs = ir.args.get('apply', {})

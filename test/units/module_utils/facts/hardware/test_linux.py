@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import os
 
-from units.compat import unittest
-from units.compat.mock import Mock, patch
+import unittest
+from unittest.mock import Mock, patch
 
 from ansible.module_utils.facts import timeout
 
@@ -28,8 +28,6 @@ from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_E
 
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
-
-GET_MOUNT_SIZE = {}
 
 
 def mock_get_mount_size(mountpoint):

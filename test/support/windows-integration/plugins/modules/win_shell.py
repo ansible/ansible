@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: win_shell
 short_description: Execute shell commands on target hosts
@@ -80,9 +80,9 @@ seealso:
 - module: win_psexec
 author:
     - Matt Davis (@nitzmahone)
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Execute a command in the remote shell; stdout goes to the specified
 # file on the remote.
 - win_shell: C:\somescript.ps1 >> C:\somelog.txt
@@ -116,9 +116,9 @@ EXAMPLES = r'''
   win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'
   args:
     stdin: Input message
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 msg:
     description: Changed.
     returned: always
@@ -164,4 +164,4 @@ stdout_lines:
     returned: always
     type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
-'''
+"""

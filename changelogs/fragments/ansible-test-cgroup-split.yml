@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix parsing of cgroup entries which contain a ``:`` in the path (https://github.com/ansible/ansible/issues/81977).

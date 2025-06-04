@@ -1,0 +1,6 @@
+- hosts: host1,host2
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: end_role_inside
+        tasks_from: nested.yml

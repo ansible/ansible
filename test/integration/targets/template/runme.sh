@@ -2,16 +2,17 @@
 
 set -eux
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
+ANSIBLE_CALLBACK_RESULT_FORMAT=yaml ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
 
 # Test for https://github.com/ansible/ansible/pull/35571
-ansible testhost -i testhost, -m debug -a 'msg={{ hostvars["localhost"] }}' -e "vars1={{ undef() }}" -e "vars2={{ vars1 }}"
+echo "presence of an undefined var in a template should not break things that don't access it"
+ansible testhost -i testhost, -m assert -a 'that=var3=="accessme"' -e "vars1={{ bogus_var }}" -e "var2={{ var1 }}" -e var3=accessme
 
-# Test for https://github.com/ansible/ansible/issues/27262
+# ansible_managed tests
 ANSIBLE_CONFIG=ansible_managed.cfg ansible-playbook ansible_managed.yml -i ../../inventory -v "$@"
 
-# Test for https://github.com/ansible/ansible/pull/79129
-ANSIBLE_CONFIG=ansible_managed.cfg ansible-playbook ansible_managed_79129.yml -i ../../inventory -v "$@"
+# same as above but with ansible_managed j2 template
+ANSIBLE_CONFIG=ansible_managed_templated.cfg ansible-playbook ansible_managed.yml -i ../../inventory -v "$@"
 
 # Test for #42585
 ANSIBLE_ROLES_PATH=../ ansible-playbook custom_template.yml -i ../../inventory -v "$@"
@@ -55,3 +56,5 @@ do
 	ANSIBLE_CONFIG="./${badcfg}.cfg" ansible-config dump --only-changed
 done
 
+# ensure we picle hostvarscorrectly with native https://github.com/ansible/ansible/issues/83503
+ANSIBLE_JINJA2_NATIVE=1 ansible -m debug -a "msg={{ groups.all | map('extract', hostvars) }}" -i testhost, all -c local -v "$@"

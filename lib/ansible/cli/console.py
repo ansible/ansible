@@ -29,13 +29,14 @@ from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.utils.display import Display
 
 display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
-    '''
+    """
        A REPL that allows for running ad-hoc tasks against a chosen inventory
        from a nice shell with built-in tab completion (based on dominis'
        ``ansible-shell``).
@@ -62,7 +63,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
        - ``help [command/module]``: display documentation for
          the command or module
        - ``exit``: exit ``ansible-console``
-    '''
+    """
 
     name = 'ansible-console'
     modules = []  # type: list[str] | None
@@ -71,6 +72,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     # use specific to console, but fallback to highlight for backwards compatibility
     NORMAL_PROMPT = C.COLOR_CONSOLE_PROMPT or C.COLOR_HIGHLIGHT
+
+    USES_CONNECTION = True
 
     def __init__(self, args):
 
@@ -179,6 +182,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 else:
                     module_args = ''
 
+        module_args = TrustedAsTemplate().tag(module_args)
+
         if self.callback:
             cb = self.callback
         elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
@@ -237,11 +242,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         except KeyboardInterrupt:
             display.error('User interrupted execution')
             return False
-        except Exception as e:
-            if self.verbosity >= 3:
-                import traceback
-                display.v(traceback.format_exc())
-            display.error(to_text(e))
+        except Exception as ex:
+            display.error(ex)
             return False
 
     def emptyline(self):
@@ -545,7 +547,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 if path:
                     module_loader.add_directory(path)
 
-        # dynamically add 'cannonical' modules as commands, aliases coudld be used and dynamically loaded
+        # dynamically add 'canonical' modules as commands, aliases could be used and dynamically loaded
         self.modules = self.list_modules()
         for module in self.modules:
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
@@ -579,7 +581,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.cmdloop()
 
     def __getattr__(self, name):
-        ''' handle not found to populate dynamically a module function if module matching name exists '''
+        """ handle not found to populate dynamically a module function if module matching name exists """
         attr = None
 
         if name.startswith('do_'):

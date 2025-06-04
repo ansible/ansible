@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     inventory: cache_host
     short_description: add a host to inventory and cache it
     description: add a host to inventory and cache it
@@ -13,7 +13,7 @@ DOCUMENTATION = '''
       plugin:
         required: true
         description: name of the plugin (cache_host)
-'''
+"""
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 import random

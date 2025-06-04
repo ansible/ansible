@@ -152,3 +152,19 @@
     that:
     - "result.state == 'file'"
     - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
+
+- name: test assemble with diff
+  assemble:
+    src: "./"
+    dest: "{{remote_tmp_dir}}/assembled11"
+    remote_src: false
+  diff: true
+  register: result
+
+- name: assert the fragments were assembled with diff
+  assert:
+    that:
+      - result.changed
+      - result.diff.after is defined
+      - result.diff.before is defined
+      - "result.state == 'file'"

@@ -434,6 +434,15 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 2,
             'processor_nproc': 4,
             'processor_threads_per_core': 1,
+            'flags': [
+                'fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce',
+                'cx8', 'apic', 'sep', 'mtrr', 'pge', 'mca', 'cmov', 'pat',
+                'pse36', 'clflush', 'mmx', 'fxsr', 'sse', 'sse2', 'ht',
+                'syscall', 'nx', 'mmxext', 'fxsr_opt', 'rdtscp', 'lm',
+                '3dnowext', '3dnow', 'art', 'rep_good', 'nopl', 'extd_apicid',
+                'pni', 'cx16', 'lahf_lm', 'cmp_legacy', 'svm', 'extapic',
+                'cr8_legacy', 'retpoline_amd', 'vmmcall'
+            ],
             'processor_vcpus': 4},
     },
     {
@@ -456,6 +465,21 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 1,
             'processor_nproc': 4,
             'processor_threads_per_core': 2,
+            'flags': [
+                'fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce',
+                'cx8', 'apic', 'sep', 'mtrr', 'pge', 'mca', 'cmov',
+                'pat', 'pse36', 'clflush', 'dts', 'acpi', 'mmx', 'fxsr',
+                'sse', 'sse2', 'ss', 'ht', 'tm', 'pbe', 'syscall', 'nx',
+                'pdpe1gb', 'rdtscp', 'lm', 'constant_tsc', 'arch_perfmon',
+                'pebs', 'bts', 'rep_good', 'nopl', 'xtopology', 'nonstop_tsc',
+                'aperfmperf', 'eagerfpu', 'pni', 'pclmulqdq', 'dtes64', 'monitor',
+                'ds_cpl', 'vmx', 'smx', 'est', 'tm2', 'ssse3', 'sdbg', 'fma', 'cx16',
+                'xtpr', 'pdcm', 'pcid', 'sse4_1', 'sse4_2', 'x2apic', 'movbe',
+                'popcnt', 'tsc_deadline_timer', 'aes', 'xsave', 'avx', 'f16c',
+                'rdrand', 'lahf_lm', 'abm', 'epb', 'tpr_shadow', 'vnmi', 'flexpriority',
+                'ept', 'vpid', 'fsgsbase', 'tsc_adjust', 'bmi1', 'avx2', 'smep', 'bmi2',
+                'erms', 'invpcid', 'xsaveopt', 'dtherm', 'ida', 'arat', 'pln', 'pts'
+            ],
             'processor_vcpus': 8},
     },
     {
@@ -507,6 +531,16 @@ CPU_INFO_TEST_SCENARIOS = [
             'processor_count': 2,
             'processor_nproc': 2,
             'processor_threads_per_core': 1,
+            'flags': [
+                'fpu', 'vme', 'de', 'pse', 'tsc', 'msr', 'pae', 'mce', 'cx8', 'apic',
+                'sep', 'mtrr', 'pge', 'mca', 'cmov', 'pat', 'pse36', 'clflush', 'mmx',
+                'fxsr', 'sse', 'sse2', 'ss', 'syscall', 'nx', 'pdpe1gb', 'rdtscp', 'lm',
+                'constant_tsc', 'arch_perfmon', 'rep_good', 'nopl', 'xtopology',
+                'cpuid', 'tsc_known_freq', 'pni', 'pclmulqdq', 'ssse3', 'cx16',
+                'pcid', 'sse4_1', 'sse4_2', 'x2apic', 'popcnt', 'tsc_deadline_timer',
+                'aes', 'xsave', 'avx', 'f16c', 'rdrand', 'hypervisor', 'lahf_lm',
+                'pti', 'fsgsbase', 'tsc_adjust', 'smep', 'erms', 'xsaveopt', 'arat'
+            ],
             'processor_vcpus': 2},
     },
     {

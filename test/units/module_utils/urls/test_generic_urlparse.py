@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.urls import generic_urlparse
-from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse
 
 
 def test_generic_urlparse():

@@ -11,3 +11,4 @@ pip_test_pkg_ver_unsatisfied:
 pip_test_modules:
   - sample
   - jiphy
+remote_sample_project: "{{ remote_tmp_dir }}/sample-project"

@@ -21,8 +21,6 @@ import multiprocessing
 
 from ansible.module_utils.common.text.converters import to_text, to_bytes
 
-PY3 = sys.version_info[0] == 3
-
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 syslog.syslog(syslog.LOG_NOTICE, 'Invoked with %s' % " ".join(sys.argv[1:]))
 
@@ -77,13 +75,13 @@ def daemonize_self():
 # NB: this function copied from module_utils/json_utils.py. Ensure any changes are propagated there.
 # FUTURE: AnsibleModule-ify this module so it's Ansiballz-compatible and can use the module_utils copy of this function.
 def _filter_non_json_lines(data):
-    '''
+    """
     Used to filter unrelated output around module JSON output, like messages from
     tcagetattr, or where dropbear spews MOTD on every single command (which is nuts).
 
     Filters leading lines before first line-starting occurrence of '{', and filter all
     trailing lines after matching close character (working from the bottom of output).
-    '''
+    """
     warnings = []
 
     # Filter initial junk
@@ -149,7 +147,9 @@ def jwrite(info):
 
 def _run_module(wrapped_cmd, jid):
 
-    jwrite({"started": 1, "finished": 0, "ansible_job_id": jid})
+    # DTFIX-FUTURE: needs rework for serialization profiles
+
+    jwrite({"started": True, "finished": False, "ansible_job_id": jid})
 
     result = {}
 
@@ -168,13 +168,18 @@ def _run_module(wrapped_cmd, jid):
         interpreter = _get_interpreter(cmd[0])
         if interpreter:
             cmd = interpreter + cmd
-        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+        script = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            text=True,
+            encoding="utf-8",
+            errors="surrogateescape",
+        )
 
         (outdata, stderr) = script.communicate()
-        if PY3:
-            outdata = outdata.decode('utf-8', 'surrogateescape')
-            stderr = stderr.decode('utf-8', 'surrogateescape')
 
         (filtered_outdata, json_warnings) = _filter_non_json_lines(outdata)
 
@@ -185,6 +190,9 @@ def _run_module(wrapped_cmd, jid):
             module_warnings = result.get('warnings', [])
             if not isinstance(module_warnings, list):
                 module_warnings = [module_warnings]
+
+            # this relies on the controller's fallback conversion of string warnings to WarningMessageDetail instances, and assumes
+            # that the module result and warning collection are basic JSON datatypes (eg, no tags or other custom collections).
             module_warnings.extend(json_warnings)
             result['warnings'] = module_warnings
 
@@ -195,7 +203,7 @@ def _run_module(wrapped_cmd, jid):
     except (OSError, IOError):
         e = sys.exc_info()[1]
         result = {
-            "failed": 1,
+            "failed": True,
             "cmd": wrapped_cmd,
             "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
@@ -206,7 +214,7 @@ def _run_module(wrapped_cmd, jid):
 
     except (ValueError, Exception):
         result = {
-            "failed": 1,
+            "failed": True,
             "cmd": wrapped_cmd,
             "data": outdata,  # temporary notice only
             "stderr": stderr,
@@ -252,9 +260,9 @@ def main():
         _make_temp_dir(jobdir)
     except Exception as e:
         end({
-            "failed": 1,
+            "failed": True,
             "msg": "could not create directory: %s - %s" % (jobdir, to_text(e)),
-            "exception": to_text(traceback.format_exc()),
+            "exception": to_text(traceback.format_exc()),  # NB: task executor compat will coerce to the correct dataclass type
         }, 1)
 
     # immediately exit this process, leaving an orphaned process
@@ -285,7 +293,7 @@ def main():
                     continue
 
             notice("Return async_wrapper task started.")
-            end({"failed": 0, "started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
+            end({"failed": False, "started": True, "finished": False, "ansible_job_id": jid, "results_file": job_path,
                  "_ansible_suppress_tmpdir_delete": (not preserve_tmp)}, 0)
         else:
             # The actual wrapper process

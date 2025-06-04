@@ -312,6 +312,7 @@ from ansible.plugins.loader import (
     connection_loader,
     terminal_loader,
 )
+from ansible.utils.display import Display
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.utils import (
     to_list,
 )
@@ -327,6 +328,7 @@ except ImportError:
     HAS_SCP = False
 
 HAS_PYLIBSSH = False
+display = Display()
 
 
 def ensure_connect(func):
@@ -599,7 +601,7 @@ class Connection(NetworkConnectionBase):
         """
         Connects to the remote device and starts the terminal
         """
-        if self._play_context.verbosity > 3:
+        if display.verbosity > 3:
             logging.getLogger(self.ssh_type).setLevel(logging.DEBUG)
 
         self.queue_message(

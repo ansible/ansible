@@ -48,9 +48,37 @@
         - dpkg_result is successful
         - dpkg_result.rc == 0
 
-  always:
-    - name: uninstall echo-hello with apt
+    - name: Install package from local repo
       apt:
-        pkg: echo-hello
+        deb: "{{ repodir }}/dists/stable/main/binary-all/baz_1.0.0_all.deb"
+        install_recommends: yes
+      register: apt_url_deps
+
+    - name: check to make sure we installed the package
+      shell: dpkg -l | grep baz
+      failed_when: False
+      register: baz_dpkg_result
+
+    - name: check to make sure we installed the package's recommends
+      shell: dpkg -l | grep rolldice
+      failed_when: False
+      register: rolldice_dpkg_result
+
+    - name: verify real installation of bar
+      assert:
+        that:
+        - apt_url_deps is changed
+        - baz_dpkg_result is successful
+        - baz_dpkg_result.rc == 0
+        - rolldice_dpkg_result is successful
+        - rolldice_dpkg_result.rc == 0
+
+  always:
+    - name: uninstall packages with apt
+      apt:
+        pkg:
+          - echo-hello
+          - rolldice
+          - baz
         state: absent
         purge: yes

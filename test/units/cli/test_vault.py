@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import pytest
 
-from units.compat import unittest
+import unittest
 from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
@@ -31,11 +31,11 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.utils import context_objects as co
 
 
-# TODO: make these tests assert something, likely by verifing
+# TODO: make these tests assert something, likely by verifying
 #       mock calls
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     yield
@@ -120,8 +120,21 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault',
                              'encrypt_string',
-                             '--prompt',
-                             'some string to encrypt'])
+                             '--prompt'])
+        cli.parse()
+        cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"]
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    @patch('ansible.cli.vault.display.prompt', return_value='a_prompt')
+    def test_shadowed_encrypt_string_prompt_plus(self, mock_display, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault',
+                             'encrypt_string',
+                             'some string to encrypt',
+                             '--prompt'])
         cli.parse()
         cli.run()
         args, kwargs = mock_display.call_args

@@ -22,13 +22,14 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import api as galaxy_api
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyAPI, GalaxyError
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken
+from ansible.module_utils.common.file import S_IRWU_RG_RO
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.six.moves.urllib import error as urllib_error
+import urllib.error
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 
 
-@pytest.fixture(autouse='function')
+@pytest.fixture(autouse=True)
 def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
     # Required to initialise the GalaxyAPI object
@@ -39,7 +40,7 @@ def reset_cli_args():
 
 @pytest.fixture()
 def collection_artifact(tmp_path_factory):
-    ''' Creates a collection artifact tarball that is ready to be published '''
+    """ Creates a collection artifact tarball that is ready to be published """
     output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
     tar_path = os.path.join(output_dir, 'namespace-collection-v1.0.0.tar.gz')
@@ -47,7 +48,7 @@ def collection_artifact(tmp_path_factory):
         b_io = BytesIO(b"\x00\x01\x02\x03")
         tar_info = tarfile.TarInfo('test')
         tar_info.size = 4
-        tar_info.mode = 0o0644
+        tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     yield tar_path
@@ -65,7 +66,7 @@ def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache
     token_value = token_value or "my token"
     token_ins = token_ins or GalaxyToken(token_value)
     api = GalaxyAPI(None, "test", url, no_cache=no_cache)
-    # Warning, this doesn't test g_connect() because _availabe_api_versions is set here.  That means
+    # Warning, this doesn't test g_connect() because _available_api_versions is set here.  That means
     # that urls for v2 servers have to append '/api/' themselves in the input data.
     api._available_api_versions = {version: '%s' % version}
     api.token = token_ins
@@ -324,8 +325,8 @@ def test_initialise_automation_hub(monkeypatch):
 def test_initialise_unknown(monkeypatch):
     mock_open = MagicMock()
     mock_open.side_effect = [
-        urllib_error.HTTPError('https://galaxy.ansible.com/api/', 500, 'msg', {}, StringIO(u'{"msg":"raw error"}')),
-        urllib_error.HTTPError('https://galaxy.ansible.com/api/api/', 500, 'msg', {}, StringIO(u'{"msg":"raw error"}')),
+        urllib.error.HTTPError('https://galaxy.ansible.com/api/', 500, 'msg', {}, StringIO(u'{"msg":"raw error"}')),
+        urllib.error.HTTPError('https://galaxy.ansible.com/api/api/', 500, 'msg', {}, StringIO(u'{"msg":"raw error"}')),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
@@ -442,7 +443,7 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
     expected_url = '%s/api/%s/%s' % (api.api_server, api_version, collection_url)
 
     mock_open = MagicMock()
-    mock_open.side_effect = urllib_error.HTTPError(expected_url, 500, 'msg', {},
+    mock_open.side_effect = urllib.error.HTTPError(expected_url, 500, 'msg', {},
                                                    StringIO(to_text(json.dumps(response))))
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
@@ -1234,7 +1235,7 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
         side_effect=[
             StringIO(to_text(json.dumps(responses[0]))),
             StringIO(to_text(json.dumps(responses[1]))),
-            urllib_error.HTTPError(responses[1]['next'], 500, 'Error', {}, StringIO()),
+            urllib.error.HTTPError(responses[1]['next'], 500, 'Error', {}, StringIO()),
             StringIO(to_text(json.dumps(responses[3]))),
         ]
     )

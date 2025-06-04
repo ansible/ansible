@@ -11,7 +11,7 @@ from ansible.module_utils.compat.version import LooseVersion, Version
 # Regular expression taken from
 # https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
 SEMVER_RE = re.compile(
-    r'''
+    r"""
     ^
         (?P<major>0|[1-9]\d*)
         \.
@@ -30,7 +30,7 @@ SEMVER_RE = re.compile(
             (?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)
         )?
     $
-    ''',
+    """,
     flags=re.X
 )
 
@@ -190,6 +190,7 @@ class SemanticVersion(Version):
             raise ValueError("invalid semantic version '%s'" % vstring)
 
         (major, minor, patch, prerelease, buildmetadata) = match.group(1, 2, 3, 4, 5)
+        self.vstring = vstring
         self.major = int(major)
         self.minor = int(minor)
         self.patch = int(patch)

@@ -1,0 +1,46 @@
+{
+    "name": "SLES 16.0",
+    "distro": {
+        "codename": "",
+        "id": "sles",
+        "name": "SLES",
+        "version": "16.0",
+        "version_best": "16.0",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "SLES",
+            "pretty_name": "SUSE Linux Enterprise Server 16.0",
+            "variant": "Enterprise Server",
+            "variant_id": "server",
+            "version": "16.0 Beta4",
+            "version_id": "16.0",
+            "ansi_color": "0;32",
+            "id": "sles",
+            "id_like": "suse opensuse",
+            "cpe_name": "cpe:/o:suse:sles:16:16.0",
+            "suse_support_product": "SUSE Linux Enterprise Server",
+            "suse_support_product_version": "16.0",
+            "home_url": "https://www.suse.com/products/server/",
+            "documentation_url": "https://documentation.suse.com/sles/16.0/",
+            "logo": "distributor-logo"
+        }
+    },
+    "input": {
+        "/etc/os-release": "# The NAME and PRETTY_NAME fields have been chosen to state compatibility between our products.\n# The use of \"SLES\" and \"SUSE Linux Enterprise\" rather than a more generic name is due to backward compatibility with existing OS detection code in applications of third party vendors.\nNAME=\"SLES\"\nPRETTY_NAME=\"SUSE Linux Enterprise Server 16.0\"\nVARIANT=\"Enterprise Server\"\nVARIANT_ID=\"server\"\nVERSION=\"16.0 Beta4\"\nVERSION_ID=\"16.0\"\nANSI_COLOR=\"0;32\"\nID=\"sles\"\nID_LIKE=\"suse opensuse\"\nCPE_NAME=\"cpe:/o:suse:sles:16:16.0\"\nSUSE_SUPPORT_PRODUCT=\"SUSE Linux Enterprise Server\"\nSUSE_SUPPORT_PRODUCT_VERSION=\"16.0\"\nHOME_URL=\"https://www.suse.com/products/server/\"\nDOCUMENTATION_URL=\"https://documentation.suse.com/sles/16.0/\"\nLOGO=\"distributor-logo\"\n",
+        "/usr/lib/os-release": "# The NAME and PRETTY_NAME fields have been chosen to state compatibility between our products.\n# The use of \"SLES\" and \"SUSE Linux Enterprise\" rather than a more generic name is due to backward compatibility with existing OS detection code in applications of third party vendors.\nNAME=\"SLES\"\nPRETTY_NAME=\"SUSE Linux Enterprise Server 16.0\"\nVARIANT=\"Enterprise Server\"\nVARIANT_ID=\"server\"\nVERSION=\"16.0 Beta4\"\nVERSION_ID=\"16.0\"\nANSI_COLOR=\"0;32\"\nID=\"sles\"\nID_LIKE=\"suse opensuse\"\nCPE_NAME=\"cpe:/o:suse:sles:16:16.0\"\nSUSE_SUPPORT_PRODUCT=\"SUSE Linux Enterprise Server\"\nSUSE_SUPPORT_PRODUCT_VERSION=\"16.0\"\nHOME_URL=\"https://www.suse.com/products/server/\"\nDOCUMENTATION_URL=\"https://documentation.suse.com/sles/16.0/\"\nLOGO=\"distributor-logo\"\n"
+    },
+    "platform.dist": [
+        "sles",
+        "16.0",
+        ""
+    ],
+    "result": {
+        "distribution": "SLES",
+        "distribution_version": "16.0",
+        "distribution_release": "0",
+        "distribution_major_version": "16",
+        "os_family": "Suse"
+    },
+    "platform.release": "6.12.0-160000.11-default"
+}
+

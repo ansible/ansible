@@ -9,49 +9,32 @@ from __future__ import annotations
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import json
 import sys
+import typing as t
 
 import argparse
+import functools
 
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRuntimeError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible._internal._json._profiles import _inventory_legacy
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
 display = Display()
 
-INTERNAL_VARS = frozenset(['ansible_diff_mode',
-                           'ansible_config_file',
-                           'ansible_facts',
-                           'ansible_forks',
-                           'ansible_inventory_sources',
-                           'ansible_limit',
-                           'ansible_playbook_python',
-                           'ansible_run_tags',
-                           'ansible_skip_tags',
-                           'ansible_verbosity',
-                           'ansible_version',
-                           'inventory_dir',
-                           'inventory_file',
-                           'inventory_hostname',
-                           'inventory_hostname_short',
-                           'groups',
-                           'group_names',
-                           'omit',
-                           'playbook_dir', ])
-
 
 class InventoryCLI(CLI):
-    ''' used to display or dump the configured inventory as Ansible sees it '''
+    """ used to display or dump the configured inventory as Ansible sees it """
 
     name = 'ansible-inventory'
 
-    ARGUMENTS = {'host': 'The name of a host to match in the inventory, relevant when using --list',
-                 'group': 'The name of a group in the inventory, relevant when using --graph', }
+    ARGUMENTS = {'group': 'The name of a group in the inventory, relevant when using --graph', }
 
     def __init__(self, args):
 
@@ -62,7 +45,7 @@ class InventoryCLI(CLI):
 
     def init_parser(self):
         super(InventoryCLI, self).init_parser(
-            usage='usage: %prog [options] [host|group]',
+            usage='usage: %prog [options] [group]',
             desc='Show Ansible inventory information, by default it uses the inventory script JSON format')
 
         opt_help.add_inventory_options(self.parser)
@@ -73,7 +56,7 @@ class InventoryCLI(CLI):
         # remove unused default options
         self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
-        self.parser.add_argument('args', metavar='host|group', nargs='?')
+        self.parser.add_argument('args', metavar='group', nargs='?', help='The name of a group in the inventory, relevant when using --graph')
 
         # Actions
         action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
@@ -94,12 +77,12 @@ class InventoryCLI(CLI):
 
         # list
         self.parser.add_argument("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
-                                 help="When doing an --list, represent in a way that is optimized for export,"
+                                 help="When doing --list, represent in a way that is optimized for export,"
                                       "not as an accurate representation of how Ansible has processed it")
         self.parser.add_argument('--output', default=None, dest='output_file',
                                  help="When doing --list, send the inventory to a file instead of to the screen")
         # self.parser.add_argument("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
-        #                          help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
+        #                          help="When doing --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
     def post_process_args(self, options):
         options = super(InventoryCLI, self).post_process_args(options)
@@ -177,34 +160,17 @@ class InventoryCLI(CLI):
 
     @staticmethod
     def dump(stuff):
-
         if context.CLIARGS['yaml']:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
-            results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
+
+            # DTFIX0: need shared infra to smuggle custom kwargs to dumpers, since yaml.dump cannot (as of PyYAML 6.0.1)
+            dumper = functools.partial(AnsibleDumper, dump_vault_tags=True)
+            results = to_text(yaml.dump(stuff, Dumper=dumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
-            from ansible.plugins.inventory.toml import toml_dumps
-            try:
-                results = toml_dumps(stuff)
-            except TypeError as e:
-                raise AnsibleError(
-                    'The source inventory contains a value that cannot be represented in TOML: %s' % e
-                )
-            except KeyError as e:
-                raise AnsibleError(
-                    'The source inventory contains a non-string key (%s) which cannot be represented in TOML. '
-                    'The specified key will need to be converted to a string. Be aware that if your playbooks '
-                    'expect this key to be non-string, your playbooks will need to be modified to support this '
-                    'change.' % e.args[0]
-                )
+            results = toml_dumps(stuff)
         else:
-            import json
-            from ansible.parsing.ajson import AnsibleJSONEncoder
-            try:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
-            except TypeError as e:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
-                display.warning("Could not sort JSON output due to issues while sorting keys: %s" % to_native(e))
+            results = json.dumps(stuff, cls=_inventory_legacy.Encoder, sort_keys=True, indent=4)
 
         return results
 
@@ -246,7 +212,7 @@ class InventoryCLI(CLI):
     @staticmethod
     def _remove_internal(dump):
 
-        for internal in INTERNAL_VARS:
+        for internal in C.INTERNAL_STATIC_VARS:
             if internal in dump:
                 del dump[internal]
 
@@ -327,7 +293,11 @@ class InventoryCLI(CLI):
         results = format_group(top, frozenset(h.name for h in hosts))
 
         # populate meta
-        results['_meta'] = {'hostvars': {}}
+        results['_meta'] = {
+            'hostvars': {},
+            'profile': _inventory_legacy.Encoder.profile_name,
+        }
+
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
@@ -428,6 +398,17 @@ class InventoryCLI(CLI):
         results = format_group(top, available_hosts)
 
         return results
+
+
+def toml_dumps(data: t.Any) -> str:
+    try:
+        from tomli_w import dumps as _tomli_w_dumps
+    except ImportError:
+        pass
+    else:
+        return _tomli_w_dumps(data)
+
+    raise AnsibleRuntimeError('The Python library "tomli-w" is required when using the TOML output format.')
 
 
 def main(args=None):

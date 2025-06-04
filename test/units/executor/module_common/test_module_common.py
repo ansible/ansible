@@ -38,7 +38,7 @@ class TestStripComments:
             # Being as it is
             # To be
             """
-        assert amc._strip_comments(all_comments) == u""
+        assert amc._strip_comments(all_comments) == u"\n\n\n"
 
     def test_all_whitespace(self):
         all_whitespace = (
@@ -51,7 +51,7 @@ class TestStripComments:
             '            '
         )
 
-        assert amc._strip_comments(all_whitespace) == u""
+        assert amc._strip_comments(all_whitespace) == u"\n\n\n\n\n\n"
 
     def test_somewhat_normal(self):
         mixed = u"""#!/usr/bin/python
@@ -63,9 +63,14 @@ def test(arg):
     return thing
 # End
 """
-        mixed_results = u"""def test(arg):
+        mixed_results = u"""
+
+
+def test(arg):
+
     thing = '# test'
-    return thing"""
+    return thing
+"""
         assert amc._strip_comments(mixed) == mixed_results
 
 
@@ -165,19 +170,18 @@ class TestDetectionRegexes:
     def test_no_detect_new_style_python_module_re(self, testcase):
         assert not amc.NEW_STYLE_PYTHON_MODULE_RE.search(testcase)
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    @pytest.mark.parametrize('testcase, result', CORE_PATHS)  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('testcase, result', CORE_PATHS)
     def test_detect_core_library_path_re(self, testcase, result):
         assert amc.CORE_LIBRARY_PATH_RE.search(testcase).group('path') == result
 
-    @pytest.mark.parametrize('testcase', (p[0] for p in COLLECTION_PATHS))  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('testcase', (p[0] for p in COLLECTION_PATHS))
     def test_no_detect_core_library_path_re(self, testcase):
         assert not amc.CORE_LIBRARY_PATH_RE.search(testcase)
 
-    @pytest.mark.parametrize('testcase, result', COLLECTION_PATHS)  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('testcase, result', COLLECTION_PATHS)
     def test_detect_collection_path_re(self, testcase, result):
         assert amc.COLLECTION_PATH_RE.search(testcase).group('path') == result
 
-    @pytest.mark.parametrize('testcase', (p[0] for p in CORE_PATHS))  # pylint: disable=undefined-variable
+    @pytest.mark.parametrize('testcase', (p[0] for p in CORE_PATHS))
     def test_no_detect_collection_path_re(self, testcase):
         assert not amc.COLLECTION_PATH_RE.search(testcase)

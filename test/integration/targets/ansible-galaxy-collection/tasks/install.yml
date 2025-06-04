@@ -31,6 +31,9 @@
     - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
     - 'from_first_good_server.stdout|regex_findall("has not signed namespace1\.name1")|length == 1'
+    - "info_dir is is_dir"
+  vars:
+    info_dir: "{{ galaxy_dir }}/ansible_collections/namespace1.name1-1.0.9.info"
 
 - name: Remove the collection
   file:
@@ -105,6 +108,10 @@
     that:
     - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in install_prerelease.stdout'
     - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
+    - not ([info_dir, "namespace1.name1-1.0.9.info"] | path_join) is is_dir
+    - ([info_dir, "namespace1.name1-1.1.0-beta.1.info"] | path_join) is is_dir
+  vars:
+    info_dir: "{{ galaxy_dir }}/ansible_collections"
 
 - name: Remove beta
   file:
@@ -225,7 +232,7 @@
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
-            ERROR! Failed to resolve the requested dependencies map.
+            Failed to resolve the requested dependencies map.
             Got the candidate namespace3.name:1.0.0 (direct request)
             which didn't satisfy all of the following requirements:
             * namespace3.name:1.2.0
@@ -234,7 +241,7 @@
   vars:
     error: "{{ result.stderr | regex_replace('\\n', ' ') }}"
     expected_error: >-
-            ERROR! Failed to resolve the requested dependencies map.
+            Failed to resolve the requested dependencies map.
             Got the candidate namespace3.name:1.0.0 (dependency of tmp_parent.name:1.0.0)
             which didn't satisfy all of the following requirements:
             * namespace3.name:1.2.0
@@ -323,12 +330,12 @@
     - '"Installing ''namespace4.name:1.0.0'' to" in install_uri.stdout'
     - (install_uri_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
-- name: fail to install a collection with an undefined URL - {{ test_id }}
+- name: fail to install a collection with missing URL - {{ test_id }}
   command: ansible-galaxy collection install namespace5.name {{ galaxy_verbosity }}
   register: fail_undefined_server
-  failed_when: '"No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined" not in fail_undefined_server.stderr'
+  failed_when: fail_undefined_server.stderr is not contains "config 'url' for 'bogus' galaxy_server plugin not provided"
   environment:
-    ANSIBLE_GALAXY_SERVER_LIST: undefined
+    ANSIBLE_GALAXY_SERVER_LIST: bogus
 
 # pulp_v2 doesn't require auth
 - when: v2|default(false)
@@ -528,7 +535,7 @@
 - assert:
     that:
       - required_together is failed
-      - '"ERROR! Signatures were provided to verify namespace1.name1 but no keyring was configured." in required_together.stderr'
+      - required_together.stderr is contains("Signatures were provided to verify namespace1.name1 but no keyring was configured.")
 
 - name: install collections with ansible-galaxy install -r with invalid signatures - {{ test_id }}
   # Note that --keyring is a valid option for 'ansible-galaxy install -r ...', not just 'ansible-galaxy collection ...'
@@ -789,7 +796,7 @@
     - name: assert cache version list is ignored on a collection version change - {{ test_id }}
       assert:
         that:
-        - '"Installing ''cache.cache:1.0.{{ cache_version_build }}'' to" in install_cached_update.stdout'
+        - '"Installing ''cache.cache:1.0." ~ cache_version_build ~ "'' to" in install_cached_update.stdout'
         - (install_cached_update_actual.content | b64decode | from_json).collection_info.version == '1.0.' ~ cache_version_build
 
 - name: install collection with symlink - {{ test_id }}
@@ -1140,6 +1147,33 @@
     - '"Installing ''dep_with_beta.parent:1.0.0'' to" in install_concrete_pre.stdout'
     - (install_concrete_pre_actual.results[0].content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
     - (install_concrete_pre_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+
+- block:
+  - name: create skeleton collection for trailing slash test
+    command: ansible-galaxy collection init trailing_dir.name --init-path "{{ galaxy_dir }}/scratch"
+
+  - name: install collection with directory source and trailing slash - {{ test_id }}
+    command: ansible-galaxy collection install '{{ galaxy_dir }}/scratch/trailing_dir/name/' {{ galaxy_verbosity }}
+    environment:
+      ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    register: install_dir_slash
+
+  - name: get result of install collections with with trailing slash - {{ test_id }}
+    slurp:
+      path: '{{ galaxy_dir }}/ansible_collections/trailing_dir/name/MANIFEST.json'
+    register: install_dir_slash_actual
+
+  - name: assert install collections with with trailing slash - {{ test_id }}
+    assert:
+      that:
+      - '"Installing ''trailing_dir.name:1.0.0'' to" in install_dir_slash.stdout'
+      - (install_dir_slash_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+
+  always:
+  - name: remove trailing dir skeleton
+    file:
+      path: '{{ galaxy_dir }}/scratch/trailing_dir'
+      state: absent
 
 - name: remove collection dir after round of testing - {{ test_id }}
   file:

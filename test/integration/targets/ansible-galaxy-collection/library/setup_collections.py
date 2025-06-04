@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: setup_collections
 short_description: Set up test collections based on the input
@@ -57,9 +57,9 @@ options:
         default: '{}'
 author:
 - Jordan Borean (@jborean93)
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Build test collections
   setup_collections:
     path: ~/ansible/collections/ansible_collections
@@ -70,11 +70,11 @@ EXAMPLES = '''
     - namespace: namespace1
       name: name1
       version: 0.0.2
-'''
+"""
 
-RETURN = '''
+RETURN = """
 #
-'''
+"""
 
 import datetime
 import os
@@ -87,10 +87,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes
 from functools import partial
 from multiprocessing import dummy as threading
-from multiprocessing import TimeoutError
+from multiprocessing import TimeoutError, Lock
 
 
-COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 180
+COLLECTIONS_BUILD_AND_PUBLISH_TIMEOUT = 300
+LOCK = Lock()
 
 
 def publish_collection(module, collection):
@@ -174,7 +175,10 @@ def publish_collection(module, collection):
     if module.params['token']:
         publish_args.extend(['--token', module.params['token']])
 
-    rc, stdout, stderr = module.run_command(publish_args)
+    with LOCK:
+        # lock publish operations since Galaxy publish DB key generation is not mutex'd
+        rc, stdout, stderr = module.run_command(publish_args)
+
     result['publish'] = {
         'rc': rc,
         'stdout': stdout,
@@ -252,7 +256,7 @@ def run_module():
     start = datetime.datetime.now()
     result = dict(changed=True, results=[], start=str(start))
 
-    pool = threading.Pool(4)
+    pool = threading.Pool(1)
     publish_func = partial(publish_collection, module)
     try:
         result['results'] = pool.map_async(

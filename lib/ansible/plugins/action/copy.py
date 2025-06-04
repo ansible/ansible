@@ -23,12 +23,11 @@ import os
 import os.path
 import stat
 import tempfile
-import traceback
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
@@ -149,7 +148,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                                 new_parents.add((parent_stat.st_dev, parent_stat.st_ino))
 
                             if (dir_stats.st_dev, dir_stats.st_ino) in new_parents:
-                                # This was a a circular symlink.  So add it as
+                                # This was a circular symlink.  So add it as
                                 # a symlink
                                 r_files['symlinks'].append((os.readlink(dirpath), dest_dirpath))
                             else:
@@ -210,7 +209,7 @@ class ActionModule(ActionBase):
         # NOTE: do not add to this. This should be made a generic function for action plugins.
         # This should also use the same argspec as the module instead of keeping it in sync.
         if 'invocation' not in result:
-            if self._play_context.no_log:
+            if self._task.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
             else:
                 # NOTE: Should be removed in the future. For now keep this broken
@@ -283,16 +282,21 @@ class ActionModule(ActionBase):
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
-            if self._play_context.diff and not raw:
+            if self._task.diff and not raw:
                 result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars, content))
 
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
                 result['changed'] = True
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, '.source')
+
+            # ensure we keep suffix for validate
+            suffix = os.path.splitext(dest_file)[1]
+            if suffix:
+                tmp_src += suffix
 
             remote_path = None
 
@@ -384,17 +388,15 @@ class ActionModule(ActionBase):
         return result
 
     def _create_content_tempfile(self, content):
-        ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
-        f = os.fdopen(fd, 'wb')
+        """ Create a tempfile containing defined content """
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP, prefix='.')
         content = to_bytes(content)
         try:
-            f.write(content)
+            with os.fdopen(fd, 'wb') as f:
+                f.write(content)
         except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
-        finally:
-            f.close()
         return content_tempfile
 
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
@@ -402,12 +404,18 @@ class ActionModule(ActionBase):
             os.remove(content_tempfile)
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+
         del tmp  # tmp no longer has any effect
+
+        # ensure user is not setting internal parameters
+        for internal in ('_original_basename', '_diff_peek'):
+            if self._task.args.get(internal, None) is not None:
+                raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
@@ -443,10 +451,10 @@ class ActionModule(ActionBase):
                 else:
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
-            except Exception as err:
-                result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % to_native(err)
-                return self._ensure_invocation(result)
+            except Exception as ex:
+                self._ensure_invocation(result)
+
+                raise AnsibleActionFail(message="could not write content temp file", result=result) from ex
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
@@ -462,11 +470,10 @@ class ActionModule(ActionBase):
             try:
                 # find in expected paths
                 source = self._find_needle('files', source)
-            except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_text(e)
-                result['exception'] = traceback.format_exc()
-                return self._ensure_invocation(result)
+            except AnsibleError as ex:
+                self._ensure_invocation(result)
+
+                raise AnsibleActionFail(result=result) from ex
 
             if trailing_slash != source.endswith(os.path.sep):
                 if source[-1] == os.path.sep:

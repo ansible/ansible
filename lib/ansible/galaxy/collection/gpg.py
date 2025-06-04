@@ -12,19 +12,13 @@ import contextlib
 import inspect
 import os
 import subprocess
-import sys
 import typing as t
 
 from dataclasses import dataclass, fields as dc_fields
-from functools import partial
 from urllib.error import HTTPError, URLError
 
 if t.TYPE_CHECKING:
     from ansible.utils.display import Display
-
-IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
-
-frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
 
 
 def get_signature_from_source(source, display=None):  # type: (str, t.Optional[Display]) -> str
@@ -128,7 +122,7 @@ def parse_gpg_errors(status_out):  # type: (str) -> t.Iterator[GpgBaseError]
         yield cls(*fields)
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBaseError(Exception):
     status: str
 
@@ -142,35 +136,35 @@ class GpgBaseError(Exception):
             super(GpgBaseError, self).__setattr__(field_name, field_type(getattr(self, field_name)))
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgExpSig(GpgBaseError):
     """The signature with the keyid is good, but the signature is expired."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgExpKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by an expired key."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgRevKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by a revoked key."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBadSig(GpgBaseError):
     """The signature with the keyid has not been verified okay."""
     keyid: str
     username: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgErrSig(GpgBaseError):
     """"It was not possible to check the signature.  This may be caused by
     a missing public key or an unsupported algorithm.  A RC of 4
@@ -186,24 +180,24 @@ class GpgErrSig(GpgBaseError):
     fpr: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgNoPubkey(GpgBaseError):
     """The public key is not available."""
     keyid: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgMissingPassPhrase(GpgBaseError):
     """No passphrase was supplied."""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBadPassphrase(GpgBaseError):
     """The supplied passphrase was wrong or not given."""
     keyid: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgNoData(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
@@ -215,7 +209,7 @@ class GpgNoData(GpgBaseError):
     what: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgUnexpected(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
@@ -227,7 +221,7 @@ class GpgUnexpected(GpgBaseError):
     what: str
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgError(GpgBaseError):
     """This is a generic error status message, it might be followed by error location specific data."""
     location: str
@@ -235,30 +229,30 @@ class GpgError(GpgBaseError):
     more: str = ""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgFailure(GpgBaseError):
     """This is the counterpart to SUCCESS and used to indicate a program failure."""
     location: str
     code: int
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgBadArmor(GpgBaseError):
     """The ASCII armor is corrupted."""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgKeyExpired(GpgBaseError):
     """The key has expired."""
     timestamp: int
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgKeyRevoked(GpgBaseError):
     """The used key has been revoked by its owner."""
 
 
-@frozen_dataclass
+@dataclass(frozen=True, slots=True)
 class GpgNoSecKey(GpgBaseError):
     """The secret key is not available."""
     keyid: str

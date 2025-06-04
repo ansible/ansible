@@ -1,0 +1,79 @@
+Using /home/bcoca/.ansible.cfg as config file
+> MODULE testns.testcol.randommodule (/home/bcoca/work/ansible/test/integration/targets/ansible-doc/collections/ansible_collections/testns/testcol/plugins/modules/randommodule.py)
+
+  A random module.
+DEPRECATED: 
+	Reason: Test deprecation
+	Will be removed in: Ansible 3.0.0
+	Alternatives: Use some other module
+
+OPTIONS (= indicates it is required):
+
+- sub     Suboptions.
+        set_via:
+          env:
+          - added_in: version 1.0.0 of ansible-core
+            deprecated:
+              alternative: none
+              removed_in: 2.0.0
+              version: 2.0.0
+              why: Test deprecation
+            name: TEST_ENV
+        default: null
+        type: dict
+        options:
+
+        - subtest2  Another suboption.
+          default: null
+          type: float
+          added in: version 1.1.0
+        suboptions:
+
+        - subtest  A suboption.
+          default: null
+          type: int
+          added in: version 1.1.0 of testns.testcol
+
+- test    Some text.
+        default: null
+        type: str
+        added in: version 1.2.0 of testns.testcol
+
+- testcol2option  An option taken from testcol2
+        default: null
+        type: str
+        added in: version 1.0.0 of testns.testcol2
+
+- testcol2option2  Another option taken from testcol2
+        default: null
+        type: str
+
+ADDED_IN: version 1.0.0 of testns.testcol
+
+AUTHOR: Ansible Core Team
+
+EXAMPLES:
+
+
+RETURN VALUES:
+
+- a_first  A first result.
+        returned: success
+        type: str
+
+- m_middle  This should be in the middle.
+             Has some more data
+        returned: success and 1st of month
+        type: dict
+        contains:
+
+        - suboption  A suboption.
+          choices: [ARF, BARN, c_without_capital_first_letter]
+          type: str
+          added in: version 1.4.0 of testns.testcol
+
+- z_last  A last result.
+        returned: success
+        type: str
+        added in: version 1.3.0 of testns.testcol
+

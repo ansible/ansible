@@ -13,7 +13,7 @@
     - name: final task, has to be reached for the test to succeed
       debug: msg="MAGICKEYWORD"
 
-    - name: check that extra vars are correclty passed
+    - name: check that extra vars are correctly passed
       assert:
         that:
             - docker_registries_login is defined

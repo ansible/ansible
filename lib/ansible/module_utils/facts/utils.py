@@ -20,7 +20,7 @@ import os
 
 
 def get_file_content(path, default=None, strip=True):
-    '''
+    """
         Return the contents of a given file path
 
         :args path: path to file to return contents from
@@ -28,7 +28,7 @@ def get_file_content(path, default=None, strip=True):
         :args strip: controls if we strip whitespace from the result or not
 
         :returns: String with file contents (optionally stripped) or 'default' value
-    '''
+    """
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
         datafile = None
@@ -62,7 +62,7 @@ def get_file_content(path, default=None, strip=True):
 
 
 def get_file_lines(path, strip=True, line_sep=None):
-    '''get list of lines from file'''
+    """get list of lines from file"""
     data = get_file_content(path, strip=strip)
     if data:
         if line_sep is None:
