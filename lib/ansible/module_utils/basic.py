@@ -2160,7 +2160,7 @@ class AnsibleModule(object):
     pretty_bytes = bytes_to_human
 
     def human_to_bytes(self, number, isbits=False):
-        return human_to_bytes(number, isbits)
+        return human_to_bytes(number, isbits=isbits)
 
     #
     # Backwards compat
