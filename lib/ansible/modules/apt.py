@@ -376,7 +376,6 @@ import shutil
 import sys
 import tempfile
 import time
-import typing as t
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWXU_RXG_RXO
@@ -691,7 +690,7 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed(m: t.Any, packages: t.List[str], manual: bool = True) -> None:
+def mark_installed(m: AnsibleModule, packages: list[str], manual: bool) -> None:
     """Mark packages as manually or automatically installed."""
     if not packages:
         return
@@ -720,7 +719,7 @@ def mark_installed(m: t.Any, packages: t.List[str], manual: bool = True) -> None
         rc, out, err = m.run_command(cmd)
 
     if rc != 0:
-        m.fail_json(msg=f"'{cmd}' failed: {err}", stdout=out, stderr=err, rc=rc)
+        m.fail_json(msg=f"Command {shlex.join(cmd)!r} failed.", stdout=out, stderr=err, rc=rc)
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
@@ -846,7 +845,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         data = dict(changed=False)
 
     if not build_dep and not m.check_mode:
-        mark_installed(m, package_names)
+        mark_installed(m, package_names, manual=True)
 
     return (status, data)
 
