@@ -29,7 +29,7 @@ DOCUMENTATION:
         - '"'
         - '|'
         - '>'
-      type: raw
+      type: string
     canonical:
       description:
         - If set to V(True), export tag type to the output.
