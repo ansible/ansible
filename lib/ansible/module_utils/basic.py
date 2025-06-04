@@ -2123,11 +2123,11 @@ class AnsibleModule(object):
                 self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
                 raise
-        except Exception as e:
+        except Exception as ex:
             if handle_exceptions:
-                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
+                raise
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
