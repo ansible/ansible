@@ -168,7 +168,7 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     atomic_mocks['path_exists'].side_effect = [False, False]
     atomic_mocks['rename'].side_effect = OSError(errno.EIO, 'failing with EIO')
 
-    with pytest.raises(Exception, match='Could not replace file') as err:
+    with pytest.raises(Exception, match='Could not replace') as err:
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
     assert isinstance(err.value.__cause__, OSError)
