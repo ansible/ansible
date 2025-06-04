@@ -47,6 +47,7 @@ DOCUMENTATION:
         - ','
         - ': '
       type: list
+      elements: str
     skipkeys:
       description: If V(True), keys that are not basic Python types will be skipped.
       default: False
