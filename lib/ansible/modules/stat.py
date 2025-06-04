@@ -49,7 +49,7 @@ options:
       - Get file SELinux context.
     type: bool
     default: no
-    version_added: "2.20"
+    version_added: TODO
 extends_documentation_fragment:
   -  action_common_attributes
   -  checksum_common
@@ -359,10 +359,10 @@ stat:
             sample: "381700746"
             version_added: 2.3
         selinux_context:
-            description: TODO
-            returned: TODO
-            type: TODO
-            sample: TODO
+            description: The SELinux context of a file/directory
+            returned: success, path exists and user can execute the path
+            type: list
+            sample: [ user, role, type, range ]
             version_added: TODO
 """
 
