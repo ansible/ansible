@@ -376,6 +376,7 @@ import shutil
 import sys
 import tempfile
 import time
+import typing as t
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWXU_RXG_RXO
@@ -690,7 +691,7 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed(m: Any, packages: List[str], manual: bool = True) -> None:
+def mark_installed(m: t.Any, packages: t.List[str], manual: bool = True) -> None:
     """Mark packages as manually or automatically installed."""
     if not packages:
         return
