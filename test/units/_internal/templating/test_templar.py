@@ -1074,3 +1074,9 @@ def test_unsafe_attr_access(template: str, expected: object) -> None:
 
     with unittest.mock.patch.object(_TemplateConfig, 'sandbox_mode', _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES):
         assert TemplateEngine().template(TRUST.tag(template)) == expected
+
+
+def test_marker_from_test_plugin() -> None:
+    """Verify test plugins can raise MarkerError to return a Marker, and that no warnings or deprecations are emitted."""
+    with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
+        assert TemplateEngine(variables=dict(something=TRUST.tag("{{ nope }}"))).template(TRUST.tag("{{ (something is eq {}) is undefined }}"))

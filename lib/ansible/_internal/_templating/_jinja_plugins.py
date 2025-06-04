@@ -128,6 +128,9 @@ class JinjaPluginIntercept(c.MutableMapping):
         def wrapper(*args, **kwargs) -> bool | Marker:
             result = self._invoke_plugin(instance, *args, **kwargs)
 
+            if isinstance(result, Marker):
+                return result
+
             if not isinstance(result, bool):
                 template = TemplateContext.current().template_value
 
