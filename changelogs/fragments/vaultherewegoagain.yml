@@ -1,0 +1,2 @@
+minor_changes:
+- vault now writes AES256v2 format with increased security settings, it can still read the older AES256 format

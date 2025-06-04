@@ -622,7 +622,7 @@ class TestVaultLib(unittest.TestCase):
 
         self.assertIsInstance(b_vaulttext, bytes)
 
-        b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
+        b_header = b'$ANSIBLE_VAULT;1.1;AES256v2\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
 
     def test_encrypt_vault_id(self):
@@ -631,7 +631,7 @@ class TestVaultLib(unittest.TestCase):
 
         self.assertIsInstance(b_vaulttext, bytes)
 
-        b_header = b'$ANSIBLE_VAULT;1.2;AES256;test_id\n'
+        b_header = b'$ANSIBLE_VAULT;1.2;AES256v2;test_id\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
 
     def test_encrypt_bytes(self):
@@ -641,7 +641,7 @@ class TestVaultLib(unittest.TestCase):
 
         self.assertIsInstance(b_vaulttext, bytes)
 
-        b_header = b'$ANSIBLE_VAULT;1.1;AES256\n'
+        b_header = b'$ANSIBLE_VAULT;1.1;AES256v2\n'
         self.assertEqual(b_vaulttext[:len(b_header)], b_header)
 
     def test_encrypt_no_secret_empty_secrets(self):

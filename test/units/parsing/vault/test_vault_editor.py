@@ -360,7 +360,7 @@ class TestVaultEditor(unittest.TestCase):
         with open(src_file_path, 'rb') as new_src_file:
             new_src_file_contents = new_src_file.read()
 
-        self.assertTrue(b'$ANSIBLE_VAULT;1.2;AES256;vault_secrets' in new_src_file_contents)
+        self.assertTrue(b'$ANSIBLE_VAULT;1.2;AES256v2;vault_secrets' in new_src_file_contents)
 
         src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
         self.assertEqual(src_file_plaintext, new_src_contents)
