@@ -372,6 +372,7 @@ import locale as locale_module
 import os
 import re
 import secrets
+import shlex
 import shutil
 import sys
 import tempfile
