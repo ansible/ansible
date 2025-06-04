@@ -325,8 +325,9 @@ class ShellModule(ShellBase):
 
     def checksum(self, path, *args, **kwargs):
         display.deprecated(
-            "The 'ShellModule.checksum' method is deprecated. Use 'ActionBase._execute_remote_stat()' instead.",
-            version="2.23"
+            msg="The `ShellModule.checksum` method is deprecated.",
+            version="2.23",
+            help_text="Use `ActionBase._execute_remote_stat()` instead.",
         )
         path = self._escape(self._unquote(path))
         script = """
