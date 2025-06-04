@@ -1272,9 +1272,9 @@ class VaultAES256:
                 try:
                     b_plaintext = cls._decrypt_cryptography(b_ciphertext, b_crypted_hmac, b_key1, b_key2, b_iv)
                     break
-                except Exception as e:
+                except AnsibleVaultError as e:
+                    display.debug(f'Failed at iter: {iterations!r}: {type(e)}, {e!r}')
                     error = e
-                    print(e, type(e))
             else:
                 raise AnsibleError(NEED_CRYPTO_LIBRARY + '(Detected in decrypt)')
         else:
