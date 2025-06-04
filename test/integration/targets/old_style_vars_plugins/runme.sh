@@ -14,7 +14,7 @@ export ANSIBLE_VARS_ENABLED=require_enabled
 
 # Test deprecated features
 export ANSIBLE_VARS_PLUGINS=./deprecation_warning
-WARNING="The vars plugin v2_vars_plugin .* is relying on the deprecated entrypoints 'get_host_vars' and 'get_group_vars'"
+WARNING="The vars plugin v2_vars_plugin .* is relying on the deprecated entrypoints \`get_host_vars\` and \`get_group_vars\`"
 ANSIBLE_DEPRECATION_WARNINGS=True ANSIBLE_NOCOLOR=True ANSIBLE_FORCE_COLOR=False \
         ansible-inventory -i localhost, --list all "$@" 2> err.txt
 ansible localhost -m debug -a "msg={{ lookup('file', 'err.txt') | regex_replace('\n', '') }}" | grep "$WARNING"
