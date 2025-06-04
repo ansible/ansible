@@ -36,7 +36,7 @@ DOCUMENTATION:
       type: bool
     width:
       description: Set the preferred line width.
-      type: string
+      type: int
     line_break:
       description: Specify the line break.
       type: string
