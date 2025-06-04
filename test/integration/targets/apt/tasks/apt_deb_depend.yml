@@ -5,7 +5,6 @@
         - packageone
         - packagetwo
       state: absent
-    ignore_errors: true
 
   - name: Install packageone from deb URL and make sure it installs depend
     apt:
@@ -14,22 +13,26 @@
     register: packageone_installed
 
   - name: Check if packagetwo is installed as part of packageone installation
-    shell: dpkg -l | grep packagetwo
+    shell: dpkg -s packagetwo
     register: packagetwo_installed
+
+  - name: Make sure packagetwo is installed
+    assert:
+      that:
+        - packagetwo_installed.rc == 0
 
   - name: Check if the packagetwo is marked as auto
     shell: apt-mark showauto
     register: packagetwo_auto
 
-  - name: Make sure packageone and packagetwo is installed
+  - name: Make sure packageone is installed and packagetwo is marked as auto
     assert:
       that:
         - packageone_installed.changed
-        - packagetwo_installed.rc == 0
         - "'packagetwo' in packagetwo_auto.stdout"
 
   always:
-    - name: Remove packageone and packagetwo
+    - name: Clean up after tests
       apt:
         name:
           - packageone

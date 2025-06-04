@@ -690,7 +690,8 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed(m, packages, manual=True):
+def mark_installed(m: Any, packages: List[str], manual: bool = True) -> None:
+    """Mark packages as manually or automatically installed."""
     if not packages:
         return
 
@@ -698,7 +699,7 @@ def mark_installed(m, packages, manual=True):
         mark_state = "unmarkauto"
         mark_msg = "manually"
         mark_op = "manual"
-    elif not manual:
+    else:
         mark_state = "markauto"
         mark_msg = "auto"
         mark_op = "auto"
@@ -707,26 +708,18 @@ def mark_installed(m, packages, manual=True):
 
     # https://github.com/ansible/ansible/issues/40531
     if apt_mark_cmd_path is None:
-        m.warn("Could not find apt-mark binary, not marking package(s) as %s installed." % mark_msg)
+        m.warn(f"Could not find apt-mark binary, not marking package(s) as {mark_msg} installed.")
         return
 
-    cmd = "%s %s %s" % (apt_mark_cmd_path, mark_op, ' '.join(packages))
+    cmd = [apt_mark_cmd_path, mark_op] + packages
     rc, out, err = m.run_command(cmd)
 
-    if any(x in err for x in [APT_MARK_INVALID_OP, APT_MARK_INVALID_OP_DEB6]):
-        cmd = "%s %s %s" % (apt_mark_cmd_path, mark_state, ' '.join(packages))
+    if APT_MARK_INVALID_OP in err or APT_MARK_INVALID_OP_DEB6 in err:
+        cmd = [apt_mark_cmd_path, mark_state] + packages
         rc, out, err = m.run_command(cmd)
 
     if rc != 0:
-        m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
-
-
-def mark_installed_manually(m, packages):
-    mark_installed(m, packages)
-
-
-def mark_installed_auto(m, packages):
-    mark_installed(m, packages, manual=False)
+        m.fail_json(msg=f"'{cmd}' failed: {err}", stdout=out, stderr=err, rc=rc)
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
@@ -852,7 +845,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         data = dict(changed=False)
 
     if not build_dep and not m.check_mode:
-        mark_installed_manually(m, package_names)
+        mark_installed(m, package_names)
 
     return (status, data)
 
@@ -931,7 +924,7 @@ def install_deb(
             m.fail_json(**retvals)
         # Mark the dependencies as auto installed
         # https://github.com/ansible/ansible/issues/78123
-        mark_installed_auto(m, deps_to_install)
+        mark_installed(m, deps_to_install, manual=False)
         changed = retvals.get('changed', False)
 
     if pkgs_to_install:
