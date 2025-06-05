@@ -4,6 +4,9 @@ import collections.abc as c
 
 import typing as t
 
+if t.TYPE_CHECKING:
+    from ansible.module_utils.compat.typing import TypeGuard
+
 
 INTERMEDIATE_MAPPING_TYPES = (c.Mapping,)
 """
@@ -22,12 +25,12 @@ ITERABLE_SCALARS_NOT_TO_ITERATE = (str, bytes)
 """Scalars which are also iterable, and should thus be excluded from iterable checks."""
 
 
-def is_intermediate_mapping(value: object) -> t.TypeGuard[c.Mapping]:
+def is_intermediate_mapping(value: object) -> TypeGuard[c.Mapping]:
     """Returns `True` if `value` is a type supported for projection to a Python `dict`, otherwise returns `False`."""
     return isinstance(value, INTERMEDIATE_MAPPING_TYPES)
 
 
-def is_intermediate_iterable(value: object) -> t.TypeGuard[c.Iterable]:
+def is_intermediate_iterable(value: object) -> TypeGuard[c.Iterable]:
     """Returns `True` if `value` is a type supported for projection to a Python `list`, otherwise returns `False`."""
     return isinstance(value, INTERMEDIATE_ITERABLE_TYPES) and not isinstance(value, ITERABLE_SCALARS_NOT_TO_ITERATE)
 
