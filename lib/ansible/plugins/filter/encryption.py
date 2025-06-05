@@ -21,7 +21,11 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
         raise TypeError(f"Can only vault strings, instead we got {type(data)}.")
 
     if vaultid is not None:
-        display.deprecated("Use of undocumented 'vaultid', use 'vault_id' instead", version='2.20')
+        display.deprecated(
+            msg="Use of undocumented `vaultid`.",
+            version="2.20",
+            help_text="Use `vault_id` instead.",
+        )
 
         if vault_id == 'filter_default':
             vault_id = vaultid
@@ -58,7 +62,11 @@ def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
         raise TypeError(f"Vault should be in the form of a string, instead we got {type(vault)}.")
 
     if vaultid is not None:
-        display.deprecated("Use of undocumented 'vaultid', use 'vault_id' instead", version='2.20')
+        display.deprecated(
+            msg="Use of undocumented `vaultid`.",
+            version="2.20",
+            help_text="Use `vault_id` instead.",
+        )
 
         if vault_id == 'filter_default':
             vault_id = vaultid

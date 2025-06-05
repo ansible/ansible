@@ -19,8 +19,9 @@ def __getattr__(name):
         raise AttributeError(name)
 
     display.deprecated(
-        msg='ansible.utils.py3compat.environ is deprecated in favor of os.environ.',
+        msg='`ansible.utils.py3compat.environ` is deprecated.',
         version='2.20',
+        help_text='Use `os.environ` from the Python standard library instead.',
     )
 
     return os.environ

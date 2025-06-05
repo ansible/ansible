@@ -95,8 +95,9 @@ class AnsibleError(Exception):
                 self._show_content = False
 
             Display().deprecated(
-                msg=f"The `suppress_extended_error` argument to `{type(self).__name__}` is deprecated. Use `show_content=False` instead.",
+                msg=f"The `suppress_extended_error` argument to `{type(self).__name__}` is deprecated.",
                 version="2.23",
+                help_text="Use `show_content=False` instead.",
             )
 
     @property
