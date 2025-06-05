@@ -4,13 +4,13 @@ import abc
 import copy
 import typing as t
 
-from yaml import Node
+from yaml import Node, ScalarNode
 from yaml.constructor import SafeConstructor
 from yaml.resolver import BaseResolver
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils._internal._datatag import AnsibleTagHelper, AnsibleDatatagBase
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
@@ -117,13 +117,13 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
         items = [origin.tag(item) for item in items]
         yield origin.tag(items)
 
-    def construct_yaml_str(self, node):
+    def construct_yaml_str(self, node: ScalarNode) -> str:
         # Override the default string handling function
         # to always return unicode objects
         # DTFIX-FUTURE: is this to_text conversion still necessary under Py3?
         value = to_text(self.construct_scalar(node))
 
-        tags = [self._node_position_info(node)]
+        tags: list[AnsibleDatatagBase] = [self._node_position_info(node)]
 
         if self.trusted_as_template:
             # NB: since we're not context aware, this will happily add trust to dictionary keys; this is actually necessary for

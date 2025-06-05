@@ -18,18 +18,18 @@ These will be converted to a simple Python `list` before serialization or storag
 CAUTION: Scalar types which are sequences should be excluded when using this.
 """
 
-ITERABLE_SCALARS_NOT_TO_ITERATE_FIXME = (str, bytes)
+ITERABLE_SCALARS_NOT_TO_ITERATE = (str, bytes)
 """Scalars which are also iterable, and should thus be excluded from iterable checks."""
 
 
-def is_intermediate_mapping(value: object) -> bool:
+def is_intermediate_mapping(value: object) -> t.TypeGuard[c.Mapping]:
     """Returns `True` if `value` is a type supported for projection to a Python `dict`, otherwise returns `False`."""
     return isinstance(value, INTERMEDIATE_MAPPING_TYPES)
 
 
-def is_intermediate_iterable(value: object) -> bool:
+def is_intermediate_iterable(value: object) -> t.TypeGuard[c.Iterable]:
     """Returns `True` if `value` is a type supported for projection to a Python `list`, otherwise returns `False`."""
-    return isinstance(value, INTERMEDIATE_ITERABLE_TYPES) and not isinstance(value, ITERABLE_SCALARS_NOT_TO_ITERATE_FIXME)
+    return isinstance(value, INTERMEDIATE_ITERABLE_TYPES) and not isinstance(value, ITERABLE_SCALARS_NOT_TO_ITERATE)
 
 
 is_controller: bool = False
