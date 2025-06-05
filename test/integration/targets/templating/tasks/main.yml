@@ -236,7 +236,7 @@
 
   - name: undecryptable vault values in a scalar template should trip on YAML serialization
     debug:
-      msg: '{{ dict_with_undecryptable_vault | to_yaml }}'
+      msg: '{{ dict_with_undecryptable_vault | to_yaml(dump_vault_tags=False) }}'
     ignore_errors: true
     register: result
 
@@ -248,7 +248,7 @@
   - name: undecryptable vault values in a list of templates should trip on YAML serialization
     debug:
       msg:
-      - '{{ dict_with_undecryptable_vault | to_yaml }}'
+      - '{{ dict_with_undecryptable_vault | to_yaml(dump_vault_tags=False) }}'
     ignore_errors: true
     register: result
 
