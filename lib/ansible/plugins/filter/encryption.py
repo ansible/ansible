@@ -22,7 +22,7 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
 
     if vaultid is not None:
         display.deprecated(
-            msg="Use of undocumented `vaultid`",
+            msg="Use of undocumented `vaultid`.",
             version="2.20",
             help_text="Use `vault_id` instead.",
         )
@@ -63,7 +63,7 @@ def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
 
     if vaultid is not None:
         display.deprecated(
-            msg="Use of undocumented `vaultid`",
+            msg="Use of undocumented `vaultid`.",
             version="2.20",
             help_text="Use `vault_id` instead.",
         )
