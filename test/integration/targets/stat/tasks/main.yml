@@ -188,4 +188,4 @@
 
 - assert:
     that:
-        - "'selinux_context' in stat_result"
+        - "'selinux_context' in stat_result.stat"
