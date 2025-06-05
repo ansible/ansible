@@ -49,7 +49,7 @@ options:
       - Get file SELinux context.
     type: bool
     default: no
-    version_added: '2.18'
+    version_added: '2.19'
 extends_documentation_fragment:
   -  action_common_attributes
   -  checksum_common
@@ -357,7 +357,7 @@ stat:
             returned: success, path exists and user can execute the path
             type: list
             sample: [ user, role, type, range ]
-            version_added: '2.18'
+            version_added: '2.19'
         version:
             description: The version/generation attribute of a file according to the filesystem
             returned: success, path exists, user can execute the path, lsattr is available and filesystem supports
