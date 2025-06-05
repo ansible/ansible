@@ -36,7 +36,7 @@
       - pip:
           name: rpmfluff
           executable: pip3
-    when: ansible_facts.os_family == 'RedHat' and ansible_distribution_major_version is version('9', '==')
+    when: ansible_facts.os_family == 'RedHat' and ansible_distribution_major_version is version('9', '>=')
 
   - set_fact:
       repos:
