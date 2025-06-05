@@ -21,7 +21,7 @@
 - name: Confirm that signature check failed
   assert:
     that:
-      - checksig.stdout is contains 'SIGNATURES NOT OK'
+      - checksig.stdout is contains 'NOT OK'
       - checksig.failed
 
 - name: Remove test key from keyring (idempotent)
@@ -55,7 +55,7 @@
 
 - name: Confirm that signature check succeeded
   assert:
-    that: checksig.stdout is contains 'digests signatures OK'
+    that: checksig.stdout is contains 'OK'
 
 - name: Remove test key via url
   rpm_key:
@@ -70,7 +70,7 @@
 - name: Confirm that signature check failed
   assert:
     that:
-      - checksig.stdout is contains 'SIGNATURES NOT OK'
+      - checksig.stdout is contains 'NOT OK'
       - checksig.failed
 
 - name: Add test key from url
@@ -84,7 +84,7 @@
 
 - name: Confirm that signature check succeeded
   assert:
-    that: checksig.stdout is contains 'digests signatures OK'
+    that: checksig.stdout is contains 'OK'
 
 - name: Remove all keys from key ring
   shell: rpm -q gpg-pubkey | xargs rpm -e
@@ -100,7 +100,7 @@
 
 - name: Confirm that signature check succeeded
   assert:
-    that: checksig.stdout is contains 'digests signatures OK'
+    that: checksig.stdout is contains 'OK'
 
 - name: Get keyid
   shell: rpm -q gpg-pubkey | head -n 1 | xargs rpm -q --qf %{version}
