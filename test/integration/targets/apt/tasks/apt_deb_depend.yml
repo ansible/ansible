@@ -16,20 +16,16 @@
     shell: dpkg -s packagetwo
     register: packagetwo_installed
 
-  - name: Make sure packagetwo is installed
-    assert:
-      that:
-        - packagetwo_installed.rc == 0
 
-  - name: Check if the packagetwo is marked as auto
-    shell: apt-mark showauto
-    register: packagetwo_auto
+  - name: Check if packageone and packagetwo are marked as auto
+    shell: apt-mark showauto packageone packagetwo
+    register: auto_installed
 
-  - name: Make sure packageone is installed and packagetwo is marked as auto
+  - name: Make sure packageone is installed manually and packagetwo is marked as auto
     assert:
       that:
         - packageone_installed.changed
-        - "'packagetwo' in packagetwo_auto.stdout"
+        - auto_installed.stdout_lines == ["packagetwo"]
 
   always:
     - name: Clean up after tests
@@ -38,4 +34,3 @@
           - packageone
           - packagetwo
         state: absent
-      ignore_errors: true
