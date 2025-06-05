@@ -332,7 +332,9 @@ DOCUMENTATION = """
             version_added: '2.7'
       sftp_batch_mode:
         default: true
-        description: 'TODO: write it'
+        description:
+          - When set to C(True), sftp will be run in batch mode, allowing detection of transfer errors.
+          - When set to C(False), sftp will not be run in batch mode, preventing detection of transfer errors.
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
