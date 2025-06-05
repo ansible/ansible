@@ -6,7 +6,7 @@
     register: setup_acl
 
   - name: Install the acl package on RedHat
-    dnf:
+    yum:
       name: acl
     when: ansible_distribution in ('RedHat')
     register: setup_acl
@@ -44,7 +44,7 @@
       when: setup_acl is changed and ansible_distribution in ('Ubuntu')
 
     - name: Remove the acl package on RedHat
-      dnf:
+      yum:
         name: acl
         state: absent
       when: setup_acl is changed and ansible_distribution in ('RedHat')
