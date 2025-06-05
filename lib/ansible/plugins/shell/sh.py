@@ -48,8 +48,9 @@ class ShellModule(ShellBase):
 
     def checksum(self, path, python_interp):
         display.deprecated(
-            "The 'ShellModule.checksum' method is deprecated. Use 'ActionBase._execute_remote_stat()' instead.",
-            version="2.23"
+            msg="The `ShellModule.checksum` method is deprecated.",
+            version="2.23",
+            help_text="Use `ActionBase._execute_remote_stat()` instead.",
         )
         # In the following test, each condition is a check and logical
         # comparison (|| or &&) that sets the rc value.  Every check is run so
