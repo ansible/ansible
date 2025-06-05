@@ -189,3 +189,15 @@
 - assert:
     that:
         - "'selinux_context' in stat_result.stat"
+
+- name: check stat a file with get_selinux_context off
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: False
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' not in stat_result.stat"

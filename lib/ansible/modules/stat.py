@@ -46,7 +46,9 @@ options:
     version_added: "1.8"
   get_selinux_context:
     description:
-      - Get file SELinux context.
+      - Get file SELinux context in a list [ user, role, type, range ], 
+      - and will get [None, None, None, None] if it is not possible to retrieve the context, 
+      - either because it does not exist or some other issue.
     type: bool
     default: no
     version_added: '2.19'
