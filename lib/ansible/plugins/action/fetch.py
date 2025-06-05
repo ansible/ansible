@@ -119,7 +119,7 @@ class ActionModule(ActionBase):
 
                     if 'not found' in slurpres.get('msg', ''):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
-                    elif slurpres.get('msg', '').startswith('source is a directory'):
+                    elif slurpres.get('msg', '').lower().startswith('source is a directory'):
                         result['msg'] = "remote file is a directory, fetch cannot work on directories"
 
                     return result
