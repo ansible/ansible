@@ -42,7 +42,7 @@ from ansible.utils.vars import combine_vars
 # global cache for role dependencies
 # Key: collection.path.role_name
 # Value: list of role dependencies
-global_role_dependency_cache = {}
+global_role_dependency_cache : dict[str, list[str]] = {}
 
 __all__ = ['Role', 'hash_params']
 
@@ -525,7 +525,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         seen = []
 
         deps = self.get_cached_deps()
-        if deps == None:
+        if deps is None:
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
 
