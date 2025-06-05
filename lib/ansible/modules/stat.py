@@ -49,7 +49,7 @@ options:
       - Get file SELinux context.
     type: bool
     default: no
-    version_added: TODO
+    version_added: '2.18'
 extends_documentation_fragment:
   -  action_common_attributes
   -  checksum_common
@@ -352,18 +352,18 @@ stat:
             type: list
             sample: [ immutable, extent ]
             version_added: 2.3
+        selinux_context:
+            description: The SELinux context of a file/directory
+            returned: success, path exists and user can execute the path
+            type: list
+            sample: [ user, role, type, range ]
+            version_added: '2.18'
         version:
             description: The version/generation attribute of a file according to the filesystem
             returned: success, path exists, user can execute the path, lsattr is available and filesystem supports
             type: str
             sample: "381700746"
             version_added: 2.3
-        selinux_context:
-            description: The SELinux context of a file/directory
-            returned: success, path exists and user can execute the path
-            type: list
-            sample: [ user, role, type, range ]
-            version_added: TODO
 """
 
 import errno
@@ -447,6 +447,7 @@ def main():
             get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
+            get_selinux_context=dict(type='bool', default=False),
             checksum_algorithm=dict(type='str', default='sha1',
                                     choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum', 'checksum_algo']),
