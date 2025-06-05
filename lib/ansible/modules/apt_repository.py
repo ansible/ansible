@@ -754,7 +754,7 @@ def main():
 
         except OSError as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
-            raise ex
+            raise
 
     module.exit_json(changed=changed, repo=repo, sources_added=sources_added, sources_removed=sources_removed, state=state, diff=diff)
 
