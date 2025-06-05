@@ -48,11 +48,9 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
 @accept_lazy_markers
-def to_yaml(a, *_args, default_flow_style: bool | None = None, dump_vault_tags: bool | None = None, **kwargs) -> str:
+def to_yaml(a, *_args, default_flow_style: bool | None = None, **kwargs) -> str:
     """Serialize input as terse flow-style YAML."""
-    dumper = partial(AnsibleDumper, dump_vault_tags=dump_vault_tags)
-
-    return yaml.dump(a, Dumper=dumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
+    return yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
 
 
 @accept_lazy_markers
