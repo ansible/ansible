@@ -140,8 +140,6 @@ deprecated_features:
   - conditionals - Conditionals using Jinja templating delimiters (e.g., ``{{``, ``{%``) should be rewritten as expressions without delimiters, unless the entire conditional value is a single template that resolves to a trusted string expression.
     This is useful for dynamic indirection of conditional expressions, but is limited to trusted literal string expressions.
   - templating - The ``disable_lookups`` option has no effect, since plugins must be updated to apply trust before any templating can be performed.
-  - to_yaml/to_nice_yaml filters - Implicit YAML dumping of vaulted value ciphertext is deprecated.
-    Set `dump_vault_tags` to explicitly specify the desired behavior.
   - plugin error handling - The ``AnsibleError`` constructor arg ``suppress_extended_error`` is deprecated.
     Using ``suppress_extended_error=True`` has the same effect as ``show_content=False``.
   - config - The ``ACTION_WARNINGS`` config has no effect. It previously disabled command warnings, which have since been removed.
