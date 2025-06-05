@@ -34,12 +34,6 @@ class _BaseDumper(SafeDumper, metaclass=abc.ABCMeta):
 class AnsibleDumper(_BaseDumper):
     """A simple stub class that allows us to add representers for our custom types."""
 
-    # DTFIX0: need a better way to handle serialization controls during YAML dumping
-    def __init__(self, *args, dump_vault_tags: bool | None = None, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._dump_vault_tags = dump_vault_tags
-
     @classmethod
     def _register_representers(cls) -> None:
         cls.add_multi_representer(AnsibleTaggedObject, cls.represent_ansible_tagged_object)
@@ -49,15 +43,7 @@ class AnsibleDumper(_BaseDumper):
         cls.add_multi_representer(_jinja_common.VaultExceptionMarker, cls.represent_vault_exception_marker)
 
     def get_node_from_ciphertext(self, data: object) -> ScalarNode | None:
-        if self._dump_vault_tags is not False and (ciphertext := VaultHelper.get_ciphertext(data, with_tags=False)):
-            # deprecated: description='enable the deprecation warning below' core_version='2.23'
-            # if self._dump_vault_tags is None:
-            #     Display().deprecated(
-            #         msg="Implicit YAML dumping of vaulted value ciphertext is deprecated.",
-            #         version="2.27",
-            #         help_text="Set `dump_vault_tags` to explicitly specify the desired behavior.",
-            #     )
-
+        if ciphertext := VaultHelper.get_ciphertext(data, with_tags=False):
             return self.represent_scalar('!vault', ciphertext, style='|')
 
         return None
