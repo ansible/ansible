@@ -19,7 +19,7 @@ from jinja2.compiler import Frame
 from jinja2.lexer import TOKEN_VARIABLE_BEGIN, TOKEN_VARIABLE_END, TOKEN_STRING, Lexer
 from jinja2.nativetypes import NativeCodeGenerator
 from jinja2.nodes import Const, EvalContext
-from jinja2.runtime import Context
+from jinja2.runtime import Context, Macro
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from jinja2.utils import missing, LRUCache
 
@@ -799,11 +799,14 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
             # Performing either before calling them will interfere with that processing.
             return super().call(__context, __obj, *args, **kwargs)
 
-        if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        # Jinja's generated macro code handles Markers, so pre-emptive raise on Marker args and lazy retrieval should be disabled for the macro invocation.
+        is_macro = isinstance(__obj, Macro)
+
+        if not is_macro and (first_marker := get_first_marker_arg(args, kwargs)) is not None:
             return first_marker
 
         try:
-            with JinjaCallContext(accept_lazy_markers=False):
+            with JinjaCallContext(accept_lazy_markers=is_macro):
                 call_res = super().call(__context, __obj, *lazify_container_args(args), **lazify_container_kwargs(kwargs))
 
                 if __obj is range:
@@ -826,7 +829,7 @@ _sentinel: t.Final[object] = object()
 
 
 @_DirectCall.mark
-def _undef(hint=None):
+def _undef(hint: str | None = None) -> UndefinedMarker:
     """Jinja2 global function (undef) for creating getting a `UndefinedMarker` instance, optionally with a custom hint."""
     validate_arg_type('hint', hint, (str, type(None)))
 

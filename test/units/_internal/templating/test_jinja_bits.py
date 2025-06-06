@@ -371,3 +371,33 @@ def test_builtin_alt_names(name: str) -> None:
     alt_name = _BUILTIN_TEST_ALIASES[name]
 
     assert tests[name] is tests[alt_name]
+
+
+@pytest.mark.parametrize("template,variables,expected", (
+    # macro getting an undefined from a getitem should continue execution
+    (
+        "{{ macro_user('badkey') }}",
+        dict(data={}, macro_user=TRUST.tag("{% macro a_macro(a_key) %}{{ data[a_key] | default('thedefault') }}{% endmacro %}{{ a_macro }}")),
+        "thedefault",
+    ),
+    # call block getting an undefined from a getitem should continue execution
+    (
+        "{% macro a_macro() %}it was {{ caller() }}{% endmacro %}{% call a_macro() %}{{ data['nope'] | default('thedefault') }}{% endcall %}",
+        dict(data={}),
+        "it was thedefault",
+    ),
+    # macro receiving an undefined arg should always execute
+    (
+        "{{ macro_user(an_undefined_var) }}",
+        dict(data={}, macro_user=TRUST.tag("{% macro a_macro(value) %}{{ value | default('thedefault') }}{% endmacro %}{{ a_macro }}")),
+        "thedefault",
+    ),
+))
+def test_macro_marker_handling(template: str, variables: dict[str, object], expected: object) -> None:
+    """
+    Ensure that `JinjaCallContext` Marker handling is masked/set correctly for Jinja macro callables.
+    Jinja's generated macro code handles Markers, so pre-emptive raise on retrieval should be disabled for the macro `call()`.
+    """
+    res = TemplateEngine(variables=variables).template(TRUST.tag(template))
+
+    assert res == expected

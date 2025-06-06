@@ -163,7 +163,7 @@ class JinjaPluginIntercept(c.MutableMapping):
 class _DirectCall:
     """Functions/methods marked `_DirectCall` bypass Jinja Environment checks for `Marker`."""
 
-    _marker_attr: str = "_directcall"
+    _marker_attr: t.Final[str] = "_directcall"
 
     @classmethod
     def mark(cls, src: _TCallable) -> _TCallable:
@@ -172,7 +172,7 @@ class _DirectCall:
 
     @classmethod
     def is_marked(cls, value: t.Callable) -> bool:
-        return callable(value) and getattr(value, "_directcall", False)
+        return callable(value) and getattr(value, cls._marker_attr, False)
 
 
 @_DirectCall.mark
