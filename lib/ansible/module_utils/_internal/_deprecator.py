@@ -5,7 +5,7 @@ import pathlib
 import sys
 import typing as t
 
-from ansible.module_utils._internal import _stack, _messages, _validation
+from ansible.module_utils._internal import _stack, _messages, _validation, _plugin_info
 
 
 def deprecator_from_collection_name(collection_name: str | None) -> _messages.PluginInfo | None:
@@ -19,7 +19,7 @@ def deprecator_from_collection_name(collection_name: str | None) -> _messages.Pl
 
     return _messages.PluginInfo(
         resolved_name=collection_name,
-        type=_COLLECTION_ONLY_TYPE,
+        type=None,
     )
 
 
@@ -54,7 +54,7 @@ def _path_as_core_plugininfo(path: str) -> _messages.PluginInfo | None:
 
     if match := re.match(r'plugins/(?P<plugin_type>\w+)/(?P<plugin_name>\w+)', relpath):
         plugin_name = match.group("plugin_name")
-        plugin_type = match.group("plugin_type")
+        plugin_type = _plugin_info.normalize_plugin_type(match.group("plugin_type"))
 
         if plugin_type not in _DEPRECATOR_PLUGIN_TYPES:
             # The plugin type isn't a known deprecator type, so we have to assume the caller is intermediate code.
@@ -65,13 +65,13 @@ def _path_as_core_plugininfo(path: str) -> _messages.PluginInfo | None:
     elif match := re.match(r'modules/(?P<module_name>\w+)', relpath):
         # AnsiballZ Python package for core modules
         plugin_name = match.group("module_name")
-        plugin_type = "module"
+        plugin_type = _messages.PluginType.MODULE
     elif match := re.match(r'legacy/(?P<module_name>\w+)', relpath):
         # AnsiballZ Python package for non-core library/role modules
         namespace = 'ansible.legacy'
 
         plugin_name = match.group("module_name")
-        plugin_type = "module"
+        plugin_type = _messages.PluginType.MODULE
     else:
         return ANSIBLE_CORE_DEPRECATOR  # non-plugin core path, safe to use ansible-core for the same reason as the non-deprecator plugin type case above
 
@@ -85,16 +85,13 @@ def _path_as_collection_plugininfo(path: str) -> _messages.PluginInfo | None:
     if not (match := re.search(r'/ansible_collections/(?P<ns>\w+)/(?P<coll>\w+)/plugins/(?P<plugin_type>\w+)/(?P<plugin_name>\w+)', path)):
         return None
 
-    plugin_type = match.group('plugin_type')
+    plugin_type = _plugin_info.normalize_plugin_type(match.group('plugin_type'))
 
     if plugin_type in _AMBIGUOUS_DEPRECATOR_PLUGIN_TYPES:
         # We're able to detect the namespace, collection and plugin type -- but we have no way to identify the plugin name currently.
         # To keep things simple we'll fall back to just identifying the namespace and collection.
         # In the future we could improve the detection and/or make it easier for a caller to identify the plugin name.
         return deprecator_from_collection_name('.'.join((match.group('ns'), match.group('coll'))))
-
-    if plugin_type == 'modules':
-        plugin_type = 'module'
 
     if plugin_type not in _DEPRECATOR_PLUGIN_TYPES:
         # The plugin type isn't a known deprecator type, so we have to assume the caller is intermediate code.
@@ -107,46 +104,43 @@ def _path_as_collection_plugininfo(path: str) -> _messages.PluginInfo | None:
     return _messages.PluginInfo(resolved_name=name, type=plugin_type)
 
 
-_COLLECTION_ONLY_TYPE: t.Final = 'collection'
-"""Ersatz placeholder plugin type for use by a `PluginInfo` instance that references only a collection."""
-
 _ANSIBLE_MODULE_BASE_PATH: t.Final = pathlib.Path(sys.modules['ansible'].__file__).parent
 """Runtime-detected base path of the `ansible` Python package to distinguish between Ansible-owned and external code."""
 
 ANSIBLE_CORE_DEPRECATOR: t.Final = deprecator_from_collection_name('ansible.builtin')
 """Singleton `PluginInfo` instance for ansible-core callers where the plugin can/should not be identified in messages."""
 
-INDETERMINATE_DEPRECATOR: t.Final = _messages.PluginInfo(resolved_name='indeterminate', type='indeterminate')
+INDETERMINATE_DEPRECATOR: t.Final = _messages.PluginInfo(resolved_name=None, type=None)
 """Singleton `PluginInfo` instance for indeterminate deprecator."""
 
 _DEPRECATOR_PLUGIN_TYPES: t.Final = frozenset(
     {
-        'action',
-        'become',
-        'cache',
-        'callback',
-        'cliconf',
-        'connection',
-        # doc_fragments - no code execution
-        # filter - basename inadequate to identify plugin
-        'httpapi',
-        'inventory',
-        'lookup',
-        'module',  # only for collections
-        'netconf',
-        'shell',
-        'strategy',
-        'terminal',
-        # test - basename inadequate to identify plugin
-        'vars',
+        _messages.PluginType.ACTION,
+        _messages.PluginType.BECOME,
+        _messages.PluginType.CACHE,
+        _messages.PluginType.CALLBACK,
+        _messages.PluginType.CLICONF,
+        _messages.PluginType.CONNECTION,
+        # DOC_FRAGMENTS - no code execution
+        # FILTER - basename inadequate to identify plugin
+        _messages.PluginType.HTTPAPI,
+        _messages.PluginType.INVENTORY,
+        _messages.PluginType.LOOKUP,
+        _messages.PluginType.MODULE,  # only for collections
+        _messages.PluginType.NETCONF,
+        _messages.PluginType.SHELL,
+        _messages.PluginType.STRATEGY,
+        _messages.PluginType.TERMINAL,
+        # TEST - basename inadequate to identify plugin
+        _messages.PluginType.VARS,
     }
 )
 """Plugin types which are valid for identifying a deprecator for deprecation purposes."""
 
 _AMBIGUOUS_DEPRECATOR_PLUGIN_TYPES: t.Final = frozenset(
     {
-        'filter',
-        'test',
+        _messages.PluginType.FILTER,
+        _messages.PluginType.TEST,
     }
 )
 """Plugin types for which basename cannot be used to identify the plugin name."""

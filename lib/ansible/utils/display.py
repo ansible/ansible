@@ -603,20 +603,18 @@ class Display(metaclass=Singleton):
         else:
             removal_fragment = 'This feature will be removed'
 
-        if not deprecator or deprecator.type == _deprecator.INDETERMINATE_DEPRECATOR.type:
-            collection = None
-            plugin_fragment = ''
-        elif deprecator.type == _deprecator._COLLECTION_ONLY_TYPE:
-            collection = deprecator.resolved_name
+        if not deprecator or not deprecator.type:
+            # indeterminate has no resolved_name or type
+            # collections have a resolved_name but no type
+            collection = deprecator.resolved_name if deprecator else None
             plugin_fragment = ''
         else:
             parts = deprecator.resolved_name.split('.')
             plugin_name = parts[-1]
-            # DTFIX1: normalize 'modules' -> 'module' before storing it so we can eliminate the normalization here
-            plugin_type = "module" if deprecator.type in ("module", "modules") else f'{deprecator.type} plugin'
+            plugin_type_name = str(deprecator.type) if deprecator.type is _messages.PluginType.MODULE else f'{deprecator.type} plugin'
 
             collection = '.'.join(parts[:2]) if len(parts) > 2 else None
-            plugin_fragment = f'{plugin_type} {plugin_name!r}'
+            plugin_fragment = f'{plugin_type_name} {plugin_name!r}'
 
         if collection and plugin_fragment:
             plugin_fragment += ' in'

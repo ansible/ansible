@@ -87,6 +87,7 @@ For controller-to-module, type behavior is profile dependent.
 _common_module_response_types: frozenset[type[AnsibleSerializable]] = frozenset(
     {
         _messages.PluginInfo,
+        _messages.PluginType,
         _messages.Event,
         _messages.EventChain,
         _messages.ErrorSummary,

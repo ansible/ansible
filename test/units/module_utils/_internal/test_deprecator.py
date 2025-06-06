@@ -33,26 +33,25 @@ def do_stuff():
         return super().exec_module(module)
 
 
-@pytest.mark.parametrize("python_fq_name,expected_resolved_name,expected_plugin_type", (
+@pytest.mark.parametrize("python_fq_name,expected_plugin_info", (
     # legacy module callers
-    ('ansible.legacy.blah', 'ansible.legacy.blah', 'module'),
+    ('ansible.legacy.blah', _messages.PluginInfo(resolved_name='ansible.legacy.blah', type=_messages.PluginType.MODULE)),
     # core callers
-    ('ansible.modules.ping', 'ansible.builtin.ping', 'module'),
-    ('ansible.plugins.filters.core', _deprecator.ANSIBLE_CORE_DEPRECATOR.resolved_name, _deprecator.ANSIBLE_CORE_DEPRECATOR.type),
-    ('ansible.plugins.tests.core', _deprecator.ANSIBLE_CORE_DEPRECATOR.resolved_name, _deprecator.ANSIBLE_CORE_DEPRECATOR.type),
-    ('ansible.nonplugin_something', _deprecator.ANSIBLE_CORE_DEPRECATOR.resolved_name, _deprecator.ANSIBLE_CORE_DEPRECATOR.type),
+    ('ansible.modules.ping', _messages.PluginInfo(resolved_name='ansible.builtin.ping', type=_messages.PluginType.MODULE)),
+    ('ansible.plugins.filter.core', _deprecator.ANSIBLE_CORE_DEPRECATOR),
+    ('ansible.plugins.test.core', _deprecator.ANSIBLE_CORE_DEPRECATOR),
+    ('ansible.nonplugin_something', _deprecator.ANSIBLE_CORE_DEPRECATOR),
     # collections plugin callers
-    ('ansible_collections.foo.bar.plugins.modules.module_thing', 'foo.bar.module_thing', 'module'),
-    ('ansible_collections.foo.bar.plugins.filter.somefilter', 'foo.bar', _deprecator._COLLECTION_ONLY_TYPE),
-    ('ansible_collections.foo.bar.plugins.test.sometest', 'foo.bar', _deprecator._COLLECTION_ONLY_TYPE),
+    ('ansible_collections.foo.bar.plugins.modules.module_thing', _messages.PluginInfo(resolved_name='foo.bar.module_thing', type=_messages.PluginType.MODULE)),
+    ('ansible_collections.foo.bar.plugins.filter.somefilter', _messages.PluginInfo(resolved_name='foo.bar', type=None)),
+    ('ansible_collections.foo.bar.plugins.test.sometest', _messages.PluginInfo(resolved_name='foo.bar', type=None)),
     # indeterminate callers (e.g. collection module_utils- must specify since they might be calling on behalf of another
-    ('ansible_collections.foo.bar.plugins.module_utils.something',
-     _deprecator.INDETERMINATE_DEPRECATOR.resolved_name, _deprecator.INDETERMINATE_DEPRECATOR.type),
+    ('ansible_collections.foo.bar.plugins.module_utils.something', _deprecator.INDETERMINATE_DEPRECATOR),
     # other callers
-    ('something.else', None, None),
-    ('ansible_collections.foo.bar.nonplugin_something', None, None),
+    ('something.else', None),
+    ('ansible_collections.foo.bar.nonplugin_something', None),
 ))
-def test_get_caller_plugin_info(python_fq_name: str, expected_resolved_name: str, expected_plugin_type: str):
+def test_get_caller_plugin_info(python_fq_name: str, expected_plugin_info: _messages.PluginInfo):
     """Validates the expected `PluginInfo` values received from various types of core/non-core/collection callers."""
     # invoke a standalone fake loader that generates a Python module with the specified FQ python name (converted to a corresponding __file__ entry) that
     # pretends as if it called `get_caller_plugin_info()` and returns its result
@@ -64,10 +63,4 @@ def test_get_caller_plugin_info(python_fq_name: str, expected_resolved_name: str
 
     pi: _messages.PluginInfo = mod.do_stuff()
 
-    if not expected_resolved_name and not expected_plugin_type:
-        assert pi is None
-        return
-
-    assert pi is not None
-    assert pi.resolved_name == expected_resolved_name
-    assert pi.type == expected_plugin_type
+    assert pi == expected_plugin_info
