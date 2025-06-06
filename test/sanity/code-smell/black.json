@@ -3,6 +3,7 @@
         ".azure-pipelines/",
         "lib/ansible/_internal/",
         "lib/ansible/module_utils/_internal/",
+        "lib/ansible/template/",
         "lib/ansible/utils/collection_loader/__init__.py",
         "packaging/",
         "test/sanity/code-smell/"

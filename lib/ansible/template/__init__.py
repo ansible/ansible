@@ -1,22 +1,18 @@
 from __future__ import annotations as _annotations
 
 import contextlib as _contextlib
-import datetime as _datetime
 import io as _io
 import os as _os
-import pwd as _pwd
-import time as _time
 import typing as _t
 
 from jinja2 import environment as _environment
 
 from ansible import _internal
-from ansible import constants as _constants
 from ansible import errors as _errors
 from ansible._internal._datatag import _tags, _wrappers
-from ansible._internal._templating import _jinja_bits, _engine, _jinja_common
+from ansible._internal._templating import _jinja_bits, _engine, _jinja_common, _template_vars
+
 from ansible.module_utils import datatag as _module_utils_datatag
-from ansible.module_utils._internal import _datatag
 from ansible.utils.display import Display as _Display
 
 if _t.TYPE_CHECKING:  # pragma: nocover
@@ -352,57 +348,17 @@ class Templar:
         )
 
 
-def generate_ansible_template_vars(path: str, fullpath: str | None = None, dest_path: str | None = None) -> dict[str, object]:
+def generate_ansible_template_vars(
+    path: str,
+    fullpath: str | None = None,
+    dest_path: str | None = None,
+) -> dict[str, object]:
     """
     Generate and return a dictionary with variable metadata about the template specified by `fullpath`.
     If `fullpath` is `None`, `path` will be used instead.
     """
-    if fullpath is None:
-        fullpath = _os.path.abspath(path)
-
-    template_path = fullpath
-    template_stat = _os.stat(template_path)
-
-    template_uid: int | str
-
-    try:
-        template_uid = _pwd.getpwuid(template_stat.st_uid).pw_name
-    except KeyError:
-        template_uid = template_stat.st_uid
-
-    managed_default = _constants.config.get_config_value('DEFAULT_MANAGED_STR')
-
-    managed_str = managed_default.format(
-        # IMPORTANT: These values must be constant strings to avoid template injection.
-        #            Use Jinja template expressions where variables are needed.
-        host="{{ template_host }}",
-        uid="{{ template_uid }}",
-        file="{{ template_path }}",
-    )
-
-    ansible_managed = _time.strftime(managed_str, _time.localtime(template_stat.st_mtime))
-    # DTFIX7: this should not be tag_copy, it should either be an origin copy or some kind of derived origin
-    ansible_managed = _datatag.AnsibleTagHelper.tag_copy(managed_default, ansible_managed)
-    ansible_managed = trust_as_template(ansible_managed)
-    ansible_managed = _module_utils_datatag.deprecate_value(
-        value=ansible_managed,
-        msg="The `ansible_managed` variable is deprecated.",
-        help_text="Define and use a custom variable instead.",
-        version='2.23',
-    )
-
-    temp_vars = dict(
-        template_host=_os.uname()[1],
-        template_path=path,
-        template_mtime=_datetime.datetime.fromtimestamp(template_stat.st_mtime),
-        template_uid=template_uid,
-        template_run_date=_datetime.datetime.now(),
-        template_destpath=dest_path,
-        template_fullpath=fullpath,
-        ansible_managed=ansible_managed,
-    )
-
-    return temp_vars
+    # deprecated description="deprecate `generate_ansible_template_vars`, collections should inline the necessary variables" core_version="2.23"
+    return _template_vars.generate_ansible_template_vars(path=path, fullpath=fullpath, dest_path=dest_path, include_ansible_managed=True)
 
 
 def trust_as_template(value: _TTrustable) -> _TTrustable:

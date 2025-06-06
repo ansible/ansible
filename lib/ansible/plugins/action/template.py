@@ -25,7 +25,8 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text, to_na
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.template import generate_ansible_template_vars, trust_as_template
+from ansible.template import trust_as_template
+from ansible._internal._templating import _template_vars
 
 
 class ActionModule(ActionBase):
@@ -115,7 +116,12 @@ class ActionModule(ActionBase):
 
             # add ansible 'template' vars
             temp_vars = task_vars.copy()
-            temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), fullpath=source, dest_path=dest))
+            temp_vars.update(_template_vars.generate_ansible_template_vars(
+                path=self._task.args.get('src', None),
+                fullpath=source,
+                dest_path=dest,
+                include_ansible_managed='ansible_managed' not in temp_vars,  # do not clobber ansible_managed when set by the user
+            ))
 
             overrides = dict(
                 block_start_string=block_start_string,

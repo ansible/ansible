@@ -6,9 +6,11 @@ import pathlib
 import typing as t
 
 import pytest
+import pytest_mock
 
 from contextlib import nullcontext
 
+from ansible import constants
 from ansible import errors as _errors
 from ansible import template as _template
 from ansible._internal._templating import _engine, _jinja_bits
@@ -370,3 +372,12 @@ def test_copy_with_new_env_with_none() -> None:
     copied = templar.copy_with_new_env(variable_start_string=None)
 
     assert copied.template(trust_as_template('{{ True }}')) is True
+
+
+def test_generate_ansible_template_vars(mocker: pytest_mock.MockerFixture, tmp_path: pathlib.Path) -> None:
+    """Verify public API passes through ansible_managed."""
+    mocker.patch.object(constants.config, 'get_config_value', return_value='value from config')
+
+    tvars = _template.generate_ansible_template_vars(path="path", fullpath=str(tmp_path), dest_path=str(tmp_path))
+
+    assert tvars['ansible_managed'] == 'value from config'
