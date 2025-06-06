@@ -727,37 +727,37 @@
 
 - name: Ensure double uninstall of wildcard globs works
   block:
-  - name: "Install redhat-*-fonts"
+  - name: "Install dejavu-*-fonts"
     yum:
-      name: "redhat-*-fonts"
+      name: "dejavu-*-fonts"
       state: present
 
-  - name: "Remove redhat-*-fonts (1st time)"
+  - name: "Remove dejavu-*-fonts (1st time)"
     yum:
-      name: "redhat-*-fonts"
+      name: "dejavu-*-fonts"
       state: absent
-    register: remove_redhat_fonts_1
+    register: remove_dejavu_fonts_1
 
-  - name: "Verify redhat-*-fonts (1st time)"
+  - name: "Verify dejavu-*-fonts (1st time)"
     assert:
       that:
-        - "remove_redhat_fonts_1 is changed"
-        - "'msg' in remove_redhat_fonts_1"
-        - "'results' in remove_redhat_fonts_1"
+        - "remove_dejavu_fonts_1 is changed"
+        - "'msg' in remove_dejavu_fonts_1"
+        - "'results' in remove_dejavu_fonts_1"
 
-  - name: "Remove redhat-*-fonts (2nd time)"
+  - name: "Remove dejavu-*-fonts (2nd time)"
     yum:
-      name: "redhat-*-fonts"
+      name: "dejavu-*-fonts"
       state: absent
-    register: remove_redhat_fonts_2
+    register: remove_dejavu_fonts_2
 
-  - name: "Verify redhat-*-fonts (2nd time)"
+  - name: "Verify dejavu-*-fonts (2nd time)"
     assert:
       that:
-        - "remove_redhat_fonts_2 is not changed"
-        - "'msg' in remove_redhat_fonts_2"
-        - "'results' in remove_redhat_fonts_2"
-        - "'redhat-*-fonts is not installed' in remove_redhat_fonts_2['results']"
+        - "remove_dejavu_fonts_2 is not changed"
+        - "'msg' in remove_dejavu_fonts_2"
+        - "'results' in remove_dejavu_fonts_2"
+        - "'dejavu-*-fonts is not installed' in remove_dejavu_fonts_2['results']"
 
 - block:
   - name: uninstall {{ package2 }}

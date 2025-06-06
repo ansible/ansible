@@ -21,7 +21,7 @@
     mode: 0755
 
 - name: get yum releasever
-  command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
+  command: "{{ ansible_python_interpreter }} -c 'import dnf; print(dnf.Base().conf.substitutions[\'releasever\'])'"
   register: releasever
   ignore_errors: yes
 
