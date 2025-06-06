@@ -1,0 +1,20 @@
+# deprecated: description='ansible_managed has been removed' core_version='2.23'
+- name: invoke template action with content using default injected `ansible_managed`
+  template:
+    src: uses_ansible_managed.j2
+    dest: '{{output_dir}}/default_am.txt'
+  register: default_action_result
+
+- name: invoke template action with content using explicitly set `ansible_managed` var
+  vars:
+    ansible_managed: '{{ "a " ~ "dynamic " ~ "ansible_managed value" }}'
+  template:
+    src: uses_ansible_managed.j2
+    dest: '{{output_dir}}/overridden_am.txt'
+  register: overridden_action_result
+
+- name: validate ansible_managed results
+  assert:
+    that:
+      - lookup('file', default_action_result.dest) is contains "Ansible managed"
+      - lookup('file', overridden_action_result.dest) is contains "a dynamic ansible_managed value"

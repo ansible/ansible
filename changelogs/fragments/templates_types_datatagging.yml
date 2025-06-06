@@ -127,8 +127,6 @@ bugfixes:
     Previously, there were cases where a non-list could be received.
 
 deprecated_features:
-  - templating - The ``ansible_managed`` variable available for certain templating scenarios, such as the ``template`` action and ``template`` lookup has been deprecated.
-    Define and use a custom variable instead of relying on ``ansible_managed``.
   - display - The ``Display.get_deprecation_message`` method has been deprecated.
     Call ``Display.deprecated`` to display a deprecation message, or call it with ``removed=True`` to raise an ``AnsibleError``.
   - config - The ``DEFAULT_JINJA2_NATIVE`` option has no effect.

@@ -105,7 +105,8 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.template import generate_ansible_template_vars, trust_as_template
+from ansible.template import trust_as_template
+from ansible._internal._templating import _template_vars
 from ansible.utils.display import Display
 
 
@@ -157,7 +158,11 @@ class LookupModule(LookupBase):
                 # argument.
                 # FIXME: why isn't this a chainmap with a sacrificial bottom layer?
                 vars = deepcopy(variables)
-                vars.update(generate_ansible_template_vars(term, fullpath=lookupfile))
+                vars.update(_template_vars.generate_ansible_template_vars(
+                    path=term,
+                    fullpath=lookupfile,
+                    include_ansible_managed='ansible_managed' not in vars,  # do not clobber ansible_managed when set by the user
+                ))
                 vars.update(lookup_template_vars)
 
                 overrides = dict(

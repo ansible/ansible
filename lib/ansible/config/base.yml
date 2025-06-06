@@ -906,6 +906,10 @@ DEFAULT_MANAGED_STR:
   ini:
   - {key: ansible_managed, section: defaults}
   yaml: {key: defaults.ansible_managed}
+  deprecated:
+    why: The `ansible_managed` variable can be set just like any other variable, or a different variable can be used.
+    version: "2.23"
+    alternatives: Set the `ansible_managed` variable, or use any custom variable in templates.
 DEFAULT_MODULE_ARGS:
   name: Adhoc default arguments
   default: ~
