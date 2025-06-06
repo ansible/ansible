@@ -43,8 +43,8 @@
   vars:
     some_var: Hello
     expected_plugin_info:
-      resolved_name: resolved_name
-      type: type
+      resolved_name: ns.col.module
+      type: module
 
 - name: test the python_literal_eval filter
   assert:

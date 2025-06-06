@@ -5,6 +5,7 @@ import collections.abc as c
 import copy
 import dataclasses
 import datetime
+import enum
 import inspect
 import sys
 
@@ -216,7 +217,7 @@ class AnsibleTagHelper:
             return value
 
 
-class AnsibleSerializable(metaclass=abc.ABCMeta):
+class AnsibleSerializable:
     __slots__ = _NO_INSTANCE_STORAGE
 
     _known_type_map: t.ClassVar[t.Dict[str, t.Type['AnsibleSerializable']]] = {}
@@ -272,6 +273,27 @@ class AnsibleSerializable(metaclass=abc.ABCMeta):
         args = self._as_dict()
         arg_string = ', '.join((f'{k}={v!r}' for k, v in args.items()))
         return f'{name}({arg_string})'
+
+
+class AnsibleSerializableEnum(AnsibleSerializable, enum.Enum):
+    """Base class for serializable enumerations."""
+
+    def _as_dict(self) -> t.Dict[str, t.Any]:
+        return dict(value=self.value)
+
+    @classmethod
+    def _from_dict(cls, d: t.Dict[str, t.Any]) -> t.Self:
+        return cls(d['value'].lower())
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__}.{self.name}>'
+
+    @staticmethod
+    def _generate_next_value_(name, start, count, last_values):
+        return name.lower()
 
 
 class AnsibleSerializableWrapper(AnsibleSerializable, t.Generic[_T], metaclass=abc.ABCMeta):

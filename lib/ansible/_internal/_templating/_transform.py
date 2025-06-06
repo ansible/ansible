@@ -21,6 +21,11 @@ def plugin_info(value: _messages.PluginInfo) -> dict[str, str]:
     return dataclasses.asdict(value)
 
 
+def plugin_type(value: _messages.PluginType) -> str:
+    """Render PluginType as a string."""
+    return value.value
+
+
 def error_summary(value: _messages.ErrorSummary) -> str:
     """Render ErrorSummary as a formatted traceback for backward-compatibility with pre-2.19 TaskResult.exception."""
     if _traceback._is_traceback_enabled(_traceback.TracebackEvent.ERROR):
@@ -56,6 +61,7 @@ def encrypted_string(value: EncryptedString) -> str | VaultExceptionMarker:
 _type_transform_mapping: dict[type, t.Callable[[t.Any], t.Any]] = {
     _captured.CapturedErrorSummary: error_summary,
     _messages.PluginInfo: plugin_info,
+    _messages.PluginType: plugin_type,
     _messages.ErrorSummary: error_summary,
     _messages.WarningSummary: warning_summary,
     _messages.DeprecationSummary: deprecation_summary,
