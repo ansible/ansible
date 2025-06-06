@@ -7,6 +7,6 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         return [_messages.PluginInfo(
-            resolved_name='resolved_name',
-            type='type',
+            resolved_name='ns.col.module',
+            type=_messages.PluginType.MODULE,
         )]

@@ -5,6 +5,7 @@ import collections.abc as c
 import copy
 import dataclasses
 import datetime
+import enum
 import inspect
 import json
 
@@ -26,6 +27,7 @@ from ansible.module_utils._internal import _messages
 
 from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
+    AnsibleSerializableEnum,
     AnsibleSingletonTagBase,
     AnsibleTaggedObject,
     NotTaggableError,
@@ -83,7 +85,8 @@ message_instances = [
     _messages.ErrorSummary(event=_messages.Event(msg="bla", formatted_traceback="tb")),
     _messages.WarningSummary(event=_messages.Event(msg="bla", formatted_source_context="sc", formatted_traceback="tb")),
     _messages.DeprecationSummary(event=_messages.Event(msg="bla", formatted_source_context="sc", formatted_traceback="tb"), version="1.2.3"),
-    _messages.PluginInfo(resolved_name='a.b.c', type='module'),
+    _messages.PluginInfo(resolved_name='a.b.c', type=_messages.PluginType.MODULE),
+    _messages.PluginType.MODULE,
 ]
 
 
@@ -97,7 +100,7 @@ def assert_round_trip(original_value, round_tripped_value, via_copy=False):
         return
 
     # singleton values should rehydrate as the shared singleton instance, all others should be a new instance
-    if isinstance(original_value, AnsibleSingletonTagBase):
+    if isinstance(original_value, (AnsibleSingletonTagBase, enum.Enum)):
         assert original_value is round_tripped_value
     else:
         assert original_value is not round_tripped_value
@@ -483,6 +486,8 @@ class TestDatatagTarget(AutoParamSupport):
         excluded_type_names = {
             AnsibleTaggedObject.__name__,  # base class, cannot be abstract
             AnsibleSerializableDataclass.__name__,  # base class, cannot be abstract
+            AnsibleSerializable.__name__,  # base class, cannot be abstract
+            AnsibleSerializableEnum.__name__,  # base class, cannot be abstract
             # these types are all controller-only, so it's easier to have static type names instead of importing them
             'JinjaConstTemplate',  # serialization not required
             '_EncryptedSource',  # serialization not required
@@ -643,7 +648,7 @@ class TestDatatagTarget(AutoParamSupport):
         """Assert that __slots__ are properly defined on the given serializable type."""
         if value in (AnsibleSerializable, AnsibleTaggedObject):
             expect_slots = True  # non-dataclass base types have no attributes, but still use slots
-        elif issubclass(value, (int, bytes, tuple)):
+        elif issubclass(value, (int, bytes, tuple, enum.Enum)):
             # non-empty slots are not supported by these variable-length data types
             # see: https://docs.python.org/3/reference/datamodel.html
             expect_slots = False

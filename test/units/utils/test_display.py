@@ -182,14 +182,14 @@ Origin: /some/path
 
 A_DATE = datetime.date(2025, 1, 1)
 CORE = deprecator_from_collection_name('ansible.builtin')
-CORE_MODULE = _messages.PluginInfo(resolved_name='ansible.builtin.ping', type='module')
-CORE_PLUGIN = _messages.PluginInfo(resolved_name='ansible.builtin.debug', type='action')
+CORE_MODULE = _messages.PluginInfo(resolved_name='ansible.builtin.ping', type=_messages.PluginType.MODULE)
+CORE_PLUGIN = _messages.PluginInfo(resolved_name='ansible.builtin.debug', type=_messages.PluginType.ACTION)
 COLL = deprecator_from_collection_name('ns.col')
-COLL_MODULE = _messages.PluginInfo(resolved_name='ns.col.ping', type='module')
-COLL_PLUGIN = _messages.PluginInfo(resolved_name='ns.col.debug', type='action')
+COLL_MODULE = _messages.PluginInfo(resolved_name='ns.col.ping', type=_messages.PluginType.MODULE)
+COLL_PLUGIN = _messages.PluginInfo(resolved_name='ns.col.debug', type=_messages.PluginType.ACTION)
 INDETERMINATE = _deprecator.INDETERMINATE_DEPRECATOR
-LEGACY_MODULE = _messages.PluginInfo(resolved_name='ping', type='module')
-LEGACY_PLUGIN = _messages.PluginInfo(resolved_name='debug', type='action')
+LEGACY_MODULE = _messages.PluginInfo(resolved_name='ping', type=_messages.PluginType.MODULE)
+LEGACY_PLUGIN = _messages.PluginInfo(resolved_name='debug', type=_messages.PluginType.ACTION)
 
 
 @pytest.mark.parametrize('kwargs, expected', (
