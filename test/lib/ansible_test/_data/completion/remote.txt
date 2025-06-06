@@ -9,6 +9,7 @@ macos python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
 rhel/7.9 python=2.7 become=sudo provider=aws arch=x86_64
 rhel/8.8 python=3.6,3.11 become=sudo provider=aws arch=x86_64
 rhel/9.2 python=3.9,3.11 become=sudo provider=aws arch=x86_64
+rhel/10.0 python=3.12 become=sudo provider=aws arch=x86_64
 rhel become=sudo provider=aws arch=x86_64
 ubuntu/22.04 python=3.10 become=sudo provider=aws arch=x86_64
 ubuntu become=sudo provider=aws arch=x86_64

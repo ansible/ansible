@@ -20,8 +20,16 @@
     state: directory
     mode: 0755
 
-- name: get yum releasever
-  command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
+- set_fact:
+    releasever_command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
+  when: ansible_pkg_mgr == "yum"
+
+- set_fact:
+    releasever_command: "{{ ansible_python_interpreter }} -c 'import dnf; print(dnf.Base().conf.substitutions[\"releasever\"])'"
+  when: ansible_pkg_mgr == "dnf"
+
+- name: get releasever
+  command: "{{ releasever_command }}"
   register: releasever
   ignore_errors: yes
 
@@ -31,13 +39,16 @@
     dest: "/{{ yumroot.stdout }}/etc/yum/vars/releasever"
   when: releasever is successful
 
+- set_fact:
+    installroot_pkg_name: "{{ 'zlib-ng-compat' if ansible_distribution == 'RedHat' and ansible_distribution_major_version|int == 10 else 'zlib' }}"
+
 # This will drag in > 200 MB.
 - name: attempt installroot
-  yum: name=zlib installroot="{{ yumroot.stdout }}/" disable_gpg_check=yes
+  yum: name={{ installroot_pkg_name }} installroot="{{ yumroot.stdout }}/" disable_gpg_check=yes
   register: yum_result
 
 - name: check sos with rpm in installroot
-  shell: rpm -q zlib --root="{{ yumroot.stdout }}/"
+  shell: rpm -q {{ installroot_pkg_name }} --root="{{ yumroot.stdout }}/"
   failed_when: False
   register: rpm_result
 
