@@ -31,7 +31,6 @@ RETURN = r"""
 """
 
 import contextlib
-import errno
 import os
 import subprocess
 
@@ -106,9 +105,7 @@ def main():
         process = subprocess.Popen(['%skrb5-config' % prefix, '--version'], stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         version = to_text(stdout)
-    except OSError as e:
-        if e.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
         version = 'Unknown (no krb5-config)'
 
     kinit_args = ['%skinit' % prefix]

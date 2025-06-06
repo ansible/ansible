@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import io
-import socket
 import sys
 import http.client
 import urllib.error
@@ -181,7 +180,7 @@ def test_fetch_url_urlerror(open_url_mock, fake_ansible_module):
 
 
 def test_fetch_url_socketerror(open_url_mock, fake_ansible_module):
-    open_url_mock.side_effect = socket.error('TESTS')
+    open_url_mock.side_effect = OSError('TESTS')
     r, info = fetch_url(fake_ansible_module, BASE_URL)
     assert info == {'msg': 'Connection failure: TESTS', 'status': -1, 'url': BASE_URL}
 

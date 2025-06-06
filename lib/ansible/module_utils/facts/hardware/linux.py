@@ -182,7 +182,7 @@ class LinuxHardware(Hardware):
                         xen = True
                     # Only interested in the first line
                     break
-        except IOError:
+        except OSError:
             pass
 
         if not os.access("/proc/cpuinfo", os.R_OK):

@@ -474,7 +474,7 @@ class Display(metaclass=Singleton):
             # final flush at shutdown.
             # try:
             #     fileobj.flush()
-            # except IOError as e:
+            # except OSError as e:
             #     # Ignore EPIPE in case fileobj has been prematurely closed, eg.
             #     # when piping to "head -n1"
             #     if e.errno != errno.EPIPE:

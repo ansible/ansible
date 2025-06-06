@@ -380,31 +380,29 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
             if not os.path.isfile(self.source_file[family]):
                 continue
             try:
-                f = open(self.source_file[family])
-                for tcp_connection in f.readlines():
-                    tcp_connection = tcp_connection.strip().split()
-                    if tcp_connection[self.local_address_field] == 'local_address':
-                        continue
-                    if (tcp_connection[self.connection_state_field] not in
-                            [get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states']]):
-                        continue
-                    (local_ip, local_port) = tcp_connection[self.local_address_field].split(':')
-                    if self.port != local_port:
-                        continue
-                    (remote_ip, remote_port) = tcp_connection[self.remote_address_field].split(':')
-                    if (family, remote_ip) in self.exclude_ips:
-                        continue
-                    if any((
-                        (family, local_ip) in self.ips,
-                        (family, self.match_all_ips[family]) in self.ips,
-                        local_ip.startswith(self.ipv4_mapped_ipv6_address['prefix']) and
-                            (family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
-                    )):
-                        active_connections += 1
-            except IOError as e:
+                with open(self.source_file[family]) as f:
+                    for tcp_connection in f.readlines():
+                        tcp_connection = tcp_connection.strip().split()
+                        if tcp_connection[self.local_address_field] == 'local_address':
+                            continue
+                        if (tcp_connection[self.connection_state_field] not in
+                                [get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states']]):
+                            continue
+                        (local_ip, local_port) = tcp_connection[self.local_address_field].split(':')
+                        if self.port != local_port:
+                            continue
+                        (remote_ip, remote_port) = tcp_connection[self.remote_address_field].split(':')
+                        if (family, remote_ip) in self.exclude_ips:
+                            continue
+                        if any((
+                            (family, local_ip) in self.ips,
+                            (family, self.match_all_ips[family]) in self.ips,
+                            local_ip.startswith(self.ipv4_mapped_ipv6_address['prefix']) and
+                                (family, self.ipv4_mapped_ipv6_address['match_all']) in self.ips,
+                        )):
+                            active_connections += 1
+            except OSError:
                 pass
-            finally:
-                f.close()
 
         return active_connections
 
@@ -549,7 +547,7 @@ def main():
                 try:
                     if not os.access(b_path, os.F_OK):
                         break
-                except IOError:
+                except OSError:
                     break
             elif port:
                 try:
@@ -609,7 +607,7 @@ def main():
                                     break
                             except Exception as e:
                                 module.warn('wait_for failed on "%s", unexpected exception(%s): %s.).' % (path, to_native(e.__class__), to_native(e)))
-                    except IOError:
+                    except OSError:
                         pass
             elif port:
                 alt_connect_timeout = math.ceil(
@@ -648,8 +646,8 @@ def main():
                         # Shutdown the client socket
                         try:
                             s.shutdown(socket.SHUT_RDWR)
-                        except socket.error as e:
-                            if e.errno != errno.ENOTCONN:
+                        except OSError as ex:
+                            if ex.errno != errno.ENOTCONN:
                                 raise
                         # else, the server broke the connection on its end, assume it's not ready
                         else:
@@ -661,8 +659,8 @@ def main():
                         # Connection established, success!
                         try:
                             s.shutdown(socket.SHUT_RDWR)
-                        except socket.error as e:
-                            if e.errno != errno.ENOTCONN:
+                        except OSError as ex:
+                            if ex.errno != errno.ENOTCONN:
                                 raise
                         # else, the server broke the connection on its end, assume it's not ready
                         else:

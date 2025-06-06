@@ -480,9 +480,11 @@ class AnsibleModule(object):
             if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
-                except (OSError, IOError) as e:
-                    self.warn("Unable to use %s as temporary directory, "
-                              "failing back to system: %s" % (basedir, to_native(e)))
+                except OSError as ex:
+                    self.error_as_warning(
+                        msg=f"Unable to use {basedir!r} as temporary directory, falling back to system default.",
+                        exception=ex,
+                    )
                     basedir = None
                 else:
                     self.warn("Module remote_tmp %s did not exist and was "
@@ -494,11 +496,11 @@ class AnsibleModule(object):
             basefile = "ansible-moduletmp-%s-" % time.time()
             try:
                 tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
-            except (OSError, IOError) as e:
-                self.fail_json(
-                    msg="Failed to create remote module tmp path at dir %s "
-                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
-                )
+            except OSError as ex:
+                raise Exception(
+                    f"Failed to create remote module tmp path at dir {basedir!r} "
+                    f"with prefix {basefile!r}.",
+                ) from ex
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
@@ -658,11 +660,8 @@ class AnsibleModule(object):
             return context
         try:
             ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.fail_json(path=path, msg='path %s does not exist' % path)
-            else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
+        except OSError as ex:
+            self.fail_json(path=path, msg='Failed to retrieve selinux context.', exception=ex)
         if ret[0] == -1:
             return context
         # Limit split to 4 because the selevel, the last in the list,
@@ -802,9 +801,9 @@ class AnsibleModule(object):
                 return True
             try:
                 os.lchown(b_path, uid, -1)
-            except (IOError, OSError) as e:
+            except OSError as ex:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
+                self.fail_json(path=path, msg='chown failed', exception=ex)
             changed = True
         return changed
 
@@ -1330,7 +1329,7 @@ class AnsibleModule(object):
                     else:
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
                                      **dict(journal_args))
-                except IOError:
+                except OSError:
                     # fall back to syslog since logging to journal failed
                     self._log_to_syslog(journal_msg)
             else:
@@ -1660,8 +1659,8 @@ class AnsibleModule(object):
 
             try:
                 self.preserved_copy(fn, backupdest)
-            except (shutil.Error, IOError) as e:
-                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, to_native(e)))
+            except (shutil.Error, OSError) as ex:
+                raise Exception(f'Could not make backup of {fn!r} to {backupdest!r}.') from ex
 
         return backupdest
 
@@ -1735,28 +1734,25 @@ class AnsibleModule(object):
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(b_src, b_dest)
-        except (IOError, OSError) as e:
-            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
+        except OSError as ex:
+            if ex.errno in (errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY):
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)))
-            else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
                 b_dest_dir = os.path.dirname(b_dest)
                 b_suffix = os.path.basename(b_dest)
-                error_msg = None
                 tmp_dest_name = None
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
-                except (OSError, IOError) as e:
-                    error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-
+                except OSError as ex:
                     if unsafe_writes:
                         self._unsafe_writes(b_src, b_dest)
                     else:
-                        self.fail_json(msg=error_msg)
+                        raise Exception(
+                            f'The destination directory {os.path.dirname(dest)!r} is not writable by the current user.'
+                        ) from ex
 
                 if tmp_dest_name:
                     b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
@@ -1785,24 +1781,27 @@ class AnsibleModule(object):
                                     if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
                                         os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
                                     os.utime(b_tmp_dest_name, times=(time.time(), time.time()))
-                            except OSError as e:
-                                if e.errno != errno.EPERM:
+                            except OSError as ex:
+                                if ex.errno != errno.EPERM:
                                     raise
                             try:
                                 os.rename(b_tmp_dest_name, b_dest)
-                            except (shutil.Error, OSError, IOError) as e:
-                                if unsafe_writes and e.errno == errno.EBUSY:
+                            except (shutil.Error, OSError) as ex:
+                                if unsafe_writes and ex.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)))
-                        except (shutil.Error, OSError, IOError) as e:
+                                    raise Exception(
+                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {to_text(b_tmp_dest_name)!r}.'
+                                    ) from ex
+                        except (shutil.Error, OSError) as ex:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)))
+                                raise Exception(f'Failed to replace {dest!r} with {src!r}.') from ex
                     finally:
                         self.cleanup(b_tmp_dest_name)
+            else:
+                raise Exception(f'Could not replace {dest!r} with {src!r}.') from ex
 
         if creating:
             # make sure the file has the correct permissions
@@ -1829,18 +1828,11 @@ class AnsibleModule(object):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
         try:
-            out_dest = in_src = None
-            try:
-                out_dest = open(dest, 'wb')
-                in_src = open(src, 'rb')
-                shutil.copyfileobj(in_src, out_dest)
-            finally:  # assuring closed files in 2.4 compatible way
-                if out_dest:
-                    out_dest.close()
-                if in_src:
-                    in_src.close()
-        except (shutil.Error, OSError, IOError) as e:
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)))
+            with open(dest, 'wb') as out_dest:
+                with open(src, 'rb') as in_src:
+                    shutil.copyfileobj(in_src, out_dest)
+        except (shutil.Error, OSError) as ex:
+            raise Exception(f'Could not write data to file {dest!r} from {src!r}.') from ex
 
     def _clean_args(self, args):
 
@@ -2126,18 +2118,16 @@ class AnsibleModule(object):
             selector.close()
 
             rc = cmd.returncode
-        except (OSError, IOError) as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
+        except OSError as ex:
             if handle_exceptions:
-                self.fail_json(rc=e.errno, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
-        except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
+                raise
+        except Exception as ex:
             if handle_exceptions:
-                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
+                raise
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)

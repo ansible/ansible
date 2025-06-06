@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import errno
 import fcntl
 import functools
 import os
@@ -414,8 +413,8 @@ class FileVaultSecret(VaultSecret):
         try:
             with open(filename, "rb") as f:
                 vault_pass = f.read().strip()
-        except (OSError, IOError) as e:
-            raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
+        except OSError as ex:
+            raise AnsibleError(f"Could not read vault password file {filename!r}.") from ex
 
         b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass)
 
@@ -1071,13 +1070,10 @@ class VaultEditor:
                 try:
                     # create file with secure permissions
                     fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
-                except OSError as ose:
-                    # Want to catch FileExistsError, which doesn't exist in Python 2, so catch OSError
-                    # and compare the error number to get equivalent behavior in Python 2/3
-                    if ose.errno == errno.EEXIST:
-                        raise AnsibleError('Vault file got recreated while we were operating on it: %s' % to_native(ose))
-
-                    raise AnsibleError('Problem creating temporary vault file: %s' % to_native(ose))
+                except FileExistsError as ex:
+                    raise AnsibleError('Vault file got recreated while we were operating on it.') from ex
+                except OSError as ex:
+                    raise AnsibleError('Problem creating temporary vault file.') from ex
 
                 try:
                     # now write to the file and ensure ours is only data in it

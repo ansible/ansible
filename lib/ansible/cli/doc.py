@@ -137,8 +137,8 @@ class RoleMixin(object):
                 data = yaml.load(trust_as_template(f), Loader=AnsibleLoader)
                 if data is None:
                     data = {}
-        except (IOError, OSError) as ex:
-            raise AnsibleParserError(f"Could not read the role {role_name!r} (at {path}).") from ex
+        except OSError as ex:
+            raise AnsibleParserError(f"Could not read the role {role_name!r} at {path!r}.") from ex
 
         return data
 
