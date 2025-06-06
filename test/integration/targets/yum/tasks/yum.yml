@@ -727,37 +727,37 @@
 
 - name: Ensure double uninstall of wildcard globs works
   block:
-  - name: "Install lohit-*-fonts"
+  - name: "Install redhat-*-fonts"
     yum:
-      name: "lohit-*-fonts"
+      name: "redhat-*-fonts"
       state: present
 
-  - name: "Remove lohit-*-fonts (1st time)"
+  - name: "Remove redhat-*-fonts (1st time)"
     yum:
-      name: "lohit-*-fonts"
+      name: "redhat-*-fonts"
       state: absent
-    register: remove_lohit_fonts_1
+    register: remove_redhat_fonts_1
 
-  - name: "Verify lohit-*-fonts (1st time)"
+  - name: "Verify redhat-*-fonts (1st time)"
     assert:
       that:
-        - "remove_lohit_fonts_1 is changed"
-        - "'msg' in remove_lohit_fonts_1"
-        - "'results' in remove_lohit_fonts_1"
+        - "remove_redhat_fonts_1 is changed"
+        - "'msg' in remove_redhat_fonts_1"
+        - "'results' in remove_redhat_fonts_1"
 
-  - name: "Remove lohit-*-fonts (2nd time)"
+  - name: "Remove redhat-*-fonts (2nd time)"
     yum:
-      name: "lohit-*-fonts"
+      name: "redhat-*-fonts"
       state: absent
-    register: remove_lohit_fonts_2
+    register: remove_redhat_fonts_2
 
-  - name: "Verify lohit-*-fonts (2nd time)"
+  - name: "Verify redhat-*-fonts (2nd time)"
     assert:
       that:
-        - "remove_lohit_fonts_2 is not changed"
-        - "'msg' in remove_lohit_fonts_2"
-        - "'results' in remove_lohit_fonts_2"
-        - "'lohit-*-fonts is not installed' in remove_lohit_fonts_2['results']"
+        - "remove_redhat_fonts_2 is not changed"
+        - "'msg' in remove_redhat_fonts_2"
+        - "'results' in remove_redhat_fonts_2"
+        - "'redhat-*-fonts is not installed' in remove_redhat_fonts_2['results']"
 
 - block:
   - name: uninstall {{ package2 }}
