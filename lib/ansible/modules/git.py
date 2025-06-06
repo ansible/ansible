@@ -357,11 +357,11 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
                 dot_git_file.write('gitdir: %s' % repo_dir)
             result['git_dir_before'] = old_repo_dir
             result['git_dir_now'] = repo_dir
-        except (IOError, OSError) as err:
+        except OSError as ex:
             # if we already moved the .git dir, roll it back
             if os.path.exists(repo_dir):
                 shutil.move(repo_dir, old_repo_dir)
-            module.fail_json(msg=u'Unable to move git dir. %s' % to_text(err))
+            raise Exception('Unable to move git dir.') from ex
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
@@ -439,7 +439,7 @@ def write_ssh_wrapper(module):
             fd, wrapper_path = tempfile.mkstemp(prefix=module.tmpdir + '/')
         else:
             raise OSError
-    except (IOError, OSError):
+    except OSError:
         fd, wrapper_path = tempfile.mkstemp()
 
     # use existing git_ssh/ssh_command, fallback to 'ssh'
@@ -824,13 +824,14 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     """
     try:
         repo_path = get_repo_path(dest, bare)
-    except (IOError, ValueError) as err:
+    except (OSError, ValueError) as ex:
         # No repo path found
         # ``.git`` file does not have a valid format for detached Git dir.
         module.fail_json(
             msg='Current repo does not have a valid reference to a '
             'separate Git dir or it refers to the invalid path',
-            details=to_text(err),
+            details=str(ex),
+            exception=ex,
         )
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
@@ -1290,13 +1291,14 @@ def main():
                 if not module.check_mode:
                     relocate_repo(module, result, separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
-        except (IOError, ValueError) as err:
+        except (OSError, ValueError) as ex:
             # No repo path found
             # ``.git`` file does not have a valid format for detached Git dir.
             module.fail_json(
                 msg='Current repo does not have a valid reference to a '
                 'separate Git dir or it refers to the invalid path',
-                details=to_text(err),
+                details=str(ex),
+                exception=ex,
             )
         gitconfig = os.path.join(repo_path, 'config')
 

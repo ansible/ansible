@@ -19,9 +19,8 @@ from __future__ import annotations
 import os
 import shutil
 
-from errno import EEXIST
 from ansible.errors import AnsibleError
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
 __all__ = ['unfrackpath', 'makedirs_safe']
@@ -84,12 +83,11 @@ def makedirs_safe(path, mode=None):
     if not os.path.exists(b_rpath):
         try:
             if mode:
-                os.makedirs(b_rpath, mode)
+                os.makedirs(b_rpath, mode, exist_ok=True)
             else:
-                os.makedirs(b_rpath)
-        except OSError as e:
-            if e.errno != EEXIST:
-                raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))
+                os.makedirs(b_rpath, exist_ok=True)
+        except OSError as ex:
+            raise AnsibleError(f"Unable to create local directories {rpath!r}.") from ex
 
 
 def basedir(source):

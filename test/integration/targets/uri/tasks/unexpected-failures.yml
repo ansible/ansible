@@ -22,4 +22,4 @@
   assert:
     that:
       - ret is failed
-      - ret.msg is match "Could not replace file"
+      - ret.msg is search "Could not replace"

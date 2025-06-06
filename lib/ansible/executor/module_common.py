@@ -1089,9 +1089,9 @@ def _find_module_utils(
                 # instead of re-creating it.
                 try:
                     cached_module = _CachedModule.load(cached_module_filename)
-                except IOError:
+                except OSError as ex:
                     raise AnsibleError('A different worker process failed to create module file. '
-                                       'Look at traceback for that process for debugging information.')
+                                       'Look at traceback for that process for debugging information.') from ex
 
                 zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
 

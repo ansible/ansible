@@ -145,7 +145,7 @@ def main():
         except ValueError as e:
             print(f'{filename}: ERROR: {e}')
             continue
-        except (IOError, OSError) as e:
+        except OSError as e:
             if e.errno == 2:
                 print(
                     f'{filename}: ERROR: {e}. '

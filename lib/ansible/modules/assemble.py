@@ -186,10 +186,10 @@ def cleanup(module, path, result=None):
     if os.path.exists(path):
         try:
             os.remove(path)
-        except (IOError, OSError) as e:
+        except OSError as ex:
             # don't error on possible race conditions, but keep warning
             if result is not None:
-                module.warn('Unable to remove temp file (%s): %s' % (path, to_native(e)))
+                module.error_as_warning(f'Unable to remove temp file {path!r}.', exception=ex)
 
 
 def main():

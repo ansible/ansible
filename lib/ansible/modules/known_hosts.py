@@ -102,7 +102,6 @@ EXAMPLES = r"""
 
 import base64
 import copy
-import errno
 import hashlib
 import hmac
 import os
@@ -169,11 +168,10 @@ def enforce_state(module, params):
     if replace_or_add or found != (state == "present"):
         try:
             inf = open(path, "r")
-        except IOError as e:
-            if e.errno == errno.ENOENT:
-                inf = None
-            else:
-                module.fail_json(msg="Failed to read %s: %s" % (path, str(e)))
+        except FileNotFoundError:
+            inf = None
+        except OSError as ex:
+            raise Exception(f"Failed to read {path!r}.") from ex
         try:
             with tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path), delete=False) as outf:
                 if inf is not None:
@@ -184,8 +182,8 @@ def enforce_state(module, params):
                     inf.close()
                 if state == 'present':
                     outf.write(key)
-        except (IOError, OSError) as e:
-            module.fail_json(msg="Failed to write to file %s: %s" % (path, to_native(e)))
+        except OSError as ex:
+            raise Exception(f"Failed to write to file {path!r}.") from ex
         else:
             module.atomic_move(outf.name, path)
 
@@ -220,9 +218,8 @@ def sanity_check(module, host, key, sshkeygen):
         try:
             outf.write(key)
             outf.flush()
-        except IOError as e:
-            module.fail_json(msg="Failed to write to temporary file %s: %s" %
-                             (outf.name, to_native(e)))
+        except OSError as ex:
+            raise Exception(f"Failed to write to temporary file {outf.name!r}.") from ex
 
         sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
         rc, stdout, stderr = module.run_command(sshkeygen_command)
@@ -337,9 +334,10 @@ def compute_diff(path, found_line, replace_or_add, state, key):
     }
     try:
         inf = open(path, "r")
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            diff['before_header'] = '/dev/null'
+    except FileNotFoundError:
+        diff['before_header'] = '/dev/null'
+    except OSError:
+        pass
     else:
         diff['before'] = inf.read()
         inf.close()

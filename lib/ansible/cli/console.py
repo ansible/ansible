@@ -573,7 +573,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         histfile = os.path.join(os.path.expanduser("~"), ".ansible-console_history")
         try:
             readline.read_history_file(histfile)
-        except IOError:
+        except OSError:
             pass
 
         atexit.register(readline.write_history_file, histfile)

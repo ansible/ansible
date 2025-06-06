@@ -299,9 +299,9 @@ def main():
 
         try:
             os.chdir(chdir)
-        except (IOError, OSError) as e:
-            r['msg'] = 'Unable to change directory before execution: %s' % to_text(e)
-            module.fail_json(**r)
+        except OSError as ex:
+            r['msg'] = 'Unable to change directory before execution.'
+            module.fail_json(**r, exception=ex)
 
     # check_mode partial support, since it only really works in checking creates/removes
     if module.check_mode:

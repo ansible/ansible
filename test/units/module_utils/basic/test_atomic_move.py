@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 import errno
-import json
 from itertools import product
 
 import pytest
@@ -169,15 +168,12 @@ def test_rename_failure(atomic_am, atomic_mocks, mocker, capfd):
     atomic_mocks['path_exists'].side_effect = [False, False]
     atomic_mocks['rename'].side_effect = OSError(errno.EIO, 'failing with EIO')
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(Exception, match='Could not replace') as err:
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
 
-    out, err = capfd.readouterr()
-    results = json.loads(out)
-
-    assert 'Could not replace file' in results['msg']
-    assert 'failing with EIO' in results['msg']
-    assert results['failed']
+    assert isinstance(err.value.__cause__, OSError)
+    assert err.value.__cause__.errno == errno.EIO
+    assert err.value.__cause__.strerror == 'failing with EIO'
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
@@ -190,14 +186,8 @@ def test_rename_perms_fail_temp_creation_fails(atomic_am, atomic_mocks, mocker, 
     atomic_mocks['mkstemp'].side_effect = OSError()
     atomic_am.selinux_enabled.return_value = False
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(Exception, match='is not writable by the current user'):
         atomic_am.atomic_move('/path/to/src', '/path/to/dest')
-
-    out, err = capfd.readouterr()
-    results = json.loads(out)
-
-    assert 'is not writable by the current user' in results['msg']
-    assert results['failed']
 
 
 @pytest.mark.parametrize('stdin, selinux', product([{}], (True, False)), indirect=['stdin'])

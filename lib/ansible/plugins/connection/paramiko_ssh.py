@@ -413,7 +413,7 @@ class Connection(ConnectionBase):
                     # TODO: check if we need to look at several possible locations, possible for loop
                     ssh.load_system_host_keys(ssh_known_hosts)
                     break
-                except IOError:
+                except OSError:
                     pass  # file was not found, but not required to function
             ssh.load_system_host_keys()
 
@@ -567,8 +567,8 @@ class Connection(ConnectionBase):
 
         try:
             self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
-        except IOError:
-            raise AnsibleError("failed to transfer file to %s" % out_path)
+        except OSError as ex:
+            raise AnsibleError(f"Failed to transfer file to {out_path!r}.") from ex
 
     def _connect_sftp(self) -> paramiko.sftp_client.SFTPClient:
 
@@ -593,8 +593,8 @@ class Connection(ConnectionBase):
 
         try:
             self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
-        except IOError:
-            raise AnsibleError("failed to transfer file from %s" % in_path)
+        except OSError as ex:
+            raise AnsibleError(f"Failed to transfer file from {in_path!r}.") from ex
 
     def _any_keys_added(self) -> bool:
 

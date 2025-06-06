@@ -17,8 +17,6 @@ from __future__ import annotations
 
 import re
 
-from ansible.module_utils.common.text.converters import to_text
-
 
 def get_sysctl(module, prefixes):
 
@@ -31,8 +29,8 @@ def get_sysctl(module, prefixes):
 
         try:
             rc, out, err = module.run_command(cmd)
-        except (IOError, OSError) as e:
-            module.warn('Unable to read sysctl: %s' % to_text(e))
+        except OSError as ex:
+            module.error_as_warning('Unable to read sysctl.', exception=ex)
             rc = 1
 
         if rc == 0:
@@ -54,8 +52,8 @@ def get_sysctl(module, prefixes):
 
                 try:
                     (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
-                except Exception as e:
-                    module.warn('Unable to split sysctl line (%s): %s' % (to_text(line), to_text(e)))
+                except Exception as ex:
+                    module.error_as_warning(f'Unable to split sysctl line {line!r}.', exception=ex)
 
             if key:
                 sysctl[key] = value.strip()

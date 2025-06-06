@@ -354,7 +354,6 @@ stat:
             version_added: 2.3
 """
 
-import errno
 import grp
 import os
 import pwd
@@ -456,12 +455,11 @@ def main():
             st = os.stat(b_path)
         else:
             st = os.lstat(b_path)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            output = {'exists': False}
-            module.exit_json(changed=False, stat=output)
-
-        module.fail_json(msg=e.strerror)
+    except FileNotFoundError:
+        output = {'exists': False}
+        module.exit_json(changed=False, stat=output)
+    except OSError as ex:
+        module.fail_json(msg=ex.strerror, exception=ex)
 
     # process base results
     output = format_output(module, path, st)

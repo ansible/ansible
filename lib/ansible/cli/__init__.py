@@ -74,7 +74,7 @@ def initialize_locale():
 
 initialize_locale()
 
-import errno
+
 import getpass
 import subprocess
 import traceback
@@ -525,9 +525,7 @@ class CLI(ABC):
         try:
             cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
-        except IOError:
-            pass
-        except KeyboardInterrupt:
+        except (OSError, KeyboardInterrupt):
             pass
 
     def _play_prereqs(self):
@@ -632,8 +630,8 @@ class CLI(ABC):
             try:
                 with open(b_pwd_file, "rb") as password_file:
                     secret = password_file.read().strip()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
+            except OSError as ex:
+                raise AnsibleError(f"Could not read password file {pwd_file!r}.") from ex
 
         secret = secret.strip(b'\r\n')
 
@@ -652,12 +650,9 @@ class CLI(ABC):
 
             ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
             try:
-                ansible_dir.mkdir(mode=0o700)
-            except OSError as exc:
-                if exc.errno != errno.EEXIST:
-                    display.warning(
-                        "Failed to create the directory '%s': %s" % (ansible_dir, to_text(exc, errors='surrogate_or_replace'))
-                    )
+                ansible_dir.mkdir(mode=0o700, exist_ok=True)
+            except OSError as ex:
+                display.error_as_warning(f"Failed to create the directory {ansible_dir!r}.", ex)
             else:
                 display.debug("Created the '%s' directory" % ansible_dir)
 

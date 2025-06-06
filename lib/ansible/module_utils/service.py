@@ -286,7 +286,7 @@ def is_systemd_managed(module):
             with open('/proc/1/comm', 'r') as init_proc:
                 init = init_proc.readline().strip()
                 return init == 'systemd'
-        except IOError:
+        except OSError:
             # If comm doesn't exist, old kernel, no systemd
             return False
 

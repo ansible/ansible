@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import errno
 import fnmatch
 import functools
 import glob
@@ -1689,11 +1688,7 @@ def _extract_tar_dir(tar, dirname, b_dest):
     b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
 
     b_parent_path = os.path.dirname(b_dir_path)
-    try:
-        os.makedirs(b_parent_path, mode=S_IRWXU_RXG_RXO)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+    os.makedirs(b_parent_path, mode=S_IRWXU_RXG_RXO, exist_ok=True)
 
     if tar_member.type == tarfile.SYMTYPE:
         b_link_path = to_bytes(tar_member.linkname, errors='surrogate_or_strict')

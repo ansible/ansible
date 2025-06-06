@@ -580,7 +580,7 @@ def get_ca_certs(cafile=None, capath=None):
                             cadata[b_der] = None
                     except Exception:
                         continue
-                except (OSError, IOError):
+                except OSError:
                     pass
 
     # paths_checked isn't used any more, but is kept just for ease of debugging
@@ -694,7 +694,7 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
         try:
             rc = netrc.netrc(os.environ.get('NETRC'))
             login = rc.authenticators(parsed.hostname)
-        except IOError:
+        except OSError:
             login = None
 
         if login:
@@ -1303,8 +1303,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except urllib.error.URLError as e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
-    except socket.error as e:
-        info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except OSError as ex:
+        info.update(dict(msg=f"Connection failure: {ex}", status=-1))
     except http.client.BadStatusLine as e:
         info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
     except Exception as ex:

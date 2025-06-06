@@ -57,8 +57,8 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
 
     try:
         scm_path = get_bin_path(scm)
-    except (ValueError, OSError, IOError):
-        raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
+    except (ValueError, OSError) as ex:
+        raise AnsibleError(f"Could not find/use {scm!r}, it is required to continue with installing {src!r}.") from ex
 
     tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
     clone_cmd = [scm_path, 'clone']

@@ -59,16 +59,16 @@
   assert:
     that:
       - slurp_missing is failed
-      - slurp_missing.msg is search('file not found')
+      - slurp_missing.msg is search('File not found')
       - slurp_missing is not changed
       - slurp_unreadable_file is failed
-      - slurp_unreadable_file.msg is regex('^file is not readable:')
+      - slurp_unreadable_file.msg is regex('^File is not readable:')
       - slurp_unreadable_file is not changed
       - slurp_unreadable_dir is failed
-      - slurp_unreadable_dir.msg is regex('^file is not readable:')
+      - slurp_unreadable_dir.msg is regex('^File is not readable:')
       - slurp_unreadable_dir is not changed
       - slurp_path_file_as_dir is failed
-      - slurp_path_file_as_dir is search('unable to slurp file')
+      - slurp_path_file_as_dir is search('Unable to slurp file')
       - slurp_dir is failed
-      - slurp_dir.msg is search('source is a directory and must be a file')
+      - slurp_dir.msg is search('Source is a directory and must be a file')
       - slurp_dir is not changed
