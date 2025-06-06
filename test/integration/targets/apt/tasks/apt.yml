@@ -514,6 +514,11 @@
       - libslang2-dev
 
 # # https://github.com/ansible/ansible/issues/38995
+- name: Make sure that at least one build dependency is missing
+  apt:
+    name: build-essential
+    state: absent
+
 - name: build-dep for a package
   apt:
     name: tree
