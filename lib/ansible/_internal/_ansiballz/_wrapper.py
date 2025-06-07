@@ -37,14 +37,13 @@ _ANSIBALLZ_WRAPPER = True
 
 
 def _ansiballz_main(
-    zipdata: str,
+    zip_data: str,
     ansible_module: str,
     module_fqn: str,
     params: str,
     profile: str,
     date_time: datetime.datetime,
-    coverage_config: str | None,
-    coverage_output: str | None,
+    extensions: dict[str, dict[str, object]],
     rlimit_nofile: int,
 ) -> None:
     import os
@@ -136,15 +135,14 @@ def _ansiballz_main(
         # can monkeypatch the right basic
         sys.path.insert(0, modlib_path)
 
-        from ansible.module_utils._internal._ansiballz import run_module
+        from ansible.module_utils._internal._ansiballz import _loader
 
-        run_module(
+        _loader.run_module(
             json_params=json_params,
             profile=profile,
             module_fqn=module_fqn,
             modlib_path=modlib_path,
-            coverage_config=coverage_config,
-            coverage_output=coverage_output,
+            extensions=extensions,
         )
 
     def debug(command: str, modlib_path: str, json_params: bytes) -> None:
@@ -223,13 +221,14 @@ def _ansiballz_main(
             with open(args_path, 'rb') as reader:
                 json_params = reader.read()
 
-            from ansible.module_utils._internal._ansiballz import run_module
+            from ansible.module_utils._internal._ansiballz import _loader
 
-            run_module(
+            _loader.run_module(
                 json_params=json_params,
                 profile=profile,
                 module_fqn=module_fqn,
                 modlib_path=modlib_path,
+                extensions=extensions,
             )
 
         else:
@@ -246,13 +245,14 @@ def _ansiballz_main(
     # store this in remote_tmpdir (use system tempdir instead)
     # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
     # (this helps ansible-test produce coverage stats)
-    temp_path = tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_')
+    # IMPORTANT: The real path must be used here to ensure a remote debugger such as PyCharm (using pydevd) can resolve paths correctly.
+    temp_path = os.path.realpath(tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_'))
 
     try:
         zipped_mod = os.path.join(temp_path, 'ansible_' + ansible_module + '_payload.zip')
 
         with open(zipped_mod, 'wb') as modlib:
-            modlib.write(base64.b64decode(zipdata))
+            modlib.write(base64.b64decode(zip_data))
 
         if len(sys.argv) == 2:
             debug(sys.argv[1], zipped_mod, encoded_params)

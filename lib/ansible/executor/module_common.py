@@ -37,6 +37,8 @@ from ast import AST, Import, ImportFrom
 from io import BytesIO
 
 from ansible._internal import _locking
+from ansible._internal._ansiballz import _builder
+from ansible._internal import _ansiballz
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _dataclass_validation
 from ansible.module_utils.common.yaml import yaml_load
@@ -54,7 +56,8 @@ from ansible.plugins.loader import module_utils_loader
 from ansible._internal._templating._engine import TemplateOptions, TemplateEngine
 from ansible.template import Templar
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
-from ansible.module_utils._internal import _json, _ansiballz
+from ansible.module_utils._internal import _json
+from ansible.module_utils._internal._ansiballz import _loader
 from ansible.module_utils import basic as _basic
 
 if t.TYPE_CHECKING:
@@ -117,7 +120,7 @@ def _strip_comments(source: str) -> str:
 
 
 def _read_ansiballz_code() -> str:
-    code = (pathlib.Path(__file__).parent.parent / '_internal/_ansiballz.py').read_text()
+    code = (pathlib.Path(_ansiballz.__file__).parent / '_wrapper.py').read_text()
 
     if not C.DEFAULT_KEEP_REMOTE_FILES:
         # Keep comments when KEEP_REMOTE_FILES is set.  That way users will see
@@ -709,7 +712,14 @@ def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
     return metadata
 
 
-def recursive_finder(name: str, module_fqn: str, module_data: str | bytes, zf: zipfile.ZipFile, date_time: datetime.datetime) -> ModuleMetadata:
+def recursive_finder(
+    name: str,
+    module_fqn: str,
+    module_data: str | bytes,
+    zf: zipfile.ZipFile,
+    date_time: datetime.datetime,
+    extension_manager: _builder.ExtensionManager,
+) -> ModuleMetadata:
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module and its module_utils files needs. (no longer actually recursive)
@@ -755,11 +765,13 @@ def recursive_finder(name: str, module_fqn: str, module_data: str | bytes, zf: z
 
     # include module_utils that are always required
     modules_to_process.extend((
-        _ModuleUtilsProcessEntry.from_module(_ansiballz),
+        _ModuleUtilsProcessEntry.from_module(_loader),
         _ModuleUtilsProcessEntry.from_module(_basic),
         _ModuleUtilsProcessEntry.from_module_name(_json.get_module_serialization_profile_module_name(profile, True)),
         _ModuleUtilsProcessEntry.from_module_name(_json.get_module_serialization_profile_module_name(profile, False)),
     ))
+
+    modules_to_process.extend(_ModuleUtilsProcessEntry.from_module_name(name) for name in extension_manager.module_names)
 
     module_info: ModuleUtilLocatorBase
 
@@ -815,12 +827,13 @@ def recursive_finder(name: str, module_fqn: str, module_data: str | bytes, zf: z
                 modules_to_process.append(_ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=entry.is_optional))
 
     for py_module_name in py_module_cache:
-        py_module_file_name = py_module_cache[py_module_name][1]
+        source_code, py_module_file_name = py_module_cache[py_module_name]
 
-        zf.writestr(
-            _make_zinfo(py_module_file_name, date_time, zf=zf),
-            py_module_cache[py_module_name][0]
-        )
+        zf.writestr(_make_zinfo(py_module_file_name, date_time, zf=zf), source_code)
+
+        if extension_manager.debugger_enabled and (origin := Origin.get_tag(source_code)) and origin.path:
+            extension_manager.source_mapping[origin.path] = py_module_file_name
+
         mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
         display.vvvvv("Including module_utils file %s" % mu_file)
 
@@ -879,16 +892,26 @@ def _get_ansible_module_fqn(module_path):
     return remote_module_fqn
 
 
-def _add_module_to_zip(zf: zipfile.ZipFile, date_time: datetime.datetime, remote_module_fqn: str, b_module_data: bytes) -> None:
+def _add_module_to_zip(
+    zf: zipfile.ZipFile,
+    date_time: datetime.datetime,
+    remote_module_fqn: str,
+    b_module_data: bytes,
+    module_path: str,
+    extension_manager: _builder.ExtensionManager,
+) -> None:
     """Add a module from ansible or from an ansible collection into the module zip"""
     module_path_parts = remote_module_fqn.split('.')
 
     # Write the module
-    module_path = '/'.join(module_path_parts) + '.py'
+    zip_module_path = '/'.join(module_path_parts) + '.py'
     zf.writestr(
-        _make_zinfo(module_path, date_time, zf=zf),
+        _make_zinfo(zip_module_path, date_time, zf=zf),
         b_module_data
     )
+
+    if extension_manager.debugger_enabled:
+        extension_manager.source_mapping[module_path] = zip_module_path
 
     existing_paths: frozenset[str]
 
@@ -932,6 +955,8 @@ class _CachedModule:
 
     zip_data: bytes
     metadata: ModuleMetadata
+    source_mapping: dict[str, str]
+    """A mapping of controller absolute source locations to target relative source locations within the AnsiballZ payload."""
 
     def dump(self, path: str) -> None:
         temp_path = pathlib.Path(path + '-part')
@@ -1029,6 +1054,7 @@ def _find_module_utils(
 
     if module_substyle == 'python':
         date_time = datetime.datetime.now(datetime.timezone.utc)
+
         if date_time.year < 1980:
             raise AnsibleError(f'Cannot create zipfile due to pre-1980 configured date: {date_time}')
 
@@ -1038,19 +1064,19 @@ def _find_module_utils(
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
 
+        extension_manager = _builder.ExtensionManager.create(task_vars=task_vars)
+        extension_key = '~'.join(extension_manager.extension_names) if extension_manager.extension_names else 'none'
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')  # type: ignore[attr-defined]
-        cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
+        cached_module_filename = os.path.join(lookup_path, '-'.join((remote_module_fqn, module_compression, extension_key)))
 
         os.makedirs(os.path.dirname(cached_module_filename), exist_ok=True)
 
-        zipdata: bytes | None = None
-        module_metadata: ModuleMetadata | None = None
+        cached_module: _CachedModule | None = None
 
         # Optimization -- don't lock if the module has already been cached
         if os.path.exists(cached_module_filename):
             display.debug('ANSIBALLZ: using cached module: %s' % cached_module_filename)
             cached_module = _CachedModule.load(cached_module_filename)
-            zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
         else:
             display.debug('ANSIBALLZ: Acquiring lock')
             lock_path = f'{cached_module_filename}.lock'
@@ -1065,24 +1091,31 @@ def _find_module_utils(
                     zf = zipfile.ZipFile(zipoutput, mode='w', compression=compression_method)
 
                     # walk the module imports, looking for module_utils to send- they'll be added to the zipfile
-                    module_metadata = recursive_finder(module_name, remote_module_fqn, Origin(path=module_path).tag(b_module_data), zf, date_time)
+                    module_metadata = recursive_finder(
+                        module_name,
+                        remote_module_fqn,
+                        Origin(path=module_path).tag(b_module_data),
+                        zf,
+                        date_time,
+                        extension_manager,
+                    )
 
                     display.debug('ANSIBALLZ: Writing module into payload')
-                    _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data)
+                    _add_module_to_zip(zf, date_time, remote_module_fqn, b_module_data, module_path, extension_manager)
 
                     zf.close()
-                    zipdata = base64.b64encode(zipoutput.getvalue())
+                    zip_data = base64.b64encode(zipoutput.getvalue())
 
                     # Write the assembled module to a temp file (write to temp
                     # so that no one looking for the file reads a partially
                     # written file)
                     os.makedirs(lookup_path, exist_ok=True)
                     display.debug('ANSIBALLZ: Writing module')
-                    cached_module = _CachedModule(zip_data=zipdata, metadata=module_metadata)
+                    cached_module = _CachedModule(zip_data=zip_data, metadata=module_metadata, source_mapping=extension_manager.source_mapping)
                     cached_module.dump(cached_module_filename)
                     display.debug('ANSIBALLZ: Done creating module')
 
-            if not zipdata:
+            if not cached_module:
                 display.debug('ANSIBALLZ: Reading module after lock')
                 # Another process wrote the file while we were waiting for
                 # the write lock.  Go ahead and read the data from disk
@@ -1092,8 +1125,6 @@ def _find_module_utils(
                 except OSError as ex:
                     raise AnsibleError('A different worker process failed to create module file. '
                                        'Look at traceback for that process for debugging information.') from ex
-
-                zipdata, module_metadata = cached_module.zip_data, cached_module.metadata
 
         o_interpreter, o_args = _extract_interpreter(b_module_data)
         if o_interpreter is None:
@@ -1107,39 +1138,35 @@ def _find_module_utils(
         if not isinstance(rlimit_nofile, int):
             rlimit_nofile = int(templar._engine.template(rlimit_nofile, options=TemplateOptions(value_for_omit=0)))
 
-        coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
-
-        if coverage_config:
-            coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
-        else:
-            coverage_output = None
-
-        if not isinstance(module_metadata, ModuleMetadataV1):
+        if not isinstance(cached_module.metadata, ModuleMetadataV1):
             raise NotImplementedError()
 
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        encoder = get_module_encoder(module_metadata.serialization_profile, Direction.CONTROLLER_TO_MODULE)
+        encoder = get_module_encoder(cached_module.metadata.serialization_profile, Direction.CONTROLLER_TO_MODULE)
+
         try:
             encoded_params = json.dumps(params, cls=encoder)
         except TypeError as ex:
             raise AnsibleError(f'Failed to serialize arguments for the {module_name!r} module.') from ex
 
+        extension_manager.source_mapping = cached_module.source_mapping
+
         code = _get_ansiballz_code(shebang)
         args = dict(
-            zipdata=to_text(zipdata),
             ansible_module=module_name,
             module_fqn=remote_module_fqn,
-            params=encoded_params,
-            profile=module_metadata.serialization_profile,
+            profile=cached_module.metadata.serialization_profile,
             date_time=date_time,
-            coverage_config=coverage_config,
-            coverage_output=coverage_output,
             rlimit_nofile=rlimit_nofile,
+            params=encoded_params,
+            extensions=extension_manager.get_extensions(),
+            zip_data=to_text(cached_module.zip_data),
         )
 
         args_string = '\n'.join(f'{key}={value!r},' for key, value in args.items())
 
         wrapper = f"""{code}
+
 
 if __name__ == "__main__":
     _ansiballz_main(
@@ -1149,6 +1176,7 @@ if __name__ == "__main__":
 
         output.write(to_bytes(wrapper))
 
+        module_metadata = cached_module.metadata
         b_module_data = output.getvalue()
 
     elif module_substyle == 'powershell':
