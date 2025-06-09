@@ -1773,6 +1773,13 @@ INJECT_FACTS_AS_VARS:
   - {key: inject_facts_as_vars, section: defaults}
   type: boolean
   version_added: "2.5"
+JFROG_TOKEN:
+  default: null
+  description: The JFrog Artifactory API token for authenticating to Artifactory servers when downloading roles or collections.
+  env: [{name: ANSIBLE_GALAXY_JFROG_TOKEN}]
+  ini:
+    - {key: jfrog_token, section: galaxy}
+  type: string
 MODULE_IGNORE_EXTS:
   name: Module ignore extensions
   default: "{{ REJECT_EXTS + ['.yaml', '.yml', '.ini'] }}"
