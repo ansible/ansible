@@ -22,7 +22,7 @@ DOCUMENTATION = """
         default: true
         deprecated:
           why: This option is no longer used in the Ansible Core code base.
-          version: "2.21"
+          version: "2.23"
           alternatives: Jinja2 native mode is now the default and only option, which is mutually exclusive with this option.
       variable_start_string:
         description: The string marking the beginning of a print statement.
@@ -45,7 +45,7 @@ DOCUMENTATION = """
         type: bool
         deprecated:
           why: This option is no longer used in the Ansible Core code base.
-          version: "2.21"
+          version: "2.23"
           alternatives: Jinja2 native mode is now the default and only option.
       template_vars:
         description: A dictionary, the keys become additional variables available for templating.
