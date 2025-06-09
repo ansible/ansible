@@ -83,7 +83,6 @@ _list:
 """
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
 
@@ -104,7 +103,7 @@ class LookupModule(LookupBase):
             _raise_terms_error()
 
         # first term should be a list (or dict), second a string holding the subkey
-        if not isinstance(terms[0], (list, dict)) or not isinstance(terms[1], string_types):
+        if not isinstance(terms[0], (list, dict)) or not isinstance(terms[1], str):
             _raise_terms_error("first a dict or a list, second a string pointing to the subkey")
         subelements = terms[1].split(".")
 
@@ -122,7 +121,7 @@ class LookupModule(LookupBase):
         flags = {}
         if len(terms) == 3:
             flags = terms[2]
-        if not isinstance(flags, dict) and not all(isinstance(key, string_types) and key in FLAGS for key in flags):
+        if not isinstance(flags, dict) and not all(isinstance(key, str) and key in FLAGS for key in flags):
             _raise_terms_error("the optional third item must be a dict with flags %s" % FLAGS)
 
         # build_items

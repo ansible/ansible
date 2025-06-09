@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import collections.abc as c
 
-from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six import binary_type, text_type  # pylint: disable=unused-import
 from ansible.module_utils.common.text.converters import to_text
 
 
@@ -20,7 +20,7 @@ def boolean(value, strict=True):
 
     normalized_value = value
 
-    if isinstance(value, (text_type, binary_type)):
+    if isinstance(value, (str, bytes)):
         normalized_value = to_text(value, errors='surrogate_or_strict').lower().strip()
 
     if not isinstance(value, c.Hashable):

@@ -20,12 +20,11 @@ from __future__ import annotations
 from ansible.errors import AnsibleAssertionError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task import Task
-from ansible.module_utils.six import string_types
 
 
 class Handler(Task):
 
-    listen = NonInheritableFieldAttribute(isa='list', default=list, listof=string_types, static=True)
+    listen = NonInheritableFieldAttribute(isa='list', default=list, listof=(str,), static=True)
 
     def __init__(self, block=None, role=None, task_include=None):
         self.notified_hosts = []

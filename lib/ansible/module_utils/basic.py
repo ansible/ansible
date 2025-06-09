@@ -46,6 +46,15 @@ import tempfile
 import time
 import traceback
 
+from collections.abc import (
+    KeysView,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    MutableSequence,
+    Set,
+    MutableSet,
+)
 from functools import reduce
 
 try:
@@ -123,13 +132,6 @@ def _get_available_hash_algorithms():
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
 
 from ansible.module_utils.common import json as _json
-
-from ansible.module_utils.six.moves.collections_abc import (
-    KeysView,
-    Mapping, MutableMapping,
-    Sequence, MutableSequence,
-    Set, MutableSet,
-)
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (

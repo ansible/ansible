@@ -24,7 +24,6 @@ from ansible.config.manager import ConfigManager
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible._internal import _json
-from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
@@ -288,21 +287,21 @@ class ConfigCLI(CLI):
                         default = '0'
                 elif default:
                     if stype == 'list':
-                        if not isinstance(default, string_types):
+                        if not isinstance(default, str):
                             # python lists are not valid env ones
                             try:
                                 default = ', '.join(default)
                             except Exception as e:
                                 # list of other stuff
                                 default = '%s' % to_native(default)
-                    if isinstance(default, string_types) and not is_quoted(default):
+                    if isinstance(default, str) and not is_quoted(default):
                         default = shlex.quote(default)
                 elif default is None:
                     default = ''
 
             if subkey in settings[setting] and settings[setting][subkey]:
                 entry = settings[setting][subkey][-1]['name']
-                if isinstance(settings[setting]['description'], string_types):
+                if isinstance(settings[setting]['description'], str):
                     desc = settings[setting]['description']
                 else:
                     desc = '\n#'.join(settings[setting]['description'])
@@ -343,7 +342,7 @@ class ConfigCLI(CLI):
                         sections[s] = new_sections[s]
                 continue
 
-            if isinstance(opt['description'], string_types):
+            if isinstance(opt['description'], str):
                 desc = '# (%s) %s' % (opt.get('type', 'string'), opt['description'])
             else:
                 desc = "# (%s) " % opt.get('type', 'string')
@@ -361,7 +360,7 @@ class ConfigCLI(CLI):
                     seen[entry['section']].append(entry['key'])
 
                     default = self.config.template_default(opt.get('default', ''), get_constants())
-                    if opt.get('type', '') == 'list' and not isinstance(default, string_types):
+                    if opt.get('type', '') == 'list' and not isinstance(default, str):
                         # python lists are not valid ini ones
                         default = ', '.join(default)
                     elif default is None:

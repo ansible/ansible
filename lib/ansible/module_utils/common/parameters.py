@@ -9,7 +9,16 @@ import os
 import typing as t
 
 from collections import deque
-from itertools import chain
+from collections.abc import (
+    KeysView,
+    Set,
+    Sequence,
+    Mapping,
+    MutableMapping,
+    MutableSet,
+    MutableSequence,
+)
+from itertools import chain  # pylint: disable=unused-import
 
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils._internal._datatag import AnsibleSerializable, AnsibleTagHelper
@@ -33,18 +42,7 @@ from ansible.module_utils.errors import (
     SubParameterTypeError,
 )
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
-
-from ansible.module_utils.six.moves.collections_abc import (
-    KeysView,
-    Set,
-    Sequence,
-    Mapping,
-    MutableMapping,
-    MutableSet,
-    MutableSequence,
-)
-
-from ansible.module_utils.six import (
+from ansible.module_utils.six import (  # pylint: disable=unused-import
     binary_type,
     integer_types,
     string_types,
@@ -243,7 +241,7 @@ def _handle_aliases(argument_spec, parameters, alias_warnings=None, alias_deprec
         if aliases is None:
             continue
 
-        if not is_iterable(aliases) or isinstance(aliases, (binary_type, text_type)):
+        if not is_iterable(aliases) or isinstance(aliases, (bytes, str)):
             raise TypeError('internal error: aliases must be a list or tuple')
 
         for alias in aliases:
@@ -346,7 +344,7 @@ def _list_no_log_values(argument_spec, params):
                     for sub_param in sub_parameters:
                         # Validate dict fields in case they came in as strings
 
-                        if isinstance(sub_param, string_types):
+                        if isinstance(sub_param, str):
                             sub_param = check_type_dict(sub_param)
 
                         if not isinstance(sub_param, Mapping):
@@ -362,7 +360,7 @@ def _return_datastructure_name(obj):
     """ Return native stringified values from datastructures.
 
     For use with removing sensitive values pre-jsonification."""
-    if isinstance(obj, (text_type, binary_type)):
+    if isinstance(obj, (str, bytes)):
         if obj:
             yield to_native(obj, errors='surrogate_or_strict')
         return
@@ -375,7 +373,7 @@ def _return_datastructure_name(obj):
     elif obj is None or isinstance(obj, bool):
         # This must come before int because bools are also ints
         return
-    elif isinstance(obj, tuple(list(integer_types) + [float])):
+    elif isinstance(obj, (int, float)):
         yield to_native(obj, nonstring='simplerepr')
     else:
         raise TypeError('Unknown parameter type: %s' % (type(obj)))
@@ -413,14 +411,14 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
     """
     original_value = value
 
-    if isinstance(value, (text_type, binary_type)):
+    if isinstance(value, (str, bytes)):
         # Need native str type
         native_str_value = value
-        if isinstance(value, text_type):
+        if isinstance(value, str):
             value_is_text = True
             if PY2:
                 native_str_value = to_bytes(value, errors='surrogate_or_strict')
-        elif isinstance(value, binary_type):
+        elif isinstance(value, bytes):
             value_is_text = False
             if PY3:
                 native_str_value = to_text(value, errors='surrogate_or_strict')
@@ -430,9 +428,9 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         for omit_me in no_log_strings:
             native_str_value = native_str_value.replace(omit_me, '*' * 8)
 
-        if value_is_text and isinstance(native_str_value, binary_type):
+        if value_is_text and isinstance(native_str_value, bytes):
             value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
-        elif not value_is_text and isinstance(native_str_value, text_type):
+        elif not value_is_text and isinstance(native_str_value, str):
             value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         else:
             value = native_str_value
@@ -514,7 +512,7 @@ def _set_defaults(argument_spec, parameters, set_default=True):
 
 def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
     """ Helper method to :func:`sanitize_keys` to build ``deferred_removals`` and avoid deep recursion. """
-    if isinstance(value, (text_type, binary_type)):
+    if isinstance(value, (str, bytes)):
         return value
 
     if isinstance(value, Sequence):
@@ -541,7 +539,7 @@ def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_remov
         deferred_removals.append((value, new_value))
         return new_value
 
-    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+    if isinstance(value, (int, float, bool, NoneType)):
         return value
 
     if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
@@ -560,8 +558,8 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
     # Get param name for strings so we can later display this value in a useful error message if needed
     # Only pass 'kwargs' to our checkers and ignore custom callable checkers
     kwargs = {}
-    if wanted_element_type == 'str' and isinstance(wanted_type, string_types):
-        if isinstance(parameter, string_types):
+    if wanted_element_type == 'str' and isinstance(wanted_type, str):
+        if isinstance(parameter, str):
             kwargs['param'] = parameter
         elif isinstance(parameter, dict):
             kwargs['param'] = list(parameter.keys())[0]
@@ -620,7 +618,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
         # Get param name for strings so we can later display this value in a useful error message if needed
         # Only pass 'kwargs' to our checkers and ignore custom callable checkers
         kwargs = {}
-        if wanted_name == 'str' and isinstance(wanted_type, string_types):
+        if wanted_name == 'str' and isinstance(wanted_type, str):
             kwargs['param'] = list(parameters.keys())[0]
 
             # Get the name of the parent key if this is a nested option
@@ -659,7 +657,7 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
         if choices is None:
             continue
 
-        if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (binary_type, text_type)):
+        if isinstance(choices, (frozenset, KeysView, Sequence)) and not isinstance(choices, (bytes, str)):
             if param in parameters:
                 # Allow one or more when type='list' param with choices
                 if isinstance(parameters[param], list):
@@ -745,7 +743,7 @@ def _validate_sub_spec(
             options_context.append(param)
 
             # Make sure we can iterate over the elements
-            if not isinstance(parameters[param], Sequence) or isinstance(parameters[param], string_types):
+            if not isinstance(parameters[param], Sequence) or isinstance(parameters[param], str):
                 elements = [parameters[param]]
             else:
                 elements = parameters[param]

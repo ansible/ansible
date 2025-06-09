@@ -33,7 +33,6 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.datatag import native_type_name
-from ansible.module_utils.six import text_type
 from ansible.parsing.dataloader import DataLoader
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.plugins.loader import cache_loader
@@ -467,7 +466,7 @@ class VariableManager:
             if task._role:
                 variables['role_name'] = task._role.get_name(include_role_fqcn=False)
                 variables['role_path'] = task._role._role_path
-                variables['role_uuid'] = text_type(task._role._uuid)
+                variables['role_uuid'] = str(task._role._uuid)
                 variables['ansible_collection_name'] = task._role._role_collection
                 variables['ansible_role_name'] = task._role.get_name()
 

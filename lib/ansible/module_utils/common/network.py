@@ -9,8 +9,8 @@ import re
 from struct import pack
 from socket import inet_ntoa
 
-from ansible.module_utils.six.moves import zip
-
+# backwards compat
+zip = zip  # pylint: disable=self-assigning-variable
 
 VALID_MASKS = [2**8 - 2**i for i in range(0, 9)]
 

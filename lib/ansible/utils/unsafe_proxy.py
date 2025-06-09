@@ -10,7 +10,7 @@ from collections.abc import Mapping, Set
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six import binary_type, text_type  # pylint: disable=unused-import
 
 __all__ = ['AnsibleUnsafe', 'wrap_var']
 
@@ -62,9 +62,9 @@ def wrap_var(v):
         v = _wrap_set(v)
     elif is_sequence(v):
         v = _wrap_sequence(v)
-    elif isinstance(v, binary_type):
+    elif isinstance(v, bytes):
         v = AnsibleUnsafeBytes(v)
-    elif isinstance(v, text_type):
+    elif isinstance(v, str):
         v = AnsibleUnsafeText(v)
 
     return v

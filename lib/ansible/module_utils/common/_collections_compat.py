@@ -10,7 +10,7 @@ from __future__ import annotations
 
 # Although this was originally intended for internal use only, it has wide adoption in collections.
 # This is due in part to sanity tests previously recommending its use over `collections` imports.
-from ansible.module_utils.six.moves.collections_abc import (  # pylint: disable=unused-import
+from collections.abc import (  # pylint: disable=unused-import
     MappingView,
     ItemsView,
     KeysView,

@@ -27,7 +27,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -74,7 +73,7 @@ def hash_params(params):
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
     # cannot be hashed)
-    if isinstance(params, Container) and not isinstance(params, (text_type, binary_type)):
+    if isinstance(params, Container) and not isinstance(params, (str, bytes)):
         if isinstance(params, Mapping):
             try:
                 # Optimistically hope the contents are all hashable

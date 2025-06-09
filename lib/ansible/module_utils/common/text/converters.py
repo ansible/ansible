@@ -8,7 +8,7 @@ from __future__ import annotations
 import codecs
 import json
 
-from ansible.module_utils.six import (
+from ansible.module_utils.six import (  # pylint: disable=unused-import
     binary_type,
     iteritems,
     text_type,
@@ -90,7 +90,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         Added the ``surrogate_then_replace`` error handler and made it the default error handler.
     """
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         return obj
 
     # We're given a text string
@@ -104,7 +104,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         try:
             # Try this first as it's the fastest
             return obj.encode(encoding, errors)
@@ -194,7 +194,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         Added the surrogate_then_replace error handler and made it the default error handler.
     """
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         return obj
 
     if errors in _COMPOSED_ERROR_HANDLERS:
@@ -205,7 +205,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         # Note: We don't need special handling for surrogate_then_replace
         # because all bytes will either be made into surrogates or are valid
         # to decode.
@@ -259,10 +259,10 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
     """
     # DTFIX-FUTURE: deprecate
 
-    if isinstance(d, text_type):
+    if isinstance(d, str):
         return to_bytes(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_bytes(o, encoding, errors) for o in iteritems(d))
+        return dict(container_to_bytes(o, encoding, errors) for o in d.items())
     elif isinstance(d, list):
         return [container_to_bytes(o, encoding, errors) for o in d]
     elif isinstance(d, tuple):
@@ -279,11 +279,11 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
     """
     # DTFIX-FUTURE: deprecate
 
-    if isinstance(d, binary_type):
+    if isinstance(d, bytes):
         # Warning, can traceback
         return to_text(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_text(o, encoding, errors) for o in iteritems(d))
+        return dict(container_to_text(o, encoding, errors) for o in d.items())
     elif isinstance(d, list):
         return [container_to_text(o, encoding, errors) for o in d]
     elif isinstance(d, tuple):

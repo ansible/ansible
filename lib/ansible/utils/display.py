@@ -57,7 +57,7 @@ from ansible.module_utils._internal import _ambient_context, _deprecator, _messa
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import text_type  # pylint: disable=unused-import
 from ansible.module_utils._internal import _traceback, _errors
 from ansible.utils.color import stringc
 from ansible.utils.multiprocessing import context as multiprocessing_context
@@ -106,7 +106,7 @@ def get_text_width(text: str) -> int:
     character and using wcwidth individually, falling back to a value of 0
     for non-printable wide characters.
     """
-    if not isinstance(text, text_type):
+    if not isinstance(text, str):
         raise TypeError('get_text_width requires text, not %s' % type(text))
 
     try:

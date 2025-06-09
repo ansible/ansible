@@ -30,7 +30,7 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems  # pylint: disable=unused-import
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
@@ -653,7 +653,7 @@ class LinuxHardware(Hardware):
                     retval[target].add(entry)
                 except OSError:
                     continue
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return dict((k, list(sorted(v))) for (k, v) in retval.items())
         except OSError:
             return {}
 
@@ -665,7 +665,7 @@ class LinuxHardware(Hardware):
                 device = elements[3]
                 target = elements[5]
                 retval[target].add(device)
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return dict((k, list(sorted(v))) for (k, v) in retval.items())
         except OSError:
             return {}
 
@@ -750,7 +750,7 @@ class LinuxHardware(Hardware):
             d = {}
             d['virtual'] = virtual
             d['links'] = {}
-            for (link_type, link_values) in iteritems(links):
+            for (link_type, link_values) in links.items():
                 d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
@@ -801,7 +801,7 @@ class LinuxHardware(Hardware):
                     part_sysdir = sysdir + "/" + partname
 
                     part['links'] = {}
-                    for (link_type, link_values) in iteritems(links):
+                    for (link_type, link_values) in links.items():
                         part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start", 0)

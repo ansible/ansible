@@ -24,11 +24,8 @@ import secrets
 import shlex
 import time
 
-from collections.abc import Mapping, Sequence
-
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import text_type, string_types
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
@@ -84,7 +81,7 @@ class ShellBase(AnsiblePlugin):
         return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), secrets.randbelow(2**48))
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, self.quote(text_type(v))) for k, v in kwargs.items()])
+        return ' '.join(['%s=%s' % (k, self.quote(str(v))) for k, v in kwargs.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)

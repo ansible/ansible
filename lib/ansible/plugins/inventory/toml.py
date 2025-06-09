@@ -90,7 +90,6 @@ from collections.abc import MutableMapping, MutableSequence
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.six import string_types
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
 
@@ -147,7 +146,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 )
 
     def _load_file(self, file_name):
-        if not file_name or not isinstance(file_name, string_types):
+        if not file_name or not isinstance(file_name, str):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
 
         b_file_name = to_bytes(self.loader.path_dwim(file_name))
