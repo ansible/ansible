@@ -276,7 +276,7 @@ class GalaxyAPI:
 
     def __init__(
             self, galaxy, name, url,
-            username=None, password=None, token=None, validate_certs=True,
+            username=None, password=None, token=None, jfrog_token=None, validate_certs=True,
             available_api_versions=None,
             clear_response_cache=False, no_cache=True,
             priority=float('inf'),
@@ -287,6 +287,7 @@ class GalaxyAPI:
         self.username = username
         self.password = password
         self.token = token
+        self.jfrog_token = jfrog_token
         self.api_server = url
         self.validate_certs = validate_certs
         self.timeout = timeout

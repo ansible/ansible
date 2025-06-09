@@ -227,6 +227,8 @@ class GalaxyCLI(CLI):
         common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences.')
+        common.add_argument('--jfrog-token', dest='jfrog_token', default=False,
+                            help='The JFrog API token for authenticating to Artifactory servers.')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', help='Ignore SSL certificate validation errors.', default=None)
 
         # --timeout uses the default None to handle two different scenarios.
@@ -630,6 +632,8 @@ class GalaxyCLI(CLI):
                 galaxy_options[optional_key] = context.CLIARGS[optional_key]
 
         config_servers = []
+        jfrog_token = context.CLIARGS.get('jfrog_token')
+
         # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
         server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
         for server_priority, server_key in enumerate(server_list, start=1):
@@ -683,6 +687,7 @@ class GalaxyCLI(CLI):
             config_servers.append(GalaxyAPI(
                 self.galaxy, server_key,
                 priority=server_priority,
+                jfrog_token=jfrog_token,
                 **server_options
             ))
 
@@ -710,6 +715,7 @@ class GalaxyCLI(CLI):
                     priority=len(config_servers) + 1,
                     validate_certs=validate_certs,
                     timeout=default_server_timeout,
+                    jfrog_token=jfrog_token,
                     **galaxy_options
                 ))
         else:
@@ -1460,6 +1466,7 @@ class GalaxyCLI(CLI):
         no_deps = context.CLIARGS['no_deps']
         force_deps = context.CLIARGS['force_with_deps']
         force = context.CLIARGS['force'] or force_deps
+        jfrog_token = context.CLIARGS.get('jfrog_token')
 
         for role in requirements:
             # only process roles in roles files when names matches if given
