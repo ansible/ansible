@@ -628,7 +628,7 @@ class ConfigManager:
             # env vars are next precedence
             if value is None and defs[config].get('env'):
                 value, origin = self._loop_entries(os.environ, defs[config]['env'])
-                if value == 'AnsibleUndefined':
+                if value.strip() == 'ansible_omit':
                     value = None
                 else:
                     origin = 'env: %s' % origin
