@@ -22,7 +22,6 @@ from ansible.config.manager import ConfigManager
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRequiredOptionError
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence
-from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -134,7 +133,7 @@ class ConfigCLI(CLI):
                                  help='Prefixes all entries with a comment character to disable them')
 
         validate_parser = subparsers.add_parser('validate', help='Validate the configuration file and environment variables. '
-                                                     'By default it only checks the base settings without accounting for plugins (see -t).',
+                                                'By default it only checks the base settings without accounting for plugins (see -t).',
                                                 parents=[common])
         validate_parser.set_defaults(func=self.execute_validate)
         validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'] , default='ini',
@@ -695,7 +694,6 @@ class ConfigCLI(CLI):
         # allsgood
         display.display("All configurations seem valid!")
 
-
     def execute_get(self):
 
         # init/validation
@@ -750,10 +748,10 @@ class ConfigCLI(CLI):
         # show it
         display.display(to_text(res, errors='surrogate_or_strict'))
 
+
 def main(args=None):
     ConfigCLI.cli_executor(args)
 
 
 if __name__ == '__main__':
     main()
-
