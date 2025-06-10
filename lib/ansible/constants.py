@@ -20,6 +20,7 @@ from ansible.utils.fqcn import add_internal_fqcns
 config = ConfigManager()
 
 # CONSTANTS ### yes, actual ones
+
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
@@ -67,9 +68,8 @@ DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
-# FIXME: expand to other plugins, but never doc fragments
+
 CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars')
-# NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
