@@ -107,7 +107,7 @@ options:
       - The character set in which the target file is encoded.
     type: str
     default: utf-8
-    version_added: '2.19'  
+    version_added: '2.19'
 notes:
   - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
@@ -198,9 +198,9 @@ EXAMPLES = r"""
 import re
 import os
 import tempfile
-from ansible.module_utils.six import b
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 
 
 def write_changes(module, contents, path, encoding=None):
@@ -261,7 +261,7 @@ def main():
     params = module.params
     path = params['path']
 
-    encoding=module.params.get('encoding', None)
+    encoding = module.params.get('encoding', None)
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
@@ -371,8 +371,8 @@ def main():
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
         if n0 != 0 and lines[n0 - 1] != (os.linesep):
-          lines[n0:n0] = blank_line
-          n0 += 1
+            lines[n0:n0] = blank_line
+            n0 += 1
 
     # Insert the block
     lines[n0:n0] = blocklines
