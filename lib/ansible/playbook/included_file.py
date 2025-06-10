@@ -144,7 +144,9 @@ class IncludedFile:
                                     parent_include_dir = parent_include._role_path
                                 else:
                                     try:
-                                        parent_include_dir = os.path.dirname(parent_include.args.get('_raw_params'))
+                                        # FUTURE: Since the parent include path has already been resolved, it should be used here.
+                                        #         Unfortunately it's not currently stored anywhere, so it must be calculated again.
+                                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                                     except AnsibleError as e:
                                         parent_include_dir = ''
                                         display.warning(
