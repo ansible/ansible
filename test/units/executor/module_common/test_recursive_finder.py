@@ -14,6 +14,7 @@ from io import BytesIO
 
 import ansible.errors
 
+from ansible._internal._ansiballz._builder import ExtensionManager
 from ansible.executor.module_common import recursive_finder
 from ansible.plugins.loader import init_plugin_loader
 
@@ -27,7 +28,8 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/basic.py',
                                       'ansible/module_utils/six/__init__.py',
                                       'ansible/module_utils/_internal/__init__.py',
-                                      'ansible/module_utils/_internal/_ansiballz.py',
+                                      'ansible/module_utils/_internal/_ansiballz/__init__.py',
+                                      'ansible/module_utils/_internal/_ansiballz/_loader.py',
                                       'ansible/module_utils/_internal/_dataclass_validation.py',
                                       'ansible/module_utils/_internal/_datatag/__init__.py',
                                       'ansible/module_utils/_internal/_datatag/_tags.py',
@@ -99,7 +101,7 @@ def zip_file() -> zipfile.ZipFile:
 def test_no_module_utils(zip_file: zipfile.ZipFile) -> None:
     name = 'ping'
     data = b'#!/usr/bin/python\nreturn \'{\"changed\": false}\''
-    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW)
+    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW, ExtensionManager())
     assert frozenset(zip_file.namelist()) == MODULE_UTILS_BASIC_FILES
 
 
@@ -107,7 +109,7 @@ def test_module_utils_with_syntax_error(zip_file: zipfile.ZipFile) -> None:
     name = 'fake_module'
     data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
     with pytest.raises(ansible.errors.AnsibleError) as exec_info:
-        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, zip_file, NOW)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, zip_file, NOW, ExtensionManager())
     assert "Unable to compile 'fake_module': invalid syntax" in str(exec_info.value)
 
 
@@ -115,26 +117,26 @@ def test_module_utils_with_identation_error(zip_file: zipfile.ZipFile) -> None:
     name = 'fake_module'
     data = b'#!/usr/bin/python\n    def something():\n    pass\n'
     with pytest.raises(ansible.errors.AnsibleError) as exec_info:
-        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, zip_file, NOW)
+        recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, zip_file, NOW, ExtensionManager())
     assert "Unable to compile 'fake_module': unexpected indent" in str(exec_info.value)
 
 
 def test_from_import_six(zip_file: zipfile.ZipFile) -> None:
     name = 'ping'
     data = b'#!/usr/bin/python\nfrom ansible.module_utils import six'
-    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW)
+    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW, ExtensionManager())
     assert frozenset(zip_file.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', )).union(MODULE_UTILS_BASIC_FILES)
 
 
 def test_import_six(zip_file: zipfile.ZipFile) -> None:
     name = 'ping'
     data = b'#!/usr/bin/python\nimport ansible.module_utils.six'
-    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW)
+    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW, ExtensionManager())
     assert frozenset(zip_file.namelist()) == frozenset(('ansible/module_utils/six/__init__.py', )).union(MODULE_UTILS_BASIC_FILES)
 
 
 def test_import_six_from_many_submodules(zip_file: zipfile.ZipFile) -> None:
     name = 'ping'
     data = b'#!/usr/bin/python\nfrom ansible.module_utils.six.moves.urllib.parse import urlparse'
-    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW)
+    recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'ping.py'), data, zip_file, NOW, ExtensionManager())
     assert frozenset(zip_file.namelist()) == frozenset(('ansible/module_utils/six/__init__.py',)).union(MODULE_UTILS_BASIC_FILES)
