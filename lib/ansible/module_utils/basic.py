@@ -2198,7 +2198,7 @@ def __getattr__(importable_name):
         importable = repeat
     elif importable_name in {
         'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
-        'iteritems', 'string_types', 'test_type'
+        'iteritems', 'string_types', 'text_type',
     }:
         import importlib
         importable = getattr(
