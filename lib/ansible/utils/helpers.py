@@ -17,7 +17,9 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.six import string_types  # pylint: disable=unused-import
+from ansible.utils.display import Display as _Display
+
+_display = _Display()
 
 
 def pct_to_int(value, num_items, min_value=1):
@@ -47,3 +49,23 @@ def deduplicate_list(original_list):
     """
     seen = set()
     return [x for x in original_list if x not in seen and not seen.add(x)]
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "string_types":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _display.deprecated(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

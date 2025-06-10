@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import collections.abc as c
 
-from ansible.module_utils.six import binary_type, text_type  # pylint: disable=unused-import
 from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common import warnings as _warnings
 
 
 BOOLEANS_TRUE = frozenset(('y', 'yes', 'on', '1', 'true', 't', 1, 1.0, True))
@@ -32,3 +32,23 @@ def boolean(value, strict=True):
         return False
 
     raise TypeError("The value '%s' is not a valid boolean. Valid booleans include: %s" % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name in {"binary_type", "text_type"}:
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!r})"
+        )
+
+    _warnings.deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

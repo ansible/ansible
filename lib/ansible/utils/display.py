@@ -57,7 +57,6 @@ from ansible.module_utils._internal import _ambient_context, _deprecator, _messa
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils.six import text_type  # pylint: disable=unused-import
 from ansible.module_utils._internal import _traceback, _errors
 from ansible.utils.color import stringc
 from ansible.utils.multiprocessing import context as multiprocessing_context
@@ -1282,3 +1281,23 @@ def _report_config_warnings(deprecator: _messages.PluginInfo) -> None:
 # emit any warnings or deprecations
 # in the event config fails before display is up, we'll lose warnings -- but that's OK, since everything is broken anyway
 _report_config_warnings(_deprecator.ANSIBLE_CORE_DEPRECATOR)
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "text_type":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _display.deprecated(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

@@ -25,12 +25,12 @@ import sys
 import time
 
 from ansible.module_utils._internal._concurrent import _futures
+from ansible.module_utils.common import warnings as _warnings
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
-from ansible.module_utils.six import iteritems  # pylint: disable=unused-import
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
@@ -925,3 +925,23 @@ class LinuxHardwareCollector(HardwareCollector):
     _fact_class = LinuxHardware
 
     required_facts = set(['platform'])
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "iteritems":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _warnings.deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

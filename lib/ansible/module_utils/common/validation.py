@@ -11,12 +11,12 @@ import re
 
 from ast import literal_eval
 from ansible.module_utils.common import json as _common_json
+from ansible.module_utils.common import warnings as _warnings
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import string_types  # pylint: disable=unused-import
 
 
 def count_terms(terms, parameters):
@@ -592,3 +592,23 @@ def check_type_jsonarg(value):
         return json.dumps(value, cls=_common_json._get_legacy_encoder(), _decode_bytes=True)
 
     raise TypeError('%s cannot be converted to a json string' % type(value))
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "string_types":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _warnings.deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

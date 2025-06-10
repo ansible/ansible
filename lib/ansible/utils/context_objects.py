@@ -10,8 +10,11 @@ from abc import ABCMeta
 from collections.abc import Container, Mapping, Sequence, Set
 
 from ansible.module_utils.common.collections import ImmutableDict
-from ansible.module_utils.six import add_metaclass, binary_type, text_type  # pylint: disable=unused-import
+from ansible.utils.display import Display as _Display
 from ansible.utils.singleton import Singleton
+
+
+_display = _Display()
 
 
 def _make_immutable(obj):
@@ -86,3 +89,23 @@ class GlobalCLIArgs(CLIArgs, metaclass=_ABCSingleton):
     Only one of these exist per program as it is for global context
     """
     pass
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name in {"binary_type", "text_type", "add_metaclass"}:
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _display.deprecated(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

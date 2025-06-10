@@ -18,7 +18,7 @@ from __future__ import annotations
 import os
 import typing as t
 
-from ansible.module_utils.six import iteritems  # pylint: disable=unused-import
+from ansible.module_utils.common import warnings as _warnings
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -35,3 +35,23 @@ class EnvFactCollector(BaseFactCollector):
             env_facts['env'][k] = v
 
         return env_facts
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "iteritems":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!r})"
+        )
+
+    _warnings.deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

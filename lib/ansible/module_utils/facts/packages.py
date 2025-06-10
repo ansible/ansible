@@ -7,8 +7,8 @@ import ansible.module_utils.compat.typing as t
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.module_utils.six import with_metaclass  # pylint: disable=unused-import
 from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.common import warnings as _warnings
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common._utils import get_all_subclasses
@@ -125,3 +125,23 @@ class CLIMgr(PkgMgr):
             if not handle_exceptions:
                 raise
         return found
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "with_metaclass":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _warnings.deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

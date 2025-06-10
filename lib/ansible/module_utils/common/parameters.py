@@ -23,7 +23,7 @@ from itertools import chain  # pylint: disable=unused-import
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils._internal._datatag import AnsibleSerializable, AnsibleTagHelper
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.common.warnings import warn, deprecate
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.errors import (
     AliasError,
@@ -42,15 +42,6 @@ from ansible.module_utils.errors import (
     SubParameterTypeError,
 )
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
-from ansible.module_utils.six import (  # pylint: disable=unused-import
-    binary_type,
-    integer_types,
-    string_types,
-    text_type,
-    PY2,
-    PY3,
-)
-
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
     check_required_arguments,
@@ -416,12 +407,9 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         native_str_value = value
         if isinstance(value, str):
             value_is_text = True
-            if PY2:
-                native_str_value = to_bytes(value, errors='surrogate_or_strict')
         elif isinstance(value, bytes):
             value_is_text = False
-            if PY3:
-                native_str_value = to_text(value, errors='surrogate_or_strict')
+            native_str_value = to_text(value, errors='surrogate_or_strict')
 
         if native_str_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
@@ -938,3 +926,27 @@ def remove_values(value, no_log_strings):
                     raise TypeError('Unknown container type encountered when removing private values from output')
 
     return new_value
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name in {
+        "binary_type", "text_type",
+        "integer_types", "string_types",
+        "PY2", "PY3",
+    }:
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable

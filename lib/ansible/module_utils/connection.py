@@ -36,9 +36,9 @@ import struct
 import uuid
 
 from functools import partial
+from ansible.module_utils.common import warnings as _warnings
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.json import _get_legacy_encoder
-from ansible.module_utils.six import iteritems  # pylint: disable=unused-import
 
 
 def write_to_stream(stream, obj):
@@ -200,3 +200,23 @@ class Connection(object):
         sf.close()
 
         return to_text(response, errors='surrogate_or_strict')
+
+
+def __getattr__(importable_name):
+    """Inject import-time deprecation warnings."""
+    if importable_name == "iteritems":
+        import importlib
+        importable = getattr(
+            importlib.import_module("ansible.module_utils.six"),
+            importable_name
+        )
+    else:
+        raise AttributeError(
+            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
+        )
+
+    _warnings.deprecate(
+        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
+        version="2.23",
+    )
+    return importable
