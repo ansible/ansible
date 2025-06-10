@@ -883,7 +883,6 @@ class Display(metaclass=Singleton):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color, nowrap=True)
 
-<<<<<<< HEAD
     def error_as_warning(
         self,
         msg: str | None,
@@ -936,14 +935,6 @@ class Display(metaclass=Singleton):
             event = _error_factory.ControllerEventFactory.from_exception(msg, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
 
             wrap_text = False
-=======
-    @_proxy
-    def error(self, msg: str, wrap_text: bool = C.NOTTY_WRAP) -> None:
-        if wrap_text:
-            new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = u"\n".join(wrapped) + u"\n"
->>>>>>> 175789f85e7 (no tty, no wrap)
         else:
             event = _messages.Event(
                 msg=msg,
