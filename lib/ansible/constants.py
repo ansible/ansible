@@ -177,19 +177,20 @@ MAGIC_VARIABLE_MAPPING = dict(
 
 ### Generate C.<setting> ###
 _me = sys.modules[__name__]
+_C = {}
 
 
 def __getattr__(name):
     """
     Dynamically load constants from settings
     """
-    try:
-        value = _me.__dict__[name]
-    except KeyError as e:
+    if name not in _C:
         try:
-            value = config.get_config_value(name)
-            setattr(_me, name, value)
-        except:
-            raise AttributeError from e
-
-    return value
+            return _me.__dict__[name]
+        except KeyError as e:
+            try:
+                value = config.get_config_value(name)
+                _C[name] = value
+            except:
+                raise AttributeError from e
+    return _C[name]

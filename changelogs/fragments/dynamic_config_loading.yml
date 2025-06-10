@@ -1,0 +1,2 @@
+minor_changes:
+  - configuration constants are now loaded on demand. There should be a very slight delay in access of ``C.<constant name>`` on first access but this also should very slightly enhance Ansible performance
