@@ -14,7 +14,6 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.utils.fqcn import add_internal_fqcns
 
-
 # initialize config manager/config data to read/store global settings
 # and generate 'pseudo constants' for app consumption.
 config = ConfigManager()
