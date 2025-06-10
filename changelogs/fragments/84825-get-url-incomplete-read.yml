@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - add a check to recognize incomplete data transfers.

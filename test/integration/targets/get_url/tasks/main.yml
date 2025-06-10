@@ -761,3 +761,16 @@
 - assert:
     that:
       - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
+
+- name: Test for incomplete data read (issue 85164)
+  get_url:
+    url: 'http://localhost:{{ http_port }}/incompleteRead'
+    dest: '{{ remote_tmp_dir }}/85164.txt'
+  ignore_errors: true
+  register: result
+
+- name: Assert we have an incomplete read failure
+  assert:
+    that:
+      - result is failed
+      - '"Incomplete read" in result.msg'
