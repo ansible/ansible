@@ -443,7 +443,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             format(repo_url=to_native(git_url)),
         ) from proc_err
 
-    git_switch_cmd = git_executable, 'checkout', to_text(version)
+    git_switch_cmd = git_executable, '-c', 'advice.detachedHead=false', 'checkout', to_text(version)
     try:
         subprocess.check_call(git_switch_cmd, cwd=b_checkout_path)
     except subprocess.CalledProcessError as proc_err:
