@@ -14,6 +14,10 @@ from ...util import (
     HostConnectionError,
 )
 
+from ...ansible_util import (
+    ansible_environment,
+)
+
 from ...config import (
     ShellConfig,
 )
@@ -32,6 +36,7 @@ from ...host_profiles import (
     ControllerProfile,
     PosixProfile,
     SshTargetHostProfile,
+    DebuggableProfile,
 )
 
 from ...provisioning import (
@@ -39,7 +44,6 @@ from ...provisioning import (
 )
 
 from ...host_configs import (
-    ControllerConfig,
     OriginConfig,
 )
 
@@ -48,12 +52,21 @@ from ...inventory import (
     create_posix_inventory,
 )
 
+from ...python_requirements import (
+    install_requirements,
+)
+
+from ...util_common import (
+    get_injector_env,
+)
+
+from ...delegation import (
+    metadata_context,
+)
+
 
 def command_shell(args: ShellConfig) -> None:
     """Entry point for the `shell` command."""
-    if args.raw and isinstance(args.targets[0], ControllerConfig):
-        raise ApplicationError('The --raw option has no effect on the controller.')
-
     if not args.export and not args.cmd and not sys.stdin.isatty():
         raise ApplicationError('Standard input must be a TTY to launch a shell.')
 
@@ -61,6 +74,8 @@ def command_shell(args: ShellConfig) -> None:
 
     if args.delegate:
         raise Delegate(host_state=host_state)
+
+    install_requirements(args, host_state.controller_profile, host_state.controller_profile.python)  # shell
 
     if args.raw and not isinstance(args.controller, OriginConfig):
         display.warning('The --raw option will only be applied to the target.')
@@ -92,6 +107,16 @@ def command_shell(args: ShellConfig) -> None:
         con.run(args.cmd, capture=False, interactive=False, output_stream=OutputStream.ORIGINAL)
         return
 
+    with metadata_context(args):
+        interactive_shell(args, target_profile, con)
+
+
+def interactive_shell(
+    args: ShellConfig,
+    target_profile: SshTargetHostProfile,
+    con: Connection,
+) -> None:
+    """Run an interactive shell."""
     if isinstance(con, SshConnection) and args.raw:
         cmd: list[str] = []
     elif isinstance(target_profile, PosixProfile):
@@ -110,6 +135,15 @@ def command_shell(args: ShellConfig) -> None:
             )
 
             env = {name: os.environ[name] for name in optional_vars if name in os.environ}
+
+            if isinstance(con, LocalConnection):  # configure the controller environment
+                env.update(ansible_environment(args))
+                env.update(get_injector_env(target_profile.python, env))
+                env.update(ANSIBLE_TEST_METADATA_PATH=os.path.abspath(args.metadata_path))
+
+                if isinstance(target_profile, DebuggableProfile):
+                    env.update(target_profile.get_ansiballz_environment_variables())
+                    env.update(target_profile.get_ansible_cli_environment_variables())
 
             if env:
                 cmd = ['/usr/bin/env'] + [f'{name}={value}' for name, value in env.items()]

@@ -76,6 +76,7 @@ from ...python_requirements import (
     PipInstall,
     collect_requirements,
     run_pip,
+    install_requirements,
 )
 
 from ...config import (
@@ -178,6 +179,7 @@ def command_sanity(args: SanityConfig) -> None:
     if args.delegate:
         raise Delegate(host_state=host_state, require=changes, exclude=args.exclude)
 
+    install_requirements(args, host_state.controller_profile, host_state.controller_profile.python)  # sanity
     configure_pypi_proxy(args, host_state.controller_profile)  # sanity
 
     if disabled:

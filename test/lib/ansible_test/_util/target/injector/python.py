@@ -15,6 +15,7 @@ def main():
     args = [sys.executable]
 
     ansible_lib_root = os.environ.get('ANSIBLE_TEST_ANSIBLE_LIB_ROOT')
+    debugger_config = os.environ.get('ANSIBLE_TEST_DEBUGGER_CONFIG')
     coverage_config = os.environ.get('COVERAGE_CONF')
     coverage_output = os.environ.get('COVERAGE_FILE')
 
@@ -27,6 +28,13 @@ def main():
             if not found:
                 sys.exit('ERROR: Could not find `coverage` module. '
                          'Did you use a virtualenv created without --system-site-packages or with the wrong interpreter?')
+
+    if debugger_config:
+        import json
+
+        debugger_options = json.loads(debugger_config)
+        os.environ.update(debugger_options['env'])
+        args += debugger_options['args']
 
     if name == 'python.py':
         if sys.argv[1] == '-c':
