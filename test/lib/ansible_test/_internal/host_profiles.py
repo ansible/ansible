@@ -206,7 +206,7 @@ class Inventory:
             inventory_text += f'[{group}]\n'
 
             for host, variables in hosts.items():
-                kvp = ' '.join(f'{key}="{value}"' for key, value in variables.items())
+                kvp = ' '.join(f"{key}={value!r}" for key, value in variables.items())
                 inventory_text += f'{host} {kvp}\n'
 
             inventory_text += '\n'
@@ -235,17 +235,23 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         *,
         args: EnvironmentConfig,
         config: THostConfig,
-        targets: t.Optional[list[HostConfig]],
+        controller: ControllerHostProfile,
     ) -> None:
         self.args = args
         self.config = config
-        self.controller = bool(targets)
-        self.targets = targets or []
+        self.controller = not controller  # this profile is a controller whenever the `controller` arg was not provided
+        self.targets = args.targets if self.controller else []  # only keep targets if this profile is a controller
+        self.controller_profile = controller if isinstance(self, ControllerProfile) else None
 
         self.state: dict[str, t.Any] = {}
         """State that must be persisted across delegation."""
         self.cache: dict[str, t.Any] = {}
         """Cache that must not be persisted across delegation."""
+
+    @property
+    @abc.abstractmethod
+    def name(self) -> str:
+        """The name of the host profile."""
 
     def provision(self) -> None:
         """Provision the host before delegation."""
@@ -273,6 +279,9 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
         # args will be populated after the instances are restored
         self.cache = {}
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__}: {self.name}'
 
 
 class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
@@ -321,6 +330,11 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
     """Base class for remote instance profiles."""
 
     @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return self.config.name
+
+    @property
     def core_ci_state(self) -> t.Optional[dict[str, str]]:
         """The saved Ansible Core CI state."""
         return self.state.get('core_ci')
@@ -339,6 +353,8 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
     def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
+        super().deprovision()
+
         if self.args.remote_terminate == TerminateMode.ALWAYS or (self.args.remote_terminate == TerminateMode.SUCCESS and self.args.success):
             self.delete_instance()
 
@@ -397,6 +413,11 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[ControllerConfig]):
     """Host profile for the controller as a target."""
 
+    @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return self.controller_profile.name
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
@@ -424,6 +445,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         command: str
         command_privileged: bool
         expected_mounts: tuple[CGroupMount, ...]
+
+    @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return self.config.name
 
     @property
     def container_name(self) -> t.Optional[str]:
@@ -976,6 +1002,8 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
     def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
+        super().deprovision()
+
         container_exists = False
 
         if self.container_name:
@@ -1025,10 +1053,10 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
             raise HostConnectionError(f'Timeout waiting for {self.config.name} container {self.container_name}.', callback)
 
-    def get_controller_target_connections(self) -> list[SshConnection]:
-        """Return SSH connection(s) for accessing the host as a target from the controller."""
+    def get_ssh_connection_detail(self, host_type: str) -> SshConnectionDetail:
+        """Return SSH connection detail for the specified host type."""
         containers = get_container_database(self.args)
-        access = containers.data[HostType.control]['__test_hosts__'][self.container_name]
+        access = containers.data[host_type]['__test_hosts__'][self.container_name]
 
         host = access.host_ip
         port = dict(access.port_map())[22]
@@ -1046,7 +1074,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             enable_rsa_sha1='centos6' in self.config.image,
         )
 
-        return [SshConnection(self.args, settings)]
+        return settings
+
+    def get_controller_target_connections(self) -> list[SshConnection]:
+        """Return SSH connection(s) for accessing the host as a target from the controller."""
+        return [SshConnection(self.args, self.get_ssh_connection_detail(HostType.control))]
 
     def get_origin_controller_connection(self) -> DockerConnection:
         """Return a connection for accessing the host as a controller from the origin."""
@@ -1115,6 +1147,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
 class NetworkInventoryProfile(HostProfile[NetworkInventoryConfig]):
     """Host profile for a network inventory."""
+
+    @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return self.config.path
 
 
 class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
@@ -1196,6 +1233,11 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
 class OriginProfile(ControllerHostProfile[OriginConfig]):
     """Host profile for origin."""
+
+    @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return 'origin'
 
     def get_origin_controller_connection(self) -> LocalConnection:
         """Return a connection for accessing the host as a controller from the origin."""
@@ -1317,6 +1359,11 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSshConfig]):
     """Host profile for a POSIX SSH instance."""
 
+    @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return self.config.host
+
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
@@ -1333,6 +1380,11 @@ class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSs
 
 class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
     """Host profile for a Windows inventory."""
+
+    @property
+    def name(self) -> str:
+        """The name of the host profile."""
+        return self.config.path
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
@@ -1436,9 +1488,9 @@ def get_config_profile_type_map() -> dict[t.Type[HostConfig], t.Type[HostProfile
 def create_host_profile(
     args: EnvironmentConfig,
     config: HostConfig,
-    controller: bool,
+    controller: ControllerHostProfile | None,
 ) -> HostProfile:
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]
-    profile = profile_type(args=args, config=config, targets=args.targets if controller else None)
+    profile = profile_type(args=args, config=config, controller=controller)
     return profile

@@ -533,16 +533,23 @@ def raw_command(
 
     try:
         try:
-            cmd_bytes = [to_bytes(arg) for arg in cmd]
-            env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
+            process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
         except FileNotFoundError as ex:
             raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
 
         if communicate:
             data_bytes = to_optional_bytes(data)
-            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
-                                                                  output_stream=output_stream)
+
+            stdout_bytes, stderr_bytes = communicate_with_process(
+                name=cmd[0],
+                process=process,
+                stdin=data_bytes,
+                stdout=stdout == subprocess.PIPE,
+                stderr=stderr == subprocess.PIPE,
+                capture=capture,
+                output_stream=output_stream,
+            )
+
             stdout_text = to_optional_text(stdout_bytes, str_errors) or ''
             stderr_text = to_optional_text(stderr_bytes, str_errors) or ''
         else:
@@ -566,6 +573,7 @@ def raw_command(
 
 
 def communicate_with_process(
+    name: str,
     process: subprocess.Popen,
     stdin: t.Optional[bytes],
     stdout: bool,
@@ -583,16 +591,16 @@ def communicate_with_process(
         reader = OutputThread
 
     if stdin is not None:
-        threads.append(WriterThread(process.stdin, stdin))
+        threads.append(WriterThread(process.stdin, stdin, name))
 
     if stdout:
-        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer))
+        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer), name)
         threads.append(stdout_reader)
     else:
         stdout_reader = None
 
     if stderr:
-        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer))
+        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer), name)
         threads.append(stderr_reader)
     else:
         stderr_reader = None
@@ -624,8 +632,8 @@ def communicate_with_process(
 class WriterThread(WrappedThread):
     """Thread to write data to stdin of a subprocess."""
 
-    def __init__(self, handle: t.IO[bytes], data: bytes) -> None:
-        super().__init__(self._run)
+    def __init__(self, handle: t.IO[bytes], data: bytes, name: str) -> None:
+        super().__init__(self._run, f'{self.__class__.__name__}: {name}')
 
         self.handle = handle
         self.data = data
@@ -642,8 +650,8 @@ class WriterThread(WrappedThread):
 class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
     """Thread to read stdout from a subprocess."""
 
-    def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO) -> None:
-        super().__init__(self._run)
+    def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO, name: str) -> None:
+        super().__init__(self._run, f'{self.__class__.__name__}: {name}')
 
         self.handle = handle
         self.buffer = buffer
