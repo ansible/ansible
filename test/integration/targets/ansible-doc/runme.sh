@@ -281,3 +281,9 @@ test "$(ansible-doc -l -t module --playbook-dir ./ 2>&1 1>/dev/null |grep -c "no
 
 echo "testing without playbook dir, builtin should return"
 ansible-doc -t filter split -v 2>&1 |grep "${GREP_OPTS[@]}" -v histerical
+
+echo "test 'sidecar' for no extension module  with .py doc"
+[ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c bogus_facts)" == "1" ]
+
+echo "test 'sidecar' for no extension module  with .yml doc"
+[ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c facts_one)" == "1" ]
