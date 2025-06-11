@@ -98,6 +98,7 @@ _valid_bool_false = {'no', 'off', 'false', '0'}
 def to_bool(value: object) -> bool:
     """Convert well-known input values to a boolean value."""
     value_to_check: object
+
     if isinstance(value, str):
         value_to_check = value.lower()  # accept mixed case variants
     elif isinstance(value, int):  # bool is also an int
@@ -105,14 +106,17 @@ def to_bool(value: object) -> bool:
     else:
         value_to_check = value
 
-    if value_to_check in _valid_bool_true:
-        return True
+    try:
+        if value_to_check in _valid_bool_true:
+            return True
 
-    if value_to_check in _valid_bool_false:
-        return False
+        if value_to_check in _valid_bool_false:
+            return False
 
-    # if we're still here, the value is unsupported- always fire a deprecation warning
-    result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
+        # if we're still here, the value is unsupported- always fire a deprecation warning
+        result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
+    except TypeError:
+        result = False
 
     # NB: update the doc string to reflect reality once this fallback is removed
     display.deprecated(

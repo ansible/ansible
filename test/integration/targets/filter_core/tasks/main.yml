@@ -366,6 +366,7 @@
       - (1.0|bool)==true
       - (0.0|bool)==false
       - (7|bool)==false
+      - ({}|bool)==false
 
 - name: Verify to_datetime
   assert:
