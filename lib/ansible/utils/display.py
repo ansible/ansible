@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 
 try:
@@ -216,10 +217,22 @@ b_COW_PATHS = (
 
 
 def _synchronize_textiowrapper(tio: t.TextIO, lock: threading.RLock):
-    # Ensure that a background thread can't hold the internal buffer lock on a file object
-    # during a fork, which causes forked children to hang. We're using display's existing lock for
-    # convenience (and entering the lock before a fork).
+    """
+    This decorator ensures that the supplied RLock is held before invoking the wrapped methods.
+    It is intended to prevent background threads from holding the Python stdout/stderr buffer lock on a file object during a fork.
+    Since background threads are abandoned in child forks, locks they hold are orphaned in a locked state.
+    Attempts to acquire an orphaned lock in this state will block forever, effectively hanging the child process on stdout/stderr writes.
+    The shared lock is permanently disabled immediately after a fork.
+    This prevents hangs in early post-fork code (e.g., stdio writes from pydevd, coverage, etc.) before user code has resumed and released the lock.
+    """
+
     def _wrap_with_lock(f, lock):
+        def disable_lock():
+            nonlocal lock
+            lock = contextlib.nullcontext()
+
+        os.register_at_fork(after_in_child=disable_lock)
+
         @wraps(f)
         def locking_wrapper(*args, **kwargs):
             with lock:
