@@ -65,6 +65,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
        Task.something(...)
     """
 
+    _post_validate_object = True
+
     # =================================================================================
     # ATTRIBUTES
     # load_<attribute_name> and
