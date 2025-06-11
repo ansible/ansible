@@ -4,6 +4,35 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0b6
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2025-06-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansiballz - Added an experimental AnsiballZ extension for remote debugging.
+- ansiballz - Added support for AnsiballZ extensions.
+- ansiballz - Moved AnsiballZ code coverage support into an extension.
+- ansiballz - Refactored AnsiballZ and module respawn.
+- template action and lookup plugin - The value of the ``ansible_managed`` variable (if set) will not be masked by the ``template`` action and lookup. Previously, the value calculated by the ``DEFAULT_MANAGED_STR`` configuration option always masked the variable value during plugin execution, preventing runtime customization.
+
+Bugfixes
+--------
+
+- Fix templating ``tags`` on plays and roles. (https://github.com/ansible/ansible/issues/69903)
+- ansible-doc will no longer ignore docs for modules without an extension (https://github.com/ansible/ansible/issues/85279).
+- display - Fix hang caused by early post-fork writers to stdout/stderr (e.g., pydevd) encountering an unreleased fork lock.
+- get_url - add a check to recognize incomplete data transfers.
+- include_tasks - fix templating options when used as a handler (https://github.com/ansible/ansible/pull/85015).
+- templating - Fixed cases where template expression blocks halted prematurely when a Jinja macro invocation returned an undefined value.
+- templating - Jinja macros returned from a template expression can now be called from another template expression.
+
 v2.19.0b5
 =========
 
@@ -322,9 +351,7 @@ Deprecated Features
 - plugin error handling - The ``AnsibleError`` constructor arg ``suppress_extended_error`` is deprecated. Using ``suppress_extended_error=True`` has the same effect as ``show_content=False``.
 - template lookup - The jinja2_native option is no longer used in the Ansible Core code base. Jinja2 native mode is now the default and only option.
 - templating - Support for enabling Jinja2 extensions (not plugins) has been deprecated.
-- templating - The ``ansible_managed`` variable available for certain templating scenarios, such as the ``template`` action and ``template`` lookup has been deprecated. Define and use a custom variable instead of relying on ``ansible_managed``.
 - templating - The ``disable_lookups`` option has no effect, since plugins must be updated to apply trust before any templating can be performed.
-- to_yaml/to_nice_yaml filters - Implicit YAML dumping of vaulted value ciphertext is deprecated. Set `dump_vault_tags` to explicitly specify the desired behavior.
 - tree callback - The ``tree`` callback and its associated ad-hoc CLI args (``-t``, ``--tree``) are deprecated.
 
 Removed Features (previously deprecated)
