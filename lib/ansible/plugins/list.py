@@ -42,7 +42,7 @@ def get_composite_name(collection, name, path, depth):
     return '.'.join(composite)
 
 
-def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
+def _list_plugins_from_paths(ptype, dirs, collection, depth=0, docs=False):
     # TODO: update to use importlib.resources
 
     plugins = {}
@@ -77,14 +77,15 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                                 continue
 
                         # actually recurse dirs
-                        plugins.update(_list_plugins_from_paths(ptype, [to_native(full_path)], collection, depth=depth + 1))
+                        plugins.update(_list_plugins_from_paths(ptype, [to_native(full_path)], collection, depth=depth + 1, docs=docs))
                     else:
                         if any([
                                 plugin in C.IGNORE_FILES,                # general files to ignore
                                 to_native(b_ext) in C.REJECT_EXTS,       # general extensions to ignore
-                                b_ext in (b'.yml', b'.yaml', b'.json'),  # ignore docs files TODO: constant!
+                                b_ext in (b'.yml', b'.yaml', b'.json'),  # ignore docs files
                                 plugin in IGNORE.get(bkey, ()),          # plugin in reject list
                                 os.path.islink(full_path),               # skip aliases, author should document in 'aliases' field
+                                not docs and b_ext in (b''),             # ignore no ext when looking for docs files
                         ]):
                             continue
 
@@ -147,7 +148,7 @@ def list_collection_plugins(ptype, collections, search_paths=None):
 
             #     raise Exception('bad acr for %s, %s' % (collection, ptype))
 
-        plugins.update(_list_plugins_from_paths(ptype, dirs, collection))
+        plugins.update(_list_plugins_from_paths(ptype, dirs, collection, docs=True))
 
     #  return plugin and it's class object, None for those not verifiable or failing
     if ptype in ('module',):
