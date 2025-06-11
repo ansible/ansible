@@ -63,6 +63,7 @@ class AdHocCLI(CLI):
                                  help="Name of the action to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
+        self.parser.add_argument('--flush-caches', action='store_true',default=False,help='Flush inventory caches before running the ad-hoc command.')
 
     def post_process_args(self, options):
         """Post process and validate options for bin/ansible """
@@ -121,6 +122,23 @@ class AdHocCLI(CLI):
 
         # get basic objects
         loader, inventory, variable_manager = self._play_prereqs()
+        if context.CLIARGS.get('flush_caches'):
+            from ansible.plugins.loader import cache_loader
+            from ansible.utils.display import Display
+
+            display = Display()
+
+            # List the most commonly used cache plugins to attempt flushing
+            possible_plugins = ['jsonfile', 'memory', 'pickle', 'yaml']
+
+            for name in possible_plugins:
+                try:
+                    cp = cache_loader.get(name)()
+                    cp.flush()
+                    display.v(f"Flushed cache plugin: {name}")
+                except Exception as e:
+                    display.v(f"Skipping cache plugin '{name}': {e}")
+
 
         # get list of hosts to execute against
         try:
