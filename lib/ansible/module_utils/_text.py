@@ -8,7 +8,7 @@ from ansible.module_utils.common import warnings as _warnings
 
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
-    help_text=""
+    help_text = ""
     if importable_name == "codecs":
         import codecs
         importable = codecs
