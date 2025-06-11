@@ -5,8 +5,8 @@ from __future__ import annotations
 
 DOCUMENTATION = """
 module: invalid_choice_value
-short_description: Test for equal length of chocies with correct options
-description: Test for equal length of chocies with correct options
+short_description: Test for equal length of choices with correct options
+description: Test for equal length of choices with correct options
 author:
   - Ansible Core Team
 options:
