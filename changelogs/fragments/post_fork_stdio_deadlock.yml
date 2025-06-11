@@ -1,0 +1,2 @@
+bugfixes:
+  - display - Fix hang caused by early post-fork writers to stdout/stderr (e.g., pydevd) encountering an unreleased fork lock.
