@@ -118,6 +118,19 @@ class EnvironmentConfig(CommonConfig):
         self.dev_systemd_debug: bool = args.dev_systemd_debug
         self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
 
+        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        self.metadata_path: t.Optional[str] = None
+
+        def metadata_callback(payload_config: PayloadConfig) -> None:
+            """Add the metadata file to the payload file list."""
+            config = self
+            files = payload_config.files
+
+            if config.metadata_path:
+                files.append((os.path.abspath(config.metadata_path), config.metadata_path))
+
+        data_context().register_payload_callback(metadata_callback)
+
         def host_callback(payload_config: PayloadConfig) -> None:
             """Add the host files to the payload file list."""
             config = self
@@ -220,21 +233,8 @@ class TestConfig(EnvironmentConfig):
         self.junit: bool = getattr(args, 'junit', False)
         self.failure_ok: bool = getattr(args, 'failure_ok', False)
 
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path: t.Optional[str] = None
-
         if self.coverage_check:
             self.coverage = True
-
-        def metadata_callback(payload_config: PayloadConfig) -> None:
-            """Add the metadata file to the payload file list."""
-            config = self
-            files = payload_config.files
-
-            if config.metadata_path:
-                files.append((os.path.abspath(config.metadata_path), config.metadata_path))
-
-        data_context().register_payload_callback(metadata_callback)
 
 
 class ShellConfig(EnvironmentConfig):

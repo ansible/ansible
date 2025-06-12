@@ -55,7 +55,7 @@ class Metadata:
             changes=self.changes,
             cloud_config=self.cloud_config,
             ci_provider=self.ci_provider,
-            change_description=self.change_description.to_dict(),
+            change_description=self.change_description.to_dict() if self.change_description else None,
             session_id=self.session_id,
         )
 
@@ -80,7 +80,7 @@ class Metadata:
         metadata.changes = data['changes']
         metadata.cloud_config = data['cloud_config']
         metadata.ci_provider = data['ci_provider']
-        metadata.change_description = ChangeDescription.from_dict(data['change_description'])
+        metadata.change_description = ChangeDescription.from_dict(data['change_description']) if data['change_description'] else None
         metadata.session_id = data['session_id']
 
         return metadata
