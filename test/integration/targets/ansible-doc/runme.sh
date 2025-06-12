@@ -287,3 +287,6 @@ echo "test 'sidecar' for no extension module  with .py doc"
 
 echo "test 'sidecar' for no extension module  with .yml doc"
 [ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c facts_one)" == "1" ]
+
+echo "Test j2 plugins get jinja2 instead of path"
+ansible-doc -t filter map 2>&1 |grep "${GREP_OPTS[@]}" '(Jinja2)'
