@@ -1265,7 +1265,8 @@ class DocCLI(CLI, RoleMixin):
 
             # description is specifically formatted and can either be string or list of strings
             if 'description' not in opt:
-                raise AnsibleError("All (sub-)options and return values must have a 'description' field")
+                error = f"All (sub-)options and return values must have a 'description' field for {o}: {opt}."
+                raise AnsibleError("%s" % error)
             text.append('')
 
             # TODO: push this to top of for and sort by size, create indent on largest key?
@@ -1309,7 +1310,7 @@ class DocCLI(CLI, RoleMixin):
                             if ignore in item:
                                 del item[ignore]
 
-            # reformat cli optoins
+            # reformat cli options
             if 'cli' in opt and opt['cli']:
                 conf['cli'] = []
                 for cli in opt['cli']:
