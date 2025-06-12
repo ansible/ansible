@@ -855,6 +855,7 @@ def install_deb(
         allow_downgrade,
         allow_change_held_packages,
         dpkg_options,
+        lock_timeout,
 ):
     changed = False
     deps_to_install = []
@@ -903,13 +904,14 @@ def install_deb(
     # install the deps through apt
     retvals = {}
     if deps_to_install:
+        install_dpkg_options = f"{expand_dpkg_options(dpkg_options)} -o DPkg::Lock::Timeout={lock_timeout}"
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
                                      allow_downgrade=allow_downgrade,
                                      allow_change_held_packages=allow_change_held_packages,
-                                     dpkg_options=expand_dpkg_options(dpkg_options))
+                                     dpkg_options=install_dpkg_options)
         if not success:
             m.fail_json(**retvals)
         changed = retvals.get('changed', False)
@@ -1269,7 +1271,7 @@ def main():
 
     p = module.params
     install_recommends = p['install_recommends']
-    dpkg_options = expand_dpkg_options(p['dpkg_options'])
+    dpkg_options = f"{expand_dpkg_options(p['dpkg_options'])} -o DPkg::Lock::Timeout={p['lock_timeout']}"
 
     if not HAS_PYTHON_APT:
         # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
@@ -1470,7 +1472,11 @@ def main():
                             allow_unauthenticated=allow_unauthenticated,
                             allow_change_held_packages=allow_change_held_packages,
                             allow_downgrade=allow_downgrade,
-                            force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
+                            force=force_yes,
+                            fail_on_autoremove=fail_on_autoremove,
+                            dpkg_options=p['dpkg_options'],
+                            lock_timeout=p['lock_timeout']
+                            )
 
             unfiltered_packages = p['package'] or ()
             packages = [package.strip() for package in unfiltered_packages if package != '*']
