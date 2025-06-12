@@ -113,21 +113,18 @@ def delegate(args: CommonConfig, host_state: HostState, exclude: list[str], requ
     assert isinstance(args, EnvironmentConfig)
 
     with delegation_context(args, host_state):
-        if isinstance(args, TestConfig):
-            args.metadata.ci_provider = get_ci_provider().code
+        args.metadata.ci_provider = get_ci_provider().code
 
-            make_dirs(ResultType.TMP.path)
+        make_dirs(ResultType.TMP.path)
 
-            with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
-                args.metadata_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(metadata_fd.name))
-                args.metadata.to_file(args.metadata_path)
+        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
+            args.metadata_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(metadata_fd.name))
+            args.metadata.to_file(args.metadata_path)
 
-                try:
-                    delegate_command(args, host_state, exclude, require)
-                finally:
-                    args.metadata_path = None
-        else:
-            delegate_command(args, host_state, exclude, require)
+            try:
+                delegate_command(args, host_state, exclude, require)
+            finally:
+                args.metadata_path = None
 
 
 def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: list[str], require: list[str]) -> None:
@@ -334,6 +331,7 @@ def filter_options(
         ('--redact', 0, False),
         ('--no-redact', 0, not args.redact),
         ('--host-path', 1, args.host_path),
+        ('--metadata', 1, args.metadata_path),
     ]
 
     if isinstance(args, TestConfig):
@@ -346,7 +344,6 @@ def filter_options(
             ('--ignore-unstaged', 0, False),
             ('--changed-from', 1, False),
             ('--changed-path', 1, False),
-            ('--metadata', 1, args.metadata_path),
             ('--exclude', 1, exclude),
             ('--require', 1, require),
             ('--base-branch', 1, False),

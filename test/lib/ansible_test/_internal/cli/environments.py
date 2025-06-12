@@ -166,6 +166,11 @@ def add_composite_environment_options(
         help=argparse.SUPPRESS,
     )
 
+    parser.add_argument(
+        '--metadata',
+        help=argparse.SUPPRESS,
+    )
+
     action_types: list[t.Type[CompositeAction]] = []
 
     def register_action_type(action_type: t.Type[CompositeAction]) -> t.Type[CompositeAction]:
