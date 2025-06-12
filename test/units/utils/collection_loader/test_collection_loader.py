@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import inspect
 import os
 import pkgutil
@@ -190,13 +191,14 @@ def test_root_loader():
         sys.modules.pop(name, None)
         loader = _AnsibleCollectionRootPkgLoader(name, paths)
         assert repr(loader).startswith('_AnsibleCollectionRootPkgLoader(path=')
-        module = loader.load_module(name)
+        spec = importlib.util.spec_from_loader(name, loader)
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
         assert module.__name__ == name
         assert module.__path__ == [p for p in extend_paths(paths, name) if os.path.isdir(p)]
         # even if the dir exists somewhere, this loader doesn't support get_data, so make __file__ a non-file
         assert module.__file__ == '<ansible_synthetic_collection_package>'
         assert module.__package__ == name
-        assert sys.modules.get(name) == module
 
 
 def test_nspkg_loader_not_interested():
@@ -217,13 +219,14 @@ def test_nspkg_loader_load_module():
         sys.modules.pop(name, None)
         loader = _AnsibleCollectionNSPkgLoader(name, path_list=paths)
         assert repr(loader).startswith('_AnsibleCollectionNSPkgLoader(path=')
-        module = loader.load_module(name)
+        spec = importlib.util.spec_from_loader(name, loader)
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
         assert module.__name__ == name
         assert isinstance(module.__loader__, _AnsibleCollectionNSPkgLoader)
         assert module.__path__ == existing_child_paths
         assert module.__package__ == name
         assert module.__file__ == '<ansible_synthetic_collection_package>'
-        assert sys.modules.get(name) == module
 
 
 def test_collpkg_loader_not_interested():
@@ -246,7 +249,9 @@ def test_collpkg_loader_load_module():
             sys.modules.pop(name, None)
             loader = _AnsibleCollectionPkgLoader(name, path_list=paths)
             assert repr(loader).startswith('_AnsibleCollectionPkgLoader(path=')
-            module = loader.load_module(name)
+            spec = importlib.util.spec_from_loader(name, loader)
+            module = importlib.util.module_from_spec(spec)
+            loader.exec_module(module)
             assert module.__name__ == name
             assert isinstance(module.__loader__, _AnsibleCollectionPkgLoader)
             if is_builtin:
@@ -259,7 +264,6 @@ def test_collpkg_loader_load_module():
                 assert module.__file__ == '<ansible_synthetic_collection_package>'
             else:
                 assert module.__file__.endswith('__synthetic__') and os.path.isdir(os.path.dirname(module.__file__))
-            assert sys.modules.get(name) == module
 
             assert hasattr(module, '_collection_meta') and isinstance(module._collection_meta, dict)
 
@@ -272,7 +276,10 @@ def test_collpkg_loader_load_module():
 
             with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
                 with pytest.raises(Exception) as ex:
-                    _AnsibleCollectionPkgLoader(name, path_list=paths).load_module(name)
+                    loader = _AnsibleCollectionPkgLoader(name, path_list=paths)
+                    spec = importlib.util.spec_from_loader(name, loader)
+                    module = importlib.util.module_from_spec(spec)
+                    loader.exec_module(module)
 
                 assert 'error parsing collection metadata' in str(ex.value)
 
@@ -605,7 +612,8 @@ def test_collection_role_name_location(role_name, collection_list, expected_coll
         assert found[1] == expected_path
         assert found[2] == expected_collection_name
     else:
-        assert expected_collection_name is None and expected_path_suffix is None
+        assert expected_collection_name is None
+        assert expected_path_suffix is None
 
 
 def test_bogus_imports():
