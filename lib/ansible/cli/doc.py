@@ -1440,7 +1440,7 @@ class DocCLI(CLI, RoleMixin):
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename')))
+        text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename') or 'Jinja2'))
 
         if isinstance(doc['description'], list):
             descs = doc.pop('description')
