@@ -147,6 +147,16 @@ def add_global_options(
         help='install command requirements',
     )
 
+    global_parser.add_argument(
+        '--host-path',
+        help=argparse.SUPPRESS,  # for internal use only by ansible-test
+    )
+
+    global_parser.add_argument(
+        '--metadata',
+        help=argparse.SUPPRESS,  # for internal use only by ansible-test
+    )
+
     add_global_remote(global_parser, controller_mode)
     add_global_docker(global_parser, controller_mode)
 
@@ -160,16 +170,6 @@ def add_composite_environment_options(
     """Add composite options for controlling the test environment."""
     composite_parser = t.cast(argparse.ArgumentParser, parser.add_argument_group(
         title='composite environment arguments (mutually exclusive with "environment arguments" above)'))
-
-    composite_parser.add_argument(
-        '--host-path',
-        help=argparse.SUPPRESS,
-    )
-
-    parser.add_argument(
-        '--metadata',
-        help=argparse.SUPPRESS,
-    )
 
     action_types: list[t.Type[CompositeAction]] = []
 
