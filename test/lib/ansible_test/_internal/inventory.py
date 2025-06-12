@@ -30,6 +30,7 @@ from .host_profiles import (
     SshTargetHostProfile,
     WindowsInventoryProfile,
     WindowsRemoteProfile,
+    DebuggableProfile,
 )
 
 from .ssh import (
@@ -58,6 +59,9 @@ def get_common_variables(target_profile: HostProfile, controller: bool = False) 
         # When using sudo on macOS we may encounter permission denied errors when dropping privileges due to inability to access the current working directory.
         # To compensate for this we'll perform a `cd /` before running any commands after `sudo` succeeds.
         common_variables.update(ansible_sudo_chdir='/')
+
+    if isinstance(target_profile, DebuggableProfile):
+        common_variables.update(target_profile.get_ansiballz_inventory_variables())
 
     return common_variables
 

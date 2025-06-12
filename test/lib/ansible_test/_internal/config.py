@@ -20,6 +20,7 @@ from .util_common import (
 
 from .metadata import (
     Metadata,
+    DebuggerFlags,
 )
 
 from .data import (
@@ -118,7 +119,14 @@ class EnvironmentConfig(CommonConfig):
         self.dev_systemd_debug: bool = args.dev_systemd_debug
         self.dev_probe_cgroups: t.Optional[str] = args.dev_probe_cgroups
 
-        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        debugger_flags = DebuggerFlags(
+            on_demand=args.dev_debug_on_demand,
+            cli=args.dev_debug_cli,
+            ansiballz=args.dev_debug_ansiballz,
+            self=args.dev_debug_self,
+        )
+
+        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata(debugger_flags=debugger_flags)
         self.metadata_path: t.Optional[str] = None
 
         def metadata_callback(payload_config: PayloadConfig) -> None:
