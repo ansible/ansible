@@ -270,7 +270,7 @@ def _get_lock(b_path):
     b_pathdir = os.path.dirname(b_path)
     lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
-    if b_path != to_bytes('/dev/null'):
+    if b_path != b'/dev/null':
         makedirs_safe(b_pathdir, mode=0o700)
         with contextlib.suppress(FileExistsError):
             fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
