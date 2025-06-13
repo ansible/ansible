@@ -139,7 +139,7 @@
     that:
       - 'git_result.stdout == test_branch_ref_head_id'
 
-# Test that a forced shallow checkout referincing branch only always fetches latest head
+# Test that a forced shallow checkout referencing branch only always fetches latest head
 
 - name: SPECIFIC-REVISION | clear checkout_dir
   file:
