@@ -51,7 +51,7 @@ options:
         either because it does not exist or some other issue.
     type: bool
     default: no
-    version_added: '2.19'
+    version_added: '2.20'
 extends_documentation_fragment:
   -  action_common_attributes
   -  checksum_common
