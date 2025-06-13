@@ -355,11 +355,11 @@ stat:
             sample: [ immutable, extent ]
             version_added: 2.3
         selinux_context:
-            description: The SELinux context of a file/directory
+            description: The SELinux context of a path
             returned: success, path exists and user can execute the path
             type: list
             sample: [ user, role, type, range ]
-            version_added: '2.19'
+            version_added: '2.20'
         version:
             description: The version/generation attribute of a file according to the filesystem
             returned: success, path exists, user can execute the path, lsattr is available and filesystem supports
