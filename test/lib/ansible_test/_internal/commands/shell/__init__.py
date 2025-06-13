@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import sys
 import typing as t
@@ -106,6 +107,10 @@ def command_shell(args: ShellConfig) -> None:
         # Command stderr output is allowed to mix with our own output, which is all sent to stderr.
         con.run(args.cmd, capture=False, interactive=False, output_stream=OutputStream.ORIGINAL)
         return
+
+    if isinstance(con, LocalConnection) and isinstance(target_profile, DebuggableProfile) and target_profile.debugging_enabled:
+        # HACK: ensure the pydevd port visible in the shell is the forwarded port, not the original
+        args.metadata.debugger_settings = dataclasses.replace(args.metadata.debugger_settings, port=target_profile.pydevd_port)
 
     with metadata_context(args):
         interactive_shell(args, target_profile, con)
