@@ -42,7 +42,7 @@ from ansible.utils.vars import combine_vars
 # global cache for role dependencies
 # Key: collection.path.role_name
 # Value: list of role dependencies
-global_role_dependency_cache : dict[str, list[str]] = {}
+global_role_dependency_cache: dict[str, list[str]] = {}
 
 __all__ = ['Role', 'hash_params']
 
@@ -130,7 +130,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._handler_blocks = []
         self._compiled_handler_blocks = None
         self._default_vars = dict()
-        self._default_vars_full: dict[str, str] | None = None  # this dict includes all default vars, including the full dep chain vars
+        self._default_vars_full: dict[str, str] | None = None  # type: ignore[annotation-unchecked]  # this dict includes all default vars, including the full dep chain vars
         self._role_vars = dict()
         self._had_task_run = dict()
         self._completed = dict()
