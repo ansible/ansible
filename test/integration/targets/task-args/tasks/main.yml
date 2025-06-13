@@ -1,4 +1,4 @@
-# DTFIX-FUTURE: finish the full precedence decscription in DT docs and include it here
+# DTFIX-FUTURE: finish the full precedence description in DT docs and include it here
 
 - name: validate templated raw params from the action statement and the args keyword are merged
   echo: '{{ vp }}'
