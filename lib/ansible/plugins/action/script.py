@@ -20,6 +20,7 @@ import os
 import pathlib
 import re
 import shlex
+import typing as _t
 
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.powershell import module_manifest as ps_manifest
@@ -35,7 +36,7 @@ class ActionModule(ActionBase):
     # after chopping off a potential drive letter.
     windows_absolute_path_detection = re.compile(r'^(?:[a-zA-Z]\:)?(\\|\/)')
 
-    def run(self, tmp=None, task_vars=None):
+    def run(self, tmp: str | None = None, task_vars: dict[str, _t.Any] | None = None) -> dict[str, _t.Any]:
         """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
@@ -130,7 +131,7 @@ class ActionModule(ActionBase):
             self._fixup_perms2((self._connection._shell.tmpdir, tmp_src), execute=True)
 
             # add preparation steps to one ssh roundtrip executing the script
-            env_dict = dict()
+            env_dict: dict[str, _t.Any] = {}
             env_string = self._compute_environment_string(env_dict)
 
             if executable:
