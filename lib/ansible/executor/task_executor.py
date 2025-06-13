@@ -47,6 +47,7 @@ display = Display()
 
 
 RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]
+_INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
 
 __all__ = ['TaskExecutor']
 
@@ -663,8 +664,11 @@ class TaskExecutor:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     af = result['ansible_facts']
                     vars_copy['ansible_facts'] = combine_vars(vars_copy.get('ansible_facts', {}), namespace_facts(af))
-                    if C.INJECT_FACTS_AS_VARS:
-                        cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                    if _INJECT_FACTS:
+                        if _INJECT_FACTS_ORIGIN == 'default':
+                            cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                        else:
+                            cleaned_toplevel = clean_facts(af)
                         vars_copy.update(cleaned_toplevel)
 
             # set the failed property if it was missing.
@@ -758,9 +762,13 @@ class TaskExecutor:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 af = result['ansible_facts']
                 variables['ansible_facts'] = combine_vars(variables.get('ansible_facts', {}), namespace_facts(af))
-                if C.INJECT_FACTS_AS_VARS:
-                    # DTFIX-FUTURE: why is this happening twice, esp since we're post-fork and these will be discarded?
-                    cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                if _INJECT_FACTS:
+                    if _INJECT_FACTS_ORIGIN == 'default':
+                        # This happens x2 due to loops and being able to use values in subsequent iterations
+                        # these copies are later discared in favor of 'total/final' one on loop end.
+                        cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                    else:
+                        cleaned_toplevel = clean_facts(af)
                     variables.update(cleaned_toplevel)
 
         # save the notification target in the result, if it was specified, as
