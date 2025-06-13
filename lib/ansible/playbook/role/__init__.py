@@ -130,7 +130,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._handler_blocks = []
         self._compiled_handler_blocks = None
         self._default_vars = dict()
-        self._default_vars_full: dict[str, str] | None = None  # type: ignore[annotation-unchecked]  # this dict includes all default vars, including the full dep chain vars
+        # the _default_vars_full dict includes all default vars, including the full dep chain vars
+        self._default_vars_full: dict[str, str] | None = None  # type: ignore[annotation-unchecked]
         self._role_vars = dict()
         self._had_task_run = dict()
         self._completed = dict()
