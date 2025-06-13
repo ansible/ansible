@@ -564,10 +564,12 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             self._all_dependencies = []
             for dep in self.get_direct_dependencies():
                 for child_dep in dep.get_all_dependencies():
-                    if child_dep not in self._all_dependencies:
-                        self._all_dependencies.append(child_dep)
-                if dep not in self._all_dependencies:
-                    self._all_dependencies.append(dep)
+                    if child_dep in self._all_dependencies:
+                        self._all_dependencies.remove(child_dep)
+                    self._all_dependencies.append(child_dep)
+                if dep in self._all_dependencies:
+                    self._all_dependencies.remove(child_dep)
+                self._all_dependencies.append(dep)
 
         return self._all_dependencies
 
