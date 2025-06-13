@@ -164,10 +164,10 @@ class ActionModule(ActionBase):
                 script_cmd = self._connection._shell.build_module_command(env_string='', shebang='#!powershell', cmd='')
 
             # now we execute script, always assume changed.
-            result = dict(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir), changed=True)
+            result: dict[str, object] = dict(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir), changed=True)
 
             if 'rc' in result and result['rc'] != 0:
-                raise AnsibleActionFail('non-zero return code', result=result)
+                result.update(msg='non-zero return code', failed=True)
 
             return result
         finally:
