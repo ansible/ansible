@@ -65,8 +65,18 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
     return result
 
 
-def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None = None) -> None:
-    """ this function warns if any variable passed conflicts with internally reserved names """
+def warn_if_reserved(myvars: c.Mapping[str, object], additional: c.Iterable[str] | None = None) -> None:
+    """Issue a warning for any variable which conflicts with an internally reserved name."""
+    if not isinstance(myvars, c.Mapping):
+        # raise TypeError('The 'myvars' argument must be a mapping.')
+
+        display.deprecated(
+            msg="The 'warn_if_reserved' function converted the 'myvars' argument to a mapping.",
+            help_text="Pass 'myvars' as a mapping of names and values.",
+            version="2.23",
+        )
+
+        myvars = {name: None for name in myvars}
 
     if additional is None:
         reserved = _RESERVED_NAMES
@@ -77,7 +87,7 @@ def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None
     varnames.discard('vars')  # we add this one internally, so safe to ignore
 
     for varname in varnames.intersection(reserved):
-        display.warning(f'Found variable using reserved name {varname!r}.')
+        display.warning(f'Found variable using reserved name {varname!r}.', obj=myvars[varname])
 
 
 def is_reserved_name(name: str) -> bool:
