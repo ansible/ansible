@@ -1,5 +1,2 @@
 minor_changes:
   - variables - Warnings about reserved variable names now show context where the variable was defined.
-
-deprecated_features:
-  - variables - The ``ansible.vars.reserved.warn_if_reserved`` function now expects a mapping of variable names and values instead of a sequence of variable names.
