@@ -1,0 +1,4 @@
+minor_changes:
+  - "Add test helpers ``extract_warnings_messages()`` and ``extract_deprecation_records()`` to ``ansible.module_utils.testing``
+     that allow to extract warnings and deprecation messages from module results without having to access ansible-core internals
+     (https://github.com/ansible/ansible/pull/85327)."
