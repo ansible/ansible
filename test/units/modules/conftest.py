@@ -15,16 +15,16 @@ assert module_env_mocker is not None  # avoid unused imports
 
 
 @pytest.fixture
-def set_module_args():
+def set_module_args() -> t.Iterator[t.Callable[[dict[str, t.Any] | None], None]]:
     ctx: t.ContextManager | None = None
 
-    def set_module_args(args):
+    def set_module_args(args: dict[str, t.Any] | None = None) -> None:
         nonlocal ctx
 
         args['_ansible_remote_tmp'] = '/tmp'
         args['_ansible_keep_remote_files'] = False
 
-        ctx = patch_module_args(args)
+        ctx = t.cast(t.ContextManager, patch_module_args(args))
         ctx.__enter__()
 
     try:
