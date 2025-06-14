@@ -221,6 +221,12 @@ def relative_to_absolute(name: str, level: int, module: str, path: str, lineno: 
     else:
         parts = module.split('.')
 
+        if path.endswith('/__init__.py'):
+            # Ensure the correct relative module is calculated for both not_init.py and __init__.py:
+            # a/b/not_init.py -> a.b.not_init  # used as-is
+            # a/b/__init__.py -> a.b           # needs "__init__" part appended to ensure relative imports work
+            parts.append('__init__')
+
         if level >= len(parts):
             display.warning('Cannot resolve relative import "%s%s" above module "%s" at %s:%d' % ('.' * level, name, module, path, lineno))
             absolute_name = 'relative.abovelevel'
