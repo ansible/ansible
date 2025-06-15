@@ -114,7 +114,7 @@ $actual = Run-Command -command "cmd.exe /c set" -environment @{ TESTENV2 = "test
 $env_not_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV=test" }
 $env_present = $actual.stdout -split "`r`n" | Where-Object { $_ -eq "TESTENV2=testing" }
 if ($null -ne $env_not_present) {
-    Fail-Json -obj $result -message "Test $test_name failed`nenvironment variabel TESTENV found in stdout when it should be`n$($actual.stdout)"
+    Fail-Json -obj $result -message "Test $test_name failed`nenvironment variable TESTENV found in stdout when it should be`n$($actual.stdout)"
 }
 if ($null -eq $env_present) {
     Fail-json -obj $result -message "Test $test_name failed`nenvironment variable TESTENV2 not found in stdout`n$($actual.stdout)"
