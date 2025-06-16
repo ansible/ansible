@@ -1,0 +1,52 @@
+- hosts: localhost
+  tasks:
+    - set_fact:
+        dnf5: "{{ (ansible_distribution == 'RedHat' and ansible_distribution_major_version | int > 10) or ansible_distribution == 'Fedora' }}"
+
+    - set_fact:
+        libdnf_pkg: "{{ 'python3-libdnf5' if dnf5 else 'python3-libdnf' }}"
+
+    - when: dnf5
+      block:
+        - command: "dnf install -y 'dnf-command(copr)'"
+        - name: Test against dnf5 nightly build to detect any issues early
+          command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
+
+        - name: Ensure module deps are not installed
+          command: dnf remove -y {{ libdnf_pkg }}
+
+        - name: Test the auto_install_module_deps option
+          dnf5:
+            name: sos
+            auto_install_module_deps: false
+          register: r
+          ignore_errors: true
+
+        - assert:
+            that:
+              - r is failed
+              - r.msg is contains("Could not import the libdnf5 python module")
+
+        # Now the first dnf5 task in the integration tests should auto install python3-libdnf5 as
+        # auto_install_module_deps is true by default.
+
+    - command: dnf update -y {{ libdnf_pkg }}
+      when: not dnf5
+
+    - name: Test the latest version of dnf
+      include_role:
+        name: dnf
+
+    - command: rpm -q {{ libdnf_pkg }}
+      register: libdnf_version_latest
+
+    - name: Downgrade dnf to the original version
+      command: dnf downgrade -y --disable-repo=* --enable-repo=fedora {{ libdnf_pkg }}
+
+    - command: rpm -q {{ libdnf_pkg }}
+      register: libdnf_version_original
+
+    - name: Test the original version of dnf
+      include_role:
+        name: dnf
+      when: libdnf_version_original.stdout != libdnf_version_latest.stdout
