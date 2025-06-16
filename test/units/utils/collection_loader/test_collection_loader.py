@@ -892,6 +892,24 @@ def test_importlib_resources():
     assert next(module_utils.glob('__init__.py')) == nestcoll_mu_init
 
 
+@pytest.mark.skipif(sys.version_info < (3, 12), reason='Testing Python 3.12+ codepath that returns package when provided module')
+def test_importlib_resources_module():
+    from importlib.resources import files
+    from pathlib import Path
+
+    f = get_default_finder()
+    reset_collections_loader_state(f)
+
+    module_utils = files('ansible_collections.testns.testcoll.plugins.module_utils')
+    my_util = files('ansible_collections.testns.testcoll.plugins.module_utils.my_util')
+    assert isinstance(module_utils, Path)
+    assert isinstance(my_util, Path)
+
+    assert module_utils.is_dir()
+    assert my_util.is_dir()
+    assert module_utils == my_util
+
+
 # BEGIN TEST SUPPORT
 
 default_test_collection_paths = [

@@ -47,8 +47,7 @@ if sys.version_info >= (3, 10):
 else:
     # deprecated: description='reliable importlib.resources.files' python_version='3.10'
     def files(name):
-        spec = find_spec(name)
-        if spec is None:
+        if (spec := find_spec(name)) is None:
             raise ImportError(name)
         origin = pathlib.Path(spec.origin)
         return origin.parent
@@ -144,7 +143,7 @@ class _AnsibleTraversableResources(TraversableResources):
     def _get_package(self, package):
         try:
             # spec
-            return package.__parent__
+            return package.parent
         except AttributeError:
             # module
             return package.__package__
@@ -168,13 +167,6 @@ class _AnsibleTraversableResources(TraversableResources):
         module_filename = os.path.basename(origin)
         return module_filename in {'__synthetic__', '__init__.py'}
 
-    def _ensure_package(self, package):
-        if self._is_ansible_ns_package(package):
-            # Short circuit our loaders
-            return
-        if self._get_package(package) != package.__name__:
-            raise TypeError('%r is not a package' % package.__name__)
-
     def files(self):
         package = self._package
         parts = package.split('.')
@@ -191,7 +183,6 @@ class _AnsibleTraversableResources(TraversableResources):
         elif not isinstance(package, ModuleType):
             raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
 
-        self._ensure_package(package)
         if is_ns:
             return _AnsibleNSTraversable(*package.submodule_search_locations)
         return pathlib.Path(self._get_path(package)).parent
