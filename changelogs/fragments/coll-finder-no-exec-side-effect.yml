@@ -1,0 +1,2 @@
+minor_changes:
+- collection loader - Update the collection loader to rely on newer Python 3 functionality to remove code exec side effects
