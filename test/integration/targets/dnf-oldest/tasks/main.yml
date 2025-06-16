@@ -1,3 +1,10 @@
-- name: Run DNF tests
-  include_role:
-    name: dnf
+- when: ansible_distribution == "Fedora"
+  block:
+    - name: Downgrade dnf to the original version
+      command: dnf install -y --disable-repo=* --enable-repo=fedora python3-libdnf5
+
+    - name: Run DNF tests
+      include_role:
+        name: dnf
+      vars:
+        test_auto_install: false

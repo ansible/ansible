@@ -1,3 +1,14 @@
-- name: Run DNF tests
-  include_role:
-    name: dnf
+- when: ansible_distribution == "Fedora"
+  block:
+    - command: "dnf install -y 'dnf-command(copr)'"
+
+    - name: Test against dnf5 nightly build to detect any issues early
+      command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
+
+    - command: dnf install -y python3-libdnf5
+
+    - name: Run DNF tests
+      include_role:
+        name: dnf
+      vars:
+        test_auto_install: false
