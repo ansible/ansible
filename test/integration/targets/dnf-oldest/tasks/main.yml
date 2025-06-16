@@ -1,0 +1,3 @@
+- name: Run DNF tests
+  include_role:
+    name: dnf
