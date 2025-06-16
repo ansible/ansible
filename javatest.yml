@@ -1,0 +1,13 @@
+---
+- name: Check Java version on localhost
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Run java -version command
+      shell: java -version
+      register: java_output
+      ignore_errors: yes
+
+    - name: Display Java version output
+      debug:
+        var: java_output.stderr_lines
