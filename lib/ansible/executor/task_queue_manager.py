@@ -208,6 +208,7 @@ class TaskQueueManager:
         if not stdout_callback:
             raise AnsibleError(f"Could not load {self._stdout_callback_name!r} callback plugin.")
 
+        stdout_callback._init_callback_methods()
         stdout_callback.set_options()
 
         self._callback_plugins.append(stdout_callback)
@@ -261,6 +262,7 @@ class TaskQueueManager:
                 # avoid bad plugin not returning an object, only needed cause we do class_only load and bypass loader checks,
                 # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
+                    callback_obj._init_callback_methods()
                     callback_obj.set_options()
                     self._callback_plugins.append(callback_obj)
                 else:
@@ -460,4 +462,4 @@ class TaskQueueManager:
                     except Exception as ex:
                         raise AnsibleCallbackError(f"Callback dispatch {method_name!r} failed for plugin {callback_plugin._load_name!r}.") from ex
 
-            callback_plugin._current_task_result = None
+            callback_plugin._current_task_result = None  # clear temporary instance storage hack
