@@ -39,6 +39,16 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
+# NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
+#       available by using forward references this seems not to work well with commonly used IDEs.
+#       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
+#       References:
+#       * https://stackoverflow.com/q/39740632/199513
+#       * https://peps.python.org/pep-0484/#forward-references
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ansible.playbook.play import Play
+
 __all__ = ['Role', 'hash_params']
 
 # TODO: this should be a utility function, but can't be a member of
@@ -97,7 +107,7 @@ def hash_params(params):
 
 class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True):
+    def __init__(self, play: Play=None, from_files: dict[str, list[str]]=None, from_include: bool=False, validate: bool=True, public: bool=None, static: bool=True):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
