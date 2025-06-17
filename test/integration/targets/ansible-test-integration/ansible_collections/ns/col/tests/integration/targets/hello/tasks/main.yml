@@ -5,3 +5,5 @@
 - assert:
     that:
       - hello.message == 'Hello Ansibull'
+      - lookup('env', 'A_VAR') == 'something'
+      - lookup('env', 'A_PATH') == '/an/absolute/path'

@@ -659,9 +659,14 @@ metadata_versions: dict[t.Any, type[ModuleMetadata]] = {
     1: ModuleMetadataV1,
 }
 
+_DEFAULT_LEGACY_METADATA = ModuleMetadataV1(serialization_profile='legacy')
+
 
 def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
-    # DTFIX2: while module metadata works, this feature isn't fully baked and should be turned off before release
+    # experimental module metadata; off by default
+    if not C.config.get_config_value('_MODULE_METADATA'):
+        return _DEFAULT_LEGACY_METADATA
+
     metadata_nodes: list[ast.Assign] = []
 
     for node in module.body:
@@ -674,9 +679,7 @@ def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
                         metadata_nodes.append(node)
 
     if not metadata_nodes:
-        return ModuleMetadataV1(
-            serialization_profile='legacy',
-        )
+        return _DEFAULT_LEGACY_METADATA
 
     if len(metadata_nodes) > 1:
         raise ValueError('Module METADATA must defined only once.')
