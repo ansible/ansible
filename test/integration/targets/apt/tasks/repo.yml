@@ -148,6 +148,14 @@
         Pin-Priority: 1000
       dest: /etc/apt/preferences.d/foo
 
+  - name: Pin foo=1.0.0
+    copy:
+      content: |-
+        Package: foo
+        Pin: version 1.0.0
+        Pin-Priority: 1002
+      dest: /etc/apt/preferences.d/foo
+
   - name: Run pinning version test matrix
     apt:
       name: foo{{ item.0 }}
