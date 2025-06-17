@@ -621,6 +621,12 @@ class Display(metaclass=Singleton):
             # collections have a resolved_name but no type
             collection = deprecator.resolved_name if deprecator else None
             plugin_fragment = ''
+        elif deprecator.resolved_name == 'ansible.builtin':
+            # core deprecations from base classes (the API) have no plugin name, only 'ansible.builtin'
+            plugin_type_name = str(deprecator.type) if deprecator.type is _messages.PluginType.MODULE else f'{deprecator.type} plugin'
+
+            collection = deprecator.resolved_name
+            plugin_fragment = f'the {plugin_type_name} API'
         else:
             parts = deprecator.resolved_name.split('.')
             plugin_name = parts[-1]
