@@ -989,6 +989,9 @@ class PluginLoader:
     def get_with_context(self, name, *args, **kwargs) -> get_with_context_result:
         """ instantiates a plugin of the given name using arguments """
 
+        if not name:
+            raise ValueError('A non-empty plugin name is required.')
+
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
         collection_list = kwargs.pop('collection_list', None)
@@ -1034,6 +1037,7 @@ class PluginLoader:
             except AttributeError:
                 return get_with_context_result(None, plugin_load_context)
             if not issubclass(obj, plugin_class):
+                display.warning(f"Ignoring {self.type} plugin {resolved_type_name!r} due to missing base class {self.base_class!r}.")
                 return get_with_context_result(None, plugin_load_context)
 
         # FIXME: update this to use the load context
@@ -1721,6 +1725,7 @@ callback_loader = PluginLoader(
     'ansible.plugins.callback',
     C.DEFAULT_CALLBACK_PLUGIN_PATH,
     'callback_plugins',
+    required_base_class='CallbackBase',
 )
 
 connection_loader = PluginLoader(

@@ -34,7 +34,6 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
 from ansible.inventory.data import InventoryData
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
@@ -139,7 +138,7 @@ class TaskQueueManager:
         variable_manager: VariableManager,
         loader: DataLoader,
         passwords: dict[str, str | None],
-        stdout_callback: str | None = None,
+        stdout_callback_name: str | None = None,
         run_additional_callbacks: bool = True,
         run_tree: bool = False,
         forks: int | None = None,
@@ -149,12 +148,11 @@ class TaskQueueManager:
         self._loader = loader
         self._stats = AggregateStats()
         self.passwords = passwords
-        self._stdout_callback: str | None | CallbackBase = stdout_callback
+        self._stdout_callback_name: str | None = stdout_callback_name or C.DEFAULT_STDOUT_CALLBACK
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree = run_tree
         self._forks = forks or 5
 
-        self._callbacks_loaded = False
         self._callback_plugins: list[CallbackBase] = []
         self._start_at_done = False
 
@@ -199,44 +197,40 @@ class TaskQueueManager:
         only one such callback plugin will be loaded.
         """
 
-        if self._callbacks_loaded:
+        if self._callback_plugins:
             return
 
-        stdout_callback_loaded = False
-        if self._stdout_callback is None:
-            self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
+        if not self._stdout_callback_name:
+            raise AnsibleError("No stdout callback name provided.")
 
-        if isinstance(self._stdout_callback, CallbackBase):
-            stdout_callback_loaded = True
-        elif isinstance(self._stdout_callback, string_types):
-            if self._stdout_callback not in callback_loader:
-                raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
-            else:
-                self._stdout_callback = callback_loader.get(self._stdout_callback)
-                self._stdout_callback.set_options()
-                stdout_callback_loaded = True
-        else:
-            raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
+        stdout_callback = callback_loader.get(self._stdout_callback_name)
+
+        if not stdout_callback:
+            raise AnsibleError(f"Could not load {self._stdout_callback_name!r} callback plugin.")
+
+        stdout_callback._init_callback_methods()
+        stdout_callback.set_options()
+
+        self._callback_plugins.append(stdout_callback)
 
         # get all configured loadable callbacks (adjacent, builtin)
-        callback_list = list(callback_loader.all(class_only=True))
+        plugin_types = {plugin_type.ansible_name: plugin_type for plugin_type in callback_loader.all(class_only=True)}
 
         # add enabled callbacks that refer to collections, which might not appear in normal listing
         for c in C.CALLBACKS_ENABLED:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
 
-            # TODO: check if this skip is redundant, loader should handle bad file/plugin cases already
             if plugin:
                 # avoids incorrect and dupes possible due to collections
-                if plugin not in callback_list:
-                    callback_list.append(plugin)
+                plugin_types.setdefault(plugin.ansible_name, plugin)
             else:
                 display.warning("Skipping callback plugin '%s', unable to load" % c)
 
-        # for each callback in the list see if we should add it to 'active callbacks' used in the play
-        for callback_plugin in callback_list:
+        plugin_types.pop(stdout_callback.ansible_name, None)
 
+        # for each callback in the list see if we should add it to 'active callbacks' used in the play
+        for callback_plugin in plugin_types.values():
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_enabled = getattr(callback_plugin, 'CALLBACK_NEEDS_ENABLED', getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False))
 
@@ -252,10 +246,8 @@ class TaskQueueManager:
             display.vvvvv("Attempting to use '%s' callback." % (callback_name))
             if callback_type == 'stdout':
                 # we only allow one callback of type 'stdout' to be loaded,
-                if callback_name != self._stdout_callback or stdout_callback_loaded:
-                    display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_name))
-                    continue
-                stdout_callback_loaded = True
+                display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_name))
+                continue
             elif callback_name == 'tree' and self._run_tree:
                 # TODO: remove special case for tree, which is an adhoc cli option --tree
                 pass
@@ -270,20 +262,15 @@ class TaskQueueManager:
                 # avoid bad plugin not returning an object, only needed cause we do class_only load and bypass loader checks,
                 # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
-                    # skip initializing if we already did the work for the same plugin (even with diff names)
-                    if callback_obj not in self._callback_plugins:
-                        callback_obj.set_options()
-                        self._callback_plugins.append(callback_obj)
-                    else:
-                        display.vv("Skipping callback '%s', already loaded as '%s'." % (callback_plugin, callback_name))
+                    callback_obj._init_callback_methods()
+                    callback_obj.set_options()
+                    self._callback_plugins.append(callback_obj)
                 else:
                     display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
                     continue
-            except Exception as e:
-                display.warning("Skipping callback '%s', unable to load due to: %s" % (callback_name, to_native(e)))
+            except Exception as ex:
+                display.warning_as_error(f"Failed to load callback plugin {callback_name!r}.", exception=ex)
                 continue
-
-        self._callbacks_loaded = True
 
     def run(self, play):
         """
@@ -294,8 +281,7 @@ class TaskQueueManager:
         are done with the current task).
         """
 
-        if not self._callbacks_loaded:
-            self.load_callbacks()
+        self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(play=play)
         templar = TemplateEngine(loader=self._loader, variables=all_vars)
@@ -311,13 +297,9 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
-        if (self._stdout_callback and
-                hasattr(self._stdout_callback, 'set_play_context')):
-            self._stdout_callback.set_play_context(play_context)
 
         for callback_plugin in self._callback_plugins:
-            if hasattr(callback_plugin, 'set_play_context'):
-                callback_plugin.set_play_context(play_context)
+            callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
 
@@ -437,7 +419,7 @@ class TaskQueueManager:
     @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
         # We always send events to stdout callback first, rest should follow config order
-        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
+        for callback_plugin in self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if callback_plugin.disabled:
@@ -448,31 +430,13 @@ class TaskQueueManager:
             if not callback_plugin.wants_implicit_tasks and (task_arg := self._first_arg_of_type(Task, args)) and task_arg.implicit:
                 continue
 
-            # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
 
-            for possible in [method_name, 'v2_on_any']:
-                method = getattr(callback_plugin, possible, None)
+            if method_name in callback_plugin._implemented_callback_methods:
+                methods.append(getattr(callback_plugin, method_name))
 
-                if method is None:
-                    method = getattr(callback_plugin, possible.removeprefix('v2_'), None)
-
-                    if method is not None:
-                        display.deprecated(
-                            msg='The v1 callback API is deprecated.',
-                            version='2.23',
-                            help_text='Use `v2_` prefixed callback methods instead.',
-                        )
-
-                if method is not None and not getattr(method, '_base_impl', False):  # don't bother dispatching to the base impls
-                    if possible == 'v2_on_any':
-                        display.deprecated(
-                            msg='The `v2_on_any` callback method is deprecated.',
-                            version='2.23',
-                            help_text='Use event-specific callback methods instead.',
-                        )
-
-                    methods.append(method)
+            if 'v2_on_any' in callback_plugin._implemented_callback_methods:
+                methods.append(getattr(callback_plugin, 'v2_on_any'))
 
             for method in methods:
                 # send clean copies
@@ -498,4 +462,4 @@ class TaskQueueManager:
                     except Exception as ex:
                         raise AnsibleCallbackError(f"Callback dispatch {method_name!r} failed for plugin {callback_plugin._load_name!r}.") from ex
 
-            callback_plugin._current_task_result = None
+            callback_plugin._current_task_result = None  # clear temporary instance storage hack

@@ -184,7 +184,7 @@ class AdHocCLI(CLI):
                 variable_manager=variable_manager,
                 loader=loader,
                 passwords=passwords,
-                stdout_callback=cb,
+                stdout_callback_name=cb,
                 run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                 run_tree=run_tree,
                 forks=context.CLIARGS['forks'],

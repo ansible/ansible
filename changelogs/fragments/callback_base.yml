@@ -1,0 +1,8 @@
+bugfixes:
+  - callback plugins - Callback plugins that do not extend ``ansible.plugins.callback.CallbackBase`` will fail to load with a warning.
+      If the plugin is used as the stdout callback plugin, this will also be a fatal error.
+  - callback plugins - Removed unused methods - runner_on_no_hosts, playbook_on_setup, playbook_on_import_for_host, playbook_on_not_import_for_host,
+      v2_playbook_on_cleanup_task_start, v2_playbook_on_import_for_host, v2_playbook_on_not_import_for_host.
+  - callback plugins - The stdout callback plugin is no longer called twice if it is also in the list of additional callback plugins.
+  - callback plugins - A more descriptive error is now raised if the stdout callback plugin cannot be loaded.
+  - plugin loader - A warning is now emitted for any plugin which fails to load due to a missing base class.

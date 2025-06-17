@@ -17,14 +17,14 @@ class CallbackModule(CallbackBase):
 
     expects_task_result = {
         'v2_runner_on_failed', 'v2_runner_on_ok', 'v2_runner_on_skipped', 'v2_runner_on_unreachable', 'v2_runner_on_async_poll', 'v2_runner_on_async_ok',
-        'v2_runner_on_async_failed,', 'v2_playbook_on_import_for_host', 'v2_playbook_on_not_import_for_host', 'v2_on_file_diff', 'v2_runner_item_on_ok',
+        'v2_runner_on_async_failed,', 'v2_on_file_diff', 'v2_runner_item_on_ok',
         'v2_runner_item_on_failed', 'v2_runner_item_on_skipped', 'v2_runner_retry',
     }
 
     expects_no_task_result = {
         'v2_playbook_on_start', 'v2_playbook_on_notify', 'v2_playbook_on_no_hosts_matched', 'v2_playbook_on_no_hosts_remaining', 'v2_playbook_on_task_start',
-        'v2_playbook_on_cleanup_task_start', 'v2_playbook_on_handler_task_start', 'v2_playbook_on_vars_prompt', 'v2_playbook_on_play_start',
-        'v2_playbook_on_stats', 'v2_playbook_on_include', 'v2_runner_on_start',
+        'v2_playbook_on_handler_task_start', 'v2_playbook_on_vars_prompt', 'v2_playbook_on_play_start',
+        'v2_playbook_on_include', 'v2_runner_on_start',
     }
 
     # we're abusing runtime assertions to signify failure in this integration test component; ensure they're not disabled by opimizations
@@ -102,6 +102,12 @@ class CallbackModule(CallbackBase):
         assert self.get_first_task_result(args) is None
 
         assert self._current_task_result is None
+
+    def v2_playbook_on_stats(self, *args, **kwargs) -> None:
+        print('hello from v2_playbook_on_stats')
+        assert self.get_first_task_result(args) is None
+
+        print('legacy warning display callback test PASS')
 
     def __getattribute__(self, item: str) -> object:
         if item in CallbackModule.expects_task_result:
