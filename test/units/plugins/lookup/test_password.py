@@ -472,11 +472,16 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
     @patch('time.sleep')
     def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
-        password.os.path.exists = lambda x: True
-        with pytest.raises(AnsibleError):
-            with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
-                # should timeout here
-                self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
+        def _already_exists(*args, **kwargs):
+            raise FileExistsError("The lock is busy, wait and try again.")
+
+        with (
+            pytest.raises(AnsibleError, match='^Password lookup cannot get the lock in 7 seconds.*'),
+            patch.object(password.os, 'open', _already_exists),
+            patch.object(password.os.path, 'exists', lambda *args, **kwargs: True),
+        ):
+            # should timeout here
+            self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
 
     def test_lock_not_been_held(self):
         # pretend now there is password file but no lock

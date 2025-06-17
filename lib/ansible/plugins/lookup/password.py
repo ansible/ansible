@@ -126,6 +126,7 @@ _raw:
   elements: str
 """
 
+import contextlib
 import os
 import string
 import time
@@ -269,15 +270,12 @@ def _get_lock(b_path):
     b_pathdir = os.path.dirname(b_path)
     lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
-    if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
-        try:
-            makedirs_safe(b_pathdir, mode=0o700)
+    if b_path != b'/dev/null':
+        makedirs_safe(b_pathdir, mode=0o700)
+        with contextlib.suppress(FileExistsError):
             fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
             os.close(fd)
             first_process = True
-        except OSError as e:
-            if e.strerror != 'File exists':
-                raise
 
     counter = 0
     # if the lock is got by other process, wait until it's released
