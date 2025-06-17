@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import difflib
 import functools
+import inspect
 import json
 import re
 import sys
@@ -39,6 +40,7 @@ from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 from ansible.module_utils._internal._json._profiles import _fallback_to_str
 from ansible._internal._templating import _engine
+from ansible.module_utils._internal import _deprecator
 
 import yaml
 
@@ -59,16 +61,6 @@ _SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
 
 
 _T_callable = t.TypeVar("_T_callable", bound=t.Callable)
-
-
-def _callback_base_impl(wrapped: _T_callable) -> _T_callable:
-    """
-    Decorator for the no-op methods on the `CallbackBase` base class.
-    Used to avoid unnecessary dispatch overhead to no-op base callback methods.
-    """
-    wrapped._base_impl = True
-
-    return wrapped
 
 
 class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
@@ -154,6 +146,9 @@ class CallbackBase(AnsiblePlugin):
     custom actions.
     """
 
+    _implemented_callback_methods: frozenset[str] = frozenset()
+    """Set of callback methods overridden by each subclass; used by TQM to bypass callback dispatch on no-op methods."""
+
     def __init__(self, display: Display | None = None, options: dict[str, t.Any] | None = None) -> None:
         super().__init__()
 
@@ -188,6 +183,48 @@ class CallbackBase(AnsiblePlugin):
 
     # helper for callbacks, so they don't all have to include deepcopy
     _copy_result = deepcopy
+
+    def _init_callback_methods(self) -> None:
+        """Record analysis of callback methods on each callback instance for dispatch optimization and deprecation warnings."""
+        implemented_callback_methods: set[str] = set()
+        deprecated_v1_method_overrides: set[str] = set()
+        plugin_file = sys.modules[type(self).__module__].__file__
+
+        if plugin_info := _deprecator._path_as_plugininfo(plugin_file):
+            plugin_name = plugin_info.resolved_name
+        else:
+            plugin_name = plugin_file
+
+        for base_v2_method, base_v1_method in CallbackBase._v2_v1_method_map.items():
+            method_name = None
+
+            if not inspect.ismethod(method := getattr(self, (v2_method_name := base_v2_method.__name__))) or method.__func__ is not base_v2_method:
+                implemented_callback_methods.add(v2_method_name)  # v2 method directly implemented by subclass
+                method_name = v2_method_name
+            elif base_v1_method is None:
+                pass  # no corresponding v1 method
+            elif not inspect.ismethod(method := getattr(self, (v1_method_name := base_v1_method.__name__))) or method.__func__ is not base_v1_method:
+                implemented_callback_methods.add(v2_method_name)  # v1 method directly implemented by subclass
+                deprecated_v1_method_overrides.add(v1_method_name)
+                method_name = v1_method_name
+
+            if method_name and v2_method_name == 'v2_on_any':
+                deprecated_v1_method_overrides.discard(method_name)  # avoid including v1 on_any in the v1 deprecation below
+
+                global_display.deprecated(
+                    msg=f'The {plugin_name!r} callback plugin implements deprecated method {method_name!r}.',
+                    version='2.23',
+                    help_text='Use event-specific callback methods instead.',
+                )
+
+        self._implemented_callback_methods = frozenset(implemented_callback_methods)
+
+        if deprecated_v1_method_overrides:
+            global_display.deprecated(
+                msg=f'The {plugin_name!r} callback plugin implements the following deprecated method(s): {", ".join(sorted(deprecated_v1_method_overrides))}',
+                version='2.23',
+                help_text='Implement the `v2_*` equivalent callback method(s) instead.',
+            )
 
     def set_option(self, k, v):
         self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
@@ -471,96 +508,61 @@ class CallbackBase(AnsiblePlugin):
     def set_play_context(self, play_context):
         pass
 
-    @_callback_base_impl
     def on_any(self, *args, **kwargs):
         pass
 
-    @_callback_base_impl
     def runner_on_failed(self, host, res, ignore_errors=False):
         pass
 
-    @_callback_base_impl
     def runner_on_ok(self, host, res):
         pass
 
-    @_callback_base_impl
     def runner_on_skipped(self, host, item=None):
         pass
 
-    @_callback_base_impl
     def runner_on_unreachable(self, host, res):
         pass
 
-    @_callback_base_impl
-    def runner_on_no_hosts(self):
-        pass
-
-    @_callback_base_impl
     def runner_on_async_poll(self, host, res, jid, clock):
         pass
 
-    @_callback_base_impl
     def runner_on_async_ok(self, host, res, jid):
         pass
 
-    @_callback_base_impl
     def runner_on_async_failed(self, host, res, jid):
         pass
 
-    @_callback_base_impl
     def playbook_on_start(self):
         pass
 
-    @_callback_base_impl
     def playbook_on_notify(self, host, handler):
         pass
 
-    @_callback_base_impl
     def playbook_on_no_hosts_matched(self):
         pass
 
-    @_callback_base_impl
     def playbook_on_no_hosts_remaining(self):
         pass
 
-    @_callback_base_impl
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
-    @_callback_base_impl
     def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
         pass
 
-    @_callback_base_impl
-    def playbook_on_setup(self):
-        pass
-
-    @_callback_base_impl
-    def playbook_on_import_for_host(self, host, imported_file):
-        pass
-
-    @_callback_base_impl
-    def playbook_on_not_import_for_host(self, host, missing_file):
-        pass
-
-    @_callback_base_impl
     def playbook_on_play_start(self, name):
         pass
 
-    @_callback_base_impl
     def playbook_on_stats(self, stats):
         pass
 
-    @_callback_base_impl
     def on_file_diff(self, host, diff):
         pass
 
     # V2 METHODS, by default they call v1 counterparts if possible
-    @_callback_base_impl
     def v2_on_any(self, *args, **kwargs):
         self.on_any(args, kwargs)
 
-    @_callback_base_impl
     def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors: bool = False) -> None:
         """Process results of a failed task.
 
@@ -583,7 +585,6 @@ class CallbackBase(AnsiblePlugin):
         host = result.host.get_name()
         self.runner_on_failed(host, result.result, ignore_errors)
 
-    @_callback_base_impl
     def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         """Process results of a successful task.
 
@@ -596,7 +597,6 @@ class CallbackBase(AnsiblePlugin):
         host = result.host.get_name()
         self.runner_on_ok(host, result.result)
 
-    @_callback_base_impl
     def v2_runner_on_skipped(self, result: CallbackTaskResult) -> None:
         """Process results of a skipped task.
 
@@ -610,7 +610,6 @@ class CallbackBase(AnsiblePlugin):
             host = result.host.get_name()
             self.runner_on_skipped(host, self._get_item_label(getattr(result.result, 'results', {})))
 
-    @_callback_base_impl
     def v2_runner_on_unreachable(self, result: CallbackTaskResult) -> None:
         """Process results of a task if a target node is unreachable.
 
@@ -623,7 +622,6 @@ class CallbackBase(AnsiblePlugin):
         host = result.host.get_name()
         self.runner_on_unreachable(host, result.result)
 
-    @_callback_base_impl
     def v2_runner_on_async_poll(self, result: CallbackTaskResult) -> None:
         """Get details about an unfinished task running in async mode.
 
@@ -642,7 +640,6 @@ class CallbackBase(AnsiblePlugin):
         clock = 0
         self.runner_on_async_poll(host, result.result, jid, clock)
 
-    @_callback_base_impl
     def v2_runner_on_async_ok(self, result: CallbackTaskResult) -> None:
         """Process results of a successful task that ran in async mode.
 
@@ -656,7 +653,6 @@ class CallbackBase(AnsiblePlugin):
         jid = result.result.get('ansible_job_id')
         self.runner_on_async_ok(host, result.result, jid)
 
-    @_callback_base_impl
     def v2_runner_on_async_failed(self, result: CallbackTaskResult) -> None:
         host = result.host.get_name()
         # Attempt to get the async job ID. If the job does not finish before the
@@ -666,89 +662,84 @@ class CallbackBase(AnsiblePlugin):
             jid = result.result['async_result'].get('ansible_job_id')
         self.runner_on_async_failed(host, result.result, jid)
 
-    @_callback_base_impl
     def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
 
-    @_callback_base_impl
     def v2_playbook_on_notify(self, handler, host):
         self.playbook_on_notify(host, handler)
 
-    @_callback_base_impl
     def v2_playbook_on_no_hosts_matched(self):
         self.playbook_on_no_hosts_matched()
 
-    @_callback_base_impl
     def v2_playbook_on_no_hosts_remaining(self):
         self.playbook_on_no_hosts_remaining()
 
-    @_callback_base_impl
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.playbook_on_task_start(task.name, is_conditional)
 
-    # FIXME: not called
-    @_callback_base_impl
-    def v2_playbook_on_cleanup_task_start(self, task):
-        pass  # no v1 correspondence
-
-    @_callback_base_impl
     def v2_playbook_on_handler_task_start(self, task):
         pass  # no v1 correspondence
 
-    @_callback_base_impl
     def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
         self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
-    # FIXME: not called
-    @_callback_base_impl
-    def v2_playbook_on_import_for_host(self, result: CallbackTaskResult, imported_file) -> None:
-        host = result.host.get_name()
-        self.playbook_on_import_for_host(host, imported_file)
-
-    # FIXME: not called
-    @_callback_base_impl
-    def v2_playbook_on_not_import_for_host(self, result: CallbackTaskResult, missing_file) -> None:
-        host = result.host.get_name()
-        self.playbook_on_not_import_for_host(host, missing_file)
-
-    @_callback_base_impl
     def v2_playbook_on_play_start(self, play):
         self.playbook_on_play_start(play.name)
 
-    @_callback_base_impl
     def v2_playbook_on_stats(self, stats):
         self.playbook_on_stats(stats)
 
-    @_callback_base_impl
     def v2_on_file_diff(self, result: CallbackTaskResult) -> None:
         if 'diff' in result.result:
             host = result.host.get_name()
             self.on_file_diff(host, result.result['diff'])
 
-    @_callback_base_impl
     def v2_playbook_on_include(self, included_file):
         pass  # no v1 correspondence
 
-    @_callback_base_impl
     def v2_runner_item_on_ok(self, result: CallbackTaskResult) -> None:
         pass
 
-    @_callback_base_impl
     def v2_runner_item_on_failed(self, result: CallbackTaskResult) -> None:
         pass
 
-    @_callback_base_impl
     def v2_runner_item_on_skipped(self, result: CallbackTaskResult) -> None:
         pass
 
-    @_callback_base_impl
     def v2_runner_retry(self, result: CallbackTaskResult) -> None:
         pass
 
-    @_callback_base_impl
     def v2_runner_on_start(self, host, task):
         """Event used when host begins execution of a task
 
         .. versionadded:: 2.8
         """
         pass
+
+    _v2_v1_method_map = {
+        v2_on_any: on_any,
+        v2_on_file_diff: on_file_diff,
+        v2_playbook_on_handler_task_start: None,
+        v2_playbook_on_include: None,
+        v2_playbook_on_no_hosts_matched: playbook_on_no_hosts_matched,
+        v2_playbook_on_no_hosts_remaining: playbook_on_no_hosts_remaining,
+        v2_playbook_on_notify: playbook_on_notify,
+        v2_playbook_on_play_start: playbook_on_play_start,
+        v2_playbook_on_start: playbook_on_start,
+        v2_playbook_on_stats: playbook_on_stats,
+        v2_playbook_on_task_start: playbook_on_task_start,
+        v2_playbook_on_vars_prompt: playbook_on_vars_prompt,
+        v2_runner_item_on_failed: None,
+        v2_runner_item_on_ok: None,
+        v2_runner_item_on_skipped: None,
+        v2_runner_on_async_failed: runner_on_async_failed,
+        v2_runner_on_async_ok: runner_on_async_ok,
+        v2_runner_on_async_poll: runner_on_async_poll,
+        v2_runner_on_failed: runner_on_failed,
+        v2_runner_on_ok: runner_on_ok,
+        v2_runner_on_skipped: runner_on_skipped,
+        v2_runner_on_start: None,
+        v2_runner_on_unreachable: runner_on_unreachable,
+        v2_runner_retry: None,
+    }
+    """Internal mapping of v2 callback methods with v1 counterparts; populated after type init for deprecation warnings and bypass calculation."""
