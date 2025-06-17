@@ -1696,7 +1696,7 @@ namespace Ansible.Basic
                 if ((attr & FileAttributes.ReadOnly) != 0)
                 {
                     // Windows does not allow files set with ReadOnly to be
-                    // deleted. Pre-emptively unset the attribute.
+                    // deleted. Preemptively unset the attribute.
                     // FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE is quite new,
                     // look at using that flag with POSIX delete once Server 2019
                     // is the baseline.

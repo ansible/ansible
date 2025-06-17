@@ -98,7 +98,7 @@ EXAMPLES = r'''# fmt: code
     def get_api_data(namespace: str, pretty=False) -> str:
         """
         :param namespace: parameter for our custom api
-        :param pretty: Human redable JSON vs machine readable
+        :param pretty: Human readable JSON vs machine readable
         :return: JSON string
         """
         found_data = list(MyInventoryAPI(namespace))

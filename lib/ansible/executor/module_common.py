@@ -364,7 +364,7 @@ def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(
                                                    options=TemplateOptions(value_for_omit=None))
 
     if not interpreter_out:
-        # nothing matched(None) or in case someone configures empty string or empty intepreter
+        # nothing matched(None) or in case someone configures empty string or empty interpreter
         interpreter_out = interpreter
 
     # set shebang

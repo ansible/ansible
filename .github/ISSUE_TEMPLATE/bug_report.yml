@@ -136,7 +136,7 @@ body:
   attributes:
     label: Steps to Reproduce
     description: |
-      Describe exactly how to reproduce the problem, using a minimal test-case. It would *really* help us understand your problem if you could also pased any playbooks, configs and commands you used.
+      Describe exactly how to reproduce the problem, using a minimal test-case. It would *really* help us understand your problem if you could also provide any playbooks, configs and commands you used.
 
       **HINT:** You can paste https://gist.github.com links for larger files.
     value: |

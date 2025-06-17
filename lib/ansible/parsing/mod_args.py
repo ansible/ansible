@@ -30,7 +30,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.fqcn import add_internal_fqcns
 
 
-# modules formated for user msg
+# modules formatted for user msg
 _BUILTIN_RAW_PARAM_MODULES_SIMPLE = set([
     'include_vars',
     'include_tasks',

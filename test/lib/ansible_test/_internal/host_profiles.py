@@ -810,7 +810,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 # The host namespace must be used to permit the container to access the cgroup v1 systemd hierarchy created by Podman.
                 '--cgroupns', 'host',
                 # Mask the host cgroup tmpfs mount to avoid exposing the host cgroup v1 hierarchies (or cgroup v2 hybrid) to the container.
-                # Podman will provide a cgroup v1 systemd hiearchy on top of this.
+                # Podman will provide a cgroup v1 systemd hierarchy on top of this.
                 '--tmpfs', '/sys/fs/cgroup',
             ))
 

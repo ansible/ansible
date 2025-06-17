@@ -872,7 +872,7 @@ class TaskExecutor:
                 async_result = async_handler.run(task_vars=task_vars)
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
-                # have issues which result in a half-written/unparseable result
+                # have issues which result in a half-written/unparsable result
                 # file on disk, which manifests to the user as a timeout happening
                 # before it's time to timeout.
                 if (async_result.get('finished', False) or
@@ -910,7 +910,7 @@ class TaskExecutor:
             if async_result.get('_ansible_parsed'):
                 return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val, async_result=async_result)
             else:
-                return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
+                return dict(failed=True, msg="async task produced unparsable results", async_result=async_result)
         else:
             # If the async task finished, automatically cleanup the temporary
             # status file left behind.

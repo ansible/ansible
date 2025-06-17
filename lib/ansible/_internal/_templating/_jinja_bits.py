@@ -799,7 +799,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
             # Performing either before calling them will interfere with that processing.
             return super().call(__context, __obj, *args, **kwargs)
 
-        # Jinja's generated macro code handles Markers, so pre-emptive raise on Marker args and lazy retrieval should be disabled for the macro invocation.
+        # Jinja's generated macro code handles Markers, so preemptive raise on Marker args and lazy retrieval should be disabled for the macro invocation.
         is_macro = isinstance(__obj, Macro)
 
         if not is_macro and (first_marker := get_first_marker_arg(args, kwargs)) is not None:

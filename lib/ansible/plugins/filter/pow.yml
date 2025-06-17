@@ -3,7 +3,7 @@ DOCUMENTATION:
   version_added: "1.9"
   short_description: power of (math operation)
   description:
-    - Math operation that returns the Nth power of inputed number, C(X ^ N).
+    - Math operation that returns the Nth power of inputted number, C(X ^ N).
   notes:
     - This is a passthrough to Python's C(math.pow).
   positional: _input, _power

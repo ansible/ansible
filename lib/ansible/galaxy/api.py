@@ -92,7 +92,7 @@ def g_connect(versions):
                 try:
                     data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg, cache=True)
                 except (AnsibleError, GalaxyError, ValueError, KeyError) as err:
-                    # Either the URL doesnt exist, or other error. Or the URL exists, but isn't a galaxy API
+                    # Either the URL doesn't exist, or other error. Or the URL exists, but isn't a galaxy API
                     # root (not JSON, no 'available_versions') so try appending '/api/'
                     if n_url.endswith('/api') or n_url.endswith('/api/'):
                         raise
@@ -877,7 +877,7 @@ class GalaxyAPI:
         except GalaxyError as err:
             if err.http_code != 404:
                 raise
-            # v3 doesn't raise a 404 so we need to mimick the empty response from APIs that do.
+            # v3 doesn't raise a 404 so we need to mimic the empty response from APIs that do.
             return []
 
         if 'data' in data:

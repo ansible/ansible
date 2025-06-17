@@ -96,7 +96,7 @@ class Marker(StrictUndefined, Tripwire):
         return AnsibleUndefinedVariable(self._undefined_message, obj=self._marker_template_source)
 
     def _as_message(self) -> str:
-        """Return the error message to show when this marker must be represented as a string, such as for subsitutions or warnings."""
+        """Return the error message to show when this marker must be represented as a string, such as for substitutions or warnings."""
         return self._undefined_message
 
     def _fail_with_undefined_error(self, *args: t.Any, **kwargs: t.Any) -> t.NoReturn:

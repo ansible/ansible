@@ -102,7 +102,7 @@ begin {
             Set-Property 'MaximumAllowedMemory' $null
     }
     catch {
-        # Satify pslint, we purposefully ignore this error as it is not critical it works.
+        # Satisfy pslint, we purposefully ignore this error as it is not critical it works.
         $null = $null
     }
 }

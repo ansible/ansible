@@ -72,12 +72,12 @@ class ActionModule(ActionBase):
         fail_msg = new_module_args['fail_msg']
         success_msg = new_module_args['success_msg']
         quiet = new_module_args['quiet']
-        thats = new_module_args['that']
+        that_list = new_module_args['that']
 
         if not quiet:
             result['_ansible_verbose_always'] = True
 
-        for that in thats:
+        for that in that_list:
             test_result = self._templar.evaluate_conditional(conditional=that)
             if not test_result:
                 result['failed'] = True

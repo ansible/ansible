@@ -1,16 +1,16 @@
 DOCUMENTATION:
   name: strftime
   version_added: "2.4"
-  short_description: date formating
+  short_description: date formatting
   description:
-    - Using Python's C(strftime) function, take a data formating string and a date/time to create a formatted date.
+    - Using Python's C(strftime) function, take a data formatting string and a date/time to create a formatted date.
   notes:
     - This is a passthrough to Python's C(stftime), for a complete set of formatting options go to https://strftime.org/.
   positional: _input, second, utc
   options:
     _input:
       description:
-        - A formating string following C(stftime) conventions.
+        - A formatting string following C(stftime) conventions.
         - See L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior) for a reference.
       type: str
       required: true
