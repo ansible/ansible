@@ -1,4 +1,5 @@
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
+# Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - set_fact:
@@ -6,7 +7,7 @@
 
 - when:
     - dnf5
-    - test_auto_install | default(true)
+    - test_auto_install | default(false)  # NOTE ensure one of dnf, dnf-oldest or dnf-latest sets test_auto_install
   block:
     - name: Ensure module deps are not installed
       command: dnf remove -y python3-libdnf5
