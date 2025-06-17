@@ -228,7 +228,7 @@ namespace Ansible.Privilege
         }
 
         /// <summary>
-        /// Get's the status of all the privileges on the token specified
+        /// Gets the status of all the privileges on the token specified
         /// </summary>
         /// <param name="token">The process token to get the privilege status on</param>
         /// <returns>Dictionary where the key is the privilege constant and the value is the PrivilegeAttributes flags</returns>
@@ -342,7 +342,7 @@ namespace Ansible.Privilege
                 // Need to manually marshal the bytes requires for newState as the constant size
                 // of LUID_AND_ATTRIBUTES is set to 1 and can't be overridden at runtime, TOKEN_PRIVILEGES
                 // always contains at least 1 entry so we need to calculate the extra size if there are
-                // nore than 1 LUID_AND_ATTRIBUTES entry
+                // more than 1 LUID_AND_ATTRIBUTES entry
                 int tokenPrivilegesSize = Marshal.SizeOf(typeof(NativeHelpers.TOKEN_PRIVILEGES));
                 int luidAttrSize = 0;
                 if (newState.Length > 1)

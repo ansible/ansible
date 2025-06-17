@@ -61,7 +61,7 @@ class FacterFactCollector(BaseFactCollector):
         return out
 
     def collect(self, module=None, collected_facts=None):
-        # Note that this mirrors previous facter behavior, where there isnt
+        # Note that this mirrors previous facter behavior, where there isn't
         # a 'ansible_facter' key in the main fact dict, but instead, 'facter_whatever'
         # items are added to the main dict.
         facter_dict = {}

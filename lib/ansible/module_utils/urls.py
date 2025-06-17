@@ -1155,7 +1155,7 @@ def url_argument_spec():
 
 def url_redirect_argument_spec():
     """
-    Creates an addition arugment spec to `url_argument_spec`
+    Creates an addition argument spec to `url_argument_spec`
     for  `follow_redirects` argument
     """
     return dict(

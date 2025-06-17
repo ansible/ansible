@@ -570,8 +570,8 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
         return match_encrypt_vault_id_secret(secrets,
                                              encrypt_vault_id=encrypt_vault_id)
 
-    # Find the best/first secret from secrets since we didnt specify otherwise
-    # ie, consider all of the available secrets as matches
+    # Find the best/first secret from secrets since we didn't specify otherwise
+    # ie, consider all the available secrets as matches
     _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
 
@@ -1413,7 +1413,7 @@ class EncryptedString(AnsibleTaggedObject):
             'ljust',
             'lower',
             'lstrip',
-            'maketrans',  # static, but implemented for simplicty/consistency
+            'maketrans',  # static, but implemented for simplicity/consistency
             'partition',
             'removeprefix',
             'removesuffix',
