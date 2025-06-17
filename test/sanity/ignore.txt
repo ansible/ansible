@@ -156,6 +156,34 @@ lib/ansible/module_utils/facts/hardware/aix.py pylint:used-before-assignment
 lib/ansible/modules/rpm_key.py pylint:used-before-assignment
 lib/ansible/modules/service.py pylint:used-before-assignment
 lib/ansible/modules/user.py pylint:used-before-assignment
+lib/ansible/_internal/_wrapt.py codespell!skip  # vendored code
+lib/ansible/config/ansible_builtin_runtime.yml codespell:aci  # network collection name
+lib/ansible/galaxy/token.py codespell:chouse  # contributor's name
+lib/ansible/modules/assemble.py codespell:Fromm  # contributor's name
+lib/ansible/modules/group.py codespell:Fromm  # contributor's name
+lib/ansible/modules/stat.py codespell:woth  # write-other
+lib/ansible/modules/uri.py codespell:aNULL  # cipher name
+lib/ansible/modules/user.py codespell:Fromm  # contributor's name
+lib/ansible/plugins/action/assemble.py codespell:Fromm  # contributor's name
+test/integration/targets/ansible_log/runme.sh codespell:ALOG  # variable name
+test/integration/targets/apt/tasks/apt.yml codespell:hel  # test data
+test/integration/targets/filter_mathstuff/tasks/main.yml codespell:fo  # expected test output
+test/integration/targets/lineinfile/tasks/test_string01.yml codespell:Thi  # test data
+test/integration/targets/lineinfile/tasks/test_string01.yml codespell:ine  # test data
+test/integration/targets/lookup_ini/lookup-8859-15.ini codespell:indien  # French
+test/integration/targets/lookup_ini/lookup.ini codespell:indien  # French
+test/integration/targets/lookup_ini/lookup.properties codespell:indien  # French
+test/integration/targets/lookup_ini/test_lookup_properties.yml codespell:indien  # French
+test/integration/targets/module_utils_Ansible.Process/library/ansible_process_tests.ps1 codespell:caf  # expected test output
+test/lib/ansible_test/config/inventory.networking.template codespell:aci  # network collection name
+test/units/errors/fixtures/outputs/short_file_left_marker.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_long_line_truncated_past_target.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_no_column.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_truncated_target.txt codespell!skip  # intentionally truncated test data
+test/units/errors/fixtures/outputs/short_file_truncated_target_last_displayed_char.txt codespell!skip  # intentionally truncated test data
+test/units/module_utils/facts/fixtures/cpuinfo/s390x-z13-2cpu-cpuinfo codespell!skip  # test data
+test/units/module_utils/facts/fixtures/cpuinfo/s390x-z14-64cpu-cpuinfo codespell!skip  # test data
+test/units/module_utils/facts/system/distribution/fixtures/univention_corporate_server_5.2.json codespell!skip  # test data
 lib/ansible/plugins/action/copy.py pylint:undefined-variable
 test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
 test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
