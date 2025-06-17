@@ -32,7 +32,7 @@ os.environ.update(env_vars)
 # -- Plain pause -- #
 playbook = 'pause-1.yml'
 
-# Case 1 - Contiune with enter
+# Case 1 - Continue with enter
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
@@ -86,7 +86,7 @@ pause_test.close()
 # -- Custom Prompt -- #
 playbook = 'pause-2.yml'
 
-# Case 1 - Contiune with enter
+# Case 1 - Continue with enter
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
@@ -102,7 +102,7 @@ pause_test.expect(pexpect.EOF)
 pause_test.close()
 
 
-# Case 2 - Contiune with C
+# Case 2 - Continue with C
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
@@ -156,7 +156,7 @@ pause_test.expect('Task after pause')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
 
-# Case 2 - Contiune with Ctrl + C, C
+# Case 2 - Continue with Ctrl + C, C
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
@@ -214,7 +214,7 @@ pause_test.expect('Task after pause')
 pause_test.expect(pexpect.EOF)
 pause_test.close()
 
-# Case 2 - Contiune with Ctrl + C, C
+# Case 2 - Continue with Ctrl + C, C
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
