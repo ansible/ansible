@@ -110,7 +110,13 @@ def hash_params(params):
 
 class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    def __init__(self, play: Play=None, from_files: dict[str, list[str]]=None, from_include: bool=False, validate: bool=True, public: bool=None, static: bool=True):
+    def __init__(self,
+                 play: Play = None,
+                 from_files: dict[str, list[str]] = None,
+                 from_include: bool = False,
+                 validate: bool = True,
+                 public: bool = None,
+                 static: bool = True):
         self._role_name: str = None
         self._role_path: str = None
         self._role_collection: str = None
