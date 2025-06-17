@@ -57,5 +57,5 @@ export ANSIBLE_CACHE_PLUGIN=notjsonfile
 [ "$(ansible-doc -t cache notjsonfile --playbook-dir ./ | grep -c 'DEPRECATED:')" -eq "1" ]
 
 # Injection default is deprecated
-[ "$(ansible-playbook injectfacts.yml 2>&1 | grep -c 'INJECT_FACTS_AS_VARS default to ' -eq "1" ]
+[ "$(ansible-playbook injectfacts.yml 2>&1 | grep -c 'INJECT_FACTS_AS_VARS default to ')" -eq "1" ]
 [ "$(ANSIBLE_INJECT_FACT_VARS=1 ansible-playbook injectfacts.yml 2>&1 | grep -c 'INJECT_FACTS_AS_VARS default to ')" -eq "0" ]
