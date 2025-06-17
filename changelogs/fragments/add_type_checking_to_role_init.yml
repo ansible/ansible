@@ -1,0 +1,3 @@
+bugfixes:
+  - >-
+    Added type-checking to Role.__init__ to help keep the codebase clean and support dev
