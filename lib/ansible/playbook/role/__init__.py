@@ -472,7 +472,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep_chain.append(parent)
         return dep_chain
 
-    def get_cached_deps(self):
+    @property
+    def cached_deps(self):
         return global_role_dependency_cache.get(self.full_qualified_name, None)
 
     def add_deps_to_cache(self, deps):
@@ -481,7 +482,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
 
-        deps = self.get_cached_deps()
+        deps = self.cached_deps
         if deps is None:
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
@@ -530,7 +531,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         # get exported variables from meta/dependencies
         seen = []
 
-        deps = self.get_cached_deps()
+        deps = self.cached_deps
         if deps is None:
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
