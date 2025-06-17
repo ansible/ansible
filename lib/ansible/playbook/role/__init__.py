@@ -121,7 +121,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._role_path: str = None
         self._role_collection: str = None
         self._role_params: dict[str, dict[str, str]] = dict()
-        self._loader: DataLoader = None
+        self._loader: DataLoader | None = None
         self.static: bool = static
 
         # includes (static=false) default to private, while imports (static=true) default to public
