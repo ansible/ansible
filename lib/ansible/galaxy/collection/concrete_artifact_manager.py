@@ -449,9 +449,9 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     except subprocess.CalledProcessError as proc_err:
         raise AnsibleError(  # should probably be LookupError
             'Failed to switch a cloned Git repo `{repo_url!s}` '
-            'to the requested revision `{commitish!s}`.'.
+            'to the requested revision `{revision!s}`.'.
             format(
-                commitish=to_native(version),
+                revision=to_native(version),
                 repo_url=to_native(git_url),
             ),
         ) from proc_err

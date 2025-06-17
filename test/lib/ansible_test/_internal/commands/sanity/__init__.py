@@ -1087,7 +1087,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
 
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
-    """Base class for sanity test plugins which are idependent of the python version being used."""
+    """Base class for sanity test plugins which are independent of the python version being used."""
 
     @abc.abstractmethod
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
