@@ -20,6 +20,7 @@ from __future__ import annotations
 import os
 
 from collections.abc import Container, Mapping, Set, Sequence
+from functools import cached_property
 from types import MappingProxyType
 
 from ansible import constants as C
@@ -150,6 +151,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     def __repr__(self):
         return self.get_name()
+
+    @cached_property
+    def full_qualified_name(self):
+        return f"{self._role_collection}.{self._role_path}.{self._role_name}"
 
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:
@@ -468,10 +473,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return dep_chain
 
     def get_cached_deps(self):
-        return global_role_dependency_cache.get(f"{self._role_collection}.{self._role_path}.{self._role_name}", None)
+        return global_role_dependency_cache.get(self.full_qualified_name, None)
 
     def add_deps_to_cache(self, deps):
-        global_role_dependency_cache[f"{self._role_collection}.{self._role_path}.{self._role_name}"] = deps
+        global_role_dependency_cache[self.full_qualified_name] = deps
 
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
