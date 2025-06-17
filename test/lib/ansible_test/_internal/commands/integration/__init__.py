@@ -825,6 +825,7 @@ def integration_environment(
         env.update(ANSIBLE_TEST_REMOTE_INTERPRETER='')
 
     env.update(integration)
+    env.update(target.env_set)
 
     return env
 
