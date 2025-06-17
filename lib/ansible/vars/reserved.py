@@ -66,8 +66,7 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
 
 
 def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None = None) -> None:
-    """ this function warns if any variable passed conflicts with internally reserved names """
-
+    """Issue a warning for any variable which conflicts with an internally reserved name."""
     if additional is None:
         reserved = _RESERVED_NAMES
     else:
@@ -76,8 +75,11 @@ def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
 
-    for varname in varnames.intersection(reserved):
-        display.warning(f'Found variable using reserved name {varname!r}.')
+    if conflicts := varnames.intersection(reserved):
+        # Ensure the varname used for obj is the tagged one from myvars and not the untagged one from reserved.
+        # This can occur because tags do not affect value equality, and intersection can return values from either the left or right side.
+        for varname in (name for name in myvars if name in conflicts):
+            display.warning(f'Found variable using reserved name {varname!r}.', obj=varname)
 
 
 def is_reserved_name(name: str) -> bool:
