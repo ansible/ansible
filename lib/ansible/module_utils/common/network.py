@@ -6,11 +6,13 @@
 from __future__ import annotations
 
 import re
+
+# backwards compat
+from builtins import zip # pylint: disable=unused-import
+
 from struct import pack
 from socket import inet_ntoa
 
-# backwards compat
-zip = zip  # pylint: disable=self-assigning-variable
 
 VALID_MASKS = [2**8 - 2**i for i in range(0, 9)]
 
