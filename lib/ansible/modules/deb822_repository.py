@@ -142,6 +142,10 @@ options:
         - absent
         - present
         default: present
+    signed_by_target:
+        description:
+        - armor or dearmor
+        - type: bool
 requirements:
     - python3-debian / python-debian
 version_added: '2.15'
@@ -226,6 +230,7 @@ key_filename:
   sample: /etc/apt/keyrings/debian.gpg
 """
 
+import base64
 import os
 import re
 import tempfile
@@ -314,7 +319,7 @@ def is_armored(b_data):
     return b'-----BEGIN PGP PUBLIC KEY BLOCK-----' in b_data
 
 
-def write_signed_by_key(module, v, slug):
+def write_signed_by_key(module, v, slug , is_dearmor = False):
     changed = False
     if os.path.isfile(v):
         return changed, v, None
@@ -337,8 +342,16 @@ def write_signed_by_key(module, v, slug):
         return changed, v, None
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as f:
-        f.write(b_data)
+    if is_dearmor:
+        b_data = b_data.decode('utf-8')
+        lines = b_data.splitlines()
+        b64_data = ''.join(line.strip() for line in lines[1:-1] if line.strip())
+        b_data = base64.b64decode(b64_data)
+        with os.fdopen(tmpfd, 'wb') as f:
+            f.write(b_data)
+    else:
+        with os.fdopen(tmpfd, 'wb') as f:
+            f.write(b_data)
 
     ext = 'asc' if is_armored(b_data) else 'gpg'
     filename = make_signed_by_filename(slug, ext)
@@ -448,6 +461,12 @@ def main():
                 ],
                 'default': 'present',
             },
+            
+             'dearmor': {
+                'type' : 'str',
+                'default': 'false'
+            }
+            
         },
         supports_check_mode=True,
     )
@@ -496,6 +515,7 @@ def main():
             dest=sources_filename,
             key_filename=signed_by_filename,
         )
+    is_dearmor=params['dearmor']
 
     deb822 = Deb822()
     signed_by_filename = None
@@ -511,7 +531,7 @@ def main():
             value = format_list(value)
         elif key == 'signed_by':
             try:
-                key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug)
+                key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug , is_dearmor)
                 value = signed_by_filename or signed_by_data
                 changed |= key_changed
             except RuntimeError as exc:
