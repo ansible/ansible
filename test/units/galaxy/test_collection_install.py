@@ -147,7 +147,7 @@ def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeyp
     clone_cmd = [git_executable, 'clone', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
-    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'commitish')
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, '-c', 'advice.detachedHead=false', 'checkout', 'commitish')
 
 
 @pytest.mark.parametrize(
@@ -178,7 +178,7 @@ def test_concrete_artifact_manager_scm_cmd_shallow(url, version, trailing_slash,
     shallow_clone_cmd = [git_executable, 'clone', '--depth=1', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == shallow_clone_cmd
-    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, '-c', 'advice.detachedHead=false', 'checkout', 'HEAD')
 
 
 @pytest.mark.parametrize(
@@ -210,7 +210,7 @@ def test_concrete_artifact_manager_scm_cmd_validate_certs(ignore_certs_cli, igno
         clone_cmd.extend(['-c', 'http.sslVerify=false'])
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
-    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, '-c', 'advice.detachedHead=false', 'checkout', 'HEAD')
 
 
 def test_build_requirement_from_path(collection_artifact):
