@@ -12,3 +12,5 @@
         # Since dnf-latest is the only dnf target that installs the latest version
         # test the 'auto_install_module_deps' feature here.
         test_auto_install: true
+  always:
+    - command: dnf copr disable -y rpmsoftwaremanagement/dnf-nightly
