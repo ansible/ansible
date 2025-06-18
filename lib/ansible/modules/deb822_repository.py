@@ -142,7 +142,7 @@ options:
         - absent
         - present
         default: present
-    signed_by_target:
+    dearmor:
         description:
         - armor or dearmor
         - type: bool
