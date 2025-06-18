@@ -2185,12 +2185,6 @@ WIN_ASYNC_STARTUP_TIMEOUT:
   vars:
     - {name: ansible_win_async_startup_timeout}
   version_added: '2.10'
-WRAP_STDERR:
-  description: Control line-wrapping behavior on console warnings and errors from default output callbacks (eases pattern-based output testing)
-  env: [{name: ANSIBLE_WRAP_STDERR}]
-  default: false
-  type: bool
-  version_added: "2.19"
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

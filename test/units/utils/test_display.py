@@ -121,7 +121,7 @@ def test_Display_display_warn_fork(display_resource):
         display = Display()
         display.set_queue(queue)
         display.warning('foo')
-        queue.send_display.assert_called_once_with('_warning', _messages.WarningSummary(event=_messages.Event(msg='foo')), wrap_text=True)
+        queue.send_display.assert_called_once_with('_warning', _messages.WarningSummary(event=_messages.Event(msg='foo')))
 
     p = multiprocessing_context.Process(target=test)
     p.start()
