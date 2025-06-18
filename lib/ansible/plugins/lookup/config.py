@@ -96,18 +96,7 @@ def _get_plugin_config(pname, ptype, config, variables):
     if p is None:
         raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
 
-    result, origin = C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
-
-    return result, origin
-
-
-def _get_global_config(config, variables):
-    try:
-        result, origin = C.config.get_config_value_and_origin(config, variables=variables)
-    except AttributeError:
-        raise AnsibleUndefinedConfigEntry(f"Setting {config!r} does not exist.") from None
-
-    return result, origin
+    return C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
 
 
 class LookupModule(LookupBase):
@@ -136,7 +125,7 @@ class LookupModule(LookupBase):
                 if pname:
                     result, origin = _get_plugin_config(pname, ptype, term, variables)
                 else:
-                    result, origin = _get_global_config(term, variables)
+                    result, origin = C.config.get_config_value_and_origin(term, variables=variables)
             except AnsibleUndefinedConfigEntry:
                 if missing == 'error':
                     raise
