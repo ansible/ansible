@@ -60,7 +60,7 @@ options:
   virtualenv_python:
     description:
       - The Python executable used for creating the virtual environment.
-        For example V(python3.12), V(python2.7). When not specified, the
+        For example V(python3.13). When not specified, the
         Python version used to run the ansible module is used. This parameter
         should not be used when O(virtualenv_command) is using V(pyvenv) or
         the C(-m venv) module.
@@ -93,8 +93,8 @@ options:
     description:
       - The explicit executable or pathname for the C(pip) executable,
         if different from the Ansible Python interpreter. For
-        example V(pip3.3), if there are both Python 2.7 and 3.3 installations
-        in the system and you want to run pip for the Python 3.3 installation.
+        example V(pip3.13), if there are multiple Python installations
+        in the system and you want to run pip for the Python 3.13 installation.
       - Mutually exclusive with O(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
       - The C(setuptools) package must be installed for both the Ansible Python interpreter
@@ -134,7 +134,7 @@ notes:
      the virtualenv needs to be created.
    - Although it executes using the Ansible Python interpreter, the pip module shells out to
      run the actual pip command, so it can use any pip version you specify with O(executable).
-     By default, it uses the pip version for the Ansible Python interpreter. For example, pip3 on python 3, and pip2 or pip on python 2.
+     By default, it uses the pip version for the Ansible Python interpreter.
    - The interpreter used by Ansible
      (see R(ansible_python_interpreter, ansible_python_interpreter))
      requires the setuptools package, regardless of the version of pip set with
@@ -197,11 +197,11 @@ EXAMPLES = """
     virtualenv: /my_app/venv
     virtualenv_site_packages: yes
 
-- name: Install bottle into the specified (virtualenv), using Python 2.7
+- name: Install bottle into the specified (virtualenv), using Python 3.13
   ansible.builtin.pip:
     name: bottle
     virtualenv: /my_app/venv
-    virtualenv_command: virtualenv-2.7
+    virtualenv_command: virtualenv-3.13
 
 - name: Install bottle within a user home directory
   ansible.builtin.pip:
@@ -227,10 +227,10 @@ EXAMPLES = """
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
-- name: Install bottle for Python 3.3 specifically, using the 'pip3.3' executable
+- name: Install bottle for Python 3.13 specifically, using the 'pip3.13' executable
   ansible.builtin.pip:
     name: bottle
-    executable: pip3.3
+    executable: pip3.13
 
 - name: Install bottle, forcing reinstallation if it's already installed
   ansible.builtin.pip:
@@ -460,9 +460,7 @@ def _get_pip(module, env=None, executable=None):
             candidate_pip_basenames = (executable,)
     elif executable is None and env is None and _have_pip_module():
         # If no executable or virtualenv were specified, use the pip module for the current Python interpreter if available.
-        # Use of `__main__` is required to support Python 2.6 since support for executing packages with `runpy` was added in Python 2.7.
-        # Without it Python 2.6 gives the following error: pip is a package and cannot be directly executed
-        pip = [sys.executable, '-m', 'pip.__main__']
+        pip = [sys.executable, '-m', 'pip']
 
     if pip is None:
         if env is None:

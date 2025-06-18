@@ -1900,18 +1900,18 @@ class AnsibleModule(object):
             the execution to hang (especially if no input data is specified)
         :kw environ_update: dictionary to *update* environ variables with
         :kw umask: Umask to be used when running the command. Default None
-        :kw encoding: Since we return native strings, on python3 we need to
+        :kw encoding: Since we return strings, we need to
             know the encoding to use to transform from bytes to text.  If you
             want to always get bytes back, use encoding=None.  The default is
             "utf-8".  This does not affect transformation of strings given as
             args.
-        :kw errors: Since we return native strings, on python3 we need to
+        :kw errors: Since we return strings, we need to
             transform stdout and stderr from bytes to text.  If the bytes are
             undecodable in the ``encoding`` specified, then use this error
             handler to deal with them.  The default is ``surrogate_or_strict``
             which means that the bytes will be decoded using the
             surrogateescape error handler if available (available on all
-            python3 versions we support) otherwise a UnicodeError traceback
+            Python versions we support) otherwise a UnicodeError traceback
             will be raised.  This does not affect transformations of strings
             given as args.
         :kw expand_user_and_vars: When ``use_unsafe_shell=False`` this argument
@@ -1919,10 +1919,8 @@ class AnsibleModule(object):
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
-        :kw pass_fds: When running on Python 3 this argument
-            dictates which file descriptors should be passed
-            to an underlying ``Popen`` constructor. On Python 2, this will
-            set ``close_fds`` to False.
+        :kw pass_fds: This argument dictates which file descriptors should be passed
+            to an underlying ``Popen`` constructor.
         :kw before_communicate_callback: This function will be called
             after ``Popen`` object will be created
             but before communicating to the process.
@@ -1933,11 +1931,10 @@ class AnsibleModule(object):
         :kw handle_exceptions: This flag indicates whether an exception will
             be handled inline and issue a failed_json or if the caller should
             handle it.
-        :returns: A 3-tuple of return code (integer), stdout (native string),
-            and stderr (native string).  On python2, stdout and stderr are both
-            byte strings.  On python3, stdout and stderr are text strings converted
-            according to the encoding and errors parameters.  If you want byte
-            strings on python3, use encoding=None to turn decoding to text off.
+        :returns: A 3-tuple of return code (int), stdout (str), and stderr (str).
+            stdout and stderr are text strings converted according to the encoding
+            and errors parameters.  If you want byte strings, use encoding=None
+            to turn decoding to text off.
         """
         # used by clean args later on
         self._clean = None
