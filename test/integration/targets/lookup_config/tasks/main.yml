@@ -83,6 +83,18 @@
   ignore_errors: yes
   register: lookup_config_12
 
+- name: origins
+  set_fact:
+    config_origin1: "{{ q('config', '_Z_TEST_ENTRY', show_origin=True) }}"
+  ignore_errors: yes
+
+- name: var sets it
+  set_fact:
+    config_origin2: "{{ q('config', '_Z_TEST_ENTRY', show_origin=True) }}"
+  ignore_errors: yes
+  vars:
+    _z_test_entry = 'yolo'
+
 - name: Verify lookup_config
   assert:
     that:
@@ -114,3 +126,8 @@
       - ssh_user_and_port == ['lola', 2022]
       - "ssh_user_and_port_and_origin == [['lola', 'var: ansible_ssh_user'], [2022, 'var: ansible_ssh_port']]"
       - yolo_remote == ["yolo"]
+      - config_origin1 is list
+      - 'config_origin[1] == "default"'
+      - config_origin2 is list
+      - "config_origin2[0] == 'yolo'"
+      - 'config_origin2[1] == "var: _z_test_entry"'

@@ -101,16 +101,13 @@ def _get_plugin_config(pname, ptype, config, variables):
     return result, origin
 
 
-def _get_global_config(config):
+def _get_global_config(config, variables):
     try:
-        result = getattr(C, config)
+        result, origin = C.config.get_config_value_and_origin(config, variables=variables)
     except AttributeError:
         raise AnsibleUndefinedConfigEntry(f"Setting {config!r} does not exist.") from None
 
-    if callable(result):
-        raise ValueError(f"Invalid setting {config!r} attempted.")
-
-    return result
+    return result, origin
 
 
 class LookupModule(LookupBase):
@@ -139,7 +136,7 @@ class LookupModule(LookupBase):
                 if pname:
                     result, origin = _get_plugin_config(pname, ptype, term, variables)
                 else:
-                    result = _get_global_config(term)
+                    result, origin = _get_global_config(term, variables)
             except AnsibleUndefinedConfigEntry:
                 if missing == 'error':
                     raise
