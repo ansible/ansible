@@ -56,7 +56,7 @@ Assert-Equal -actual $actual -expected $false
 $actual = Test-AnsiblePath -Path C:\fakedirectory
 Assert-Equal -actual $actual -expected $false
 
-# Test-AnsiblePath file in non-existant directory
+# Test-AnsiblePath file in non-existent directory
 $actual = Test-AnsiblePath -Path C:\fakedirectory\fakefile.txt
 Assert-Equal -actual $actual -expected $false
 

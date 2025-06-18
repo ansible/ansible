@@ -515,7 +515,7 @@ def _perform_reboot(
 
     # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
     if handle_abort and (rc == 1190 or (rc != 0 and stderr and "(1190)" in stderr)):
-        display.warning("A scheduled reboot was pre-empted by Ansible.")
+        display.warning("A scheduled reboot was preempted by Ansible.")
 
         # Try to abort (this may fail if it was already aborted)
         rc, stdout, stderr = _execute_command(

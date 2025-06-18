@@ -4,7 +4,7 @@ set -eux
 
 ansible-playbook test_var_blending.yml -i inventory -e @test_vars.yml -v "$@"
 
-# check bad vault file erros
+# check bad vault file errors
 [ "$(ansible-playbook error_handling.yml -i inventory --vault-password-file supersecretvaultsecret -e @vars/bad_vault.yml 2>&1 | grep -c 'dummy')" -eq "0" ]
 [ "$(ansible-playbook error_handling.yml -i inventory --vault-password-file supersecretvaultsecret --tags includevault 2>&1 | grep -c 'dummy')" -eq "0" ]
 

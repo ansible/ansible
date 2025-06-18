@@ -104,7 +104,7 @@ $tests = [Ordered]@{
         $failed = $false
         try {
             $h_process = [Ansible.AccessToken.TokenUtil]::OpenProcess(4, "QueryInformation", $false)
-            $h_process.Dispose()  # Incase this doesn't fail, make sure we still dispose of it
+            $h_process.Dispose()  # In case this doesn't fail, make sure we still dispose of it
         }
         catch [Ansible.AccessToken.Win32Exception] {
             $failed = $true

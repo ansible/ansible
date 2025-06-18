@@ -13,7 +13,7 @@
       changed_when: true
       notify: another_listen
 
-    - name: nofity another handler 2
+    - name: notify another handler 2
       debug:
       changed_when: true
       notify: another_listen

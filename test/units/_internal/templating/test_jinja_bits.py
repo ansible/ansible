@@ -400,7 +400,7 @@ def test_builtin_alt_names(name: str) -> None:
 def test_macro_marker_handling(template: str, variables: dict[str, object], expected: object) -> None:
     """
     Ensure that `JinjaCallContext` Marker handling is masked/set correctly for Jinja macro callables.
-    Jinja's generated macro code handles Markers, so pre-emptive raise on retrieval should be disabled for the macro `call()`.
+    Jinja's generated macro code handles Markers, so preemptive raise on retrieval should be disabled for the macro `call()`.
     """
     res = TemplateEngine(variables=variables).template(TRUST.tag(template))
 

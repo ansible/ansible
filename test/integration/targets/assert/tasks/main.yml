@@ -222,10 +222,10 @@
 
 - name: ensure that arg-splatted expressions that are template-wrapped provide a deprecation warning
   assert:
-    that: '{{ thats }}'
+    that: '{{ that_list }}'
   vars:
     ansible_deprecation_warnings: true
-    thats:
+    that_list:
       - '{{ 1 == 1 }}'
   register: result
 

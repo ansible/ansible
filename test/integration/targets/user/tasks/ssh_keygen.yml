@@ -8,7 +8,7 @@
       - '{{ssh_key_file}}'
       - '{{pub_file}}'
   block:
-  - name: Ensure clean/non existsing ansibulluser
+  - name: Ensure clean/non existing ansibulluser
     user: name=ansibulluser state=absent
 
   - name: Test creating ssh key creation
@@ -37,7 +37,7 @@
       file: path={{ home ~ item }} state=absent
       loop: '{{ key_files }}'
 
-    - name: Ensure clean/non existsing ansibulluser
+    - name: Ensure clean/non existing ansibulluser
       user: name=ansibulluser state=absent
 
   - name: Ensure we don't break on conflicts
@@ -96,5 +96,5 @@
       file: path={{ home ~ item }} state=absent
       loop: '{{ key_files + [flagfile.path] }}'
 
-    - name: Ensure clean/non existsing ansibulluser
+    - name: Ensure clean/non existing ansibulluser
       user: name=ansibulluser state=absent

@@ -724,7 +724,7 @@ class Dnf5Module(YumDnf):
                     # package specs that evaluate to a single package, trying to mimic what would the dnf machinery do
                     # for glob package specs and then filtering those for allow_downgrade appears to always
                     # result in naive/inferior solution.
-                    # TODO reasearch how feasible it is to implement the above
+                    # TODO research how feasible it is to implement the above
                     if upgrade:
                         # for upgrade we pass the spec to both upgrade and install, to satisfy both available and installed
                         # packages evaluated from the glob spec

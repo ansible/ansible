@@ -712,7 +712,7 @@
   register: dpkg_result
   ignore_errors: true
 
-- name: Verify that package removal was succesfull
+- name: Verify that package removal was successful
   assert:
     that:
     - package_removed is success

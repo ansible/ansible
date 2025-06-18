@@ -106,8 +106,8 @@ class TestAnsibleModuleExitValuesRemoved:
 
     DATA = (
         (
-            dict(username='person', password='$ecret k3y'),
-            dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
+            dict(username='person', password='$secret k3y'),
+            dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
             dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here',
@@ -115,15 +115,15 @@ class TestAnsibleModuleExitValuesRemoved:
         ),
         (
             dict(username='person', password='password12345'),
-            dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:password12345@foo.com/login/',
                  not_secret='following the leader', msg='here'),
-            dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
+            dict(one=1, pwd='$secret k3y', url='https://username:********@foo.com/login/',
                  not_secret='following the leader', msg='here',
                  invocation=dict(module_args=dict(password=OMIT, token=None, username='person'))),
         ),
         (
-            dict(username='person', password='$ecret k3y'),
-            dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
+            dict(username='person', password='$secret k3y'),
+            dict(one=1, pwd='$secret k3y', url='https://username:$secret k3y@foo.com/login/',
                  not_secret='following the leader', msg='here'),
             dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
                  not_secret='following the leader', msg='here',

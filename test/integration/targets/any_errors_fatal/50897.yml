@@ -4,13 +4,13 @@
   tasks:
     - name: EXPECTED FAILURE include_role that doesn't exist
       include_role:
-        name: 'non-existant-role'
+        name: 'non-existent-role'
       when:
         - inventory_hostname == 'testhost2'
         - test_name == 'test_include_role'
 
     - name: EXPECTED FAILURE include_tasks that don't exist
-      include_tasks: non-existant.yml
+      include_tasks: non-existent.yml
       when:
         - inventory_hostname == 'testhost2'
         - test_name == 'test_include_tasks'

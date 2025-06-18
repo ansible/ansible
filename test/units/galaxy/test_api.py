@@ -858,7 +858,7 @@ def test_get_collection_versions(api_version, token_type, token_ins, monkeypatch
             },
             {
                 'version': '1.0.1',
-                'href': '/api/v3/plugin/ansible/content/pubished/collections/index/ns/col/versions/1.0.1/',
+                'href': '/api/v3/plugin/ansible/content/published/collections/index/ns/col/versions/1.0.1/',
             },
         ],
     }

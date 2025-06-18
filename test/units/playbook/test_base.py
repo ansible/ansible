@@ -59,7 +59,7 @@ class TestBase(unittest.TestCase):
         self.assertIsInstance(self.b, base.Base)
         self.assertIsInstance(self.b, self.ClassUnderTest)
 
-    # dump me doesnt return anything or change anything so not much to assert
+    # dump me doesn't return anything or change anything so not much to assert
     def test_dump_me_empty(self):
         self.b.dump_me()
 

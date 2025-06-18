@@ -32,7 +32,7 @@
         - name: Include task inside always
           include_tasks: tasks4.yml
 
-        - name: Validate that variables set in previously improted tasks are passed down
+        - name: Validate that variables set in previously imported tasks are passed down
           include_tasks: validate3.yml
 
         - name: Assert that tasks4 was included

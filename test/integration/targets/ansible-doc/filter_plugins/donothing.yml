@@ -1,7 +1,7 @@
 DOCUMENTATION:
   name: donothing
   author: lazy
-  version_added: 'histerical'
+  version_added: 'hysterical'
   short_description: noop
   description:
     - don't do anything

@@ -7,7 +7,7 @@
       delegate_facts: true
       loop: "{{ groups['all'] | difference(['localhost']) }}"
 
-    - name: ensure we didnt create it on current host
+    - name: ensure we didn't create it on current host
       assert:
         that:
           - test is undefined
@@ -20,7 +20,7 @@
       loop: "{{ groups['all'] | difference(['localhost'])}}"
 
 
-- name: test that we don't polute whole group with one value
+- name: test that we don't pollute whole group with one value
   hosts: localhost
   gather_facts: no
   vars:

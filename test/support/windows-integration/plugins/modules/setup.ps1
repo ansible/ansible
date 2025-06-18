@@ -28,7 +28,7 @@ Function Get-CustomFacts {
 
 Function Get-MachineSid {
     # The Machine SID is stored in HKLM:\SECURITY\SAM\Domains\Account and is
-    # only accessible by the Local System account. This method get's the local
+    # only accessible by the Local System account. This method gets the local
     # admin account (ends with -500) and lops it off to get the machine sid.
 
     $machine_sid = $null

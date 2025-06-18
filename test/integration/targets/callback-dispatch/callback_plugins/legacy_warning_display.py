@@ -25,7 +25,7 @@ class CallbackModule(CallbackBase):
         'v2_playbook_on_include', 'v2_runner_on_start',
     }
 
-    # we're abusing runtime assertions to signify failure in this integration test component; ensure they're not disabled by opimizations
+    # we're abusing runtime assertions to signify failure in this integration test component; ensure they're not disabled by optimizations
     try:
         assert False
     except AssertionError:

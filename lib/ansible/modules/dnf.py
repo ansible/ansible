@@ -747,7 +747,7 @@ class DnfModule(YumDnf):
                 # result in naive/inferior solution.
                 # NOTE this has historically never worked even before https://github.com/ansible/ansible/pull/82725
                 # where our (buggy) custom code ignored wildcards for the installed checks.
-                # TODO reasearch how feasible it is to implement the above
+                # TODO research how feasible it is to implement the above
                 if upgrade:
                     # for upgrade we pass the spec to both upgrade and install, to satisfy both available and installed
                     # packages evaluated from the glob spec

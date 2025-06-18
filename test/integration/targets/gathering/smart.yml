@@ -13,7 +13,7 @@
 
 - hosts: testhost
   tasks:
-    - name: ensure we still have facts, but didnt pickup new local ones
+    - name: ensure we still have facts, but didn't pickup new local ones
       assert:
         that:
             - ansible_facts is defined and 'fqdn' in ansible_facts

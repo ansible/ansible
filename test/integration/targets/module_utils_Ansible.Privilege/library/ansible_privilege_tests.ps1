@@ -179,7 +179,7 @@ $tests = @{
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equal -Expected 0
         $actual.ContainsKey("SeTcbPrivilege") | Assert-Equal -Expected $false
 
-        # Now verify a no-op enabler will not rever back to disabled
+        # Now verify a no-op enabler will not revert back to disabled
         $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
         $enabler2.Dispose()
         $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
@@ -217,7 +217,7 @@ $tests = @{
             Assert-Equal -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equal -Expected 0
 
-        # Now verify a no-op enabler will not rever back to disabled
+        # Now verify a no-op enabler will not revert back to disabled
         $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
         $enabler2.Dispose()
         $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)

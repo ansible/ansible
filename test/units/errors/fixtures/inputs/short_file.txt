@@ -4,4 +4,4 @@ another line exceeding 120 chars content content content content content content
 yet another line exceeding 120 chars content content content content content content content content content content content content content content content content content content EOL
 short
 a line of reasonably normal length
-a line of exactly 118 chars content content content content content content content content content content conten EOL
+a line of exactly 118 chars content content content content content content content content content content finish EOL

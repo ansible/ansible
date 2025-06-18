@@ -179,7 +179,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
         add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module, return_docs=(section == 'RETURN'))
 
         if section == 'DOCUMENTATION':
-            # notes, seealso, options and attributes entries are specificly merged, but only occur in documentation section
+            # notes, seealso, options and attributes entries are specifically merged, but only occur in documentation section
             for doc_key in ['notes', 'seealso']:
                 if doc_key in fragment:
                     entries = fragment.pop(doc_key)

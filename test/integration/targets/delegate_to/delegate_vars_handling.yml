@@ -45,6 +45,6 @@
         that:
             - bad_args_ping is failed or bad_args_ping is unreachable
 
-    - name: this should work by ignoring the bad ags for orig host
+    - name: this should work by ignoring the bad args for orig host
       ping:
       delegate_to: delegatetome
