@@ -71,3 +71,8 @@ class Handler(Task):
 
     def is_host_notified(self, host):
         return host in self.notified_hosts
+
+    def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Task:
+        new_me = super().copy(exclude_parent, exclude_tasks)
+        new_me.notified_hosts = self.notified_hosts.copy()
+        return new_me

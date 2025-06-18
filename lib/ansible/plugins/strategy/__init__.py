@@ -776,11 +776,6 @@ class StrategyBase:
         """
         ti_copy = included_file._task.copy(exclude_parent=True)
         ti_copy._parent = included_file._task._parent
-
-        temp_vars = ti_copy.vars | included_file._vars
-
-        ti_copy.vars = temp_vars
-
         return ti_copy
 
     def _load_included_file(self, included_file: IncludedFile, iterator, is_handler=False):
