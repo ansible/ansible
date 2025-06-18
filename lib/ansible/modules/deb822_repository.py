@@ -463,7 +463,7 @@ def main():
             },
             
              'dearmor': {
-                'type' : 'str',
+                'type' : 'bool',
                 'default': 'false'
             }
             
