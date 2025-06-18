@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 
 # backwards compat
-from builtins import zip # pylint: disable=unused-import
+from builtins import zip  # pylint: disable=unused-import
 
 from struct import pack
 from socket import inet_ntoa
