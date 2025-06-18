@@ -127,7 +127,7 @@
       - "ssh_user_and_port_and_origin == [['lola', 'var: ansible_ssh_user'], [2022, 'var: ansible_ssh_port']]"
       - yolo_remote == ["yolo"]
       - config_origin1 is list
-      - 'config_origin[1] == "default"'
+      - 'config_origin1[1] == "default"'
       - config_origin2 is list
       - "config_origin2[0] == 'yolo'"
       - 'config_origin2[1] == "var: _z_test_entry"'
