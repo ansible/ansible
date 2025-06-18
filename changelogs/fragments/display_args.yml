@@ -1,0 +1,5 @@
+minor_changes:
+  - display - The ``formatted`` arg to ``warning`` has no effect.
+    Warning wrapping is left to the consumer (e.g. terminal, browser).
+  - display - The ``wrap_text`` and ``stderr`` arguments to ``error`` have no effect.
+    Errors are always sent to stderr and wrapping is left to the consumer (e.g. terminal, browser).

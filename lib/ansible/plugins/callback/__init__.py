@@ -353,8 +353,7 @@ class CallbackBase(AnsiblePlugin):
         if res.pop('warnings', None) and self._current_task_result and (warnings := self._current_task_result.warnings):
             # display warnings from the current task result if `warnings` was not removed from `result` (or made falsey)
             for warning in warnings:
-                # DTFIX3: what to do about propagating wrap_text from the original display.warning call?
-                self._display._warning(warning, wrap_text=False)
+                self._display._warning(warning)
 
         if res.pop('deprecations', None) and self._current_task_result and (deprecations := self._current_task_result.deprecations):
             # display deprecations from the current task result if `deprecations` was not removed from `result` (or made falsey)
@@ -364,7 +363,7 @@ class CallbackBase(AnsiblePlugin):
     def _handle_exception(self, result: _c.MutableMapping[str, t.Any], use_stderr: bool = False) -> None:
         if result.pop('exception', None) and self._current_task_result and (exception := self._current_task_result.exception):
             # display exception from the current task result if `exception` was not removed from `result` (or made falsey)
-            self._display._error(exception, wrap_text=False, stderr=use_stderr)
+            self._display._error(exception, stderr=use_stderr)
 
     def _handle_warnings_and_exception(self, result: CallbackTaskResult) -> None:
         """Standardized handling of warnings/deprecations and exceptions from a task/item result."""
