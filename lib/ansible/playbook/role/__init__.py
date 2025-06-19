@@ -154,7 +154,12 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @cached_property
     def fully_qualified_name(self):
-        return f"{self._role_collection}.{self._role_path}.{self._role_name}"
+        fqname = self._role_name
+        if self._role_path:
+            fqname = f"{self._role_path}.{fqname}"
+        if self._role_collection:
+            fqname = f"{self._role_collection}.{fqname}"
+        return fqname
 
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:
