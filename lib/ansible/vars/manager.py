@@ -189,6 +189,7 @@ class VariableManager:
         def _combine_and_track(data, new_data, source):
             # FIXME: this no longer does any tracking, only a slight optimization for empty new_data
             if new_data == {}:
+                display.debug(f"Combining {len(new_data)} vars from {source}")
                 return data
 
             return combine_vars(data, new_data)
