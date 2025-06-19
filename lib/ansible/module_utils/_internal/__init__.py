@@ -4,8 +4,10 @@ import collections.abc as c
 
 import typing as t
 
+if t.TYPE_CHECKING:
+    from ansible.module_utils.compat.typing import TypeGuard
 
-# DTFIX-RELEASE: bikeshed "intermediate"
+
 INTERMEDIATE_MAPPING_TYPES = (c.Mapping,)
 """
 Mapping types which are supported for recursion and runtime usage, such as in serialization and templating.
@@ -19,20 +21,18 @@ These will be converted to a simple Python `list` before serialization or storag
 CAUTION: Scalar types which are sequences should be excluded when using this.
 """
 
-ITERABLE_SCALARS_NOT_TO_ITERATE_FIXME = (str, bytes)
+ITERABLE_SCALARS_NOT_TO_ITERATE = (str, bytes)
 """Scalars which are also iterable, and should thus be excluded from iterable checks."""
 
 
-def is_intermediate_mapping(value: object) -> bool:
+def is_intermediate_mapping(value: object) -> TypeGuard[c.Mapping]:
     """Returns `True` if `value` is a type supported for projection to a Python `dict`, otherwise returns `False`."""
-    # DTFIX-RELEASE: bikeshed name
     return isinstance(value, INTERMEDIATE_MAPPING_TYPES)
 
 
-def is_intermediate_iterable(value: object) -> bool:
+def is_intermediate_iterable(value: object) -> TypeGuard[c.Iterable]:
     """Returns `True` if `value` is a type supported for projection to a Python `list`, otherwise returns `False`."""
-    # DTFIX-RELEASE: bikeshed name
-    return isinstance(value, INTERMEDIATE_ITERABLE_TYPES) and not isinstance(value, ITERABLE_SCALARS_NOT_TO_ITERATE_FIXME)
+    return isinstance(value, INTERMEDIATE_ITERABLE_TYPES) and not isinstance(value, ITERABLE_SCALARS_NOT_TO_ITERATE)
 
 
 is_controller: bool = False

@@ -40,7 +40,7 @@ param([ScriptBlock]$ScriptBlock, $Param)
 & $ScriptBlock.Ast.GetScriptBlock() @Param
 '@).AddParameters(
     @{
-        ScriptBlock = $execInfo.ScriptBlock
+        ScriptBlock = $execInfo.ScriptInfo.ScriptBlock
         Param = $execInfo.Parameters
     })
 
@@ -64,7 +64,7 @@ $jobError = $null
 try {
     $jobAsyncResult = $ps.BeginInvoke($pipelineInput, $invocationSettings, $null, $null)
     $jobAsyncResult.AsyncWaitHandle.WaitOne($Timeout * 1000) > $null
-    $result.finished = 1
+    $result.finished = $true
 
     if ($jobAsyncResult.IsCompleted) {
         $jobOutput = $ps.EndInvoke($jobAsyncResult)

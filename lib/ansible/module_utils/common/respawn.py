@@ -3,15 +3,14 @@
 
 from __future__ import annotations
 
-import dataclasses
 import os
 import pathlib
 import subprocess
 import sys
 import typing as t
 
-from ansible.module_utils._internal import _plugin_exec_context
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils._internal._ansiballz import _respawn
 
 _ANSIBLE_PARENT_PATH = pathlib.Path(__file__).parents[3]
 
@@ -41,7 +40,7 @@ def respawn_module(interpreter_path) -> t.NoReturn:
         raise Exception('module has already been respawned')
 
     # FUTURE: we need a safe way to log that a respawn has occurred for forensic/debug purposes
-    payload = _create_payload()
+    payload = _respawn.create_payload()
     stdin_read, stdin_write = os.pipe()
     os.write(stdin_write, to_bytes(payload))
     os.close(stdin_write)
@@ -61,10 +60,12 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
     :arg module_name: fully-qualified Python module name to probe for (for example, ``selinux``)
     """
     PYTHONPATH = os.getenv('PYTHONPATH', '')
+
     env = os.environ.copy()
     env.update({
         'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')
     })
+
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
@@ -83,48 +84,3 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
             continue
 
     return None
-
-
-def _create_payload():
-    # FIXME: move this into _ansiballz and skip the template
-    from ansible.module_utils import basic
-
-    module_fqn = sys.modules['__main__']._module_fqn
-    modlib_path = sys.modules['__main__']._modlib_path
-
-    respawn_code_template = """
-if __name__ == '__main__':
-    import runpy
-    import sys
-
-    json_params = {json_params!r}
-    profile = {profile!r}
-    plugin_info_dict = {plugin_info_dict!r}
-    module_fqn = {module_fqn!r}
-    modlib_path = {modlib_path!r}
-
-    sys.path.insert(0, modlib_path)
-
-    from ansible.module_utils._internal import _ansiballz
-
-    _ansiballz.run_module(
-        json_params=json_params,
-        profile=profile,
-        plugin_info_dict=plugin_info_dict,
-        module_fqn=module_fqn,
-        modlib_path=modlib_path,
-        init_globals=dict(_respawned=True),
-    )
-"""
-
-    plugin_info = _plugin_exec_context.PluginExecContext.get_current_plugin_info()
-
-    respawn_code = respawn_code_template.format(
-        json_params=basic._ANSIBLE_ARGS,
-        profile=basic._ANSIBLE_PROFILE,
-        plugin_info_dict=dataclasses.asdict(plugin_info),
-        module_fqn=module_fqn,
-        modlib_path=modlib_path,
-    )
-
-    return respawn_code

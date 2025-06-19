@@ -16,10 +16,9 @@ import typing as t
 
 import yaml
 
-from jinja2 import __version__ as j2_version
-
 import ansible
 from ansible import constants as C
+from ansible._internal import _templating
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
@@ -56,7 +55,10 @@ class DeprecatedArgument:
 
         from ansible.utils.display import Display
 
-        Display().deprecated(f'The {option!r} argument is deprecated.', version=self.version)
+        Display().deprecated(  # pylint: disable=ansible-invalid-deprecated-version
+            msg=f'The {option!r} argument is deprecated.',
+            version=self.version,
+        )
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -241,7 +243,7 @@ def _git_repo_info(repo_path):
                     repo_path = gitdir
                 else:
                     repo_path = os.path.join(repo_path[:-4], gitdir)
-            except (IOError, AttributeError):
+            except (OSError, AttributeError):
                 return ''
         with open(os.path.join(repo_path, "HEAD")) as f:
             line = f.readline().rstrip("\n")
@@ -310,7 +312,7 @@ def version(prog=None):
     result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
     result.append("  executable location = %s" % sys.argv[0])
     result.append("  python version = %s (%s)" % (''.join(sys.version.splitlines()), to_native(sys.executable)))
-    result.append("  jinja version = %s" % j2_version)
+    result.append(f"  jinja version = {_templating.jinja2_version}")
     result.append(f"  pyyaml version = {yaml.__version__} ({libyaml_fragment})")
 
     return "\n".join(result)
@@ -532,13 +534,17 @@ def _tagged_type_factory(name: str, func: t.Callable[[str], object], /) -> t.Cal
     def tag_value(value: str) -> object:
         result = func(value)
 
-        if result is value:
+        if result is value or func is str:
             # Values which are not mutated are automatically trusted for templating.
             # The `is` reference equality is critically important, as other types may only alter the tags, so object equality is
             # not sufficient to prevent them being tagged as trusted when they should not.
+            # Explicitly include all usages using the `str` type factory since it strips tags.
             result = TrustedAsTemplate().tag(result)
 
-        return Origin(description=f'<CLI option {name!r}>').tag(result)
+        if not (origin := Origin.get_tag(value)):
+            origin = Origin(description=f'<CLI option {name!r}>')
+
+        return origin.tag(result)
 
     tag_value._name = name  # simplify debugging by attaching the argument name to the function
 

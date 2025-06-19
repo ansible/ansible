@@ -28,8 +28,12 @@ $Host.Runspace.Debugger.SetDebugMode([DebugModes]::RemoteScript)
 Function New-CoverageBreakpointsForScriptBlock {
     Param (
         [Parameter(Mandatory)]
-        [ScriptBlock]
-        $ScriptBlock,
+        [string]
+        $ScriptName,
+
+        [Parameter(Mandatory)]
+        [ScriptBlockAst]
+        $ScriptBlockAst,
 
         [Parameter(Mandatory)]
         [String]
@@ -39,7 +43,7 @@ Function New-CoverageBreakpointsForScriptBlock {
     $predicate = {
         $args[0] -is [CommandBaseAst]
     }
-    $scriptCmds = $ScriptBlock.Ast.FindAll($predicate, $true)
+    $scriptCmds = $ScriptBlockAst.FindAll($predicate, $true)
 
     # Create an object that tracks the Ansible path of the file and the breakpoints that have been set in it
     $info = [PSCustomObject]@{
@@ -68,7 +72,7 @@ Function New-CoverageBreakpointsForScriptBlock {
         }
 
         # Action is explicitly $null as it will slow down the runtime quite dramatically.
-        $b = $lineCtor.Invoke(@($ScriptBlock.File, $cmd.Extent.StartLineNumber, $cmd.Extent.StartColumnNumber, $null))
+        $b = $lineCtor.Invoke(@($ScriptName, $cmd.Extent.StartLineNumber, $cmd.Extent.StartColumnNumber, $null))
         $info.Breakpoints.Add($b)
     }
 
@@ -102,11 +106,16 @@ try {
     $coveragePathFilter = $PathFilter.Split(":", [StringSplitOptions]::RemoveEmptyEntries)
     $breakpointInfo = @(
         foreach ($scriptName in @($ModuleName; $actionParams.PowerShellModules)) {
-            $scriptInfo = Get-AnsibleScript -Name $scriptName -IncludeScriptBlock
+            # We don't use -IncludeScriptBlock as the script might be untrusted
+            # and will run under CLM. While we recreate the ScriptBlock here it
+            # is only to get the AST that contains the statements and their
+            # line numbers to create the breakpoint info for.
+            $scriptInfo = Get-AnsibleScript -Name $scriptName
 
             if (Compare-PathFilterPattern -Patterns $coveragePathFilter -Path $scriptInfo.Path) {
                 $covParams = @{
-                    ScriptBlock = $scriptInfo.ScriptBlock
+                    ScriptName = $scriptInfo.Name
+                    ScriptBlockAst = [ScriptBlock]::Create($scriptInfo.Script).Ast
                     AnsiblePath = $scriptInfo.Path
                 }
                 New-CoverageBreakpointsForScriptBlock @covParams

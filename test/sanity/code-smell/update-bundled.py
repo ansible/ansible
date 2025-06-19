@@ -88,18 +88,17 @@ def get_bundled_metadata(filename):
                 return None
 
             if line.strip().startswith('# CANT_UPDATE'):
-                print(
-                    '{0} marked as CANT_UPDATE, so skipping. Manual '
-                    'check for CVEs required.'.format(filename))
+                print(f'{filename} marked as CANT_UPDATE, so skipping. Manual check for CVEs required.')
                 return None
 
             if line.strip().startswith('_BUNDLED_METADATA'):
-                data = line[line.index('{'):].strip()
+                data = line[line.index('{') :].strip()
                 break
         else:
-            raise ValueError('Unable to check bundled library for update.  Please add'
-                             ' _BUNDLED_METADATA dictionary to the library file with'
-                             ' information on pypi name and bundled version.')
+            raise ValueError(
+                'Unable to check bundled library for update. '
+                'Please add _BUNDLED_METADATA dictionary to the library file with information on pypi name and bundled version.'
+            )
         metadata = json.loads(data)
     return metadata
 
@@ -138,20 +137,20 @@ def main():
         if filename.startswith('test/support/'):
             continue  # bundled support code does not need to be updated or tracked
 
-        print('{0}: ERROR: File contains _BUNDLED_METADATA but needs to be added to'
-              ' test/sanity/code-smell/update-bundled.py'.format(filename))
+        print(f'{filename}: ERROR: File contains _BUNDLED_METADATA but needs to be added to test/sanity/code-smell/update-bundled.py')
 
     for filename in bundled_libs:
         try:
             metadata = get_bundled_metadata(filename)
         except ValueError as e:
-            print('{0}: ERROR: {1}'.format(filename, e))
+            print(f'{filename}: ERROR: {e}')
             continue
-        except (IOError, OSError) as e:
+        except OSError as e:
             if e.errno == 2:
-                print('{0}: ERROR: {1}.  Perhaps the bundled library has been removed'
-                      ' or moved and the bundled library test needs to be modified as'
-                      ' well?'.format(filename, e))
+                print(
+                    f'{filename}: ERROR: {e}. '
+                    'Perhaps the bundled library has been removed or moved and the bundled library test needs to be modified as well?'
+                )
 
         if metadata is None:
             continue
@@ -163,12 +162,11 @@ def main():
         latest_version = get_latest_applicable_version(pypi_data, constraints)
 
         if LooseVersion(metadata['version']) < LooseVersion(latest_version):
-            print('{0}: UPDATE {1} from {2} to {3} {4}'.format(
-                filename,
-                metadata['pypi_name'],
-                metadata['version'],
-                latest_version,
-                'https://pypi.org/pypi/{0}/json'.format(metadata['pypi_name'])))
+            name = metadata['pypi_name']
+            version = metadata['version']
+            url = f"https://pypi.org/pypi/{name}/json"
+
+            print(f"{filename}: UPDATE {name} from {version} to {latest_version} {url}")
 
 
 if __name__ == '__main__':

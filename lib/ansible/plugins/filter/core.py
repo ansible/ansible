@@ -26,16 +26,16 @@ from jinja2.filters import do_map, do_select, do_selectattr, do_reject, do_rejec
 from jinja2.environment import Environment
 
 from ansible._internal._templating import _lazy_containers
-from ansible.errors import AnsibleFilterError, AnsibleTypeError
+from ansible.errors import AnsibleFilterError, AnsibleTypeError, AnsibleTemplatePluginError
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.json import get_encoder, get_decoder
 from ansible.module_utils.six import string_types, integer_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins import accept_args_markers, accept_lazy_markers
+from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
+from ansible._internal._yaml import _loader as _yaml_loader
 from ansible.utils.display import Display
 from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
@@ -47,13 +47,13 @@ display = Display()
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
-def to_yaml(a, *_args, default_flow_style: bool | None = None, dump_vault_tags: bool | None = None, **kwargs) -> str:
+@accept_lazy_markers
+def to_yaml(a, *_args, default_flow_style: bool | None = None, **kwargs) -> str:
     """Serialize input as terse flow-style YAML."""
-    dumper = partial(AnsibleDumper, dump_vault_tags=dump_vault_tags)
-
-    return yaml.dump(a, Dumper=dumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
+    return yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
 
 
+@accept_lazy_markers
 def to_nice_yaml(a, indent=4, *_args, default_flow_style=False, **kwargs) -> str:
     """Serialize input as verbose multi-line YAML."""
     return to_yaml(a, indent=indent, default_flow_style=default_flow_style, **kwargs)
@@ -98,6 +98,7 @@ _valid_bool_false = {'no', 'off', 'false', '0'}
 def to_bool(value: object) -> bool:
     """Convert well-known input values to a boolean value."""
     value_to_check: object
+
     if isinstance(value, str):
         value_to_check = value.lower()  # accept mixed case variants
     elif isinstance(value, int):  # bool is also an int
@@ -105,17 +106,23 @@ def to_bool(value: object) -> bool:
     else:
         value_to_check = value
 
-    if value_to_check in _valid_bool_true:
-        return True
+    try:
+        if value_to_check in _valid_bool_true:
+            return True
 
-    if value_to_check in _valid_bool_false:
-        return False
+        if value_to_check in _valid_bool_false:
+            return False
 
-    # if we're still here, the value is unsupported- always fire a deprecation warning
-    result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
+        # if we're still here, the value is unsupported- always fire a deprecation warning
+        result = value_to_check == 1  # backwards compatibility with the old code which checked: value in ('yes', 'on', '1', 'true', 1)
+    except TypeError:
+        result = False
 
     # NB: update the doc string to reflect reality once this fallback is removed
-    display.deprecated(f'The `bool` filter coerced invalid value {value!r} ({native_type_name(value)}) to {result!r}.', version='2.23')
+    display.deprecated(
+        msg=f'The `bool` filter coerced invalid value {value!r} ({native_type_name(value)}) to {result!r}.',
+        version='2.23',
+    )
 
     return result
 
@@ -244,20 +251,24 @@ def regex_escape(string, re_type='python'):
 
 
 def from_yaml(data):
-    if isinstance(data, string_types):
-        # The ``text_type`` call here strips any custom
-        # string wrapper class, so that CSafeLoader can
-        # read the data
-        return yaml_load(text_type(to_text(data, errors='surrogate_or_strict')))
+    if data is None:
+        return None
+
+    if isinstance(data, str):
+        return yaml.load(data, Loader=_yaml_loader.AnsibleInstrumentedLoader)  # type: ignore[arg-type]
+
+    display.deprecated(f"The from_yaml filter ignored non-string input of type {native_type_name(data)!r}.", version='2.23', obj=data)
     return data
 
 
 def from_yaml_all(data):
-    if isinstance(data, string_types):
-        # The ``text_type`` call here strips any custom
-        # string wrapper class, so that CSafeLoader can
-        # read the data
-        return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
+    if data is None:
+        return []  # backward compatibility; ensure consistent result between classic/native Jinja for None/empty string input
+
+    if isinstance(data, str):
+        return yaml.load_all(data, Loader=_yaml_loader.AnsibleInstrumentedLoader)  # type: ignore[arg-type]
+
+    display.deprecated(f"The from_yaml_all filter ignored non-string input of type {native_type_name(data)!r}.", version='2.23', obj=data)
     return data
 
 
@@ -335,7 +346,7 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
 @accept_args_markers
 def mandatory(a: object, msg: str | None = None) -> object:
     """Make a variable mandatory."""
-    # DTFIX-RELEASE: deprecate this filter; there are much better ways via undef, etc...
+    # DTFIX-FUTURE: deprecate this filter; there are much better ways via undef, etc...
     #                also remember to remove unit test checking for _undefined_name
     if isinstance(a, UndefinedMarker):
         if msg is not None:
@@ -404,6 +415,13 @@ def comment(text, style='plain', **kw):
             'end': '-->'
         }
     }
+
+    if style not in comment_styles:
+        raise AnsibleTemplatePluginError(
+            message=f"Invalid style {style!r}.",
+            help_text=f"Available styles: {', '.join(comment_styles)}",
+            obj=style,
+        )
 
     # Pointer to the right comment type
     style_params = comment_styles[style]
@@ -644,7 +662,7 @@ def _cleansed_groupby(*args, **kwargs):
 
     return res
 
-# DTFIX-RELEASE: make these dumb wrappers more dynamic
+# DTFIX-FUTURE: make these dumb wrappers more dynamic
 
 
 @accept_args_markers
@@ -796,7 +814,6 @@ class FilterModule(object):
             'groupby': _cleansed_groupby,
 
             # Jinja builtins that need special arg handling
-            # DTFIX-RELEASE: document these now that they're overridden, or hide them so they don't show up as undocumented
             'd': ansible_default,  # replaces the implementation instead of wrapping it
             'default': ansible_default,  # replaces the implementation instead of wrapping it
             'map': wrapped_map,
@@ -805,5 +822,3 @@ class FilterModule(object):
             'reject': wrapped_reject,
             'rejectattr': wrapped_rejectattr,
         }
-
-# DTFIX-RELEASE: document protomatter plugins, or hide them from ansible-doc/galaxy (not related to this code, but needed some place to put this comment)

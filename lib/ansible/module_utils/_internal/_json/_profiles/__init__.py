@@ -6,7 +6,7 @@ import json
 import typing as t
 
 from ansible.module_utils import _internal
-from ansible.module_utils.common import messages as _messages
+from ansible.module_utils._internal import _messages
 from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
     AnsibleSerializableWrapper,
@@ -87,7 +87,9 @@ For controller-to-module, type behavior is profile dependent.
 _common_module_response_types: frozenset[type[AnsibleSerializable]] = frozenset(
     {
         _messages.PluginInfo,
-        _messages.Detail,
+        _messages.PluginType,
+        _messages.Event,
+        _messages.EventChain,
         _messages.ErrorSummary,
         _messages.WarningSummary,
         _messages.DeprecationSummary,
@@ -203,10 +205,26 @@ class _JSONSerializationProfile(t.Generic[_T_encoder, _T_decoder]):
 
     @classmethod
     def handle_key(cls, k: t.Any) -> t.Any:
+        """Validation/conversion hook before a dict key is serialized. The default implementation only accepts str-typed keys."""
+        # NOTE: Since JSON requires string keys, there is no support for preserving tags on dictionary keys during serialization.
+
         if not isinstance(k, str):  # DTFIX-FUTURE: optimize this to use all known str-derived types in type map / allowed types
             raise TypeError(f'Key of type {type(k).__name__!r} is not JSON serializable by the {cls.profile_name!r} profile.')
 
         return k
+
+    @classmethod
+    def _handle_key_str_fallback(cls, k: t.Any) -> t.Any:
+        """Legacy implementations should use this key handler for backward compatibility with stdlib JSON key conversion quirks."""
+        # DTFIX-FUTURE: optimized exact-type table lookup first
+
+        if isinstance(k, str):
+            return k
+
+        if k is None or isinstance(k, (int, float)):
+            return json.dumps(k)
+
+        raise TypeError(f'Key of type {type(k).__name__!r} is not JSON serializable by the {cls.profile_name!r} profile.')
 
     @classmethod
     def default(cls, o: t.Any) -> t.Any:
@@ -373,8 +391,8 @@ Future code changes should further restrict bytes to string conversions to elimi
 Additional warnings at other boundaries may be needed to give users an opportunity to resolve the issues before they become errors.
 """
 # DTFIX-FUTURE: add strict UTF8 string encoding checking to serialization profiles (to match the checks performed during deserialization)
-# DTFIX-RELEASE: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
-# DTFIX-RELEASE: this config setting should probably be deprecated
+# DTFIX3: the surrogateescape note above isn't quite right, for encoding use surrogatepass, which does work
+# DTFIX-FUTURE: this config setting should probably be deprecated
 
 
 def _create_encoding_check_error() -> Exception:

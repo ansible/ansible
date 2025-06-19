@@ -6,10 +6,13 @@ import collections.abc as c
 import dataclasses
 import datetime
 import functools
+import inspect
+import re
 import typing as t
 
+from jinja2 import defaults
+
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
-from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible._internal._datatag._tags import TrustedAsTemplate
@@ -111,12 +114,12 @@ class JinjaPluginIntercept(c.MutableMapping):
                 return first_marker
 
         try:
-            with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers), PluginExecContext(executing_plugin=instance):
+            with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
                 return instance.j2_function(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
-            raise AnsibleTemplatePluginRuntimeError(instance.plugin_type, instance.ansible_name) from ex  # DTFIX-RELEASE: which name to use? use plugin info?
+            raise AnsibleTemplatePluginRuntimeError(instance.plugin_type, instance.ansible_name) from ex  # DTFIX-FUTURE: which name to use? use plugin info?
 
     def _wrap_test(self, instance: AnsibleJinja2Plugin) -> t.Callable:
         """Intercept point for all test plugins to ensure that args are properly templated/lazified."""
@@ -125,10 +128,12 @@ class JinjaPluginIntercept(c.MutableMapping):
         def wrapper(*args, **kwargs) -> bool | Marker:
             result = self._invoke_plugin(instance, *args, **kwargs)
 
+            if isinstance(result, Marker):
+                return result
+
             if not isinstance(result, bool):
                 template = TemplateContext.current().template_value
 
-                # DTFIX-RELEASE: which name to use? use plugin info?
                 _display.deprecated(
                     msg=f"The test plugin {instance.ansible_name!r} returned a non-boolean result of type {type(result)!r}. "
                     "Test plugins must have a boolean result.",
@@ -158,7 +163,7 @@ class JinjaPluginIntercept(c.MutableMapping):
 class _DirectCall:
     """Functions/methods marked `_DirectCall` bypass Jinja Environment checks for `Marker`."""
 
-    _marker_attr: str = "_directcall"
+    _marker_attr: t.Final[str] = "_directcall"
 
     @classmethod
     def mark(cls, src: _TCallable) -> _TCallable:
@@ -167,7 +172,7 @@ class _DirectCall:
 
     @classmethod
     def is_marked(cls, value: t.Callable) -> bool:
-        return callable(value) and getattr(value, "_directcall", False)
+        return callable(value) and getattr(value, cls._marker_attr, False)
 
 
 @_DirectCall.mark
@@ -212,10 +217,7 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
     wantlist = lookup_kwargs.pop('wantlist', False)
     errors = lookup_kwargs.pop('errors', 'strict')
 
-    with (
-        JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers),
-        PluginExecContext(executing_plugin=instance),
-    ):
+    with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
         try:
             if _TemplateConfig.allow_embedded_templates:
                 # for backwards compat, only trust constant templates in lookup terms
@@ -258,7 +260,7 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
-            # DTFIX-RELEASE: convert this to the new error/warn/ignore context manager
+            # DTFIX-FUTURE: convert this to the new error/warn/ignore context manager
             if errors == 'warn':
                 _display.error_as_warning(
                     msg=f'An error occurred while running the lookup plugin {plugin_name!r}.',
@@ -343,3 +345,28 @@ def _wrap_plugin_output(o: t.Any) -> t.Any:
         o = list(o)
 
     return _AnsibleLazyTemplateMixin._try_create(o, LazyOptions.SKIP_TEMPLATES)
+
+
+_PLUGIN_SOURCES = dict(
+    filter=defaults.DEFAULT_FILTERS,
+    test=defaults.DEFAULT_TESTS,
+)
+
+
+def _get_builtin_short_description(plugin: object) -> str:
+    """
+    Make a reasonable effort to break a function docstring down to a single sentence.
+    We can't use the full docstring due to embedded formatting, particularly RST.
+    This isn't intended to be perfect, just good enough until we can write our own docs for these.
+    """
+    value = re.split(r'(\.|!|\s\(|:\s)', inspect.getdoc(plugin), 1)[0].replace('\n', ' ')
+
+    if value:
+        value += '.'
+
+    return value
+
+
+def get_jinja_builtin_plugin_descriptions(plugin_type: str) -> dict[str, str]:
+    """Returns a dictionary of Jinja builtin plugin names and their short descriptions."""
+    return {f'ansible.builtin.{name}': _get_builtin_short_description(plugin) for name, plugin in _PLUGIN_SOURCES[plugin_type].items() if name.isidentifier()}

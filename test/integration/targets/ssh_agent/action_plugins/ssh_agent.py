@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 from ansible.plugins.action import ActionBase
-from ansible.utils._ssh_agent import SshAgentClient
+from ansible._internal._ssh._ssh_agent import SshAgentClient
 
 from cryptography.hazmat.primitives.serialization import ssh
 

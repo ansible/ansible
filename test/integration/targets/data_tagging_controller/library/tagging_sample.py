@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._internal._datatag._tags import Deprecated
+from ansible.module_utils.datatag import deprecate_value
 
 METADATA = """
 schema_version: 1
@@ -16,7 +16,7 @@ def main():
 
     something_old_value = 'an old thing'
     # Deprecated needs args; tag the value and store it
-    something_old_value = Deprecated(msg="`something_old` is deprecated, don't use it!", removal_version='1.2.3').tag(something_old_value)
+    something_old_value = deprecate_value(something_old_value, "`something_old` is deprecated, don't use it!", version='9.9999')
 
     result = {
         'something_old': something_old_value,

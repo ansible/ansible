@@ -328,3 +328,14 @@
     - exec_wrapper_scope.util_res.module_using_namespace == 'System.Security.Cryptography.X509Certificates.X509Certificate2'
     - exec_wrapper_scope.util_res.missing_using_namespace == True
     - exec_wrapper_scope.util_res.script_var == 'bar'
+
+- name: test module without any util references
+  test_no_utils:
+    foo: bar
+  register: no_utils_res
+
+- name: assert test module without any util references
+  assert:
+    that:
+    - no_utils_res is not changed
+    - "no_utils_res.complex_args == {'foo': 'bar'}"

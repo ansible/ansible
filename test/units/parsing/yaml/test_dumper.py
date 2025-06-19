@@ -86,20 +86,14 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
             self._dump_string(_DEFAULT_UNDEF, dumper=self.dumper)
 
 
-@pytest.mark.parametrize("filter_impl, dump_vault_tags, expected_output, expected_warning", [
-    (to_yaml, True, "!vault |-\n  ciphertext\n", None),
-    (to_yaml, None, "!vault |-\n  ciphertext\n", "Implicit YAML dumping"),
-    (to_yaml, False, "secret plaintext\n", None),
-    (to_nice_yaml, True, "!vault |-\n    ciphertext\n", None),
-    (to_nice_yaml, None, "!vault |-\n    ciphertext\n", "Implicit YAML dumping"),
-    (to_nice_yaml, False, "secret plaintext\n", None),
+@pytest.mark.parametrize("filter_impl, expected_output", [
+    (to_yaml, "!vault |-\n  ciphertext\n"),
+    (to_nice_yaml, "!vault |-\n    ciphertext\n"),
 ])
 def test_vaulted_value_dump(
-        filter_impl: t.Callable,
-        dump_vault_tags: bool | None,
-        expected_output: str,
-        expected_warning: str | None,
-        mocker: pytest_mock.MockerFixture
+    filter_impl: t.Callable,
+    expected_output: str,
+    mocker: pytest_mock.MockerFixture
 ) -> None:
     """Validate that strings tagged VaultedValue are represented properly."""
     value = VaultedValue(ciphertext="ciphertext").tag("secret plaintext")
@@ -108,14 +102,9 @@ def test_vaulted_value_dump(
 
     _deprecated_spy = mocker.spy(Display(), 'deprecated')
 
-    res = filter_impl(value, dump_vault_tags=dump_vault_tags)
+    res = filter_impl(value)
 
     assert res == expected_output
-
-    # deprecated: description='enable the assertion for the deprecation warning below' core_version='2.21'
-    # if expected_warning:
-    #     assert _deprecated_spy.call_count == 1
-    #     assert expected_warning in _deprecated_spy.call_args.kwargs['msg']
 
 
 _test_tag = Deprecated(msg="test")

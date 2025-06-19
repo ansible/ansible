@@ -18,7 +18,7 @@ def get_controller_serialize_map() -> dict[type, t.Callable]:
     return {
         _lazy_containers._AnsibleLazyTemplateDict: _profiles._JSONSerializationProfile.discard_tags,
         _lazy_containers._AnsibleLazyTemplateList: _profiles._JSONSerializationProfile.discard_tags,
-        EncryptedString: str,  # preserves tags since this is an intance of EncryptedString; if tags should be discarded from str, another entry will handle it
+        EncryptedString: str,  # preserves tags since this is an instance of EncryptedString; if tags should be discarded from str, another entry will handle it
     }
 
 
@@ -45,7 +45,7 @@ def setup() -> None:
     """No-op function to ensure that side-effect only imports of this module are not flagged/removed as 'unused'."""
 
 
-# DTFIX-RELEASE: this is really fragile- disordered/incorrect imports (among other things) can mess it up. Consider a hosting-env-managed context
+# DTFIX-FUTURE: this is really fragile- disordered/incorrect imports (among other things) can mess it up. Consider a hosting-env-managed context
 #  with an enum with at least Controller/Target/Unknown values, and possibly using lazy-init module shims or some other mechanism to allow controller-side
 #  notification/augmentation of this kind of metadata.
 _internal.get_controller_serialize_map = get_controller_serialize_map

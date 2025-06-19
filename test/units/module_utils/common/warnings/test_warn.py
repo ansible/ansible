@@ -7,21 +7,31 @@ from __future__ import annotations
 import pytest
 import typing as t
 
-from ansible.module_utils._internal import _traceback
+from ansible.module_utils._internal import _traceback, _messages
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common import warnings
-from ansible.module_utils.common.messages import WarningSummary, Detail
 
 from ansible.module_utils.common.warnings import warn
-from units.mock.messages import make_summary
+from ansible.module_utils.testing import patch_module_args
 from units.mock.module import ModuleEnvMocker
 
-pytestmark = pytest.mark.usefixtures("module_env_mocker")
+pytestmark = pytest.mark.usefixtures("as_target", "module_env_mocker")
 
 
 def test_warn():
     warn('Warning message')
     assert warnings.get_warning_messages() == ('Warning message',)
-    assert warnings.get_warnings() == [make_summary(WarningSummary, Detail(msg='Warning message'))]
+    assert warnings.get_warnings() == [_messages.WarningSummary(event=_messages.Event(msg='Warning message'))]
+
+
+def test_warn_via_module() -> None:
+    with patch_module_args():
+        am = AnsibleModule(argument_spec={})
+
+    am.warn('Warning message')
+
+    assert warnings.get_warning_messages() == ('Warning message',)
+    assert warnings.get_warnings() == [_messages.WarningSummary(event=_messages.Event(msg='Warning message'))]
 
 
 def test_multiple_warnings():
@@ -35,14 +45,14 @@ def test_multiple_warnings():
         warn(w)
 
     assert warnings.get_warning_messages() == tuple(messages)
-    assert warnings.get_warnings() == [make_summary(WarningSummary, Detail(msg=w)) for w in messages]
+    assert warnings.get_warnings() == [_messages.WarningSummary(event=_messages.Event(msg=w)) for w in messages]
 
 
 def test_dedupe_with_traceback(module_env_mocker: ModuleEnvMocker) -> None:
     module_env_mocker.set_traceback_config([_traceback.TracebackEvent.WARNING])
     msg = "a warning message"
 
-    # WarningMessageDetail dataclass object hash is the dedupe key; presence of differing tracebacks or SourceContexts affects de-dupe
+    # WarningSummary dataclass object hash is the dedupe key; presence of differing tracebacks or SourceContexts affects de-dupe
 
     for _i in range(0, 10):
         warn(msg)  # same location, same traceback- should be collapsed to one message

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
@@ -609,8 +608,8 @@ class Hostname(object):
         self.use = module.params['use']
 
         if self.use is not None:
-            strat = globals()['%sStrategy' % STRATS[self.use]]
-            self.strategy = strat(module)
+            strategy = globals()['%sStrategy' % STRATS[self.use]]
+            self.strategy = strategy(module)
         elif platform.system() == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             # This is Linux and systemd is active
             self.strategy = SystemdStrategy(module)

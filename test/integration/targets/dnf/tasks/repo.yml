@@ -19,6 +19,9 @@
       assert:
         that:
             - "'results' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_before
     # ============================================================================
     - name: Install dinginessentail-1.0-1 again
       dnf:
@@ -40,6 +43,13 @@
       assert:
         that:
             - "'msg' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_after
+
+    - assert:
+        that:
+          - dnf_history_lines_before.stdout == dnf_history_lines_after.stdout
     # ============================================================================
     - name: Install dinginessentail again (noop, module is idempotent)
       dnf:
@@ -619,3 +629,30 @@
       loop:
         - provides-package
         - provided-package
+
+- name: Test failures occured during loading repositories are properly handled
+  vars:
+    repo_name: test-non-existing-gpgkey-file
+  block:
+    - yum_repository:
+        name: "{{ repo_name }}"
+        baseurl: "file://{{ repodir }}"
+        description: "{{ repo_name }}"
+        repo_gpgcheck: true
+        skip_if_unavailable: false
+
+    - dnf:
+        name: dinginessentail
+        enablerepo: "{{ repo_name }}"
+        disablerepo: "*"
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+          - r.msg is contains("Couldn't open file")
+  always:
+    - file:
+        name: /etc/yum.repos.d/{{ repo_name }}.repo
+        state: absent

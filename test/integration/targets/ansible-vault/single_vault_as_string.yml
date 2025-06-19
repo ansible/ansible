@@ -69,14 +69,6 @@
           - vaulted_value|random(seed='foo') == ' '
           - vaulted_value|shuffle(seed='foo') == ["o", "f", "r", "b", "o", "a", " "]
           - vaulted_value|pprint == "'foo bar'"
-      when: ansible_python.version.major == 3
-
-    - assert:
-        that:
-          - vaulted_value|random(seed='foo') == 'r'
-          - vaulted_value|shuffle(seed='foo') == ["b", "o", "a", " ", "o", "f", "r"]
-          - vaulted_value|pprint == "u'foo bar'"
-      when: ansible_python.version.major == 2
 
     - assert:
         that:

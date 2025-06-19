@@ -14,13 +14,12 @@ import sys
 import typing as t
 
 import argparse
-import functools
 
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRuntimeError
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible._internal._json._profiles import _inventory_legacy
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
@@ -152,8 +151,8 @@ class InventoryCLI(CLI):
                 try:
                     with open(to_bytes(outfile), 'wb') as f:
                         f.write(to_bytes(results))
-                except (OSError, IOError) as e:
-                    raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
+                except OSError as ex:
+                    raise AnsibleError(f'Unable to write to destination file {outfile!r}.') from ex
             sys.exit(0)
 
         sys.exit(1)
@@ -162,11 +161,10 @@ class InventoryCLI(CLI):
     def dump(stuff):
         if context.CLIARGS['yaml']:
             import yaml
+
             from ansible.parsing.yaml.dumper import AnsibleDumper
 
-            # DTFIX-RELEASE: need shared infra to smuggle custom kwargs to dumpers, since yaml.dump cannot (as of PyYAML 6.0.1)
-            dumper = functools.partial(AnsibleDumper, dump_vault_tags=True)
-            results = to_text(yaml.dump(stuff, Dumper=dumper, default_flow_style=False, allow_unicode=True))
+            results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
             results = toml_dumps(stuff)
         else:

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# write > 13 chars to satisfy the check
+echo bogusbogusbogus
+
+# wait long enough for the parent process to fail accessing the socket file we didn't create
+# this ensures consistent failure on fast/slow test hosts
+sleep 3

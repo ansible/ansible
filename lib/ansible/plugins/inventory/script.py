@@ -98,7 +98,7 @@ EXAMPLES = r'''# fmt: code
     def get_api_data(namespace: str, pretty=False) -> str:
         """
         :param namespace: parameter for our custom api
-        :param pretty: Human redable JSON vs machine readable
+        :param pretty: Human readable JSON vs machine readable
         :return: JSON string
         """
         found_data = list(MyInventoryAPI(namespace))
@@ -367,7 +367,7 @@ def run_command(path: str, options: list[str], origin: Origin) -> tuple[str, str
     if stderr and not stderr.endswith('\n'):
         stderr += '\n'
 
-    # DTFIX-RELEASE: another use case for the "not quite help text, definitely not message" diagnostic output on errors
+    # DTFIX-FUTURE: another use case for the "not quite help text, definitely not message" diagnostic output on errors
     stderr_help_text = f'Standard error from inventory script:\n{stderr}' if stderr.strip() else None
 
     if sp.returncode != 0:

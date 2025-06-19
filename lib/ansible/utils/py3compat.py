@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import inspect
 import os
 
 from ansible.utils.display import Display
@@ -19,14 +18,10 @@ def __getattr__(name):
     if name != 'environ':
         raise AttributeError(name)
 
-    caller = inspect.stack()[1]
-
     display.deprecated(
-        (
-            'ansible.utils.py3compat.environ is deprecated in favor of os.environ. '
-            f'Accessed by {caller.filename} line number {caller.lineno}'
-        ),
+        msg='`ansible.utils.py3compat.environ` is deprecated.',
         version='2.20',
+        help_text='Use `os.environ` from the Python standard library instead.',
     )
 
     return os.environ

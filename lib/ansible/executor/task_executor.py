@@ -7,7 +7,6 @@ import os
 import time
 import json
 import pathlib
-import signal
 import subprocess
 import sys
 
@@ -17,14 +16,13 @@ import typing as t
 from ansible import constants as C
 from ansible.cli import scripts
 from ansible.errors import (
-    AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip, AnsibleTaskError,
+    AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import _RawTaskResult
 from ansible._internal._datatag import _utils
-from ansible.module_utils._internal._plugin_exec_context import PluginExecContext
-from ansible.module_utils.common.messages import Detail, WarningSummary, DeprecationSummary
-from ansible.module_utils.datatag import native_type_name
+from ansible.module_utils._internal import _messages
+from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_text, to_native
@@ -32,7 +30,6 @@ from ansible.module_utils.connection import write_to_stream
 from ansible.module_utils.six import string_types
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
-from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible._internal._templating._jinja_plugins import _invoke_lookup, _DirectCall
 from ansible._internal._templating._engine import TemplateEngine
@@ -42,7 +39,7 @@ from ansible.utils.display import Display, _DeferredWarningContext
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.manager import _deprecate_top_level_fact
-from ansible._internal._errors import _captured
+from ansible._internal._errors import _captured, _task_timeout, _error_utils
 
 if t.TYPE_CHECKING:
     from ansible.executor.task_queue_manager import FinalQueue
@@ -53,24 +50,6 @@ display = Display()
 RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]
 
 __all__ = ['TaskExecutor']
-
-
-class TaskTimeoutError(BaseException):
-    def __init__(self, message="", frame=None):
-
-        if frame is not None:
-            orig = frame
-            root = pathlib.Path(__file__).parent
-            while not pathlib.Path(frame.f_code.co_filename).is_relative_to(root):
-                frame = frame.f_back
-
-            self.frame = 'Interrupted at %s called from %s' % (orig, frame)
-
-        super(TaskTimeoutError, self).__init__(message)
-
-
-def task_timeout(signum, frame):
-    raise TaskTimeoutError(frame=frame)
 
 
 class TaskExecutor:
@@ -177,7 +156,7 @@ class TaskExecutor:
 
             return res
         except Exception as ex:
-            result = ActionBase.result_dict_from_exception(ex)
+            result = _error_utils.result_dict_from_exception(ex)
 
             self._task.update_result_no_log(self._task_templar, result)
 
@@ -364,7 +343,7 @@ class TaskExecutor:
             if self._connection and not isinstance(self._connection, string_types):
                 task_fields['connection'] = getattr(self._connection, 'ansible_name')
 
-            tr = TaskResult(
+            tr = _RawTaskResult(
                 host=self._host,
                 task=self._task,
                 return_data=res,
@@ -443,11 +422,11 @@ class TaskExecutor:
                 result = self._execute_internal(templar, variables)
                 self._apply_task_result_compat(result, warning_ctx)
                 _captured.AnsibleActionCapturedError.maybe_raise_on_result(result)
-            except Exception as ex:
+            except (Exception, _task_timeout.TaskTimeoutError) as ex:  # TaskTimeoutError is BaseException
                 try:
                     raise AnsibleTaskError(obj=self._task.get_ds()) from ex
                 except AnsibleTaskError as atex:
-                    result = ActionBase.result_dict_from_exception(atex)
+                    result = _error_utils.result_dict_from_exception(atex, accept_result_contribution=True)
                     result.setdefault('changed', False)
 
             self._task.update_result_no_log(templar, result)
@@ -531,7 +510,7 @@ class TaskExecutor:
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with delegation
         # and undefined vars (correct values are in cvars later on and connection plugins, if still error, blows up there)
 
-        # DTFIX-RELEASE: this should probably be declaratively handled in post_validate (or better, get rid of play_context)
+        # DTFIX-FUTURE: this should probably be declaratively handled in post_validate (or better, get rid of play_context)
         if context_validation_error is not None:
             raiseit = True
             if self._task.delegate_to:
@@ -540,7 +519,7 @@ class TaskExecutor:
                     if isinstance(context_validation_error.__cause__, AnsibleUndefinedVariable):
                         raiseit = False
                 elif isinstance(context_validation_error, AnsibleUndefinedVariable):
-                    # DTFIX-RELEASE: should not be possible to hit this now (all are AnsibleFieldAttributeError)?
+                    # DTFIX-FUTURE: should not be possible to hit this now (all are AnsibleFieldAttributeError)?
                     raiseit = False
             if raiseit:
                 raise context_validation_error  # pylint: disable=raising-bad-type
@@ -637,24 +616,9 @@ class TaskExecutor:
         for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
-                if self._task.timeout:
-                    old_sig = signal.signal(signal.SIGALRM, task_timeout)
-                    signal.alarm(self._task.timeout)
-                with PluginExecContext(self._handler):
+                with _task_timeout.TaskTimeoutError.alarm_timeout(self._task.timeout):
                     result = self._handler.run(task_vars=vars_copy)
-
-            # DTFIX-RELEASE: nuke this, it hides a lot of error detail- remove the active exception propagation hack from AnsibleActionFail at the same time
-            except (AnsibleActionFail, AnsibleActionSkip) as e:
-                return e.result
-            except AnsibleConnectionFailure as e:
-                return dict(unreachable=True, msg=to_text(e))
-            except TaskTimeoutError as e:
-                msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
-                return dict(failed=True, msg=msg, timedout={'frame': e.frame, 'period': self._task.timeout})
             finally:
-                if self._task.timeout:
-                    signal.alarm(0)
-                    old_sig = signal.signal(signal.SIGALRM, old_sig)
                 self._handler.cleanup()
             display.debug("handler run complete")
 
@@ -669,7 +633,7 @@ class TaskExecutor:
                     if result.get('failed'):
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
-                            TaskResult(
+                            _RawTaskResult(
                                 host=self._host,
                                 task=self._task,
                                 return_data=result,
@@ -679,7 +643,7 @@ class TaskExecutor:
                     else:
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
-                            TaskResult(
+                            _RawTaskResult(
                                 host=self._host,
                                 task=self._task,
                                 return_data=result,
@@ -732,7 +696,7 @@ class TaskExecutor:
             if 'skipped' not in result:
                 condname = 'changed'
 
-                # DTFIX-RELEASE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
+                # DTFIX-FUTURE: error normalization has not yet occurred; this means that the expressions used for until/failed_when/changed_when/break_when
                 #  and when (for loops on the second and later iterations) cannot see the normalized error shapes. This, and the current impl of the expression
                 #  handling here causes a number of problems:
                 #  * any error in one of the post-task exec expressions is silently ignored and detail lost (eg: `failed_when: syntax ERROR @$123`)
@@ -765,7 +729,7 @@ class TaskExecutor:
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
                         self._final_q.send_callback(
                             'v2_runner_retry',
-                            TaskResult(
+                            _RawTaskResult(
                                 host=self._host,
                                 task=self._task,
                                 return_data=result,
@@ -826,11 +790,11 @@ class TaskExecutor:
         if warnings := result.get('warnings'):
             if isinstance(warnings, list):
                 for warning in warnings:
-                    if not isinstance(warning, WarningSummary):
+                    if not isinstance(warning, _messages.WarningSummary):
                         # translate non-WarningMessageDetail messages
-                        warning = WarningSummary(
-                            details=(
-                                Detail(msg=str(warning)),
+                        warning = _messages.WarningSummary(
+                            event=_messages.Event(
+                                msg=str(warning),
                             ),
                         )
 
@@ -841,19 +805,18 @@ class TaskExecutor:
         if deprecations := result.get('deprecations'):
             if isinstance(deprecations, list):
                 for deprecation in deprecations:
-                    if not isinstance(deprecation, DeprecationSummary):
-                        # translate non-DeprecationMessageDetail message dicts
+                    if not isinstance(deprecation, _messages.DeprecationSummary):
+                        # translate non-DeprecationSummary message dicts
                         try:
-                            if deprecation.pop('collection_name', ...) is not ...:
+                            if (collection_name := deprecation.pop('collection_name', ...)) is not ...:
                                 # deprecated: description='enable the deprecation message for collection_name' core_version='2.23'
+                                # CAUTION: This deprecation cannot be enabled until the replacement (deprecator) has been documented, and the schema finalized.
                                 # self.deprecated('The `collection_name` key in the `deprecations` dictionary is deprecated.', version='2.27')
-                                pass
+                                deprecation.update(deprecator=deprecator_from_collection_name(collection_name))
 
-                            # DTFIX-RELEASE: when plugin isn't set, do it at the boundary where we receive the module/action results
-                            #                that may even allow us to never set it in modules/actions directly and to populate it at the boundary
-                            deprecation = DeprecationSummary(
-                                details=(
-                                    Detail(msg=deprecation.pop('msg')),
+                            deprecation = _messages.DeprecationSummary(
+                                event=_messages.Event(
+                                    msg=deprecation.pop('msg'),
                                 ),
                                 **deprecation,
                             )
@@ -909,12 +872,12 @@ class TaskExecutor:
                 async_result = async_handler.run(task_vars=task_vars)
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
-                # have issues which result in a half-written/unparseable result
+                # have issues which result in a half-written/unparsable result
                 # file on disk, which manifests to the user as a timeout happening
                 # before it's time to timeout.
-                if (int(async_result.get('finished', 0)) == 1 or
-                        ('failed' in async_result and async_result.get('_ansible_parsed', False)) or
-                        'skipped' in async_result):
+                if (async_result.get('finished', False) or
+                   (async_result.get('failed', False) and async_result.get('_ansible_parsed', False)) or
+                   async_result.get('skipped', False)):
                     break
             except Exception as e:
                 # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
@@ -935,7 +898,7 @@ class TaskExecutor:
                 time_left -= self._task.poll
                 self._final_q.send_callback(
                     'v2_runner_on_async_poll',
-                    TaskResult(
+                    _RawTaskResult(
                         host=self._host,
                         task=async_task,
                         return_data=async_result,
@@ -943,11 +906,11 @@ class TaskExecutor:
                     ),
                 )
 
-        if int(async_result.get('finished', 0)) != 1:
+        if not async_result.get('finished', False):
             if async_result.get('_ansible_parsed'):
                 return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val, async_result=async_result)
             else:
-                return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
+                return dict(failed=True, msg="async task produced unparsable results", async_result=async_result)
         else:
             # If the async task finished, automatically cleanup the temporary
             # status file left behind.

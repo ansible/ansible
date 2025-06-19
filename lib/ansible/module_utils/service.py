@@ -36,7 +36,7 @@ import select
 import shlex
 import subprocess
 
-from ansible.module_utils.six import PY2, b
+from ansible.module_utils.six import b
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
@@ -187,12 +187,8 @@ def daemonize(module, cmd):
     if pid == 0:
         os.close(pipe[0])
 
-        # if command is string deal with  py2 vs py3 conversions for shlex
         if not isinstance(cmd, list):
-            if PY2:
-                cmd = shlex.split(to_bytes(cmd, errors=errors))
-            else:
-                cmd = shlex.split(to_text(cmd, errors=errors))
+            cmd = shlex.split(to_text(cmd, errors=errors))
 
         # make sure we always use byte strings
         run_cmd = []
@@ -247,9 +243,6 @@ def daemonize(module, cmd):
                     break
                 return_data += to_bytes(data, errors=errors)
 
-        # Note: no need to specify encoding on py3 as this module sends the
-        # pickle to itself (thus same python interpreter so we aren't mixing
-        # py2 and py3)
         return pickle.loads(to_bytes(return_data, errors=errors))
 
 
@@ -293,7 +286,7 @@ def is_systemd_managed(module):
             with open('/proc/1/comm', 'r') as init_proc:
                 init = init_proc.readline().strip()
                 return init == 'systemd'
-        except IOError:
+        except OSError:
             # If comm doesn't exist, old kernel, no systemd
             return False
 

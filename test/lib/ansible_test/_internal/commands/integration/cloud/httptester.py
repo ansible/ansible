@@ -71,7 +71,7 @@ class HttptesterProvider(CloudProvider):
             return
 
         # Read the password from the container environment.
-        # This allows the tests to work when re-using an existing container.
+        # This allows the tests to work when reusing an existing container.
         # The password is marked as sensitive, since it may differ from the one we generated.
         krb5_password = descriptor.details.container.env_dict()[KRB5_PASSWORD_ENV]
         display.sensitive.add(krb5_password)

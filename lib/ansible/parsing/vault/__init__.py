@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import errno
 import fcntl
 import functools
 import os
@@ -149,7 +148,7 @@ def _parse_vaulttext_envelope(b_vaulttext_envelope, default_vault_id=None):
         vault_id = to_text(b_tmpheader[3].strip())
 
     b_ciphertext = b''.join(b_tmpdata[1:])
-    # DTFIX-RELEASE: possible candidate for propagate_origin
+    # DTFIX7: possible candidate for propagate_origin
     b_ciphertext = AnsibleTagHelper.tag_copy(b_vaulttext_envelope, b_ciphertext)
 
     return b_ciphertext, b_version, cipher_name, vault_id
@@ -222,7 +221,7 @@ def format_vaulttext_envelope(b_ciphertext, cipher_name, version=None, vault_id=
 
 def _unhexlify(b_data):
     try:
-        # DTFIX-RELEASE: possible candidate for propagate_origin
+        # DTFIX7: possible candidate for propagate_origin
         return AnsibleTagHelper.tag_copy(b_data, unhexlify(b_data))
     except (BinasciiError, TypeError) as ex:
         raise AnsibleVaultFormatError('Vault format unhexlify error.', obj=b_data) from ex
@@ -414,8 +413,8 @@ class FileVaultSecret(VaultSecret):
         try:
             with open(filename, "rb") as f:
                 vault_pass = f.read().strip()
-        except (OSError, IOError) as e:
-            raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
+        except OSError as ex:
+            raise AnsibleError(f"Could not read vault password file {filename!r}.") from ex
 
         b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass)
 
@@ -571,8 +570,8 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
         return match_encrypt_vault_id_secret(secrets,
                                              encrypt_vault_id=encrypt_vault_id)
 
-    # Find the best/first secret from secrets since we didnt specify otherwise
-    # ie, consider all of the available secrets as matches
+    # Find the best/first secret from secrets since we didn't specify otherwise
+    # ie, consider all the available secrets as matches
     _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
 
@@ -712,7 +711,7 @@ class VaultLib:
                 # secret = self.secrets[vault_secret_id]
                 display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
-                # DTFIX-RELEASE: possible candidate for propagate_origin
+                # DTFIX7: possible candidate for propagate_origin
                 b_plaintext = AnsibleTagHelper.tag_copy(vaulttext, b_plaintext)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
@@ -1071,13 +1070,10 @@ class VaultEditor:
                 try:
                     # create file with secure permissions
                     fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
-                except OSError as ose:
-                    # Want to catch FileExistsError, which doesn't exist in Python 2, so catch OSError
-                    # and compare the error number to get equivalent behavior in Python 2/3
-                    if ose.errno == errno.EEXIST:
-                        raise AnsibleError('Vault file got recreated while we were operating on it: %s' % to_native(ose))
-
-                    raise AnsibleError('Problem creating temporary vault file: %s' % to_native(ose))
+                except FileExistsError as ex:
+                    raise AnsibleError('Vault file got recreated while we were operating on it.') from ex
+                except OSError as ex:
+                    raise AnsibleError('Problem creating temporary vault file.') from ex
 
                 try:
                     # now write to the file and ensure ours is only data in it
@@ -1417,7 +1413,7 @@ class EncryptedString(AnsibleTaggedObject):
             'ljust',
             'lower',
             'lstrip',
-            'maketrans',  # static, but implemented for simplicty/consistency
+            'maketrans',  # static, but implemented for simplicity/consistency
             'partition',
             'removeprefix',
             'removesuffix',
@@ -1520,7 +1516,7 @@ class VaultHelper:
             tags = AnsibleTagHelper.tags(ciphertext)  # ciphertext has tags but value does not
         elif value_type is EncryptedString:
             ciphertext = value._ciphertext
-        elif value_type in _jinja_common.Marker.concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
+        elif value_type in _jinja_common.Marker._concrete_subclasses:  # avoid wasteful raise/except of Marker when calling get_tag below
             ciphertext = None
         elif vaulted_value := VaultedValue.get_tag(value):
             ciphertext = vaulted_value.ciphertext

@@ -6,6 +6,8 @@ import pytest
 import sys
 import typing as t
 
+import pytest_mock
+
 try:
     from ansible import _internal  # sets is_controller=True in controller context
     from ansible.module_utils._internal import is_controller  # allow checking is_controller
@@ -23,6 +25,9 @@ else:
     _TemplateConfig.untrusted_template_handler = ErrorHandler(ErrorAction.ERROR)
 
     from .controller_only_conftest import *  # pylint: disable=wildcard-import,unused-wildcard-import
+
+from ansible.module_utils import _internal as _module_utils_internal
+from ansible.module_utils._internal import _traceback as _module_utils_internal_traceback
 
 
 def pytest_configure(config: pytest.Config):
@@ -73,3 +78,10 @@ def pytest_collection_finish(session: pytest.Session):
     for finder in sys.meta_path:
         if "_AnsibleCollectionFinder" in type(finder).__name__:
             assert False, "a collection loader was active after collection"
+
+
+@pytest.fixture
+def as_target(mocker: pytest_mock.MockerFixture) -> None:
+    """Force execution in the context of a target host instead of the controller."""
+    mocker.patch.object(_module_utils_internal, 'is_controller', False)
+    mocker.patch.object(_module_utils_internal_traceback, '_is_traceback_enabled', _module_utils_internal_traceback._is_module_traceback_enabled)

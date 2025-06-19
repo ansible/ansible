@@ -11,7 +11,7 @@ import typing as t
 import yaml
 
 from ansible.errors import AnsibleJSONParserError
-from ansible._internal._errors import _utils
+from ansible._internal._errors import _error_utils
 from ansible.parsing.vault import VaultSecret
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._errors import AnsibleYAMLParserError
@@ -34,7 +34,7 @@ def from_yaml(
 
     data = origin.tag(data)
 
-    with _utils.RedactAnnotatedSourceContext.when(not show_content):
+    with _error_utils.RedactAnnotatedSourceContext.when(not show_content):
         try:
             # we first try to load this data as JSON.
             # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
@@ -48,6 +48,6 @@ def from_yaml(
         try:
             return yaml.load(data, Loader=AnsibleLoader)  # type: ignore[arg-type]
         except Exception as yaml_ex:
-            # DTFIX-RELEASE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
+            # DTFIX-FUTURE: how can we indicate in Origin that the data is in-memory only, to support context information -- is that useful?
             #        we'd need to pass data to handle_exception so it could be used as the content instead of reading from disk
             AnsibleYAMLParserError.handle_exception(yaml_ex, origin=origin)

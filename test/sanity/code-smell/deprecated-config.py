@@ -83,9 +83,7 @@ def main():
         data = {}
         data['doc'], data['examples'], data['return'], data['metadata'] = get_docstring(plugin, fragment_loader)
         for result in find_deprecations(data['doc']):
-            print(
-                '%s: %s is scheduled for removal in %s' % (plugin, '.'.join(str(i) for i in result[0][:-2]), result[1])
-            )
+            print('%s: %s is scheduled for removal in %s' % (plugin, '.'.join(str(i) for i in result[0][:-2]), result[1]))
 
     base = os.path.join(os.path.dirname(ansible.config.__file__), 'base.yml')
     root_path = os.path.dirname(os.path.dirname(os.path.dirname(ansible.__file__)))

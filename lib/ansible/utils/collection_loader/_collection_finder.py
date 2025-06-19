@@ -1095,8 +1095,8 @@ def _get_collection_playbook_path(playbook):
         try:
             # get_collection_path
             pkg = import_module(acr.n_python_collection_package_name)
-        except (IOError, ModuleNotFoundError) as e:
-            # leaving e as debug target, even though not used in normal code
+        except (OSError, ModuleNotFoundError) as ex:
+            # leaving ex as debug target, even though not used in normal code
             pkg = None
 
         if pkg:
@@ -1151,7 +1151,7 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
                 path = os.path.dirname(_to_bytes(sys.modules[acr.n_python_package_name].__file__))
                 return resource, _to_text(path), collection_name
 
-        except (IOError, ModuleNotFoundError) as e:
+        except (OSError, ModuleNotFoundError) as ex:
             continue
         except Exception as ex:
             # FIXME: pick out typical import errors first, then error logging

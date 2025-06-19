@@ -94,6 +94,8 @@ stages:
               test: rhel/9.5@3.9
             - name: RHEL 9.5 py312
               test: rhel/9.5@3.12
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.5
               test: freebsd/13.5
             - name: FreeBSD 14.2
@@ -108,6 +110,8 @@ stages:
               test: macos/15.3
             - name: RHEL 9.5
               test: rhel/9.5
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: FreeBSD 13.5
               test: freebsd/13.5
             - name: FreeBSD 14.2
@@ -125,6 +129,8 @@ stages:
               test: fedora/41
             - name: RHEL 9.5
               test: rhel/9.5
+            - name: RHEL 10.0
+              test: rhel/10.0
             - name: Ubuntu 24.04
               test: ubuntu/24.04
           groups:

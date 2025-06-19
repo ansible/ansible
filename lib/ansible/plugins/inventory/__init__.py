@@ -28,7 +28,7 @@ from collections.abc import Mapping
 from ansible import template as _template
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleValueOmittedError
 from ansible.inventory.group import to_safe_group_name as original_safe
-from ansible.module_utils._internal import _plugin_exec_context
+from ansible.module_utils._internal import _plugin_info
 from ansible.parsing.utils.addresses import parse_address
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins import AnsiblePlugin, _ConfigurablePlugin
@@ -314,7 +314,7 @@ class BaseFileInventoryPlugin(_BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
-class Cacheable(_plugin_exec_context.HasPluginInfo, _ConfigurablePlugin):
+class Cacheable(_plugin_info.HasPluginInfo, _ConfigurablePlugin):
     """Mixin for inventory plugins which support caching."""
 
     _cache: CachePluginAdjudicator
@@ -334,7 +334,6 @@ class Cacheable(_plugin_exec_context.HasPluginInfo, _ConfigurablePlugin):
 
     def _get_cache_prefix(self, path: str) -> str:
         """Return a predictable unique key based on the given path."""
-        # DTFIX-RELEASE: choose a better hashing approach
         return 'k' + hashlib.sha256(f'{self.ansible_name}{path}'.encode(), usedforsecurity=False).hexdigest()[:6]
 
     def clear_cache(self) -> None:
@@ -402,6 +401,8 @@ class Constructable(_BaseInventoryPlugin):
 
     def _add_host_to_keyed_groups(self, keys, variables, host, strict=False, fetch_hostvars=True):
         """ helper to create groups for plugins based on variable values and add the corresponding hosts to it"""
+        should_default_value = (None, '')
+
         if keys and isinstance(keys, list):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
@@ -418,7 +419,9 @@ class Constructable(_BaseInventoryPlugin):
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
                         raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|trailing_separator")
-                    if key or (key == '' and default_value_name is not None):
+
+                    use_default = key in should_default_value and default_value_name is not None
+                    if key or use_default:
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
@@ -434,23 +437,21 @@ class Constructable(_BaseInventoryPlugin):
                             continue
 
                         new_raw_group_names = []
-                        if isinstance(key, string_types):
-                            # if key is empty, 'default_value' will be used as group name
-                            if key == '' and default_value_name is not None:
-                                new_raw_group_names.append(default_value_name)
-                            else:
-                                new_raw_group_names.append(key)
+                        if use_default:
+                            new_raw_group_names.append(default_value_name)
+                        elif isinstance(key, string_types):
+                            new_raw_group_names.append(key)
                         elif isinstance(key, list):
                             for name in key:
                                 # if list item is empty, 'default_value' will be used as group name
-                                if name == '' and default_value_name is not None:
+                                if name in should_default_value and default_value_name is not None:
                                     new_raw_group_names.append(default_value_name)
                                 else:
                                     new_raw_group_names.append(name)
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
                                 bare_name = '%s%s%s' % (gname, sep, gval)
-                                if gval == '':
+                                if gval in should_default_value:
                                     # key's value is empty
                                     if default_value_name is not None:
                                         bare_name = '%s%s%s' % (gname, sep, default_value_name)

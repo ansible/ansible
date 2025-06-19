@@ -449,9 +449,9 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     except subprocess.CalledProcessError as proc_err:
         raise AnsibleError(  # should probably be LookupError
             'Failed to switch a cloned Git repo `{repo_url!s}` '
-            'to the requested revision `{commitish!s}`.'.
+            'to the requested revision `{revision!s}`.'.
             format(
-                commitish=to_native(version),
+                revision=to_native(version),
                 repo_url=to_native(git_url),
             ),
         ) from proc_err
@@ -656,14 +656,8 @@ def _get_json_from_installed_dir(
     try:
         with open(b_json_filepath, 'rb') as manifest_fd:
             b_json_text = manifest_fd.read()
-    except (IOError, OSError):
-        raise LookupError(
-            "The collection {manifest!s} path '{path!s}' does not exist.".
-            format(
-                manifest=filename,
-                path=to_native(b_json_filepath),
-            )
-        )
+    except OSError as ex:
+        raise LookupError(f"The collection {filename!r} path {to_text(b_json_filepath)!r} does not exist.") from ex
 
     manifest_txt = to_text(b_json_text, errors='surrogate_or_strict')
 

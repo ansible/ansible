@@ -723,8 +723,11 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         encoded_prefix = self._shell._encode_script('', as_list=False, strict_mode=False, preserve_rc=False)
-        if cmd.startswith(encoded_prefix):
-            # Avoid double encoding the script
+        if cmd.startswith(encoded_prefix) or cmd.startswith("type "):
+            # Avoid double encoding the script, the first means we are already
+            # running the standard PowerShell command, the latter is used for
+            # the no pipeline case where it uses type to pipe the script into
+            # powershell which is known to work without re-encoding as pwsh.
             cmd_parts = cmd.split(" ")
         else:
             cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
@@ -825,7 +828,7 @@ class Connection(ConnectionBase):
                     stderr = to_text(b_stderr)
 
                     if status_code != 0:
-                        raise IOError(stderr)
+                        raise OSError(stderr)
                     if stdout.strip() == '[DIR]':
                         data = None
                     else:

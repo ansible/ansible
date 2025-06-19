@@ -20,7 +20,7 @@ def __getattr__(name: str) -> object:
         #     _warnings.deprecate(
         #         msg="The `AnsibleJSONEncoder` type is deprecated.",
         #         version="2.27",
-        #         help_text="Use a profile-based encoder instead.",  # DTFIX-RELEASE: improve this help text
+        #         help_text="Use a profile-based encoder instead.",  # DTFIX-FUTURE: improve this help text
         #     )
 
         return _get_legacy_encoder()
@@ -31,7 +31,7 @@ def __getattr__(name: str) -> object:
         #     _warnings.deprecate(
         #         msg="The `AnsibleJSONDecoder` type is deprecated.",
         #         version="2.27",
-        #         help_text="Use a profile-based decoder instead.",  # DTFIX-RELEASE: improve this help text
+        #         help_text="Use a profile-based decoder instead.",  # DTFIX-FUTURE: improve this help text
         #     )
 
         return _tagless.Decoder

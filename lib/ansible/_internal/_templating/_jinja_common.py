@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import collections.abc as c
+import enum
 import inspect
 import itertools
 import typing as t
@@ -9,7 +10,7 @@ import typing as t
 from jinja2 import UndefinedError, StrictUndefined, TemplateRuntimeError
 from jinja2.utils import missing
 
-from ansible.module_utils.common.messages import ErrorSummary, Detail
+from ...module_utils._internal import _messages
 from ansible.constants import config
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTypeError
 from ansible._internal._errors._handler import ErrorHandler
@@ -24,10 +25,16 @@ from ...module_utils.datatag import native_type_name
 _patch_jinja()  # apply Jinja2 patches before types are declared that are dependent on the changes
 
 
+class _SandboxMode(enum.Enum):
+    DEFAULT = enum.auto()
+    ALLOW_UNSAFE_ATTRIBUTES = enum.auto()
+
+
 class _TemplateConfig:
     allow_embedded_templates: bool = config.get_config_value("ALLOW_EMBEDDED_TEMPLATES")
     allow_broken_conditionals: bool = config.get_config_value('ALLOW_BROKEN_CONDITIONALS')
     jinja_extensions: list[str] = config.get_config_value('DEFAULT_JINJA2_EXTENSIONS')
+    sandbox_mode: _SandboxMode = _SandboxMode.__members__[config.get_config_value('_TEMPLAR_SANDBOX_MODE').upper()]
 
     unknown_type_encountered_handler = ErrorHandler.from_config('_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED')
     unknown_type_conversion_handler = ErrorHandler.from_config('_TEMPLAR_UNKNOWN_TYPE_CONVERSION')
@@ -55,7 +62,7 @@ class Marker(StrictUndefined, Tripwire):
 
     __slots__ = ('_marker_template_source',)
 
-    concrete_subclasses: t.ClassVar[set[type[Marker]]] = set()
+    _concrete_subclasses: t.ClassVar[set[type[Marker]]] = set()
 
     def __init__(
         self,
@@ -89,7 +96,7 @@ class Marker(StrictUndefined, Tripwire):
         return AnsibleUndefinedVariable(self._undefined_message, obj=self._marker_template_source)
 
     def _as_message(self) -> str:
-        """Return the error message to show when this marker must be represented as a string, such as for subsitutions or warnings."""
+        """Return the error message to show when this marker must be represented as a string, such as for substitutions or warnings."""
         return self._undefined_message
 
     def _fail_with_undefined_error(self, *args: t.Any, **kwargs: t.Any) -> t.NoReturn:
@@ -129,7 +136,7 @@ class Marker(StrictUndefined, Tripwire):
     def __init_subclass__(cls, **kwargs) -> None:
         if not inspect.isabstract(cls):
             _untaggable_types.add(cls)
-            cls.concrete_subclasses.add(cls)
+            cls._concrete_subclasses.add(cls)
 
     @classmethod
     def _init_class(cls):
@@ -197,8 +204,6 @@ class TruncationMarker(Marker):
     It will only be visible if the previous `Marker` was ignored/replaced instead of being tripped, which would raise an exception.
     """
 
-    # DTFIX-RELEASE: make this a singleton?
-
     __slots__ = ()
 
     def __init__(self) -> None:
@@ -252,28 +257,18 @@ class UndecryptableVaultError(_captured.AnsibleCapturedError):
 class VaultExceptionMarker(ExceptionMarker):
     """A `Marker` value that represents an error accessing a vaulted value during templating."""
 
-    __slots__ = ('_marker_undecryptable_ciphertext', '_marker_undecryptable_reason', '_marker_undecryptable_traceback')
+    __slots__ = ('_marker_undecryptable_ciphertext', '_marker_event')
 
-    def __init__(self, ciphertext: str, reason: str, traceback: str | None) -> None:
-        # DTFIX-RELEASE: when does this show up, should it contain more details?
-        #          see also CapturedExceptionMarker for a similar issue
+    def __init__(self, ciphertext: str, event: _messages.Event) -> None:
         super().__init__(hint='A vault exception marker was tripped.')
 
         self._marker_undecryptable_ciphertext = ciphertext
-        self._marker_undecryptable_reason = reason
-        self._marker_undecryptable_traceback = traceback
+        self._marker_event = event
 
     def _as_exception(self) -> Exception:
         return UndecryptableVaultError(
             obj=self._marker_undecryptable_ciphertext,
-            error_summary=ErrorSummary(
-                details=(
-                    Detail(
-                        msg=self._marker_undecryptable_reason,
-                    ),
-                ),
-                formatted_traceback=self._marker_undecryptable_traceback,
-            ),
+            event=self._marker_event,
         )
 
     def _disarm(self) -> str:
@@ -282,16 +277,12 @@ class VaultExceptionMarker(ExceptionMarker):
 
 def get_first_marker_arg(args: c.Sequence, kwargs: dict[str, t.Any]) -> Marker | None:
     """Utility method to inspect plugin args and return the first `Marker` encountered, otherwise `None`."""
-    # DTFIX-RELEASE: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
-    for arg in iter_marker_args(args, kwargs):
-        return arg
-
-    return None
+    # CAUTION: This function is exposed in public API as ansible.template.get_first_marker_arg.
+    return next(iter_marker_args(args, kwargs), None)
 
 
 def iter_marker_args(args: c.Sequence, kwargs: dict[str, t.Any]) -> t.Generator[Marker]:
     """Utility method to iterate plugin args and yield any `Marker` encountered."""
-    # DTFIX-RELEASE: this may or may not need to be public API, move back to utils or once usage is wrapped in a decorator?
     for arg in itertools.chain(args, kwargs.values()):
         if isinstance(arg, Marker):
             yield arg
@@ -306,7 +297,7 @@ class JinjaCallContext(NotifiableAccessContextBase):
     _mask = True
 
     def __init__(self, accept_lazy_markers: bool) -> None:
-        self._type_interest = frozenset() if accept_lazy_markers else frozenset(Marker.concrete_subclasses)
+        self._type_interest = frozenset() if accept_lazy_markers else frozenset(Marker._concrete_subclasses)
 
     def _notify(self, o: Marker) -> t.NoReturn:
         o.trip()
@@ -314,7 +305,7 @@ class JinjaCallContext(NotifiableAccessContextBase):
 
 def validate_arg_type(name: str, value: t.Any, allowed_type_or_types: type | tuple[type, ...], /) -> None:
     """Validate the type of the given argument while preserving context for Marker values."""
-    # DTFIX-RELEASE: find a home for this as a general-purpose utliity method and expose it after some API review
+    # DTFIX-FUTURE: find a home for this as a general-purpose utliity method and expose it after some API review
     if isinstance(value, allowed_type_or_types):
         return
 

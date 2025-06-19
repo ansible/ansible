@@ -451,10 +451,20 @@ def intercept_python(
     """
     Run a command while intercepting invocations of Python to control the version used.
     If the specified Python is an ansible-test managed virtual environment, it will be added to PATH to activate it.
-    Otherwise a temporary directory will be created to ensure the correct Python can be found in PATH.
+    Otherwise, a temporary directory will be created to ensure the correct Python can be found in PATH.
     """
-    env = env.copy()
     cmd = list(cmd)
+    env = get_injector_env(python, env)
+
+    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
+
+
+def get_injector_env(
+    python: PythonConfig,
+    env: dict[str, str],
+) -> dict[str, str]:
+    """Get the environment variables needed to inject the given Python interpreter into the environment."""
+    env = env.copy()
     inject_path = get_injector_path()
 
     # make sure scripts (including injector.py) find the correct Python interpreter
@@ -467,7 +477,7 @@ def intercept_python(
     env['ANSIBLE_TEST_PYTHON_VERSION'] = python.version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = python.path
 
-    return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
+    return env
 
 
 def run_command(

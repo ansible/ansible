@@ -19,7 +19,7 @@ from jinja2.compiler import Frame
 from jinja2.lexer import TOKEN_VARIABLE_BEGIN, TOKEN_VARIABLE_END, TOKEN_STRING, Lexer
 from jinja2.nativetypes import NativeCodeGenerator
 from jinja2.nodes import Const, EvalContext
-from jinja2.runtime import Context
+from jinja2.runtime import Context, Macro
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from jinja2.utils import missing, LRUCache
 
@@ -49,6 +49,7 @@ from ._jinja_common import (
     TruncationMarker,
     validate_arg_type,
     JinjaCallContext,
+    _SandboxMode,
 )
 from ._jinja_plugins import JinjaPluginIntercept, _query, _lookup, _now, _wrap_plugin_output, get_first_marker_arg, _DirectCall, _jinja_const_template_warning
 from ._lazy_containers import (
@@ -71,6 +72,11 @@ from ansible.vars.hostvars import HostVars, HostVarsVars
 from ...module_utils.datatag import native_type_name
 
 JINJA2_OVERRIDE = '#jinja2:'
+"""
+String values prefixed with this sequence are interpreted as templates, even without template delimiters.
+The values following this prefix up to the first newline are parsed as Jinja2 template overrides.
+To include this literal value at the start of a string, a space or other character must precede it.
+"""
 
 display = Display()
 
@@ -304,7 +310,7 @@ class AnsibleTemplate(Template):
     _python_source_temp_path: pathlib.Path | None = None
 
     def __del__(self):
-        # DTFIX-RELEASE: this still isn't working reliably; something else must be keeping the template object alive
+        # DTFIX-FUTURE: this still isn't working reliably; something else must be keeping the template object alive
         if self._python_source_temp_path:
             self._python_source_temp_path.unlink(missing_ok=True)
 
@@ -497,7 +503,7 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
     return exception_to_raise
 
 
-# DTFIX-RELEASE: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
+# DTFIX3: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
 #                also update the protomatter integration test once this is done (the test was written differently since this wasn't done yet)
 
 _BUILTIN_FILTER_ALIASES: dict[str, str] = {}
@@ -583,10 +589,17 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
 
             return template_obj
 
+    def is_safe_attribute(self, obj: t.Any, attr: str, value: t.Any) -> bool:
+        # deprecated: description="remove relaxed template sandbox mode support" core_version="2.23"
+        if _TemplateConfig.sandbox_mode == _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES:
+            return True
+
+        return super().is_safe_attribute(obj, attr, value)
+
     @property
     def lexer(self) -> AnsibleLexer:
         """Return/cache an AnsibleLexer with settings from the current AnsibleEnvironment"""
-        # DTFIX-RELEASE: optimization - we should pre-generate the default cached lexer before forking, not leave it to chance (e.g. simple playbooks)
+        # DTFIX-FUTURE: optimization - we should pre-generate the default cached lexer before forking, not leave it to chance (e.g. simple playbooks)
         key = tuple(getattr(self, name) for name in _TEMPLATE_OVERRIDE_FIELD_NAMES)
 
         lex = self._lexer_cache.get(key)
@@ -610,7 +623,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         Without this, `_wrap_filter` will wrap `args` and `kwargs` in templating lazy containers.
         This provides consistency with plugin output handling by preventing auto-templating of trusted templates passed in native containers.
         """
-        # DTFIX-RELEASE: need better logic to handle non-list/non-dict inputs for args/kwargs
+        # DTFIX-FUTURE: need better logic to handle non-list/non-dict inputs for args/kwargs
         args = _AnsibleLazyTemplateMixin._try_create(list(args or []), LazyOptions.SKIP_TEMPLATES)
         kwargs = _AnsibleLazyTemplateMixin._try_create(kwargs, LazyOptions.SKIP_TEMPLATES)
 
@@ -630,7 +643,7 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         Without this, `_wrap_test` will wrap `args` and `kwargs` in templating lazy containers.
         This provides consistency with plugin output handling by preventing auto-templating of trusted templates passed in native containers.
         """
-        # DTFIX-RELEASE: need better logic to handle non-list/non-dict inputs for args/kwargs
+        # DTFIX-FUTURE: need better logic to handle non-list/non-dict inputs for args/kwargs
         args = _AnsibleLazyTemplateMixin._try_create(list(args or []), LazyOptions.SKIP_TEMPLATES)
         kwargs = _AnsibleLazyTemplateMixin._try_create(kwargs, LazyOptions.SKIP_TEMPLATES)
 
@@ -701,7 +714,6 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
         # this code is complemented by our tweaked CodeGenerator _output_const_repr that ensures that literal constants
         # in templates aren't double-repr'd in the generated code
         if len(node_list) == 1:
-            # DTFIX-RELEASE: determine if we should do managed access here (we *should* have hit them all during templating/resolve, but ?)
             return node_list[0]
 
         # In order to ensure that all markers are tripped, do a recursive finalize before we repr (otherwise we can end up
@@ -787,11 +799,14 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
             # Performing either before calling them will interfere with that processing.
             return super().call(__context, __obj, *args, **kwargs)
 
-        if (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+        # Jinja's generated macro code handles Markers, so preemptive raise on Marker args and lazy retrieval should be disabled for the macro invocation.
+        is_macro = isinstance(__obj, Macro)
+
+        if not is_macro and (first_marker := get_first_marker_arg(args, kwargs)) is not None:
             return first_marker
 
         try:
-            with JinjaCallContext(accept_lazy_markers=False):
+            with JinjaCallContext(accept_lazy_markers=is_macro):
                 call_res = super().call(__context, __obj, *lazify_container_args(args), **lazify_container_kwargs(kwargs))
 
                 if __obj is range:
@@ -814,7 +829,7 @@ _sentinel: t.Final[object] = object()
 
 
 @_DirectCall.mark
-def _undef(hint=None):
+def _undef(hint: str | None = None) -> UndefinedMarker:
     """Jinja2 global function (undef) for creating getting a `UndefinedMarker` instance, optionally with a custom hint."""
     validate_arg_type('hint', hint, (str, type(None)))
 
@@ -856,9 +871,6 @@ def _flatten_and_lazify_vars(mapping: c.Mapping) -> t.Iterable[c.Mapping]:
         for m in mapping.maps:
             yield from _flatten_and_lazify_vars(m)
     elif mapping_type is _AnsibleLazyTemplateDict:
-        if not mapping:
-            # DTFIX-RELEASE: handle or remove?
-            raise Exception("we didn't think it was possible to have an empty lazy here...")
         yield mapping
     elif mapping_type in (dict, _AnsibleTaggedDict):
         # don't propagate empty dictionary layers
@@ -882,10 +894,6 @@ def _new_context(
     layers = []
 
     if jinja_locals:
-        # DTFIX-RELEASE: if we can't trip this in coverage, kill it off?
-        if type(jinja_locals) is not dict:  # pylint: disable=unidiomatic-typecheck
-            raise NotImplementedError("locals must be a dict")
-
         # Omit values set to Jinja's internal `missing` sentinel; they are locals that have not yet been
         # initialized in the current context, and should not be exposed to child contexts. e.g.: {% import 'a' as b with context %}.
         # The `b` local will be `missing` in the `a` context and should not be propagated as a local to the child context we're creating.
@@ -978,7 +986,7 @@ def _finalize_list(o: t.Any, mode: FinalizeMode) -> t.Iterator[t.Any]:
 
 
 def _maybe_finalize_scalar(o: t.Any) -> t.Any:
-    # DTFIX-RELEASE: this should check all supported scalar subclasses, not just JSON ones (also, does the JSON serializer handle these cases?)
+    # DTFIX5: this should check all supported scalar subclasses, not just JSON ones (also, does the JSON serializer handle these cases?)
     for target_type in _json_subclassable_scalar_types:
         if not isinstance(o, target_type):
             continue
@@ -1028,7 +1036,7 @@ def _finalize_collection(
 
 def _finalize_template_result(o: t.Any, mode: FinalizeMode) -> t.Any:
     """Recurse the template result, rendering any encountered templates, converting containers to non-lazy versions."""
-    # DTFIX-RELEASE: add tests to ensure this method doesn't drift from allowed types
+    # DTFIX5: add tests to ensure this method doesn't drift from allowed types
     o_type = type(o)
 
     # DTFIX-FUTURE: provide an optional way to check for trusted templates leaking out of templating (injected, but not passed through templar.template)
@@ -1045,7 +1053,7 @@ def _finalize_template_result(o: t.Any, mode: FinalizeMode) -> t.Any:
     if o_type in _FINALIZE_FAST_PATH_EXACT_ITERABLE_TYPES:  # silently convert known sequence types to list
         return _finalize_collection(o, mode, _finalize_list, list)
 
-    if o_type in Marker.concrete_subclasses:  # this early return assumes handle_marker follows our variable type rules
+    if o_type in Marker._concrete_subclasses:  # this early return assumes handle_marker follows our variable type rules
         return TemplateContext.current().templar.marker_behavior.handle_marker(o)
 
     if mode is not FinalizeMode.TOP_LEVEL:  # unsupported type (do not raise)

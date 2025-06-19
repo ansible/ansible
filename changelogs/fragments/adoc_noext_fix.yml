@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-doc will no longer ignore docs for modules without an extension (https://github.com/ansible/ansible/issues/85279).

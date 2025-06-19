@@ -4,12 +4,12 @@ set -eux -o pipefail
 
 export ANSIBLE_DEPRECATION_WARNINGS=False
 
-ansible-playbook disabled.yml -i ../../inventory "${@}" 2>&1 | tee disabled.txt
+ansible-playbook deprecated.yml -i ../../inventory "${@}" 2>&1 | tee disabled.txt
 
 grep "This is a warning" disabled.txt  # should be visible
 
-if grep "This is a deprecation" disabled.txt; then
-  echo "ERROR: deprecation should not be visible"
+if grep "DEPRECATION" disabled.txt; then
+  echo "ERROR: deprecation warnings should not be visible"
   exit 1
 fi
 

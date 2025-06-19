@@ -40,7 +40,6 @@ import shutil
 
 from pathlib import Path
 
-from ansible.module_utils.common.messages import PluginInfo
 from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
@@ -172,15 +171,8 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     modname = os.path.basename(modfile)
     modname = os.path.splitext(modname)[0]
 
-    plugin = PluginInfo(
-        requested_name=modname,
-        resolved_name=modname,
-        type='module',
-    )
-
     built_module = module_common.modify_module(
         module_name=modname,
-        plugin=plugin,
         module_path=modfile,
         module_args=complex_args,
         templar=Templar(loader=loader),
@@ -225,10 +217,11 @@ def ansiballz_setup(modfile, modname, interpreters):
 
     # All the directories in an AnsiBallZ that modules can live
     core_dirs = glob.glob(os.path.join(debug_dir, 'ansible/modules'))
+    non_core_dirs = glob.glob(os.path.join(debug_dir, 'ansible/legacy'))
     collection_dirs = glob.glob(os.path.join(debug_dir, 'ansible_collections/*/*/plugins/modules'))
 
     # There's only one module in an AnsiBallZ payload so look for the first module and then exit
-    for module_dir in core_dirs + collection_dirs:
+    for module_dir in core_dirs + collection_dirs + non_core_dirs:
         for dirname, directories, filenames in os.walk(module_dir):
             for filename in filenames:
                 if filename == modname + '.py':

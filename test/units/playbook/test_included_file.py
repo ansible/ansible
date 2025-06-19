@@ -118,9 +118,9 @@ def test_process_include_tasks_results(mock_iterator, mock_variable_manager):
     loaded_task = TaskInclude.load(task_ds, task_include=parent_task)
 
     return_data = {'include': 'include_test.yml'}
-    # The task in the TaskResult has to be a TaskInclude so it has a .static attr
-    result1 = task_result.TaskResult(host=host1, task=loaded_task, return_data=return_data, task_fields={})
-    result2 = task_result.TaskResult(host=host2, task=loaded_task, return_data=return_data, task_fields={})
+    # The task in the _RawTaskResult has to be a TaskInclude so it has a .static attr
+    result1 = task_result._RawTaskResult(host=host1, task=loaded_task, return_data=return_data, task_fields={})
+    result2 = task_result._RawTaskResult(host=host2, task=loaded_task, return_data=return_data, task_fields={})
     results = [result1, result2]
 
     fake_loader = DictDataLoader({'include_test.yml': ""})
@@ -151,11 +151,11 @@ def test_process_include_tasks_diff_files(mock_iterator, mock_variable_manager):
     loaded_child_task._play = None
 
     return_data = {'include': 'include_test.yml'}
-    # The task in the TaskResult has to be a TaskInclude so it has a .static attr
-    result1 = task_result.TaskResult(host=host1, task=loaded_task, return_data=return_data, task_fields={})
+    # The task in the _RawTaskResult has to be a TaskInclude so it has a .static attr
+    result1 = task_result._RawTaskResult(host=host1, task=loaded_task, return_data=return_data, task_fields={})
 
     return_data = {'include': 'other_include_test.yml'}
-    result2 = task_result.TaskResult(host=host2, task=loaded_child_task, return_data=return_data, task_fields={})
+    result2 = task_result._RawTaskResult(host=host2, task=loaded_child_task, return_data=return_data, task_fields={})
     results = [result1, result2]
 
     fake_loader = DictDataLoader({'include_test.yml': "",
@@ -192,9 +192,9 @@ def test_process_include_tasks_simulate_free(mock_iterator, mock_variable_manage
     loaded_task2 = TaskInclude.load(task_ds, task_include=parent_task2)
 
     return_data = {'include': 'include_test.yml'}
-    # The task in the TaskResult has to be a TaskInclude so it has a .static attr
-    result1 = task_result.TaskResult(host=host1, task=loaded_task1, return_data=return_data, task_fields={})
-    result2 = task_result.TaskResult(host=host2, task=loaded_task2, return_data=return_data, task_fields={})
+    # The task in the _RawTaskResult has to be a TaskInclude so it has a .static attr
+    result1 = task_result._RawTaskResult(host=host1, task=loaded_task1, return_data=return_data, task_fields={})
+    result2 = task_result._RawTaskResult(host=host2, task=loaded_task2, return_data=return_data, task_fields={})
     results = [result1, result2]
 
     fake_loader = DictDataLoader({'include_test.yml': ""})
@@ -234,8 +234,8 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator, mock_vari
         """,
     })
 
-    hostname = "testhost1"
-    hostname2 = "testhost2"
+    host1 = Host("testhost1")
+    host2 = Host("testhost2")
 
     role1_ds = {
         'name': 'task1 include',
@@ -281,16 +281,20 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator, mock_vari
                                      block=parent_block,
                                      loader=fake_loader)
 
-    result1 = task_result.TaskResult(host=hostname,
-                                     task=include_role1,
-                                     return_data=include_role1_ds,
-                                     task_fields={},
-                                     )
-    result2 = task_result.TaskResult(host=hostname2,
-                                     task=include_role2,
-                                     return_data=include_role2_ds,
-                                     task_fields={},
-                                     )
+    result1 = task_result._RawTaskResult(
+        host=host1,
+        task=include_role1,
+        return_data=include_role1_ds,
+        task_fields={},
+    )
+
+    result2 = task_result._RawTaskResult(
+        host=host2,
+        task=include_role2,
+        return_data=include_role2_ds,
+        task_fields={},
+    )
+
     results = [result1, result2]
 
     res = IncludedFile.process_include_results(results,
@@ -305,8 +309,8 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator, mock_vari
     # with different tasks
     assert res[0]._task != res[1]._task
 
-    assert res[0]._hosts == ['testhost1']
-    assert res[1]._hosts == ['testhost2']
+    assert res[0]._hosts == [host1]
+    assert res[1]._hosts == [host2]
 
     assert res[0]._args == {}
     assert res[1]._args == {}

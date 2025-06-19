@@ -5,6 +5,7 @@ import collections.abc as c
 import copy
 import dataclasses
 import datetime
+import enum
 import inspect
 import json
 
@@ -22,10 +23,11 @@ from ansible.module_utils._internal._json._profiles import (
     _JSONSerializationProfile,
 )
 
-from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, PluginInfo
+from ansible.module_utils._internal import _messages
 
 from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
+    AnsibleSerializableEnum,
     AnsibleSingletonTagBase,
     AnsibleTaggedObject,
     NotTaggableError,
@@ -43,7 +45,6 @@ from ansible.module_utils._internal._datatag import (
 )
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.module_utils.datatag import native_type_name
-from units.mock.messages import make_summary
 
 if sys.version_info >= (3, 9):
     from typing import get_type_hints
@@ -79,11 +80,13 @@ class CopyProtocol(t.Protocol):
 
 
 message_instances = [
-    Detail(msg="bla", formatted_source_context="sc"),
-    make_summary(ErrorSummary, Detail(msg="bla"), formatted_traceback="tb"),
-    make_summary(WarningSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb"),
-    make_summary(DeprecationSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb", version="1.2.3"),
-    PluginInfo(requested_name='a.b.c', resolved_name='a.b.c', type='module'),
+    _messages.Event(msg="bla", formatted_source_context="sc"),
+    _messages.EventChain(msg_reason="a", traceback_reason="b", event=_messages.Event(msg="c")),
+    _messages.ErrorSummary(event=_messages.Event(msg="bla", formatted_traceback="tb")),
+    _messages.WarningSummary(event=_messages.Event(msg="bla", formatted_source_context="sc", formatted_traceback="tb")),
+    _messages.DeprecationSummary(event=_messages.Event(msg="bla", formatted_source_context="sc", formatted_traceback="tb"), version="1.2.3"),
+    _messages.PluginInfo(resolved_name='a.b.c', type=_messages.PluginType.MODULE),
+    _messages.PluginType.MODULE,
 ]
 
 
@@ -97,7 +100,7 @@ def assert_round_trip(original_value, round_tripped_value, via_copy=False):
         return
 
     # singleton values should rehydrate as the shared singleton instance, all others should be a new instance
-    if isinstance(original_value, AnsibleSingletonTagBase):
+    if isinstance(original_value, (AnsibleSingletonTagBase, enum.Enum)):
         assert original_value is round_tripped_value
     else:
         assert original_value is not round_tripped_value
@@ -215,7 +218,7 @@ def test_tag_types() -> None:
 
 def test_deprecated_invalid_date_type() -> None:
     with pytest.raises(TypeError):
-        Deprecated(msg="test", removal_date="wrong")  # type: ignore
+        Deprecated(msg="test", date=42)  # type: ignore
 
 
 def test_tag_with_invalid_tag_type() -> None:
@@ -356,8 +359,8 @@ class TestDatatagTarget(AutoParamSupport):
     later = t.cast(t.Self, Later(locals()))
 
     tag_instances_with_reprs: t.Annotated[t.List[t.Tuple[AnsibleDatatagBase, str]], ParamDesc(["value", "expected_repr"])] = [
-        (Deprecated(msg="hi mom, I am deprecated", removal_date=datetime.date(2023, 1, 2), removal_version="42.42"),
-         "Deprecated(msg='hi mom, I am deprecated', removal_date='2023-01-02', removal_version='42.42')"),
+        (Deprecated(msg="hi mom, I am deprecated", date='2023-01-02', version="42.42"),
+         "Deprecated(msg='hi mom, I am deprecated', date='2023-01-02', version='42.42')"),
         (Deprecated(msg="minimal"), "Deprecated(msg='minimal')")
     ]
 
@@ -483,6 +486,8 @@ class TestDatatagTarget(AutoParamSupport):
         excluded_type_names = {
             AnsibleTaggedObject.__name__,  # base class, cannot be abstract
             AnsibleSerializableDataclass.__name__,  # base class, cannot be abstract
+            AnsibleSerializable.__name__,  # base class, cannot be abstract
+            AnsibleSerializableEnum.__name__,  # base class, cannot be abstract
             # these types are all controller-only, so it's easier to have static type names instead of importing them
             'JinjaConstTemplate',  # serialization not required
             '_EncryptedSource',  # serialization not required
@@ -531,7 +536,7 @@ class TestDatatagTarget(AutoParamSupport):
 
         round_tripped_value = copy.deepcopy(value)
 
-        # DTFIX-RELEASE: ensure items in collections are copies
+        # DTFIX5: ensure items in collections are copies
 
         assert_round_trip(value, round_tripped_value, via_copy=True)
 
@@ -545,7 +550,7 @@ class TestDatatagTarget(AutoParamSupport):
         if not isinstance(native_copy, int):
             assert native_copy is not value._native_copy()
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert native_copy == value
         assert native_copy == value._native_copy()
@@ -557,7 +562,7 @@ class TestDatatagTarget(AutoParamSupport):
 
         round_tripped_value = copy.copy(value)
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert_round_trip(value, round_tripped_value, via_copy=True)
 
@@ -565,7 +570,7 @@ class TestDatatagTarget(AutoParamSupport):
     def test_instance_copy_roundtrip(self, value: CopyProtocol):
         round_tripped_value = value.copy()
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert_round_trip(value, round_tripped_value)
 
@@ -573,8 +578,8 @@ class TestDatatagTarget(AutoParamSupport):
         t.List[t.Tuple[t.Type[AnsibleDatatagBase], t.Dict[str, object]]], ParamDesc(["tag_type", "init_kwargs"])
     ] = [
         (Deprecated, dict(msg=ExampleSingletonTag().tag(''))),
-        (Deprecated, dict(removal_date=ExampleSingletonTag().tag(''), msg='')),
-        (Deprecated, dict(removal_version=ExampleSingletonTag().tag(''), msg='')),
+        (Deprecated, dict(date=ExampleSingletonTag().tag(''), msg='')),
+        (Deprecated, dict(version=ExampleSingletonTag().tag(''), msg='')),
     ]
 
     @pytest.mark.autoparam(later.test_dataclass_tag_base_field_validation_fail_instances)
@@ -589,8 +594,8 @@ class TestDatatagTarget(AutoParamSupport):
         t.List[t.Tuple[t.Type[AnsibleDatatagBase], t.Dict[str, object]]], ParamDesc(["tag_type", "init_kwargs"])
     ] = [
         (Deprecated, dict(msg='')),
-        (Deprecated, dict(msg='', removal_date=datetime.date.today())),
-        (Deprecated, dict(msg='', removal_version='')),
+        (Deprecated, dict(msg='', date='2025-01-01')),
+        (Deprecated, dict(msg='', version='')),
     ]
 
     @pytest.mark.autoparam(later.test_dataclass_tag_base_field_validation_pass_instances)
@@ -643,7 +648,7 @@ class TestDatatagTarget(AutoParamSupport):
         """Assert that __slots__ are properly defined on the given serializable type."""
         if value in (AnsibleSerializable, AnsibleTaggedObject):
             expect_slots = True  # non-dataclass base types have no attributes, but still use slots
-        elif issubclass(value, (int, bytes, tuple)):
+        elif issubclass(value, (int, bytes, tuple, enum.Enum)):
             # non-empty slots are not supported by these variable-length data types
             # see: https://docs.python.org/3/reference/datamodel.html
             expect_slots = False

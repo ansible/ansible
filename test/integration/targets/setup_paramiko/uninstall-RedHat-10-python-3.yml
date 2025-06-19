@@ -1,0 +1,7 @@
+- name: Uninstall Paramiko for Python 3 on RHEL 10
+  pip: # no python3-paramiko package exists for RHEL 10
+    name: paramiko
+    state: absent
+
+- name: Revert the crypto-policy back to DEFAULT
+  command: update-crypto-policies --set DEFAULT

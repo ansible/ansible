@@ -19,6 +19,17 @@
 - set_fact:
     output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 
+- include_tasks: ansible_managed.yml
+
+- name: render a template which has no content
+  template:
+    src: none.j2
+    dest: '{{ output_dir }}/none.templated'
+
+- name: verify a template with no content renders as an empty string
+  assert:
+    that: "{{ lookup('file', output_dir ~ '/none.templated') == '' }}"
+
 - name: get default group
   shell: id -gn
   register: group
@@ -503,12 +514,6 @@
     src: foo.unix.txt
     dest: '{{ output_dir }}/foo.unix.txt'
 
-- name: Dump templated file (Unix)
-  command: hexdump -C {{ output_dir }}/foo.unix.templated
-
-- name: Dump expected file (Unix)
-  command: hexdump -C {{ output_dir }}/foo.unix.txt
-
 - name: compare templated file to known good (Unix)
   command: diff -u {{ output_dir }}/foo.unix.templated {{ output_dir }}/foo.unix.txt
   register: diff_result
@@ -550,12 +555,6 @@
     src: foo.dos.txt
     dest: '{{ output_dir }}/foo.dos.txt'
 
-- name: Dump templated file (DOS)
-  command: hexdump -C {{ output_dir }}/foo.dos.templated
-
-- name: Dump expected file (DOS)
-  command: hexdump -C {{ output_dir }}/foo.dos.txt
-
 - name: compare templated file to known good (DOS)
   command: diff -u {{ output_dir }}/foo.dos.templated {{ output_dir }}/foo.dos.txt
   register: diff_result
@@ -571,12 +570,6 @@
   copy:
     src: foo.unix.txt
     dest: '{{ output_dir }}/foo.unix.txt'
-
-- name: Dump templated file (Unix)
-  command: hexdump -C {{ output_dir }}/foo.unix.templated
-
-- name: Dump expected file (Unix)
-  command: hexdump -C {{ output_dir }}/foo.unix.txt
 
 - name: compare templated file to known good (Unix)
   command: diff -u {{ output_dir }}/foo.unix.templated {{ output_dir }}/foo.unix.txt

@@ -15,8 +15,10 @@ def main() -> None:
 
     cmd = [
         sys.executable,
-        '-m', 'pymarkdown',
-        '--config', pathlib.Path(__file__).parent / 'pymarkdown.config.json',
+        '-m',
+        'pymarkdown',
+        '--config',
+        pathlib.Path(__file__).parent / 'pymarkdown.config.json',
         '--strict-config',
         'scan',
     ] + paths

@@ -4,30 +4,9 @@
 - include_tasks:
     file: break_system_packages.yml
 
-- name: Python 2
-  when: ansible_python.version.major == 2
-  block:
-    - name: find virtualenv command
-      command: "which virtualenv virtualenv-{{ ansible_python.version.major }}.{{ ansible_python.version.minor }}"
-      register: command
-      ignore_errors: true
-
-    - name: is virtualenv available to python -m
-      command: '{{ ansible_python_interpreter }} -m virtualenv'
-      register: python_m
-      when: not command.stdout_lines
-      failed_when: python_m.rc != 2
-
-    - name: remember selected virtualenv command
-      set_fact:
-        virtualenv: "{{ command.stdout_lines[0] if command is successful else ansible_python_interpreter ~ ' -m virtualenv' }}"
-
-- name: Python 3+
-  when: ansible_python.version.major > 2
-  block:
-    - name: remember selected virtualenv command
-      set_fact:
-        virtualenv: "{{ ansible_python_interpreter ~ ' -m venv' }}"
+- name: remember selected virtualenv command
+  set_fact:
+    virtualenv: "{{ ansible_python_interpreter ~ ' -m venv' }}"
 
 - block:
     - name: install git, needed for repo installs
@@ -45,7 +24,6 @@
     - include_tasks: pip.yml
 
     - include_tasks: no_setuptools.yml
-      when: ansible_python.version_info[:2] >= [3, 8]
   always:
     - name: platform specific cleanup
       include_tasks: "{{ cleanup_filename }}"

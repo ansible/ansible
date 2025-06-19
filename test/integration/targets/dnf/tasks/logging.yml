@@ -1,23 +1,14 @@
-# Verify logging function is enabled in the dnf module.
-#  The following tasks has been supported in dnf-4.2.17-6 or later
-#  Note: https://bugzilla.redhat.com/show_bug.cgi?id=1788212
-- name: Install latest version python3-dnf
-  dnf:
-    name:
-      - python3-dnf
-      - python3-libdnf  # https://bugzilla.redhat.com/show_bug.cgi?id=1887502
-      - libmodulemd     # https://bugzilla.redhat.com/show_bug.cgi?id=1942236
-    state: latest
-  register: dnf_result
+- set_fact:
+    dnf_log_files:
+      - /var/log/dnf5.log
+  when: dnf5
 
-- name: Verify python3-dnf installed
-  assert:
-    that:
-      - "dnf_result.rc == 0"
-
-- name: Get python3-dnf version
-  shell: "dnf info python3-dnf | awk '/^Version/ { print $3 }'"
-  register: py3_dnf_version
+- set_fact:
+    dnf_log_files:
+      - /var/log/dnf.log
+      - /var/log/dnf.rpm.log
+      - /var/log/dnf.librepo.log
+  when: not dnf5
 
 - name: Check logging enabled
   block:
@@ -44,5 +35,3 @@
         that:
           - "item.stat.exists"
       loop: "{{ stats.results }}"
-  when:
-    - 'py3_dnf_version.stdout is version("4.2.17", ">=")'

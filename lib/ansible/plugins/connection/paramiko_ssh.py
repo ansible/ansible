@@ -248,11 +248,13 @@ from ansible.errors import (
     AnsibleError,
     AnsibleFileNotFound,
 )
+
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.compat.paramiko import _PARAMIKO_IMPORT_ERR as PARAMIKO_IMPORT_ERR, _paramiko as paramiko
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils._internal import _deprecator
 
 display = Display()
 
@@ -327,7 +329,12 @@ class Connection(ConnectionBase):
     _log_channel: str | None = None
 
     def __init__(self, *args, **kwargs):
-        display.deprecated('The paramiko connection plugin is deprecated.', version='2.21')
+        display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+            msg='The paramiko connection plugin is deprecated.',
+            version='2.21',
+            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
+        )
+
         super().__init__(*args, **kwargs)
 
     def _cache_key(self) -> str:
@@ -406,7 +413,7 @@ class Connection(ConnectionBase):
                     # TODO: check if we need to look at several possible locations, possible for loop
                     ssh.load_system_host_keys(ssh_known_hosts)
                     break
-                except IOError:
+                except OSError:
                     pass  # file was not found, but not required to function
             ssh.load_system_host_keys()
 
@@ -560,8 +567,8 @@ class Connection(ConnectionBase):
 
         try:
             self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
-        except IOError:
-            raise AnsibleError("failed to transfer file to %s" % out_path)
+        except OSError as ex:
+            raise AnsibleError(f"Failed to transfer file to {out_path!r}.") from ex
 
     def _connect_sftp(self) -> paramiko.sftp_client.SFTPClient:
 
@@ -586,8 +593,8 @@ class Connection(ConnectionBase):
 
         try:
             self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
-        except IOError:
-            raise AnsibleError("failed to transfer file from %s" % in_path)
+        except OSError as ex:
+            raise AnsibleError(f"Failed to transfer file from {in_path!r}.") from ex
 
     def _any_keys_added(self) -> bool:
 

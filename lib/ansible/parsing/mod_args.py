@@ -30,7 +30,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.fqcn import add_internal_fqcns
 
 
-# modules formated for user msg
+# modules formatted for user msg
 _BUILTIN_RAW_PARAM_MODULES_SIMPLE = set([
     'include_vars',
     'include_tasks',
@@ -160,7 +160,7 @@ class ModuleArgsParser:
         final_args = dict()
         if additional_args:
             if isinstance(additional_args, (str, EncryptedString)):
-                # DTFIX-RELEASE: should this be is_possibly_template?
+                # DTFIX5: should this be is_possibly_template?
                 if TemplateEngine().is_template(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
