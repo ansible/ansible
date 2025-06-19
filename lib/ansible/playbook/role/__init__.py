@@ -492,7 +492,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
 
-        if self._default_vars_full is None:
+        # Note: In case of a depchain we need to recompute the default vars (not use cache) to include the parent's default vars
+        if (self._default_vars_full is None) or dep_chain:
             self._default_vars_full = dict()
             for dep in deps:
                 self._default_vars_full = combine_vars(self._default_vars_full, dep.get_default_vars())
