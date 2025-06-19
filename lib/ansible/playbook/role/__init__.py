@@ -477,7 +477,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @cached_property
     def global_cached_deps(self):
-        if not self.fully_qualified_name in global_role_dependency_cache:
+        if self.fully_qualified_name not in global_role_dependency_cache:
             global_role_dependency_cache[self.fully_qualified_name] = self.get_all_dependencies()
         return global_role_dependency_cache.get(self.fully_qualified_name)
 
