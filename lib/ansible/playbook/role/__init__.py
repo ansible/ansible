@@ -116,7 +116,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                  from_include: bool = False,
                  validate: bool = True,
                  public: bool = None,
-                 static: bool = True):
+                 static: bool = True) -> None:
         self._role_name: str = None
         self._role_path: str = None
         self._role_collection: str = None
