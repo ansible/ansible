@@ -181,6 +181,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
         group_numbers = self.ci_test_groups.get(name, None)
 
         if group_numbers:
+            group_numbers = [num for num in group_numbers if num not in (6, 7)]  # HACK: ignore special groups 6 and 7
+
             if min(group_numbers) != 1:
                 display.warning('Min test group "%s" in %s is %d instead of 1.' % (name, self.CI_YML, min(group_numbers)), unique=True)
 
@@ -291,6 +293,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
             if target.name == 'ansible-test-container':
                 continue  # special test target which uses group 6 -- nothing else should be in that group
 
+            if target.name in ('dnf-oldest', 'dnf-latest'):
+                continue  # special test targets which use group 7 -- nothing else should be in that group
+
             if f'{self.TEST_ALIAS_PREFIX}/posix/' not in target.aliases:
                 continue
 
@@ -350,6 +355,12 @@ class IntegrationAliasesTest(SanitySingleVersion):
         for path in unassigned_paths:
             if path == 'test/integration/targets/ansible-test-container':
                 continue  # special test target which uses group 6 -- nothing else should be in that group
+
+            if path in (
+                'test/integration/targets/dnf-oldest',
+                'test/integration/targets/dnf-latest',
+            ):
+                continue  # special test targets which use group 7 -- nothing else should be in that group
 
             messages.append(SanityMessage(unassigned_message, '%s/aliases' % path))
 

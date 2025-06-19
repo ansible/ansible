@@ -167,6 +167,14 @@ stages:
             - 3
             - 4
             - 5
+      - template: templates/matrix.yml  # context/target (dnf-oldest, dnf-latest)
+        parameters:
+          testFormat: linux/{0}
+          targets:
+            - name: Fedora 41
+              test: fedora41
+          groups:
+            - 7
   - stage: Galaxy
     dependsOn: []
     jobs:
