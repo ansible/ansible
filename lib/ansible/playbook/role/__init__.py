@@ -475,24 +475,19 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep_chain.append(parent)
         return dep_chain
 
-    @property
-    def cached_deps(self):
-        return global_role_dependency_cache.get(self.fully_qualified_name, None)
-
-    def add_deps_to_cache(self, deps):
-        global_role_dependency_cache[self.fully_qualified_name] = deps
+    @cached_property
+    def global_cached_deps(self):
+        if not self.fully_qualified_name in global_role_dependency_cache:
+            global_role_dependency_cache[self.fully_qualified_name] = self.get_all_dependencies()
+        return global_role_dependency_cache.get(self.fully_qualified_name)
 
     @cached_property
     def _default_vars_full(self):
         '''
         Returns a dict which includes all default vars, including the full dep chain vars
         '''
-        deps = self.cached_deps
-        if deps is None:
-            deps = self.get_all_dependencies()
-            self.add_deps_to_cache(deps)
-
         default_vars_full = dict()
+        deps = self.global_cached_deps
         for dep in deps:
             default_vars_full = combine_vars(default_vars_full, dep.get_default_vars())
         default_vars_full = combine_vars(default_vars_full, self._default_vars)
@@ -542,11 +537,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         # get exported variables from meta/dependencies
         seen = []
 
-        deps = self.cached_deps
-        if deps is None:
-            deps = self.get_all_dependencies()
-            self.add_deps_to_cache(deps)
-
+        deps = self.global_cached_deps
         for dep in deps:
             # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
