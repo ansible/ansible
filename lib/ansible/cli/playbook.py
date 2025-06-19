@@ -116,7 +116,6 @@ class PlaybookCLI(CLI):
                 # check if playbook is from collection (path can be passed directly)
                 playbook_collection = _get_collection_name_from_path(playbook)
 
-
             # don't add collection playbooks to adjacency search path
             if not playbook_collection:
                 # setup dirs to enable loading plugins from all playbooks in case they add callbacks/inventory/etc

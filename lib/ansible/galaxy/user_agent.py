@@ -9,7 +9,6 @@ import sys
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 
 
-
 def user_agent():
     """Returns a user agent used by ansible-galaxy to include the Ansible version, platform and python version."""
 

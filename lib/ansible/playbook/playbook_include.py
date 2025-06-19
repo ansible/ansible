@@ -84,7 +84,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # might still be collection playbook
             playbook_collection = _get_collection_name_from_path(playbook)
 
-
         if playbook_collection:
             # it is a collection playbook, setup default collections
             AnsibleCollectionConfig.default_collection = playbook_collection

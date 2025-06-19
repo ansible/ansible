@@ -6,11 +6,8 @@ from __future__ import annotations
 
 import platform
 
-
 from ansible.galaxy import user_agent
-from ansible.module_utils.ansible_release import __version__ as ansible_version  # type: ignore[import-untyped]
-
-
+from ansible.module_utils.ansible_release import __version__ as ansible_version
 
 def test_user_agent():
     res = user_agent.user_agent()
