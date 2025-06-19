@@ -114,7 +114,7 @@ class PlaybookCLI(CLI):
                     raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
                 # check if playbook is from collection (path can be passed directly)
-                playbook_collection = _get_collection_name_from_path(playbook) or AnsibleCollectionConfig.default_collection
+                playbook_collection = _get_collection_name_from_path(playbook)
 
 
             # don't add collection playbooks to adjacency search path

@@ -1162,44 +1162,42 @@ def _get_collection_resource_path(name, ref_type, collection_list=None):
 
 def _get_collection_name_from_path(path):
     """
-    Return the containing collection name for a given path, or an empty string ("") if:
-    - Path is not under a configured collection
-    - Collection cannot be loaded (e.g. masked or missing)
+    Return the containing collection name for a given path, or None if the path is not below a configured collection, or
+    the collection cannot be loaded (eg, the collection is masked by another of the same name higher in the configured
+    collection roots).
+    :param path: path to evaluate for collection containment
+    :return: collection name or None
     """
-    if not path:
-        return ""  # Return an empty string instead of None
 
-        # Ensure we compare full paths since pkg path will be abspath
+    # ensure we compare full paths since pkg path will be abspath
     path = _to_text(os.path.abspath(_to_bytes(path)))
-    path_parts = path.split('/')
 
+    path_parts = path.split('/')
     if path_parts.count('ansible_collections') != 1:
-        return ""
+        return None
 
     ac_pos = path_parts.index('ansible_collections')
 
-    # Make sure it's followed by at least a namespace and collection name
+    # make sure it's followed by at least a namespace and collection name
     if len(path_parts) < ac_pos + 3:
-        return ""
+        return None
 
     candidate_collection_name = '.'.join(path_parts[ac_pos + 1:ac_pos + 3])
 
     try:
-        # We've got a name for it, now see if the path prefix matches what the loader sees
+        # we've got a name for it, now see if the path prefix matches what the loader sees
         imported_pkg_path = _to_text(os.path.dirname(_to_bytes(import_module('ansible_collections.' + candidate_collection_name).__file__)))
     except ImportError:
-        return ""
+        return None
 
-    # Reassemble the original path prefix up to the collection name
+    # reassemble the original path prefix up the collection name, and it should match what we just imported. If not
+    # this is probably a collection root that's not configured.
+
     original_path_prefix = os.path.join('/', *path_parts[0:ac_pos + 3])
-    imported_pkg_path = to_text(os.path.abspath(to_bytes(imported_pkg_path)))
-
-
 
     imported_pkg_path = _to_text(os.path.abspath(_to_bytes(imported_pkg_path)))
-
     if original_path_prefix != imported_pkg_path:
-        return ""
+        return None
 
     return candidate_collection_name
 

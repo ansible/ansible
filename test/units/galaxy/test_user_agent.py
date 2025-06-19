@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import platform
-from tokenize import Ignore
+
 
 from ansible.galaxy import user_agent
 from ansible.module_utils.ansible_release import __version__ as ansible_version  # type: ignore[import-untyped]

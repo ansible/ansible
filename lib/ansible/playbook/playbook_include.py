@@ -82,7 +82,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 playbook = os.path.join(basedir, playbook)
 
             # might still be collection playbook
-            playbook_collection = _get_collection_name_from_path(playbook) or AnsibleCollectionConfig.default_collection
+            playbook_collection = _get_collection_name_from_path(playbook)
 
 
         if playbook_collection:

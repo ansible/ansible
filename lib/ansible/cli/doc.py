@@ -237,7 +237,8 @@ class RoleMixin(object):
         b_colldirs = list_collection_dirs(coll_filter=collection_filter)
         for b_path in b_colldirs:
             path = to_text(b_path, errors='surrogate_or_strict')
-            collname = _get_collection_name_from_path(b_path) or AnsibleCollectionConfig.default_collection
+            if not (collname := _get_collection_name_from_path(b_path)):
+                continue
 
 
             roles_dir = os.path.join(path, 'roles')
