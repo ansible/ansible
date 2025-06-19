@@ -203,7 +203,7 @@ class VariableManager:
             # get role defaults (lowest precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role._role_name)
+                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
 
         if task:
             # set basedirs
