@@ -45,8 +45,8 @@ from ansible.utils.vars import combine_vars
 #       References:
 #       * https://stackoverflow.com/q/39740632/199513
 #       * https://peps.python.org/pep-0484/#forward-references
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
+import typing as _t
+if _t.TYPE_CHECKING:
     from ansible.playbook.block import Block
     from ansible.playbook.play import Play
     from ansible.parsing.dataloader import DataLoader
