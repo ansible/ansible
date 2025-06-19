@@ -483,9 +483,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @cached_property
     def _default_vars_full(self):
-        '''
+        """
         Returns a dict which includes all default vars, including the full dep chain vars
-        '''
+        """
         default_vars_full = dict()
         deps = self.global_cached_deps
         for dep in deps:
