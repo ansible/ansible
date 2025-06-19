@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import os
+import typing as _t
 
 from collections.abc import Container, Mapping, Set, Sequence
 from types import MappingProxyType
@@ -45,12 +46,9 @@ from ansible.utils.vars import combine_vars
 #       References:
 #       * https://stackoverflow.com/q/39740632/199513
 #       * https://peps.python.org/pep-0484/#forward-references
-import typing as _t
 if _t.TYPE_CHECKING:
     from ansible.playbook.block import Block
     from ansible.playbook.play import Play
-    from ansible.parsing.dataloader import DataLoader
-
 
 __all__ = ['Role', 'hash_params']
 
