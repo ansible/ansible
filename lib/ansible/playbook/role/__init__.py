@@ -534,17 +534,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         # TODO: is this right precedence for inherited role_vars?
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
-        # get exported variables from meta/dependencies
-        seen = []
-
         deps = self.global_cached_deps
         for dep in deps:
-            # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
-            # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
-            if dep not in seen:
-                # only take 'exportable' vars from deps
-                all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
-                seen.append(dep)
+            # only take 'exportable' vars from deps
+            all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
 
         # role_vars come from vars/ in a role
         all_vars = combine_vars(all_vars, self._role_vars)
