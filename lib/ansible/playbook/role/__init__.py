@@ -131,8 +131,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._handler_blocks = []
         self._compiled_handler_blocks = None
         self._default_vars = dict()
-        # the _default_vars_full dict includes all default vars, including the full dep chain vars
-        self._default_vars_full: dict[str, str] = None
         self._role_vars = dict()
         self._had_task_run = dict()
         self._completed = dict()
@@ -484,24 +482,31 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def add_deps_to_cache(self, deps):
         global_role_dependency_cache[self.fully_qualified_name] = deps
 
-    def get_default_vars(self, dep_chain=None):
-        dep_chain = [] if dep_chain is None else dep_chain
-
+    @cached_property
+    def _default_vars_full(self):
+        '''
+        Returns a dict which includes all default vars, including the full dep chain vars
+        '''
         deps = self.cached_deps
         if deps is None:
             deps = self.get_all_dependencies()
             self.add_deps_to_cache(deps)
 
-        # Note: In case of a depchain we need to recompute the default vars (not use cache) to include the parent's default vars
-        if (self._default_vars_full is None) or dep_chain:
-            self._default_vars_full = dict()
-            for dep in deps:
-                self._default_vars_full = combine_vars(self._default_vars_full, dep.get_default_vars())
-            if dep_chain:
-                for parent in dep_chain:
-                    self._default_vars_full = combine_vars(self._default_vars_full, parent._default_vars)
-            self._default_vars_full = combine_vars(self._default_vars_full, self._default_vars)
-        return self._default_vars_full
+        default_vars_full = dict()
+        for dep in deps:
+            default_vars_full = combine_vars(default_vars_full, dep.get_default_vars())
+        default_vars_full = combine_vars(default_vars_full, self._default_vars)
+        return default_vars_full
+
+    def get_default_vars(self, dep_chain=None):
+        default_vars_full = self._default_vars_full
+
+        # Note: In case of a depchain we need to recompute the default vars everytime (not use cache) to include the parent's default vars
+        if dep_chain:
+            for parent in dep_chain:
+                default_vars_full = combine_vars(default_vars_full, parent._default_vars)
+            default_vars_full = combine_vars(default_vars_full, self._default_vars)
+        return default_vars_full
 
     def get_inherited_vars(self, dep_chain=None, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
