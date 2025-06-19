@@ -159,10 +159,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             fqname = f"{self._role_collection}.{fqname}"
         return fqname
 
-    @cached_property
-    def name(self):
-        return self.get_name()
-
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:
             return '.'.join(x for x in (self._role_collection, self._role_name) if x)
