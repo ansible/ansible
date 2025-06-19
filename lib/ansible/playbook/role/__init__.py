@@ -525,22 +525,29 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         params = combine_vars(params, self._role_params)
         return params
 
+    @cached_property
+    def _role_vars_full(self):
+        """
+        Returns a dict which includes all role vars, including the full dep chain vars
+        """
+        role_vars_full = {}
+        deps = self.global_cached_deps
+        for dep in deps:
+            # only take 'exportable' vars from deps
+            role_vars_full = combine_vars(role_vars_full, dep.get_vars(include_params=False, only_exports=True))
+        # role_vars come from vars/ in a role
+        role_vars_full = combine_vars(role_vars_full, self._role_vars)
+        return role_vars_full
+
     def get_vars(self, dep_chain=None, include_params=True, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
-
-        all_vars = {}
 
         # get role_vars: from parent objects
         # TODO: is this right precedence for inherited role_vars?
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
-        deps = self.global_cached_deps
-        for dep in deps:
-            # only take 'exportable' vars from deps
-            all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
-
-        # role_vars come from vars/ in a role
-        all_vars = combine_vars(all_vars, self._role_vars)
+        # Add the cached role_vars (including vars from dependencies)
+        all_vars = combine_vars(all_vars, self._role_vars_full)
 
         if not only_exports:
             # include_params are 'inline variables' in role invocation. - {role: x, varname: value}
