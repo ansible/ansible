@@ -153,7 +153,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return self.get_name()
 
     @cached_property
-    def full_qualified_name(self):
+    def fully_qualified_name(self):
         return f"{self._role_collection}.{self._role_path}.{self._role_name}"
 
     def get_name(self, include_role_fqcn=True):
@@ -474,10 +474,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @property
     def cached_deps(self):
-        return global_role_dependency_cache.get(self.full_qualified_name, None)
+        return global_role_dependency_cache.get(self.fully_qualified_name, None)
 
     def add_deps_to_cache(self, deps):
-        global_role_dependency_cache[self.full_qualified_name] = deps
+        global_role_dependency_cache[self.fully_qualified_name] = deps
 
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
