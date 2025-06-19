@@ -1,5 +1,5 @@
 # Test and validate playbook import
-- import_playbook: playbook1.yml
+- import_playbook: '{{ "playbook1.yml" }}'  # ensure templating occurs correctly
 - import_playbook: validate1.yml
 
 # Test and validate conditional import

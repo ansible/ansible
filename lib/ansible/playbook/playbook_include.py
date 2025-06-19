@@ -19,12 +19,7 @@ from __future__ import annotations
 
 import os
 
-import ansible.constants as C
-from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import string_types
-from ansible.parsing.splitter import split_args
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
@@ -32,15 +27,14 @@ from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible._internal._templating._engine import TemplateEngine
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    import_playbook = NonInheritableFieldAttribute(isa='string')
+    import_playbook = NonInheritableFieldAttribute(isa='string', required=True)
     vars_val = NonInheritableFieldAttribute(isa='dict', default=dict, alias='vars')
+
+    _post_validate_object = True  # manually post_validate to get free arg validation/coercion
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
@@ -62,18 +56,22 @@ class PlaybookInclude(Base, Conditional, Taggable):
         new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader)
 
         all_vars = self.vars.copy()
+
         if variable_manager:
             all_vars |= variable_manager.get_vars()
 
         templar = TemplateEngine(loader=loader, variables=all_vars)
 
+        new_obj.post_validate(templar)
+
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
 
-        file_name = templar.template(new_obj.import_playbook)
+        file_name = new_obj.import_playbook
 
         # check for FQCN
         resource = _get_collection_playbook_path(file_name)
+
         if resource is not None:
             playbook = resource[1]
             playbook_collection = resource[2]
@@ -92,6 +90,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         else:
             # it is NOT a collection playbook, setup adjacent paths
             AnsibleCollectionConfig.playbook_paths.append(os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict'))))
+            # broken, see: https://github.com/ansible/ansible/issues/85357
 
         pb._load_playbook_data(file_name=playbook, variable_manager=variable_manager, vars=self.vars.copy())
 
@@ -120,49 +119,3 @@ class PlaybookInclude(Base, Conditional, Taggable):
                     task_block._when = new_obj.when[:] + task_block.when[:]
 
         return pb
-
-    def preprocess_data(self, ds):
-        """
-        Reorganizes the data for a PlaybookInclude datastructure to line
-        up with what we expect the proper attributes to be
-        """
-
-        if not isinstance(ds, dict):
-            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
-
-        # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
-        # attributes of the task class; copy any tagged data to preserve things like origin
-        new_ds = AnsibleTagHelper.tag_copy(ds, {})
-
-        for (k, v) in ds.items():
-            if k in C._ACTION_IMPORT_PLAYBOOK:
-                self._preprocess_import(ds, new_ds, k, v)
-            else:
-                # some basic error checking, to make sure vars are properly
-                # formatted and do not conflict with k=v parameters
-                if k == 'vars':
-                    if 'vars' in new_ds:
-                        raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
-                    elif not isinstance(v, dict):
-                        raise AnsibleParserError("vars for import_playbook statements must be specified as a dictionary", obj=ds)
-                new_ds[k] = v
-
-        return super(PlaybookInclude, self).preprocess_data(new_ds)
-
-    def _preprocess_import(self, ds, new_ds, k, v):
-        """
-        Splits the playbook import line up into filename and parameters
-        """
-        if v is None:
-            raise AnsibleParserError("playbook import parameter is missing", obj=ds)
-        elif not isinstance(v, string_types):
-            raise AnsibleParserError("playbook import parameter must be a string indicating a file path, got %s instead" % type(v), obj=ds)
-
-        # The import_playbook line must include at least one item, which is the filename
-        # to import. Anything after that should be regarded as a parameter to the import
-        items = split_args(v)
-        if len(items) == 0:
-            raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
-
-        # DTFIX3: investigate this as a possible "problematic strip"
-        new_ds['import_playbook'] = AnsibleTagHelper.tag_copy(v, items[0].strip())
