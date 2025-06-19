@@ -1,2 +1,2 @@
 ---
-include_default_var: include_default_var
+inherit_default: default
