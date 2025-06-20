@@ -549,9 +549,9 @@ class CLI(ABC):
                 display.warning(u'running with default collection {0}'.format(default_collection))
                 AnsibleCollectionConfig.default_collection = default_collection
 
-        vault_ids = list(options['vault_ids'])
-        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
-        vault_ids = default_vault_ids + vault_ids
+            vault_ids = list(options['vault_ids'])
+            default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
+            vault_ids = default_vault_ids + vault_ids
 
         vault_secrets = CLI.setup_vault_secrets(loader,
                                                 vault_ids=vault_ids,
