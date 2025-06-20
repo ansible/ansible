@@ -220,7 +220,10 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), "role '%s' defaults" % task._role.get_name())
+                default_vars = task._role.get_default_vars(dep_chain=task.get_dep_chain())
+                all_vars = _combine_and_track(all_vars,
+                                              default_vars,
+                                              f"role '{task._role.get_name()}' defaults")
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
