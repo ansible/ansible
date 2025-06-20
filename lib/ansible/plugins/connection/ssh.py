@@ -961,6 +961,13 @@ class Connection(ConnectionBase):
                 b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
+        if password_mechanism == "ssh_askpass":
+            self._add_args(
+                b_command,
+                (b"-o", b"NumberOfPasswordPrompts=1"),
+                "Restrict number of password prompts in case incorrect password is provided.",
+            )
+
         # Finally, we add any caller-supplied extras.
         if other_args:
             b_command += [to_bytes(a) for a in other_args]

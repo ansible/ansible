@@ -44,4 +44,5 @@ def main() -> t.Never:
     sys.stdout.flush()
     shm.buf[:] = b'\x00' * shm.size
     shm.close()
+    shm.unlink()
     sys.exit(0)
