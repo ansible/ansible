@@ -102,6 +102,7 @@ class PlaybookExecutor:
 
                 if playbook_collection:
                     display.v("running playbook inside collection {0}".format(playbook_collection))
+                    AnsibleCollectionConfig.default_collection = playbook_collection
                 else:
                     AnsibleCollectionConfig.default_collection = None
 
