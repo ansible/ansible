@@ -114,8 +114,8 @@ class Connection(ConnectionBase):
             # privileges or the command otherwise needs a pty.
             try:
                 pty_primary, stdin = pty.openpty()
-            except (IOError, OSError) as e:
-                display.debug("Unable to open pty: %s" % to_native(e))
+            except OSError as ex:
+                display.debug(f"Unable to open pty: {ex}")
 
         p = subprocess.Popen(
             cmd,
@@ -271,8 +271,8 @@ class Connection(ConnectionBase):
             shutil.copyfile(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except shutil.Error:
             raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_native(in_path), to_native(out_path)))
-        except IOError as e:
-            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_native(out_path), to_native(e)))
+        except OSError as ex:
+            raise AnsibleError(f"Failed to transfer file to {out_path!r}.") from ex
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
         """ fetch a file from local to local -- for compatibility """

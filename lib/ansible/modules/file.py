@@ -323,11 +323,8 @@ def get_state(path):
             return 'file'
 
         return 'absent'
-    except OSError as e:
-        if e.errno == errno.ENOENT:  # It may already have been removed
-            return 'absent'
-        else:
-            raise
+    except FileNotFoundError:
+        return 'absent'
 
 
 # This should be moved into the common file utilities
@@ -527,12 +524,14 @@ def ensure_absent(path):
             else:
                 try:
                     os.unlink(b_path)
-                except OSError as e:
-                    if e.errno != errno.ENOENT:  # It may already have been removed
-                        module.fail_json(
-                            msg=f"unlinking failed: {to_native(e)}",
-                            path=path
-                        )
+                except FileNotFoundError:
+                    pass
+                except OSError as ex:
+                    module.fail_json(
+                        msg="Unlinking failed.",
+                        path=path,
+                        exception=ex,
+                    )
 
         result.update({'path': path, 'changed': True, 'diff': diff, 'state': 'absent'})
     else:
@@ -560,10 +559,11 @@ def execute_touch(path, follow, timestamps):
         try:
             open(b_path, 'wb').close()
             changed = True
-        except (OSError, IOError) as e:
+        except OSError as ex:
             module.fail_json(
-                msg=f"Error, could not touch target: {to_native(e, nonstring='simplerepr')}",
-                path=path
+                msg="Error, could not touch target.",
+                path=path,
+                exception=ex,
             )
     # Update the attributes on the file
     diff = initial_diff(path, 'touch', prev_state)
@@ -894,9 +894,8 @@ def ensure_hardlink(path, src, follow, force, timestamps):
                     if os.path.exists(b_path):
                         try:
                             os.unlink(b_path)
-                        except OSError as e:
-                            if e.errno != errno.ENOENT:  # It may already have been removed
-                                raise
+                        except FileNotFoundError:
+                            pass
                 os.link(b_src, b_tmppath)
                 os.rename(b_tmppath, b_path)
             except OSError as e:

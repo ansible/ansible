@@ -33,7 +33,6 @@ import json
 import pickle
 import socket
 import struct
-import traceback
 import uuid
 
 from functools import partial
@@ -136,12 +135,11 @@ class Connection(object):
 
         try:
             out = self.send(data)
-        except socket.error as e:
+        except OSError as ex:
             raise ConnectionError(
-                'unable to connect to socket %s. See Troubleshooting socket path issues '
-                'in the Network Debug and Troubleshooting Guide' % self.socket_path,
-                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
-            )
+                f'Unable to connect to socket {self.socket_path!r}. See Troubleshooting socket path issues '
+                'in the Network Debug and Troubleshooting Guide.'
+            ) from ex
 
         try:
             response = json.loads(out)
@@ -192,13 +190,12 @@ class Connection(object):
             send_data(sf, to_bytes(data))
             response = recv_data(sf)
 
-        except socket.error as e:
+        except OSError as ex:
             sf.close()
             raise ConnectionError(
-                'unable to connect to socket %s. See the socket path issue category in '
-                'Network Debug and Troubleshooting Guide' % self.socket_path,
-                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
-            )
+                f'Unable to connect to socket {self.socket_path!r}. See the socket path issue category in '
+                'Network Debug and Troubleshooting Guide.',
+            ) from ex
 
         sf.close()
 

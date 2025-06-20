@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import copy
-import errno
 import os
 import tempfile
 import time
@@ -108,8 +107,8 @@ class BaseFileCacheModule(BaseCacheModule):
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
-            except (OSError, IOError) as e:
-                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
+            except OSError as ex:
+                raise AnsibleError(f"Error in {self.plugin_name!r} cache plugin while trying to create cache dir {self._cache_dir!r}.") from ex
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
@@ -160,13 +159,13 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             try:
                 self._dump(value, tmpfile_path)
-            except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to write to '%s' : %s" % (self.plugin_name, tmpfile_path, to_bytes(e)))
+            except OSError as ex:
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}.", exception=ex)
             try:
                 os.rename(tmpfile_path, cachefile)
                 os.chmod(cachefile, mode=S_IRWU_RG_RO)
-            except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
+            except OSError as ex:
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to move {tmpfile_path!r} to {cachefile!r}.", exception=ex)
         finally:
             try:
                 os.unlink(tmpfile_path)
@@ -181,12 +180,12 @@ class BaseFileCacheModule(BaseCacheModule):
         cachefile = self._get_cache_file_name(key)
         try:
             st = os.stat(cachefile)
-        except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                return False
+        except FileNotFoundError:
+            return False
+        except OSError as ex:
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
+
+            return False
 
         if time.time() - st.st_mtime <= self._timeout:
             return False
@@ -223,11 +222,10 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.stat(cachefile)
             return True
-        except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+        except FileNotFoundError:
+            return False
+        except OSError as ex:
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
 
     def delete(self, key):
         try:
@@ -236,7 +234,7 @@ class BaseFileCacheModule(BaseCacheModule):
             pass
         try:
             os.remove(self._get_cache_file_name(key))
-        except (OSError, IOError):
+        except OSError:
             pass  # TODO: only pass on non existing?
 
     def flush(self):

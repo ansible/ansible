@@ -76,6 +76,7 @@ from ...python_requirements import (
     PipInstall,
     collect_requirements,
     run_pip,
+    install_requirements,
 )
 
 from ...config import (
@@ -178,6 +179,7 @@ def command_sanity(args: SanityConfig) -> None:
     if args.delegate:
         raise Delegate(host_state=host_state, require=changes, exclude=args.exclude)
 
+    install_requirements(args, host_state.controller_profile, host_state.controller_profile.python)  # sanity
     configure_pypi_proxy(args, host_state.controller_profile)  # sanity
 
     if disabled:
@@ -1085,7 +1087,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
 
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
-    """Base class for sanity test plugins which are idependent of the python version being used."""
+    """Base class for sanity test plugins which are independent of the python version being used."""
 
     @abc.abstractmethod
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:

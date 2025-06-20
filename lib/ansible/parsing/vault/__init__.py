@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import errno
 import fcntl
 import functools
 import os
@@ -414,8 +413,8 @@ class FileVaultSecret(VaultSecret):
         try:
             with open(filename, "rb") as f:
                 vault_pass = f.read().strip()
-        except (OSError, IOError) as e:
-            raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
+        except OSError as ex:
+            raise AnsibleError(f"Could not read vault password file {filename!r}.") from ex
 
         b_vault_data, dummy = self.loader._decrypt_if_vault_data(vault_pass)
 
@@ -571,8 +570,8 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
         return match_encrypt_vault_id_secret(secrets,
                                              encrypt_vault_id=encrypt_vault_id)
 
-    # Find the best/first secret from secrets since we didnt specify otherwise
-    # ie, consider all of the available secrets as matches
+    # Find the best/first secret from secrets since we didn't specify otherwise
+    # ie, consider all the available secrets as matches
     _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
     best_secret = match_best_secret(secrets, _vault_id_matchers)
 
@@ -1071,13 +1070,10 @@ class VaultEditor:
                 try:
                     # create file with secure permissions
                     fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
-                except OSError as ose:
-                    # Want to catch FileExistsError, which doesn't exist in Python 2, so catch OSError
-                    # and compare the error number to get equivalent behavior in Python 2/3
-                    if ose.errno == errno.EEXIST:
-                        raise AnsibleError('Vault file got recreated while we were operating on it: %s' % to_native(ose))
-
-                    raise AnsibleError('Problem creating temporary vault file: %s' % to_native(ose))
+                except FileExistsError as ex:
+                    raise AnsibleError('Vault file got recreated while we were operating on it.') from ex
+                except OSError as ex:
+                    raise AnsibleError('Problem creating temporary vault file.') from ex
 
                 try:
                     # now write to the file and ensure ours is only data in it
@@ -1417,7 +1413,7 @@ class EncryptedString(AnsibleTaggedObject):
             'ljust',
             'lower',
             'lstrip',
-            'maketrans',  # static, but implemented for simplicty/consistency
+            'maketrans',  # static, but implemented for simplicity/consistency
             'partition',
             'removeprefix',
             'removesuffix',

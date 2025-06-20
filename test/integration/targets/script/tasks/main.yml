@@ -58,6 +58,29 @@
       - "script_result0.rc == 0"
       - "script_result0.stdout == 'win'"
 
+- name: Basic non-zero RC
+  script: exit_1.sh
+  ignore_errors: true
+  register: non_zero_rc
+
+- name: Ensure non-zero RC result
+  assert:
+    that:
+      - non_zero_rc is failed
+      - non_zero_rc.rc == 1
+
+- name: Exercise failed_when on non-zero RC
+  script: exit_1.sh
+  register: non_zero_rc_failed_when
+  failed_when: false
+
+- name: Ensure failed_when executed
+  assert:
+    that:
+      - non_zero_rc_failed_when is success
+      - non_zero_rc_failed_when.rc == 1
+      - non_zero_rc_failed_when.failed_when_result is false
+
 - name: Execute a script with a space in the path
   script: "'space path/test.sh'"
   register: _space_path_test

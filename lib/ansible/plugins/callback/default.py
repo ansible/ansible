@@ -197,9 +197,6 @@ class CallbackModule(CallbackBase):
 
         self._last_task_banner = task._uuid
 
-    def v2_playbook_on_cleanup_task_start(self, task):
-        self._task_start(task, prefix='CLEANUP TASK')
-
     def v2_playbook_on_handler_task_start(self, task):
         self._task_start(task, prefix='RUNNING HANDLER')
 

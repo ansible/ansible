@@ -1,15 +1,14 @@
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
+# Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - set_fact:
     dnf5: "{{ (ansible_distribution == 'RedHat' and ansible_distribution_major_version | int > 10) or ansible_distribution == 'Fedora' }}"
 
-- when: dnf5
+- when:
+    - dnf5
+    - test_auto_install | default(false)  # NOTE ensure one of dnf, dnf-oldest or dnf-latest sets test_auto_install
   block:
-    - command: "dnf install -y 'dnf-command(copr)'"
-    - name: Test against dnf5 nightly build to detect any issues early
-      command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
-
     - name: Ensure module deps are not installed
       command: dnf remove -y python3-libdnf5
 

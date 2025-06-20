@@ -103,7 +103,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         self._display = display
 
     @abstractmethod
-    def run(self, tmp=None, task_vars=None):
+    def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
         tasks.  Everything else in this base class is a helper method for the
         action plugin to do that.
@@ -120,7 +120,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         * Module parameters.  These are stored in self._task.args
         """
         # does not default to {'changed': False, 'failed': False}, as it used to break async
-        result = {}
+        result: dict[str, t.Any] = {}
 
         if tmp is not None:
             display.warning('ActionModule.run() no longer honors the tmp parameter. Action'

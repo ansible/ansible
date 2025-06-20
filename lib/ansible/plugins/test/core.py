@@ -175,8 +175,8 @@ def vaulted_file(value):
     try:
         with open(to_bytes(value), 'rb') as f:
             return is_encrypted_file(f)
-    except (OSError, IOError) as e:
-        raise errors.AnsibleFilterError(f"Cannot test if the file {value} is a vault.") from e
+    except OSError as ex:
+        raise errors.AnsibleFilterError(f"Cannot test if the file {value!r} is a vault.") from ex
 
 
 def match(value, pattern='', ignorecase=False, multiline=False):

@@ -32,6 +32,7 @@
       - lookup('template', 'dict.j2') is not mapping
 
 - include_tasks: trim_blocks.yml
+- include_tasks: ansible_managed.yml
 
 - name: Verify templates with no rendered content return `None`
   assert:

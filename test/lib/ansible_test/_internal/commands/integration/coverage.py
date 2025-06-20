@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import abc
+import json
 import os
 import shutil
 import tempfile
@@ -240,9 +241,13 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
             # cause the 'coverage' module to be found, but not imported or enabled
             coverage_file = ''
 
+        coverage_options = dict(
+            config=config_file,
+            output=coverage_file,
+        )
+
         variables = dict(
-            _ANSIBLE_COVERAGE_CONFIG=config_file,
-            _ANSIBLE_COVERAGE_OUTPUT=coverage_file,
+            _ANSIBLE_ANSIBALLZ_COVERAGE_CONFIG=json.dumps(coverage_options),
         )
 
         return variables

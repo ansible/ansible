@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 
-import errno
 import json
 import shlex
 import shutil
@@ -122,24 +121,14 @@ def _get_interpreter(module_path):
         return head[2:head.index(b'\n')].strip().split(b' ')
 
 
-def _make_temp_dir(path):
-    # TODO: Add checks for permissions on path.
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
 def jwrite(info):
-
     jobfile = job_path + ".tmp"
     tjob = open(jobfile, "w")
     try:
         tjob.write(json.dumps(info))
-    except (IOError, OSError) as e:
-        notice('failed to write to %s: %s' % (jobfile, str(e)))
-        raise e
+    except OSError as ex:
+        notice(f'failed to write to {jobfile!r}: {ex}')
+        raise
     finally:
         tjob.close()
         os.rename(jobfile, job_path)
@@ -200,7 +189,7 @@ def _run_module(wrapped_cmd, jid):
             result['stderr'] = stderr
         jwrite(result)
 
-    except (OSError, IOError):
+    except OSError:
         e = sys.exc_info()[1]
         result = {
             "failed": True,
@@ -212,7 +201,7 @@ def _run_module(wrapped_cmd, jid):
         result['ansible_job_id'] = jid
         jwrite(result)
 
-    except (ValueError, Exception):
+    except Exception:
         result = {
             "failed": True,
             "cmd": wrapped_cmd,
@@ -257,7 +246,8 @@ def main():
     job_path = os.path.join(jobdir, jid)
 
     try:
-        _make_temp_dir(jobdir)
+        # TODO: Add checks for permissions on path.
+        os.makedirs(jobdir, exist_ok=True)
     except Exception as e:
         end({
             "failed": True,

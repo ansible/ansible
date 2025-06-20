@@ -651,7 +651,8 @@
     - assert:
         that:
           - r is failed
-          - r.msg is contains("Couldn't open file")
+          # account for two different messages depending on the libdnf version
+          - r.msg is contains("Couldn't open file") or r.msg is contains("Failed to download metadata")
   always:
     - file:
         name: /etc/yum.repos.d/{{ repo_name }}.repo

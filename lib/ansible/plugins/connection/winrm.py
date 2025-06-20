@@ -828,7 +828,7 @@ class Connection(ConnectionBase):
                     stderr = to_text(b_stderr)
 
                     if status_code != 0:
-                        raise IOError(stderr)
+                        raise OSError(stderr)
                     if stdout.strip() == '[DIR]':
                         data = None
                     else:

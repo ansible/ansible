@@ -218,7 +218,7 @@ def main():
                 rc=0
             )
 
-    startd = datetime.datetime.now()
+    start_date = datetime.datetime.now()
 
     try:
         try:
@@ -246,8 +246,8 @@ def main():
     except pexpect.ExceptionPexpect as e:
         module.fail_json(msg='%s' % to_native(e))
 
-    endd = datetime.datetime.now()
-    delta = endd - startd
+    end_date = datetime.datetime.now()
+    delta = end_date - start_date
 
     if b_out is None:
         b_out = b''
@@ -256,8 +256,8 @@ def main():
         cmd=args,
         stdout=to_native(b_out).rstrip('\r\n'),
         rc=rc,
-        start=str(startd),
-        end=str(endd),
+        start=str(start_date),
+        end=str(end_date),
         delta=str(delta),
         changed=True,
     )

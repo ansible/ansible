@@ -411,7 +411,7 @@ class VariableManager:
         all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
 
         # before we add 'reserved vars', check we didn't add any reserved vars
-        warn_if_reserved(all_vars.keys())
+        warn_if_reserved(all_vars)
 
         # magic variables
         all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
@@ -567,7 +567,8 @@ class VariableManager:
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
-        warn_if_reserved(facts.keys())
+        warn_if_reserved(facts)
+
         try:
             host_cache = self._fact_cache.get(host)
         except KeyError:
@@ -591,7 +592,8 @@ class VariableManager:
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
-        warn_if_reserved(facts.keys())
+        warn_if_reserved(facts)
+
         try:
             self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
@@ -603,6 +605,7 @@ class VariableManager:
         """
 
         warn_if_reserved([varname])
+
         if host not in self._vars_cache:
             self._vars_cache[host] = dict()
 
