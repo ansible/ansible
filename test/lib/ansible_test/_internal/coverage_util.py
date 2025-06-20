@@ -300,7 +300,10 @@ omit =
         coverage_config += """
 include =
      %s/*
-""" % data_context().content.root
+
+omit =
+    %s/*
+""" % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
 
     return coverage_config
 
