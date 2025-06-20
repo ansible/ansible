@@ -333,8 +333,8 @@ class SourcesList(object):
 
                 try:
                     fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
-                except (OSError, IOError) as e:
-                    self.module.fail_json(msg='Unable to create temp file at "%s" for apt source: %s' % (d, to_native(e)))
+                except OSError as ex:
+                    raise Exception(f'Unable to create temp file at {d!r} for apt source.') from ex
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
@@ -350,8 +350,8 @@ class SourcesList(object):
 
                     try:
                         f.write(line)
-                    except IOError as ex:
-                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(ex)))
+                    except OSError as ex:
+                        raise Exception(f"Failed to write to file {tmp_path!r}.") from ex
                 if filename in self.files_mapping:
                     # Write to symlink target instead of replacing symlink as a normal file
                     self.module.atomic_move(tmp_path, self.files_mapping[filename])
@@ -507,8 +507,8 @@ class UbuntuSourcesList(SourcesList):
             if os.path.exists(key_file):
                 try:
                     rc, out, err = self.module.run_command([self.gpg_bin, '--list-packets', key_file])
-                except (IOError, OSError) as e:
-                    self.debug("Could check key against file %s: %s" % (key_file, to_native(e)))
+                except OSError as ex:
+                    self.debug(f"Could check key against file {key_file!r}: {ex}")
                     continue
 
                 if key_fingerprint in out:
@@ -557,8 +557,8 @@ class UbuntuSourcesList(SourcesList):
                             with open(keyfile, 'wb') as f:
                                 f.write(stdout)
                             self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
-                        except (OSError, IOError) as e:
-                            self.module.fail_json(msg='Unable to add required signing key for%s ', rc=rc, stderr=stderr, error=to_native(e))
+                        except OSError as ex:
+                            self.module.fail_json(msg='Unable to add required signing key.', rc=rc, stderr=stderr, error=str(ex), exception=ex)
 
             # apt source file
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
@@ -752,9 +752,9 @@ def main():
                     )
                     module.fail_json(msg=msg)
 
-        except (OSError, IOError) as ex:
+        except OSError as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
-            module.fail_json(msg=to_native(ex))
+            raise
 
     module.exit_json(changed=changed, repo=repo, sources_added=sources_added, sources_removed=sources_removed, state=state, diff=diff)
 

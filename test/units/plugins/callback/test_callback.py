@@ -413,3 +413,13 @@ class TestCallbackOnMethods(unittest.TestCase):
         cb = CallbackBase()
         cb.v2_on_any('whatever', some_keyword='blippy')
         cb.on_any('whatever', some_keyword='blippy')
+
+
+def test_v2_v1_method_map() -> None:
+    """Ensure that all v2 callback methods appear in the method map."""
+    expected_names = [name for name in dir(CallbackBase) if name.startswith('v2_')]
+    mapped_names = {method.__name__ for method in CallbackBase._v2_v1_method_map}
+
+    missing = [name for name in expected_names if name not in mapped_names]
+
+    assert not missing

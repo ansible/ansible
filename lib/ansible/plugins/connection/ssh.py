@@ -332,7 +332,9 @@ DOCUMENTATION = """
             version_added: '2.7'
       sftp_batch_mode:
         default: true
-        description: 'TODO: write it'
+        description:
+          - When set to C(True), sftp will be run in batch mode, allowing detection of transfer errors.
+          - When set to C(False), sftp will not be run in batch mode, preventing detection of transfer errors.
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
@@ -977,7 +979,7 @@ class Connection(ConnectionBase):
         try:
             fh.write(to_bytes(in_data))
             fh.close()
-        except (OSError, IOError) as ex:
+        except OSError as ex:
             # The ssh connection may have already terminated at this point, with a more useful error
             # Only raise AnsibleConnectionFailure if the ssh process is still alive
             time.sleep(0.001)
@@ -993,7 +995,7 @@ class Connection(ConnectionBase):
         """ Terminate a process, ignoring errors """
         try:
             p.terminate()
-        except (OSError, IOError):
+        except OSError:
             pass
 
     # This is separate from _run() because we need to do the same thing for stdout
@@ -1134,7 +1136,7 @@ class Connection(ConnectionBase):
                 p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
-            except (OSError, IOError):
+            except OSError:
                 p = None
 
         if not p:
@@ -1142,8 +1144,8 @@ class Connection(ConnectionBase):
                 p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = p.stdin  # type: ignore[assignment] # stdin will be set and not None due to the calls above
-            except (OSError, IOError) as e:
-                raise AnsibleError('Unable to execute ssh command line on a controller due to: %s' % to_native(e))
+            except OSError as ex:
+                raise AnsibleError('Unable to execute ssh command line on a controller.') from ex
 
         if password_mechanism == 'sshpass' and conn_password:
             os.close(self.sshpass_pipe[0])
@@ -1169,7 +1171,7 @@ class Connection(ConnectionBase):
 
         # Are we requesting privilege escalation? Right now, we may be invoked
         # to execute sftp/scp with sudoable=True, but we can request escalation
-        # only when using ssh. Otherwise we can send initial data straightaway.
+        # only when using ssh. Otherwise, we can send initial data straight away.
 
         state = states.index('ready_to_send')
         if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:

@@ -17,7 +17,7 @@ Function Get-AnsibleWebRequest {
     The protocol method to use, if omitted, will use the default value for the URI protocol specified.
 
     .PARAMETER FollowRedirects
-    Whether to follow redirect reponses. This is only valid when using a HTTP URI.
+    Whether to follow redirect responses. This is only valid when using a HTTP URI.
         all - Will follow all redirects
         none - Will follow no redirects
         safe - Will only follow redirects when GET or HEAD is used as the Method

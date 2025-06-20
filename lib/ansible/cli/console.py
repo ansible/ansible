@@ -222,7 +222,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     variable_manager=self.variable_manager,
                     loader=self.loader,
                     passwords=self.passwords,
-                    stdout_callback=cb,
+                    stdout_callback_name=cb,
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                     run_tree=False,
                     forks=self.forks,
@@ -573,7 +573,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         histfile = os.path.join(os.path.expanduser("~"), ".ansible-console_history")
         try:
             readline.read_history_file(histfile)
-        except IOError:
+        except OSError:
             pass
 
         atexit.register(readline.write_history_file, histfile)

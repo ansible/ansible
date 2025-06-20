@@ -7,7 +7,7 @@ DOCUMENTATION:
   positional: _input, namespace
   options:
     _input:
-      description: String to use as base fo the UUID.
+      description: String to use as base of the UUID.
       type: str
       required: true
     namespace:

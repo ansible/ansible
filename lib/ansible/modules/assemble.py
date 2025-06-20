@@ -80,7 +80,7 @@ attributes:
     bypass_host_loop:
       support: none
     check_mode:
-      support: none
+      support: full
     diff_mode:
       support: full
     platform:
@@ -186,10 +186,10 @@ def cleanup(module, path, result=None):
     if os.path.exists(path):
         try:
             os.remove(path)
-        except (IOError, OSError) as e:
+        except OSError as ex:
             # don't error on possible race conditions, but keep warning
             if result is not None:
-                module.warn('Unable to remove temp file (%s): %s' % (path, to_native(e)))
+                module.error_as_warning(f'Unable to remove temp file {path!r}.', exception=ex)
 
 
 def main():
@@ -212,6 +212,7 @@ def main():
             decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     changed = False
@@ -266,12 +267,13 @@ def main():
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
 
-        module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
+        if not module.check_mode:
+            module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
         changed = True
 
     cleanup(module, path, result)
 
-    # handle file permissions
+    # handle file permissions (check mode aware)
     file_args = module.load_file_common_arguments(module.params)
     result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
 

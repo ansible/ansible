@@ -207,7 +207,7 @@ class TestBase(unittest.TestCase):
     def test_vars_not_valid_identifier(self):
         ds = {'environment': [],
               'vars': [{'var_2_key': 'var_2_value'},
-                       {'1an-invalid identifer': 'var_1_value'}]
+                       {'1an-invalid identifier': 'var_1_value'}]
               }
         self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 

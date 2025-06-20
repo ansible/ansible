@@ -83,6 +83,11 @@ class _ClassProperty:
 
 class FieldAttributeBase:
 
+    _post_validate_object = False
+    """
+    `False` skips FieldAttribute post-validation on intermediate objects and mixins for attributes without `always_post_validate`.
+    Leaf objects (e.g., `Task`) should set this attribute `True` to opt-in to post-validation.
+    """
     fattributes = _ClassProperty()
 
     @classmethod
@@ -216,8 +221,6 @@ class FieldAttributeBase:
 
     def validate(self, all_vars=None):
         """ validation that is done at parse time, not load time """
-        all_vars = {} if all_vars is None else all_vars
-
         if not self._validated:
             # walk all fields in the object
             for (name, attribute) in self.fattributes.items():
@@ -566,8 +569,8 @@ class FieldAttributeBase:
             # only import_role is checked here because import_tasks never reaches this point
             return Sentinel
 
-        # FIXME: compare types, not strings
-        if not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext', 'IncludeRole', 'TaskInclude'):
+        # Skip post validation unless always_post_validate is True, or the object requires post validation.
+        if not attribute.always_post_validate and not self._post_validate_object:
             # Intermediate objects like Play() won't have their fields validated by
             # default, as their values are often inherited by other objects and validated
             # later, so we don't want them to fail out early

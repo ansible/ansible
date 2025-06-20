@@ -137,8 +137,8 @@ class RoleMixin(object):
                 data = yaml.load(trust_as_template(f), Loader=AnsibleLoader)
                 if data is None:
                     data = {}
-        except (IOError, OSError) as ex:
-            raise AnsibleParserError(f"Could not read the role {role_name!r} (at {path}).") from ex
+        except OSError as ex:
+            raise AnsibleParserError(f"Could not read the role {role_name!r} at {path!r}.") from ex
 
         return data
 
@@ -1309,7 +1309,7 @@ class DocCLI(CLI, RoleMixin):
                             if ignore in item:
                                 del item[ignore]
 
-            # reformat cli optoins
+            # reformat cli options
             if 'cli' in opt and opt['cli']:
                 conf['cli'] = []
                 for cli in opt['cli']:
@@ -1440,7 +1440,7 @@ class DocCLI(CLI, RoleMixin):
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename')))
+        text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename') or 'Jinja2'))
 
         if isinstance(doc['description'], list):
             descs = doc.pop('description')

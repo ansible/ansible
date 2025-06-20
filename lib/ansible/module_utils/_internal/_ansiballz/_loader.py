@@ -5,17 +5,15 @@
 
 from __future__ import annotations
 
-import atexit
-import importlib.util
+import importlib
 import json
-import os
 import runpy
 import sys
 import typing as t
 
-from . import _errors, _traceback, _messages
-from .. import basic
-from ..common.json import get_module_encoder, Direction
+from ansible.module_utils import basic
+from ansible.module_utils._internal import _errors, _traceback, _messages, _ansiballz
+from ansible.module_utils.common.json import get_module_encoder, Direction
 
 
 def run_module(
@@ -24,13 +22,16 @@ def run_module(
     profile: str,
     module_fqn: str,
     modlib_path: str,
+    extensions: dict[str, dict[str, object]],
     init_globals: dict[str, t.Any] | None = None,
-    coverage_config: str | None = None,
-    coverage_output: str | None = None,
 ) -> None:  # pragma: nocover
     """Used internally by the AnsiballZ wrapper to run an Ansible module."""
     try:
-        _enable_coverage(coverage_config, coverage_output)
+        for extension, args in extensions.items():
+            # importing _ansiballz instead of _extensions avoids an unnecessary import when extensions are not in use
+            extension_module = importlib.import_module(f'{_ansiballz.__name__}._extensions.{extension}')
+            extension_module.run(args)
+
         _run_module(
             json_params=json_params,
             profile=profile,
@@ -40,35 +41,6 @@ def run_module(
         )
     except Exception as ex:  # not BaseException, since modules are expected to raise SystemExit
         _handle_exception(ex, profile)
-
-
-def _enable_coverage(coverage_config: str | None, coverage_output: str | None) -> None:  # pragma: nocover
-    """Bootstrap `coverage` for the current Ansible module invocation."""
-    if not coverage_config:
-        return
-
-    if coverage_output:
-        # Enable code coverage analysis of the module.
-        # This feature is for internal testing and may change without notice.
-        python_version_string = '.'.join(str(v) for v in sys.version_info[:2])
-        os.environ['COVERAGE_FILE'] = f'{coverage_output}=python-{python_version_string}=coverage'
-
-        import coverage
-
-        cov = coverage.Coverage(config_file=coverage_config)
-
-        def atexit_coverage():
-            cov.stop()
-            cov.save()
-
-        atexit.register(atexit_coverage)
-
-        cov.start()
-    else:
-        # Verify coverage is available without importing it.
-        # This will detect when a module would fail with coverage enabled with minimal overhead.
-        if importlib.util.find_spec('coverage') is None:
-            raise RuntimeError('Could not find the `coverage` Python module.')
 
 
 def _run_module(

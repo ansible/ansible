@@ -60,6 +60,8 @@ lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
 lib/ansible/_internal/_wrapt.py pep8!skip # vendored code
 lib/ansible/_internal/_wrapt.py pylint!skip # vendored code
 lib/ansible/_internal/ansible_collections/ansible/_protomatter/README.md no-unwanted-files
+test/integration/targets/ansible-doc/library/bogus_facts shebang
+test/integration/targets/ansible-doc/library/facts_one shebang
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
@@ -104,7 +106,7 @@ test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps
 test/integration/targets/win_app_control/files/Set-ManifestSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
-test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
+test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quotes in the file name to fetch
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep

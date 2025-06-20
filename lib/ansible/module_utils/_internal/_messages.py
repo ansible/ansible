@@ -8,6 +8,7 @@ A future release will remove the provisional status.
 from __future__ import annotations as _annotations
 
 import dataclasses as _dataclasses
+import enum as _enum
 import sys as _sys
 import typing as _t
 
@@ -21,14 +22,37 @@ else:
     _dataclass_kwargs = dict(frozen=True)
 
 
+class PluginType(_datatag.AnsibleSerializableEnum):
+    """Enum of Ansible plugin types."""
+
+    ACTION = _enum.auto()
+    BECOME = _enum.auto()
+    CACHE = _enum.auto()
+    CALLBACK = _enum.auto()
+    CLICONF = _enum.auto()
+    CONNECTION = _enum.auto()
+    DOC_FRAGMENTS = _enum.auto()
+    FILTER = _enum.auto()
+    HTTPAPI = _enum.auto()
+    INVENTORY = _enum.auto()
+    LOOKUP = _enum.auto()
+    MODULE = _enum.auto()
+    NETCONF = _enum.auto()
+    SHELL = _enum.auto()
+    STRATEGY = _enum.auto()
+    TERMINAL = _enum.auto()
+    TEST = _enum.auto()
+    VARS = _enum.auto()
+
+
 @_dataclasses.dataclass(**_dataclass_kwargs)
 class PluginInfo(_datatag.AnsibleSerializableDataclass):
     """Information about a loaded plugin."""
 
-    resolved_name: str
+    resolved_name: _t.Optional[str]
     """The resolved canonical plugin name; always fully-qualified for collection plugins."""
 
-    type: str
+    type: _t.Optional[PluginType]
     """The plugin type."""
 
 

@@ -330,6 +330,6 @@ def run_playbook(
     if args.verbosity:
         cmd.append('-%s' % ('v' * args.verbosity))
 
-    install_requirements(args, args.controller_python, ansible=True)  # run_playbook()
+    install_requirements(args, None, args.controller_python, ansible=True)  # run_playbook()
     env = ansible_environment(args)
     intercept_python(args, args.controller_python, cmd, env, capture=capture)
