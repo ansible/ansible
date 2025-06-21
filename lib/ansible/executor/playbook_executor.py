@@ -148,13 +148,20 @@ class PlaybookExecutor:
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
 
-                            if vname not in self._variable_manager.extra_vars:
-                                if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
-                                                            default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
-                                else:  # we are either in --list-<option> or syntax check
-                                    play.vars[vname] = default
+                            if self._tqm:
+                                self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+
+                                answer = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+
+                                # Validate regex support
+                                validate_pattern = var.get("validate")
+                                if validate_pattern:
+                                    import re
+                                    while not re.fullmatch(validate_pattern, answer):
+                                        display.display(f"Invalid input. Must match: {validate_pattern}", color='red')
+                                        answer = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+
+                                play.vars[vname] = answer
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
