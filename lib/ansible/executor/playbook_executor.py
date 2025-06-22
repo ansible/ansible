@@ -149,8 +149,11 @@ class PlaybookExecutor:
                             unsafe = boolean(var.get("unsafe", False))
 
                             if self._tqm:
-                                self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
-
+                                self._tqm.send_callback(
+                                    'v2_playbook_on_vars_prompt',
+                                    vname, private, prompt, encrypt, confirm,
+                                    salt_size, salt, default, unsafe
+                                )
                                 answer = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
                                 # Validate regex support
