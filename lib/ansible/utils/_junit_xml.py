@@ -3,15 +3,11 @@ Dataclasses for creating JUnit XML files.
 See: https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd
 """
 from __future__ import annotations
-
 import abc
 import dataclasses
 import datetime
 import decimal
-
 from xml.dom import minidom
-
-# noinspection PyPep8Naming
 from xml.etree import ElementTree as ET
 
 

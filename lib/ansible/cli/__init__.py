@@ -231,7 +231,7 @@ class CLI(ABC):
 
         # convert vault_password_files into vault_ids slugs
         for password_file in vault_password_files:
-            id_slug = "%s@%s" % (C.DEFAULT_VAULT_IDENTITY, password_file)
+            id_slug = "%s@%s" % (C.DEFAULT_VAULT_ID, password_file)
 
             # note this makes --vault-id higher precedence than --vault-password-file
             # if we want to intertwingle them in order probably need a cli callback to populate vault_ids
