@@ -78,6 +78,21 @@ The values following this prefix up to the first newline are parsed as Jinja2 te
 To include this literal value at the start of a string, a space or other character must precede it.
 """
 
+JINJA_KEYWORDS = frozenset(
+    {
+        # scalar singletons (see jinja2.nodes.Name.can_assign)
+        'true',
+        'false',
+        'none',
+        'True',
+        'False',
+        'None',
+        # other
+        'not',  # unary operator always applicable to names
+    }
+)
+"""Names which have special meaning to Jinja and cannot be resolved as variable names."""
+
 display = Display()
 
 

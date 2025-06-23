@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import keyword
 import pathlib
 
 import typing as t
@@ -381,3 +382,23 @@ def test_generate_ansible_template_vars(mocker: pytest_mock.MockerFixture, tmp_p
     tvars = _template.generate_ansible_template_vars(path="path", fullpath=str(tmp_path), dest_path=str(tmp_path))
 
     assert tvars['ansible_managed'] == 'value from config'
+
+
+_ALLOWED_PYTHON_KEYWORDS = sorted(set(keyword.kwlist) - _jinja_bits.JINJA_KEYWORDS)
+"""Python keywords which Jinja allows as variable names."""
+
+
+@pytest.mark.parametrize("keyword_name", _ALLOWED_PYTHON_KEYWORDS)
+def test_set_get_keyword(keyword_name: str) -> None:
+    """Verify Python keywords that are not Jinja keywords can be freely used to set and get variables in templates."""
+    template_set_get = TRUST.tag(f"{{% set {keyword_name} = 42 %}}{{{{ {keyword_name} }}}}")
+
+    assert Templar().template(template_set_get) == 42
+
+
+@pytest.mark.parametrize("keyword_name", _ALLOWED_PYTHON_KEYWORDS)
+def test_if_get_keyword(keyword_name: str) -> None:
+    """Verify Python keywords that are not Jinja keywords can be freely used as variables in templates and template conditionals."""
+    template_set_get = TRUST.tag(f"{{% if {keyword_name} == 42 %}}{{{{ {keyword_name} }}}}{{% endif %}}")
+
+    assert Templar(variables={keyword_name: 42}).template(template_set_get) == 42

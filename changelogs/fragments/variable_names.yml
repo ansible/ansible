@@ -1,0 +1,7 @@
+bugfixes:
+  - variables - Added Jinja scalar singletons (``true``, ``false``, ``none``) to invalid Ansible variable name detection.
+    Previously, variables with these names could be assigned without error, but could not be resolved.
+minor_changes:
+  - variables - Removed restriction on usage of most Python keywords as Ansible variable names.
+deprecated_features:
+  - inventory plugins - Setting invalid Ansible variable names in inventory plugins is deprecated.

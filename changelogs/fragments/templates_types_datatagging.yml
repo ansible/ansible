@@ -92,7 +92,6 @@ breaking_changes:
   - templating - Access to ``_`` prefixed attributes and methods, and methods with known side effects, is no longer permitted.
     In cases where a matching mapping key is present, the associated value will be returned instead of an error. 
     This increases template environment isolation and ensures more consistent behavior between the ``.`` and ``[]`` operators.
-  - inventory - Invalid variable names provided by inventories result in an inventory parse failure. This behavior is now consistent with other variable name usages throughout Ansible.
   - internals - The ``ansible.utils.native_jinja`` Python module has been removed.
   - internals - The ``AnsibleLoader`` and ``AnsibleDumper`` classes for working with YAML are now factory functions and cannot be extended.
   - public API - The ``ansible.vars.fact_cache.FactCache`` wrapper has been removed.
