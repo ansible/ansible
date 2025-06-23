@@ -22,8 +22,10 @@ import typing as t
 
 from collections.abc import Mapping, MutableMapping
 
+from ansible.errors import AnsibleError
 from ansible.inventory.group import Group, InventoryObjectType
 from ansible.parsing.utils.addresses import patterns
+from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
 
 from . import helpers  # this is left as a module import to facilitate easier unit test patching
@@ -117,7 +119,10 @@ class Host:
     def set_variable(self, key: str, value: t.Any) -> None:
         key = helpers.remove_trust(key)
 
-        validate_variable_name(key)
+        try:
+            validate_variable_name(key)
+        except AnsibleError as ex:
+            Display().deprecated(msg=f'Accepting inventory variable with invalid name {key!r}.', version='2.23', help_text=ex._help_text, obj=ex.obj)
 
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars = combine_vars(self.vars, {key: value})
