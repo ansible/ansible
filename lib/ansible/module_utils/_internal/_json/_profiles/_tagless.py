@@ -17,7 +17,7 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
     @classmethod
     def post_init(cls) -> None:
         cls.serialize_map = {
-            # DTFIX-RELEASE: support serialization of every type that is supported in the Ansible variable type system
+            # DTFIX5: support serialization of every type that is supported in the Ansible variable type system
             set: cls.serialize_as_list,
             tuple: cls.serialize_as_list,
             _datetime.date: cls.serialize_as_isoformat,
@@ -40,6 +40,8 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
             '__ansible_unsafe': _functools.partial(cls.unsupported_target_type_error, '__ansible_unsafe'),
             '__ansible_vault': _functools.partial(cls.unsupported_target_type_error, '__ansible_vault'),
         }
+
+        cls.handle_key = cls._handle_key_str_fallback  # type: ignore[method-assign]  # legacy stdlib-compatible key behavior
 
 
 class Encoder(_profiles.AnsibleProfileJSONEncoder):

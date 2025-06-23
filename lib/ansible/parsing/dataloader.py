@@ -15,7 +15,7 @@ import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible._internal._errors import _utils
+from ansible._internal._errors import _error_utils
 from ansible.module_utils.basic import is_executable
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, SourceWasEncrypted
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
@@ -86,7 +86,7 @@ class DataLoader:
             json_only: bool = False,
     ) -> t.Any:
         """Backwards compat for now"""
-        with _utils.RedactAnnotatedSourceContext.when(not show_content):
+        with _error_utils.RedactAnnotatedSourceContext.when(not show_content):
             return from_yaml(data=data, file_name=file_name, json_only=json_only)
 
     def load_from_file(self, file_name: str, cache: str = 'all', unsafe: bool = False, json_only: bool = False, trusted_as_template: bool = False) -> t.Any:
@@ -217,7 +217,7 @@ class DataLoader:
         except FileNotFoundError as ex:
             # DTFIX-FUTURE: why not just let the builtin one fly?
             raise AnsibleFileNotFound("Unable to retrieve file contents.", file_name=file_name) from ex
-        except (IOError, OSError) as ex:
+        except OSError as ex:
             raise AnsibleParserError(f"An error occurred while trying to read the file {file_name!r}.") from ex
 
         data = Origin(path=file_name).tag(data)
@@ -448,7 +448,7 @@ class DataLoader:
 
             return real_path
 
-        except (IOError, OSError) as ex:
+        except OSError as ex:
             raise AnsibleParserError(f"an error occurred while trying to read the file {to_text(real_path)!r}.") from ex
 
     def cleanup_tmp_file(self, file_path: str) -> None:

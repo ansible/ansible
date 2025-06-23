@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import locale
 import os
-import signal
 import sys
 
 # We overload the ``ansible`` adhoc command to provide the functionality for
@@ -76,8 +75,6 @@ def initialize_locale():
 initialize_locale()
 
 
-import atexit
-import errno
 import getpass
 import subprocess
 import traceback
@@ -96,7 +93,7 @@ try:
     display = Display()
 except Exception as ex:
     if isinstance(ex, AnsibleError):
-        ex_msg = ' '.join((ex.message, ex._help_text)).strip()
+        ex_msg = ' '.join((ex.message, ex._help_text or '')).strip()
     else:
         ex_msg = str(ex)
 
@@ -112,94 +109,23 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
-from ansible.module_utils.common.process import get_bin_path
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret, VaultSecretsContext
 from ansible.plugins.loader import add_all_plugin_dirs, init_plugin_loader
 from ansible.release import __version__
-from ansible.utils._ssh_agent import SshAgentClient
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.path import unfrackpath
 from ansible.vars.manager import VariableManager
 from ansible.module_utils._internal import _deprecator
+from ansible._internal._ssh import _agent_launch
+
 
 try:
     import argcomplete
     HAS_ARGCOMPLETE = True
 except ImportError:
     HAS_ARGCOMPLETE = False
-
-
-_SSH_AGENT_STDOUT_READ_TIMEOUT = 5  # seconds
-
-
-def _ssh_agent_timeout_handler(signum, frame):
-    raise TimeoutError
-
-
-def _launch_ssh_agent() -> None:
-    ssh_agent_cfg = C.config.get_config_value('SSH_AGENT')
-    match ssh_agent_cfg:
-        case 'none':
-            display.debug('SSH_AGENT set to none')
-            return
-        case 'auto':
-            try:
-                ssh_agent_bin = get_bin_path('ssh-agent')
-            except ValueError as e:
-                raise AnsibleError('SSH_AGENT set to auto, but cannot find ssh-agent binary') from e
-            ssh_agent_dir = os.path.join(C.DEFAULT_LOCAL_TMP, 'ssh_agent')
-            os.mkdir(ssh_agent_dir, 0o700)
-            sock = os.path.join(ssh_agent_dir, 'agent.sock')
-            display.vvv('SSH_AGENT: starting...')
-            try:
-                p = subprocess.Popen(
-                    [ssh_agent_bin, '-D', '-s', '-a', sock],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-            except OSError as e:
-                raise AnsibleError(
-                    f'Could not start ssh-agent: {e}'
-                ) from e
-
-            if p.poll() is not None:
-                raise AnsibleError(
-                    f'Could not start ssh-agent: rc={p.returncode} stderr="{p.stderr.read().decode()}"'
-                )
-
-            old_sigalrm_handler = signal.signal(signal.SIGALRM, _ssh_agent_timeout_handler)
-            signal.alarm(_SSH_AGENT_STDOUT_READ_TIMEOUT)
-            try:
-                stdout = p.stdout.read(13)
-            except TimeoutError:
-                stdout = b''
-            finally:
-                signal.alarm(0)
-                signal.signal(signal.SIGALRM, old_sigalrm_handler)
-
-            if stdout != b'SSH_AUTH_SOCK':
-                display.warning(
-                    f'The first 13 characters of stdout did not match the '
-                    f'expected SSH_AUTH_SOCK. This may not be the right binary, '
-                    f'or an incompatible agent: {stdout.decode()}'
-                )
-            display.vvv(f'SSH_AGENT: ssh-agent[{p.pid}] started and bound to {sock}')
-            atexit.register(p.terminate)
-        case _:
-            sock = ssh_agent_cfg
-
-    try:
-        with SshAgentClient(sock) as client:
-            client.list()
-    except Exception as e:
-        raise AnsibleError(
-            f'Could not communicate with ssh-agent using auth sock {sock}: {e}'
-        ) from e
-
-    os.environ['SSH_AUTH_SOCK'] = os.environ['ANSIBLE_SSH_AGENT'] = sock
 
 
 class CLI(ABC):
@@ -286,9 +212,9 @@ class CLI(ABC):
             # used by --vault-id and --vault-password-file
             vault_ids.append(id_slug)
 
-        # if an action needs an encrypt password (create_new_password=True) and we dont
+        # if an action needs an encrypt password (create_new_password=True) and we don't
         # have other secrets setup, then automatically add a password prompt as well.
-        # prompts cant/shouldnt work without a tty, so dont add prompt secrets
+        # prompts can't/shouldn't work without a tty, so don't add prompt secrets
         if ask_vault_pass or (not vault_ids and auto_prompt):
 
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, u'prompt_ask_vault_pass')
@@ -599,9 +525,7 @@ class CLI(ABC):
         try:
             cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
-        except IOError:
-            pass
-        except KeyboardInterrupt:
+        except (OSError, KeyboardInterrupt):
             pass
 
     def _play_prereqs(self):
@@ -636,10 +560,7 @@ class CLI(ABC):
         loader.set_vault_secrets(vault_secrets)
 
         if self.USES_CONNECTION:
-            try:
-                _launch_ssh_agent()
-            except Exception as e:
-                raise AnsibleError('Failed to launch ssh agent', orig_exc=e)
+            _agent_launch.launch_ssh_agent()
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))
@@ -709,8 +630,8 @@ class CLI(ABC):
             try:
                 with open(b_pwd_file, "rb") as password_file:
                     secret = password_file.read().strip()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read password file %s: %s" % (pwd_file, e))
+            except OSError as ex:
+                raise AnsibleError(f"Could not read password file {pwd_file!r}.") from ex
 
         secret = secret.strip(b'\r\n')
 
@@ -729,12 +650,9 @@ class CLI(ABC):
 
             ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
             try:
-                ansible_dir.mkdir(mode=0o700)
-            except OSError as exc:
-                if exc.errno != errno.EEXIST:
-                    display.warning(
-                        "Failed to create the directory '%s': %s" % (ansible_dir, to_text(exc, errors='surrogate_or_replace'))
-                    )
+                ansible_dir.mkdir(mode=0o700, exist_ok=True)
+            except OSError as ex:
+                display.error_as_warning(f"Failed to create the directory {ansible_dir!r}.", ex)
             else:
                 display.debug("Created the '%s' directory" % ansible_dir)
 

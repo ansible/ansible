@@ -163,11 +163,6 @@ def do_commands(
     )
 
     testing.add_argument(
-        '--metadata',
-        help=argparse.SUPPRESS,
-    )
-
-    testing.add_argument(
         '--base-branch',
         metavar='BRANCH',
         help='base branch used for change detection',

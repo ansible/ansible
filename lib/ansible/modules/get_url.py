@@ -436,6 +436,23 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         module.fail_json(msg="failed to create temporary content file: %s" % to_native(e), elapsed=elapsed)
     f.close()
     rsp.close()
+
+    # Since shutil.copyfileobj() will read from HTTPResponse in chunks, HTTPResponse.read() will not recognize
+    # if the entire content-length of data was not read. We need to do that validation here, unless a 'chunked'
+    # transfer-encoding was used, in which case we will not know content-length because it will not be returned.
+    # But in that case, HTTPResponse will behave correctly and recognize an IncompleteRead.
+
+    is_gzip = info.get('content-encoding') == 'gzip'
+
+    if not module.check_mode and 'content-length' in info:
+        # If data is decompressed, then content-length won't match the amount of data we've read, so skip.
+        if not is_gzip or (is_gzip and not decompress):
+            st = os.stat(tempname)
+            cl = int(info['content-length'])
+            if st.st_size != cl:
+                diff = cl - st.st_size
+                module.fail_json(msg=f'Incomplete read, ({rsp.length=}, {cl=}, {st.st_size=}) failed to read remaining {diff} bytes')
+
     return tempname, info
 
 

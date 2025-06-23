@@ -1341,7 +1341,7 @@ class User(object):
         try:
             with open(ssh_public_key_file, 'r') as f:
                 ssh_public_key = f.read().strip()
-        except IOError:
+        except OSError:
             return None
         return ssh_public_key
 

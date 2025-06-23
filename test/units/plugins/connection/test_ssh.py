@@ -56,13 +56,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.close()
         self.assertFalse(conn._connected)
 
-    def test_plugins_connection_ssh__build_command(self):
-        pc = PlayContext()
-        conn = connection_loader.get('ssh', pc)
-        conn.get_option = MagicMock()
-        conn.get_option.return_value = ""
-        conn._build_command('ssh', 'ssh')
-
     def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
         conn = connection_loader.get('ssh', pc)

@@ -43,13 +43,14 @@ from ansible._internal._templating import _transform
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible.plugins.loader import init_plugin_loader
-from ansible._internal._templating._jinja_common import _TemplateConfig
+from ansible._internal._templating._jinja_common import _TemplateConfig, _SandboxMode
 from ansible._internal._templating._jinja_plugins import _lookup
 from ansible._internal._templating import _jinja_plugins
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible._internal._templating._jinja_bits import AnsibleEnvironment, AnsibleContext, is_possibly_template, is_possibly_all_template
 from ansible._internal._templating._marker_behaviors import ReplacingMarkerBehavior
 from ansible._internal._templating._utils import TemplateContext
+from ansible.module_utils._internal import _event_utils
 from ansible.utils.display import Display, _DeferredWarningContext
 from units.mock.loader import DictDataLoader
 from units.test_utils.controller.display import emits_warnings
@@ -422,7 +423,7 @@ def test_evaluate_expression_errors(expr: str, error_type: type[Exception]):
 @pytest.mark.parametrize("conditional,expected,variables", [
     ("1 == 2", False, None),
     ("test2_name | default(True)", True, None),
-    # DTFIX-RELEASE: more success cases?
+    # DTFIX5: more success cases?
 ])
 def test_evaluate_conditional(conditional: str, expected: t.Any, variables: dict[str, t.Any] | None):
     assert TemplateEngine().evaluate_conditional(TRUST.tag(conditional)) == expected
@@ -510,7 +511,7 @@ def test_is_possibly_template_false(value: str) -> None:
 
 
 def test_stop_on_container() -> None:
-    # DTFIX-RELEASE: add more test cases
+    # DTFIX5: add more test cases
     assert TemplateEngine().resolve_to_container(TRUST.tag('{{ [ 1 ] }}')) == [1]
 
 
@@ -576,7 +577,7 @@ def test_finalize_generator(value: t.Any, expected: t.Any) -> None:
         yielder=yielder,
     ))
 
-    # DTFIX-RELEASE: we still need to deal with the "Encountered unsupported" warnings these generate
+    # DTFIX5: we still need to deal with the "Encountered unsupported" warnings these generate
     assert templar.template(TRUST.tag(value)) == expected
 
 
@@ -1040,9 +1041,9 @@ def test_deprecated_dedupe_and_source():
     dep_warnings = dwc.get_deprecation_warnings()
 
     assert len(dep_warnings) == 3
-    assert 'deprecated_string' in dep_warnings[0]._format()
-    assert 'indirect1 and deprecated_list and deprecated_dict' in dep_warnings[1]._format()
-    assert 'd1 and d2' in dep_warnings[2]._format()
+    assert 'deprecated_string' in _event_utils.format_event_brief_message(dep_warnings[0].event)
+    assert 'indirect1 and deprecated_list and deprecated_dict' in _event_utils.format_event_brief_message(dep_warnings[1].event)
+    assert 'd1 and d2' in _event_utils.format_event_brief_message(dep_warnings[2].event)
 
 
 def test_jinja_const_template_leak(template_context: TemplateContext) -> None:
@@ -1057,3 +1058,25 @@ def test_jinja_const_template_finalized() -> None:
     with _DeferredWarningContext(variables={}):  # suppress warning from usage of embedded template
         with unittest.mock.patch.object(_TemplateConfig, 'allow_embedded_templates', True):
             assert not _JinjaConstTemplate.is_tagged_on(TemplateEngine().template(TRUST.tag("{{ '{{ 1 }}' }}")))
+
+
+@pytest.mark.parametrize("template,expected", (
+    ("{% set x=[] %}{% set _=x.append(42) %}{{ x }}", [42]),
+    ("{{ (32).__or__(64) }}", 96),
+    ("{% set x={'foo': 42} %}{% set _=x.clear() %}{{ x }}", {}),
+))
+def test_unsafe_attr_access(template: str, expected: object) -> None:
+    """Verify that unsafe attribute access fails by default and works when explicitly configured."""
+    assert _TemplateConfig.sandbox_mode == _SandboxMode.DEFAULT
+
+    with pytest.raises(AnsibleUndefinedVariable):
+        TemplateEngine().template(TRUST.tag(template))
+
+    with unittest.mock.patch.object(_TemplateConfig, 'sandbox_mode', _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES):
+        assert TemplateEngine().template(TRUST.tag(template)) == expected
+
+
+def test_marker_from_test_plugin() -> None:
+    """Verify test plugins can raise MarkerError to return a Marker, and that no warnings or deprecations are emitted."""
+    with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
+        assert TemplateEngine(variables=dict(something=TRUST.tag("{{ nope }}"))).template(TRUST.tag("{{ (something is eq {}) is undefined }}"))

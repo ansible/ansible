@@ -31,7 +31,7 @@ from ansible import errors
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible._internal._templating._jinja_common import Marker, UndefinedMarker
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.plugins import accept_args_markers
+from ansible.template import accept_args_markers
 from ansible.parsing.vault import is_encrypted_file, VaultHelper, VaultLib
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
@@ -116,7 +116,6 @@ def started(result):
 
     if 'started' in result:
         # For async tasks, return status
-        # NOTE: The value of started is 0 or 1, not False or True :-/
         return bool(result.get('started'))
     else:
         # For non-async tasks, warn user, but return as if started
@@ -131,7 +130,6 @@ def finished(result):
 
     if 'finished' in result:
         # For async tasks, return status
-        # NOTE: The value of finished is 0 or 1, not False or True :-/
         return bool(result.get('finished'))
     else:
         # For non-async tasks, warn user, but return as if finished
@@ -177,8 +175,8 @@ def vaulted_file(value):
     try:
         with open(to_bytes(value), 'rb') as f:
             return is_encrypted_file(f)
-    except (OSError, IOError) as e:
-        raise errors.AnsibleFilterError(f"Cannot test if the file {value} is a vault", orig_exc=e)
+    except OSError as ex:
+        raise errors.AnsibleFilterError(f"Cannot test if the file {value!r} is a vault.") from ex
 
 
 def match(value, pattern='', ignorecase=False, multiline=False):

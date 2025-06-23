@@ -71,6 +71,8 @@ class PlayContext(Base):
     connection/authentication information.
     """
 
+    _post_validate_object = True
+
     # base
     module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
     shell = FieldAttribute(isa='string')

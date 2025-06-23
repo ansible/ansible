@@ -5,6 +5,7 @@ import collections.abc as c
 import copy
 import dataclasses
 import datetime
+import enum
 import inspect
 import json
 
@@ -22,10 +23,11 @@ from ansible.module_utils._internal._json._profiles import (
     _JSONSerializationProfile,
 )
 
-from ansible.module_utils.common.messages import ErrorSummary, WarningSummary, DeprecationSummary, Detail, PluginInfo
+from ansible.module_utils._internal import _messages
 
 from ansible.module_utils._internal._datatag import (
     AnsibleSerializable,
+    AnsibleSerializableEnum,
     AnsibleSingletonTagBase,
     AnsibleTaggedObject,
     NotTaggableError,
@@ -43,7 +45,6 @@ from ansible.module_utils._internal._datatag import (
 )
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.module_utils.datatag import native_type_name
-from units.mock.messages import make_summary
 
 if sys.version_info >= (3, 9):
     from typing import get_type_hints
@@ -79,11 +80,13 @@ class CopyProtocol(t.Protocol):
 
 
 message_instances = [
-    Detail(msg="bla", formatted_source_context="sc"),
-    make_summary(ErrorSummary, Detail(msg="bla"), formatted_traceback="tb"),
-    make_summary(WarningSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb"),
-    make_summary(DeprecationSummary, Detail(msg="bla", formatted_source_context="sc"), formatted_traceback="tb", version="1.2.3"),
-    PluginInfo(resolved_name='a.b.c', type='module'),
+    _messages.Event(msg="bla", formatted_source_context="sc"),
+    _messages.EventChain(msg_reason="a", traceback_reason="b", event=_messages.Event(msg="c")),
+    _messages.ErrorSummary(event=_messages.Event(msg="bla", formatted_traceback="tb")),
+    _messages.WarningSummary(event=_messages.Event(msg="bla", formatted_source_context="sc", formatted_traceback="tb")),
+    _messages.DeprecationSummary(event=_messages.Event(msg="bla", formatted_source_context="sc", formatted_traceback="tb"), version="1.2.3"),
+    _messages.PluginInfo(resolved_name='a.b.c', type=_messages.PluginType.MODULE),
+    _messages.PluginType.MODULE,
 ]
 
 
@@ -97,7 +100,7 @@ def assert_round_trip(original_value, round_tripped_value, via_copy=False):
         return
 
     # singleton values should rehydrate as the shared singleton instance, all others should be a new instance
-    if isinstance(original_value, AnsibleSingletonTagBase):
+    if isinstance(original_value, (AnsibleSingletonTagBase, enum.Enum)):
         assert original_value is round_tripped_value
     else:
         assert original_value is not round_tripped_value
@@ -483,6 +486,8 @@ class TestDatatagTarget(AutoParamSupport):
         excluded_type_names = {
             AnsibleTaggedObject.__name__,  # base class, cannot be abstract
             AnsibleSerializableDataclass.__name__,  # base class, cannot be abstract
+            AnsibleSerializable.__name__,  # base class, cannot be abstract
+            AnsibleSerializableEnum.__name__,  # base class, cannot be abstract
             # these types are all controller-only, so it's easier to have static type names instead of importing them
             'JinjaConstTemplate',  # serialization not required
             '_EncryptedSource',  # serialization not required
@@ -531,7 +536,7 @@ class TestDatatagTarget(AutoParamSupport):
 
         round_tripped_value = copy.deepcopy(value)
 
-        # DTFIX-RELEASE: ensure items in collections are copies
+        # DTFIX5: ensure items in collections are copies
 
         assert_round_trip(value, round_tripped_value, via_copy=True)
 
@@ -545,7 +550,7 @@ class TestDatatagTarget(AutoParamSupport):
         if not isinstance(native_copy, int):
             assert native_copy is not value._native_copy()
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert native_copy == value
         assert native_copy == value._native_copy()
@@ -557,7 +562,7 @@ class TestDatatagTarget(AutoParamSupport):
 
         round_tripped_value = copy.copy(value)
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert_round_trip(value, round_tripped_value, via_copy=True)
 
@@ -565,7 +570,7 @@ class TestDatatagTarget(AutoParamSupport):
     def test_instance_copy_roundtrip(self, value: CopyProtocol):
         round_tripped_value = value.copy()
 
-        # DTFIX-RELEASE: ensure items in collections are not copies
+        # DTFIX5: ensure items in collections are not copies
 
         assert_round_trip(value, round_tripped_value)
 
@@ -643,7 +648,7 @@ class TestDatatagTarget(AutoParamSupport):
         """Assert that __slots__ are properly defined on the given serializable type."""
         if value in (AnsibleSerializable, AnsibleTaggedObject):
             expect_slots = True  # non-dataclass base types have no attributes, but still use slots
-        elif issubclass(value, (int, bytes, tuple)):
+        elif issubclass(value, (int, bytes, tuple, enum.Enum)):
             # non-empty slots are not supported by these variable-length data types
             # see: https://docs.python.org/3/reference/datamodel.html
             expect_slots = False

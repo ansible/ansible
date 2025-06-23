@@ -6,7 +6,11 @@ import collections.abc as c
 import dataclasses
 import datetime
 import functools
+import inspect
+import re
 import typing as t
+
+from jinja2 import defaults
 
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
 from ansible.module_utils.common.collections import is_sequence
@@ -124,6 +128,9 @@ class JinjaPluginIntercept(c.MutableMapping):
         def wrapper(*args, **kwargs) -> bool | Marker:
             result = self._invoke_plugin(instance, *args, **kwargs)
 
+            if isinstance(result, Marker):
+                return result
+
             if not isinstance(result, bool):
                 template = TemplateContext.current().template_value
 
@@ -156,7 +163,7 @@ class JinjaPluginIntercept(c.MutableMapping):
 class _DirectCall:
     """Functions/methods marked `_DirectCall` bypass Jinja Environment checks for `Marker`."""
 
-    _marker_attr: str = "_directcall"
+    _marker_attr: t.Final[str] = "_directcall"
 
     @classmethod
     def mark(cls, src: _TCallable) -> _TCallable:
@@ -165,7 +172,7 @@ class _DirectCall:
 
     @classmethod
     def is_marked(cls, value: t.Callable) -> bool:
-        return callable(value) and getattr(value, "_directcall", False)
+        return callable(value) and getattr(value, cls._marker_attr, False)
 
 
 @_DirectCall.mark
@@ -338,3 +345,28 @@ def _wrap_plugin_output(o: t.Any) -> t.Any:
         o = list(o)
 
     return _AnsibleLazyTemplateMixin._try_create(o, LazyOptions.SKIP_TEMPLATES)
+
+
+_PLUGIN_SOURCES = dict(
+    filter=defaults.DEFAULT_FILTERS,
+    test=defaults.DEFAULT_TESTS,
+)
+
+
+def _get_builtin_short_description(plugin: object) -> str:
+    """
+    Make a reasonable effort to break a function docstring down to a single sentence.
+    We can't use the full docstring due to embedded formatting, particularly RST.
+    This isn't intended to be perfect, just good enough until we can write our own docs for these.
+    """
+    value = re.split(r'(\.|!|\s\(|:\s)', inspect.getdoc(plugin), 1)[0].replace('\n', ' ')
+
+    if value:
+        value += '.'
+
+    return value
+
+
+def get_jinja_builtin_plugin_descriptions(plugin_type: str) -> dict[str, str]:
+    """Returns a dictionary of Jinja builtin plugin names and their short descriptions."""
+    return {f'ansible.builtin.{name}': _get_builtin_short_description(plugin) for name, plugin in _PLUGIN_SOURCES[plugin_type].items() if name.isidentifier()}

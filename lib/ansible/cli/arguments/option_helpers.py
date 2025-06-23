@@ -16,10 +16,9 @@ import typing as t
 
 import yaml
 
-from jinja2 import __version__ as j2_version
-
 import ansible
 from ansible import constants as C
+from ansible._internal import _templating
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
@@ -244,7 +243,7 @@ def _git_repo_info(repo_path):
                     repo_path = gitdir
                 else:
                     repo_path = os.path.join(repo_path[:-4], gitdir)
-            except (IOError, AttributeError):
+            except (OSError, AttributeError):
                 return ''
         with open(os.path.join(repo_path, "HEAD")) as f:
             line = f.readline().rstrip("\n")
@@ -313,7 +312,7 @@ def version(prog=None):
     result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
     result.append("  executable location = %s" % sys.argv[0])
     result.append("  python version = %s (%s)" % (''.join(sys.version.splitlines()), to_native(sys.executable)))
-    result.append("  jinja version = %s" % j2_version)
+    result.append(f"  jinja version = {_templating.jinja2_version}")
     result.append(f"  pyyaml version = {yaml.__version__} ({libyaml_fragment})")
 
     return "\n".join(result)

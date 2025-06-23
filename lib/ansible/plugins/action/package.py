@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from ansible.errors import AnsibleAction, AnsibleActionFail
+from ansible.errors import AnsibleActionFail
 from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 from ansible.plugins.action import ActionBase
@@ -38,7 +38,7 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
         self._supports_async = True
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
 
         module = self._task.args.get('use', 'auto')
 
@@ -99,11 +99,8 @@ class ActionModule(ActionBase):
                         module = 'ansible.legacy.' + module
 
                     display.vvvv("Running %s" % module)
-                    result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+                    return self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val)
             else:
                 raise AnsibleActionFail('Could not detect which package manager to use. Try gathering facts or setting the "use" option.')
-
-        except AnsibleAction as e:
-            result.update(e.result)
-
-        return result
+        finally:
+            pass  # avoid de-dent all on refactor

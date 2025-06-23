@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # deprecated: description="deprecate unsafe_proxy module" core_version="2.23"
-# DTFIX-RELEASE: add full unit test coverage
+# DTFIX5: add full unit test coverage
 from __future__ import annotations
 
 from collections.abc import Mapping, Set

@@ -502,10 +502,11 @@ class YumRepo:
             try:
                 with open(self.dest, 'w') as fd:
                     self.repofile.write(fd)
-            except IOError as e:
+            except OSError as ex:
                 self.module.fail_json(
-                    msg=f"Problems handling file {self.dest}.",
-                    details=to_native(e),
+                    msg=f"Problems handling file {self.dest!r}.",
+                    details=str(ex),
+                    exception=ex,
                 )
         else:
             try:

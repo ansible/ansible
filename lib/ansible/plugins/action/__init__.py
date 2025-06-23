@@ -20,9 +20,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ansible import constants as C
-from ansible._internal._errors import _captured
+from ansible._internal._errors import _captured, _error_utils
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
-from ansible._internal._errors import _utils
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils._internal import _traceback
@@ -41,7 +40,6 @@ from ansible import _internal
 from ansible._internal._templating import _engine
 
 from .. import _AnsiblePluginInfoMixin
-from ...module_utils.common.messages import PluginInfo
 
 display = Display()
 
@@ -105,7 +103,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         self._display = display
 
     @abstractmethod
-    def run(self, tmp=None, task_vars=None):
+    def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
         tasks.  Everything else in this base class is a helper method for the
         action plugin to do that.
@@ -121,9 +119,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         * Module parameters.  These are stored in self._task.args
         """
-
-        # does not default to {'changed': False, 'failed': False}, as it breaks async
-        result = {}
+        # does not default to {'changed': False, 'failed': False}, as it used to break async
+        result: dict[str, t.Any] = {}
 
         if tmp is not None:
             display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
@@ -476,8 +473,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd, sudoable=False)
+        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -908,8 +905,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
-        cmd = self._connection._shell.expand_user(expand_path)
-        data = self._low_level_execute_command(cmd, sudoable=False)
+        cmd = self._connection._shell._expand_user2(expand_path)
+        data = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -1115,7 +1112,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
             (async_module_bits, async_module_path) = self._configure_module(module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
-            (async_module_style, shebang, async_module_data) = (async_module_bits.module_style, async_module_bits.shebang, async_module_bits.b_module_data)
+            (shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
@@ -1255,7 +1252,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             except AnsibleError as ansible_ex:
                 sentinel = object()
 
-                data = self.result_dict_from_exception(ansible_ex)
+                data = _error_utils.result_dict_from_exception(ansible_ex)
                 data.update(
                     _ansible_parsed=False,
                     module_stdout=res.get('stdout', ''),
@@ -1436,23 +1433,3 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
-
-    @staticmethod
-    def result_dict_from_exception(exception: BaseException) -> dict[str, t.Any]:
-        """Return a failed task result dict from the given exception."""
-        if ansible_remoted_error := _captured.AnsibleResultCapturedError.find_first_remoted_error(exception):
-            result = ansible_remoted_error._result.copy()
-        else:
-            result = {}
-
-        error_summary = _utils._create_error_summary(exception, _traceback.TracebackEvent.ERROR)
-
-        result.update(
-            failed=True,
-            exception=error_summary,
-        )
-
-        if 'msg' not in result:
-            result.update(msg=_utils._dedupe_and_concat_message_chain([md.msg for md in error_summary.details]))
-
-        return result

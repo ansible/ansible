@@ -8,7 +8,9 @@
 
     - set_fact:
         key_types: "{{ key_types + ['dsa'] }}"
-      when: ansible_distribution == "RedHat"
+      when:
+        - ansible_distribution == "RedHat"
+        - ansible_distribution_major_version | int == 9
 
     - include_tasks: test_key.yml
       loop: "{{ key_types }}"

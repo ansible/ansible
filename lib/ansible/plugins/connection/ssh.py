@@ -332,7 +332,9 @@ DOCUMENTATION = """
             version_added: '2.7'
       sftp_batch_mode:
         default: true
-        description: 'TODO: write it'
+        description:
+          - When set to C(True), sftp will be run in batch mode, allowing detection of transfer errors.
+          - When set to C(False), sftp will not be run in batch mode, preventing detection of transfer errors.
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
@@ -398,6 +400,17 @@ DOCUMENTATION = """
           - {key: pkcs11_provider, section: ssh_connection}
         vars:
           - name: ansible_ssh_pkcs11_provider
+      verbosity:
+        version_added: '2.19'
+        default: 0
+        type: int
+        description:
+          - Requested verbosity level for the SSH CLI.
+        env: [{name: ANSIBLE_SSH_VERBOSITY}]
+        ini:
+          - {key: verbosity, section: ssh_connection}
+        vars:
+          - name: ansible_ssh_verbosity
 """
 
 import collections.abc as c
@@ -436,7 +449,7 @@ from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
-from ansible.utils._ssh_agent import SshAgentClient, _key_data_into_crypto_objects
+from ansible._internal._ssh import _ssh_agent
 
 try:
     from cryptography.hazmat.primitives import serialization
@@ -755,12 +768,12 @@ class Connection(ConnectionBase):
         key_data = self.get_option('private_key')
         passphrase = self.get_option('private_key_passphrase')
 
-        private_key, public_key, fingerprint = _key_data_into_crypto_objects(
+        private_key, public_key, fingerprint = _ssh_agent.key_data_into_crypto_objects(
             to_bytes(key_data),
             to_bytes(passphrase) if passphrase else None,
         )
 
-        with SshAgentClient(auth_sock) as client:
+        with _ssh_agent.SshAgentClient(auth_sock) as client:
             if public_key not in client:
                 display.vvv(f'SSH: SSH_AGENT adding {fingerprint} to agent', host=self.host)
                 client.add(
@@ -855,8 +868,8 @@ class Connection(ConnectionBase):
                 self._add_args(b_command, b_args, u'disable batch mode for password auth')
             b_command += [b'-b', b'-']
 
-        if display.verbosity:
-            b_command.append(b'-' + (b'v' * display.verbosity))
+        if (verbosity := self.get_option('verbosity')) > 0:
+            b_command.append(b'-' + (b'v' * verbosity))
 
         # Next, we add ssh_args
         ssh_args = self.get_option('ssh_args')
@@ -879,10 +892,7 @@ class Connection(ConnectionBase):
             try:
                 key = self._populate_agent()
             except Exception as e:
-                raise AnsibleAuthenticationFailure(
-                    'Failed to add configured private key into ssh-agent',
-                    orig_exc=e,
-                )
+                raise AnsibleAuthenticationFailure('Failed to add configured private key into ssh-agent.') from e
             b_args = (b'-o', b'IdentitiesOnly=yes', b'-o', to_bytes(f'IdentityFile="{key}"', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, "ANSIBLE_PRIVATE_KEY/private_key set")
         elif key := self.get_option('private_key_file'):
@@ -969,7 +979,7 @@ class Connection(ConnectionBase):
         try:
             fh.write(to_bytes(in_data))
             fh.close()
-        except (OSError, IOError) as ex:
+        except OSError as ex:
             # The ssh connection may have already terminated at this point, with a more useful error
             # Only raise AnsibleConnectionFailure if the ssh process is still alive
             time.sleep(0.001)
@@ -985,7 +995,7 @@ class Connection(ConnectionBase):
         """ Terminate a process, ignoring errors """
         try:
             p.terminate()
-        except (OSError, IOError):
+        except OSError:
             pass
 
     # This is separate from _run() because we need to do the same thing for stdout
@@ -1126,7 +1136,7 @@ class Connection(ConnectionBase):
                 p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
-            except (OSError, IOError):
+            except OSError:
                 p = None
 
         if not p:
@@ -1134,8 +1144,8 @@ class Connection(ConnectionBase):
                 p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE, **popen_kwargs)
                 stdin = p.stdin  # type: ignore[assignment] # stdin will be set and not None due to the calls above
-            except (OSError, IOError) as e:
-                raise AnsibleError('Unable to execute ssh command line on a controller due to: %s' % to_native(e))
+            except OSError as ex:
+                raise AnsibleError('Unable to execute ssh command line on a controller.') from ex
 
         if password_mechanism == 'sshpass' and conn_password:
             os.close(self.sshpass_pipe[0])
@@ -1161,7 +1171,7 @@ class Connection(ConnectionBase):
 
         # Are we requesting privilege escalation? Right now, we may be invoked
         # to execute sftp/scp with sudoable=True, but we can request escalation
-        # only when using ssh. Otherwise we can send initial data straightaway.
+        # only when using ssh. Otherwise, we can send initial data straight away.
 
         state = states.index('ready_to_send')
         if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:

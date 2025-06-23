@@ -1,4 +1,4 @@
-# DTFIX-RELEASE: more thorough tests are needed here, this is just a starting point
+# DTFIX5: more thorough tests are needed here, this is just a starting point
 
 from __future__ import annotations
 
@@ -374,7 +374,7 @@ def test_lazy_container_operators(expression: str, expected_value: t.Any, expect
     When the result is a container, items in the container are checked to see if they're lazy as appropriate.
     This test uses a function to simulate Jinja plugin behavior, since plugins can use operators and methods that Jinja expressions cannot.
     """
-    # DTFIX-RELEASE: add a unit test to ensure every list/dict method has been overridden or on a list we can safely ignore
+    # DTFIX5: add a unit test to ensure every list/dict method has been overridden or on a list we can safely ignore
     def l2f() -> list:
         """Return a lazy list that uses different lazy options, to ensure it cannot be lazy combined."""
         return TemplateContext.current().templar.template([2], lazy_options=LazyOptions.SKIP_TEMPLATES)
@@ -570,7 +570,7 @@ def test_lazy_persistence(expression: str, expected: t.Any) -> None:
 ))
 def test_lazy_mutation_persistence(expression: str) -> None:
     """Verify that lazy containers persist values added after creation and return them as-is without modification, even if they contain trusted templates."""
-    # DTFIX-RELEASE: investigate relevance of this test now that mutation/dirty tracking is toast
+    # DTFIX5: investigate relevance of this test now that mutation/dirty tracking is toast
     variables = dict(
         data=dict(
             l1=[None],
@@ -601,7 +601,7 @@ def test_lazy_mutation_persistence(expression: str) -> None:
 ])
 def test_lazy_mutation_cross_plugin_dirty_container(expr: str, new_value: t.Any, some_var: t.Any, expected_value: t.Any):
     """Ensure that new templates sourced from a plugin are not processed by subsequent plugins or template finalization."""
-    # DTFIX-RELEASE: investigate relevance of this test now that mutation/dirty tracking is toast
+    # DTFIX5: investigate relevance of this test now that mutation/dirty tracking is toast
     def mutate_list(value: list) -> list:
         value.append(new_value)
 

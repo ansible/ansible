@@ -7,6 +7,7 @@ using namespace System.Collections
 using namespace System.Diagnostics
 using namespace System.IO
 using namespace System.Management.Automation
+using namespace System.Management.Automation.Security
 using namespace System.Net
 using namespace System.Text
 
@@ -53,7 +54,7 @@ $executablePath = Join-Path -Path $PSHome -ChildPath $executable
 $actionInfo = Get-AnsibleExecWrapper -EncodeInputOutput
 $bootstrapManifest = ConvertTo-Json -InputObject @{
     n = "exec_wrapper-become-$([Guid]::NewGuid()).ps1"
-    s = $actionInfo.Script
+    s = $actionInfo.ScriptInfo.Script
     p = $actionInfo.Parameters
 } -Depth 99 -Compress
 
@@ -68,9 +69,26 @@ $m=foreach($i in $input){
 $m=$m|ConvertFrom-Json
 $p=@{}
 foreach($o in $m.p.PSObject.Properties){$p[$o.Name]=$o.Value}
-$c=[System.Management.Automation.Language.Parser]::ParseInput($m.s,$m.n,[ref]$null,[ref]$null).GetScriptBlock()
-$input | & $c @p
 '@
+
+if ([SystemPolicy]::GetSystemLockdownPolicy() -eq 'Enforce') {
+    # If we started in CLM we need to execute the script from a file so that
+    # PowerShell validates our exec_wrapper is trusted and will run in FLM.
+    $command += @'
+$n=Join-Path $env:TEMP $m.n
+$null=New-Item $n -Value $m.s -Type File -Force
+try{$input|&$n @p}
+finally{if(Test-Path -LiteralPath $n){Remove-Item -LiteralPath $n -Force}}
+'@
+}
+else {
+    # If we started in FLM we pass the script through stdin and execute in
+    # memory.
+    $command += @'
+$c=[System.Management.Automation.Language.Parser]::ParseInput($m.s,$m.n,[ref]$null,[ref]$null).GetScriptBlock()
+$input|&$c @p
+'@
+}
 
 # Strip out any leading or trailing whitespace and remove empty lines.
 $command = @(

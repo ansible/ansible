@@ -20,12 +20,13 @@ from jinja2.defaults import (
 
 from ansible import constants as C
 from ansible.config.manager import ensure_type
-from ansible.errors import AnsibleError, AnsibleAction, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleActionFail
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.template import generate_ansible_template_vars, trust_as_template
+from ansible.template import trust_as_template
+from ansible._internal._templating import _template_vars
 
 
 class ActionModule(ActionBase):
@@ -39,11 +40,11 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         # Options type validation
-        # stings
+        # strings
         for s_type in ('src', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
                        'block_end_string', 'comment_start_string', 'comment_end_string'):
             if s_type in self._task.args:
@@ -115,7 +116,12 @@ class ActionModule(ActionBase):
 
             # add ansible 'template' vars
             temp_vars = task_vars.copy()
-            temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), fullpath=source, dest_path=dest))
+            temp_vars.update(_template_vars.generate_ansible_template_vars(
+                path=self._task.args.get('src', None),
+                fullpath=source,
+                dest_path=dest,
+                include_ansible_managed='ansible_managed' not in temp_vars,  # do not clobber ansible_managed when set by the user
+            ))
 
             overrides = dict(
                 block_start_string=block_start_string,
@@ -167,13 +173,8 @@ class ActionModule(ActionBase):
                                                                         loader=self._loader,
                                                                         templar=self._templar,
                                                                         shared_loader_obj=self._shared_loader_obj)
-                result.update(copy_action.run(task_vars=task_vars))
+                return copy_action.run(task_vars=task_vars)
             finally:
                 shutil.rmtree(to_bytes(local_tempdir, errors='surrogate_or_strict'))
-
-        except AnsibleAction as e:
-            result.update(e.result)
         finally:
             self._remove_tmp_path(self._connection._shell.tmpdir)
-
-        return result

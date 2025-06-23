@@ -128,7 +128,7 @@ def results_thread_main(strategy: StrategyBase) -> None:
                 strategy._workers[result.worker_id].worker_queue.put(value)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
-        except (IOError, EOFError):
+        except (OSError, EOFError):
             break
         except queue.Empty:
             pass
@@ -402,9 +402,9 @@ class StrategyBase:
                     time.sleep(0.0001)
 
             self._pending_results += 1
-        except (EOFError, IOError, AssertionError) as e:
+        except (EOFError, OSError, AssertionError) as ex:
             # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
+            display.debug(f"got an error while queuing: {ex}")
             return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 

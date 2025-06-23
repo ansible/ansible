@@ -438,8 +438,8 @@ class GalaxyRole(object):
                 if not (self.src and os.path.isfile(self.src)):
                     try:
                         os.unlink(tmp_file)
-                    except (OSError, IOError) as e:
-                        display.warning(u"Unable to remove tmp file (%s): %s" % (tmp_file, to_text(e)))
+                    except OSError as ex:
+                        display.error_as_warning(f"Unable to remove tmp file {tmp_file!r}.", exception=ex)
                 return True
 
         return False

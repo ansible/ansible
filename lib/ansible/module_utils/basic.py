@@ -75,7 +75,7 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._internal import _traceback, _errors, _debugging, _deprecator
+from ._internal import _traceback, _errors, _debugging, _deprecator, _messages
 
 from .common.text.converters import (
     to_native,
@@ -161,10 +161,10 @@ from ansible.module_utils.common.validation import (
     safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
-from ansible.module_utils.common import messages as _messages
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
     deprecate,
+    error_as_warning,
     get_deprecations,
     get_warnings,
     warn,
@@ -480,9 +480,11 @@ class AnsibleModule(object):
             if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
-                except (OSError, IOError) as e:
-                    self.warn("Unable to use %s as temporary directory, "
-                              "failing back to system: %s" % (basedir, to_native(e)))
+                except OSError as ex:
+                    self.error_as_warning(
+                        msg=f"Unable to use {basedir!r} as temporary directory, falling back to system default.",
+                        exception=ex,
+                    )
                     basedir = None
                 else:
                     self.warn("Module remote_tmp %s did not exist and was "
@@ -494,20 +496,45 @@ class AnsibleModule(object):
             basefile = "ansible-moduletmp-%s-" % time.time()
             try:
                 tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
-            except (OSError, IOError) as e:
-                self.fail_json(
-                    msg="Failed to create remote module tmp path at dir %s "
-                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
-                )
+            except OSError as ex:
+                raise Exception(
+                    f"Failed to create remote module tmp path at dir {basedir!r} "
+                    f"with prefix {basefile!r}.",
+                ) from ex
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
 
         return self._tmpdir
 
-    def warn(self, warning):
-        warn(warning)
-        self.log('[WARNING] %s' % warning)
+    def warn(
+        self,
+        warning: str,
+        *,
+        help_text: str | None = None,
+    ) -> None:
+        _skip_stackwalk = True
+
+        warn(
+            warning=warning,
+            help_text=help_text,
+        )
+
+    def error_as_warning(
+        self,
+        msg: str | None,
+        exception: BaseException,
+        *,
+        help_text: str | None = None,
+    ) -> None:
+        """Display an exception as a warning."""
+        _skip_stackwalk = True
+
+        error_as_warning(
+            msg=msg,
+            exception=exception,
+            help_text=help_text,
+        )
 
     def deprecate(
         self,
@@ -633,11 +660,8 @@ class AnsibleModule(object):
             return context
         try:
             ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.fail_json(path=path, msg='path %s does not exist' % path)
-            else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
+        except OSError as ex:
+            self.fail_json(path=path, msg='Failed to retrieve selinux context.', exception=ex)
         if ret[0] == -1:
             return context
         # Limit split to 4 because the selevel, the last in the list,
@@ -777,9 +801,9 @@ class AnsibleModule(object):
                 return True
             try:
                 os.lchown(b_path, uid, -1)
-            except (IOError, OSError) as e:
+            except OSError as ex:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
+                self.fail_json(path=path, msg='chown failed', exception=ex)
             changed = True
         return changed
 
@@ -1305,7 +1329,7 @@ class AnsibleModule(object):
                     else:
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
                                      **dict(journal_args))
-                except IOError:
+                except OSError:
                     # fall back to syslog since logging to journal failed
                     self._log_to_syslog(journal_msg)
             else:
@@ -1528,16 +1552,25 @@ class AnsibleModule(object):
         )
 
         if isinstance(exception, BaseException):
-            # Include a `_messages.ErrorDetail` in the result.
-            # The `msg` is included in the list of errors to ensure it is not lost when looking only at `exception` from the result.
+            # Include a `_messages.Event` in the result.
+            # The `msg` is included in the chain to ensure it is not lost when looking only at `exception` from the result.
 
-            error_summary = _errors.create_error_summary(exception)
-            error_summary = _dataclasses.replace(error_summary, details=(_messages.Detail(msg=msg),) + error_summary.details)
-
-            kwargs.update(exception=error_summary)
+            kwargs.update(
+                exception=_messages.ErrorSummary(
+                    event=_messages.Event(
+                        msg=msg,
+                        formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR),
+                        chain=_messages.EventChain(
+                            msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
+                            traceback_reason="The above exception was the direct cause of the following error:",
+                            event=_errors.EventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+                        ),
+                    ),
+                ),
+            )
         elif _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR):
             # Include only a formatted traceback string in the result.
-            # The controller will combine this with `msg` to create an `_messages.ErrorDetail`.
+            # The controller will combine this with `msg` to create an `_messages.ErrorSummary`.
 
             formatted_traceback: str | None
 
@@ -1546,7 +1579,7 @@ class AnsibleModule(object):
             elif exception is _UNSET and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
                 formatted_traceback = _traceback.maybe_extract_traceback(current_exception, _traceback.TracebackEvent.ERROR)
             else:
-                formatted_traceback = _traceback.maybe_capture_traceback(_traceback.TracebackEvent.ERROR)
+                formatted_traceback = _traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR)
 
             if formatted_traceback:
                 kwargs.update(exception=formatted_traceback)
@@ -1624,10 +1657,11 @@ class AnsibleModule(object):
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
             backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
-            try:
-                self.preserved_copy(fn, backupdest)
-            except (shutil.Error, IOError) as e:
-                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, to_native(e)))
+            if not self.check_mode:
+                try:
+                    self.preserved_copy(fn, backupdest)
+                except (shutil.Error, IOError) as ex:
+                    raise Exception(f'Could not make backup of {fn!r} to {backupdest!r}.') from ex
 
         return backupdest
 
@@ -1701,28 +1735,25 @@ class AnsibleModule(object):
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(b_src, b_dest)
-        except (IOError, OSError) as e:
-            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
+        except OSError as ex:
+            if ex.errno in (errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY):
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)))
-            else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
                 b_dest_dir = os.path.dirname(b_dest)
                 b_suffix = os.path.basename(b_dest)
-                error_msg = None
                 tmp_dest_name = None
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
-                except (OSError, IOError) as e:
-                    error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-
+                except OSError as ex:
                     if unsafe_writes:
                         self._unsafe_writes(b_src, b_dest)
                     else:
-                        self.fail_json(msg=error_msg)
+                        raise Exception(
+                            f'The destination directory {os.path.dirname(dest)!r} is not writable by the current user.'
+                        ) from ex
 
                 if tmp_dest_name:
                     b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
@@ -1751,24 +1782,27 @@ class AnsibleModule(object):
                                     if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
                                         os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
                                     os.utime(b_tmp_dest_name, times=(time.time(), time.time()))
-                            except OSError as e:
-                                if e.errno != errno.EPERM:
+                            except OSError as ex:
+                                if ex.errno != errno.EPERM:
                                     raise
                             try:
                                 os.rename(b_tmp_dest_name, b_dest)
-                            except (shutil.Error, OSError, IOError) as e:
-                                if unsafe_writes and e.errno == errno.EBUSY:
+                            except (shutil.Error, OSError) as ex:
+                                if unsafe_writes and ex.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)))
-                        except (shutil.Error, OSError, IOError) as e:
+                                    raise Exception(
+                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {to_text(b_tmp_dest_name)!r}.'
+                                    ) from ex
+                        except (shutil.Error, OSError) as ex:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)))
+                                raise Exception(f'Failed to replace {dest!r} with {src!r}.') from ex
                     finally:
                         self.cleanup(b_tmp_dest_name)
+            else:
+                raise Exception(f'Could not replace {dest!r} with {src!r}.') from ex
 
         if creating:
             # make sure the file has the correct permissions
@@ -1795,18 +1829,11 @@ class AnsibleModule(object):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
         try:
-            out_dest = in_src = None
-            try:
-                out_dest = open(dest, 'wb')
-                in_src = open(src, 'rb')
-                shutil.copyfileobj(in_src, out_dest)
-            finally:  # assuring closed files in 2.4 compatible way
-                if out_dest:
-                    out_dest.close()
-                if in_src:
-                    in_src.close()
-        except (shutil.Error, OSError, IOError) as e:
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)))
+            with open(dest, 'wb') as out_dest:
+                with open(src, 'rb') as in_src:
+                    shutil.copyfileobj(in_src, out_dest)
+        except (shutil.Error, OSError) as ex:
+            raise Exception(f'Could not write data to file {dest!r} from {src!r}.') from ex
 
     def _clean_args(self, args):
 
@@ -1873,18 +1900,18 @@ class AnsibleModule(object):
             the execution to hang (especially if no input data is specified)
         :kw environ_update: dictionary to *update* environ variables with
         :kw umask: Umask to be used when running the command. Default None
-        :kw encoding: Since we return native strings, on python3 we need to
+        :kw encoding: Since we return strings, we need to
             know the encoding to use to transform from bytes to text.  If you
             want to always get bytes back, use encoding=None.  The default is
             "utf-8".  This does not affect transformation of strings given as
             args.
-        :kw errors: Since we return native strings, on python3 we need to
+        :kw errors: Since we return strings, we need to
             transform stdout and stderr from bytes to text.  If the bytes are
             undecodable in the ``encoding`` specified, then use this error
             handler to deal with them.  The default is ``surrogate_or_strict``
             which means that the bytes will be decoded using the
             surrogateescape error handler if available (available on all
-            python3 versions we support) otherwise a UnicodeError traceback
+            Python versions we support) otherwise a UnicodeError traceback
             will be raised.  This does not affect transformations of strings
             given as args.
         :kw expand_user_and_vars: When ``use_unsafe_shell=False`` this argument
@@ -1892,10 +1919,8 @@ class AnsibleModule(object):
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
-        :kw pass_fds: When running on Python 3 this argument
-            dictates which file descriptors should be passed
-            to an underlying ``Popen`` constructor. On Python 2, this will
-            set ``close_fds`` to False.
+        :kw pass_fds: This argument dictates which file descriptors should be passed
+            to an underlying ``Popen`` constructor.
         :kw before_communicate_callback: This function will be called
             after ``Popen`` object will be created
             but before communicating to the process.
@@ -1906,11 +1931,10 @@ class AnsibleModule(object):
         :kw handle_exceptions: This flag indicates whether an exception will
             be handled inline and issue a failed_json or if the caller should
             handle it.
-        :returns: A 3-tuple of return code (integer), stdout (native string),
-            and stderr (native string).  On python2, stdout and stderr are both
-            byte strings.  On python3, stdout and stderr are text strings converted
-            according to the encoding and errors parameters.  If you want byte
-            strings on python3, use encoding=None to turn decoding to text off.
+        :returns: A 3-tuple of return code (int), stdout (str), and stderr (str).
+            stdout and stderr are text strings converted according to the encoding
+            and errors parameters.  If you want byte strings, use encoding=None
+            to turn decoding to text off.
         """
         # used by clean args later on
         self._clean = None
@@ -2092,18 +2116,16 @@ class AnsibleModule(object):
             selector.close()
 
             rc = cmd.returncode
-        except (OSError, IOError) as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
+        except OSError as ex:
             if handle_exceptions:
-                self.fail_json(rc=e.errno, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
-        except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
+                raise
+        except Exception as ex:
             if handle_exceptions:
-                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
+                raise
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
@@ -2174,7 +2196,7 @@ def __getattr__(importable_name):
         importable = repeat
     elif importable_name in {
         'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
-        'iteritems', 'string_types', 'test_type'
+        'iteritems', 'string_types', 'text_type',
     }:
         import importlib
         importable = getattr(

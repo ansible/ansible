@@ -176,7 +176,6 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.inference_context = astroid.context.InferenceContext()
         self.module_cache: dict[str, astroid.Module] = {}
 
     @functools.cached_property
@@ -241,7 +240,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         inferred: astroid.typing.InferenceResult | None = None
 
         while target:
-            if inferred := astroid.util.safe_infer(target, self.inference_context):
+            if inferred := astroid.util.safe_infer(target):
                 break
 
             if isinstance(target, astroid.Call):
@@ -263,6 +262,20 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
                 break
 
         for name in reversed(names):
+            if isinstance(inferred, astroid.Instance):
+                try:
+                    attr = next(iter(inferred.getattr(name)), None)
+                except astroid.AttributeInferenceError:
+                    break
+
+                if isinstance(attr, astroid.AssignAttr):
+                    inferred = self.get_ansible_module(attr)
+                    continue
+
+                if isinstance(attr, astroid.FunctionDef):
+                    inferred = attr
+                    continue
+
             if not isinstance(inferred, (astroid.Module, astroid.ClassDef)):
                 inferred = None
                 break
@@ -282,25 +295,46 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
     def infer_name(self, node: astroid.Name) -> astroid.NodeNG | None:
         """Infer the node referenced by the given name, or `None` if it cannot be unambiguously inferred."""
         scope = node.scope()
-        name = None
+        inferred: astroid.NodeNG | None = None
+        name = node.name
 
         while scope:
             try:
-                assignment = scope[node.name]
+                assignment = scope[name]
             except KeyError:
                 scope = scope.parent.scope() if scope.parent else None
                 continue
 
             if isinstance(assignment, astroid.AssignName) and isinstance(assignment.parent, astroid.Assign):
-                name = assignment.parent.value
+                inferred = assignment.parent.value
+            elif (
+                isinstance(scope, astroid.FunctionDef)
+                and isinstance(assignment, astroid.AssignName)
+                and isinstance(assignment.parent, astroid.Arguments)
+                and assignment.parent.annotations
+            ):
+                idx, _node = assignment.parent.find_argname(name)
+
+                if idx is not None:
+                    try:
+                        annotation = assignment.parent.annotations[idx]
+                    except IndexError:
+                        pass
+                    else:
+                        if isinstance(annotation, astroid.Name):
+                            name = annotation.name
+                            continue
+            elif isinstance(assignment, astroid.ClassDef):
+                inferred = assignment
             elif isinstance(assignment, astroid.ImportFrom):
                 if module := self.get_module(assignment):
+                    name = assignment.real_name(name)
                     scope = module.scope()
                     continue
 
             break
 
-        return name
+        return inferred
 
     def get_module(self, node: astroid.ImportFrom) -> astroid.Module | None:
         """Import the requested module if possible and cache the result."""
@@ -480,7 +514,27 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
 
         raise TypeError(type(value))
 
+    def get_ansible_module(self, node: astroid.AssignAttr) -> astroid.Instance | None:
+        """Infer an AnsibleModule instance node from the given assignment."""
+        if isinstance(node.parent, astroid.Assign) and isinstance(node.parent.type_annotation, astroid.Name):
+            inferred = self.infer_name(node.parent.type_annotation)
+        elif isinstance(node.parent, astroid.Assign) and isinstance(node.parent.parent, astroid.FunctionDef) and isinstance(node.parent.value, astroid.Name):
+            inferred = self.infer_name(node.parent.value)
+        elif isinstance(node.parent, astroid.AnnAssign) and isinstance(node.parent.annotation, astroid.Name):
+            inferred = self.infer_name(node.parent.annotation)
+        else:
+            inferred = None
+
+        if isinstance(inferred, astroid.ClassDef) and inferred.name == 'AnsibleModule':
+            return inferred.instantiate_class()
+
+        return None
+
+    def register(self) -> None:
+        """Register this plugin."""
+        self.linter.register_checker(self)
+
 
 def register(linter: pylint.lint.PyLinter) -> None:
     """Required method to auto-register this checker."""
-    linter.register_checker(AnsibleDeprecatedChecker(linter))
+    AnsibleDeprecatedChecker(linter).register()

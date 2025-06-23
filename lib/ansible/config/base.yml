@@ -1,6 +1,26 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+_ANSIBALLZ_COVERAGE_CONFIG:
+  name: Configure the AnsiballZ code coverage extension
+  description:
+    - Enables and configures the AnsiballZ code coverage extension.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_COVERAGE_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_coverage_config}
+  version_added: '2.19'
+_ANSIBALLZ_DEBUGGER_CONFIG:
+  name: Configure the AnsiballZ remote debugging extension
+  description:
+    - Enables and configures the AnsiballZ remote debugging extension.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_debugger_config}
+  version_added: '2.19'
 _ANSIBLE_CONNECTION_PATH:
   env:
   - name: _ANSIBLE_CONNECTION_PATH
@@ -20,6 +40,15 @@ _CALLBACK_DISPATCH_ERROR_BEHAVIOR:
     warning: issue a warning but continue
     ignore: just continue silently
   env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
+  version_added: '2.19'
+_MODULE_METADATA:
+  name: Enable experimental module metadata
+  description:
+    - Enables experimental module-level metadata controls for serialization profile selection.
+    - This is for internal use only.
+  type: boolean
+  default: false
+  env: [ { name: _ANSIBLE_MODULE_METADATA } ]
   version_added: '2.19'
 ALLOW_BROKEN_CONDITIONALS:
   # This config option will be deprecated once it no longer has any effect (2.23).
@@ -906,6 +935,10 @@ DEFAULT_MANAGED_STR:
   ini:
   - {key: ansible_managed, section: defaults}
   yaml: {key: defaults.ansible_managed}
+  deprecated:
+    why: The `ansible_managed` variable can be set just like any other variable, or a different variable can be used.
+    version: "2.23"
+    alternatives: Set the `ansible_managed` variable, or use any custom variable in templates.
 DEFAULT_MODULE_ARGS:
   name: Adhoc default arguments
   default: ~
@@ -1335,6 +1368,7 @@ DISPLAY_TRACEBACK:
     - error
     - warning
     - deprecated
+    - deprecated_value
     - always
     - never
   version_added: "2.19"
@@ -1961,6 +1995,14 @@ SSH_AGENT:
   env: [{name: ANSIBLE_SSH_AGENT}]
   ini: [{key: ssh_agent, section: connection}]
   version_added: '2.19'
+SSH_AGENT_EXECUTABLE:
+  name: Executable to start for the ansible-managed SSH agent
+  description: When ``SSH_AGENT`` is ``auto``, the path or name of the ssh agent executable to start.
+  default: ssh-agent
+  type: str
+  env: [ { name: ANSIBLE_SSH_AGENT_EXECUTABLE } ]
+  ini: [ { key: ssh_agent_executable, section: connection } ]
+  version_added: '2.19'
 SSH_AGENT_KEY_LIFETIME:
   name: Set a maximum lifetime when adding identities to an agent
   description: For keys inserted into an agent defined by ``SSH_AGENT``, define a lifetime, in seconds, that the key may remain
@@ -2035,6 +2077,19 @@ TASK_TIMEOUT:
   - {key: task_timeout, section: defaults}
   type: integer
   version_added: '2.10'
+_TEMPLAR_SANDBOX_MODE:
+  name: Control Jinja template sandbox behavior
+  default: default
+  description:
+    - The default Jinja sandbox behavior blocks template access to all `_` prefixed object attributes and known collection mutation methods (e.g., `dict.clear()`, `list.append()`).
+  type: choices
+  choices:
+    - default
+    - allow_unsafe_attributes
+  env: [{name: _ANSIBLE_TEMPLAR_SANDBOX_MODE}]
+  deprecated:
+    why: controlling sandbox behavior is a temporary workaround
+    version: '2.23'
 _TEMPLAR_UNKNOWN_TYPE_CONVERSION:
   name: Templar unknown type conversion behavior
   default: warning
@@ -2130,12 +2185,6 @@ WIN_ASYNC_STARTUP_TIMEOUT:
   vars:
     - {name: ansible_win_async_startup_timeout}
   version_added: '2.10'
-WRAP_STDERR:
-  description: Control line-wrapping behavior on console warnings and errors from default output callbacks (eases pattern-based output testing)
-  env: [{name: ANSIBLE_WRAP_STDERR}]
-  default: false
-  type: bool
-  version_added: "2.19"
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

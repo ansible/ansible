@@ -28,7 +28,7 @@ class ActionModule(ActionBase):
         )
 
         # initialize response
-        results['started'] = results['finished'] = 0
+        results['started'] = results['finished'] = False
         results['stdout'] = results['stderr'] = ''
         results['stdout_lines'] = results['stderr_lines'] = []
 
@@ -43,9 +43,14 @@ class ActionModule(ActionBase):
             results['erased'] = log_path
         else:
             results['results_file'] = log_path
-            results['started'] = 1
+            results['started'] = True
 
         new_module_args['_async_dir'] = async_dir
         results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=new_module_args))
+
+        # Backwards compat shim for when started/finished were ints,
+        # mostly to work with ansible.windows.async_status
+        for convert in ('started', 'finished'):
+            results[convert] = bool(results[convert])
 
         return results

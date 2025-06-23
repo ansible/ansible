@@ -37,6 +37,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
+from ansible.plugins.shell import _ShellCommand
 from ansible.vars.clean import clean_facts
 from ansible.template import Templar
 from ansible.plugins import loader
@@ -106,7 +107,7 @@ class TestActionBase(unittest.TestCase):
         mock_task.async_val = None
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
         results = action_base.run()
-        self.assertEqual(results, dict())
+        self.assertEqual(results, {})
 
         mock_task.async_val = 0
         action_base = DerivedActionBase(mock_task, mock_connection, play_context, None, None, None)
@@ -293,7 +294,7 @@ class TestActionBase(unittest.TestCase):
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
         mock_connection.transport = 'ssh'
-        mock_connection._shell.mkdtemp.return_value = 'mkdir command'
+        mock_connection._shell._mkdtemp2.return_value = _ShellCommand(command='mkdir command')
         mock_connection._shell.join_path.side_effect = os.path.join
         mock_connection._shell.get_option = get_shell_opt
         mock_connection._shell.HOMES_RE = re.compile(r'(\'|\")?(~|\$HOME)(.*)')

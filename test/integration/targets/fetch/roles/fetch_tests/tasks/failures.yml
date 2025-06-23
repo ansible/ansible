@@ -67,7 +67,7 @@
       - fetch_incorrect_src is failed
       - fetch_incorrect_src.msg is search('Invalid type supplied for source')
       - failed_fetch_no_access is failed
-      - failed_fetch_no_access.msg is search('file is not readable')
+      - failed_fetch_no_access.msg is search('File is not readable')
       - failed_fetch_dest_dir is failed
       - failed_fetch_dest_dir.msg is search('dest is an existing directory')
       - failed_detch_dest_calc_dir is failed

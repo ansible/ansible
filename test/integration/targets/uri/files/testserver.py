@@ -25,7 +25,7 @@ if __name__ == '__main__':
                         self.send_header("Content-type", content_type_json)
                         self.end_headers()
                         self.wfile.write(bytes(f.read(), "utf-8"))
-                except IOError:
+                except OSError:
                     self.send_error(404)
             else:
                 self.send_error(404)

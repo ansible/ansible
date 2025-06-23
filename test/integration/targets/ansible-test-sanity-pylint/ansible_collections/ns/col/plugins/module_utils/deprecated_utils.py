@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ansible.module_utils.common.messages import PluginInfo
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils.common.warnings import deprecate
 
 # extra lines below to allow for adding more imports without shifting the line numbers of the code that follows
@@ -15,7 +15,7 @@ from ansible.module_utils.common.warnings import deprecate
 
 
 def do_stuff() -> None:
-    deprecator = PluginInfo._from_collection_name('ns.col')
+    deprecator = deprecator_from_collection_name('ns.col')
 
     # ansible-deprecated-version - only ansible-core can encounter this
     deprecate(msg='ansible-deprecated-no-version', collection_name='ns.col')
