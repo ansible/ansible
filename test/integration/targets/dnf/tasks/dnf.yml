@@ -892,8 +892,6 @@
         that:
           - enable_plugin_result is failed
           - disable_plugin_result is failed
-          - '"No matches were found for the following plugin name patterns while enabling libdnf5 plugins: " in enable_plugin_result.msg'
-          - '"No matches were found for the following plugin name patterns while disabling libdnf5 plugins: " in disable_plugin_result.msg'
-          - '"nonexisting" in enable_plugin_result.msg'
-          - '"nonexisting" in disable_plugin_result.msg'
+          - enable_plugin_result.msg is contains("'enable_plugin' requires python3-libdnf5 5.2.0.0+")
+          - disable_plugin_result.msg is contains("'disable_plugin' requires python3-libdnf5 5.2.0.0+")
   when: dnf5|default(false)

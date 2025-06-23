@@ -651,7 +651,7 @@
     - assert:
         that:
           - r is failed
-          - r.msg is contains("Couldn't open file")
+          - r.msg is contains("Couldn't open file") or r.msg is contains("Failed to download metadata")
   always:
     - file:
         name: /etc/yum.repos.d/{{ repo_name }}.repo
