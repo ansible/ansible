@@ -93,7 +93,7 @@
     config_origin2: "{{ q('config', '_Z_TEST_ENTRY', show_origin=True) }}"
   ignore_errors: yes
   vars:
-    _z_test_entry = 'yolo'
+    _z_test_entry: yolo
 
 - name: Verify lookup_config
   assert:
