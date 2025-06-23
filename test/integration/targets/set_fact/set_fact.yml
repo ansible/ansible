@@ -17,7 +17,7 @@
 
     - name: Attempt to use a template to set an invalid variable name with set_fact
       set_fact:
-        "{{ 'continue' }}": value
+        "{{ 'true' }}": value
       register: result
       ignore_errors: yes
 
@@ -25,7 +25,7 @@
       assert:
         that:
           - result is failed
-          - result.msg is contains "Invalid variable name 'continue'"
+          - result.msg is contains "Invalid variable name 'true'"
 
     - name: Attempt to use a template to set an invalid variable name type with set_fact
       set_fact:

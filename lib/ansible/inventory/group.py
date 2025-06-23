@@ -26,7 +26,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, validate_variable_name
 
 from . import helpers  # this is left as a module import to facilitate easier unit test patching
 
@@ -220,6 +220,11 @@ class Group:
 
     def set_variable(self, key: str, value: t.Any) -> None:
         key = helpers.remove_trust(key)
+
+        try:
+            validate_variable_name(key)
+        except AnsibleError as ex:
+            Display().deprecated(msg=f'Accepting inventory variable with invalid name {key!r}.', version='2.23', help_text=ex._help_text, obj=ex.obj)
 
         if key == 'ansible_group_priority':
             self.set_priority(int(value))
