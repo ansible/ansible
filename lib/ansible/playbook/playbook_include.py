@@ -27,6 +27,8 @@ from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible._internal._templating._engine import TemplateEngine
+from ansible.errors import AnsibleError
+from ansible import constants as C
 
 
 class PlaybookInclude(Base, Conditional, Taggable):
@@ -35,6 +37,18 @@ class PlaybookInclude(Base, Conditional, Taggable):
     vars_val = NonInheritableFieldAttribute(isa='dict', default=dict, alias='vars')
 
     _post_validate_object = True  # manually post_validate to get free arg validation/coercion
+
+    def preprocess_data(self, ds):
+        keys = {action for action in C._ACTION_IMPORT_PLAYBOOK if action in ds}
+
+        if len(keys) != 1:
+            raise AnsibleError(f'Found conflicting import_playbook actions: {", ".join(sorted(keys))}')
+
+        key = next(iter(keys))
+
+        ds['import_playbook'] = ds.pop(key)
+
+        return ds
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
