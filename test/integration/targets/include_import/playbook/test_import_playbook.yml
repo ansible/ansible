@@ -1,14 +1,14 @@
 # Test and validate playbook import
-- import_playbook: '{{ "playbook1.yml" }}'  # ensure templating occurs correctly
+- import_playbook: '{{ "playbook1.yml" }}'  # ensure templating occurs
 - import_playbook: validate1.yml
 
 # Test and validate conditional import
 - import_playbook: playbook2.yml
   when: no
 
-- import_playbook: validate2.yml
+- ansible.builtin.import_playbook: validate2.yml  # intentionally testing ansible.builtin
 
-- import_playbook: playbook3.yml
+- ansible.legacy.import_playbook: playbook3.yml  # intentionally testing ansible.legacy
 - import_playbook: playbook4.yml
   when: include_next_playbook
 
