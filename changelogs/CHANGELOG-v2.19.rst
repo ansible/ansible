@@ -4,6 +4,50 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0b7
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2025-06-24
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- Added type annotations to the ``Role.__init__()`` method to enable type checking. (https://github.com/ansible/ansible/pull/85346)
+- ansible-test - Added experimental support for remote debugging.
+- ansible-test - Added support for setting static environment variables in integration tests using ``env/set/`` entries in the ``aliases`` file. For example, ``env/set/MY_KEY/MY_VALUE`` or ``env/set/MY_PATH//an/abs/path``.
+- ansible-test - The ``shell`` command has been augmented to propagate remote debug configurations and other test-related settings when running on the controller. Use the ``--raw`` argument to bypass the additional environment configuration.
+- apt - consider lock timeout while invoking apt-get command (https://github.com/ansible/ansible/issues/78658).
+- assemble action added check_mode support
+- display - The ``formatted`` arg to ``warning`` has no effect. Warning wrapping is left to the consumer (e.g. terminal, browser).
+- display - The ``wrap_text`` and ``stderr`` arguments to ``error`` have no effect. Errors are always sent to stderr and wrapping is left to the consumer (e.g. terminal, browser).
+- module_utils.basic.backup_local enforces check_mode now
+- variables - Removed restriction on usage of most Python keywords as Ansible variable names.
+- variables - Warnings about reserved variable names now show context where the variable was defined.
+
+Deprecated Features
+-------------------
+
+- inventory plugins - Setting invalid Ansible variable names in inventory plugins is deprecated.
+- playbook syntax - Specifying the task ``args`` keyword without a value is deprecated.
+- playbook syntax - Using ``key=value`` args and the task ``args`` keyword on the same task is deprecated.
+- playbook syntax - Using a mapping with the ``action`` keyword is deprecated. (https://github.com/ansible/ansible/issues/84101)
+
+Bugfixes
+--------
+
+- ansible-test - Fix Python relative import resolution from ``__init__.py`` files when using change detection.
+- callback plugins - A more descriptive error is now raised if the stdout callback plugin cannot be loaded.
+- callback plugins - Callback plugins that do not extend ``ansible.plugins.callback.CallbackBase`` will fail to load with a warning. If the plugin is used as the stdout callback plugin, this will also be a fatal error.
+- callback plugins - Removed unused methods - runner_on_no_hosts, playbook_on_setup, playbook_on_import_for_host, playbook_on_not_import_for_host, v2_playbook_on_cleanup_task_start, v2_playbook_on_import_for_host, v2_playbook_on_not_import_for_host.
+- callback plugins - The stdout callback plugin is no longer called twice if it is also in the list of additional callback plugins.
+- password lookup - fix acquiring the lock when human-readable FileExistsError error message is not English.
+- plugin loader - A warning is now emitted for any plugin which fails to load due to a missing base class.
+- variables - Added Jinja scalar singletons (``true``, ``false``, ``none``) to invalid Ansible variable name detection. Previously, variables with these names could be assigned without error, but could not be resolved.
+
 v2.19.0b6
 =========
 
@@ -231,7 +275,7 @@ Minor Changes
 - ansible-test - The ``yamllint`` sanity test now enforces string values for the ``!vault`` tag.
 - ansible-test - Update ``nios-test-container`` to version 7.0.0.
 - ansible-test - Update ``pylint`` sanity test to use version 3.3.1.
-- ansible-test - Update distro containers to remove unnecessary pakages (apache2, subversion, ruby).
+- ansible-test - Update distro containers to remove unnecessary packages (apache2, subversion, ruby).
 - ansible-test - Update sanity test requirements to latest available versions.
 - ansible-test - Update the HTTP test container.
 - ansible-test - Update the PyPI test container.
@@ -272,7 +316,7 @@ Minor Changes
 - modules - Unhandled exceptions during Python module execution are now returned as structured data from the target. This allows the new traceback handling to be applied to exceptions raised on targets.
 - pipelining logic has mostly moved to connection plugins so they can decide/override settings.
 - plugin error handling - When raising exceptions in an exception handler, be sure to use ``raise ... from`` as appropriate. This supersedes the use of the ``AnsibleError`` arg ``orig_exc`` to represent the cause. Specifying ``orig_exc`` as the cause is still permitted. Failure to use ``raise ... from`` when ``orig_exc`` is set will result in a warning. Additionally, if the two cause exceptions do not match, a warning will be issued.
-- removed harcoding of su plugin as it now works with pipelining.
+- removed hardcoding of su plugin as it now works with pipelining.
 - runtime-metadata sanity test - improve validation of ``action_groups`` (https://github.com/ansible/ansible/pull/83965).
 - service_facts module got freebsd support added.
 - ssh connection plugin - Support ``SSH_ASKPASS`` mechanism to provide passwords, making it the default, but still offering an explicit choice to use ``sshpass`` (https://github.com/ansible/ansible/pull/83936)
@@ -292,7 +336,7 @@ Minor Changes
 - vault - improved vault filter documentation by adding missing example content for dump_template_data.j2, refining examples for clarity, and ensuring variable consistency (https://github.com/ansible/ansible/issues/83583).
 - warnings - All warnings (including deprecation warnings) issued during a task's execution are now accessible via the ``warnings`` and ``deprecations`` keys on the task result.
 - when the ``dict`` lookup is given a non-dict argument, show the value of the argument and its type in the error message.
-- windows - add hard minimum limit for PowerShell to 5.1. Ansible dropped support for older versions of PowerShell in the 2.16 release but this reqirement is now enforced at runtime.
+- windows - add hard minimum limit for PowerShell to 5.1. Ansible dropped support for older versions of PowerShell in the 2.16 release but this requirement is now enforced at runtime.
 - windows - refactor windows exec runner to improve efficiency and add better error reporting on failures.
 - winrm - Remove need for pexpect on macOS hosts when using ``kinit`` to retrieve the Kerberos TGT. By default the code will now only use the builtin ``subprocess`` library which should handle issues with select and a high fd count and also simplify the code.
 
@@ -305,7 +349,6 @@ Breaking Changes / Porting Guide
 - first_found lookup - When specifying ``files`` or ``paths`` as a templated list containing undefined values, the undefined list elements will be discarded with a warning. Previously, the entire list would be discarded without any warning.
 - internals - The ``AnsibleLoader`` and ``AnsibleDumper`` classes for working with YAML are now factory functions and cannot be extended.
 - internals - The ``ansible.utils.native_jinja`` Python module has been removed.
-- inventory - Invalid variable names provided by inventories result in an inventory parse failure. This behavior is now consistent with other variable name usages throughout Ansible.
 - lookup plugins - Lookup plugins called as `with_(lookup)` will no longer have the `_subdir` attribute set.
 - lookup plugins - ``terms`` will always be passed to ``run`` as the first positional arg, where previously it was sometimes passed as a keyword arg when using ``with_`` syntax.
 - loops - Omit placeholders no longer leak between loop item templating and task templating. Previously, ``omit`` placeholders could remain embedded in loop items after templating and be used as an ``omit`` for task templating. Now, values resolving to ``omit`` are dropped immediately when loop items are templated. To turn missing values into an ``omit`` for task templating, use ``| default(omit)``. This solution is backward-compatible with previous versions of ansible-core.
@@ -331,7 +374,7 @@ Deprecated Features
 -------------------
 
 - CLI - The ``--inventory-file`` option alias is deprecated. Use the ``-i`` or ``--inventory`` option instead.
-- Stategy Plugins - Use of strategy plugins not provided in ``ansible.builtin`` are deprecated and do not carry any backwards compatibility guarantees going forward. A future release will remove the ability to use external strategy plugins. No alternative for third party strategy plugins is currently planned.
+- Strategy Plugins - Use of strategy plugins not provided in ``ansible.builtin`` are deprecated and do not carry any backwards compatibility guarantees going forward. A future release will remove the ability to use external strategy plugins. No alternative for third party strategy plugins is currently planned.
 - ``ansible.module_utils.compat.datetime`` - The datetime compatibility shims are now deprecated. They are scheduled to be removed in ``ansible-core`` v2.21. This includes ``UTC``, ``utcfromtimestamp()`` and ``utcnow`` importable from said module (https://github.com/ansible/ansible/pull/81874).
 - bool filter - Support for coercing unrecognized input values (including None) has been deprecated. Consult the filter documentation for acceptable values, or consider use of the ``truthy`` and ``falsy`` tests.
 - cache plugins - The `ansible.plugins.cache.base` Python module is deprecated. Use `ansible.plugins.cache` instead.
@@ -364,7 +407,7 @@ Removed Features (previously deprecated)
 - modules - Modules returning non-UTF8 strings now result in an error. The ``MODULE_STRICT_UTF8_RESPONSE`` setting can be used to disable this check.
 - removed deprecated pycompat24 and compat.importlib.
 - selector - remove deprecated compat.selector related files (https://github.com/ansible/ansible/pull/84155).
-- windows - removed common module functions ``ConvertFrom-AnsibleJson``, ``Format-AnsibleException`` from Windows modules as they are not used and add uneeded complexity to the code.
+- windows - removed common module functions ``ConvertFrom-AnsibleJson``, ``Format-AnsibleException`` from Windows modules as they are not used and add unneeded complexity to the code.
 
 Security Fixes
 --------------
