@@ -1,0 +1,18 @@
+plugin: ansible.builtin.generator
+hosts:
+    name: "{{ application }}_{{ operation }}_runner"
+    parents:
+        - name: "{{ environment }}"
+          vars:
+            log: "s"
+layers:
+    operation:
+        - build
+        - launch
+    environment:
+        - dev
+        - test
+        - prod
+    application:
+        - web
+        - api
