@@ -1170,10 +1170,13 @@ def _get_collection_name_from_path(path):
     path = _to_text(os.path.abspath(_to_bytes(path)))
 
     path_parts = path.split('/')
-    if path_parts.count('ansible_collections') != 1:
+
+    try:
+        last_ac = path_parts[::-1].index('ansible_collections')
+    except ValueError:
         return None
 
-    ac_pos = path_parts.index('ansible_collections')
+    ac_pos = len(path_parts) - 1 - last_ac
 
     # make sure it's followed by at least a namespace and collection name
     if len(path_parts) < ac_pos + 3:

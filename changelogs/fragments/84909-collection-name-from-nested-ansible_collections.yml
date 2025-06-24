@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  ansible-doc - fix detecting collection name when more than one ``ansible_collections`` directory
+  is in the plugin path (https://github.com/ansible/ansible/issues/84909).
