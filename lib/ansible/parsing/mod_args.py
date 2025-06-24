@@ -20,13 +20,13 @@ from __future__ import annotations
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.parsing.vault import EncryptedString
 from ansible.plugins.loader import module_loader, action_loader
-from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal._templating import _jinja_bits
+from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 
 
@@ -152,38 +152,43 @@ class ModuleArgsParser:
         arguments can be fuzzy.  Deal with all the forms.
         """
 
-        additional_args = {} if additional_args is None else additional_args
-
         # final args are the ones we'll eventually return, so first update
         # them with any additional args specified, which have lower priority
         # than those which may be parsed/normalized next
         final_args = dict()
-        if additional_args:
-            if isinstance(additional_args, (str, EncryptedString)):
-                # DTFIX5: should this be is_possibly_template?
-                if TemplateEngine().is_template(additional_args):
-                    final_args['_variable_params'] = additional_args
-                else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
-                                             "and must use the full variable style ('{{var_name}}')")
+
+        if additional_args is not Sentinel:
+            if isinstance(additional_args, str) and _jinja_bits.is_possibly_all_template(additional_args):
+                final_args['_variable_params'] = additional_args
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
+            elif additional_args is None:
+                Display().deprecated(
+                    msg="Ignoring empty task `args` keyword.",
+                    version="2.23",
+                    help_text='A mapping or template which resolves to a mapping is required.',
+                    obj=self._task_ds,
+                )
             else:
-                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
+                raise AnsibleParserError(
+                    message='The value of the task `args` keyword is invalid.',
+                    help_text='A mapping or template which resolves to a mapping is required.',
+                    obj=additional_args,
+                )
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's a 'new style' invocation.
         # otherwise, it's not
 
         if action is not None:
-            args = self._normalize_new_style_args(thing, action)
+            args = self._normalize_new_style_args(thing, action, additional_args)
         else:
             (action, args) = self._normalize_old_style_args(thing)
 
             # this can occasionally happen, simplify
             if args and 'args' in args:
                 tmp_args = args.pop('args')
-                if isinstance(tmp_args, string_types):
+                if isinstance(tmp_args, str):
                     tmp_args = parse_kv(tmp_args)
                 args.update(tmp_args)
 
@@ -206,7 +211,7 @@ class ModuleArgsParser:
 
         return (action, final_args)
 
-    def _normalize_new_style_args(self, thing, action):
+    def _normalize_new_style_args(self, thing, action, additional_args):
         """
         deals with fuzziness in new style module invocations
         accepting key=value pairs and dictionaries, and returns
@@ -222,11 +227,23 @@ class ModuleArgsParser:
         if isinstance(thing, dict):
             # form is like: { xyz: { x: 2, y: 3 } }
             args = thing
-        elif isinstance(thing, string_types):
+        elif isinstance(thing, str):
             # form is like: copy: src=a dest=b
             check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(thing, check_raw=check_raw)
+            args_keys = set(args) - {'_raw_params'}
+
+            if args_keys and additional_args is not Sentinel:
+                kv_args = ', '.join(repr(arg) for arg in sorted(args_keys))
+
+                Display().deprecated(
+                    msg=f"Merging legacy k=v args ({kv_args}) into task args.",
+                    help_text="Include all task args in the task `args` mapping.",
+                    version="2.23",
+                    obj=thing,
+                )
         elif isinstance(thing, EncryptedString):
+            # k=v parsing intentionally omitted
             args = dict(_raw_params=thing)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -253,6 +270,7 @@ class ModuleArgsParser:
 
         if isinstance(thing, dict):
             # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
+            Display().deprecated("Using a mapping for `action` is deprecated.", version='2.23', help_text='Use a string value for `action`.', obj=thing)
             thing = thing.copy()
             if 'module' in thing:
                 action, module_args = self._split_module_string(thing['module'])
@@ -261,7 +279,7 @@ class ModuleArgsParser:
                 args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
-        elif isinstance(thing, string_types):
+        elif isinstance(thing, str):
             # form is like:  action: copy src=a dest=b
             (action, args) = self._split_module_string(thing)
             check_raw = action in FREEFORM_ACTIONS
@@ -287,7 +305,7 @@ class ModuleArgsParser:
         # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
-        additional_args = self._task_ds.get('args', dict())
+        additional_args = self._task_ds.get('args', Sentinel)
 
         # We can have one of action, local_action, or module specified
         # action

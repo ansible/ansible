@@ -88,8 +88,11 @@ class AdHocCLI(CLI):
         if not module_args:
             module_args = parse_kv(module_args_raw, check_raw=check_raw)
 
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': module_args},
-                  'timeout': context.CLIARGS['task_timeout']}
+        mytask = dict(
+            action=context.CLIARGS['module_name'],
+            args=module_args,
+            timeout=context.CLIARGS['task_timeout'],
+        )
 
         mytask = Origin(description=f'<adhoc {context.CLIARGS["module_name"]!r} task>').tag(mytask)
 

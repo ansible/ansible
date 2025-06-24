@@ -1,0 +1,4 @@
+deprecated_features:
+  - playbook syntax - Using a mapping with the ``action`` keyword is deprecated. (https://github.com/ansible/ansible/issues/84101)
+  - playbook syntax - Using ``key=value`` args and the task ``args`` keyword on the same task is deprecated.
+  - playbook syntax - Specifying the task ``args`` keyword without a value is deprecated.

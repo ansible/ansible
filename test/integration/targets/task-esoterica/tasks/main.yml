@@ -1,0 +1,39 @@
+# Validates some deprecated (previously untested/undocumented) playbook syntax until support is removed.
+
+- name: action-as-dict (static-only, template-to-dict never worked anyway)
+  action:
+    module: "{{ 'echo' }}"
+    args: "{{ echo_args }}"  # note that `module` and `args` are children of `action`
+  vars:
+    echo_args:
+      a: 1
+  register: action_as_dict
+
+- assert:
+    that: action_as_dict.action_args == action_args
+  vars:
+    action_args:
+      a: 1
+
+- name: kv and task args at the same time
+  echo: kv1=kv
+  args:
+    kv1: task_arg
+    kv2: task_arg
+  register: kv_and_task_args
+
+- assert:
+    that: kv_and_task_args.action_args == action_args
+  vars:
+    action_args:
+      kv1: kv
+      kv2: task_arg
+
+- name: task args with no value
+  echo:
+  args:
+  register: args_were_none
+
+- assert:
+    that:
+      - args_were_none.action_args == {}
