@@ -1,0 +1,31 @@
+- name: Test all ways to invoke an action
+  hosts: testhost
+  gather_facts: false
+  tasks:
+  - name: the basics
+    block:
+    - action: module=ping
+    - action:
+        module: ping
+    - action: ping
+    - ping:
+
+  - name: local_action variants
+    block:
+    - local_action: module=ping
+    - local_action: ping
+    - local_action:
+        module: ping
+    - ping:
+      delegate_to: localhost
+
+  - name: 'now templated! NOTE: this bypasses module_defaults'
+    vars:
+      doit: ping
+    block:
+    - action: module={{doit}}
+    - action:
+        module: '{{doit}}'
+    - action: '{{doit}}'
+    #- name: this does not work, never did and that is good
+    #  '{{doit}}':
