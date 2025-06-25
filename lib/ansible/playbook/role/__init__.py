@@ -500,8 +500,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @cached_property
     def _default_vars_full(self):
-        """
-        Returns a dict which includes all default vars, including the full dep chain vars
+        """Return a dict which includes all default variables.
+        
+        The full transitive dependency chain variables are also included.
         """
         default_vars_full = dict()
         for dep in self.global_cached_deps:
