@@ -379,7 +379,7 @@ class VariableManager:
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.get_name())
+                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), f"role '{role!r}' exported vars")
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
