@@ -41,11 +41,6 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
-# global cache for role dependencies
-# Key: collection.path.role_name
-# Value: list of role dependencies
-global_role_dependency_cache: dict[str, list[str]] = {}
-
 # NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
 #       available by using forward references this seems not to work well with commonly used IDEs.
 #       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
@@ -143,7 +138,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._play: Play = play
         self._parents: list[Role] = []
         self._dependencies: list[Role] = []
-        self._all_dependencies: list[Role] | None = None
         self._task_blocks: list[Block] = []
         self._handler_blocks: list[Block] = []
         self._compiled_handler_blocks: list[Block] | None = None
@@ -166,15 +160,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     def __repr__(self):
         return self.get_name()
-
-    @cached_property
-    def fully_qualified_name(self):
-        fqname = self._role_name
-        if self._role_path:
-            fqname = f"{self._role_path}.{fqname}"
-        if self._role_collection:
-            fqname = f"{self._role_collection}.{fqname}"
-        return fqname
 
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:
@@ -492,11 +477,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep_chain.append(parent)
         return dep_chain
 
-    @cached_property
-    def global_cached_deps(self):
-        if self.fully_qualified_name not in global_role_dependency_cache:
-            global_role_dependency_cache[self.fully_qualified_name] = self.get_all_dependencies()
-        return global_role_dependency_cache.get(self.fully_qualified_name)
+    def _update_role_cache(self):
+        if self._play and self._play.role_cache:
+            self._play.role_cache[self.get_role_path] = self
 
     @cached_property
     def _default_vars_full(self):
@@ -504,7 +487,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         The full transitive dependency chain variables are also included.
         """
         default_vars_full = dict()
-        for dep in self.global_cached_deps:
+        for dep in self._all_dependencies:
             default_vars_full = combine_vars(default_vars_full, dep.get_default_vars())
         default_vars_full = combine_vars(default_vars_full, self._default_vars)
         return default_vars_full
@@ -517,6 +500,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             for parent in dep_chain:
                 default_vars_full = combine_vars(default_vars_full, parent._default_vars)
             default_vars_full = combine_vars(default_vars_full, self._default_vars)
+
+        # Update the cached role with the new info we have calculated
+        self._update_role_cache()
+
         return default_vars_full
 
     def get_inherited_vars(self, dep_chain=None, only_exports=False):
@@ -547,7 +534,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         The full transitive dependency chain variables are also included.
         """
         role_vars_full = {}
-        for dep in self.global_cached_deps:
+        for dep in self._all_dependencies:
             # only take 'exportable' vars from deps
             role_vars_full = combine_vars(role_vars_full, dep.get_vars(include_params=False, only_exports=True))
         # role_vars come from vars/ in a role
@@ -573,6 +560,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             # these come from vars: keyword in role invocation. - {role: x, vars: {varname: value}}
             all_vars = combine_vars(all_vars, self.vars)
 
+        # Update the cached role with the new info we have calculated
+        self._update_role_cache()
+
         return all_vars
 
     def get_direct_dependencies(self):
@@ -583,17 +573,22 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns a list of all deps, built recursively from all child dependencies,
         in the proper order in which they should be executed or evaluated.
         """
-        if self._all_dependencies is None:
+        return self._all_dependencies
 
-            self._all_dependencies = []
-            for dep in self.get_direct_dependencies():
-                for child_dep in dep.get_all_dependencies():
-                    if child_dep in self._all_dependencies:
-                        self._all_dependencies.remove(child_dep)
-                    self._all_dependencies.append(child_dep)
-                if dep in self._all_dependencies:
+    @cached_property
+    def _all_dependencies(self):
+        self._all_dependencies = []
+        for dep in self.get_direct_dependencies():
+            for child_dep in dep._all_dependencies:
+                if child_dep in self._all_dependencies:
                     self._all_dependencies.remove(child_dep)
-                self._all_dependencies.append(dep)
+                self._all_dependencies.append(child_dep)
+            if dep in self._all_dependencies:
+                self._all_dependencies.remove(child_dep)
+            self._all_dependencies.append(dep)
+
+        # Update the cached role with the new info we have calculated
+        self._update_role_cache()
 
         return self._all_dependencies
 
