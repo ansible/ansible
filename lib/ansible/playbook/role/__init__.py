@@ -501,7 +501,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     @cached_property
     def _default_vars_full(self):
         """Return a dict which includes all default variables.
-        
         The full transitive dependency chain variables are also included.
         """
         default_vars_full = dict()
@@ -545,7 +544,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     @cached_property
     def _role_vars_full(self):
         """Return a dict which includes all role variables.
-        
         The full transitive dependency chain variables are also included.
         """
         role_vars_full = {}
