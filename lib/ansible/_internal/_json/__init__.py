@@ -144,16 +144,16 @@ class AnsibleVariableVisitor:
             value = self._template_engine.transform(value)
             value_type = type(value)
 
-        # DTFIX3: need to handle native copy for keys too
+        # DTFIX0: need to handle native copy for keys too
         if self.convert_to_native_values and isinstance(value, _datatag.AnsibleTaggedObject):
             value = value._native_copy()
             value_type = type(value)
 
         result: _T
 
-        # DTFIX3: the visitor is ignoring dict/mapping keys except for debugging and schema-aware checking, it should be doing type checks on keys
+        # DTFIX0: the visitor is ignoring dict/mapping keys except for debugging and schema-aware checking, it should be doing type checks on keys
         #                keep in mind the allowed types for keys is a more restrictive set than for values (str and tagged str only, not EncryptedString)
-        # DTFIX5: some type lists being consulted (the ones from datatag) are probably too permissive, and perhaps should not be dynamic
+        # DTFIX0: some type lists being consulted (the ones from datatag) are probably too permissive, and perhaps should not be dynamic
 
         if (result := self._early_visit(value, value_type)) is not _sentinel:
             pass

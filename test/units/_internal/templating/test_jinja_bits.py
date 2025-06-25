@@ -235,17 +235,21 @@ undefined_with_unsafe = AnsibleUndefinedVariable("is unsafe")
     ('on_dict["get"]', ok),  # [] prefers getitem, matching dict key present (no attr lookup)
     ('on_dict.get("_native_copy")', ok),  # . matches safe method on dict, should be callable to fetch a valid key
     ('on_dict["clear"]', ok),  # [] prefers getitem, matching dict key present (no attr lookup)
-    ('on_dict.clear', ok),  # . matches known-mutating method on _AnsibleTaggedDict, custom fallback to getitem with valid key
-    ('on_dict["setdefault"]', undefined_with_unsafe),  # [] finds no matching dict key, getattr fallback matches known-mutating method, fails
-    ('on_dict.setdefault', undefined_with_unsafe),  # . finds a known-mutating method, getitem fallback finds no matching dict key, fails
     ('on_dict["_non_method_or_attr"]', ok),  # [] prefers getitem, sunder key ok
     ('on_dict._non_method_or_attr', ok),  # . finds nothing, getattr fallback finds dict key, `_` prefix has no effect
-    ('on_list.sort', undefined_with_unsafe),  # . matches known-mutating method on list, fails
-    ('on_list["sort"]', undefined_with_unsafe),  # [] gets TypeError, getattr fallback matches known-mutating method on list, fails
     ('on_list._native_copy', undefined_with_unsafe),  # . matches sunder-named method on list, fails
     ('on_list["_native_copy"]', undefined_with_unsafe),  # [] gets TypeError, getattr fallback matches sunder-named method on list, fails
     ('on_list.0', 42),  # . gets AttributeError, getitem fallback succeeds
     ('on_list[0]', 42),  # [] prefers getitem, succeeds
+    # -- Jinja mutable method sandbox test cases follow; if sandbox is re-enabled, the correct behavior is defined by the commented value below
+    ('on_dict.clear | type_debug', 'builtin_function_or_method'),
+    # ('on_dict.clear', ok),  # . matches known-mutating method on _AnsibleTaggedDict, custom fallback to getitem with valid key
+    ('on_dict["setdefault"] | type_debug', 'method'),
+    # ('on_dict.setdefault', undefined_with_unsafe),  # . finds a known-mutating method, getitem fallback finds no matching dict key, fails
+    ('on_list.sort | type_debug', 'method'),
+    # ('on_list.sort', undefined_with_unsafe),  # . matches known-mutating method on list, fails
+    ('on_list["sort"] | type_debug', 'method'),
+    # ('on_list["sort"]', undefined_with_unsafe),  # [] gets TypeError, getattr fallback matches known-mutating method on list, fails
 ))
 def test_jinja_getattr(expr: str, expected: object) -> None:
     """Validate expected behavior from Jinja environment getattr/getitem methods, including Ansible-customized fallback behavior."""
@@ -401,3 +405,41 @@ def test_macro_marker_handling(template: str, variables: dict[str, object], expe
     res = TemplateEngine(variables=variables).template(TRUST.tag(template))
 
     assert res == expected
+
+
+@pytest.mark.parametrize("expression, result", (
+    ("(0x20).__or__(0xf)", 47),
+    ("(0x20).__and__(0x29)", 32),
+    ("(0x20).__lshift__(1)", 64),
+    ("(0x20).__rshift__(1)", 16),
+    ("(0x20).__xor__(0x29)", 9),
+))
+def test_bitwise_dunder_methods(expression: str, result: object) -> None:
+    """
+    Verify a limited set of dunder methods are supported.
+    This feature may be deprecated and removed in the future after bitwise filters are implemented.
+    """
+    assert TemplateEngine().evaluate_expression(TRUST.tag(expression)) == result
+
+
+@pytest.mark.parametrize("expression", (
+    "{1:2}.__delitem__(1)",
+    "[123].__len__()",
+))
+def test_disallowed_dunder_methods(expression: str) -> None:
+    """Verify dunder methods are disallowed by the Jinja sandbox."""
+    with pytest.raises(AnsibleUndefinedVariable, match="is unsafe"):
+        TemplateEngine().evaluate_expression(TRUST.tag(expression))
+
+
+@pytest.mark.parametrize("template, result", (
+    ("{% set my_list = [] %}{% set _ = my_list.append(1) %}{{ my_list }}", [1]),
+    ("{% set my_list = [] %}{% set _ = my_list.extend([1, 2]) %}{{ my_list }}", [1, 2]),
+    ("{% set my_dict = {} %}{% set _ = my_dict.update(a=1) %}{{ my_dict }}", dict(a=1)),
+))
+def test_mutation_methods(template: str, result: object) -> None:
+    """
+    Verify mutation methods are allowed by the Jinja sandbox.
+    This feature may be deprecated and removed in a future release by using Jinja's ImmutableSandboxedEnvironment.
+    """
+    assert TemplateEngine().template(TRUST.tag(template)) == result

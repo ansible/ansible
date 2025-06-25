@@ -1061,9 +1061,7 @@ def test_jinja_const_template_finalized() -> None:
 
 
 @pytest.mark.parametrize("template,expected", (
-    ("{% set x=[] %}{% set _=x.append(42) %}{{ x }}", [42]),
-    ("{{ (32).__or__(64) }}", 96),
-    ("{% set x={'foo': 42} %}{% set _=x.clear() %}{{ x }}", {}),
+    ("{{ (-1).__abs__() }}", 1),
 ))
 def test_unsafe_attr_access(template: str, expected: object) -> None:
     """Verify that unsafe attribute access fails by default and works when explicitly configured."""

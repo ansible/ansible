@@ -99,7 +99,7 @@ Omit = object.__new__(_OmitType)
 _datatag._untaggable_types.add(_OmitType)
 
 
-# DTFIX5: review these type sets to ensure they're not overly permissive/dynamic
+# DTFIX0: review these type sets to ensure they're not overly permissive/dynamic
 IGNORE_SCALAR_VAR_TYPES = {value for value in _datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES if not issubclass(value, str)}
 
 PASS_THROUGH_SCALAR_VAR_TYPES = _datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES | {

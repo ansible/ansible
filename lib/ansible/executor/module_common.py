@@ -954,7 +954,7 @@ class _BuiltModule:
 class _CachedModule:
     """Cached Python module created by AnsiballZ."""
 
-    # DTFIX5: secure this (locked down pickle, don't use pickle, etc.)
+    # FIXME: switch this to use a locked down pickle config or don't use pickle- easy to mess up and reach objects that shouldn't be pickled
 
     zip_data: bytes
     metadata: ModuleMetadata
