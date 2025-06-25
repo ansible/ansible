@@ -544,8 +544,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @cached_property
     def _role_vars_full(self):
-        """
-        Returns a dict which includes all role vars, including the full dep chain vars
+        """Return a dict which includes all role variables.
+        
+        The full transitive dependency chain variables are also included.
         """
         role_vars_full = {}
         for dep in self.global_cached_deps:
