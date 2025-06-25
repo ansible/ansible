@@ -223,7 +223,7 @@ class VariableManager:
                 default_vars = task._role.get_default_vars(dep_chain=task.get_dep_chain())
                 all_vars = _combine_and_track(all_vars,
                                               default_vars,
-                                              f"role '{task._role.get_name()}' defaults")
+                                              f"role '{task._role!r}' defaults")
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
