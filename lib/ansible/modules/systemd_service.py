@@ -34,7 +34,7 @@ options:
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
-            - Whether the unit should start on boot. At least one of O(state) and O(enabled) are required.
+            - Whether the unit should start on boot. At least one of O(state) or O(enabled) are required.
             - If set, requires O(name).
         type: bool
     force:
