@@ -436,7 +436,7 @@ def test_disallowed_dunder_methods(expression: str) -> None:
     ("{% set my_list = [] %}{% set _ = my_list.append(1) %}{{ my_list }}", [1]),
     ("{% set my_list = [] %}{% set _ = my_list.extend([1, 2]) %}{{ my_list }}", [1, 2]),
     ("{% set my_dict = {} %}{% set _ = my_dict.update(a=1) %}{{ my_dict }}", dict(a=1)),
-    ))
+))
 def test_mutation_methods(template: str, result: object) -> None:
     """
     Verify mutation methods are allowed by the Jinja sandbox.
