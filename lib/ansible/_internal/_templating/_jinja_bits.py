@@ -20,7 +20,7 @@ from jinja2.lexer import TOKEN_VARIABLE_BEGIN, TOKEN_VARIABLE_END, TOKEN_STRING,
 from jinja2.nativetypes import NativeCodeGenerator
 from jinja2.nodes import Const, EvalContext
 from jinja2.runtime import Context, Macro
-from jinja2.sandbox import ImmutableSandboxedEnvironment
+from jinja2.sandbox import SandboxedEnvironment
 from jinja2.utils import missing, LRUCache
 
 from ansible.utils.display import Display
@@ -518,7 +518,7 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
     return exception_to_raise
 
 
-# DTFIX3: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
+# DTFIX1: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
 #                also update the protomatter integration test once this is done (the test was written differently since this wasn't done yet)
 
 _BUILTIN_FILTER_ALIASES: dict[str, str] = {}
@@ -535,7 +535,7 @@ _BUILTIN_FILTERS = filter_loader._wrap_funcs(defaults.DEFAULT_FILTERS, _BUILTIN_
 _BUILTIN_TESTS = test_loader._wrap_funcs(t.cast(dict[str, t.Callable], defaults.DEFAULT_TESTS), _BUILTIN_TEST_ALIASES)
 
 
-class AnsibleEnvironment(ImmutableSandboxedEnvironment):
+class AnsibleEnvironment(SandboxedEnvironment):
     """
     Our custom environment, which simply allows us to override the class-level
     values for the Template and Context classes used by jinja2 internally.
@@ -545,6 +545,21 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     template_class = AnsibleTemplate
     code_generator_class = AnsibleCodeGenerator
     intercepted_binops = frozenset(('eq',))
+
+    _allowed_unsafe_attributes: dict[str, type | tuple[type, ...]] = dict(
+        # Allow bitwise operations on int until bitwise filters are available.
+        # see: https://github.com/ansible/ansible/issues/85204
+        __and__=int,
+        __lshift__=int,
+        __or__=int,
+        __rshift__=int,
+        __xor__=int,
+    )
+    """
+    Attributes which are considered unsafe by `is_safe_attribute`, which should be allowed when used on specific types.
+    The attributes allowed here are intended only for backward compatibility with existing use cases.
+    They should be exposed as filters in a future release and eventually deprecated.
+    """
 
     _lexer_cache = LRUCache(50)
 
@@ -607,6 +622,9 @@ class AnsibleEnvironment(ImmutableSandboxedEnvironment):
     def is_safe_attribute(self, obj: t.Any, attr: str, value: t.Any) -> bool:
         # deprecated: description="remove relaxed template sandbox mode support" core_version="2.23"
         if _TemplateConfig.sandbox_mode == _SandboxMode.ALLOW_UNSAFE_ATTRIBUTES:
+            return True
+
+        if (type_or_tuple := self._allowed_unsafe_attributes.get(attr)) and isinstance(obj, type_or_tuple):
             return True
 
         return super().is_safe_attribute(obj, attr, value)

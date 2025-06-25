@@ -10,7 +10,7 @@ from ansible.plugins.callback import CallbackBase
 
 
 class CallbackModule(CallbackBase):
-    # DTFIX5: validate VaultedValue redaction behavior
+    # DTFIX1: validate VaultedValue redaction behavior
 
     CALLBACK_NEEDS_ENABLED = True
     seen_tr = []  # track taskresult instances to ensure every call sees a unique instance

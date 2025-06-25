@@ -50,7 +50,7 @@
   assert:
     that:
       - "'[1, 2]' | ansible._protomatter.python_literal_eval == [1, 2]"
-      # DTFIX5: This test requires fixing plugin captured error handling first.
+      # DTFIX1: This test requires fixing plugin captured error handling first.
       #                Once fixed, the error handling test below can be replaced by this assert.
       # - "'x[1, 2]' | ansible._protomatter.python_literal_eval | true_type == 'CapturedExceptionMarker'"
       - "'x[1, 2]' | ansible._protomatter.python_literal_eval(ignore_errors=True) == 'x[1, 2]'"
