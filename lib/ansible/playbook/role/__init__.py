@@ -504,8 +504,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns a dict which includes all default vars, including the full dep chain vars
         """
         default_vars_full = dict()
-        deps = self.global_cached_deps
-        for dep in deps:
+        for dep in self.global_cached_deps:
             default_vars_full = combine_vars(default_vars_full, dep.get_default_vars())
         default_vars_full = combine_vars(default_vars_full, self._default_vars)
         return default_vars_full
