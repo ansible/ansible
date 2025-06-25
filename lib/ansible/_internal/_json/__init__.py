@@ -162,8 +162,6 @@ class AnsibleVariableVisitor:
         # DTFIX-FUTURE: Visitor generally ignores dict/mapping keys by default except for debugging and schema-aware checking.
         #               It could be checking keys destined for variable storage to apply more strict rules about key shape and type.
 
-        # DTFIX0: some type lists being consulted (the ones from datatag) are probably too permissive, and perhaps should not be dynamic
-
         if (result := self._early_visit(value, value_type)) is not _sentinel:
             pass
         # DTFIX7: de-duplicate and optimize; extract inline generator expressions and fallback function or mapping for native type calculation?
