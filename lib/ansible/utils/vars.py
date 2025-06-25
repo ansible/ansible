@@ -306,6 +306,7 @@ def transform_to_native_types(
         convert_custom_scalars=True,
         convert_to_native_values=True,
         apply_transforms=True,
+        visit_keys=True,  # ensure that keys are also converted
         encrypted_string_behavior=_json.EncryptedStringBehavior.REDACT if redact else _json.EncryptedStringBehavior.DECRYPT,
     )
 

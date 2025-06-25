@@ -23,8 +23,10 @@ from collections import defaultdict
 from unittest import mock
 
 import unittest
+
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars, merge_hash
+from ansible._internal._datatag._tags import Origin
+from ansible.utils.vars import combine_vars, merge_hash, transform_to_native_types
 
 
 class TestVariableUtils(unittest.TestCase):
@@ -274,3 +276,15 @@ class TestVariableUtils(unittest.TestCase):
             "b": high['b'] + [1, 1, 2]
         }
         self.assertEqual(merge_hash(low, high, True, 'prepend_rp'), expected)
+
+
+def test_transform_to_native_types() -> None:
+    """Verify that transform_to_native_types results in native types for both keys and values."""
+    value = {Origin(description="blah").tag("tagged_key"): Origin(description="blah").tag("value with tagged key")}
+
+    result = transform_to_native_types(value)
+
+    assert result == dict(tagged_key="value with tagged key")
+
+    assert all(type(key) is str for key in result.keys())  # pylint: disable=unidiomatic-typecheck
+    assert all(type(value) is str for value in result.values())  # pylint: disable=unidiomatic-typecheck
