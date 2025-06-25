@@ -548,8 +548,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         Returns a dict which includes all role vars, including the full dep chain vars
         """
         role_vars_full = {}
-        deps = self.global_cached_deps
-        for dep in deps:
+        for dep in self.global_cached_deps:
             # only take 'exportable' vars from deps
             role_vars_full = combine_vars(role_vars_full, dep.get_vars(include_params=False, only_exports=True))
         # role_vars come from vars/ in a role
