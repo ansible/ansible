@@ -293,7 +293,7 @@ def validate_variable_name(name: object) -> None:
 def transform_to_native_types(
     value: object,
     redact: bool = True,
-) -> object:
+) -> t.Any:
     """
     Recursively transform the given value to Python native types.
     Potentially sensitive values such as individually vaulted variables will be redacted unless ``redact=False`` is passed.
