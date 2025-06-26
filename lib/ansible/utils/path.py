@@ -102,7 +102,7 @@ def basedir(source):
         dname = os.path.dirname(source)
 
     if dname:
-        # don't follow symlinks for basedir, enables source re-use
+        # don't follow symlinks for basedir, enables source reuse
         dname = os.path.abspath(dname)
 
     return to_text(dname, errors='surrogate_or_strict')

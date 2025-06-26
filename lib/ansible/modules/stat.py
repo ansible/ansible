@@ -408,7 +408,7 @@ def format_output(module, path, st):
             ('st_blksize', 'block_size'),
             ('st_rdev', 'device_type'),
             ('st_flags', 'flags'),
-            # Some Berkley based
+            # Some Berkeley based
             ('st_gen', 'generation'),
             ('st_birthtime', 'birthtime'),
             # RISCOS

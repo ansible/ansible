@@ -40,7 +40,6 @@ import secrets
 import subprocess
 import sys
 import termios
-import textwrap
 import threading
 import time
 import tty
@@ -329,7 +328,6 @@ class Display(metaclass=Singleton):
         self.noncow = C.ANSIBLE_COW_SELECTION
 
         self.set_cowsay_info()
-        self._wrap_stderr = C.WRAP_STDERR
 
         if self.b_cowsay:
             try:
@@ -621,6 +619,12 @@ class Display(metaclass=Singleton):
             # collections have a resolved_name but no type
             collection = deprecator.resolved_name if deprecator else None
             plugin_fragment = ''
+        elif deprecator.resolved_name == 'ansible.builtin':
+            # core deprecations from base classes (the API) have no plugin name, only 'ansible.builtin'
+            plugin_type_name = str(deprecator.type) if deprecator.type is _messages.PluginType.MODULE else f'{deprecator.type} plugin'
+
+            collection = deprecator.resolved_name
+            plugin_fragment = f'the {plugin_type_name} API'
         else:
             parts = deprecator.resolved_name.split('.')
             plugin_name = parts[-1]
@@ -656,13 +660,6 @@ class Display(metaclass=Singleton):
         deprecation_msg = ' '.join(f for f in [removal_fragment, from_fragment, plugin_fragment, collection_fragment, when_fragment] if f) + '.'
 
         return _join_sentences(msg, deprecation_msg)
-
-    def _wrap_message(self, msg: str, wrap_text: bool) -> str:
-        if wrap_text and self._wrap_stderr:
-            wrapped = textwrap.wrap(msg, self.columns, drop_whitespace=False)
-            msg = "\n".join(wrapped) + "\n"
-
-        return msg
 
     @staticmethod
     def _deduplicate(msg: str, messages: set[str]) -> bool:
@@ -780,9 +777,6 @@ class Display(metaclass=Singleton):
         msg = _format_message(warning, _traceback.is_traceback_enabled(_traceback.TracebackEvent.DEPRECATED))
         msg = f'[DEPRECATION WARNING]: {msg}'
 
-        # DTFIX3: what should we do with wrap_message?
-        msg = self._wrap_message(msg=msg, wrap_text=True)
-
         if self._deduplicate(msg, self._deprecations):
             return
 
@@ -798,6 +792,8 @@ class Display(metaclass=Singleton):
     ) -> None:
         """Display a warning message."""
         _skip_stackwalk = True
+
+        # deprecated: description='The formatted argument has no effect.' core_version='2.23'
 
         # This is the pre-proxy half of the `warning` implementation.
         # Any logic that must occur on workers needs to be implemented here.
@@ -818,13 +814,12 @@ class Display(metaclass=Singleton):
 
         if warning_ctx := _DeferredWarningContext.current(optional=True):
             warning_ctx.capture(warning)
-            # DTFIX3: what to do about propagating wrap_text?
             return
 
-        self._warning(warning, wrap_text=not formatted)
+        self._warning(warning)
 
     @_proxy
-    def _warning(self, warning: _messages.WarningSummary, wrap_text: bool) -> None:
+    def _warning(self, warning: _messages.WarningSummary) -> None:
         """Internal implementation detail, use `warning` instead."""
 
         # This is the post-proxy half of the `warning` implementation.
@@ -835,9 +830,6 @@ class Display(metaclass=Singleton):
 
         if self._deduplicate(msg, self._warns):
             return
-
-        # DTFIX3: what should we do with wrap_message?
-        msg = self._wrap_message(msg=msg, wrap_text=wrap_text)
 
         self.display(msg, color=C.config.get_config_value('COLOR_WARN'), stderr=True, caplevel=-2)
 
@@ -927,19 +919,20 @@ class Display(metaclass=Singleton):
             warning_ctx.capture(warning)
             return
 
-        self._warning(warning, wrap_text=False)
+        self._warning(warning)
 
     def error(self, msg: str | BaseException, wrap_text: bool = True, stderr: bool = True) -> None:
         """Display an error message."""
         _skip_stackwalk = True
+
+        # deprecated: description='The wrap_text argument has no effect.' core_version='2.23'
+        # deprecated: description='The stderr argument has no effect.' core_version='2.23'
 
         # This is the pre-proxy half of the `error` implementation.
         # Any logic that must occur on workers needs to be implemented here.
 
         if isinstance(msg, BaseException):
             event = _error_factory.ControllerEventFactory.from_exception(msg, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
-
-            wrap_text = False
         else:
             event = _messages.Event(
                 msg=msg,
@@ -950,10 +943,10 @@ class Display(metaclass=Singleton):
             event=event,
         )
 
-        self._error(error, wrap_text=wrap_text, stderr=stderr)
+        self._error(error, stderr=True)
 
     @_proxy
-    def _error(self, error: _messages.ErrorSummary, wrap_text: bool, stderr: bool) -> None:
+    def _error(self, error: _messages.ErrorSummary, stderr: bool) -> None:
         """Internal implementation detail, use `error` instead."""
 
         # This is the post-proxy half of the `error` implementation.
@@ -964,9 +957,6 @@ class Display(metaclass=Singleton):
 
         if self._deduplicate(msg, self._errors):
             return
-
-        # DTFIX3: what should we do with wrap_message?
-        msg = self._wrap_message(msg=msg, wrap_text=wrap_text)
 
         self.display(msg, color=C.config.get_config_value('COLOR_ERROR'), stderr=stderr, caplevel=-1)
 

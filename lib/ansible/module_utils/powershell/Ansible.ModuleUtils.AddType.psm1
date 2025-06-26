@@ -5,7 +5,7 @@ Function Add-CSharpType {
     <#
     .SYNOPSIS
     Compiles one or more C# scripts similar to Add-Type. This exposes
-    more configuration options that are useable within Ansible and it
+    more configuration options that are usable within Ansible and it
     also allows multiple C# sources to be compiled together.
 
     .PARAMETER References

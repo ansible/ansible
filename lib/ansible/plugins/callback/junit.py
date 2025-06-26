@@ -300,13 +300,7 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_play_start(self, play):
         self._play_name = play.get_name()
 
-    def v2_runner_on_no_hosts(self, task: Task) -> None:
-        self._start_task(task)
-
     def v2_playbook_on_task_start(self, task: Task, is_conditional: bool) -> None:
-        self._start_task(task)
-
-    def v2_playbook_on_cleanup_task_start(self, task: Task) -> None:
         self._start_task(task)
 
     def v2_playbook_on_handler_task_start(self, task: Task) -> None:

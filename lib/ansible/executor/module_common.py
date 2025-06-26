@@ -364,7 +364,7 @@ def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(
                                                    options=TemplateOptions(value_for_omit=None))
 
     if not interpreter_out:
-        # nothing matched(None) or in case someone configures empty string or empty intepreter
+        # nothing matched(None) or in case someone configures empty string or empty interpreter
         interpreter_out = interpreter
 
     # set shebang
@@ -659,9 +659,14 @@ metadata_versions: dict[t.Any, type[ModuleMetadata]] = {
     1: ModuleMetadataV1,
 }
 
+_DEFAULT_LEGACY_METADATA = ModuleMetadataV1(serialization_profile='legacy')
+
 
 def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
-    # DTFIX2: while module metadata works, this feature isn't fully baked and should be turned off before release
+    # experimental module metadata; off by default
+    if not C.config.get_config_value('_MODULE_METADATA'):
+        return _DEFAULT_LEGACY_METADATA
+
     metadata_nodes: list[ast.Assign] = []
 
     for node in module.body:
@@ -674,9 +679,7 @@ def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
                         metadata_nodes.append(node)
 
     if not metadata_nodes:
-        return ModuleMetadataV1(
-            serialization_profile='legacy',
-        )
+        return _DEFAULT_LEGACY_METADATA
 
     if len(metadata_nodes) > 1:
         raise ValueError('Module METADATA must defined only once.')
@@ -951,7 +954,7 @@ class _BuiltModule:
 class _CachedModule:
     """Cached Python module created by AnsiballZ."""
 
-    # DTFIX5: secure this (locked down pickle, don't use pickle, etc.)
+    # FIXME: switch this to use a locked down pickle config or don't use pickle- easy to mess up and reach objects that shouldn't be pickled
 
     zip_data: bytes
     metadata: ModuleMetadata

@@ -25,9 +25,9 @@
   - name: check they all complain about bad defined var
     assert:
       that:
-        - item.stderr == warning_message
+        - item.stderr.startswith(warning_message)
     loop: '{{play_out.results}}'
     loop_control:
       label: '{{item.item.file}}'
     vars:
-      warning_message: "[WARNING]: {{ canary }} '{{ item.item.name }}'."
+      warning_message: "[WARNING]: {{ canary }} '{{ item.item.name }}'.\nOrigin: "

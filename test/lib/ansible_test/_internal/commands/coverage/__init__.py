@@ -77,7 +77,7 @@ class CoverageConfig(EnvironmentConfig):
 def initialize_coverage(args: CoverageConfig, host_state: HostState) -> coverage_module:
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     configure_pypi_proxy(args, host_state.controller_profile)  # coverage
-    install_requirements(args, host_state.controller_profile.python, coverage=True)  # coverage
+    install_requirements(args, host_state.controller_profile, host_state.controller_profile.python, coverage=True)  # coverage
 
     try:
         import coverage

@@ -125,7 +125,7 @@
   - >-
     res.msg is not contains("Failed to process signed manifest 'ansible_collections.ns.invalid_manifest.meta.powershell_signatures.psd1': expecting hash list entry for " ~ module_hash ~ " to contain a mode of 'Trusted' or 'Unsupported' but got ''.")
 
-- name: create manfiest with invalid Mode subkey value
+- name: create manifest with invalid Mode subkey value
   ansible.builtin.import_tasks: create_manifest.yml
   vars:
     manifest_file: manifest_v1_invalid_mode_subkey.psd1

@@ -62,7 +62,7 @@ def test_play_ds_positive():
     adhoc_cli.parse()
     ret = adhoc_cli._play_ds('command', 10, 2)
     assert ret['name'] == 'Ansible Ad-Hoc'
-    assert ret['tasks'] == [{'action': {'module': 'command', 'args': {}}, 'async_val': 10, 'poll': 2, 'timeout': 0}]
+    assert ret['tasks'] == [{'action': 'command', 'args': {}, 'async_val': 10, 'poll': 2, 'timeout': 0}]
 
 
 def test_play_ds_with_include_role():

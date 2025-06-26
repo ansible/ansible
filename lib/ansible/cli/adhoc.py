@@ -88,8 +88,11 @@ class AdHocCLI(CLI):
         if not module_args:
             module_args = parse_kv(module_args_raw, check_raw=check_raw)
 
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': module_args},
-                  'timeout': context.CLIARGS['task_timeout']}
+        mytask = dict(
+            action=context.CLIARGS['module_name'],
+            args=module_args,
+            timeout=context.CLIARGS['task_timeout'],
+        )
 
         mytask = Origin(description=f'<adhoc {context.CLIARGS["module_name"]!r} task>').tag(mytask)
 
@@ -184,7 +187,7 @@ class AdHocCLI(CLI):
                 variable_manager=variable_manager,
                 loader=loader,
                 passwords=passwords,
-                stdout_callback=cb,
+                stdout_callback_name=cb,
                 run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                 run_tree=run_tree,
                 forks=context.CLIARGS['forks'],

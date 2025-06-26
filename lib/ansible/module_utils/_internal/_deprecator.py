@@ -38,9 +38,14 @@ def get_caller_plugin_info() -> _messages.PluginInfo | None:
     _skip_stackwalk = True
 
     if frame_info := _stack.caller_frame():
-        return _path_as_core_plugininfo(frame_info.filename) or _path_as_collection_plugininfo(frame_info.filename)
+        return _path_as_plugininfo(frame_info.filename)
 
     return None  # pragma: nocover
+
+
+def _path_as_plugininfo(path: str) -> _messages.PluginInfo | None:
+    """Return a `PluginInfo` instance if the provided `path` refers to a plugin."""
+    return _path_as_core_plugininfo(path) or _path_as_collection_plugininfo(path)
 
 
 def _path_as_core_plugininfo(path: str) -> _messages.PluginInfo | None:
@@ -62,6 +67,10 @@ def _path_as_core_plugininfo(path: str) -> _messages.PluginInfo | None:
             # Callers in this case need to identify the deprecating plugin name, otherwise only ansible-core will be reported.
             # Reporting ansible-core is never wrong, it just may be missing an additional detail (plugin name) in the "on behalf of" case.
             return ANSIBLE_CORE_DEPRECATOR
+
+        if plugin_name == '__init__':
+            # The plugin type is known, but the caller isn't a specific plugin -- instead, it's core plugin infrastructure (the base class).
+            return _messages.PluginInfo(resolved_name=namespace, type=plugin_type)
     elif match := re.match(r'modules/(?P<module_name>\w+)', relpath):
         # AnsiballZ Python package for core modules
         plugin_name = match.group("module_name")
@@ -100,6 +109,8 @@ def _path_as_collection_plugininfo(path: str) -> _messages.PluginInfo | None:
         return INDETERMINATE_DEPRECATOR
 
     name = '.'.join((match.group('ns'), match.group('coll'), match.group('plugin_name')))
+
+    # DTFIX-FUTURE: deprecations from __init__ will be incorrectly attributed to a plugin of that name
 
     return _messages.PluginInfo(resolved_name=name, type=plugin_type)
 

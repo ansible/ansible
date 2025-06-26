@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import os
+import typing as _t
 
 from collections.abc import Container, Mapping, Set, Sequence
 from types import MappingProxyType
@@ -38,6 +39,16 @@ from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
+
+# NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
+#       available by using forward references this seems not to work well with commonly used IDEs.
+#       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
+#       References:
+#       * https://stackoverflow.com/q/39740632/199513
+#       * https://peps.python.org/pep-0484/#forward-references
+if _t.TYPE_CHECKING:
+    from ansible.playbook.block import Block
+    from ansible.playbook.play import Play
 
 __all__ = ['Role', 'hash_params']
 
@@ -97,13 +108,19 @@ def hash_params(params):
 
 class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True):
-        self._role_name = None
-        self._role_path = None
-        self._role_collection = None
-        self._role_params = dict()
+    def __init__(self,
+                 play: Play = None,
+                 from_files: dict[str, list[str]] = None,
+                 from_include: bool = False,
+                 validate: bool = True,
+                 public: bool = None,
+                 static: bool = True) -> None:
+        self._role_name: str = None
+        self._role_path: str = None
+        self._role_collection: str = None
+        self._role_params: dict[str, dict[str, str]] = dict()
         self._loader = None
-        self.static = static
+        self.static: bool = static
 
         # includes (static=false) default to private, while imports (static=true) default to public
         # but both can be overridden by global config if set
@@ -116,26 +133,26 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         else:
             self.public = public
 
-        self._metadata = RoleMetadata()
-        self._play = play
-        self._parents = []
-        self._dependencies = []
-        self._all_dependencies = None
-        self._task_blocks = []
-        self._handler_blocks = []
-        self._compiled_handler_blocks = None
-        self._default_vars = dict()
-        self._role_vars = dict()
-        self._had_task_run = dict()
-        self._completed = dict()
-        self._should_validate = validate
+        self._metadata: RoleMetadata = RoleMetadata()
+        self._play: Play = play
+        self._parents: list[Role] = []
+        self._dependencies: list[Role] = []
+        self._all_dependencies: list[Role] | None = None
+        self._task_blocks: list[Block] = []
+        self._handler_blocks: list[Block] = []
+        self._compiled_handler_blocks: list[Block] | None = None
+        self._default_vars: dict[str, str] | None = dict()
+        self._role_vars: dict[str, str] | None = dict()
+        self._had_task_run: dict[str, bool] = dict()
+        self._completed: dict[str, bool] = dict()
+        self._should_validate: bool = validate
 
         if from_files is None:
             from_files = {}
-        self._from_files = from_files
+        self._from_files: dict[str, list[str]] = from_files
 
         # Indicates whether this role was included via include/import_role
-        self.from_include = from_include
+        self.from_include: bool = from_include
 
         self._hash = None
 

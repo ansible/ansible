@@ -221,8 +221,6 @@ class FieldAttributeBase:
 
     def validate(self, all_vars=None):
         """ validation that is done at parse time, not load time """
-        all_vars = {} if all_vars is None else all_vars
-
         if not self._validated:
             # walk all fields in the object
             for (name, attribute) in self.fattributes.items():

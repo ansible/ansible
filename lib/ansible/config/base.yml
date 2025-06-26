@@ -41,6 +41,15 @@ _CALLBACK_DISPATCH_ERROR_BEHAVIOR:
     ignore: just continue silently
   env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
   version_added: '2.19'
+_MODULE_METADATA:
+  name: Enable experimental module metadata
+  description:
+    - Enables experimental module-level metadata controls for serialization profile selection.
+    - This is for internal use only.
+  type: boolean
+  default: false
+  env: [ { name: _ANSIBLE_MODULE_METADATA } ]
+  version_added: '2.19'
 ALLOW_BROKEN_CONDITIONALS:
   # This config option will be deprecated once it no longer has any effect (2.23).
   name: Allow broken conditionals
@@ -2176,12 +2185,6 @@ WIN_ASYNC_STARTUP_TIMEOUT:
   vars:
     - {name: ansible_win_async_startup_timeout}
   version_added: '2.10'
-WRAP_STDERR:
-  description: Control line-wrapping behavior on console warnings and errors from default output callbacks (eases pattern-based output testing)
-  env: [{name: ANSIBLE_WRAP_STDERR}]
-  default: false
-  type: bool
-  version_added: "2.19"
 YAML_FILENAME_EXTENSIONS:
   name: Valid YAML extensions
   default: [".yml", ".yaml", ".json"]

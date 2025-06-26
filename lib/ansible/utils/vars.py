@@ -28,6 +28,7 @@ from json import dumps
 from ansible import constants as C
 from ansible import context
 from ansible._internal import _json
+from ansible._internal._templating import _jinja_bits
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.text.converters import to_native, to_text
@@ -252,6 +253,8 @@ def isidentifier(ident):
 
     Originally posted at https://stackoverflow.com/a/29586366
     """
+    # deprecated: description='Use validate_variable_name instead.' core_version='2.23'
+
     if not isinstance(ident, str):
         return False
 
@@ -269,7 +272,7 @@ def isidentifier(ident):
 
 def validate_variable_name(name: object) -> None:
     """Validate the given variable name is valid, raising an AnsibleError if it is not."""
-    if isinstance(name, str) and isidentifier(name):
+    if isinstance(name, str) and name.isidentifier() and name.isascii() and name not in _jinja_bits.JINJA_KEYWORDS:
         return
 
     if isinstance(name, (str, int, float, bool, type(None))):
@@ -290,7 +293,7 @@ def validate_variable_name(name: object) -> None:
 def transform_to_native_types(
     value: object,
     redact: bool = True,
-) -> object:
+) -> t.Any:
     """
     Recursively transform the given value to Python native types.
     Potentially sensitive values such as individually vaulted variables will be redacted unless ``redact=False`` is passed.
@@ -303,6 +306,7 @@ def transform_to_native_types(
         convert_custom_scalars=True,
         convert_to_native_values=True,
         apply_transforms=True,
+        visit_keys=True,  # ensure that keys are also converted
         encrypted_string_behavior=_json.EncryptedStringBehavior.REDACT if redact else _json.EncryptedStringBehavior.DECRYPT,
     )
 
