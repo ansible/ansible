@@ -640,18 +640,19 @@ def ensure_directory(path, follow, recurse, timestamps):
                 if not os.path.exists(b_curpath):
                     mkdir_diff = initial_diff(curpath, "directory", "absent")
                     mkdir_diffs.append(mkdir_diff)
-                    if not module.check_mode:
-                        try:
-                            os.mkdir(b_curpath)
-                        except OSError as ex:
-                            # Possibly something else created the dir since the os.path.exists
-                            # check above. As long as it's a dir, we don't need to error out.
-                            if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
-                                raise
-                        tmp_file_args = file_args.copy()
-                        tmp_file_args['path'] = curpath
-                        module.set_fs_attributes_if_different(tmp_file_args, False, mkdir_diff, expand=False)
-                        update_timestamp_for_file(file_args['path'], mtime, atime, mkdir_diff)
+                    if module.check_mode:
+                        continue
+                    try:
+                        os.mkdir(b_curpath)
+                    except OSError as ex:
+                        # Possibly something else created the dir since the os.path.exists
+                        # check above. As long as it's a dir, we don't need to error out.
+                        if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
+                            raise
+                    tmp_file_args = file_args.copy()
+                    tmp_file_args['path'] = curpath
+                    module.set_fs_attributes_if_different(tmp_file_args, False, mkdir_diff, expand=False)
+                    update_timestamp_for_file(file_args['path'], mtime, atime, mkdir_diff)
         except Exception as e:
             module.fail_json(
                 msg=f"There was an issue creating {curpath} as requested: {to_native(e)}",
