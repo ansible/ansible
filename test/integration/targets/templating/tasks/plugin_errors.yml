@@ -60,3 +60,13 @@
     that:
       - error is failed
       - error.msg is contains("lookup plugin 'nope' was not found")
+
+- name: verify plugin errors are captured
+  assert:
+    that:
+      - (syntax_error | ansible._protomatter.dump_object).exception.message is contains "Syntax error in template"
+      - (undef(0) | ansible._protomatter.dump_object).exception.message is contains "argument must be of type"
+      - (lookup('pipe', 'exit 1') | ansible._protomatter.dump_object).exception.message is contains "lookup plugin 'pipe' failed"
+      - ('{' | from_json | ansible._protomatter.dump_object).exception.message is contains "Expecting property name enclosed in double quotes"
+  vars:
+    syntax_error: "{{ #'"

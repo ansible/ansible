@@ -23,7 +23,7 @@ from ansible.utils.display import Display
 
 from ._datatag import _JinjaConstTemplate
 from ._errors import AnsibleTemplatePluginRuntimeError, AnsibleTemplatePluginLoadError, AnsibleTemplatePluginNotFoundError
-from ._jinja_common import MarkerError, _TemplateConfig, get_first_marker_arg, Marker, JinjaCallContext
+from ._jinja_common import MarkerError, _TemplateConfig, get_first_marker_arg, Marker, JinjaCallContext, CapturedExceptionMarker
 from ._lazy_containers import lazify_container_kwargs, lazify_container_args, lazify_container, _AnsibleLazyTemplateMixin
 from ._utils import LazyOptions, TemplateContext
 
@@ -119,7 +119,10 @@ class JinjaPluginIntercept(c.MutableMapping):
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
-            raise AnsibleTemplatePluginRuntimeError(instance.plugin_type, instance.ansible_name) from ex  # DTFIX-FUTURE: which name to use? use plugin info?
+            try:
+                raise AnsibleTemplatePluginRuntimeError(instance.plugin_type, instance.ansible_name) from ex  # DTFIX-FUTURE: which name to use? PluginInfo?
+            except AnsibleTemplatePluginRuntimeError as captured:
+                return CapturedExceptionMarker(captured)
 
     def _wrap_test(self, instance: AnsibleJinja2Plugin) -> t.Callable:
         """Intercept point for all test plugins to ensure that args are properly templated/lazified."""

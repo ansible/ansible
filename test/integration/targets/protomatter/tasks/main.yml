@@ -31,6 +31,8 @@
       - still_untrusted_number | ansible._protomatter.tag_names == ['Origin']  # does not have TrustedAsTemplate
       - missing_var | ansible._protomatter.apply_trust is undefined
 
+# DTFIX-FUTURE: protomatter should be available from unit tests, either always or via a fixture opt-in
+
 - name: test the dump_object filter
   assert:
     that:
@@ -40,33 +42,21 @@
       - lookup('synthetic_plugin_info') | type_debug == 'PluginInfo'
       - lookup('synthetic_plugin_info') | ansible._protomatter.dump_object | type_debug == 'dict'
       - lookup('synthetic_plugin_info') | ansible._protomatter.dump_object == expected_plugin_info
+      - (syntax_error | ansible._protomatter.dump_object).exception.message is contains 'Syntax error in template'
   vars:
     some_var: Hello
     expected_plugin_info:
       resolved_name: ns.col.module
       type: module
+    syntax_error: '{{ bogus syntax oops DSYFF*&H#$*F#$@F'
 
 - name: test the python_literal_eval filter
   assert:
     that:
       - "'[1, 2]' | ansible._protomatter.python_literal_eval == [1, 2]"
-      # DTFIX1: This test requires fixing plugin captured error handling first.
-      #                Once fixed, the error handling test below can be replaced by this assert.
-      # - "'x[1, 2]' | ansible._protomatter.python_literal_eval | true_type == 'CapturedExceptionMarker'"
+      - "'x[1, 2]' | ansible._protomatter.python_literal_eval | ansible._protomatter.true_type == 'CapturedExceptionMarker'"
       - "'x[1, 2]' | ansible._protomatter.python_literal_eval(ignore_errors=True) == 'x[1, 2]'"
       - missing_var | ansible._protomatter.python_literal_eval is undefined
-
-- name: test the python_literal_eval filter with an error
-  assert:
-    that:
-      - "'x[1, 2]' | ansible._protomatter.python_literal_eval"
-  ignore_errors: true
-  register: failing_python_literal_eval
-
-- assert:
-    that:
-      - failing_python_literal_eval is failed
-      - failing_python_literal_eval.msg is contains "malformed node or string"
 
 - name: test non-string input failure to python_literal_eval filter
   assert:
