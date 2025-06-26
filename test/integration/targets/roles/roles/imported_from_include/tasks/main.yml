@@ -6,17 +6,17 @@
 - debug: var=include_default_var
 - assert:
     that:
-      - (inherit_var is defined) and (inherit_var == 'var')
-      - (inherit_default is defined) and (inherit_default == 'default')
-      - (inherit_playbook is defined) and (inherit_playbook == 'playbook')
-      - (inherit_include is defined) and (inherit_include == 'include')
-      - (include_default_var is defined) and (include_default_var == 'include_default_var')
+      - inherit_var == 'var'
+      - inherit_default == 'default'
+      - inherit_playbook == 'playbook'
+      - inherit_include == 'include'
+      - include_default_var == 'include_default_var'
   when: (overwritten is undefined) or (not overwritten)
 - assert:
     that:
-      - (inherit_var is defined) and (inherit_var == 'overwritten_as_well')
-      - (inherit_default is defined) and (inherit_default == 'overwritten')
-      - (inherit_playbook is defined) and (inherit_playbook == 'playbook')
-      - (inherit_include is defined) and (inherit_include == 'include')
-      - (include_default_var is defined) and (include_default_var == 'overwritten_again')
+      - inherit_var == 'overwritten_as_well'
+      - inherit_default == 'overwritten'
+      - inherit_playbook == 'playbook'
+      - inherit_include == 'include'
+      - include_default_var == 'overwritten_again'
   when: (overwritten is defined) and overwritten
