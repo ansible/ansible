@@ -2531,3 +2531,46 @@
         state: absent
       loop:
         - '{{ remote_file }}'
+
+- name: Test copy with local_follow=False and dest is a symlink
+  block:
+    - name: execute - Create a test dest dir
+      file:
+        path: '{{ item }}'
+        state: directory
+      loop:
+        - '{{ remote_tmp_dir }}/testcase_local_follow_false_symlink_dest'
+        - '{{ remote_tmp_dir }}/dest'
+
+    - name: Create a dest symlink
+      file:
+        src: "{{ remote_tmp_dir }}/dest"
+        state: link
+        dest: "{{ remote_tmp_dir }}/sym_dest"
+
+    - name: Copy a file to the dest symlink
+      copy:
+        src: "{{ remote_tmp_dir }}/sym_dest"
+        dest: "{{ remote_tmp_dir }}/testcase_local_follow_false_symlink_dest"
+        local_follow: False
+        remote_src: True
+      register: copy_result
+
+    - name: Gather info about copied symlink
+      stat:
+        path: "{{ remote_tmp_dir }}/testcase_local_follow_false_symlink_dest/sym_dest"
+      register: stat_result
+
+    - name: Assert that the file has been copied
+      assert:
+        that:
+          - copy_result is changed
+          - stat_result.stat.exists
+  always:
+    - name: execute - Clean up
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_tmp_dir }}/testcase_local_follow_false_symlink_dest'
+        - '{{ remote_tmp_dir }}/dest'
