@@ -187,7 +187,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
         offset += 1
 
     if os.path.islink(topdir) and not local_follow:
-        r_files['symlinks'] = (os.readlink(topdir), os.path.basename(topdir))
+        r_files['symlinks'].append((os.readlink(topdir), os.path.basename(topdir)))
         return r_files
 
     dir_stats = os.stat(topdir)
