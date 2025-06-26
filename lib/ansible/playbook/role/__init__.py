@@ -477,10 +477,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             dep_chain.append(parent)
         return dep_chain
 
-    def _update_role_cache(self):
-        if self._play and self._play.role_cache:
-            self._play.role_cache[self.get_role_path] = self
-
     @cached_property
     def _default_vars_full(self):
         """Return a dict which includes all default variables.
@@ -500,9 +496,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             for parent in dep_chain:
                 default_vars_full = combine_vars(default_vars_full, parent._default_vars)
             default_vars_full = combine_vars(default_vars_full, self._default_vars)
-
-        # Update the cached role with the new info we have calculated
-        self._update_role_cache()
 
         return default_vars_full
 
@@ -560,9 +553,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             # these come from vars: keyword in role invocation. - {role: x, vars: {varname: value}}
             all_vars = combine_vars(all_vars, self.vars)
 
-        # Update the cached role with the new info we have calculated
-        self._update_role_cache()
-
         return all_vars
 
     def get_direct_dependencies(self):
@@ -586,9 +576,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             if dep in self._all_dependencies:
                 self._all_dependencies.remove(child_dep)
             self._all_dependencies.append(dep)
-
-        # Update the cached role with the new info we have calculated
-        self._update_role_cache()
 
         return self._all_dependencies
 
