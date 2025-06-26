@@ -949,8 +949,13 @@ This set gets augmented with additional types when some controller-only types ar
 
 # noinspection PyProtectedMember
 _ANSIBLE_ALLOWED_VAR_TYPES = frozenset({type(None), bool}) | set(AnsibleTaggedObject._tagged_type_map) | set(AnsibleTaggedObject._tagged_type_map.values())
-"""These are the only types supported by Ansible's variable storage. Subclasses are not permitted."""
+"""These are the exact types supported by Ansible's variable storage."""
 
 _ANSIBLE_ALLOWED_NON_SCALAR_COLLECTION_VAR_TYPES = frozenset(item for item in _ANSIBLE_ALLOWED_VAR_TYPES if is_non_scalar_collection_type(item))
+"""These are the exact non-scalar collection types supported by Ansible's variable storage."""
+
 _ANSIBLE_ALLOWED_MAPPING_VAR_TYPES = frozenset(item for item in _ANSIBLE_ALLOWED_VAR_TYPES if issubclass(item, c.Mapping))
+"""These are the exact mapping types supported by Ansible's variable storage."""
+
 _ANSIBLE_ALLOWED_SCALAR_VAR_TYPES = _ANSIBLE_ALLOWED_VAR_TYPES - _ANSIBLE_ALLOWED_NON_SCALAR_COLLECTION_VAR_TYPES
+"""These are the exact scalar types supported by Ansible's variable storage."""

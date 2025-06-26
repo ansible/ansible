@@ -99,9 +99,10 @@ Omit = object.__new__(_OmitType)
 _datatag._untaggable_types.add(_OmitType)
 
 
-# DTFIX0: review these type sets to ensure they're not overly permissive/dynamic
 IGNORE_SCALAR_VAR_TYPES = {value for value in _datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES if not issubclass(value, str)}
+"""Scalar variable types that short-circuit bypass templating."""
 
 PASS_THROUGH_SCALAR_VAR_TYPES = _datatag._ANSIBLE_ALLOWED_SCALAR_VAR_TYPES | {
     _OmitType,  # allow pass through of omit for later handling after top-level finalize completes
 }
+"""Scalar variable types which are allowed to appear in finalized template results."""
