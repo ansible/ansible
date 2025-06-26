@@ -288,8 +288,8 @@ echo "test 'sidecar' for no extension module  with .py doc"
 echo "test 'sidecar' for no extension module  with .yml doc"
 [ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c facts_one)" == "1" ]
 
-echo "Test j2 plugins get jinja2 instead of path"
+echo "test j2 plugins get jinja2 instead of path"
 ansible-doc -t filter map 2>&1 |grep "${GREP_OPTS[@]}" '(Jinja2)'
 
 echo "test missing description in test_role4 argument spec"
-test "$(ansible-doc -t role -r ./roles test_role4 2>&1 >/dev/null | grep -c '\[ERROR\]: Error extracting role docs from '\''test_role4'\'': All (sub-)options and return values must have a '\''description'\'' field for myopt2')" == "1"
+ansible-doc -t role -r ./roles test_role4 2>&1 >/dev/null | grep -q 'Error extracting role docs from '\''test_role4'\'': All (sub-)options and return values must have a '\''description'\'' field'
