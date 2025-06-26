@@ -559,6 +559,9 @@ class TaskExecutor:
 
         templar.available_variables = cvars
 
+        if self._task.delegate_to and "ansible_host" in cvars:
+            cvars["ansible_host"] = templar.template(cvars["ansible_host"])
+
         # use magic var if it exists, if not, let task inheritance do it's thing.
         if cvars.get('ansible_connection') is not None:
             current_connection = templar.template(cvars['ansible_connection'])
