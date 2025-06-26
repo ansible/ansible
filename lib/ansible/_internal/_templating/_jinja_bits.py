@@ -518,9 +518,6 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
     return exception_to_raise
 
 
-# DTFIX1: implement CapturedExceptionMarker deferral support on call (and lookup), filter/test plugins, etc.
-#                also update the protomatter integration test once this is done (the test was written differently since this wasn't done yet)
-
 _BUILTIN_FILTER_ALIASES: dict[str, str] = {}
 _BUILTIN_TEST_ALIASES: dict[str, str] = {
     '!=': 'ne',
@@ -827,18 +824,18 @@ class AnsibleEnvironment(SandboxedEnvironment):
         *args: t.Any,
         **kwargs: t.Any,
     ) -> t.Any:
-        if _DirectCall.is_marked(__obj):
-            # Both `_lookup` and `_query` handle arg proxying and `Marker` args internally.
-            # Performing either before calling them will interfere with that processing.
-            return super().call(__context, __obj, *args, **kwargs)
-
-        # Jinja's generated macro code handles Markers, so preemptive raise on Marker args and lazy retrieval should be disabled for the macro invocation.
-        is_macro = isinstance(__obj, Macro)
-
-        if not is_macro and (first_marker := get_first_marker_arg(args, kwargs)) is not None:
-            return first_marker
-
         try:
+            if _DirectCall.is_marked(__obj):
+                # Both `_lookup` and `_query` handle arg proxying and `Marker` args internally.
+                # Performing either before calling them will interfere with that processing.
+                return super().call(__context, __obj, *args, **kwargs)
+
+            # Jinja's generated macro code handles Markers, so preemptive raise on Marker args and lazy retrieval should be disabled for the macro invocation.
+            is_macro = isinstance(__obj, Macro)
+
+            if not is_macro and (first_marker := get_first_marker_arg(args, kwargs)) is not None:
+                return first_marker
+
             with JinjaCallContext(accept_lazy_markers=is_macro):
                 call_res = super().call(__context, __obj, *lazify_container_args(args), **lazify_container_kwargs(kwargs))
 
@@ -852,6 +849,8 @@ class AnsibleEnvironment(SandboxedEnvironment):
 
         except MarkerError as ex:
             return ex.source
+        except Exception as ex:
+            return CapturedExceptionMarker(ex)
 
 
 AnsibleTemplate.environment_class = AnsibleEnvironment
