@@ -314,7 +314,7 @@
         name: sshd
         state: started
         enabled: yes
-        arguments: '-j testjail'
+        arguments: -j testjail
       register: sshd_result
 
     - name: Assert that SSHD was started
@@ -326,7 +326,7 @@
       service:
         name: sshd
         state: stopped
-        arguments: '-j testjail'
+        arguments: -j testjail
       register: sshd_result
 
     - name: Assert that SSHD was stopped
