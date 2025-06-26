@@ -1041,7 +1041,7 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, _dummy = self.run_service_cmd(status="rcvar")
+        rc, stdout, stderr = self.run_service_cmd(status="rcvar")
         rcvars = shlex.split(stdout, comments=True)
 
         # In rare cases, i.e. sendmail, rcvar can return several key=value pairs
