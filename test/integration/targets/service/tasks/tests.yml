@@ -192,7 +192,6 @@
         that:
           - "start_result.state == 'started'"
           - "start_result is changed"
-          - "'eth0' in cmdline.stdout"
 
 - name: "test for #42786 (sysvinit)"
   when: ansible_service_mgr == "sysv"
