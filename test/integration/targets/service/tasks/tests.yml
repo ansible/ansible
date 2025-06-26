@@ -150,6 +150,10 @@
 - name: Test arguments in service using FreeBSD
   when: ansible_distribution == 'FreeBSD'
   block:
+    - name: fetch PID for ansible_test service
+      command: 'cat /var/run/ansible_test_service.pid'
+      register: ansible_test_pid
+    
     - name: stop the ansible test service
       service:
         name: ansible_test
@@ -174,8 +178,12 @@
         arguments: 'eth0'
       register: start_result
 
+    - name: fetch PID for ansible_test service
+      command: 'cat /var/run/ansible_test_service.pid'
+      register: pid_after_start
+      
     - name: check that the service is started (FreeBSD)
-      shell: 'ps -p {{ pid_after_restart.stdout }}'
+      shell: 'ps -p {{ pid_after_start.stdout }}'
       register: cmdline
       failed_when: cmdline is failed or '/usr/sbin/ansible_test_service' not in cmdline.stdout
 
