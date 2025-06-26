@@ -34,7 +34,6 @@ from ansible import constants as C
 class PlaybookInclude(Base, Conditional, Taggable):
 
     import_playbook = NonInheritableFieldAttribute(isa='string', required=True)
-    vars_val = NonInheritableFieldAttribute(isa='dict', default=dict, alias='vars')
 
     _post_validate_object = True  # manually post_validate to get free arg validation/coercion
 
