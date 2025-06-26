@@ -147,10 +147,10 @@ class AnsibleVariableVisitor:
         """Internal implementation to recursively visit a data structure's contents."""
         self._current = key  # supports StateTrackingMixIn
 
-        value_type = type(value)
+        value_type: type = type(value)
 
         # handle EncryptedString conversion before more generic transformation and native conversions
-        if value_type is EncryptedString:  # pylint: unidiomatic-typecheck
+        if value_type is EncryptedString:  # pylint: disable=unidiomatic-typecheck
             match self.encrypted_string_behavior:
                 case EncryptedStringBehavior.DECRYPT:
                     value = str(value)  # type: ignore[assignment]
@@ -198,7 +198,7 @@ class AnsibleVariableVisitor:
             # supported scalar type that requires no special handling, just return as-is
             result = value
         elif self.encrypted_string_behavior is EncryptedStringBehavior.PRESERVE and isinstance(value, EncryptedString):
-            result = value
+            result = value  # type: ignore[assignment]
         else:
             raise AnsibleVariableTypeError.from_value(obj=value)
 
