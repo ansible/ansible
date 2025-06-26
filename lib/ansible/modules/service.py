@@ -1014,9 +1014,9 @@ class FreeBsdService(Service):
         """Run a service command with various options considering jail parameter."""
         # Jail name or verbose takes precedence over other arguments
         if self.arguments.startswith(('-j', '-v')):
-            cmd = shlex.join([self.svc_cmd, self.arguments, self.name, status])
+            cmd = f"{self.svc_cmd} {self.arguments} {self.name} {status}"
         else:
-            cmd = shlex.join([self.svc_cmd, self.name, status, self.arguments])
+            cmd = f"{self.svc_cmd} {self.name} {status} {self.arguments}"
         return self.execute_command(cmd)
 
     def get_service_status(self):
