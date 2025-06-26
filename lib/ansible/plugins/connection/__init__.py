@@ -75,6 +75,10 @@ class ConnectionBase(AnsiblePlugin):
 
     default_user: str | None = None
 
+    ansible_host_option = "remote_addr"
+    ansible_port_option = "port"
+    ansible_user_option = "remote_user"
+
     def __init__(
         self,
         play_context: PlayContext,
@@ -223,16 +227,25 @@ class ConnectionBase(AnsiblePlugin):
         """Terminate the connection"""
         pass
 
+    @property
+    def ansible_host(self) -> str:
+        try:
+            host = self.get_option(self.ansible_host_option)
+        except KeyError:
+            # Deprecate?
+            host = self._play_context.remote_addr
+        return host
+
     def connection_lock(self) -> None:
         f = self._play_context.connection_lockfd
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self.ansible_host)
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self.ansible_host)
 
     def connection_unlock(self) -> None:
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self.ansible_host)
 
     def reset(self) -> None:
         display.warning("Reset is not implemented for this connection")
@@ -411,7 +424,7 @@ class NetworkConnectionBase(ConnectionBase):
     ) -> None:
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
         if self.get_option('persistent_log_messages'):
-            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
+            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self.anible_host
             logpath = getattr(C, 'DEFAULT_LOG_PATH')
             if logpath is not None:
                 warning += " to %s" % logpath

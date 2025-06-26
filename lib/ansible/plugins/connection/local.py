@@ -12,6 +12,14 @@ DOCUMENTATION = """
     author: ansible (@core)
     version_added: historical
     options:
+        host_label:
+            version_added: '2.20'
+            type: str
+            description:
+              - The host name potentially displayed by callback plugins or debug messages.
+            vars:
+              - name: inventory_hostname
+              - name: ansible_host
         become_success_timeout:
             version_added: '2.19'
             type: int
@@ -62,6 +70,8 @@ class Connection(ConnectionBase):
     transport = 'local'
     has_pipelining = True
 
+    ansible_host_option = "host_label"
+
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
         super(Connection, self).__init__(*args, **kwargs)
@@ -80,7 +90,7 @@ class Connection(ConnectionBase):
         self._play_context.remote_user = self.default_user
 
         if not self._connected:
-            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self.default_user), host=self.ansible_host)
             self._connected = True
         return self
 
@@ -97,7 +107,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to find the executable specified %s."
                                " Please verify if the executable exists and re-try." % executable)
 
-        display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self._play_context.remote_addr)
+        display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self.ansible_host)
         display.debug("opening command with Popen()")
 
         if isinstance(cmd, (text_type, binary_type)):
@@ -264,7 +274,7 @@ class Connection(ConnectionBase):
         in_path = unfrackpath(in_path, basedir=self.cwd)
         out_path = unfrackpath(out_path, basedir=self.cwd)
 
-        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.ansible_host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
         try:
@@ -279,7 +289,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.ansible_host)
         self.put_file(in_path, out_path)
 
     def reset(self) -> None:

@@ -559,9 +559,6 @@ class TaskExecutor:
 
         templar.available_variables = cvars
 
-        if self._task.delegate_to and "ansible_host" in cvars:
-            cvars["ansible_host"] = templar.template(cvars["ansible_host"])
-
         # use magic var if it exists, if not, let task inheritance do it's thing.
         if cvars.get('ansible_connection') is not None:
             current_connection = templar.template(cvars['ansible_connection'])
@@ -775,13 +772,23 @@ class TaskExecutor:
         # also now add connection vars results when delegating
         if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
+
+            # TODO: consider deprecating or adding a better mechanism to pass
+            # variables to the results side. The comment above isn't really
+            # true since cvars is not templated.
             for k in plugin_vars:
                 result["_ansible_delegated_vars"][k] = cvars.get(k)
 
             # note: here for callbacks that rely on this info to display delegation
-            for requireshed in ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'):
-                if requireshed not in result["_ansible_delegated_vars"] and requireshed in cvars:
-                    result["_ansible_delegated_vars"][requireshed] = cvars.get(requireshed)
+            result["_ansible_delegated_vars"]["ansible_connection"] = current_connection
+            for opt_marker in ('ansible_host_option', 'ansible_port_option', 'ansible_user_option'):
+                return_label = opt_marker[:-7]
+                try:
+                    opt_name = getattr(self._connection, opt_marker)
+                    result["_ansible_delegated_vars"][return_label] = self._connection.get_option(opt_name)
+                except (AttributeError, KeyError):
+                    if return_label not in result["_ansible_delegated_vars"] and return_label in cvars:
+                        result["_ansible_delegated_vars"][return_label] = cvars[return_label]
 
         # and return
         display.debug("attempt loop complete, returning result")
@@ -1136,7 +1143,7 @@ class TaskExecutor:
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
-                         host=self._play_context.remote_addr)
+                         host=self._connection.ansible_host)
         else:
             # use ansible.legacy.normal to allow (historic) local action_plugins/ override without collections search
             handler_name = 'ansible.legacy.normal'
@@ -1150,12 +1157,12 @@ class TaskExecutor:
             if getattr(handler_class, '_requires_connection', True):
                 # for persistent connections, initialize socket path and start connection manager
                 self._play_context.timeout = self._connection.get_option('persistent_command_timeout')
-                display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
-                display.vvvv('using connection plugin %s' % self._connection.transport, host=self._play_context.remote_addr)
+                display.vvvv('attempting to start connection', host=self._connection.ansible_host)
+                display.vvvv('using connection plugin %s' % self._connection.transport, host=self._connection.ansible_host)
 
                 options = self._connection.get_options()
                 socket_path = start_connection(self._play_context, options, self._task._uuid)
-                display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+                display.vvvv('local domain socket path is %s' % socket_path, host=self._connection.ansible_host)
                 setattr(self._connection, '_socket_path', socket_path)
             else:
                 # TODO: set self._connection to dummy/noop connection, using local for now

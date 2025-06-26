@@ -34,8 +34,6 @@ DOCUMENTATION = """
                - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
-               - name: delegated_vars['ansible_host']
-               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if SSH should reject or not a connection after checking host keys.
           default: True
@@ -655,13 +653,11 @@ class Connection(ConnectionBase):
     transport = 'ssh'
     has_pipelining = True
 
+    ansible_host_option = "host"
+
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super(Connection, self).__init__(*args, **kwargs)
 
-        # TODO: all should come from get_option(), but not might be set at this point yet
-        self.host = self._play_context.remote_addr
-        self.port = self._play_context.port
-        self.user = self._play_context.remote_user
         self.control_path: str | None = None
         self.control_path_dir: str | None = None
         self.shm: SharedMemory | None = None
@@ -740,6 +736,26 @@ class Connection(ConnectionBase):
                 controlpath = True
 
         return controlpersist, controlpath
+
+    @property
+    def host(self) -> str:
+        return self.ansible_host or self._play_context.remote_addr
+
+    @property
+    def port(self) -> int:
+        try:
+            value = self.get_option("port")
+        except KeyError:
+            value = self._play_context.port
+        return value or self._play_context.port
+
+    @property
+    def user(self) -> str:
+        try:
+            value = self.get_option("remote_user")
+        except KeyError:
+            value = self._play_context.remote_user
+        return value or self._play_context.remote_user
 
     def _add_args(self, b_command: list[bytes], b_args: t.Iterable[bytes], explanation: str) -> None:
         """
@@ -883,7 +899,6 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
-        self.port = self.get_option('port')
         if self.port is not None:
             b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
@@ -909,7 +924,6 @@ class Connection(ConnectionBase):
                 u"ansible_password/ansible_ssh_password not set"
             )
 
-        self.user = self.get_option('remote_user')
         if self.user:
             self._add_args(
                 b_command,
@@ -1491,8 +1505,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        self.host = self.get_option('host') or self._play_context.remote_addr
-
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self.host)
 
         if getattr(self._shell, "_IS_WINDOWS", False):
@@ -1532,8 +1544,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self.host = self.get_option('host') or self._play_context.remote_addr
-
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
@@ -1548,8 +1558,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self.host = self.get_option('host') or self._play_context.remote_addr
-
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
 
         # need to add / if path is rooted
@@ -1561,7 +1569,6 @@ class Connection(ConnectionBase):
     def reset(self) -> None:
 
         run_reset = False
-        self.host = self.get_option('host') or self._play_context.remote_addr
 
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
