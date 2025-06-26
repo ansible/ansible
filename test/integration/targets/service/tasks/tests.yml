@@ -147,6 +147,45 @@
       - "reload_result is changed"
   when: ansible_service_mgr != "systemd"
 
+- name: Test arguments in service using FreeBSD
+  when: ansible_distribution == 'FreeBSD'
+  block:
+    - name: stop the ansible test service
+      service:
+        name: ansible_test
+        state: stopped
+      register: stop_result
+
+    - name: check that the service is stopped (FreeBSD)
+      shell: 'ps -p {{ ansible_test_pid.stdout }}'
+      register: cmdline
+      failed_when: cmdline is not failed or '/usr/sbin/ansible_test_service' in cmdline.stdout
+
+    - name: assert that the service was stopped
+      assert:
+        that:
+          - "stop_result.state == 'stopped'"
+          - "stop_result is changed"
+
+    - name: Pass arguments to service
+      service:
+        name: ansible_test
+        state: started
+        arguments: 'eth0'
+      register: start_result
+
+    - name: check that the service is started (FreeBSD)
+      shell: 'ps -p {{ pid_after_restart.stdout }}'
+      register: cmdline
+      failed_when: cmdline is failed or '/usr/sbin/ansible_test_service' not in cmdline.stdout
+
+    - name: assert that the service was started
+      assert:
+        that:
+          - "start_result.state == 'started'"
+          - "start_result is changed"
+          - "'eth0' in cmdline.stdout"
+
 - name: "test for #42786 (sysvinit)"
   when: ansible_service_mgr == "sysv"
   block:
@@ -256,3 +295,40 @@
       - result is failed
       - result is search("Could not find the requested service nonexisting")
   when: ansible_distribution != 'FreeBSD'
+
+- name: Test service with jail in FreeBSD
+  when: ansible_distribution == 'FreeBSD'
+  block:
+    - name: Setup testjail
+      include_tasks: setup-testjail.yml
+
+    - name: Start SSHD in testjail
+      service:
+        name: sshd
+        state: started
+        enabled: yes
+        arguments: '-j testjail'
+      register: sshd_result
+
+    - name: Assert that SSHD was started
+      assert:
+        that:
+          - sshd_result.state == 'started'
+
+    - name: Stop SSHD in testjail
+      service:
+        name: sshd
+        state: stopped
+        arguments: '-j testjail'
+      register: sshd_result
+
+    - name: Assert that SSHD was stopped
+      assert:
+        that:
+          - sshd_result.state == 'stopped'
+
+  always:
+    - name: Stop and remove testjail
+      failed_when: false
+      changed_when: false
+      command: "ezjail-admin delete -wf testjail"
