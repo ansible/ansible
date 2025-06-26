@@ -20,3 +20,15 @@
 
 # https://github.com/ansible/ansible/issues/59548
 - import_playbook: sub_playbook/sub_playbook.yml
+
+- name: Use set_fact to declare a variable
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        a_var_from_set_fact: hello
+
+- name: Verify vars for import_playbook are not templated too early
+  import_playbook: playbook_using_a_var.yml
+  vars:
+    pb_var: "{{ a_var_from_set_fact }}"
