@@ -1,0 +1,4 @@
+minor_changes:
+  - config - Default variables can be provided in the ``default_variables`` section of the Ansible config file.
+    These variables will always be available, and have the lowest precedence.
+    This can be used to set arbitrary variables, such as ``ansible_managed``.

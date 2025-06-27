@@ -14,7 +14,7 @@ import pytest
 
 from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible._internal._datatag._tags import Origin, VaultedValue
+from ansible._internal._datatag._tags import Origin, VaultedValue, TrustedAsTemplate
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.template import is_trusted_as_template
 from units.mock.vault_helper import VaultTestHelper
@@ -23,6 +23,7 @@ curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
 cfg_file2 = os.path.join(curdir, 'test2.cfg')
 cfg_file3 = os.path.join(curdir, 'test3.cfg')
+cfg_file_with_vars = os.path.join(curdir, 'test_with_vars.cfg')
 
 
 class CustomMapping(c.Mapping):
@@ -300,3 +301,15 @@ def test_config_trust_from_file(tmp_path: pathlib.Path) -> None:
     assert origin
     assert origin.path == str(cfg_path)
     assert origin.description == "section 'testing' option 'valid'"
+
+
+def test_config_variables() -> None:
+    cfg_vars = ConfigManager(cfg_file_with_vars).get_config_value('CONFIG_DEFAULT_VARIABLES')
+
+    expected = dict(from_cfg_with_template='{{ "hello from config template" }}', from_cfg='hello from config')
+    expected_origin = Origin(path=cfg_file_with_vars, description="section 'default_variables'")
+    expected_content_tags = {expected_origin, TrustedAsTemplate()}
+
+    assert cfg_vars == expected
+    assert Origin.get_tag(cfg_vars) == expected_origin  # validate origin on dict
+    assert all(AnsibleTagHelper.tags(v) == expected_content_tags for v in cfg_vars.values())  # validate origin and trust on values

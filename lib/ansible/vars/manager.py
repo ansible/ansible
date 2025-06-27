@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import sys
 import typing as t
@@ -38,7 +39,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.plugins.loader import cache_loader
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
+from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars, validate_variable_name
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.hostvars import HostVars
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -138,6 +139,16 @@ class VariableManager:
     def extra_vars(self):
         return self._extra_vars
 
+    @functools.cached_property
+    def configured_default_vars(self) -> dict[str, t.Any]:
+        """Variables set in the config file, if any."""
+        cfg_vars = C.config.get_config_value('CONFIG_DEFAULT_VARIABLES')
+
+        for var_name in cfg_vars:
+            validate_variable_name(var_name)
+
+        return cfg_vars
+
     def set_inventory(self, inventory):
         self._inventory = inventory
 
@@ -158,6 +169,7 @@ class VariableManager:
         sets of variables being returned due to the additional context).
 
         The order of precedence is:
+        - default_variables section from config (if present)
         - play->roles->get_default_vars (if there is a play context)
         - group_vars_files[host] (if there is a host context)
         - host->get_vars (if there is a host context)
@@ -197,6 +209,9 @@ class VariableManager:
         basedirs = []
         if self.safe_basedir:  # avoid adhoc/console loading cwd
             basedirs = [self._loader.get_basedir()]
+
+        if configured_default_vars := self.configured_default_vars:
+            all_vars = _combine_and_track(all_vars, configured_default_vars, "configuration-defined variables")
 
         if play:
             # get role defaults (lowest precedence)

@@ -3,6 +3,7 @@
 set -eux
 
 export ANSIBLE_GATHERING=explicit
+unset ANSIBLE_CONFIG  # all checks should bypass ansible-test managed config
 
 ansible-playbook test_var_precedence.yml -i inventory -v "$@" \
     -e 'extra_var=extra_var' \

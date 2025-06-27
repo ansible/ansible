@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import sys
 import shutil
 import stat
@@ -343,6 +344,9 @@ class VarTestMaker(object):
                 role.params = dict(findme='role_params')
             self.roles.append(role)
 
+        elif 'config' in self.features:
+            (pathlib.Path(TESTDIR) / 'ansible.cfg').write_text('[default_variables]\nfindme=config\n')
+
         debug_task = dict(debug='var=findme')
         test_task = {'assert': dict(that=['findme == "%s"' % self.features[0]])}
         if 'task_vars' in self.features:
@@ -440,6 +444,7 @@ def main():
         'ini_all',
         'role_parent_default',
         'role_default',
+        'config'
     ]
 
     parser = OptionParser()
@@ -459,6 +464,7 @@ def main():
         features = list(options.feature)
 
     fdesc = {
+        'config': 'variables section in ansible.cfg',
         'ini_host': 'host var inside the ini',
         'script_host': 'host var inside the script _meta',
         'ini_child': 'child group var inside the ini',

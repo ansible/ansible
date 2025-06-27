@@ -633,7 +633,7 @@ class ConfigManager:
                         for entry in defs[config][ftype]:
                             # load from config
                             if ftype == 'ini':
-                                temp_value = self._get_ini_config_value(cfile, entry.get('section', 'defaults'), entry['key'])
+                                temp_value = self._get_ini_config_value(cfile, entry.get('section', 'defaults'), entry.get('key'))
                             elif ftype == 'yaml':
                                 raise AnsibleError('YAML configuration type has not been implemented yet')
                             else:
@@ -646,7 +646,7 @@ class ConfigManager:
                                 origin_ftype = ftype
                                 if 'deprecated' in entry:
                                     if ftype == 'ini':
-                                        self.DEPRECATED.append(('[%s]%s' % (entry['section'], entry['key']), entry['deprecated']))
+                                        self.DEPRECATED.append(('[%s]%s' % (entry['section'], entry.get('key', '')), entry['deprecated']))
                                     else:
                                         raise AnsibleError('Unimplemented file type: %s' % ftype)
 
@@ -715,9 +715,9 @@ class ConfigManager:
 
         self._plugins[plugin_type][name] = defs
 
-    def _get_ini_config_value(self, config_file: str, section: str, option: str) -> t.Any:
+    def _get_ini_config_value(self, config_file: str, section: str, option: str | None) -> t.Any:
         """
-        Fetch `option` from the specified `section`.
+        Fetch `option` from the specified `section`, or the entire section dictionary if `option` is not specified.
         Returns `None` if the specified `section` or `option` are not present.
         Origin and TrustedAsTemplate tags are applied to returned values.
 
@@ -725,19 +725,33 @@ class ConfigManager:
                  It is up to the code consuming configuration values to apply templating if required.
         """
         parser = self._parsers[config_file]
-        value = parser.get(section, option, raw=True, fallback=None)
+
+        if option:
+            value = parser.get(section, option, raw=True, fallback=None)
+        elif parser.has_section(section):
+            value = dict(parser.items(section, raw=True))
+        else:
+            value = None
 
         if value is not None:
             value = self._apply_tags(value, section, option)
 
         return value
 
-    def _apply_tags(self, value: str, section: str, option: str) -> t.Any:
-        """Apply origin and trust to the given `value` sourced from the stated `section` and `option`."""
-        description = f'section {section!r} option {option!r}'
+    def _apply_tags(self, value: str | dict[str, str], section: str, option: str | None) -> t.Any:
+        """Apply tags to the given `value` sourced from the stated `section` and `option`."""
+        description = f'section {section!r} option {option!r}' if option else f'section {section!r}'
         origin = _tags.Origin(path=self._config_file, description=description)
         tags = [origin, _tags.TrustedAsTemplate()]
-        value = AnsibleTagHelper.tag(value, tags)
+
+        if isinstance(value, dict):
+            value = AnsibleTagHelper.tag(
+                value=((AnsibleTagHelper.tag(key, tags), AnsibleTagHelper.tag(value, tags)) for key, value in value.items()),
+                value_type=dict,
+                tags=origin,
+            )
+        else:
+            value = AnsibleTagHelper.tag(value, tags)
 
         return value
 

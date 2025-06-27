@@ -456,6 +456,15 @@ COLOR_DOC_PLUGIN:
   ini:
   - {key: doc_plugin, section: colors}
   version_added: '2.18'
+CONFIG_DEFAULT_VARIABLES:
+  name: Default variables from config file
+  description: Dictionary of variable values from ``default_variables`` section in config file.
+  default: {}
+  type: dict
+  ini:
+  - {section: default_variables}
+  # only you can prevent config inception; do not add additional sources for default vars
+  version_added: '2.19'
 CONNECTION_PASSWORD_FILE:
   name: Connection password file
   default: ~

@@ -28,6 +28,9 @@ ansible-playbook validation.yml "$@"
 # test types from config (just lists for now)
 ANSIBLE_CONFIG=type_munging.cfg ansible-playbook types.yml "$@"
 
+# ensure that invalid variable names in config are an error
+ANSIBLE_CONFIG=bogus_var_config.cfg ansible localhost -m debug 2>&1 | grep "Invalid variable name 'bogus.varname'"
+
 cleanup() {
 	rm -f files/*.new.*
 }

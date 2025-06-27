@@ -79,7 +79,8 @@ def _get_ini_entries(settings):
             for kv in settings[setting]['ini']:
                 if not kv['section'] in data:
                     data[kv['section']] = set()
-                data[kv['section']].add(kv['key'])
+                if 'key' in kv:
+                    data[kv['section']].add(kv['key'])
     return data
 
 
@@ -357,7 +358,7 @@ class ConfigCLI(CLI):
                     sections[entry['section']] = []
 
                 # avoid dupes
-                if entry['key'] not in seen[entry['section']]:
+                if 'key' in entry and entry['key'] not in seen[entry['section']]:
                     seen[entry['section']].append(entry['key'])
 
                     default = self.config.template_default(opt.get('default', ''), get_constants())
@@ -664,7 +665,7 @@ class ConfigCLI(CLI):
 
                         # check keys in valid sections
                         for k in p.options(s):
-                            if k not in sections[s]:
+                            if k not in sections[s] and sections[s]:
                                 display.error(f"Found unknown key '{k}' in section '{s}' in '{C.CONFIG_FILE}.")
                                 found = True
 
