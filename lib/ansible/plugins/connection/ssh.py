@@ -640,11 +640,11 @@ def _clean_shm(func):
                 self.shm.close()
                 with contextlib.suppress(FileNotFoundError):
                     self.shm.unlink()
-                if not _HAS_RESOURCE_TRACK:
-                    # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
-                    # There is a resource tracking issue where the resource is deleted, but tracking still has a record
-                    # This will effectively overwrite the record and remove it
-                    SharedMemory(name=self.shm.name, create=True, size=1).unlink()
+                    if not _HAS_RESOURCE_TRACK:
+                        # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
+                        # There is a resource tracking issue where the resource is deleted, but tracking still has a record
+                        # This will effectively overwrite the record and remove it
+                        SharedMemory(name=self.shm.name, create=True, size=1).unlink()
         return ret
     return inner
 
