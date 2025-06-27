@@ -44,5 +44,10 @@ def main() -> t.Never:
     sys.stdout.flush()
     shm.buf[:] = b'\x00' * shm.size
     shm.close()
-    shm.unlink()
+    if sys.version_info[:2] < (3, 13):
+      try:
+          # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
+          shm.unlink()
+      except FileNotFoundError:
+          pass
     sys.exit(0)
