@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - add hostname character sanitization function to prevent invalid hostname errors

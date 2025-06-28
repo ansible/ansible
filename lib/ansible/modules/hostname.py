@@ -296,6 +296,24 @@ class SystemdStrategy(BaseStrategy):
         super(SystemdStrategy, self).__init__(module)
         self.hostnamectl_cmd = self.module.get_bin_path(self.COMMAND, True)
 
+    def _scrub_hostname(self, name):
+        """
+        Clean hostname by replacing invalid characters with dashes
+        and removing multiple consecutive dashes
+        """
+        name = to_text(name)
+        replace_chars = u'\'"~`!@#$%^&*(){}[]/=?+\\|-_ '
+        delete_chars = u".'"
+        table = str.maketrans(replace_chars, '-' * len(replace_chars), delete_chars)
+        name = name.translate(table)
+
+        # Replace multiple dashes with a single dash
+        while '-' * 2 in name:
+            name = name.replace('-' * 2, '')
+
+        name = name.rstrip('-')
+        return name
+
     def get_current_hostname(self):
         cmd = [self.hostnamectl_cmd, '--transient', 'status']
         rc, out, err = self.module.run_command(cmd)
