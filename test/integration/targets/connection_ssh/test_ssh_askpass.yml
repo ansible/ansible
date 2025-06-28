@@ -23,7 +23,42 @@
         state: restarted
       when: ansible_facts.system != 'Darwin'
 
-    - command:
+    - name: Test incorrect password
+      command:
+        argv:
+          - ansible
+          - localhost
+          - -m
+          - command
+          - -a
+          - id
+          - -vvv
+          - -e
+          - ansible_pipelining=yes
+          - -e
+          - ansible_connection=ssh
+          - -e
+          - ansible_ssh_password_mechanism=ssh_askpass
+          - -e
+          - ansible_user={{ test_user_name }}
+          - -e
+          - ansible_password=INCORRECT_PASSWORD
+      environment:
+        ANSIBLE_NOCOLOR: "1"
+        ANSIBLE_FORCE_COLOR: "0"
+      register: askpass_out
+      ignore_errors: true
+
+    - assert:
+        that:
+          - askpass_out is failed
+          - askpass_out.stdout is contains('UNREACHABLE')
+          - askpass_out.stdout is contains('Permission denied')
+          - askpass_out.stdout is not contains('Permission denied, please try again.')  # password tried only once
+          - askpass_out.stdout is not contains('Traceback (most recent call last)')
+
+    - name: Test correct password
+      command:
         argv:
           - ansible
           - localhost
