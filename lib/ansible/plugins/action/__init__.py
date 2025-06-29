@@ -102,7 +102,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
-        self._found = {}
+        self._found: dict[str, PluginLoadContext] = {}
 
     def _ensure_invocation(self, result):
 
