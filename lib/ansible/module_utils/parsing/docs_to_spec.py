@@ -59,6 +59,8 @@ example of DOCUMENTATION with requirements:
 """
 from __future__ import annotations
 
+import typing as _t
+
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
@@ -89,7 +91,7 @@ def option_to_spec(option, deprecate=None) -> dict:
     return spec
 
 
-def restriction_to_spec(r) -> t.Any:
+def restriction_to_spec(r):
     """ read documented restriction and create spec restriction """
 
     name = None

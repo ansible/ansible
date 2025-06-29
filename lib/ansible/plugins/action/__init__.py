@@ -141,7 +141,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         * Module parameters.  These are stored in self._task.args
         """
-        result: dict[str, t.Any]  = {'changed': False, 'failed': False}
+        result: dict[str, t.Any] = {'changed': False, 'failed': False}
 
         if tmp is not None:
             display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
