@@ -739,23 +739,21 @@ class Connection(ConnectionBase):
 
     @property
     def host(self) -> str:
-        return self.ansible_host or self._play_context.remote_addr
+        if not self.ansible_host:
+            raise NotImplementedError
+        return self.ansible_host
 
     @property
     def port(self) -> int:
-        try:
-            value = self.get_option("port")
-        except KeyError:
-            value = self._play_context.port
-        return value or self._play_context.port
+        if not (port := self.get_option("port")):
+            raise NotImplementedError
+        return port
 
     @property
     def user(self) -> str:
-        try:
-            value = self.get_option("remote_user")
-        except KeyError:
-            value = self._play_context.remote_user
-        return value or self._play_context.remote_user
+        if not (remote_user := self.get_option("remote_user")):
+            raise NotImplementedError
+        return remote_user
 
     def _add_args(self, b_command: list[bytes], b_args: t.Iterable[bytes], explanation: str) -> None:
         """

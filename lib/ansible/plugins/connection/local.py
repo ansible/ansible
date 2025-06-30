@@ -13,7 +13,7 @@ DOCUMENTATION = """
     version_added: historical
     options:
         host_label:
-            version_added: '2.20'
+            version_added: '2.19'
             type: str
             description:
               - The host name potentially displayed by callback plugins or debug messages.

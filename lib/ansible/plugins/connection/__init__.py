@@ -229,12 +229,7 @@ class ConnectionBase(AnsiblePlugin):
 
     @property
     def ansible_host(self) -> str:
-        try:
-            host = self.get_option(self.ansible_host_option)
-        except KeyError:
-            # Deprecate?
-            host = self._play_context.remote_addr
-        return host
+        return self.get_option(self.ansible_host_option)
 
     def connection_lock(self) -> None:
         f = self._play_context.connection_lockfd
