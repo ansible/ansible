@@ -273,8 +273,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         self.assertIs(mock.sentinel.handler, handler)
 
-        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
-                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_with(
             'ansible.legacy.normal', task=te._task, connection=te._connection,
