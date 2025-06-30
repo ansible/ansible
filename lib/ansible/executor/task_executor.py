@@ -19,7 +19,7 @@ from ansible.errors import (
     AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
-from ansible.executor.task_result import _RawTaskResult
+from ansible.executor.task_result import _RawTaskResult, _SUB_PRESERVE
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _messages
 from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name
@@ -771,24 +771,19 @@ class TaskExecutor:
         # on the results side without having to do any further templating
         # also now add connection vars results when delegating
         if self._task.delegate_to:
-            result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
-
-            # TODO: consider deprecating or adding a better mechanism to pass
-            # variables to the results side. The comment above isn't really
-            # true since cvars is not templated.
+            result["_ansible_delegated_vars"] = {
+                "ansible_delegated_host": self._task.delegate_to,
+                "ansible_connection": current_connection,
+            }
             for k in plugin_vars:
-                result["_ansible_delegated_vars"][k] = cvars.get(k)
+                if k not in _SUB_PRESERVE["_ansible_delegated_vars"]:
+                    continue
 
-            # note: here for callbacks that rely on this info to display delegation
-            result["_ansible_delegated_vars"]["ansible_connection"] = current_connection
-            for opt_marker in ('ansible_host_option', 'ansible_port_option', 'ansible_user_option'):
-                return_label = opt_marker[:-7]
-                try:
-                    opt_name = getattr(self._connection, opt_marker)
-                    result["_ansible_delegated_vars"][return_label] = self._connection.get_option(opt_name)
-                except (AttributeError, KeyError):
-                    if return_label not in result["_ansible_delegated_vars"] and return_label in cvars:
-                        result["_ansible_delegated_vars"][return_label] = cvars[return_label]
+                for o in C.config.get_plugin_options_from_var("connection", current_connection, k):
+                    result["_ansible_delegated_vars"][k] = self._connection.get_option(o)
+
+            if "ansible_host" not in result["_ansible_delegated_vars"]:
+                result["_ansible_delegated_vars"]["ansible_host"] = self._task.delegate_to
 
         # and return
         display.debug("attempt loop complete, returning result")
@@ -1167,6 +1162,7 @@ class TaskExecutor:
             else:
                 # TODO: set self._connection to dummy/noop connection, using local for now
                 self._connection = self._get_connection({}, templar, 'local')
+                self._set_connection_options(templar.available_variables, templar)
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,

@@ -739,21 +739,15 @@ class Connection(ConnectionBase):
 
     @property
     def host(self) -> str:
-        if not self.ansible_host:
-            raise NotImplementedError
         return self.ansible_host
 
     @property
     def port(self) -> int:
-        if not (port := self.get_option("port")):
-            raise NotImplementedError
-        return port
+        return self._get_option_or_pc_fallback("port", "port")
 
     @property
     def user(self) -> str:
-        if not (remote_user := self.get_option("remote_user")):
-            raise NotImplementedError
-        return remote_user
+        return self._get_option_or_pc_fallback("remote_user", "remote_user")
 
     def _add_args(self, b_command: list[bytes], b_args: t.Iterable[bytes], explanation: str) -> None:
         """

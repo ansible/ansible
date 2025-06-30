@@ -251,7 +251,7 @@ class CallbackBase(AnsiblePlugin):
             # show delegated host
             label += " -> %s" % result.task.delegate_to
             # in case we have 'extra resolution'
-            ahost = result.result.get('_ansible_delegated_vars', {}).get('ansible_host', result.task.delegate_to)
+            ahost = result.result['_ansible_delegated_vars']['ansible_host']
             if result.task.delegate_to != ahost:
                 label += "(%s)" % ahost
         return label

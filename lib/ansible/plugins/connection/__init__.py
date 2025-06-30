@@ -76,8 +76,6 @@ class ConnectionBase(AnsiblePlugin):
     default_user: str | None = None
 
     ansible_host_option = "remote_addr"
-    ansible_port_option = "port"
-    ansible_user_option = "remote_user"
 
     def __init__(
         self,
@@ -227,9 +225,26 @@ class ConnectionBase(AnsiblePlugin):
         """Terminate the connection"""
         pass
 
+    def _get_option_or_pc_fallback(self, option, fallback):
+        try:
+            has_option = self.has_option(option)
+        except AttributeError:
+            has_option = False
+
+        if not has_option:
+            display.deprecated(f"Connection {self._load_name} does not define the option '{option}'. "
+                               f"Falling back to PlayContext.{fallback}", obj=self, version="2.23")
+            return getattr(self._play_context, fallback)
+        if not (option := self.get_option(option)) and (default := getattr(self._play_context, fallback)):
+            display.deprecated(f"Connection {self._load_name} defines the option '{option}', "
+                               f"but the option hasn't been configured. Falling back to PlayContext.{fallback}.",
+                               obj=self, version="2.23")
+            return default
+        return option
+
     @property
     def ansible_host(self) -> str:
-        return self.get_option(self.ansible_host_option)
+        return self._get_option_or_pc_fallback(self.ansible_host_option, 'remote_addr')
 
     def connection_lock(self) -> None:
         f = self._play_context.connection_lockfd
@@ -419,7 +434,7 @@ class NetworkConnectionBase(ConnectionBase):
     ) -> None:
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
         if self.get_option('persistent_log_messages'):
-            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self.anible_host
+            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self.ansible_host
             logpath = getattr(C, 'DEFAULT_LOG_PATH')
             if logpath is not None:
                 warning += " to %s" % logpath

@@ -12,14 +12,6 @@ DOCUMENTATION = """
     author: ansible (@core)
     version_added: historical
     options:
-        host_label:
-            version_added: '2.19'
-            type: str
-            description:
-              - The host name potentially displayed by callback plugins or debug messages.
-            vars:
-              - name: inventory_hostname
-              - name: ansible_host
         become_success_timeout:
             version_added: '2.19'
             type: int
@@ -39,6 +31,7 @@ DOCUMENTATION = """
                 - name: ansible_local_become_strip_preamble
     extends_documentation_fragment:
         - connection_pipelining
+        - connection_host
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 """
@@ -69,8 +62,6 @@ class Connection(ConnectionBase):
 
     transport = 'local'
     has_pipelining = True
-
-    ansible_host_option = "host_label"
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
