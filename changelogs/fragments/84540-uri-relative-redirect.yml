@@ -1,3 +1,0 @@
----
-bugfixes:
-  - uri - Form location correctly when the server returns a relative redirect (https://github.com/ansible/ansible/issues/84540)

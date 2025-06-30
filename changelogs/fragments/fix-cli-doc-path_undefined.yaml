@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-doc - If none of the files in files exists, path will be undefined and a direct reference will throw an UnboundLocalError (https://github.com/ansible/ansible/pull/84464).

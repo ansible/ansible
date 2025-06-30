@@ -17,6 +17,6 @@
 
 from __future__ import annotations
 
-__version__ = '2.19.0.dev0'
+__version__ = '2.20.0.dev0'
 __author__ = 'Ansible, Inc.'
-__codename__ = "What Is and What Should Never Be"
+__codename__ = "TBD"

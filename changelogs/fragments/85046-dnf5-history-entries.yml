@@ -1,2 +1,0 @@
-bugfixes:
-  - dnf5 - avoid generating excessive transaction entries in the dnf5 history (https://github.com/ansible/ansible/issues/85046)

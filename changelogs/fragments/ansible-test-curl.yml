@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Use Python's ``urllib`` instead of ``curl`` for HTTP requests.
-  - ansible-test - Automatically retry HTTP GET/PUT/DELETE requests on exceptions.

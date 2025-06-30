@@ -1,3 +1,0 @@
-minor_changes:
-- template action and lookup plugin - The value of the ``ansible_managed`` variable (if set) will not be masked by the ``template`` action and lookup.
-  Previously, the value calculated by the ``DEFAULT_MANAGED_STR`` configuration option always masked the variable value during plugin execution, preventing runtime customization.

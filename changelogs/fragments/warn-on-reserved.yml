@@ -1,2 +1,0 @@
-minor_changes:
-  - variables - Warnings about reserved variable names now show context where the variable was defined.

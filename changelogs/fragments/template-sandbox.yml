@@ -1,5 +1,0 @@
-minor_changes:
-  - templating - Switched from the Jinja immutable sandbox to the standard sandbox.
-    This restores the ability to use mutation methods such as ``list.append`` and ``dict.update``.
-  - templating - Relaxed the Jinja sandbox to allow specific bitwise operations which have no filter equivalent.
-    The allowed methods are ``__and__``, ``__lshift__``, ``__or__``, ``__rshift__``, ``__xor__``.

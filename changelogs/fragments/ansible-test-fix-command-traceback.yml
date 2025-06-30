@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix traceback that occurs after an interactive command fails.

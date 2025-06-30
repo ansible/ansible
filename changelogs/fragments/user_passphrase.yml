@@ -1,4 +1,0 @@
----
-bugfixes:
-  - user - Update prompt for SSH key passphrase (https://github.com/ansible/ansible/issues/84484).
-  - user - Set timeout for passphrase interaction.

@@ -1,2 +1,0 @@
-minor_changes:
-  - "modules - use ``AnsibleModule.warn`` instead of passing ``warnings`` to ``exit_json`` or ``fail_json`` which is deprecated."

@@ -1,3 +1,0 @@
----
-minor_changes:
-   - apt - consider lock timeout while invoking apt-get command (https://github.com/ansible/ansible/issues/78658).

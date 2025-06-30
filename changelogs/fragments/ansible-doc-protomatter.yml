@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-doc - Skip listing the internal ``ansible._protomatter`` plugins unless explicitly requested

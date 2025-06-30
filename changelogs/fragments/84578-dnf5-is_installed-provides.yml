@@ -1,2 +1,0 @@
-bugfixes:
-  - "dnf5 - fix ``is_installed`` check for packages that are not installed but listed as provided by an installed package (https://github.com/ansible/ansible/issues/84578)"

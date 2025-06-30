@@ -1,2 +1,0 @@
-bugfixes:
-  - package_facts module when using 'auto' will return the first package manager found that provides an output, instead of just the first one, as this can be foreign and not have any packages.

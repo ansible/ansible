@@ -1,3 +1,0 @@
-bugfixes:
-  - gather_facts action will now issues errors and warnings as appropriate if a network OS is detected but no facts modules are defined for it.
-  - gather_facts action now defaults to `ansible.legacy.setup` if `smart` was set, no network OS was found and no other alias for `setup` was present.

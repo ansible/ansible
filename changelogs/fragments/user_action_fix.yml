@@ -1,2 +1,0 @@
-bugfixes:
-  - user module now avoids changing ownership of files symlinked in provided home dir skeleton

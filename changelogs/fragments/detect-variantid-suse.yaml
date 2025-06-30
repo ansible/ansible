@@ -1,3 +1,0 @@
-minor_changes:
-  - Improved SUSE distribution detection in distribution.py by parsing VARIANT_ID from /etc/os-release
-    for identifying SLES_SAP and SL-Micro. Falls back to /etc/products.d/baseproduct symlink for older systems.

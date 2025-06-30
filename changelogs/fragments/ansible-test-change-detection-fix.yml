@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix Python relative import resolution from ``__init__.py`` files when using change detection.

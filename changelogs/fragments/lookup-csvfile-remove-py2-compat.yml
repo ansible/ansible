@@ -1,2 +1,0 @@
-minor_changes:
-  - "csvfile lookup - remove Python 2 compat"

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - get_url - add support for BSD-style checksum digest file (https://github.com/ansible/ansible/issues/84476).

@@ -1,2 +1,0 @@
-bugfixes:
-  - "dnf5 - fix installing a package using ``state=latest`` when a binary of the same name as the package is already installed (https://github.com/ansible/ansible/issues/84259)"

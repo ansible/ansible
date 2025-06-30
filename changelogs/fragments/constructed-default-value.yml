@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    constructed inventory - Use the ``default_value`` or ``trailing_separator`` in a ``keyed_groups`` entry if the expression result of ``key``
-    is ``None`` and not just an empty string.

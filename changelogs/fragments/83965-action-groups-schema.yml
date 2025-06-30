@@ -1,2 +1,0 @@
-minor_changes:
-  - "runtime-metadata sanity test - improve validation of ``action_groups`` (https://github.com/ansible/ansible/pull/83965)."

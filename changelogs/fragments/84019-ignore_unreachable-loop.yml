@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix returning 'unreachable' for the overall task result. This prevents false positives when a looped task has unignored unreachable items (https://github.com/ansible/ansible/issues/84019).

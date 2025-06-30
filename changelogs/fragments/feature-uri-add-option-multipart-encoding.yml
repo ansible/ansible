@@ -1,2 +1,0 @@
-minor_changes:
-  - AnsibleModule.uri - Add option ``multipart_encoding`` for ``form-multipart`` files in body to change default base64 encoding for files

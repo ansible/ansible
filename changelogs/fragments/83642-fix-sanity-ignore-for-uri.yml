@@ -1,2 +1,0 @@
-bugfixes:
-  - uri - mark ``url`` as required (https://github.com/ansible/ansible/pull/83642).

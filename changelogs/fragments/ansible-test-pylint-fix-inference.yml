@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - Improve type inference for pylint deprecated checks to accommodate some type annotations.
-  - ansible-test - Disabled the ``bad-super-call`` pylint rule due to false positives.

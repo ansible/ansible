@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Show a more user-friendly error message when a ``runme.sh`` script is not executable.

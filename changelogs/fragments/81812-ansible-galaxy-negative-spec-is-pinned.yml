@@ -1,8 +1,0 @@
----
-
-bugfixes:
-- >-
-  ``ansible-galaxy`` — the collection dependency resolver now treats
-  version specifiers starting with ``!=`` as unpinned.
-
-...

@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    ansible-test - Fix up coverage reporting to properly translate the temporary path of integration test modules to
-    the expected static test module path.

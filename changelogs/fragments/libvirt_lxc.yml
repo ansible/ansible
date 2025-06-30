@@ -1,3 +1,0 @@
----
-bugfixes:
-  - base.yml - deprecated libvirt_lxc_noseclabel config.

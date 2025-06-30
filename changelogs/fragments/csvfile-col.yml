@@ -1,3 +1,0 @@
----
-minor_changes:
-  - csvfile - let the config system do the typecasting (https://github.com/ansible/ansible/pull/82263).

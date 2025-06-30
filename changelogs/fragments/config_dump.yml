@@ -1,3 +1,0 @@
----
-bugfixes:
-  - ansible-config - format galaxy server configs while dumping in JSON format (https://github.com/ansible/ansible/issues/84840).

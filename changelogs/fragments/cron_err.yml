@@ -1,3 +1,0 @@
----
-minor_changes:
-  - cron - Provide additional error information while writing cron file (https://github.com/ansible/ansible/issues/83223).

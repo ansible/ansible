@@ -1,3 +1,0 @@
----
-removed_features:
-  - Remove deprecated plural form of collection path (https://github.com/ansible/ansible/pull/84156).

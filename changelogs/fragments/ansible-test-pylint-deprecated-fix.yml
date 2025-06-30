@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Updated the ``pylint`` sanity test to skip some deprecation validation checks when all arguments are dynamic.

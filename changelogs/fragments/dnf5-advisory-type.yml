@@ -1,2 +1,0 @@
-bugfixes:
-  - "dnf5 - when ``bugfix`` and/or ``security`` is specified, skip packages that do not have any such updates, even for new versions of libdnf5 where this functionality changed and it is considered failure"

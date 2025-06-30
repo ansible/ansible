@@ -1,3 +1,0 @@
-minor_changes:
-- ssh connection plugin - Support ``SSH_ASKPASS`` mechanism to provide passwords, making it the default, but still offering an explicit choice to use ``sshpass``
-  (https://github.com/ansible/ansible/pull/83936)

@@ -1,3 +1,0 @@
-deprecated_features:
-  - interpreter discovery - The ``auto_legacy`` and ``auto_legacy_silent`` options for ``INTERPRETER_PYTHON`` are deprecated.
-    Use ``auto`` or ``auto_silent`` options instead, as they have the same effect.

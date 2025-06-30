@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix ipv6 pattern bug in lib/ansible/parsing/utils/addresses.py (https://github.com/ansible/ansible/issues/84237)

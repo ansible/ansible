@@ -1,6 +1,0 @@
-minor_changes:
-  - ansible-test - Replace remote FreeBSD 13.3 with 13.5.
-  - ansible-test - Replace remote FreeBSD 14.1 with 14.2.
-  - ansible-test - Replace remote Fedora 40 with 41.
-  - ansible-test - Replace remote Alpine 3.20 with 3.21.
-  - ansible-test - Replace remote RHEL 9.4 with 9.5.

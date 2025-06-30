@@ -1,5 +1,0 @@
-minor_changes:
-  - module_utils - Add optional ``help_text`` argument to ``AnsibleModule.warn``.
-  - module_utils - Add ``AnsibleModule.error_as_warning``.
-  - module_utils - Add ``ansible.module_utils.common.warnings.error_as_warning``.
-  - display - Add ``help_text`` and ``obj`` to ``Display.error_as_warning``.

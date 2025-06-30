@@ -1,4 +1,0 @@
-minor_changes:
-  - >-
-    Added type annotations to the ``Role.__init__()`` method to enable type checking.
-    (https://github.com/ansible/ansible/pull/85346)

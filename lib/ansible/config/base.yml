@@ -1844,29 +1844,6 @@ PAGER:
     - name: ANSIBLE_PAGER
       version_added: '2.15'
     - name: PAGER
-PARAMIKO_HOST_KEY_AUTO_ADD:
-  default: False
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
-  ini:
-  - {key: host_key_auto_add, section: paramiko_connection}
-  type: boolean
-  deprecated:
-    why: This option was moved to the plugin itself
-    version: "2.20"
-    alternatives: Use the option from the plugin itself.
-PARAMIKO_LOOK_FOR_KEYS:
-  name: look for keys
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
-  ini:
-  - {key: look_for_keys, section: paramiko_connection}
-  type: boolean
-  deprecated:
-    why: This option was moved to the plugin itself
-    version: "2.20"
-    alternatives: Use the option from the plugin itself.
 PERSISTENT_CONTROL_PATH_DIR:
   name: Persistence socket path
   default: '{{ ANSIBLE_HOME ~ "/pc" }}'

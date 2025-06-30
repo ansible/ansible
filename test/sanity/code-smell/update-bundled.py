@@ -51,6 +51,7 @@ def get_bundled_libs(paths):
 
     bundled_libs.add('lib/ansible/module_utils/distro/__init__.py')
     bundled_libs.add('lib/ansible/module_utils/six/__init__.py')
+    bundled_libs.add('lib/ansible/_internal/_wrapt.py')
 
     return bundled_libs
 

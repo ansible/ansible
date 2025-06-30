@@ -1,2 +1,0 @@
-bugfixes:
-- async_status module - The ``started`` and ``finished`` return values are now ``True`` or ``False`` instead of ``1`` or ``0``.

@@ -1,2 +1,0 @@
-bugfixes:
-  - wait_for_connection - a warning was displayed if any hosts used a local connection (https://github.com/ansible/ansible/issues/84419)

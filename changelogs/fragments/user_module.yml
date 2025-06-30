@@ -1,3 +1,0 @@
----
-bugfixes:
-  - user - Use higher precedence HOME_MODE as UMASK for path provided (https://github.com/ansible/ansible/pull/84482).

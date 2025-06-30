@@ -1,2 +1,0 @@
-bugfixes:
-  - "dnf5 - handle all libdnf5 specific exceptions (https://github.com/ansible/ansible/issues/84634)"

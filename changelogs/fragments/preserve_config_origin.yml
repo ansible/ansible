@@ -1,2 +1,0 @@
-bugfixes:
-  - config - Preserve or apply Origin tag to values returned by config.

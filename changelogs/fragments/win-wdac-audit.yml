@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    Windows - add support for running on system where WDAC is in audit mode with
-    ``Dynamic Code Security`` enabled.

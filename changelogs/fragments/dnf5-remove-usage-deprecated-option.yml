@@ -1,2 +1,0 @@
-bugfixes:
-  - dnf5 - libdnf5 - use ``conf.pkg_gpgcheck`` instead of deprecated ``conf.gpgcheck`` which is used only as a fallback

@@ -1,3 +1,0 @@
----
-minor_changes:
-   - comment filter - Improve the error message shown when an invalid ``style`` argument is provided.

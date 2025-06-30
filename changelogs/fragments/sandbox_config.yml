@@ -1,2 +1,0 @@
-minor_changes:
-  - templating - Added ``_ANSIBLE_TEMPLAR_SANDBOX_MODE=allow_unsafe_attributes`` environment variable to disable Jinja template attribute sandbox. (https://github.com/ansible/ansible/issues/85202)

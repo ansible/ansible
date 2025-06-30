@@ -1,2 +1,0 @@
-bugfixes:
-  - Time out waiting on become is an unreachable error (https://github.com/ansible/ansible/issues/84468)

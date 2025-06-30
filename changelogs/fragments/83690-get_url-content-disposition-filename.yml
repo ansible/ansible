@@ -1,2 +1,0 @@
-bugfixes:
-  - get_url - fix honoring ``filename`` from the ``content-disposition`` header even when the type is ``inline`` (https://github.com/ansible/ansible/issues/83690)

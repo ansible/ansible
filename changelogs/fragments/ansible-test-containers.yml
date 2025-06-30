@@ -1,7 +1,0 @@
-minor_changes:
-  - ansible-test - Replace container Fedora 40 with 41.
-  - ansible-test - Replace container Alpine 3.20 with 3.21.
-  - ansible-test - Update distro containers to remove unnecessary packages (apache2, subversion, ruby).
-  - ansible-test - Update the HTTP test container.
-  - ansible-test - Update the PyPI test container.
-  - ansible-test - Update the utility container.

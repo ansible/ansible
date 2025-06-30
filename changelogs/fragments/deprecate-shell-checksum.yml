@@ -1,2 +1,0 @@
-deprecated_features:
-  - "The ``ShellModule.checksum`` method is now deprecated and will be removed in ansible-core 2.23. Use ``ActionBase._execute_remote_stat()`` instead."

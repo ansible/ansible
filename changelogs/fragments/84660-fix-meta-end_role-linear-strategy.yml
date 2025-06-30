@@ -1,2 +1,0 @@
-bugfixes:
-  - linear strategy - fix executing ``end_role`` meta tasks for each host, instead of handling these as implicit run_once tasks (https://github.com/ansible/ansible/issues/84660).

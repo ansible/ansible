@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-doc - Return dynamic stub when reporting on Jinja filters and tests not explicitly documented in Ansible

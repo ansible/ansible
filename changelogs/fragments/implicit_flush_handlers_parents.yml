@@ -1,2 +1,0 @@
-bugfixes:
-  - "Implicit ``meta: flush_handlers`` tasks now have a parent block to prevent potential tracebacks when calling methods like ``get_play()`` on them internally."

@@ -1,3 +1,0 @@
-bugfixes:
-  - >-
-    Ansible.Basic - Fix ``required_if`` check when the option value to check is unset or set to null.

@@ -1,2 +1,0 @@
-bugfixes:
-  - iptables - Allows the wait parameter to be used with iptables chain creation (https://github.com/ansible/ansible/issues/84490)

@@ -1,4 +1,0 @@
-minor_changes:
-  - display - Replace Windows newlines (``\r\n``) in display output with Unix newlines (``\n``).
-    This ensures proper display of strings sourced from Windows hosts in environments which treat ``\r`` as ``\n``,
-    such as Azure Pipelines.

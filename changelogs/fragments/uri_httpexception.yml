@@ -1,3 +1,0 @@
----
-bugfixes:
-  - uri - Handle HTTP exceptions raised while reading the content (https://github.com/ansible/ansible/issues/83794).

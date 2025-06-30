@@ -1,2 +1,0 @@
-bugfixes:
-  - local connection plugin - The command-line used to create subprocesses is now always ``str`` to avoid issues with debuggers and profilers.

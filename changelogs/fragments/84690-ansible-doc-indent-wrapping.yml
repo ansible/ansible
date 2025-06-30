@@ -1,3 +1,0 @@
-bugfixes:
-  - "ansible-doc - fix indentation for first line of descriptions of suboptions and sub-return values (https://github.com/ansible/ansible/pull/84690)."
-  - "ansible-doc - fix line wrapping for first line of description of options and return values (https://github.com/ansible/ansible/pull/84690)."
