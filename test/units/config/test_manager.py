@@ -16,6 +16,7 @@ from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible._internal._datatag._tags import Origin, VaultedValue
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.template import is_trusted_as_template
 from units.mock.vault_helper import VaultTestHelper
 
 curdir = os.path.dirname(__file__)
@@ -272,3 +273,30 @@ def test_256color_support(key, expected_value):
     actual_value = manager.get_config_value(key)
     # THEN: no error
     assert actual_value == expected_value
+
+
+def test_config_trust_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    expected = "from test"
+    monkeypatch.setenv("ANSIBLE_TEST_ENTRY", expected)
+    result = ConfigManager().get_config_value("_Z_TEST_ENTRY")
+    origin = Origin.get_tag(result)
+
+    assert result == expected
+    assert is_trusted_as_template(result)
+    assert origin and origin.description == '<Config env: ANSIBLE_TEST_ENTRY>'
+
+
+def test_config_trust_from_file(tmp_path: pathlib.Path) -> None:
+    expected = "from test"
+    cfg_path = tmp_path / 'test.cfg'
+
+    cfg_path.write_text(f"[testing]\nvalid={expected}")
+
+    result = ConfigManager(str(cfg_path)).get_config_value("_Z_TEST_ENTRY")
+    origin = Origin.get_tag(result)
+
+    assert result == expected
+    assert is_trusted_as_template(result)
+    assert origin
+    assert origin.path == str(cfg_path)
+    assert origin.description == "section 'testing' option 'valid'"

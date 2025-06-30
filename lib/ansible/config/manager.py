@@ -6,6 +6,7 @@ from __future__ import annotations
 import atexit
 import decimal
 import configparser
+import functools
 import os
 import os.path
 import sys
@@ -248,18 +249,6 @@ def get_config_type(cfile):
     return ftype
 
 
-# FIXME: can move to module_utils for use for ini plugins also?
-def get_ini_config_value(p, entry):
-    """ returns the value of last ini entry found """
-    value = None
-    if p is not None:
-        try:
-            value = p.get(entry.get('section', 'defaults'), entry.get('key', ''), raw=True)
-        except Exception:  # FIXME: actually report issues here
-            pass
-    return value
-
-
 def find_ini_config_file(warnings=None):
     """ Load INI Config File order(first found is used): ENV, CWD, HOME, /etc/ansible """
     # FIXME: eventually deprecate ini configs
@@ -345,6 +334,7 @@ class ConfigManager:
     _errors: list[tuple[str, Exception]]
 
     def __init__(self, conf_file=None, defs_file=None):
+        self._get_ini_config_value = functools.cache(self._get_ini_config_value)
 
         self._base_defs = {}
         self._plugins = {}
@@ -628,6 +618,7 @@ class ConfigManager:
             # env vars are next precedence
             if value is None and defs[config].get('env'):
                 value, origin = self._loop_entries(os.environ, defs[config]['env'])
+                value = _tags.TrustedAsTemplate().tag(value)
                 origin = 'env: %s' % origin
 
             # try config file entries next, if we have one
@@ -642,7 +633,7 @@ class ConfigManager:
                         for entry in defs[config][ftype]:
                             # load from config
                             if ftype == 'ini':
-                                temp_value = get_ini_config_value(self._parsers[cfile], entry)
+                                temp_value = self._get_ini_config_value(cfile, entry.get('section', 'defaults'), entry['key'])
                             elif ftype == 'yaml':
                                 raise AnsibleError('YAML configuration type has not been implemented yet')
                             else:
@@ -723,6 +714,32 @@ class ConfigManager:
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
+
+    def _get_ini_config_value(self, config_file: str, section: str, option: str) -> t.Any:
+        """
+        Fetch `option` from the specified `section`.
+        Returns `None` if the specified `section` or `option` are not present.
+        Origin and TrustedAsTemplate tags are applied to returned values.
+
+        CAUTION: Although INI sourced configuration values are trusted for templating, that does not automatically mean they will be templated.
+                 It is up to the code consuming configuration values to apply templating if required.
+        """
+        parser = self._parsers[config_file]
+        value = parser.get(section, option, raw=True, fallback=None)
+
+        if value is not None:
+            value = self._apply_tags(value, section, option)
+
+        return value
+
+    def _apply_tags(self, value: str, section: str, option: str) -> t.Any:
+        """Apply origin and trust to the given `value` sourced from the stated `section` and `option`."""
+        description = f'section {section!r} option {option!r}'
+        origin = _tags.Origin(path=self._config_file, description=description)
+        tags = [origin, _tags.TrustedAsTemplate()]
+        value = AnsibleTagHelper.tag(value, tags)
+
+        return value
 
     @staticmethod
     def get_deprecated_msg_from_config(dep_docs, include_removal=False, collection_name=None):
