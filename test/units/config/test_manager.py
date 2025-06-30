@@ -14,7 +14,7 @@ import pytest
 
 from ansible.config.manager import ConfigManager, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
-from ansible._internal._datatag._tags import Origin, VaultedValue, TrustedAsTemplate
+from ansible._internal._datatag._tags import Origin, VaultedValue
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.template import is_trusted_as_template
 from units.mock.vault_helper import VaultTestHelper
