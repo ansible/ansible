@@ -1,2 +1,0 @@
-bugfixes:
-  - gather_facts action, will now add setup when 'smart' appears with other modules in the FACTS_MODULES setting (#84750).

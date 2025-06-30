@@ -1,2 +1,0 @@
-bugfixes:
-  - include_vars - fix including previously undefined hash variables with hash_behaviour merge (https://github.com/ansible/ansible/issues/84295).

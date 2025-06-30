@@ -1,2 +1,0 @@
-bugfixes:
-  - sequence lookup - sequence query/lookups without positional arguments now return a valid list if their kwargs comprise a valid sequence expression (https://github.com/ansible/ansible/issues/82921).

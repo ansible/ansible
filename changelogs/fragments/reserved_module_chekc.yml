@@ -1,2 +1,0 @@
-bugfixes:
-  - Ansible will now also warn when reserved keywords are set via a module (set_fact, include_vars, etc).

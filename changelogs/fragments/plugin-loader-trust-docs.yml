@@ -1,2 +1,0 @@
-bugfixes:
-  - plugin loader - Apply template trust to strings loaded from plugin configuration definitions and doc fragments.

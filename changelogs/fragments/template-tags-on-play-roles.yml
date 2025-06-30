@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix templating ``tags`` on plays and roles. (https://github.com/ansible/ansible/issues/69903)

@@ -81,7 +81,7 @@ def main():
 
     for plugin in plugins:
         data = {}
-        data['doc'], data['examples'], data['return'], data['metadata'] = get_docstring(plugin, fragment_loader)
+        data['doc'], data['examples'], data['return'], data['metadata'] = get_docstring(os.path.abspath(plugin), fragment_loader)
         for result in find_deprecations(data['doc']):
             print('%s: %s is scheduled for removal in %s' % (plugin, '.'.join(str(i) for i in result[0][:-2]), result[1]))
 

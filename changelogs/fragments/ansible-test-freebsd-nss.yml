@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Ensure CA certificates are installed on managed FreeBSD instances.

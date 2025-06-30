@@ -1,2 +1,0 @@
-bugfixes:
-  - from_yaml_all filter - `None` and empty string inputs now always return an empty list. Previously, `None` was returned in Jinja native mode and empty list in classic mode.

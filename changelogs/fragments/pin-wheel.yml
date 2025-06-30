@@ -1,2 +1,0 @@
-bugfixes:
-  - build - Pin ``wheel`` in ``pyproject.toml`` to ensure compatibility with supported ``setuptools`` versions.

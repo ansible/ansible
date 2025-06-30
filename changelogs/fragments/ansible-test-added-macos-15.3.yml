@@ -1,6 +1,0 @@
----
-
-minor_changes:
-- ansible-test - Added a macOS 15.3 remote VM, replacing 14.3.
-
-...

@@ -1,2 +1,0 @@
-bugfixes:
-  - dnf5 - matching on a binary can be achieved only by specifying a full path (https://github.com/ansible/ansible/issues/84334)

@@ -1,2 +1,0 @@
-bugfixes:
-  - ssh - connection options were incorrectly templated during ``reset_connection`` tasks (https://github.com/ansible/ansible/pull/84238).

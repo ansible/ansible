@@ -1,5 +1,0 @@
-bugfixes:
-  - ansible-test - Fix incorrect handling of options with optional args (e.g. ``--color``),
-    when followed by other options which are omitted during arg filtering (e.g. ``--docker``).
-    Previously it was possible for non-option arguments to be incorrectly omitted in these cases.
-    (https://github.com/ansible/ansible/issues/85173)

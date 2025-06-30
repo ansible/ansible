@@ -1,7 +1,0 @@
-minor_changes:
-  - ansible-test - Update ``pylint`` sanity test to use version 3.3.1.
-  - ansible-test - Default to Python 3.13 in the ``base`` and ``default`` containers.
-  - ansible-test - Disable the ``deprecated-`` prefixed ``pylint`` rules as their results vary by Python version.
-  - ansible-test - Update the ``base`` and ``default`` containers.
-  - ansible-test - Update sanity test requirements to latest available versions.
-  - ansible-test - Disable the ``pep8`` sanity test rules ``E701`` and ``E704`` to improve compatibility with ``black``.

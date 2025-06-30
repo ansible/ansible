@@ -1,2 +1,0 @@
-bugfixes:
-  - Optimize the way tasks from within ``include_tasks``/``include_role`` are inserted into the play.

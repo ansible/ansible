@@ -1,3 +1,0 @@
----
-bugfixes:
-  - facts - gather pagesize and calculate respective values depending upon architecture (https://github.com/ansible/ansible/issues/84773).
