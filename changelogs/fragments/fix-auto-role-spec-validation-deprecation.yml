@@ -1,0 +1,2 @@
+bugfixes:
+  - Update automatic role argument spec validation to not use deprecated syntax (https://github.com/ansible/ansible/issues/85399).
