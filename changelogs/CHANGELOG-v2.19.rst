@@ -4,6 +4,27 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-06-30
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- templating - Relaxed the Jinja sandbox to allow specific bitwise operations which have no filter equivalent. The allowed methods are ``__and__``, ``__lshift__``, ``__or__``, ``__rshift__``, ``__xor__``.
+- templating - Switched from the Jinja immutable sandbox to the standard sandbox. This restores the ability to use mutation methods such as ``list.append`` and ``dict.update``.
+
+Bugfixes
+--------
+
+- Update automatic role argument spec validation to not use deprecated syntax (https://github.com/ansible/ansible/issues/85399).
+- ssh connection plugin - Allow only one password prompt attempt when utilizing ``SSH_ASKPASS`` (https://github.com/ansible/ansible/issues/85359)
+
 v2.19.0b7
 =========
 
