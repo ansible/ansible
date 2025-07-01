@@ -19,4 +19,4 @@ types-requests==2.32.0.20250328
 types-setuptools==80.4.0.20250511
 types-toml==0.10.8.20240310
 typing_extensions==4.13.2
-urllib3==2.4.0
+urllib3==2.5.0
