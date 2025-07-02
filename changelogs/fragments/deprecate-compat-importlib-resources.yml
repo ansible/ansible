@@ -1,2 +1,0 @@
-deprecated_features:
-  - "``ansible.compat.importlib_resources`` is deprecated and will be removed in ansible-core 2.23. Use ``importlib.resources`` from the Python standard library instead."

@@ -1,9 +1,0 @@
-minor_changes:
-  - >-
-    windows - Added support for ``#AnsibleRequires -Wrapper`` to request a PowerShell module be run through the
-    execution wrapper scripts without any module utils specified.
-  - >-
-    windows - Added support for running signed modules and scripts with a Windows host protected by Windows App
-    Control/WDAC. This is a tech preview and the interface may be subject to change.
-  - >-
-    windows - Script modules will preserve UTF-8 encoding when executing the script.

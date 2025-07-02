@@ -1,6 +1,6 @@
 """
 Backwards compatibility profile for serialization other than inventory (which should use inventory_legacy for backward-compatible trust behavior).
-Behavior is equivalent to pre 2.18 `AnsibleJSONEncoder` with vault_to_text=True.
+Behavior is equivalent to pre 2.19 `AnsibleJSONEncoder` with vault_to_text=True.
 """
 
 from __future__ import annotations as _annotations

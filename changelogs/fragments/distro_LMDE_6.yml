@@ -1,4 +1,0 @@
----
-bugfixes:
-   - distro - add support for Linux Mint Debian Edition (LMDE) (https://github.com/ansible/ansible/issues/84934).
-   - distro - detect Debian as os_family for LMDE 6 (https://github.com/ansible/ansible/issues/84934).

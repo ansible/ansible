@@ -1,2 +1,0 @@
-minor_changes:
-  - when the ``dict`` lookup is given a non-dict argument, show the value of the argument and its type in the error message.

@@ -1,3 +1,0 @@
----
-bugfixes:
-  - unarchive - Clamp timestamps from beyond y2038 to representible values when unpacking zip files on platforms that use 32-bit time_t (e.g. Debian i386).

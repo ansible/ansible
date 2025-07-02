@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    ssh - Improve the logic for parsing CLIXML data in stderr when working with Windows host. This fixes issues when
-    the raw stderr contains invalid UTF-8 byte sequences and improves embedded CLIXML sequences.

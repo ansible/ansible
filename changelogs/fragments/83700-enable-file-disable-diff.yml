@@ -1,2 +1,0 @@
-minor_changes:
-  - file - enable file module to disable diff_mode (https://github.com/ansible/ansible/issues/80817).

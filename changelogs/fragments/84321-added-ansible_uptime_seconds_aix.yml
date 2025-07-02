@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible_uptime_second - added ansible_uptime_seconds fact support for AIX (https://github.com/ansible/ansible/pull/84321).

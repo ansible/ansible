@@ -1,3 +1,0 @@
-bugfixes:
-  - Core Jinja test plugins - Builtin test plugins now always return ``bool`` to avoid spurious deprecation warnings for
-    some malformed inputs.

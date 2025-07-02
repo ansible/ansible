@@ -194,7 +194,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         result = None
         try:
             check_raw = module in C._ACTION_ALLOWS_RAW_ARGS
-            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
+            task = dict(action=module, args=parse_kv(module_args, check_raw=check_raw), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,

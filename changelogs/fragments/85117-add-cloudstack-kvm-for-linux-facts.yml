@@ -1,2 +1,0 @@
-minor_changes:
-  - facts - add "CloudStack KVM Hypervisor" for Linux VM in virtual facts (https://github.com/ansible/ansible/issues/85089).

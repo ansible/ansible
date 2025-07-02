@@ -1,3 +1,0 @@
-bugfixes:
-  - Correctly return ``False`` when using the ``filter`` and ``test`` Jinja tests on plugin names which are not filters or tests, respectively.
-    (resolves issue https://github.com/ansible/ansible/issues/82084)

@@ -233,3 +233,13 @@ test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:a
 test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-date-not-permitted  # required to verify plugin against core
 test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-unnecessary-collection-name  # required to verify plugin against core
 test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-collection-name-not-permitted  # required to verify plugin against core
+lib/ansible/cli/doc.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/galaxy/api.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/plugins/filter/encryption.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/utils/py3compat.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/utils/ssh_functions.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/vars/manager.py pylint:ansible-deprecated-version-comment  # TODO: 2.20
+lib/ansible/vars/plugins.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/modules/dnf.py validate-modules:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/modules/dnf5.py validate-modules:ansible-deprecated-version  # TODO: 2.20

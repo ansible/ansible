@@ -640,11 +640,11 @@ def _clean_shm(func):
                 self.shm.close()
                 with contextlib.suppress(FileNotFoundError):
                     self.shm.unlink()
-                if not _HAS_RESOURCE_TRACK:
-                    # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
-                    # There is a resource tracking issue where the resource is deleted, but tracking still has a record
-                    # This will effectively overwrite the record and remove it
-                    SharedMemory(name=self.shm.name, create=True, size=1).unlink()
+                    if not _HAS_RESOURCE_TRACK:
+                        # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
+                        # There is a resource tracking issue where the resource is deleted, but tracking still has a record
+                        # This will effectively overwrite the record and remove it
+                        SharedMemory(name=self.shm.name, create=True, size=1).unlink()
         return ret
     return inner
 
@@ -960,6 +960,13 @@ class Connection(ConnectionBase):
                     )
                 b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
+
+        if password_mechanism == "ssh_askpass":
+            self._add_args(
+                b_command,
+                (b"-o", b"NumberOfPasswordPrompts=1"),
+                "Restrict number of password prompts in case incorrect password is provided.",
+            )
 
         # Finally, we add any caller-supplied extras.
         if other_args:

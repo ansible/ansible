@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-config will now show internal, but not test configuration entries. This allows for debugging but still denoting the configurations as internal use only (_ prefix).

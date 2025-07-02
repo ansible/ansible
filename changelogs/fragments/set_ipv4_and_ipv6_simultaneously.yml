@@ -1,2 +1,0 @@
-minor_changes:
-  - module - set ipv4 and ipv6 rules simultaneously in iptables module (https://github.com/ansible/ansible/issues/84404).

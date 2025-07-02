@@ -1,6 +1,0 @@
-major_changes:
-- Task Execution / Forks - Forks no longer inherit stdio from the parent
-  ``ansible-playbook`` process. ``stdout``, ``stderr``, and ``stdin``
-  within a worker are detached from the terminal, and non-functional. All
-  needs to access stdio from a fork for controller side plugins requires
-  use of ``Display``.

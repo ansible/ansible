@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Use the ``-t`` option to set the stop timeout when stopping a container.
-    This avoids use of the ``--time`` option which was deprecated in Docker v28.0.
