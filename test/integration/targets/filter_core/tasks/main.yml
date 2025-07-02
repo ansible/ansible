@@ -462,6 +462,9 @@
       - 'thing | to_nice_yaml == "subdict:\n    k1: v1\nsublist:\n- howdy\n"'
       - 'thing | to_json == "{\"sublist\": [\"howdy\"], \"subdict\": {\"k1\": \"v1\"}}"'
       - 'thing | to_nice_json == "{\n    \"subdict\": {\n        \"k1\": \"v1\"\n    },\n    \"sublist\": [\n        \"howdy\"\n    ]\n}"'
+      # Test custom separators
+      - 'thing | to_nice_json(separators=[",", ":"]) == "{\n    \"subdict\":{\n        \"k1\":\"v1\"\n    },\n    \"sublist\":[\n        \"howdy\"\n    ]\n}"'
+      - 'thing | to_nice_json(separators=[";  ", " = "]) == "{\n    \"subdict\" = {\n        \"k1\" = \"v1\"\n    };  \n    \"sublist\" = [\n        \"howdy\"\n    ]\n}"'
 
 - name: Verify from_yaml and from_yaml_all
   assert:
