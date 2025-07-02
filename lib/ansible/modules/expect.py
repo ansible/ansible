@@ -249,7 +249,7 @@ def main():
     end_date = datetime.datetime.now()
     delta = end_date - start_date
 
-    if b_out is None:
+    if not b_out:
         b_out = b''
 
     result = dict(
