@@ -242,11 +242,11 @@
     - "non_zero_result.failed"
     - "non_zero_result.msg == 'non-zero return code'"
 
-- name: Find pexpect locations
+- name: find all pexpect files
   command: find / \( -path /proc -o -path /sys -o -path /dev -o -path /run -o -path /tmp \) -prune -o -type d -name '*pexpect*' -print -prune
   register: pexpect_locations
 
-- name: Backup all files and dirs containing 'pexpect'
+- name: backup all files and dirs containing 'pexpect'
   become: true
   command: >
     mv "{{ item }}"
@@ -255,7 +255,7 @@
   when: item is not match('^/proc|^/sys|^/dev|^/run|^/tmp|.*/test/.*')
   ignore_errors: true
 
-- name: Trigger pexpect dependency absence
+- name: trigger pexpect dependency absence
   expect:
     command: "echo expectThePexpected"
     responses:
@@ -263,7 +263,7 @@
   register: pexpect_dependency_absence
   ignore_errors: true
 
-- name: Assert pexpect dependency absence
+- name: assert pexpect dependency absence
   assert:
     that:
     - "pexpect_dependency_absence.failed"
@@ -275,27 +275,27 @@
     name: pexpect
     version: 3.3
 
-- name: Trigger expect to fallback to pexpect3.3 methods
+- name: trigger fallback to pexpect3.3 methods
   expect:
     command: "echo pexpectIsABitOutOfDate"
     responses:
       foo: bar
   register: pexpect_version_three_dot_three
 
-- name: Uninstall pexpect3.3
+- name: uninstall pexpect3.3
   pip:
     break_system_packages: true
     name: pexpect
     state: absent
     version: 3.3
 
-- name: Install pexpect3.0
+- name: install pexpect3.0
   pip:
     break_system_packages: true
     name: pexpect
     version: 3.0
 
-- name: Trigger expect to fail with out of date pexpect version
+- name: trigger failure with out of date pexpect version
   expect:
     command: "echo pexpectIsTooOutOfDate"
     responses:
@@ -303,20 +303,20 @@
   register: pexpect_version_out_of_date
   ignore_errors: true
 
-- name: Assert that expect fails with out of date pexpect
+- name: assert failure with out of date pexpect
   assert:
     that:
     - "pexpect_version_out_of_date.failed"
     - "'Insufficient version of pexpect installed' in pexpect_version_out_of_date.msg"
 
-- name: Uninstall pexpect3.0
+- name: uninstall pexpect3.0
   pip:
     break_system_packages: true
     name: pexpect
     state: absent
     version: 3.0
 
-- name: Restore all files and dirs containing 'pexpect'
+- name: restore all files and dirs containing 'pexpect'
   become: true
   command: >
     mv "{{ item | regex_replace('pexpect', 'pexpect_ansible_managed_backup') }}"
@@ -325,11 +325,11 @@
   when: item is not match('^/proc|^/sys|^/dev|^/run|^/tmp|.*/test/.*')
   ignore_errors: true
 
-- name: Reinstall test requirements for sanity
+- name: reinstall test requirements for sanity
   import_role:
     name: setup_pexpect
 
-- name: Trigger TypeError on timeout value
+- name: rrigger TypeError on timeout value
   expect:
     command: "echo piIsNotAnInt"
     responses:
@@ -338,8 +338,21 @@
   register: pexpect_timeout_typeerror
   ignore_errors: true
 
-- name: Assert that timeout triggers TypeError when not an int
+- name: assert timeout triggers TypeError when not an int
   assert:
     that:
     - "pexpect_timeout_typeerror.failed"
     - "'cannot be converted to an int' in pexpect_timeout_typeerror.msg"
+
+- name: trigger pexpect.ExceptionPexpect
+  expect:
+    command: commandthatdoesntexist
+    responses:
+      foo: bar
+  register: pexpect_exception_pexpect
+  ignore_errors: true
+
+- name: assert that the correct exception was triggered
+  assert:
+    that:
+      - "pexpect_exception_pexpect.failed"
