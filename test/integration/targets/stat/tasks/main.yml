@@ -177,3 +177,27 @@
         - "stat_result.changed == false"
         - "stat_result.stat.mimetype == 'text/plain'"
         - "stat_result.stat.charset == 'us-ascii'"
+
+- name: check stat a file with get_selinux_context on
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: True
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' in stat_result.stat"
+
+- name: check stat a file with get_selinux_context off
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: False
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' not in stat_result.stat"

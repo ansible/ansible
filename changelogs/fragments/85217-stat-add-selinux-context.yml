@@ -1,0 +1,2 @@
+minor_changes:
+  - stat module - add SELinux context as a return value, and add a new option to trigger this return, which is False by default. (https://github.com/ansible/ansible/issues/85217).
