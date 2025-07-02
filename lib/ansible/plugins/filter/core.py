@@ -85,7 +85,6 @@ def to_json(a, profile: str | None = None, vault_to_text: t.Any = ..., preproces
 
 def to_nice_json(a, indent=4, sort_keys=True, separators=None, **kwargs):
     """Make verbose, human-readable JSON.
-    
     Args:
         a: The object to serialize
         indent: Number of spaces for indentation (default: 4)
