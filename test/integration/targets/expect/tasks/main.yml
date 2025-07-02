@@ -257,7 +257,7 @@
 
 - name: Trigger pexpect dependency failure
   expect:
-    command: "echo hello"
+    command: "echo expectThePexpected"
     responses:
       foo: bar
   register: pexpect_dependency_failure
@@ -266,7 +266,8 @@
 - name: Assert pexpect dependency failure
   assert:
     that:
-      "'pexpect' in pexpect_dependency_failure.msg"
+    - "pexpect_dependency_failure.failed"
+    - "'pexpect' in pexpect_dependency_failure.msg"
 
 - name: Restore all files and dirs containing 'pexpect'
   become: true
@@ -280,3 +281,18 @@
 - name: Reinstall test requirements for sanity
   import_role:
     name: setup_pexpect
+
+- name: Trigger TypeError on timeout value
+  expect:
+    command: "echo piIsNotAnInt"
+    responses:
+      foo: bar
+    timeout: pi
+  register: pexpect_timeout_typeerror
+  ignore_errors: true
+
+- name: Assert that timeout triggers TypeError when not an int
+  assert:
+    that:
+    - "pexpect_timeout_typeerror.failed"
+    - "'cannot be converted to an int' in pexpect_timeout_typeerror.msg"
