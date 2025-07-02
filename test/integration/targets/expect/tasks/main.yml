@@ -244,7 +244,7 @@
 
 - name: run tests in venv
   vars:
-    venv_dir: /tmp/pexpectversionsvenv
+    venv_dir:  "{{ output_dir }}/pexpected_venv"
     venv_python: "{{ venv_dir }}/bin/python"
   block:
     - name: ensure venv exists
