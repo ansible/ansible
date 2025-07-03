@@ -1,0 +1,104 @@
+- name: remove the test user
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: try to create a user
+  user:
+    name: ansibulluser
+    state: present
+  register: user_test0_0
+
+- name: create the user again
+  user:
+    name: ansibulluser
+    state: present
+  register: user_test0_1
+
+- debug:
+    var: user_test0
+    verbosity: 2
+
+- name: make a list of users
+  script: userlist.sh {{ ansible_facts.distribution }}
+  register: user_names
+
+- debug:
+    var: user_names
+    verbosity: 2
+
+- name: validate results for testcase 0
+  assert:
+    that:
+      - user_test0_0 is changed
+      - user_test0_1 is not changed
+      - '"ansibulluser" in user_names.stdout_lines'
+
+- name: run existing user check tests
+  user:
+    name: "{{ user_names.stdout_lines | random }}"
+    state: present
+    create_home: no
+  loop: "{{ range(1, 5+1) | list }}"
+  register: user_test1
+
+- debug:
+    var: user_test1
+    verbosity: 2
+
+- name: validate results for testcase 1
+  assert:
+    that:
+      - user_test1.results is defined
+      - user_test1.results | length == 5
+
+- name: validate changed results for testcase 1
+  assert:
+    that:
+      - "user_test1.results[0] is not changed"
+      - "user_test1.results[1] is not changed"
+      - "user_test1.results[2] is not changed"
+      - "user_test1.results[3] is not changed"
+      - "user_test1.results[4] is not changed"
+      - "user_test1.results[0]['state'] == 'present'"
+      - "user_test1.results[1]['state'] == 'present'"
+      - "user_test1.results[2]['state'] == 'present'"
+      - "user_test1.results[3]['state'] == 'present'"
+      - "user_test1.results[4]['state'] == 'present'"
+
+- name: register user informations
+  when: ansible_facts.system == 'Darwin'
+  command: dscl . -read /Users/ansibulluser
+  register: user_test2
+
+- name: validate user defaults for MacOS
+  when: ansible_facts.system == 'Darwin'
+  assert:
+    that:
+      - "'RealName: ansibulluser' in user_test2.stdout_lines "
+      - "'PrimaryGroupID: 20' in user_test2.stdout_lines "
+
+#https://github.com/ansible/ansible/issues/82490
+- name: Create a new user with custom shell to test ~ expansion
+  user:
+    name: randomuserthomas
+    shell: ~/custom_shell
+  register: user_create_result
+
+- name: Create a new user with custom shell to test ~ expansion second time should show ok not changed
+  user:
+    name: randomuserthomas
+    shell: ~/custom_shell
+  register: user_creation_result
+
+- name: Assert that the user with a tilde in the shell path is created
+  assert:
+    that:
+      - user_creation_result is not changed
+      - user_create_result is changed
+
+- name: remove the randomuserthomas user to clean up
+  user:
+    name: randomuserthomas
+    state: absent
+    force: true

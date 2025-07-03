@@ -15,7 +15,7 @@
   hosts: facthost21
   tags: [ 'fact_network' ]
   connection: local
-  gather_subset: "!all,network"
+  gather_subset: ["!all", "network"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving network facts works and gets prereqs from platform and distribution
@@ -69,7 +69,7 @@
   hosts: facthost23
   tags: [ 'fact_service_mgr' ]
   connection: local
-  gather_subset: "!all,service_mgr"
+  gather_subset: ["!all", "service_mgr"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving service_mgr facts works and gets prereqs from platform and distribution
@@ -104,6 +104,22 @@
           - 'ansible_mounts|default("UNDEF_MOUNT") != "UNDEF_MOUNT" or ansible_distribution == "MacOSX"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
 
+- hosts: facthost1
+  tags: [ 'fact_min' ]
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Test that we can retrieve the loadavg fact
+      setup:
+        filter: "ansible_loadavg"
+
+    - name: Test the contents of the loadavg fact
+      assert:
+        that:
+          - 'ansible_loadavg|default("UNDEF_ENV") != "UNDEF_ENV"'
+          - '"1m" in ansible_loadavg and ansible_loadavg["1m"] is float'
+          - '"5m" in ansible_loadavg and ansible_loadavg["5m"] is float'
+          - '"15m" in ansible_loadavg and ansible_loadavg["15m"] is float'
 
 - hosts: facthost19
   tags: [ 'fact_min' ]
@@ -121,6 +137,52 @@
           - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
           - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
+
+- hosts: facthost24
+  tags: [ 'fact_min' ]
+  connection: local
+  gather_facts: no
+  tasks:
+    - setup:
+        filter:
+            - "*env*"
+            - "*virt*"
+
+    - name: Test that retrieving all facts filtered to env and virt works
+      assert:
+        that:
+          - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
+          - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
+          - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
+
+- hosts: facthost25
+  tags: [ 'fact_min' ]
+  gather_facts: no
+  tasks:
+    - setup:
+        filter:
+            - "date_time"
+
+    - name: Test that retrieving all facts filtered to date_time even w/o using ansible_ prefix
+      assert:
+        that:
+          - 'ansible_facts["date_time"]|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+          - 'ansible_date_time|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+
+- hosts: facthost26
+  tags: [ 'fact_min' ]
+  gather_facts: no
+  tasks:
+    - setup:
+        filter:
+            - "ansible_date_time"
+
+    - name: Test that retrieving all facts filtered to date_time even using ansible_ prefix
+      assert:
+        that:
+          - 'ansible_facts["date_time"]|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
+          - 'ansible_date_time|default("UNDEF_MOUNT") != "UNDEF_MOUNT"'
 
 - hosts: facthost13
   tags: [ 'fact_min' ]
@@ -195,7 +257,7 @@
 - hosts: facthost2
   tags: [ 'fact_network' ]
   connection: local
-  gather_subset: "!all,!min,network"
+  gather_subset: ["!all", "!min", "network"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving network facts work
@@ -237,7 +299,7 @@
 - hosts: facthost5
   tags: [ 'fact_comma_string' ]
   connection: local
-  gather_subset: "virtual,network"
+  gather_subset: ["virtual", "network"]
   gather_facts: yes
   tasks:
     - name: Test that retrieving virtualization and network as a string works
@@ -288,7 +350,7 @@
 - hosts: facthost8
   tags: [ 'fact_mixed_negation_addition' ]
   connection: local
-  gather_subset: "!hardware,network"
+  gather_subset: ["!hardware", "network"]
   gather_facts: yes
   tasks:
     - name: Test that negation and additional subsets work together
@@ -302,7 +364,7 @@
 - hosts: facthost14
   tags: [ 'fact_mixed_negation_addition_min' ]
   connection: local
-  gather_subset: "!all,!min,network"
+  gather_subset: ["!all", "!min", "network"]
   gather_facts: yes
   tasks:
     - name: Test that negation and additional subsets work together for min subset
@@ -319,7 +381,7 @@
 - hosts: facthost15
   tags: [ 'fact_negate_all_min_add_pkg_mgr' ]
   connection: local
-  gather_subset: "!all,!min,pkg_mgr"
+  gather_subset: ["!all", "!min", "pkg_mgr"]
   gather_facts: yes
   tasks:
     - name: Test that negation and additional subsets work together for min subset
@@ -371,7 +433,7 @@
     - name: Test reading facts from default fact_path
       assert:
         that:
-          - '"{{ ansible_local.testfact.fact_dir }}" == "default"'
+          - 'ansible_local.testfact.fact_dir == "default"'
 
 - hosts: facthost9
   tags: [ 'fact_local']
@@ -382,7 +444,7 @@
     - name: Test reading facts from custom fact_path
       assert:
         that:
-          - '"{{ ansible_local.testfact.fact_dir }}" == "custom"'
+          - 'ansible_local.testfact.fact_dir == "custom"'
 
 - hosts: facthost20
   tags: [ 'fact_facter_ohai' ]
@@ -398,3 +460,77 @@
         # facter/ohai
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
+
+- hosts: facthost9
+  tags: [ 'fact_file_utils' ]
+  connection: local
+  gather_facts: false
+  tasks:
+    - block:
+        - name: Ensure get_file_content works when strip=False
+          file_utils:
+            test: strip
+
+        - assert:
+            that:
+              - ansible_facts.get('etc_passwd_newlines', 0) + 1 == ansible_facts.get('etc_passwd_newlines_unstripped', 0)
+
+        - name: Make an empty file
+          file:
+            path: "{{ output_dir }}/empty_file"
+            state: touch
+
+        - name: Ensure get_file_content gives default when file is empty
+          file_utils:
+            test: default
+            touch_file: "{{ output_dir }}/empty_file"
+
+        - assert:
+            that:
+              - ansible_facts.get('touch_default') == 'i am a default'
+
+        - copy:
+            dest: "{{ output_dir }}/1charsep"
+            content: "foo:bar:baz:buzz:"
+
+        - copy:
+            dest: "{{ output_dir }}/2charsep"
+            content: "foo::bar::baz::buzz::"
+
+        - name: Ensure get_file_lines works as expected with specified 1-char line_sep
+          file_utils:
+            test: line_sep
+            line_sep_file: "{{ output_dir }}/1charsep"
+            line_sep_sep: ":"
+
+        - assert:
+            that:
+              - ansible_facts.get('line_sep') == ['foo', 'bar', 'baz', 'buzz']
+
+        - name: Ensure get_file_lines works as expected with specified 1-char line_sep
+          file_utils:
+            test: line_sep
+            line_sep_file: "{{ output_dir }}/2charsep"
+            line_sep_sep: "::"
+
+        - assert:
+            that:
+              - ansible_facts.get('line_sep') == ['foo', 'bar', 'baz', 'buzz', '']
+
+        - name: Ensure get_mount_size fails gracefully
+          file_utils:
+            test: invalid_mountpoint
+
+        - assert:
+            that:
+              - ansible_facts['invalid_mountpoint']|length == 0
+
+      always:
+        - name: Remove test files
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - "{{ output_dir }}/empty_file"
+            - "{{ output_dir }}/1charsep"
+            - "{{ output_dir }}/2charsep"

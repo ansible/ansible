@@ -1,0 +1,44 @@
+DOCUMENTATION:
+  name: ternary
+  author: Brian Coca (@bcoca)
+  version_added: '1.9'
+  short_description: Ternary operation filter
+  description:
+    - Return the first value if the input is V(True), the second if V(False).
+  positional: true_val, false_val
+  options:
+    _input:
+      description: A boolean expression, must evaluate to V(True) or V(False).
+      type: bool
+      required: true
+    true_val:
+      description: Value to return if the input is V(True).
+      type: any
+      required: true
+    false_val:
+      description: Value to return if the input is V(False).
+      type: any
+    none_val:
+      description: Value to return if the input is V(None). If not set, V(None) will be treated as V(False).
+      type: any
+      version_added: '2.8'
+  notes:
+    - Vars as values are evaluated even when not returned. This is due to them being evaluated before being passed into the filter.
+
+EXAMPLES: |
+  # set first 10 volumes rw, rest as dp
+  volume_mode: "{{ (item|int < 11)|ternary('rw', 'dp') }}"
+
+  # choose correct vpc subnet id, note that vars as values are evaluated even if not returned
+  vpc_subnet_id: "{{ (ec2_subnet_type == 'public') | ternary(ec2_vpc_public_subnet_id, ec2_vpc_private_subnet_id) }}"
+
+  - name: service-foo, use systemd module unless upstart is present, then use old service module
+    service:
+      state: restarted
+      enabled: yes
+      use: "{{ (ansible_service_mgr == 'upstart') | ternary('service', 'systemd') }}"
+
+RETURN:
+  _value:
+    description: The value indicated by the input.
+    type: any

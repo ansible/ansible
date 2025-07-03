@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+# make vendored top-level modules accessible EARLY
+import ansible._vendor
 
 # Note: Do not add any code to this file.  The ansible module may be
 # a namespace package when using Ansible-2.1+ Anything in this file may not be

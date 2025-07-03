@@ -2,110 +2,145 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import os
+import re
 
-from ast import literal_eval
-from jinja2 import Template
 from string import ascii_letters, digits
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
-from ansible.module_utils.six import string_types
-from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
+from ansible.config.manager import ConfigManager
+from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.utils.fqcn import add_internal_fqcns
 
-
-def _deprecated(msg, version='2.8'):
-    ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
-    try:
-        from __main__ import display
-        display.deprecated(msg, version=version)
-    except:
-        import sys
-        sys.stderr.write('[DEPRECATED] %s, to be removed in %s' % (msg, version))
-
-
-def mk_boolean(value):
-    ''' moved to module_utils'''
-    _deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead')
-    return boolean(value, strict=False)
-
-
-def get_config(parser, section, key, env_var, default_value, value_type=None, expand_relative_paths=False):
-    ''' kept for backwarsd compatibility, but deprecated '''
-    _deprecated('ansible.constants.get_config() is deprecated. There is new config API, see porting docs.')
-
-    value = None
-    # small reconstruction of the old code env/ini/default
-    value = os.environ.get(env_var, None)
-    if value is None:
-        try:
-            value = get_ini_config_value(parser, {'key': key, 'section': section})
-        except:
-            pass
-    if value is None:
-        value = default_value
-
-    value = ensure_type(value, value_type)
-
-    return value
+# initialize config manager/config data to read/store global settings
+# and generate 'pseudo constants' for app consumption.
+config = ConfigManager()
 
 
 def set_constant(name, value, export=vars()):
-    ''' sets constants and returns resolved options dict '''
+    """ sets constants and returns resolved options dict """
     export[name] = value
 
 
 # CONSTANTS ### yes, actual ones
-BECOME_METHODS = ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable']
-BECOME_ERROR_STRINGS = {
-    'sudo': 'Sorry, try again.',
-    'su': 'Authentication failure',
-    'pbrun': '',
-    'pfexec': '',
-    'doas': 'Permission denied',
-    'dzdo': '',
-    'ksu': 'Password incorrect',
-    'pmrun': 'You are not permitted to run this command',
-    'enable': '',
-}  # FIXME: deal with i18n
-BECOME_MISSING_STRINGS = {
-    'sudo': 'sorry, a password is required to run sudo',
-    'su': '',
-    'pbrun': '',
-    'pfexec': '',
-    'doas': 'Authorization required',
-    'dzdo': '',
-    'ksu': 'No password given',
-    'pmrun': '',
-    'enable': '',
-}  # FIXME: deal with i18n
-BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
+
+# The following are hard-coded action names
+_ACTION_DEBUG = add_internal_fqcns(('debug', ))
+_ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
+_ACTION_IMPORT_ROLE = add_internal_fqcns(('import_role', ))
+_ACTION_IMPORT_TASKS = add_internal_fqcns(('import_tasks', ))
+_ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
+_ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
+_ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_INVENTORY_TASKS = add_internal_fqcns(('add_host', 'group_by'))
+_ACTION_META = add_internal_fqcns(('meta', ))
+_ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
+_ACTION_SETUP = add_internal_fqcns(('setup', ))
+_ACTION_HAS_CMD = add_internal_fqcns(('command', 'shell', 'script'))
+_ACTION_ALLOWS_RAW_ARGS = _ACTION_HAS_CMD + add_internal_fqcns(('raw', ))
+_ACTION_ALL_INCLUDES = _ACTION_INCLUDE_TASKS + _ACTION_INCLUDE_ROLE
+_ACTION_ALL_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES = _ACTION_INCLUDE_ROLE + _ACTION_IMPORT_ROLE
+_ACTION_ALL_PROPER_INCLUDE_IMPORT_TASKS = _ACTION_INCLUDE_TASKS + _ACTION_IMPORT_TASKS
+_ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
+_ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
+_ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
+
+# http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
+COLOR_CODES = {
+    'black': u'0;30', 'bright gray': u'0;37',
+    'blue': u'0;34', 'white': u'1;37',
+    'green': u'0;32', 'bright blue': u'1;34',
+    'cyan': u'0;36', 'bright green': u'1;32',
+    'red': u'0;31', 'bright cyan': u'1;36',
+    'purple': u'0;35', 'bright red': u'1;31',
+    'yellow': u'0;33', 'bright purple': u'1;35',
+    'dark gray': u'1;30', 'bright yellow': u'1;33',
+    'magenta': u'0;35', 'bright magenta': u'1;35',
+    'normal': u'0',
+}
+REJECT_EXTS = ['.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst']  # this is concatenated with other config settings as lists; cannot be tuple
 BOOL_TRUE = BOOLEANS_TRUE
-CONTROLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
+COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
+
+PYTHON_DOC_EXTENSIONS = ('.py',)
+YAML_DOC_EXTENSIONS = ('.yml', '.yaml')
+DOC_EXTENSIONS = PYTHON_DOC_EXTENSIONS + YAML_DOC_EXTENSIONS
+
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
-DEFAULT_SUDO_PASS = None
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
-DEFAULT_SU_PASS = None
-IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
+# FIXME: expand to other plugins, but never doc fragments
+CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars')
+# NOTE: always update the docs/docsite/Makefile to match
+DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'test', 'filter')
+IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "MANIFEST", "Makefile")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
+INTERNAL_STATIC_VARS = frozenset(
+    [
+        "ansible_async_path",
+        "ansible_collection_name",
+        "ansible_config_file",
+        "ansible_dependent_role_names",
+        "ansible_diff_mode",
+        "ansible_config_file",
+        "ansible_facts",
+        "ansible_forks",
+        "ansible_inventory_sources",
+        "ansible_limit",
+        "ansible_play_batch",
+        "ansible_play_hosts",
+        "ansible_play_hosts_all",
+        "ansible_play_role_names",
+        "ansible_playbook_python",
+        "ansible_role_name",
+        "ansible_role_names",
+        "ansible_run_tags",
+        "ansible_skip_tags",
+        "ansible_verbosity",
+        "ansible_version",
+        "inventory_dir",
+        "inventory_file",
+        "inventory_hostname",
+        "inventory_hostname_short",
+        "groups",
+        "group_names",
+        "hostvars",
+        "playbook_dir",
+        "play_hosts",
+        "role_name",
+        "role_names",
+        "role_path",
+        "role_uuid",
+        "role_names",
+    ]
+)
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = ('command', 'win_command', 'shell', 'win_shell', 'raw', 'script')
-MODULE_NO_JSON = ('command', 'win_command', 'shell', 'win_shell', 'raw')
-RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python')
+WIN_MOVED = ['ansible.windows.win_command', 'ansible.windows.win_shell']
+MODULE_REQUIRE_ARGS_SIMPLE = ['command', 'raw', 'script', 'shell', 'win_command', 'win_shell']
+MODULE_REQUIRE_ARGS = tuple(add_internal_fqcns(MODULE_REQUIRE_ARGS_SIMPLE) + WIN_MOVED)
+MODULE_NO_JSON = tuple(add_internal_fqcns(('command', 'win_command', 'shell', 'win_shell', 'raw')) + WIN_MOVED)
+RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
+SYNTHETIC_COLLECTIONS = ('ansible.builtin', 'ansible.legacy')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
+
+# This matches a string that cannot be used as a valid python variable name i.e 'not-valid', 'not!valid@either' '1_nor_This'
+INVALID_VARIABLE_NAMES = re.compile(r'^[\d\W]|[^\w]')
+
 
 # FIXME: remove once play_context mangling is removed
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
+
+COMMON_CONNECTION_VARS = frozenset(('ansible_connection', 'ansible_host', 'ansible_user', 'ansible_shell_executable',
+                                    'ansible_port', 'ansible_pipelining', 'ansible_password', 'ansible_timeout',
+                                    'ansible_shell_type', 'ansible_module_compression', 'ansible_private_key_file'))
 
 MAGIC_VARIABLE_MAPPING = dict(
 
@@ -146,39 +181,8 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_pass=('ansible_become_password', 'ansible_become_pass'),
     become_exe=('ansible_become_exe', ),
     become_flags=('ansible_become_flags', ),
-
-    # deprecated
-    sudo=('ansible_sudo', ),
-    sudo_user=('ansible_sudo_user', ),
-    sudo_pass=('ansible_sudo_password', 'ansible_sudo_pass'),
-    sudo_exe=('ansible_sudo_exe', ),
-    sudo_flags=('ansible_sudo_flags', ),
-    su=('ansible_su', ),
-    su_user=('ansible_su_user', ),
-    su_pass=('ansible_su_password', 'ansible_su_pass'),
-    su_exe=('ansible_su_exe', ),
-    su_flags=('ansible_su_flags', ),
 )
 
 # POPULATE SETTINGS FROM CONFIG ###
-config = ConfigManager()
-
-# Generate constants from config
-for setting in config.data.get_settings():
-
-    value = setting.value
-    if setting.origin == 'default' and \
-       isinstance(setting.value, string_types) and \
-       (setting.value.startswith('{{') and setting.value.endswith('}}')):
-        try:
-            t = Template(setting.value)
-            value = t.render(vars())
-            try:
-                value = literal_eval(value)
-            except ValueError:
-                pass  # not a python data structure
-        except:
-            pass  # not templatable
-        value = ensure_type(value, setting.name)
-
-    set_constant(setting.name, value)
+for setting in config.get_configuration_definitions():
+    set_constant(setting, config.get_config_value(setting, variables=vars()))

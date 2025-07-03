@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - include_role:
+        name: import_template_handler_names
+      tags:
+        - lazy_evaluation
+        - evaluation_time

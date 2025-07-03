@@ -13,19 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
+import time
 
-from ansible.module_utils.six.moves import reduce
-
-from ansible.module_utils.basic import bytes_to_human
-
+from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
-
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts import timeout
+from ansible.module_utils.six.moves import reduce
 
 
 class SunOSHardware(Hardware):
@@ -41,7 +39,8 @@ class SunOSHardware(Hardware):
         # FIXME: could pass to run_command(environ_update), but it also tweaks the env
         #        of the parent process instead of altering an env provided to Popen()
         # Use C locale for hardware collection helpers to avoid locale specific number formatting (#24542)
-        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
+        locale = get_best_parsable_locale(self.module)
+        self.module.run_command_environ_update = {'LANG': locale, 'LC_ALL': locale, 'LC_NUMERIC': locale}
 
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
@@ -108,7 +107,7 @@ class SunOSHardware(Hardware):
         # Counting cores on Solaris can be complicated.
         # https://blogs.oracle.com/mandalika/entry/solaris_show_me_the_cpu
         # Treat 'processor_count' as physical sockets and 'processor_cores' as
-        # virtual CPUs visisble to Solaris. Not a true count of cores for modern SPARC as
+        # virtual CPUs visible to Solaris. Not a true count of cores for modern SPARC as
         # these processors have: sockets -> cores -> threads/virtual CPU.
         if len(sockets) > 0:
             cpu_facts['processor_count'] = len(sockets)
@@ -168,17 +167,42 @@ class SunOSHardware(Hardware):
     def get_dmi_facts(self):
         dmi_facts = {}
 
-        uname_path = self.module.get_bin_path("prtdiag")
-        rc, out, err = self.module.run_command(uname_path)
-        """
-        rc returns 1
-        """
+        # On Solaris 8 the prtdiag wrapper is absent from /usr/sbin,
+        # but that's okay, because we know where to find the real thing:
+        rc, platform, err = self.module.run_command('/usr/bin/uname -i')
+        platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
+
+        prtdiag_path = self.module.get_bin_path(
+            "prtdiag",
+            opt_dirs=[platform_sbin]
+        )
+        if prtdiag_path is None:
+            return dmi_facts
+
+        rc, out, err = self.module.run_command(prtdiag_path)
+        # rc returns 1
         if out:
             system_conf = out.split('\n')[0]
-            found = re.search(r'(\w+\sEnterprise\s\w+)', system_conf)
 
+            # If you know of any other manufacturers whose names appear in
+            # the first line of prtdiag's output, please add them here:
+            vendors = [
+                "Fujitsu",
+                "Oracle Corporation",
+                "QEMU",
+                "Sun Microsystems",
+                "VMware, Inc.",
+            ]
+            vendor_regexp = "|".join(map(re.escape, vendors))
+            system_conf_regexp = (r'System Configuration:\s+'
+                                  + r'(' + vendor_regexp + r')\s+'
+                                  + r'(?:sun\w+\s+)?'
+                                  + r'(.+)')
+
+            found = re.match(system_conf_regexp, system_conf)
             if found:
-                dmi_facts['product_name'] = found.group(1)
+                dmi_facts['system_vendor'] = found.group(1)
+                dmi_facts['product_name'] = found.group(2)
 
         return dmi_facts
 
@@ -245,18 +269,15 @@ class SunOSHardware(Hardware):
 
     def get_uptime_facts(self):
         uptime_facts = {}
-        # On Solaris, unix:0:system_misc:snaptime is created shortly after machine boots up
-        # and displays tiem in seconds. This is much easier than using uptime as we would
-        # need to have a parsing procedure for translating from human-readable to machine-readable
-        # format.
-        # Example output:
-        # unix:0:system_misc:snaptime     1175.410463590
-        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:snaptime')
+        # sample kstat output:
+        # unix:0:system_misc:boot_time    1548249689
+        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:boot_time')
 
         if rc != 0:
             return
 
-        uptime_facts['uptime_seconds'] = int(float(out.split('\t')[1]))
+        # uptime = $current_time - $boot_time
+        uptime_facts['uptime_seconds'] = int(time.time() - int(out.split('\t')[1]))
 
         return uptime_facts
 

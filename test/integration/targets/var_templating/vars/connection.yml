@@ -1,0 +1,3 @@
+ansible_become: "{{ my_var.become }}"
+ansible_become_method: "{{ my_var.become_method }}"
+ansible_connection: "{{ my_var.connection }}"

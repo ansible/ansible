@@ -1,0 +1,20 @@
+- assert:
+    that:
+        - i_one|type_debug == "int"
+        - s_one|type_debug == "str"
+        - dict_one|type_debug == "dict"
+        - 'dict_one is mapping'
+        - list_one|type_debug == "list"
+        - 'b_true|type_debug == "bool"'
+        - s_true|type_debug == "str"
+
+- set_fact:
+    a_list: "{{[i_one, s_two]}}"
+
+- assert:
+    that:
+        - a_list|type_debug == "list"
+        - 'a_list[0] == 1'
+        - a_list[0]|type_debug == "int"
+        - 'a_list[1] == "2"'
+        - a_list[1]|type_debug == "str"

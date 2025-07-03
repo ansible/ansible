@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: started
+  author: Ansible Core
+  version_added: "1.9"
+  short_description: Was async task started
+  description:
+    - Used to check if an async task has started, will also work with non async tasks but will issue a warning.
+    - This test checks for the existence of a C(started) key in the input dictionary and that it is V(1) if present
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ (asynctaskpoll is started}}
+
+RETURN:
+  _value:
+    description: Returns V(True) if the task has started, V(False) otherwise.
+    type: boolean

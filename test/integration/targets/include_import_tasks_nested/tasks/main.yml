@@ -1,0 +1,11 @@
+- include_tasks: nested/nested_include.yml
+
+- assert:
+    that:
+      - nested_adjacent_count|int == 1
+
+- import_tasks: nested/nested_import.yml
+
+- assert:
+    that:
+      - nested_adjacent_count|int == 2

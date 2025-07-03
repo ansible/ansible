@@ -1,0 +1,33 @@
+DOCUMENTATION:
+  name: log
+  version_added: "1.9"
+  short_description: log of (math operation)
+  description:
+    - Math operation that returns the L(logarithm, https://en.wikipedia.org/wiki/Logarithm) to base N of the input number.
+    - By default, computes the L(natural logarithm, https://en.wikipedia.org/wiki/Natural_logarithm).
+  notes:
+    - This is a passthrough to Python's C(math.log).
+  positional: _input, base
+  options:
+    _input:
+      description: Number to operate on.
+      type: float
+      required: true
+    base:
+      description: Which base to use. Defaults to L(Euler's number, https://en.wikipedia.org/wiki/Euler%27s_number).
+      type: float
+      default: 2.718281828459045
+
+EXAMPLES: |
+
+  # 1.2920296742201791
+  eightlogfive: "{{ 8 | log(5) }}"
+
+  # 0.9030899869919435
+  eightlog10: "{{ 8 | log() }}"
+
+
+RETURN:
+  _value:
+    description: Resulting number.
+    type: float

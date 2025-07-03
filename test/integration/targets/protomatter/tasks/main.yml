@@ -1,0 +1,144 @@
+- name: test the origin filter  # CAUTION: moving this task requires updating the assertion line numbers
+  vars:  # vars placed before assert to allow adding assertions without changing the line number of existing vars
+    some_var: Hello
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.origin == None"
+      - some_var | ansible._protomatter.origin == role_path ~ '/tasks/main.yml:3:15'
+      - missing_var | ansible._protomatter.origin is undefined
+
+- name: register a task result which generates a deprecation warning for use by later tests
+  debug:
+    var: lookup('emit_deprecation_warning')
+  vars:
+    ansible_deprecation_warnings: true
+  register: deprecation_warning
+
+- name: create variables to test the apply_trust filter
+  set_fact:
+    untrusted_string: "{{ untrusted }}"
+    formerly_untrusted_string: "{{ untrusted | ansible._protomatter.apply_trust }}"
+    still_untrusted_number: "{{ a_number | ansible._protomatter.apply_trust }}"
+  vars:
+    untrusted: !unsafe "{{ 1 }}"
+    a_number: 1
+
+- name: test the apply_trust filter
+  assert:
+    that:
+      - untrusted_string == "{" + "{ 1 }}"
+      - formerly_untrusted_string == 1
+      - still_untrusted_number | ansible._protomatter.tag_names == ['Origin']  # does not have TrustedAsTemplate
+      - missing_var | ansible._protomatter.apply_trust is undefined
+
+# DTFIX-FUTURE: protomatter should be available from unit tests, either always or via a fixture opt-in
+
+- name: test the dump_object filter
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.dump_object == 'some_string'"
+      - some_var | ansible._protomatter.dump_object == some_var
+      - missing_var | ansible._protomatter.dump_object is undefined
+      - lookup('synthetic_plugin_info') | type_debug == 'PluginInfo'
+      - lookup('synthetic_plugin_info') | ansible._protomatter.dump_object | type_debug == 'dict'
+      - lookup('synthetic_plugin_info') | ansible._protomatter.dump_object == expected_plugin_info
+      - (syntax_error | ansible._protomatter.dump_object).exception.message is contains 'Syntax error in template'
+  vars:
+    some_var: Hello
+    expected_plugin_info:
+      resolved_name: ns.col.module
+      type: module
+    syntax_error: '{{ bogus syntax oops DSYFF*&H#$*F#$@F'
+
+- name: test the python_literal_eval filter
+  assert:
+    that:
+      - "'[1, 2]' | ansible._protomatter.python_literal_eval == [1, 2]"
+      - "'x[1, 2]' | ansible._protomatter.python_literal_eval | ansible._protomatter.true_type == 'CapturedExceptionMarker'"
+      - "'x[1, 2]' | ansible._protomatter.python_literal_eval(ignore_errors=True) == 'x[1, 2]'"
+      - missing_var | ansible._protomatter.python_literal_eval is undefined
+
+- name: test non-string input failure to python_literal_eval filter
+  assert:
+    that: 123 | ansible._protomatter.python_literal_eval
+  ignore_errors: true
+  register: nonstr_python_literal_eval
+
+- assert:
+    that:
+      - nonstr_python_literal_eval is failed
+      - nonstr_python_literal_eval.msg is contains "must be a string"
+
+- name: test the tag_names filter
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.tag_names == []"
+      - some_var | ansible._protomatter.tag_names == ['Origin', 'TrustedAsTemplate']
+      - missing_var | ansible._protomatter.tag_names is undefined
+  vars:
+    some_var: Hello
+
+- name: test the true_type filter
+  assert:
+    that:
+      - "'some_string' | ansible._protomatter.true_type == 'str'"
+      - some_var | ansible._protomatter.true_type == "_AnsibleTaggedStr"
+      - missing_var | ansible._protomatter.true_type == "UndefinedMarker"
+  vars:
+    some_var: Hello
+
+- name: test the unmask filter
+  assert:
+    that:
+      - deprecation_warning.deprecations[0].deprecator | type_debug == 'dict'
+      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask("PluginInfo")).deprecator | type_debug == "PluginInfo"
+      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask(["PluginInfo"])).deprecator | type_debug == "PluginInfo"
+      - 1 | ansible._protomatter.unmask("PluginInfo") == 1
+      - missing_var | ansible._protomatter.unmask("PluginInfo") is undefined
+
+- name: unmask with an invalid type for type_names
+  debug:
+    msg: "{{ [] | ansible._protomatter.unmask(invalid_type) }}"
+  register: unamsk_type_names_type_error
+  ignore_errors: yes
+  vars:
+    invalid_type: 1
+
+- name: unmask an invalid type
+  debug:
+    msg: "{{ [] | ansible._protomatter.unmask(bogus_type) }}"
+  register: unmask_bogus_type
+  ignore_errors: yes
+  vars:
+    bogus_type: BogusType
+
+- name: verify the unmask errors
+  assert:
+    that:
+      - unamsk_type_names_type_error is failed
+      - unamsk_type_names_type_error.msg is contains "The 'type_names' argument must be of type 'str' or 'list', not 'int'."
+      - unmask_bogus_type is failed
+      - unmask_bogus_type.msg is search "Unknown type name\(s\). BogusType"
+
+- transform_factory:
+  vars:
+    ansible_deprecation_warnings: true
+  register: transformed
+
+- debug:
+    var: (transformed | ansible._protomatter.unmask(['WarningSummary','DeprecationSummary'])) | to_json(profile='fallback_to_str')
+
+- name: validate transformed and unmasked values
+  assert:
+    that:
+      - transformed.warnings | length > 0
+      - transformed.warnings[0] | type_debug == 'str'
+      - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0] | type_debug == 'WarningSummary'
+      - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0].event | type_debug == 'Event'
+      - transformed.deprecations | length > 0
+      - transformed.deprecations[0] | type_debug == 'dict'
+      - (transformed.deprecations | ansible._protomatter.unmask(['DeprecationSummary']))[0].event | type_debug == 'Event'
+      # unmask the wrong type, ensure that the default transform still occurs
+      - (transformed.warnings | ansible._protomatter.unmask('EncryptedString'))[0] | type_debug == 'str'
+      # unmask at a higher level, validate that it propagates to child lazies
+      - (transformed | ansible._protomatter.unmask(['WarningSummary'])).warnings[0].event | type_debug == 'Event'

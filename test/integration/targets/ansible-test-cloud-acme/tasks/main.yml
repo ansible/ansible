@@ -1,0 +1,7 @@
+- name: Verify endpoints respond
+  uri:
+    url: "{{ item }}"
+    validate_certs: no
+  with_items:
+    - http://{{ acme_host }}:5000/
+    - https://{{ acme_host }}:14000/dir

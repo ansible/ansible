@@ -2,5 +2,5 @@
 
 set -eux
 
-ansible-playbook bad_parsing.yml  -i ../../inventory -vvv "$@" --tags prepare,common,scenario5
-ansible-playbook good_parsing.yml -i ../../inventory -v "$@"
+ansible-playbook parsing.yml -i ../../inventory "$@" -e "output_dir=${OUTPUT_DIR}"
+ansible-playbook good_parsing.yml -i ../../inventory "$@"

@@ -1,0 +1,9 @@
+---
+- name: call module with ArgvParser tests
+  argv_parser_test:
+    exe: '{{ win_printargv_path }}'
+  register: argv_test
+
+- assert:
+    that:
+    - argv_test.data == 'success'

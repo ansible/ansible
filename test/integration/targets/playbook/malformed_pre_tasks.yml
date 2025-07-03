@@ -1,0 +1,2 @@
+- hosts: localhost
+  pre_tasks: 123

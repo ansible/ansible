@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: regex_escape
+  version_added: "2.8"
+  short_description: escape regex chars
+  description:
+    - Escape special characters in a string for use in a regular expression.
+  positional: _input, re_type
+  notes:
+    - posix_extended is not implemented yet
+  options:
+    _input:
+      description: String to escape.
+      type: str
+      required: true
+    re_type:
+      description: Which type of escaping to use.
+      type: str
+      default: python
+      choices: [python, posix_basic]
+
+EXAMPLES: |
+
+  # safe_for_regex => '\^f\.\*o\(\.\*\)\$'
+  safe_for_regex: "{{ '^f.*o(.*)$' | regex_escape() }}"
+
+RETURN:
+  _value:
+    description: Escaped string.
+    type: str

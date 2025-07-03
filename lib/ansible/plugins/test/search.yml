@@ -1,0 +1,33 @@
+DOCUMENTATION:
+  name: search
+  author: Ansible Core
+  short_description: Does string match a regular expression
+  description:
+    - Compare string against regular expression using Python's C(search) function.
+  options:
+    _input:
+      description: String to match.
+      type: string
+      required: True
+    pattern:
+      description: Regex to match against.
+      type: string
+      required: True
+    ignorecase:
+      description: Use case insensitive matching.
+      type: boolean
+      default: False
+    multiline:
+      description: Match against multiple lines in string.
+      type: boolean
+      default: False
+
+EXAMPLES: |
+  url: "https://example.com/users/foo/resources/bar"
+  foundmatch: url is search("https://example.com/users/.*/resources")
+  alsomatch: url is search("users/.*/resources")
+
+RETURN:
+  _value:
+    description: Returns V(True) if there is a match, V(False) otherwise.
+    type: boolean

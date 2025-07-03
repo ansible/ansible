@@ -1,0 +1,20 @@
+---
+- name: setup subversion server
+  import_tasks: setup.yml
+  tags: setup
+
+- name: verify that subversion is installed so this test can continue
+  shell: which svn
+  tags: always
+
+- name: run tests
+  import_tasks: tests.yml
+  tags: tests
+
+- name: run warning
+  import_tasks: warnings.yml
+  tags: warnings
+
+- name: clean up
+  import_tasks: cleanup.yml
+  tags: cleanup

@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+        - block:
+            - name: EXPECTED FAILURE
+              fail:
+          always:
+            - block:
+                - debug:
+              always:
+                - debug:
+      rescue:
+        - assert:
+            that:
+              - ansible_failed_task is defined
+              - ansible_failed_result is defined

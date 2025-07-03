@@ -1,0 +1,86 @@
+- block:
+  - name: Install needed packages
+    apt:
+      name: "{{ item }}"
+    with_items:
+      - dpkg-dev
+      - equivs
+      - libfile-fcntllock-perl  # to silence warning by equivs-build
+
+  - set_fact:
+      repodir: /tmp/repo/
+
+  - name: Create repo dirs
+    file:
+      path: "{{ repodir }}/dists/{{ item }}/main/binary-all"
+      state: directory
+      mode: 0755
+    loop:
+      - stable
+      - testing
+
+  - name: Copy package specs to remote
+    copy:
+      src: package_specs
+      dest: "{{ remote_tmp_dir }}"
+
+  - name: Create deb files
+    shell: "find {{ remote_tmp_dir }}/package_specs/{{ item }} -type f -exec equivs-build {} \\;"
+    args:
+      chdir: "{{ repodir }}/dists/{{ item }}/main/binary-all"
+    loop:
+      - stable
+      - testing
+
+  - name: Create repo Packages
+    shell: dpkg-scanpackages --multiversion . /dev/null dists/{{ item }}/main/binary-all/ | gzip -9c > Packages.gz
+    args:
+      chdir: "{{ repodir }}/dists/{{ item }}/main/binary-all"
+    loop:
+      - stable
+      - testing
+
+  - name: Create repo Release
+    copy:
+      content: |
+        Codename: {{ item.0 }}
+        {% for k,v in item.1.items() %}
+        {{ k }}: {{ v }}
+        {% endfor %}
+      dest: "{{ repodir }}/dists/{{ item.0 }}/Release"
+    loop:
+      - [stable, {}]
+      - [testing, {NotAutomatic: "yes", ButAutomaticUpgrades: "yes"}]
+
+  - name: Install the repo
+    apt_repository:
+      repo: deb [trusted=yes arch=all] file:{{ repodir }} {{ item }} main
+      update_cache: false # interferes with task 'Test update_cache 1'
+    loop:
+      - stable
+      - testing
+    when: install_repo|default(True)|bool is true
+
+  when: ansible_distribution in ['Ubuntu', 'Debian']
+
+- block:
+  # Need to uncomment the deb-src for the universe component for build-dep state
+  - name: Ensure deb-src for the universe component
+    lineinfile:
+      path: /etc/apt/sources.list
+      backrefs: True
+      regexp: ^#\s*deb-src (http://.*\.ubuntu\.com/ubuntu.*/) (\w*){{ item }} universe$
+      line: deb-src \1 \2{{ item }} universe
+      state: present
+    with_items:
+    - ''
+    - -updates
+    when: ansible_distribution_version is version('24.04', '<')
+
+  - name: Enable deb-src in ubuntu.sources
+    # see: https://askubuntu.com/questions/1512042/ubuntu-24-04-getting-error-you-must-put-some-deb-src-uris-in-your-sources-list
+    command: |
+      sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+    when: ansible_distribution_version is version('24.04', '>=')
+
+  when: ansible_distribution == 'Ubuntu'

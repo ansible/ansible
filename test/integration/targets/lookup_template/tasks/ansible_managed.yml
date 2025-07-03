@@ -1,0 +1,17 @@
+- name: invoke template lookup with content using default injected `ansible_managed`
+  debug:
+    msg: "{{ lookup('template', 'uses_ansible_managed.j2') }}"
+  register: default_lookup_result
+
+- name: invoke template lookup with content using explicitly set `ansible_managed` var
+  vars:
+    ansible_managed: '{{ "a " ~ "dynamic " ~ "ansible_managed value" }}'
+  debug:
+    msg: "{{ lookup('template', 'uses_ansible_managed.j2') }}"
+  register: overridden_lookup_result
+
+- name: validate ansible_managed results
+  assert:
+    that:
+      - default_lookup_result.msg is contains "Ansible managed"
+      - overridden_lookup_result.msg is contains "a dynamic ansible_managed value"

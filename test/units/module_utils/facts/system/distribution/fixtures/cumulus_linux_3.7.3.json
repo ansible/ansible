@@ -1,0 +1,23 @@
+{
+    "name": "Cumulus Linux 3.7.3",
+    "input": {
+        "/etc/os-release": "NAME=\"Cumulus Linux\"\nVERSION_ID=3.7.3\nVERSION=\"Cumulus Linux 3.7.3\"\nPRETTY_NAME=\"Cumulus Linux\"\nID=cumulus-linux\nID_LIKE=debian\nCPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:3.7.3\nHOME_URL=\"http://www.cumulusnetworks.com/\"\nSUPPORT_URL=\"http://support.cumulusnetworks.com/\""
+    },
+    "platform.dist": ["debian", "8.11", ""],
+    "distro": {
+        "codename": "",
+        "id": "cumulus-linux",
+        "name": "Cumulus Linux",
+        "version": "3.7.3",
+        "version_best": "3.7.3",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Cumulus Linux",
+        "distribution_major_version": "3",
+        "distribution_release": "Cumulus Linux 3.7.3",
+        "os_family": "Debian",
+        "distribution_version": "3.7.3"
+    }
+}

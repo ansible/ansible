@@ -3,19 +3,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.plugins.cache import BaseCacheModule
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     cache: none
     short_description: write-only cache (no cache)
     description:
         - No caching at all
     version_added: historical
     author: core team (@ansible-core)
-'''
+"""
 
 
 class CacheModule(BaseCacheModule):

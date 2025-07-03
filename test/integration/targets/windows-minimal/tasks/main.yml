@@ -1,0 +1,149 @@
+# test code for the win_ping module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: sample config for traceback behavior
+  set_fact:
+    traceback_on_error: |
+      {{ lookup('ansible._protomatter.config', 'DISPLAY_TRACEBACK') is contains 'error' }}
+
+- name: test win_ping
+  action: win_ping
+  register: win_ping_result
+
+- name: check win_ping result
+  assert:
+    that:
+      - win_ping_result is not failed
+      - win_ping_result is not changed
+      - win_ping_result.ping == 'pong'
+
+- name: test win_ping with data
+  win_ping:
+    data: ☠
+  register: win_ping_with_data_result
+
+- name: check win_ping result with data
+  assert:
+    that:
+      - win_ping_with_data_result is not failed
+      - win_ping_with_data_result is not changed
+      - win_ping_with_data_result.ping == '☠'
+
+- name: test win_ping.ps1 with data as complex args
+  # win_ping.ps1: # TODO: do we want to actually support this? no other tests that I can see...
+  win_ping:
+    data: bleep
+  register: win_ping_ps1_result
+
+- name: check win_ping.ps1 result with data
+  assert:
+    that:
+      - win_ping_ps1_result is not failed
+      - win_ping_ps1_result is not changed
+      - win_ping_ps1_result.ping == 'bleep'
+
+- name: test win_ping using data=crash so that it throws an exception
+  win_ping:
+    data: crash
+  register: win_ping_crash_result
+  ignore_errors: yes
+
+- name: check win_ping_crash result
+  assert:
+    that:
+      - win_ping_crash_result is failed
+      - win_ping_crash_result is not changed
+      - 'win_ping_crash_result.msg == "Unhandled exception while executing module: boom"'
+      - not traceback_on_error or "throw \"boom\"" in win_ping_crash_result.exception
+
+- name: verify that shortname _raw_params works
+  win_shell: echo "name=foo"
+  register: win_shell_short_res
+  failed_when: win_shell_short_res.stdout | trim != 'name=foo'
+
+- name: verify that legacy _raw_params works
+  ansible.legacy.win_shell: echo "name=foo"
+  register: win_shell_legacy_res
+  failed_when: win_shell_legacy_res.stdout | trim != 'name=foo'
+
+- name: verify that builtin _raw_params works
+  ansible.builtin.win_shell: echo "name=foo"
+  register: win_shell_builtin_res
+  failed_when: win_shell_builtin_res.stdout | trim != 'name=foo'
+
+- name: verify that collection _raw_params works
+  ansible.windows.win_shell: echo "name=foo"
+  register: win_shell_collection_res
+  failed_when: win_shell_collection_res.stdout | trim != 'name=foo'
+
+- name: set ping data fact
+  set_fact:
+    # FUTURE: Fix psrp so it can handle non-ASCII chars in a non-pipeline scenario
+    ping_data: '{{ (ansible_connection == "psrp") | ternary("test", "汉语") }}'
+
+- name: run module with pipelining disabled
+  ansible.builtin.command:
+    cmd: >-
+      ansible windows
+      -m ansible.windows.win_ping
+      -a 'data={{ ping_data }}'
+      -i {{ '-i '.join(ansible_inventory_sources) }}
+      {{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}
+      -e ansible_remote_tmp='{{ remote_tmp_dir | regex_replace('\\', '\\\\') }}'
+  register: pipeline_disabled_res
+  delegate_to: localhost
+  environment:
+    ANSIBLE_KEEP_REMOTE_FILES: 'true'
+    ANSIBLE_NOCOLOR: 'true'
+    ANSIBLE_FORCE_COLOR: 'false'
+
+- name: view temp files
+  ansible.windows.win_shell: (Get-Item '{{ remote_tmp_dir }}\ansible-tmp-*\*').Name
+  register: pipeline_disabled_files
+
+- name: assert run module with pipelining disabled
+  assert:
+    that:
+    - >-
+      pipeline_disabled_res.stdout is search('\"ping\": \"' ~ ping_data ~ '\"')
+    - pipeline_disabled_files.stdout_lines == ["AnsiballZ_win_ping.ps1"]
+
+- name: test module with no exec wrapper
+  test_no_exec_wrapper:
+  register: no_exec_wrapper
+
+- name: assert test module with no exec wrapper
+  assert:
+    that:
+    - no_exec_wrapper is not failed
+    - no_exec_wrapper.args | length == 1
+    - '"_ansible_check_mode=False" in no_exec_wrapper.arg0'
+    - no_exec_wrapper.path != ""
+
+- name: check if the script and args file still exist
+  win_stat:
+    path: '{{ item }}'
+  register: no_exec_wrapper_files
+  loop:
+  - '{{ no_exec_wrapper.path }}'
+  - '{{ no_exec_wrapper.args[0] }}'
+
+- name: assert no exec wrapper files still exist
+  assert:
+    that:
+    - no_exec_wrapper_files.results | map(attribute='stat.exists') | list == [False, False]

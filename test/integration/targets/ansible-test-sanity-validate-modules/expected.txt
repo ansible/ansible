@@ -1,0 +1,35 @@
+plugins/lookup/import_order_lookup.py:5:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
+plugins/modules/check_mode_attribute_1.py:0:0: attributes-check-mode: The module does not declare support for check mode, but the check_mode attribute's support value is 'full' and not 'none'
+plugins/modules/check_mode_attribute_2.py:0:0: attributes-check-mode: The module does not declare support for check mode, but the check_mode attribute's support value is 'partial' and not 'none'
+plugins/modules/check_mode_attribute_3.py:0:0: attributes-check-mode: The module does declare support for check mode, but the check_mode attribute's support value is 'none'
+plugins/modules/check_mode_attribute_4.py:0:0: attributes-check-mode-details: The module declares it does not fully support check mode, but has no details on what exactly that means
+plugins/modules/import_order.py:7:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
+plugins/modules/invalid_argument_spec_extra_key.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.extra_key: extra keys not allowed @ data['argument_spec']['foo']['extra_key']. Got 'bar'
+plugins/modules/invalid_argument_spec_incorrect_context.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.context: expected dict for dictionary value @ data['argument_spec']['foo']['context']. Got 'bar'
+plugins/modules/invalid_choice_value.py:0:0: doc-choices-do-not-match-spec: Argument 'caching' in argument_spec defines choices as (['ReadOnly', 'ReadOnly']) but documentation defines choices as (['ReadOnly', 'ReadWrite'])
+plugins/modules/invalid_yaml_syntax.py:0:0: deprecation-mismatch: "meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.
+plugins/modules/invalid_yaml_syntax.py:0:0: missing-documentation: No DOCUMENTATION provided
+plugins/modules/invalid_yaml_syntax.py:7:15: documentation-syntax-error: DOCUMENTATION is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:11:15: invalid-examples: EXAMPLES is not valid YAML
+plugins/modules/invalid_yaml_syntax.py:15:15: return-syntax-error: RETURN is not valid YAML
+plugins/modules/option_name_casing.py:0:0: option-equal-up-to-casing: Multiple options/aliases are equal up to casing: option 'Bar', alias 'baR' of option 'bam', alias 'bar' of option 'foo'
+plugins/modules/option_name_casing.py:0:0: option-equal-up-to-casing: Multiple options/aliases are equal up to casing: option 'Foo', option 'foo'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.0: While parsing "V(C\(" at index 1: Unnecessarily escaped "(" @ data['options']['a11']['suboptions']['b1']['description'][0]. Got 'V(C\\(foo\\)).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.2: While parsing "P(foo.bar#baz)" at index 1: Plugin name "foo.bar" is not a FQCN @ data['options']['a11']['suboptions']['b1']['description'][2]. Got 'P(foo.bar#baz).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.3: While parsing "P(foo.bar.baz)" at index 1: Parameter "foo.bar.baz" is not of the form FQCN#type @ data['options']['a11']['suboptions']['b1']['description'][3]. Got 'P(foo.bar.baz).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.4: Directive "P(foo.bar.baz#woof)" must contain a valid plugin type; found "woof" @ data['options']['a11']['suboptions']['b1']['description'][4]. Got 'P(foo.bar.baz#woof).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.5: While parsing "E(foo\(" at index 1: Unnecessarily escaped "(" @ data['options']['a11']['suboptions']['b1']['description'][5]. Got 'E(foo\\(bar).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a2.description: While parsing "V(C\(" at index 1: Unnecessarily escaped "(" for dictionary value @ data['options']['a2']['description']. Got 'V(C\\(foo\\)).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a4.description: While parsing "P(foo.bar#baz)" at index 1: Plugin name "foo.bar" is not a FQCN for dictionary value @ data['options']['a4']['description']. Got 'P(foo.bar#baz).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a5.description: While parsing "P(foo.bar.baz)" at index 1: Parameter "foo.bar.baz" is not of the form FQCN#type for dictionary value @ data['options']['a5']['description']. Got 'P(foo.bar.baz).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a6.description: Directive "P(foo.bar.baz#woof)" must contain a valid plugin type; found "woof" for dictionary value @ data['options']['a6']['description']. Got 'P(foo.bar.baz#woof).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a7.description: While parsing "E(foo\(" at index 1: Unnecessarily escaped "(" for dictionary value @ data['options']['a7']['description']. Got 'E(foo\\(bar).'
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(bar)" contains a non-existing option "bar"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(bar=bam)" contains a non-existing option "bar"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "O(foo.bar=1)" contains a non-existing option "foo.bar"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(bam)" contains a non-existing return value "bam"
+plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: Directive "RV(does.not.exist=true)" contains a non-existing return value "does.not.exist"
+plugins/modules/unsupported_extension.nope:0:0: invalid-extension: Official Ansible modules must have a .py extension for python modules or a .ps1 for powershell modules
+plugins/modules/unsupported_extension.nope:0:0: missing-gplv3-license: GPLv3 license header not found in the first 20 lines of the module
+plugins/modules/wrong_aliases.py:0:0: parameter-documented-aliases-differ: Argument 'bar' in argument_spec has names 'bam', 'bar', but its documentation has names 'bar'
+plugins/modules/wrong_aliases.py:0:0: parameter-documented-aliases-differ: Argument 'foo' in argument_spec has names 'foo', but its documentation has names 'bam', 'foo'

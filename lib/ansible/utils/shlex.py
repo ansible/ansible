@@ -15,20 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # alongwith Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import shlex
-from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_bytes, to_text
 
 
-if PY3:
-    # shlex.split() wants Unicode (i.e. ``str``) input on Python 3
-    shlex_split = shlex.split
-else:
-    # shlex.split() wants bytes (i.e. ``str``) input on Python 2
-    def shlex_split(s, comments=False, posix=True):
-        return map(to_text, shlex.split(to_bytes(s), comments, posix))
-    shlex_split.__doc__ = shlex.split.__doc__
+# shlex.split() wants Unicode (i.e. ``str``) input on Python 3
+shlex_split = shlex.split

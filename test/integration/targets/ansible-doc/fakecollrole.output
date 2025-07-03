@@ -1,0 +1,24 @@
+> ROLE: *testns.testcol.testrole* (test/integration/targets/ansible-doc/collections/ansible_collections/testns/testcol)
+
+ENTRY POINT: *alternate* - testns.testcol.testrole short description for alternate entry point
+
+          Longer description for testns.testcol.testrole alternate
+          entry point.
+
+Options (= indicates it is required):
+
+= altopt1   altopt1 description
+          type: int
+
+ATTRIBUTES:
+
+          `check_mode:`
+          description: Can run in check_mode and return changed status prediction without modifying
+            target
+          support: full
+
+AUTHOR: Ansible Core (@ansible)
+
+EXAMPLES:
+This is an example.
+It has two lines.

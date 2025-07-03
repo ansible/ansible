@@ -1,0 +1,23 @@
+---
+- name: Verify handler can include other tasks (#47287)
+  hosts: testhost
+  tasks:
+    - name: include a task from the tasks section
+      include_tasks: handlers.yml
+
+    - name: notify a handler
+      debug:
+        msg: notifying handler
+      changed_when: yes
+      notify:
+        - include a task from the handlers section
+        - include a task in a loop from the handlers section
+
+  handlers:
+    - name: include a task from the handlers section
+      include_tasks: handlers.yml
+
+    - name: include a task in a loop from the handlers section
+      include_tasks: "{{ item }}"
+      with_first_found:
+        - handlers.yml

@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        foo: bar
+      register: baz
+
+    - assert:
+        that:
+          - baz.ansible_facts.foo is ansible._protomatter.tagged_with("TrustedAsTemplate")

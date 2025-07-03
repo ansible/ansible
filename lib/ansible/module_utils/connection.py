@@ -26,16 +26,27 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import os
 import json
+import pickle
 import socket
 import struct
-import traceback
 import uuid
 
 from functools import partial
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.json import _get_legacy_encoder
 from ansible.module_utils.six import iteritems
+
+
+def write_to_stream(stream, obj):
+    """Write a length+newline-prefixed pickled object to a stream."""
+    src = pickle.dumps(obj)
+
+    stream.write(b'%d\n' % len(src))
+    stream.write(src)
 
 
 def send_data(s, data):
@@ -72,13 +83,10 @@ def exec_command(module, command):
     return 0, out, ''
 
 
-def request_builder(method, *args, **kwargs):
+def request_builder(method_, *args, **kwargs):
     reqid = str(uuid.uuid4())
-    req = {'jsonrpc': '2.0', 'method': method, 'id': reqid}
-
-    params = args or kwargs or None
-    if params:
-        req['params'] = params
+    req = {'jsonrpc': '2.0', 'method': method_, 'id': reqid}
+    req['params'] = (args, kwargs)
 
     return req
 
@@ -112,18 +120,45 @@ class Connection(object):
         reqid = req['id']
 
         if not os.path.exists(self.socket_path):
-            raise ConnectionError('socket_path does not exist or cannot be found')
+            raise ConnectionError(
+                'socket path %s does not exist or cannot be found. See Troubleshooting socket '
+                'path issues in the Network Debug and Troubleshooting Guide' % self.socket_path
+            )
 
         try:
-            data = json.dumps(req)
-            out = self.send(data)
-            response = json.loads(out)
+            data = json.dumps(req, cls=_get_legacy_encoder(), vault_to_text=True)
+        except TypeError as exc:
+            raise ConnectionError(
+                "Failed to encode some variables as JSON for communication with the persistent connection helper. "
+                "The original exception was: %s" % to_text(exc)
+            )
 
-        except socket.error as e:
-            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+        try:
+            out = self.send(data)
+        except OSError as ex:
+            raise ConnectionError(
+                f'Unable to connect to socket {self.socket_path!r}. See Troubleshooting socket path issues '
+                'in the Network Debug and Troubleshooting Guide.'
+            ) from ex
+
+        try:
+            response = json.loads(out)
+        except ValueError:
+            # set_option(s) has sensitive info, and the details are unlikely to matter anyway
+            if name.startswith("set_option"):
+                raise ConnectionError(
+                    "Unable to decode JSON from response to {0}. Received '{1}'.".format(name, out)
+                )
+            params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in iteritems(kwargs)]
+            params = ', '.join(params)
+            raise ConnectionError(
+                "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
+            )
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
+        if "result_type" in response:
+            response["result"] = pickle.loads(to_bytes(response["result"], errors="surrogateescape"))
 
         return response
 
@@ -155,9 +190,12 @@ class Connection(object):
             send_data(sf, to_bytes(data))
             response = recv_data(sf)
 
-        except socket.error as e:
+        except OSError as ex:
             sf.close()
-            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+            raise ConnectionError(
+                f'Unable to connect to socket {self.socket_path!r}. See the socket path issue category in '
+                'Network Debug and Troubleshooting Guide.',
+            ) from ex
 
         sf.close()
 

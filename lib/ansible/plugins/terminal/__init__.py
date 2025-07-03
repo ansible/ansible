@@ -16,51 +16,59 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import with_metaclass
 
 
-class TerminalBase(with_metaclass(ABCMeta, object)):
-    '''
+class TerminalBase(ABC):
+    """
     A base class for implementing cli connections
 
     .. note:: Unlike most of Ansible, nearly all strings in
         :class:`TerminalBase` plugins are byte strings.  This is because of
         how close to the underlying platform these plugins operate.  Remember
         to mark literal strings as byte string (``b"string"``) and to use
-        :func:`~ansible.module_utils._text.to_bytes` and
-        :func:`~ansible.module_utils._text.to_text` to avoid unexpected
+        :func:`~ansible.module_utils.common.text.converters.to_bytes` and
+        :func:`~ansible.module_utils.common.text.converters.to_text` to avoid unexpected
         problems.
-    '''
+    """
 
     #: compiled bytes regular expressions as stdout
-    terminal_stdout_re = []
+    terminal_stdout_re = []  # type: list[re.Pattern]
 
     #: compiled bytes regular expressions as stderr
-    terminal_stderr_re = []
+    terminal_stderr_re = []  # type: list[re.Pattern]
 
     #: compiled bytes regular expressions to remove ANSI codes
     ansi_re = [
-        re.compile(br'(\x1b\[\?1h\x1b=)'),
-        re.compile(br'\x08.')
+        re.compile(br'\x1b\[\?1h\x1b='),  # CSI ? 1 h ESC =
+        re.compile(br'\x08.'),            # [Backspace] .
+        re.compile(br"\x1b\[m"),          # ANSI reset code
     ]
+
+    #: terminal initial prompt
+    terminal_initial_prompt = None
+
+    #: terminal initial answer
+    terminal_initial_answer = None
+
+    #: Send newline after prompt match
+    terminal_inital_prompt_newline = True
 
     def __init__(self, connection):
         self._connection = connection
 
     def _exec_cli_command(self, cmd, check_rc=True):
-        '''
+        """
         Executes the CLI command on the remote device and returns the output
 
         :arg cmd: Byte string command to be executed
-        '''
+        """
         return self._connection.exec_command(cmd)
 
     def _get_prompt(self):
@@ -76,7 +84,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         This method is called right after the invoke_shell() is called from
         the Paramiko SSHClient instance.  It provides an opportunity to setup
-        terminal parameters such as disbling paging for instance.
+        terminal parameters such as disabling paging for instance.
         """
         pass
 

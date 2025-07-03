@@ -16,6 +16,10 @@
     mode: 0444
   register: copy_result
 
+- name: Record the sha of the test file for later tests
+  set_fact:
+    remote_file_hash: "{{ copy_result['checksum'] }}"
+
 - name: Check the mode of the output file
   file:
     name: "{{ remote_file }}"
@@ -46,7 +50,6 @@
       - copy_result.dest == remote_file_expanded
       - "'group' in copy_result"
       - "'gid' in copy_result"
-      - "'md5sum' in copy_result"
       - "'checksum' in copy_result"
       - "'owner' in copy_result"
       - "'size' in copy_result"
@@ -73,7 +76,6 @@
 - name: Check the stat results of the file
   stat:
     path: "{{ remote_file }}"
-    get_md5: yes
   register: stat_results
 
 - debug:
@@ -90,11 +92,17 @@
       - "stat_results.stat.issock == false"
       - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
 
-- name: Verify that the legacy md5sum is correct
+- name: Test copying content with force=false when the dest already exists
+  copy:
+    content: other_data
+    dest: "{{ remote_file }}"
+    mode: 0444
+    force: False
+  register: repeat_copy_result
+
+- name: Assert no changes are made
   assert:
-    that:
-      - "stat_results.stat.md5 == ('foo.txt\n'|hash('md5'))"
-  when: ansible_fips|bool != True
+    that: repeat_copy_result is not changed
 
 - name: Overwrite the file via same means
   copy:
@@ -173,7 +181,7 @@
 - name: Create a hardlink to the file
   file:
     src: '{{ remote_file }}'
-    dest: '{{ output_dir }}/hard.lnk'
+    dest: '{{ remote_dir }}/hard.lnk'
     state: hard
 
 - name: copy the same contents into place
@@ -191,7 +199,7 @@
 
 - name: Check the stat results of the hard link
   stat:
-    path: "{{ output_dir }}/hard.lnk"
+    path: "{{ remote_dir }}/hard.lnk"
   register: hlink_results
 
 - name: Check that the file did not change
@@ -216,7 +224,7 @@
 
 - name: Check the stat results of the hard link
   stat:
-    path: "{{ output_dir }}/hard.lnk"
+    path: "{{ remote_dir }}/hard.lnk"
   register: hlink_results
 
 - name: Check that the file changed permissions but is still the same
@@ -242,7 +250,7 @@
 
 - name: Check the stat results of the hard link
   stat:
-    path: "{{ output_dir }}/hard.lnk"
+    path: "{{ remote_dir }}/hard.lnk"
   register: hlink_results
 
 - name: Check that the file changed and hardlink was broken
@@ -380,7 +388,7 @@
     content: "foo.txt\n"
     dest: '{{ local_temp_dir }}/foo.txt'
     mode: 0547
-  connection: local
+  delegate_to: localhost
 
 - name: Copy with mode=preserve
   copy:
@@ -402,6 +410,101 @@
        - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results.stat.mode == '0547'"
 
+- name: Test copy with mode=preserve and remote_src=True
+  copy:
+    src: '{{ remote_dir }}/copy-foo.txt'
+    dest: '{{ remote_dir }}/copy-foo2.txt'
+    mode: 'preserve'
+    remote_src: True
+  register: copy_results2
+
+- name: Check the stat results of the file
+  stat:
+    path: '{{ remote_dir }}/copy-foo2.txt'
+  register: stat_results2
+
+- name: Assert that the file has changed and has correct mode
+  assert:
+     that:
+       - "copy_results2 is changed"
+       - "copy_results2.mode == '0547'"
+       - "stat_results2.stat.checksum == ('foo.txt\n'|hash('sha1'))"
+       - "stat_results2.stat.mode == '0547'"
+
+#
+# test copying an empty dir to a dest dir with remote_src=True
+#
+
+- name: create empty test dir
+  file:
+    path: '{{ remote_dir }}/testcase_empty_dir'
+    state: directory
+
+- name: test copying an empty dir to a dir that does not exist (dest ends with slash)
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+
+- name: get stat of newly created dir
+  stat:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: stat_result
+
+- assert:
+    that:
+      - copy_result.changed
+      - stat_result.stat.exists
+      - stat_result.stat.isdir
+
+- name: test no change is made running the task twice
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+  failed_when: copy_result is changed
+
+- name: remove to test dest with no trailing slash
+  file:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest/'
+    state: absent
+
+- name: test copying an empty dir to a dir that does not exist (both src/dest have no trailing slash)
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: copy_result
+
+- name: get stat of newly created dir
+  stat:
+    path: '{{ remote_dir }}/testcase_empty_dir_dest'
+  register: stat_result
+
+- assert:
+    that:
+      - copy_result.changed
+      - stat_result.stat.exists
+      - stat_result.stat.isdir
+
+- name: test no change is made running the task twice
+  copy:
+    src: '{{ remote_dir }}/testcase_empty_dir/'
+    remote_src: yes
+    dest: '{{ remote_dir }}/testcase_empty_dir_dest/'
+  register: copy_result
+  failed_when: copy_result is changed
+
+- name: clean up src and dest
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - '{{ remote_dir }}/testcase_empty_dir'
+    - '{{ remote_dir }}/testcase_empty_dir_dest'
+
 #
 # test recursive copy local_follow=False, no trailing slash
 #
@@ -410,7 +513,7 @@
   file:
     path: '{{ role_path }}/files/subdir/subdira'
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Set the output subdirectory
   set_fact:
@@ -425,13 +528,13 @@
   copy:
     dest: /tmp/ansible-test-abs-link
     content: target
-  connection: local
+  delegate_to: localhost
 
 - name: Setup link target dir for absolute link
   file:
     dest: /tmp/ansible-test-abs-link-dir
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Test recursive copy to directory no trailing slash, local_follow=False
   copy:
@@ -582,13 +685,13 @@
   copy:
     dest: /tmp/ansible-test-abs-link
     content: target
-  connection: local
+  delegate_to: localhost
 
 - name: Setup link target dir for absolute link
   file:
     dest: /tmp/ansible-test-abs-link-dir
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Test recursive copy to directory trailing slash, local_follow=False
   copy:
@@ -737,13 +840,13 @@
   copy:
     dest: /tmp/ansible-test-abs-link
     content: target
-  connection: local
+  delegate_to: localhost
 
 - name: Setup link target dir for absolute link
   file:
     dest: /tmp/ansible-test-abs-link-dir
     state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Test recursive copy to directory no trailing slash, local_follow=True
   copy:
@@ -838,7 +941,6 @@
       - "stat_dir_in_copy_link.stat.exists"
       - "not stat_dir_in_copy_link.stat.islnk"
       - "stat_dir_in_copy_link.stat.isdir"
-      -
       - "stat_dir_outside_copy_link.stat.exists"
       - "not stat_dir_outside_copy_link.stat.islnk"
       - "stat_dir_outside_copy_link.stat.isdir"
@@ -896,13 +998,13 @@
 
   - name: Create a directory outside of the tree
     file:
-      path: '{{ local_temp_dir }}/source2'
+      path: '{{ local_temp_dir }}/source2'
       state: directory
 
   - name: Create a symlink to a directory outside of the tree
     file:
       path: '{{ local_temp_dir }}/source1/link'
-      src: '{{ local_temp_dir }}/source2'
+      src: '{{ local_temp_dir }}/source2'
       state: link
 
   - name: Create a circular link back to the tree
@@ -915,7 +1017,7 @@
     file:
       path: '{{ local_temp_dir }}/dest1'
       state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Recursive copy the source
   copy:
@@ -961,7 +1063,7 @@
 - name: Test that remote_dir is appropriate for this test (absolute path)
   assert:
     that:
-      - '{{ remote_dir_expanded[0] == "/" }}'
+      - 'remote_dir_expanded[0] == "/"'
 
 - block:
   - name: Create a directory to copy
@@ -972,13 +1074,13 @@
   - name: Create a file inside of the directory
     copy:
       content: "testing"
-      dest: '{{ local_temp_dir }}/source_recursive/file'
+      dest: '{{ local_temp_dir }}/source_recursive/file'
 
   - name: Create a directory to place the test output in
     file:
       path: '{{ local_temp_dir }}/destination'
       state: directory
-  connection: local
+  delegate_to: localhost
 
 - name: Copy the directory and files within (no trailing slash)
   copy:
@@ -1043,6 +1145,100 @@
       - "copied_stat.results[2].stat.exists"
 
 #
+# Recursive copy with relative paths (#34893)
+#
+
+- name: Create a directory to copy
+  file:
+    path: 'source_recursive'
+    state: directory
+  delegate_to: localhost
+
+- name: Create a file inside of the directory
+  copy:
+    content: "testing"
+    dest: 'source_recursive/file'
+  delegate_to: localhost
+
+- name: Create a directory to place the test output in
+  file:
+    path: 'destination'
+    state: directory
+  delegate_to: localhost
+
+- name: Copy the directory and files within (no trailing slash)
+  copy:
+    src: 'source_recursive'
+    dest: 'destination'
+
+- name: Stat the recursively copied directory
+  stat:
+    path: "destination/{{ item }}"
+  register: copied_stat
+  with_items:
+    - "source_recursive"
+    - "source_recursive/file"
+    - "file"
+
+- debug:
+    var: copied_stat
+    verbosity: 1
+
+- name: Assert with no trailing slash, directory and file is copied
+  assert:
+    that:
+      - "copied_stat.results[0].stat.exists"
+      - "copied_stat.results[1].stat.exists"
+      - "not copied_stat.results[2].stat.exists"
+
+- name: Cleanup
+  file:
+    path: 'destination'
+    state: absent
+
+# Try again with no trailing slash
+
+- name: Create a directory to place the test output in
+  file:
+    path: 'destination'
+    state: directory
+
+- name: Copy just the files inside of the directory
+  copy:
+    src: 'source_recursive/'
+    dest: 'destination'
+
+- name: Stat the recursively copied directory
+  stat:
+    path: "destination/{{ item }}"
+  register: copied_stat
+  with_items:
+    - "source_recursive"
+    - "source_recursive/file"
+    - "file"
+
+- debug:
+    var: copied_stat
+    verbosity: 1
+
+- name: Assert with trailing slash, only the file is copied
+  assert:
+    that:
+      - "not copied_stat.results[0].stat.exists"
+      - "not copied_stat.results[1].stat.exists"
+      - "copied_stat.results[2].stat.exists"
+
+- name: Cleanup
+  file:
+    path: 'destination'
+    state: absent
+
+- name: Cleanup
+  file:
+    path: 'source_recursive'
+    state: absent
+
+#
 # issue 8394
 #
 
@@ -1065,7 +1261,7 @@
   assert:
     that:
       - "copy_result6.changed"
-      - "copy_result6.dest == '{{remote_dir_expanded}}/multiline.txt'"
+      - "copy_result6.dest == remote_dir_expanded + '/multiline.txt'"
       - "copy_result6.checksum == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 # test overwriting a file as an unprivileged user (pull request #8624)
@@ -1105,6 +1301,10 @@
 
   remote_user: root
 
+#
+# Follow=True tests
+#
+
 # test overwriting a link using "follow=yes" so that the link
 # is preserved and the link target is updated
 
@@ -1122,7 +1322,7 @@
 - name: Update the test file using follow=True to preserve the link
   copy:
     dest: "{{ remote_dir }}/follow_link"
-    content: "this is the new content\n"
+    src: foo.txt
     follow: yes
   register: replace_follow_result
 
@@ -1131,19 +1331,37 @@
     path: "{{ remote_dir }}/follow_link"
   register: stat_link_result
 
-- name: Assert that the link is still a link
+- name: Assert that the link is still a link and contents were changed
   assert:
     that:
-    - stat_link_result.stat.islnk
+    - stat_link_result['stat']['islnk']
+    - stat_link_result['stat']['lnk_target'] == './follow_test'
+    - replace_follow_result['changed']
+    - "replace_follow_result['checksum'] == remote_file_hash"
 
-- name: Get the checksum of the link target
-  shell: "{{ ansible_python_interpreter }} -c 'import hashlib; print(hashlib.sha1(open(\"{{remote_dir | expanduser}}/follow_test\", \"rb\").read()).hexdigest())'"
-  register: target_file_result
+# Symlink handling when the dest is already there
+# https://github.com/ansible/ansible-modules-core/issues/1568
 
-- name: Assert that the link target was updated
+- name: test idempotency by trying to copy to the symlink with the same contents
+  copy:
+    dest: "{{ remote_dir }}/follow_link"
+    src: foo.txt
+    follow: yes
+  register: replace_follow_result
+
+- name: Stat the link path
+  stat:
+    path: "{{ remote_dir }}/follow_link"
+  register: stat_link_result
+
+- name: Assert that the link is still a link and contents were changed
   assert:
     that:
-    - replace_follow_result.checksum == target_file_result.stdout
+    - stat_link_result['stat']['islnk']
+    - stat_link_result['stat']['lnk_target'] == './follow_test'
+    - not replace_follow_result['changed']
+    - replace_follow_result['checksum'] == remote_file_hash
+
 
 - name: Update the test file using follow=False to overwrite the link
   copy:
@@ -1169,6 +1387,13 @@
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "not stat_results.stat.islnk"
 
+# test overwriting a link using "follow=yes" so that the link
+# is preserved and the link target is updated when the thing being copied is a link
+
+#
+# File mode tests
+#
+
 - name: setup directory for test
   file: state=directory dest={{remote_dir }}/directory mode=0755
 
@@ -1185,9 +1410,10 @@
 
 - assert:
     that:
-      - "file_attrs.stat.uid == 0"
-      - "file_attrs.stat.pw_name == 'root'"
       - "file_attrs.stat.mode == '0604'"
+      # The below assertions make an invalid assumption, these were not explicitly set
+      # - "file_attrs.stat.uid == 0"
+      # - "file_attrs.stat.pw_name == 'root'"
 
 - name: check that the containing directory did not change attributes
   stat: path={{ remote_dir }}/directory/
@@ -1197,6 +1423,26 @@
     that:
       - "dir_attrs.stat.mode == '0755'"
 
+# Test that recursive copy of a directory containing a symlink to another
+# directory, with mode=preserve and local_follow=no works.
+# See: https://github.com/ansible/ansible/issues/68471
+
+- name: Test recursive copy of dir with symlinks, mode=preserve, local_follow=False
+  copy:
+    src: '{{ role_path }}/files/subdir/'
+    dest: '{{ local_temp_dir }}/preserve_symlink/'
+    mode: preserve
+    local_follow: no
+
+- name: check that we actually used and still have a symlink
+  stat: path={{ local_temp_dir }}/preserve_symlink/subdir1/bar.txt
+  register: symlink_path
+
+- assert:
+    that:
+      - symlink_path.stat.exists
+      - symlink_path.stat.islnk
+
 #
 # I believe the below section is now covered in the recursive copying section.
 # Hold on for now as an original test case but delete once confirmed that
@@ -1205,10 +1451,11 @@
 #
 # Recursive copying with symlinks tests
 #
-- block:
+- delegate_to: localhost
+  block:
   - name: Create a test dir to copy
     file:
-      path: '{{ local_temp_dir }}/top_dir'
+      path: '{{ local_temp_dir }}/top_dir'
       state: directory
 
   - name: Create a test dir to symlink to
@@ -1218,7 +1465,7 @@
 
   - name: Create a file in the test dir
     copy:
-      dest: '{{ local_temp_dir }}/linked_dir/file1'
+      dest: '{{ local_temp_dir }}/linked_dir/file1'
       content: 'hello world'
 
   - name: Create a link to the test dir
@@ -1239,11 +1486,9 @@
       src: '{{ local_temp_dir }}/top_dir/'
       state: link
 
-  connection: local
-
 - name: Copy the directory's link
   copy:
-    src: '{{ local_temp_dir }}/top_dir'
+    src: '{{ local_temp_dir }}/top_dir'
     dest: '{{ remote_dir }}/new_dir'
     local_follow: True
 
@@ -1327,8 +1572,24 @@
     state: absent
 
 # src is a file, dest is a non-existent directory (2 levels of directories):
+# using remote_src
 # checks that dest is created
-- include: dest_in_non_existent_directories.yml
+- include_tasks: file=dest_in_non_existent_directories_remote_src.yml
+  with_items:
+    - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
+
+# src is a file, dest is file in a non-existent directory: checks that a failure occurs
+# using remote_src
+- include_tasks: file=src_file_dest_file_in_non_existent_dir_remote_src.yml
+  with_items:
+    - 'new_sub_dir1/sub_dir2/foo.txt'
+    - 'new_sub_dir1/foo.txt'
+  loop_control:
+    loop_var: 'dest'
+
+# src is a file, dest is a non-existent directory (2 levels of directories):
+# checks that dest is created
+- include_tasks: file=dest_in_non_existent_directories.yml
   with_items:
     - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
     - { src: 'subdir', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/subdir/bar.txt' }
@@ -1337,9 +1598,936 @@
     - { src: 'subdir/', dest: 'new_sub_dir1/sub_dir2', check: 'new_sub_dir1/sub_dir2/bar.txt' }
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
-- include: src_file_dest_file_in_non_existent_dir.yml
+- include_tasks: file=src_file_dest_file_in_non_existent_dir.yml
   with_items:
     - 'new_sub_dir1/sub_dir2/foo.txt'
     - 'new_sub_dir1/foo.txt'
   loop_control:
     loop_var: 'dest'
+#
+# Recursive copying on remote host
+#
+## prepare for test
+- block:
+
+  - name: execute - Create a test src dir
+    file:
+      path: '{{ remote_dir }}/remote_dir_src'
+      state: directory
+
+  - name: gather - Stat the remote_dir_src
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src'
+    register: stat_remote_dir_src_before
+
+  - name: execute - Create a subdir
+    file:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+      state: directory
+
+  - name: gather - Stat the remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir'
+    register: stat_remote_dir_src_subdir_before
+
+  - name: execute - Create a file in the top of src
+    copy:
+      dest: '{{ remote_dir }}/remote_dir_src/file1'
+      content: 'hello world 1'
+
+  - name: gather - Stat the remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/file1'
+    register: stat_remote_dir_src_file1_before
+
+  - name: execute - Create a file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+      content: 'hello world 12'
+
+  - name: gather - Stat the remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+    register: stat_remote_dir_src_subdir_file12_before
+
+  - name: execute -  Create a link to the file12
+    file:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+      src: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+      state: link
+
+  - name: gather - Stat the remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/remote_dir_src/link_file12'
+    register: stat_remote_dir_src_link_file12_before
+
+### test when src endswith os.sep and dest isdir
+- block:
+
+### local_follow: True
+  - name: execute - Create a test dest dir
+    file:
+      path: '{{ remote_dir }}/testcase1_local_follow_true'
+      state: directory
+
+  - name: execute - Copy the directory on remote with local_follow True
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/testcase1_local_follow_true'
+      local_follow: True
+    register: testcase1
+
+  - name: gather - Stat the testcase1_local_follow_true
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_true'
+    register: stat_testcase1_local_follow_true
+  - name: gather - Stat the testcase1_local_follow_true/subdir
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_true/subdir'
+    register: stat_testcase1_local_follow_true_subdir
+  - name: gather - Stat the testcase1_local_follow_true/file1
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_true/file1'
+    register: stat_testcase1_local_follow_true_file1
+  - name: gather - Stat the testcase1_local_follow_true/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_true/subdir/file12'
+    register: stat_testcase1_local_follow_true_subdir_file12
+  - name: gather - Stat the testcase1_local_follow_true/link_file12
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_true/link_file12'
+    register: stat_testcase1_local_follow_true_link_file12
+
+  - name: assert - remote_dir_src has copied with local_follow True.
+    assert:
+      that:
+      - testcase1 is changed
+      - "stat_testcase1_local_follow_true.stat.isdir"
+      - "stat_testcase1_local_follow_true_subdir.stat.isdir"
+      - "stat_testcase1_local_follow_true_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase1_local_follow_true_file1.stat.checksum"
+      - "stat_testcase1_local_follow_true_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase1_local_follow_true_subdir_file12.stat.checksum"
+      - "stat_testcase1_local_follow_true_link_file12.stat.exists"
+      - "not stat_testcase1_local_follow_true_link_file12.stat.islnk"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase1_local_follow_true_link_file12.stat.checksum"
+
+### local_follow: False
+  - name: execute - Create a test dest dir
+    file:
+      path: '{{ remote_dir }}/testcase1_local_follow_false'
+      state: directory
+
+  - name: execute - Copy the directory on remote with local_follow False
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/testcase1_local_follow_false'
+      local_follow: False
+    register: testcase1
+
+  - name: gather - Stat the testcase1_local_follow_false
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_false'
+    register: stat_testcase1_local_follow_false
+  - name: gather - Stat the testcase1_local_follow_false/subdir
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_false/subdir'
+    register: stat_testcase1_local_follow_false_subdir
+  - name: gather - Stat the testcase1_local_follow_false/file1
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_false/file1'
+    register: stat_testcase1_local_follow_false_file1
+  - name: gather - Stat the testcase1_local_follow_false/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_false/subdir/file12'
+    register: stat_testcase1_local_follow_false_subdir_file12
+  - name: gather - Stat the testcase1_local_follow_false/link_file12
+    stat:
+      path: '{{ remote_dir }}/testcase1_local_follow_false/link_file12'
+    register: stat_testcase1_local_follow_false_link_file12
+
+  - name: assert - remote_dir_src has copied with local_follow True.
+    assert:
+      that:
+      - testcase1 is changed
+      - "stat_testcase1_local_follow_false.stat.isdir"
+      - "stat_testcase1_local_follow_false_subdir.stat.isdir"
+      - "stat_testcase1_local_follow_false_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase1_local_follow_false_file1.stat.checksum"
+      - "stat_testcase1_local_follow_false_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase1_local_follow_false_subdir_file12.stat.checksum"
+      - "stat_testcase1_local_follow_false_link_file12.stat.exists"
+      - "stat_testcase1_local_follow_false_link_file12.stat.islnk"
+
+## test when src endswith os.sep and dest not exists
+
+- block:
+    - name: execute - Copy the directory on remote with local_follow True
+      copy:
+        remote_src: True
+        src: '{{ remote_dir }}/remote_dir_src/'
+        dest: '{{ remote_dir }}/testcase2_local_follow_true'
+        local_follow: True
+      register: testcase2
+
+    - name: gather - Stat the testcase2_local_follow_true
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true'
+      register: stat_testcase2_local_follow_true
+    - name: gather - Stat the testcase2_local_follow_true/subdir
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/subdir'
+      register: stat_testcase2_local_follow_true_subdir
+    - name: gather - Stat the testcase2_local_follow_true/file1
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/file1'
+      register: stat_testcase2_local_follow_true_file1
+    - name: gather - Stat the testcase2_local_follow_true/subdir/file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/subdir/file12'
+      register: stat_testcase2_local_follow_true_subdir_file12
+    - name: gather - Stat the testcase2_local_follow_true/link_file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_true/link_file12'
+      register: stat_testcase2_local_follow_true_link_file12
+
+    - name: assert - remote_dir_src has copied with local_follow True.
+      assert:
+        that:
+        - testcase2 is changed
+        - "stat_testcase2_local_follow_true.stat.isdir"
+        - "stat_testcase2_local_follow_true_subdir.stat.isdir"
+        - "stat_testcase2_local_follow_true_file1.stat.exists"
+        - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase2_local_follow_true_file1.stat.checksum"
+        - "stat_testcase2_local_follow_true_subdir_file12.stat.exists"
+        - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase2_local_follow_true_subdir_file12.stat.checksum"
+        - "stat_testcase2_local_follow_true_link_file12.stat.exists"
+        - "not stat_testcase2_local_follow_true_link_file12.stat.islnk"
+        - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase2_local_follow_true_link_file12.stat.checksum"
+
+### local_follow: False
+    - name: execute - Copy the directory on remote with local_follow False
+      copy:
+        remote_src: True
+        src: '{{ remote_dir }}/remote_dir_src/'
+        dest: '{{ remote_dir }}/testcase2_local_follow_false'
+        local_follow: False
+      register: testcase2
+
+    - name: execute - Copy the directory on remote with local_follow False
+      copy:
+        remote_src: True
+        src: '{{ remote_dir }}/remote_dir_src/'
+        dest: '{{ remote_dir }}/testcase2_local_follow_false'
+        local_follow: False
+      register: testcase1
+
+    - name: gather - Stat the testcase2_local_follow_false
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false'
+      register: stat_testcase2_local_follow_false
+    - name: gather - Stat the testcase2_local_follow_false/subdir
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/subdir'
+      register: stat_testcase2_local_follow_false_subdir
+    - name: gather - Stat the testcase2_local_follow_false/file1
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/file1'
+      register: stat_testcase2_local_follow_false_file1
+    - name: gather - Stat the testcase2_local_follow_false/subdir/file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/subdir/file12'
+      register: stat_testcase2_local_follow_false_subdir_file12
+    - name: gather - Stat the testcase2_local_follow_false/link_file12
+      stat:
+        path: '{{ remote_dir }}/testcase2_local_follow_false/link_file12'
+      register: stat_testcase2_local_follow_false_link_file12
+
+    - name: assert - remote_dir_src has copied with local_follow True.
+      assert:
+        that:
+        - testcase2 is changed
+        - "stat_testcase2_local_follow_false.stat.isdir"
+        - "stat_testcase2_local_follow_false_subdir.stat.isdir"
+        - "stat_testcase2_local_follow_false_file1.stat.exists"
+        - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase2_local_follow_false_file1.stat.checksum"
+        - "stat_testcase2_local_follow_false_subdir_file12.stat.exists"
+        - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase2_local_follow_false_subdir_file12.stat.checksum"
+        - "stat_testcase2_local_follow_false_link_file12.stat.exists"
+        - "stat_testcase2_local_follow_false_link_file12.stat.islnk"
+
+## test when src not endswith os.sep and dest isdir
+- block:
+
+### local_follow: True
+  - name: execute - Create a test dest dir
+    file:
+      path: '{{ remote_dir }}/testcase3_local_follow_true'
+      state: directory
+
+  - name: execute - Copy the directory on remote with local_follow True
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src'
+      dest: '{{ remote_dir }}/testcase3_local_follow_true'
+      local_follow: True
+    register: testcase3
+
+  - name: gather - Stat the testcase3_local_follow_true
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_true/remote_dir_src'
+    register: stat_testcase3_local_follow_true_remote_dir_src
+  - name: gather - Stat the testcase3_local_follow_true/remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_true/remote_dir_src/subdir'
+    register: stat_testcase3_local_follow_true_remote_dir_src_subdir
+  - name: gather - Stat the testcase3_local_follow_true/remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_true/remote_dir_src/file1'
+    register: stat_testcase3_local_follow_true_remote_dir_src_file1
+  - name: gather - Stat the testcase3_local_follow_true/remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_true/remote_dir_src/subdir/file12'
+    register: stat_testcase3_local_follow_true_remote_dir_src_subdir_file12
+  - name: gather - Stat the testcase3_local_follow_true/remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_true/remote_dir_src/link_file12'
+    register: stat_testcase3_local_follow_true_remote_dir_src_link_file12
+
+  - name: assert - remote_dir_src has copied with local_follow True.
+    assert:
+      that:
+      - testcase3 is changed
+      - "stat_testcase3_local_follow_true_remote_dir_src.stat.isdir"
+      - "stat_testcase3_local_follow_true_remote_dir_src_subdir.stat.isdir"
+      - "stat_testcase3_local_follow_true_remote_dir_src_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase3_local_follow_true_remote_dir_src_file1.stat.checksum"
+      - "stat_testcase3_local_follow_true_remote_dir_src_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase3_local_follow_true_remote_dir_src_subdir_file12.stat.checksum"
+      - "stat_testcase3_local_follow_true_remote_dir_src_link_file12.stat.exists"
+      - "not stat_testcase3_local_follow_true_remote_dir_src_link_file12.stat.islnk"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase3_local_follow_true_remote_dir_src_link_file12.stat.checksum"
+
+### local_follow: False
+  - name: execute - Create a test dest dir
+    file:
+      path: '{{ remote_dir }}/testcase3_local_follow_false'
+      state: directory
+
+  - name: execute - Copy the directory on remote with local_follow False
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src'
+      dest: '{{ remote_dir }}/testcase3_local_follow_false'
+      local_follow: False
+    register: testcase3
+
+  - name: gather - Stat the testcase3_local_follow_false
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_false/remote_dir_src'
+    register: stat_testcase3_local_follow_false_remote_dir_src
+  - name: gather - Stat the testcase3_local_follow_false/remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_false/remote_dir_src/subdir'
+    register: stat_testcase3_local_follow_false_remote_dir_src_subdir
+  - name: gather - Stat the testcase3_local_follow_false/remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_false/remote_dir_src/file1'
+    register: stat_testcase3_local_follow_false_remote_dir_src_file1
+  - name: gather - Stat the testcase3_local_follow_false/remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_false/remote_dir_src/subdir/file12'
+    register: stat_testcase3_local_follow_false_remote_dir_src_subdir_file12
+  - name: gather - Stat the testcase3_local_follow_false/remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/testcase3_local_follow_false/remote_dir_src/link_file12'
+    register: stat_testcase3_local_follow_false_remote_dir_src_link_file12
+
+  - name: assert - remote_dir_src has copied with local_follow False.
+    assert:
+      that:
+      - testcase3 is changed
+      - "stat_testcase3_local_follow_false_remote_dir_src.stat.isdir"
+      - "stat_testcase3_local_follow_false_remote_dir_src_subdir.stat.isdir"
+      - "stat_testcase3_local_follow_false_remote_dir_src_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase3_local_follow_false_remote_dir_src_file1.stat.checksum"
+      - "stat_testcase3_local_follow_false_remote_dir_src_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase3_local_follow_false_remote_dir_src_subdir_file12.stat.checksum"
+      - "stat_testcase3_local_follow_false_remote_dir_src_link_file12.stat.exists"
+      - "stat_testcase3_local_follow_false_remote_dir_src_link_file12.stat.islnk"
+
+## test when src not endswith os.sep and dest not exists
+- block:
+### local_follow: True
+  - name: execute - Copy the directory on remote with local_follow True
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src'
+      dest: '{{ remote_dir }}/testcase4_local_follow_true'
+      local_follow: True
+    register: testcase4
+
+  - name: gather - Stat the testcase4_local_follow_true
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_true/remote_dir_src'
+    register: stat_testcase4_local_follow_true_remote_dir_src
+  - name: gather - Stat the testcase4_local_follow_true/remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_true/remote_dir_src/subdir'
+    register: stat_testcase4_local_follow_true_remote_dir_src_subdir
+  - name: gather - Stat the testcase4_local_follow_true/remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_true/remote_dir_src/file1'
+    register: stat_testcase4_local_follow_true_remote_dir_src_file1
+  - name: gather - Stat the testcase4_local_follow_true/remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_true/remote_dir_src/subdir/file12'
+    register: stat_testcase4_local_follow_true_remote_dir_src_subdir_file12
+  - name: gather - Stat the testcase4_local_follow_true/remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_true/remote_dir_src/link_file12'
+    register: stat_testcase4_local_follow_true_remote_dir_src_link_file12
+
+  - name: assert - remote_dir_src has copied with local_follow True.
+    assert:
+      that:
+      - testcase4 is changed
+      - "stat_testcase4_local_follow_true_remote_dir_src.stat.isdir"
+      - "stat_testcase4_local_follow_true_remote_dir_src_subdir.stat.isdir"
+      - "stat_testcase4_local_follow_true_remote_dir_src_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase4_local_follow_true_remote_dir_src_file1.stat.checksum"
+      - "stat_testcase4_local_follow_true_remote_dir_src_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase4_local_follow_true_remote_dir_src_subdir_file12.stat.checksum"
+      - "stat_testcase4_local_follow_true_remote_dir_src_link_file12.stat.exists"
+      - "not stat_testcase4_local_follow_true_remote_dir_src_link_file12.stat.islnk"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase4_local_follow_true_remote_dir_src_link_file12.stat.checksum"
+
+### local_follow: False
+  - name: execute - Copy the directory on remote with local_follow False
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src'
+      dest: '{{ remote_dir }}/testcase4_local_follow_false'
+      local_follow: False
+    register: testcase4
+
+  - name: gather - Stat the testcase4_local_follow_false
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_false/remote_dir_src'
+    register: stat_testcase4_local_follow_false_remote_dir_src
+  - name: gather - Stat the testcase4_local_follow_false/remote_dir_src/subdir
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_false/remote_dir_src/subdir'
+    register: stat_testcase4_local_follow_false_remote_dir_src_subdir
+  - name: gather - Stat the testcase4_local_follow_false/remote_dir_src/file1
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_false/remote_dir_src/file1'
+    register: stat_testcase4_local_follow_false_remote_dir_src_file1
+  - name: gather - Stat the testcase4_local_follow_false/remote_dir_src/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_false/remote_dir_src/subdir/file12'
+    register: stat_testcase4_local_follow_false_remote_dir_src_subdir_file12
+  - name: gather - Stat the testcase4_local_follow_false/remote_dir_src/link_file12
+    stat:
+      path: '{{ remote_dir }}/testcase4_local_follow_false/remote_dir_src/link_file12'
+    register: stat_testcase4_local_follow_false_remote_dir_src_link_file12
+
+  - name: assert - remote_dir_src has copied with local_follow False.
+    assert:
+      that:
+      - testcase4 is changed
+      - "stat_testcase4_local_follow_false_remote_dir_src.stat.isdir"
+      - "stat_testcase4_local_follow_false_remote_dir_src_subdir.stat.isdir"
+      - "stat_testcase4_local_follow_false_remote_dir_src_file1.stat.exists"
+      - "stat_remote_dir_src_file1_before.stat.checksum == stat_testcase4_local_follow_false_remote_dir_src_file1.stat.checksum"
+      - "stat_testcase4_local_follow_false_remote_dir_src_subdir_file12.stat.exists"
+      - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_testcase4_local_follow_false_remote_dir_src_subdir_file12.stat.checksum"
+      - "stat_testcase4_local_follow_false_remote_dir_src_link_file12.stat.exists"
+      - "stat_testcase4_local_follow_false_remote_dir_src_link_file12.stat.islnk"
+
+- block:
+  - name: execute - Clone the source directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/remote_dir_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src'
+  - name: Create a 2nd level subdirectory
+    file:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/'
+      state: directory
+  - name: execute - Copy the directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest'
+      local_follow: True
+  - name: execute - Create a new file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+      content: 'very new file'
+  - name: gather - Stat the testcase5_remote_src_subdirs_src/subdir/subdir2/file13
+    stat:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+  - name: execute - Copy the directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest/'
+    register: testcase5_new
+  - name: execute - Edit a file in the subdir
+    copy:
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+      content: 'NOT hello world 12'
+  - name: gather - Stat the testcase5_remote_src_subdirs_src/subdir/subdir2/file13
+    stat:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/subdir/subdir2/file13'
+    register: stat_testcase5_remote_src_subdirs_file13_before
+  - name: execute - Copy the directory on remote
+    copy:
+      remote_src: True
+      src: '{{ remote_dir }}/testcase5_remote_src_subdirs_src/'
+      dest: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest/'
+    register: testcase5_edited
+  - name: gather - Stat the testcase5_remote_src_subdirs_dest/subdir/subdir2/file13
+    stat:
+      path: '{{ remote_dir }}/testcase5_remote_src_subdirs_dest/subdir/subdir2/file13'
+    register: stat_testcase5_remote_src_subdirs_file13
+  - name: assert - remote_dir_src has copied with local_follow False.
+    assert:
+      that:
+      - testcase5_new is changed
+      - testcase5_edited is changed
+      - "stat_testcase5_remote_src_subdirs_file13.stat.exists"
+      - "stat_testcase5_remote_src_subdirs_file13_before.stat.checksum == stat_testcase5_remote_src_subdirs_file13.stat.checksum"
+
+
+## test copying the directory on remote with chown
+- name: setting 'ansible_copy_test_user_name' outside block since 'always' section depends on this also
+  set_fact:
+    ansible_copy_test_user_name: 'ansible_copy_test_{{ 100000 | random }}'
+
+- block:
+
+  - name: execute - create a user for test
+    user:
+      name: '{{ ansible_copy_test_user_name }}'
+      state: present
+    become: true
+    register: ansible_copy_test_user
+
+  - name: execute - create a group for test
+    group:
+      name: '{{ ansible_copy_test_user_name }}'
+      state: present
+    become: true
+    register: ansible_copy_test_group
+
+  - name: execute - Copy the directory on remote with chown
+    copy:
+      remote_src: True
+      src: '{{ remote_dir_expanded }}/remote_dir_src/'
+      dest: '{{ remote_dir_expanded }}/new_dir_with_chown'
+      owner: '{{ ansible_copy_test_user_name }}'
+      group: '{{ ansible_copy_test_user_name }}'
+      follow: true
+    register: testcase5
+    become: true
+
+  - name: gather - Stat the new_dir_with_chown
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown'
+    register: stat_new_dir_with_chown
+
+  - name: gather - Stat the new_dir_with_chown/file1
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/file1'
+    register: stat_new_dir_with_chown_file1
+
+  - name: gather - Stat the new_dir_with_chown/subdir
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/subdir'
+    register: stat_new_dir_with_chown_subdir
+
+  - name: gather - Stat the new_dir_with_chown/subdir/file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/subdir/file12'
+    register: stat_new_dir_with_chown_subdir_file12
+
+  - name: gather - Stat the new_dir_with_chown/link_file12
+    stat:
+      path: '{{ remote_dir }}/new_dir_with_chown/link_file12'
+    register: stat_new_dir_with_chown_link_file12
+
+  - name: assert - owner and group have changed
+    assert:
+      that:
+      - testcase5 is changed
+      - stat_new_dir_with_chown.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_file1.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_file1.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_file1.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_file1.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_subdir.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_subdir.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir_file12.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_subdir_file12.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_subdir_file12.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_subdir_file12.stat.gr_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_link_file12.stat.uid == ansible_copy_test_user.uid
+      - stat_new_dir_with_chown_link_file12.stat.gid == ansible_copy_test_group.gid
+      - stat_new_dir_with_chown_link_file12.stat.pw_name == ansible_copy_test_user_name
+      - stat_new_dir_with_chown_link_file12.stat.gr_name == ansible_copy_test_user_name
+
+  always:
+    - name: execute - remove the user for test
+      user:
+        name: '{{ ansible_copy_test_user_name }}'
+        state: absent
+        remove: yes
+      become: true
+
+    - name: execute - remove the group for test
+      group:
+        name: '{{ ansible_copy_test_user_name }}'
+        state: absent
+      become: true
+
+## testcase last - make sure remote_dir_src not change
+- block:
+   - name: Stat the remote_dir_src
+     stat:
+       path: '{{ remote_dir }}/remote_dir_src'
+     register: stat_remote_dir_src_after
+
+   - name: Stat the remote_dir_src/subdir
+     stat:
+       path: '{{ remote_dir }}/remote_dir_src/subdir'
+     register: stat_remote_dir_src_subdir_after
+
+   - name: Stat the remote_dir_src/file1
+     stat:
+       path: '{{ remote_dir }}/remote_dir_src/file1'
+     register: stat_remote_dir_src_file1_after
+
+   - name: Stat the remote_dir_src/subdir/file12
+     stat:
+       path: '{{ remote_dir }}/remote_dir_src/subdir/file12'
+     register: stat_remote_dir_src_subdir_file12_after
+
+   - name: Stat the remote_dir_src/link_file12
+     stat:
+       path: '{{ remote_dir }}/remote_dir_src/link_file12'
+     register: stat_remote_dir_src_link_file12_after
+
+   - name: Assert that remote_dir_src not change.
+     assert:
+       that:
+       - "stat_remote_dir_src_after.stat.exists"
+       - "stat_remote_dir_src_after.stat.isdir"
+       - "stat_remote_dir_src_before.stat.uid == stat_remote_dir_src_after.stat.uid"
+       - "stat_remote_dir_src_before.stat.gid == stat_remote_dir_src_after.stat.gid"
+       - "stat_remote_dir_src_before.stat.pw_name == stat_remote_dir_src_after.stat.pw_name"
+       - "stat_remote_dir_src_before.stat.gr_name == stat_remote_dir_src_after.stat.gr_name"
+       - "stat_remote_dir_src_before.stat.path == stat_remote_dir_src_after.stat.path"
+       - "stat_remote_dir_src_before.stat.mode == stat_remote_dir_src_after.stat.mode"
+
+       - "stat_remote_dir_src_subdir_after.stat.exists"
+       - "stat_remote_dir_src_subdir_after.stat.isdir"
+       - "stat_remote_dir_src_subdir_before.stat.uid == stat_remote_dir_src_subdir_after.stat.uid"
+       - "stat_remote_dir_src_subdir_before.stat.gid == stat_remote_dir_src_subdir_after.stat.gid"
+       - "stat_remote_dir_src_subdir_before.stat.pw_name == stat_remote_dir_src_subdir_after.stat.pw_name"
+       - "stat_remote_dir_src_subdir_before.stat.gr_name == stat_remote_dir_src_subdir_after.stat.gr_name"
+       - "stat_remote_dir_src_subdir_before.stat.path == stat_remote_dir_src_subdir_after.stat.path"
+       - "stat_remote_dir_src_subdir_before.stat.mode == stat_remote_dir_src_subdir_after.stat.mode"
+
+       - "stat_remote_dir_src_file1_after.stat.exists"
+       - "stat_remote_dir_src_file1_before.stat.uid == stat_remote_dir_src_file1_after.stat.uid"
+       - "stat_remote_dir_src_file1_before.stat.gid == stat_remote_dir_src_file1_after.stat.gid"
+       - "stat_remote_dir_src_file1_before.stat.pw_name == stat_remote_dir_src_file1_after.stat.pw_name"
+       - "stat_remote_dir_src_file1_before.stat.gr_name == stat_remote_dir_src_file1_after.stat.gr_name"
+       - "stat_remote_dir_src_file1_before.stat.path == stat_remote_dir_src_file1_after.stat.path"
+       - "stat_remote_dir_src_file1_before.stat.mode == stat_remote_dir_src_file1_after.stat.mode"
+       - "stat_remote_dir_src_file1_before.stat.checksum == stat_remote_dir_src_file1_after.stat.checksum"
+
+       - "stat_remote_dir_src_subdir_file12_after.stat.exists"
+       - "stat_remote_dir_src_subdir_file12_before.stat.uid == stat_remote_dir_src_subdir_file12_after.stat.uid"
+       - "stat_remote_dir_src_subdir_file12_before.stat.gid == stat_remote_dir_src_subdir_file12_after.stat.gid"
+       - "stat_remote_dir_src_subdir_file12_before.stat.pw_name == stat_remote_dir_src_subdir_file12_after.stat.pw_name"
+       - "stat_remote_dir_src_subdir_file12_before.stat.gr_name == stat_remote_dir_src_subdir_file12_after.stat.gr_name"
+       - "stat_remote_dir_src_subdir_file12_before.stat.path == stat_remote_dir_src_subdir_file12_after.stat.path"
+       - "stat_remote_dir_src_subdir_file12_before.stat.mode == stat_remote_dir_src_subdir_file12_after.stat.mode"
+       - "stat_remote_dir_src_subdir_file12_before.stat.checksum == stat_remote_dir_src_subdir_file12_after.stat.checksum"
+
+       - "stat_remote_dir_src_link_file12_after.stat.exists"
+       - "stat_remote_dir_src_link_file12_after.stat.islnk"
+       - "stat_remote_dir_src_link_file12_before.stat.uid == stat_remote_dir_src_link_file12_after.stat.uid"
+       - "stat_remote_dir_src_link_file12_before.stat.gid == stat_remote_dir_src_link_file12_after.stat.gid"
+       - "stat_remote_dir_src_link_file12_before.stat.pw_name == stat_remote_dir_src_link_file12_after.stat.pw_name"
+       - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_remote_dir_src_link_file12_after.stat.gr_name"
+       - "stat_remote_dir_src_link_file12_before.stat.path == stat_remote_dir_src_link_file12_after.stat.path"
+       - "stat_remote_dir_src_link_file12_before.stat.mode == stat_remote_dir_src_link_file12_after.stat.mode"
+
+# Test for issue 69783: copy with remote_src=yes and src='dir/' preserves all permissions
+- block:
+   - name: Create directory structure
+     file:
+        path: "{{ local_temp_dir }}/test69783/{{ item }}"
+        state: directory
+     loop:
+        - "src/dir"
+        - "dest"
+
+   - name: Create source file structure
+     file:
+        path: "{{ local_temp_dir }}/test69783/src/{{ item.name }}"
+        state: touch
+        mode: "{{ item.mode }}"
+     loop:
+        - { name: 'readwrite', mode: '0644' }
+        - { name: 'executable', mode: '0755' }
+        - { name: 'readonly', mode: '0444' }
+        - { name: 'dir/readwrite', mode: '0644' }
+        - { name: 'dir/executable', mode: '0755' }
+        - { name: 'dir/readonly', mode: '0444' }
+
+   - name: Recursive remote copy with preserve
+     copy:
+        src: "{{ local_temp_dir }}/test69783/src/"
+        dest: "{{ local_temp_dir }}/test69783/dest/"
+        remote_src: yes
+        mode: preserve
+
+   - name: Stat dest 'readwrite' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/readwrite"
+     register: dest_readwrite_stat
+
+   - name: Stat dest 'executable' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/executable"
+     register: dest_executable_stat
+
+   - name: Stat dest 'readonly' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/readonly"
+     register: dest_readonly_stat
+
+   - name: Stat dest 'dir/readwrite' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/dir/readwrite"
+     register: dest_dir_readwrite_stat
+
+   - name: Stat dest 'dir/executable' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/dir/executable"
+     register: dest_dir_executable_stat
+
+   - name: Stat dest 'dir/readonly' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/dir/readonly"
+     register: dest_dir_readonly_stat
+
+   - name: Assert modes are preserved
+     assert:
+       that:
+         - "dest_readwrite_stat.stat.mode == '0644'"
+         - "dest_executable_stat.stat.mode == '0755'"
+         - "dest_readonly_stat.stat.mode == '0444'"
+         - "dest_dir_readwrite_stat.stat.mode == '0644'"
+         - "dest_dir_executable_stat.stat.mode == '0755'"
+         - "dest_dir_readonly_stat.stat.mode == '0444'"
+
+- name: fail to copy an encrypted file without the password set
+  copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{remote_tmp_dir}}/copy/file'
+  register: fail_copy_encrypted_file
+  ignore_errors: yes # weird failed_when doesn't work in this case
+
+- name: assert failure message when copying an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_encrypted_file is failed
+    - fail_copy_encrypted_file.msg.endswith('A vault password or secret must be specified to decrypt ' + role_path + '/files-different/vault/vault-file')
+
+- name: fail to copy a directory with an encrypted file without the password
+  copy:
+    src: '{{role_path}}/files-different/vault'
+    dest: '{{remote_tmp_dir}}/copy'
+  register: fail_copy_directory_with_enc_file
+  ignore_errors: yes
+
+- name: assert failure message when copying a directory that contains an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_directory_with_enc_file is failed
+    - fail_copy_directory_with_enc_file.msg.endswith('A vault password or secret must be specified to decrypt ' + role_path + '/files-different/vault/vault-file')
+
+#
+# Test for issue 74536: recursively copy all nested directories with remote_src=yes and src='dir/' when dest exists
+#
+- vars:
+    src: '{{ remote_dir }}/testcase_74536'
+  block:
+    - name: create source dir with 3 nested subdirs
+      file:
+        path: '{{ src }}/a/b1/c1'
+        state: directory
+
+    - name: copy the source dir with a trailing slash
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+      failed_when: copy_result is not changed
+
+    - name: remove the source dir to recreate with different subdirs
+      file:
+        path: '{{ src }}'
+        state: absent
+
+    - name: recreate source dir
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - '{{ src }}/a/b1/c2'
+        - '{{ src }}/a/b2/c3'
+
+    - name: copy the source dir containing new subdirs into the existing dest dir
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+
+    - name: stat each directory that should exist
+      stat:
+        path: '{{ item }}'
+      register: stat_result
+      loop:
+        - '{{ src }}_dest'
+        - '{{ src }}_dest/a'
+        - '{{ src }}_dest/a/b1'
+        - '{{ src }}_dest/a/b2'
+        - '{{ src }}_dest/a/b1/c1'
+        - '{{ src }}_dest/a/b1/c2'
+        - '{{ src }}_dest/a/b2/c3'
+
+    - debug: msg="{{ stat_result }}"
+
+    - assert:
+        that:
+          - copy_result is changed
+          # all paths exist
+          - stat_result.results | map(attribute='stat') | map(attribute='exists') | unique == [true]
+          # all paths are dirs
+          - stat_result.results | map(attribute='stat') | map(attribute='isdir') | unique == [true]
+
+    - name: copy the src again to verify no changes will be made
+      copy:
+        src: '{{ src }}/'
+        remote_src: yes
+        dest: '{{ src }}_dest/'
+      register: copy_result
+      failed_when: copy_result is changed
+
+    - name: clean up src and dest
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ src }}'
+        - '{{ src }}_dest'
+
+- name: Verify atime and mtime update on content change (same partition)
+  vars:
+    remote_file: "{{ remote_tmp_dir }}/foo.txt"
+    ansible_remote_tmp: "{{ remote_tmp_dir }}"
+  block:
+    - name: Create a dest file
+      shell: "echo Test content > {{ remote_file }}"
+      register: create_dest_result
+
+    - name: Check the stat results of the file before copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_before_copy
+
+    - name: Overwrite the file using the content system
+      copy:
+        content: "modified"
+        dest: "{{ remote_file }}"
+        decrypt: no
+      register: copy_result
+
+    - name: Check the stat results of the file after copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_after_copy
+
+    - name: Assert that the file has changed
+      assert:
+         that:
+           - "create_dest_result is changed"
+           - "copy_result is changed"
+           - "'content' not in copy_result"
+           - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+           - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+  always:
+    - name: clean up dest file
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_file }}'
+
+- name: Verify atime and mtime update on content change (diff partition)
+  vars:
+    remote_file: "/var/tmp/foo.txt"
+    ansible_remote_tmp: "/tmp"
+  block:
+    - name: Create a dest file
+      shell: "echo Test content > {{ remote_file }}"
+      register: create_dest_result
+
+    - name: Check the stat results of the file before copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_before_copy
+
+    - name: Overwrite the file using the content system
+      copy:
+        content: "modified"
+        dest: "{{ remote_file }}"
+        decrypt: no
+      register: copy_result
+
+    - name: Check the stat results of the file after copying
+      stat:
+        path: "{{ remote_file }}"
+      register: stat_results_after_copy
+
+    - name: Assert that the file has changed
+      assert:
+         that:
+           - "create_dest_result is changed"
+           - "copy_result is changed"
+           - "'content' not in copy_result"
+           - "stat_results_before_copy.stat.atime < stat_results_after_copy.stat.atime"
+           - "stat_results_before_copy.stat.mtime < stat_results_after_copy.stat.mtime"
+  always:
+    - name: clean up dest file
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - '{{ remote_file }}'

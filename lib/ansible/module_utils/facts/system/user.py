@@ -13,12 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import getpass
 import os
 import pwd
+import typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -28,14 +28,17 @@ class UserFactCollector(BaseFactCollector):
     _fact_ids = set(['user_id', 'user_uid', 'user_gid',
                      'user_gecos', 'user_dir', 'user_shell',
                      'real_user_id', 'effective_user_id',
-                     'effective_group_ids'])
+                     'effective_group_ids'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         user_facts = {}
 
         user_facts['user_id'] = getpass.getuser()
 
-        pwent = pwd.getpwnam(getpass.getuser())
+        try:
+            pwent = pwd.getpwnam(getpass.getuser())
+        except KeyError:
+            pwent = pwd.getpwuid(os.getuid())
 
         user_facts['user_uid'] = pwent.pw_uid
         user_facts['user_gid'] = pwent.pw_gid

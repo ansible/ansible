@@ -15,26 +15,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+from ansible.plugins import AnsiblePlugin
 from ansible.utils.path import basedir
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class BaseVarsPlugin(object):
+class BaseVarsPlugin(AnsiblePlugin):
 
     """
     Loads variables for groups and/or hosts
     """
+    is_stateless = False
 
     def __init__(self):
         """ constructor """
+        super(BaseVarsPlugin, self).__init__()
         self._display = display
 
     def get_vars(self, loader, path, entities):

@@ -1,18 +1,11 @@
-import json
+from __future__ import annotations
+
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    if "--interactive" in sys.argv:
-        import ansible.module_utils.basic
-        ansible.module_utils.basic._ANSIBLE_ARGS = json.dumps(dict(
-            ANSIBLE_MODULE_ARGS=dict(
-                fail_mode="graceful"
-            )
-        ))
-
     module = AnsibleModule(
         argument_spec=dict(
             fail_mode=dict(type='list', default=['success'])
@@ -33,10 +26,14 @@ def main():
         if 'exception' in fail_mode:
             raise Exception('failing via exception')
 
+        if 'stderr' in fail_mode:
+            print('printed to stderr', file=sys.stderr)
+
         module.exit_json(**result)
 
     finally:
         if 'trailing_junk' in fail_mode:
             print("trailing junk after module output")
+
 
 main()

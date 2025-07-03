@@ -15,41 +15,36 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import collections.abc as c
 
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible._internal._templating._engine import TemplateEngine
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-def get_reserved_names(include_private=True):
-    ''' this function returns the list of reserved names associated with play objects'''
+def get_reserved_names(include_private: bool = True) -> set[str]:
+    """ this function returns the list of reserved names associated with play objects"""
 
-    public = set()
+    public = set(TemplateEngine().environment.globals.keys())
     private = set()
-    result = set()
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = [Play, Role, Block, Task]
 
     for aclass in class_list:
-        aobj = aclass()
-
         # build ordered list to loop over and dict with attributes
-        for attribute in aobj.__dict__['_attributes']:
-            if 'private' in attribute:
-                private.add(attribute)
+        for name, attr in aclass.fattributes.items():
+            if attr.private:
+                private.add(name)
             else:
-                public.add(attribute)
+                public.add(name)
 
     # local_action is implicit with action
     if 'action' in public:
@@ -65,16 +60,30 @@ def get_reserved_names(include_private=True):
     else:
         result = public
 
+    result.discard('gather_subset')
+
     return result
 
 
-def warn_if_reserved(myvars):
-    ''' this function warns if any variable passed conflicts with internally reserved names '''
+def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None = None) -> None:
+    """Issue a warning for any variable which conflicts with an internally reserved name."""
+    if additional is None:
+        reserved = _RESERVED_NAMES
+    else:
+        reserved = _RESERVED_NAMES.union(additional)
 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
-    for varname in varnames.intersection(_RESERVED_NAMES):
-        display.warning('Found variable using reserved name: %s' % varname)
+
+    if conflicts := varnames.intersection(reserved):
+        # Ensure the varname used for obj is the tagged one from myvars and not the untagged one from reserved.
+        # This can occur because tags do not affect value equality, and intersection can return values from either the left or right side.
+        for varname in (name for name in myvars if name in conflicts):
+            display.warning(f'Found variable using reserved name {varname!r}.', obj=varname)
+
+
+def is_reserved_name(name: str) -> bool:
+    return name in _RESERVED_NAMES
 
 
 _RESERVED_NAMES = frozenset(get_reserved_names())

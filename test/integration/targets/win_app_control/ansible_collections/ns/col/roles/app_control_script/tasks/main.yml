@@ -1,0 +1,7 @@
+- name: run signed script
+  script: signed.ps1 café
+  register: signed_res
+
+- name: run unsigned script
+  script: unsigned.ps1 café
+  register: unsigned_res

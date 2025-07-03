@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+- name: "{{ role_name }} playbook to provision the application"
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    apb_action: provision
+  roles:
+    - role: {{ role_name }}

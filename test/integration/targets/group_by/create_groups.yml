@@ -1,0 +1,39 @@
+# test code for the group_by module
+# (c) 2014, Chris Church <cchurch@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- debug: var=genus
+
+- name: group by genus
+  group_by: key={{ genus }}
+  register: grouped_by_genus
+
+- debug: var=grouped_by_genus
+
+- name: ensure we reflect 'changed' on change
+  assert:
+    that:
+      - grouped_by_genus is changed
+
+- name: group by first three letters of genus with key in quotes
+  group_by: key="{{ genus[:3] }}"
+
+- name: group by first two letters of genus with key not in quotes
+  group_by: key={{ genus[:2] }}
+
+- name: group by genus in uppercase using complex args
+  group_by: { key: "{{ genus | upper() }}" }

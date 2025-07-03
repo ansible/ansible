@@ -16,23 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
 import os.path
 import stat
 import tempfile
-import traceback
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
+
+
+# Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
+REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
+                          ('state', 'path', '_original_basename', 'recurse', 'force',
+                           '_diff_peek', 'src'))
+
+
+def _create_remote_file_args(module_args):
+    """remove keys that are not relevant to file"""
+    return dict((k, v) for k, v in module_args.items() if k in REAL_FILE_ARGS)
+
+
+def _create_remote_copy_args(module_args):
+    """remove action plugin only keys"""
+    return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
 
 
 def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detector=None):
@@ -134,7 +148,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                                 new_parents.add((parent_stat.st_dev, parent_stat.st_ino))
 
                             if (dir_stats.st_dev, dir_stats.st_ino) in new_parents:
-                                # This was a a circular symlink.  So add it as
+                                # This was a circular symlink.  So add it as
                                 # a symlink
                                 r_files['symlinks'].append((os.readlink(dirpath), dest_dirpath))
                             else:
@@ -188,13 +202,32 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _create_remote_file_args(self, module_args):
-        # remove action plugin only keys
-        return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
+    def _ensure_invocation(self, result):
+        # NOTE: adding invocation arguments here needs to be kept in sync with
+        # any no_log specified in the argument_spec in the module.
+        # This is not automatic.
+        # NOTE: do not add to this. This should be made a generic function for action plugins.
+        # This should also use the same argspec as the module instead of keeping it in sync.
+        if 'invocation' not in result:
+            if self._task.no_log:
+                result['invocation'] = "CENSORED: no_log is set"
+            else:
+                # NOTE: Should be removed in the future. For now keep this broken
+                # behaviour, have a look in the PR 51582
+                result['invocation'] = self._task.args.copy()
+                result['invocation']['module_args'] = self._task.args.copy()
 
-    def _copy_file(self, source_full, source_rel, content, content_tempfile, dest, task_vars):
+        if isinstance(result['invocation'], dict):
+            if 'content' in result['invocation']:
+                result['invocation']['content'] = 'CENSORED: content is a no_log parameter'
+            if result['invocation'].get('module_args', {}).get('content') is not None:
+                result['invocation']['module_args']['content'] = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+
+        return result
+
+    def _copy_file(self, source_full, source_rel, content, content_tempfile,
+                   dest, task_vars, follow):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
-        follow = boolean(self._task.args.get('follow', False), strict=False)
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
         raw = boolean(self._task.args.get('raw', 'no'), strict=False)
 
@@ -249,16 +282,21 @@ class ActionModule(ActionBase):
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
-            if self._play_context.diff and not raw:
-                result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars))
+            if self._task.diff and not raw:
+                result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars, content))
 
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
                 result['changed'] = True
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, '.source')
+
+            # ensure we keep suffix for validate
+            suffix = os.path.splitext(dest_file)[1]
+            if suffix:
+                tmp_src += suffix
 
             remote_path = None
 
@@ -271,6 +309,10 @@ class ActionModule(ActionBase):
             self._remove_tempfile_if_content_defined(content, content_tempfile)
             self._loader.cleanup_tmp_file(source_full)
 
+            # FIXME: I don't think this is needed when PIPELINING=0 because the source is created
+            # world readable.  Access to the directory itself is controlled via fixup_perms2() as
+            # part of executing the module. Check that umask with scp/sftp/piped doesn't cause
+            # a problem before acting on this idea. (This idea would save a round-trip)
             # fix file permissions when the copy is done as a different user
             if remote_path:
                 self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
@@ -283,12 +325,13 @@ class ActionModule(ActionBase):
 
             # src and dest here come after original and override them
             # we pass dest only to make sure it includes trailing slash in case of recursive copy
-            new_module_args = self._create_remote_file_args(self._task.args)
+            new_module_args = _create_remote_copy_args(self._task.args)
             new_module_args.update(
                 dict(
                     src=tmp_src,
                     dest=dest,
-                    original_basename=source_rel,
+                    _original_basename=source_rel,
+                    follow=follow
                 )
             )
             if not self._task.args.get('checksum'):
@@ -297,7 +340,7 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
-            module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
 
         else:
             # no need to transfer the file, already correct hash, but still need to call
@@ -317,21 +360,26 @@ class ActionModule(ActionBase):
                     dest = dest_status_nofollow['lnk_source']
 
             # Build temporary module_args.
-            new_module_args = self._create_remote_file_args(self._task.args)
+            new_module_args = _create_remote_file_args(self._task.args)
             new_module_args.update(
                 dict(
-                    src=source_rel,
                     dest=dest,
-                    original_basename=source_rel,
+                    _original_basename=source_rel,
+                    recurse=False,
                     state='file',
                 )
             )
+            # src is sent to the file module in _original_basename, not in src
+            try:
+                del new_module_args['src']
+            except KeyError:
+                pass
 
             if lmode:
                 new_module_args['mode'] = lmode
 
             # Execute the file module.
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
 
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
@@ -339,46 +387,16 @@ class ActionModule(ActionBase):
         result.update(module_return)
         return result
 
-    def _get_file_args(self):
-        new_module_args = {'recurse': False}
-
-        if 'attributes' in self._task.args:
-            new_module_args['attributes'] = self._task.args['attributes']
-        if 'follow' in self._task.args:
-            new_module_args['follow'] = self._task.args['follow']
-        if 'force' in self._task.args:
-            new_module_args['force'] = self._task.args['force']
-        if 'group' in self._task.args:
-            new_module_args['group'] = self._task.args['group']
-        if 'mode' in self._task.args:
-            new_module_args['mode'] = self._task.args['mode']
-        if 'owner' in self._task.args:
-            new_module_args['owner'] = self._task.args['owner']
-        if 'selevel' in self._task.args:
-            new_module_args['selevel'] = self._task.args['selevel']
-        if 'serole' in self._task.args:
-            new_module_args['serole'] = self._task.args['serole']
-        if 'setype' in self._task.args:
-            new_module_args['setype'] = self._task.args['setype']
-        if 'seuser' in self._task.args:
-            new_module_args['seuser'] = self._task.args['seuser']
-        if 'unsafe_writes' in self._task.args:
-            new_module_args['unsafe_writes'] = self._task.args['unsafe_writes']
-
-        return new_module_args
-
     def _create_content_tempfile(self, content):
-        ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
-        f = os.fdopen(fd, 'wb')
+        """ Create a tempfile containing defined content """
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP, prefix='.')
         content = to_bytes(content)
         try:
-            f.write(content)
+            with os.fdopen(fd, 'wb') as f:
+                f.write(content)
         except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
-        finally:
-            f.close()
         return content_tempfile
 
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
@@ -386,12 +404,18 @@ class ActionModule(ActionBase):
             os.remove(content_tempfile)
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for file transfer operations '''
+        """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+
         del tmp  # tmp no longer has any effect
+
+        # ensure user is not setting internal parameters
+        for internal in ('_original_basename', '_diff_peek'):
+            if self._task.args.get(internal, None) is not None:
+                raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
@@ -412,7 +436,7 @@ class ActionModule(ActionBase):
             del result['failed']
 
         if result.get('failed'):
-            return result
+            return self._ensure_invocation(result)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -427,16 +451,16 @@ class ActionModule(ActionBase):
                 else:
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
-            except Exception as err:
-                result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % to_native(err)
-                return result
+            except Exception as ex:
+                self._ensure_invocation(result)
+
+                raise AnsibleActionFail(message="could not write content temp file", result=result) from ex
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(task_vars=task_vars))
-            return result
+            result.update(self._execute_module(module_name='ansible.legacy.copy', task_vars=task_vars))
+            return self._ensure_invocation(result)
         else:
             # find_needle returns a path that may not have a trailing slash on
             # a directory so we need to determine that now (we use it just
@@ -446,11 +470,10 @@ class ActionModule(ActionBase):
             try:
                 # find in expected paths
                 source = self._find_needle('files', source)
-            except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_text(e)
-                result['exception'] = traceback.format_exc()
-                return result
+            except AnsibleError as ex:
+                self._ensure_invocation(result)
+
+                raise AnsibleActionFail(result=result) from ex
 
             if trailing_slash != source.endswith(os.path.sep):
                 if source[-1] == os.path.sep:
@@ -491,9 +514,20 @@ class ActionModule(ActionBase):
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
-            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars)
+
+            # We only follow symlinks for files in the non-recursive case
+            if source_files['directories']:
+                follow = False
+            else:
+                follow = boolean(self._task.args.get('follow', False), strict=False)
+
+            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars, follow)
             if module_return is None:
                 continue
+
+            if module_return.get('failed'):
+                result.update(module_return)
+                return self._ensure_invocation(result)
 
             paths = os.path.split(source_rel)
             dir_path = ''
@@ -512,29 +546,45 @@ class ActionModule(ActionBase):
                 continue
 
             # Use file module to create these
-            new_module_args = self._get_file_args()
+            new_module_args = _create_remote_file_args(self._task.args)
             new_module_args['path'] = os.path.join(dest, dest_path)
             new_module_args['state'] = 'directory'
             new_module_args['mode'] = self._task.args.get('directory_mode', None)
+            new_module_args['recurse'] = False
+            del new_module_args['src']
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
+
+            if module_return.get('failed'):
+                result.update(module_return)
+                return self._ensure_invocation(result)
+
             module_executed = True
             changed = changed or module_return.get('changed', False)
 
         for target_path, dest_path in source_files['symlinks']:
             # Copy symlinks over
-            new_module_args = self._get_file_args()
+            new_module_args = _create_remote_file_args(self._task.args)
             new_module_args['path'] = os.path.join(dest, dest_path)
             new_module_args['src'] = target_path
             new_module_args['state'] = 'link'
             new_module_args['force'] = True
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+            # Only follow remote symlinks in the non-recursive case
+            if source_files['directories']:
+                new_module_args['follow'] = False
+
+            # file module cannot deal with 'preserve' mode and is meaningless
+            # for symlinks anyway, so just don't pass it.
+            if new_module_args.get('mode', None) == 'preserve':
+                new_module_args.pop('mode')
+
+            module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return result
+                return self._ensure_invocation(result)
 
             changed = changed or module_return.get('changed', False)
 
@@ -551,4 +601,4 @@ class ActionModule(ActionBase):
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
 
-        return result
+        return self._ensure_invocation(result)

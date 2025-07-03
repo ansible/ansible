@@ -2,11 +2,10 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
-    callback: junit
+DOCUMENTATION = """
+    name: junit
     type: aggregate
     short_description: write playbook output to a JUnit file.
     version_added: historical
@@ -33,6 +32,20 @@ DOCUMENTATION = '''
         description: Configure the output to be one class per yaml file
         env:
           - name: JUNIT_TASK_CLASS
+      task_relative_path:
+        name: JUnit Task relative path
+        default: none
+        description: Configure the output to use relative paths to given directory
+        version_added: "2.8"
+        env:
+          - name: JUNIT_TASK_RELATIVE_PATH
+      replace_out_of_tree_path:
+        name: Replace out of tree path
+        default: none
+        description: Replace the directory portion of an out-of-tree relative task path with the given placeholder
+        version_added: "2.12.3"
+        env:
+          - name: JUNIT_REPLACE_OUT_OF_TREE_PATH
       fail_on_change:
         name: JUnit fail on change
         default: False
@@ -45,33 +58,51 @@ DOCUMENTATION = '''
         description: Consider failed tasks as a junit test failure even if ignore_on_error is set
         env:
           - name: JUNIT_FAIL_ON_IGNORE
+      include_setup_tasks_in_report:
+        name: JUnit include setup tasks in report
+        default: True
+        description: Should the setup tasks be included in the final report
+        env:
+          - name: JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT
+      hide_task_arguments:
+        name: Hide the arguments for a task
+        default: False
+        description: Hide the arguments for a task
+        version_added: "2.8"
+        env:
+          - name: JUNIT_HIDE_TASK_ARGUMENTS
+      test_case_prefix:
+        name: Prefix to find actual test cases
+        default: <empty>
+        description: Consider a task only as test case if it has this value as prefix. Additionally failing tasks are recorded as failed test cases.
+        version_added: "2.8"
+        env:
+          - name: JUNIT_TEST_CASE_PREFIX
     requirements:
-      - whitelist in configuration
-      - junit_xml (python lib)
-'''
+      - enable in configuration
+"""
 
+import decimal
 import os
 import time
 import re
+import typing as t
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible import constants
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils._internal import _event_utils
+from ansible._internal import _event_formatting
+from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
-
-try:
-    from junit_xml import TestSuite, TestCase
-    HAS_JUNIT_XML = True
-except ImportError:
-    HAS_JUNIT_XML = False
-
-try:
-    from collections import OrderedDict
-    HAS_ORDERED_DICT = True
-except ImportError:
-    try:
-        from ordereddict import OrderedDict
-        HAS_ORDERED_DICT = True
-    except ImportError:
-        HAS_ORDERED_DICT = False
+from ansible.executor.task_result import CallbackTaskResult
+from ansible.playbook.included_file import IncludedFile
+from ansible.utils._junit_xml import (
+    TestCase,
+    TestError,
+    TestFailure,
+    TestSuite,
+    TestSuites,
+)
 
 
 class CallbackModule(CallbackBase):
@@ -92,51 +123,52 @@ class CallbackModule(CallbackBase):
                                      Default: ~/.ansible.log
         JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
                                      Default: False
+        JUNIT_TASK_RELATIVE_PATH (optional): Configure the output to use relative paths to given directory
+                                     Default: none
         JUNIT_FAIL_ON_CHANGE (optional): Consider any tasks reporting "changed" as a junit test failure
                                      Default: False
         JUNIT_FAIL_ON_IGNORE (optional): Consider failed tasks as a junit test failure even if ignore_on_error is set
                                      Default: False
-
-    Requires:
-        junit_xml
-
+        JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT (optional): Should the setup tasks be included in the final report
+                                     Default: True
+        JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
+                                     Default: False
+        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionally, failing tasks are recorded as failed
+                                     test cases.
+                                     Default: <empty>
     """
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'junit'
-    CALLBACK_NEEDS_WHITELIST = True
+    CALLBACK_NEEDS_ENABLED = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(CallbackModule, self).__init__()
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
         self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
+        self._task_relative_path = os.getenv('JUNIT_TASK_RELATIVE_PATH', '')
         self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
         self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
+        self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
+        self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
+        self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
+        self._replace_out_of_tree_path = os.getenv('JUNIT_REPLACE_OUT_OF_TREE_PATH', None)
         self._playbook_path = None
         self._playbook_name = None
-        self._play_name = None
-        self._task_data = None
+        self._play_name: str | None = None
+        self._task_data: dict[str, TaskData] = {}
 
         self.disabled = False
 
-        if not HAS_JUNIT_XML:
-            self.disabled = True
-            self._display.warning('The `junit_xml` python module is not installed. '
-                                  'Disabling the `junit` callback plugin.')
-
-        if HAS_ORDERED_DICT:
-            self._task_data = OrderedDict()
-        else:
-            self.disabled = True
-            self._display.warning('The `ordereddict` python module is not installed. '
-                                  'Disabling the `junit` callback plugin.')
+        if self._replace_out_of_tree_path is not None:
+            self._replace_out_of_tree_path = to_text(self._replace_out_of_tree_path)
 
         if not os.path.exists(self._output_dir):
-            os.mkdir(self._output_dir)
+            os.makedirs(self._output_dir)
 
-    def _start_task(self, task):
+    def _start_task(self, task: Task) -> None:
         """ record the start of a task for one or more hosts """
 
         uuid = task._uuid
@@ -147,30 +179,31 @@ class CallbackModule(CallbackBase):
         play = self._play_name
         name = task.get_name().strip()
         path = task.get_path()
+        action = task.action
 
-        if not task.no_log:
+        if not task.no_log and self._hide_task_arguments == 'false':
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
             if args:
                 name += ' ' + args
 
-        self._task_data[uuid] = TaskData(uuid, name, path, play)
+        self._task_data[uuid] = TaskData(uuid, name, path, play, action)
 
-    def _finish_task(self, status, result):
+    def _finish_task(self, status: str, result: IncludedFile | CallbackTaskResult) -> None:
         """ record the results of a task for a single host """
 
-        task_uuid = result._task._uuid
+        if isinstance(result, CallbackTaskResult):
+            task_uuid = result.task._uuid
+            host_uuid = result.host._uuid
+            host_name = result.host.name
 
-        if hasattr(result, '_host'):
-            host_uuid = result._host._uuid
-            host_name = result._host.name
+            if self._fail_on_change == 'true' and status == 'ok' and result.result.get('changed', False):
+                status = 'failed'
         else:
+            task_uuid = result._task._uuid
             host_uuid = 'include'
             host_name = 'include'
 
         task_data = self._task_data[task_uuid]
-
-        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
-            status = 'failed'
 
         # ignore failure if expected and toggle result if asked for
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
@@ -181,52 +214,61 @@ class CallbackModule(CallbackBase):
             elif status == 'ok':
                 status = 'failed'
 
-        task_data.add_host(HostData(host_uuid, host_name, status, result))
+        if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
+            task_data.add_host(HostData(host_uuid, host_name, status, result))
 
-    def _build_test_case(self, task_data, host_data):
+    def _build_test_case(self, task_data: TaskData, host_data: HostData) -> TestCase:
         """ build a TestCase from the given TaskData and HostData """
 
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
-        duration = host_data.finish - task_data.start
+        duration = decimal.Decimal(host_data.finish - task_data.start)
 
-        if self._task_class == 'true':
-            junit_classname = re.sub(r'\.yml:[0-9]+$', '', task_data.path)
+        if self._task_relative_path and task_data.path:
+            junit_classname = to_text(os.path.relpath(to_bytes(task_data.path), to_bytes(self._task_relative_path)))
         else:
             junit_classname = task_data.path
 
-        if host_data.status == 'included':
-            return TestCase(name, junit_classname, duration, host_data.result)
+        if self._replace_out_of_tree_path is not None and junit_classname.startswith('../'):
+            junit_classname = self._replace_out_of_tree_path + to_text(os.path.basename(to_bytes(junit_classname)))
 
-        res = host_data.result._result
+        if self._task_class == 'true':
+            junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
+
+        if host_data.status == 'included':
+            return TestCase(name=name, classname=junit_classname, time=duration, system_out=str(host_data.result))
+
+        task_result = t.cast(CallbackTaskResult, host_data.result)
+        res = task_result.result
         rc = res.get('rc', 0)
         dump = self._dump_results(res, indent=0)
         dump = self._cleanse_string(dump)
 
         if host_data.status == 'ok':
-            return TestCase(name, junit_classname, duration, dump)
+            return TestCase(name=name, classname=junit_classname, time=duration, system_out=dump)
 
-        test_case = TestCase(name, junit_classname, duration)
+        test_case = TestCase(name=name, classname=junit_classname, time=duration)
 
         if host_data.status == 'failed':
-            if 'exception' in res:
-                message = res['exception'].strip().split('\n')[-1]
-                output = res['exception']
-                test_case.add_error_info(message, output)
+            if error_summary := task_result.exception:
+                message = _event_utils.format_event_brief_message(error_summary.event)
+                output = _event_formatting.format_event_traceback(error_summary.event)
+                test_case.errors.append(TestError(message=message, output=output))
             elif 'msg' in res:
                 message = res['msg']
-                test_case.add_failure_info(message, dump)
+                test_case.failures.append(TestFailure(message=message, output=dump))
             else:
-                test_case.add_failure_info('rc=%s' % rc, dump)
+                test_case.failures.append(TestFailure(message='rc=%s' % rc, output=dump))
         elif host_data.status == 'skipped':
             if 'skip_reason' in res:
                 message = res['skip_reason']
             else:
                 message = 'skipped'
-            test_case.add_skipped_info(message)
+            test_case.skipped = message
 
         return test_case
 
-    def _cleanse_string(self, value):
+    @staticmethod
+    def _cleanse_string(value):
         """ convert surrogate escapes to the unicode replacement character to avoid XML encoding errors """
         return to_text(to_bytes(value, errors='surrogateescape'), errors='replace')
 
@@ -236,11 +278,15 @@ class CallbackModule(CallbackBase):
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
+            if task_data.action in constants._ACTION_SETUP and self._include_setup_tasks_in_report == 'false':
+                continue
+
             for host_uuid, host_data in task_data.host_data.items():
                 test_cases.append(self._build_test_case(task_data, host_data))
 
-        test_suite = TestSuite(self._playbook_name, test_cases)
-        report = TestSuite.to_xml_string([test_suite])
+        test_suite = TestSuite(name=self._playbook_name, cases=test_cases)
+        test_suites = TestSuites(suites=[test_suite])
+        report = test_suites.to_pretty_xml()
 
         output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
@@ -254,31 +300,25 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_play_start(self, play):
         self._play_name = play.get_name()
 
-    def v2_runner_on_no_hosts(self, task):
+    def v2_playbook_on_task_start(self, task: Task, is_conditional: bool) -> None:
         self._start_task(task)
 
-    def v2_playbook_on_task_start(self, task, is_conditional):
+    def v2_playbook_on_handler_task_start(self, task: Task) -> None:
         self._start_task(task)
 
-    def v2_playbook_on_cleanup_task_start(self, task):
-        self._start_task(task)
-
-    def v2_playbook_on_handler_task_start(self, task):
-        self._start_task(task)
-
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors=False) -> None:
         if ignore_errors and self._fail_on_ignore != 'true':
             self._finish_task('ok', result)
         else:
             self._finish_task('failed', result)
 
-    def v2_runner_on_ok(self, result):
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         self._finish_task('ok', result)
 
-    def v2_runner_on_skipped(self, result):
+    def v2_runner_on_skipped(self, result: CallbackTaskResult) -> None:
         self._finish_task('skipped', result)
 
-    def v2_playbook_on_include(self, included_file):
+    def v2_playbook_on_include(self, included_file: IncludedFile) -> None:
         self._finish_task('included', included_file)
 
     def v2_playbook_on_stats(self, stats):
@@ -290,20 +330,21 @@ class TaskData:
     Data about an individual task.
     """
 
-    def __init__(self, uuid, name, path, play):
+    def __init__(self, uuid: str, name: str, path: str, play: str, action: str) -> None:
         self.uuid = uuid
         self.name = name
         self.path = path
         self.play = play
         self.start = None
-        self.host_data = OrderedDict()
+        self.host_data: dict[str, HostData] = {}
         self.start = time.time()
+        self.action = action
 
-    def add_host(self, host):
+    def add_host(self, host: HostData) -> None:
         if host.uuid in self.host_data:
             if host.status == 'included':
                 # concatenate task include output from multiple items
-                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+                host.result = f'{self.host_data[host.uuid].result}\n{host.result}'
             else:
                 raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
 
@@ -315,7 +356,7 @@ class HostData:
     Data about an individual host.
     """
 
-    def __init__(self, uuid, name, status, result):
+    def __init__(self, uuid: str, name: str, status: str, result: IncludedFile | CallbackTaskResult | str) -> None:
         self.uuid = uuid
         self.name = name
         self.status = status

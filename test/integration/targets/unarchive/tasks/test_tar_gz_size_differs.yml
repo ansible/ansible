@@ -1,0 +1,52 @@
+- set_fact:
+    dest: '{{remote_tmp_dir}}/test-unarchive-tar-gz-size-differs'
+
+- name: create our tar.gz unarchive destination
+  file:
+    path: "{{ dest }}"
+    state: directory
+
+- name: unarchive a tar.gz file
+  unarchive:
+    src: 'size_differs.tar.gz'
+    dest: '{{ dest }}'
+    remote_src: no
+  register: unarchive_size_differs_01
+
+- name: verify that the task was marked as changed
+  assert:
+    that:
+      - unarchive_size_differs_01.changed
+
+- name: Check size after first unarchive
+  stat:
+    path: '{{ dest }}/hello.txt'
+  register: first_unarchive
+
+- name: unarchive a tar.gz file with same name but different size
+  unarchive:
+    src: 'size_differs_2.tar.gz'
+    dest: '{{ dest }}'
+    remote_src: no
+  register: unarchive_size_differs_02
+
+- name: verify that the task was marked as changed
+  assert:
+    that:
+      - unarchive_size_differs_02.changed
+
+- name: Check size after unarchive
+  stat:
+    path: '{{ dest }}/hello.txt'
+  register: second_unarchive
+
+- name: verify that unarchive extracted new sized file
+  assert:
+    that:
+      - first_unarchive.stat.size != second_unarchive.stat.size
+      - first_unarchive.stat.size < second_unarchive.stat.size
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ dest }}'
+    state: absent

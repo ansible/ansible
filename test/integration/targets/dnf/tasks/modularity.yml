@@ -1,0 +1,95 @@
+- name: install "{{ astream_name }}" module
+  dnf:
+    name: "{{ astream_name }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name }}" module
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "dnf_result.changed"
+
+- name: install "{{ astream_name }}" module again
+  dnf:
+    name: "{{ astream_name }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name }}" module again
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "not dnf_result.changed"
+
+- name: uninstall "{{ astream_name }}" module
+  dnf:
+    name: "{{ astream_name }}"
+    state: absent
+  register: dnf_result
+
+- name: verify uninstallation of "{{ astream_name }}" module
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "dnf_result.changed"
+
+- name: uninstall "{{ astream_name }}" module again
+  dnf:
+    name: "{{ astream_name }}"
+    state: absent
+  register: dnf_result
+
+- name: verify uninstallation of "{{ astream_name }}" module again
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "not dnf_result.changed"
+
+- name: install "{{ astream_name_no_stream }}" module without providing stream
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name_no_stream }}" module without providing stream
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "dnf_result.changed"
+
+- name: install "{{ astream_name_no_stream }}" module again without providing stream
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name_no_stream }}" module again without providing stream
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "not dnf_result.changed"
+
+- name: uninstall "{{ astream_name_no_stream }}" module without providing stream
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: absent
+  register: dnf_result
+
+- name: verify uninstallation of "{{ astream_name_no_stream }}" module without providing stream
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "dnf_result.changed"
+
+- name: uninstall "{{ astream_name_no_stream }}" module again without providing stream
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: absent
+  register: dnf_result
+
+- name: verify uninstallation of "{{ astream_name_no_stream }}" module again without providing stream
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "not dnf_result.changed"

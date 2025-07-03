@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Test interpolation
+      assert:
+        that:
+          - lookup('ini', 'my_dir', file='interpolation.ini') == '/Users/lumberjack'
+          - lookup('ini', 'Exec', file='nointerpolation.ini', interpolation=false) == '/bin/program run %u'

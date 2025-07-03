@@ -25,9 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import typing as t
+
+from ansible.module_utils.facts.collector import BaseFactCollector
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 from ansible.module_utils.facts.other.ohai import OhaiFactCollector
@@ -41,6 +43,7 @@ from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
 from ansible.module_utils.facts.system.env import EnvFactCollector
 from ansible.module_utils.facts.system.dns import DnsFactCollector
 from ansible.module_utils.facts.system.fips import FipsFactCollector
+from ansible.module_utils.facts.system.loadavg import LoadAvgFactCollector
 from ansible.module_utils.facts.system.local import LocalFactCollector
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 from ansible.module_utils.facts.system.os_release import OSReleaseFactCollector
@@ -51,6 +54,7 @@ from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.system.selinux import SelinuxFactCollector
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
 from ansible.module_utils.facts.system.ssh_pub_keys import SshPubKeyFactCollector
+from ansible.module_utils.facts.system.systemd import SystemdFactCollector
 from ansible.module_utils.facts.system.user import UserFactCollector
 
 from ansible.module_utils.facts.hardware.base import HardwareCollector
@@ -69,10 +73,13 @@ from ansible.module_utils.facts.network.base import NetworkCollector
 from ansible.module_utils.facts.network.aix import AIXNetworkCollector
 from ansible.module_utils.facts.network.darwin import DarwinNetworkCollector
 from ansible.module_utils.facts.network.dragonfly import DragonFlyNetworkCollector
+from ansible.module_utils.facts.network.fc_wwn import FcWwnInitiatorFactCollector
 from ansible.module_utils.facts.network.freebsd import FreeBSDNetworkCollector
 from ansible.module_utils.facts.network.hpux import HPUXNetworkCollector
 from ansible.module_utils.facts.network.hurd import HurdNetworkCollector
 from ansible.module_utils.facts.network.linux import LinuxNetworkCollector
+from ansible.module_utils.facts.network.iscsi import IscsiInitiatorNetworkCollector
+from ansible.module_utils.facts.network.nvme import NvmeInitiatorNetworkCollector
 from ansible.module_utils.facts.network.netbsd import NetBSDNetworkCollector
 from ansible.module_utils.facts.network.openbsd import OpenBSDNetworkCollector
 from ansible.module_utils.facts.network.sunos import SunOSNetworkCollector
@@ -91,8 +98,9 @@ _base = [
     PlatformFactCollector,
     DistributionFactCollector,
     LSBFactCollector,
-    OSReleaseFactCollector
-]
+    OSReleaseFActCollector
+    ]  # type: t.List[t.Type[BaseFactCollector]]
+
 
 # These restrict what is possible in others
 _restrictive = [
@@ -100,7 +108,7 @@ _restrictive = [
     ApparmorFactCollector,
     ChrootFactCollector,
     FipsFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # general info, not required but probably useful for other facts
 _general = [
@@ -112,9 +120,11 @@ _general = [
     CmdLineFactCollector,
     DateTimeFactCollector,
     EnvFactCollector,
+    LoadAvgFactCollector,
     SshPubKeyFactCollector,
-    UserFactCollector
-]
+    UserFactCollector,
+    SystemdFactCollector
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # virtual, this might also limit hardware/networking
 _virtual = [
@@ -126,7 +136,7 @@ _virtual = [
     NetBSDVirtualCollector,
     SunOSVirtualCollector,
     HPUXVirtualCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 _hardware = [
     HardwareCollector,
@@ -140,10 +150,11 @@ _hardware = [
     NetBSDHardwareCollector,
     OpenBSDHardwareCollector,
     SunOSHardwareCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 _network = [
     DnsFactCollector,
+    FcWwnInitiatorFactCollector,
     NetworkCollector,
     AIXNetworkCollector,
     DarwinNetworkCollector,
@@ -151,18 +162,20 @@ _network = [
     FreeBSDNetworkCollector,
     HPUXNetworkCollector,
     HurdNetworkCollector,
+    IscsiInitiatorNetworkCollector,
+    NvmeInitiatorNetworkCollector,
     LinuxNetworkCollector,
     NetBSDNetworkCollector,
     OpenBSDNetworkCollector,
     SunOSNetworkCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # other fact sources
 _extra_facts = [
     LocalFactCollector,
     FacterFactCollector,
     OhaiFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # TODO: make config driven
 collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts

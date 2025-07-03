@@ -1,3 +1,4 @@
-posix/ci/group3
-skip/freebsd
-skip/osx
+destructive
+needs/root
+shippable/posix/group2
+skip/macos

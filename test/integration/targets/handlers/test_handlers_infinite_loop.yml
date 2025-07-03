@@ -1,0 +1,25 @@
+- hosts: A
+  gather_facts: false
+  tasks:
+    - command: echo
+      notify:
+        - handler1
+        - self_notify
+  handlers:
+    - name: handler1
+      debug:
+        msg: handler1 ran
+      changed_when: true
+      notify: handler2
+
+    - name: handler2
+      debug:
+        msg: handler2 ran
+      changed_when: true
+      notify: handler1
+
+    - name: self_notify
+      debug:
+        msg: self_notify ran
+      changed_when: true
+      notify: self_notify

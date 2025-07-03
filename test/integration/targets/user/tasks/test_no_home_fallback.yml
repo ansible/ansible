@@ -1,0 +1,112 @@
+## create user without home and test fallback home dir create
+
+- name: Test home directory creation
+  when: ansible_facts.system != 'Darwin'
+  block:
+    - name: create the user
+      user:
+        name: ansibulluser
+
+    - name: delete the user and home dir
+      user:
+        name: ansibulluser
+        state: absent
+        force: true
+        remove: true
+
+    - name: create the user without home
+      user:
+        name: ansibulluser
+        create_home: no
+
+    - name: create the user home dir
+      user:
+        name: ansibulluser
+      register: user_create_home_fallback
+
+    - name: stat home dir
+      stat:
+        path: '{{ user_create_home_fallback.home }}'
+      register: user_create_home_fallback_dir
+
+    - name: read UMASK from /etc/login.defs and return mode
+      shell: |
+        import re
+        import os
+        umask = os.umask(0)
+        mode = oct(0o777 & ~umask)
+        try:
+            for line in open('/etc/login.defs').readlines():
+                m = re.match(r'^HOME_MODE\s+(\d+)$', line)
+                if m:
+                    mode = oct(int(m.group(1), 8))
+                    break
+                m = re.match(r'^UMASK\s+(\d+)$', line)
+                if m:
+                    umask = int(m.group(1), 8)
+                    mode = oct(0o777 & ~umask)
+        except:
+            pass
+        print(str(mode).replace('o', ''))
+      args:
+        executable: "{{ ansible_python_interpreter }}"
+      register: user_login_defs_umask
+
+    - name: validate that user home dir is created
+      assert:
+        that:
+          - user_create_home_fallback is changed
+          - user_create_home_fallback_dir.stat.exists
+          - user_create_home_fallback_dir.stat.isdir
+          - user_create_home_fallback_dir.stat.pw_name == 'ansibulluser'
+          - user_create_home_fallback_dir.stat.mode == user_login_defs_umask.stdout
+
+- name: Create non-system user
+  when: ansible_facts.distribution == "MacOSX"
+  block:
+    - name: create non-system user on macOS to test the shell is set to /bin/bash
+      user:
+        name: macosuser
+      register: macosuser_output
+
+    - name: validate the shell is set to /bin/bash
+      assert:
+        that:
+          - 'macosuser_output.shell == "/bin/bash"'
+
+    - name: cleanup
+      user:
+        name: macosuser
+        state: absent
+
+    - name: create system user on macOS to test the shell is set to /usr/bin/false
+      user:
+        name: macosuser
+        system: yes
+      register: macosuser_output
+
+    - name: validate the shell is set to /usr/bin/false
+      assert:
+        that:
+          - 'macosuser_output.shell == "/usr/bin/false"'
+
+    - name: cleanup
+      user:
+        name: macosuser
+        state: absent
+
+    - name: create non-system user on macos and set the shell to /bin/sh
+      user:
+        name: macosuser
+        shell: /bin/sh
+      register: macosuser_output
+
+    - name: validate the shell is set to /bin/sh
+      assert:
+        that:
+          - 'macosuser_output.shell == "/bin/sh"'
+
+    - name: cleanup
+      user:
+        name: macosuser
+        state: absent

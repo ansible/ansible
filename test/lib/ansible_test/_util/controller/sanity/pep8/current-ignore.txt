@@ -1,0 +1,13 @@
+E402
+W503
+W504
+E741
+
+# The E203 rule is not PEP 8 compliant.
+# Unfortunately this means it also conflicts with the output from `black`.
+# See: https://github.com/PyCQA/pycodestyle/issues/373
+E203
+
+# The "multiple statements on one line" rules conflict with `black` for no-impl class and method defs.
+E701
+E704

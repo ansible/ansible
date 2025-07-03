@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: donothing
+  author: lazy
+  version_added: 'histerical'
+  short_description: noop
+  description:
+    - don't do anything
+  options:
+    _input:
+      description: Anything you want to get back
+      type: raw
+      required: true
+
+EXAMPLES: |
+  # set first 10 volumes rw, rest as dp
+  meaning: "{{ (stuff|donothing}}"
+
+RETURN:
+  _value:
+    description: guess
+    type: raw

@@ -1,0 +1,32 @@
+- import_tasks: get_boot_time.yml
+- name: Reboot with default settings
+  reboot:
+  register: reboot_result
+- import_tasks: check_reboot.yml
+
+
+- import_tasks: get_boot_time.yml
+- name: Reboot with all options except reboot_command
+  reboot:
+    connect_timeout: 30
+    search_paths:
+      - /sbin
+      - /bin
+      - /usr/sbin
+      - /usr/bin
+    msg: Rebooting
+    post_reboot_delay: 1
+    pre_reboot_delay: 61
+    test_command: uptime
+    reboot_timeout: 500
+  register: reboot_result
+- import_tasks: check_reboot.yml
+
+
+- import_tasks: get_boot_time.yml
+- name: Test with negative values for delays
+  reboot:
+    post_reboot_delay: -0.5
+    pre_reboot_delay: -61
+  register: reboot_result
+- import_tasks: check_reboot.yml

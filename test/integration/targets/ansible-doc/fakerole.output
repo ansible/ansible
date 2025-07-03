@@ -1,0 +1,36 @@
+> ROLE: *test_role1* (test/integration/targets/ansible-doc/roles/test_role1)
+
+ENTRY POINT: *main* - test_role1 from roles subdir
+
+          In to am attended desirous raptures *declared* diverted
+          confined at. Collected instantly remaining up certainly to
+          `necessary' as. Over walk dull into son boy door went new.
+          At or happiness commanded daughters as. Is `handsome` an
+          declared at received in extended vicinity subjects. Into
+          miss on he over been late pain an. Only week bore boy what
+          fat case left use. Match round scale now style far times.
+          Your me past an much.
+
+Options (= indicates it is required):
+
+= myopt1    First option.
+          type: str
+
+- myopt2    Second option
+          default: 8000
+          type: int
+
+- myopt3    Third option.
+          choices: [choice1, choice2]
+          default: null
+          type: str
+
+ATTRIBUTES:
+
+          `diff_mode:`
+          description: Will return details on what has changed (or possibly needs changing in
+            check_mode), when in diff mode
+          details: Not all modules used support this
+          support: partial
+
+AUTHOR: John Doe (@john), Jane Doe (@jane)

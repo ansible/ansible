@@ -1,0 +1,45 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # make sure tasks with an undefined variable in the name are gracefully handled
+    - name: "Task name with undefined variable: {{ not_defined }}"
+      debug:
+        msg: Hello
+
+    # ensure we properly test for an action name, not a task name when checking for a meta task
+    - name: "meta"
+      debug:
+        msg: Hello
+
+    - name: ensure malformed raw_params on arbitrary actions are not ignored
+      debug:
+        garbage {{"with a template"}}
+      ignore_errors: true
+      register: bad_templated_raw_param
+
+    - assert:
+        that:
+        - bad_templated_raw_param is failed
+        - bad_templated_raw_param.msg is contains("does not support raw params")
+
+    - name: validate error handling for actions that directly raise exceptions
+      action_that_fails:
+        fail_mode: raise
+      ignore_errors: true
+      register: action_with_raise
+
+    - assert:
+        that:
+          - action_with_raise is failed
+          - action_with_raise.msg is match "Task failed. I am an exception from an action"
+
+    - name: validate error handling for actions that directly set `exception` in result dict
+      action_that_fails:
+        fail_mode: result_dict
+      ignore_errors: true
+      register: action_with_result_fail
+
+    - assert:
+        that:
+          - action_with_result_fail is failed
+          - action_with_result_fail.msg is match "sorry, it broke"

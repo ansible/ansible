@@ -7,3 +7,4 @@
     - assert:
         that:
           - "inner == 'reached'"
+          - "inner_fqcn == 'reached'"

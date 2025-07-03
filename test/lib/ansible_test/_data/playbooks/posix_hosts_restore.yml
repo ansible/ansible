@@ -1,0 +1,10 @@
+- name: Restore POSIX hosts file
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Remove container hostname(s) from hosts file
+      blockinfile:
+        path: /etc/hosts
+        block: "{{ '\n'.join(hosts_entries) }}"
+        unsafe_writes: yes
+        state: absent

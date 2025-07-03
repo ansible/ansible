@@ -1,6 +1,0 @@
----
-# defaults file for test_gcp_url_map
-service_account_email: "{{ gce_service_account_email }}"
-credentials_file: "{{ gce_pem_file }}"
-project_id: "{{ gce_project_id }}"
-urlmap: "ans-int-urlmap-{{ resource_prefix|lower }}"

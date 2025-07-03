@@ -1,0 +1,11 @@
+- name: Use invalid parameter
+  reboot:
+    foo: bar
+  ignore_errors: yes
+  register: invalid_parameter
+
+- name: Ensure task fails with error
+  assert:
+    that:
+    - invalid_parameter is failed
+    - "invalid_parameter.msg == 'Invalid options for reboot: foo'"

@@ -16,52 +16,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/test_blockinfile
+- set_fact:
+    remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_blockinfile"
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: directory
 
-##
-## blockinfile
-##
-
-- name: copy the sshd_config to the test dir
-  copy:
-      src: sshd_config
-      dest: "{{ output_dir_test }}"
-
-- name: insert/update "Match User" configuration block in sshd_config
-  blockinfile:
-      path: "{{ output_dir_test }}/sshd_config"
-      block: |
-          Match User ansible-agent
-          PasswordAuthentication no
-  register: blockinfile_test0
-- name: check content
-  shell: 'grep -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ output_dir_test }}/sshd_config'
-  register: blockinfile_test0_grep
-- debug: var=blockinfile_test0
-- debug: var=blockinfile_test0_grep
-- name: validate first example results
-  assert:
-      that:
-          - 'blockinfile_test0.changed is defined'
-          - 'blockinfile_test0.msg is defined'
-          - 'blockinfile_test0.changed'
-          - 'blockinfile_test0.msg == "Block inserted"'
-          - 'blockinfile_test0_grep.stdout_lines | length == 2'
-
-- name: check idemptotence
-  blockinfile:
-      path: "{{ output_dir_test }}/sshd_config"
-      block: |
-          Match User ansible-agent
-          PasswordAuthentication no
-  register: blockinfile_test1
-- name: validate idempotence results
-  assert:
-      that:
-          - 'not blockinfile_test1.changed'
+- import_tasks: add_block_to_existing_file.yml
+- import_tasks: create_file.yml
+- import_tasks: create_dir.yml
+- import_tasks: preserve_line_endings.yml
+- import_tasks: block_without_trailing_newline.yml
+- import_tasks: file_without_trailing_newline.yml
+- import_tasks: diff.yml
+- import_tasks: validate.yml
+- import_tasks: insertafter.yml
+- import_tasks: insertbefore.yml
+- import_tasks: multiline_search.yml
+- import_tasks: append_newline.yml
+- import_tasks: prepend_newline.yml

@@ -1,0 +1,4 @@
+- name: fully qualified module usage with relative imports
+  my_ns.my_col.my_module:
+- name: collection relative module usage with relative imports
+  my_module:

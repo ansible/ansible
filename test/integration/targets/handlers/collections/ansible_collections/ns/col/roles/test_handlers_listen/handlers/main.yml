@@ -1,0 +1,4 @@
+- name: test notifying listen namespaced by collection + role
+  set_fact:
+    notify_listen_in_specific_collection_role: True
+  listen: notify_specific_collection_role_listen

@@ -29,14 +29,20 @@ docs/man/man3/*
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
-docs/api/_build/
-docs/api/rst/
 docs/docsite/_build
 docs/docsite/*.html
 docs/docsite/htmlout
+docs/docsite/rst/conf.py
+docs/docsite/rst/index.rst
 docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
+docs/docsite/rst/dev_guide/collections_galaxy_meta.rst
+docs/docsite/rst/dev_guide/testing/sanity/index.rst.new
+docs/docsite/rst/dev_guide/index.rst
 docs/docsite/rst/modules/*.rst
+docs/docsite/rst/collections/*.rst
+!docs/docsite/rst/collections/all_plugins.rst
+docs/docsite/rst/collections/*/*.rst
 docs/docsite/rst/playbooks_directives.rst
 docs/docsite/rst/plugins_by_category.rst
 docs/docsite/rst/plugins/*/*.rst
@@ -47,44 +53,62 @@ docs/docsite/searchindex.js
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
-# deb building stuff...
-/debian/
-deb-build
 # Vim swap files
 *.swp
 *.swo
+[._]*.un~
 credentials.yml
 # test output
 *.retry
 *.out
+.pytest_cache/
 .tox
 .cache
+.pytest_cache
 results.xml
 coverage.xml
 /test/units/cover-html
+/test/integration/inventory
 /test/integration/targets/*/backup/
 /test/cache/*
 # Development
 /test/develop
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 venv
+env
 Vagrantfile
 .vagrant
-ansible.egg-info/
-/shippable/
+# Backwards compatibility with `stable-2.9` and earlier branches.
+# Also used in the `devel` branch during early Ansible 2.10 development.
+/lib/ansible.egg-info/
+# First used in the `devel` branch during Ansible 2.10 development.
+/lib/ansible_base.egg-info/
+# First used in the `devel` branch during Ansible 2.11 development.
+/lib/ansible_core.egg-info/
+# First used in the `devel` branch during Ansible 2.18 development.
+/ansible_core.egg-info/
+# vendored lib dir
+lib/ansible/_vendor/*
+!lib/ansible/_vendor/__init__.py
+# PowerShell signed hashlist
+lib/ansible/config/powershell_signatures.psd1
+*.authenticode
+# test stuff
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
+.python-version
 # Release directory
 packaging/release/ansible_release
 /.cache/
-/test/results/coverage/*=coverage.*
-/test/results/coverage/coverage*
-/test/results/reports/coverage*.xml
-/test/results/reports/coverage*/
-/test/results/bot/*.json
-/test/results/junit/*.xml
-/test/results/logs/*.log
-/test/results/data/*.json
-/test/integration/inventory.remote
+/test/results/
+/test/integration/cloud-config-aws.yml
 /test/integration/inventory.networking
 /test/integration/inventory.winrm
 /test/integration/cloud-config-aws.yml
@@ -100,3 +124,6 @@ htmlcov/
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
+/SYMLINK_CACHE.json
+changelogs/.plugin-cache.yaml
+.ansible-test-timeout.json

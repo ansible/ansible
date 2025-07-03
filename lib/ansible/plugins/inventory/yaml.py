@@ -1,26 +1,26 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
-    inventory: yaml
+DOCUMENTATION = """
+    name: yaml
     version_added: "2.4"
-    short_description: Uses a specifically YAML file as inventory source.
+    short_description: Uses a specific YAML file as an inventory source.
     description:
-        - "YAML based inventory, starts with the 'all' group and has hosts/vars/children entries."
+        - "YAML-based inventory, should start with the C(all) group and contain hosts/vars/children entries."
         - Host entries can have sub-entries defined, which will be treated as variables.
         - Vars entries are normal group vars.
         - "Children are 'child groups', which can also have their own vars/hosts/children and so on."
-        - File MUST have a valid extension, defined in configuration
+        - File MUST have a valid extension, defined in configuration.
     notes:
-        - It takes the place of the previously hardcoded YAML inventory.
-        - To function it requires being whitelisted in configuration.
+        - If you want to set vars for the C(all) group inside the inventory file, the C(all) group must be the first entry in the file.
+        - Enabled in configuration by default.
     options:
       yaml_extensions:
         description: list of 'valid' extensions for files containing YAML
         type: list
+        elements: string
         default: ['.yaml', '.yml', '.json']
         env:
           - name: ANSIBLE_YAML_FILENAME_EXT
@@ -31,21 +31,28 @@ DOCUMENTATION = '''
           - section: inventory_plugin_yaml
             key: yaml_valid_extensions
 
-'''
-EXAMPLES = '''
+"""
+EXAMPLES = """
 all: # keys must be unique, i.e. only one 'hosts' per group
     hosts:
         test1:
         test2:
-            var1: value1
+            host_var: value
     vars:
-        group_var1: value2
+        group_all_var: value
     children:   # key order does not matter, indentation does
         other_group:
             children:
                 group_x:
                     hosts:
-                        test5
+                        test5   # Note that one machine will work without a colon
+                #group_x:
+                #    hosts:
+                #        test5  # But this won't
+                #        test7  #
+                group_y:
+                    hosts:
+                        test6:  # So always use a colon
             vars:
                 g2_var2: value3
             hosts:
@@ -55,22 +62,26 @@ all: # keys must be unique, i.e. only one 'hosts' per group
             hosts:
                 test1 # same host as above, additional group membership
             vars:
-                last_var: MYVALUE
-'''
+                group_last_var: value
+"""
 
 import os
-from collections import MutableMapping
 
-from ansible.errors import AnsibleParserError
+from collections.abc import MutableMapping
+
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
-from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.inventory import BaseFileInventoryPlugin, detect_range, expand_hostname_range
+from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.plugins.inventory import BaseFileInventoryPlugin
+
+NoneType = type(None)
 
 
 class InventoryModule(BaseFileInventoryPlugin):
 
     NAME = 'yaml'
+
+    # implicit trust behavior is already added by the YAML parser invoked by the loader
 
     def __init__(self):
 
@@ -86,12 +97,13 @@ class InventoryModule(BaseFileInventoryPlugin):
         return valid
 
     def parse(self, inventory, loader, path, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         try:
-            data = self.loader.load_from_file(path)
+            data = self.loader.load_from_file(path, cache='none', trusted_as_template=True)
         except Exception as e:
             raise AnsibleParserError(e)
 
@@ -103,7 +115,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError('Plugin configuration YAML file, not YAML inventory')
 
         # We expect top level keys to correspond to groups, iterate over them
-        # to get host, vars and subgroups (which we iterate over recursivelly)
+        # to get host, vars and subgroups (which we iterate over recursively)
         if isinstance(data, MutableMapping):
             for group_name in data:
                 self._parse_group(group_name, data[group_name])
@@ -112,66 +124,61 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        self.inventory.add_group(group)
+        if isinstance(group_data, (MutableMapping, NoneType)):  # type: ignore[misc]
 
-        if isinstance(group_data, MutableMapping):
-            # make sure they are dicts
-            for section in ['vars', 'children', 'hosts']:
-                if section in group_data:
-                    # convert strings to dicts as these are allowed
-                    if isinstance(group_data[section], string_types):
-                        group_data[section] = {group_data[section]: None}
+            try:
+                group = self.inventory.add_group(group)
+            except AnsibleError as e:
+                raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
 
-                    if not isinstance(group_data[section], MutableMapping):
-                        raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
-                                                 (section, group, type(group_data[section])))
+            if group_data is not None:
+                # make sure they are dicts
+                for section in ['vars', 'children', 'hosts']:
+                    if section in group_data:
+                        # convert strings to dicts as these are allowed
+                        if isinstance(group_data[section], string_types):
+                            group_data[section] = {group_data[section]: None}
 
-            for key in group_data:
-                if key == 'vars':
-                    for var in group_data['vars']:
-                        self.inventory.set_variable(group, var, group_data['vars'][var])
+                        if not isinstance(group_data[section], (MutableMapping, NoneType)):  # type: ignore[misc]
+                            raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
+                                                     (section, group, type(group_data[section])))
 
-                elif key == 'children':
-                    for subgroup in group_data['children']:
-                        self._parse_group(subgroup, group_data['children'][subgroup])
-                        self.inventory.add_child(group, subgroup)
+                for key in group_data:
 
-                elif key == 'hosts':
-                    for host_pattern in group_data['hosts']:
-                        hosts, port = self._parse_host(host_pattern)
-                        self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
-                else:
-                    self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+                    if not isinstance(group_data[key], (MutableMapping, NoneType)):  # type: ignore[misc]
+                        self.display.warning('Skipping key (%s) in group (%s) as it is not a mapping, it is a %s' % (key, group, type(group_data[key])))
+                        continue
+
+                    if isinstance(group_data[key], NoneType):  # type: ignore[misc]
+                        self.display.vvv('Skipping empty key (%s) in group (%s)' % (key, group))
+                    elif key == 'vars':
+                        for var in group_data[key]:
+                            self.inventory.set_variable(group, var, group_data[key][var])
+                    elif key == 'children':
+                        for subgroup in group_data[key]:
+                            subgroup = self._parse_group(subgroup, group_data[key][subgroup])
+                            self.inventory.add_child(group, subgroup)
+
+                    elif key == 'hosts':
+                        for host_pattern in group_data[key]:
+                            hosts, port = self._parse_host(host_pattern)
+                            self._populate_host_vars(hosts, group_data[key][host_pattern] or {}, group, port)
+                    else:
+                        self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
+
+        else:
+            self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+
+        return group
 
     def _parse_host(self, host_pattern):
-        '''
+        """
         Each host key can be a pattern, try to process it and add variables as needed
-        '''
-        (hostnames, port) = self._expand_hostpattern(host_pattern)
-
-        return hostnames, port
-
-    def _expand_hostpattern(self, hostpattern):
-        '''
-        Takes a single host pattern and returns a list of hostnames and an
-        optional port number that applies to all of them.
-        '''
-        # Can the given hostpattern be parsed as a host with an optional port
-        # specification?
-
+        """
         try:
-            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except:
-            # not a recognizable host pattern
-            pattern = hostpattern
-            port = None
-
-        # Once we have separated the pattern, we expand it into list of one or
-        # more hostnames, depending on whether it contains any [x:y] ranges.
-
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
-        else:
-            hostnames = [pattern]
-
-        return (hostnames, port)
+            (hostnames, port) = self._expand_hostpattern(host_pattern)
+        except TypeError:
+            raise AnsibleParserError(
+                f"Host pattern {host_pattern} must be a string. Enclose integers/floats in quotation marks."
+            )
+        return hostnames, port

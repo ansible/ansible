@@ -1,0 +1,77 @@
+---
+- name: make sure win output dir exists
+  win_file:
+    path: "{{win_output_dir}}"
+    state: directory
+
+- name: reboot with defaults
+  win_reboot:
+
+# HACK: this test often causes subsequent failures on Server 2022- testing disable to see if things improve
+#- name: test with negative values for delays
+#  win_reboot:
+#    post_reboot_delay: -0.5
+#    pre_reboot_delay: -61
+
+- name: schedule a reboot for sometime in the future
+  win_command: shutdown.exe /r /t 599
+
+- name: reboot with a shutdown already scheduled
+  win_reboot:
+
+# test a reboot that reboots again during the test_command phase
+- name: create test file
+  win_file:
+    path: '{{win_output_dir}}\win_reboot_test'
+    state: touch
+
+- name: reboot with secondary reboot stage
+  win_reboot:
+    test_command: '{{ lookup("template", "post_reboot.ps1") }}'
+
+- name: reboot with test command that fails
+  win_reboot:
+    test_command: 'FAIL'
+    reboot_timeout: 120
+  register: reboot_fail_test
+  failed_when: "reboot_fail_test.msg != 'Timed out waiting for post-reboot test command (timeout=120)'"
+
+- name: remove SeRemoteShutdownPrivilege
+  win_user_right:
+    name: SeRemoteShutdownPrivilege
+    users: []
+    action: set
+  register: removed_shutdown_privilege
+
+- block:
+  - name: reset connection to ensure privilege change takes effect
+    meta: reset_connection
+
+  - name: try and reboot without required privilege
+    win_reboot:
+    register: fail_privilege
+    failed_when:
+    - "'Reboot command failed, error was:' not in fail_privilege.msg"
+    - "'Access is denied.(5)' not in fail_privilege.msg"
+
+  always:
+  - name: reset the SeRemoteShutdownPrivilege
+    win_user_right:
+      name: SeRemoteShutdownPrivilege
+      users: '{{ removed_shutdown_privilege.removed }}'
+      action: add
+
+  - name: reset connection after adding privileges back in
+    meta: reset_connection
+
+- name: Use invalid parameter
+  reboot:
+    foo: bar
+  ignore_errors: true
+  register: invalid_parameter
+
+- name: Ensure task fails with error
+  assert:
+    that:
+    - invalid_parameter is failed
+    - "invalid_parameter.msg == 'Invalid options for reboot: foo'"

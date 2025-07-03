@@ -1,0 +1,4 @@
+- assert:
+    that:
+      - '"00:00:00:a1:2b:cc" is is_mac'
+      - '"foo" is not is_mac'

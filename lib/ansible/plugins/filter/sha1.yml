@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: sha1
+  version_added: "historical"
+  short_description: SHA-1 hash of input data
+  description:
+    - Returns a L(SHA-1 hash, https://en.wikipedia.org/wiki/SHA-1) of the input data.
+  positional: _input
+  notes:
+    - This requires the SHA-1 algorithm to be available on the system, security contexts like FIPS might prevent this.
+    - SHA-1 has been deemed insecure and is not recommended for security related uses.
+  options:
+    _input:
+      description: Data to hash.
+      type: raw
+      required: true
+
+EXAMPLES: |
+    # sha1hash => "dc724af18fbdd4e59189f5fe768a5f8311527050"
+    sha1hash: "{{ 'testing' | sha1 }}"
+
+RETURN:
+  _value:
+    description: The SHA-1 hash of the input.
+    type: string

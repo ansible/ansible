@@ -1,0 +1,37 @@
+- name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=warn
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/playbook.yml
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: warn
+  register: duplicate_warn
+
+- assert:
+    that:
+      - duplicate_warn.stderr is contains("Found duplicate mapping key 'foo'")
+      - duplicate_warn.rc == 0
+
+- name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=error
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/playbook.yml
+  failed_when: duplicate_error.rc != 4
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: error
+  register: duplicate_error
+
+- assert:
+    that:
+      - duplicate_error.stderr is contains("Found duplicate mapping key 'foo'")
+      - duplicate_error.rc == 4
+
+- name: Test ANSIBLE_DUPLICATE_YAML_DICT_KEY=ignore
+  command: ansible-playbook {{ verbosity }} {{ role_path }}/playbook.yml
+  environment:
+    ANSIBLE_DUPLICATE_YAML_DICT_KEY: ignore
+  register: duplicate_ignore
+
+- assert:
+    that:
+      - duplicate_ignore.stderr is not contains("Found duplicate mapping key 'foo'")
+      - duplicate_ignore.rc == 0
+
+
+- name: test unsafe YAMLism
+  import_tasks: unsafe.yml

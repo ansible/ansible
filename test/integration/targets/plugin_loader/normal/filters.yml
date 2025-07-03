@@ -1,0 +1,13 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: ensure filters work as shipped from core
+      assert:
+         that:
+             - a|flatten == [1, 2, 3, 4, 5]
+             - a|ternary('yes', 'no') == 'yes'
+      vars:
+        a:
+         - 1
+         - 2
+         - [3, 4, 5]

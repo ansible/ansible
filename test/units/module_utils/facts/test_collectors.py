@@ -15,11 +15,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests.mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from . base import BaseFactsTest
 
@@ -92,7 +90,7 @@ class TestApparmorFacts(BaseFactsTest):
     collector_class = ApparmorFactCollector
 
     def test_collect(self):
-        facts_dict = super(TestApparmorFacts, self).test_collect()
+        facts_dict = super(TestApparmorFacts, self)._test_collect()
         self.assertIn('status', facts_dict['apparmor'])
 
 
@@ -190,7 +188,7 @@ class TestEnvFacts(BaseFactsTest):
     collector_class = EnvFactCollector
 
     def test_collect(self):
-        facts_dict = super(TestEnvFacts, self).test_collect()
+        facts_dict = super(TestEnvFacts, self)._test_collect()
         self.assertIn('HOME', facts_dict['env'])
 
 
@@ -233,8 +231,82 @@ class TestPkgMgrFacts(BaseFactsTest):
     valid_subsets = ['pkg_mgr']
     fact_namespace = 'ansible_pkgmgr'
     collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat"
+    }
 
     def test_collect(self):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+
+
+class TestMacOSXPkgMgrFacts(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "MacOSX",
+        "ansible_distribution_major_version": "11",
+        "ansible_os_family": "Darwin"
+    }
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/opt/homebrew/bin/brew')
+    def test_collect_opt_homebrew(self, p_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'homebrew')
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/usr/local/bin/brew')
+    def test_collect_usr_homebrew(self, p_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'homebrew')
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=lambda x: x == '/opt/local/bin/port')
+    def test_collect_macports(self, p_exists):
+        module = self._mock_module()
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertIn('pkg_mgr', facts_dict)
+        self.assertEqual(facts_dict['pkg_mgr'], 'macports')
+
+
+def _sanitize_os_path_apt_get(path):
+    if path == '/usr/bin/apt-get':
+        return True
+    else:
+        return False
+
+
+class TestPkgMgrFactsAptFedora(BaseFactsTest):
+    __test__ = True
+    gather_subset = ['!all', 'pkg_mgr']
+    valid_subsets = ['pkg_mgr']
+    fact_namespace = 'ansible_pkgmgr'
+    collector_class = PkgMgrFactCollector
+    collected_facts = {
+        "ansible_distribution": "Fedora",
+        "ansible_distribution_major_version": "28",
+        "ansible_os_family": "RedHat",
+        "ansible_pkg_mgr": "apt"
+    }
+
+    @patch('ansible.module_utils.facts.system.pkg_mgr.os.path.exists', side_effect=_sanitize_os_path_apt_get)
+    def test_collect(self, mock_os_path_exists):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
@@ -288,7 +360,6 @@ class TestSelinuxFacts(BaseFactsTest):
             facts_dict = fact_collector.collect(module=module)
             self.assertIsInstance(facts_dict, dict)
             self.assertEqual(facts_dict['selinux']['status'], 'Missing selinux Python library')
-            return facts_dict
 
 
 class TestServiceMgrFacts(BaseFactsTest):
@@ -301,17 +372,6 @@ class TestServiceMgrFacts(BaseFactsTest):
     # TODO: dedupe some of this test code
 
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-    def test_no_proc1(self, mock_gfc):
-        # no /proc/1/comm, ps returns non-0
-        # should fallback to 'service'
-        module = self._mock_module()
-        module.run_command = Mock(return_value=(1, '', 'wat'))
-        fact_collector = self.collector_class()
-        facts_dict = fact_collector.collect(module=module)
-        self.assertIsInstance(facts_dict, dict)
-        self.assertEqual(facts_dict['service_mgr'], 'service')
-
-    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
     def test_no_proc1_ps_random_init(self, mock_gfc):
         # no /proc/1/comm, ps returns '/sbin/sys11' which we dont know
         # should end up return 'sys11'
@@ -322,63 +382,33 @@ class TestServiceMgrFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['service_mgr'], 'sys11')
 
-    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-    def test_clowncar(self, mock_gfc):
-        # no /proc/1/comm, ps fails, distro and system are clowncar
-        # should end up return 'sys11'
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='runit-init')
+    def test_service_mgr_runit(self, mock_gfc):
+        # /proc/1/comm contains 'runit-init', ps fails, service manager is runit
+        # should end up return 'runit'
         module = self._mock_module()
         module.run_command = Mock(return_value=(1, '', ''))
-        collected_facts = {'distribution': 'clowncar',
-                           'system': 'ClownCarOS'}
+        collected_facts = {'ansible_system': 'Linux'}
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module,
                                             collected_facts=collected_facts)
         self.assertIsInstance(facts_dict, dict)
-        self.assertEqual(facts_dict['service_mgr'], 'service')
+        self.assertEqual(facts_dict['service_mgr'], 'runit')
 
-    # TODO: reenable these tests when we can mock more easily
-
-#    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-#    def test_sunos_fallback(self, mock_gfc):
-#        # no /proc/1/comm, ps fails, 'system' is SunOS
-#        # should end up return 'smf'?
-#        module = self._mock_module()
-#        # FIXME: the result here is a kluge to at least cover more of service_mgr.collect
-#        # TODO: remove
-#        # FIXME: have to force a pid for results here to get into any of the system/distro checks
-#        module.run_command = Mock(return_value=(1, ' 37 ', ''))
-#        collected_facts = {'system': 'SunOS'}
-#        fact_collector = self.collector_class(module=module)
-#        facts_dict = fact_collector.collect(collected_facts=collected_facts)
-#        print('facts_dict: %s' % facts_dict)
-#        self.assertIsInstance(facts_dict, dict)
-#        self.assertEqual(facts_dict['service_mgr'], 'smf')
-
-#    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-#    def test_aix_fallback(self, mock_gfc):
-#        # no /proc/1/comm, ps fails, 'system' is SunOS
-#        # should end up return 'smf'?
-#        module = self._mock_module()
-#        module.run_command = Mock(return_value=(1, '', ''))
-#        collected_facts = {'system': 'AIX'}
-#        fact_collector = self.collector_class(module=module)
-#        facts_dict = fact_collector.collect(collected_facts=collected_facts)
-#        print('facts_dict: %s' % facts_dict)
-#        self.assertIsInstance(facts_dict, dict)
-#        self.assertEqual(facts_dict['service_mgr'], 'src')
-
-#    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
-#    def test_linux_fallback(self, mock_gfc):
-#        # no /proc/1/comm, ps fails, 'system' is SunOS
-#        # should end up return 'smf'?
-#        module = self._mock_module()
-#        module.run_command = Mock(return_value=(1, '  37 ', ''))
-#        collected_facts = {'system': 'Linux'}
-#        fact_collector = self.collector_class(module=module)
-#        facts_dict = fact_collector.collect(collected_facts=collected_facts)
-#        print('facts_dict: %s' % facts_dict)
-#        self.assertIsInstance(facts_dict, dict)
-#        self.assertEqual(facts_dict['service_mgr'], 'sdfadf')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
+    @patch('ansible.module_utils.facts.system.service_mgr.os.path.islink', side_effect=lambda x: x == '/sbin/init')
+    @patch('ansible.module_utils.facts.system.service_mgr.os.readlink', side_effect=lambda x: '/sbin/runit-init' if x == '/sbin/init' else '/bin/false')
+    def test_service_mgr_runit_no_comm(self, mock_gfc, mock_opl, mock_orl):
+        # no /proc/1/comm, ps returns 'COMMAND\n', service manager is runit
+        # should end up return 'runit'
+        module = self._mock_module()
+        module.run_command = Mock(return_value=(1, 'COMMAND\n', ''))
+        collected_facts = {'ansible_system': 'Linux'}
+        fact_collector = self.collector_class()
+        facts_dict = fact_collector.collect(module=module,
+                                            collected_facts=collected_facts)
+        self.assertIsInstance(facts_dict, dict)
+        self.assertEqual(facts_dict['service_mgr'], 'runit')
 
 
 class TestSshPubKeyFactCollector(BaseFactsTest):

@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -30,11 +29,13 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
     platform = 'AIX'
 
     def get_default_interfaces(self, route_path):
+        interface = dict(v4={}, v6={})
+
         netstat_path = self.module.get_bin_path('netstat')
+        if netstat_path is None:
+            return interface['v4'], interface['v6']
 
         rc, out, err = self.module.run_command([netstat_path, '-nr'])
-
-        interface = dict(v4={}, v6={})
 
         lines = out.splitlines()
         for line in lines:
@@ -58,9 +59,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
             all_ipv6_addresses=[],
         )
 
-        uname_rc = None
-        uname_out = None
-        uname_err = None
+        uname_rc = uname_out = uname_err = None
         uname_path = self.module.get_bin_path('uname')
         if uname_path:
             uname_rc, uname_out, uname_err = self.module.run_command([uname_path, '-W'])

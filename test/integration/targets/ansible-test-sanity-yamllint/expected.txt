@@ -1,0 +1,4 @@
+plugins/inventory/inventory1.py:34:1: multiple-yaml-documents: RETURN: expected a single document in the stream
+plugins/modules/module1.py:15:1: key-duplicates: DOCUMENTATION: duplication of key "short_description" in mapping
+plugins/modules/module1.py:25:3: error: RETURN: syntax error: expected <block end>, but found '<block mapping start>' (syntax)
+plugins/modules/module1.py:25:3: unparsable-with-libyaml: RETURN: while parsing a block mapping did not find expected key

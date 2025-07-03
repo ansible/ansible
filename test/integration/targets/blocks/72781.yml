@@ -1,0 +1,13 @@
+- hosts: all
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+    - block:
+      - block:
+          - fail:
+            when: inventory_hostname == 'host1'
+        rescue:
+          - fail:
+      - block:
+        - debug:
+            msg: "SHOULD NOT HAPPEN"

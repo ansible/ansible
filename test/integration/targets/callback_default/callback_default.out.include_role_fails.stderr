@@ -1,0 +1,10 @@
++ ansible-playbook -i inventory test_include_role_fails.yml
+++ set +x
+[ERROR]: the role 'does-not-exist' was not found in TEST_PATH/roles:/<<HOMEDIR>>/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:TEST_PATH
+Origin: TEST_PATH/test_include_role_fails.yml:5:15
+
+3   tasks:
+4     - include_role:
+5         name: does-not-exist
+                ^ column 15
+

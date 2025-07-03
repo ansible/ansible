@@ -1,0 +1,23 @@
+- name: Lookup test
+  hosts: testhost
+  tasks:
+    - name: "Read mysql.ini allow_none=False (default)"
+      set_fact:
+        test1: "{{ lookup('ini', 'user', file='mysql.ini', section='mysqld') }}"
+      register: result
+      ignore_errors: true
+
+    - name: "Read mysql.ini allow_no_value=True"
+      set_fact:
+        test2: "{{ lookup('ini', 'user', file='mysql.ini', section='mysqld', allow_no_value=True) }}"
+
+    - name: "Read mysql.ini allow_none=True"
+      set_fact:
+        test3: "{{ lookup('ini', 'skip-innodb', file='mysql.ini', section='mysqld', allow_none=True) }}"
+
+    - assert:
+        that:
+          - result is failed
+          - test2 == 'mysql'
+          - test3 == []
+          - test3|length == 0

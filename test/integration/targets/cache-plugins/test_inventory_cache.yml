@@ -1,0 +1,34 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    cache_options_message: "Cache options were provided but may not reconcile correctly unless set via set_options"
+    no_parse_message: "No inventory was parsed, only implicit localhost is available"
+    expected_host_name: host1
+    base_environment:
+      ANSIBLE_FORCE_COLOR: 0
+    legacy_cache:
+      DUMMY_CACHE_SKIP_SUPER: 1
+  tasks:
+    - name: legacy-style cache plugin should cause a warning
+      command: ansible-inventory -i test.inventoryconfig.yml --graph --playbook-dir .
+      register: result
+      environment: "{{ base_environment | combine(legacy_cache) }}"
+
+    - name: test warning output (no inventory)
+      assert:
+        that:
+          - result.stderr is contains cache_options_message
+          - result.stderr is contains no_parse_message
+          - result.stdout is not contains expected_host_name
+
+    - name: cache plugin updated to use config manager should work
+      command: ansible-inventory -i test.inventoryconfig.yml --graph --playbook-dir .
+      register: result
+      environment: "{{ base_environment }}"
+
+    - name: test warning output (inventory parse success)
+      assert:
+        that:
+          - result.stderr is not contains cache_options_message
+          - result.stderr is not contains no_parse_message
+          - result.stdout is contains expected_host_name

@@ -1,0 +1,50 @@
+- name: Test unarchiving as root and apply different ownership to top folder
+  vars:
+    ansible_become: yes
+    ansible_become_user: root
+    ansible_become_password: null
+  block:
+    - name: Create top folder owned by root
+      file:
+        path: "{{ test_user.home }}/tarball-top-folder"
+        state: directory
+        owner: root
+
+    - name: Add a file owned by root
+      copy:
+        src: foo.txt
+        dest: "{{ test_user.home }}/tarball-top-folder/foo-unarchive.txt"
+        mode: preserve
+
+    - name: Create a tarball as root. This tarball won't list the top folder when doing "tar tvf test-tarball.tar.gz"
+      shell: tar -czf test-tarball.tar.gz tarball-top-folder/foo-unarchive.txt
+      args:
+        chdir: "{{ test_user.home }}"
+        creates: "{{ test_user.home }}/test-tarball.tar.gz"
+
+    - name: Create unarchive destination folder in {{ test_user.home }}/unarchivetest3-unarchive
+      file:
+        path: "{{ test_user.home }}/unarchivetest3-unarchive"
+        state: directory
+        owner: "{{ test_user.name }}"
+        group: "{{ test_user.group }}"
+
+    - name: "unarchive the tarball as root. apply ownership for {{ test_user.name }}"
+      unarchive:
+        src: "{{ test_user.home }}/test-tarball.tar.gz"
+        dest: "{{ test_user.home }}/unarchivetest3-unarchive"
+        remote_src: yes
+        list_files: True
+        owner: "{{ test_user.name }}"
+        group: "{{ test_user.group }}"
+
+    - name: Stat the extracted top folder
+      stat:
+        path: "{{ test_user.home }}/unarchivetest3-unarchive/tarball-top-folder"
+      register: top_folder_info
+
+    - name: "verify that extracted top folder is owned by {{ test_user.name }}"
+      assert:
+        that:
+          - top_folder_info.stat.pw_name == test_user.name
+          - top_folder_info.stat.gid == test_user.group

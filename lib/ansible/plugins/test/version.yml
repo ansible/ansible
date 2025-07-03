@@ -1,0 +1,82 @@
+DOCUMENTATION:
+  name: version
+  author: Ansible Core
+  version_added: "1.6"
+  short_description: compare version strings
+  aliases: [version_compare]
+  description:
+    - Compare version strings using various versioning schemes
+  options:
+    _input:
+      description: Left hand version to compare
+      type: string
+      required: True
+    version:
+      description: Right hand version to compare
+      type: string
+      required: True
+    operator:
+      description: Comparison operator
+      type: string
+      required: False
+      choices:
+        - ==
+        - '='
+        - eq
+        - <
+        - lt
+        - <=
+        - le
+        - '>'
+        - gt
+        - '>='
+        - ge
+        - '!='
+        - <>
+        - ne
+      default: eq
+    strict:
+      description: Whether to use strict version scheme. Mutually exclusive with O(version_type)
+      type: boolean
+      required: False
+      default: False
+    version_type:
+      description: Version scheme to use for comparison. Mutually exclusive with O(strict). See C(notes) for descriptions on the version types.
+      type: string
+      required: False
+      choices:
+        - loose
+        - strict
+        - semver
+        - semantic
+        - pep440
+      default: loose
+  notes:
+    - V(loose) - This type corresponds to the Python C(distutils.version.LooseVersion) class. All version formats are valid for this type. The rules for comparison are simple and predictable, but may not always give expected results.
+    - V(strict) - This type corresponds to the Python C(distutils.version.StrictVersion) class. A version number consists of two or three dot-separated numeric components, with an optional "pre-release" tag on the end. The pre-release tag consists of a single letter C(a) or C(b) followed by a number.  If the numeric components of two version numbers are equal, then one with a pre-release tag will always be deemed earlier (lesser) than one without.
+    - V(semver)/V(semantic) - This type implements the L(Semantic Version,https://semver.org) scheme for version comparison.
+    - V(pep440) - This type implements the Python L(PEP-440,https://peps.python.org/pep-0440/) versioning rules for version comparison. Added in version 2.14.
+EXAMPLES: |
+  - name: version test examples
+    assert:
+      that:
+        - "'1.0' is version_compare('1.0', '==')"  # old name
+        - "'1.0' is version('1.0', '==')"
+        - "'1.0' is version('2.0', '!=')"
+        - "'1.0' is version('2.0', '<')"
+        - "'2.0' is version('1.0', '>')"
+        - "'1.0' is version('1.0', '<=')"
+        - "'1.0' is version('1.0', '>=')"
+        - "'1.0' is version_compare('1.0', '==', strict=true)"  # old name
+        - "'1.0' is version('1.0', '==', strict=true)"
+        - "'1.0' is version('2.0', '!=', strict=true)"
+        - "'1.0' is version('2.0', '<', strict=true)"
+        - "'2.0' is version('1.0', '>', strict=true)"
+        - "'1.0' is version('1.0', '<=', strict=true)"
+        - "'1.0' is version('1.0', '>=', strict=true)"
+        - "'1.2.3' is version('2.0.0', 'lt', version_type='semver')"
+        - "'2.14.0rc1' is version('2.14.0', 'lt', version_type='pep440')"
+RETURN:
+  _value:
+    description: Returns V(True) or V(False) depending on the outcome of the comparison.
+    type: boolean

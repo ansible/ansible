@@ -26,8 +26,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -48,9 +49,9 @@ class HardwareCollector(BaseFactCollector):
     _fact_ids = set(['processor',
                      'processor_cores',
                      'processor_count',
-                     # TODO: mounts isnt exactly hardware
+                     # TODO: mounts isn't exactly hardware
                      'mounts',
-                     'devices'])
+                     'devices'])  # type: t.Set[str]
     _fact_class = Hardware
 
     def collect(self, module=None, collected_facts=None):

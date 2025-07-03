@@ -1,13 +1,12 @@
 # (c) 2012-17 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
 
 DOCUMENTATION = """
-    lookup: list
-    author: Ansible core team
+    name: list
+    author: Ansible Core Team
     version_added: "2.0"
     short_description: simply returns what it is given.
     description:
@@ -16,7 +15,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: unlike with_items you will get 3 items from this loop, the 2nd one being a list
-  debug: var=item
+  ansible.builtin.debug: var=item
   with_list:
     - 1
     - [2,3]
@@ -26,11 +25,19 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: basically the same as you fed in
+    type: list
+    elements: raw
 """
+
+from collections.abc import Sequence
+
 from ansible.plugins.lookup import LookupBase
+from ansible.errors import AnsibleError
 
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
+        if not isinstance(terms, Sequence):
+            raise AnsibleError("with_list expects a list")
         return terms

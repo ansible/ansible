@@ -1,0 +1,1 @@
+- include_tasks: "{{ lookup('first_found', inventory_hostname ~ '.yml') }}"

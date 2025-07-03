@@ -1,0 +1,224 @@
+- name: test with_subelements
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data}}"
+    - the_list
+
+- name: verify with_subelements results
+  assert:
+    that:
+        - "_xf == 'f'"
+        - "_xd == 'd'"
+        - "_ye == 'e'"
+        - "_yf == 'f'"
+
+- name: test with_subelements in subkeys
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data}}"
+    - the.sub.key.list
+
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - "_xq == 'q'"
+        - "_xr == 'r'"
+        - "_yi == 'i'"
+        - "_yo == 'o'"
+
+- name: test with_subelements with missing key or subkey
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - "{{element_data_missing}}"
+    - the.sub.key.list
+    - skip_missing: yes
+  register: _subelements_missing_subkeys
+
+- debug: var=_subelements_missing_subkeys
+- debug: var=_subelements_missing_subkeys.results|length
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - _subelements_missing_subkeys is not skipped
+        - _subelements_missing_subkeys.results|length == 2
+        - "_xk == 'k'"
+        - "_xl == 'l'"
+
+# Example from the DOCUMENTATION block
+- set_fact:
+    users:
+      - name: alice
+        authorized:
+          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
+        mysql:
+            password: mysql-password
+            hosts:
+              - "%"
+              - "127.0.0.1"
+              - "::1"
+              - "localhost"
+            privs:
+              - "*.*:SELECT"
+              - "DB1.*:ALL"
+        groups:
+          - wheel
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+        mysql:
+            password: other-mysql-password
+            hosts:
+              - "db1"
+            privs:
+              - "*.*:SELECT"
+              - "DB2.*:ALL"
+      - name: carol
+        skipped: true
+        authorized:
+          - /tmp/carol/id_rsa.pub
+        mysql:
+            password: third-mysql-password
+            hosts:
+              - "db9"
+            privs:
+              - "*.*:SELECT"
+              - "DB9.*:ALL"
+
+
+- name: Ensure it errors properly with non-dict
+  set_fact:
+    err: "{{ lookup('subelements', 9001, 'groups', wantlist=true) }}"
+  ignore_errors: true
+  register: err1
+
+- assert:
+    that:
+      - err1 is failed
+      - "'first a dict or a list' in err1.msg"
+
+- name: Ensure it errors properly when pointing to non-list
+  set_fact:
+    err: "{{ lookup('subelements', users, 'mysql.password', wantlist=true) }}"
+  ignore_errors: true
+  register: err2
+
+- assert:
+    that:
+      - err2 is failed
+      - "'should point to a list' in err2.msg"
+
+- name: Ensure it properly skips missing keys
+  set_fact:
+    err: "{{ lookup('subelements', users, 'mysql.hosts.doesnotexist', wantlist=true) }}"
+  ignore_errors: true
+  register: err3
+
+- assert:
+    that:
+      - err3 is failed
+      - "'should point to a dictionary' in err3.msg"
+
+- name: Ensure it properly skips missing keys
+  set_fact:
+    err: "{{ lookup('subelements', users, 'mysql.monkey', wantlist=true) }}"
+  ignore_errors: true
+  register: err4
+
+- assert:
+    that:
+      - err4 is failed
+      - >-
+        "could not find 'monkey' key in iterated item" in err4.msg
+
+- assert:
+    that:
+      - "item.0.name != 'carol'"
+  with_subelements:
+    - "{{ users }}"
+    - mysql.privs
+
+- name: Ensure it errors properly when optional arg is nonsensical
+  set_fact:
+    err: neverset
+  with_subelements:
+    - "{{ users }}"
+    - mysql.privs
+    - wolves
+  ignore_errors: true
+  register: err5
+
+- assert:
+    that:
+      - err5 is failed
+      - "'the optional third item must be a dict' in err5.msg"
+
+- name: Ensure it errors properly when given way too many args
+  set_fact:
+    err: neverset
+  with_subelements:
+    - "{{ users }}"
+    - mysql.privs
+    - wolves
+    - foo
+    - bar
+    - baz
+    - bye now
+  ignore_errors: true
+  register: err6
+
+- assert:
+    that:
+      - err6 is failed
+      - "'expects a list of two or three' in err6.msg"
+
+- name: Ensure it errors properly when second arg is invalid type
+  set_fact:
+    err: neverset
+  with_subelements:
+    - "{{ users }}"
+    - true
+  ignore_errors: true
+  register: err7
+
+- assert:
+    that:
+      - err7 is failed
+      - "'second a string' in err7.msg"
+
+- name: Ensure it errors properly when first arg is invalid type
+  set_fact:
+    err: neverset
+  with_subelements:
+    - true
+    - "{{ users }}"
+  ignore_errors: true
+  register: err8
+
+- assert:
+    that:
+      - err8 is failed
+      - "'first a dict or a list' in err8.msg"
+
+- set_fact:
+    empty_subelements: "{{ lookup('subelements', {'skipped': true}, 'mysql.hosts', wantlist=true) }}"
+
+- assert:
+    that:
+      - empty_subelements == []
+
+- set_fact:
+    some_dict:
+      key: "{{ users[0] }}"
+      another: "{{ users[1] }}"
+
+- name: Ensure it works when we give a dict instead of a list
+  set_fact: "user_{{ item.0.name }}={{ item.1 }}"
+  with_subelements:
+    - "{{ some_dict }}"
+    - mysql.hosts
+
+- assert:
+    that:
+      - "user_alice == 'localhost'"
+      - "user_bob == 'db1'"

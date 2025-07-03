@@ -12,21 +12,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
-    strategy: debug
+DOCUMENTATION = """
+    name: debug
     short_description: Executes tasks in interactive debug session.
     description:
         - Task execution is 'linear' but controlled by an interactive debug session.
     version_added: "2.1"
-    author: Kishin Yagami
-'''
-
-import cmd
-import pprint
-import sys
+    author: Kishin Yagami (!UNKNOWN)
+"""
 
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 

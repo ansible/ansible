@@ -26,24 +26,25 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import fnmatch
 import sys
+import typing as t
 
 from ansible.module_utils.facts import timeout
 from ansible.module_utils.facts import collector
+from ansible.module_utils.common.collections import is_string
 
 
 class AnsibleFactCollector(collector.BaseFactCollector):
-    '''A FactCollector that returns results under 'ansible_facts' top level key.
+    """A FactCollector that returns results under 'ansible_facts' top level key.
 
        If a namespace if provided, facts will be collected under that namespace.
        For ex, a ansible.module_utils.facts.namespace.PrefixFactNamespace(prefix='ansible_')
 
        Has a 'from_gather_subset() constructor that populates collectors based on a
-       gather_subset specifier.'''
+       gather_subset specifier."""
 
     def __init__(self, collectors=None, namespace=None, filter_spec=None):
 
@@ -53,11 +54,24 @@ class AnsibleFactCollector(collector.BaseFactCollector):
         self.filter_spec = filter_spec
 
     def _filter(self, facts_dict, filter_spec):
-        # assume a filter_spec='' is equilv to filter_spec='*'
+        # assume filter_spec='' or filter_spec=[] is equivalent to filter_spec='*'
         if not filter_spec or filter_spec == '*':
             return facts_dict
 
-        return [(x, y) for x, y in facts_dict.items() if fnmatch.fnmatch(x, filter_spec)]
+        if is_string(filter_spec):
+            filter_spec = [filter_spec]
+
+        found = []
+        for f in filter_spec:
+            for x, y in facts_dict.items():
+                if not f or fnmatch.fnmatch(x, f):
+                    found.append((x, y))
+                elif not f.startswith(('ansible_', 'facter', 'ohai')):
+                    # try to match with ansible_ prefix added when non empty
+                    g = 'ansible_%s' % f
+                    if fnmatch.fnmatch(x, g):
+                        found.append((x, y))
+        return found
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}
@@ -87,10 +101,10 @@ class AnsibleFactCollector(collector.BaseFactCollector):
 
 
 class CollectorMetaDataCollector(collector.BaseFactCollector):
-    '''Collector that provides a facts with the gather_subset metadata.'''
+    """Collector that provides a facts with the gather_subset metadata."""
 
     name = 'gather_subset'
-    _fact_ids = set([])
+    _fact_ids = set()  # type: t.Set[str]
 
     def __init__(self, collectors=None, namespace=None, gather_subset=None, module_setup=None):
         super(CollectorMetaDataCollector, self).__init__(collectors, namespace)
@@ -98,7 +112,13 @@ class CollectorMetaDataCollector(collector.BaseFactCollector):
         self.module_setup = module_setup
 
     def collect(self, module=None, collected_facts=None):
+        # NOTE: deprecate/remove once DT lands
+        # we can return this data, but should not be top level key
         meta_facts = {'gather_subset': self.gather_subset}
+
+        # NOTE: this is just a boolean indicator that 'facts were gathered'
+        # and should be moved to the 'gather_facts' action plugin
+        # probably revised to handle modules/subsets combos
         if self.module_setup:
             meta_facts['module_setup'] = self.module_setup
         return meta_facts
@@ -111,7 +131,7 @@ def get_ansible_collector(all_collector_classes,
                           gather_timeout=None,
                           minimal_gather_subset=None):
 
-    filter_spec = filter_spec or '*'
+    filter_spec = filter_spec or []
     gather_subset = gather_subset or ['all']
     gather_timeout = gather_timeout or timeout.DEFAULT_GATHER_TIMEOUT
     minimal_gather_subset = minimal_gather_subset or frozenset()

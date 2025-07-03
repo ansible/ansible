@@ -1,0 +1,2 @@
+---
+- { import_tasks: cli.yaml, tags: ['cli'] }

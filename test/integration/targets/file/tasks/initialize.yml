@@ -1,0 +1,15 @@
+#
+# Cleanup the output dir and recreate it for the tests to operate on
+#
+- name: Cleanup the output directory
+  file:
+    dest: '{{ remote_tmp_dir_test }}'
+    state: 'absent'
+
+- name: Recreate the toplevel output dir
+  file:
+    dest: '{{ remote_tmp_dir_test }}'
+    state: 'directory'
+
+- name: prep with a basic file to operate on
+  copy: src=foo.txt dest={{output_file}}

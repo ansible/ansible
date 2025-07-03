@@ -1,0 +1,74 @@
+- name: add two ints
+  set_fact:
+      integer_sum: "{{ i_one + i_two }}"
+
+- assert:
+    that:
+        - 'integer_sum == 3'
+        - integer_sum|type_debug == "int"
+
+- name: add casted string and int
+  set_fact:
+      integer_sum2: "{{ s_one|int + i_two }}"
+
+- assert:
+    that:
+        - 'integer_sum2 == 3'
+
+- name: concatenate int and string
+  set_fact:
+      string_sum: "'{{ [i_one, s_two]|join('') }}'"
+
+- assert:
+    that:
+        - string_sum == "'12'"
+
+- name: add two lists
+  set_fact:
+      list_sum: "{{ list_one + list_two }}"
+
+- assert:
+    that:
+        - 'list_sum == ["one", "two", "three", "four"]'
+
+- name: add two lists, multi expression
+  set_fact:
+      list_sum_multi: "{{ list_one }} + {{ list_two }}"
+
+- assert:
+    that:
+        - |
+            list_sum_multi == "['one', 'two'] + ['three', 'four']"
+
+- name: add two dicts
+  set_fact:
+      dict_sum: "{{ dict_one + dict_two }}"
+  ignore_errors: yes
+
+- assert:
+    that:
+        - 'dict_sum is undefined'
+
+- name: loop through list with strings
+  set_fact:
+      list_for_strings: "{% for x in list_one %}{{ x }}{% endfor %}"
+
+- assert:
+    that:
+        - 'list_for_strings == "onetwo"'
+
+- name: loop through list with int
+  set_fact:
+      list_for_int: "{% for x in list_one_int %}{{ x }}{% endfor %}"
+
+- assert:
+    that:
+        - 'list_for_int == 1'
+
+- name: loop through list with ints
+  set_fact:
+      list_for_ints: "{% for x in list_ints %}{{ x }}{% endfor %}"
+
+- assert:
+    that:
+        - 'list_for_ints | int == 42'

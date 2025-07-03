@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "force templating in delegate_to before we hit the second one with a filter"
+      delegate_to: "{{ 'localhost' }}"
+
+    - include_role:
+        name: role_filter

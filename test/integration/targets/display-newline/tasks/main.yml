@@ -1,0 +1,10 @@
+- name: Run a command which generates a warning with NL, CR and CRNL
+  command: ansible -m noisy localhost
+  register: result
+  environment:
+    ANSIBLE_FORCE_COLOR: 0
+    ANSIBLE_LIBRARY: "{{ role_path }}/library"
+
+- name: Verify NL and CR are preserved, but CRNL is converted to NL
+  assert:
+    that: result.stderr is contains 'Hello\nNew\rAnsible\nWorld'

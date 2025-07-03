@@ -1,0 +1,10 @@
+---
+- name: test Ansible.ModuleUtils.WebRequest
+  web_request_test:
+    httpbin_host: '{{ httpbin_host }}'
+  register: web_request
+
+- name: assert test Ansible.ModuleUtils.WebRequest succeeded
+  assert:
+    that:
+    - web_request.data == 'success'

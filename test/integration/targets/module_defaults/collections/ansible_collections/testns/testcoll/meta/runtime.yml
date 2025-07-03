@@ -1,0 +1,92 @@
+plugin_routing:
+  action:
+    # Backwards compat for modules-redirected-as-actions:
+    # By default, each module_defaults entry is resolved as an action plugin,
+    # and if it does not exist, it is resolved a module.
+    # All modules that redirect to the same action will resolve to the same action.
+    module_uses_action_defaults:
+      redirect: testns.testcoll.eos
+
+    # module-redirected-as-action overridden by action_plugin
+    iosfacts:
+      redirect: testns.testcoll.nope
+    ios_facts:
+      redirect: testns.testcoll.nope
+
+    redirected_action:
+      redirect: testns.testcoll.ios
+  modules:
+    # Any module_defaults for testns.testcoll.module will not apply to a module_uses_action_defaults task:
+    #
+    # module_defaults:
+    #   testns.testcoll.module:
+    #     option: value
+    #
+    # But defaults for testns.testcoll.module_uses_action_defaults or testns.testcoll.eos will:
+    #
+    # module_defaults:
+    #   testns.testcoll.module_uses_action_defaults:
+    #     option: value
+    #   testns.testcoll.eos:
+    #     option: defined_last_i_win
+    module_uses_action_defaults:
+      redirect: testns.testcoll.module
+
+    # Not "eos_facts" to ensure TE is not finding handler via prefix
+    # eosfacts tasks should not get eos module_defaults (or defaults for other modules that use eos action plugin)
+    eosfacts:
+      action_plugin: testns.testcoll.eos
+
+    # Test that `action_plugin` has higher precedence than module-redirected-as-action  - reverse this?
+    # Current behavior is iosfacts/ios_facts do not get ios defaults.
+    iosfacts:
+      redirect: testns.testcoll.ios_facts
+    ios_facts:
+      action_plugin: testns.testcoll.redirected_action
+
+    old_ping:
+      deprecation:
+        removal_date: 2020-12-31
+        warning_text: old_ping will be removed in a future release of this collection. Use ping instead.
+        redirect: ping
+
+action_groups:
+  testgroup:
+    # Test metadata 'extend_group' feature does not get stuck in a recursive loop
+    - metadata:
+        extend_group: othergroup
+    - metadata
+    - old_ping
+    - ping
+    - testns.testcoll.echo1
+    - testns.testcoll.echo2
+# note we can define defaults for an action
+    - testns.testcoll.echoaction
+# note we can define defaults in this group for actions/modules in another collection
+    - testns.othercoll.other_echoaction
+    - testns.othercoll.other_echo1
+  othergroup:
+    - metadata:
+        extend_group:
+          - testgroup
+  empty_metadata:
+    - metadata: {}
+  bad_metadata_format:
+    - unexpected_key:
+        key: value
+      metadata:
+        extend_group: testgroup
+  multiple_metadata:
+    - metadata:
+        extend_group: testgroup
+    - metadata:
+        extend_group: othergroup
+  bad_metadata_options:
+    - metadata:
+        unexpected_key: testgroup
+  bad_metadata_type:
+    - metadata: [testgroup]
+  bad_metadata_option_type:
+    - metadata:
+        extend_group:
+          name: testgroup

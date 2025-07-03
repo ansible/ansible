@@ -13,8 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -41,14 +42,14 @@ class Network:
 
 
 class NetworkCollector(BaseFactCollector):
-    # MAYBE: we could try to build this based on the arch specific implemementation of Network() or its kin
+    # MAYBE: we could try to build this based on the arch specific implementation of Network() or its kin
     name = 'network'
     _fact_class = Network
     _fact_ids = set(['interfaces',
                      'default_ipv4',
                      'default_ipv6',
                      'all_ipv4_addresses',
-                     'all_ipv6_addresses'])
+                     'all_ipv6_addresses'])  # type: t.Set[str]
 
     IPV6_SCOPE = {'0': 'global',
                   '10': 'host',

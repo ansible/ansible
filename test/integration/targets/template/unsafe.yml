@@ -1,0 +1,69 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    nottemplated: this should not be seen
+    imunsafe: !unsafe '{{ nottemplated }}'
+    unsafe_set: !unsafe '{{ "test" }}'
+  tasks:
+
+    - set_fact:
+        this_was_unsafe: >
+          {{ imunsafe }}
+
+    - set_fact:
+          this_always_safe: '{{ imunsafe }}'
+
+    - set_fact:
+        this_unsafe_set: "{{ unsafe_set }}"
+
+    - name: ensure nothing was templated
+      assert:
+        that:
+        - this_always_safe == imunsafe
+        - imunsafe == this_was_unsafe.strip()
+        - unsafe_set == this_unsafe_set.strip()
+
+
+- hosts: localhost
+  gather_facts: false
+  vars:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+  tasks:
+    - set_fact:
+        unsafe_foo: "{{ lookup('list', var0) }}"
+      vars:
+        var0: "{{ var1 }}"
+        var1:
+          - unsafe
+
+    - assert:
+        that:
+          - unsafe_foo is not ansible._protomatter.tagged_with('TrustedAsTemplate')
+
+    - block:
+      - copy:
+          dest: "{{ file_name }}"
+          content: !unsafe "{{ i_should_not_be_templated }}"
+
+      - set_fact:
+          file_content: "{{ lookup('file', file_name) }}"
+
+      - assert:
+          that:
+            - not file_content is contains('unsafe')
+
+      - set_fact:
+          file_content: "{{ lookup('file', file_name_tmpl) }}"
+        vars:
+          file_name_tmpl: "{{ file_name }}"
+
+      - assert:
+          that:
+            - not file_content is contains('unsafe')
+      vars:
+        file_name: "{{ output_dir }}/unsafe_file"
+        i_should_not_be_templated: unsafe
+      always:
+        - file:
+            dest: "{{ file_name }}"
+            state: absent

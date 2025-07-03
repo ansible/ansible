@@ -13,12 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+import unittest
+from unittest.mock import patch
 
 from ansible.module_utils.facts import utils
 

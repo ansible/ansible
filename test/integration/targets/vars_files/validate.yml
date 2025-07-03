@@ -1,0 +1,11 @@
+- assert:
+    that:
+      - common is true
+- assert:
+    that:
+      - is_bar is true
+  when: inventory_hostname == 'testhost'
+- assert:
+    that:
+      - is_bar is false
+  when: inventory_hostname == 'testhost2'

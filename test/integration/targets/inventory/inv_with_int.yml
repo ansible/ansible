@@ -1,0 +1,6 @@
+all:
+  hosts:
+    testing123:
+      x:
+        a: 1
+        0: 2

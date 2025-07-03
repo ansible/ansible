@@ -1,0 +1,4 @@
+shippable/posix/group3
+context/controller
+gather_facts/no
+env/set/ANSIBLE_DEPRECATION_WARNINGS/yes

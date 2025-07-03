@@ -2,13 +2,13 @@
 # Copyright 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 import pytest
 
 from ansible.errors import AnsibleParserError
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.utils.sentinel import Sentinel
 
 
 class TestModArgsDwim:
@@ -37,7 +37,7 @@ class TestModArgsDwim:
         assert args == dict(
             _raw_params='echo hi',
         )
-        assert to is None
+        assert to is Sentinel
 
     def test_basic_command(self):
         m = ModuleArgsParser(dict(command='echo hi'))
@@ -48,7 +48,7 @@ class TestModArgsDwim:
         assert args == dict(
             _raw_params='echo hi',
         )
-        assert to is None
+        assert to is Sentinel
 
     def test_shell_with_modifiers(self):
         m = ModuleArgsParser(dict(shell='/bin/foo creates=/tmp/baz removes=/tmp/bleep'))
@@ -61,7 +61,7 @@ class TestModArgsDwim:
             removes='/tmp/bleep',
             _raw_params='/bin/foo',
         )
-        assert to is None
+        assert to is Sentinel
 
     def test_normal_usage(self):
         m = ModuleArgsParser(dict(copy='src=a dest=b'))
@@ -70,7 +70,7 @@ class TestModArgsDwim:
 
         assert mod, 'copy'
         assert args, dict(src='a', dest='b')
-        assert to is None
+        assert to is Sentinel
 
     def test_complex_args(self):
         m = ModuleArgsParser(dict(copy=dict(src='a', dest='b')))
@@ -79,7 +79,7 @@ class TestModArgsDwim:
 
         assert mod, 'copy'
         assert args, dict(src='a', dest='b')
-        assert to is None
+        assert to is Sentinel
 
     def test_action_with_complex(self):
         m = ModuleArgsParser(dict(action=dict(module='copy', src='a', dest='b')))
@@ -88,7 +88,7 @@ class TestModArgsDwim:
 
         assert mod == 'copy'
         assert args == dict(src='a', dest='b')
-        assert to is None
+        assert to is Sentinel
 
     def test_action_with_complex_and_complex_args(self):
         m = ModuleArgsParser(dict(action=dict(module='copy', args=dict(src='a', dest='b'))))
@@ -97,7 +97,7 @@ class TestModArgsDwim:
 
         assert mod == 'copy'
         assert args == dict(src='a', dest='b')
-        assert to is None
+        assert to is Sentinel
 
     def test_local_action_string(self):
         m = ModuleArgsParser(dict(local_action='copy src=a dest=b'))
@@ -116,12 +116,20 @@ class TestModArgsDwim:
 
         assert err.value.args[0] == msg
 
-    def test_multiple_actions(self):
+    @pytest.mark.usefixtures('collection_loader')
+    def test_multiple_actions_ping_shell(self):
         args_dict = {'ping': 'data=hi', 'shell': 'echo hi'}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:
             m.parse()
 
-        assert err.value.args[0].startswith("conflicting action statements: ")
-        conflicts = set(err.value.args[0][len("conflicting action statements: "):].split(', '))
-        assert conflicts == set(('ping', 'shell'))
+        assert err.value.args[0] == f'conflicting action statements: {", ".join(args_dict)}'
+
+    @pytest.mark.usefixtures('collection_loader')
+    def test_bogus_action(self):
+        args_dict = {'bogusaction': {}}
+        m = ModuleArgsParser(args_dict)
+        with pytest.raises(AnsibleParserError) as err:
+            m.parse()
+
+        assert err.value.args[0].startswith(f"couldn't resolve module/action '{next(iter(args_dict))}'")

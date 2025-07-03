@@ -1,0 +1,32 @@
++ ansible-playbook -i inventory test.yml
+++ set +x
+[ERROR]: Task failed: Action failed: no reason
+Origin: TEST_PATH/test.yml:16:7
+
+14       changed_when: false
+15
+16     - name: Failed task
+         ^ column 7
+
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}
+[ERROR]: Task failed: Action failed: debug-2
+Origin: TEST_PATH/test.yml:38:7
+
+36
+37     # detect "changed" debug tasks being hidden with display_ok_tasks=false
+38     - name: debug loop
+         ^ column 7
+
+failed: [testhost] (item=debug-2) => {
+    "msg": "debug-2"
+}
+fatal: [testhost]: FAILED! => {"msg": "One or more items failed"}
+[ERROR]: Task failed: Action failed: Failed as requested from task
+Origin: TEST_PATH/test.yml:54:11
+
+52
+53     - block:
+54         - name: EXPECTED FAILURE Failed task to be rescued
+             ^ column 11
+
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested from task"}

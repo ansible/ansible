@@ -1,12 +1,11 @@
 # (c) 2013, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 DOCUMENTATION = """
-    lookup: random_choice
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: random_choice
+    author: Michael DeHaan
     version_added: "1.1"
     short_description: return random element from list
     description:
@@ -17,7 +16,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Magic 8 ball for MUDs
-  debug:
+  ansible.builtin.debug:
     msg: "{{ item }}"
   with_random_choice:
      - "go through the door"
@@ -30,22 +29,23 @@ RETURN = """
   _raw:
     description:
       - random item
+    type: raw
 """
-import random
+import secrets
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, inject=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = terms
         if terms:
             try:
-                ret = [random.choice(terms)]
+                ret = [secrets.choice(terms)]
             except Exception as e:
                 raise AnsibleError("Unable to choose random term: %s" % to_native(e))
 

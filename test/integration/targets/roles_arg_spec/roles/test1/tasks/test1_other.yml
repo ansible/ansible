@@ -1,0 +1,11 @@
+---
+# "test1_other" tasks file for test1
+- name: "test1_other BLIPPY test1_other tasks debug for task1 show test1_var1"
+  debug:
+     var: test1_var1
+  tags: ["runme"]
+
+- name: "BLIPPY FOO test1_other tasks debug for task1 show test1_var2"
+  debug:
+     var: test1_var2
+  tags: ["runme"]

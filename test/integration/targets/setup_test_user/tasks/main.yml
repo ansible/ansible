@@ -1,0 +1,45 @@
+- name: gather distribution facts
+  gather_facts:
+    gather_subset: distribution
+  when: ansible_distribution is not defined
+
+- name: include distribution specific tasks
+  include_tasks: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution | lower }}.yml"
+        - default.yml
+      paths:
+        - tasks
+
+- set_fact:
+    delete_users: "{{ (delete_users | default([])) + [test_user_name] }}"
+
+- name: create test user
+  user:
+    name: "{{ test_user_name }}"
+    group: "{{ test_user_group or omit }}"
+    groups: "{{ test_user_groups or omit }}"
+    password: "{{ test_user_hashed_password or omit }}"
+  register: test_user
+  notify:
+    - delete test user
+
+- name: maybe configure sudo
+  include_tasks: sudo_config.yml
+  when: test_user_allow_sudo != False
+
+- name: run whoami as the test user
+  shell: whoami
+  vars:
+    # ansible_become_method and ansible_become_flags are not set, allowing them to be provided by inventory
+    ansible_become: yes
+    ansible_become_user: "{{ test_user_name }}"
+    ansible_become_password: "{{ test_user_plaintext_password }}"
+  register: whoami
+
+- name: verify becoming the test user worked
+  assert:
+    that:
+      - whoami.stdout == test_user_name

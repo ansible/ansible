@@ -1,97 +1,77 @@
 #!/usr/bin/env fish
-# usage: . ./hacking/env-setup [-q]
-#    modifies environment for running Ansible from checkout
-set HACKING_DIR (dirname (status -f))
-set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
-set ANSIBLE_HOME (dirname $FULL_PATH)
-set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
-set PREFIX_PATH $ANSIBLE_HOME/bin $ANSIBLE_HOME/test/runner
-set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
-
-# set quiet flag
-if test (count $argv) -ge 1
-    switch $argv
-        case '-q' '--quiet'
-            set QUIET "true"
-        case '*'
-    end
-end
-
-# Set PYTHONPATH
-if not set -q PYTHONPATH
-    set -gx PYTHONPATH $PREFIX_PYTHONPATH
-else
-    switch PYTHONPATH
-        case "$PREFIX_PYTHONPATH*"
-        case "*"
-            if not [ $QUIET ]
-                echo "Appending PYTHONPATH"
-            end
-            set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
-    end
-end
-
-# Set PATH
-if not contains $PREFIX_PATH $PATH
-    set -gx PATH $PREFIX_PATH $PATH
-end
-
-# Set MANPATH
-if not contains $PREFIX_MANPATH $MANPATH
-    if not set -q MANPATH
-        set -gx MANPATH $PREFIX_MANPATH:
-    else
-        set -gx MANPATH $PREFIX_MANPATH $MANPATH
-    end
-end
+# Script: env-setup.fish
+# Description: Modifies the environment for running Ansible from a checkout
+# Usage: . ./hacking/env-setup [-q]
 
 # Set PYTHON_BIN
 if not set -q PYTHON_BIN
-    if test (which python)
-        set -gx PYTHON_BIN (which python)
-    else if test (which python3)
-        set -gx PYTHON_BIN (which python3)
-    else
+    for exe in python3 python
+        if command -v $exe > /dev/null
+            set -gx PYTHON_BIN (command -v $exe)
+            break
+        end
+    end
+    if not set -q PYTHON_BIN
         echo "No valid Python found"
         exit 1
     end
 end
 
-set -gx ANSIBLE_LIBRARY $ANSIBLE_HOME/library
+# Retrieve the path of the current directory where the script resides
+set HACKING_DIR (dirname (status -f))
+set FULL_PATH ($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+set ANSIBLE_HOME (dirname $FULL_PATH)
 
-#
-# Generate egg_info so that pkg_resources works
-#
-
-# Do the work in a fuction
-function gen_egg_info
-
-    if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
-        rm -rf "$PREFIX_PYTHONPATH/ansible*.egg-info"
-    end
-
-    if [ $QUIET ]
-        set options '-q'
-    end
-
-    eval $PYTHON_BIN setup.py $options egg_info
-
+# Set quiet flag
+set QUIET ""
+if contains -- (string split -m 1 " " $argv) -q --quiet
+    set QUIET "true"
 end
 
+# Set environment variables
+set -gx PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
+set -gx ANSIBLE_TEST_PREFIX_PYTHONPATH $ANSIBLE_HOME/test/lib
+set -gx PREFIX_PATH $ANSIBLE_HOME/bin
+set -gx PREFIX_MANPATH $ANSIBLE_HOME/docs/man
+
+# Set PYTHONPATH
+if not set -q PYTHONPATH
+    set -gx PYTHONPATH $PREFIX_PYTHONPATH
+else if not string match -qr $PREFIX_PYTHONPATH'($|:)' $PYTHONPATH
+    if not test -n "$QUIET"
+        echo "Appending PYTHONPATH"
+    end
+    set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
+end
+
+# Set ansible_test PYTHONPATH
+if not string match -qr $ANSIBLE_TEST_PREFIX_PYTHONPATH'($|:)' $PYTHONPATH
+    if not test -n "$QUIET"
+        echo "Appending PYTHONPATH"
+    end
+    set -gx PYTHONPATH "$ANSIBLE_TEST_PREFIX_PYTHONPATH:$PYTHONPATH"
+end
+
+# Set PATH
+if not contains -- $PREFIX_PATH $PATH
+    set -gx PATH $PREFIX_PATH $PATH
+end
+
+# Set MANPATH
+if not set -q MANPATH
+    set -gx MANPATH $PREFIX_MANPATH
+else if not string match -qr $PREFIX_MANPATH'($|:)' $MANPATH
+    set -gx MANPATH "$PREFIX_MANPATH:$MANPATH"
+end
 
 pushd $ANSIBLE_HOME
-
-if [ $QUIET ]
-    gen_egg_info ^ /dev/null
-    find . -type f -name "*.pyc" -exec rm -f '{}' ';' ^ /dev/null
+if test -n "$QUIET"
+    # Remove any .pyc files found
+    find . -type f -name "*.pyc" -exec rm -f '{}' ';' &> /dev/null
 else
-    gen_egg_info
+    # Remove any .pyc files found
     find . -type f -name "*.pyc" -exec rm -f '{}' ';'
-end
-
-popd
-
-if not [ $QUIET ]
+    # Display setup details
     echo ""
     echo "Setting up Ansible to run out of checkout..."
     echo ""
@@ -106,5 +86,7 @@ if not [ $QUIET ]
     echo "Done!"
     echo ""
 end
+popd
 
+# Unset QUIET variable
 set -e QUIET

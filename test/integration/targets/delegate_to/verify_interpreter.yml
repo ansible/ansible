@@ -1,0 +1,47 @@
+- name: ensure they are different
+  hosts: localhost
+  tasks:
+    - name: dont game me
+      assert:
+        msg: 'expected different values but got ((hostvars["testhost"]["ansible_python_interpreter"]}} and {{hostvars["testhost2"]["ansible_python_interpreter"]}}'
+        that:
+           - hostvars["testhost"]["ansible_python_interpreter"] != hostvars["testhost2"]["ansible_python_interpreter"]
+
+- name: no delegation
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: detect interpreter used by each host
+      detect_interpreter:
+      register: baseline
+
+    - name: verify it
+      assert:
+        msg: 'expected {{ansible_python_interpreter}} but got {{baseline.found|basename}}'
+        that:
+           - baseline.found|basename == ansible_python_interpreter
+
+- name: actual test
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: original host
+      detect_interpreter:
+      register: found
+
+    - name: verify it orig host
+      assert:
+        msg: 'expected {{ansible_python_interpreter}} but got {{found.found|basename}}'
+        that:
+           - found.found|basename == ansible_python_interpreter
+
+    - name: delegated host
+      detect_interpreter:
+      register: found2
+      delegate_to: testhost2
+
+    - name: verify it delegated
+      assert:
+        msg: 'expected {{hostvars["testhost2"]["ansible_python_interpreter"]}} but got {{found2.found|basename}}'
+        that:
+           - found2.found|basename == hostvars["testhost2"]["ansible_python_interpreter"]

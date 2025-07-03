@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - shell: sleep 100
+      timeout: 1
+      ignore_errors: true
+      register: time
+
+    - assert:
+        that:
+            - time is failed
+            - time.msg is contains 'Timed out after'
+            - '"timedout" in time'

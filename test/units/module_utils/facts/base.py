@@ -15,12 +15,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
+import unittest
+from unittest.mock import Mock, patch
 
 
 class BaseFactsTest(unittest.TestCase):
@@ -45,17 +43,23 @@ class BaseFactsTest(unittest.TestCase):
         mock_module.get_bin_path = Mock(return_value=None)
         return mock_module
 
-    def test_collect(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def test_collect(self, mock_gfc, mock_ps):
+        self._test_collect()
+
+    def _test_collect(self):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
         self.assertIsInstance(facts_dict, dict)
         return facts_dict
 
-    def test_collect_with_namespace(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def test_collect_with_namespace(self, mock_gfc, mock_ps):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect_with_namespace(module=module,
                                                            collected_facts=self.collected_facts)
         self.assertIsInstance(facts_dict, dict)
-        return facts_dict

@@ -15,15 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
+import unittest
+from unittest.mock import MagicMock
+
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
+from ansible.utils import context_objects as co
 
 from units.mock.loader import DictDataLoader
 
@@ -31,65 +31,61 @@ from units.mock.loader import DictDataLoader
 class TestPlaybookExecutor(unittest.TestCase):
 
     def setUp(self):
-        pass
+        # Reset command line args for every test
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def tearDown(self):
-        pass
+        # And cleanup after ourselves too
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({
-            'no_serial.yml': '''
+            'no_serial.yml': """
             - hosts: all
               gather_facts: no
               tasks:
               - debug: var=inventory_hostname
-            ''',
-            'serial_int.yml': '''
+            """,
+            'serial_int.yml': """
             - hosts: all
               gather_facts: no
               serial: 2
               tasks:
               - debug: var=inventory_hostname
-            ''',
-            'serial_pct.yml': '''
+            """,
+            'serial_pct.yml': """
             - hosts: all
               gather_facts: no
               serial: 20%
               tasks:
               - debug: var=inventory_hostname
-            ''',
-            'serial_list.yml': '''
+            """,
+            'serial_list.yml': """
             - hosts: all
               gather_facts: no
               serial: [1, 2, 3]
               tasks:
               - debug: var=inventory_hostname
-            ''',
-            'serial_list_mixed.yml': '''
+            """,
+            'serial_list_mixed.yml': """
             - hosts: all
               gather_facts: no
               serial: [1, "20%", -1]
               tasks:
               - debug: var=inventory_hostname
-            ''',
+            """,
         })
 
         mock_inventory = MagicMock()
         mock_var_manager = MagicMock()
 
-        # fake out options to use the syntax CLI switch, which will ensure
-        # the PlaybookExecutor doesn't create a TaskQueueManager
-        mock_options = MagicMock()
-        mock_options.syntax.value = True
-
-        templar = Templar(loader=fake_loader)
+        templar = TemplateEngine(loader=fake_loader)
 
         pbe = PlaybookExecutor(
             playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml'],
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
-            options=mock_options,
             passwords=[],
         )
 

@@ -1,0 +1,34 @@
+DOCUMENTATION:
+  name: pow
+  version_added: "1.9"
+  short_description: power of (math operation)
+  description:
+    - Math operation that returns the Nth power of inputted number, C(X ^ N).
+  notes:
+    - This is a passthrough to Python's C(math.pow).
+  positional: _input, _power
+  options:
+    _input:
+      description: The base.
+      type: float
+      required: true
+    _power:
+      description: Which power (exponent) to use.
+      type: float
+      required: true
+
+EXAMPLES: |
+
+  # => 32768
+  eight_power_five: "{{ 8 | pow(5) }}"
+
+  # 4
+  square_of_2: "{{ 2 | pow(2) }}"
+
+  # me ^ 3
+  cube_me: "{{ me | pow(3) }}"
+
+RETURN:
+  _value:
+    description: Resulting number.
+    type: float

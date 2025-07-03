@@ -1,0 +1,37 @@
+DOCUMENTATION:
+  name: regex
+  author: Ansible Core
+  short_description: Does string match regular expression from the start
+  description:
+    - Compare string against regular expression using Python's match or search functions.
+  options:
+    _input:
+      description: String to match.
+      type: string
+      required: True
+    pattern:
+      description: Regex to match against.
+      type: string
+      required: True
+    ignorecase:
+      description: Use case insensitive matching.
+      type: boolean
+      default: False
+    multiline:
+      description: Match against multiple lines in string.
+      type: boolean
+      default: False
+    match_type:
+      description: Decide which function to be used to do the matching.
+      type: string
+      choices: [match, search]
+      default: search
+
+EXAMPLES: |
+  url: "https://example.com/users/foo/resources/bar"
+  foundmatch: url is regex("example\.com/\w+/foo")
+
+RETURN:
+  _value:
+    description: Returns V(True) if there is a match, V(False) otherwise.
+    type: boolean

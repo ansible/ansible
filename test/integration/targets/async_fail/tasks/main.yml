@@ -28,8 +28,9 @@
 - name: validate that by the end of the retry interval, we succeeded
   assert:
     that:
-    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
-    - async_result.changed == true
+    - async_result is finished
+    - async_result is changed
     - async_result is successful
     - async_result.msg is search('succeeded')

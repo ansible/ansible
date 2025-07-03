@@ -1,0 +1,15 @@
+- set_fact:
+    names: '{{ things|map(attribute="name") }}'
+  vars:
+    things:
+      - name: one
+      - name: two
+      - notname: three
+      - name: four
+  ignore_errors: true
+  register: undefined_set_fact
+
+- assert:
+    that:
+      - undefined_set_fact is failed
+      - undefined_set_fact.msg is contains "has no attribute 'name'"

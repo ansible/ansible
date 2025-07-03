@@ -1,0 +1,4 @@
+# This config file is included to cause ansible-test to import the `packaging` module.
+
+modules:
+  python_requires: default

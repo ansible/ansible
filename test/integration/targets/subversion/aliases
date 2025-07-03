@@ -1,2 +1,4 @@
-posix/ci/group2
-skip/osx
+shippable/posix/group2
+skip/macos
+destructive
+needs/root

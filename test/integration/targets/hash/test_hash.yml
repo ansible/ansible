@@ -1,5 +1,5 @@
----
 - hosts: testhost
+  gather_facts: no
   vars_files:
     - vars/test_hash_vars.yml
   vars:
@@ -17,4 +17,6 @@
       role_vars: "this is in role vars/main.yml"
       vars_file: "this is in a vars_file"
   roles:
-  - { role: test_hash_behavior, test_hash: {'role_argument':'this is a role argument variable'} }
+  - role: test_hash_behaviour
+    test_hash:
+      role_argument: 'this is a role argument variable'

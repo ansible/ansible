@@ -1,4 +1,0 @@
-examples/hosts etc/ansible
-docs/man/man1/*.1 usr/share/man/man1
-bin/* usr/bin
-examples/ansible.cfg etc/ansible

@@ -1,6 +1,0 @@
-[chroot]
-chroot-pipelining    ansible_ssh_pipelining=true
-chroot-no-pipelining ansible_ssh_pipelining=false
-[chroot:vars]
-ansible_host=/
-ansible_connection=chroot

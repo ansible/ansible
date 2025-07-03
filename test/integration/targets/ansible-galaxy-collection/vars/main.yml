@@ -1,0 +1,207 @@
+galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
+
+gpg_homedir: "{{ galaxy_dir }}/gpg"
+
+offline_server: https://test-hub.demolab.local/api/galaxy/content/api/
+
+# Test oldest and most recently supported, and versions with notable changes.
+# The last breaking change for a feature ansible-galaxy uses was in 0.8.0.
+# It would be redundant to test every minor version since 0.8.0, so we just test against the latest minor release.
+# NOTE: If ansible-galaxy incorporates new resolvelib features, this matrix should be updated to verify the features work on all supported versions.
+supported_resolvelib_versions:
+  - "0.5.3"  # test CollectionDependencyProvider050
+  - "0.6.0"  # test CollectionDependencyProvider060
+  - "0.7.0"  # test CollectionDependencyProvider070
+  - "<2.0.0"  # test CollectionDependencyProvider080
+
+unsupported_resolvelib_versions:
+  - "0.2.0"  # Fails on import
+  - "0.5.1"
+
+pulp_repositories:
+  - primary
+  - secondary
+
+publish_namespaces:
+  - ansible_test
+  - secondary
+
+collection_list:
+  # Scenario to test out pre-release being ignored unless explicitly set and version pagination.
+  - namespace: namespace1
+    name: name1
+    version: 0.0.1
+  - namespace: namespace1
+    name: name1
+    version: 0.0.2
+  - namespace: namespace1
+    name: name1
+    version: 0.0.3
+  - namespace: namespace1
+    name: name1
+    version: 0.0.4
+  - namespace: namespace1
+    name: name1
+    version: 0.0.5
+  - namespace: namespace1
+    name: name1
+    version: 0.0.6
+  - namespace: namespace1
+    name: name1
+    version: 0.0.7
+  - namespace: namespace1
+    name: name1
+    version: 0.0.8
+  - namespace: namespace1
+    name: name1
+    version: 0.0.9
+  - namespace: namespace1
+    name: name1
+    version: 0.0.10
+  - namespace: namespace1
+    name: name1
+    version: 0.1.0
+  - namespace: namespace1
+    name: name1
+    version: 1.0.0
+  - namespace: namespace1
+    name: name1
+    version: 1.0.9
+  - namespace: namespace1
+    name: name1
+    version: 1.1.0-beta.1
+
+  # Pad out number of namespaces for pagination testing
+  - namespace: namespace2
+    name: name
+  - namespace: namespace3
+    name: name
+  - namespace: namespace4
+    name: name
+  - namespace: namespace5
+    name: name
+  - namespace: namespace6
+    name: name
+  - namespace: namespace7
+    name: name
+  - namespace: namespace8
+    name: name
+  - namespace: namespace9
+    name: name
+
+  # Complex dependency resolution
+  - namespace: parent_dep
+    name: parent_collection
+    version: 0.0.1
+    dependencies:
+      child_dep.child_collection: '<0.5.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.0.0
+    dependencies:
+      child_dep.child_collection: '>=0.5.0,<1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.1.0
+    dependencies:
+      child_dep.child_collection: '>=0.9.9,<=1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 2.0.0
+    dependencies:
+      child_dep.child_collection: '>=1.0.0'
+  - namespace: parent_dep2
+    name: parent_collection
+    dependencies:
+      child_dep.child_collection: '0.5.0'
+  - namespace: child_dep
+    name: child_collection
+    version: 0.4.0
+  - namespace: child_dep
+    name: child_collection
+    version: 0.5.0
+  - namespace: child_dep
+    name: child_collection
+    version: 0.9.9
+    dependencies:
+      child_dep.child_dep2: '!=1.2.3'
+  - namespace: child_dep
+    name: child_collection
+    version: 1.0.0
+    dependencies:
+      child_dep.child_dep2: '!=1.2.3'
+  - namespace: child_dep
+    name: child_dep2
+    version: 1.2.2
+  - namespace: child_dep
+    name: child_dep2
+    version: 1.2.3
+
+  # Dep resolution failure
+  - namespace: fail_namespace
+    name: fail_collection
+    version: 2.1.2
+    dependencies:
+      fail_dep.name: '0.0.5'
+      fail_dep2.name: '<0.0.5'
+  - namespace: fail_dep
+    name: name
+    version: '0.0.5'
+    dependencies:
+      fail_dep2.name: '>0.0.5'
+  - namespace: fail_dep2
+    name: name
+
+  # Symlink tests
+  - namespace: symlink
+    name: symlink
+    use_symlink: yes
+
+  # Caching update tests
+  - namespace: cache
+    name: cache
+    version: 1.0.0
+
+  # Dep with beta version
+  - namespace: dep_with_beta
+    name: parent
+    dependencies:
+      namespace1.name1: '*'
+
+  # non-prerelease is published to test that installing
+  # the pre-release from SCM doesn't accidentally prefer indirect
+  # dependencies from Galaxy
+  - namespace: test_prereleases
+    name: collection2
+    version: 1.0.0
+
+  - namespace: dev_and_stables_ns
+    name: dev_and_stables_name
+    version: 1.2.3-dev0
+  - namespace: dev_and_stables_ns
+    name: dev_and_stables_name
+    version: 1.2.4
+
+  - namespace: ns_with_wildcard_dep
+    name: name_with_wildcard_dep
+    version: 5.6.7-beta.3
+    dependencies:
+      dev_and_stables_ns.dev_and_stables_name: >-
+        *
+  - namespace: ns_with_dev_dep
+    name: name_with_dev_dep
+    version: 6.7.8
+    dependencies:
+      dev_and_stables_ns.dev_and_stables_name: 1.2.3-dev0
+
+  - namespace: rc_meta_ns_with_transitive_dev_dep
+    name: rc_meta_name_with_transitive_dev_dep
+    version: 2.4.5-rc5
+    dependencies:
+      ns_with_dev_dep.name_with_dev_dep: >-
+        *
+  - namespace: meta_ns_with_transitive_wildcard_dep
+    name: meta_name_with_transitive_wildcard_dep
+    version: 4.5.6
+    dependencies:
+      ns_with_wildcard_dep.name_with_wildcard_dep: 5.6.7-beta.3

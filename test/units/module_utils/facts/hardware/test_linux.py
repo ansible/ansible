@@ -13,24 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock, patch
+import unittest
+from unittest.mock import Mock, patch
 
 from ansible.module_utils.facts import timeout
 
 from ansible.module_utils.facts.hardware import linux
 
-from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT
+from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT, SG_INQ_OUTPUTS
 
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
-
-GET_MOUNT_SIZE = {}
 
 
 def mock_get_mount_size(mountpoint):
@@ -73,17 +70,20 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
                          'block_total': 105871006,
                          'block_used': 5713133,
                          'device': '/dev/mapper/fedora_dhcp129--186-home',
+                         'dump': 0,
                          'fstype': 'ext4',
                          'inode_available': 26860880,
                          'inode_total': 26902528,
                          'inode_used': 41648,
                          'mount': '/home',
                          'options': 'rw,seclabel,relatime,data=ordered',
+                         'passno': 0,
                          'size_available': 410246647808,
                          'size_total': 433647640576,
                          'uuid': 'N/A'}
         home_info = [x for x in mount_facts['mounts'] if x['mount'] == '/home'][0]
 
+        self.maxDiff = 4096
         self.assertDictEqual(home_info, home_expected)
 
     @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
@@ -172,3 +172,26 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         udevadm_uuid = lh._udevadm_uuid('mock_device')
 
         self.assertEqual(udevadm_uuid, '57b1a3e7-9019-4747-9809-7ec52bba9179')
+
+    def test_get_sg_inq_serial(self):
+        # Valid outputs
+        for sq_inq_output in SG_INQ_OUTPUTS:
+            module = Mock()
+            module.run_command = Mock(return_value=(0, sq_inq_output, ''))  # (rc, out, err)
+            lh = linux.LinuxHardware(module=module, load_on_init=False)
+            sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+            self.assertEqual(sg_inq_serial, 'vol0123456789')
+
+        # Invalid output
+        module = Mock()
+        module.run_command = Mock(return_value=(0, '', ''))  # (rc, out, err)
+        lh = linux.LinuxHardware(module=module, load_on_init=False)
+        sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+        self.assertEqual(sg_inq_serial, None)
+
+        # Non zero rc
+        module = Mock()
+        module.run_command = Mock(return_value=(42, '', 'Error 42'))  # (rc, out, err)
+        lh = linux.LinuxHardware(module=module, load_on_init=False)
+        sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+        self.assertEqual(sg_inq_serial, None)

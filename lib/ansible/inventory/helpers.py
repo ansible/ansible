@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 #############################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.utils.vars import combine_vars
 
 
@@ -27,9 +27,22 @@ def sort_groups(groups):
 
 
 def get_group_vars(groups):
+    """
+    Combine all the group vars from a list of inventory groups.
 
+    :param groups: list of ansible.inventory.group.Group objects
+    :rtype: dict
+    """
     results = {}
     for group in sort_groups(groups):
         results = combine_vars(results, group.get_vars())
 
     return results
+
+
+def remove_trust(value: str) -> str:
+    """
+    Remove trust from strings which should not be trusted.
+    This exists to centralize the untagging call which facilitate patching it out in unit tests.
+    """
+    return TrustedAsTemplate.untag(value)

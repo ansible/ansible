@@ -1,0 +1,20 @@
+- name: Test vars_prompt custom variables in prompt
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars:
+    prompt_var: prompt from variable
+
+  vars_prompt:
+    - name: input
+      prompt: "{{ prompt_var }}"
+
+  tasks:
+    - name:
+      assert:
+        that:
+          - input == 'input'
+
+    - debug:
+        var: input

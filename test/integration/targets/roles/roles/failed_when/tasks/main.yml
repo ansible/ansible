@@ -1,0 +1,4 @@
+- debug:
+    msg: "{{ role_set_var is undefined | ternary('failed_when task failed', 'failed_when task succeeded') }}"
+  failed_when: role_set_var is undefined
+  run_once: true

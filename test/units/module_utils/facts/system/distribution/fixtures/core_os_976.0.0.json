@@ -1,0 +1,23 @@
+{
+    "name": "Core OS",
+    "input": {
+        "/etc/os-release": "NAME=CoreOS\nID=coreos\nVERSION=976.0.0\nVERSION_ID=976.0.0\nBUILD_ID=2016-03-03-2324\nPRETTY_NAME=\"CoreOS 976.0.0 (Coeur Rouge)\"\nANSI_COLOR=\"1;32\"\nHOME_URL=\"https://coreos.com/\"\nBUG_REPORT_URL=\"https://github.com/coreos/bugs/issues\"",
+        "/etc/lsb-release": "DISTRIB_ID=CoreOS\nDISTRIB_RELEASE=976.0.0\nDISTRIB_CODENAME=\"Coeur Rouge\"\nDISTRIB_DESCRIPTION=\"CoreOS 976.0.0 (Coeur Rouge)\""
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "Coeur Rouge",
+        "id": "coreos",
+        "name": "CoreOS",
+        "version": "976.0.0",
+        "version_best": "976.0.0",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "platform.release": "",
+    "result": {
+        "distribution": "CoreOS",
+        "distribution_major_version": "976",
+        "distribution_version": "976.0.0"
+    }
+}

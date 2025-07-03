@@ -1,0 +1,9 @@
+# edit "sanity.pylint.in" and generate with: hacking/update-sanity-requirements.py --test pylint
+astroid==3.3.10
+dill==0.4.0
+isort==6.0.1
+mccabe==0.7.0
+platformdirs==4.3.8
+pylint==3.3.7
+PyYAML==6.0.2
+tomlkit==0.13.2

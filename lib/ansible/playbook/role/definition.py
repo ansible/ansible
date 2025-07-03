@@ -15,39 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import iteritems, string_types
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
+from ansible.module_utils.six import string_types
+from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
+from ansible.utils.collection_loader import AnsibleCollectionRef
+from ansible.utils.collection_loader._collection_finder import _get_collection_role_path
 from ansible.utils.path import unfrackpath
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+from ansible.utils.display import Display
 
 __all__ = ['RoleDefinition']
 
+display = Display()
 
-class RoleDefinition(Base, Become, Conditional, Taggable):
 
-    _role = FieldAttribute(isa='string')
+class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+    role = NonInheritableFieldAttribute(isa='string')
+
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
         super(RoleDefinition, self).__init__()
 
@@ -56,8 +52,10 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         self._loader = loader
 
         self._role_path = None
+        self._role_collection = None
         self._role_basedir = role_basedir
         self._role_params = dict()
+        self._collection_list = collection_list
 
     # def __repr__(self):
     #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
@@ -72,7 +70,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+        if not isinstance(ds, dict) and not isinstance(ds, string_types):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
@@ -81,12 +79,9 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # save the original ds for use later
         self._ds = ds
 
-        # we create a new data structure here, using the same
-        # object used internally by the YAML parsing code so we
-        # can preserve file:line:column information if it exists
-        new_ds = AnsibleMapping()
-        if isinstance(ds, AnsibleBaseYAMLObject):
-            new_ds.ansible_pos = ds.ansible_pos
+        # the new, cleaned datastructure, which will have legacy items reduced to a standard structure suitable for the
+        # attributes of the task class; copy any tagged data to preserve things like origin
+        new_ds = AnsibleTagHelper.tag_copy(ds, {})
 
         # first we pull the role name out of the data structure,
         # and then use that to determine the role path (which may
@@ -99,7 +94,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # result and the role name
         if isinstance(ds, dict):
             (new_role_def, role_params) = self._split_role_params(ds)
-            new_ds.update(new_role_def)
+            new_ds |= new_role_def
             self._role_params = role_params
 
         # set the role name in the new ds
@@ -112,11 +107,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         return new_ds
 
     def _load_role_name(self, ds):
-        '''
+        """
         Returns the role name (either the role: or name: field) from
         the role definition, or (when the role definition is a simple
         string), just that string
-        '''
+        """
 
         if isinstance(ds, string_types):
             return ds
@@ -129,19 +124,43 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # contains a variable, try and template it now
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
-            templar = Templar(loader=self._loader, variables=all_vars)
-            if templar._contains_vars(role_name):
-                role_name = templar.template(role_name)
+            templar = TemplateEngine(loader=self._loader, variables=all_vars)
+            role_name = templar.template(role_name)
 
         return role_name
 
     def _load_role_path(self, role_name):
-        '''
+        """
         the 'role', as specified in the ds (or as a bare string), can either
         be a simple name or a full path. If it is a full path, we use the
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
-        '''
+        """
+
+        # create a templar class to template the dependency names, in
+        # case they contain variables
+        if self._variable_manager is not None:
+            all_vars = self._variable_manager.get_vars(play=self._play)
+        else:
+            all_vars = dict()
+
+        templar = TemplateEngine(loader=self._loader, variables=all_vars)
+        role_name = templar.template(role_name)
+
+        role_tuple = None
+
+        # try to load as a collection-based role first
+        if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
+            role_tuple = _get_collection_role_path(role_name, self._collection_list)
+
+        if role_tuple:
+            # we found it, stash collection data and return the name/path tuple
+            self._role_collection = role_tuple[2]
+            return role_tuple[0:2]
+
+        # We didn't find a collection role, look in defined role paths
+        # FUTURE: refactor this to be callable from internal so we can properly order
+        # ansible.legacy searches with the collections keyword
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
@@ -162,16 +181,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # the roles/ dir appended
         role_search_paths.append(self._loader.get_basedir())
 
-        # create a templar class to template the dependency names, in
-        # case they contain variables
-        if self._variable_manager is not None:
-            all_vars = self._variable_manager.get_vars(play=self._play)
-        else:
-            all_vars = dict()
-
-        templar = Templar(loader=self._loader, variables=all_vars)
-        role_name = templar.template(role_name)
-
         # now iterate through the possible paths and return the first one we find
         for path in role_search_paths:
             path = templar.template(path)
@@ -185,18 +194,20 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
 
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)), obj=self._ds)
+        searches = (self._collection_list or []) + role_search_paths
+
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):
-        '''
+        """
         Splits any random role params off from the role spec and store
         them in a dictionary of params for parsing later
-        '''
+        """
 
         role_def = dict()
         role_params = dict()
-        base_attribute_names = frozenset(self._valid_attrs.keys())
-        for (key, value) in iteritems(ds):
+        base_attribute_names = frozenset(self.fattributes)
+        for (key, value) in ds.items():
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
             # FIXME: hard-coded list of exception key names here corresponds to the
@@ -204,12 +215,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             #        other mechanism where we exclude certain kinds of field attributes,
             #        or make this list more automatic in some way so we don't have to
             #        remember to update it manually.
-            if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
-                if key in ('connection', 'port', 'remote_user'):
-                    display.deprecated("Using '%s' as a role param has been deprecated. " % key +
-                                       "In the future, these values should be entered in the `vars:` " +
-                                       "section for roles, but for now we'll store it as both a param and an attribute.", version="2.7")
-                    role_def[key] = value
+            if key not in base_attribute_names:
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:
@@ -223,3 +229,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
     def get_role_path(self):
         return self._role_path
+
+    def get_name(self, include_role_fqcn=True):
+        if include_role_fqcn:
+            return '.'.join(x for x in (self._role_collection, self.role) if x)
+        return self.role

@@ -1,0 +1,493 @@
+- name: create an empty collection skeleton
+  command: ansible-galaxy collection init ansible_test.verify
+  args:
+    chdir: '{{ galaxy_dir }}/scratch'
+
+- name: created required runtime.yml
+  copy:
+    content: 'requires_ansible: ">=1.0.0"'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/verify/meta/runtime.yml'
+
+- name: build the collection
+  command: ansible-galaxy collection build scratch/ansible_test/verify
+  args:
+    chdir: '{{ galaxy_dir }}'
+
+- name: publish collection - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-verify-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+
+- name: test verifying a tarfile
+  command: ansible-galaxy collection verify {{ galaxy_dir }}/ansible_test-verify-1.0.0.tar.gz
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - verify.stderr is contains "'file' type is not supported. The format namespace.name is expected."
+
+- name: install the collection from the server
+  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_api_fallback }} {{ galaxy_verbosity }}
+
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
+- name: verify the collection against the first valid server
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -vvvv {{ galaxy_verbosity }}
+  register: verify
+  vars:
+    # This sets a specific precedence that the tests are expecting
+    ANSIBLE_GALAXY_SERVER_LIST: offline,secondary,pulp_v2,galaxy_ng
+
+- assert:
+    that:
+      - verify is success
+      - >-
+        "Found API version '" + test_api_fallback_versions + "' with Galaxy server " + test_api_fallback in verify.stdout
+
+- name: verify the installed collection against the server
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+
+- assert:
+    that:
+      - verify is success
+      - "'Collection ansible_test.verify contains modified content' not in verify.stdout"
+
+- name: verify the installed collection against the server, with unspecified version in CLI
+  command: ansible-galaxy collection verify ansible_test.verify -s {{ test_name }} {{ galaxy_verbosity }}
+
+- name: verify a collection that doesn't appear to be installed
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/nonexistent_dir'
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - "'Collection ansible_test.verify is not installed in any of the collection paths.' in verify.stderr"
+
+- name: create a modules directory
+  file:
+    state: directory
+    path: '{{ galaxy_dir }}/scratch/ansible_test/verify/plugins/modules'
+
+- name: add a module to the collection
+  copy:
+    src: test_module.py
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/verify/plugins/modules/test_module.py'
+
+- name: update the collection version
+  lineinfile:
+    regexp: "version: .*"
+    line: "version: '2.0.0'"
+    path: '{{ galaxy_dir }}/scratch/ansible_test/verify/galaxy.yml'
+
+- name: build the new version
+  command: ansible-galaxy collection build scratch/ansible_test/verify
+  args:
+    chdir: '{{ galaxy_dir }}'
+
+- name: publish the new version
+  command: ansible-galaxy collection publish ansible_test-verify-2.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+
+- name: verify a version of a collection that isn't installed
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - '"ansible_test.verify has the version ''1.0.0'' but is being compared to ''2.0.0''" in verify.stdout'
+
+- name: install the new version from the server
+  command: ansible-galaxy collection install ansible_test.verify:2.0.0 --force -s {{ test_name }} {{ galaxy_verbosity }}
+
+- name: verify the installed collection against the server
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+
+- assert:
+    that:
+      - "'Collection ansible_test.verify contains modified content' not in verify.stdout"
+
+# Test a modified collection
+
+- set_fact:
+    manifest_path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/MANIFEST.json'
+    file_manifest_path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/FILES.json'
+    module_path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_module.py'
+
+- name: load the FILES.json
+  set_fact:
+    files_manifest: "{{ lookup('file', file_manifest_path) | from_json }}"
+
+- name: get the real checksum of a particular module
+  stat:
+    path: "{{ module_path }}"
+    checksum_algorithm: sha256
+  register: file
+
+- assert:
+    that:
+      - "file.stat.checksum == item.chksum_sha256"
+  loop: "{{ files_manifest.files }}"
+  when: "item.name == 'plugins/modules/aws_s3.py'"
+
+- name: append a newline to the module to modify the checksum
+  shell: "echo '' >> {{ module_path }}"
+
+- name: get the new checksum
+  stat:
+    path: "{{ module_path }}"
+    checksum_algorithm: sha256
+  register: updated_file
+
+- assert:
+    that:
+      - "updated_file.stat.checksum != file.stat.checksum"
+
+- name: test verifying checksums of the modified collection
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - "'Collection ansible_test.verify contains modified content in the following files:\n    plugins/modules/test_module.py' in verify.stdout"
+
+- name: modify the FILES.json to match the new checksum
+  lineinfile:
+    path: "{{ file_manifest_path }}"
+    regexp: '   "chksum_sha256": "{{ file.stat.checksum }}",'
+    line: '   "chksum_sha256": "{{ updated_file.stat.checksum }}",'
+    state: present
+  diff: true
+
+- name: ensure a modified FILES.json is validated
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - "'Collection ansible_test.verify contains modified content in the following files:\n    FILES.json' in verify.stdout"
+
+- name: get the checksum of the FILES.json
+  stat:
+    path: "{{ file_manifest_path }}"
+    checksum_algorithm: sha256
+  register: manifest_info
+
+- name: modify the MANIFEST.json to contain a different checksum for FILES.json
+  lineinfile:
+    regexp: '  "chksum_sha256": *'
+    path: "{{ manifest_path }}"
+    line: ' "chksum_sha256": "{{ manifest_info.stat.checksum }}",'
+
+- name: ensure the MANIFEST.json is validated against the uncorrupted file from the server
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - "'Collection ansible_test.verify contains modified content in the following files:\n    MANIFEST.json' in verify.stdout"
+
+- name: remove the artifact metadata to test verifying a collection without it
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ manifest_path }}"
+    - "{{ file_manifest_path }}"
+
+- name: add some development metadata
+  copy:
+    content: |
+      namespace: 'ansible_test'
+      name: 'verify'
+      version: '2.0.0'
+      readme: 'README.md'
+      authors: ['Ansible']
+    dest: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/galaxy.yml'
+
+- name: test we only verify collections containing a MANIFEST.json with the version on the server
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - "'Collection ansible_test.verify does not have a MANIFEST.json' in verify.stderr"
+
+- name: update the collection version to something not present on the server
+  lineinfile:
+    regexp: "version: .*"
+    line: "version: '3.0.0'"
+    path: '{{ galaxy_dir }}/scratch/ansible_test/verify/galaxy.yml'
+
+- name: build the new version
+  command: ansible-galaxy collection build scratch/ansible_test/verify
+  args:
+    chdir: '{{ galaxy_dir }}'
+
+- name: force-install from local artifact
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/ansible_test-verify-3.0.0.tar.gz' --force
+
+- name: verify locally only, no download or server manifest hash check
+  command: ansible-galaxy collection verify --offline ansible_test.verify
+  register: verify
+
+- assert:
+    that:
+    - >-
+      "Verifying 'ansible_test.verify:3.0.0'." in verify.stdout
+    - '"MANIFEST.json hash: " in verify.stdout'
+    - >-
+      "Successfully verified that checksums for 'ansible_test.verify:3.0.0' are internally consistent with its manifest." in verify.stdout
+
+- name: append a newline to a module to modify the checksum
+  shell: "echo '' >> {{ module_path }}"
+
+- name: create a new module file
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_new_file.py'
+    state: touch
+
+- name: create a new directory
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_new_dir'
+    state: directory
+
+- name: create a new ignore directory
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/__pycache__'
+    state: directory
+
+- name: create a new ignore file
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/__pycache__/test.cpython-311.pyc'
+    state: touch
+
+- name: verify modified collection locally-only (should fail)
+  command: ansible-galaxy collection verify --offline ansible_test.verify
+  register: verify
+  failed_when: verify.rc == 0
+
+- assert:
+    that:
+      - verify.rc != 0
+      - "'Collection ansible_test.verify contains modified content in the following files:' in verify.stdout"
+      - "'plugins/modules/test_module.py' in verify.stdout"
+      - "'plugins/modules/test_new_file.py' in verify.stdout"
+      - "'plugins/modules/test_new_dir' in verify.stdout"
+      - "'plugins/modules/__pycache__/test.cpython-311.pyc' not in verify.stdout"
+
+# TODO: add a test for offline Galaxy signature metadata
+
+- name: install a collection that was signed by setup_collections
+  command: ansible-galaxy collection install namespace1.name1:1.0.0
+
+- name: verify the installed collection with a detached signature
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ galaxy_verbosity }} {{ signature_options }}
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: verify
+
+- assert:
+    that:
+      - verify.rc == 0
+
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
+- name: verify the installed collection with invalid detached signature
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv {{ signature_options }}
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: verify
+  ignore_errors: yes
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- assert:
+    that:
+      - verify.rc != 0
+      - '"Signature verification failed for ''namespace1.name1'' (return code 1)" in verify.stdout'
+      - expected_errors[0] in verify_stdout
+      - expected_errors[1] in verify_stdout
+  vars:
+    expected_errors:
+      - "* This is the counterpart to SUCCESS and used to indicate a program failure."
+      - "* The signature with the keyid has not been verified okay."
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
+- name: verify the installed collection with invalid detached signature offline
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv {{ signature_options }} --offline
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: verify
+  ignore_errors: yes
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- assert:
+    that:
+      - verify.rc != 0
+      - '"Signature verification failed for ''namespace1.name1'' (return code 1)" in verify.stdout'
+      - expected_errors[0] in verify_stdout
+      - expected_errors[1] in verify_stdout
+  vars:
+    expected_errors:
+      - "* This is the counterpart to SUCCESS and used to indicate a program failure."
+      - "* The signature with the keyid has not been verified okay."
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+
+- include_tasks: revoke_gpg_key.yml
+
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
+- name: verify the installed collection with a revoked detached signature
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv {{ signature_options }}
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: verify
+  ignore_errors: yes
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- assert:
+    that:
+      - verify.rc != 0
+      - '"Signature verification failed for ''namespace1.name1'' (return code 0)" in verify.stdout'
+      - expected_errors[0] in verify_stdout
+      - expected_errors[1] in verify_stdout
+  vars:
+    expected_errors:
+      - "* The used key has been revoked by its owner."
+      - "* The signature with the keyid is good, but the signature was made by a revoked key."
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+
+# This command is hardcoded with no verbosity purposefully to evaluate overall gpg failure
+- name: verify that ignoring the signature error and no successful signatures is not successful verification
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ signature_options }}
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: verify
+  ignore_errors: yes
+  environment:
+    ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: REVKEYSIG,KEYREVOKED
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- assert:
+    that:
+      - verify.rc != 0
+      - '"Signature verification failed for ''namespace1.name1'': fewer successful signatures than required" in verify.stdout'
+      - ignored_errors[0] not in verify_stdout
+      - ignored_errors[1] not in verify_stdout
+  vars:
+    ignored_errors:
+      - "* The used key has been revoked by its owner."
+      - "* The signature with the keyid is good, but the signature was made by a revoked key."
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
+- name: verify that ignoring the signature error and no successful signatures and required signature count all is successful verification
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv {{ signature_options }}
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: verify
+  ignore_errors: yes
+  environment:
+    ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: REVKEYSIG,KEYREVOKED
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- assert:
+    that:
+      - verify is success
+      - verify.rc == 0
+      - '"Signature verification failed for ''namespace1.name1'': fewer successful signatures than required" not in verify.stdout'
+      - success_messages[0] in verify_stdout
+      - success_messages[1] in verify_stdout
+      - ignored_errors[0] not in verify_stdout
+      - ignored_errors[1] not in verify_stdout
+  vars:
+    success_messages:
+      - "GnuPG signature verification succeeded, verifying contents of namespace1.name1:1.0.0"
+      - "Successfully verified that checksums for 'namespace1.name1:1.0.0' match the remote collection."
+    ignored_errors:
+      - "* The used key has been revoked by its owner."
+      - "* The signature with the keyid is good, but the signature was made by a revoked key."
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+
+- name: use lenient signature verification (default) without providing signatures
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "1"
+  register: verify
+  ignore_errors: yes
+
+- assert:
+    that:
+      - verify is success
+      - verify.rc == 0
+      - error_message not in verify.stdout
+      - success_messages[0] in verify.stdout
+      - success_messages[1] in verify.stdout
+  vars:
+    error_message: "Signature verification failed for 'namespace1.name1': fewer successful signatures than required"
+    success_messages:
+      - "GnuPG signature verification succeeded, verifying contents of namespace1.name1:1.0.0"
+      - "Successfully verified that checksums for 'namespace1.name1:1.0.0' match the remote collection."
+
+- name: use strict signature verification without providing signatures
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
+  register: verify
+  ignore_errors: yes
+
+- assert:
+    that:
+      - verify is failed
+      - verify.rc == 1
+      - '"Signature verification failed for ''namespace1.name1'': no successful signatures" in verify.stdout'
+
+- name: empty installed collections
+  file:
+    path: "{{ galaxy_dir }}/ansible_collections"
+    state: "{{ item }}"
+  loop:
+    - absent
+    - directory

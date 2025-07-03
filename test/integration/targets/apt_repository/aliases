@@ -1,6 +1,5 @@
-apt_key
 destructive
-posix/ci/group1
+shippable/posix/group1
 skip/freebsd
-skip/osx
+skip/macos
 skip/rhel

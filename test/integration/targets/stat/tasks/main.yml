@@ -17,10 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: make a new file
-  copy: dest={{output_dir}}/foo.txt mode=0644 content="hello world"
+  copy: dest={{remote_tmp_dir}}/foo.txt mode=0644 content="hello world"
 
 - name: check stat of file
-  stat: path={{output_dir}}/foo.txt
+  stat: path={{remote_tmp_dir}}/foo.txt
   register: stat_result
 
 - debug: var=stat_result
@@ -44,7 +44,6 @@
         - "'isreg' in stat_result.stat"
         - "'issock' in stat_result.stat"
         - "'isuid' in stat_result.stat"
-        - "'md5' not in stat_result.stat"  # Remove in 2.9
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat"
@@ -63,25 +62,15 @@
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
 
-- name: check stat of file with get_md5
-  stat: path={{output_dir}}/foo.txt get_md5=True
-  register: stat_result_with_md5
-  when: ansible_fips|bool != True
-
-- assert:
-    that:
-      - "stat_result_with_md5.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  when: ansible_fips|bool != True
-
 - name: make a symlink
   file:
-    src: "{{ output_dir }}/foo.txt"
-    path: "{{ output_dir }}/foo-link"
+    src: "{{ remote_tmp_dir }}/foo.txt"
+    path: "{{ remote_tmp_dir }}/foo-link"
     state: link
 
 - name: check stat of a symlink with follow off
   stat:
-    path: "{{ output_dir }}/foo-link"
+    path: "{{ remote_tmp_dir }}/foo-link"
   register: stat_result
 
 - debug: var=stat_result
@@ -124,7 +113,7 @@
 
 - name: check stat of a symlink with follow on
   stat:
-    path: "{{ output_dir }}/foo-link"
+    path: "{{ remote_tmp_dir }}/foo-link"
     follow: True
   register: stat_result
 
@@ -149,7 +138,6 @@
         - "'isreg' in stat_result.stat"
         - "'issock' in stat_result.stat"
         - "'isuid' in stat_result.stat"
-        - "'md5' not in stat_result.stat"
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat"
@@ -168,15 +156,48 @@
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
 
-- name: check stat of a symlink with follow on with get_md5
+- name: make a new file with colon in filename
+  copy:
+    dest: "{{ remote_tmp_dir }}/foo:bar.txt"
+    mode: '0644'
+    content: "hello world"
+
+- name: check stat of a file with colon in name
   stat:
-    path: "{{ output_dir }}/foo-link"
+    path: "{{ remote_tmp_dir }}/foo:bar.txt"
     follow: True
-    get_md5: yes
-  register: stat_result_with_md5
-  when: ansible_fips|bool != True
+  register: stat_result
+
+- debug:
+    var: stat_result
 
 - assert:
     that:
-      - "stat_result_with_md5.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  when: ansible_fips|bool != True
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "stat_result.stat.mimetype == 'text/plain'"
+        - "stat_result.stat.charset == 'us-ascii'"
+
+- name: check stat a file with get_selinux_context on
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: True
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' in stat_result.stat"
+
+- name: check stat a file with get_selinux_context off
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: False
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' not in stat_result.stat"

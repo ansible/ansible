@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 import socket
@@ -73,12 +72,12 @@ class GenericBsdIfconfigNetwork(Network):
     def get_default_interfaces(self, route_path):
 
         # Use the commands:
-        #     route -n get 8.8.8.8                            -> Google public DNS
-        #     route -n get -inet6 2404:6800:400a:800::1012    -> ipv6.google.com
+        #     route -n get default
+        #     route -n get -inet6 default
         # to find out the default outgoing interface, address, and gateway
 
-        command = dict(v4=[route_path, '-n', 'get', '8.8.8.8'],
-                       v6=[route_path, '-n', 'get', '-inet6', '2404:6800:400a:800::1012'])
+        command = dict(v4=[route_path, '-n', 'get', 'default'],
+                       v6=[route_path, '-n', 'get', '-inet6', 'default'])
 
         interface = dict(v4={}, v6={})
 
@@ -92,13 +91,19 @@ class GenericBsdIfconfigNetwork(Network):
                 #   RTNETLINK answers: Invalid argument
                 continue
             for line in out.splitlines():
-                words = line.split()
+                words = line.strip().split(': ')
                 # Collect output from route command
                 if len(words) > 1:
-                    if words[0] == 'interface:':
+                    if words[0] == 'interface':
                         interface[v]['interface'] = words[1]
-                    if words[0] == 'gateway:':
+                    if words[0] == 'gateway':
                         interface[v]['gateway'] = words[1]
+                    # help pick the right interface address on OpenBSD
+                    if words[0] == 'if address':
+                        interface[v]['address'] = words[1]
+                    # help pick the right interface address on NetBSD
+                    if words[0] == 'local addr':
+                        interface[v]['address'] = words[1]
 
         return interface['v4'], interface['v6']
 
@@ -109,7 +114,7 @@ class GenericBsdIfconfigNetwork(Network):
             all_ipv4_addresses=[],
             all_ipv6_addresses=[],
         )
-        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and OS X all implicitly add '-a'
+        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and macOS all implicitly add '-a'
         # when running the command 'ifconfig'.
         # Solaris must explicitly run the command 'ifconfig -a'.
         rc, out, err = self.module.run_command([ifconfig_path, ifconfig_options])
@@ -215,24 +220,35 @@ class GenericBsdIfconfigNetwork(Network):
                 address['broadcast'] = words[3]
 
         else:
+            # Don't just assume columns, use "netmask" as the index for the prior column
+            try:
+                netmask_idx = words.index('netmask') + 1
+            except ValueError:
+                netmask_idx = 3
+
             # deal with hex netmask
-            if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:
-                words[3] = '0x' + words[3]
-            if words[3].startswith('0x'):
-                address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
+            if re.match('([0-9a-f]){8}$', words[netmask_idx]):
+                netmask = '0x' + words[netmask_idx]
+            else:
+                netmask = words[netmask_idx]
+
+            if netmask.startswith('0x'):
+                address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(netmask, base=16)))
             else:
                 # otherwise assume this is a dotted quad
-                address['netmask'] = words[3]
+                address['netmask'] = netmask
         # calculate the network
         address_bin = struct.unpack('!L', socket.inet_aton(address['address']))[0]
         netmask_bin = struct.unpack('!L', socket.inet_aton(address['netmask']))[0]
         address['network'] = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
         if 'broadcast' not in address:
             # broadcast may be given or we need to calculate
-            if len(words) > 5:
-                address['broadcast'] = words[5]
-            else:
+            try:
+                broadcast_idx = words.index('broadcast') + 1
+            except ValueError:
                 address['broadcast'] = socket.inet_ntoa(struct.pack('!L', address_bin | (~netmask_bin & 0xffffffff)))
+            else:
+                address['broadcast'] = words[broadcast_idx]
 
         # add to our list of addresses
         if not words[1].startswith('127.'):
@@ -291,6 +307,14 @@ class GenericBsdIfconfigNetwork(Network):
         for item in ifinfo:
             if item != 'ipv4' and item != 'ipv6':
                 defaults[item] = ifinfo[item]
-        if len(ifinfo[ip_type]) > 0:
-            for item in ifinfo[ip_type][0]:
-                defaults[item] = ifinfo[ip_type][0][item]
+
+        ipinfo = []
+        if 'address' in defaults:
+            ipinfo = [x for x in ifinfo[ip_type] if x['address'] == defaults['address']]
+
+        if len(ipinfo) == 0:
+            ipinfo = ifinfo[ip_type]
+
+        if len(ipinfo) > 0:
+            for item in ipinfo[0]:
+                defaults[item] = ipinfo[0][item]

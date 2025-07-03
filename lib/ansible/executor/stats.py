@@ -15,17 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 
 from ansible.utils.vars import merge_hash
 
 
 class AggregateStats:
-    ''' holds stats about per-host activity during playbook runs '''
+    """ holds stats about per-host activity during playbook runs """
 
     def __init__(self):
 
@@ -35,12 +33,14 @@ class AggregateStats:
         self.dark = {}
         self.changed = {}
         self.skipped = {}
+        self.rescued = {}
+        self.ignored = {}
 
         # user defined stats, which can be per host or global
         self.custom = {}
 
     def increment(self, what, host):
-        ''' helper function to bump a statistic '''
+        """ helper function to bump a statistic """
 
         self.processed[host] = 1
         prev = (getattr(self, what)).get(host, 0)
@@ -57,18 +57,20 @@ class AggregateStats:
             _what[host] = 0
 
     def summarize(self, host):
-        ''' return information about a particular host '''
+        """ return information about a particular host """
 
         return dict(
             ok=self.ok.get(host, 0),
             failures=self.failures.get(host, 0),
             unreachable=self.dark.get(host, 0),
             changed=self.changed.get(host, 0),
-            skipped=self.skipped.get(host, 0)
+            skipped=self.skipped.get(host, 0),
+            rescued=self.rescued.get(host, 0),
+            ignored=self.ignored.get(host, 0),
         )
 
     def set_custom_stats(self, which, what, host=None):
-        ''' allow setting of a custom stat'''
+        """ allow setting of a custom stat"""
 
         if host is None:
             host = '_run'
@@ -78,7 +80,7 @@ class AggregateStats:
             self.custom[host][which] = what
 
     def update_custom_stats(self, which, what, host=None):
-        ''' allow aggregation of a custom stat'''
+        """ allow aggregation of a custom stat"""
 
         if host is None:
             host = '_run'

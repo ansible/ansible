@@ -1,0 +1,32 @@
+- name: check if /tmp/foo-unarchive.text exists
+  stat:
+    path: /tmp/foo-unarchive.txt
+  ignore_errors: True
+  register: unarchive04
+
+- name: fail if the proposed destination file exists for safety
+  fail:
+    msg: /tmp/foo-unarchive.txt already exists, aborting
+  when: unarchive04.stat.exists
+
+- name: try unarchiving to /tmp
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.tar.gz'
+    dest: /tmp
+    remote_src: true
+  register: unarchive05
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive05.changed == true"
+
+- name: verify that the file was unarchived
+  file:
+    path: /tmp/foo-unarchive.txt
+    state: file
+
+- name: remove our unarchive destination
+  file:
+    path: /tmp/foo-unarchive.txt
+    state: absent

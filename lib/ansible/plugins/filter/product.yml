@@ -1,0 +1,42 @@
+DOCUMENTATION:
+  name: product
+  version_added: "historical"
+  short_description: cartesian product of lists
+  description:
+    - Combines two lists into one with each element being the product of the elements of the input lists.
+    - Creates 'nested loops'. Looping over C(listA) and C(listB) is the same as looping over C(listA | product(listB)).
+  notes:
+    - This is a passthrough to Python's C(itertools.product)
+  positional: _input, _additional_lists, repeat
+  options:
+    _input:
+      description: First list.
+      type: list
+      required: true
+    _additional_lists:  #TODO: *args, N possible additional lists
+      description: Additional list for the product.
+      type: list
+      required: false
+    repeat:
+      description: Number of times to repeat the product against itself.
+      default: 1
+      type: int
+EXAMPLES: |
+
+  # product => [ [ 1, "a" ], [ 1, "b" ], [ 1, "c" ], [ 2, "a" ], [ 2, "b" ], [ 2, "c" ], [ 3, "a" ], [ 3, "b" ], [ 3, "c" ], [ 4, "a" ], [ 4, "b" ], [ 4, "c" ], [ 5, "a" ], [ 5, "b" ], [ 5, "c" ] ]
+  product:  "{{ [1,2,3,4,5] | product(['a', 'b', 'c']) }}"
+
+  # repeat_original => [ [ 1, 1 ], [ 1, 2 ], [ 2, 1 ], [ 2, 2 ] ]
+  repeat_original: "{{ [1,2] | product(repeat=2) }}"
+
+  # repeat_product => [ [ 1, "a", 1, "a" ], [ 1, "a", 1, "b" ], [ 1, "a", 2, "a" ], [ 1, "a", 2, "b" ], [ 1, "b", 1, "a" ], [ 1, "b", 1, "b" ], [ 1, "b", 2, "a" ], [ 1, "b", 2, "b" ], [ 2, "a", 1, "a" ], [ 2, "a", 1, "b" ], [ 2, "a", 2, "a" ], [ 2, "a", 2, "b" ], [ 2, "b", 1, "a" ], [ 2, "b", 1, "b" ], [ 2, "b", 2, "a" ], [ 2, "b", 2, "b" ] ]
+  repeat_product:  "{{ [1,2] | product(['a', 'b'], repeat=2) }}"
+
+  # domains => [ 'example.com', 'ansible.com', 'redhat.com' ]
+  domains: "{{ [ 'example', 'ansible', 'redhat'] | product(['com']) | map('join', '.') }}"
+
+RETURN:
+  _value:
+    description: List of lists of combined elements from the input lists.
+    type: list
+    elements: list

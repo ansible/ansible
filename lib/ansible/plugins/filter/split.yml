@@ -1,0 +1,32 @@
+DOCUMENTATION:
+  name: split
+  version_added: 2.11
+  short_description: split a string into a list
+  description:
+    - Using Python's text object method C(split) we turn strings into lists via a 'splitting character'.
+  notes:
+    - This is a passthrough to Python's C(str.split).
+  positional: _input, _split_string
+  options:
+    _input:
+      description: A string to split.
+      type: str
+      required: true
+    _split_string:
+      description: A string on which to split the original.
+      type: str
+      default: ' '
+
+EXAMPLES: |
+
+    # listjojo => [ "jojo", "is", "a" ]
+    listjojo: "{{ 'jojo is a' | split }}"
+
+    # listjojocomma => [ "jojo is", " a" ]
+    listjojocomma: "{{ 'jojo is, a' | split(',') }}"
+
+RETURN:
+  _value:
+    description: List of substrings split from the original.
+    type: list
+    elements: str

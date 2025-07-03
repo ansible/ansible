@@ -1,0 +1,12 @@
+- name: remove git from FreeBSD
+  pkgng:
+    name: git
+    state: absent
+    autoremove: yes
+  when: git_install.changed
+- name: remove openssl from FreeBSD
+  pkgng:
+    name: openssl
+    state: absent
+    autoremove: yes
+  when: openssl_install.changed

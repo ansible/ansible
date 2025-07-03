@@ -1,0 +1,29 @@
+# This template adds a job for processing code coverage data.
+# It will upload results to Azure Pipelines and codecov.io.
+# Use it from a job stage that completes after all other jobs have completed.
+# This can be done by placing it in a separate summary stage that runs after the test stage(s) have completed.
+
+jobs:
+  - job: Coverage
+    displayName: Code Coverage
+    container: $[ variables.defaultContainer ]
+    workspace:
+      clean: all
+    steps:
+      - checkout: self
+        fetchDepth: $(fetchDepth)
+        path: $(checkoutPath)
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Coverage Data
+        inputs:
+          path: coverage/
+          patterns: "Coverage */*=coverage.combined"
+      - bash: .azure-pipelines/scripts/combine-coverage.py coverage/
+        displayName: Combine Coverage Data
+      - bash: .azure-pipelines/scripts/report-coverage.sh
+        displayName: Generate Coverage Report
+        condition: gt(variables.coverageFileCount, 0)
+      - bash: .azure-pipelines/scripts/publish-codecov.py "$(outputPath)"
+        displayName: Publish to codecov.io
+        condition: gt(variables.coverageFileCount, 0)
+        continueOnError: true

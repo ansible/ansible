@@ -1,0 +1,39 @@
+- name: verify handlers_from on include_role
+  hosts: A
+  gather_facts: False
+  tags: ['scenario1']
+  tasks:
+    - name: test include_role
+      include_role: name=test_handlers_meta handlers_from=alternate.yml
+
+    - name: force handler run
+      meta: flush_handlers
+
+    - name: verify handlers ran
+      assert:
+        that:
+            - "'handler1_alt_called' in hostvars[inventory_hostname]"
+            - "'handler2_alt_called' in hostvars[inventory_hostname]"
+      tags: ['scenario1']
+
+
+- name: verify handlers_from on import_role
+  hosts: A
+  gather_facts: False
+  tasks:
+    - name: set facts to false
+      set_fact:
+        handler1_alt_called: False
+        handler2_alt_called: False
+
+    - import_role: name=test_handlers_meta handlers_from=alternate.yml
+
+    - name: force handler run
+      meta: flush_handlers
+
+    - name: verify handlers ran
+      assert:
+        that:
+            - handler1_alt_called|bool
+            - handler2_alt_called|bool
+      tags: ['scenario1']

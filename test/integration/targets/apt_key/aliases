@@ -1,4 +1,6 @@
-posix/ci/group1
+destructive
+needs/root
+shippable/posix/group1
 skip/freebsd
-skip/osx
+skip/macos
 skip/rhel

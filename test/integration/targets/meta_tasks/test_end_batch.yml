@@ -1,0 +1,13 @@
+- name: Testing end_batch with strategy {{ test_strategy | default('linear') }}
+  hosts: testhost:testhost2
+  gather_facts: no
+  serial: 1
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+        msg: "Using end_batch, current host: {{ inventory_hostname }}, current batch: {{ ansible_play_batch }}"
+
+    - meta: end_batch
+
+    - fail:
+        msg: "Failed to end_batch, current host: {{ inventory_hostname }}, current batch: {{ ansible_play_batch }}"

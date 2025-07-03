@@ -1,0 +1,7 @@
+- name: "main"
+  hosts: all
+  gather_facts: false
+  tasks:
+  - import_role:
+      name: some_role
+    delegate_to: testhost

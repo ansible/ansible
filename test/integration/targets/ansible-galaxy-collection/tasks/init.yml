@@ -1,0 +1,208 @@
+---
+- name: create default skeleton
+  command: ansible-galaxy collection init ansible_test.my_collection {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}/scratch'
+  register: init_relative
+
+- name: create required runtime.yml
+  copy:
+    content: |
+      requires_ansible: '>=1.0.0'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/meta/runtime.yml'
+
+- name: get result of create default skeleton
+  find:
+    path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
+    recurse: yes
+    file_type: directory
+  register: init_relative_actual
+
+- debug:
+    var: init_relative_actual.files | map(attribute='path') | list
+
+- name: assert create default skeleton
+  assert:
+    that:
+    - '"Collection ansible_test.my_collection was created successfully" in init_relative.stdout'
+    - init_relative_actual.files | length == 4
+    - (init_relative_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_relative_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_relative_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_relative_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
+
+- name: create collection with custom init path
+  command: ansible-galaxy collection init ansible_test2.my_collection --init-path "{{ galaxy_dir }}/scratch/custom-init-dir" {{ galaxy_verbosity }}
+  register: init_custom_path
+
+- name: get result of create default skeleton
+  find:
+    path: '{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection'
+    file_type: directory
+  register: init_custom_path_actual
+
+- name: assert create collection with custom init path
+  assert:
+    that:
+    - '"Collection ansible_test2.my_collection was created successfully" in init_custom_path.stdout'
+    - init_custom_path_actual.files | length == 4
+    - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
+
+- name: add a directory to the init collection path to test that --force removes it
+  file:
+    state: directory
+    path: "{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection/remove_me"
+
+- name: create collection with custom init path
+  command: ansible-galaxy collection init ansible_test2.my_collection --init-path "{{ galaxy_dir }}/scratch/custom-init-dir" --force {{ galaxy_verbosity }}
+  register: init_custom_path
+
+- name: get result of create default skeleton
+  find:
+    path: '{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection'
+    file_type: directory
+  register: init_custom_path_actual
+
+- name: assert create collection with custom init path
+  assert:
+    that:
+    - '"Collection ansible_test2.my_collection was created successfully" in init_custom_path.stdout'
+    - init_custom_path_actual.files | length == 4
+    - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
+
+- name: create collection in cwd with custom init path
+  command: ansible-galaxy collection init ansible_test2.my_collection --init-path ../../ --force {{ galaxy_verbosity }}
+  args:
+    chdir: "{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection"
+  register: init_custom_path
+
+- name: get result of create default skeleton
+  find:
+    path: '{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection'
+    file_type: directory
+  register: init_custom_path_actual
+
+- name: assert create collection with custom init path
+  assert:
+    that:
+    - '"Collection ansible_test2.my_collection was created successfully" in init_custom_path.stdout'
+    - init_custom_path_actual.files | length == 4
+    - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles', 'meta']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[3] | basename in ['docs', 'plugins', 'roles', 'meta']
+
+- name: test using a custom skeleton for collection init
+  block:
+    - name: create skeleton directories
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton/{{ item }}"
+        state: directory
+      loop:
+        - custom_skeleton
+        - custom_skeleton/plugins
+        - inventory
+
+    - name: create files
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton/{{ item }}"
+        state: touch
+      loop:
+        - inventory/foo.py
+        - galaxy.yml
+
+    - name: create symlinks
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton/{{ item.link }}"
+        src: "{{ galaxy_dir }}/scratch/skeleton/{{ item.source }}"
+        state: link
+      loop:
+        - link: custom_skeleton/plugins/inventory
+          source: inventory
+        - link: custom_skeleton/galaxy.yml
+          source: galaxy.yml
+
+    - name: create j2 file
+      copy:
+        dest: "{{ galaxy_dir }}/scratch/skeleton/custom_skeleton/README.j2"
+        content: !unsafe |
+          Requires ansible-core >={{ min_ansible_version }}
+
+    - name: initialize a collection using the skeleton
+      command: ansible-galaxy collection init ansible_test.my_collection {{ init_path }} {{ skeleton }} {{ extra }}
+      vars:
+        init_path: '--init-path {{ galaxy_dir }}/scratch/skeleton'
+        skeleton: '--collection-skeleton {{ galaxy_dir }}/scratch/skeleton/custom_skeleton'
+        extra: '-e min_ansible_version="2.17"'
+
+    - name: stat expected collection contents
+      stat:
+        path: "{{ galaxy_dir }}/scratch/skeleton/ansible_test/my_collection/{{ item }}"
+      register: stat_result
+      loop:
+        - plugins
+        - plugins/inventory
+        - galaxy.yml
+        - plugins/inventory/foo.py
+        - README
+
+    - assert:
+        that:
+          - stat_result.results[0].stat.isdir
+          - stat_result.results[1].stat.islnk
+          - stat_result.results[2].stat.islnk
+          - stat_result.results[3].stat.isreg
+          - stat_result.results[4].stat.isreg
+
+    - name: Verify the README was templated successfully
+      copy:
+        dest: "{{ galaxy_dir }}/scratch/skeleton/ansible_test/my_collection/README"
+        content: |
+          Requires ansible-core >=2.17
+      register: validate_readme_content
+
+    - assert:
+        that:
+          - not validate_readme_content.changed
+  always:
+    - name: cleanup
+      file:
+        path: "{{ galaxy_dir }}/scratch/skeleton"
+        state: absent
+
+- name: create collection for ignored files and folders
+  command: ansible-galaxy collection init ansible_test.ignore
+  args:
+    chdir: '{{ galaxy_dir }}/scratch'
+
+- name: create list of ignored files
+  set_fact:
+    collection_ignored_files:
+    - plugins/compiled.pyc
+    - something.retry
+    - .git
+
+- name: plant ignored files into the ansible_test.ignore collection
+  copy:
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/ignore/{{ item }}'
+    content: '{{ item }}'
+  loop: '{{ collection_ignored_files }}'
+
+- name: create list of ignored directories
+  set_fact:
+    collection_ignored_directories:
+    - docs/.git
+    - plugins/doc_fragments/__pycache__
+    - .svn
+
+- name: plant ignored folders into the ansible_test.ignore collection
+  file:
+    path: '{{ galaxy_dir }}/scratch/ansible_test/ignore/{{ item }}'
+    state: directory
+  loop: '{{ collection_ignored_directories }}'

@@ -16,16 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import subprocess
 
-from ansible.module_utils._text import to_bytes
+from ansible import constants as C
+from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.compat.paramiko import _paramiko as paramiko
+from ansible.utils.display import Display
+
+display = Display()
 
 
-_HAS_CONTROLPERSIST = {}
+_HAS_CONTROLPERSIST = {}  # type: dict[str, bool]
 
 
 def check_for_controlpersist(ssh_executable):
@@ -47,3 +50,20 @@ def check_for_controlpersist(ssh_executable):
 
     _HAS_CONTROLPERSIST[ssh_executable] = has_cp
     return has_cp
+
+
+def set_default_transport():
+
+    # deal with 'smart' connection .. one time ..
+    if C.DEFAULT_TRANSPORT == 'smart':
+        display.deprecated(
+            msg="The `smart` option for connections is deprecated.",
+            version="2.20",
+            help_text="Set the connection plugin directly instead.",
+        )
+
+        # see if SSH can support ControlPersist if not use paramiko
+        if not check_for_controlpersist('ssh') and paramiko is not None:
+            C.DEFAULT_TRANSPORT = "paramiko"
+        else:
+            C.DEFAULT_TRANSPORT = "ssh"

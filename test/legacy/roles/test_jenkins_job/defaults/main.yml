@@ -1,5 +1,0 @@
----
-jenkins_url: http://localhost:8080
-jenkins_user: admin
-jenkins_password: ""
-jenkins_days_to_keep: 20

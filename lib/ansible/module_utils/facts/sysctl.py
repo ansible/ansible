@@ -13,23 +13,49 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
 import re
 
 
 def get_sysctl(module, prefixes):
-    sysctl_cmd = module.get_bin_path('sysctl')
-    cmd = [sysctl_cmd]
-    cmd.extend(prefixes)
-
-    rc, out, err = module.run_command(cmd)
-    if rc != 0:
-        return dict()
 
     sysctl = dict()
-    for line in out.splitlines():
-        if not line:
-            continue
-        (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
-        sysctl[key] = value.strip()
+    sysctl_cmd = module.get_bin_path('sysctl')
+    if sysctl_cmd is not None:
+
+        cmd = [sysctl_cmd]
+        cmd.extend(prefixes)
+
+        try:
+            rc, out, err = module.run_command(cmd)
+        except OSError as ex:
+            module.error_as_warning('Unable to read sysctl.', exception=ex)
+            rc = 1
+
+        if rc == 0:
+            key = ''
+            value = ''
+            for line in out.splitlines():
+                if not line.strip():
+                    continue
+
+                if line.startswith(' '):
+                    # handle multiline values, they will not have a starting key
+                    # Add the newline back in so people can split on it to parse
+                    # lines if they need to.
+                    value += '\n' + line
+                    continue
+
+                if key:
+                    sysctl[key] = value.strip()
+
+                try:
+                    (key, value) = re.split(r'\s?=\s?|: ', line, maxsplit=1)
+                except Exception as ex:
+                    module.error_as_warning(f'Unable to split sysctl line {line!r}.', exception=ex)
+
+            if key:
+                sysctl[key] = value.strip()
 
     return sysctl

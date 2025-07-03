@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: file
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: does the path resolve to an existing file
+  description:
+    - Check if the provided path maps to an existing file on the controller's filesystem (localhost)
+  aliases: [is_file]
+  options:
+    _input:
+      description: A path.
+      type: path
+
+EXAMPLES: |
+  vars:
+    my_etc_hosts_is_a_file: "{{ '/etc/hosts' is file }}"
+    list_of_files: "{{ list_of_paths | select('file') }}"
+
+RETURN:
+  _value:
+    description: Returns V(True) if the path corresponds to an existing file on the filesystem on the controller, V(False) if otherwise.
+    type: boolean

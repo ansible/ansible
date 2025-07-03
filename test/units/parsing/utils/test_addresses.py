@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
+
 import unittest
 
 from ansible.parsing.utils.addresses import parse_address
@@ -32,6 +34,8 @@ class TestParseAddress(unittest.TestCase):
         '::ffff:1.2.3.4': ['::ffff:1.2.3.4', None],
         '::1.2.3.4': ['::1.2.3.4', None],
         '1234::': ['1234::', None],
+        # Invalid IPv6 address
+        '1234::9abc:def0:1234:5678:9abc::::::::def0': [None, None],
 
         # Hostnames
         'some-host': ['some-host', None],
@@ -74,7 +78,7 @@ class TestParseAddress(unittest.TestCase):
 
             try:
                 (host, port) = parse_address(t)
-            except:
+            except Exception:
                 host = None
                 port = None
 
@@ -87,7 +91,7 @@ class TestParseAddress(unittest.TestCase):
 
             try:
                 (host, port) = parse_address(t, allow_ranges=True)
-            except:
+            except Exception:
                 host = None
                 port = None
 

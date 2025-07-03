@@ -1,4 +1,5 @@
 # (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2018, Ansible Project
 #
 # This file is part of Ansible
 #
@@ -14,59 +15,63 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import copy
 import os
+import tempfile
 import time
-import errno
-from abc import ABCMeta, abstractmethod
-from collections import MutableMapping
+import typing as t
+
+from abc import abstractmethod
+from collections import abc as c
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import with_metaclass
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common.file import S_IRWU_RG_RO
+from ansible.module_utils.common.text.converters import to_bytes
+from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
+from ansible.utils.collection_loader import resource_from_fqcr
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class BaseCacheModule(with_metaclass(ABCMeta, object)):
+class BaseCacheModule(AnsiblePlugin):
 
     # Backwards compat only.  Just import the global display instead
     _display = display
+    _persistent = True
+    """Plugins that do not persist data between runs can set False to bypass schema-version key munging and JSON serialization wrapper."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+
+        self.set_options(var_options=args, direct=kwargs)
 
     @abstractmethod
-    def get(self, key):
+    def get(self, key: str) -> dict[str, object]:
         pass
 
     @abstractmethod
-    def set(self, key, value):
+    def set(self, key: str, value: dict[str, object]) -> None:
         pass
 
     @abstractmethod
-    def keys(self):
+    def keys(self) -> t.Sequence[str]:
         pass
 
     @abstractmethod
-    def contains(self, key):
+    def contains(self, key: object) -> bool:
         pass
 
     @abstractmethod
-    def delete(self, key):
+    def delete(self, key: str) -> None:
         pass
 
     @abstractmethod
-    def flush(self):
-        pass
-
-    @abstractmethod
-    def copy(self):
+    def flush(self) -> None:
         pass
 
 
@@ -76,11 +81,15 @@ class BaseFileCacheModule(BaseCacheModule):
     """
     def __init__(self, *args, **kwargs):
 
-        self.plugin_name = self.__module__.split('.')[-1]
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
+        try:
+            super(BaseFileCacheModule, self).__init__(*args, **kwargs)
+            self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
+            self._timeout = float(self.get_option('_timeout'))
+        except KeyError:
+            self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
+            self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
+        self.plugin_name = resource_from_fqcr(self.__module__)
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
-        self._set_inventory_cache_override(**kwargs)
         self.validate_cache_connection()
 
     def _get_cache_connection(self, source):
@@ -90,12 +99,6 @@ class BaseFileCacheModule(BaseCacheModule):
             except TypeError:
                 pass
 
-    def _set_inventory_cache_override(self, **kwargs):
-        if kwargs.get('cache_timeout'):
-            self._timeout = kwargs.get('cache_timeout')
-        if kwargs.get('cache_connection'):
-            self._cache_dir = self._get_cache_connection(kwargs.get('cache_connection'))
-
     def validate_cache_connection(self):
         if not self._cache_dir:
             raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
@@ -104,13 +107,21 @@ class BaseFileCacheModule(BaseCacheModule):
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
-            except (OSError, IOError) as e:
-                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
+            except OSError as ex:
+                raise AnsibleError(f"Error in {self.plugin_name!r} cache plugin while trying to create cache dir {self._cache_dir!r}.") from ex
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
                     raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
                         self.plugin_name, self._cache_dir))
+
+    def _get_cache_file_name(self, key: str) -> str:
+        prefix = self.get_option('_prefix')
+        if prefix:
+            cachefile = "%s/%s%s" % (self._cache_dir, prefix, key)
+        else:
+            cachefile = "%s/%s" % (self._cache_dir, key)
+        return cachefile
 
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
@@ -122,7 +133,7 @@ class BaseFileCacheModule(BaseCacheModule):
             if self.has_expired(key) or key == "":
                 raise KeyError
 
-            cachefile = "%s/%s" % (self._cache_dir, key)
+            cachefile = self._get_cache_file_name(key)
             try:
                 value = self._load(cachefile)
                 self._cache[key] = value
@@ -132,11 +143,10 @@ class BaseFileCacheModule(BaseCacheModule):
                 self.delete(key)
                 raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
                                    "It has been removed, so you can re-run your command now." % cachefile)
-            except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+            except FileNotFoundError:
                 raise KeyError
-            except Exception as e:
-                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+            except Exception as ex:
+                raise AnsibleError(f"Error while accessing the cache file {cachefile!r}.") from ex
 
         return self._cache.get(key)
 
@@ -144,26 +154,38 @@ class BaseFileCacheModule(BaseCacheModule):
 
         self._cache[key] = value
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file_name(key)
+        tmpfile_handle, tmpfile_path = tempfile.mkstemp(dir=os.path.dirname(cachefile))
         try:
-            self._dump(value, cachefile)
-        except (OSError, IOError) as e:
-            display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+            try:
+                self._dump(value, tmpfile_path)
+            except OSError as ex:
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}.", exception=ex)
+            try:
+                os.rename(tmpfile_path, cachefile)
+                os.chmod(cachefile, mode=S_IRWU_RG_RO)
+            except OSError as ex:
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to move {tmpfile_path!r} to {cachefile!r}.", exception=ex)
+        finally:
+            try:
+                os.unlink(tmpfile_path)
+            except OSError:
+                pass
 
     def has_expired(self, key):
 
         if self._timeout == 0:
-            return True
+            return False
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file_name(key)
         try:
             st = os.stat(cachefile)
-        except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                return False
+        except FileNotFoundError:
+            return False
+        except OSError as ex:
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
+
+            return False
 
         if time.time() - st.st_mtime <= self._timeout:
             return False
@@ -173,14 +195,24 @@ class BaseFileCacheModule(BaseCacheModule):
         return True
 
     def keys(self):
+        # When using a prefix we must remove it from the key name before
+        # checking the expiry and returning it to the caller. Keys that do not
+        # share the same prefix cannot be fetched from the cache.
+        prefix = self.get_option('_prefix')
+        prefix_length = len(prefix)
         keys = []
         for k in os.listdir(self._cache_dir):
-            if not (k.startswith('.') or self.has_expired(k)):
+            if k.startswith('.') or not k.startswith(prefix):
+                continue
+
+            k = k[prefix_length:]
+            if not self.has_expired(k):
                 keys.append(k)
+
         return keys
 
     def contains(self, key):
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file_name(key)
 
         if key in self._cache:
             return True
@@ -190,11 +222,10 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.stat(cachefile)
             return True
-        except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+        except FileNotFoundError:
+            return False
+        except OSError as ex:
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
 
     def delete(self, key):
         try:
@@ -202,8 +233,8 @@ class BaseFileCacheModule(BaseCacheModule):
         except KeyError:
             pass
         try:
-            os.remove("%s/%s" % (self._cache_dir, key))
-        except (OSError, IOError):
+            os.remove(self._get_cache_file_name(key))
+        except OSError:
             pass  # TODO: only pass on non existing?
 
     def flush(self):
@@ -211,14 +242,8 @@ class BaseFileCacheModule(BaseCacheModule):
         for key in self.keys():
             self.delete(key)
 
-    def copy(self):
-        ret = dict()
-        for key in self.keys():
-            ret[key] = self.get(key)
-        return ret
-
     @abstractmethod
-    def _load(self, filepath):
+    def _load(self, filepath: str) -> object:
         """
         Read data from a filepath and return it as a value
 
@@ -237,7 +262,7 @@ class BaseFileCacheModule(BaseCacheModule):
         pass
 
     @abstractmethod
-    def _dump(self, value, filepath):
+    def _dump(self, value: object, filepath: str) -> None:
         """
         Write data to a filepath
 
@@ -247,101 +272,94 @@ class BaseFileCacheModule(BaseCacheModule):
         pass
 
 
-class FactCache(MutableMapping):
+class CachePluginAdjudicator(c.MutableMapping):
+    """Batch update wrapper around a cache plugin."""
 
-    def __init__(self, *args, **kwargs):
-
-        self._plugin = cache_loader.get(C.CACHE_PLUGIN)
-        if not self._plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
-
-        # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display = display
-
-        # in memory cache so plugins don't expire keys mid run
+    def __init__(self, plugin_name='memory', **kwargs):
         self._cache = {}
+        self._retrieved = {}
+        self._plugin = cache_loader.get(plugin_name, **kwargs)
 
-    def __getitem__(self, key):
-        if not self._plugin.contains(key):
-            raise KeyError
-        return self._plugin.get(key)
+    def update_cache_if_changed(self):
+        if self._retrieved != self._cache:
+            self.set_cache()
 
-    def __setitem__(self, key, value):
-        self._plugin.set(key, value)
+    def set_cache(self):
+        for top_level_cache_key in self._cache.keys():
+            self._plugin.set(top_level_cache_key, self._cache[top_level_cache_key])
 
-    def __delitem__(self, key):
-        self._plugin.delete(key)
+        self._retrieved = copy.deepcopy(self._cache)
 
-    def __contains__(self, key):
-        return self._plugin.contains(key)
+    def load_whole_cache(self):
+        for key in self._plugin.keys():
+            self._cache[key] = self._plugin.get(key)
+
+    def __repr__(self):
+        return repr(self._cache)
 
     def __iter__(self):
-        return iter(self._plugin.keys())
+        return iter(self.keys())
 
     def __len__(self):
-        return len(self._plugin.keys())
+        return len(self.keys())
 
-    def copy(self):
-        """ Return a primitive copy of the keys and values from the cache. """
-        return dict(self)
+    def _do_load_key(self, key):
+        load = False
+
+        if key not in self._cache and key not in self._retrieved and self._plugin._persistent and self._plugin.contains(key):
+            load = True
+
+        return load
+
+    def __getitem__(self, key):
+        if self._do_load_key(key):
+            try:
+                self._cache[key] = self._plugin.get(key)
+            except KeyError:
+                pass
+            else:
+                self._retrieved[key] = self._cache[key]
+
+        return self._cache[key]
+
+    def get(self, key, default=None):
+        if self._do_load_key(key):
+            try:
+                self._cache[key] = self._plugin.get(key)
+            except KeyError:
+                pass
+            else:
+                self._retrieved[key] = self._cache[key]
+
+        return self._cache.get(key, default)
+
+    def items(self):
+        return self._cache.items()
+
+    def values(self):
+        return self._cache.values()
 
     def keys(self):
-        return self._plugin.keys()
+        return self._cache.keys()
+
+    def pop(self, key, *args):
+        if args:
+            return self._cache.pop(key, args[0])
+
+        return self._cache.pop(key)
+
+    def __delitem__(self, key):
+        del self._cache[key]
+
+    def __setitem__(self, key, value):
+        self._cache[key] = value
+
+    def clear(self):
+        self.flush()
 
     def flush(self):
-        """ Flush the fact cache of all keys. """
         self._plugin.flush()
-
-    def update(self, key, value):
-        host_cache = self._plugin.get(key)
-        host_cache.update(value)
-        self._plugin.set(key, host_cache)
-
-
-class InventoryFileCacheModule(BaseFileCacheModule):
-    """
-    A caching module backed by file based storage.
-    """
-    def __init__(self, plugin_name, timeout, cache_dir):
-
-        self.plugin_name = plugin_name
-        self._timeout = timeout
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(cache_dir)
-        self.validate_cache_connection()
-        self._plugin = self.get_plugin(plugin_name)
 
-    def validate_cache_connection(self):
-        try:
-            super(InventoryFileCacheModule, self).validate_cache_connection()
-        except AnsibleError as e:
-            cache_connection_set = False
-        else:
-            cache_connection_set = True
-
-        if not cache_connection_set:
-            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set:\n"
-                               "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
-                               "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
-                               "to be set to a writeable directory path" % self.plugin_name)
-
-    def get(self, cache_key):
-
-        if not self.contains(cache_key):
-            # Check if cache file exists
-            raise KeyError
-
-        return super(InventoryFileCacheModule, self).get(cache_key)
-
-    def get_plugin(self, plugin_name):
-        plugin = cache_loader.get(plugin_name, cache_connection=self._cache_dir, cache_timeout=self._timeout)
-        if not plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (plugin_name))
-        self._cache = {}
-        return plugin
-
-    def _load(self, path):
-        return self._plugin._load(path)
-
-    def _dump(self, value, path):
-        return self._plugin._dump(value, path)
+    def update(self, value):
+        self._cache.update(value)

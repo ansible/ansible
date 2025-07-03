@@ -1,0 +1,65 @@
+{
+    "testns.testcol.yolo": {
+        "doc": {
+            "collection": "testns.testcol",
+            "description": [
+                "This is always true"
+            ],
+            "filename": "./collections/ansible_collections/testns/testcol/plugins/test/yolo.yml",
+            "name": "yolo",
+            "options": {
+                "_input": {
+                    "description": "does not matter",
+                    "required": true,
+                    "type": "raw"
+                }
+            },
+            "plugin_name": "testns.testcol.yolo",
+            "seealso": [
+                {
+                    "module": "ansible.builtin.test"
+                },
+                {
+                    "description": "A fake module",
+                    "module": "testns.testcol.fakemodule"
+                },
+                {
+                    "plugin": "testns.testcol.noop",
+                    "plugin_type": "lookup"
+                },
+                {
+                    "description": "A grouped filter.",
+                    "plugin": "testns.testcol.grouped",
+                    "plugin_type": "filter"
+                },
+                {
+                    "plugin": "ansible.builtin.combine",
+                    "plugin_type": "filter"
+                },
+                {
+                    "description": "Read a file on the controller.",
+                    "plugin": "ansible.builtin.file",
+                    "plugin_type": "lookup"
+                },
+                {
+                    "description": "See also the Ansible docsite.",
+                    "link": "https://docs.ansible.com",
+                    "name": "Ansible docsite"
+                },
+                {
+                    "description": "Some foo bar.",
+                    "ref": "foo_bar"
+                }
+            ],
+            "short_description": "you only live once"
+        },
+        "examples": "{{ 'anything' is yolo }}\n",
+        "metadata": null,
+        "return": {
+            "output": {
+                "description": "always true",
+                "type": "boolean"
+            }
+        }
+    }
+}

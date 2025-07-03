@@ -1,37 +1,37 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
-    inventory: advanced_host_list
+DOCUMENTATION = """
+    name: advanced_host_list
     version_added: "2.4"
     short_description: Parses a 'host list' with ranges
     description:
         - Parses a host list string as a comma separated values of hosts and supports host ranges.
         - This plugin only applies to inventory sources that are not paths and contain at least one comma.
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
     # simple range
     # ansible -i 'host[1:10],' -m ping
 
     # still supports w/o ranges also
     # ansible-playbook -i 'localhost,' play.yml
-'''
+"""
 
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native
-from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.inventory import BaseInventoryPlugin, detect_range, expand_hostname_range
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.plugins.inventory import BaseInventoryPlugin
 
 
 class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'advanced_host_list'
+
+    # advanced_host_list does not set vars, so needs no special trust assistance from the inventory API
 
     def verify_file(self, host_list):
 
@@ -42,7 +42,7 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def parse(self, inventory, loader, host_list, cache=True):
-        ''' parses the inventory file '''
+        """ parses the inventory file """
 
         super(InventoryModule, self).parse(inventory, loader, host_list)
 
@@ -53,8 +53,8 @@ class InventoryModule(BaseInventoryPlugin):
                     try:
                         (hostnames, port) = self._expand_hostpattern(h)
                     except AnsibleError as e:
-                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_native(e))
-                        host = [h]
+                        self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
+                        hostnames = [h]
                         port = None
 
                     for host in hostnames:
@@ -62,28 +62,3 @@ class InventoryModule(BaseInventoryPlugin):
                             self.inventory.add_host(host, group='ungrouped', port=port)
         except Exception as e:
             raise AnsibleParserError("Invalid data from string, could not parse: %s" % to_native(e))
-
-    def _expand_hostpattern(self, hostpattern):
-        '''
-        Takes a single host pattern and returns a list of hostnames and an
-        optional port number that applies to all of them.
-        '''
-        # Can the given hostpattern be parsed as a host with an optional port
-        # specification?
-
-        try:
-            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        except:
-            # not a recognizable host pattern
-            pattern = hostpattern
-            port = None
-
-        # Once we have separated the pattern, we expand it into list of one or
-        # more hostnames, depending on whether it contains any [x:y] ranges.
-
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
-        else:
-            hostnames = [pattern]
-
-        return (hostnames, port)

@@ -1,26 +1,23 @@
 # (c) 2017, Peter Sprygada <psprygad@redhat.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
+import pickle
 import traceback
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.six import binary_type
+from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.six import binary_type, text_type
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class JsonRpcServer(object):
 
-    _objects = set()
+    _objects = set()  # type: set[object]
 
     def handle_request(self, request):
         request = json.loads(to_text(request, errors='surrogate_then_replace'))
@@ -31,16 +28,8 @@ class JsonRpcServer(object):
             error = self.invalid_request()
             return json.dumps(error)
 
-        params = request.get('params')
+        args, kwargs = request.get('params')
         setattr(self, '_identifier', request.get('id'))
-
-        args = []
-        kwargs = {}
-
-        if all((params, isinstance(params, list))):
-            args = params
-        elif all((params, isinstance(params, dict))):
-            kwargs = params
 
         rpc_method = None
         for obj in self._objects:
@@ -54,6 +43,13 @@ class JsonRpcServer(object):
         else:
             try:
                 result = rpc_method(*args, **kwargs)
+            except ConnectionError as exc:
+                display.vvv(traceback.format_exc())
+                try:
+                    error = self.error(code=exc.code, message=to_text(exc))
+                except AttributeError:
+                    error = self.internal_error(data=to_text(exc))
+                response = json.dumps(error)
             except Exception as exc:
                 display.vvv(traceback.format_exc())
                 error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
@@ -64,7 +60,12 @@ class JsonRpcServer(object):
                 else:
                     response = self.response(result)
 
-                response = json.dumps(response)
+                try:
+                    response = json.dumps(response)
+                except Exception as exc:
+                    display.vvv(traceback.format_exc())
+                    error = self.internal_error(data=to_text(exc, errors='surrogate_then_replace'))
+                    response = json.dumps(error)
 
         delattr(self, '_identifier')
 
@@ -80,6 +81,9 @@ class JsonRpcServer(object):
         response = self.header()
         if isinstance(result, binary_type):
             result = to_text(result)
+        if not isinstance(result, text_type):
+            response["result_type"] = "pickle"
+            result = to_text(pickle.dumps(result), errors='surrogateescape')
         response['result'] = result
         return response
 

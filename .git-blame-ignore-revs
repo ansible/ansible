@@ -1,0 +1,6 @@
+# .git-blame-ignore-revs
+# Bulk PowerShell sanity fixes
+6def4a3180fe03981ba64c6d8db28fed3bb39c0c
+716631189cb5a3f66b3add98f39e64e98bc17bf7
+# Bulk update of strings from triple single quotes to triple double quotes
+a0495fc31497798a7a833ba7406a9729e1528dd8

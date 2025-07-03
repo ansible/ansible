@@ -1,0 +1,225 @@
+## Check local mode
+# Even if we don't have a system that is bound to a directory, it's useful
+# to run with local: true to exercise the code path that reads through the local
+# user database file.
+# https://github.com/ansible/ansible/issues/50947
+
+- name: Ensure luseradd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Create local account that already exists to check for warning
+  user:
+    name: root
+    local: yes
+  register: local_existing
+  tags:
+    - user_test_local_mode
+
+- name: Ensure no local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    local: yes
+    remove: true
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_1
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_2
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_remove_1
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_remove_2
+  tags:
+    - user_test_local_mode
+
+- name: Create test groups
+  group:
+    name: "{{ item }}"
+  loop:
+    - testgroup1
+    - testgroup2
+    - testgroup3
+    - testgroup4
+    - testgroup5
+    - testgroup6
+    - local_ansibulluser
+  tags:
+    - user_test_local_mode
+  register: test_groups
+
+- name: Create local_ansibulluser with groups
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: ['testgroup1', 'testgroup2']
+  register: local_user_test_3
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: ['testgroup3', 'testgroup4']
+    append: yes
+  register: local_user_test_4
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser (again)
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: ['testgroup3', 'testgroup4']
+    append: yes
+  register: local_user_test_4_again
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Test append without groups for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+  register: local_user_test_5
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: testgroup5
+  register: local_user_test_6
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser using group id
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+    groups: "{{ test_groups.results[5]['gid'] }}"
+  register: local_user_test_7
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Append groups for local_ansibulluser using gid (again)
+  user:
+    name: local_ansibulluser
+    state: present
+    append: yes
+    groups: "{{ test_groups.results[5]['gid'] }}"
+  register: local_user_test_7_again
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+# If we don't re-assign, then "Set user expiration" will
+# fail.
+- name: Re-assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: local_ansibulluser
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Remove test groups
+  group:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - testgroup1
+    - testgroup2
+    - testgroup3
+    - testgroup4
+    - testgroup5
+    - testgroup6
+    - local_ansibulluser
+  tags:
+    - user_test_local_mode
+
+- name: Ensure local user accounts were created and removed properly
+  assert:
+    that:
+      - local_user_test_1 is changed
+      - local_user_test_2 is not changed
+      - local_user_test_3 is changed
+      - local_user_test_4 is changed
+      - local_user_test_4_again is not changed
+      - local_user_test_6 is changed
+      - local_user_test_7 is changed
+      - local_user_test_7_again is not changed
+      - local_user_test_remove_1 is changed
+      - local_user_test_remove_2 is not changed
+  tags:
+    - user_test_local_mode
+
+- name: Ensure warnings were displayed properly
+  assert:
+    that:
+      - local_user_test_5['warnings'] is search("'append' is set, but no 'groups' are specified. Use 'groups'")
+      - local_existing['warnings'] is not defined
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Test expires for local users
+  import_tasks: test_local_expires.yml

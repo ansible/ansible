@@ -1,0 +1,18 @@
+- hosts: testhost
+  gather_facts: no
+  roles:
+    - foo
+  tasks:
+  - name: Use ping from role
+    ping:
+    register: result
+
+  - name: Use  from role
+    a:
+    register: a_res
+
+  - assert:
+      that:
+        - '"location" in result'
+        - 'result["location"] == "role: foo"'
+        - 'a_res["location"] == "role: foo, a.py"'

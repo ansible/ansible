@@ -1,0 +1,36 @@
+# Ensure that our logic for special filesystems works as intended
+# https://github.com/ansible/ansible/issues/70244
+- block:
+    - name: Install dosfstools
+      dnf:
+        name: dosfstools
+        state: present
+
+    - name: Create a file to use for a fat16 filesystem
+      command: dd if=/dev/zero of=/fat16 bs=1024 count=10240
+
+    - name: mkfs.fat
+      command: mkfs.fat -F16 /fat16
+
+    - name: Mount it
+      command: mount /fat16 /mnt
+
+    - name: Copy a file to it
+      copy:
+        src: /etc/fstab
+        dest: /mnt/fstab
+        remote_src: true
+  always:
+    - name: Unmount it
+      command: umount /mnt
+      ignore_errors: true
+
+    - name: Nuke /fat16
+      file:
+        path: /fat16
+        state: absent
+
+    - name: Uninstall dosfstools
+      dnf:
+        name: dosfstools
+        state: absent

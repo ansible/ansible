@@ -15,13 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+import unittest
+from ansible.errors import AnsibleParserError
 from ansible.playbook import Playbook
 from ansible.vars.manager import VariableManager
 
@@ -29,12 +26,6 @@ from units.mock.loader import DictDataLoader
 
 
 class TestPlaybook(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_empty_playbook(self):
         fake_loader = DictDataLoader({})

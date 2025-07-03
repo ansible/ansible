@@ -1,0 +1,17 @@
+- hosts: testhost,testhost2
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - block:
+        - fail:
+          when: inventory_hostname == "testhost"
+        - name: any_errors_fatal fails all hosts when any of them fails
+          debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - name: Rescues both hosts
+          debug:
+            msg: rescuedd
+    - name: You can recover from fatal errors by adding a rescue section to the block.
+      debug:
+        msg: recovered

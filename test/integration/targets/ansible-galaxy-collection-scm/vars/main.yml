@@ -1,0 +1,11 @@
+install_path: "{{ galaxy_dir }}/collections/ansible_collections"
+alt_install_path: "{{ galaxy_dir }}/other_collections/ansible_collections"
+scm_path: "{{ galaxy_dir }}/development"
+test_repo_path: "{{ galaxy_dir }}/development/ansible_test"
+test_error_repo_path: "{{ galaxy_dir }}/development/error_test"
+
+supported_resolvelib_versions:
+  - "0.5.3"  # Oldest supported
+  - "0.6.0"
+  - "0.7.0"
+  - "0.8.0"

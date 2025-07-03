@@ -1,0 +1,6 @@
+- hosts: localhost
+  tasks:
+    - name: Make sure git is uninstalled
+      package:
+        name: git
+        state: absent

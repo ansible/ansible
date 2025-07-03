@@ -1,0 +1,13 @@
+- name: "Testing end_host all hosts with strategy={{ test_strategy | default('linear') }}"
+  hosts:
+    - testhost
+    - testhost2
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+
+    - ansible.builtin.meta: end_host
+
+    - debug:
+        msg: "play not ended {{ inventory_hostname }}"

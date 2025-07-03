@@ -14,8 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
@@ -53,7 +52,7 @@ class ActionModule(ActionBase):
 
         # Simulate a transient network failure
         if self._task.action == 'async_status' and 'finished' in result and result['finished'] != 1:
-            raise AnsibleError('Pretend to fail somewher ein executing async_status')
+            raise AnsibleError('Pretend to fail somewhere in executing async_status')
 
         if not wrap_async:
             # remove a temporary path we created

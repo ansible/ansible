@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # (c) 2017, Adrian Likins <alikins@redhat.com>
 #
 # This file is part of Ansible
@@ -15,20 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+import os
+import pytest
+
+import unittest
+from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
-from ansible import errors
+from ansible import context, errors
 from ansible.cli.vault import VaultCLI
+from ansible.module_utils.common.text.converters import to_text
+from ansible.utils import context_objects as co
 
 
-# TODO: make these tests assert something, likely by verifing
+# TODO: make these tests assert something, likely by verifying
 #       mock calls
+
+
+@pytest.fixture(autouse=True)
+def reset_cli_args():
+    co.GlobalCLIArgs._Singleton__instance = None
+    yield
+    co.GlobalCLIArgs._Singleton__instance = None
 
 
 class TestVaultCli(unittest.TestCase):
@@ -40,10 +51,9 @@ class TestVaultCli(unittest.TestCase):
         self.tty_patcher.stop()
 
     def test_parse_empty(self):
-        cli = VaultCLI([])
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                '.*Missing required action.*',
-                                cli.parse)
+        cli = VaultCLI(['vaultcli'])
+        self.assertRaises(SystemExit,
+                          cli.parse)
 
     # FIXME: something weird seems to be afoot when parsing actions
     # cli = VaultCLI(args=['view', '/dev/null/foo', 'mysecret3'])
@@ -58,18 +68,18 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -96,9 +106,39 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault',
                              'encrypt_string',
                              '--prompt',
+                             '--show-input',
                              'some string to encrypt'])
         cli.parse()
         cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"] is False
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    @patch('ansible.cli.vault.display.prompt', return_value='a_prompt')
+    def test_shadowed_encrypt_string_prompt(self, mock_display, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault',
+                             'encrypt_string',
+                             '--prompt'])
+        cli.parse()
+        cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"]
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    @patch('ansible.cli.vault.display.prompt', return_value='a_prompt')
+    def test_shadowed_encrypt_string_prompt_plus(self, mock_display, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault',
+                             'encrypt_string',
+                             'some string to encrypt',
+                             '--prompt'])
+        cli.parse()
+        cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"]
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -142,7 +182,28 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
         cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
         cli.parse()
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "not a tty, editor cannot be opened",
+                               cli.run)
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_skip_tty_check(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'create', '--skip-tty-check', '/dev/null/foo'])
+        cli.parse()
         cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_create_with_tty(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        self.tty_stdout_patcher = patch('ansible.cli.sys.stdout.isatty', return_value=True)
+        self.tty_stdout_patcher.start()
+        cli = VaultCLI(args=['ansible-vault', 'create', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+        self.tty_stdout_patcher.stop()
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -175,3 +236,27 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault', 'rekey', '/dev/null/foo'])
         cli.parse()
         cli.run()
+
+
+@pytest.mark.parametrize('cli_args, expected', [
+    (['ansible-vault', 'view', 'vault.txt'], 0),
+    (['ansible-vault', 'view', 'vault.txt', '-vvv'], 3),
+    (['ansible-vault', 'view', 'vault.txt', '-vv'], 2),
+])
+def test_verbosity_arguments(cli_args, expected, tmp_path_factory, monkeypatch):
+    # Add a password file so we don't get a prompt in the test
+    test_dir = to_text(tmp_path_factory.mktemp('test-ansible-vault'))
+    pass_file = os.path.join(test_dir, 'pass.txt')
+    with open(pass_file, 'w') as pass_fd:
+        pass_fd.write('password')
+
+    cli_args.extend(['--vault-id', pass_file])
+
+    # Mock out the functions so we don't actually execute anything
+    for func_name in [f for f in dir(VaultCLI) if f.startswith("execute_")]:
+        monkeypatch.setattr(VaultCLI, func_name, MagicMock())
+
+    cli = VaultCLI(args=cli_args)
+    cli.run()
+
+    assert context.CLIARGS['verbosity'] == expected

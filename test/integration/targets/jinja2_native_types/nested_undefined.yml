@@ -1,0 +1,23 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+      - name: Test nested undefined var fails, single node
+        raw: "{{ [{ 'key': nested_and_undefined }] }}"
+        register: result
+        ignore_errors: yes
+
+      - assert:
+          that:
+            - result.msg is contains "Task failed:"
+            - result.msg is contains "'nested_and_undefined' is undefined"
+
+      - name: Test nested undefined var fails, multiple nodes
+        raw: "{{ [{ 'key': nested_and_undefined}] }} second_node"
+        register: result
+        ignore_errors: yes
+
+      - assert:
+          that:
+            - result.msg is contains "Task failed:"
+            - result.msg is contains "'nested_and_undefined' is undefined"

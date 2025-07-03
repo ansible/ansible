@@ -1,0 +1,52 @@
+# Setting the hostname in our test containers doesn't work currently
+- when: ansible_facts.virtualization_type not in ('docker', 'container', 'containerd')
+  block:
+    - name: Include distribution specific variables
+      include_vars: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          files:
+            - "{{ ansible_facts.distribution }}.yml"
+            - "{{ ansible_facts.os_family }}.yml"
+            - default.yml
+          paths:
+            - "{{ role_path }}/vars"
+
+    - name: Get current hostname
+      command: hostname
+      register: original
+
+    - import_tasks: test_check_mode.yml
+    - import_tasks: test_normal.yml
+
+    - name: Include distribution specific tasks
+      include_tasks:
+        file: "{{ lookup('first_found', files) }}"
+      vars:
+        files:
+          - "{{ ansible_facts.distribution }}.yml"
+          - default.yml
+
+  always:
+    # Reset back to original hostname
+    - name: Move back original file if it existed
+      become: 'yes'
+      command: mv -f {{ _hostname_file }}.orig {{ _hostname_file }}
+      when: hn_stat.stat.exists | default(False)
+
+    - name: Delete the file if it never existed
+      file:
+        path: "{{ _hostname_file }}"
+        state: absent
+      when: not hn_stat.stat.exists | default(True)
+
+    - name: Reset back to original hostname
+      become: 'yes'
+      hostname:
+        name: "{{ original.stdout }}"
+      register: revert
+
+    - name: Ensure original hostname was reset
+      assert:
+        that:
+          - revert is changed

@@ -1,0 +1,50 @@
+DOCUMENTATION:
+  name: to_datetime
+  version_added: "2.4"
+  short_description: Get C(datetime) from string
+  description:
+    - Using the input string attempt to create a matching Python C(datetime) object.
+    - Adding or Subtracting two datetime objects will result in a Python C(timedelta) object.
+  notes:
+    - For a full list of format codes for working with Python date format strings, see
+      L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior).
+    - The timedelta object produced by the difference of two datetimes store the days, seconds, and microseconds of
+      the delta. This results in the C(seconds) attribute being the total seconds of the minutes and hours of that
+      delta. See L(datatime.timedelta, https://docs.python.org/3/library/datetime.html#timedelta-objects) for more
+      information about how a timedelta works.
+  positional: _input
+  options:
+    _input:
+      description: A string containing date time information.
+      type: str
+      required: true
+    format:
+      description: C(strformat) formatted string that describes the expected format of the input string.
+      type: str
+
+EXAMPLES: |
+
+  # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
+  secsdiff: '{{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime("%Y-%m-%d"))).total_seconds()  }}'
+
+  # Get remaining seconds after delta has been calculated. NOTE: This does NOT convert years and days to seconds. For that, use total_seconds()
+  {{ (("2016-08-14 20:00:12" | to_datetime) - ("2016-08-14 18:00:00" | to_datetime)).seconds  }}
+  # This expression evaluates to "7212". Delta is 2 hours, 12 seconds
+
+  # get amount of days between two dates. This returns only number of days and discards remaining hours, minutes, and seconds
+  {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).days  }}
+
+  # difference between to dotnet (100ns precision) and iso8601 microsecond timestamps
+  # the date1_short regex replace will work for any timestamp that has a higher than microsecond precision
+  # by cutting off anything more precise than microseconds
+  vars:
+    date1: '2022-11-15T03:23:13.6869568Z'
+    date2: '2021-12-15T16:06:24.400087Z'
+    date1_short: '{{ date1|regex_replace("([^.]+)(\.\d{6})(\d*)(.+)", "\1\2\4") }}' # shorten to microseconds
+    iso8601format: '%Y-%m-%dT%H:%M:%S.%fZ'
+    date_diff_isoed: '{{ (date1_short|to_datetime(iso8601format) - date2|to_datetime(iso8601format)).total_seconds() }}'
+
+RETURN:
+  _value:
+    description: C(datetime) object from the represented value.
+    type: raw

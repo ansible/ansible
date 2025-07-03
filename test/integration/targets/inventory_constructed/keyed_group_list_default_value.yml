@@ -1,0 +1,9 @@
+plugin: ansible.builtin.constructed
+keyed_groups:
+  - key: roles
+    default_value: storage
+    prefix: host
+
+  - key: '[]'
+    default_value: default_value
+    prefix: empty_list_test

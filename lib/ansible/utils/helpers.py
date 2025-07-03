@@ -15,18 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from ansible.module_utils.six import string_types
 
 
 def pct_to_int(value, num_items, min_value=1):
-    '''
+    """
     Converts a given value to a percentage if specified as "x%",
     otherwise converts the given value to an integer.
-    '''
+    """
     if isinstance(value, string_types) and value.endswith('%'):
         value_pct = int(value.replace("%", ""))
         return int((value_pct / 100.0) * num_items) or min_value
@@ -41,3 +39,11 @@ def object_to_dict(obj, exclude=None):
     if exclude is None or not isinstance(exclude, list):
         exclude = []
     return dict((key, getattr(obj, key)) for key in dir(obj) if not (key.startswith('_') or key in exclude))
+
+
+def deduplicate_list(original_list):
+    """
+    Creates a deduplicated list with the order in which each item is first found.
+    """
+    seen = set()
+    return [x for x in original_list if x not in seen and not seen.add(x)]

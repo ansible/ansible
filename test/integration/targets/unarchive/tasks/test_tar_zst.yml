@@ -1,0 +1,40 @@
+# Only do this whole file when the "zstd" executable is present
+- when:
+    - zstd_available.rc == 0
+    - gnu_tar.stdout != ""
+  block:
+    - name: create our tar.zst unarchive destination
+      file:
+        path: '{{remote_tmp_dir}}/test-unarchive-tar-zst'
+        state: directory
+
+    - name: unarchive a tar.zst file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.tar.zst'
+        dest: '{{remote_tmp_dir}}/test-unarchive-tar-zst'
+        remote_src: yes
+      register: unarchive02
+
+    - name: verify that the file was marked as changed
+      assert:
+        that:
+          - "unarchive02.changed == true"
+          # Verify that no file list is generated
+          - "'files' not in unarchive02"
+
+    - name: verify that the file was unarchived
+      file:
+        path: '{{remote_tmp_dir}}/test-unarchive-tar-zst/foo-unarchive.txt'
+        state: file
+
+    - name: remove our tar.zst unarchive destination
+      file:
+        path: '{{remote_tmp_dir}}/test-unarchive-tar-zst'
+        state: absent
+
+    - name: test owner/group perms
+      include_tasks: test_owner_group.yml
+      vars:
+        ext: tar.zst
+        archive: test-unarchive.tar.zst
+        testfile: foo-unarchive.txt

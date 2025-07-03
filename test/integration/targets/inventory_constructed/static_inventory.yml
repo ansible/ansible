@@ -1,0 +1,8 @@
+all:
+  hosts:
+    host0:
+      hostvar0:
+        key0: value0
+      hostvar1: hostvalue1
+      hostvar2:
+        - item0

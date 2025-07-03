@@ -1,0 +1,25 @@
+DOCUMENTATION:
+  name: from_json
+  version_added: 'historical'
+  short_description: Convert JSON string into variable structure
+  description:
+    - Converts a JSON string representation into an equivalent structured Ansible variable.
+    - Ansible automatically converts JSON strings into variable structures in most contexts, use this plugin in contexts where automatic conversion does not happen.
+  notes:
+    - This filter functions as a wrapper to the Python C(json.loads) function.
+  options:
+    _input:
+      description: A JSON string.
+      type: string
+      required: true
+EXAMPLES: |
+  # variable from string variable containing a JSON document
+  {{ docker_config | from_json }}
+
+  # variable from string JSON document
+  {{ '{"a": true, "b": 54, "c": [1,2,3]}' | from_json }}
+
+RETURN:
+  _value:
+    description: The variable resulting from deserialization of the JSON document.
+    type: raw

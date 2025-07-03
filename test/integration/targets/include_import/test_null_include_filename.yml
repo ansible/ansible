@@ -1,0 +1,7 @@
+- name: Test include failure with invalid included include_task
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+  - ansible.builtin.include_tasks:
+      file: null_filename/tasks.yml

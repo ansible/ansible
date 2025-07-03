@@ -2,4 +2,4 @@
 
 set -eux
 
-ansible-playbook test_var_blending.yml -i inventory -e @integration_config.yml -v "$@"
+ansible-playbook test_var_blending.yml -i inventory -e @test_vars.yml -v "$@"

@@ -1,0 +1,34 @@
+- hosts: windows
+  tasks:
+  - testns.testcoll.win_selfcontained:
+    register: selfcontained_out
+
+  - testns.testcoll.win_csbasic_only:
+    register: csbasic_only_out
+
+  - testns.testcoll.win_uses_coll_psmu:
+    register: uses_coll_psmu
+
+  - testns.testcoll.win_uses_coll_csmu:
+    register: uses_coll_csmu
+
+  - testns.testcoll.win_uses_optional:
+    register: uses_coll_optional
+
+  - assert:
+      that:
+      - selfcontained_out.source == 'user'
+      - csbasic_only_out.source == 'user'
+      # win_uses_coll_psmu
+      - uses_coll_psmu.source == 'user'
+      - "'user_mu' in uses_coll_psmu.ping"
+      - uses_coll_psmu.subpkg == 'from subpkg.subps.psm1'
+      # win_uses_coll_csmu
+      - uses_coll_csmu.source == 'user'
+      - "'user_mu' in uses_coll_csmu.ping"
+      - "'Hello from subpkg.subcs' in uses_coll_csmu.ping"
+      - uses_coll_csmu.subpkg == 'Hello from subpkg.subcs'
+      - uses_coll_csmu.type_accelerator == uses_coll_csmu.ping
+      # win_uses_optional
+      - uses_coll_optional.data == "called from optional user_mu"
+      - uses_coll_optional.csharp == "Hello from user_mu collection-hosted MyCSMUOptional, also Hello from nested user-collection-hosted AnotherCSMU and Hello from subpkg.subcs"

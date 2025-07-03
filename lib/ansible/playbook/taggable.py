@@ -15,52 +15,65 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import itertools
+import typing as t
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common.sentinel import Sentinel
+from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import FieldAttribute
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
+
+
+def _flatten_tags(tags: list[str | int]) -> list[str | int]:
+    rv = set()
+    for tag in tags:
+        if isinstance(tag, list):
+            rv.update(tag)
+        else:
+            rv.add(tag)
+    return list(rv)
 
 
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int), extend=True)
-
-    def __init__(self):
-        super(Taggable, self).__init__()
+    tags = FieldAttribute(isa='list', default=list, listof=(string_types, int), extend=True)
 
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
-        elif isinstance(ds, string_types):
-            value = ds.split(',')
-            if isinstance(value, list):
-                return [x.strip() for x in value]
-            else:
-                return [ds]
-        else:
-            raise AnsibleError('tags must be specified as a list', obj=ds)
+
+        if isinstance(ds, str):
+            return [AnsibleTagHelper.tag_copy(ds, item.strip()) for item in ds.split(',')]
+
+        raise AnsibleError('tags must be specified as a list', obj=ds)
+
+    def _get_all_taggable_objects(self) -> t.Iterable[Taggable]:
+        obj = self
+        while obj is not None:
+            yield obj
+
+            if (role := getattr(obj, "_role", Sentinel)) is not Sentinel:
+                yield role  # type: ignore[misc]
+
+            obj = obj._parent
+
+        yield self.get_play()
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
-        ''' this checks if the current item should be executed depending on tag options '''
+        """Check if the current item should be executed depending on the specified tags.
 
+        NOTE this method is assumed to be called only on Task objects.
+        """
         if self.tags:
-            templar = Templar(loader=self._loader, variables=all_vars)
-            tags = templar.template(self.tags)
-
-            if not isinstance(tags, list):
-                if tags.find(',') != -1:
-                    tags = set(tags.split(','))
-                else:
-                    tags = set([tags])
-            else:
-                tags = set([i for i, _ in itertools.groupby(tags)])
+            templar = TemplateEngine(loader=self._loader, variables=all_vars)
+            for obj in self._get_all_taggable_objects():
+                if (_tags := getattr(obj, "_tags", Sentinel)) is not Sentinel:
+                    obj._tags = _flatten_tags(templar.template(_tags))
+            tags = set(self.tags)
         else:
             # this makes isdisjoint work for untagged
             tags = self.untagged

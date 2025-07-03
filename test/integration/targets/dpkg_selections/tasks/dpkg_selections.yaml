@@ -1,5 +1,9 @@
+- name: get the default arch
+  command: dpkg --print-architecture
+  register: default_arch
+
 - name: download and install old version of hello
-  apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_{{ default_arch.stdout }}.deb"
 
 - name: freeze version for hello
   dpkg_selections:
@@ -19,7 +23,9 @@
 
 - name: attempt to upgrade hello
   apt:
-    upgrade: dist
+    name: hello
+    state: latest
+  ignore_errors: yes
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'
@@ -28,7 +34,7 @@
 - name: ensure hello was not upgraded
   assert:
     that:
-      - "{{ hello_version.stdout }} == {{ hello_old_version }}"
+    - hello_version.stdout == hello_old_version
 
 - name: remove version freeze
   dpkg_selections:
@@ -37,7 +43,8 @@
 
 - name: upgrade hello
   apt:
-    upgrade: dist
+    name: hello
+    state: latest
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'
@@ -46,7 +53,7 @@
 - name: check that old version upgraded correctly
   assert:
     that:
-      - "{{ hello_version.stdout }}!={{ hello_old_version }}"
+    - hello_version.stdout != hello_old_version
 
 - name: set hello to deinstall
   dpkg_selections:
@@ -84,3 +91,15 @@
   apt:
     name: hello
     state: absent
+
+- name: Try to select non-existent package
+  dpkg_selections:
+    name: kernel
+    selection: hold
+  ignore_errors: yes
+  register: result
+
+- name: Check that module fails for non-existent package
+  assert:
+    that:
+      - "'Failed to find package' in result.msg"

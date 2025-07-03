@@ -1,0 +1,8 @@
+---
+- name: call module with FileUtil tests
+  file_util_test:
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'

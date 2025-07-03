@@ -1,0 +1,4 @@
+- name: remove package hello
+  apt:
+    name: hello
+    state: absent

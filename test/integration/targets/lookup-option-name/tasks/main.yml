@@ -1,0 +1,16 @@
+---
+- debug:
+    msg: "{{ lookup('vars', name='test') }}"
+
+- debug:
+    msg: "{{ query('vars', name='test') }}"
+
+- name: ensure that plugins can use `terms` as a kwarg name
+  vars:
+    expected:
+      not_terms:
+      - run_posarg0
+      terms: something_else
+  assert:
+    that:
+        - lookup('non_terms_posargs', 'run_posarg0', terms='something_else') == expected

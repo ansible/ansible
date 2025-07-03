@@ -1,0 +1,10 @@
+destructive
+shippable/posix/group1
+context/target
+gather_facts/no
+needs/root
+needs/target/setup_become_user_pair
+needs/target/setup_test_user
+setup/always/setup_passlib_controller  # required for setup_test_user
+skip/macos  # requires a TTY
+skip/freebsd  # appears to require a TTY (ignores password input from stdin)

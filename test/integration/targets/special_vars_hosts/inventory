@@ -1,0 +1,3 @@
+successful ansible_connection=local ansible_host=127.0.0.1 ansible_python_interpreter="{{ ansible_playbook_python }}"
+failed ansible_connection=local ansible_host=127.0.0.1 ansible_python_interpreter="{{ ansible_playbook_python }}"
+unreachable ansible_connection=ssh ansible_host=127.0.0.1 ansible_port=1011  # IANA Reserved port

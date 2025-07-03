@@ -1,2 +1,5 @@
 needs/ssh
-posix/ci/group3
+shippable/posix/group3
+needs/target/connection
+needs/target/setup_test_user
+setup/always/setup_passlib_controller  # required for setup_test_user

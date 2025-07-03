@@ -1,0 +1,3 @@
+[somegroup.hosts.something]
+foo = "bar"
+some_dict = { some_int = 1, some_float = 1.1, some_bool = true, some_list = [ 1, 2, 3 ] }

@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import shlex
+import typing as t
 
 from ansible.module_utils.facts.utils import get_file_content
 
@@ -25,7 +25,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 class CmdLineFactCollector(BaseFactCollector):
     name = 'cmdline'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def _get_proc_cmdline(self):
         return get_file_content('/proc/cmdline')
@@ -44,6 +44,27 @@ class CmdLineFactCollector(BaseFactCollector):
 
         return cmdline_dict
 
+    def _parse_proc_cmdline_facts(self, data):
+        cmdline_dict = {}
+        try:
+            for piece in shlex.split(data, posix=False):
+                item = piece.split('=', 1)
+                if len(item) == 1:
+                    cmdline_dict[item[0]] = True
+                else:
+                    if item[0] in cmdline_dict:
+                        if isinstance(cmdline_dict[item[0]], list):
+                            cmdline_dict[item[0]].append(item[1])
+                        else:
+                            new_list = [cmdline_dict[item[0]], item[1]]
+                            cmdline_dict[item[0]] = new_list
+                    else:
+                        cmdline_dict[item[0]] = item[1]
+        except ValueError:
+            pass
+
+        return cmdline_dict
+
     def collect(self, module=None, collected_facts=None):
         cmdline_facts = {}
 
@@ -53,4 +74,6 @@ class CmdLineFactCollector(BaseFactCollector):
             return cmdline_facts
 
         cmdline_facts['cmdline'] = self._parse_proc_cmdline(data)
+        cmdline_facts['proc_cmdline'] = self._parse_proc_cmdline_facts(data)
+
         return cmdline_facts

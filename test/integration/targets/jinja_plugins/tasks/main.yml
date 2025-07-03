@@ -1,0 +1,23 @@
+- shell: ansible-playbook {{ verbosity }} playbook.yml
+  environment:
+    ANSIBLE_FORCE_COLOR: no
+  args:
+    chdir: '{{ role_path }}'
+  vars:
+    verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
+  register: result
+
+- debug:
+    var: result
+
+- set_fact:
+    # NOTE: This will cram words together that were manually wrapped, which should be OK for this test.
+    stderr: "{{ result.stderr | replace('\n', '') }}"
+
+- assert:
+    that:
+      - '"[WARNING]: Skipping filter plugin" in stderr'
+      - '"[WARNING]: Skipping test plugin" in stderr'
+      - stderr|regex_findall('bad_collection_filter')|length == 3
+      - stderr|regex_findall('bad_collection_filter2')|length == 1
+      - stderr|regex_findall('bad_collection_test')|length == 2

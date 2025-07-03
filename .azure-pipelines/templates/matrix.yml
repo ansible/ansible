@@ -1,0 +1,55 @@
+# This template uses the provided targets and optional groups to generate a matrix which is then passed to the test template.
+# If this matrix template does not provide the required functionality, consider using the test template directly instead.
+
+parameters:
+  # A required list of dictionaries, one per test target.
+  # Each item in the list must contain a "test" or "name" key.
+  # Both may be provided. If one is omitted, the other will be used.
+  - name: targets
+    type: object
+
+  # An optional list of values which will be used to multiply the targets list into a matrix.
+  # Values can be strings or numbers.
+  - name: groups
+    type: object
+    default: []
+
+  # An optional format string used to generate the job name.
+  # - {0} is the name of an item in the targets list.
+  - name: nameFormat
+    type: string
+    default: "{0}"
+
+  # An optional format string used to generate the test name.
+  # - {0} is the name of an item in the targets list.
+  - name: testFormat
+    type: string
+    default: "{0}"
+
+  # An optional format string used to add the group to the job name.
+  # {0} is the formatted name of an item in the targets list.
+  # {{1}} is the group -- be sure to include the double "{{" and "}}".
+  - name: nameGroupFormat
+    type: string
+    default: "{0} - {{1}}"
+
+  # An optional format string used to add the group to the test name.
+  # {0} is the formatted test of an item in the targets list.
+  # {{1}} is the group -- be sure to include the double "{{" and "}}".
+  - name: testGroupFormat
+    type: string
+    default: "{0}/{{1}}"
+
+jobs:
+  - template: test.yml
+    parameters:
+      jobs:
+        - ${{ if eq(length(parameters.groups), 0) }}:
+          - ${{ each target in parameters.targets }}:
+            - name: ${{ format(parameters.nameFormat, coalesce(target.name, target.test)) }}
+              test: ${{ format(parameters.testFormat, coalesce(target.test, target.name)) }}
+        - ${{ if not(eq(length(parameters.groups), 0)) }}:
+          - ${{ each group in parameters.groups }}:
+            - ${{ each target in parameters.targets }}:
+              - name: ${{ format(format(parameters.nameGroupFormat, parameters.nameFormat), coalesce(target.name, target.test), group) }}
+                test: ${{ format(format(parameters.testGroupFormat, parameters.testFormat), coalesce(target.test, target.name), group) }}

@@ -1,0 +1,43 @@
+> TEST testns.testcol.yolo (./collections/ansible_collections/testns/testcol/plugins/test/yolo.yml)
+
+  This is always true
+
+OPTIONS (= indicates it is required):
+
+= _input  does not matter
+        type: raw
+
+SEE ALSO:
+      * Module ansible.builtin.test
+           The official documentation on the
+           ansible.builtin.test module.
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/test_module.html
+      * Module testns.testcol.fakemodule
+           A fake module
+      * Lookup plugin testns.testcol.noop
+      * Filter plugin testns.testcol.grouped
+           A grouped filter.
+      * Filter plugin ansible.builtin.combine
+           The official documentation on the
+           ansible.builtin.combine filter plugin.
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/combine_filter.html
+      * Lookup plugin ansible.builtin.file
+           Read a file on the controller.
+           https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_lookup.html
+      * Ansible docsite
+           See also the Ansible docsite.
+           https://docs.ansible.com
+      * Ansible documentation [foo_bar]
+           Some foo bar.
+           https://docs.ansible.com/ansible-core/devel/#stq=foo_bar&stp=1
+
+NAME: yolo
+
+EXAMPLES:
+{{ 'anything' is yolo }}
+
+RETURN VALUES:
+
+- output  always true
+        type: boolean
+

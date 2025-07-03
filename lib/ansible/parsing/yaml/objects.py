@@ -1,137 +1,67 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""Backwards compatibility types, which will be deprecated a future release. Do not use these in new code."""
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations as _annotations
 
-import yaml
+import typing as _t
 
-from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._internal import _datatag
+from ansible.module_utils.common.text import converters as _converters
+from ansible.parsing import vault as _vault
+
+_UNSET = _t.cast(_t.Any, object())
 
 
-class AnsibleBaseYAMLObject(object):
-    '''
-    the base class used to sub-class python built-in objects
-    so that we can add attributes to them during yaml parsing
+class _AnsibleMapping(dict):
+    """Backwards compatibility type."""
 
-    '''
-    _data_source = None
-    _line_number = 0
-    _column_number = 0
+    def __new__(cls, value=_UNSET, /, **kwargs):
+        if value is _UNSET:
+            return dict(**kwargs)
 
-    def _get_ansible_position(self):
-        return (self._data_source, self._line_number, self._column_number)
-
-    def _set_ansible_position(self, obj):
-        try:
-            (src, line, col) = obj
-        except (TypeError, ValueError):
-            raise AssertionError(
-                'ansible_pos can only be set with a tuple/list '
-                'of three values: source, line number, column number'
-            )
-        self._data_source = src
-        self._line_number = line
-        self._column_number = col
-
-    ansible_pos = property(_get_ansible_position, _set_ansible_position)
+        return _datatag.AnsibleTagHelper.tag_copy(value, dict(value, **kwargs))
 
 
-class AnsibleMapping(AnsibleBaseYAMLObject, dict):
-    ''' sub class for dictionaries '''
-    pass
+class _AnsibleUnicode(str):
+    """Backwards compatibility type."""
+
+    def __new__(cls, object=_UNSET, **kwargs):
+        if object is _UNSET:
+            return str(**kwargs)
+
+        return _datatag.AnsibleTagHelper.tag_copy(object, str(object, **kwargs))
 
 
-class AnsibleUnicode(AnsibleBaseYAMLObject, text_type):
-    ''' sub class for unicode objects '''
-    pass
+class _AnsibleSequence(list):
+    """Backwards compatibility type."""
+
+    def __new__(cls, value=_UNSET, /):
+        if value is _UNSET:
+            return list()
+
+        return _datatag.AnsibleTagHelper.tag_copy(value, list(value))
 
 
-class AnsibleSequence(AnsibleBaseYAMLObject, list):
-    ''' sub class for lists '''
-    pass
+class _AnsibleVaultEncryptedUnicode:
+    """Backwards compatibility type."""
+
+    def __new__(cls, ciphertext: str | bytes):
+        encrypted_string = _vault.EncryptedString(ciphertext=_converters.to_text(_datatag.AnsibleTagHelper.untag(ciphertext)))
+
+        return _datatag.AnsibleTagHelper.tag_copy(ciphertext, encrypted_string)
 
 
-# Unicode like object that is not evaluated (decrypted) until it needs to be
-# TODO: is there a reason these objects are subclasses for YAMLObject?
-class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
-    __UNSAFE__ = True
-    __ENCRYPTED__ = True
-    yaml_tag = u'!vault'
+def __getattr__(name: str) -> _t.Any:
+    """Inject import-time deprecation warnings."""
+    if (value := globals().get(f'_{name}', None)) and name.startswith('Ansible'):
+        # deprecated: description='enable deprecation of everything in this module', core_version='2.23'
+        # from ansible.utils.display import Display
+        #
+        # Display().deprecated(
+        #     msg=f"Importing {name!r} is deprecated.",
+        #     help_text="Instances of this type cannot be created and will not be encountered.",
+        #     version="2.27",
+        # )
 
-    @classmethod
-    def from_plaintext(cls, seq, vault, secret):
-        if not vault:
-            raise vault.AnsibleVaultError('Error creating AnsibleVaultEncryptedUnicode, invalid vault (%s) provided' % vault)
+        return value
 
-        ciphertext = vault.encrypt(seq, secret)
-        avu = cls(ciphertext)
-        avu.vault = vault
-        return avu
-
-    def __init__(self, ciphertext):
-        '''A AnsibleUnicode with a Vault attribute that can decrypt it.
-
-        ciphertext is a byte string (str on PY2, bytestring on PY3).
-
-        The .data attribute is a property that returns the decrypted plaintext
-        of the ciphertext as a PY2 unicode or PY3 string object.
-        '''
-        super(AnsibleVaultEncryptedUnicode, self).__init__()
-
-        # after construction, calling code has to set the .vault attribute to a vaultlib object
-        self.vault = None
-        self._ciphertext = to_bytes(ciphertext)
-
-    @property
-    def data(self):
-        if not self.vault:
-            # FIXME: raise exception?
-            return self._ciphertext
-        return self.vault.decrypt(self._ciphertext).decode()
-
-    @data.setter
-    def data(self, value):
-        self._ciphertext = value
-
-    def __repr__(self):
-        return repr(self.data)
-
-    # Compare a regular str/text_type with the decrypted hypertext
-    def __eq__(self, other):
-        if self.vault:
-            return other == self.data
-        return False
-
-    def __hash__(self):
-        return id(self)
-
-    def __ne__(self, other):
-        if self.vault:
-            return other != self.data
-        return True
-
-    def __str__(self):
-        return str(self.data)
-
-    def __unicode__(self):
-        return to_text(self.data, errors='surrogate_or_strict')
-
-    def encode(self, encoding=None, errors=None):
-        return self.data.encode(encoding, errors)
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

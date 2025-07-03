@@ -1,0 +1,78 @@
+
+DRY RUN ************************************************************************
+
+PLAY [A common play] [CHECK MODE] **********************************************
+
+TASK [debug] [CHECK MODE] ******************************************************
+ok: [testhost] => {
+    "msg": "ansible_check_mode: True"
+}
+
+TASK [Command] [CHECK MODE] ****************************************************
+skipping: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with check_mode: true (runs always in check_mode)] [CHECK MODE] *****
+
+TASK [debug] [CHECK MODE] ******************************************************
+ok: [testhost] => {
+    "msg": "ansible_check_mode: True"
+}
+
+TASK [Command] [CHECK MODE] ****************************************************
+skipping: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with check_mode: false (runs always in wet mode)] *******************
+
+TASK [debug] *******************************************************************
+ok: [testhost] => {
+    "msg": "ansible_check_mode: True"
+}
+
+TASK [Command] *****************************************************************
+changed: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with a block with check_mode: true] [CHECK MODE] ********************
+
+TASK [Command] [CHECK MODE] ****************************************************
+skipping: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with a block with check_mode: false] [CHECK MODE] *******************
+
+TASK [Command] *****************************************************************
+changed: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=10   changed=7    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0   
+
+
+DRY RUN ************************************************************************

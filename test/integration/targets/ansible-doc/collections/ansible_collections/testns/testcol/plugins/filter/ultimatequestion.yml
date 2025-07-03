@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: ultimatequestion
+  author: Terry Prachet
+  version_added: 'histerical'
+  short_description: Ask any question but it will only respond with the answer to the ultimate one
+  description:
+    - read the book
+  options:
+    _input:
+      description: Anything you want, goign to ignore it anywayss ...
+      type: raw
+      required: true
+
+EXAMPLES: |
+  # set first 10 volumes rw, rest as dp
+  meaning: "{{ (stuff|ulmtimatequestion }}"
+
+RETURN:
+  _value:
+    description: guess
+    type: int

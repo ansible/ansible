@@ -1,0 +1,5 @@
+- debug:
+    msg: dynamic
+
+- set_fact:
+    dynamic_tasks_var: dynamic_tasks

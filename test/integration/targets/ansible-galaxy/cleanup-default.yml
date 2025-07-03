@@ -1,0 +1,13 @@
+- name: remove git package
+  package:
+    name: git
+    state: absent
+  when: git_install.changed
+- name: remove openssl package
+  package:
+    name: openssl
+    state: absent
+  when: ansible_distribution not in ["MacOSX", "Alpine"] and openssl_install.changed
+- name: remove openssl package
+  command: apk del openssl
+  when: ansible_distribution == "Alpine" and openssl_install.changed

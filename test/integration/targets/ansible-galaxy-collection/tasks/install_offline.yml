@@ -1,0 +1,145 @@
+- name: test tarfile dependency resolution without querying distribution servers
+  vars:
+    init_dir: "{{ galaxy_dir }}/offline/setup"
+    build_dir: "{{ galaxy_dir }}/offline/build"
+    install_dir: "{{ galaxy_dir }}/offline/collections"
+  block:
+    - name: create test directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ init_dir }}"
+        - "{{ build_dir }}"
+        - "{{ install_dir }}"
+
+    - name: initialize two collections
+      command: ansible-galaxy collection init ns.{{ item }} --init-path {{ init_dir }}
+      loop:
+        - coll1
+        - coll2
+
+    - name: add one collection as the dependency of the other
+      lineinfile:
+        path: "{{ galaxy_dir }}/offline/setup/ns/coll1/galaxy.yml"
+        regexp: "^dependencies:*"
+        line: "dependencies: {'ns.coll2': '>=1.0.0'}"
+
+    - name: create required runtime.yml
+      copy:
+        dest: "{{ galaxy_dir }}/offline/setup/ns/{{ item }}/meta/runtime.yml"
+        content: "requires_ansible: '>=1.0.0'"
+      loop:
+        - coll1
+        - coll2
+
+    - name: build both collections
+      command: ansible-galaxy collection build {{ init_dir }}/ns/{{ item }}
+      args:
+        chdir: "{{ build_dir }}"
+      loop:
+        - coll1
+        - coll2
+
+    - name: install the dependency from the tarfile
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll2-1.0.0.tar.gz -p {{ install_dir }} -s offline
+
+    - name: install the tarfile with the installed dependency
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz -p {{ install_dir }} -s offline
+
+    - name: empty the installed collections directory
+      file:
+        path: "{{ install_dir }}"
+        state: "{{ item }}"
+      loop:
+        - absent
+        - directory
+
+    - name: edit skeleton with new versions to test upgrading
+      lineinfile:
+        path: "{{ galaxy_dir }}/offline/setup/ns/{{ item }}/galaxy.yml"
+        regexp: "^version:.*$"
+        line: "version: 2.0.0"
+      loop:
+        - coll1
+        - coll2
+
+    - name: build the tarfiles to test upgrading
+      command: ansible-galaxy collection build {{ init_dir }}/ns/{{ item }}
+      args:
+        chdir: "{{ build_dir }}"
+      loop:
+        - coll1
+        - coll2
+
+    - name: install the tarfile and its dep with an unreachable server (expected error)
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz -p {{ install_dir }} -s offline
+      environment:
+        ANSIBLE_FORCE_COLOR: False
+        ANSIBLE_NOCOLOR: True
+      ignore_errors: yes
+      register: missing_dep
+
+    - name: install the tarfile with a missing dependency and --offline
+      command: ansible-galaxy collection install --offline {{ build_dir }}/ns-coll1-1.0.0.tar.gz -p {{ install_dir }} -s offline
+      environment:
+        ANSIBLE_FORCE_COLOR: False
+        ANSIBLE_NOCOLOR: True
+      ignore_errors: yes
+      register: missing_dep_offline
+
+    - assert:
+        that:
+          - missing_dep.failed
+          - missing_dep_offline.failed
+          - galaxy_err in missing_dep.stderr
+          - missing_err in missing_dep_offline.stderr
+      vars:
+        galaxy_err: "Unknown error when attempting to call Galaxy at '{{ offline_server }}'"
+        missing_err: |-
+            Failed to resolve the requested dependencies map. Could not satisfy the following requirements:
+            * ns.coll2:>=1.0.0 (dependency of ns.coll1:1.0.0)
+
+    - name: install the dependency from the tarfile
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll2-1.0.0.tar.gz -p {{ install_dir }}
+
+    - name: install the tarfile with --offline for dep resolution
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz {{ cli_opts }}
+      vars:
+        cli_opts: "--offline -p {{ install_dir }} -s offline"
+      register: offline_install
+
+    - name: upgrade using tarfile with --offline for dep resolution
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-2.0.0.tar.gz {{ cli_opts }}
+      vars:
+        cli_opts: "--offline --upgrade -p {{ install_dir }} -s offline"
+      register: offline_upgrade
+
+    - name: reinstall ns-coll1-1.0.0 to test upgrading the dependency too
+      command: ansible-galaxy collection install {{ build_dir }}/ns-coll1-1.0.0.tar.gz {{ cli_opts }}
+      vars:
+        cli_opts: "--offline --force -p {{ install_dir }} -s offline"
+
+    - name: upgrade both collections using tarfiles and --offline
+      command: ansible-galaxy collection install {{ collections }} {{ cli_opts }}
+      vars:
+        collections: "{{ build_dir }}/ns-coll1-2.0.0.tar.gz {{ build_dir }}/ns-coll2-2.0.0.tar.gz"
+        cli_opts: "--offline --upgrade -s offline"
+      register: upgrade_all
+
+    - assert:
+        that:
+          - '"ns.coll1:1.0.0 was installed successfully" in offline_install.stdout'
+          - '"ns.coll1:2.0.0 was installed successfully" in offline_upgrade.stdout'
+          - '"ns.coll1:2.0.0 was installed successfully" in upgrade_all.stdout'
+          - '"ns.coll2:2.0.0 was installed successfully" in upgrade_all.stdout'
+
+  always:
+    - name: clean up test directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ init_dir }}"
+        - "{{ build_dir }}"
+        - "{{ install_dir }}"

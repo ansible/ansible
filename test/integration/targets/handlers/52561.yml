@@ -1,0 +1,20 @@
+- hosts: A,B
+  gather_facts: false
+  tasks:
+    - block:
+        - debug:
+          changed_when: true
+          notify:
+            - handler1
+        - name: EXPECTED FAILURE
+          fail:
+          when: inventory_hostname == 'B'
+      always:
+        - debug:
+            msg: 'always'
+    - debug:
+        msg: 'after always'
+  handlers:
+  - name: handler1
+    debug:
+       msg: 'handler1 ran'

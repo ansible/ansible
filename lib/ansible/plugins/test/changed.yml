@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: changed
+  author: Ansible Core
+  version_added: "1.9"
+  short_description: did the task require changes
+  aliases: [change]
+  description:
+    - Tests if task required changes to complete
+    - This test checks for the existence of a C(changed) key in the input dictionary and that it is V(True) if present
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ taskresults is changed }}
+
+RETURN:
+  _value:
+    description: Returns V(True) if the task was required changes, V(False) otherwise.
+    type: boolean

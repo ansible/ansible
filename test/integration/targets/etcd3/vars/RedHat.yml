@@ -1,3 +1,0 @@
-etcd3_deps_packages:
-  - gcc-c++
-  - python-devel

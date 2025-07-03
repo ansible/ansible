@@ -14,31 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import base64
-
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleActionFail, AnsibleActionSkip
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import makedirs_safe, is_subpath
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for fetch operations '''
+        """ handler for fetch operations """
         if task_vars is None:
             task_vars = dict()
 
@@ -46,72 +41,93 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         try:
-            if self._play_context.check_mode:
-                result['skipped'] = True
-                result['msg'] = 'check mode not (yet) supported for this module'
-                return result
+            if self._task.check_mode:
+                raise AnsibleActionSkip('check mode not (yet) supported for this module')
 
             source = self._task.args.get('src', None)
-            dest = self._task.args.get('dest', None)
+            original_dest = dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
             fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
-            validate_checksum = boolean(self._task.args.get('validate_checksum',
-                                                            self._task.args.get('validate_md5', True)),
-                                        strict=False)
+            validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
-            # validate source and dest are strings FIXME: use basic.py and module specs
+            msg = ''
+            # FIXME: validate source and dest are strings; use basic.py and module specs
             if not isinstance(source, string_types):
-                result['msg'] = "Invalid type supplied for source option, it must be a string"
+                msg = "Invalid type supplied for source option, it must be a string"
 
             if not isinstance(dest, string_types):
-                result['msg'] = "Invalid type supplied for dest option, it must be a string"
-
-            # validate_md5 is the deprecated way to specify validate_checksum
-            if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-                result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
-
-            if 'validate_md5' in self._task.args:
-                display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
+                msg = "Invalid type supplied for dest option, it must be a string"
 
             if source is None or dest is None:
-                result['msg'] = "src and dest are required"
+                msg = "src and dest are required"
 
-            if result.get('msg'):
-                result['failed'] = True
-                return result
+            if msg:
+                raise AnsibleActionFail(msg)
 
             source = self._connection._shell.join_path(source)
             source = self._remote_expand_user(source)
 
+            remote_stat = {}
             remote_checksum = None
-            if not self._play_context.become:
-                # calculate checksum for the remote file, don't bother if using become as slurp will be used
-                # Force remote_checksum to follow symlinks because fetch always follows symlinks
-                remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
+            if not self._connection.become:
+                # Get checksum for the remote file. Don't bother if using become as slurp will be used.
+                # Follow symlinks because fetch always follows symlinks
+                try:
+                    remote_stat = self._execute_remote_stat(source, all_vars=task_vars, follow=True)
+                except AnsibleConnectionFailure:
+                    raise
+                except AnsibleError as ae:
+                    result['changed'] = False
+                    result['file'] = source
+                    if fail_on_missing:
+                        result['failed'] = True
+                        result['msg'] = to_text(ae)
+                    else:
+                        result['msg'] = "%s, ignored" % to_text(ae, errors='surrogate_or_replace')
+
+                    return result
+
+                remote_checksum = remote_stat.get('checksum')
+                if remote_stat.get('exists'):
+                    if remote_stat.get('isdir'):
+                        result['failed'] = True
+                        result['changed'] = False
+                        result['msg'] = "remote file is a directory, fetch cannot work on directories"
+
+                        # Historically, these don't fail because you may want to transfer
+                        # a log file that possibly MAY exist but keep going to fetch other
+                        # log files. Today, this is better achieved by adding
+                        # ignore_errors or failed_when to the task.  Control the behaviour
+                        # via fail_when_missing
+                        if not fail_on_missing:
+                            result['msg'] += ", not transferring, ignored"
+                            del result['changed']
+                            del result['failed']
+
+                        return result
 
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
-            if remote_checksum in ('1', '2', None):
-                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
+            if remote_checksum in (None, '1', ''):
+                slurpres = self._execute_module(module_name='ansible.legacy.slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
-                    if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
-                        result['msg'] = "the remote file does not exist, not transferring, ignored"
+                    if not fail_on_missing:
                         result['file'] = source
                         result['changed'] = False
                     else:
                         result.update(slurpres)
+
+                    if 'not found' in slurpres.get('msg', ''):
+                        result['msg'] = "the remote file does not exist, not transferring, ignored"
+                    elif slurpres.get('msg', '').lower().startswith('source is a directory'):
+                        result['msg'] = "remote file is a directory, fetch cannot work on directories"
+
                     return result
                 else:
                     if slurpres['encoding'] == 'base64':
                         remote_data = base64.b64decode(slurpres['content'])
                     if remote_data is not None:
                         remote_checksum = checksum_s(remote_data)
-                    # the source path may have been expanded on the
-                    # target system, so we compare it here and use the
-                    # expanded version if it's different
-                    remote_source = slurpres.get('source')
-                    if remote_source and remote_source != source:
-                        source = remote_source
 
             # calculate the destination name
             if os.path.sep not in self._connection._shell.join_path('a', ''):
@@ -120,18 +136,23 @@ class ActionModule(ActionBase):
             else:
                 source_local = source
 
-            dest = os.path.expanduser(dest)
+            # ensure we only use file name, avoid relative paths
+            if not is_subpath(dest, original_dest):
+                # TODO: ? dest = os.path.expanduser(dest.replace(('../','')))
+                raise AnsibleActionFail("Detected directory traversal, expected to be contained in '%s' but got '%s'" % (original_dest, dest))
+
             if flat:
                 if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')) and not dest.endswith(os.sep):
-                    result['msg'] = "dest is an existing directory, use a trailing slash if you want to fetch src into that directory"
-                    result['file'] = dest
-                    result['failed'] = True
-                    return result
+                    raise AnsibleActionFail("dest is an existing directory, use a trailing slash if you want to fetch src into that directory")
                 if dest.endswith(os.sep):
                     # if the path ends with "/", we'll use the source filename as the
                     # destination filename
                     base = os.path.basename(source_local)
                     dest = os.path.join(dest, base)
+
+                    if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')):
+                        raise AnsibleActionFail(
+                            f"calculated dest '{dest}' is an existing directory, use another path that does not point to an existing directory")
                 if not dest.startswith("/"):
                     # if dest does not start with "/", we'll assume a relative path
                     dest = self._loader.path_dwim(dest)
@@ -143,34 +164,7 @@ class ActionModule(ActionBase):
                     target_name = self._play_context.remote_addr
                 dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
-            dest = dest.replace("//", "/")
-
-            if remote_checksum in ('0', '1', '2', '3', '4', '5'):
-                result['changed'] = False
-                result['file'] = source
-                if remote_checksum == '0':
-                    result['msg'] = "unable to calculate the checksum of the remote file"
-                elif remote_checksum == '1':
-                    result['msg'] = "the remote file does not exist"
-                elif remote_checksum == '2':
-                    result['msg'] = "no read permission on remote file"
-                elif remote_checksum == '3':
-                    result['msg'] = "remote file is a directory, fetch cannot work on directories"
-                elif remote_checksum == '4':
-                    result['msg'] = "python isn't present on the system.  Unable to compute checksum"
-                elif remote_checksum == '5':
-                    result['msg'] = "stdlib json or simplejson was not found on the remote machine. Only the raw module can work without those installed"
-                # Historically, these don't fail because you may want to transfer
-                # a log file that possibly MAY exist but keep going to fetch other
-                # log files. Today, this is better achieved by adding
-                # ignore_errors or failed_when to the task.  Control the behaviour
-                # via fail_when_missing
-                if fail_on_missing:
-                    result['failed'] = True
-                    del result['changed']
-                else:
-                    result['msg'] += ", not transferring, ignored"
-                return result
+            dest = os.path.normpath(dest)
 
             # calculate checksum for the local file
             local_checksum = checksum(dest)
@@ -184,11 +178,10 @@ class ActionModule(ActionBase):
                     self._connection.fetch_file(source, dest)
                 else:
                     try:
-                        f = open(to_bytes(dest, errors='surrogate_or_strict'), 'wb')
-                        f.write(remote_data)
-                        f.close()
-                    except (IOError, OSError) as e:
-                        raise AnsibleError("Failed to fetch the file: %s" % e)
+                        with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
+                            f.write(remote_data)
+                    except OSError as ex:
+                        raise AnsibleActionFail("Failed to fetch the file.") from ex
                 new_checksum = secure_hash(dest)
                 # For backwards compatibility. We'll return None on FIPS enabled systems
                 try:

@@ -15,18 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import collections
+from collections.abc import Container
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+import pytest
 
-from ansible.errors import AnsibleError, AnsibleParserError
+import unittest
+from unittest.mock import patch, MagicMock
+
+from ansible.errors import AnsibleParserError
 from ansible.playbook.block import Block
-from ansible.playbook.task import Task
 
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
@@ -43,12 +42,9 @@ class TestHashParams(unittest.TestCase):
         self._assert_set(res)
         self._assert_hashable(res)
 
-    def _assert_hashable(self, res):
-        a_dict = {}
-        try:
-            a_dict[res] = res
-        except TypeError as e:
-            self.fail('%s is not hashable: %s' % (res, e))
+    @staticmethod
+    def _assert_hashable(res):
+        hash(res)
 
     def _assert_set(self, res):
         self.assertIsInstance(res, frozenset)
@@ -88,45 +84,77 @@ class TestHashParams(unittest.TestCase):
 
     def test_generator(self):
         def my_generator():
-            for i in ['a', 1, None, {}]:
-                yield i
+            yield
 
         params = my_generator()
         res = hash_params(params)
         self._assert_hashable(res)
+        assert list(params)
 
     def test_container_but_not_iterable(self):
         # This is a Container that is not iterable, which is unlikely but...
-        class MyContainer(collections.Container):
-            def __init__(self, some_thing):
-                self.data = []
-                self.data.append(some_thing)
+        class MyContainer(Container):
+            def __init__(self, _some_thing):
+                pass
 
             def __contains__(self, item):
-                return item in self.data
+                """Implementation omitted, since it will never be called."""
 
-            def __hash__(self):
-                return hash(self.data)
+        params = MyContainer('foo bar')
 
-            def __len__(self):
-                return len(self.data)
+        with pytest.raises(TypeError) as ex:
+            hash_params(params)
 
-            def __call__(self):
-                return False
+        assert ex.value.args == ("'MyContainer' object is not iterable",)
 
-        foo = MyContainer('foo bar')
-        params = foo
+    def test_param_dict_dupe_values(self):
+        params1 = {'foo': False}
+        params2 = {'bar': False}
 
-        self.assertRaises(TypeError, hash_params, params)
+        res1 = hash_params(params1)
+        res2 = hash_params(params2)
+
+        hash1 = hash(res1)
+        hash2 = hash(res2)
+        self.assertNotEqual(res1, res2)
+        self.assertNotEqual(hash1, hash2)
+
+    def test_param_dupe(self):
+        params1 = {
+            # 'from_files': {},
+            'tags': [],
+            u'testvalue': False,
+            u'testvalue2': True,
+            # 'when': []
+        }
+        params2 = {
+            # 'from_files': {},
+            'tags': [],
+            u'testvalue': True,
+            u'testvalue2': False,
+            # 'when': []
+        }
+        res1 = hash_params(params1)
+        res2 = hash_params(params2)
+
+        self.assertNotEqual(hash(res1), hash(res2))
+        self.assertNotEqual(res1, res2)
+
+        params_dict = {}
+        params_dict[res1] = 'params1'
+        params_dict[res2] = 'params2'
+
+        self.assertEqual(len(params_dict), 2)
+
+        del params_dict[res2]
+        self.assertEqual(len(params_dict), 1)
+
+        for key in params_dict:
+            self.assertTrue(key in params_dict)
+            self.assertIn(key, params_dict)
 
 
 class TestRole(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_tasks(self):
@@ -138,7 +166,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -146,6 +174,26 @@ class TestRole(unittest.TestCase):
         self.assertEqual(str(r), 'foo_tasks')
         self.assertEqual(len(r._task_blocks), 1)
         assert isinstance(r._task_blocks[0], Block)
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_tasks_dir_vs_file(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_tasks/tasks/custom_main/foo.yml": """
+            - command: bar
+            """,
+            "/etc/ansible/roles/foo_tasks/tasks/custom_main.yml": """
+            - command: baz
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+
+        i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play, from_files=dict(tasks='custom_main'))
+
+        self.assertEqual(r._task_blocks[0]._ds[0]['command'], 'baz')
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_handlers(self):
@@ -158,7 +206,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_handlers', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -179,12 +227,96 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_dirs(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main/bar.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_nested_dirs(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo/bar.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main/bar/foo.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_nested_dirs_combined(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo/bar.yml": """
+            foo: bar
+            a: 1
+            """,
+            "/etc/ansible/roles/foo_vars/defaults/main/bar/foo.yml": """
+            foo: bam
+            b: 2
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar', a=1, b=2))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_dir_vs_file(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/vars/main/foo.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
@@ -226,7 +358,8 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.collections = None
+        mock_play.role_cache = {}
 
         i = RoleInclude.load('foo_metadata', play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)
@@ -252,8 +385,11 @@ class TestRole(unittest.TestCase):
         i = RoleInclude.load('bad2_metadata', play=mock_play, loader=fake_loader)
         self.assertRaises(AnsibleParserError, Role.load, i, play=mock_play)
 
-        i = RoleInclude.load('recursive1_metadata', play=mock_play, loader=fake_loader)
-        self.assertRaises(AnsibleError, Role.load, i, play=mock_play)
+        # TODO: re-enable this test once Ansible has proper role dep cycle detection
+        # that doesn't rely on stack overflows being recoverable (as they aren't in Py3.7+)
+        # see https://github.com/ansible/ansible/issues/61527
+        # i = RoleInclude.load('recursive1_metadata', play=mock_play, loader=fake_loader)
+        # self.assertRaises(AnsibleError, Role.load, i, play=mock_play)
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_complex(self):
@@ -268,7 +404,7 @@ class TestRole(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.ROLE_CACHE = {}
+        mock_play.role_cache = {}
 
         i = RoleInclude.load(dict(role='foo_complex'), play=mock_play, loader=fake_loader)
         r = Role.load(i, play=mock_play)

@@ -1,0 +1,221 @@
+# https://github.com/ansible/ansible/issues/42484
+# Skipping macOS for now since there is a bug when changing home directory
+- name: Test home directory creation
+  when: ansible_facts.system != 'Darwin'
+  block:
+    - name: create user specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_0
+
+    - name: create user again specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_1
+
+    - name: change user home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser-mod"
+      register: user_test3_2
+
+    - name: change user home back
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_3
+
+    - name: validate results for testcase 3
+      assert:
+        that:
+          - user_test3_0 is not changed
+          - user_test3_1 is not changed
+          - user_test3_2 is changed
+          - user_test3_3 is changed
+
+# https://github.com/ansible/ansible/issues/41393
+# Create a new user account with a path that has parent directories that do not exist
+- name: Create user with home path that has parents that do not exist
+  user:
+    name: ansibulluser2
+    state: present
+    home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+  register: create_home_with_no_parent_1
+
+- name: Create user with home path that has parents that do not exist again
+  user:
+    name: ansibulluser2
+    state: present
+    home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+  register: create_home_with_no_parent_2
+
+- name: Check the created home directory
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+  register: home_with_no_parent_3
+
+- name: Ensure user with non-existing parent paths was created successfully
+  assert:
+    that:
+      - create_home_with_no_parent_1 is changed
+      - create_home_with_no_parent_1.home == user_home_prefix[ansible_facts.system] ~ '/in2deep/ansibulluser2'
+      - create_home_with_no_parent_2 is not changed
+      - home_with_no_parent_3.stat.uid == create_home_with_no_parent_1.uid
+      - home_with_no_parent_3.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
+
+- name: Cleanup test account
+  user:
+    name: ansibulluser2
+    home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
+    state: absent
+    remove: yes
+
+- name: Remove testing dir
+  file:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/"
+    state: absent
+
+
+# https://github.com/ansible/ansible/issues/60307
+# Make sure we can create a user when the home directory is missing
+- name: Create user with home path that does not exist
+  user:
+    name: ansibulluser3
+    state: present
+    home: "{{ user_home_prefix[ansible_facts.system] }}/nosuchdir"
+    createhome: no
+
+- name: Cleanup test account
+  user:
+    name: ansibulluser3
+    state: absent
+    remove: yes
+
+# https://github.com/ansible/ansible/issues/70589
+# Create user with create_home: no and parent directory does not exist.
+- name: "Check if parent dir for home dir for user exists (before)"
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir"
+  register: create_user_no_create_home_with_no_parent_parent_dir_before
+
+- name: "Create user with create_home == no and home path parent dir does not exist"
+  user:
+    name: randomuser
+    state: present
+    create_home: false
+    home: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir/randomuser"
+  register: create_user_no_create_home_with_no_parent
+
+- name: "Check if parent dir for home dir for user exists (after)"
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir"
+  register: create_user_no_create_home_with_no_parent_parent_dir_after
+
+- name: "Check if home for user is created"
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir/randomuser"
+  register: create_user_no_create_home_with_no_parent_home_dir
+
+- name: "Ensure user with non-existing parent paths with create_home: no was created successfully"
+  assert:
+    that:
+      - not create_user_no_create_home_with_no_parent_parent_dir_before.stat.exists
+      - not create_user_no_create_home_with_no_parent_parent_dir_after.stat.isdir is defined
+      - not create_user_no_create_home_with_no_parent_home_dir.stat.exists
+
+- name: Cleanup test account
+  user:
+    name: randomuser
+    state: absent
+    remove: yes
+
+- name: Create user home directory with /dev/null as skeleton, https://github.com/ansible/ansible/issues/75063
+  # create_homedir is mostly used by linux, rest of OSs take care of it themselves via -k option (which fails this task)
+  # OS X actuall breaks since it does not implement getpwnam()
+  when: ansible_system == 'Linux'
+  block:
+    - name: "Create user home directory with /dev/null as skeleton"
+      user:
+        name: withskeleton
+        state: present
+        skeleton: "/dev/null"
+        createhome: yes
+      register: create_user_with_skeleton_dev_null
+  always:
+    - name: "Remove test user"
+      user:
+        name: withskeleton
+        state: absent
+        remove: yes
+
+- name: Create user home directory with skel that contains symlinks
+  tags: symlink_home
+  when: ansible_system == 'Linux'
+  become: True
+  vars:
+    flag: '{{tempdir.path}}/root_flag.conf'
+  block:
+    - name: make tempdir for skel
+      tempfile: state=directory
+      register: tempdir
+
+    - name: create flag file
+      file: path={{flag}} owner=root state=touch
+
+    - name: copy skell to target
+      copy:
+        dest: '{{tempdir.path}}/skel'
+        src: files/skel
+      register: skel
+
+    - name: create the bad symlink
+      file:
+        src: '{{flag}}'
+        dest: '{{tempdir.path}}/skel/should_not_change_own'
+        state: link
+
+    - name: "Create user home directory with skeleton"
+      user:
+        name: withskeleton
+        state: present
+        skeleton: "{{tempdir.path}}/skel"
+        createhome: yes
+        home: /home/missing/withskeleton
+      register: create_user_with_skeleton_symlink
+
+    - name: Check flag
+      stat: path={{flag}}
+      register: test_flag
+
+    - name: ensure we didn't change owner for flag
+      assert:
+        that:
+          - test_flag.stat.uid != create_user_with_skeleton_symlink.uid
+
+  always:
+    - name: "Remove test user"
+      user:
+        name: withskeleton
+        state: absent
+        remove: yes
+
+    - name: get files to delete
+      find: path="{{tempdir.path}}"
+      register: remove
+      when:
+        - tempdir is defined
+        - tempdir is success
+
+    - name: "Remove temp files"
+      file:
+        path: '{{item}}'
+        state: absent
+      loop: "{{remove.files|default([])}}"
+      when:
+        - remove is success

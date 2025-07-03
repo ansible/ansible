@@ -1,0 +1,14 @@
+- name: Ensure pickling error doesn't cause a hang
+  result_pickle_error:
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result.msg == expected_msg
+      - result is failed
+  vars:
+    expected_msg: "Task result omitted due to queue send failure: pickle intentionally not supported"
+
+- debug:
+    msg: Success, no hang

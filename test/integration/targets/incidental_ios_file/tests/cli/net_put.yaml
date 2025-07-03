@@ -1,0 +1,73 @@
+---
+- debug:
+    msg: "START ios cli/net_put.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup
+  cisco.ios.ios_config:
+    lines:
+      - ip ssh version 2
+      - ip scp server enable
+      - username {{ ansible_ssh_user }} privilege 15
+    match: none
+
+- name: Delete existing files if present on remote host
+  cisco.ios.ios_command:
+     commands: "{{ item }}"
+  loop:
+     - delete /force ios1.cfg
+     - delete /force ios.cfg
+     - delete /force nonascii.bin
+  ignore_errors: true
+
+- name: copy file from controller to ios + scp (Default)
+  ansible.netcommon.net_put:
+    src: ios1.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: Idempotency Check
+  ansible.netcommon.net_put:
+    src: ios1.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: copy file from controller to ios + dest specified
+  ansible.netcommon.net_put:
+    src: ios1.cfg
+    dest: ios.cfg
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: copy file with non-ascii characters to ios in template mode(Fail case)
+  ansible.netcommon.net_put:
+    src: nonascii.bin
+    mode: 'text'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result.failed == true
+
+- name: copy file with non-ascii characters to ios in default mode(binary)
+  ansible.netcommon.net_put:
+    src: nonascii.bin
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- debug: msg="END ios cli/net_put.yaml on connection={{ ansible_connection }}"

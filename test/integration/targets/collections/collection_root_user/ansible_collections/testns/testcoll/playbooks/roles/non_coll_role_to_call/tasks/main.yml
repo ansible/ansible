@@ -1,0 +1,7 @@
+- debug:
+    msg: '{{ test_role_input | default("(undefined)") }}'
+  register: non_coll_role_to_call_test_role_output
+
+- assert:
+    that:
+    - 'non_coll_role_to_call_test_role_output.msg == "include another non-coll role"'

@@ -1,0 +1,116 @@
+- name: Verify lookup_config errors with no on_missing (failure expected)
+  set_fact:
+    foo: '{{lookup("config", "THIS_DOES_NOT_EXIST")}}'
+  ignore_errors: yes
+  register: lookup_config_1
+
+- name: Verify lookup_config errors with on_missing=error (failure expected)
+  set_fact:
+    foo: '{{lookup("config", "THIS_DOES_NOT_EXIST", on_missing="error")}}'
+  ignore_errors: yes
+  register: lookup_config_2
+
+- name: Verify lookup_config does not error with on_missing=skip
+  set_fact:
+    lookup3: '{{lookup("config", "THIS_DOES_NOT_EXIST", on_missing="skip")}}'
+  register: lookup_config_3
+
+# TODO: Is there a decent way to check that the warning is actually triggered?
+- name: Verify lookup_config does not error with on_missing=warn (warning expected)
+  set_fact:
+    lookup4: '{{lookup("config", "THIS_DOES_NOT_EXIST", on_missing="warn")}}'
+  register: lookup_config_4
+
+- name: Verify lookup_config errors with invalid on_missing (failure expected)
+  set_fact:
+    foo: '{{lookup("config", "THIS_DOES_NOT_EXIST", on_missing="boo")}}'
+  ignore_errors: yes
+  register: lookup_config_5
+
+- name: Verify lookup_config errors with invalid param type (failure expected)
+  set_fact:
+    foo: '{{lookup("config", 1337)}}'
+  ignore_errors: yes
+  register: lookup_config_6
+
+- name: Verify lookup_config errors with callable arg (failure expected)
+  set_fact:
+    foo: '{{lookup("config", "ConfigManager")}}'
+  ignore_errors: yes
+  register: lookup_config_7
+
+- name: remote user and port for ssh connection
+  set_fact:
+    ssh_user_and_port: '{{q("config", "remote_user", "port", plugin_type="connection", plugin_name="ssh")}}'
+    ssh_user_and_port_and_origin: '{{q("config", "remote_user", "port", plugin_type="connection", plugin_name="ssh", show_origin=True)}}'
+  vars:
+    ansible_ssh_user: lola
+    ansible_ssh_port: 2022
+
+- name: remote_tmp for sh shell plugin
+  set_fact:
+    yolo_remote: '{{q("config", "remote_tmp", plugin_type="shell", plugin_name="sh")}}'
+  vars:
+    ansible_remote_tmp: yolo
+
+- name: check if plugin_type and plugin_name is required together
+  set_fact:
+    lookup_failure: '{{ q("config", "remote_tmp", plugin_type="shell") }}'
+  ignore_errors: yes
+  register: lookup_config_8
+
+- name: check if plugin_type and plugin_name is required together
+  set_fact:
+    lookup_failure: '{{ q("config", "remote_tmp", plugin_name="sh") }}'
+  ignore_errors: yes
+  register: lookup_config_9
+
+- name: query non-existent config setting
+  set_fact:
+    lookup_failure: "{{ q('config', 'plugin_type1', plugin_type='lookup', plugin_name='config', ) }}"
+  ignore_errors: yes
+  register: lookup_config_10
+
+- name: query non-existent plugin
+  set_fact:
+    lookup_failure: "{{ q('config', 'plugin_type', plugin_type='lookup', plugin_name='some.nonexistent.mylookup', ) }}"
+  ignore_errors: yes
+  register: lookup_config_11
+
+- name: exception handling while reading configuration
+  set_fact:
+    lookup_failure: "{{ q('config', 'test_list', plugin_type='lookup', plugin_name='bogus', ) }}"
+  ignore_errors: yes
+  register: lookup_config_12
+
+- name: Verify lookup_config
+  assert:
+    that:
+      - '"meow" in lookup("config", "ANSIBLE_COW_ACCEPTLIST")'
+      - lookup_config_1 is failed
+      - lookup_config_1.msg is contains "Setting 'THIS_DOES_NOT_EXIST' does not exist."
+      - lookup_config_2 is failed
+      - lookup_config_2.msg is contains "Setting 'THIS_DOES_NOT_EXIST' does not exist."
+      - lookup_config_3 is success
+      - 'lookup3|length == 0'
+      - lookup_config_4 is success
+      - 'lookup4|length == 0'
+      - lookup_config_5 is failed
+      - lookup_config_5.msg is contains "Invalid value 'boo'"
+      - lookup_config_6 is failed
+      - '"Invalid setting identifier" in lookup_config_6.msg'
+      - lookup_config_7 is failed
+      - '"Invalid setting" in lookup_config_7.msg'
+      - lookup_config_8 is failed
+      - '"Both plugin_type and plugin_name" in lookup_config_8.msg'
+      - lookup_config_9 is failed
+      - '"Both plugin_type and plugin_name" in lookup_config_9.msg'
+      - lookup_config_10 is failed
+      - lookup_config_10.msg is contains "No config definition exists for 'plugin_type1'"
+      - lookup_config_11 is failed
+      - '"Unable to load lookup" in lookup_config_11.msg'
+      - lookup_config_12 is failed
+      - lookup_config_12.msg is contains "Required config 'test_list' for 'bogus' lookup plugin not provided"
+      - ssh_user_and_port == ['lola', 2022]
+      - "ssh_user_and_port_and_origin == [['lola', 'var: ansible_ssh_user'], [2022, 'var: ansible_ssh_port']]"
+      - yolo_remote == ["yolo"]

@@ -1,6 +1,0 @@
-mysql_service: 'mysql'
-
-mysql_packages:
-    - mysql-server
-    - python-mysqldb
-    - bzip2

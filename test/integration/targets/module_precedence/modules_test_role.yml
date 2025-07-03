@@ -1,4 +1,4 @@
-- hosts: localhost
+- hosts: testhost
   gather_facts: no
   roles:
     - foo

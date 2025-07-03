@@ -1,0 +1,90 @@
+---
+- hosts: localhost
+  tasks:
+    - name: throttle template that resolves to an integer
+      debug:
+      throttle: "{{ 1 }}"
+
+- hosts: localhosts
+  gather_facts: false
+  strategy: linear
+  run_once: yes
+  tasks:
+    - name: Clean base throttledir '{{ base_throttledir }}'
+      file:
+        state: absent
+        path: '{{ base_throttledir }}'
+      ignore_errors: yes
+
+    - name: Create throttledir '{{ throttledir }}'
+      file:
+        state: directory
+        path: '{{ throttledir }}'
+      loop: "{{ range(1, test_count|int)|list }}"
+      loop_control:
+        loop_var: test_id
+      vars:
+        test_count: "{{ 9 if lookup('env', 'SELECTED_STRATEGY') in ['free', 'host_pinned'] else 2 }}"
+
+- hosts: localhosts
+  gather_facts: false
+  strategy: "{{ lookup('env', 'SELECTED_STRATEGY') }}"
+  tasks:
+    - block:
+      - name: "Test 1 (max throttle: 3)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 3"
+        vars:
+          test_id: 1
+      throttle: 3
+    - block:
+      - name: "Test 2 (max throttle: 5)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 5"
+        throttle: 5
+        vars:
+          test_id: 2
+      - block:
+        - name: "Test 3 (max throttle: 8)"
+          script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 8"
+          throttle: 8
+        throttle: 6
+        vars:
+           test_id: 3
+      - block:
+        - block:
+          - name: "Test 4 (max throttle: 8)"
+            script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 8"
+            throttle: 8
+            vars:
+              test_id: 4
+          throttle: 6
+        throttle: 12
+      throttle: 15
+    - block:
+      - name: "Test 5 (max throttle: 3)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 3"
+        vars:
+          test_id: 5
+      throttle: 3
+    - block:
+      - name: "Test 6 (max throttle: 5)"
+        script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 5"
+        throttle: 5
+        vars:
+          test_id: 6
+      - block:
+        - name: "Test 7 (max throttle: 6)"
+          script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 6"
+          throttle: 6
+          vars:
+            test_id: 7
+        throttle: 3
+      - block:
+        - block:
+          - name: "Test 8 (max throttle: 8)"
+            script: "test_throttle.py {{throttledir}} {{inventory_hostname}} 8"
+            throttle: 8
+            vars:
+              test_id: 8
+          throttle: 6
+        throttle: 4
+      throttle: 2

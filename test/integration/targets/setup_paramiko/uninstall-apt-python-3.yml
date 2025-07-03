@@ -1,0 +1,5 @@
+- name: Uninstall Paramiko for Python 3 using apt
+  apt:
+    name: python3-paramiko
+    state: absent
+    autoremove: yes

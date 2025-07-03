@@ -1,1 +1,1 @@
-ansible
+../lib/ansible/cli/console.py

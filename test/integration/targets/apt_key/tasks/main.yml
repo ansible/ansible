@@ -16,13 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/apt_key
+- name: apt key tests
+  when:
+    - ansible_distribution in ('Ubuntu', 'Debian')
+  block:
+  - shell: which apt-key
+    ignore_errors: True
+    register: has_aptkey
 
-- name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
-
-- name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
-
-- include: 'apt_key.yml'
-  when: ansible_distribution in ('Ubuntu', 'Debian')
+  - name: actually test if i have apt-key
+    when: has_aptkey is success
+    block:
+      - import_tasks: 'apt_key.yml'
+      - import_tasks: 'apt_key_inline_data.yml'
+      - import_tasks: 'file.yml'
+      - import_tasks: 'apt_key_binary.yml'

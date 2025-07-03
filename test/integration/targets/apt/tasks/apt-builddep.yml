@@ -29,9 +29,9 @@
   when: dpkg_result is successful
   tags: ['test_apt_builddep']
 
-# install build-dep for netcat
-- name: install netcat build-dep with apt
-  apt: pkg=netcat state=build-dep
+# install build-dep for rolldice
+- name: install rolldice build-dep with apt
+  apt: pkg=rolldice state=build-dep
   register: apt_result
   tags: ['test_apt_builddep']
 

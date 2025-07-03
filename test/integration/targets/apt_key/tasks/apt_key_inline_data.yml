@@ -1,0 +1,5 @@
+- name: "Ensure import of a deliberately corrupted downloaded GnuPG binary key results in an 'inline data' occurrence in the message"
+  apt_key:
+    url: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-corrupt-zeros-2k.gpg
+  register: gpg_inline_result
+  failed_when: "not ('inline data' in gpg_inline_result.msg)"

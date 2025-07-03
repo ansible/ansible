@@ -1,0 +1,38 @@
+# test code for the iptables module
+# (c) 2021, Éloi Rivard <eloi@yaal.coop>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+---
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+        - default.yml
+      paths:
+        - vars
+
+- name: install dependencies for iptables test
+  package:
+    name: iptables
+    state: present
+    # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
+    exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
+
+- import_tasks: chain_management.yml

@@ -1,0 +1,68 @@
+- name: get the ansible-test imposed file descriptor limit
+  check_rlimit_and_maxfd:
+  register: rlimit_limited_return
+
+- name: get existing file descriptor limit
+  check_rlimit_and_maxfd:
+  register: rlimit_original_return
+  vars:
+    ansible_python_module_rlimit_nofile: 0  # ignore limit set by ansible-test
+
+- name: attempt to set a value lower than existing soft limit
+  check_rlimit_and_maxfd:
+  vars:
+    ansible_python_module_rlimit_nofile: '{{ rlimit_original_return.rlimit_nofile[0] - 1 }}'
+  register: rlimit_below_soft_return
+
+- name: attempt to set a value higher than existing soft limit
+  check_rlimit_and_maxfd:
+  vars:
+    ansible_python_module_rlimit_nofile: '{{ rlimit_original_return.rlimit_nofile[0] + 1 }}'
+  register: rlimit_above_soft_return
+
+- name: attempt to set a value lower than existing hard limit
+  check_rlimit_and_maxfd:
+  vars:
+    ansible_python_module_rlimit_nofile: '{{ rlimit_original_return.rlimit_nofile[1] - 1 }}'
+  register: rlimit_below_hard_return
+
+- name: attempt to set a value higher than existing hard limit
+  check_rlimit_and_maxfd:
+  vars:
+    ansible_python_module_rlimit_nofile: '{{ rlimit_original_return.rlimit_nofile[1] + 1 }}'
+  register: rlimit_above_hard_return
+
+- name: run a role module which uses a role module_util using relative imports
+  custom_module:
+  register: custom_module_return
+
+- assert:
+    that:
+      # make sure ansible-test was able to set the limit unless it exceeds the hard limit or the value is lower on macOS
+      - rlimit_limited_return.rlimit_nofile[0] == 1024 or rlimit_original_return.rlimit_nofile[1] < 1024 or (rlimit_limited_return.rlimit_nofile[0] < 1024 and ansible_distribution == 'MacOSX')
+      # make sure that maxfd matches the soft limit on Python 2.x (-1 on Python 3.x)
+      - rlimit_limited_return.maxfd == rlimit_limited_return.rlimit_nofile[0] or rlimit_limited_return.maxfd == -1
+
+      # we should always be able to set the limit lower than the existing soft limit
+      - rlimit_below_soft_return.rlimit_nofile[0] == rlimit_original_return.rlimit_nofile[0] - 1
+      # the hard limit should not have changed
+      - rlimit_below_soft_return.rlimit_nofile[1] == rlimit_original_return.rlimit_nofile[1]
+      # lowering the limit should also lower the max file descriptors reported by Python 2.x (-1 on Python 3.x)
+      - rlimit_below_soft_return.maxfd == rlimit_original_return.rlimit_nofile[0] - 1 or rlimit_below_soft_return.maxfd == -1
+
+      # we should be able to set the limit higher than the existing soft limit if it does not exceed the hard limit (except on macOS)
+      - rlimit_above_soft_return.rlimit_nofile[0] == rlimit_original_return.rlimit_nofile[0] + 1 or rlimit_original_return.rlimit_nofile[0] == rlimit_original_return.rlimit_nofile[1] or ansible_distribution == 'MacOSX'
+
+      # we should be able to set the limit lower than the existing hard limit (except on macOS)
+      - rlimit_below_hard_return.rlimit_nofile[0] == rlimit_original_return.rlimit_nofile[1] - 1 or ansible_distribution == 'MacOSX'
+
+      # setting the limit higher than the existing hard limit should use the hard limit (except on macOS)
+      - rlimit_above_hard_return.rlimit_nofile[0] == rlimit_original_return.rlimit_nofile[1] or ansible_distribution == 'MacOSX'
+
+      # custom module returned the correct answer
+      - custom_module_return.answer == 42
+
+# https://github.com/ansible/ansible/issues/64664
+# https://github.com/ansible/ansible/issues/64479
+- name: Run module that tries to access itself via sys.modules
+  sys_check:

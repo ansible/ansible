@@ -1,0 +1,24 @@
+{
+    "platform.dist": ["Ubuntu", "16.04", "xenial"],
+    "distro": {
+        "codename": "xenial",
+        "id": "ubuntu",
+        "name": "Ubuntu",
+        "version": "16.04",
+        "version_best": "16.04.6",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"16.04 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 16.04 LTS\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\nSUPPORT_URL=\"http://help.ubuntu.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\"\nUBUNTU_CODENAME=xenial\n",
+        "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=16.04\nDISTRIB_CODENAME=xenial\nDISTRIB_DESCRIPTION=\"Ubuntu 16.04 LTS\"\n"
+    },
+    "name": "Ubuntu 16.04",
+    "result": {
+        "distribution_release": "xenial",
+        "distribution": "Ubuntu",
+        "distribution_major_version": "16",
+        "os_family": "Debian",
+        "distribution_version": "16.04"
+    }
+}

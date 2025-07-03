@@ -1,0 +1,35 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: test that a variable cannot inject raw arguments
+      shell: echo hi {{ chdir }}
+      vars:
+        chdir: mom chdir=/tmp
+      register: raw_injection
+
+    - name: test that a variable cannot inject kvp arguments as a kvp
+      file: path={{ test_file }} {{ test_input }}
+      vars:
+        test_file: "{{ output_dir }}/ansible_test_file"
+        test_input: "owner=test"
+      register: kvp_kvp_injection
+      ignore_errors: yes
+
+    - name: test that a variable cannot inject kvp arguments as a value
+      file: state=absent path='{{ kvp_in_var }}'
+      vars:
+        kvp_in_var: "{{ output_dir }}' owner='test"
+      register: kvp_value_injection
+
+    - name: test that a missing filter fails
+      debug:
+        msg: "{{ output_dir | badfiltername }}"
+      register: filter_missing
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - raw_injection.stdout == 'hi mom chdir=/tmp'
+          - kvp_kvp_injection is failed
+          - kvp_value_injection.path.endswith("' owner='test")
+          - filter_missing is failed

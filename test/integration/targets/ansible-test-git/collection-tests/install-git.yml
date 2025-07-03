@@ -1,0 +1,5 @@
+- hosts: localhost
+  tasks:
+    - name: Make sure git is installed
+      package:
+        name: git

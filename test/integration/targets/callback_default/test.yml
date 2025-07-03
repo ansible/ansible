@@ -1,0 +1,128 @@
+---
+- hosts: testhost
+  gather_facts: no
+  vars:
+    foo: foo bar
+  tasks:
+    - name: Changed task
+      command: echo foo
+      changed_when: true
+      notify: test handlers
+
+    - name: Ok task
+      command: echo foo
+      changed_when: false
+
+    - name: Failed task
+      fail:
+        msg: no reason
+      ignore_errors: yes
+
+    - name: Skipped task
+      command: echo foo
+      when: false
+
+    - name: Task with var in name ({{ foo }})
+      command: echo foo
+
+    - name: Loop task
+      command: echo foo
+      loop:
+        - 1
+        - 2
+        - 3
+      loop_control:
+        label: foo-{{ item }}
+
+    # detect "changed" debug tasks being hidden with display_ok_tasks=false
+    - name: debug loop
+      debug:
+        msg: debug-{{ item }}
+      changed_when: item == 1
+      failed_when: item == 2
+      when: item != 4
+      ignore_errors: yes
+      loop:
+        - 1
+        - 2
+        - 3
+        - 4
+      loop_control:
+        label: debug-{{ item }}
+
+    - block:
+        - name: EXPECTED FAILURE Failed task to be rescued
+          fail:
+      rescue:
+        - name: Rescue task
+          command: echo rescued
+
+    - include_tasks: include_me.yml
+      loop:
+        - 1
+
+    - copy:
+        dest: '{{ lookup("env", "OUTPUT_DIR") }}/test_diff.txt'
+        content: foo
+
+    - replace:
+        path: '{{ lookup("env", "OUTPUT_DIR") }}/test_diff.txt'
+        regexp: '^foo$'
+        replace: bar
+      diff: true
+
+    - replace:
+        path: '{{ lookup("env", "OUTPUT_DIR") }}/test_diff.txt'
+        regexp: '^bar$'
+        replace: baz
+      diff: true
+      changed_when: false
+
+    - debug:
+        msg: "{{ item }}"
+      loop: []
+
+    - debug:
+        msg: "{{ item }}"
+      loop: "{{ empty_list }}"
+      vars:
+        empty_list: []
+
+    - debug:
+        msg: "{{ item }}"
+      when: False
+      loop:
+        - 1
+        - 2
+
+  handlers:
+    - name: Test handler 1
+      command: echo foo
+      listen: test handlers
+
+    - name: Test handler 2
+      command: echo foo
+      changed_when: false
+      listen: test handlers
+
+    - name: Test handler 3
+      command: echo foo
+      listen: test handlers
+
+# An issue was found previously for tasks in a play using strategy 'free' after
+# a non-'free' play in the same playbook, so we protect against a regression.
+- hosts: testhost
+  gather_facts: no
+  strategy: free
+  tasks:
+    - name: First free task
+      command: echo foo
+
+    - name: Second free task
+      command: echo foo
+
+    # Ensure include_tasks task names get shown (#71277)
+    - name: Include some tasks
+      include_tasks: include_me.yml
+      loop:
+        - 1

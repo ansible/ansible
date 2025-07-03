@@ -15,36 +15,34 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests.mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from .. base import BaseFactsTest
 
 from ansible.module_utils.facts.system.lsb import LSBFactCollector
 
 
-lsb_release_a_fedora_output = '''
+lsb_release_a_fedora_output = """
 LSB Version:	:core-4.1-amd64:core-4.1-noarch:cxx-4.1-amd64:cxx-4.1-noarch:desktop-4.1-amd64:desktop-4.1-noarch:languages-4.1-amd64:languages-4.1-noarch:printing-4.1-amd64:printing-4.1-noarch
 Distributor ID:	Fedora
 Description:	Fedora release 25 (Twenty Five)
 Release:	25
 Codename:	TwentyFive
-'''  # noqa
+"""  # noqa
 
 # FIXME: a
-etc_lsb_release_ubuntu14 = '''DISTRIB_ID=Ubuntu
+etc_lsb_release_ubuntu14 = """DISTRIB_ID=Ubuntu
 DISTRIB_RELEASE=14.04
 DISTRIB_CODENAME=trusty
 DISTRIB_DESCRIPTION="Ubuntu 14.04.3 LTS"
-'''
-etc_lsb_release_no_decimal = '''DISTRIB_ID=AwesomeOS
+"""
+etc_lsb_release_no_decimal = """DISTRIB_ID=AwesomeOS
 DISTRIB_RELEASE=11
 DISTRIB_CODENAME=stonehenge
 DISTRIB_DESCRIPTION="AwesomeÖS 11"
-'''
+"""
 
 
 class TestLSBFacts(BaseFactsTest):
@@ -88,7 +86,7 @@ class TestLSBFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['lsb']['release'], '14.04')
         self.assertEqual(facts_dict['lsb']['id'], 'Ubuntu')
-        self.assertEqual(facts_dict['lsb']['description'], '"Ubuntu 14.04.3 LTS"')
+        self.assertEqual(facts_dict['lsb']['description'], 'Ubuntu 14.04.3 LTS')
         self.assertEqual(facts_dict['lsb']['codename'], 'trusty')
 
     def test_etc_lsb_release_no_decimal_release(self):
@@ -104,5 +102,5 @@ class TestLSBFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['lsb']['release'], '11')
         self.assertEqual(facts_dict['lsb']['id'], 'AwesomeOS')
-        self.assertEqual(facts_dict['lsb']['description'], '"AwesomeÖS 11"')
+        self.assertEqual(facts_dict['lsb']['description'], 'AwesomeÖS 11')
         self.assertEqual(facts_dict['lsb']['codename'], 'stonehenge')

@@ -1,0 +1,321 @@
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+        - default.yml
+      paths:
+        - vars
+
+- name: add cron task (check mode enabled, cron task not already created)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  check_mode: yes
+  register: check_mode_enabled_state_present
+
+- assert:
+    that: check_mode_enabled_state_present is changed
+
+- name: add cron task (check mode disabled, task hasn't already been created)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  register: add_cron_task
+
+- assert:
+    that: add_cron_task is changed
+
+- name: add cron task (check mode enabled, cron task already exists)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  check_mode: yes
+  register: check_mode_enabled_state_present_cron_task_already_exists
+
+- assert:
+    that: check_mode_enabled_state_present_cron_task_already_exists is not changed
+
+- name: add cron task (check mode disabled, cron task already created)
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+  register: cron_task_already_created
+
+- assert:
+    that: cron_task_already_created is not changed
+
+- block:
+    - name: wait for canary creation
+      wait_for:
+        path: '{{ remote_dir }}/cron_canary1'
+        timeout: '{{ 20 if faketime_pkg else 70 }}'
+      register: wait_canary
+  always:
+    - name: display some logs in case of failure
+      command: 'journalctl -u {{ cron_service }}'
+      when: wait_canary is failed and ansible_service_mgr == 'systemd'
+
+- debug:
+    msg: 'elapsed time waiting for canary: {{ wait_canary.elapsed }}'
+
+- name: Check check_mode
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  check_mode: yes
+  register: check_check_mode
+
+- assert:
+    that: check_check_mode is changed
+
+- name: Remove a cron task
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  register: remove_task
+
+- assert:
+    that: remove_task is changed
+
+- name: 'cron task missing: check idempotence (check mode enabled, state=absent)'
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  register: check_mode_enabled_remove_task_idempotence
+
+- assert:
+    that: check_mode_enabled_remove_task_idempotence is not changed
+
+- name: 'cron task missing: check idempotence (check mode disabled, state=absent)'
+  cron:
+    name: test cron task
+    job: 'date > {{ remote_dir }}/cron_canary1'
+    state: absent
+  register: remove_task_idempotence
+
+- assert:
+    that: remove_task_idempotence is not changed
+
+- name: Check that removing a cron task with cron_file and without specifying a user is allowed (#58493)
+  cron:
+    name: test cron task
+    cron_file: unexistent_cron_file
+    state: absent
+  register: remove_cron_file
+
+- assert:
+    that: remove_cron_file is not changed
+
+- name: Non regression test - cron file should not be empty after adding var (#71207)
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Cron file creation
+    cron:
+      cron_file: cron_filename
+      name: "simple cron job"
+      job: 'echo "_o/"'
+      user: root
+
+  - name: Add var to the cron file
+    cron:
+      cron_file: cron_filename
+      env: yes
+      name: FOO
+      value: bar
+      user: root
+
+  - name: "Ensure cron_file still contains job string"
+    replace:
+      path: /etc/cron.d/cron_filename
+      regexp: "_o/"
+      replace: "OK"
+    register: find_chars
+    failed_when: (find_chars is not changed) or (find_chars is failed)
+
+# BusyBox does not have /etc/cron.d
+- name: Removing a cron file when the name is specified is allowed (#57471)
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Check file does not exist
+    stat:
+      path: /etc/cron.d/cron_remove_name
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+  - name: Cron file creation
+    cron:
+      cron_file: cron_remove_name
+      name: "integration test cron"
+      job: 'ls'
+      user: root
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_remove_name
+      name: "integration test cron"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_remove_name
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+# BusyBox does not have /etc/cron.d
+- name: Removing a cron file, which contains only whitespace
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Check file does not exist
+    stat:
+      path: /etc/cron.d/cron_remove_whitespace
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+  - name: Cron file creation
+    cron:
+      cron_file: cron_remove_whitespace
+      name: "integration test cron"
+      job: 'ls'
+      user: root
+
+  - name: Add whitespace to cron file
+    shell: 'printf "\n    \n\t\n" >> /etc/cron.d/cron_remove_whitespace'
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_remove_whitespace
+      name: "integration test cron"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_remove_whitespace
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+- name: System cron tab can not be managed
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Add cron job
+    cron:
+      cron_file: "{{ system_crontab }}"
+      user: root
+      name: "integration test cron"
+      job: 'ls'
+    ignore_errors: yes
+    register: result
+
+  - assert:
+      that: "result.msg == 'Will not manage /etc/crontab via cron_file, see documentation.'"
+
+# TODO: restrict other root crontab locations
+- name: System cron tab does not get removed
+  when: ansible_distribution == 'Alpine'
+  block:
+  - name: Add cron job
+    cron:
+      cron_file: "{{ system_crontab }}"
+      user: root
+      name: "integration test cron"
+      job: 'ls'
+
+  - name: Remove cron job
+    cron:
+      cron_file: "{{ system_crontab }}"
+      name: "integration test cron"
+      state: absent
+
+  - name: Check system crontab still exists
+    stat:
+      path: "{{ system_crontab }}"
+    register: cron_file_stats
+
+  - assert:
+      that: cron_file_stats.stat.exists
+
+- name: Allow non-ascii chars in job (#69492)
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Check file does not exist
+    stat:
+      path: /etc/cron.d/cron_nonascii
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+  - name: Cron file creation
+    cron:
+      cron_file: cron_nonascii
+      name: "cron job that contain non-ascii chars in job (これは日本語です; This is Japanese)"
+      job: 'echo "うどんは好きだがお化け👻は苦手である。"'
+      user: root
+
+  - name: "Ensure cron_file contains job string"
+    replace:
+      path: /etc/cron.d/cron_nonascii
+      regexp: "うどんは好きだがお化け👻は苦手である。"
+      replace: "それは機密情報🔓です。"
+    register: find_chars
+    failed_when: (find_chars is not changed) or (find_chars is failed)
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_nonascii
+      name: "cron job that contain non-ascii chars in job (これは日本語です; This is Japanese)"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_nonascii
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+- name: Allow non-ascii chars in cron_file (#69492)
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Cron file creation with non-ascii filename (これは日本語です; This is Japanese)
+    cron:
+      cron_file: 'なせば大抵なんとかなる👊'
+      name: "integration test cron"
+      job: 'echo "Hello, ansible!"'
+      user: root
+
+  - name: Check file exists
+    stat:
+      path: "/etc/cron.d/なせば大抵なんとかなる👊"
+    register: cron_file_stats
+
+  - assert:
+      that: cron_file_stats.stat.exists
+
+  - name: Cron file deletion
+    cron:
+      cron_file: 'なせば大抵なんとかなる👊'
+      name: "integration test cron"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: "/etc/cron.d/なせば大抵なんとかなる👊"
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists

@@ -25,8 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 
 class FactNamespace:
@@ -34,7 +33,7 @@ class FactNamespace:
         self.namespace_name = namespace_name
 
     def transform(self, name):
-        '''Take a text name, and transforms it as needed (add a namespace prefix, etc)'''
+        """Take a text name, and transforms it as needed (add a namespace prefix, etc)"""
         return name
 
     def _underscore(self, name):

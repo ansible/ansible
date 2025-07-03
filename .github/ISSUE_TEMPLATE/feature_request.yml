@@ -1,0 +1,176 @@
+---
+name: ✨ Feature request
+description: Suggest an idea for this project
+
+body:
+- type: markdown
+  attributes:
+    value: >
+      **Thank you for wanting to suggest a feature for ansible-core!**
+
+
+
+      💡
+      Before you go ahead with your request, please first consider if it
+      would be useful for majority of the ansible-core users. As a
+      general rule of thumb, any feature that is only of interest to a
+      small sub group should be [implemented in a third-party Ansible
+      Collection][contribute to collections] or maybe even just your
+      project alone. Be mindful of the fact that the essential
+      ansible-core features have a broad impact.
+
+      If unsure, consider filing a [new proposal] instead outlining your
+      use-cases, the research and implementation considerations. Then,
+      start a discussion in the [Ansible forum][forum].
+
+
+      <details>
+        <summary>
+          ❗ Every change breaks someone's workflow.
+        </summary>
+
+
+        [![❗ Every change breaks someone's workflow.
+        ](https://imgs.xkcd.com/comics/workflow.png)
+        ](https://xkcd.com/1172/)
+      </details>
+
+
+      ⚠
+      Verify first that your idea is not [already requested on
+      GitHub][issue search].
+
+      Also test if the devel branch does not already implement this.
+
+
+      **Tip:** If you are seeking community support, please see
+      [Communicating with the Ansible community][communication] to
+      get in touch and ask questions.
+
+
+
+      [contribute to collections]:
+      https://docs.ansible.com/ansible-core/devel/community/contributing_maintained_collections.html?utm_medium=github&utm_source=issue_form--feature_request.yml
+
+      [communication]:
+      https://docs.ansible.com/ansible/devel/community/communication.html
+
+      [issue search]: ../search?q=is%3Aissue&type=issues
+
+      [forum help]:
+      https://forum.ansible.com/c/help/6
+
+      [new proposal]: ../../proposals/issues/new
+
+
+- type: textarea
+  attributes:
+    label: Summary
+    description: >
+      Describe the new feature/improvement you would like briefly below.
+
+
+      What's the problem this feature will solve?
+
+      What are you trying to do, that you are unable to achieve
+      with ansible-core as it currently stands?
+
+
+      * Provide examples of real-world use cases that this would enable
+      and how it solves the problem you described.
+
+      * How do you solve this now?
+
+      * Have you tried to work around the problem using other tools?
+
+      * Could there be a different approach to solving this issue?
+
+
+      *Know **exactly** what you want?* Consider filing a [new proposal]
+      instead outlining your research and implementation considerations.
+
+
+      [new proposal]: ../../proposals/issues/new
+    placeholder: >-
+      I am trying to do X with ansible-core from the devel branch on GitHub and
+      I think that implementing a feature Y would be very helpful for me and
+      every other user of ansible-core because of Z.
+  validations:
+    required: true
+
+- type: dropdown
+  attributes:
+    label: Issue Type
+    description: This is a marker for our automatic bot. Do not change it.
+    options:
+    - Feature Idea
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: Component Name
+    description: >
+      Write the short name of the module, plugin, task or feature below,
+      *use your best guess if unsure*.
+
+
+      Be aware that a lot of content that used to reside in this repository
+      previously, is now hosted under [individual collection
+      projects][collections org].
+      If this is the case, please make sure to file an issue under the
+      appropriate project there instead.
+
+
+      [collections org]: /ansible-collections
+    placeholder: dnf, apt, pip, user etc.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Additional Information
+    description: |
+      Describe how the feature would be used, why it is needed and what it would solve.
+
+      **HINT:** You can paste https://gist.github.com links for larger files.
+    value: |
+      <!--- Paste example playbooks or commands between quotes below -->
+      ```yaml (paste below)
+
+      ```
+    placeholder: >-
+      I asked on https://stackoverflow.com/.... and the community
+      advised me to do X, Y and Z.
+  validations:
+    required: true
+
+
+- type: markdown
+  attributes:
+    value: >
+      *One last thing...*
+
+
+      *Please, complete **all** sections as described, this form
+      is [processed automatically by a robot][ansibot help].*
+
+
+      Thank you for your collaboration!
+
+
+      [ansibot help]:
+      /ansible/ansibotmini#ansibotmini
+
+
+- type: checkboxes
+  attributes:
+    label: Code of Conduct
+    description: |
+      Read the [Ansible Code of Conduct][CoC] first.
+
+      [CoC]: https://docs.ansible.com/ansible/devel/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--feature_request.yml
+    options:
+    - label: I agree to follow the Ansible Code of Conduct
+      required: true
+...

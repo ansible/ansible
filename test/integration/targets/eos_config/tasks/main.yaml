@@ -1,3 +1,0 @@
----
-- { include: cli.yaml, tags: ['cli'] }
-- { include: eapi.yaml, tags: ['eapi'] }

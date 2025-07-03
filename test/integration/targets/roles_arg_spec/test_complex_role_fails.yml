@@ -1,0 +1,113 @@
+---
+- name: "Running include_role test1"
+  hosts: localhost
+  gather_facts: false
+  vars:
+      unicode_type_match: "<type 'unicode'>"
+      string_type_match: "<type 'str'>"
+      float_type_match: "<type 'float'>"
+      list_type_match: "<type 'list'>"
+      dict_type_match: "<type 'dict'>"
+      unicode_class_match: "<class 'unicode'>"
+      string_class_match: "<class 'str'>"
+      bytes_class_match: "<class 'bytes'>"
+      float_class_match: "<class 'float'>"
+      list_class_match: "<class 'list'>"
+      dict_class_match: "<class 'dict'>"
+      expected:
+          test1_1:
+              argument_errors: [
+                  "argument 'tidy_expected' is of type dict and we were unable to convert to list: <class 'ansible.module_utils.datatag._AnsibleTaggedDict'> cannot be converted to a list",
+                  "argument 'bust_some_stuff' is of type str and we were unable to convert to int: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to an int",
+                  "argument 'some_list' is of type dict and we were unable to convert to list: <class 'ansible.module_utils.datatag._AnsibleTaggedDict'> cannot be converted to a list",
+                  "argument 'some_dict' is of type list and we were unable to convert to dict: <class 'ansible.module_utils.datatag._AnsibleTaggedList'> cannot be converted to a dict",
+                  "argument 'some_int' is of type float and we were unable to convert to int: <class 'ansible.module_utils.datatag._AnsibleTaggedFloat'> cannot be converted to an int",
+                  "argument 'some_float' is of type str and we were unable to convert to float: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to a float",
+                  "argument 'some_bytes' is of type bytes and we were unable to convert to bytes: <class 'ansible.module_utils.datatag._AnsibleTaggedBytes'> cannot be converted to a Byte value",
+                  "argument 'some_bits' is of type str and we were unable to convert to bits: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to a Bit value",
+                  "value of test1_choices must be one of: this paddle game, the astray, this remote control, the chair, got: My dog",
+                  "value of some_choices must be one of: choice1, choice2, got: choice4",
+                  "argument 'some_second_level' is of type str found in 'some_dict_options'. and we were unable to convert to bool: The value 'not-a-bool' is not a valid boolean.",
+                  "argument 'third_level' is of type str found in 'multi_level_option -> second_level'. and we were unable to convert to int: <class 'ansible.module_utils.datatag._AnsibleTaggedStr'> cannot be converted to an int",
+                  "argument 'some_more_dict_options' is of type str and we were unable to convert to dict: dictionary requested, could not parse JSON or key=value",
+                  "value of 'some_more_dict_options' must be of type dict or list of dicts",
+                  "dictionary requested, could not parse JSON or key=value",
+                  ]
+
+  tasks:
+      - name: include_role test1 since it has a arg_spec.yml
+        block:
+            - include_role:
+                name: test1
+              vars:
+                tidy_expected:
+                    some_key: some_value
+                test1_var1: 37.4
+                test1_choices: "My dog"
+                bust_some_stuff: "some_string_that_is_not_an_int"
+                some_choices: "choice4"
+                some_str: 37.5
+                some_list: {'a': false}
+                some_dict:
+                    - "foo"
+                    - "bar"
+                some_int: 37.
+                some_float: "notafloatisit"
+                some_path: "anything_is_a_valid_path"
+                some_raw: {"anything_can_be": "a_raw_type"}
+                # not sure what would be an invalid jsonarg
+                # some_jsonarg: "not sure what this does yet"
+                some_json: |
+                    '{[1, 3, 3] 345345|45v<#!}'
+                some_jsonarg: |
+                    {"foo": [1, 3, 3]}
+                # not sure we can load binary in safe_load
+                some_bytes: !!binary |
+                    R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5
+                    OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/+
+                    +f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLC
+                    AgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+                some_bits: "foo"
+                # some_str_nicknames: []
+                # some_str_akas: {}
+                some_str_removed_in: "foo"
+                some_dict_options:
+                  some_second_level: "not-a-bool"
+                some_more_dict_options: "not-a-dict"
+                multi_level_option:
+                  second_level:
+                    third_level: "should_be_int"
+
+            - fail:
+                msg: "Should not get here"
+
+        rescue:
+            - debug:
+                var: ansible_failed_result
+
+      - name: test message for missing required parameters and invalid suboptions
+        block:
+            - include_role:
+                name: test1
+              vars:
+                some_json: '{}'
+                some_jsonarg: '{}'
+                multi_level_option:
+                  second_level:
+                    not_a_supported_suboption: true
+
+            - fail:
+                msg: "Should not get here"
+
+        rescue:
+           - debug:
+               var: ansible_failed_result
+
+           - assert:
+               that:
+                 - ansible_failed_result.argument_errors | length == 2
+                 - missing_required in ansible_failed_result.argument_errors
+                 - got_unexpected in ansible_failed_result.argument_errors
+             vars:
+               missing_required: "missing required arguments: third_level found in multi_level_option -> second_level"
+               got_unexpected: "multi_level_option.second_level.not_a_supported_suboption. Supported parameters include: third_level."

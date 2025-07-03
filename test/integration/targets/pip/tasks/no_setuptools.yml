@@ -1,0 +1,48 @@
+- name: Get coverage version
+  pip:
+    name: coverage
+  check_mode: true
+  register: pip_coverage
+
+- name: create a virtualenv for use without setuptools
+  pip:
+    name:
+      - packaging
+      # coverage is needed when ansible-test is invoked with --coverage
+      # and using a custom ansible_python_interpreter below
+      - '{{ pip_coverage.stdout_lines|select("match", "coverage==")|first }}'
+    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+
+- name: Remove setuptools
+  pip:
+    name:
+      - setuptools
+      - pkg_resources  # This shouldn't be a thing, but ubuntu 20.04...
+    virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+    state: absent
+
+- name: Ensure pkg_resources is gone
+  command: "{{ remote_tmp_dir }}/no_setuptools/bin/python -c 'import pkg_resources'"
+  register: result
+  failed_when: result.rc == 0
+
+- vars:
+    ansible_python_interpreter: "{{ remote_tmp_dir }}/no_setuptools/bin/python"
+  block:
+    - name: Checkmode install pip
+      pip:
+        name: pip
+        virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+      check_mode: true
+      register: pip_check_mode
+
+    - assert:
+        that:
+          - pip_check_mode.stdout is contains "pip=="
+          - pip_check_mode.stdout is not contains "setuptools=="
+
+    - name: Install fallible
+      pip:
+        name: fallible==0.0.1a2
+        virtualenv: "{{ remote_tmp_dir }}/no_setuptools"
+      register: fallible_install

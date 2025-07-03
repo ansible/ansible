@@ -15,22 +15,20 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.compat.tests.mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from .. base import BaseFactsTest
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 
-facter_json_output = '''
+facter_json_output = """
 {
   "operatingsystemmajrelease": "25",
   "hardwareisa": "x86_64",
   "kernel": "Linux",
-  "path": "/home/testuser/src/ansible/bin:/home/testuser/src/ansible/test/runner:/home/testuser/perl5/bin:/home/testuser/perl5/bin:/home/testuser/bin:/home/testuser/.local/bin:/home/testuser/pythons/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/testuser/.cabal/bin:/home/testuser/gopath/bin:/home/testuser/.rvm/bin",
+  "path": "/home/testuser/src/ansible/bin:/home/testuser/perl5/bin:/home/testuser/perl5/bin:/home/testuser/bin:/home/testuser/.local/bin:/home/testuser/pythons/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/testuser/.cabal/bin:/home/testuser/gopath/bin:/home/testuser/.rvm/bin",
   "memorysize": "15.36 GB",
   "memoryfree": "4.88 GB",
   "swapsize": "7.70 GB",
@@ -179,7 +177,7 @@ facter_json_output = '''
   "uptime_hours": 432,
   "kernelversion": "4.9.14"
 }
-'''
+"""
 
 
 class TestFacterCollector(BaseFactsTest):

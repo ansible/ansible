@@ -1,0 +1,2 @@
+# edit "update-bundled.requirements.in" and generate with: hacking/update-sanity-requirements.py --test update-bundled
+packaging==25.0

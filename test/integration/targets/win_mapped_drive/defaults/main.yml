@@ -1,9 +1,0 @@
-test_win_mapped_drive_letter: M
-test_win_mapped_drive_path: share1
-test_win_mapped_drive_path2: share2
-
-test_win_mapped_drive_local_path: C:\ansible\win_mapped_drive\share1
-test_win_mapped_drive_local_path2: C:\ansible\win_mapped_drive\share2
-
-test_win_mapped_drive_temp_user: TestMappedUser
-test_win_mapped_drive_temp_password: aZ293jgkdslgj4

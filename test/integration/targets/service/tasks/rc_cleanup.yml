@@ -1,0 +1,9 @@
+- name: remove the rc init file
+  file: path=/etc/rc.d/ansible_test state=absent
+  register: remove_rc_result
+
+- name: assert that the rc init file was removed
+  assert:
+    that:
+    - "remove_rc_result.path == '/etc/rc.d/ansible_test'"
+    - "remove_rc_result.state == 'absent'"

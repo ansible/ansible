@@ -1,0 +1,7 @@
+---
+- name: checkout using a password to test for a warning when using svn lt 1.10.0
+  subversion:
+    repo: '{{ subversion_repo_auth_url }}'
+    dest: '{{ subversion_test_dir }}/svn'
+    username: '{{ subversion_username }}'
+    password: '{{ subversion_password }}'

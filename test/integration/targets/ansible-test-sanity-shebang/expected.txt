@@ -1,0 +1,9 @@
+plugins/modules/no-shebang-executable.py:0:0: file without shebang should not be executable
+plugins/modules/python-executable.py:0:0: module should not be executable
+plugins/modules/python-wrong-shebang.py:1:1: expected module shebang "b'#!/usr/bin/python'" but found: b'#!invalid'
+plugins/modules/utf-16-be-bom.py:0:0: file starts with a UTF-16 (BE) byte order mark
+plugins/modules/utf-16-le-bom.py:0:0: file starts with a UTF-16 (LE) byte order mark
+plugins/modules/utf-32-be-bom.py:0:0: file starts with a UTF-32 (BE) byte order mark
+plugins/modules/utf-32-le-bom.py:0:0: file starts with a UTF-32 (LE) byte order mark
+plugins/modules/utf-8-bom.py:0:0: file starts with a UTF-8 byte order mark
+scripts/unexpected-shebang:1:1: unexpected non-module shebang: b'#!/usr/bin/custom'

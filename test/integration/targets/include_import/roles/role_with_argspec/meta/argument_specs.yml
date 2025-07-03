@@ -1,0 +1,7 @@
+argument_specs:
+  main:
+    short_description: The main entry point for dup_allowed_role
+    options:
+      optional_int:
+        type: int
+        description: An integer value

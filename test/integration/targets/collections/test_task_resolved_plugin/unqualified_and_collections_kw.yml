@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - test_ns.test_coll
+  tasks:
+    - legacy_action:
+    - legacy_module:
+    - debug:
+    - ping:
+    - collection_action:
+    - collection_module:
+    - local_action:
+        module: formerly_action
+    - action:
+        module: formerly_module

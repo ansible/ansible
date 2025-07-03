@@ -1,0 +1,42 @@
+- name: test dynamic no log
+  hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: no loop, task fails, dynamic no_log
+      raw: echo {{ var_does_not_exist }}
+      no_log: "{{ not (unsafe_show_logs|bool) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - result is failed
+          - result.results is not defined
+
+    - name: loop, task succeeds, dynamic does no_log
+      raw: echo {{ item }}
+      loop:
+        - a
+        - b
+        - c
+      no_log: "{{ not (unsafe_show_logs|bool) }}"
+      register: result
+
+    - assert:
+        that:
+          - result.results | length == 3
+
+    - name: loop, task fails, dynamic no_log
+      raw: echo {{ var_does_not_exist }}
+      loop:
+        - a
+        - b
+        - c
+      no_log: "{{ not (unsafe_show_logs|bool) }}"
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - result is failed
+          - result.results | length == 3

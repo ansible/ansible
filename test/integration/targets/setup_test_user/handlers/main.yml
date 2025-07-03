@@ -1,0 +1,7 @@
+- name: delete test user
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+    force: yes
+  loop: "{{ delete_users }}"

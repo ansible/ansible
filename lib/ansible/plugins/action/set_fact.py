@@ -15,18 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from ansible.module_utils.six import iteritems, string_types
+from ansible.errors import AnsibleActionFail
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
+from ansible.utils.vars import validate_variable_name
 
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    _requires_connection = False
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -35,25 +35,25 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        facts = dict()
-
+        facts = {}
         cacheable = boolean(self._task.args.pop('cacheable', False))
 
         if self._task.args:
-            for (k, v) in iteritems(self._task.args):
-                k = self._templar.template(k)
+            for (k, v) in self._task.args.items():
+                k = self._templar.template(k)  # a rare case where key templating is allowed; backward-compatibility for dynamic storage
 
-                if not isidentifier(k):
-                    result['failed'] = True
-                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
-                                     "letters, numbers and underscores." % k)
-                    return result
+                validate_variable_name(k)
 
-                if isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v, strict=False)
                 facts[k] = v
+        else:
+            raise AnsibleActionFail('No key/value pairs provided, at least one is required for this action to succeed')
 
-        result['changed'] = False
-        result['ansible_facts'] = facts
-        result['_ansible_facts_cacheable'] = cacheable
+        if facts:
+            # just as _facts actions, we don't set changed=true as we are not modifying the actual host
+            result['ansible_facts'] = facts
+            result['_ansible_facts_cacheable'] = cacheable
+        else:
+            # this should not happen, but JIC we get here
+            raise AnsibleActionFail('Unable to create any variables with provided arguments')
+
         return result

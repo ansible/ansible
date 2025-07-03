@@ -1,0 +1,39 @@
+DOCUMENTATION:
+  name: extract
+  version_added: "2.1"
+  short_description: extract a value based on an index or key
+  description:
+    - Extract a value from a list or dictionary based on an index/key.
+    - User must ensure that index or key used matches the type of container.
+    - Equivalent of using C(list[index]) and C(dictionary[key]) but useful as a filter to combine with C(map).
+  positional: _input, container, morekeys
+  options:
+    _input:
+      description: Index or key to extract.
+      type: raw
+      required: true
+    container:
+      description: Dictionary or list from which to extract a value.
+      type: raw
+      required: true
+    morekeys:
+      description: Indices or keys to extract from the initial result (subkeys/subindices).
+      type: list
+      elements: dictionary
+      required: true
+
+EXAMPLES: |
+
+    # extracted => 'b', same as ['a', 'b', 'c'][1]
+    extracted: "{{ 1 | extract(['a', 'b', 'c']) }}"
+
+    # extracted_key => '2', same as {'a': 1, 'b': 2, 'c': 3}['b']
+    extracted_key: "{{ 'b' | extract({'a': 1, 'b': 2, 'c': 3}) }}"
+
+    # extracted_key_r => '2', same as [{'a': 1, 'b': 2, 'c': 3}, {'x': 9, 'y': 10}][0]['b']
+    extracted_key_r: "{{ 0 | extract([{'a': 1, 'b': 2, 'c': 3}, {'x': 9, 'y': 10}], morekeys='b') }}"
+
+RETURN:
+  _value:
+    description: Resulting merge of supplied dictionaries.
+    type: dict

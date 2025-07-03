@@ -1,0 +1,42 @@
+- name: Check split state
+  stat:
+    path: "{{ output_dir }}"
+  register: split
+  ignore_errors: yes
+
+- name: >-
+    Memorize whether we're in a containerized environment
+    and/or a split controller mode
+  set_fact:
+    in_container_env: >-
+      {{
+        ansible_facts.virtualization_type | default('')
+        in ['docker', 'container', 'containerd']
+      }}
+    in_split_controller_mode: >-
+      {{ split is not success or not split.stat.exists }}
+
+- name: Explain why testing against a container is not an option
+  debug:
+    msg: >-
+      This test is attempting to reboot the whole host operating system.
+      The current target is a containerized environment. Containers
+      cannot be reboot like VMs. This is why the test is being skipped.
+  when: in_container_env
+
+- name: Explain why testing against the same host is not an option
+  debug:
+    msg: >-
+      This test is attempting to reboot the whole host operating system.
+      This means it would interrupt itself trying to reboot own
+      environment. It needs to target a separate VM or machine to be
+      able to function so it's being skipped in the current invocation.
+  when: not in_split_controller_mode
+
+- name: Test reboot
+  when: not in_container_env and in_split_controller_mode
+  block:
+    - import_tasks: test_standard_scenarios.yml
+    - import_tasks: test_invalid_parameter.yml
+    - import_tasks: test_invalid_test_command.yml
+    - import_tasks: test_molly_guard.yml

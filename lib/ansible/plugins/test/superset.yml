@@ -1,0 +1,27 @@
+DOCUMENTATION:
+  name: superset
+  author: Ansible Core
+  version_added: "2.4"
+  short_description: is the list a superset of this other list
+  aliases: [issuperset]
+  description:
+    - Validate if the first list is a super set (includes) the second list.
+  options:
+    _input:
+      description: List.
+      type: list
+      elements: raw
+      required: True
+    _subset:
+      description: List to test against.
+      type: list
+      elements: raw
+      required: True
+EXAMPLES: |
+  big: [1,2,3,4,5]
+  small: [3,4]
+  issmallinbig: '{{ big is superset(small) }}'
+RETURN:
+  _value:
+    description: Returns V(True) if the specified list is a superset of the provided list, V(False) otherwise.
+    type: boolean

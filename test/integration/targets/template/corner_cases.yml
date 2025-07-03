@@ -1,0 +1,55 @@
+- name: test tempating corner cases
+  hosts: localhost
+  gather_facts: false
+  vars:
+    empty_list: []
+    dont: I SHOULD NOT BE TEMPLATED
+    other: I WORK
+  tasks:
+    - name: 'ensure we are not interpolating data from outside of j2 delimiters'
+      assert:
+        that:
+            - '"I SHOULD NOT BE TEMPLATED" not in adjacent'
+            - globals1 == "[[], globals()]"
+            - globals2 == "[[], globals]"
+            - left_hand == '[1] + [2]'
+            - left_hand_2 == '[1 + 2 * 3 / 4] + [-2.5, 2.5, 3.5]'
+      vars:
+        adjacent: "{{ empty_list }} + [dont]"
+        globals1: "[{{ empty_list }}, globals()]"
+        globals2: "[{{ empty_list }}, globals]"
+        left_hand: '[1] + {{ [2] }}'
+        left_hand_2: '[1 + 2 * 3 / 4] + {{ [-2.5, +2.5, 1 + 2.5] }}'
+
+    - name: 'ensure we can add lists'
+      assert:
+        that:
+            - (empty_list + [other]) == [other]
+            - (empty_list + [other, other]) == [other, other]
+            - (dont_exist|default([]) + [other]) == [other]
+            - ([other] + [empty_list, other]) == [other, [], other]
+
+    - name: 'ensure comments go away and we still dont interpolate in string'
+      assert:
+        that:
+            - 'comm1 == " + [dont]"'
+            - 'comm2 == " #} + [dont]"'
+      vars:
+        comm1: '{# {{nothing}} {# #} + [dont]'
+        comm2: "{# {{nothing}} {# #} #} + [dont]"
+
+    - name: test additions with facts, set them up
+      set_fact:
+        inames: []
+        iname: "{{ prefix ~ '-options' }}"
+        iname_1: "{{ prefix ~ '-options-1' }}"
+      vars:
+        prefix: 'bo'
+
+    - name: add the facts
+      set_fact:
+        inames: '{{ inames + [iname, iname_1] }}'
+
+    - assert:
+        that:
+            - inames == ['bo-options', 'bo-options-1']

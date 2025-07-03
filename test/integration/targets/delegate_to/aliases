@@ -1,1 +1,4 @@
-posix/ci/group3
+shippable/posix/group5
+needs/ssh
+needs/root  # only on macOS and FreeBSD to configure network interfaces
+context/controller

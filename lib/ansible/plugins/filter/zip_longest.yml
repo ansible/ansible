@@ -1,0 +1,36 @@
+DOCUMENTATION:
+  name: zip_longest
+  version_added: "2.3"
+  short_description: combine list elements, with filler
+  positional: _input, _additional_lists
+  description:
+      - Make an iterator that aggregates elements from each of the iterables.
+        If the iterables are of uneven length, missing values are filled-in with O(fillvalue).
+        Iteration continues until the longest iterable is exhausted.
+  notes:
+    - This is mostly a passthrough to Python's C(itertools.zip_longest) function
+  options:
+    _input:
+      description: Original list.
+      type: list
+      elements: any
+      required: yes
+    _additional_lists:
+      description: Additional list(s).
+      type: list
+      elements: any
+      required: yes
+    fillvalue:
+      description: Filler value to add to output when one of the lists does not contain enough elements to match the others.
+      type: any
+
+EXAMPLES: |
+
+    # X_fill => [[1, "a", 21], [2, "b", 22], [3, "c", 23], ["X", "d", "X"], ["X", "e", "X"], ["X", "f", "X"]]
+    X_fill: "{{ [1,2,3] | zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X') }}"
+
+RETURN:
+  _value:
+    description: List of lists made of elements matching the positions of the input lists.
+    type: list
+    elements: list

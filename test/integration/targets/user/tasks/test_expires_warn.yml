@@ -1,0 +1,36 @@
+# https://github.com/ansible/ansible/issues/79882
+- name: Test setting warning days
+  when: ansible_facts.os_family in ['RedHat', 'Debian']
+  block:
+    - name: create user
+      user:
+        name: ansibulluser
+        state: present
+
+    - name: add warning days for password
+      user:
+        name: ansibulluser
+        password_expire_warn: 28
+      register: pass_warn_1_0
+
+    - name: again add warning days for password
+      user:
+        name: ansibulluser
+        password_expire_warn: 28
+      register: pass_warn_1_1
+
+    - name: validate result for warning days
+      assert:
+        that:
+          - pass_warn_1_0 is changed
+          - pass_warn_1_1 is not changed
+
+    - name: Get shadow data for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure number of warning days was set properly
+      assert:
+        that:
+          - ansible_facts.getent_shadow['ansibulluser'][4] == '28'

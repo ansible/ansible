@@ -1,0 +1,33 @@
+- name: ensure we clean module output well
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: where is bash
+      shell: command -v bash
+      register: bash
+      changed_when: false
+
+    - name: call module that spews extra stuff
+      bad_json:
+      register: clean_json
+      ignore_errors: true
+      vars:
+        ansible_bash_interpreter: '{{ bash.stdout }}'
+
+    - name: all expected is there
+      assert:
+        that:
+          - clean_json is success
+          - clean_json is not changed
+          - "clean_json['msg'] == 'good json response'"
+
+    - name: all non wanted is not there
+      assert:
+        that:
+          - item not in clean_json.values()
+      loop:
+         - this stuff should be ignored
+         - [ looks like a json list]
+         - '[ looks like a json list]'
+         - ' looks like a json list'
+         - moar garbage
