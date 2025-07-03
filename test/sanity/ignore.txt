@@ -115,7 +115,6 @@ test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvo
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/ssh_agent/fake_agents/ssh-agent-bad-shebang shebang  # required for test
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/module_utils/WebRequest.psm1 pslint!skip
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/modules/win_uri.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
