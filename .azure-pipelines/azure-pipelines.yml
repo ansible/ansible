@@ -190,15 +190,6 @@ stages:
             - test: 2016
             - test: 2019
             - test: 2022
-  - stage: Incidental
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}/1
-          targets:
-            - name: IOS Python
-              test: ios/csr1000v/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
@@ -210,6 +201,5 @@ stages:
       - Galaxy
       - Generic
       - Incidental_Windows
-      - Incidental
     jobs:
       - template: templates/coverage.yml
