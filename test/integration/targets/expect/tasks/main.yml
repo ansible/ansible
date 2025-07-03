@@ -266,8 +266,8 @@
     - name: assert pexpect dependency absence
       assert:
         that:
-          - "pexpect_dependency_absence.failed"
-          - "'pexpect' in pexpect_dependency_absence.msg"
+          - pexpect_dependency_absence is failed
+          - pexpect_dependency_absence.msg is contains 'pexpect'
 
     - name: Install pexpect3.3
       pip:
@@ -285,17 +285,8 @@
         ansible_python_interpreter: "{{ venv_python }}"
       register: pexpect_version_three_dot_three
 
-    - name: uninstall pexpect3.3
-      pip:
-        break_system_packages: true
-        name: pexpect
-        state: absent
-        version: 3.3
-        virtualenv: "{{ venv_dir }}"
-
     - name: install pexpect3.0
       pip:
-        break_system_packages: true
         name: pexpect
         version: 3.0
         virtualenv: "{{ venv_dir }}"
@@ -313,8 +304,8 @@
     - name: assert failure with out of date pexpect
       assert:
         that:
-        - "pexpect_version_out_of_date.failed"
-        - "'Insufficient version of pexpect installed' in pexpect_version_out_of_date.msg"
+        - pexpect_version_out_of_date is failed
+        - pexpect_version_out_of_date.msg is contains 'Insufficient version of pexpect installed'
 
 - name: trigger TypeError on timeout value
   expect:
@@ -328,8 +319,8 @@
 - name: assert timeout triggers TypeError when not an int
   assert:
     that:
-    - "pexpect_timeout_typeerror.failed"
-    - "'cannot be converted to an int' in pexpect_timeout_typeerror.msg"
+    - pexpect_timeout_typeerror is failed
+    - pexpect_timeout_typeerror.msg is contains 'cannot be converted to an int'
 
 - name: trigger pexpect.ExceptionPexpect
   expect:
@@ -339,8 +330,7 @@
   register: pexpect_exception_pexpect
   ignore_errors: true
 
-- name: assert that the correct exception was triggered
+- name: assert failure for a nonexistent command
   assert:
     that:
-      - "pexpect_exception_pexpect.failed"
-
+      - pexpect_exception_pexpect is failed
