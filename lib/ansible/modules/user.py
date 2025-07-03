@@ -302,7 +302,7 @@ options:
             - IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
         type: bool
         default: no
-        version_added: '2.19'
+        version_added: "2.20"
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
