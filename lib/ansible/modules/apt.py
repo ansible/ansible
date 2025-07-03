@@ -372,6 +372,7 @@ import locale as locale_module
 import os
 import re
 import secrets
+import shlex
 import shutil
 import sys
 import tempfile
@@ -390,8 +391,6 @@ APT_GET_ZERO = "\n0 upgraded, 0 newly installed, 0 to remove"
 APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed, 0 to remove"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
-APT_MARK_INVALID_OP = 'Invalid operation'
-APT_MARK_INVALID_OP_DEB6 = 'Usage: apt-mark [options] {markauto|unmarkauto} packages'
 
 CLEAN_OP_CHANGED_STR = dict(
     autoremove='The following packages will be REMOVED',
@@ -690,26 +689,30 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed_manually(m, packages):
+def mark_installed(m: AnsibleModule, packages: list[str], manual: bool) -> None:
+    """Mark packages as manually or automatically installed."""
     if not packages:
         return
+
+    if manual:
+        mark_msg = "manually"
+        mark_op = "manual"
+    else:
+        mark_msg = "auto"
+        mark_op = "auto"
 
     apt_mark_cmd_path = m.get_bin_path("apt-mark")
 
     # https://github.com/ansible/ansible/issues/40531
     if apt_mark_cmd_path is None:
-        m.warn("Could not find apt-mark binary, not marking package(s) as manually installed.")
+        m.warn(f"Could not find apt-mark binary, not marking package(s) as {mark_msg} installed.")
         return
 
-    cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
+    cmd = [apt_mark_cmd_path, mark_op] + packages
     rc, out, err = m.run_command(cmd)
 
-    if APT_MARK_INVALID_OP in err or APT_MARK_INVALID_OP_DEB6 in err:
-        cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
-        rc, out, err = m.run_command(cmd)
-
     if rc != 0:
-        m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+        m.fail_json(msg=f"Command {shlex.join(cmd)!r} failed.", stdout=out, stderr=err, rc=rc)
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
@@ -835,7 +838,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         data = dict(changed=False)
 
     if not build_dep and not m.check_mode:
-        mark_installed_manually(m, package_names)
+        mark_installed(m, package_names, manual=True)
 
     return (status, data)
 
@@ -914,6 +917,9 @@ def install_deb(
                                      dpkg_options=install_dpkg_options)
         if not success:
             m.fail_json(**retvals)
+        # Mark the dependencies as auto installed
+        # https://github.com/ansible/ansible/issues/78123
+        mark_installed(m, deps_to_install, manual=False)
         changed = retvals.get('changed', False)
 
     if pkgs_to_install:

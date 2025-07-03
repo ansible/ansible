@@ -22,6 +22,8 @@
 - block:
   - import_tasks: 'apt.yml'
 
+  - import_tasks: 'apt_deb_depend.yml'
+
   - import_tasks: 'url-with-deps.yml'
 
   - import_tasks: 'apt-multiarch.yml'
