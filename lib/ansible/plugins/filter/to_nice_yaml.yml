@@ -1,5 +1,5 @@
 DOCUMENTATION:
-  name: to_yaml
+  name: to_nice_yaml
   author: core team
   version_added: 'historical'
   short_description: Convert variable to YAML string
@@ -20,10 +20,38 @@ DOCUMENTATION:
       description: Affects sorting of dictionary keys.
       default: True
       type: bool
-    #default_style=None, canonical=None, width=None, line_break=None, encoding=None, explicit_start=None, explicit_end=None, version=None, tags=None
+    default_style:
+      description:
+        - Indicates the style of the scalar.
+      choices:
+        - ''
+        - "'"
+        - '"'
+        - '|'
+        - '>'
+      type: string
+    canonical:
+      description:
+        - If set to V(True), export tag type to the output.
+      type: bool
+    width:
+      description: Set the preferred line width.
+      type: int
+    line_break:
+      description: Specify the line break.
+      type: string
+    encoding:
+      description: Specify the output encoding.
+      type: string
+    explicit_start:
+      description: If set to V(True), adds an explicit start using "---".
+      type: bool
+    explicit_end:
+      description: If set to V(True), adds an explicit end using "...".
+      type: bool
   notes:
     - More options may be available, see L(PyYAML documentation, https://pyyaml.org/wiki/PyYAMLDocumentation) for details.
-    - 'These parameters to C(yaml.dump) will be ignored, as they are overridden internally: I(default_flow_style)'
+    - 'These parameters to C(yaml.dump) will be ignored, as they are overridden internally: I(default_flow_style), I(allow_unicode).'
 
 EXAMPLES: |
   # dump variable in a template to create a YAML document
