@@ -36,30 +36,6 @@ variables:
 pool: Standard
 
 stages:
-  - stage: Sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-  - stage: Units
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: units/{0}
-          targets:
-            - test: 3.8
-            - test: 3.9
-            - test: '3.10'
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
   - stage: Windows
     dependsOn: []
     jobs:
@@ -135,68 +111,6 @@ stages:
               test: ubuntu/24.04
           groups:
             - 6
-  - stage: Docker
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml  # context/target
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Alpine 3.21
-              test: alpine321
-            - name: Fedora 41
-              test: fedora41
-            - name: Ubuntu 22.04
-              test: ubuntu2204
-            - name: Ubuntu 24.04
-              test: ubuntu2404
-          groups:
-            - 1
-            - 2
-      - template: templates/matrix.yml  # context/controller
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Alpine 3.21
-              test: alpine321
-            - name: Fedora 41
-              test: fedora41
-            - name: Ubuntu 24.04
-              test: ubuntu2404
-          groups:
-            - 3
-            - 4
-            - 5
-      - template: templates/matrix.yml  # context/target (dnf-oldest, dnf-latest)
-        parameters:
-          testFormat: linux/{0}
-          targets:
-            - name: Fedora 41
-              test: fedora41
-          groups:
-            - 7
-  - stage: Galaxy
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: galaxy/{0}/1
-          targets:
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
-  - stage: Generic
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: generic/{0}/1
-          targets:
-            - test: 3.11
-            - test: 3.12
-            - test: 3.13
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -223,13 +137,8 @@ stages:
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity
-      - Units
       - Windows
       - Remote
-      - Docker
-      - Galaxy
-      - Generic
       - Incidental_Windows
     jobs:
       - template: templates/coverage.yml

@@ -59,4 +59,6 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
+export S=dev
+
 ".azure-pipelines/commands/${script}.sh" "${test}"
