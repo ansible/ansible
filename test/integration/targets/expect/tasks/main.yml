@@ -271,7 +271,6 @@
 
     - name: Install pexpect3.3
       pip:
-        break_system_packages: true
         name: pexpect
         version: 3.3
         virtualenv: "{{ venv_dir }}"
