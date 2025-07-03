@@ -179,7 +179,7 @@ class TaskQueueManager:
             for fd in (STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO):
                 os.set_inheritable(fd, False)
         except Exception as ex:
-            self.warning(f"failed to set stdio as non inheritable: {ex}")
+            display.error_as_warning("failed to set stdio as non inheritable", exception=ex)
 
         self._callback_lock = threading.Lock()
 
@@ -269,7 +269,7 @@ class TaskQueueManager:
                     display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
                     continue
             except Exception as ex:
-                display.warning_as_error(f"Failed to load callback plugin {callback_name!r}.", exception=ex)
+                display.error_as_warning(f"Failed to load callback plugin {callback_name!r}.", exception=ex)
                 continue
 
     def run(self, play):
