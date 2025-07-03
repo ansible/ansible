@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-doc - Return a more verbose error message when the ``description`` field is missing.

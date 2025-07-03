@@ -1,0 +1,10 @@
+# This meta/main.yml exists to test that it is NOT read, with preference being
+# given to the meta/argument_specs.yml file. This spec contains an additional
+# entry point that the argument_specs.yml does not. If this file # were read,
+# the additional entrypoints would show up in --list output, breaking # tests.
+---
+argument_specs:
+    main:
+        short_description: test_role4 from roles subdir
+    holden:
+        short_description: Rocinante pilot
