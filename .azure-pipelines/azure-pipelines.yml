@@ -220,15 +220,6 @@ stages:
               test: 2025/psrp/http
             - name: 2025 SSH Key
               test: 2025/ssh/key
-  - stage: Incidental
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}/1
-          targets:
-            - name: IOS Python
-              test: ios/csr1000v/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
@@ -240,6 +231,5 @@ stages:
       - Galaxy
       - Generic
       - Incidental_Windows
-      - Incidental
     jobs:
       - template: templates/coverage.yml
