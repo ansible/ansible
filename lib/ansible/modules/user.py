@@ -1422,10 +1422,10 @@ class User(object):
             self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def write_changes(self, contents, path):
-        tmpfd, tmpfile = tempfile.mkstemp(dir=self.module.tmpdir)
-        with os.fdopen(tmpfd, 'w') as tf:
+        with tempfile.NamedTemporaryFile(dir=self.module.tmpdir, delete=False) as tf:
             for line in contents:
                 tf.write(line)
+            tmpfile = tf.name
 
         self.module.atomic_move(tmpfile, path, unsafe_writes=self.module.params['unsafe_writes'])
 
@@ -3136,19 +3136,14 @@ class BusyBox(User):
     def _disable_password_in_shadow_or_fail(self, username):
         self.backup_shadow()
         out_lines = []
-        try:
-            with open(self.SHADOWFILE, 'r') as f:
-                for line in f.readlines():
-                    components = line.split(':')
-                    if components[0] == username:
-                        components[1] = '*'
-                        out_lines.append(':'.join(components))
-                    else:
-                        out_lines.append(line)
-        except Exception as e:
-            self.module.fail_json(
-                msg="Something went wrong when trying to modify %s: %s" %
-                (self.SHADOWFILE, to_native(e)))
+        with open(self.SHADOWFILE, 'r') as f:
+            for line in f.readlines():
+                components = line.split(':')
+                if components[0] == username:
+                    components[1] = '*'
+                    out_lines.append(':'.join(components))
+                else:
+                    out_lines.append(line)
         self.write_changes(out_lines, self.SHADOWFILE)
 
     def create_user(self):
