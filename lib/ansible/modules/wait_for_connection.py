@@ -103,7 +103,6 @@ EXAMPLES = r"""
         runonce:
         - cmd.exe /c winrm.cmd quickconfig -quiet -force
     delegate_to: localhost
-    
 
   - name: Wait for system to become reachable over WinRM
     ansible.builtin.wait_for_connection:
