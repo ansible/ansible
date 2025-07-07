@@ -20,7 +20,6 @@ from __future__ import annotations
 import typing as t
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import FieldAttribute
@@ -40,7 +39,7 @@ def _flatten_tags(tags: list[str | int]) -> list[str | int]:
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    tags = FieldAttribute(isa='list', default=list, listof=(string_types, int), extend=True)
+    tags = FieldAttribute(isa='list', default=list, listof=(str, int), extend=True)
 
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
