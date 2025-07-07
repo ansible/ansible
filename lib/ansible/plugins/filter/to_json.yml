@@ -23,8 +23,9 @@ DOCUMENTATION:
       default: True
       version_added: '2.9'
     allow_nan:
-      description: When V(False), strict adherence to float value limits of the JSON specifications, so C(nan), C(inf) and C(-inf) values will produce errors.
-                   When V(True), JavaScript equivalents will be used (C(NaN), C(Infinity), C(-Infinity)).
+      description:
+        - When V(False), out-of-range float values C(nan), C(inf) and C(-inf) will result in an error.
+        - When V(True), out-of-range float values will be represented using their JavaScript equivalents, C(NaN), C(Infinity) and C(-Infinity).
       default: True
       type: bool
     check_circular:
@@ -42,8 +43,11 @@ DOCUMENTATION:
     separators:
       description: The C(item) and C(key) separator to be used in the serialized output,
                    default may change depending on O(indent) and Python version.
-      default: "(', ', ': ')"
-      type: tuple
+      default:
+        - ', '
+        - ': '
+      type: list
+      elements: str
     skipkeys:
       description: If V(True), keys that are not basic Python types will be skipped.
       default: False
