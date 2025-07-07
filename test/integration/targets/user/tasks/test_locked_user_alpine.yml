@@ -1,5 +1,5 @@
 ---
-- name: Test locked user on Alpine
+- name: Test if new user with no password is unlocked by default
   block:
     - name: Remove ansibulluser
       user:
@@ -17,17 +17,15 @@
         that:
           - password_lock_1 is changed
 
-    - name: Verify account lock for Linux
-      block:
-        - name: LINUX | Get account status
-          getent:
-            database: shadow
-            key: ansibulluser
+    - name: Get account status
+      getent:
+        database: shadow
+        key: ansibulluser
 
-        - name: LINUX | Ensure account is locked
-          assert:
-            that:
-              - getent_shadow['ansibulluser'][0].startswith('!')
+    - name: Ensure account is unlocked
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][0].startswith('*')
 
   always:
     - name: Remove ansibulluser
