@@ -183,14 +183,6 @@ options:
       - This parameter is deprecated as it has no effect with dnf as an underlying package manager
         and will be removed in ansible-core 2.22.
     type: bool
-  keepcache:
-    description:
-      - Either V(1) or V(0). Determines whether or not yum keeps the cache of
-        headers and packages after successful installation.
-      - This parameter is deprecated as it is only valid in the main configuration
-        and will be removed in ansible-core 2.20.
-    choices: ['0', '1']
-    type: str
   metadata_expire:
     description:
       - Time (in seconds) after which the metadata will expire.
@@ -466,13 +458,7 @@ class YumRepo:
         for key, value in sorted(self.params.items()):
             if value is None:
                 continue
-            if key == 'keepcache':
-                self.module.deprecate(
-                    "'keepcache' parameter is deprecated as it is only valid in "
-                    "the main configuration.",
-                    version='2.20'
-                )
-            elif key == 'async':
+            if key == 'async':
                 self.module.deprecate(
                     "'async' parameter is deprecated as it has been removed on systems supported by ansible-core",
                     version='2.22',
@@ -557,7 +543,6 @@ def main():
         includepkgs=dict(type='list', elements='str'),
         ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
         keepalive=dict(type='bool'),
-        keepcache=dict(choices=['0', '1']),
         metadata_expire=dict(),
         metadata_expire_filter=dict(
             choices=[
