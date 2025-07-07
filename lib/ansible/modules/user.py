@@ -1422,9 +1422,8 @@ class User(object):
             self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def write_changes(self, contents, path):
-        with tempfile.NamedTemporaryFile(dir=self.module.tmpdir, delete=False) as tf:
-            for line in contents:
-                tf.write(line)
+        with tempfile.NamedTemporaryFile(dir=self.module.tmpdir, mode='w+t', delete=False) as tf:
+            tf.writelines(contents)
             tmpfile = tf.name
 
         self.module.atomic_move(tmpfile, path, unsafe_writes=self.module.params['unsafe_writes'])
