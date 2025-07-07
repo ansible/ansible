@@ -107,7 +107,6 @@ EXAMPLES = r"""
   - name: Wait for system to become reachable over WinRM
     ansible.builtin.wait_for_connection:
       timeout: 900
-      
   - name: Wait for server to become reachable, polling every 10 seconds
     ansible.builtin.wait_for_connection:
       timeout: 300
