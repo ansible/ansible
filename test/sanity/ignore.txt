@@ -240,5 +240,3 @@ lib/ansible/utils/py3compat.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/utils/ssh_functions.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version-comment  # TODO: 2.20
 lib/ansible/vars/plugins.py pylint:ansible-deprecated-version  # TODO: 2.20
-lib/ansible/modules/dnf.py validate-modules:ansible-deprecated-version  # TODO: 2.20
-lib/ansible/modules/dnf5.py validate-modules:ansible-deprecated-version  # TODO: 2.20
