@@ -222,7 +222,7 @@ def main(args=None):
     # initialize verbosity
     display.verbosity = args.verbosity
 
-    rc = 0
+    rc = 1
     result = {}
     messages = list()
     socket_path = None
