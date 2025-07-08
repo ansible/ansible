@@ -1,0 +1,2 @@
+removed_features:
+  - dnf/dnf5 - remove deprecated ``install_repoquery`` option.
