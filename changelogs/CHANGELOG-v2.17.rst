@@ -4,6 +4,28 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.13rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-07-08
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Add RHEL 10.0 as a remote platform for testing.
+
+Bugfixes
+--------
+
+- ansible-doc will no longer ignore docs for modules without an extension (https://github.com/ansible/ansible/issues/85279).
+- ansible-test - Fix Python relative import resolution from ``__init__.py`` files when using change detection.
+- user - Set timeout for passphrase interaction.
+- user - Update prompt for SSH key passphrase (https://github.com/ansible/ansible/issues/84484).
+
 v2.17.12
 ========
 
