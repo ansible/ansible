@@ -34,8 +34,6 @@ DOCUMENTATION = """
                - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
-               - name: delegated_vars['ansible_host']
-               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if SSH should reject or not a connection after checking host keys.
           default: True
