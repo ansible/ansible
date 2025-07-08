@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 66.1.0, <= 80.7.1", "wheel == 0.45.1"]  # lower bound to support controller Python versions, upper bound for latest version tested at release
+requires = ["setuptools >= 66.1.0, <= 80.9.0", "wheel == 0.45.1"]  # lower bound to support controller Python versions, upper bound for latest version tested at release
 build-backend = "setuptools.build_meta"
 
 [project]
