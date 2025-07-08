@@ -4,6 +4,31 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.0rc2
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-07-08
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Deprecated Features
+-------------------
+
+- Jinja test plugins - Returning a non-boolean result from a Jinja test plugin is deprecated.
+- YAML parsing - Usage of the YAML 1.1 ``!!omap`` and ``!!pairs`` tags is deprecated. Use standard mappings instead.
+- YAML parsing - Usage of the undocumented ``!vault-encrypted`` YAML tag is deprecated. Use ``!vault`` instead.
+- config - The ``DEFAULT_ALLOW_UNSAFE_LOOKUPS`` configuration option is deprecated and no longer has any effect. Ansible templating no longer encounters situations where use of lookup plugins is considered "unsafe".
+- config - The ``DEFAULT_UNDEFINED_VAR_BEHAVIOR`` configuration option is deprecated and no longer has any effect. Attempting to use an undefined variable where undefined values are unexpected is now always an error. This behavior was enabled by default in previous versions, and disabling it yielded inconsistent results.
+- config - The ``STRING_TYPE_FILTERS`` configuration option is deprecated and no longer has any effect. Since the template engine now always preserves native types, there is no longer a risk of unintended conversion from strings to native types.
+- config - Using the ``DEFAULT_JINJA2_EXTENSIONS`` configuration option to enable Jinja2 extensions is deprecated. Previously, custom Jinja extensions were disabled by default, as they can destabilize the Ansible templating environment. Templates should only make use of filter, test and lookup plugins.
+- config - Using the ``DEFAULT_MANAGED_STR`` configuration option to customize the value of the ``ansible_managed`` variable is deprecated. The ``ansible_managed`` variable can now be set the same as any other variable.
+- playbook - The ``timedout.frame`` task result value (injected when a task timeout occurs) is deprecated. Include ``error`` in the ``DISPLAY_TRACEBACK`` config value to capture a full Python traceback for timed out actions.
+- public API - The ``ansible.errors.AnsibleFilterTypeError`` exception type has been deprecated. Use ``AnsibleTypeError`` instead.
+- public API - The ``ansible.errors._AnsibleActionDone`` exception type has been deprecated. Action plugins should return a task result dictionary in success cases instead of raising.
+- public API - The ``ansible.module_utils.common.json.json_dump`` function is deprecated. Call Python stdlib ``json.dumps`` instead, with ``cls`` set to an Ansible profile encoder type from ``ansible.module_utils.common.json.get_encoder``.
+
 v2.19.0rc1
 ==========
 
