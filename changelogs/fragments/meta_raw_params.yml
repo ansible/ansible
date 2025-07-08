@@ -1,0 +1,3 @@
+---
+bugfixes:
+   - meta - avoid traceback when retrieving the meta task name (https://github.com/ansible/ansible/issues/85367).

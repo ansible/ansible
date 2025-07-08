@@ -137,9 +137,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def __repr__(self):
         ''' returns a human-readable representation of the task '''
         if self.action in C._ACTION_META:
-            return "TASK: meta (%s)" % self.args['_raw_params']
-        else:
-            return "TASK: %s" % self.get_name()
+            return "TASK: meta (%s)" % self.args.get('_raw_params')
+        return "TASK: %s" % self.get_name()
 
     def _preprocess_with_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
