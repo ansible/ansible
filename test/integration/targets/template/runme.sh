@@ -2,10 +2,11 @@
 
 set -eux
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
+ANSIBLE_CALLBACK_RESULT_FORMAT=yaml ANSIBLE_ROLES_PATH=../ ansible-playbook template.yml -i ../../inventory -v "$@"
 
 # Test for https://github.com/ansible/ansible/pull/35571
-ansible testhost -i testhost, -m debug -a 'msg={{ hostvars["localhost"] }}' -e "vars1={{ undef() }}" -e "vars2={{ vars1 }}"
+echo "presence of an undefined var in a template should not break things that don't access it"
+ansible testhost -i testhost, -m assert -a 'that=var3=="accessme"' -e "vars1={{ bogus_var }}" -e "var2={{ var1 }}" -e var3=accessme
 
 # ansible_managed tests
 ANSIBLE_CONFIG=ansible_managed.cfg ansible-playbook ansible_managed.yml -i ../../inventory -v "$@"

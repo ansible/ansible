@@ -1,4 +1,0 @@
-bugfixes:
-  - user action will now require O(force) to overwrite the public part of an ssh key when generating ssh keys, as was already the case for the private part.
-security_fixes:
-  - user action won't allow ssh-keygen, chown and chmod to run on existing ssh public key file, avoiding traversal on existing symlinks (CVE-2024-9902).

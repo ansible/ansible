@@ -1,0 +1,92 @@
+- hosts: all
+  tasks:
+    - import_role:
+        role: setup_test_user
+
+    # macos currently allows password auth, and macos/15.3 prevents restarting sshd
+    - when: ansible_facts.system != 'Darwin'
+      block:
+        - find:
+            paths: /etc/ssh
+            recurse: true
+            contains: 'PasswordAuthentication'
+          register: sshd_confs
+
+        - lineinfile:
+            path: '{{ item }}'
+            regexp: '^PasswordAuthentication'
+            line: PasswordAuthentication yes
+          loop: '{{ sshd_confs.files|default([{"path": "/etc/ssh/sshd_config"}], true)|map(attribute="path") }}'
+
+    - service:
+        name: ssh{{ '' if ansible_facts.os_family == 'Debian' else 'd' }}
+        state: restarted
+      when: ansible_facts.system != 'Darwin'
+
+    - name: Test incorrect password
+      command:
+        argv:
+          - ansible
+          - localhost
+          - -m
+          - command
+          - -a
+          - id
+          - -vvv
+          - -e
+          - ansible_pipelining=yes
+          - -e
+          - ansible_connection=ssh
+          - -e
+          - ansible_ssh_password_mechanism=ssh_askpass
+          - -e
+          - ansible_user={{ test_user_name }}
+          - -e
+          - ansible_password=INCORRECT_PASSWORD
+      environment:
+        ANSIBLE_NOCOLOR: "1"
+        ANSIBLE_FORCE_COLOR: "0"
+      register: askpass_out
+      ignore_errors: true
+
+    - assert:
+        that:
+          - askpass_out is failed
+          - askpass_out.stdout is contains('UNREACHABLE')
+          - askpass_out.stdout is contains('Permission denied')
+          - askpass_out.stdout is not contains('Permission denied, please try again.')  # password tried only once
+          - askpass_out.stdout is not contains('Traceback (most recent call last)')
+
+    - name: Test correct password
+      command:
+        argv:
+          - ansible
+          - localhost
+          - -m
+          - command
+          - -a
+          - id
+          - -vvv
+          - -e
+          - ansible_pipelining=yes
+          - -e
+          - ansible_connection=ssh
+          - -e
+          - ansible_ssh_password_mechanism=ssh_askpass
+          - -e
+          - ansible_user={{ test_user_name }}
+          - -e
+          - ansible_password={{ test_user_plaintext_password }}
+      environment:
+        ANSIBLE_NOCOLOR: "1"
+        ANSIBLE_FORCE_COLOR: "0"
+      register: askpass_out
+
+    - debug:
+        var: askpass_out
+
+    - assert:
+        that:
+          - '"EXEC ssh " in askpass_out.stdout'
+          - '"sshpass" not in askpass_out.stdout'
+          - askpass_out.stdout is search('uid=\d+\(' ~ test_user_name ~ '\)')

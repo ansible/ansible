@@ -39,7 +39,7 @@ except ImportError:
 
 # TODO: add python requirements to ansible-test's ansible-core distribution info and remove the hardcoded lowerbound/upperbound fallback
 RESOLVELIB_LOWERBOUND = SemanticVersion("0.5.3")
-RESOLVELIB_UPPERBOUND = SemanticVersion("1.1.0")
+RESOLVELIB_UPPERBOUND = SemanticVersion("2.0.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
@@ -148,7 +148,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         :param resolutions: Mapping of identifier, candidate pairs.
 
-        :param candidates: Possible candidates for the identifer.
+        :param candidates: Possible candidates for the identifier.
             Mapping of identifier, list of candidate pairs.
 
         :param information: Requirement information of each package.
@@ -158,7 +158,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         :param backtrack_causes: Sequence of requirement information that were
             the requirements that caused the resolver to most recently backtrack.
 
-        The preference could depend on a various of issues, including
+        The preference could depend on various of issues, including
         (not necessarily in this order):
 
           * Is this package pinned in the current resolution result?
@@ -404,7 +404,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         :param requirement: A requirement that produced the `candidate`.
 
-        :param candidate: A pinned candidate supposedly matchine the \
+        :param candidate: A pinned candidate supposedly matching the \
                           `requirement` specifier. It is guaranteed to \
                           have been generated from the `requirement`.
 

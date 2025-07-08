@@ -1,4 +1,5 @@
 """Completers for use with argcomplete."""
+
 from __future__ import annotations
 
 import argparse

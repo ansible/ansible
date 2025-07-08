@@ -6,13 +6,16 @@ from __future__ import annotations
 
 import datetime
 import os
+import typing as t
 
 from collections import deque
 from itertools import chain
 
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils._internal._datatag import AnsibleSerializable, AnsibleTagHelper
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.errors import (
     AliasError,
     AnsibleFallbackNotFound,
@@ -83,7 +86,7 @@ _ADDITIONAL_CHECKS = (
 # if adding boolean attribute, also add to PASS_BOOL
 # some of this dupes defaults from controller config
 # keep in sync with copy in lib/ansible/module_utils/csharp/Ansible.Basic.cs
-PASS_VARS = {
+PASS_VARS: dict[str, t.Any] = {
     'check_mode': ('check_mode', False),
     'debug': ('_debug', False),
     'diff': ('_diff', False),
@@ -96,9 +99,9 @@ PASS_VARS = {
     'selinux_special_fs': ('_selinux_special_fs', ['fuse', 'nfs', 'vboxsf', 'ramfs', '9p', 'vfat']),
     'shell_executable': ('_shell', '/bin/sh'),
     'socket': ('_socket_path', None),
-    'string_conversion_action': ('_string_conversion_action', 'warn'),
     'syslog_facility': ('_syslog_facility', 'INFO'),
     'tmpdir': ('_tmpdir', None),
+    'tracebacks_for': ('_tracebacks_for', frozenset()),
     'verbosity': ('_verbosity', 0),
     'version': ('ansible_version', '0.0'),
 }
@@ -408,6 +411,8 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         dictionary for ``level1``, then the dict for ``level2``, and finally
         the list for ``level3``.
     """
+    original_value = value
+
     if isinstance(value, (text_type, binary_type)):
         # Need native str type
         native_str_value = value
@@ -432,31 +437,25 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         else:
             value = native_str_value
 
+    elif value is True or value is False or value is None:
+        return value
+
     elif isinstance(value, Sequence):
-        if isinstance(value, MutableSequence):
-            new_value = type(value)()
-        else:
-            new_value = []  # Need a mutable value
+        new_value = AnsibleTagHelper.tag_copy(original_value, [])
         deferred_removals.append((value, new_value))
-        value = new_value
+        return new_value
 
     elif isinstance(value, Set):
-        if isinstance(value, MutableSet):
-            new_value = type(value)()
-        else:
-            new_value = set()  # Need a mutable value
+        new_value = AnsibleTagHelper.tag_copy(original_value, set())
         deferred_removals.append((value, new_value))
-        value = new_value
+        return new_value
 
     elif isinstance(value, Mapping):
-        if isinstance(value, MutableMapping):
-            new_value = type(value)()
-        else:
-            new_value = {}  # Need a mutable value
+        new_value = AnsibleTagHelper.tag_copy(original_value, {})
         deferred_removals.append((value, new_value))
-        value = new_value
+        return new_value
 
-    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+    elif isinstance(value, (int, float)):
         stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
         if stringy_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
@@ -464,10 +463,14 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
             if omit_me in stringy_value:
                 return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
-    elif isinstance(value, (datetime.datetime, datetime.date)):
-        value = value.isoformat()
+    elif isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+        return value
+    elif isinstance(value, AnsibleSerializable):
+        return value
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
+    value = AnsibleTagHelper.tag_copy(original_value, value)
 
     return value
 
@@ -541,7 +544,7 @@ def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_remov
     if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
         return value
 
-    if isinstance(value, (datetime.datetime, datetime.date)):
+    if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
         return value
 
     raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
@@ -570,7 +573,7 @@ def _validate_elements(wanted_type, parameter, values, options_context=None, err
             msg = "Elements value for option '%s'" % parameter
             if options_context:
                 msg += " found in '%s'" % " -> ".join(options_context)
-            msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_element_type, to_native(e))
+            msg += " is of type %s and we were unable to convert to %s: %s" % (native_type_name(value), wanted_element_type, to_native(e))
             errors.append(ElementError(msg))
     return validated_parameters
 
@@ -629,7 +632,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
             elements_wanted_type = spec.get('elements', None)
             if elements_wanted_type:
                 elements = parameters[param]
-                if wanted_type != 'list' or not isinstance(elements, list):
+                if not isinstance(parameters[param], list) or not isinstance(elements, list):
                     msg = "Invalid type %s for option '%s'" % (wanted_name, elements)
                     if options_context:
                         msg += " found in '%s'." % " -> ".join(options_context)
@@ -638,7 +641,7 @@ def _validate_argument_types(argument_spec, parameters, prefix='', options_conte
                 parameters[param] = _validate_elements(elements_wanted_type, param, elements, options_context, errors)
 
         except (TypeError, ValueError) as e:
-            msg = "argument '%s' is of type %s" % (param, type(value))
+            msg = "argument '%s' is of type %s" % (param, native_type_name(value))
             if options_context:
                 msg += " found in '%s'." % " -> ".join(options_context)
             msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))

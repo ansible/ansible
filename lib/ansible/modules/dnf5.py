@@ -14,6 +14,12 @@ description:
     provides are implemented in M(ansible.builtin.dnf5), please consult specific options for more information."
 short_description: Manages packages with the I(dnf5) package manager
 options:
+  auto_install_module_deps:
+    description:
+      - Automatically install dependencies required to run this module.
+    type: bool
+    default: yes
+    version_added: 2.19
   name:
     description:
       - "A package name or package specifier with version, like C(name-1.0).
@@ -174,12 +180,6 @@ options:
         in the earlier transaction).
     type: bool
     default: "no"
-  install_repoquery:
-    description:
-      - This is effectively a no-op in DNF as it is not needed with DNF.
-      - This option is deprecated and will be removed in ansible-core 2.20.
-    type: bool
-    default: "yes"
   download_only:
     description:
       - Only download the packages, do not install them.
@@ -246,6 +246,10 @@ attributes:
         platforms: rhel
 requirements:
   - "python3-libdnf5"
+notes:
+  - If the interpreter can't import C(python3-libdnf5) the module will check for it in system-owned interpreters as well.
+    If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
+    If the dependency is found or installed, the module will be respawned under the correct interpreter.
 version_added: 2.15
 """
 
@@ -354,10 +358,37 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
+# Through dnf5-5.2.12 all exceptions raised through swig became RuntimeError
+LIBDNF5_ERRORS = RuntimeError
 
 
 def is_installed(base, spec):
     settings = libdnf5.base.ResolveSpecSettings()
+    try:
+        settings.set_group_with_name(True)
+        # Disable checking whether SPEC is a binary -> `/usr/(s)bin/<SPEC>`,
+        # this prevents scenarios like the following:
+        #   * the `sssd-common` package is installed and provides `/usr/sbin/sssd` binary
+        #   * the `sssd` package is NOT installed
+        #   * due to `set_with_binaries(True)` being default `is_installed(base, "sssd")` would "unexpectedly" return True
+        # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
+        # due to settings.set_with_filenames(True) being default.
+        settings.set_with_binaries(False)
+        # Disable checking whether SPEC is provided by an installed package.
+        # Consider following real scenario from the rpmfusion repo:
+        #   * the `ffmpeg-libs` package is installed and provides `libavcodec-freeworld`
+        #   * but `libavcodec-freeworld` is NOT installed (???)
+        #   * due to `set_with_provides(True)` being default `is_installed(base, "libavcodec-freeworld")`
+        #     would  "unexpectedly" return True
+        # We disable provides only for this `is_installed` check, for actual installation we leave the default
+        # setting to mirror the dnf cmdline behavior.
+        settings.set_with_provides(False)
+    except AttributeError:
+        # dnf5 < 5.2.0.0
+        settings.group_with_name = True
+        settings.with_binaries = False
+        settings.with_provides = False
+
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
     match, nevra = installed_query.resolve_pkg_spec(spec, settings, True)
@@ -386,7 +417,9 @@ def is_newer_version_installed(base, spec):
 
     try:
         spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except (RuntimeError, StopIteration):
+    except LIBDNF5_ERRORS:
+        return False
+    except StopIteration:
         return False
 
     spec_version = spec_nevra.get_version()
@@ -445,6 +478,8 @@ def get_unneeded_pkgs(base):
 class Dnf5Module(YumDnf):
     def __init__(self, module):
         super(Dnf5Module, self).__init__(module)
+        self.auto_install_module_deps = self.module.params["auto_install_module_deps"]
+
         self._ensure_dnf()
 
         self.pkg_mgr_name = "dnf5"
@@ -478,11 +513,18 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
+        global LIBDNF5_ERRORS
         has_dnf = True
         try:
             import libdnf5  # type: ignore[import]
         except ImportError:
             has_dnf = False
+
+        try:
+            import libdnf5.exception  # type: ignore[import-not-found]
+            LIBDNF5_ERRORS = (libdnf5.exception.Error, libdnf5.exception.NonLibdnf5Exception)
+        except (ImportError, AttributeError):
+            pass
 
         if has_dnf:
             return
@@ -494,21 +536,30 @@ class Dnf5Module(YumDnf):
         ]
 
         if not has_respawned():
-            # probe well-known system Python locations for accessible bindings, favoring py3
-            interpreter = probe_interpreters_for_module(system_interpreters, "libdnf5")
+            for attempt in (1, 2):
+                # probe well-known system Python locations for accessible bindings
+                interpreter = probe_interpreters_for_module(system_interpreters, "libdnf5")
+                if interpreter:
+                    # respawn under the interpreter where the bindings should be found
+                    respawn_module(interpreter)
+                    # end of the line for this module, the process will exit here once the respawned module completes
+                if attempt == 1:
+                    if self.module.check_mode:
+                        self.module.fail_json(
+                            msg="python3-libdnf5 must be installed to use check mode. "
+                                "If run normally this module can auto-install it, "
+                                "see the auto_install_module_deps option.",
+                        )
+                    elif self.auto_install_module_deps:
+                        self.module.run_command(["dnf", "install", "-y", "python3-libdnf5"], check_rc=True)
+                    else:
+                        break
 
-            if interpreter:
-                # respawn under the interpreter where the bindings should be found
-                respawn_module(interpreter)
-                # end of the line for this module, the process will exit here once the respawned module completes
-
-        # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
+        py_version = sys.version.replace("\n", "")
         self.module.fail_json(
-            msg="Could not import the libdnf5 python module using {0} ({1}). "
-            "Please install python3-libdnf5 package or ensure you have specified the "
-            "correct ansible_python_interpreter. (attempted {2})".format(
-                sys.executable, sys.version.replace("\n", ""), system_interpreters
-            ),
+            msg=f"Could not import the libdnf5 python module using {sys.executable} ({py_version}). "
+            "Ensure python3-libdnf5 package is installed (either manually or via the auto_install_module_deps option) "
+            f"or that you have specified the correct ansible_python_interpreter. (attempted {system_interpreters}).",
             failures=[],
         )
 
@@ -526,15 +577,7 @@ class Dnf5Module(YumDnf):
         if self.conf_file:
             conf.config_file_path = self.conf_file
 
-        try:
-            base.load_config()
-        except RuntimeError as e:
-            self.module.fail_json(
-                msg=str(e),
-                conf_file=self.conf_file,
-                failures=[],
-                rc=1,
-            )
+        base.load_config()
 
         if self.releasever is not None:
             variables = base.get_vars()
@@ -552,7 +595,14 @@ class Dnf5Module(YumDnf):
         elif self.best is not None:
             conf.best = self.best
         conf.install_weak_deps = self.install_weak_deps
-        conf.gpgcheck = not self.disable_gpg_check
+        try:
+            # raises AttributeError only on getter if not available
+            conf.pkg_gpgcheck   # pylint: disable=pointless-statement
+        except AttributeError:
+            # dnf5 < 5.2.7.0
+            conf.gpgcheck = not self.disable_gpg_check
+        else:
+            conf.pkg_gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
         conf.clean_requirements_on_remove = self.autoremove
@@ -646,9 +696,12 @@ class Dnf5Module(YumDnf):
         settings = libdnf5.base.GoalJobSettings()
         try:
             settings.set_group_with_name(True)
+            settings.set_with_binaries(False)
         except AttributeError:
             # dnf5 < 5.2.0.0
             settings.group_with_name = True
+            settings.with_binaries = False
+
         if self.bugfix or self.security:
             advisory_query = libdnf5.advisory.AdvisoryQuery(base)
             types = []
@@ -657,6 +710,7 @@ class Dnf5Module(YumDnf):
             if self.security:
                 types.append("security")
             advisory_query.filter_type(types)
+            conf.skip_unavailable = True  # ignore packages that are of a different type, for backwards compat
             settings.set_advisory_filter(advisory_query)
 
         goal = libdnf5.base.Goal(base)
@@ -679,19 +733,13 @@ class Dnf5Module(YumDnf):
                         goal.add_install(spec, settings)
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
-                try:
-                    goal.add_remove(spec, settings)
-                except RuntimeError as e:
-                    self.module.fail_json(msg=str(e), failures=[], rc=1)
+                goal.add_remove(spec, settings)
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
 
         goal.set_allow_erasing(self.allowerasing)
-        try:
-            transaction = goal.resolve()
-        except RuntimeError as e:
-            self.module.fail_json(msg=str(e), failures=[], rc=1)
+        transaction = goal.resolve()
 
         if transaction.get_problems():
             failures = []
@@ -732,7 +780,7 @@ class Dnf5Module(YumDnf):
         if self.module.check_mode:
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
-        else:
+        elif changed:
             transaction.download()
             if not self.download_only:
                 transaction.set_description("ansible dnf5 module")
@@ -762,7 +810,16 @@ class Dnf5Module(YumDnf):
 
 
 def main():
-    Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
+    yumdnf_argument_spec["argument_spec"].update(
+        dict(
+            auto_install_module_deps=dict(type="bool", default=True),
+        )
+    )
+    module = AnsibleModule(**yumdnf_argument_spec)
+    try:
+        Dnf5Module(module).run()
+    except LIBDNF5_ERRORS as e:
+        module.fail_json(msg=str(e), failures=[], rc=1)
 
 
 if __name__ == "__main__":

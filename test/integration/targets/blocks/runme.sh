@@ -10,7 +10,7 @@ rm -f block_test.out
 # run the test and check to make sure the right number of completions was logged
 ansible-playbook -vv main.yml -i ../../inventory | tee block_test.out
 env python -c \
-    'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
+    'import sys, re; sys.stdout.write(re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(grep -E '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 # cleanup the output log again, to make sure the test is clean
@@ -18,7 +18,7 @@ rm -f block_test.out block_test_wo_colors.out
 # run test with free strategy and again count the completions
 ansible-playbook -vv main.yml -i ../../inventory -e test_strategy=free | tee block_test.out
 env python -c \
-    'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
+    'import sys, re; sys.stdout.write(re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(grep -E '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 # cleanup the output log again, to make sure the test is clean
@@ -26,7 +26,7 @@ rm -f block_test.out block_test_wo_colors.out
 # run test with host_pinned strategy and again count the completions
 ansible-playbook -vv main.yml -i ../../inventory -e test_strategy=host_pinned | tee block_test.out
 env python -c \
-    'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
+    'import sys, re; sys.stdout.write(re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(grep -E '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 
@@ -34,7 +34,7 @@ env python -c \
 rm -f block_test.out block_test_wo_colors.out
 ansible-playbook -vv block_fail.yml -i ../../inventory | tee block_test.out
 env python -c \
-    'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
+    'import sys, re; sys.stdout.write(re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(grep -E '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 
@@ -47,9 +47,9 @@ ansible-playbook -vv always_failure_with_rescue_rc.yml > rc_test.out || exit_cod
 set -e
 cat rc_test.out
 [ $exit_code -eq 2 ]
-[ "$(grep -c 'Failure in block' rc_test.out )" -eq 1 ]
-[ "$(grep -c 'Rescue' rc_test.out )" -eq 1 ]
-[ "$(grep -c 'Failure in always' rc_test.out )" -eq 1 ]
+[ "$(grep -c 'Failure in block' rc_test.out )" -eq 2 ]
+[ "$(grep -c 'Rescue' rc_test.out )" -eq 2 ]
+[ "$(grep -c 'Failure in always' rc_test.out )" -eq 2 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test_out
 
@@ -59,7 +59,7 @@ ansible-playbook -vv always_no_rescue_rc.yml > rc_test.out || exit_code=$?
 set -e
 cat rc_test.out
 [ $exit_code -eq 2 ]
-[ "$(grep -c 'Failure in block' rc_test.out )" -eq 1 ]
+[ "$(grep -c 'Failure in block' rc_test.out )" -eq 2 ]
 [ "$(grep -c 'Always' rc_test.out )" -eq 1 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
@@ -70,8 +70,8 @@ ansible-playbook -vv always_failure_no_rescue_rc.yml > rc_test.out || exit_code=
 set -e
 cat rc_test.out
 [ $exit_code -eq 2 ]
-[ "$(grep -c 'Failure in block' rc_test.out )" -eq 1 ]
-[ "$(grep -c 'Failure in always' rc_test.out )" -eq 1 ]
+[ "$(grep -c 'Failure in block' rc_test.out )" -eq 3 ]
+[ "$(grep -c 'Failure in always' rc_test.out )" -eq 2 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
 

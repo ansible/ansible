@@ -27,7 +27,7 @@
     - assert:
         that:
           - resolvelib_version_error is failed
-          - resolvelib_version_error.stderr | regex_search(error)
+          - resolvelib_version_error.stderr | regex_search(error) is truthy
       vars:
         error: "({{ import_error }}|{{ compat_error }})"
         import_error: "Failed to import resolvelib"

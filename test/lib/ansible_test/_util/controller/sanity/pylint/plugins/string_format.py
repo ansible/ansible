@@ -1,17 +1,11 @@
 """Ansible specific pylint plugin for checking format string usage."""
+
 # (c) 2018, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import astroid
-
-# support pylint 2.x and 3.x -- remove when supporting only 3.x
-try:
-    from pylint.interfaces import IAstroidChecker
-except ImportError:
-    class IAstroidChecker:
-        """Backwards compatibility for 2.x / 3.x support."""
 
 try:
     from pylint.checkers.utils import check_messages
@@ -38,7 +32,6 @@ class AnsibleStringFormatChecker(BaseChecker):
     is valid and the arguments match the format string.
     """
 
-    __implements__ = (IAstroidChecker,)
     name = 'string'
     msgs = MSGS
 

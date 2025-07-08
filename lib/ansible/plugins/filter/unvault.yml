@@ -8,7 +8,7 @@ DOCUMENTATION:
   positional: secret
   options:
     _input:
-      description: Vault string, or an C(AnsibleVaultEncryptedUnicode) string object.
+      description: Vault string.
       type: string
       required: true
     secret:

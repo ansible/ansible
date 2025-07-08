@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
             validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             msg = ''
-            # validate source and dest are strings FIXME: use basic.py and module specs
+            # FIXME: validate source and dest are strings; use basic.py and module specs
             if not isinstance(source, string_types):
                 msg = "Invalid type supplied for source option, it must be a string"
 
@@ -119,7 +119,7 @@ class ActionModule(ActionBase):
 
                     if 'not found' in slurpres.get('msg', ''):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
-                    elif slurpres.get('msg', '').startswith('source is a directory'):
+                    elif slurpres.get('msg', '').lower().startswith('source is a directory'):
                         result['msg'] = "remote file is a directory, fetch cannot work on directories"
 
                     return result
@@ -180,8 +180,8 @@ class ActionModule(ActionBase):
                     try:
                         with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
                             f.write(remote_data)
-                    except (IOError, OSError) as e:
-                        raise AnsibleActionFail("Failed to fetch the file: %s" % e)
+                    except OSError as ex:
+                        raise AnsibleActionFail("Failed to fetch the file.") from ex
                 new_checksum = secure_hash(dest)
                 # For backwards compatibility. We'll return None on FIPS enabled systems
                 try:

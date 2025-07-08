@@ -53,6 +53,9 @@
       - lookup('csvfile', 'Jane', file='people.csv', delimiter=',', col=0, keycol=1) == "Smith"
       - lookup('csvfile', 'German von Lastname file=people.csv delimiter=, col=1') == "Demo"
 
+- debug:
+    msg: output {{ lookup('csvfile', 'fruit', file='tabs.csv', delimiter='TAB', col=1) }}
+
 - name: Check tab-separated file
   assert:
     that:
@@ -82,7 +85,20 @@
   assert:
     that:
       - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2') == []
-      - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2, default=what?') == "what?"
+      - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2 default=what?') == "what?"
+      - lookup('csvfile', 'notfound', file='people.csv', delimiter=',', col=2, default=['a', 'b']) == 'a,b'
+
+- name: Pass wrong terms value fails parse_kv
+  set_fact:
+    people_col_2: '{{ lookup("csvfile", "notfound file=people.csv delimiter=, col=2, default=what?") }}'
+  ignore_errors: yes
+  register: people_col_2_r
+
+- name: Check if wrong terms value fails parse_kv
+  assert:
+    that:
+      - people_col_2_r.failed
+      - people_col_2_r.msg is contains "has an invalid value"
 
 # NOTE: For historical reasons, this is correct; quotes in the search field must
 # be treated literally as if they appear (escaped as required) in the field in the

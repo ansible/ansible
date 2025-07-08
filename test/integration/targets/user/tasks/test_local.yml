@@ -4,24 +4,6 @@
 # user database file.
 # https://github.com/ansible/ansible/issues/50947
 
-- name: Create /etc/gshadow
-  file:
-    path: /etc/gshadow
-    state: touch
-  when: ansible_facts.os_family == 'Suse'
-  tags:
-    - user_test_local_mode
-
-- name: Create /etc/libuser.conf
-  file:
-    path: /etc/libuser.conf
-    state: touch
-  when:
-    - ansible_facts.distribution == 'Ubuntu'
-    - ansible_facts.distribution_major_version is version_compare('16', '==')
-  tags:
-    - user_test_local_mode
-
 - name: Ensure luseradd is present
   action: "{{ ansible_facts.pkg_mgr }}"
   args:

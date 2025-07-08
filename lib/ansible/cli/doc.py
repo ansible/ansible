@@ -9,13 +9,16 @@ from __future__ import annotations
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import collections.abc
 import importlib
 import pkgutil
 import os
 import os.path
 import re
 import textwrap
-import traceback
+import typing as t
+
+import yaml
 
 import ansible.plugins.loader as plugin_loader
 
@@ -28,19 +31,22 @@ from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
-from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.list import list_plugins
+from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
+from ansible.plugins.list import _list_plugins_with_info, _PluginDocMetadata
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
+from ansible.template import trust_as_template
+from ansible._internal import _json
+from ansible._internal._templating import _jinja_plugins
 
 display = Display()
 
@@ -83,10 +89,9 @@ ref_style = {
 
 def jdump(text):
     try:
-        display.display(json_dump(text))
-    except TypeError as e:
-        display.vvv(traceback.format_exc())
-        raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
+        display.display(_json.json_dumps_formatted(text))
+    except TypeError as ex:
+        raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue.') from ex
 
 
 class RoleMixin(object):
@@ -104,7 +109,7 @@ class RoleMixin(object):
         """ Load and process the YAML for the first found of a set of role files
 
         :param str root: The root path to get the files from
-        :param str files: List of candidate file names in order of precedence
+        :param list files: List of candidate file names in order of precedence
         :param str role_name: The name of the role for which we want the argspec data.
         :param str collection: collection name or None in case of stand alone roles
 
@@ -117,6 +122,7 @@ class RoleMixin(object):
             meta_path = os.path.join(root, 'meta')
 
         # Check all potential spec files
+        path = None
         for specfile in files:
             full_path = os.path.join(meta_path, specfile)
             if os.path.exists(full_path):
@@ -128,11 +134,11 @@ class RoleMixin(object):
 
         try:
             with open(path, 'r') as f:
-                data = from_yaml(f.read(), file_name=path)
+                data = yaml.load(trust_as_template(f), Loader=AnsibleLoader)
                 if data is None:
                     data = {}
-        except (IOError, OSError) as e:
-            raise AnsibleParserError("Could not read the role '%s' (at %s)" % (role_name, path), orig_exc=e)
+        except OSError as ex:
+            raise AnsibleParserError(f"Could not read the role {role_name!r} at {path!r}.") from ex
 
         return data
 
@@ -696,16 +702,16 @@ class DocCLI(CLI, RoleMixin):
                     display.warning("Skipping role '%s' due to: %s" % (role, role_json[role]['error']), True)
                     continue
                 text += self.get_role_man_text(role, role_json[role])
-            except AnsibleParserError as e:
+            except AnsibleError as ex:
                 # TODO: warn and skip role?
-                raise AnsibleParserError("Role '%s" % (role), orig_exc=e)
+                raise AnsibleParserError(f"Error extracting role docs from {role!r}.") from ex
 
         # display results
         DocCLI.pager("\n".join(text))
 
     @staticmethod
     def _list_keywords():
-        return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
+        return yaml.load(pkgutil.get_data('ansible', 'keyword_desc.yml'), Loader=AnsibleInstrumentedLoader)
 
     @staticmethod
     def _get_keywords_docs(keys):
@@ -768,10 +774,8 @@ class DocCLI(CLI, RoleMixin):
 
                 data[key] = kdata
 
-            except (AttributeError, KeyError) as e:
-                display.warning("Skipping Invalid keyword '%s' specified: %s" % (key, to_text(e)))
-                if display.verbosity >= 3:
-                    display.verbose(traceback.format_exc())
+            except (AttributeError, KeyError) as ex:
+                display.error_as_warning(f'Skipping invalid keyword {key!r}.', ex)
 
         return data
 
@@ -787,48 +791,63 @@ class DocCLI(CLI, RoleMixin):
         return coll_filter
 
     def _list_plugins(self, plugin_type, content):
-
-        results = {}
-        self.plugins = {}
-        loader = DocCLI._prep_loader(plugin_type)
+        DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
-        self.plugins.update(list_plugins(plugin_type, coll_filter))
+        plugins = _list_plugins_with_info(plugin_type, coll_filter)
+
+        # Remove the internal ansible._protomatter plugins if getting all plugins
+        if not coll_filter:
+            plugins = {k: v for k, v in plugins.items() if not k.startswith('ansible._protomatter.')}
 
         # get appropriate content depending on option
         if content == 'dir':
-            results = self._get_plugin_list_descriptions(loader)
+            results = self._get_plugin_list_descriptions(plugins)
         elif content == 'files':
-            results = {k: self.plugins[k][0] for k in self.plugins.keys()}
+            results = {k: v.path for k, v in plugins.items()}
         else:
-            results = {k: {} for k in self.plugins.keys()}
+            results = {k: {} for k in plugins.keys()}
             self.plugin_list = set()  # reset for next iteration
 
         return results
 
-    def _get_plugins_docs(self, plugin_type, names, fail_ok=False, fail_on_errors=True):
-
+    def _get_plugins_docs(self, plugin_type: str, names: collections.abc.Iterable[str], fail_ok: bool = False, fail_on_errors: bool = True) -> dict[str, dict]:
         loader = DocCLI._prep_loader(plugin_type)
+
+        if plugin_type in ('filter', 'test'):
+            jinja2_builtins = _jinja_plugins.get_jinja_builtin_plugin_descriptions(plugin_type)
+            jinja2_builtins.update({name.split('.')[-1]: value for name, value in jinja2_builtins.items()})  # add short-named versions for lookup
+        else:
+            jinja2_builtins = {}
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
         for plugin in names:
-            doc = {}
+            doc: dict[str, t.Any] = {}
             try:
-                doc, plainexamples, returndocs, metadata = get_plugin_docs(plugin, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
+                doc, plainexamples, returndocs, metadata = self._get_plugin_docs_with_jinja2_builtins(
+                    plugin,
+                    plugin_type,
+                    loader,
+                    fragment_loader,
+                    jinja2_builtins,
+                )
             except AnsiblePluginNotFound as e:
                 display.warning(to_native(e))
                 continue
-            except Exception as e:
+            except Exception as ex:
+                msg = "Missing documentation (or could not parse documentation)"
+
                 if not fail_on_errors:
-                    plugin_docs[plugin] = {'error': 'Missing documentation or could not parse documentation: %s' % to_native(e)}
+                    plugin_docs[plugin] = {'error': f'{msg}: {ex}.'}
                     continue
-                display.vvv(traceback.format_exc())
-                msg = "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e))
+
+                msg = f"{plugin_type} {plugin} {msg}"
+
                 if fail_ok:
-                    display.warning(msg)
+                    display.warning(f'{msg}: {ex}')
                 else:
-                    raise AnsibleError(msg)
+                    raise AnsibleError(f'{msg}.') from ex
 
             if not doc:
                 # The doc section existed but was empty
@@ -840,14 +859,47 @@ class DocCLI(CLI, RoleMixin):
             if not fail_on_errors:
                 # Check whether JSON serialization would break
                 try:
-                    json_dump(docs)
-                except Exception as e:  # pylint:disable=broad-except
-                    plugin_docs[plugin] = {'error': 'Cannot serialize documentation as JSON: %s' % to_native(e)}
+                    _json.json_dumps_formatted(docs)
+                except Exception as ex:  # pylint:disable=broad-except
+                    plugin_docs[plugin] = {'error': f'Cannot serialize documentation as JSON: {ex}'}
                     continue
 
             plugin_docs[plugin] = docs
 
         return plugin_docs
+
+    def _get_plugin_docs_with_jinja2_builtins(
+        self,
+        plugin_name: str,
+        plugin_type: str,
+        loader: t.Any,
+        fragment_loader: t.Any,
+        jinja_builtins: dict[str, str],
+    ) -> tuple[dict, str | None, dict | None, dict | None]:
+        try:
+            return get_plugin_docs(plugin_name, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
+        except Exception:
+            if (desc := jinja_builtins.get(plugin_name, ...)) is not ...:
+                short_name = plugin_name.split('.')[-1]
+                long_name = f'ansible.builtin.{short_name}'
+                # Dynamically build a doc stub for any Jinja2 builtin plugin we haven't
+                # explicitly documented.
+                doc = dict(
+                    collection='ansible.builtin',
+                    plugin_name=long_name,
+                    filename='',
+                    short_description=desc,
+                    description=[
+                        desc,
+                        '',
+                        f"This is the Jinja builtin {plugin_type} plugin {short_name!r}.",
+                        f"See: U(https://jinja.palletsprojects.com/en/stable/templates/#jinja-{plugin_type}s.{short_name})",
+                    ],
+                )
+
+                return doc, None, None, None
+
+            raise
 
     def _get_roles_path(self):
         """
@@ -997,10 +1049,10 @@ class DocCLI(CLI, RoleMixin):
     def get_all_plugins_of_type(plugin_type):
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         paths = loader._get_paths_with_context()
-        plugins = {}
+        plugins = []
         for path_context in paths:
-            plugins.update(list_plugins(plugin_type))
-        return sorted(plugins.keys())
+            plugins += _list_plugins_with_info(plugin_type).keys()
+        return sorted(plugins)
 
     @staticmethod
     def get_plugin_metadata(plugin_type, plugin_name):
@@ -1015,9 +1067,8 @@ class DocCLI(CLI, RoleMixin):
         try:
             doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
                                             collection_name=collection_name, plugin_type=plugin_type)
-        except Exception:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("%s %s at %s has a documentation formatting error or is missing documentation." % (plugin_type, plugin_name, filename))
+        except Exception as ex:
+            raise AnsibleError(f"{plugin_type} {plugin_name} at {filename!r} has a documentation formatting error or is missing documentation.") from ex
 
         if doc is None:
             # Removed plugins don't have any documentation
@@ -1093,24 +1144,25 @@ class DocCLI(CLI, RoleMixin):
 
         try:
             text = DocCLI.get_man_text(doc, collection_name, plugin_type)
-        except Exception as e:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("Unable to retrieve documentation from '%s'" % (plugin), orig_exc=e)
+        except Exception as ex:
+            raise AnsibleError(f"Unable to retrieve documentation from {plugin!r}.") from ex
 
         return text
 
-    def _get_plugin_list_descriptions(self, loader):
+    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, str]:
 
         descs = {}
-        for plugin in self.plugins.keys():
+        for plugin, plugin_info in plugins.items():
             # TODO: move to plugin itself i.e: plugin.get_desc()
             doc = None
-            filename = Path(to_native(self.plugins[plugin][0]))
+
             docerror = None
-            try:
-                doc = read_docstub(filename)
-            except Exception as e:
-                docerror = e
+            if plugin_info.path:
+                filename = Path(to_native(plugin_info.path))
+                try:
+                    doc = read_docstub(filename)
+                except Exception as e:
+                    docerror = e
 
             # plugin file was empty or had error, lets try other options
             if doc is None:
@@ -1125,9 +1177,15 @@ class DocCLI(CLI, RoleMixin):
                     except Exception as e:
                         docerror = e
 
-            if docerror:
-                display.warning("%s has a documentation formatting error: %s" % (plugin, docerror))
-                continue
+                # Do a final fallback to see if the plugin is a shadowed Jinja2 plugin
+                # without any explicit documentation.
+                if doc is None and plugin_info.jinja_builtin_short_description:
+                    descs[plugin] = plugin_info.jinja_builtin_short_description
+                    continue
+
+                if docerror:
+                    display.error_as_warning(f"{plugin} has a documentation formatting error.", exception=docerror)
+                    continue
 
             if not doc or not isinstance(doc, dict):
                 desc = 'UNDOCUMENTED'
@@ -1170,12 +1228,16 @@ class DocCLI(CLI, RoleMixin):
         return 'version %s' % (version_added, )
 
     @staticmethod
-    def warp_fill(text, limit, initial_indent='', subsequent_indent='', **kwargs):
+    def warp_fill(text, limit, initial_indent='', subsequent_indent='', initial_extra=0, **kwargs):
         result = []
         for paragraph in text.split('\n\n'):
-            result.append(textwrap.fill(paragraph, limit, initial_indent=initial_indent, subsequent_indent=subsequent_indent,
-                                        break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs))
+            wrapped = textwrap.fill(paragraph, limit, initial_indent=initial_indent + ' ' * initial_extra, subsequent_indent=subsequent_indent,
+                                    break_on_hyphens=False, break_long_words=False, drop_whitespace=True, **kwargs)
+            if initial_extra and wrapped.startswith(' ' * initial_extra):
+                wrapped = wrapped[initial_extra:]
+            result.append(wrapped)
             initial_indent = subsequent_indent
+            initial_extra = 0
         return '\n'.join(result)
 
     @staticmethod
@@ -1203,24 +1265,27 @@ class DocCLI(CLI, RoleMixin):
 
             # description is specifically formatted and can either be string or list of strings
             if 'description' not in opt:
-                raise AnsibleError("All (sub-)options and return values must have a 'description' field")
+                raise AnsibleError("All (sub-)options and return values must have a 'description' field", obj=o)
             text.append('')
 
             # TODO: push this to top of for and sort by size, create indent on largest key?
-            inline_indent = base_indent + ' ' * max((len(opt_indent) - len(o)) - len(base_indent), 2)
-            sub_indent = inline_indent + ' ' * (len(o) + 3)
+            inline_indent = ' ' * max((len(opt_indent) - len(o)) - len(base_indent), 2)
+            extra_indent = base_indent + ' ' * (len(o) + 3)
+            sub_indent = inline_indent + extra_indent
             if is_sequence(opt['description']):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
                     if entry_idx == 1:
-                        text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=inline_indent, subsequent_indent=sub_indent))
+                        text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit,
+                                    initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
                     else:
                         text.append(DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=sub_indent, subsequent_indent=sub_indent))
             else:
                 if not isinstance(opt['description'], string_types):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
-                text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=inline_indent, subsequent_indent=sub_indent))
+                text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit,
+                            initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
             del opt['description']
 
             suboptions = []
@@ -1244,7 +1309,7 @@ class DocCLI(CLI, RoleMixin):
                             if ignore in item:
                                 del item[ignore]
 
-            # reformat cli optoins
+            # reformat cli options
             if 'cli' in opt and opt['cli']:
                 conf['cli'] = []
                 for cli in opt['cli']:
@@ -1326,7 +1391,6 @@ class DocCLI(CLI, RoleMixin):
                     'This was unintentionally allowed when plugin attributes were added, '
                     'but the feature does not map well to role argument specs.',
                     version='2.20',
-                    collection_name='ansible.builtin',
                 )
                 text.append("")
                 text.append(_format("ATTRIBUTES:", 'bold'))
@@ -1360,7 +1424,7 @@ class DocCLI(CLI, RoleMixin):
                     try:
                         text.append(yaml_dump(doc.pop('examples'), indent=2, default_flow_style=False))
                     except Exception as e:
-                        raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+                        raise AnsibleParserError("Unable to parse examples section.") from e
 
         return text
 
@@ -1376,7 +1440,7 @@ class DocCLI(CLI, RoleMixin):
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename')))
+        text.append("> %s %s (%s)" % (plugin_type.upper(), _format(doc.pop('plugin_name'), 'bold'), doc.pop('filename') or 'Jinja2'))
 
         if isinstance(doc['description'], list):
             descs = doc.pop('description')
@@ -1396,9 +1460,9 @@ class DocCLI(CLI, RoleMixin):
                 if 'removed_at_date' not in doc['deprecated'] and 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
                     doc['deprecated']['removed_in'] = doc['deprecated']['version']
                 try:
-                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True))
+                    text.append('\t' + C.config.get_deprecated_msg_from_config(doc['deprecated'], True, collection_name=collection_name))
                 except KeyError as e:
-                    raise AnsibleError("Invalid deprecation documentation structure", orig_exc=e)
+                    raise AnsibleError("Invalid deprecation documentation structure.") from e
             else:
                 text.append("%s" % doc['deprecated'])
             del doc['deprecated']
@@ -1507,8 +1571,8 @@ class DocCLI(CLI, RoleMixin):
             else:
                 try:
                     text.append(yaml_dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
-                except Exception as e:
-                    raise AnsibleParserError("Unable to parse examples section", orig_exc=e)
+                except Exception as ex:
+                    raise AnsibleParserError("Unable to parse examples section.") from ex
 
         if doc.get('returndocs', False):
             text.append('')

@@ -28,7 +28,7 @@
     - name: validate output
       assert:
         that:
-          - 'ansible_pkg_mgr == "dnf"'
+          - 'ansible_pkg_mgr in ("dnf", "dnf5")'
   always:
     - name: remove apt
       dnf:
@@ -102,11 +102,8 @@
   set_fact:
     package_distros:
         - RedHat
-        - CentOS
-        - ScientificLinux
         - Fedora
         - Ubuntu
-        - Debian
 
 - block:
     - name: remove at package

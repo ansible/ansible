@@ -73,8 +73,8 @@ author:
 """
 
 EXAMPLES = r"""
-- name: Bootstrap a host without python2 installed
-  ansible.builtin.raw: dnf install -y python2 python2-dnf libselinux-python
+- name: Bootstrap a host without Python installed
+  ansible.builtin.raw: dnf install -y python3 python3-libdnf
 
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
   ansible.builtin.raw: cat < /tmp/*txt

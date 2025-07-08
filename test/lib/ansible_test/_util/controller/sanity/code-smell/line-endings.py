@@ -1,4 +1,5 @@
 """Require Unix line endings."""
+
 from __future__ import annotations
 
 import sys

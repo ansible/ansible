@@ -94,8 +94,7 @@
 - name: assert task was successfully started
   assert:
     that:
-    - fnf_task.started == 1
-    - fnf_task is started
+    - fnf_task.started
     - "'ansible_job_id' in fnf_task"
 
 - name: 'check on task started as a "fire-and-forget"'
@@ -108,7 +107,7 @@
 - name: assert task was successfully checked
   assert:
     that:
-    - fnf_result.finished
+    - fnf_result.finished == 1
     - fnf_result is finished
 
 - name: test graceful module failure
@@ -123,10 +122,9 @@
   assert:
     that:
     - async_result.ansible_job_id is match('j\d+\.\d+')
-    - async_result.finished == 1
-    - async_result is finished
-    - async_result is not changed
-    - async_result is failed
+    - async_result.finished
+    - async_result.changed is false
+    - async_result.failed
     - async_result.msg == 'failed gracefully'
 
 - name: test exception module failure
@@ -143,11 +141,14 @@
     - async_result.ansible_job_id is match('j\d+\.\d+')
     - async_result.finished == 1
     - async_result is finished
-    - async_result.changed == false
     - async_result is not changed
-    - async_result.failed == true
+    - async_result.finished
+    - async_result.changed is false
+    - async_result.failed
     - async_result is failed
-    - async_result.stderr is search('failing via exception', multiline=True)
+    - async_result.msg is contains 'failing via exception'
+    # DTFIX5: enable tracebacks, ensure exception is populated
+    #- async_result.exception is contains 'failing via exception'
 
 - name: test leading junk before JSON
   async_test:
@@ -160,11 +161,9 @@
   assert:
     that:
     - async_result.ansible_job_id is match('j\d+\.\d+')
-    - async_result.finished == 1
-    - async_result is finished
-    - async_result.changed == true
-    - async_result is changed
-    - async_result is successful
+    - async_result.finished
+    - async_result.changed
+    - async_result.failed is false
 
 - name: test trailing junk after JSON
   async_test:
@@ -177,11 +176,9 @@
   assert:
     that:
     - async_result.ansible_job_id is match('j\d+\.\d+')
-    - async_result.finished == 1
-    - async_result is finished
-    - async_result.changed == true
-    - async_result is changed
-    - async_result is successful
+    - async_result.finished
+    - async_result.changed
+    - async_result.failed is false
     - async_result.warnings[0] is search('trailing junk after module output')
 
 - name: test stderr handling
@@ -320,7 +317,6 @@
   vars:
     ansible_facts_modules:
       - setup
-      - package_facts
       - service_facts
 
 - name: test async in check mode

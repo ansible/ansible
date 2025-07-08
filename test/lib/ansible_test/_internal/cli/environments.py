@@ -1,9 +1,11 @@
 """Command line parsing for test environments."""
+
 from __future__ import annotations
 
 import argparse
 import enum
 import functools
+import os
 import typing as t
 
 from ..constants import (
@@ -146,8 +148,20 @@ def add_global_options(
         help='install command requirements',
     )
 
+    global_parser.add_argument(
+        '--host-path',
+        help=argparse.SUPPRESS,  # for internal use only by ansible-test
+    )
+
+    global_parser.add_argument(
+        '--metadata',
+        default=os.environ.get('ANSIBLE_TEST_METADATA_PATH'),
+        help=argparse.SUPPRESS,  # for internal use only by ansible-test
+    )
+
     add_global_remote(global_parser, controller_mode)
     add_global_docker(global_parser, controller_mode)
+    add_global_debug(global_parser)
 
 
 def add_composite_environment_options(
@@ -159,11 +173,6 @@ def add_composite_environment_options(
     """Add composite options for controlling the test environment."""
     composite_parser = t.cast(argparse.ArgumentParser, parser.add_argument_group(
         title='composite environment arguments (mutually exclusive with "environment arguments" above)'))
-
-    composite_parser.add_argument(
-        '--host-path',
-        help=argparse.SUPPRESS,
-    )
 
     action_types: list[t.Type[CompositeAction]] = []
 
@@ -436,6 +445,44 @@ def add_global_docker(
         nargs='?',
         const='',
         help=suppress or 'probe container cgroups, with optional log dir',
+    )
+
+
+def add_global_debug(
+    parser: argparse.ArgumentParser,
+) -> None:
+    """Add global debug options."""
+    # These `--dev-*` options are experimental features that may change or be removed without regard for backward compatibility.
+    # Additionally, they're features that are not likely to be used by most users.
+    # To avoid confusion, they're hidden from `--help` and tab completion by default, except for ansible-core-ci users.
+    suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
+
+    parser.add_argument(
+        '--dev-debug-on-demand',
+        action='store_true',
+        default=False,
+        help=suppress or 'enable remote debugging only under a debugger',
+    )
+
+    parser.add_argument(
+        '--dev-debug-cli',
+        action='store_true',
+        default=False,
+        help=suppress or 'enable remote debugging for the Ansible CLI',
+    )
+
+    parser.add_argument(
+        '--dev-debug-ansiballz',
+        action='store_true',
+        default=False,
+        help=suppress or 'enable remote debugging for AnsiballZ modules',
+    )
+
+    parser.add_argument(
+        '--dev-debug-self',
+        action='store_true',
+        default=False,
+        help=suppress or 'enable remote debugging for ansible-test',
     )
 
 

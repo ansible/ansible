@@ -29,16 +29,46 @@
     that:
     - "result.changed == true"
 
-- name: test assemble with all fragments
+- name: test assemble with all fragments, but only check!
   assemble: src="{{remote_tmp_dir}}/src" dest="{{remote_tmp_dir}}/assembled1"
+  check_mode: True
   register: result
 
 - name: assert the fragments were assembled
   assert:
     that:
-    - "result.state == 'file'"
     - "result.changed == True"
-    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: ensure file was not created
+  stat:
+    path: "{{remote_tmp_dir}}/assembled1"
+  register: check_it
+
+- name: it should not exist, yet
+  assert:
+    that:
+      - not check_it.stat.exists
+
+- name: test assemble with all fragments, really create now!
+  assemble: src="{{remote_tmp_dir}}/src" dest="{{remote_tmp_dir}}/assembled1"
+  register: result2
+
+- name: assert the fragments were assembled
+  assert:
+    that:
+    - "result2.state == 'file'"
+    - "result2.changed == True"
+    - "result2.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: ensure file was created
+  stat:
+    path: "{{remote_tmp_dir}}/assembled1"
+  register: check_it2
+
+- name: it should exist now
+  assert:
+    that:
+      - check_it2.stat.exists
 
 - name: test assemble with all fragments
   assemble: src="{{remote_tmp_dir}}/src" dest="{{remote_tmp_dir}}/assembled1"

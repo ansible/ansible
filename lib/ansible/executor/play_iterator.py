@@ -155,9 +155,6 @@ class PlayIterator:
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
-        # TODO: hardcoded resolution here, but should use actual resolution code in the end,
-        #       in case of 'legacy' mismatch
-        setup_task.resolved_action = 'ansible.builtin.gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.args = {}
 
@@ -255,7 +252,6 @@ class PlayIterator:
             self.set_state_for_host(host.name, s)
 
         display.debug("done getting next task for host %s" % host.name)
-        display.debug(" ^ task is: %s" % task)
         display.debug(" ^ state is: %s" % s)
         return (s, task)
 
@@ -292,7 +288,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
+                       (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name)):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
@@ -450,8 +446,7 @@ class PlayIterator:
                 # skip implicit flush_handlers if there are no handlers notified
                 if (
                     task.implicit
-                    and task.action in C._ACTION_META
-                    and task.args.get('_raw_params', None) == 'flush_handlers'
+                    and task._get_meta() == 'flush_handlers'
                     and (
                         # the state store in the `state` variable could be a nested state,
                         # notifications are always stored in the top level state, get it here
@@ -598,28 +593,22 @@ class PlayIterator:
             if state.tasks_child_state:
                 state.tasks_child_state = self._insert_tasks_into_state(state.tasks_child_state, task_list)
             else:
-                target_block = state._blocks[state.cur_block].copy()
-                before = target_block.block[:state.cur_regular_task]
-                after = target_block.block[state.cur_regular_task:]
-                target_block.block = before + task_list + after
+                target_block = state._blocks[state.cur_block].copy(exclude_tasks=True)
+                target_block.block[state.cur_regular_task:state.cur_regular_task] = task_list
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.RESCUE:
             if state.rescue_child_state:
                 state.rescue_child_state = self._insert_tasks_into_state(state.rescue_child_state, task_list)
             else:
-                target_block = state._blocks[state.cur_block].copy()
-                before = target_block.rescue[:state.cur_rescue_task]
-                after = target_block.rescue[state.cur_rescue_task:]
-                target_block.rescue = before + task_list + after
+                target_block = state._blocks[state.cur_block].copy(exclude_tasks=True)
+                target_block.rescue[state.cur_rescue_task:state.cur_rescue_task] = task_list
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.ALWAYS:
             if state.always_child_state:
                 state.always_child_state = self._insert_tasks_into_state(state.always_child_state, task_list)
             else:
-                target_block = state._blocks[state.cur_block].copy()
-                before = target_block.always[:state.cur_always_task]
-                after = target_block.always[state.cur_always_task:]
-                target_block.always = before + task_list + after
+                target_block = state._blocks[state.cur_block].copy(exclude_tasks=True)
+                target_block.always[state.cur_always_task:state.cur_always_task] = task_list
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.HANDLERS:
             state.handlers[state.cur_handlers_task:state.cur_handlers_task] = [h for b in task_list for h in b.block]

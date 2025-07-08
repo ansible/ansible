@@ -1,4 +1,5 @@
 """HTTP Tester plugin for integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -31,7 +32,7 @@ class HttptesterProvider(CloudProvider):
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.2.0')
+        self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:3.3.0')
 
         self.uses_docker = True
 
@@ -70,7 +71,7 @@ class HttptesterProvider(CloudProvider):
             return
 
         # Read the password from the container environment.
-        # This allows the tests to work when re-using an existing container.
+        # This allows the tests to work when reusing an existing container.
         # The password is marked as sensitive, since it may differ from the one we generated.
         krb5_password = descriptor.details.container.env_dict()[KRB5_PASSWORD_ENV]
         display.sensitive.add(krb5_password)

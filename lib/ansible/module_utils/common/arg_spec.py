@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.module_utils.common.parameters import (
     _ADDITIONAL_CHECKS,
     _get_legal_inputs,
@@ -300,9 +301,13 @@ class ModuleArgumentSpecValidator(ArgumentSpecValidator):
         result = super(ModuleArgumentSpecValidator, self).validate(parameters)
 
         for d in result._deprecations:
-            deprecate(d['msg'],
-                      version=d.get('version'), date=d.get('date'),
-                      collection_name=d.get('collection_name'))
+            # DTFIX-FUTURE: pass an actual deprecator instead of one derived from collection_name
+            deprecate(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+                msg=d['msg'],
+                version=d.get('version'),
+                date=d.get('date'),
+                deprecator=deprecator_from_collection_name(d.get('collection_name')),
+            )
 
         for w in result._warnings:
             warn('Both option {option} and its alias {alias} are set.'.format(option=w['option'], alias=w['alias']))

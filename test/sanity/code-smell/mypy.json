@@ -1,10 +1,10 @@
 {
     "prefixes": [
         "lib/ansible/",
-        "test/lib/ansible_test/_internal/",
         "packaging/",
-        "test/units",
-        "test/lib/ansible_test/_util/target/sanity/import/"
+        "test/lib/ansible_test/",
+        "test/sanity/",
+        "test/units/"
     ],
     "extensions": [
         ".py"

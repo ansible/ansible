@@ -23,21 +23,8 @@ class SeqStub:
 Sequence.register(SeqStub)
 
 
-class FakeAnsibleVaultEncryptedUnicode(Sequence):
-    __ENCRYPTED__ = True
-
-    def __init__(self, data):
-        self.data = data
-
-    def __getitem__(self, index):
-        raise NotImplementedError()  # pragma: nocover
-
-    def __len__(self):
-        raise NotImplementedError()  # pragma: nocover
-
-
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
-TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS) + (FakeAnsibleVaultEncryptedUnicode(u'foo'),)
+TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS)
 
 TEST_ITEMS_NON_SEQUENCES: tuple = (
     {}, object(), frozenset(),

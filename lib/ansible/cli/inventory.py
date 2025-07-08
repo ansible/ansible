@@ -9,15 +9,18 @@ from __future__ import annotations
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import json
 import sys
+import typing as t
 
 import argparse
 
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleRuntimeError
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible._internal._json._profiles import _inventory_legacy
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -148,42 +151,24 @@ class InventoryCLI(CLI):
                 try:
                     with open(to_bytes(outfile), 'wb') as f:
                         f.write(to_bytes(results))
-                except (OSError, IOError) as e:
-                    raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
+                except OSError as ex:
+                    raise AnsibleError(f'Unable to write to destination file {outfile!r}.') from ex
             sys.exit(0)
 
         sys.exit(1)
 
     @staticmethod
     def dump(stuff):
-
         if context.CLIARGS['yaml']:
             import yaml
+
             from ansible.parsing.yaml.dumper import AnsibleDumper
+
             results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
-            from ansible.plugins.inventory.toml import toml_dumps
-            try:
-                results = toml_dumps(stuff)
-            except TypeError as e:
-                raise AnsibleError(
-                    'The source inventory contains a value that cannot be represented in TOML: %s' % e
-                )
-            except KeyError as e:
-                raise AnsibleError(
-                    'The source inventory contains a non-string key (%s) which cannot be represented in TOML. '
-                    'The specified key will need to be converted to a string. Be aware that if your playbooks '
-                    'expect this key to be non-string, your playbooks will need to be modified to support this '
-                    'change.' % e.args[0]
-                )
+            results = toml_dumps(stuff)
         else:
-            import json
-            from ansible.parsing.ajson import AnsibleJSONEncoder
-            try:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
-            except TypeError as e:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
-                display.warning("Could not sort JSON output due to issues while sorting keys: %s" % to_native(e))
+            results = json.dumps(stuff, cls=_inventory_legacy.Encoder, sort_keys=True, indent=4)
 
         return results
 
@@ -306,7 +291,11 @@ class InventoryCLI(CLI):
         results = format_group(top, frozenset(h.name for h in hosts))
 
         # populate meta
-        results['_meta'] = {'hostvars': {}}
+        results['_meta'] = {
+            'hostvars': {},
+            'profile': _inventory_legacy.Encoder.profile_name,
+        }
+
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
@@ -407,6 +396,17 @@ class InventoryCLI(CLI):
         results = format_group(top, available_hosts)
 
         return results
+
+
+def toml_dumps(data: t.Any) -> str:
+    try:
+        from tomli_w import dumps as _tomli_w_dumps
+    except ImportError:
+        pass
+    else:
+        return _tomli_w_dumps(data)
+
+    raise AnsibleRuntimeError('The Python library "tomli-w" is required when using the TOML output format.')
 
 
 def main(args=None):

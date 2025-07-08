@@ -1,7 +1,9 @@
 """Inventory creation from host profiles."""
+
 from __future__ import annotations
 
 import shutil
+import sys
 import typing as t
 
 from .config import (
@@ -11,6 +13,11 @@ from .config import (
 from .util import (
     sanitize_host_name,
     exclude_none_values,
+)
+
+from .host_configs import (
+    ControllerConfig,
+    PosixRemoteConfig,
 )
 
 from .host_profiles import (
@@ -23,6 +30,7 @@ from .host_profiles import (
     SshTargetHostProfile,
     WindowsInventoryProfile,
     WindowsRemoteProfile,
+    DebuggableProfile,
 )
 
 from .ssh import (
@@ -30,12 +38,40 @@ from .ssh import (
 )
 
 
+def get_common_variables(target_profile: HostProfile, controller: bool = False) -> dict[str, t.Any]:
+    """Get variables common to all scenarios, but dependent on the target profile."""
+    target_config = target_profile.config
+
+    if controller or isinstance(target_config, ControllerConfig):
+        # The current process is running on the controller, so consult the controller directly when it is the target.
+        macos = sys.platform == 'darwin'
+    elif isinstance(target_config, PosixRemoteConfig):
+        # The target is not the controller, so consult the remote config for that target.
+        macos = target_config.name.startswith('macos/')
+    else:
+        # The target is a type which either cannot be macOS or for which the OS is unknown.
+        # There is currently no means for the user to override this for user provided hosts.
+        macos = False
+
+    common_variables: dict[str, t.Any] = {}
+
+    if macos:
+        # When using sudo on macOS we may encounter permission denied errors when dropping privileges due to inability to access the current working directory.
+        # To compensate for this we'll perform a `cd /` before running any commands after `sudo` succeeds.
+        common_variables.update(ansible_sudo_chdir='/')
+
+    if isinstance(target_profile, DebuggableProfile):
+        common_variables.update(target_profile.get_ansiballz_inventory_variables())
+
+    return common_variables
+
+
 def create_controller_inventory(args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile) -> None:
     """Create and return inventory for use in controller-only integration tests."""
     inventory = Inventory(
         host_groups=dict(
             testgroup=dict(
-                testhost=dict(
+                testhost=get_common_variables(controller_host, controller=True) | dict(
                     ansible_connection='local',
                     ansible_pipelining='yes',
                     ansible_python_interpreter=controller_host.python.path,
@@ -129,7 +165,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
         inventory = Inventory(
             host_groups=dict(
                 testgroup=dict(
-                    testhost=dict(
+                    testhost=get_common_variables(target_host) | dict(
                         ansible_connection='local',
                         ansible_pipelining='yes',
                         ansible_python_interpreter=target_host.python.path,
@@ -145,7 +181,7 @@ def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: lis
 
         ssh = connections[0]
 
-        testhost: dict[str, t.Optional[t.Union[str, int]]] = dict(
+        testhost: dict[str, t.Optional[t.Union[str, int]]] = get_common_variables(target_host) | dict(
             ansible_connection='ssh',
             ansible_pipelining='yes',
             ansible_python_interpreter=ssh.settings.python_interpreter,

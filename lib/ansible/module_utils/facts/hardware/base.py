@@ -28,7 +28,7 @@
 
 from __future__ import annotations
 
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -49,7 +49,7 @@ class HardwareCollector(BaseFactCollector):
     _fact_ids = set(['processor',
                      'processor_cores',
                      'processor_count',
-                     # TODO: mounts isnt exactly hardware
+                     # TODO: mounts isn't exactly hardware
                      'mounts',
                      'devices'])  # type: t.Set[str]
     _fact_class = Hardware

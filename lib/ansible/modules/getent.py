@@ -114,8 +114,6 @@ ansible_facts:
       type: list
 """
 
-import traceback
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_native
 
@@ -156,7 +154,7 @@ def main():
     try:
         rc, out, err = module.run_command(cmd)
     except Exception as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg=to_native(e))
 
     msg = "Unexpected failure!"
     dbtree = 'getent_%s' % database

@@ -1,0 +1,78 @@
+# verify interpreter discovery handles its own templating properly
+
+- name: clear facts to force interpreter discovery to run
+  meta: clear_facts
+
+- name: valid template for python interpreter config
+  test_echo_module:
+  vars:
+    ansible_python_interpreter: "{{ 'auto' }}"
+  register: result
+
+- assert:
+    that:
+      - result.ansible_facts.discovered_interpreter_python is defined
+
+- name: valid template for non-python interpreter config
+  test_non_python_interpreter:
+  vars:
+    # rely on the discovered interpreter from the previous test
+    ansible_actually_python_interpreter: "{{ discovered_interpreter_python }}"
+  register: result
+
+- assert:
+    that:
+      - result.running_python_interpreter == discovered_interpreter_python
+
+- name: clear facts to force interpreter discovery to run
+  meta: clear_facts
+
+- name: omit for python interpreter config
+  test_echo_module:
+  vars:
+    ansible_python_interpreter: "{{ omit }}"
+  register: result
+
+- assert:
+    that:
+      - result.ansible_facts.discovered_interpreter_python is defined
+
+- name: omit for non-python interpreter config
+  test_non_python_interpreter:
+  vars:
+    ansible_actually_python_interpreter: "{{ omit }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - (result.module_stdout + result.module_stderr) is contains("actually_python")
+
+- name: clear facts to force interpreter discovery to run
+  meta: clear_facts
+
+- name: undefined variable for python interpreter config
+  test_echo_module:
+  vars:
+    ansible_python_interpreter: "{{ undefined_variable }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("undefined")
+      - result.ansible_facts.discovered_interpreter_python is not defined
+
+- name: undefined variable for non-python interpreter config
+  test_non_python_interpreter:
+  vars:
+    ansible_actually_python_interpreter: "{{ undefined_variable }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("undefined")

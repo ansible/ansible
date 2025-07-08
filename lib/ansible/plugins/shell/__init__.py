@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+import dataclasses
 import os
 import os.path
 import re
@@ -31,6 +32,13 @@ from ansible.module_utils.six import text_type, string_types
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class _ShellCommand:
+    """Internal type returned by shell subsystems that may require both an execution payload and a command (eg powershell)."""
+    command: str
+    input_data: bytes | None = None
 
 
 class ShellBase(AnsiblePlugin):
@@ -121,7 +129,13 @@ class ShellBase(AnsiblePlugin):
         cmd = ['test', '-e', self.quote(path)]
         return ' '.join(cmd)
 
-    def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
+    def mkdtemp(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> str:
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
 
@@ -163,7 +177,31 @@ class ShellBase(AnsiblePlugin):
 
         return cmd
 
-    def expand_user(self, user_home_path, username=''):
+    def _mkdtemp2(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> _ShellCommand:
+        """Gets command info to create a temporary directory.
+
+        This is an internal API that should not be used publicly.
+
+        :args basefile: The base name of the temporary directory.
+        :args system: If True, create the directory in a system-wide location.
+        :args mode: The permissions mode for the directory.
+        :args tmpdir: The directory in which to create the temporary directory.
+        :returns: The shell command to run to create the temp directory.
+        """
+        cmd = self.mkdtemp(basefile=basefile, system=system, mode=mode, tmpdir=tmpdir)
+        return _ShellCommand(command=cmd, input_data=None)
+
+    def expand_user(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> str:
         """ Return a command to expand tildes in a path
 
         It can be either "~" or "~username". We just ignore $HOME
@@ -183,6 +221,22 @@ class ShellBase(AnsiblePlugin):
             user_home_path += username
 
         return 'echo %s' % user_home_path
+
+    def _expand_user2(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> _ShellCommand:
+        """Gets command to expand user path.
+
+        This is an internal API that should not be used publicly.
+
+        :args user_home_path: The path to expand.
+        :args username: The username to use for expansion.
+        :returns: The shell command to run to get the expanded user path.
+        """
+        cmd = self.expand_user(user_home_path, username=username)
+        return _ShellCommand(command=cmd, input_data=None)
 
     def pwd(self):
         """Return the working directory after connecting"""

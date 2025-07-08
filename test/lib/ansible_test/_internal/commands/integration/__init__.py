@@ -1,4 +1,5 @@
 """Ansible integration test infrastructure."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -104,6 +105,7 @@ from ...host_profiles import (
     HostProfile,
     PosixProfile,
     SshTargetHostProfile,
+    DebuggableProfile,
 )
 
 from ...provisioning import (
@@ -458,10 +460,10 @@ def command_integration_filtered(
 
         if isinstance(target_profile, ControllerProfile):
             if host_state.controller_profile.python.path != target_profile.python.path:
-                install_requirements(args, target_python, command=True, controller=False)  # integration
+                install_requirements(args, target_profile, target_python, command=True, controller=False)  # integration
         elif isinstance(target_profile, SshTargetHostProfile):
             connection = target_profile.get_controller_target_connections()[0]
-            install_requirements(args, target_python, command=True, controller=False, connection=connection)  # integration
+            install_requirements(args, target_profile, target_python, command=True, controller=False, connection=connection)  # integration
 
     coverage_manager = CoverageManager(args, host_state, inventory_path)
     coverage_manager.setup()
@@ -590,6 +592,9 @@ def command_integration_script(
     """Run an integration test script."""
     display.info('Running %s integration test script' % target.name)
 
+    if not os.access(target.script_path, os.X_OK):
+        raise ApplicationError(f'Unable to run non-executable script {target.script_path!r}. Did you forget to run "chmod +x" on it?')
+
     env_config = None
 
     if isinstance(args, PosixIntegrationConfig):
@@ -612,7 +617,7 @@ def command_integration_script(
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env, host_state)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
         env.update(
@@ -733,7 +738,7 @@ def command_integration_role(
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env, host_state)
             cwd = test_env.integration_dir
 
             env.update(
@@ -789,6 +794,7 @@ def integration_environment(
     ansible_config: t.Optional[str],
     env_config: t.Optional[CloudEnvironmentConfig],
     test_env: IntegrationEnvironment,
+    host_state: HostState,
 ) -> dict[str, str]:
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -809,6 +815,9 @@ def integration_environment(
     if args.debug_strategy:
         env.update(ANSIBLE_STRATEGY='debug')
 
+    if isinstance(host_state.controller_profile, DebuggableProfile):
+        env.update(host_state.controller_profile.get_ansible_cli_environment_variables())
+
     if 'non_local/' in target.aliases:
         if args.coverage:
             display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
@@ -816,6 +825,7 @@ def integration_environment(
         env.update(ANSIBLE_TEST_REMOTE_INTERPRETER='')
 
     env.update(integration)
+    env.update(target.env_set)
 
     return env
 
@@ -970,6 +980,13 @@ def requirements(host_profile: HostProfile) -> None:
     """Install requirements after bootstrapping and delegation."""
     if isinstance(host_profile, ControllerHostProfile) and host_profile.controller:
         configure_pypi_proxy(host_profile.args, host_profile)  # integration, windows-integration, network-integration
-        install_requirements(host_profile.args, host_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration
+
+        install_requirements(  # integration, windows-integration, network-integration
+            args=host_profile.args,
+            host_profile=host_profile,
+            python=host_profile.python,
+            ansible=True,
+            command=True,
+        )
     elif isinstance(host_profile, PosixProfile) and not isinstance(host_profile, ControllerProfile):
         configure_pypi_proxy(host_profile.args, host_profile)  # integration

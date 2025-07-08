@@ -57,13 +57,13 @@ def should_retry_error(exception):
     if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
         return True
 
-    if isinstance(exception, AnsibleError) and (orig_exc := getattr(exception, 'orig_exc', None)):
+    if isinstance(exception, AnsibleError) and (cause := exception.__cause__):
         # URLError is often a proxy for an underlying error, handle wrapped exceptions
-        if isinstance(orig_exc, URLError):
-            orig_exc = orig_exc.reason
+        if isinstance(cause, URLError):
+            cause = cause.reason
 
         # Handle common URL related errors
-        if isinstance(orig_exc, (TimeoutError, BadStatusLine, IncompleteRead)):
+        if isinstance(cause, (TimeoutError, BadStatusLine, IncompleteRead)):
             return True
 
     return False
@@ -92,7 +92,7 @@ def g_connect(versions):
                 try:
                     data = self._call_galaxy(n_url, method='GET', error_context_msg=error_context_msg, cache=True)
                 except (AnsibleError, GalaxyError, ValueError, KeyError) as err:
-                    # Either the URL doesnt exist, or other error. Or the URL exists, but isn't a galaxy API
+                    # Either the URL doesn't exist, or other error. Or the URL exists, but isn't a galaxy API
                     # root (not JSON, no 'available_versions') so try appending '/api/'
                     if n_url.endswith('/api') or n_url.endswith('/api/'):
                         raise
@@ -138,7 +138,7 @@ def g_connect(versions):
                     'The v2 Ansible Galaxy API is deprecated and no longer supported. '
                     'Ensure that you have configured the ansible-galaxy CLI to utilize an '
                     'updated and supported version of Ansible Galaxy.',
-                    version='2.20'
+                    version='2.20',
                 )
 
             return method(self, *args, **kwargs)
@@ -337,10 +337,7 @@ class GalaxyAPI:
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
 
-        return (
-            self._priority > other_galaxy_api._priority or
-            self.name < self.name
-        )
+        return self._priority > other_galaxy_api._priority
 
     @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
     @g_connect(['v1', 'v2', 'v3'])
@@ -408,11 +405,8 @@ class GalaxyAPI:
                             method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
-        except Exception as e:
-            raise AnsibleError(
-                "Unknown error when attempting to call Galaxy at '%s': %s" % (url, to_native(e)),
-                orig_exc=e
-            )
+        except Exception as ex:
+            raise AnsibleError(f"Unknown error when attempting to call Galaxy at {url!r}.") from ex
 
         resp_data = to_text(resp.read(), errors='surrogate_or_strict')
         try:
@@ -471,8 +465,8 @@ class GalaxyAPI:
             resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self._server_timeout)
         except HTTPError as e:
             raise GalaxyError(e, 'Attempting to authenticate to galaxy')
-        except Exception as e:
-            raise AnsibleError('Unable to authenticate to galaxy: %s' % to_native(e), orig_exc=e)
+        except Exception as ex:
+            raise AnsibleError('Unable to authenticate to galaxy.') from ex
 
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
@@ -817,8 +811,17 @@ class GalaxyAPI:
 
         signatures = data.get('signatures') or []
 
+        download_url_info = urlparse(data['download_url'])
+        if not download_url_info.scheme and not download_url_info.path.startswith('/'):
+            # galaxy does a lot of redirects, with much more complex pathing than we use
+            # within this codebase, without updating _call_galaxy to be able to return
+            # the final URL, we can't reliably build a relative URL.
+            raise AnsibleError(f'Invalid non absolute download_url: {data["download_url"]}')
+
+        download_url = urljoin(self.api_server, data['download_url'])
+
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
-                                         data['download_url'], data['artifact']['sha256'],
+                                         download_url, data['artifact']['sha256'],
                                          data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
@@ -874,7 +877,7 @@ class GalaxyAPI:
         except GalaxyError as err:
             if err.http_code != 404:
                 raise
-            # v3 doesn't raise a 404 so we need to mimick the empty response from APIs that do.
+            # v3 doesn't raise a 404 so we need to mimic the empty response from APIs that do.
             return []
 
         if 'data' in data:
@@ -896,12 +899,10 @@ class GalaxyAPI:
             if not next_link:
                 break
             elif relative_link:
-                # TODO: This assumes the pagination result is relative to the root server. Will need to be verified
-                # with someone who knows the AH API.
-
-                # Remove the query string from the versions_url to use the next_link's query
-                versions_url = urljoin(versions_url, urlparse(versions_url).path)
-                next_link = versions_url.replace(versions_url_info.path, next_link)
+                next_link_info = urlparse(next_link)
+                if not next_link_info.scheme and not next_link_info.path.startswith('/'):
+                    raise AnsibleError(f'Invalid non absolute pagination link: {next_link}')
+                next_link = urljoin(self.api_server, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=True, cache_key=cache_key)

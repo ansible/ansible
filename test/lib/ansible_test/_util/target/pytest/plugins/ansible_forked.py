@@ -1,4 +1,5 @@
 """Run each test in its own fork. PYTEST_DONT_REWRITE"""
+
 # MIT License (see licenses/MIT-license.txt or https://opensource.org/licenses/MIT)
 # Based on code originally from:
 # https://github.com/pytest-dev/pytest-forked
@@ -63,6 +64,8 @@ def run_parent(item, pid, result_path):  # type: (Item, int, str) -> list[TestRe
     """Wait for the child process to exit and return the test reports. Called in the parent process."""
     exit_code = waitstatus_to_exitcode(os.waitpid(pid, 0)[1])
 
+    reports: list[TestReport]
+
     if exit_code:
         reason = "Test CRASHED with exit code {}.".format(exit_code)
         report = TestReport(item.nodeid, item.location, {x: 1 for x in item.keywords}, "failed", reason, "call", user_properties=item.user_properties)
@@ -73,8 +76,10 @@ def run_parent(item, pid, result_path):  # type: (Item, int, str) -> list[TestRe
 
         reports = [report]
     else:
+        captured_warnings: list[warnings.WarningMessage]
+
         with open(result_path, "rb") as result_file:
-            reports, captured_warnings = pickle.load(result_file)  # type: list[TestReport], list[warnings.WarningMessage]
+            reports, captured_warnings = pickle.load(result_file)
 
         for warning in captured_warnings:
             warnings.warn_explicit(warning.message, warning.category, warning.filename, warning.lineno)

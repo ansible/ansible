@@ -1,3 +1,0 @@
----
-bugfixes:
-  - selector - remove deprecated compat.selector related files (https://github.com/ansible/ansible/pull/84155).

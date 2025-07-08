@@ -72,33 +72,39 @@ options:
   minute:
     description:
       - Minute when the job should run (V(0-59), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   hour:
     description:
       - Hour when the job should run (V(0-23), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   day:
     description:
       - Day of the month the job should run (V(1-31), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
     aliases: [ dom ]
   month:
     description:
-      - Month of the year the job should run (V(1-12), V(*), V(*/2), and so on).
+      - Month of the year the job should run (V(JAN-DEC) or V(1-12), V(*), V(*/2), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
   weekday:
     description:
-      - Day of the week that the job should run (V(0-6) for Sunday-Saturday, V(*), and so on).
+      - Day of the week that the job should run (V(SUN-SAT) or V(0-6), V(*), and so on).
+      - Cannot be combined with O(special_time).
     type: str
     default: "*"
     aliases: [ dow ]
   special_time:
     description:
       - Special time specification nickname.
+      - Cannot be combined with O(minute), O(hour), O(day), O(month) or O(weekday).
     type: str
     choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
@@ -265,13 +271,13 @@ class CronTab(object):
                 with open(self.b_cron_file, 'rb') as f:
                     self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
                     self.lines = self.n_existing.splitlines()
-            except IOError:
+            except OSError:
                 # cron file does not exist
                 return
             except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
-            # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
+            # FIXME: using safely quoted shell for now, but this really should be two non-shell calls instead.
             (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
@@ -322,7 +328,7 @@ class CronTab(object):
 
         # Add the entire crontab back to the user crontab
         if not self.cron_file:
-            # quoting shell args for now but really this should be two non-shell calls.  FIXME
+            # FIXME: quoting shell args for now but really this should be two non-shell calls.
             (rc, out, err) = self.module.run_command(self._write_execute(path), use_unsafe_shell=True)
             os.unlink(path)
 
@@ -612,7 +618,6 @@ def main():
 
     changed = False
     res_args = dict()
-    warnings = list()
 
     if cron_file:
 
@@ -621,8 +626,8 @@ def main():
 
         cron_file_basename = os.path.basename(cron_file)
         if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
-            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
-                            ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
+            module.warn('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
+                        ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
@@ -645,7 +650,7 @@ def main():
 
     if special_time and \
        (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
-        module.fail_json(msg="You must specify time and date fields or special time.")
+        module.fail_json(msg="You cannot combine special_time with any of the time or day/date parameters.")
 
     # cannot support special_time on solaris
     if special_time and platform.system() == 'SunOS':
@@ -687,7 +692,7 @@ def main():
         if do_install:
             for char in ['\r', '\n']:
                 if char in job.strip('\r\n'):
-                    warnings.append('Job should not contain line breaks')
+                    module.warn('Job should not contain line breaks')
                     break
 
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
@@ -728,7 +733,6 @@ def main():
     res_args = dict(
         jobs=crontab.get_jobnames(),
         envs=crontab.get_envnames(),
-        warnings=warnings,
         changed=changed
     )
 

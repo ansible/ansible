@@ -211,13 +211,6 @@ options:
     type: bool
     default: "no"
     version_added: "2.7"
-  install_repoquery:
-    description:
-      - This is effectively a no-op in DNF as it is not needed with DNF.
-      - This option is deprecated and will be removed in ansible-core 2.20.
-    type: bool
-    default: "yes"
-    version_added: "2.7"
   download_only:
     description:
       - Only download the packages, do not install them.
@@ -408,10 +401,10 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 
-# NOTE dnf Python bindings import is postponed, see DnfModule._ensure_dnf(),
-# because we need AnsibleModule object to use get_best_parsable_locale()
-# to set proper locale before importing dnf to be able to scrape
-# the output in some cases (FIXME?).
+# FIXME: NOTE dnf Python bindings import is postponed, see DnfModule._ensure_dnf(),
+#  because we need AnsibleModule object to use get_best_parsable_locale()
+#  to set proper locale before importing dnf to be able to scrape
+#  the output in some cases.
 dnf = None
 
 

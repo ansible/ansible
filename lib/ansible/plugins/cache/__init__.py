@@ -18,18 +18,18 @@
 from __future__ import annotations
 
 import copy
-import errno
 import os
 import tempfile
 import time
+import typing as t
 
 from abc import abstractmethod
-from collections.abc import MutableMapping
+from collections import abc as c
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.file import S_IRWU_RG_RO
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
 from ansible.utils.collection_loader import resource_from_fqcr
@@ -42,37 +42,36 @@ class BaseCacheModule(AnsiblePlugin):
 
     # Backwards compat only.  Just import the global display instead
     _display = display
+    _persistent = True
+    """Plugins that do not persist data between runs can set False to bypass schema-version key munging and JSON serialization wrapper."""
 
-    def __init__(self, *args, **kwargs):
-        super(BaseCacheModule, self).__init__()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+
         self.set_options(var_options=args, direct=kwargs)
 
     @abstractmethod
-    def get(self, key):
+    def get(self, key: str) -> dict[str, object]:
         pass
 
     @abstractmethod
-    def set(self, key, value):
+    def set(self, key: str, value: dict[str, object]) -> None:
         pass
 
     @abstractmethod
-    def keys(self):
+    def keys(self) -> t.Sequence[str]:
         pass
 
     @abstractmethod
-    def contains(self, key):
+    def contains(self, key: object) -> bool:
         pass
 
     @abstractmethod
-    def delete(self, key):
+    def delete(self, key: str) -> None:
         pass
 
     @abstractmethod
-    def flush(self):
-        pass
-
-    @abstractmethod
-    def copy(self):
+    def flush(self) -> None:
         pass
 
 
@@ -108,15 +107,15 @@ class BaseFileCacheModule(BaseCacheModule):
         if not os.path.exists(self._cache_dir):
             try:
                 os.makedirs(self._cache_dir)
-            except (OSError, IOError) as e:
-                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
+            except OSError as ex:
+                raise AnsibleError(f"Error in {self.plugin_name!r} cache plugin while trying to create cache dir {self._cache_dir!r}.") from ex
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
                     raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
                         self.plugin_name, self._cache_dir))
 
-    def _get_cache_file_name(self, key):
+    def _get_cache_file_name(self, key: str) -> str:
         prefix = self.get_option('_prefix')
         if prefix:
             cachefile = "%s/%s%s" % (self._cache_dir, prefix, key)
@@ -144,11 +143,10 @@ class BaseFileCacheModule(BaseCacheModule):
                 self.delete(key)
                 raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
                                    "It has been removed, so you can re-run your command now." % cachefile)
-            except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+            except FileNotFoundError:
                 raise KeyError
-            except Exception as e:
-                raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
+            except Exception as ex:
+                raise AnsibleError(f"Error while accessing the cache file {cachefile!r}.") from ex
 
         return self._cache.get(key)
 
@@ -161,13 +159,13 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             try:
                 self._dump(value, tmpfile_path)
-            except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to write to '%s' : %s" % (self.plugin_name, tmpfile_path, to_bytes(e)))
+            except OSError as ex:
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}.", exception=ex)
             try:
                 os.rename(tmpfile_path, cachefile)
                 os.chmod(cachefile, mode=S_IRWU_RG_RO)
-            except (OSError, IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
+            except OSError as ex:
+                display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to move {tmpfile_path!r} to {cachefile!r}.", exception=ex)
         finally:
             try:
                 os.unlink(tmpfile_path)
@@ -182,12 +180,12 @@ class BaseFileCacheModule(BaseCacheModule):
         cachefile = self._get_cache_file_name(key)
         try:
             st = os.stat(cachefile)
-        except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                return False
+        except FileNotFoundError:
+            return False
+        except OSError as ex:
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
+
+            return False
 
         if time.time() - st.st_mtime <= self._timeout:
             return False
@@ -224,11 +222,10 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             os.stat(cachefile)
             return True
-        except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
-                display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+        except FileNotFoundError:
+            return False
+        except OSError as ex:
+            display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to stat {cachefile!r}.", exception=ex)
 
     def delete(self, key):
         try:
@@ -237,7 +234,7 @@ class BaseFileCacheModule(BaseCacheModule):
             pass
         try:
             os.remove(self._get_cache_file_name(key))
-        except (OSError, IOError):
+        except OSError:
             pass  # TODO: only pass on non existing?
 
     def flush(self):
@@ -245,14 +242,8 @@ class BaseFileCacheModule(BaseCacheModule):
         for key in self.keys():
             self.delete(key)
 
-    def copy(self):
-        ret = dict()
-        for key in self.keys():
-            ret[key] = self.get(key)
-        return ret
-
     @abstractmethod
-    def _load(self, filepath):
+    def _load(self, filepath: str) -> object:
         """
         Read data from a filepath and return it as a value
 
@@ -271,7 +262,7 @@ class BaseFileCacheModule(BaseCacheModule):
         pass
 
     @abstractmethod
-    def _dump(self, value, filepath):
+    def _dump(self, value: object, filepath: str) -> None:
         """
         Write data to a filepath
 
@@ -281,19 +272,13 @@ class BaseFileCacheModule(BaseCacheModule):
         pass
 
 
-class CachePluginAdjudicator(MutableMapping):
-    """
-    Intermediary between a cache dictionary and a CacheModule
-    """
+class CachePluginAdjudicator(c.MutableMapping):
+    """Batch update wrapper around a cache plugin."""
+
     def __init__(self, plugin_name='memory', **kwargs):
         self._cache = {}
         self._retrieved = {}
-
         self._plugin = cache_loader.get(plugin_name, **kwargs)
-        if not self._plugin:
-            raise AnsibleError('Unable to load the cache plugin (%s).' % plugin_name)
-
-        self._plugin_name = plugin_name
 
     def update_cache_if_changed(self):
         if self._retrieved != self._cache:
@@ -302,6 +287,7 @@ class CachePluginAdjudicator(MutableMapping):
     def set_cache(self):
         for top_level_cache_key in self._cache.keys():
             self._plugin.set(top_level_cache_key, self._cache[top_level_cache_key])
+
         self._retrieved = copy.deepcopy(self._cache)
 
     def load_whole_cache(self):
@@ -309,7 +295,7 @@ class CachePluginAdjudicator(MutableMapping):
             self._cache[key] = self._plugin.get(key)
 
     def __repr__(self):
-        return to_text(self._cache)
+        return repr(self._cache)
 
     def __iter__(self):
         return iter(self.keys())
@@ -319,13 +305,10 @@ class CachePluginAdjudicator(MutableMapping):
 
     def _do_load_key(self, key):
         load = False
-        if all([
-            key not in self._cache,
-            key not in self._retrieved,
-            self._plugin_name != 'memory',
-            self._plugin.contains(key),
-        ]):
+
+        if key not in self._cache and key not in self._retrieved and self._plugin._persistent and self._plugin.contains(key):
             load = True
+
         return load
 
     def __getitem__(self, key):
@@ -336,16 +319,18 @@ class CachePluginAdjudicator(MutableMapping):
                 pass
             else:
                 self._retrieved[key] = self._cache[key]
+
         return self._cache[key]
 
     def get(self, key, default=None):
         if self._do_load_key(key):
             try:
                 self._cache[key] = self._plugin.get(key)
-            except KeyError as e:
+            except KeyError:
                 pass
             else:
                 self._retrieved[key] = self._cache[key]
+
         return self._cache.get(key, default)
 
     def items(self):
@@ -360,6 +345,7 @@ class CachePluginAdjudicator(MutableMapping):
     def pop(self, key, *args):
         if args:
             return self._cache.pop(key, args[0])
+
         return self._cache.pop(key)
 
     def __delitem__(self, key):
@@ -367,6 +353,9 @@ class CachePluginAdjudicator(MutableMapping):
 
     def __setitem__(self, key, value):
         self._cache[key] = value
+
+    def clear(self):
+        self.flush()
 
     def flush(self):
         self._plugin.flush()

@@ -22,7 +22,7 @@ import subprocess
 
 from ansible import constants as C
 from ansible.module_utils.common.text.converters import to_bytes
-from ansible.module_utils.compat.paramiko import paramiko
+from ansible.module_utils.compat.paramiko import _paramiko as paramiko
 from ansible.utils.display import Display
 
 display = Display()
@@ -56,7 +56,11 @@ def set_default_transport():
 
     # deal with 'smart' connection .. one time ..
     if C.DEFAULT_TRANSPORT == 'smart':
-        display.deprecated("The 'smart' option for connections is deprecated. Set the connection plugin directly instead.", version='2.20')
+        display.deprecated(
+            msg="The `smart` option for connections is deprecated.",
+            version="2.20",
+            help_text="Set the connection plugin directly instead.",
+        )
 
         # see if SSH can support ControlPersist if not use paramiko
         if not check_for_controlpersist('ssh') and paramiko is not None:

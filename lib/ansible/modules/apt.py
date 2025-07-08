@@ -17,6 +17,12 @@ description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
 options:
+  auto_install_module_deps:
+    description:
+      - Automatically install dependencies required to run this module.
+    type: bool
+    default: yes
+    version_added: 2.19
   name:
     description:
       - A list of package names, like V(foo), or package specifier with version, like V(foo=1.0) or V(foo>=1.0).
@@ -191,8 +197,7 @@ options:
     default: 60
     version_added: "2.12"
 requirements:
-   - python-apt (python 2)
-   - python3-apt (python 3)
+   - python3-apt
    - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 extends_documentation_fragment: action_common_attributes
@@ -214,8 +219,8 @@ notes:
    - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the O(name) option.
    - When O(default_release) is used, an implicit priority of 990 is used. This is the same behavior as C(apt-get -t).
    - When an exact version is specified, an implicit priority of 1001 is used.
-   - If the interpreter can't import C(python-apt)/C(python3-apt) the module will check for it in system-owned interpreters as well.
-     If the dependency can't be found, the module will attempt to install it.
+   - If the interpreter can't import C(python3-apt) the module will check for it in system-owned interpreters as well.
+     If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
      If the dependency is found or installed, the module will be respawned under the correct interpreter.
 """
 
@@ -367,6 +372,7 @@ import locale as locale_module
 import os
 import re
 import secrets
+import shlex
 import shutil
 import sys
 import tempfile
@@ -385,8 +391,6 @@ APT_GET_ZERO = "\n0 upgraded, 0 newly installed, 0 to remove"
 APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed, 0 to remove"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
-APT_MARK_INVALID_OP = 'Invalid operation'
-APT_MARK_INVALID_OP_DEB6 = 'Usage: apt-mark [options] {markauto|unmarkauto} packages'
 
 CLEAN_OP_CHANGED_STR = dict(
     autoremove='The following packages will be REMOVED',
@@ -483,7 +487,7 @@ class PolicyRcD(object):
 
 
 def package_split(pkgspec):
-    parts = re.split(r'(>?=)', pkgspec, 1)
+    parts = re.split(r'(>?=)', pkgspec, maxsplit=1)
     if len(parts) > 1:
         return parts
     return parts[0], None, None
@@ -685,26 +689,30 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
-def mark_installed_manually(m, packages):
+def mark_installed(m: AnsibleModule, packages: list[str], manual: bool) -> None:
+    """Mark packages as manually or automatically installed."""
     if not packages:
         return
+
+    if manual:
+        mark_msg = "manually"
+        mark_op = "manual"
+    else:
+        mark_msg = "auto"
+        mark_op = "auto"
 
     apt_mark_cmd_path = m.get_bin_path("apt-mark")
 
     # https://github.com/ansible/ansible/issues/40531
     if apt_mark_cmd_path is None:
-        m.warn("Could not find apt-mark binary, not marking package(s) as manually installed.")
+        m.warn(f"Could not find apt-mark binary, not marking package(s) as {mark_msg} installed.")
         return
 
-    cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
+    cmd = [apt_mark_cmd_path, mark_op] + packages
     rc, out, err = m.run_command(cmd)
 
-    if APT_MARK_INVALID_OP in err or APT_MARK_INVALID_OP_DEB6 in err:
-        cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
-        rc, out, err = m.run_command(cmd)
-
     if rc != 0:
-        m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+        m.fail_json(msg=f"Command {shlex.join(cmd)!r} failed.", stdout=out, stderr=err, rc=rc)
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
@@ -830,7 +838,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         data = dict(changed=False)
 
     if not build_dep and not m.check_mode:
-        mark_installed_manually(m, package_names)
+        mark_installed(m, package_names, manual=True)
 
     return (status, data)
 
@@ -850,6 +858,7 @@ def install_deb(
         allow_downgrade,
         allow_change_held_packages,
         dpkg_options,
+        lock_timeout,
 ):
     changed = False
     deps_to_install = []
@@ -898,15 +907,19 @@ def install_deb(
     # install the deps through apt
     retvals = {}
     if deps_to_install:
+        install_dpkg_options = f"{expand_dpkg_options(dpkg_options)} -o DPkg::Lock::Timeout={lock_timeout}"
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
                                      allow_downgrade=allow_downgrade,
                                      allow_change_held_packages=allow_change_held_packages,
-                                     dpkg_options=expand_dpkg_options(dpkg_options))
+                                     dpkg_options=install_dpkg_options)
         if not success:
             m.fail_json(**retvals)
+        # Mark the dependencies as auto installed
+        # https://github.com/ansible/ansible/issues/78123
+        mark_installed(m, deps_to_install, manual=False)
         changed = retvals.get('changed', False)
 
     if pkgs_to_install:
@@ -1233,6 +1246,7 @@ def main():
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             allow_change_held_packages=dict(type='bool', default=False),
             lock_timeout=dict(type='int', default=60),
+            auto_install_module_deps=dict(type='bool', default=True),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -1263,12 +1277,12 @@ def main():
 
     p = module.params
     install_recommends = p['install_recommends']
-    dpkg_options = expand_dpkg_options(p['dpkg_options'])
+    dpkg_options = f"{expand_dpkg_options(p['dpkg_options'])} -o DPkg::Lock::Timeout={p['lock_timeout']}"
 
     if not HAS_PYTHON_APT:
         # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
         # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
-        # 2) finding none, try to install a matching python-apt package for the current interpreter version;
+        # 2) finding none, try to install a matching python3-apt package for the current interpreter version;
         #    we limit to the current interpreter version to try and avoid installing a whole other Python just
         #    for apt support
         # 3) if we installed a support package, try to respawn under what we think is the right interpreter (could be
@@ -1294,39 +1308,47 @@ def main():
 
         # don't make changes if we're in check_mode
         if module.check_mode:
-            module.fail_json(msg="%s must be installed to use check mode. "
-                                 "If run normally this module can auto-install it." % apt_pkg_name)
+            module.fail_json(
+                msg=f"{apt_pkg_name} must be installed to use check mode. "
+                    "If run normally this module can auto-install it, "
+                    "see the auto_install_module_deps option.",
+            )
+        elif p['auto_install_module_deps']:
+            # We skip cache update in auto install the dependency if the
+            # user explicitly declared it with update_cache=no.
+            if module.params.get('update_cache') is False:
+                module.warn("Auto-installing missing dependency without updating cache: %s" % apt_pkg_name)
+            else:
+                module.warn("Updating cache and auto-installing missing dependency: %s" % apt_pkg_name)
+                module.run_command([APT_GET_CMD, 'update'], check_rc=True)
 
-        # We skip cache update in auto install the dependency if the
-        # user explicitly declared it with update_cache=no.
-        if module.params.get('update_cache') is False:
-            module.warn("Auto-installing missing dependency without updating cache: %s" % apt_pkg_name)
-        else:
-            module.warn("Updating cache and auto-installing missing dependency: %s" % apt_pkg_name)
-            module.run_command([APT_GET_CMD, 'update'], check_rc=True)
+            # try to install the apt Python binding
+            apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
 
-        # try to install the apt Python binding
-        apt_pkg_cmd = [APT_GET_CMD, 'install', apt_pkg_name, '-y', '-q', dpkg_options]
+            if install_recommends is False:
+                apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
+            elif install_recommends is True:
+                apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
+            # install_recommends is None uses the OS default
 
-        if install_recommends is False:
-            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=no"])
-        elif install_recommends is True:
-            apt_pkg_cmd.extend(["-o", "APT::Install-Recommends=yes"])
-        # install_recommends is None uses the OS default
+            module.run_command(apt_pkg_cmd, check_rc=True)
 
-        module.run_command(apt_pkg_cmd, check_rc=True)
+            # try again to find the bindings in common places
+            interpreter = probe_interpreters_for_module(interpreters, 'apt')
 
-        # try again to find the bindings in common places
-        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+            if interpreter:
+                # found the Python bindings; respawn this module under the interpreter where we found them
+                # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
+                respawn_module(interpreter)
+                # this is the end of the line for this process, it will exit here once the respawned module has completed
 
-        if interpreter:
-            # found the Python bindings; respawn this module under the interpreter where we found them
-            # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
-            respawn_module(interpreter)
-            # this is the end of the line for this process, it will exit here once the respawned module has completed
-        else:
-            # we've done all we can do; just tell the user it's busted and get out
-            module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
+        # we've done all we can do; just tell the user it's busted and get out
+        py_version = sys.version.replace("\n", "")
+        module.fail_json(
+            msg=f"Could not import the {apt_pkg_name} module using {sys.executable} ({py_version}). "
+            f"Ensure {apt_pkg_name} package is installed (either manually or via the auto_install_module_deps option) "
+            f"or that you have specified the correct ansible_python_interpreter. (attempted {interpreters}).",
+        )
 
     if p['clean'] is True:
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
@@ -1456,7 +1478,11 @@ def main():
                             allow_unauthenticated=allow_unauthenticated,
                             allow_change_held_packages=allow_change_held_packages,
                             allow_downgrade=allow_downgrade,
-                            force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
+                            force=force_yes,
+                            fail_on_autoremove=fail_on_autoremove,
+                            dpkg_options=p['dpkg_options'],
+                            lock_timeout=p['lock_timeout']
+                            )
 
             unfiltered_packages = p['package'] or ()
             packages = [package.strip() for package in unfiltered_packages if package != '*']

@@ -1,4 +1,5 @@
 """Python threading tools."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -16,11 +17,12 @@ TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
 
-    def __init__(self, action: c.Callable[[], t.Any]) -> None:
+    def __init__(self, action: c.Callable[[], t.Any], name: str) -> None:
         super().__init__()
         self._result: queue.Queue[t.Any] = queue.Queue()
         self.action = action
         self.result = None
+        self.name = name
 
     def run(self) -> None:
         """

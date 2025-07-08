@@ -15,12 +15,11 @@ version_added: historical
 description:
      - The M(ansible.builtin.command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes.
-     - The command(s) will not be
-       processed through the shell, so variables like C($HOSTNAME) and operations
-       like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+     - The command(s) will not be processed through the shell, so operations like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+       Also, environment variables are resolved via Python, not shell, see O(expand_argument_vars) and are left unchanged if not matched.
        Use the M(ansible.builtin.shell) module if you need these features.
-     - To create C(command) tasks that are easier to read than the ones using space-delimited
-       arguments, pass parameters using the C(args) L(task keyword,https://docs.ansible.com/ansible/latest/reference_appendices/playbooks_keywords.html#task)
+     - To create C(command) tasks that are easier to read than the ones using space-delimited arguments,
+       pass parameters using the C(args) L(task keyword,https://docs.ansible.com/ansible/latest/reference_appendices/playbooks_keywords.html#task)
        or use O(cmd) parameter.
      - Either a free form command or O(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(ansible.windows.win_command) module instead.
@@ -41,8 +40,8 @@ attributes:
 options:
   expand_argument_vars:
     description:
-      - Expands the arguments that are variables, for example C($HOME) will be expanded before being passed to the
-        command to run.
+      - Expands the arguments that are variables, for example C($HOME) will be expanded before being passed to the command to run.
+      - If a variable is not matched, it is left unchanged, unlike shell substitution which would remove it.
       - Set to V(false) to disable expansion and treat the value as a literal argument.
     type: bool
     default: true
@@ -250,6 +249,7 @@ def main():
         argument_spec=dict(
             _raw_params=dict(),
             _uses_shell=dict(type='bool', default=False),
+            cmd=dict(),
             argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
@@ -261,12 +261,14 @@ def main():
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
         ),
+        required_one_of=[['_raw_params', 'cmd', 'argv']],
+        mutually_exclusive=[['_raw_params', 'cmd', 'argv']],
         supports_check_mode=True,
     )
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
-    args = module.params['_raw_params']
+    args = module.params['_raw_params'] or module.params['cmd']
     argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
@@ -281,16 +283,6 @@ def main():
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
-
-    if (not args or args.strip() == '') and not argv:
-        r['rc'] = 256
-        r['msg'] = "no command given"
-        module.fail_json(**r)
-
-    if args and argv:
-        r['rc'] = 256
-        r['msg'] = "only command or argv can be given, not both"
-        module.fail_json(**r)
 
     if not shell and args:
         args = shlex.split(args)
@@ -307,9 +299,9 @@ def main():
 
         try:
             os.chdir(chdir)
-        except (IOError, OSError) as e:
-            r['msg'] = 'Unable to change directory before execution: %s' % to_text(e)
-            module.fail_json(**r)
+        except OSError as ex:
+            r['msg'] = 'Unable to change directory before execution.'
+            module.fail_json(**r, exception=ex)
 
     # check_mode partial support, since it only really works in checking creates/removes
     if module.check_mode:

@@ -33,12 +33,11 @@ import json
 import pickle
 import socket
 import struct
-import traceback
 import uuid
 
 from functools import partial
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.json import _get_legacy_encoder
 from ansible.module_utils.six import iteritems
 
 
@@ -127,7 +126,7 @@ class Connection(object):
             )
 
         try:
-            data = json.dumps(req, cls=AnsibleJSONEncoder, vault_to_text=True)
+            data = json.dumps(req, cls=_get_legacy_encoder(), vault_to_text=True)
         except TypeError as exc:
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with the persistent connection helper. "
@@ -136,12 +135,11 @@ class Connection(object):
 
         try:
             out = self.send(data)
-        except socket.error as e:
+        except OSError as ex:
             raise ConnectionError(
-                'unable to connect to socket %s. See Troubleshooting socket path issues '
-                'in the Network Debug and Troubleshooting Guide' % self.socket_path,
-                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
-            )
+                f'Unable to connect to socket {self.socket_path!r}. See Troubleshooting socket path issues '
+                'in the Network Debug and Troubleshooting Guide.'
+            ) from ex
 
         try:
             response = json.loads(out)
@@ -192,13 +190,12 @@ class Connection(object):
             send_data(sf, to_bytes(data))
             response = recv_data(sf)
 
-        except socket.error as e:
+        except OSError as ex:
             sf.close()
             raise ConnectionError(
-                'unable to connect to socket %s. See the socket path issue category in '
-                'Network Debug and Troubleshooting Guide' % self.socket_path,
-                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
-            )
+                f'Unable to connect to socket {self.socket_path!r}. See the socket path issue category in '
+                'Network Debug and Troubleshooting Guide.',
+            ) from ex
 
         sf.close()
 

@@ -10,16 +10,14 @@ import os
 import re
 
 from ast import literal_eval
+from ansible.module_utils.common import json as _common_json
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
-from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import (
-    binary_type,
     string_types,
-    text_type,
 )
 
 
@@ -185,7 +183,7 @@ def check_required_by(requirements, parameters, options_context=None):
     :kwarg options_context: List of strings of parent key names if ``requirements`` are
         in a sub spec.
 
-    :returns: Empty dictionary or raises :class:`TypeError` if the
+    :returns: Empty dictionary or raises :class:`TypeError` if the check fails.
     """
 
     result = {}
@@ -195,22 +193,15 @@ def check_required_by(requirements, parameters, options_context=None):
     for (key, value) in requirements.items():
         if key not in parameters or parameters[key] is None:
             continue
-        result[key] = []
         # Support strings (single-item lists)
         if isinstance(value, string_types):
             value = [value]
-        for required in value:
-            if required not in parameters or parameters[required] is None:
-                result[key].append(required)
 
-    if result:
-        for key, missing in result.items():
-            if len(missing) > 0:
-                msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
-                if options_context:
-                    msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
-                raise TypeError(to_native(msg))
-
+        if missing := [required for required in value if required not in parameters or parameters[required] is None]:
+            msg = f"missing parameter(s) required by '{key}': {', '.join(missing)}"
+            if options_context:
+                msg = f"{msg} found in {' -> '.join(options_context)}"
+            raise TypeError(to_native(msg))
     return result
 
 
@@ -392,6 +383,10 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     raise TypeError(to_native(msg))
 
 
+def _check_type_str_no_conversion(value) -> str:
+    return check_type_str(value, allow_conversion=False)
+
+
 def check_type_list(value):
     """Verify that the value is a list or convert to a list
 
@@ -407,12 +402,21 @@ def check_type_list(value):
     if isinstance(value, list):
         return value
 
+    # DTFIX-FUTURE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
     if isinstance(value, string_types):
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):
         return [str(value)]
 
     raise TypeError('%s cannot be converted to a list' % type(value))
+
+
+def _check_type_list_strict(value):
+    # FUTURE: this impl should replace `check_type_list`
+    if isinstance(value, list):
+        return value
+
+    return [value]
 
 
 def check_type_dict(value):
@@ -572,14 +576,21 @@ def check_type_bits(value):
 
 
 def check_type_jsonarg(value):
-    """Return a jsonified string. Sometimes the controller turns a json string
-    into a dict/list so transform it back into json here
-
-    Raises :class:`TypeError` if unable to convert the value
-
     """
-    if isinstance(value, (text_type, binary_type)):
+    JSON serialize dict/list/tuple, strip str and bytes.
+    Previously required for cases where Ansible/Jinja classic-mode literal eval pass could inadvertently deserialize objects.
+    """
+    # deprecated: description='deprecate jsonarg type support' core_version='2.23'
+    # deprecate(
+    #     msg="The `jsonarg` type is deprecated.",
+    #     version="2.27",
+    #     help_text="JSON string arguments should use `str`; structures can be explicitly serialized as JSON with the `to_json` filter.",
+    # )
+
+    if isinstance(value, (str, bytes)):
         return value.strip()
-    elif isinstance(value, (list, tuple, dict)):
-        return jsonify(value)
+
+    if isinstance(value, (list, tuple, dict)):
+        return json.dumps(value, cls=_common_json._get_legacy_encoder(), _decode_bytes=True)
+
     raise TypeError('%s cannot be converted to a json string' % type(value))

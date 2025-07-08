@@ -1,4 +1,5 @@
 """Composite argument parsers for ansible-test specific command-line arguments."""
+
 from __future__ import annotations
 
 import typing as t

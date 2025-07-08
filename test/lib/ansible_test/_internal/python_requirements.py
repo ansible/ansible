@@ -1,4 +1,5 @@
 """Python requirements management"""
+
 from __future__ import annotations
 
 import base64
@@ -53,6 +54,11 @@ from .connections import (
 from .coverage_util import (
     get_coverage_version,
 )
+
+if t.TYPE_CHECKING:
+    from .host_profiles import (
+        HostProfile,
+    )
 
 QUIET_PIP_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'quiet_pip.py')
 REQUIREMENTS_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'requirements.py')
@@ -121,6 +127,7 @@ class PipBootstrap(PipCommand):
 
 def install_requirements(
     args: EnvironmentConfig,
+    host_profile: HostProfile | None,
     python: PythonConfig,
     ansible: bool = False,
     command: bool = False,
@@ -132,6 +139,7 @@ def install_requirements(
     create_result_directories(args)
 
     if not requirements_allowed(args, controller):
+        post_install(host_profile)
         return
 
     if command and isinstance(args, (UnitsConfig, IntegrationConfig)) and args.coverage:
@@ -160,7 +168,17 @@ def install_requirements(
         sanity=None,
     )
 
+    from .host_profiles import DebuggableProfile
+
+    if isinstance(host_profile, DebuggableProfile) and host_profile.debugging_enabled and args.metadata.debugger_settings.package:
+        commands.append(PipInstall(
+            requirements=[],
+            constraints=[],
+            packages=[args.metadata.debugger_settings.package],
+        ))
+
     if not commands:
+        post_install(host_profile)
         return
 
     run_pip(args, python, commands, connection)
@@ -168,6 +186,16 @@ def install_requirements(
     # false positive: pylint: disable=no-member
     if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
         check_pyyaml(python)
+
+    post_install(host_profile)
+
+
+def post_install(host_profile: HostProfile) -> None:
+    """Operations to perform after requirements are installed."""
+    from .host_profiles import DebuggableProfile
+
+    if isinstance(host_profile, DebuggableProfile):
+        host_profile.activate_debugger()
 
 
 def collect_bootstrap(python: PythonConfig) -> list[PipCommand]:

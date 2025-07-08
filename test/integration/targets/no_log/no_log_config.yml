@@ -10,4 +10,4 @@
     - debug:
 
     - debug:
-      loop: '{{ range(3) }}'
+      loop: '{{ range(3) | list }}'

@@ -1,10 +1,15 @@
 """Test metadata for passing data to delegated tests."""
+
 from __future__ import annotations
+
+import dataclasses
 import typing as t
 
 from .util import (
     display,
     generate_name,
+    ANSIBLE_TEST_ROOT,
+    ANSIBLE_LIB_ROOT,
 )
 
 from .io import (
@@ -21,13 +26,19 @@ from .diff import (
 class Metadata:
     """Metadata object for passing data to delegated tests."""
 
-    def __init__(self) -> None:
+    def __init__(self, debugger_flags: DebuggerFlags) -> None:
         """Initialize metadata."""
         self.changes: dict[str, tuple[tuple[int, int], ...]] = {}
         self.cloud_config: t.Optional[dict[str, dict[str, t.Union[int, str, bool]]]] = None
         self.change_description: t.Optional[ChangeDescription] = None
         self.ci_provider: t.Optional[str] = None
         self.session_id = generate_name()
+        self.ansible_lib_root = ANSIBLE_LIB_ROOT
+        self.ansible_test_root = ANSIBLE_TEST_ROOT
+        self.collection_root: str | None = None
+        self.debugger_flags = debugger_flags
+        self.debugger_settings: DebuggerSettings | None = None
+        self.loaded = False
 
     def populate_changes(self, diff: t.Optional[list[str]]) -> None:
         """Populate the changeset using the given diff."""
@@ -54,8 +65,13 @@ class Metadata:
             changes=self.changes,
             cloud_config=self.cloud_config,
             ci_provider=self.ci_provider,
-            change_description=self.change_description.to_dict(),
+            change_description=self.change_description.to_dict() if self.change_description else None,
             session_id=self.session_id,
+            ansible_lib_root=self.ansible_lib_root,
+            ansible_test_root=self.ansible_test_root,
+            collection_root=self.collection_root,
+            debugger_flags=dataclasses.asdict(self.debugger_flags),
+            debugger_settings=dataclasses.asdict(self.debugger_settings) if self.debugger_settings else None,
         )
 
     def to_file(self, path: str) -> None:
@@ -75,12 +91,20 @@ class Metadata:
     @staticmethod
     def from_dict(data: dict[str, t.Any]) -> Metadata:
         """Return metadata loaded from the specified dictionary."""
-        metadata = Metadata()
+        metadata = Metadata(
+            debugger_flags=DebuggerFlags(**data['debugger_flags']),
+        )
+
         metadata.changes = data['changes']
         metadata.cloud_config = data['cloud_config']
         metadata.ci_provider = data['ci_provider']
-        metadata.change_description = ChangeDescription.from_dict(data['change_description'])
+        metadata.change_description = ChangeDescription.from_dict(data['change_description']) if data['change_description'] else None
         metadata.session_id = data['session_id']
+        metadata.ansible_lib_root = data['ansible_lib_root']
+        metadata.ansible_test_root = data['ansible_test_root']
+        metadata.collection_root = data['collection_root']
+        metadata.debugger_settings = DebuggerSettings(**data['debugger_settings']) if data['debugger_settings'] else None
+        metadata.loaded = True
 
         return metadata
 
@@ -129,3 +153,70 @@ class ChangeDescription:
         changes.no_integration_paths = data['no_integration_paths']
 
         return changes
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class DebuggerSettings:
+    """Settings for remote debugging."""
+
+    module: str | None = None
+    """
+    The Python module to import.
+    This should be pydevd or a derivative.
+    If not provided it will be auto-detected.
+    """
+
+    package: str | None = None
+    """
+    The Python package to install for debugging.
+    If `None` then the package will be auto-detected.
+    If an empty string, then no package will be installed.
+    """
+
+    settrace: dict[str, object] = dataclasses.field(default_factory=dict)
+    """
+    Options to pass to the `{module}.settrace` method.
+    Used for running AnsiballZ modules only.
+    The `host` and `port` options will be provided by ansible-test.
+    The `suspend` option defaults to `False`.
+    """
+
+    args: list[str] = dataclasses.field(default_factory=list)
+    """
+    Arguments to pass to `pydevd` on the command line.
+    Used for running Ansible CLI programs only.
+    The `--client` and `--port` options will be provided by ansible-test.
+    """
+
+    port: int = 5678
+    """
+    The port on the origin host which is listening for incoming connections from pydevd.
+    SSH port forwarding will be automatically configured for non-local hosts to connect to this port as needed.
+    """
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class DebuggerFlags:
+    """Flags for enabling specific debugging features."""
+
+    self: bool = False
+    """Debug ansible-test itself."""
+
+    ansiballz: bool = False
+    """Debug AnsiballZ modules."""
+
+    cli: bool = False
+    """Debug Ansible CLI programs other than ansible-test."""
+
+    on_demand: bool = False
+    """Enable debugging features only when ansible-test is running under a debugger."""
+
+    @property
+    def enable(self) -> bool:
+        """Return `True` if any debugger feature other than on-demand is enabled."""
+        return any(getattr(self, field.name) for field in dataclasses.fields(self) if field.name != 'on_demand')
+
+    @classmethod
+    def all(cls, enabled: bool) -> t.Self:
+        """Return a `DebuggerFlags` instance with all flags enabled or disabled."""
+        return cls(**{field.name: enabled for field in dataclasses.fields(cls)})

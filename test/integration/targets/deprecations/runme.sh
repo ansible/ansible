@@ -2,7 +2,20 @@
 
 set -eux -o pipefail
 
+export ANSIBLE_DEPRECATION_WARNINGS=False
+
+ansible-playbook deprecated.yml -i ../../inventory "${@}" 2>&1 | tee disabled.txt
+
+grep "This is a warning" disabled.txt  # should be visible
+
+if grep "DEPRECATION" disabled.txt; then
+  echo "ERROR: deprecation warnings should not be visible"
+  exit 1
+fi
+
 export ANSIBLE_DEPRECATION_WARNINGS=True
+
+ansible-playbook deprecated.yml -i ../../inventory "${@}"
 
 ### check general config
 
@@ -34,6 +47,11 @@ export ANSIBLE_CACHE_PLUGIN=notjsonfile
 # check for plugin(s) config option deprecation
 [ "$(ANSIBLE_NOTJSON_CACHE_PLUGIN_REMOVEME=1 ansible -m meta -a 'noop'  localhost --playbook-dir ./ 2>&1 | grep -c 'DEPRECATION')" -eq "1" ]
 
-# TODO: check for module deprecation
-# TODO: check for module option deprecation
-# TODO: check for plugin deprecation
+# check for the module deprecation
+[ "$(ansible-doc willremove --playbook-dir ./ | grep -c 'DEPRECATED')" -eq "1" ]
+
+# check for the module option deprecation
+[ "$(ansible-doc removeoption --playbook-dir ./ | grep -c 'deprecated:')" -eq "1" ]
+
+# check for plugin deprecation
+[ "$(ansible-doc -t cache notjsonfile --playbook-dir ./ | grep -c 'DEPRECATED:')" -eq "1" ]

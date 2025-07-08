@@ -16,7 +16,8 @@ DOCUMENTATION = r"""
     options:
       col:
         description:  column to return (0 indexed).
-        default: "1"
+        default: 1
+        type: int
       keycol:
         description:  column to search in (0 indexed).
         default: 0
@@ -102,76 +103,26 @@ RETURN = """
     elements: str
 """
 
-import codecs
 import csv
 
 from collections.abc import MutableSequence
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.six import PY2
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-
-
-class CSVRecoder:
-    """
-    Iterator that reads an encoded stream and encodes the input to UTF-8
-    """
-    def __init__(self, f, encoding='utf-8'):
-        self.reader = codecs.getreader(encoding)(f)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return next(self.reader).encode("utf-8")
-
-    next = __next__   # For Python 2
-
-
-class CSVReader:
-    """
-    A CSV reader which will iterate over lines in the CSV file "f",
-    which is encoded in the given encoding.
-    """
-
-    def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        if PY2:
-            f = CSVRecoder(f, encoding)
-        else:
-            f = codecs.getreader(encoding)(f)
-
-        self.reader = csv.reader(f, dialect=dialect, **kwds)
-
-    def __next__(self):
-        row = next(self.reader)
-        return [to_text(s) for s in row]
-
-    next = __next__  # For Python 2
-
-    def __iter__(self):
-        return self
 
 
 class LookupModule(LookupBase):
 
     def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1, keycol=0):
-
-        try:
-            f = open(to_bytes(filename), 'rb')
-            creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
-
-            for row in creader:
-                if len(row) and row[keycol] == key:
-                    return row[int(col)]
-        except Exception as e:
-            raise AnsibleError("csvfile: %s" % to_native(e))
+        with open(filename, encoding=encoding) as f:
+            for row in csv.reader(f, dialect=csv.excel, delimiter=delimiter):
+                if row and row[keycol] == key:
+                    return row[col]
 
         return dflt
 
     def run(self, terms, variables=None, **kwargs):
-
         ret = []
 
         self.set_options(var_options=variables, direct=kwargs)
@@ -191,23 +142,19 @@ class LookupModule(LookupBase):
             key = kv['_raw_params']
 
             # parameters override per term using k/v
-            try:
-                reset_params = False
-                for name, value in kv.items():
-                    if name == '_raw_params':
-                        continue
-                    if name not in paramvals:
-                        raise AnsibleAssertionError('%s is not a valid option' % name)
+            reset_params = False
+            for name, value in kv.items():
+                if name == '_raw_params':
+                    continue
+                if name not in paramvals:
+                    raise ValueError(f'{name!r} is not a valid option')
 
-                    self._deprecate_inline_kv()
-                    self.set_option(name, value)
-                    reset_params = True
+                self._deprecate_inline_kv()
+                self.set_option(name, value)
+                reset_params = True
 
-                if reset_params:
-                    paramvals = self.get_options()
-
-            except (ValueError, AssertionError) as e:
-                raise AnsibleError(e)
+            if reset_params:
+                paramvals = self.get_options()
 
             # default is just placeholder for real tab
             if paramvals['delimiter'] == 'TAB':
@@ -217,8 +164,7 @@ class LookupModule(LookupBase):
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'], paramvals['keycol'])
             if var is not None:
                 if isinstance(var, MutableSequence):
-                    for v in var:
-                        ret.append(v)
+                    ret.extend(var)
                 else:
                     ret.append(var)
 

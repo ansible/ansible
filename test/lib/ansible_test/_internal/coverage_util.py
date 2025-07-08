@@ -1,4 +1,5 @@
 """Utility code for facilitating collection of code coverage when running tests."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -69,7 +70,8 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('7.6.1', 7, (3, 8), (3, 13)),
+    CoverageVersion('7.9.1', 7, (3, 9), (3, 14)),
+    CoverageVersion('7.6.1', 7, (3, 8), (3, 8)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
@@ -246,7 +248,7 @@ def generate_coverage_config(args: TestConfig) -> str:
 
 def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
-    coverage_config = '''
+    coverage_config = """
 [run]
 branch = True
 concurrency =
@@ -262,14 +264,14 @@ omit =
     */pytest
     */AnsiballZ_*.py
     */test/results/*
-'''
+"""
 
     return coverage_config
 
 
 def generate_collection_coverage_config(args: TestConfig) -> str:
     """Generate code coverage configuration for Ansible Collection tests."""
-    coverage_config = '''
+    coverage_config = """
 [run]
 branch = True
 concurrency =
@@ -278,28 +280,28 @@ concurrency =
 parallel = True
 disable_warnings =
     no-data-collected
-'''
+"""
 
     if isinstance(args, IntegrationConfig):
-        coverage_config += '''
+        coverage_config += """
 include =
     %s/*
     */%s/*
-''' % (data_context().content.root, data_context().content.collection.directory)
+""" % (data_context().content.root, data_context().content.collection.directory)
     elif isinstance(args, SanityConfig):
         # temporary work-around for import sanity test
-        coverage_config += '''
+        coverage_config += """
 include =
     %s/*
 
 omit =
     %s/*
-''' % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
+""" % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
     else:
-        coverage_config += '''
+        coverage_config += """
 include =
      %s/*
-''' % data_context().content.root
+""" % data_context().content.root
 
     return coverage_config
 

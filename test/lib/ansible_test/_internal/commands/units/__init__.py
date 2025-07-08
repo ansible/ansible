@@ -1,4 +1,5 @@
 """Execute unit tests using pytest."""
+
 from __future__ import annotations
 
 import os
@@ -63,6 +64,7 @@ from ...executor import (
 
 from ...python_requirements import (
     install_requirements,
+    post_install,
 )
 
 from ...content_config import (
@@ -229,7 +231,9 @@ def command_units(args: UnitsConfig) -> None:
         controller = any(test_context == TestContext.controller for test_context, python, paths, env in final_candidates)
 
         if args.requirements_mode != 'skip':
-            install_requirements(args, target_profile.python, ansible=controller, command=True, controller=False)  # units
+            install_requirements(args, target_profile, target_profile.python, ansible=controller, command=True, controller=False)  # units
+        else:
+            post_install(target_profile)
 
         test_sets.extend(final_candidates)
 

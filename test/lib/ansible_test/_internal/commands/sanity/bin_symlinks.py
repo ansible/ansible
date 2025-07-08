@@ -1,4 +1,5 @@
 """Sanity test for symlinks in the bin directory."""
+
 from __future__ import annotations
 
 import os

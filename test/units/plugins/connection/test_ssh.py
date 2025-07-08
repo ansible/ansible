@@ -23,7 +23,6 @@ from selectors import SelectorKey, EVENT_READ
 import pytest
 
 
-from ansible.errors import AnsibleAuthenticationFailure
 import unittest
 from unittest.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
@@ -54,37 +53,12 @@ class TestConnectionBaseClass(unittest.TestCase):
         res = conn._connect()
         self.assertEqual(conn, res)
 
-        ssh.SSHPASS_AVAILABLE = False
-        self.assertFalse(conn._sshpass_available())
-
-        ssh.SSHPASS_AVAILABLE = True
-        self.assertTrue(conn._sshpass_available())
-
-        with patch('subprocess.Popen') as p:
-            ssh.SSHPASS_AVAILABLE = None
-            p.return_value = MagicMock()
-            self.assertTrue(conn._sshpass_available())
-
-            ssh.SSHPASS_AVAILABLE = None
-            p.return_value = None
-            p.side_effect = OSError()
-            self.assertFalse(conn._sshpass_available())
-
         conn.close()
         self.assertFalse(conn._connected)
 
-    def test_plugins_connection_ssh__build_command(self):
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
-        conn.get_option = MagicMock()
-        conn.get_option.return_value = ""
-        conn._build_command('ssh', 'ssh')
-
     def test_plugins_connection_ssh_exec_command(self):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
 
         conn._build_command = MagicMock()
         conn._build_command.return_value = 'ssh something something'
@@ -98,10 +72,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
-        new_stdin = StringIO()
         become_success_token = b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
 
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn.set_become_plugin(become_loader.get('sudo'))
 
         conn.become.check_password_prompt = MagicMock()
@@ -230,8 +203,7 @@ class TestConnectionBaseClass(unittest.TestCase):
     @patch('os.path.exists')
     def test_plugins_connection_ssh_put_file(self, mock_ospe, mock_sleep):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
 
@@ -282,8 +254,7 @@ class TestConnectionBaseClass(unittest.TestCase):
     @patch('time.sleep')
     def test_plugins_connection_ssh_fetch_file(self, mock_sleep):
         pc = PlayContext()
-        new_stdin = StringIO()
-        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn = connection_loader.get('ssh', pc)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
         conn._load_name = 'ssh'
@@ -348,9 +319,8 @@ class MockSelector(object):
 @pytest.fixture
 def mock_run_env(request, mocker):
     pc = PlayContext()
-    new_stdin = StringIO()
 
-    conn = connection_loader.get('ssh', pc, new_stdin)
+    conn = connection_loader.get('ssh', pc)
     conn.set_become_plugin(become_loader.get('sudo'))
     conn._send_initial_data = MagicMock()
     conn._examine_output = MagicMock()
@@ -411,29 +381,6 @@ class TestSSHConnectionRun(object):
         assert self.conn._send_initial_data.called is True
         assert self.conn._send_initial_data.call_count == 1
         assert self.conn._send_initial_data.call_args[0][1] == 'this is input data'
-
-    def test_with_password(self):
-        # test with a password set to trigger the sshpass write
-        self.pc.password = '12345'
-        self.mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
-        self.mock_popen_res.stderr.read.side_effect = [b""]
-        self.mock_selector.select.side_effect = [
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            []]
-        self.mock_selector.get_map.side_effect = lambda: True
-
-        return_code, b_stdout, b_stderr = self.conn._run(["ssh", "is", "a", "cmd"], "this is more data")
-        assert return_code == 0
-        assert b_stdout == b'some data'
-        assert b_stderr == b''
-        assert self.mock_selector.register.called is True
-        assert self.mock_selector.register.call_count == 2
-        assert self.conn._send_initial_data.called is True
-        assert self.conn._send_initial_data.call_count == 1
-        assert self.conn._send_initial_data.call_args[0][1] == 'this is more data'
 
     def _password_with_prompt_examine_output(self, sourice, state, b_chunk, sudoable):
         if state == 'awaiting_prompt':
@@ -525,30 +472,6 @@ class TestSSHConnectionRun(object):
 
 @pytest.mark.usefixtures('mock_run_env')
 class TestSSHConnectionRetries(object):
-    def test_incorrect_password(self, monkeypatch):
-        self.conn.set_option('host_key_checking', False)
-        self.conn.set_option('reconnection_retries', 5)
-
-        self.mock_popen_res.stdout.read.side_effect = [b'']
-        self.mock_popen_res.stderr.read.side_effect = [b'Permission denied, please try again.\r\n']
-        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[5] * 4)
-
-        self.mock_selector.select.side_effect = [
-            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
-            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
-            [],
-        ]
-
-        self.mock_selector.get_map.side_effect = lambda: True
-
-        self.conn._build_command = MagicMock()
-        self.conn._build_command.return_value = [b'sshpass', b'-d41', b'ssh', b'-C']
-
-        exception_info = pytest.raises(AnsibleAuthenticationFailure, self.conn.exec_command, 'sshpass', 'some data')
-        assert exception_info.value.message == ('Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout: '
-                                                'Permission denied, please try again.')
-        assert self.mock_popen.call_count == 1
-
     def test_retry_then_success(self, monkeypatch):
         self.conn.set_option('host_key_checking', False)
         self.conn.set_option('reconnection_retries', 3)

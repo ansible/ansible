@@ -7,6 +7,29 @@ from __future__ import annotations
 import pytest
 
 from ansible.utils.display import Display
+from ansible.module_utils import basic
+from units.test_utils.controller.display import emits_warnings
+
+
+def test_module_utils_warn() -> None:
+    """Verify that `module_utils.basic.warn` on the controller is routed to `Display.warning`."""
+    with emits_warnings(warning_pattern="hello"):
+        basic.warn("hello")
+
+
+def test_module_utils_error_as_warning() -> None:
+    """Verify that `module_utils.basic.error_as_warning` on the controller is routed to `Display.error_as_warning`."""
+    with emits_warnings(warning_pattern="hello.*world"):
+        try:
+            raise Exception("world")
+        except Exception as ex:
+            basic.error_as_warning("hello", ex)
+
+
+def test_module_utils_deprecate() -> None:
+    """Verify that `module_utils.basic.deprecate` on the controller is routed to `Display.deprecated`."""
+    with emits_warnings(deprecation_pattern="hello"):
+        basic.deprecate("hello", version='9999.9')
 
 
 @pytest.fixture
@@ -23,9 +46,10 @@ def test_warning(capsys, mocker, warning_message):
     mocker.patch('ansible.utils.color.parsecolor', return_value=u'1;35')  # value for 'bright purple'
 
     d = Display()
+    d._warns.clear()
     d.warning(warning_message)
     out, err = capsys.readouterr()
-    assert d._warns == {expected_warning_message: 1}
+    assert d._warns == {expected_warning_message}
     assert err == '\x1b[1;35m{0}\x1b[0m\n'.format(expected_warning_message.rstrip('\n'))
 
 
@@ -35,7 +59,8 @@ def test_warning_no_color(capsys, mocker, warning_message):
     mocker.patch('ansible.utils.color.ANSIBLE_COLOR', False)
 
     d = Display()
+    d._warns.clear()
     d.warning(warning_message)
     out, err = capsys.readouterr()
-    assert d._warns == {expected_warning_message: 1}
+    assert d._warns == {expected_warning_message}
     assert err == expected_warning_message

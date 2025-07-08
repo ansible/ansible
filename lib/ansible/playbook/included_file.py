@@ -21,35 +21,42 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.executor.task_executor import remove_omit
+from ansible.executor.task_result import _RawTaskResult
+from ansible.inventory.host import Host
 from ansible.module_utils.common.text.converters import to_text
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.handler import Handler
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
+from ansible.vars.manager import VariableManager
 
 display = Display()
 
 
 class IncludedFile:
 
-    def __init__(self, filename, args, vars, task, is_role=False):
+    def __init__(self, filename, args, vars, task, is_role: bool = False) -> None:
         self._filename = filename
         self._args = args
         self._vars = vars
         self._task = task
-        self._hosts = []
+        self._hosts: list[Host] = []
         self._is_role = is_role
-        self._results = []
+        self._results: list[_RawTaskResult] = []
 
-    def add_host(self, host):
+    def add_host(self, host: Host) -> None:
         if host not in self._hosts:
             self._hosts.append(host)
             return
+
         raise ValueError()
 
     def __eq__(self, other):
+        if not isinstance(other, IncludedFile):
+            return False
+
         return (other._filename == self._filename and
                 other._args == self._args and
                 other._vars == self._vars and
@@ -60,23 +67,28 @@ class IncludedFile:
         return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
 
     @staticmethod
-    def process_include_results(results, iterator, loader, variable_manager):
-        included_files = []
-        task_vars_cache = {}
+    def process_include_results(
+        results: list[_RawTaskResult],
+        iterator,
+        loader: DataLoader,
+        variable_manager: VariableManager,
+    ) -> list[IncludedFile]:
+        included_files: list[IncludedFile] = []
+        task_vars_cache: dict[tuple, dict] = {}
 
         for res in results:
 
-            original_host = res._host
-            original_task = res._task
+            original_host = res.host
+            original_task = res.task
 
             if original_task.action in C._ACTION_ALL_INCLUDES:
 
                 if original_task.loop:
-                    if 'results' not in res._result:
+                    if 'results' not in res._return_data:
                         continue
-                    include_results = res._result['results']
+                    include_results = res._loop_results
                 else:
-                    include_results = [res._result]
+                    include_results = [res._return_data]
 
                 for include_result in include_results:
                     # if the task result was skipped or failed, continue
@@ -114,7 +126,7 @@ class IncludedFile:
                     if loader.get_basedir() not in task_vars['ansible_search_path']:
                         task_vars['ansible_search_path'].append(loader.get_basedir())
 
-                    templar = Templar(loader=loader, variables=task_vars)
+                    templar = TemplateEngine(loader=loader, variables=task_vars)
 
                     if original_task.action in C._ACTION_INCLUDE_TASKS:
                         include_file = None
@@ -132,6 +144,8 @@ class IncludedFile:
                                     parent_include_dir = parent_include._role_path
                                 else:
                                     try:
+                                        # FUTURE: Since the parent include path has already been resolved, it should be used here.
+                                        #         Unfortunately it's not currently stored anywhere, so it must be calculated again.
                                         parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                                     except AnsibleError as e:
                                         parent_include_dir = ''
@@ -144,7 +158,7 @@ class IncludedFile:
                                     cumulative_path = os.path.join(parent_include_dir, cumulative_path)
                                 else:
                                     cumulative_path = parent_include_dir
-                                include_target = templar.template(include_result['include'])
+                                include_target = include_result['include']
                                 if original_task._role:
                                     dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
                                     new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
@@ -170,7 +184,7 @@ class IncludedFile:
 
                         if include_file is None:
                             if original_task._role:
-                                include_target = templar.template(include_result['include'])
+                                include_target = include_result['include']
                                 include_file = loader.path_dwim_relative(
                                     original_task._role._role_path,
                                     'handlers' if isinstance(original_task, Handler) else 'tasks',
@@ -179,25 +193,17 @@ class IncludedFile:
                             else:
                                 include_file = loader.path_dwim(include_result['include'])
 
-                        include_file = templar.template(include_file)
                         inc_file = IncludedFile(include_file, include_args, special_vars, original_task)
                     else:
                         # template the included role's name here
                         role_name = include_args.pop('name', include_args.pop('role', None))
-                        if role_name is not None:
-                            role_name = templar.template(role_name)
-
                         new_task = original_task.copy()
                         new_task.post_validate(templar=templar)
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:
                                 from_key = from_arg.removesuffix('_from')
-                                new_task._from_files[from_key] = templar.template(include_args.pop(from_arg))
-
-                        omit_token = task_vars.get('omit')
-                        if omit_token:
-                            new_task._from_files = remove_omit(new_task._from_files, omit_token)
+                                new_task._from_files[from_key] = include_args.pop(from_arg)
 
                         inc_file = IncludedFile(role_name, include_args, special_vars, new_task, is_role=True)
 

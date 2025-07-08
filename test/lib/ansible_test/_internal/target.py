@@ -1,4 +1,5 @@
 """Test target identification, iteration and inclusion/exclusion."""
+
 from __future__ import annotations
 
 import collections
@@ -580,6 +581,14 @@ class IntegrationTarget(CompletionTarget):
             static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
         else:
             static_aliases = tuple()
+
+        # non-group aliases which need to be extracted before group mangling occurs
+
+        self.env_set: dict[str, str] = {
+            match.group('key'): match.group('value') for match in (
+                re.match(r'env/set/(?P<key>[^/]+)/(?P<value>.*)', alias) for alias in static_aliases
+            ) if match
+        }
 
         # modules
 

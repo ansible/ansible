@@ -16,7 +16,8 @@ version_added: "2.11"
 options:
   argument_spec:
     description:
-        - A dictionary like AnsibleModule argument_spec. See R(argument spec definition,argument_spec).
+        - A dictionary like AnsibleModule argument_spec.
+        - See the C(options) parameter for the R(specification format,role_argument_spec).
     required: true
   provided_arguments:
     description:
@@ -46,6 +47,8 @@ attributes:
         support: none
     platform:
         platforms: all
+notes:
+    - It is unnecessary to call this module explicitly if the role contains an R(argument spec,role_argument_spec).
 """
 
 EXAMPLES = r"""

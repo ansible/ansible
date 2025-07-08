@@ -1,0 +1,74 @@
+# The debug action bypasses standard task arg templating.
+# Failures during templating occur when running the debug action.
+
+- name: Ensure debug templating failures are handled properly
+  debug:
+    msg: "{{ 5 / 0 | int }}"
+  ignore_errors: true
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - result is failed
+      - "'division by zero' in result.msg"
+      - result.exception is defined
+
+- name: Ensure debug templating failures do not stop later loop iterations
+  debug:
+    msg: "{{ 5 / item }}"
+  ignore_errors: true
+  register: result
+  loop: [0, 0, 1]
+
+- assert:
+    that:
+      - result.results[0] is failed
+      - "'division by zero' in result.results[0].msg"
+      - result.results[0].exception is defined
+      - result.results[0].item == 0
+
+      - result.results[1] is failed
+      - "'division by zero' in result.results[1].msg"
+      - result.results[1].exception is defined
+      - result.results[1].item == 0
+
+      - result.results[2] is success
+      - result.results[2].msg == 5.0
+      - result.results[2].exception is undefined
+      - result.results[2].item == 1
+
+- name: var templating exception
+  debug:
+    var: 5/0
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - '"division by zero" in result.msg'
+
+- name: undefined warnings in `var` template
+  debug:
+    var: something_undefined
+  register: result
+
+- assert:
+    that:
+      - result is success
+      - result.warnings | length == 1
+      - result.warnings[0] is contains "something_undefined"
+
+- name: composite template with embedded undefined
+  debug:
+    msg: mixed composite {{ "valid template" }} {{ bogus_var }} {{ another_bogus_var }} {{ "another valid template" }}
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - result.msg | regex_search("'bogus_var' is undefined") is not none

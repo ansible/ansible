@@ -490,6 +490,7 @@ uid:
 
 
 import ctypes.util
+from datetime import datetime
 import grp
 import calendar
 import os
@@ -502,13 +503,13 @@ import socket
 import subprocess
 import time
 import math
+import typing as t
 
 from ansible.module_utils import distro
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
-import ansible.module_utils.compat.typing as t
 
 
 class StructSpwdType(ctypes.Structure):
@@ -1279,11 +1280,16 @@ class User(object):
                                      env=env)
                 out_buffer = b''
                 err_buffer = b''
+                first_prompt = b'Enter passphrase'
+                second_prompt = b'Enter same passphrase again'
+                prompt = first_prompt
+                start = datetime.now()
+                timeout = 900
                 while p.poll() is None:
                     r_list = select.select([master_out_fd, master_err_fd], [], [], 1)[0]
-                    first_prompt = b'Enter passphrase (empty for no passphrase):'
-                    second_prompt = b'Enter same passphrase again'
-                    prompt = first_prompt
+                    now = datetime.now()
+                    if (now - start).seconds > timeout:
+                        return (1, '', f'Timeout after {timeout} while reading passphrase for SSH key')
                     for fd in r_list:
                         if fd == master_out_fd:
                             chunk = os.read(master_out_fd, 10240)
@@ -1335,7 +1341,7 @@ class User(object):
         try:
             with open(ssh_public_key_file, 'r') as f:
                 ssh_public_key = f.read().strip()
-        except IOError:
+        except OSError:
             return None
         return ssh_public_key
 
@@ -1370,16 +1376,24 @@ class User(object):
                     self.module.exit_json(failed=True, msg="%s" % to_native(e))
             # get umask from /etc/login.defs and set correct home mode
             if os.path.exists(self.LOGIN_DEFS):
-                with open(self.LOGIN_DEFS, 'r') as f:
-                    for line in f:
-                        m = re.match(r'^UMASK\s+(\d+)$', line)
-                        if m:
-                            umask = int(m.group(1), 8)
+                # fallback if neither HOME_MODE nor UMASK are set;
+                # follow behaviour of useradd initializing UMASK = 022
+                mode = 0o755
+                with open(self.LOGIN_DEFS, 'r') as fh:
+                    for line in fh:
+                        # HOME_MODE has higher precedence as UMASK
+                        match = re.match(r'^HOME_MODE\s+(\d+)$', line)
+                        if match:
+                            mode = int(match.group(1), 8)
+                            break  # higher precedence
+                        match = re.match(r'^UMASK\s+(\d+)$', line)
+                        if match:
+                            umask = int(match.group(1), 8)
                             mode = 0o777 & ~umask
-                            try:
-                                os.chmod(path, mode)
-                            except OSError as e:
-                                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+                try:
+                    os.chmod(path, mode)
+                except OSError as e:
+                    self.module.exit_json(failed=True, msg=to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
@@ -3241,6 +3255,11 @@ class Alpine(BusyBox):
     """
     platform = 'Linux'
     distribution = 'Alpine'
+
+
+class Buildroot(BusyBox):
+    platform = 'Linux'
+    distribution = 'Buildroot'
 
 
 def main():

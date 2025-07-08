@@ -1,4 +1,5 @@
 """Disallow use of unwanted Unicode characters."""
+
 from __future__ import annotations
 
 import re
@@ -19,8 +20,7 @@ def main():
                 match = re.search('(\u00a0)', text)
 
                 if match:
-                    print('%s:%d:%d: use an ASCII space instead of a Unicode no-break space' % (
-                        path, line + 1, match.start(1) + 1))
+                    print('%s:%d:%d: use an ASCII space instead of a Unicode no-break space' % (path, line + 1, match.start(1) + 1))
 
 
 if __name__ == '__main__':

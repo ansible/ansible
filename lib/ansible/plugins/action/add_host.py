@@ -77,7 +77,7 @@ class ActionModule(ActionBase):
             elif isinstance(groups, string_types):
                 group_list = groups.split(",")
             else:
-                raise AnsibleActionFail("Groups must be specified as a list.", obj=self._task)
+                raise AnsibleActionFail("Groups must be specified as a list.", obj=groups)
 
             for group_name in group_list:
                 if group_name not in new_groups:

@@ -1,4 +1,5 @@
 """Test runner for all Ansible tests."""
+
 from __future__ import annotations
 
 import os
@@ -58,6 +59,10 @@ from .config import (
     TestConfig,
 )
 
+from .debugging import (
+    initialize_debugger,
+)
+
 
 def main(cli_args: t.Optional[list[str]] = None) -> None:
     """Wrapper around the main program function to invoke cleanup functions at exit."""
@@ -76,6 +81,7 @@ def main_internal(cli_args: t.Optional[list[str]] = None) -> None:
         display.redact = config.redact
         display.color = config.color
         display.fd = sys.stderr if config.display_stderr else sys.stdout
+        initialize_debugger(config)
         configure_timeout(config)
         report_locale(isinstance(config, TestConfig) and not config.delegate)
 

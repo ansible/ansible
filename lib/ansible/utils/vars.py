@@ -20,17 +20,20 @@ from __future__ import annotations
 import keyword
 import secrets
 import uuid
+import typing as t
 
 from collections.abc import MutableMapping, MutableSequence
 from json import dumps
 
 from ansible import constants as C
 from ansible import context
+from ansible._internal import _json
+from ansible._internal._templating import _jinja_bits
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import string_types
+from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.parsing.splitter import parse_kv
-
+from ansible.parsing.dataloader import DataLoader
 
 _MAXSIZE = 2 ** 32
 cur_id = 0
@@ -178,19 +181,18 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     return x
 
 
-def load_extra_vars(loader):
+def load_extra_vars(loader: DataLoader) -> dict[str, t.Any]:
 
     if not getattr(load_extra_vars, 'extra_vars', None):
-        extra_vars = {}
+        extra_vars: dict[str, t.Any] = {}
         for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
-            data = None
             extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
             if extra_vars_opt is None or not extra_vars_opt:
                 continue
 
             if extra_vars_opt.startswith(u"@"):
                 # Argument is a YAML file (JSON is a subset of YAML)
-                data = loader.load_from_file(extra_vars_opt[1:])
+                data = loader.load_from_file(extra_vars_opt[1:], trusted_as_template=True)
             elif extra_vars_opt[0] in [u'/', u'.']:
                 raise AnsibleOptionsError("Please prepend extra_vars filename '%s' with '@'" % extra_vars_opt)
             elif extra_vars_opt[0] in [u'[', u'{']:
@@ -205,7 +207,7 @@ def load_extra_vars(loader):
             else:
                 raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 
-        setattr(load_extra_vars, 'extra_vars', extra_vars)
+        load_extra_vars.extra_vars = extra_vars
 
     return load_extra_vars.extra_vars
 
@@ -251,7 +253,9 @@ def isidentifier(ident):
 
     Originally posted at https://stackoverflow.com/a/29586366
     """
-    if not isinstance(ident, string_types):
+    # deprecated: description='Use validate_variable_name instead.' core_version='2.23'
+
+    if not isinstance(ident, str):
         return False
 
     if not ident.isascii():
@@ -264,3 +268,46 @@ def isidentifier(ident):
         return False
 
     return True
+
+
+def validate_variable_name(name: object) -> None:
+    """Validate the given variable name is valid, raising an AnsibleError if it is not."""
+    if isinstance(name, str) and name.isidentifier() and name.isascii() and name not in _jinja_bits.JINJA_KEYWORDS:
+        return
+
+    if isinstance(name, (str, int, float, bool, type(None))):
+        key_description = f'name {str(name)!r}'  # show common scalar key names as strings
+    else:
+        key_description = 'name'
+
+    if not isinstance(name, str):
+        key_description += f' of type {native_type_name(name)!r}'  # show the type name of all non-string keys
+
+    raise AnsibleError(
+        message=f'Invalid variable {key_description}.',
+        help_text='Variable names must be strings starting with a letter or underscore character, and contain only letters, numbers and underscores.',
+        obj=name,
+    )
+
+
+def transform_to_native_types(
+    value: object,
+    redact: bool = True,
+) -> t.Any:
+    """
+    Recursively transform the given value to Python native types.
+    Potentially sensitive values such as individually vaulted variables will be redacted unless ``redact=False`` is passed.
+    Which values are considered potentially sensitive may change in future releases.
+    Types which cannot be converted to Python native types will result in an error.
+    """
+    avv = _json.AnsibleVariableVisitor(
+        convert_mapping_to_dict=True,
+        convert_sequence_to_list=True,
+        convert_custom_scalars=True,
+        convert_to_native_values=True,
+        apply_transforms=True,
+        visit_keys=True,  # ensure that keys are also converted
+        encrypted_string_behavior=_json.EncryptedStringBehavior.REDACT if redact else _json.EncryptedStringBehavior.DECRYPT,
+    )
+
+    return avv.visit(value)

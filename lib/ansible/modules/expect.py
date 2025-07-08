@@ -120,14 +120,13 @@ EXAMPLES = r"""
 
 import datetime
 import os
-import traceback
 
 PEXPECT_IMP_ERR = None
 try:
     import pexpect
     HAS_PEXPECT = True
-except ImportError:
-    PEXPECT_IMP_ERR = traceback.format_exc()
+except ImportError as ex:
+    PEXPECT_IMP_ERR = ex
     HAS_PEXPECT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
@@ -164,8 +163,7 @@ def main():
     )
 
     if not HAS_PEXPECT:
-        module.fail_json(msg=missing_required_lib("pexpect"),
-                         exception=PEXPECT_IMP_ERR)
+        module.fail_json(msg=missing_required_lib("pexpect"), exception=PEXPECT_IMP_ERR)
 
     chdir = module.params['chdir']
     args = module.params['command']
@@ -220,7 +218,7 @@ def main():
                 rc=0
             )
 
-    startd = datetime.datetime.now()
+    start_date = datetime.datetime.now()
 
     try:
         try:
@@ -246,20 +244,17 @@ def main():
                              '(%s), this module requires pexpect>=3.3. '
                              'Error was %s' % (pexpect.__version__, to_native(e)))
     except pexpect.ExceptionPexpect as e:
-        module.fail_json(msg='%s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg='%s' % to_native(e))
 
-    endd = datetime.datetime.now()
-    delta = endd - startd
-
-    if b_out is None:
-        b_out = b''
+    end_date = datetime.datetime.now()
+    delta = end_date - start_date
 
     result = dict(
         cmd=args,
         stdout=to_native(b_out).rstrip('\r\n'),
         rc=rc,
-        start=str(startd),
-        end=str(endd),
+        start=str(start_date),
+        end=str(end_date),
         delta=str(delta),
         changed=True,
     )

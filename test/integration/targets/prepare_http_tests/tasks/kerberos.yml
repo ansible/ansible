@@ -26,7 +26,7 @@
   copy:
     src: openssl_legacy.cnf
     dest: '{{ krb5_openssl_conf }}'
-  when: krb5_openssl_conf | default(False, True)
+  when: krb5_openssl_conf is defined and krb5_openssl_conf is truthy
 
 - name: Include distribution specific variables
   include_vars: '{{ lookup("first_found", params) }}'

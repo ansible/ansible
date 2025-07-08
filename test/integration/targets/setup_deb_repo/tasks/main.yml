@@ -61,13 +61,16 @@
       - testing
     when: install_repo|default(True)|bool is true
 
+  when: ansible_distribution in ['Ubuntu', 'Debian']
+
+- block:
   # Need to uncomment the deb-src for the universe component for build-dep state
   - name: Ensure deb-src for the universe component
     lineinfile:
       path: /etc/apt/sources.list
       backrefs: True
-      regexp: ^#\s*deb-src http://archive\.ubuntu\.com/ubuntu/ (\w*){{ item }} universe$
-      line: deb-src http://archive.ubuntu.com/ubuntu \1{{ item }} universe
+      regexp: ^#\s*deb-src (http://.*\.ubuntu\.com/ubuntu.*/) (\w*){{ item }} universe$
+      line: deb-src \1 \2{{ item }} universe
       state: present
     with_items:
     - ''
@@ -80,4 +83,4 @@
       sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
     when: ansible_distribution_version is version('24.04', '>=')
 
-  when: ansible_distribution in ['Ubuntu', 'Debian']
+  when: ansible_distribution == 'Ubuntu'

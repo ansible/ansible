@@ -18,9 +18,15 @@
 
 from __future__ import annotations
 
+import warnings
+
 try:
-    import passlib
-    from passlib.handlers import pbkdf2
+    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
+
+        import passlib
+        from passlib.handlers import pbkdf2
 except ImportError:  # pragma: nocover
     passlib = None
     pbkdf2 = None
@@ -466,11 +472,16 @@ class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
     @patch('time.sleep')
     def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
-        password.os.path.exists = lambda x: True
-        with pytest.raises(AnsibleError):
-            with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
-                # should timeout here
-                self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
+        def _already_exists(*args, **kwargs):
+            raise FileExistsError("The lock is busy, wait and try again.")
+
+        with (
+            pytest.raises(AnsibleError, match='^Password lookup cannot get the lock in 7 seconds.*'),
+            patch.object(password.os, 'open', _already_exists),
+            patch.object(password.os.path, 'exists', lambda *args, **kwargs: True),
+        ):
+            # should timeout here
+            self.password_lookup.run([u'/path/to/somewhere chars=anything'], None)
 
     def test_lock_not_been_held(self):
         # pretend now there is password file but no lock
@@ -552,7 +563,7 @@ class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
     def test_encrypt_wrapped_crypt_algo(self, mock_write_file):
 
         password.os.path.exists = self.password_lookup._loader.path_exists
-        with patch.object(builtins, 'open', mock_open(read_data=self.password_lookup._loader._get_file_contents('/path/to/somewhere')[0])) as m:
+        with patch.object(builtins, 'open', mock_open(read_data=self.password_lookup._loader.get_text_file_contents('/path/to/somewhere'))):
             results = self.password_lookup.run([u'/path/to/somewhere encrypt=ldap_sha256_crypt'], None)
 
             wrapper = getattr(passlib.hash, 'ldap_sha256_crypt')
@@ -575,7 +586,7 @@ class TestLookupModuleWithPasslibWrappedAlgo(BaseTestLookupModule):
             self.assertEqual(str_parts[0], '{CRYPT}')
 
             # verify it used the right algo type
-            self.assertTrue(wrapper.verify(self.password_lookup._loader._get_file_contents('/path/to/somewhere')[0], result))
+            self.assertTrue(wrapper.verify(self.password_lookup._loader.get_text_file_contents('/path/to/somewhere'), result))
 
             # verify a password with a non default rounds value
             # generated with: echo test | mkpasswd -s --rounds 660000 -m sha-256 --salt testansiblepass.

@@ -65,7 +65,7 @@ def setup_collection_loader():
 setup_collection_loader()
 
 from ansible import __version__ as ansible_version
-from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
+from ansible.executor.module_common import REPLACER_WINDOWS as _REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
@@ -90,7 +90,7 @@ from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, par
 TRY_EXCEPT = ast.Try
 # REPLACER_WINDOWS from ansible.executor.module_common is byte
 # string but we need unicode for Python 3
-REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
+REPLACER_WINDOWS = _REPLACER_WINDOWS.decode('utf-8')
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
@@ -311,8 +311,8 @@ class ModuleValidator(Validator):
 
         self.analyze_arg_spec = analyze_arg_spec and plugin_type == 'module'
 
-        self._Version = LooseVersion
-        self._StrictVersion = StrictVersion
+        self._Version: type[LooseVersion | SemanticVersion] = LooseVersion
+        self._StrictVersion: type[StrictVersion | SemanticVersion] = StrictVersion
 
         self.collection = collection
         self.collection_name = 'ansible.builtin'
@@ -687,30 +687,57 @@ class ModuleValidator(Validator):
         # get module list for each
         # check "shape" of each module name
 
-        module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
-        csharp_requires = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*(Ansible\..+)'
+        legacy_ps_requires = r'(?im)^#\s*Requires\s+\-Module(?:s?)\s+(Ansible\.ModuleUtils\..+)'
+        ps_requires = r"""(?imx)
+            ^\#\s*AnsibleRequires\s+-PowerShell\s+
+            (
+                # Builtin PowerShell module
+                (Ansible\.ModuleUtils\.[\w\.]+)
+                |
+                # Fully qualified collection PowerShell module
+                (ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)
+                |
+                # Relative collection PowerShell module
+                (\.[\w\.]+)
+            )
+            (\s+-Optional)?"""
+        csharp_requires = r"""(?imx)
+            ^\#\s*AnsibleRequires\s+-CSharpUtil\s+
+            (
+                # Builtin C# util
+                (Ansible\.[\w\.]+)
+                |
+                # Fully qualified collection C# util
+                (ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)
+                |
+                # Relative collection C# util
+                (\.[\w\.]+)
+            )
+            (\s+-Optional)?"""
+
         found_requires = False
 
-        for req_stmt in re.finditer(module_requires, self.text):
-            found_requires = True
-            # this will bomb on dictionary format - "don't do that"
-            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
-            if len(module_list) > 1:
-                self.reporter.error(
-                    path=self.object_path,
-                    code='multiple-utils-per-requires',
-                    msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
-                )
-                continue
+        for pattern, required_type in [(legacy_ps_requires, "Requires"), (ps_requires, "AnsibleRequires")]:
+            for req_stmt in re.finditer(pattern, self.text):
+                found_requires = True
+                # this will bomb on dictionary format - "don't do that"
+                module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+                if len(module_list) > 1:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='multiple-utils-per-requires',
+                        msg='Ansible.ModuleUtils requirements do not support multiple modules per statement: "%s"' % req_stmt.group(0)
+                    )
+                    continue
 
-            module_name = module_list[0]
+                module_name = module_list[0]
 
-            if module_name.lower().endswith('.psm1'):
-                self.reporter.error(
-                    path=self.object_path,
-                    code='invalid-requires-extension',
-                    msg='Module #Requires should not end in .psm1: "%s"' % module_name
-                )
+                if module_name.lower().endswith('.psm1'):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='invalid-requires-extension',
+                        msg='Module #%s should not end in .psm1: "%s"' % (required_type, module_name)
+                    )
 
         for req_stmt in re.finditer(csharp_requires, self.text):
             found_requires = True
@@ -979,7 +1006,7 @@ class ModuleValidator(Validator):
             missing_fragment = False
             with CaptureStd():
                 try:
-                    get_docstring(self.path, fragment_loader=fragment_loader,
+                    get_docstring(os.path.abspath(self.path), fragment_loader=fragment_loader,
                                   verbose=True,
                                   collection_name=self.collection_name,
                                   plugin_type=self.plugin_type)
@@ -1003,7 +1030,7 @@ class ModuleValidator(Validator):
                     )
 
             if not missing_fragment:
-                add_fragments(doc, self.object_path, fragment_loader=fragment_loader,
+                add_fragments(doc, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
                               is_module=self.plugin_type == 'module')
 
             if 'options' in doc and doc['options'] is None:
@@ -1589,7 +1616,7 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader,
+                add_fragments(docs, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
                               is_module=self.plugin_type == 'module')
         except Exception:
             # Cannot merge fragments
@@ -2186,7 +2213,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name,
+                    os.path.abspath(self.base_module), fragment_loader, verbose=True, collection_name=self.collection_name,
                     is_module=self.plugin_type == 'module')
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:

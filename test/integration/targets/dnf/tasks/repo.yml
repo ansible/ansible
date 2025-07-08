@@ -19,6 +19,9 @@
       assert:
         that:
             - "'results' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_before
     # ============================================================================
     - name: Install dinginessentail-1.0-1 again
       dnf:
@@ -40,6 +43,13 @@
       assert:
         that:
             - "'msg' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_after
+
+    - assert:
+        that:
+          - dnf_history_lines_before.stdout == dnf_history_lines_after.stdout
     # ============================================================================
     - name: Install dinginessentail again (noop, module is idempotent)
       dnf:
@@ -516,4 +526,134 @@
     - name: Clean up
       dnf:
         name: provides_foo*
+        state: absent
+
+# https://github.com/ansible/ansible/issues/84259
+- name: test installing a package named `package-name` while a package providing `/usr/sbin/package-name` is installed
+  block:
+    - dnf:
+        name: package-name
+        state: absent
+
+    - dnf:
+        name: provides-binary
+        state: present
+
+    - dnf:
+        name: package-name
+        state: latest
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name:
+          - provides-binary
+          - package-name
+        state: absent
+
+- name: test installing a package that provides a binary by specifying the binary name
+  block:
+    - dnf:
+        name: provides-binary
+        state: absent
+
+    - dnf:
+        name: /usr/sbin/package-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: provides-binary
+        state: absent
+
+# https://github.com/ansible/ansible/issues/84334
+- name: test that a binary is not matched by its base name
+  block:
+    - dnf:
+        name: provides-binary
+        state: present
+
+    - dnf:
+        name: package-name
+        state: absent
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+  always:
+    - name: Clean up
+      dnf:
+        name:
+          - provides-binary
+          - package-name
+        state: absent
+
+# https://github.com/ansible/ansible/issues/84578
+- name: Test installing a package that is listed in `provides` in different package
+  block:
+    - dnf:
+        name: provides-package
+        state: present
+
+    - command: rpm -q provided-package
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+
+    - dnf:
+        name: provided-package
+        state: present
+      register: r
+
+    - assert:
+        that:
+          - r is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides-package
+        - provided-package
+
+- name: Test failures occured during loading repositories are properly handled
+  vars:
+    repo_name: test-non-existing-gpgkey-file
+  block:
+    - yum_repository:
+        name: "{{ repo_name }}"
+        baseurl: "file://{{ repodir }}"
+        description: "{{ repo_name }}"
+        repo_gpgcheck: true
+        skip_if_unavailable: false
+
+    - dnf:
+        name: dinginessentail
+        enablerepo: "{{ repo_name }}"
+        disablerepo: "*"
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+          # account for two different messages depending on the libdnf version
+          - r.msg is contains("Couldn't open file") or r.msg is contains("Failed to download metadata")
+  always:
+    - file:
+        name: /etc/yum.repos.d/{{ repo_name }}.repo
         state: absent

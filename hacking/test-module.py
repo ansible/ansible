@@ -43,7 +43,6 @@ from pathlib import Path
 from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.loader import init_plugin_loader
 from ansible.executor import module_common
@@ -87,6 +86,22 @@ def parse():
         sys.exit(1)
     else:
         return options, args
+
+
+def jsonify(result, format=False):
+    """ format JSON output (uncompressed or uncompressed) """
+
+    if result is None:
+        return "{}"
+
+    indent = None
+    if format:
+        indent = 4
+
+    try:
+        return json.dumps(result, sort_keys=True, indent=indent, ensure_ascii=False)
+    except UnicodeDecodeError:
+        return json.dumps(result, sort_keys=True, indent=indent)
 
 
 def write_argsfile(argstring, json=False):
@@ -152,15 +167,19 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     if check:
         complex_args['_ansible_check_mode'] = True
 
+    modfile = os.path.abspath(modfile)
     modname = os.path.basename(modfile)
     modname = os.path.splitext(modname)[0]
-    (module_data, module_style, shebang) = module_common.modify_module(
-        modname,
-        modfile,
-        complex_args,
-        Templar(loader=loader),
+
+    built_module = module_common.modify_module(
+        module_name=modname,
+        module_path=modfile,
+        module_args=complex_args,
+        templar=Templar(loader=loader),
         task_vars=task_vars
     )
+
+    module_data, module_style = built_module.b_module_data, built_module.module_style
 
     if module_style == 'new' and '_ANSIBALLZ_WRAPPER = True' in to_native(module_data):
         module_style = 'ansiballz'
@@ -198,10 +217,11 @@ def ansiballz_setup(modfile, modname, interpreters):
 
     # All the directories in an AnsiBallZ that modules can live
     core_dirs = glob.glob(os.path.join(debug_dir, 'ansible/modules'))
+    non_core_dirs = glob.glob(os.path.join(debug_dir, 'ansible/legacy'))
     collection_dirs = glob.glob(os.path.join(debug_dir, 'ansible_collections/*/*/plugins/modules'))
 
     # There's only one module in an AnsiBallZ payload so look for the first module and then exit
-    for module_dir in core_dirs + collection_dirs:
+    for module_dir in core_dirs + collection_dirs + non_core_dirs:
         for dirname, directories, filenames in os.walk(module_dir):
             for filename in filenames:
                 if filename == modname + '.py':

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import collections.abc as c
+
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_text
 
@@ -17,12 +19,16 @@ def boolean(value, strict=True):
         return value
 
     normalized_value = value
+
     if isinstance(value, (text_type, binary_type)):
         normalized_value = to_text(value, errors='surrogate_or_strict').lower().strip()
+
+    if not isinstance(value, c.Hashable):
+        normalized_value = None  # prevent unhashable types from bombing, but keep the rest of the existing fallback/error behavior
 
     if normalized_value in BOOLEANS_TRUE:
         return True
     elif normalized_value in BOOLEANS_FALSE or not strict:
         return False
 
-    raise TypeError("The value '%s' is not a valid boolean.  Valid booleans include: %s" % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))
+    raise TypeError("The value '%s' is not a valid boolean. Valid booleans include: %s" % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))

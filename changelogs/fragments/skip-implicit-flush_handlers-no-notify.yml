@@ -1,2 +1,0 @@
-bugfixes:
-  - "Improve performance on large inventories by reducing the number of implicit meta tasks."

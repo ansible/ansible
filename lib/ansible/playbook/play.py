@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleError
-from ansible.module_utils.common.text.converters import to_native
+from ansible.errors import AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -31,7 +31,7 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
-from ansible.vars.manager import preprocess_vars
+from ansible.parsing.vault import EncryptedString
 from ansible.utils.display import Display
 
 display = Display()
@@ -123,7 +123,7 @@ class Play(Base, Taggable, CollectionSearch):
                     elif not isinstance(entry, (binary_type, text_type)):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
 
-            elif not isinstance(value, (binary_type, text_type)):
+            elif not isinstance(value, (binary_type, text_type, EncryptedString)):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
@@ -168,6 +168,8 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
+    # DTFIX-FUTURE: these do nothing but augment the exception message; DRY and nuke
+
     def _load_tasks(self, attr, ds):
         """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
@@ -175,8 +177,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading tasks.", obj=self._ds) from ex
 
     def _load_pre_tasks(self, attr, ds):
         """
@@ -185,8 +187,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks.", obj=self._ds) from ex
 
     def _load_post_tasks(self, attr, ds):
         """
@@ -195,8 +197,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading post_tasks.", obj=self._ds) from ex
 
     def _load_handlers(self, attr, ds):
         """
@@ -209,8 +211,8 @@ class Play(Base, Taggable, CollectionSearch):
                 load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
                 prepend=True
             )
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed block was encountered while loading handlers.", obj=self._ds) from ex
 
     def _load_roles(self, attr, ds):
         """
@@ -224,8 +226,8 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
                                                loader=self._loader, collection_search_list=self.collections)
-        except AssertionError as e:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
+        except AssertionError as ex:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds) from ex
 
         roles = []
         for ri in role_includes:
@@ -236,6 +238,9 @@ class Play(Base, Taggable, CollectionSearch):
         return self.roles
 
     def _load_vars_prompt(self, attr, ds):
+        # avoid circular dep
+        from ansible.vars.manager import preprocess_vars
+
         new_ds = preprocess_vars(ds)
         vars_prompts = []
         if new_ds is not None:
@@ -296,7 +301,7 @@ class Play(Base, Taggable, CollectionSearch):
         # of the playbook execution
         flush_block = Block(play=self)
 
-        t = Task()
+        t = Task(block=flush_block)
         t.action = 'meta'
         t.resolved_action = 'ansible.builtin.meta'
         t.args['_raw_params'] = 'flush_handlers'
@@ -316,6 +321,9 @@ class Play(Base, Taggable, CollectionSearch):
         else:
             flush_block.block = [t]
 
+        # NOTE keep flush_handlers tasks even if a section has no regular tasks,
+        #      there may be notified handlers from the previous section
+        #      (typically when a handler notifies a handler defined before)
         block_list = []
         if self.force_handlers:
             noop_task = Task()
@@ -325,18 +333,33 @@ class Play(Base, Taggable, CollectionSearch):
             noop_task.set_loader(self._loader)
 
             b = Block(play=self)
-            b.block = self.pre_tasks or [noop_task]
+            if self.pre_tasks:
+                b.block = self.pre_tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             tasks = self._compile_roles() + self.tasks
             b = Block(play=self)
-            b.block = tasks or [noop_task]
+            if tasks:
+                b.block = tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 
             b = Block(play=self)
-            b.block = self.post_tasks or [noop_task]
+            if self.post_tasks:
+                b.block = self.post_tasks
+            else:
+                nt = noop_task.copy(exclude_parent=True)
+                nt._parent = b
+                b.block = [nt]
             b.always = [flush_block]
             block_list.append(b)
 

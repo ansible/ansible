@@ -83,32 +83,20 @@ _raw:
 import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils.common.sentinel import Sentinel
-from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import string_types
+from ansible.errors import AnsibleError, AnsibleUndefinedConfigEntry
 from ansible.plugins.lookup import LookupBase
 
 
-class MissingSetting(AnsibleOptionsError):
-    pass
-
-
 def _get_plugin_config(pname, ptype, config, variables):
-    try:
-        # plugin creates settings on load, this is cached so not too expensive to redo
-        loader = getattr(plugin_loader, '%s_loader' % ptype)
-        p = loader.get(pname, class_only=True)
-        if p is None:
-            raise AnsibleLookupError('Unable to load %s plugin "%s"' % (ptype, pname))
-        result, origin = C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
-    except AnsibleLookupError:
-        raise
-    except AnsibleError as e:
-        msg = to_native(e)
-        if 'was not defined' in msg:
-            raise MissingSetting(msg, orig_exc=e)
-        raise e
+    # plugin creates settings on load, this is cached so not too expensive to redo
+    loader = getattr(plugin_loader, '%s_loader' % ptype)
+    p = loader.get(pname, class_only=True)
+
+    if p is None:
+        raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
+
+    result, origin = C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
 
     return result, origin
 
@@ -116,10 +104,11 @@ def _get_plugin_config(pname, ptype, config, variables):
 def _get_global_config(config):
     try:
         result = getattr(C, config)
-        if callable(result):
-            raise AnsibleLookupError('Invalid setting "%s" attempted' % config)
-    except AttributeError as e:
-        raise MissingSetting(to_native(e), orig_exc=e)
+    except AttributeError:
+        raise AnsibleUndefinedConfigEntry(f"Setting {config!r} does not exist.") from None
+
+    if callable(result):
+        raise ValueError(f"Invalid setting {config!r} attempted.")
 
     return result
 
@@ -136,16 +125,13 @@ class LookupModule(LookupBase):
         show_origin = self.get_option('show_origin')
 
         if (ptype or pname) and not (ptype and pname):
-            raise AnsibleOptionsError('Both plugin_type and plugin_name are required, cannot use one without the other')
-
-        if not isinstance(missing, string_types) or missing not in ['error', 'warn', 'skip']:
-            raise AnsibleOptionsError('"on_missing" must be a string and one of "error", "warn" or "skip", not %s' % missing)
+            raise AnsibleError('Both plugin_type and plugin_name are required, cannot use one without the other.')
 
         ret = []
 
         for term in terms:
-            if not isinstance(term, string_types):
-                raise AnsibleOptionsError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+            if not isinstance(term, str):
+                raise AnsibleError(f'Invalid setting identifier, {term!r} is not a {str}, its a {type(term)}.')
 
             result = Sentinel
             origin = None
@@ -154,17 +140,17 @@ class LookupModule(LookupBase):
                     result, origin = _get_plugin_config(pname, ptype, term, variables)
                 else:
                     result = _get_global_config(term)
-            except MissingSetting as e:
+            except AnsibleUndefinedConfigEntry:
                 if missing == 'error':
-                    raise AnsibleLookupError('Unable to find setting %s' % term, orig_exc=e)
+                    raise
                 elif missing == 'warn':
-                    self._display.warning('Skipping, did not find setting %s' % term)
+                    self._display.warning(f"Skipping, did not find setting {term!r}.")
                 elif missing == 'skip':
                     pass  # this is not needed, but added to have all 3 options stated
 
             if result is not Sentinel:
                 if show_origin:
-                    ret.append((result, origin))
+                    ret.append([result, origin])
                 else:
                     ret.append(result)
         return ret

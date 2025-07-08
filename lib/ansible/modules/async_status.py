@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import sys
 
 DOCUMENTATION = r"""
 ---
@@ -27,6 +28,8 @@ options:
     type: str
     choices: [ cleanup, status ]
     default: status
+notes:
+  - The RV(started) and RV(finished) return values were updated to return V(True) or V(False) instead of V(1) or V(0) in ansible-core 2.19.
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
@@ -67,7 +70,7 @@ EXAMPLES = r"""
   ansible.builtin.async_status:
     jid: '{{ dnf_sleeper.ansible_job_id }}'
   register: job_result
-  until: job_result.finished
+  until: job_result is finished
   retries: 100
   delay: 10
 
@@ -84,15 +87,15 @@ ansible_job_id:
   type: str
   sample: '360874038559.4169'
 finished:
-  description: Whether the asynchronous job has finished (V(1)) or not (V(0))
+  description: Whether the asynchronous job has finished or not
   returned: always
-  type: int
-  sample: 1
+  type: bool
+  sample: true
 started:
-  description: Whether the asynchronous job has started (V(1)) or not (V(0))
+  description: Whether the asynchronous job has started or not
   returned: always
-  type: int
-  sample: 1
+  type: bool
+  sample: true
 stdout:
   description: Any output returned by async_wrapper
   returned: always
@@ -111,8 +114,6 @@ import json
 import os
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.common.text.converters import to_native
 
 
 def main():
@@ -135,7 +136,7 @@ def main():
     log_path = os.path.join(async_dir, jid)
 
     if not os.path.exists(log_path):
-        module.fail_json(msg="could not find job", ansible_job_id=jid, started=1, finished=1)
+        module.fail_json(msg="could not find job", ansible_job_id=jid, started=True, finished=True)
 
     if mode == 'cleanup':
         os.unlink(log_path)
@@ -152,21 +153,20 @@ def main():
     except Exception:
         if not data:
             # file not written yet?  That means it is running
-            module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
+            module.exit_json(results_file=log_path, ansible_job_id=jid, started=True, finished=False)
         else:
             module.fail_json(ansible_job_id=jid, results_file=log_path,
-                             msg="Could not parse job output: %s" % data, started=1, finished=1)
+                             msg="Could not parse job output: %s" % data, started=True, finished=True)
 
     if 'started' not in data:
-        data['finished'] = 1
+        data['finished'] = True
         data['ansible_job_id'] = jid
     elif 'finished' not in data:
-        data['finished'] = 0
+        data['finished'] = False
 
-    # Fix error: TypeError: exit_json() keywords must be strings
-    data = {to_native(k): v for k, v in iteritems(data)}
-
-    module.exit_json(**data)
+    # just write the module output directly to stdout and exit; bypass other processing done by exit_json since it's already been done
+    print(f"\n{json.dumps(data)}")  # pylint: disable=ansible-bad-function
+    sys.exit(0)  # pylint: disable=ansible-bad-function
 
 
 if __name__ == '__main__':

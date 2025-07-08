@@ -26,13 +26,13 @@ install_ssh_keys()
         echo "${ssh_private_key}" > "${ssh_private_key_path}"
 
         # add public key to authorized_keys
-        authoried_keys_path="${HOME}/.ssh/authorized_keys"
+        authorized_keys_path="${HOME}/.ssh/authorized_keys"
 
         # the existing file is overwritten to avoid conflicts (ex: RHEL on EC2 blocks root login)
-        cat "${public_key_path}" > "${authoried_keys_path}"
-        chmod 0600 "${authoried_keys_path}"
+        cat "${public_key_path}" > "${authorized_keys_path}"
+        chmod 0600 "${authorized_keys_path}"
 
-        # add localhost's server keys to known_hosts
+        # add localhost server keys to known_hosts
         known_hosts_path="${HOME}/.ssh/known_hosts"
 
         for key in /etc/ssh/ssh_host_*_key.pub; do
@@ -154,6 +154,7 @@ bootstrap_remote_freebsd()
         py${python_package_version}-sqlite3
         py${python_package_version}-setuptools
         bash
+        ca_root_nss
         curl
         gtar
         sudo
@@ -162,27 +163,14 @@ bootstrap_remote_freebsd()
     if [ "${controller}" ]; then
         jinja2_pkg="py${python_package_version}-jinja2"
         cryptography_pkg="py${python_package_version}-cryptography"
-        pyyaml_pkg="py${python_package_version}-yaml"
+        pyyaml_pkg="py${python_package_version}-pyyaml"
         packaging_pkg="py${python_package_version}-packaging"
 
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
         case "${platform_version}/${python_version}" in
-            13.3/3.9)
-                # defaults above 'just work'TM
-                ;;
-            13.3/3.11)
-                jinja2_pkg=""  # not available
-                cryptography_pkg=""  # not available
-                pyyaml_pkg=""  # not available
-                ;;
-            14.1/3.9)
-                # defaults above 'just work'TM
-                ;;
-            14.1/3.11)
-                cryptography_pkg=""  # not available
-                jinja2_pkg=""  # not available
-                pyyaml_pkg=""  # not available
+            14.2/3.11)
+                # defaults available
                 ;;
             *)
                 # just assume nothing is available
@@ -238,6 +226,7 @@ prefer-binary = yes
 
     # enable sudo without a password for the wheel group, allowing ansible to use the sudo become plugin
     echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /usr/local/etc/sudoers.d/ansible-test
+    chmod 440 /usr/local/etc/sudoers.d/ansible-test
 }
 
 bootstrap_remote_macos()
@@ -292,10 +281,41 @@ bootstrap_remote_rhel_9()
     done
 }
 
+bootstrap_remote_rhel_10()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        gcc
+        ${py_pkg_prefix}-devel
+        ${py_pkg_prefix}-pip
+        "
+
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-pyyaml
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        dnf install -q -y ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+}
+
 bootstrap_remote_rhel()
 {
     case "${platform_version}" in
         9.*) bootstrap_remote_rhel_9 ;;
+        10.*) bootstrap_remote_rhel_10 ;;
     esac
 }
 

@@ -1,4 +1,5 @@
 """Disallow importing of the six module."""
+
 from __future__ import annotations
 
 import re

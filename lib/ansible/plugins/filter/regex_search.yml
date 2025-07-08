@@ -52,5 +52,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: Matched string or empty string if no match.
+    description: Matched string or C(None) if no match.
     type: str

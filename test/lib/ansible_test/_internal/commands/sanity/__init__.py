@@ -1,4 +1,5 @@
 """Execute Ansible sanity tests."""
+
 from __future__ import annotations
 
 import abc
@@ -75,6 +76,7 @@ from ...python_requirements import (
     PipInstall,
     collect_requirements,
     run_pip,
+    install_requirements,
 )
 
 from ...config import (
@@ -177,6 +179,7 @@ def command_sanity(args: SanityConfig) -> None:
     if args.delegate:
         raise Delegate(host_state=host_state, require=changes, exclude=args.exclude)
 
+    install_requirements(args, host_state.controller_profile, host_state.controller_profile.python)  # sanity
     configure_pypi_proxy(args, host_state.controller_profile)  # sanity
 
     if disabled:
@@ -302,7 +305,7 @@ def command_sanity(args: SanityConfig) -> None:
 
     if created_venvs and isinstance(controller, DockerConfig) and controller.name == 'default' and not args.prime_venvs:
         names = ', '.join(created_venvs)
-        display.warning(f'There following sanity test virtual environments are out-of-date in the "default" container: {names}')
+        display.warning(f'The following sanity test virtual environments are out-of-date in the "default" container: {names}')
 
     if failed:
         message = 'The %d sanity test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
@@ -872,6 +875,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
             self.__all_targets: bool = self.config.get('all_targets')
             self.__no_targets: bool = self.config.get('no_targets')
+            self.__split_targets: bool = self.config.get('split_targets')
             self.__include_directories: bool = self.config.get('include_directories')
             self.__include_symlinks: bool = self.config.get('include_symlinks')
             self.__error_code: str | None = self.config.get('error_code', None)
@@ -889,6 +893,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
             self.__all_targets = False
             self.__no_targets = True
+            self.__split_targets = False
             self.__include_directories = False
             self.__include_symlinks = False
             self.__error_code = None
@@ -924,6 +929,11 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
     def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return self.__no_targets
+
+    @property
+    def split_targets(self) -> bool:
+        """True if the test requires target paths to be split between controller-only and target paths."""
+        return self.__split_targets
 
     @property
     def include_directories(self) -> bool:
@@ -992,6 +1002,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
             ANSIBLE_TEST_TARGET_PYTHON_VERSION=python.version,
             ANSIBLE_TEST_CONTROLLER_PYTHON_VERSIONS=','.join(CONTROLLER_PYTHON_VERSIONS),
             ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS=','.join(REMOTE_ONLY_PYTHON_VERSIONS),
+            ANSIBLE_TEST_FIX_MODE=str(int(args.fix)),
         )
 
         if self.min_max_python_only:
@@ -1018,6 +1029,12 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
                 raise ApplicationError('Unsupported output type: %s' % self.output)
 
         if not self.no_targets:
+            if self.split_targets:
+                target_paths = set(target.path for target in self.filter_remote_targets(list(targets.targets)))
+                controller_path_list = sorted(set(paths) - target_paths)
+                target_path_list = sorted(set(paths) & target_paths)
+                paths = controller_path_list + ['--'] + target_path_list
+
             data = '\n'.join(paths)
 
             if data:
@@ -1070,7 +1087,7 @@ class SanityScript(SanityTest, metaclass=abc.ABCMeta):
 
 
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
-    """Base class for sanity test plugins which are idependent of the python version being used."""
+    """Base class for sanity test plugins which are independent of the python version being used."""
 
     @abc.abstractmethod
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:

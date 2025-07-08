@@ -1,4 +1,5 @@
 """High level functions for working with SSH."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -12,7 +13,6 @@ import shlex
 import typing as t
 
 from .encoding import (
-    to_bytes,
     to_text,
 )
 
@@ -222,13 +222,10 @@ def run_ssh_command(
     cmd_show = shlex.join(cmd)
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
-    cmd_bytes = [to_bytes(arg) for arg in cmd]
-    env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-
     if args.explain:
         process = SshProcess(None)
     else:
-        process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1,  # pylint: disable=consider-using-with
+        process = SshProcess(subprocess.Popen(cmd, env=env, bufsize=-1,  # pylint: disable=consider-using-with
                                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     return process

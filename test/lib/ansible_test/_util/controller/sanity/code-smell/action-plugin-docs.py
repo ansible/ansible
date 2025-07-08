@@ -1,4 +1,5 @@
 """Test to verify action plugins have an associated module to provide documentation."""
+
 from __future__ import annotations
 
 import os

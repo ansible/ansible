@@ -97,3 +97,44 @@
         that:
           - ouch['changed'] is boolean
           - "'*' not in ouch['msg']"
+
+- name: Ensure exact matches for no log values are masked in module results (non-substring checking)
+  module_that_has_secret:
+    secret: "{{ item }}"
+    notsecret: "{{ item }}"
+  register: result
+  loop:
+    - 123456
+    - 123456.789
+    - something_dangerous
+
+- assert:
+    that:
+      - result.results[0].secret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[0].notsecret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[1].secret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[1].notsecret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[2].secret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[2].notsecret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+
+- name: Ensure partial value matches for no log values are masked in module results
+  module_that_has_secret:
+    secret: "{{ item.secret }}"
+    notsecret: "{{ item.notsecret }}"
+  register: result
+  loop:
+    - secret: 123456
+      notsecret: 91234569
+    - secret: 123456.789
+      notsecret: 9123456.7899
+    - secret: something_dangerous
+      notsecret: xsomething_dangerousx
+
+- assert:
+    that:
+      - result.results[0].secret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[0].notsecret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[1].secret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[1].notsecret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[2].secret == 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+      - result.results[2].notsecret == 'x********x'
