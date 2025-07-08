@@ -1,11 +1,3 @@
-- name: setup delegated host
-  hosts: localhost
-  gather_facts: false
-  tasks:
-    - add_host:
-        name: delegatetome
-        ansible_host: 127.0.0.4
-
 - name: ensure we dont use orig host vars if delegated one does not define them
   hosts: testhost
   gather_facts: false

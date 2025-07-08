@@ -19,7 +19,7 @@ from ansible.errors import (
     AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
-from ansible.executor.task_result import _RawTaskResult
+from ansible.executor.task_result import _RawTaskResult, _SUB_PRESERVE
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _messages
 from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name
@@ -771,14 +771,18 @@ class TaskExecutor:
         # on the results side without having to do any further templating
         # also now add connection vars results when delegating
         if self._task.delegate_to:
-            result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
-            for k in plugin_vars:
-                result["_ansible_delegated_vars"][k] = cvars.get(k)
+            result["_ansible_delegated_vars"] = {
+                "ansible_delegated_host": self._task.delegate_to,
+                "ansible_connection": current_connection,
+            }
 
             # note: here for callbacks that rely on this info to display delegation
-            for requireshed in ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'):
-                if requireshed not in result["_ansible_delegated_vars"] and requireshed in cvars:
-                    result["_ansible_delegated_vars"][requireshed] = cvars.get(requireshed)
+            for k in plugin_vars:
+                if k not in _SUB_PRESERVE["_ansible_delegated_vars"]:
+                    continue
+
+                for o in C.config.get_plugin_options_from_var("connection", current_connection, k):
+                    result["_ansible_delegated_vars"][k] = self._connection.get_option(o)
 
         # and return
         display.debug("attempt loop complete, returning result")

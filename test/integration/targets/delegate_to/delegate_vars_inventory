@@ -1,0 +1,2 @@
+[all]
+delegatetome ansible_host="{{ hostip }}" hostip="127.0.0.4"

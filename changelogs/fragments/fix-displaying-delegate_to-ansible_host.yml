@@ -1,0 +1,3 @@
+bugfixes:
+  - callback plugins - fix displaying the rendered ``ansible_host`` variable with ``delegate_to`` (https://github.com/ansible/ansible/issues/84922).
+  - ssh connection - fix documented variables for the ``host`` option. Connection options can be configured with delegated variables in general.
