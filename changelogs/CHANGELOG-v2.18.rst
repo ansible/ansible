@@ -4,6 +4,32 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-07-08
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Add RHEL 10.0 as a remote platform for testing.
+
+Bugfixes
+--------
+
+- ansible-doc will no longer ignore docs for modules without an extension (https://github.com/ansible/ansible/issues/85279).
+- ansible-pull change detection will now work independently of callback or result format settings.
+- ansible-test - Fix Python relative import resolution from ``__init__.py`` files when using change detection.
+- dnf5 - handle all libdnf5 specific exceptions (https://github.com/ansible/ansible/issues/84634)
+- meta - avoid traceback when retrieving the meta task name (https://github.com/ansible/ansible/issues/85367).
+- password lookup - fix acquiring the lock when human-readable FileExistsError error message is not English.
+- user - Set timeout for passphrase interaction.
+- user - Update prompt for SSH key passphrase (https://github.com/ansible/ansible/issues/84484).
+
 v2.18.6
 =======
 
