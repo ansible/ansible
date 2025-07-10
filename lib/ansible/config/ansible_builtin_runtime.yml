@@ -9440,21 +9440,21 @@ plugin_routing:
     k8s_config_resource_name:
       redirect: kubernetes.core.k8s_config_resource_name
     cidr_merge:
-      redirect: ansible.netcommon.cidr_merge
+      redirect: ansible.utils.cidr_merge
     ipaddr:
-      redirect: ansible.netcommon.ipaddr
+      redirect: ansible.utils.ipaddr
     ipmath:
-      redirect: ansible.netcommon.ipmath
+      redirect: ansible.utils.ipmath
     ipwrap:
-      redirect: ansible.netcommon.ipwrap
+      redirect: ansible.utils.ipwrap
     ip4_hex:
-      redirect: ansible.netcommon.ip4_hex
+      redirect: ansible.utils.ip4_hex
     ipv4:
-      redirect: ansible.netcommon.ipv4
+      redirect: ansible.utils.ipv4
     ipv6:
-      redirect: ansible.netcommon.ipv6
+      redirect: ansible.utils.ipv6
     ipsubnet:
-      redirect: ansible.netcommon.ipsubnet
+      redirect: ansible.utils.ipsubnet
     next_nth_usable:
       redirect: ansible.netcommon.next_nth_usable
     network_in_network:
