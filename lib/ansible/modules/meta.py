@@ -109,7 +109,7 @@ EXAMPLES = r"""
 - name: Clear gathered facts from all currently targeted hosts
   ansible.builtin.meta: clear_facts
 
-# Example showing how to continue using a failed target
+# Example showing how to continue using a failed target, for the next play
 - name: Bring host back to play after failure
   ansible.builtin.copy:
     src: file
