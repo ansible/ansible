@@ -5,8 +5,9 @@ import json
 
 import typing as t
 
+from ansible.errors import AnsibleError
 from ansible.module_utils._internal._ansiballz import _extensions
-from ansible.module_utils._internal._ansiballz._extensions import _pydevd, _coverage
+from ansible.module_utils._internal._ansiballz._extensions import _debugger, _debugpy, _pydevd, _coverage
 from ansible.constants import config
 
 _T = t.TypeVar('_T')
@@ -17,13 +18,14 @@ class ExtensionManager:
 
     def __init__(
         self,
-        debugger: _pydevd.Options | None = None,
+        debugger: _debugger.Options | None = None,
         coverage: _coverage.Options | None = None,
     ) -> None:
-        options = dict(
-            _pydevd=debugger,
+        options: dict[str, object] = dict(
             _coverage=coverage,
         )
+        if debugger:
+            options[debugger.ansiballz_extension] = debugger
 
         self._debugger = debugger
         self._coverage = coverage
@@ -52,7 +54,7 @@ class ExtensionManager:
         extension_options: dict[str, t.Any] = {}
 
         if self._debugger:
-            extension_options['_pydevd'] = dataclasses.replace(
+            extension_options[self._debugger.ansiballz_extension] = dataclasses.replace(
                 self._debugger,
                 source_mapping=self._get_source_mapping(),
             )
@@ -66,16 +68,16 @@ class ExtensionManager:
 
     def _get_source_mapping(self) -> dict[str, str]:
         """Get the source mapping, adjusting the source root as needed."""
-        if self._debugger.source_mapping:
-            source_mapping = {self._translate_path(key): value for key, value in self.source_mapping.items()}
+        if self._debugger and self._debugger.source_mapping:
+            source_mapping = {self._translate_path(key, self._debugger.source_mapping): value for key, value in self.source_mapping.items()}
         else:
             source_mapping = self.source_mapping
 
         return source_mapping
 
-    def _translate_path(self, path: str) -> str:
+    def _translate_path(self, path: str, debugger_mappings: dict[str, str]) -> str:
         """Translate a local path to a foreign path."""
-        for replace, match in self._debugger.source_mapping.items():
+        for replace, match in debugger_mappings.items():
             if path.startswith(match):
                 return replace + path[len(match) :]
 
@@ -85,7 +87,7 @@ class ExtensionManager:
     def create(cls, task_vars: dict[str, object]) -> t.Self:
         """Create an instance using the provided task vars."""
         return cls(
-            debugger=cls._get_options('_ANSIBALLZ_DEBUGGER_CONFIG', _pydevd.Options, task_vars),
+            debugger=cls._get_options('_ANSIBALLZ_DEBUGGER_CONFIG', _debugger.Options, task_vars),
             coverage=cls._get_options('_ANSIBALLZ_COVERAGE_CONFIG', _coverage.Options, task_vars),
         )
 
@@ -96,6 +98,21 @@ class ExtensionManager:
             return None
 
         data = json.loads(value) if isinstance(value, str) else value
+
+        if config_type == _debugger.Options:
+            if not (ext_name := data.get('ansiballz_extension', None)):
+                raise AnsibleError(f"Missing 'ansiballz_extension' in debugger config option {name!r}")
+
+            option_map = {
+                '_debugpy': _debugpy.Options,
+                '_pydevd': _pydevd.Options,
+            }
+            if config_sub_type := option_map.get(ext_name, None):
+                config_type = config_sub_type
+            else:
+                valid_options = ", ".join(option_map.keys())
+                raise AnsibleError(f"Unknown ansiballz_extension {ext_name!r} in debugger config option {name!r}. Must be one of {valid_options!r}.")
+
         options = config_type(**data)
 
         return options

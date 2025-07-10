@@ -155,44 +155,39 @@ class ChangeDescription:
         return changes
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
-class DebuggerSettings:
+class DebuggerSettings(t.Protocol):
     """Settings for remote debugging."""
 
-    module: str | None = None
+    debug_type: str
     """
-    The Python module to import.
-    This should be pydevd or a derivative.
-    If not provided it will be auto-detected.
+    The name of the debugger type, e.g. `debugpy` or `pydevd`.
+    This name should be reflected by a module under the `ansible.module_utils._internal._ansiballz._extensions._{name}` namespace.
     """
 
-    package: str | None = None
+    package: str | None
     """
     The Python package to install for debugging.
     If `None` then the package will be auto-detected.
     If an empty string, then no package will be installed.
     """
 
-    settrace: dict[str, object] = dataclasses.field(default_factory=dict)
+    port: int
     """
-    Options to pass to the `{module}.settrace` method.
-    Used for running AnsiballZ modules only.
-    The `host` and `port` options will be provided by ansible-test.
-    The `suspend` option defaults to `False`.
-    """
-
-    args: list[str] = dataclasses.field(default_factory=list)
-    """
-    Arguments to pass to `pydevd` on the command line.
-    Used for running Ansible CLI programs only.
-    The `--client` and `--port` options will be provided by ansible-test.
-    """
-
-    port: int = 5678
-    """
-    The port on the origin host which is listening for incoming connections from pydevd.
+    The port on the origin host which is listening for incoming connections from the debugger.
     SSH port forwarding will be automatically configured for non-local hosts to connect to this port as needed.
     """
+
+    def activate_debugger(self, host: str, port: int) -> None:
+        """Activate the debugger in ansible-test after delegation."""
+
+    def get_ansiballz_config(self) -> dict[str, object]:
+        """Gets the extra configuration data for the AnsiballZ extension module."""
+
+    def get_cli_arguments(self, host: str, port: int) -> list[str]:
+        """Get command line arguments for the debugger when running Ansible CLI programs."""
+
+    def get_environment_variables(self, source_mapping: dict[str, str]) -> dict[str, str]:
+        """Get environment variables needed to configure the debugger for debugging."""
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)

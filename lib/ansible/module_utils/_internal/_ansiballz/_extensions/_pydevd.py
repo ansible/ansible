@@ -1,5 +1,5 @@
 """
-Remote debugging support for AnsiballZ modules.
+Remote debugging support for AnsiballZ modules with pydevd.
 
 To use with PyCharm:
 
@@ -10,53 +10,38 @@ To use with PyCharm:
 5) Configure Ansible with the `_ANSIBALLZ_DEBUGGER_CONFIG` option.
    See `Options` below for the structure of the debugger configuration.
    Example configuration using an environment variable:
-     export _ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG='{"module": "pydevd_pycharm", "settrace": {"host": "localhost", "port": 5678, "suspend": false}}'
+     export _ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG='{"ansiballz_extension": "_pydevd", "port": 5978, "module": "pydevd_pycharm", "settrace": {"suspend": false}}'
 6) Set any desired breakpoints.
 7) Run Ansible commands.
-
-A similar process should work for other pydevd based debuggers, such as Visual Studio Code, but they have not been tested.
 """
 
 from __future__ import annotations
 
 import dataclasses
 import importlib
-import json
-import os
-import pathlib
 
 import typing as t
 
+from . import _debugger
+
 
 @dataclasses.dataclass(frozen=True)
-class Options:
+class Options(_debugger.Options):
     """Debugger options for pydevd and its derivatives."""
 
     module: str = 'pydevd'
     """The Python module which will be imported and which provides the `settrace` method."""
     settrace: dict[str, object] = dataclasses.field(default_factory=dict)
     """The options to pass to the `{module}.settrace` method."""
-    source_mapping: dict[str, str] = dataclasses.field(default_factory=dict)
-    """
-    A mapping of source paths to provide to pydevd.
-    This setting is used internally by AnsiballZ and is not required unless Ansible CLI commands are run from a different system than your IDE.
-    In that scenario, use this setting instead of configuring source mapping in your IDE.
-    The key is a path known to the IDE.
-    The value is the same path as known to the Ansible CLI.
-    Both file paths and directories are supported.
-    """
-
 
 def run(args: dict[str, t.Any]) -> None:  # pragma: nocover
-    """Enable remote debugging."""
+    """Enable remote debugging for pydevd."""
 
     options = Options(**args)
-    temp_dir = pathlib.Path(__file__).parent.parent.parent.parent.parent.parent
-    path_mapping = [[key, str(temp_dir / value)] for key, value in options.source_mapping.items()]
 
-    os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps(path_mapping)
+    _debugger.setup_pydevd_source_mapping(options)
 
     debugging_module = importlib.import_module(options.module)
-    debugging_module.settrace(**options.settrace)
+    debugging_module.settrace(host=options.host, port=options.port, **options.settrace)
 
     pass  # when suspend is True, execution pauses here -- it's also a convenient place to put a breakpoint

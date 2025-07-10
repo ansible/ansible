@@ -295,7 +295,7 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles remote debugging."""
 
-    __PYDEVD_PORT_KEY = 'pydevd_port'
+    __DEBUGGER_PORT_KEY = 'debugger_port'
     __DEBUGGING_FORWARDER_KEY = 'debugging_forwarder'
 
     @property
@@ -307,9 +307,9 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         return self.args.metadata.debugger_flags.ansiballz
 
     @property
-    def pydevd_port(self) -> int:
-        """The pydevd port to use."""
-        return self.state.get(self.__PYDEVD_PORT_KEY) or self.origin_pydev_port
+    def debugger_port(self) -> int:
+        """The debugger port to use."""
+        return self.state.get(self.__DEBUGGER_PORT_KEY) or self.origin_debugger_port
 
     @property
     def debugging_forwarder(self) -> SshProcess | None:
@@ -322,23 +322,23 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         self.cache[self.__DEBUGGING_FORWARDER_KEY] = value
 
     @property
-    def origin_pydev_port(self) -> int:
-        """The pydevd port on the origin."""
+    def origin_debugger_port(self) -> int:
+        """The debugger port on the origin."""
         return self.args.metadata.debugger_settings.port
 
     def enable_debugger_forwarding(self, ssh: SshConnectionDetail) -> None:
-        """Enable pydevd port forwarding from the origin."""
+        """Enable debugging port forwarding from the origin."""
         if not self.debugging_enabled:
             return
 
-        endpoint = ('localhost', self.origin_pydev_port)
+        endpoint = ('localhost', self.origin_debugger_port)
         forwards = [endpoint]
 
         self.debugging_forwarder = create_ssh_port_forwards(self.args, ssh, forwards)
 
         port_forwards = self.debugging_forwarder.collect_port_forwards()
 
-        self.state[self.__PYDEVD_PORT_KEY] = port = port_forwards[endpoint]
+        self.state[self.__DEBUGGER_PORT_KEY] = port = port_forwards[endpoint]
 
         display.info(f'Remote debugging of {self.name!r} is available on port {port}.', verbosity=1)
 
@@ -354,19 +354,6 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         display.info(f'Waiting for the {self.name!r} remote debugging SSH port forwarding process to terminate.', verbosity=1)
 
         self.debugging_forwarder.wait()
-
-    def get_pydevd_settrace_arguments(self) -> dict[str, object]:
-        """Get settrace arguments for pydevd."""
-        return self.args.metadata.debugger_settings.settrace | dict(
-            host="localhost",
-            port=self.pydevd_port,
-        )
-
-    def get_pydevd_environment_variables(self) -> dict[str, str]:
-        """Get environment variables needed to configure pydevd for debugging."""
-        return dict(
-            PATHS_FROM_ECLIPSE_TO_PYTHON=json.dumps(list(self.get_source_mapping().items())),
-        )
 
     def get_source_mapping(self) -> dict[str, str]:
         """Get the source mapping from the given metadata."""
@@ -396,10 +383,10 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 
         display.info('Activating remote debugging of ansible-test.', verbosity=1)
 
-        os.environ.update(self.get_pydevd_environment_variables())
+        debugger_env = self.args.metadata.debugger_settings.get_environment_variables(self.get_source_mapping())
+        os.environ.update(debugger_env)
 
-        debugging_module = importlib.import_module(self.args.metadata.debugger_settings.module)
-        debugging_module.settrace(**self.get_pydevd_settrace_arguments())
+        self.args.metadata.debugger_settings.activate_debugger('localhost', self.debugger_port)
 
         pass  # pylint: disable=unnecessary-pass  # when suspend is True, execution pauses here -- it's also a convenient place to put a breakpoint
 
@@ -432,11 +419,16 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         Return config for remote debugging of AnsiballZ modules.
         When delegating, this function must be called after delegation.
         """
+        debugger_settings = self.args.metadata.debugger_settings
+        assert debugger_settings is not None
+
         debugger_config = dict(
-            module=self.args.metadata.debugger_settings.module,
-            settrace=self.get_pydevd_settrace_arguments(),
+            ansiballz_extension=f"_{debugger_settings.debug_type}",
+            host='localhost',
+            port=self.debugger_port,
             source_mapping=self.get_source_mapping(),
         )
+        debugger_config |= debugger_settings.get_ansiballz_config()
 
         display.info(f'>>> Debugger Config ({self.name} AnsiballZ)\n{json.dumps(debugger_config, indent=4)}', verbosity=3)
 
@@ -451,8 +443,8 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
             return {}
 
         debugger_config = dict(
-            args=['-m', 'pydevd', '--client', 'localhost', '--port', str(self.pydevd_port)] + self.args.metadata.debugger_settings.args + ['--file'],
-            env=self.get_pydevd_environment_variables(),
+            args=self.args.metadata.debugger_settings.get_cli_arguments('localhost', self.debugger_port),
+            env=self.args.metadata.debugger_settings.get_environment_variables(self.get_source_mapping()),
         )
 
         display.info(f'>>> Debugger Config ({self.name} Ansible CLI)\n{json.dumps(debugger_config, indent=4)}', verbosity=3)
@@ -597,9 +589,9 @@ class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[Con
         return self.controller_profile.name
 
     @property
-    def pydevd_port(self) -> int:
+    def debugger_port(self) -> int:
         """The pydevd port to use."""
-        return self.controller_profile.pydevd_port
+        return self.controller_profile.debugger_port
 
     def get_controller_target_connections(self) -> list[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
