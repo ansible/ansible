@@ -447,7 +447,7 @@ class ConfigCLI(CLI):
                         color = 'red'
                     else:
                         color = 'yellow'
-                    
+
                     # Mask sensitive values
                     masked_value = _mask_sensitive_value(setting, value)
                     msg = "%s(%s) = %s" % (setting, config[setting]['origin'], masked_value)

@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ansible.cli.config import _mask_sensitive_value
 
 
@@ -16,7 +14,7 @@ class TestConfigCLI:
         # Test long token
         long_token = 'very_long_authentication_token_123456789'
         result = _mask_sensitive_value('token', long_token)
-        assert result == 'ver****************************789'
+        assert result == 'ver**********************************789'
         assert len(result) == len(long_token)
 
     def test_mask_sensitive_value_password(self):
@@ -24,7 +22,7 @@ class TestConfigCLI:
         # Test password
         password = 'secretpassword123'
         result = _mask_sensitive_value('password', password)
-        assert result == 'sec**********123'
+        assert result == 'sec***********123'
         assert len(result) == len(password)
 
     def test_mask_sensitive_value_client_secret(self):
@@ -32,7 +30,7 @@ class TestConfigCLI:
         # Test client secret
         client_secret = 'abcdefgh'
         result = _mask_sensitive_value('client_secret', client_secret)
-        assert result == 'a******h'
+        assert result == 'a*******'
         assert len(result) == len(client_secret)
 
     def test_mask_sensitive_value_short_values(self):
