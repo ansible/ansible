@@ -36,6 +36,9 @@ display = Display()
 
 _IGNORE_CHANGED = frozenset({'_terms', '_input'})
 
+# Settings that should be masked when displaying values
+_SENSITIVE_SETTINGS = frozenset({'token', 'password', 'client_secret'})
+
 
 def yaml_dump(data, default_flow_style=False, default_style=None):
     return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style, default_style=default_style)
@@ -43,6 +46,19 @@ def yaml_dump(data, default_flow_style=False, default_style=None):
 
 def yaml_short(data):
     return yaml_dump(data, default_flow_style=True, default_style="''")
+
+
+def _mask_sensitive_value(setting_name, value):
+    """Mask sensitive configuration values for display."""
+    if setting_name in _SENSITIVE_SETTINGS and value:
+        if isinstance(value, str) and len(value) > 8:
+            # Show first 3 and last 3 characters with asterisks in between
+            middle_length = len(value) - 6
+            return value[:3] + '*' * middle_length + value[-3:]
+        elif isinstance(value, str) and len(value) > 0:
+            # For shorter values, show fewer characters
+            return value[:1] + '*' * (len(value) - 1)
+    return value
 
 
 def get_constants():
@@ -431,10 +447,15 @@ class ConfigCLI(CLI):
                         color = 'red'
                     else:
                         color = 'yellow'
-                    msg = "%s(%s) = %s" % (setting, config[setting]['origin'], value)
+                    
+                    # Mask sensitive values
+                    masked_value = _mask_sensitive_value(setting, value)
+                    msg = "%s(%s) = %s" % (setting, config[setting]['origin'], masked_value)
                 else:
                     color = 'green'
-                    msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
+                    default_value = config[setting].get('default')
+                    masked_default = _mask_sensitive_value(setting, default_value)
+                    msg = "%s(%s) = %s" % (setting, 'default', masked_default)
 
                 entry = stringc(msg, color)
             else:
@@ -442,7 +463,11 @@ class ConfigCLI(CLI):
                 for key in config[setting].keys():
                     if key == 'type':
                         continue
-                    entry[key] = config[setting][key]
+                    if key == 'value':
+                        # Mask sensitive values in non-display formats too
+                        entry[key] = _mask_sensitive_value(setting, config[setting][key])
+                    else:
+                        entry[key] = config[setting][key]
 
             if not context.CLIARGS['only_changed'] or changed:
                 entries.append(entry)
