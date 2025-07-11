@@ -22,7 +22,7 @@ class JsonRpcServer(object):
     def handle_request(self, request):
         request = json.loads(to_text(request, errors='surrogate_then_replace'))
 
-        self._identity = request.get('id')
+        self._identifier = request.get('id')
 
         method = request.get('method')
 
