@@ -1,0 +1,2 @@
+minor_changes:
+  - utils jsonrpc - assign self._identifier earlier to fix AttributeError raised by JsonRpcServer.header()
