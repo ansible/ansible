@@ -419,6 +419,13 @@ EXAMPLES = """
     name: epel
     file: external_repos
     state: absent
+
+- name: Add EPEL repo with countme enabled for reporting anonymous usage metrics
+  ansible.builtin.yum_repository:
+    name: epel
+    baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+    countme: true
+    state: present
 """
 
 RETURN = """
