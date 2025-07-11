@@ -229,13 +229,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         variable_manager=variable_manager,
                     )
 
-                    tags = ti_copy.tags[:]
-
-                    # now we extend the tags on each of the included blocks
-                    for b in included_blocks:
-                        b.tags = list(set(b.tags).union(tags))
-                    # FIXME - END
-
                     # FIXME: handlers shouldn't need this special handling, but do
                     #        right now because they don't iterate blocks correctly
                     if use_handlers:
