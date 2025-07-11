@@ -1,19 +1,6 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import annotations
 
 import typing as t
@@ -227,7 +214,7 @@ class Group:
             Display().deprecated(msg=f'Accepting inventory variable with invalid name {key!r}.', version='2.23', help_text=ex._help_text, obj=ex.obj)
 
         if key == 'ansible_group_priority':
-            self.set_priority(int(value))
+            self.set_priority(value)
         else:
             if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
                 self.vars = combine_vars(self.vars, {key: value})
@@ -266,6 +253,10 @@ class Group:
     def set_priority(self, priority: int | str) -> None:
         try:
             self.priority = int(priority)
-        except TypeError:
-            # FIXME: warn about invalid priority
-            pass
+        except (TypeError, ValueError) as e:
+            display.error_as_warning(
+                msg=f"Invalid priority value '{priority}' for group '{self.name}'."
+                    "Setting priority to default value.",
+                exception=e,
+            )
+            # Keep the existing priority value when conversion fails
