@@ -22,6 +22,8 @@ class JsonRpcServer(object):
     def handle_request(self, request):
         request = json.loads(to_text(request, errors='surrogate_then_replace'))
 
+        self._identity = request.get('id')
+
         method = request.get('method')
 
         if method.startswith('rpc.') or method.startswith('_'):
@@ -29,7 +31,6 @@ class JsonRpcServer(object):
             return json.dumps(error)
 
         args, kwargs = request.get('params')
-        setattr(self, '_identifier', request.get('id'))
 
         rpc_method = None
         for obj in self._objects:
