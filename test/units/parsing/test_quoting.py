@@ -38,7 +38,7 @@ class TestIsQuoted:
         ('"with spaces"', True),
         ('"with\ttabs"', True),
         ('"with\'single\'quotes"', True),
-        
+
         # Single quotes
         ("'hello'", True),
         ("'hello world'", True),
@@ -48,7 +48,7 @@ class TestIsQuoted:
         ("'with spaces'", True),
         ("'with\ttabs'", True),
         ("'with\"double\"quotes'", True),
-        
+
         # Quotes with internal quotes of same or different type
         ('"hello\'world"', True),
         ("'hello\"world'", True),
@@ -68,21 +68,21 @@ class TestIsQuoted:
         ('1', False),
         ('', False),
         ('multi\nline', False),
-        
+
         # Single character (can't be quoted)
         ('"', False),
         ("'", False),
         ('a', False),
         ('1', False),
-        
+
         # Mixed quotes
         ('"hello\'', False),
         ("'hello\"", False),
-        
+
         # Escaped quotes at end (should not be considered quoted)
         ('"hello\\"', False),
         ("'hello\\'", False),
-        
+
         # Partially quoted
         ('"hello', False),
         ("'hello", False),
@@ -95,15 +95,15 @@ class TestIsQuoted:
     def test_is_quoted_edge_cases(self):
         """Test edge cases for is_quoted."""
         # Empty string
-        assert is_quoted('') == False
-        
+        assert is_quoted('') is False
+
         # Single quote characters
-        assert is_quoted('"') == False
-        assert is_quoted("'") == False
-        
+        assert is_quoted('"') is False
+        assert is_quoted("'") is False
+
         # Two different quote types
-        assert is_quoted("\"'") == False
-        assert is_quoted("'\"") == False
+        assert is_quoted("\"'") is False
+        assert is_quoted("'\"") is False
 
 
 class TestUnquote:
@@ -120,7 +120,7 @@ class TestUnquote:
         ('"with spaces"', 'with spaces'),
         ('"with\ttabs"', 'with\ttabs'),
         ('"with\'single\'quotes"', "with'single'quotes"),
-        
+
         # Single quotes
         ("'hello'", 'hello'),
         ("'hello world'", 'hello world'),
@@ -130,7 +130,7 @@ class TestUnquote:
         ("'with spaces'", 'with spaces'),
         ("'with\ttabs'", 'with\ttabs'),
         ("'with\"double\"quotes'", 'with"double"quotes'),
-        
+
         # Quotes with internal quotes of same or different type
         ('"hello\'world"', "hello'world"),
         ("'hello\"world'", 'hello"world'),
@@ -150,21 +150,21 @@ class TestUnquote:
         '1',
         '',
         'multi\nline',
-        
+
         # Single character
         '"',
         "'",
         'a',
         '1',
-        
+
         # Mixed quotes
         '"hello\'',
         "'hello\"",
-        
+
         # Escaped quotes at end
         '"hello\\"',
         "'hello\\'",
-        
+
         # Partially quoted
         '"hello',
         "'hello",
@@ -179,11 +179,11 @@ class TestUnquote:
         """Test edge cases for unquote."""
         # Empty string
         assert unquote('') == ''
-        
+
         # Single quote characters
         assert unquote('"') == '"'
         assert unquote("'") == "'"
-        
+
         # Two different quote types
         assert unquote("\"'") == "\"'"
         assert unquote("'\"") == "'\""
@@ -193,7 +193,7 @@ class TestUnquote:
         # These should not be unquoted due to escaped ending quotes
         assert unquote('"hello\\"') == '"hello\\"'
         assert unquote("'hello\\'") == "'hello\\'"
-        
+
         # These should be unquoted (escaped quotes in middle)
         assert unquote('"hello \\"world\\""') == 'hello \\"world\\"'
         assert unquote("'hello \\'world\\''") == "hello \\'world\\'"
@@ -203,7 +203,7 @@ class TestUnquote:
         # Nested quotes of different types
         assert unquote('"hello \'world\'"') == "hello 'world'"
         assert unquote("'hello \"world\"'") == 'hello "world"'
-        
+
         # Multiple internal quotes
         assert unquote('"a \\"b\\" c"') == 'a \\"b\\" c'
         assert unquote("'a \\'b\\' c'") == "a \\'b\\' c"
@@ -229,7 +229,7 @@ class TestQuotingIntegration:
             '"hello\'',  # mixed quotes
             "'hello\"",  # mixed quotes
         ]
-        
+
         for case in test_cases:
             if is_quoted(case):
                 # If is_quoted returns True, unquote should remove the quotes
@@ -252,8 +252,8 @@ class TestQuotingIntegration:
             '123',
             'special!@#$%^&*()chars',
         ]
-        
+
         for test_string in test_strings:
             quoted = f'{quote_char}{test_string}{quote_char}'
-            assert is_quoted(quoted) == True, f"Failed is_quoted for: {quoted}"
+            assert is_quoted(quoted) is True, f"Failed is_quoted for: {quoted}"
             assert unquote(quoted) == test_string, f"Failed unquote for: {quoted}"
