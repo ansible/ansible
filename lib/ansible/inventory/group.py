@@ -266,6 +266,6 @@ class Group:
     def set_priority(self, priority: int | str) -> None:
         try:
             self.priority = int(priority)
-        except TypeError:
-            # FIXME: warn about invalid priority
-            pass
+        except (TypeError, ValueError) as e:
+            display.warning(f"Invalid priority value '{priority}' for group '{self.name}': {e}")
+            # Keep the existing priority value when conversion fails

@@ -152,3 +152,40 @@ class TestGroup(unittest.TestCase):
         B.parent_groups.append(A)
         # finishes in finite time
         self.assertEqual(A.get_ancestors(), set([A, B]))
+
+    def test_set_priority_valid_values(self):
+        """Test that valid priority values are set correctly"""
+        group = Group('test_group')
+
+        # Test with integer
+        group.set_priority(5)
+        self.assertEqual(group.priority, 5)
+
+        # Test with string that can be converted to int
+        group.set_priority('10')
+        self.assertEqual(group.priority, 10)
+
+        # Test with negative numbers
+        group.set_priority(-1)
+        self.assertEqual(group.priority, -1)
+
+    def test_set_priority_invalid_values(self):
+        """Test that invalid priority values are handled gracefully with warnings"""
+        group = Group('test_group')
+        original_priority = group.priority
+
+        # Test with invalid string
+        group.set_priority('invalid')
+        self.assertEqual(group.priority, original_priority)  # Should remain unchanged
+
+        # Test with None
+        group.set_priority(None)
+        self.assertEqual(group.priority, original_priority)  # Should remain unchanged
+
+        # Test with dict
+        group.set_priority({'key': 'value'})
+        self.assertEqual(group.priority, original_priority)  # Should remain unchanged
+
+        # Test with list
+        group.set_priority(['item'])
+        self.assertEqual(group.priority, original_priority)  # Should remain unchanged
