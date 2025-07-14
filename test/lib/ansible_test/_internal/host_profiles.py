@@ -420,7 +420,7 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 
         debug_type = self.debugger.debug_type.lower()
         return {
-            f"_ansible_ansiballz_debugger_config{debug_type}": json.dumps(self.get_ansiballz_debugger_config()),
+            f"_ansible_ansiballz_{debug_type}_config": json.dumps(self.get_ansiballz_debugger_config()),
         }
 
     def get_ansiballz_environment_variables(self) -> dict[str, t.Any]:
@@ -433,7 +433,7 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 
         debug_type = self.debugger.debug_type.upper()
         return {
-            f"_ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG_{debug_type}": json.dumps(self.get_ansiballz_debugger_config()),
+            f"_ANSIBLE_ANSIBALLZ_{debug_type}_CONFIG": json.dumps(self.get_ansiballz_debugger_config()),
         }
 
     def get_ansiballz_debugger_config(self) -> dict[str, t.Any]:

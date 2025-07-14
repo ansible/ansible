@@ -40,8 +40,8 @@ from .data import (
 
 HAS_DEBUGPY = False
 try:
-    import debugpy as _debugpy  # type: ignore[import-not-found]  # Not type stubs available for debugpy
-    from debugpy.server import cli as _debugpy_cli  # type: ignore[import-not-found]  # Not type stubs available for debugpy
+    import debugpy as _debugpy
+    from debugpy.server import cli as _debugpy_cli
 
     HAS_DEBUGPY = True
 except ImportError:

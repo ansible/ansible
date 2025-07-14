@@ -29,7 +29,7 @@ To use with VSCode:
                     "main.yml"
                 ],
                 "env": {
-                    "_ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG_DEBUGPY": "{\"host\": \"localhost\", \"port\": 5678}"
+                    "_ANSIBLE_ANSIBALLZ_DEBUGPY_CONFIG\": "{\"host\": \"localhost\", \"port\": 5678}"
                 },
                 "console": "integratedTerminal",
             }
@@ -84,7 +84,7 @@ class Options:
 
 def run(args: dict[str, t.Any]) -> None:  # pragma: nocover
     """Enable remote debugging."""
-    import debugpy  # type: ignore[import-not-found]  # Not type stubs available for debugpy
+    import debugpy
 
     options = Options(**args)
     temp_dir = pathlib.Path(__file__).parent.parent.parent.parent.parent.parent

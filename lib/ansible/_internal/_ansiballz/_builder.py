@@ -96,8 +96,8 @@ class ExtensionManager:
     def create(cls, task_vars: dict[str, object]) -> t.Self:
         """Create an instance using the provided task vars."""
         return cls(
-            pydevd=cls._get_options('_ANSIBALLZ_DEBUGGER_CONFIG_PYDEVD', _pydevd.Options, task_vars),
-            debugpy=cls._get_options('_ANSIBALLZ_DEBUGGER_CONFIG_DEBUGPY', _debugpy.Options, task_vars),
+            pydevd=cls._get_options('_ANSIBALLZ_PYDEVD_CONFIG', _pydevd.Options, task_vars),
+            debugpy=cls._get_options('_ANSIBALLZ_DEBUGPY_CONFIG', _debugpy.Options, task_vars),
             coverage=cls._get_options('_ANSIBALLZ_COVERAGE_CONFIG', _coverage.Options, task_vars),
         )
 

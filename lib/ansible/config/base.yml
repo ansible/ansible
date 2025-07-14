@@ -11,26 +11,26 @@ _ANSIBALLZ_COVERAGE_CONFIG:
   vars:
   - {name: _ansible_ansiballz_coverage_config}
   version_added: '2.19'
-_ANSIBALLZ_DEBUGGER_CONFIG_DEBUGPY:
+_ANSIBALLZ_DEBUGPY_CONFIG:
   name: Configure the AnsiballZ remote debugging extension for Debugpy
   description:
     - Enables and configures the AnsiballZ remote debugging extension for Debugpy.
     - This is for internal use only.
   env:
-  - {name: _ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG_DEBUGPY}
+  - {name: _ANSIBLE_ANSIBALLZ_DEBUGPY_CONFIG}
   vars:
-  - {name: _ansible_ansiballz_debugger_config_debugpy}
+  - {name: _ansible_ansiballz_debugpy_config}
   version_added: '2.20'
-_ANSIBALLZ_DEBUGGER_CONFIG_PYDEVD:
+_ANSIBALLZ_PYDEVD_CONFIG:
   name: Configure the AnsiballZ remote debugging extension for PyDevD
   description:
     - Enables and configures the AnsiballZ remote debugging extension for PyDevD.
     - This is for internal use only.
   env:
-  - {name: _ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG_PYDEVD}
+  - {name: _ANSIBLE_ANSIBALLZ_PYDEVD_CONFIG}
   vars:
-  - {name: _ansible_ansiballz_debugger_config_pydevd}
-  version_added: '2.19'
+  - {name: _ansible_ansiballz_pydevd_config}
+  version_added: '2.20'
 _ANSIBLE_CONNECTION_PATH:
   env:
   - name: _ANSIBLE_CONNECTION_PATH

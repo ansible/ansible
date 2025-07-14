@@ -7,10 +7,10 @@ To use with PyCharm:
 2) Create a Python Debug Server using that port.
 3) Start the Python Debug Server.
 4) Ensure the correct version of `pydevd-pycharm` is installed for the interpreter(s) which will run the code being debugged.
-5) Configure Ansible with the `_ANSIBALLZ_DEBUGGER_CONFIG_PYDEVD` option.
+5) Configure Ansible with the `_ANSIBALLZ_PYDEVD_CONFIG` option.
    See `Options` below for the structure of the debugger configuration.
    Example configuration using an environment variable:
-     export _ANSIBLE_ANSIBALLZ_DEBUGGER_CONFIG_PYDEVD='{"module": "pydevd_pycharm", "settrace": {"host": "localhost", "port": 5678, "suspend": false}}'
+     export _ANSIBLE_ANSIBALLZ_PYDEVD_CONFIG='{"module": "pydevd_pycharm", "settrace": {"host": "localhost", "port": 5678, "suspend": false}}'
 6) Set any desired breakpoints.
 7) Run Ansible commands.
 """
