@@ -109,8 +109,11 @@ def command_shell(args: ShellConfig) -> None:
         return
 
     if isinstance(con, LocalConnection) and isinstance(target_profile, DebuggableProfile) and target_profile.debugging_enabled:
-        # HACK: ensure the pydevd port visible in the shell is the forwarded port, not the original
-        args.metadata.debugger_settings = dataclasses.replace(args.metadata.debugger_settings, port=target_profile.pydevd_port)
+        # HACK: ensure the pydevd/debugpy port visible in the shell is the forwarded port, not the original
+        if args.metadata.pydevd_settings:
+            args.metadata.pydevd_settings = dataclasses.replace(args.metadata.pydevd_settings, port=target_profile.debugger_port)
+        if args.metadata.debugpy_settings:
+            args.metadata.debugpy_settings = dataclasses.replace(args.metadata.debugpy_settings, port=target_profile.debugger_port)
 
     with metadata_context(args):
         interactive_shell(args, target_profile, con)

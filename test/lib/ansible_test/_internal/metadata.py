@@ -37,7 +37,8 @@ class Metadata:
         self.ansible_test_root = ANSIBLE_TEST_ROOT
         self.collection_root: str | None = None
         self.debugger_flags = debugger_flags
-        self.debugger_settings: DebuggerSettings | None = None
+        self.pydevd_settings: PyDevDSettings | None = None
+        self.debugpy_settings: DebugpySettings | None = None
         self.loaded = False
 
     def populate_changes(self, diff: t.Optional[list[str]]) -> None:
@@ -71,7 +72,8 @@ class Metadata:
             ansible_test_root=self.ansible_test_root,
             collection_root=self.collection_root,
             debugger_flags=dataclasses.asdict(self.debugger_flags),
-            debugger_settings=dataclasses.asdict(self.debugger_settings) if self.debugger_settings else None,
+            pydevd_settings=dataclasses.asdict(self.pydevd_settings) if self.pydevd_settings else None,
+            debugpy_settings=dataclasses.asdict(self.debugpy_settings) if self.debugpy_settings else None,
         )
 
     def to_file(self, path: str) -> None:
@@ -103,7 +105,8 @@ class Metadata:
         metadata.ansible_lib_root = data['ansible_lib_root']
         metadata.ansible_test_root = data['ansible_test_root']
         metadata.collection_root = data['collection_root']
-        metadata.debugger_settings = DebuggerSettings(**data['debugger_settings']) if data['debugger_settings'] else None
+        metadata.pydevd_settings = PyDevDSettings(**data['pydevd_settings']) if data['pydevd_settings'] else None
+        metadata.debugpy_settings = DebugpySettings(**data['debugpy_settings']) if data['debugpy_settings'] else None
         metadata.loaded = True
 
         return metadata
@@ -156,8 +159,8 @@ class ChangeDescription:
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
-class DebuggerSettings:
-    """Settings for remote debugging."""
+class PyDevDSettings:
+    """Settings for remote debuggin with PyDevD."""
 
     module: str | None = None
     """
@@ -191,6 +194,31 @@ class DebuggerSettings:
     port: int = 5678
     """
     The port on the origin host which is listening for incoming connections from pydevd.
+    SSH port forwarding will be automatically configured for non-local hosts to connect to this port as needed.
+    """
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class DebugpySettings:
+    """Settings for debugging with debugpy."""
+
+    connect: dict[str, object] = dataclasses.field(default_factory=dict)
+    """
+    Options to pass to the `debugpy.connect` method.
+    Used for running AnsiballZ modules and ansible-test after delegation.
+    The endpoint addr, `access_token`, and `parent_session_pid` options will be provided by ansible-test.
+    """
+
+    args: list[str] = dataclasses.field(default_factory=list)
+    """
+    Arguments to pass to `debugpy` on the command line.
+    Used for running Ansible CLI programs only.
+    The `--connect`, `--adapter-access-token`, and `--parent-session-pid` options will be provided by ansible-test.
+    """
+
+    port: int = 5678
+    """
+    The port on the origin host which is listening for incoming connections from debugpy.
     SSH port forwarding will be automatically configured for non-local hosts to connect to this port as needed.
     """
 

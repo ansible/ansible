@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 import dataclasses
+import importlib
 import json
 import os
 import re
+import typing as t
 
 from .util import (
     cache,
     display,
     raw_command,
     ApplicationError,
+)
+from .util_common import (
+    CommonConfig,
 )
 
 from .processes import (
@@ -24,14 +29,128 @@ from .config import (
 )
 
 from .metadata import (
-    DebuggerSettings,
+    DebugpySettings,
+    PyDevDSettings,
     DebuggerFlags,
 )
 
-from . import (
+from .data import (
     data_context,
-    CommonConfig,
 )
+
+HAS_DEBUGPY = False
+try:
+    import debugpy as _debugpy  # type: ignore[import-not-found]  # Not type stubs available for debugpy
+    from debugpy.server import cli as _debugpy_cli  # type: ignore[import-not-found]  # Not type stubs available for debugpy
+
+    HAS_DEBUGPY = True
+except ImportError:
+    pass
+
+
+class DebuggerProfile(t.Protocol):
+    """Commons interface for debugger profiles."""
+
+    debug_type: str
+    """The type of debugger as known by the AnsiballZ extension config suffix."""
+    package: str | None
+    """The package name of the debugger to install by ansible-tesst, or `None` if not applicable."""
+    port: int
+    """The port on the origin host which is listening for incoming connections from the debugger."""
+
+    def activate_debugger(self, host: str, port: int) -> None:
+        """Activate the debugger in ansible-test after delegation."""
+
+    def get_ansiballz_config(self, host: str, port: int) -> dict[str, object]:
+        """Gets the extra configuration data for the AnsiballZ extension module."""
+
+    def get_cli_arguments(self, host: str, port: int) -> list[str]:
+        """Get command line arguments for the debugger when running Ansible CLI programs."""
+
+    def get_environment_variables(self, source_mapping: dict[str, str]) -> dict[str, str]:
+        """Get environment variables needed to configure the debugger for debugging."""
+
+
+class PyDevDProfile(DebuggerProfile):
+    """Profile for the PyDevD debugger."""
+
+    def __init__(self, settings: PyDevDSettings) -> None:
+        self._settings = settings
+        self.debug_type = 'pydevd'
+        self.package = settings.package
+        self.port = settings.port
+
+    def activate_debugger(self, host: str, port: int) -> None:
+        module_name = self._settings.module
+        debugging_module = importlib.import_module(module_name)
+        debugging_module.settrace(**self._get_settrace_arguments(host, port))
+
+    def get_ansiballz_config(self, host: str, port: int) -> dict[str, object]:
+        settrace = dict(
+            host=host,
+            port=port,
+        ) | self._settings.settrace
+
+        return dict(
+            module=self._settings.module,
+            settrace=settrace,
+        )
+
+    def get_cli_arguments(self, host: str, port: int) -> list[str]:
+        return ['-m', 'pydevd', '--client', host, '--port', str(port)] + self._settings.args + ['--file']
+
+    def get_environment_variables(self, source_mapping: dict[str, str]) -> dict[str, str]:
+        return dict(
+            PATHS_FROM_ECLIPSE_TO_PYTHON=json.dumps(list(source_mapping.items())),
+            PYDEVD_DISABLE_FILE_VALIDATION="1",
+        )
+
+    def _get_settrace_arguments(self, host: str, port: int) -> dict[str, object]:
+        """Get settrace arguments for pydevd."""
+        return self._settings.settrace | dict(
+            host=host,
+            port=port,
+        )
+
+
+class DebugpyProfile(DebuggerProfile):
+    """Profile for the debugpy debugger."""
+
+    def __init__(self, settings: DebugpySettings) -> None:
+        self._settings = settings
+        self.debug_type = 'debugpy'
+        self.package = 'debugpy'
+        self.port = settings.port
+
+    def activate_debugger(self, host: str, port: int) -> None:
+        if not HAS_DEBUGPY:
+            raise ImportError("debugpy is not installed, cannot activate debugger.")
+
+        _debugpy.connect((host, port), **self._settings.connect)
+
+    def get_ansiballz_config(self, host: str, port: int) -> dict[str, object]:
+        return dict(
+            host=host,
+            port=port,
+            connect=self._settings.connect,
+        )
+
+    def get_cli_arguments(self, host: str, port: int) -> list[str]:
+        cli_args = ['-m', 'debugpy', '--connect', f"{host}:{port}"]
+        if access_token := self._settings.connect.get('access_token'):
+            cli_args += ['--adapter-access-token', str(access_token)]
+        if session_pid := self._settings.connect.get('parent_session_pid'):
+            cli_args += ['--parent-session-pid', str(session_pid)]
+        if self._settings.args:
+            cli_args += self._settings.args
+
+        return cli_args
+
+    def get_environment_variables(self, source_mapping: dict[str, str]) -> dict[str, str]:
+        return dict(
+            PATHS_FROM_ECLIPSE_TO_PYTHON=json.dumps(list(source_mapping.items())),
+            PYDEVD_DISABLE_FILE_VALIDATION="1",
+        )
 
 
 def initialize_debugger(args: CommonConfig) -> None:
@@ -48,10 +167,30 @@ def initialize_debugger(args: CommonConfig) -> None:
     load_debugger_settings(args)
 
 
-def parse_debugger_settings(value: str) -> DebuggerSettings:
-    """Parse remote debugger settings and apply defaults."""
+def parse_debugpy_debugger_settings(value: str) -> DebugpySettings:
+    """Parse debugpy remote debugger settings and apply defaults."""
     try:
-        settings = DebuggerSettings(**json.loads(value))
+        settings = DebugpySettings(**json.loads(value))
+    except Exception as ex:
+        raise ApplicationError(f"Invalid debugpy settings: {ex}") from ex
+
+    if port := detect_debugpy_port():
+        settings = dataclasses.replace(settings, port=port)
+
+    if token := get_debugpy_access_token():
+        settings.connect.setdefault('access_token', token)
+
+    # If not set explicitly, use the current process PID.
+    # This assumes that this ansible-test process is the one initially launched by debugpy.
+    settings.connect.setdefault('parent_session_pid', os.getpid())
+
+    return settings
+
+
+def parse_pydevd_debugger_settings(value: str) -> PyDevDSettings:
+    """Parse PyDevD remote debugger settings and apply defaults."""
+    try:
+        settings = PyDevDSettings(**json.loads(value))
     except Exception as ex:
         raise ApplicationError(f"Invalid debugger settings: {ex}") from ex
 
@@ -90,10 +229,15 @@ def parse_debugger_settings(value: str) -> DebuggerSettings:
 
 def load_debugger_settings(args: EnvironmentConfig) -> None:
     """Load the remote debugger settings."""
+    debug_type: t.Literal['pydevd', 'debugpy'] | None = None
     if args.metadata.debugger_flags.on_demand:
         # On-demand debugging only enables debugging if we're running under a debugger, otherwise it's a no-op.
 
-        if not detect_pydevd_port():
+        if detect_debugpy_port():
+            debug_type = 'debugpy'
+        elif detect_pydevd_port():
+            debug_type = 'pydevd'
+        else:
             display.info('Debugging disabled because no debugger was detected.', verbosity=1)
             args.metadata.debugger_flags = DebuggerFlags.all(False)
             return
@@ -107,12 +251,20 @@ def load_debugger_settings(args: EnvironmentConfig) -> None:
     if not args.metadata.debugger_flags.enable:
         return
 
-    value = os.environ.get('ANSIBLE_TEST_REMOTE_DEBUGGER') or '{}'
-    settings = parse_debugger_settings(value)
+    if not debug_type:
+        debug_type = 'debugpy' if 'ANSIBLE_TEST_REMOTE_DEBUGGER_DEBUGPY' in os.environ else 'pydevd'
+
+    settings: DebugpySettings | PyDevDSettings
+    if debug_type == 'debugpy':
+        value = os.environ.get('ANSIBLE_TEST_REMOTE_DEBUGGER_DEBUGPY') or '{}'
+        settings = parse_debugpy_debugger_settings(value)
+        args.metadata.debugpy_settings = settings
+    else:
+        value = os.environ.get('ANSIBLE_TEST_REMOTE_DEBUGGER_PYDEVD') or '{}'
+        settings = parse_pydevd_debugger_settings(value)
+        args.metadata.pydevd_settings = settings
 
     display.info(f'>>> Debugger Settings\n{json.dumps(dataclasses.asdict(settings), indent=4)}', verbosity=3)
-
-    args.metadata.debugger_settings = settings
 
 
 @cache
@@ -164,3 +316,21 @@ def detect_pycharm_process() -> Process | None:
 def get_current_process_cached() -> Process:
     """Return the current process. The result is cached."""
     return get_current_process()
+
+
+@cache
+def detect_debugpy_port() -> int | None:
+    """Return the port for the debugpy instance hosting this process, or `None` if not detected."""
+    if HAS_DEBUGPY and _debugpy.is_client_connected():
+        return _debugpy_cli.options.address[1]
+
+    return None
+
+
+@cache
+def get_debugpy_access_token() -> str | None:
+    """Return the access token for the debugpy instance hosting this process, or `None` if not detected."""
+    if HAS_DEBUGPY and _debugpy.is_client_connected():
+        return _debugpy_cli.options.adapter_access_token
+
+    return None
