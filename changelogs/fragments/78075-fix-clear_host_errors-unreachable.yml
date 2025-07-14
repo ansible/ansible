@@ -1,0 +1,2 @@
+bugfixes:
+  - clear_host_errors - Fix clearing unreachable host errors for subsequent plays. Previously, unreachable hosts would resume the play in which they failed, following the unreachable task. (https://github.com/ansible/ansible/issues/35086)

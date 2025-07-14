@@ -1,0 +1,40 @@
+- name: Use clear_host_errors to clear host failures for a subsequent play
+  hosts:
+    - testhost
+    - testhost2
+  gather_facts: no
+  strategy: "{{ test_strategy }}"
+  tasks:
+    - name: Delay host responsible for executing clear_host_errors
+      wait_for:
+        timeout: 1
+      when:
+        - test_strategy == 'free'
+        - inventory_hostname == 'testhost'
+
+    - name: Fail one host to test clearing errors for the next play
+      fail:
+      when: inventory_hostname == 'testhost2'
+
+    - meta: clear_host_errors
+
+    - name: Test recovered host does not resume in this play
+      fail:
+      when: inventory_hostname == 'testhost2'
+
+- name: Test recovered host is available
+  hosts: testhost2
+  gather_facts: no
+  tasks:
+    - set_fact:
+        recovered_in_subsequent_play: True
+      delegate_to: testhost
+      delegate_facts: True
+
+- name: Validate previous play executed
+  hosts: testhost
+  gather_facts: no
+  tasks:
+    - assert:
+        that:
+          - recovered_in_subsequent_play | default(False)

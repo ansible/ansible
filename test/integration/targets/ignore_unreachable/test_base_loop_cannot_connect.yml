@@ -29,6 +29,12 @@
 
   - meta: clear_host_errors
 
+  - name: Test unreachable host does not execute task following clear_host_errors (skip)
+    fail:
+    when: inventory_hostname == 'nonexistent'
+
+- hosts: nonexistent
+  tasks:
   - assert:
       that:
         - unreachable_ignored is not unreachable
@@ -38,4 +44,3 @@
         - unreachable_last["results"][-1] is unreachable
         - unreachable_last["results"][0] is not unreachable
         - unreachable_last is unreachable
-    when: inventory_hostname == 'nonexistent'
