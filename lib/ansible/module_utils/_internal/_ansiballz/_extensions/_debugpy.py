@@ -60,14 +60,6 @@ import pathlib
 
 import typing as t
 
-HAS_DEBUGPY = False
-try:
-    import debugpy  # type: ignore[import-not-found]  # Not type stubs available for debugpy
-
-    HAS_DEBUGPY = True
-except ImportError:
-    pass
-
 
 @dataclasses.dataclass(frozen=True)
 class Options:
@@ -92,8 +84,7 @@ class Options:
 
 def run(args: dict[str, t.Any]) -> None:  # pragma: nocover
     """Enable remote debugging."""
-    if not HAS_DEBUGPY:
-        return
+    import debugpy  # type: ignore[import-not-found]  # Not type stubs available for debugpy
 
     options = Options(**args)
     temp_dir = pathlib.Path(__file__).parent.parent.parent.parent.parent.parent
