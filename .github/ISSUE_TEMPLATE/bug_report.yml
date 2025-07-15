@@ -105,7 +105,8 @@ body:
     label: Configuration
     description: >-
       Paste verbatim output from `ansible-config dump --only-changed -t all` below, under the prompt line.
-      (if using a version older than ansible-core 2.12 you should omit the '-t all')
+      Remember to redact secret values. You can easily filter Galaxy server secrets using grep,
+      for example `ansible-config dump --only-changed -t all | grep -Ev 'token|password|client_secret'`.
       Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
