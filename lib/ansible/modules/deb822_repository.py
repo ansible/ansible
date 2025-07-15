@@ -77,6 +77,7 @@ options:
               for your Python version is installed some other way.
         type: bool
         default: true
+        version_added: '2.20'
     languages:
         description:
         - Defines which languages information such as translated
