@@ -318,19 +318,26 @@ def get_current_process_cached() -> Process:
     return get_current_process()
 
 
-@cache
 def detect_debugpy_port() -> int | None:
     """Return the port for the debugpy instance hosting this process, or `None` if not detected."""
-    if HAS_DEBUGPY and _debugpy.is_client_connected():
-        return _debugpy_cli.options.address[1]
+    return _get_debugpy_cli_options()[0]
 
-    return None
+
+def get_debugpy_access_token() -> str | None:
+    """Return the access token for the debugpy instance hosting this process, or `None` if not detected."""
+    return _get_debugpy_cli_options()[1]
 
 
 @cache
-def get_debugpy_access_token() -> str | None:
-    """Return the access token for the debugpy instance hosting this process, or `None` if not detected."""
-    if HAS_DEBUGPY and _debugpy.is_client_connected():
-        return _debugpy_cli.options.adapter_access_token
+def _get_debugpy_cli_options() -> tuple[int | None, str | None]:
+    if not (HAS_DEBUGPY and _debugpy.is_client_connected()):
+        return (None, None)
 
-    return None
+    # get_cli_options is the new public API introduced after debugpy 1.8.15.
+    # We should remove the _debugpy_cli fallback once the new version is released.
+    if hasattr(_debugpy, 'get_cli_options'):
+        opts = _debugpy.get_cli_options()
+    else:
+        opts = _debugpy_cli.options
+
+    return opts.address[1], opts.adapter_access_token

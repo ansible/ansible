@@ -29,7 +29,7 @@ To use with VSCode:
                     "main.yml"
                 ],
                 "env": {
-                    "_ANSIBLE_ANSIBALLZ_DEBUGPY_CONFIG\": "{\"host\": \"localhost\", \"port\": 5678}"
+                    "_ANSIBLE_ANSIBALLZ_DEBUGPY_CONFIG": "{\"host\": \"localhost\", \"port\": 5678}"
                 },
                 "console": "integratedTerminal",
             }
