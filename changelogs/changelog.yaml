@@ -865,6 +865,17 @@ releases:
     - ensure_remote_perms.yml
     - win-script-become.yml
     release_date: '2025-05-12'
+  2.18.7:
+    changes:
+      release_summary: '| Release Date: 2025-07-15
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.7_summary.yaml
+    release_date: '2025-07-15'
   2.18.7rc1:
     changes:
       bugfixes:
