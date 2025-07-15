@@ -797,6 +797,17 @@ releases:
     - ensure_remote_perms.yml
     - win-script-become.yml
     release_date: '2025-05-12'
+  2.17.13:
+    changes:
+      release_summary: '| Release Date: 2025-07-15
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.13_summary.yaml
+    release_date: '2025-07-15'
   2.17.13rc1:
     changes:
       bugfixes:
