@@ -67,6 +67,16 @@ options:
         - Determines the path to the C(InRelease) file, relative to the normal
           position of an C(InRelease) file.
         type: str
+    install_python-debian:
+        description:
+        - Whether to automatically try to install the Python debian library or not, if it is not already installed. 
+          Without this library, the module does not work.
+            - Runs C(apt-get install python3-debian).
+            - Only works with the system Python. If you are using a Python on the remote that is not
+              the system Python, set O(install_python_debian=false) and ensure that the Python debian library
+              for your Python version is installed some other way.
+        type: bool
+        default: true
     languages:
         description:
         - Defines which languages information such as translated
@@ -228,6 +238,7 @@ key_filename:
 
 import os
 import re
+import sys
 import tempfile
 import textwrap
 
@@ -235,6 +246,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import S_IRWXU_RXG_RXO, S_IRWU_RG_RO
+from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
@@ -356,6 +368,20 @@ def write_signed_by_key(module, v, slug):
 
     return changed, filename, None
 
+def install_python_debian(module, deb_pkg_name):
+
+    if not module.check_mode:
+        apt_get_path = module.get_bin_path('apt-get')
+        if apt_get_path:
+            rc, so, se = module.run_command([apt_get_path, 'update'])
+            if rc != 0:
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (deb_pkg_name, se.strip()))
+            rc, so, se = module.run_command([apt_get_path, 'install', deb_pkg_name, '-y', '-q'])
+            if rc != 0:
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (deb_pkg_name, se.strip()))
+    else:
+        module.fail_json(msg="%s must be installed to use check mode" % deb_pkg_name)
+
 
 def main():
     module = AnsibleModule(
@@ -394,6 +420,10 @@ def main():
             },
             'inrelease_path': {
                 'type': 'str',
+            },
+            'install_python_debian': {
+                'type': 'bool',
+                'default': True,
             },
             'languages': {
                 'elements': 'str',
@@ -453,8 +483,54 @@ def main():
     )
 
     if not HAS_DEBIAN:
-        module.fail_json(msg=missing_required_lib("python3-debian"),
-                         exception=DEBIAN_IMP_ERR)
+        deb_pkg_name = 'python3-debian'
+        # This interpreter can't see the debian Python library- we'll do the following to try and fix that as per
+        # the apt_repository module:
+        # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
+        # 2) finding none, try to install a matching python-debian package for the current interpreter version;
+        #    we limit to the current interpreter version to try and avoid installing a whole other Python just
+        #    for deb support
+        # 3) if we installed a support package, try to respawn under what we think is the right interpreter (could be
+        #    the current interpreter again, but we'll let it respawn anyway for simplicity)
+        # 4) if still not working, return an error and give up (some corner cases not covered, but this shouldn't be
+        #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
+        #    system locations)
+
+        if has_respawned():
+            # this shouldn't be possible; short-circuit early if it happens...
+            module.fail_json(msg="{0} must be installed and visible from {1}.".format(deb_pkg_name, sys.executable))
+
+        interpreters = ['/usr/bin/python3', '/usr/bin/python']
+
+        interpreter = probe_interpreters_for_module(interpreters, 'debian')
+
+        if interpreter:
+            # found the Python bindings; respawn this module under the interpreter where we found them
+            respawn_module(interpreter)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+
+        # don't make changes if we're in check_mode
+        if module.check_mode:
+            module.fail_json(msg="%s must be installed to use check mode. "
+                                 "If run normally this module can auto-install it." % deb_pkg_name)
+
+        if module.params['install_python_debian']:
+            install_python_debian(module, deb_pkg_name)
+        else:
+            module.fail_json(msg='%s is not installed, and install_python_debian is False' % deb_pkg_name)
+
+        # try again to find the bindings in common places
+        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+
+        if interpreter:
+            # found the Python bindings; respawn this module under the interpreter where we found them
+            # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
+            respawn_module(interpreter)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+        else:
+            # we've done all we can do; just tell the user it's busted and get out
+            module.fail_json(msg=missing_required_lib("python3-debian"),
+                             exception=DEBIAN_IMP_ERR)
 
     check_mode = module.check_mode
 
