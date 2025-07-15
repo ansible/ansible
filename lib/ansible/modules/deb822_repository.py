@@ -67,7 +67,7 @@ options:
         - Determines the path to the C(InRelease) file, relative to the normal
           position of an C(InRelease) file.
         type: str
-    install_python-debian:
+    install_python_debian:
         description:
         - Whether to automatically try to install the Python debian library or not, if it is not already installed. 
           Without this library, the module does not work.
