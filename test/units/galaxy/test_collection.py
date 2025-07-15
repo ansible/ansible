@@ -884,7 +884,7 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
     assert mock_publish.mock_calls[0][1][0] == artifact_path
 
     assert mock_wait.call_count == 1
-    assert mock_wait.mock_calls[0][1][0] == '1234'
+    assert mock_wait.mock_calls[0][1][0] == fake_import_uri
 
     assert mock_display.mock_calls[0][1][0] == "Collection has been published to the Galaxy server test_server %s" \
         % galaxy_server.api_server

@@ -689,10 +689,10 @@ class GalaxyAPI:
                                  error_context_msg='Error when publishing collection to %s (%s)'
                                                    % (self.name, self.api_server))
 
-        return resp['task']
+        return urljoin(self.api_server, resp['task'])
 
     @g_connect(['v2', 'v3'])
-    def wait_import_task(self, task_id, timeout=0):
+    def wait_import_task(self, task_url, timeout=0):
         """
         Waits until the import process on the Galaxy server has completed or the timeout is reached.
 
@@ -703,22 +703,14 @@ class GalaxyAPI:
         state = 'waiting'
         data = None
 
-        # Construct the appropriate URL per version
-        if 'v3' in self.available_api_versions:
-            full_url = _urljoin(self.api_server, self.available_api_versions['v3'],
-                                'imports/collections', task_id, '/')
-        else:
-            full_url = _urljoin(self.api_server, self.available_api_versions['v2'],
-                                'collection-imports', task_id, '/')
-
-        display.display("Waiting until Galaxy import task %s has completed" % full_url)
+        display.display("Waiting until Galaxy import task %s has completed" % task_url)
         start = time.time()
         wait = C.GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
 
         while timeout == 0 or (time.time() - start) < timeout:
             try:
-                data = self._call_galaxy(full_url, method='GET', auth_required=True,
-                                         error_context_msg='Error when getting import task results at %s' % full_url)
+                data = self._call_galaxy(task_url, method='GET', auth_required=True,
+                                         error_context_msg='Error when getting import task results at %s' % task_url)
             except GalaxyError as e:
                 if e.http_code != 404:
                     raise
@@ -740,7 +732,7 @@ class GalaxyAPI:
             wait = min(30, wait * C.GALAXY_COLLECTION_IMPORT_POLL_FACTOR)
         if state == 'waiting':
             raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
-                               % to_native(full_url))
+                               % to_native(task_url))
 
         for message in data.get('messages', []):
             level = message['level']
@@ -754,7 +746,7 @@ class GalaxyAPI:
         if state == 'failed':
             code = to_native(data['error'].get('code', 'UNKNOWN'))
             description = to_native(
-                data['error'].get('description', "Unknown error, see %s for more details" % full_url))
+                data['error'].get('description', "Unknown error, see %s for more details" % task_url))
             raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
 
     @g_connect(['v2', 'v3'])

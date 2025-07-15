@@ -623,24 +623,11 @@ def publish_collection(collection_path, api, wait, timeout):
     import_uri = api.publish_collection(collection_path)
 
     if wait:
-        # Galaxy returns a url fragment which differs between v2 and v3.  The second to last entry is
-        # always the task_id, though.
-        # v2: {"task": "https://galaxy-dev.ansible.com/api/v2/collection-imports/35573/"}
-        # v3: {"task": "/api/automation-hub/v3/imports/collections/838d1308-a8f4-402c-95cb-7823f3806cd8/"}
-        task_id = None
-        for path_segment in reversed(import_uri.split('/')):
-            if path_segment:
-                task_id = path_segment
-                break
-
-        if not task_id:
-            raise AnsibleError("Publishing the collection did not return valid task info. Cannot wait for task status. Returned task info: '%s'" % import_uri)
-
         with _display_progress(
                 "Collection has been published to the Galaxy server "
                 "{api.name!s} {api.api_server!s}".format(api=api),
         ):
-            api.wait_import_task(task_id, timeout)
+            api.wait_import_task(import_uri, timeout)
         display.display("Collection has been successfully published and imported to the Galaxy server %s %s"
                         % (api.name, api.api_server))
     else:
