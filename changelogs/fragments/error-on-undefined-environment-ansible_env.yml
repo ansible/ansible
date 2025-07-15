@@ -1,0 +1,5 @@
+bugfixes:
+- >-
+  ``environment`` keyword - env vars defined with ``ansible_env`` are no longer
+  silently ignored when ``ansible_env`` is undefined for actions other than
+  setup and gather_facts.

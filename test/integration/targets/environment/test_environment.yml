@@ -187,3 +187,19 @@
       assert:
         that:
           - test_foo.results[0].stdout == 'outer'
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - shell: echo $PATH
+      environment:
+        PATH: "/usr/local/bin/:{{ ansible_env.PATH }}"
+      ignore_errors: true
+      register: fatal
+
+    - assert:
+        that:
+          - fatal is failed
+          - fatal.msg is search(expected)
+      vars:
+        expected: "Error processing keyword 'environment': 'ansible_env' is undefined"

@@ -387,7 +387,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 return
             except AnsibleUndefinedVariable as e:
                 error = to_native(e)
-                if self.action in C._ACTION_FACT_GATHERING and 'ansible_facts.env' in error or 'ansible_env' in error:
+                if self.action in C._ACTION_FACT_GATHERING and ('ansible_facts.env' in error or 'ansible_env' in error):
                     # ignore as fact gathering is required for 'env' facts
                     return
                 raise
