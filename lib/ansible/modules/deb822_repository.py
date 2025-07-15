@@ -368,6 +368,7 @@ def write_signed_by_key(module, v, slug):
 
     return changed, filename, None
 
+
 def install_python_debian(module, deb_pkg_name):
 
     if not module.check_mode:
