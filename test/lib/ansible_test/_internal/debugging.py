@@ -7,6 +7,7 @@ import importlib
 import json
 import os
 import re
+import sys
 import typing as t
 
 from .util import (
@@ -37,15 +38,6 @@ from .metadata import (
 from .data import (
     data_context,
 )
-
-HAS_DEBUGPY = False
-try:
-    import debugpy as _debugpy
-    from debugpy.server import cli as _debugpy_cli
-
-    HAS_DEBUGPY = True
-except ImportError:
-    pass
 
 
 class DebuggerProfile(t.Protocol):
@@ -123,10 +115,9 @@ class DebugpyProfile(DebuggerProfile):
         self.port = settings.port
 
     def activate_debugger(self, host: str, port: int) -> None:
-        if not HAS_DEBUGPY:
-            raise ImportError("debugpy is not installed, cannot activate debugger.")
-
-        _debugpy.connect((host, port), **self._settings.connect)
+        # Delays importing debugpy to avoid conflicts with pydevd under other IDEs.
+        import debugpy
+        debugpy.connect((host, port), **self._settings.connect)
 
     def get_ansiballz_config(self, host: str, port: int) -> dict[str, object]:
         return dict(
@@ -330,14 +321,23 @@ def get_debugpy_access_token() -> str | None:
 
 @cache
 def _get_debugpy_cli_options() -> tuple[int | None, str | None]:
-    if not (HAS_DEBUGPY and _debugpy.is_client_connected()):
+    # To avoid importing debugpy outside of a debugging session, we check to
+    # see if it's already imported. This avoids conflicts with pydevd already
+    # loaded under different IDEs like PyCharm.
+    if "debugpy" not in sys.modules:
         return (None, None)
 
-    # get_cli_options is the new public API introduced after debugpy 1.8.15.
-    # We should remove the _debugpy_cli fallback once the new version is released.
-    if hasattr(_debugpy, 'get_cli_options'):
-        opts = _debugpy.get_cli_options()
-    else:
-        opts = _debugpy_cli.options
+    import debugpy
 
-    return opts.address[1], opts.adapter_access_token
+    # get_cli_options is the new public API introduced after debugpy 1.8.15.
+    # We should remove the debugpy.server cli fallback once the new version is
+    # released.
+    if hasattr(debugpy, 'get_cli_options'):
+        opts = debugpy.get_cli_options()
+    else:
+        from debugpy.server import cli
+        opts = cli.options
+
+    # address can be None if the debugger is not configured through the CLI as
+    # we expected.
+    return opts.address[1] if opts.address else None, opts.adapter_access_token
