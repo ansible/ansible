@@ -209,6 +209,14 @@ export ANSIBLE_CALLBACK_RESULT_FORMAT=json
 unset ANSIBLE_CALLBACK_RESULT_INDENTATION
 
 export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
+export ANSIBLE_CALLBACK_YAML_LINE_WIDTH=default
+run_test result_format_yaml_default_break test_long_line.yml
+export ANSIBLE_CALLBACK_YAML_LINE_WIDTH=no-break
+run_test result_format_yaml_no_break test_long_line.yml
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json
+unset ANSIBLE_CALLBACK_YAML_LINE_WIDTH
+
+export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
 export ANSIBLE_CALLBACK_FORMAT_PRETTY=1
 run_test result_format_yaml_lossy_verbose test.yml -v
 run_test yaml_result_format_yaml_verbose test_yaml.yml -v
