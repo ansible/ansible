@@ -156,18 +156,15 @@ class TestGroup(unittest.TestCase):
     def test_set_priority_valid_values(self):
         """Test that valid priority values are set correctly"""
         group = Group('test_group')
-
-        # Test with integer
-        group.set_priority(5)
-        self.assertEqual(group.priority, 5)
-
-        # Test with string that can be converted to int
-        group.set_priority('10')
-        self.assertEqual(group.priority, 10)
-
-        # Test with negative numbers
-        group.set_priority(-1)
-        self.assertEqual(group.priority, -1)
+        
+        param_list = [
+            (5, 5),  # int
+            ('10', 10),  # string
+            (-1, -1)  # negative number
+        ]
+        for priority, expected in param_list:
+            group.set_priority(priority)
+            self.assertEqual(group.priority, expected)
 
     def test_set_priority_invalid_values(self):
         """Test that invalid priority values are handled gracefully with warnings"""
