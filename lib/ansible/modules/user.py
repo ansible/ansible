@@ -2504,11 +2504,10 @@ class DarwinUser(User):
         Please note that password must be cleartext.
         """
         # some documentation on how is stored passwords on OSX:
-        # http://blog.lostpassword.com/2012/07/cracking-mac-os-x-lion-accounts-passwords/
         # http://null-byte.wonderhowto.com/how-to/hack-mac-os-x-lion-passwords-0130036/
         # http://pastebin.com/RYqxi7Ca
         # on OSX 10.8+ hash is SALTED-SHA512-PBKDF2
-        # https://pythonhosted.org/passlib/lib/passlib.hash.pbkdf2_digest.html
+        # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.pbkdf2_digest.html
         # https://gist.github.com/nueh/8252572
         cmd = self._get_dscl()
         if self.password:
