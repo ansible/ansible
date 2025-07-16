@@ -99,10 +99,6 @@
     path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
   register: deb822_create_1_stat_2
 
-- name: Inspect
-  debug:
-    var: deb822_create_1
-
 - assert:
     that:
       - deb822_check_mode_1 is changed
