@@ -25,7 +25,6 @@
         uris: "http://example.com/debian/"
         suites: stable
         components: main
-        install_python_debian: false
       register: no_python3_debian
       ignore_errors: true
 
@@ -40,6 +39,7 @@
         uris: "http://example.com/debian/"
         suites: stable
         components: main
+        install_python_debian: true
 
     - name: Clean up the previously added basic Debian repository
       deb822_repository:

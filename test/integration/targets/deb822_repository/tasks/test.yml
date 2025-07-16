@@ -99,6 +99,10 @@
     path: /etc/apt/sources.list.d/ansible-test-focal-archive.sources
   register: deb822_create_1_stat_2
 
+- name: Inspect
+  debug:
+    var: deb822_create_1
+
 - assert:
     that:
       - deb822_check_mode_1 is changed
@@ -119,7 +123,7 @@
     focal_archive_expected: |-
       Components: main restricted
       Date-Max-Future: 10
-      Install-Python-Debian: yes
+      Install-Python-Debian: no
       X-Repolib-Name: ansible-test focal archive
       Suites: focal focal-updates
       Types: deb
@@ -193,7 +197,7 @@
   vars:
     signed_by_inline_expected: |-
       Components: main contrib non-free
-      Install-Python-Debian: yes
+      Install-Python-Debian: no
       X-Repolib-Name: ansible-test
       Signed-By:
           -----BEGIN PGP PUBLIC KEY BLOCK-----

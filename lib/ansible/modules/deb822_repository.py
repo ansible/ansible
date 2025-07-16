@@ -76,7 +76,7 @@ options:
               the system Python, set O(install_python_debian=false) and ensure that the Python debian library
               for your Python version is installed some other way.
         type: bool
-        default: true
+        default: false
         version_added: '2.20'
     languages:
         description:
@@ -425,7 +425,7 @@ def main():
             },
             'install_python_debian': {
                 'type': 'bool',
-                'default': True,
+                'default': False,
             },
             'languages': {
                 'elements': 'str',
