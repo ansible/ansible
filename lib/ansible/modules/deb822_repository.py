@@ -69,11 +69,11 @@ options:
         type: str
     install_python_debian:
         description:
-        - Whether to automatically try to install the Python debian library or not, if it is not already installed.
+        - Whether to automatically try to install the Python C(debian) library or not, if it is not already installed.
           Without this library, the module does not work.
             - Runs C(apt install python3-debian).
             - Only works with the system Python. If you are using a Python on the remote that is not
-              the system Python, set O(install_python_debian=false) and ensure that the Python debian library
+              the system Python, set O(install_python_debian=false) and ensure that the Python C(debian) library
               for your Python version is installed some other way.
         type: bool
         default: false
