@@ -63,7 +63,7 @@ class DebuggerProfile(t.Protocol):
         """Get environment variables needed to configure the debugger for debugging."""
 
 
-class PyDevDProfile(DebuggerProfile):
+class PydevdProfile(DebuggerProfile):
     """Profile for the PyDevD debugger."""
 
     def __init__(self, settings: PyDevDSettings) -> None:
@@ -116,7 +116,7 @@ class DebugpyProfile(DebuggerProfile):
 
     def activate_debugger(self, host: str, port: int) -> None:
         # Delays importing debugpy to avoid conflicts with pydevd under other IDEs.
-        import debugpy
+        import debugpy  # pylint: disable=import-error
         debugpy.connect((host, port), **self._settings.connect)
 
     def get_ansiballz_config(self, host: str, port: int) -> dict[str, object]:
@@ -327,7 +327,7 @@ def _get_debugpy_cli_options() -> tuple[int | None, str | None]:
     if "debugpy" not in sys.modules:
         return (None, None)
 
-    import debugpy
+    import debugpy  # pylint: disable=import-error
 
     # get_cli_options is the new public API introduced after debugpy 1.8.15.
     # We should remove the debugpy.server cli fallback once the new version is
@@ -335,7 +335,7 @@ def _get_debugpy_cli_options() -> tuple[int | None, str | None]:
     if hasattr(debugpy, 'get_cli_options'):
         opts = debugpy.get_cli_options()
     else:
-        from debugpy.server import cli
+        from debugpy.server import cli  # pylint: disable=import-error
         opts = cli.options
 
     # address can be None if the debugger is not configured through the CLI as

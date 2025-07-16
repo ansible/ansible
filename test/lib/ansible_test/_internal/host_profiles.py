@@ -142,7 +142,7 @@ from .dev.container_probe import (
 from .debugging import (
     DebuggerProfile,
     DebugpyProfile,
-    PyDevDProfile,
+    PydevdProfile,
 )
 
 TControllerHostConfig = t.TypeVar('TControllerHostConfig', bound=ControllerHostConfig)
@@ -310,7 +310,7 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         if self.__DEBUGGER_KEY not in self.cache:
             profile: DebuggerProfile | None = None
             if self.args.metadata.pydevd_settings:
-                profile = PyDevDProfile(self.args.metadata.pydevd_settings)
+                profile = PydevdProfile(self.args.metadata.pydevd_settings)
             elif self.args.metadata.debugpy_settings:
                 profile = DebugpyProfile(self.args.metadata.debugpy_settings)
 
