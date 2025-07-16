@@ -373,12 +373,12 @@ def write_signed_by_key(module, v, slug):
 def install_python_debian(module, deb_pkg_name):
 
     if not module.check_mode:
-        apt_get_path = module.get_bin_path('apt-get')
-        if apt_get_path:
-            rc, so, se = module.run_command([apt_get_path, 'update'])
+        apt_path = module.get_bin_path('apt')
+        if apt_path:
+            rc, so, se = module.run_command([apt_path, 'update'])
             if rc != 0:
                 module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (deb_pkg_name, se.strip()))
-            rc, so, se = module.run_command([apt_get_path, 'install', deb_pkg_name, '-y', '-q'])
+            rc, so, se = module.run_command([apt_path, 'install', deb_pkg_name, '-y', '-q'])
             if rc != 0:
                 module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (deb_pkg_name, se.strip()))
     else:
