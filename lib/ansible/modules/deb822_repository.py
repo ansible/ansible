@@ -377,10 +377,10 @@ def install_python_debian(module, deb_pkg_name):
         if apt_get_path:
             rc, so, se = module.run_command([apt_get_path, 'update'])
             if rc != 0:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (deb_pkg_name, se.strip()))
+                module.fail_json(msg=f"Failed update while auto installing {deb_pkg_name} due to '{se.strip()}'")
             rc, so, se = module.run_command([apt_get_path, 'install', deb_pkg_name, '-y', '-q'])
             if rc != 0:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (deb_pkg_name, se.strip()))
+                module.fail_json(msg=f"Failed to auto-install {deb_pkg_name} due to : '{se.strip()}'")
     else:
         module.fail_json(msg="%s must be installed to use check mode" % deb_pkg_name)
 
@@ -500,7 +500,7 @@ def main():
 
         if has_respawned():
             # this shouldn't be possible; short-circuit early if it happens...
-            module.fail_json(msg="{0} must be installed and visible from {1}.".format(deb_pkg_name, sys.executable))
+            module.fail_json(msg=f"{deb_pkg_name} must be installed and visible from {sys.executable}.")
 
         interpreters = ['/usr/bin/python3', '/usr/bin/python']
 
@@ -513,13 +513,13 @@ def main():
 
         # don't make changes if we're in check_mode
         if module.check_mode:
-            module.fail_json(msg="%s must be installed to use check mode. "
-                                 "If run normally this module can auto-install it." % deb_pkg_name)
+            module.fail_json(msg=f"{deb_pkg_name} must be installed to use check mode. "
+                                                  "If run normally, this module can auto-install it.")
 
         if module.params['install_python_debian']:
             install_python_debian(module, deb_pkg_name)
         else:
-            module.fail_json(msg='%s is not installed, and install_python_debian is False' % deb_pkg_name)
+            module.fail_json(msg=f'{deb_pkg_name} is not installed, and install_python_debian is False')
 
         # try again to find the bindings in common places
         interpreter = probe_interpreters_for_module(interpreters, 'apt')
