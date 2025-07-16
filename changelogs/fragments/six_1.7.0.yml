@@ -1,3 +1,3 @@
 ---
 minor_changes:
-    - six - bump six version from 1.6.0 to 1.7.0 (https://github.com/ansible/ansible/issues/85408).
+    - six - bump six version from 1.16.0 to 1.17.0 (https://github.com/ansible/ansible/issues/85408).
