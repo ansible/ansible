@@ -382,7 +382,7 @@ def install_python_debian(module, deb_pkg_name):
             if rc != 0:
                 module.fail_json(msg=f"Failed to auto-install {deb_pkg_name} due to : '{se.strip()}'")
     else:
-        module.fail_json(msg="%s must be installed to use check mode" % deb_pkg_name)
+        module.fail_json(msg=f"{deb_pkg_name} must be installed to use check mode")
 
 
 def main():
