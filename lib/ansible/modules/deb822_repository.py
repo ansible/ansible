@@ -531,7 +531,7 @@ def main():
             # this is the end of the line for this process, it will exit here once the respawned module has completed
         else:
             # we've done all we can do; just tell the user it's busted and get out
-            module.fail_json(msg=missing_required_lib("python3-debian"),
+            module.fail_json(msg=missing_required_lib(deb_pkg_name),
                              exception=DEBIAN_IMP_ERR)
 
     check_mode = module.check_mode
