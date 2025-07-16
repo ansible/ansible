@@ -54,7 +54,8 @@
 
     - name: assert python3-debian already installed
       assert:
-        that: py3_deb_install.changed == false
+        that:
+           - not py3_deb_install.changed
 
     - import_tasks: test.yml
 
