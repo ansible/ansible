@@ -26,6 +26,18 @@ class ModuleDocFragment(object):
             - json
             - yaml
         version_added: '2.13'
+      result_indentation:
+        name: Indentation of the result
+        description:
+          - Allows to configure indentation for YAML and verbose/pretty JSON.
+        type: int
+        default: 4
+        env:
+          - name: ANSIBLE_CALLBACK_RESULT_INDENTATION
+        ini:
+          - key: callback_result_indentation
+            section: defaults
+        version_added: '2.20'
       pretty_results:
         name: Configure output for readability
         description:
