@@ -763,7 +763,7 @@ def main():
         else:
             # Use the detected encoding if no BOM
             u_content = to_text(content, encoding=content_encoding)
-        
+
         if maybe_json:
             try:
                 js = json.loads(u_content)
