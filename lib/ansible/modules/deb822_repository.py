@@ -513,8 +513,7 @@ def main():
 
         # don't make changes if we're in check_mode
         if module.check_mode:
-            module.fail_json(msg=f"{deb_pkg_name} must be installed to use check mode. "
-                                                  "If run normally, this module can auto-install it.")
+            module.fail_json(msg=f"{deb_pkg_name} must be installed to use check mode. If run with install_python_debian, this module can auto-install it.")
 
         if module.params['install_python_debian']:
             install_python_debian(module, deb_pkg_name)
