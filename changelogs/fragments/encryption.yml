@@ -1,0 +1,3 @@
+---
+removed_features:
+    - encryption - raise error when deprecated option vaultid is used.
