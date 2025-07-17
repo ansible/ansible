@@ -85,10 +85,9 @@ class TestUri:
 
         module_args = {"url": "http://example.com/", "return_content": True}
 
-        with (
-            patch.object(uri, "fetch_url", return_value=(resp, info)) as mock_fetch_url,
-            patch_module_args(module_args),
-        ):
+        with patch.object(uri, "fetch_url", return_value=(resp, info)) as mock_fetch_url, \
+             patch_module_args(module_args):
+
             # Module should exit normally after processing
             with pytest.raises(SystemExit):
                 uri.main()
