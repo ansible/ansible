@@ -432,6 +432,7 @@ url:
   sample: https://www.ansible.com/
 """
 
+import codecs
 import http
 import json
 import os
@@ -756,13 +757,15 @@ def main():
 
     # Default content_encoding to try
     if isinstance(content, binary_type):
-        # Check for UTF-8 BOM (EF BB BF)
-        if content.startswith(b'\xef\xbb\xbf'):
-            # Use utf-8-sig encoding which handles the BOM correctly
-            u_content = to_text(content, encoding='utf-8-sig')
-        else:
-            # Use the detected encoding if no BOM
-            u_content = to_text(content, encoding=content_encoding)
+        # Check for UTF BOM (Byte Order Mark)
+        if content.startswith((codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE)):
+            content_encoding = 'utf-32'
+        elif content.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
+            content_encoding = 'utf-16'
+        elif content.startswith(codecs.BOM_UTF8):
+            content_encoding = 'utf-8-sig'
+
+        u_content = to_text(content, encoding=content_encoding)
 
         if maybe_json:
             try:
