@@ -57,13 +57,13 @@ class ExtensionManager:
         if self._debugpy:
             extension_options['_debugpy'] = dataclasses.replace(
                 self._debugpy,
-                source_mapping=self._get_source_mapping(),
+                source_mapping=self._get_source_mapping(self._debugpy.source_mapping),
             )
 
         if self._pydevd:
             extension_options['_pydevd'] = dataclasses.replace(
                 self._pydevd,
-                source_mapping=self._get_source_mapping(),
+                source_mapping=self._get_source_mapping(self._pydevd.source_mapping),
             )
 
         if self._coverage:
@@ -73,18 +73,17 @@ class ExtensionManager:
 
         return extensions
 
-    def _get_source_mapping(self) -> dict[str, str]:
+    def _get_source_mapping(self, debugger_mapping: dict[str, str]) -> dict[str, str]:
         """Get the source mapping, adjusting the source root as needed."""
-        if self._pydevd and self._pydevd.source_mapping:
-            source_mapping = {self._translate_path(key, self._pydevd.source_mapping): value for key, value in self.source_mapping.items()}
-        elif self._debugpy and self._debugpy.source_mapping:
-            source_mapping = {self._translate_path(key, self._debugpy.source_mapping): value for key, value in self.source_mapping.items()}
+        if debugger_mapping:
+            source_mapping = {self._translate_path(key, debugger_mapping): value for key, value in self.source_mapping.items()}
         else:
             source_mapping = self.source_mapping
 
         return source_mapping
 
-    def _translate_path(self, path: str, debugger_mapping: dict[str, str]) -> str:
+    @staticmethod
+    def _translate_path(path: str, debugger_mapping: dict[str, str]) -> str:
         """Translate a local path to a foreign path."""
         for replace, match in debugger_mapping.items():
             if path.startswith(match):
