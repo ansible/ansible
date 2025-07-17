@@ -1,0 +1,98 @@
+- name: Define supported debuggers
+  set_fact:
+    debuggers:
+      - pydevd
+      - debugpy
+
+- name: Run without debugging features enabled
+  command: ansible-test shell -v -- env
+  register: result
+
+- assert:
+    that:
+      - result.stderr_lines is not contains 'Debugging'
+
+- name: Run a command which does not support debugging
+  command: ansible-test env -v
+  register: result
+
+- assert:
+    that:
+      - result.stderr_lines is not contains 'Debugging'
+
+- name: Verify on-demand debugging gracefully handles not running under a debugger
+  command: ansible-test shell -v --dev-debug-on-demand -- env
+  register: result
+
+- assert:
+    that:
+      - result.stderr_lines is contains 'Debugging disabled because no debugger was detected.'
+
+- name: Verify manual debugging gracefully handles lack of configuration
+  command: ansible-test shell -v --dev-debug-cli -- env
+  register: result
+
+- assert:
+    that:
+      - result.stderr_lines is contains 'Debugging disabled because no debugger configuration was provided.'
+
+- name: Verify invalid debugger configuration is handled
+  command: ansible-test shell --dev-debug-cli -- env
+  environment: >
+    {% set key = "ANSIBLE_TEST_REMOTE_DEBUGGER_" + item.upper() %}{{ ('{"' + key + '": "{\"invalid_key\": true}"}') | from_json }}
+  register: result
+  loop: "{{ debuggers }}"
+  ignore_errors: yes
+
+- assert:
+    that:
+      - item.stderr is search("Invalid " + item.item + " settings.*invalid_key")
+  loop: "{{ result.results }}"
+
+- name: Verify CLI debugger can be manually enabled (shell)
+  command: ansible-test shell --dev-debug-cli -- env
+  environment: >
+    {% set key = "ANSIBLE_TEST_REMOTE_DEBUGGER_" + item.upper() %}{{ ('{"' + key + '": ""}') | from_json }}
+  register: result
+  loop: "{{ debuggers }}"
+
+- assert:
+    that:
+      - item.stdout is contains "ANSIBLE_TEST_DEBUGGER_CONFIG"
+  loop: "{{ result.results }}"
+
+- name: Verify CLI debugger can be manually enabled (integration)
+  command: ansible-test integration ansible-test-debugging-env --dev-debug-cli
+  environment: >
+    {% set key = "ANSIBLE_TEST_REMOTE_DEBUGGER_" + item.upper() %}{{ ('{"' + key + '": ""}') | from_json }}
+  register: result
+  loop: "{{ debuggers }}"
+
+- assert:
+    that:
+      - item.stdout is contains "ANSIBLE_TEST_DEBUGGER_CONFIG"
+  loop: "{{ result.results }}"
+
+- name: Verify AnsiballZ debugger can be manually enabled (shell)
+  command: ansible-test shell --dev-debug-ansiballz -- env
+  environment: >
+    {% set key = "ANSIBLE_TEST_REMOTE_DEBUGGER_" + item.upper() %}{{ ('{"' + key + '": ""}') | from_json }}
+  register: result
+  loop: "{{ debuggers }}"
+
+- assert:
+    that:
+      - item.stdout is contains("_ANSIBLE_ANSIBALLZ_" + item.item.upper() + "_CONFIG")
+  loop: "{{ result.results }}"
+
+- name: Verify AnsiballZ debugger can be manually enabled (integration)
+  command: ansible-test integration ansible-test-debugging-inventory --dev-debug-ansiballz
+  environment: >
+    {% set key = "ANSIBLE_TEST_REMOTE_DEBUGGER_" + item.upper() %}{{ ('{"' + key + '": ""}') | from_json }}
+  register: result
+  loop: "{{ debuggers }}"
+
+- assert:
+    that:
+      - item.stdout is contains("_ansible_ansiballz_" + item.item + "_config")
+  loop: "{{ result.results }}"
