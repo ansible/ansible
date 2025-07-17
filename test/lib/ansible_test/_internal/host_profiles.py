@@ -141,8 +141,7 @@ from .dev.container_probe import (
 
 from .debugging import (
     DebuggerProfile,
-    DebugpyProfile,
-    PydevdProfile,
+    DebuggerSettings,
 )
 
 TControllerHostConfig = t.TypeVar('TControllerHostConfig', bound=ControllerHostConfig)
@@ -297,27 +296,16 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         return f'{self.__class__.__name__}: {self.name}'
 
 
-class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
+class DebuggableProfile(HostProfile[THostConfig], DebuggerProfile, metaclass=abc.ABCMeta):
     """Base class for profiles remote debugging."""
 
-    __DEBUGGER_KEY = 'debugger'
     __DEBUGGING_PORT_KEY = 'debugging_port'
     __DEBUGGING_FORWARDER_KEY = 'debugging_forwarder'
 
     @property
-    def debugger(self) -> DebuggerProfile | None:
-        """The debugger profile for this host if present, otherwise None."""
-        if self.__DEBUGGER_KEY not in self.cache:
-            profile: DebuggerProfile | None = None
-            if self.args.metadata.pydevd_settings:
-                profile = PydevdProfile(self.args.metadata.pydevd_settings)
-            elif self.args.metadata.debugpy_settings:
-                profile = DebugpyProfile(self.args.metadata.debugpy_settings)
-
-            self.cache[self.__DEBUGGER_KEY] = profile
-            return profile
-
-        return self.cache[self.__DEBUGGER_KEY]
+    def debugger(self) -> DebuggerSettings | None:
+        """The debugger settings for this host if present and enabled, otherwise None."""
+        return self.args.metadata.debugger_settings
 
     @property
     def debugging_enabled(self) -> bool:
@@ -328,8 +316,13 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         return self.args.metadata.debugger_flags.ansiballz
 
     @property
+    def debugger_host(self) -> str:
+        """The debugger host to use."""
+        return 'localhost'
+
+    @property
     def debugger_port(self) -> int:
-        """The pydevd/debugpy port to use."""
+        """The debugger port to use."""
         return self.state.get(self.__DEBUGGING_PORT_KEY) or self.origin_debugger_port
 
     @property
@@ -345,8 +338,7 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
     @property
     def origin_debugger_port(self) -> int:
         """The debugger port on the origin."""
-        debugger = self.debugger
-        return debugger.port if debugger else 0
+        return self.debugger.port
 
     def enable_debugger_forwarding(self, ssh: SshConnectionDetail) -> None:
         """Enable debugger port forwarding from the origin."""
@@ -400,13 +392,14 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
 
     def activate_debugger(self) -> None:
         """Activate the debugger after delegation."""
-        if not self.args.metadata.loaded or not self.args.metadata.debugger_flags.self or not self.debugger:
+        if not self.args.metadata.loaded or not self.args.metadata.debugger_flags.self:
             return
 
         display.info('Activating remote debugging of ansible-test.', verbosity=1)
 
-        os.environ.update(self.debugger.get_environment_variables(self.get_source_mapping()))
-        self.debugger.activate_debugger('localhost', self.debugger_port)
+        os.environ.update(self.debugger.get_environment_variables(self))
+
+        self.debugger.activate_debugger(self)
 
         pass  # pylint: disable=unnecessary-pass  # when suspend is True, execution pauses here -- it's also a convenient place to put a breakpoint
 
@@ -415,10 +408,11 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         Return inventory variables for remote debugging of AnsiballZ modules.
         When delegating, this function must be called after delegation.
         """
-        if not self.args.metadata.debugger_flags.ansiballz or not self.debugger:
+        if not self.args.metadata.debugger_flags.ansiballz:
             return {}
 
-        debug_type = self.debugger.debug_type.lower()
+        debug_type = self.debugger.get_debug_type()
+
         return {
             f"_ansible_ansiballz_{debug_type}_config": json.dumps(self.get_ansiballz_debugger_config()),
         }
@@ -428,10 +422,11 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         Return environment variables for remote debugging of AnsiballZ modules.
         When delegating, this function must be called after delegation.
         """
-        if not self.args.metadata.debugger_flags.ansiballz or not self.debugger:
+        if not self.args.metadata.debugger_flags.ansiballz:
             return {}
 
-        debug_type = self.debugger.debug_type.upper()
+        debug_type = self.debugger.get_debug_type().upper()
+
         return {
             f"_ANSIBLE_ANSIBALLZ_{debug_type}_CONFIG": json.dumps(self.get_ansiballz_debugger_config()),
         }
@@ -441,9 +436,7 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         Return config for remote debugging of AnsiballZ modules.
         When delegating, this function must be called after delegation.
         """
-        debugger_config = dict(
-            source_mapping=self.get_source_mapping(),
-        ) | self.debugger.get_ansiballz_config('localhost', self.debugger_port)
+        debugger_config = self.debugger.get_ansiballz_config(self)
 
         display.info(f'>>> Debugger Config ({self.name} AnsiballZ)\n{json.dumps(debugger_config, indent=4)}', verbosity=3)
 
@@ -454,12 +447,12 @@ class DebuggableProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         Return environment variables for remote debugging of the Ansible CLI.
         When delegating, this function must be called after delegation.
         """
-        if not self.args.metadata.debugger_flags.cli or not self.debugger:
+        if not self.args.metadata.debugger_flags.cli:
             return {}
 
         debugger_config = dict(
-            args=self.debugger.get_cli_arguments('localhost', self.debugger_port),
-            env=self.debugger.get_environment_variables(self.get_source_mapping()),
+            args=self.debugger.get_cli_arguments(self),
+            env=self.debugger.get_environment_variables(self),
         )
 
         display.info(f'>>> Debugger Config ({self.name} Ansible CLI)\n{json.dumps(debugger_config, indent=4)}', verbosity=3)

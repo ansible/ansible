@@ -170,11 +170,11 @@ def install_requirements(
 
     from .host_profiles import DebuggableProfile
 
-    if isinstance(host_profile, DebuggableProfile) and host_profile.debugging_enabled and (debugger := host_profile.debugger) and debugger.package:
+    if isinstance(host_profile, DebuggableProfile) and host_profile.debugger and host_profile.debugger.get_python_package():
         commands.append(PipInstall(
             requirements=[],
             constraints=[],
-            packages=[debugger.package],
+            packages=[host_profile.debugger.get_python_package()],
         ))
 
     if not commands:
