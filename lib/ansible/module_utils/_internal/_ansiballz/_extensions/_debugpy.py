@@ -1,9 +1,9 @@
 """
 Remote debugging support for AnsiballZ modules with debugpy.
 
-To use with VSCode:
+To use with VS Code:
 
-1) Choose an available port for VSCode to listen on (e.g. 5678).
+1) Choose an available port for VS Code to listen on (e.g. 5678).
 2) Ensure `debugpy` is installed for the interpreter(s) which will run the code being debugged.
 3) Create the following launch.json configuration
 
