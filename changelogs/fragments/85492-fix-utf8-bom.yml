@@ -1,0 +1,2 @@
+bugfixes:
+  - uri - add detection of UTF-8 BOM in responses and proper handling using utf-8-sig encoding.
