@@ -1,7 +1,7 @@
 - name: Run a module with remote debugging configured to use a bogus debugger module
   ping:
   vars:
-    _ansible_ansiballz_debugger_config:
+    _ansible_ansiballz_pydevd_config:
       module: not_a_valid_debugger_module
   register: result
   ignore_errors: yes

@@ -22,6 +22,9 @@ from .diff import (
     FileDiff,
 )
 
+if t.TYPE_CHECKING:
+    from .debugging import DebuggerSettings
+
 
 class Metadata:
     """Metadata object for passing data to delegated tests."""
@@ -71,7 +74,7 @@ class Metadata:
             ansible_test_root=self.ansible_test_root,
             collection_root=self.collection_root,
             debugger_flags=dataclasses.asdict(self.debugger_flags),
-            debugger_settings=dataclasses.asdict(self.debugger_settings) if self.debugger_settings else None,
+            debugger_settings=self.debugger_settings.as_dict() if self.debugger_settings else None,
         )
 
     def to_file(self, path: str) -> None:
@@ -91,6 +94,8 @@ class Metadata:
     @staticmethod
     def from_dict(data: dict[str, t.Any]) -> Metadata:
         """Return metadata loaded from the specified dictionary."""
+        from .debugging import DebuggerSettings
+
         metadata = Metadata(
             debugger_flags=DebuggerFlags(**data['debugger_flags']),
         )
@@ -103,7 +108,7 @@ class Metadata:
         metadata.ansible_lib_root = data['ansible_lib_root']
         metadata.ansible_test_root = data['ansible_test_root']
         metadata.collection_root = data['collection_root']
-        metadata.debugger_settings = DebuggerSettings(**data['debugger_settings']) if data['debugger_settings'] else None
+        metadata.debugger_settings = DebuggerSettings.from_dict(data['debugger_settings']) if data['debugger_settings'] else None
         metadata.loaded = True
 
         return metadata
@@ -153,46 +158,6 @@ class ChangeDescription:
         changes.no_integration_paths = data['no_integration_paths']
 
         return changes
-
-
-@dataclasses.dataclass(frozen=True, kw_only=True)
-class DebuggerSettings:
-    """Settings for remote debugging."""
-
-    module: str | None = None
-    """
-    The Python module to import.
-    This should be pydevd or a derivative.
-    If not provided it will be auto-detected.
-    """
-
-    package: str | None = None
-    """
-    The Python package to install for debugging.
-    If `None` then the package will be auto-detected.
-    If an empty string, then no package will be installed.
-    """
-
-    settrace: dict[str, object] = dataclasses.field(default_factory=dict)
-    """
-    Options to pass to the `{module}.settrace` method.
-    Used for running AnsiballZ modules only.
-    The `host` and `port` options will be provided by ansible-test.
-    The `suspend` option defaults to `False`.
-    """
-
-    args: list[str] = dataclasses.field(default_factory=list)
-    """
-    Arguments to pass to `pydevd` on the command line.
-    Used for running Ansible CLI programs only.
-    The `--client` and `--port` options will be provided by ansible-test.
-    """
-
-    port: int = 5678
-    """
-    The port on the origin host which is listening for incoming connections from pydevd.
-    SSH port forwarding will be automatically configured for non-local hosts to connect to this port as needed.
-    """
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)

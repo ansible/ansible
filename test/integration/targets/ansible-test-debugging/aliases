@@ -1,0 +1,5 @@
+shippable/generic/group1  # runs in the default test container
+needs/target/ansible-test-debugging-env  # indirectly used by ansible-test, included here for change detection
+needs/target/ansible-test-debugging-inventory  # indirectly used by ansible-test, included here for change detection
+context/controller
+gather_facts/no
