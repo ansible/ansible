@@ -18,6 +18,14 @@ if __name__ == '__main__':
                     b'a\r\n'  # size of the chunk (0xa = 10)
                     b'123456'
                 )
+            elif self.path == '/bom_json':
+                # Return JSON with UTF-8 BOM prefix
+                self.send_response(200)
+                self.send_header("Content-type", content_type_json)
+                self.end_headers()
+                # \xef\xbb\xbf is the UTF-8 BOM
+                response = b'\xef\xbb\xbf{"name": "dollarsign", "symbol": "$"}'
+                self.wfile.write(response)
             elif self.path.endswith('json'):
                 try:
                     with open(self.path[1:]) as f:
