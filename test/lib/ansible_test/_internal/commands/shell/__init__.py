@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import os
 import sys
 import typing as t
+
+from ...data import (
+    data_context,
+)
 
 from ...util import (
     ApplicationError,
@@ -105,7 +110,7 @@ def command_shell(args: ShellConfig) -> None:
         # HACK: ensure the debugger port visible in the shell is the forwarded port, not the original
         args.metadata.debugger_settings = dataclasses.replace(args.metadata.debugger_settings, port=target_profile.debugger_port)
 
-    with metadata_context(args):
+    with contextlib.nullcontext() if data_context().content.unsupported else metadata_context(args):
         if args.cmd:
             non_interactive_shell(args, target_profile, con)
         else:
@@ -190,6 +195,9 @@ def get_environment_variables(
     con: Connection,
 ) -> dict[str, str]:
     """Get the environment variables to expose to the shell."""
+    if data_context().content.unsupported:
+        return {}
+
     optional_vars = (
         'TERM',  # keep backspace working
     )
