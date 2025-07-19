@@ -279,6 +279,13 @@ EXAMPLES = """
     dest: /tmp/checkout
     archive: /tmp/ansible.zip
 
+- name: Create a tar.gz archive of the Git repo with prefix
+  ansible.builtin.git:
+    repo: https://github.com/example-org/demo-project.git
+    dest: /tmp/demo-project
+    archive: /tmp/demo-project.tar.gz
+    archive_prefix: demo-project/
+
 - name: Clone a repo with separate git directory
   ansible.builtin.git:
     repo: 'https://github.com/ansible/ansible.git'
