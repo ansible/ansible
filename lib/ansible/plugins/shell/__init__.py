@@ -114,7 +114,14 @@ class ShellBase(AnsiblePlugin):
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
+        # Check if setfacl is available
+        setfacl_path = self.get_bin_path('setfacl', required=False)
+        if not setfacl_path:
+            # If setfacl is not available, we can't set ACLs
+            # This will be handled by the calling code
+            return None
+        
+        cmd = [setfacl_path, '-m', 'u:%s:%s' % (user, mode)]
         cmd.extend(paths)
         return self.join(cmd)
 

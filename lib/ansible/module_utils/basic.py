@@ -2172,6 +2172,14 @@ class AnsibleModule(object):
 
         return buffer_size
 
+    def has_setfacl(self):
+        """
+        Check if the setfacl binary is available on the system.
+        
+        :returns: True if setfacl is available, False otherwise
+        """
+        return self.get_bin_path('setfacl') is not None
+
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))

@@ -586,6 +586,17 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         return remote_path
 
+    def _remote_has_setfacl(self):
+        """
+        Check if setfacl is available on the remote system.
+        
+        :returns: True if setfacl is available, False otherwise
+        """
+        # Try to find setfacl in the PATH
+        cmd = self._connection._shell.join(['which', 'setfacl'])
+        res = self._low_level_execute_command(cmd, sudoable=False)
+        return res['rc'] == 0
+
     def _fixup_perms2(self, remote_paths, remote_user=None, execute=True):
         """
         We need the files we upload to be readable (and sometimes executable)
@@ -675,13 +686,21 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             posix_acl_mode = 'A+user:{0}:r:allow'.format(become_user)
 
         # Step 3a: Are we able to use setfacl to add user ACLs to the file?
-        res = self._remote_set_user_facl(
-            remote_paths,
-            become_user,
-            setfacl_mode)
+        if self._remote_has_setfacl():
+            res = self._remote_set_user_facl(
+                remote_paths,
+                become_user,
+                setfacl_mode)
 
-        if res['rc'] == 0:
-            return remote_paths
+            if res['rc'] == 0:
+                return remote_paths
+        else:
+            # Log a warning that setfacl is not available
+            display.warning(
+                'setfacl command not found on remote system. ACL functionality will be skipped. '
+                'Consider installing the acl package for full ACL support. '
+                'Falling back to chmod/chown methods.'
+            )
 
         # Step 3b: Set execute if we need to. We do this before anything else
         # because some of the methods below might work but not let us set
@@ -834,6 +853,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Issue a remote call to setfacl
         """
         cmd = self._connection._shell.set_user_facl(paths, user, mode)
+        if cmd is None:
+            # setfacl is not available, return a failure result
+            return {'rc': 1, 'stdout': '', 'stderr': 'setfacl command not found'}
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
