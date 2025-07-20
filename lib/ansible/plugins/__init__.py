@@ -108,7 +108,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
                 # callers expect key error on missing
                 raise KeyError() from e
 
-        return self._options.get(option), self._origins.get(option)
+        return self._options[option], self._origins[option]
 
     @functools.cached_property
     def __plugin_info(self):
@@ -122,7 +122,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         if option not in self._options:
             # let it populate _options
             self.get_option_and_origin(option, hostvars=hostvars)
-        return self._options.get(option)
+        return self._options[option]
 
     def get_options(self, hostvars=None):
         options = {}
