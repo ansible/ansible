@@ -1,5 +1,16 @@
 ancestor: 2.18.0
 releases:
+  2.19.0:
+    changes:
+      release_summary: '| Release Date: 2025-07-21
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.0_summary.yaml
+    release_date: '2025-07-21'
   2.19.0b1:
     changes:
       breaking_changes:
