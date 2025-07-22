@@ -105,8 +105,23 @@ class ConnectionBase(AnsiblePlugin):
 
         self.become: BecomeBase | None = None
 
+    def _gen_signature(self):
+
+        # prime self, with own options
+        super(ConnectionBase, self)._gen_signature()
+
+        # also shell, we always have!
+        self._hash += self._shell._gen_signature()
+
+        # and become if we have it
+        if self.become is not None:
+            self._hash += self.become._gen_signature()
+
+
     def set_become_plugin(self, plugin: BecomeBase) -> None:
         self.become = plugin
+        # reset hash jic
+        self._hash = None
 
     @property
     def connected(self) -> bool:
@@ -449,3 +464,19 @@ class NetworkConnectionBase(ConnectionBase):
     def _log_messages(self, message: str) -> None:
         if self.get_option('persistent_log_messages'):
             self.queue_message('log', message)
+
+    def signature(self):
+
+        if self._hash is None:
+            # prime self, with own options
+            super(NetworkConnectionBase, self).signature()
+
+            if self._sub_plugin:
+                # also shell, we always have!
+                self._hash += self._sub_plugin.signature()
+        return self._hash
+
+    def set_become_plugin(self, plugin):
+        self.become = plugin
+        # reset hash jic
+        self._hash = None

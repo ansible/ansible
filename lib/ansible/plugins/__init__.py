@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import abc
 import functools
+import pickle
 import types
 import typing as t
 
@@ -80,6 +81,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
     def __init__(self):
         self._options = {}
         self._defs = None
+        self._hash = None
 
     @property
     def extras_prefix(self):
@@ -112,6 +114,19 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         """
         return _plugin_info.get_plugin_info(self)
 
+    def _gen_signature(self):
+        # create immutable
+        s_options = pickle.dumps(self.get_options(hostvars=variables))
+        self._hash = hash(self._load_name) + hash(s_options)
+
+    def signature(self):
+        return self.__hash__()
+
+    def __hash__(self):
+        if self._hash is None:
+            self._gen_signature()
+        return self._hash
+
     def get_option(self, option, hostvars=None):
 
         if option not in self._options:
@@ -126,8 +141,11 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         return options
 
     def set_option(self, option, value):
-        self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
-        _display._report_config_warnings(self.__plugin_info)
+        new_value = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
+        if new_value != self._options[option]:
+            self._options[option] = new_value
+            self._hash = None
+            _display._report_config_warnings(self.__plugin_info)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """
@@ -145,6 +163,8 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
             # these are largely unvalidated passthroughs, either plugin or underlying API will validate
             self._options['_extras'] = var_options['_extras']
         _display._report_config_warnings(self.__plugin_info)
+
+        self._gen_signature()
 
     def has_option(self, option):
         if not self._options:
