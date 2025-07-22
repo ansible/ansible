@@ -236,7 +236,6 @@ lib/ansible/cli/doc.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/galaxy/api.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/plugins/filter/encryption.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # TODO: 2.20
-lib/ansible/utils/py3compat.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/utils/ssh_functions.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version-comment  # TODO: 2.20
 lib/ansible/vars/plugins.py pylint:ansible-deprecated-version  # TODO: 2.20
