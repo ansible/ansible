@@ -104,13 +104,9 @@ EXAMPLES = r"""
         - cmd.exe /c winrm.cmd quickconfig -quiet -force
     delegate_to: localhost
 
-  - name: Wait for system to become reachable over WinRM
+  - name: Wait for system to become reachable over WinRM, polling every 10 seconds
     ansible.builtin.wait_for_connection:
       timeout: 900
-
-  - name: Wait for server to become reachable, polling every 10 seconds
-    ansible.builtin.wait_for_connection:
-      timeout: 300
       sleep: 10
 
   - name: Gather facts for first time
