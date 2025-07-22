@@ -79,8 +79,6 @@ stages:
       - template: templates/matrix.yml  # context/target
         parameters:
           targets:
-            - name: macOS 13.2
-              test: macos/13.2
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.8 py36
@@ -93,24 +91,18 @@ stages:
               test: rhel/9.2@3.11
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: FreeBSD 13.3
-              test: freebsd/13.3
           groups:
             - 1
             - 2
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: macOS 13.2
-              test: macos/13.2
             - name: RHEL 8.8
               test: rhel/8.8
             - name: RHEL 9.2
               test: rhel/9.2
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: FreeBSD 13.3
-              test: freebsd/13.3
           groups:
             - 3
             - 4
@@ -118,10 +110,6 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.18
-              test: alpine/3.18
-            - name: Fedora 38
-              test: fedora/38
             - name: RHEL 8.8
               test: rhel/8.8
             - name: RHEL 9.2
@@ -139,14 +127,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
-            - name: CentOS 7
-              test: centos7
-            - name: Fedora 38
-              test: fedora38
-            - name: openSUSE 15
-              test: opensuse15
             - name: Ubuntu 20.04
               test: ubuntu2004
             - name: Ubuntu 22.04
@@ -158,10 +138,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3
-              test: alpine3
-            - name: Fedora 38
-              test: fedora38
             - name: Ubuntu 22.04
               test: ubuntu2204
           groups:
