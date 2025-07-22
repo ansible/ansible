@@ -216,13 +216,13 @@ elapsed:
   type: int
   sample: 23
 match_groups:
-  description: Tuple containing all the subgroups of the match as returned by U(https://docs.python.org/3/library/re.html#re.MatchObject.groups)
+  description: Tuple containing all the subgroups of the match as returned by U(https://docs.python.org/3/library/re.html#re.Match.groups)
   returned: always
   type: list
   sample: ['match 1', 'match 2']
 match_groupdict:
   description: Dictionary containing all the named subgroups of the match, keyed by the subgroup name,
-    as returned by U(https://docs.python.org/3/library/re.html#re.MatchObject.groupdict)
+    as returned by U(https://docs.python.org/3/library/re.html#re.Match.groupdict)
   returned: always
   type: dict
   sample:
