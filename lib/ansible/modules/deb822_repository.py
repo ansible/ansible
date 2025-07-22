@@ -521,7 +521,7 @@ def main():
             module.fail_json(msg=f'{deb_pkg_name} is not installed, and install_python_debian is False')
 
         # try again to find the bindings in common places
-        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+        interpreter = probe_interpreters_for_module(interpreters, 'debian')
 
         if interpreter:
             # found the Python bindings; respawn this module under the interpreter where we found them
