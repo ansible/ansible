@@ -1,0 +1,51 @@
+{
+    "name": "Univention Corporate Server 5.2",
+    "distro": {
+        "codename": "bookworm",
+        "id": "ucs",
+        "name": "Univention Corporate Server",
+        "version": "5.2",
+        "version_best": "5.2",
+        "lsb_release_info": {
+            "distributor_id": "Ucs",
+            "description": "Univention Corporate Server 5.2",
+            "release": "5.2",
+            "codename": "bookworm"
+        },
+        "os_release_info": {
+            "pretty_name": "Univention Corporate Server 5.2",
+            "name": "Univention Corporate Server",
+            "version": "5.2",
+            "id": "ucs",
+            "version_id": "5.2",
+            "id_like": "debian",
+            "version_codename": "bookworm",
+            "home_url": "https://www.univention.com/",
+            "documentation_url": "https://docs.software-univention.de/",
+            "support_url": "https://www.univention.com/products/support/",
+            "bug_report_url": "https://forge.univention.org/",
+            "privacy_policy_url": "https://www.univention.com/privacy-statement/privacy-statement-univention-corporate-server/",
+            "ansi_color": "0;38;2;221;4;45",
+            "cpe_name": "cpe:/o:univention:univention_corporate_server:5.2",
+            "codename": "bookworm"
+        }
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Univention Corporate Server 5.2\"\nNAME=\"Univention Corporate Server\"\nVERSION=\"5.2\"\nID=\"ucs\"\nVERSION_ID=\"5.2\"\nID_LIKE=\"debian\"\nVERSION_CODENAME=bookworm\nHOME_URL=\"https://www.univention.com/\"\nDOCUMENTATION_URL=\"https://docs.software-univention.de/\"\nSUPPORT_URL=\"https://www.univention.com/products/support/\"\nBUG_REPORT_URL=\"https://forge.univention.org/\"\nPRIVACY_POLICY_URL=\"https://www.univention.com/privacy-statement/privacy-statement-univention-corporate-server/\"\nANSI_COLOR=\"0;38;2;221;4;45\"\nCPE_NAME=\"cpe:/o:univention:univention_corporate_server:5.2\"\n",
+        "/etc/lsb-release": "# Warning: This file is auto-generated and might be overwritten by\n#          univention-config-registry.\n#          Please edit the following file(s) instead:\n# Warnung: Diese Datei wurde automatisch generiert und kann durch\n#          univention-config-registry ueberschrieben werden.\n#          Bitte bearbeiten Sie an Stelle dessen die folgende(n) Datei(en):\n# \n# \t/etc/univention/templates/files/etc/lsb-release\n# \n\nDISTRIB_ID=Univention\nDISTRIB_RELEASE=\"5.2-2 errata148\"\nDISTRIB_DESCRIPTION=\"Univention Corporate Server 5.2-2 errata148\"\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"Univention Corporate Server 5.2\"\nNAME=\"Univention Corporate Server\"\nVERSION=\"5.2\"\nID=\"ucs\"\nVERSION_ID=\"5.2\"\nID_LIKE=\"debian\"\nVERSION_CODENAME=bookworm\nHOME_URL=\"https://www.univention.com/\"\nDOCUMENTATION_URL=\"https://docs.software-univention.de/\"\nSUPPORT_URL=\"https://www.univention.com/products/support/\"\nBUG_REPORT_URL=\"https://forge.univention.org/\"\nPRIVACY_POLICY_URL=\"https://www.univention.com/privacy-statement/privacy-statement-univention-corporate-server/\"\nANSI_COLOR=\"0;38;2;221;4;45\"\nCPE_NAME=\"cpe:/o:univention:univention_corporate_server:5.2\"\n"
+    },
+    "platform.dist": [
+        "ucs",
+        "5.2",
+        "bookworm"
+    ],
+    "result": {
+        "distribution": "Univention Corporate Server",
+        "distribution_version": "5.2",
+        "distribution_release": "bookworm",
+        "distribution_major_version": "5",
+        "os_family": "Debian"
+    },
+    "platform.release": "4.19.0-20-amd64"
+}
