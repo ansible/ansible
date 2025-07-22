@@ -712,7 +712,10 @@ class TaskExecutor:
                     condname = 'failed'
 
                     if self._task.failed_when:
-                        result['failed_when_result'] = result['failed'] = self._task._resolve_conditional(self._task.failed_when, vars_copy)
+                        is_failed = result['failed_when_result'] = result['failed'] = self._task._resolve_conditional(self._task.failed_when, vars_copy)
+
+                        if not is_failed and (suppressed_exception := result.pop('exception', None)):
+                            result['failed_when_suppressed_exception'] = suppressed_exception
 
                 except AnsibleError as e:
                     result['failed'] = True
