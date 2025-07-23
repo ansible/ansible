@@ -162,7 +162,7 @@ bootstrap_remote_freebsd()
     if [ "${controller}" ]; then
         jinja2_pkg="py${python_package_version}-jinja2"
         cryptography_pkg="py${python_package_version}-cryptography"
-        pyyaml_pkg="py${python_package_version}-yaml"
+        pyyaml_pkg="py${python_package_version}-pyyaml"
         packaging_pkg="py${python_package_version}-packaging"
 
         # Declare platform/python version combinations which do not have supporting OS packages available.
@@ -170,9 +170,6 @@ bootstrap_remote_freebsd()
         case "${platform_version}/${python_version}" in
             13.5/3.11)
                 # defaults available
-                ;;
-            14.1/3.9)
-                # defaults above 'just work'TM
                 ;;
             14.1/3.11)
                 cryptography_pkg=""  # not available
