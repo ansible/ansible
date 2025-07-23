@@ -264,6 +264,8 @@ omit =
     */pytest
     */AnsiballZ_*.py
     */test/results/*
+    */lib/ansible/_internal/_wrapt.py
+    */lib/ansible/module_utils/distro/_distro.py
 """
 
     return coverage_config
