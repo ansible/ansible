@@ -121,7 +121,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     )
 
     @property
-    def resolved_action(self) -> str:
+    def resolved_action(self) -> str | None:
         """The templated and resolved FQCN of the task action or None.
 
         If the action is a template, callback plugins can only use this value in certain methods.
@@ -131,16 +131,16 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         # Consider deprecating this because it's difficult to use?
         # Moving it to the task result would improve the no-loop limitation on v2_runner_on_ok
         # but then wouldn't be accessible to v2_playbook_on_task_start, *_on_skipped, etc.
-        if self._resolved_action is None:
-            if not is_possibly_template(self.action):
-                try:
-                    return self._resolve_action(self.action)
-                except AnsibleParserError:
-                    display.warning(self._resolved_action_warning, obj=self._ds)
-            else:
+        if self._resolved_action is not None:
+            return self._resolved_action
+        if not is_possibly_template(self.action):
+            try:
+                return self._resolve_action(self.action)
+            except AnsibleParserError:
                 display.warning(self._resolved_action_warning, obj=self._ds)
-            return None
-        return self._resolved_action
+        else:
+            display.warning(self._resolved_action_warning, obj=self._ds)
+        return None
 
     def get_name(self, include_role_fqcn=True):
         """ return the name of the task """
