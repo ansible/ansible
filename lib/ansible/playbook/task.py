@@ -110,6 +110,16 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         super(Task, self).__init__()
 
+    _resolved_action_warning = (
+        "A plugin is sampling the task's resolved_action when it is not resolved. "
+        "This can be caused by callback plugins using the resolved_action attribute too "
+        "early (such as in v2_playbook_on_task_start for a task using the action/local_action "
+        "keyword), or too late (such as in v2_runner_on_ok for a task with a loop). "
+        "To maximize compatibility with user features, callback plugins should "
+        "only use this attribute in v2_runner_on_ok/v2_runner_on_failed for tasks "
+        "without a loop, and v2_runner_item_on_ok/v2_runner_item_on_failed otherwise. "
+    )
+
     @property
     def resolved_action(self) -> str:
         """The templated and resolved FQCN of the task action or None.
@@ -121,24 +131,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         # Consider deprecating this because it's difficult to use?
         # Moving it to the task result would improve the no-loop limitation on v2_runner_on_ok
         # but then wouldn't be accessible to v2_playbook_on_task_start, *_on_skipped, etc.
-        warning_msg = (
-            "A plugin is sampling the task's resolved_action when it is not resolved. "
-            "This can be caused by callback plugins using the resolved_action attribute too "
-            "early (such as in v2_playbook_on_task_start for a task using the action/local_action "
-            "keyword), or too late (such as in v2_runner_on_ok for a task with a loop). "
-            "To maximize compatibility with user features, callback plugins should "
-            "only use this attribute in v2_runner_on_ok/v2_runner_on_failed for tasks "
-            "without a loop, and v2_runner_item_on_ok/v2_runner_item_on_failed otherwise. "
-            "Returning the unresolved action (previously silent behavior)."
-        )
         if self._resolved_action is None:
             if not is_possibly_template(self.action):
                 try:
                     return self._resolve_action(self.action)
                 except AnsibleParserError:
-                    display.warning(warning_msg, obj=self._ds)
+                    display.warning(self._resolved_action_warning, obj=self._ds)
             else:
-                display.warning(warning_msg, obj=self._ds)
+                display.warning(self._resolved_action_warning, obj=self._ds)
             return None
         return self._resolved_action
 
