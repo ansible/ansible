@@ -332,6 +332,7 @@ class BaseSubClass(base.Base):
     test_attr_int = FieldAttribute(isa='int', always_post_validate=True)
     test_attr_float = FieldAttribute(isa='float', default=3.14159, always_post_validate=True)
     test_attr_list = FieldAttribute(isa='list', listof=(str,), always_post_validate=True)
+    test_attr_mixed_list = FieldAttribute(isa='list', listof=(str, int), always_post_validate=True)
     test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
     test_attr_list_required = FieldAttribute(isa='list', listof=(str,), required=True,
                                              default=list, always_post_validate=True)
@@ -517,6 +518,16 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_list': string_list}
         bsc = self._base_validate(ds)
         self.assertEqual(string_list, bsc._test_attr_list)
+
+    def test_attr_mixed_list(self):
+        mixed_list = ['foo', 1]
+        ds = {'test_attr_mixed_list': mixed_list}
+        bsc = self._base_validate(ds)
+        self.assertEqual(mixed_list, bsc._test_attr_mixed_list)
+
+    def test_attr_mixed_list_invalid(self):
+        ds = {'test_attr_mixed_list': [['foo'], 1]}
+        self.assertRaises(AnsibleParserError, self._base_validate, ds)
 
     def test_attr_list_none(self):
         ds = {'test_attr_list': None}
