@@ -228,9 +228,13 @@ class CallbackBase(AnsiblePlugin):
 
     def set_option(self, k, v):
         self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
+        self._origins[k] = 'direct'
 
     def get_option(self, k, hostvars=None):
         return self._plugin_options[k]
+
+    def get_option_and_origin(self, k, hostvars=None):
+        return self._plugin_options[k], self._origins[k]
 
     def has_option(self, option):
         return (option in self._plugin_options)
@@ -241,7 +245,8 @@ class CallbackBase(AnsiblePlugin):
         """
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options, self._origins = C.config.get_plugin_options_and_origins(self.plugin_type, self._load_name,
+                                                                                      keys=task_keys, variables=var_options, direct=direct)
 
     @staticmethod
     def host_label(result: CallbackTaskResult) -> str:

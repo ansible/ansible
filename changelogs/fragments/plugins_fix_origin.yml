@@ -1,0 +1,2 @@
+bugfixes:
+  - plugins config, get_option_and_origin now correctly displays the value and origin of the option.

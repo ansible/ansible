@@ -43,3 +43,6 @@ done
 
 # ensure we don't show default templates, but templated defaults
 [ "$(ansible-config init |grep '={{' -c )" -eq 0 ]
+
+# test seldom used '_and_origin' api 
+ansible-playbook match_option_methods.yml "$@"

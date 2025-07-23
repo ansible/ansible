@@ -450,13 +450,17 @@ class ConfigManager:
         pass
 
     def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
+        options, dummy = self.get_plugin_options_and_origins(plugin_type, name, keys=keys, variables=variables, direct=direct)
+        return options
 
+    def get_plugin_options_and_origins(self, plugin_type, name, keys=None, variables=None, direct=None):
         options = {}
+        origins = {}
         defs = self.get_configuration_definitions(plugin_type=plugin_type, name=name)
         for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
-
-        return options
+            options[option], origins[option] = self.get_config_value_and_origin(option, plugin_type=plugin_type, plugin_name=name, keys=keys,
+                                                                                variables=variables, direct=direct)
+        return options, origins
 
     def get_plugin_vars(self, plugin_type, name):
 
