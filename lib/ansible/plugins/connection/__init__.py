@@ -75,8 +75,6 @@ class ConnectionBase(AnsiblePlugin):
 
     default_user: str | None = None
 
-    ansible_host_option = "remote_addr"
-
     def __init__(
         self,
         play_context: PlayContext,
@@ -225,37 +223,16 @@ class ConnectionBase(AnsiblePlugin):
         """Terminate the connection"""
         pass
 
-    def _get_option_or_pc_fallback(self, option, fallback):
-        try:
-            has_option = self.has_option(option)
-        except AttributeError:
-            has_option = False
-
-        if not has_option:
-            display.deprecated(f"Connection {self._load_name} does not define the option '{option}'. "
-                               f"Falling back to PlayContext.{fallback}", obj=self, version="2.23")
-            return getattr(self._play_context, fallback)
-        if not (option := self.get_option(option)) and (default := getattr(self._play_context, fallback)):
-            display.deprecated(f"Connection {self._load_name} defines the option '{option}', "
-                               f"but the option hasn't been configured. Falling back to PlayContext.{fallback}.",
-                               obj=self, version="2.23")
-            return default
-        return option
-
-    @property
-    def ansible_host(self) -> str:
-        return self._get_option_or_pc_fallback(self.ansible_host_option, 'remote_addr')
-
     def connection_lock(self) -> None:
         f = self._play_context.connection_lockfd
-        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self.ansible_host)
+        display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
         fcntl.lockf(f, fcntl.LOCK_EX)
-        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self.ansible_host)
+        display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
     def connection_unlock(self) -> None:
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
-        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self.ansible_host)
+        display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
 
     def reset(self) -> None:
         display.warning("Reset is not implemented for this connection")
@@ -434,7 +411,7 @@ class NetworkConnectionBase(ConnectionBase):
     ) -> None:
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
         if self.get_option('persistent_log_messages'):
-            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self.ansible_host
+            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
             logpath = getattr(C, 'DEFAULT_LOG_PATH')
             if logpath is not None:
                 warning += " to %s" % logpath
