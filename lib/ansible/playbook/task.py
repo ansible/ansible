@@ -117,7 +117,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         "keyword), or too late (such as in v2_runner_on_ok for a task with a loop). "
         "To maximize compatibility with user features, callback plugins should "
         "only use this attribute in v2_runner_on_ok/v2_runner_on_failed for tasks "
-        "without a loop, and v2_runner_item_on_ok/v2_runner_item_on_failed otherwise. "
+        "without a loop, and v2_runner_item_on_ok/v2_runner_item_on_failed otherwise."
     )
 
     @property
