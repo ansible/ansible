@@ -99,6 +99,8 @@ class PasslibHash(BaseHash):
         salt = self._clean_salt(salt)
         rounds = self._clean_rounds(rounds)
         ident = self._clean_ident(ident)
+        if salt_size is not None and not isinstance(salt_size, int):
+            raise TypeError("salt_size must be an integer")
         return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
     def _clean_ident(self, ident):
