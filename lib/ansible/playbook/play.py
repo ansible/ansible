@@ -307,15 +307,19 @@ class Play(Base, Taggable, CollectionSearch):
         t.implicit = True
         t.set_loader(self._loader)
 
-        if self.tags:
+        if self.tags and self.skip_tags:
             # Avoid calling flush_handlers in case the whole play is skipped on tags,
             # this could be performance improvement since calling flush_handlers on
             # large inventories could be expensive even if no hosts are notified
             # since we call flush_handlers per host.
             # Block.filter_tagged_tasks ignores evaluating tags on implicit meta
             # tasks so we need to explicitly call Task.evaluate_tags here.
-            t.tags = self.tags
-            if t.evaluate_tags(self.only_tags, self.skip_tags, all_vars=self.vars):
+            if t.evaluate_tags(
+                only_tags=[],
+                skip_tags=self.skip_tags,
+                all_vars=self.vars,
+            ):
+                t.tags = self.tags[:]
                 flush_block.block = [t]
         else:
             flush_block.block = [t]
