@@ -7,6 +7,7 @@
   vars:
     search:
       files:
+        - '{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml'
         - '{{ ansible_distribution | lower }}.yml'
         - '{{ ansible_os_family | lower }}.yml'
         - '{{ ansible_system | lower }}.yml'
