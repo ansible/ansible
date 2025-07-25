@@ -167,7 +167,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         coverage_config_path = os.path.join(self.common_temp_path, COVERAGE_CONFIG_NAME)
         coverage_output_path = os.path.join(self.common_temp_path, ResultType.COVERAGE.name)
 
-        coverage_config = generate_coverage_config(self.args)
+        coverage_config = generate_coverage_config()
 
         write_text_file(coverage_config_path, coverage_config, create_directories=True)
 
@@ -260,7 +260,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         """Return a dictionary of variables for setup and teardown of POSIX coverage."""
         return dict(
             common_temp_dir=self.common_temp_path,
-            coverage_config=generate_coverage_config(self.args),
+            coverage_config=generate_coverage_config(),
             coverage_config_path=os.path.join(self.common_temp_path, COVERAGE_CONFIG_NAME),
             coverage_output_path=os.path.join(self.common_temp_path, ResultType.COVERAGE.name),
             mode_directory=f'{MODE_DIRECTORY:04o}',
