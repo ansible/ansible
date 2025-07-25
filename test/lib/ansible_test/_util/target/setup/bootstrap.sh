@@ -190,7 +190,7 @@ bootstrap_remote_freebsd()
             13.5/3.11)
                 # defaults available
                 ;;
-            14.2/3.11)
+            14.3/3.11)
                 # defaults available
                 ;;
             *)
