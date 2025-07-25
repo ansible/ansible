@@ -2,6 +2,24 @@
 
 set -eu
 
+retry_init()
+{
+    attempt=0
+}
+
+retry_or_fail()
+{
+    attempt=$((attempt + 1))
+
+    if [ $attempt -gt 5 ]; then
+      echo "Failed to install packages. Giving up."
+      exit 1
+    fi
+
+    echo "Failed to install packages. Sleeping before trying again..."
+    sleep 10
+}
+
 remove_externally_managed_marker()
 {
     "${python_interpreter}" -c '
@@ -64,13 +82,13 @@ install_pip() {
                 ;;
         esac
 
+        retry_init
         while true; do
             curl --silent --show-error "${pip_bootstrap_url}" -o /tmp/get-pip.py && \
             "${python_interpreter}" /tmp/get-pip.py --disable-pip-version-check --quiet && \
             rm /tmp/get-pip.py \
             && break
-            echo "Failed to install packages. Sleeping before trying again..."
-            sleep 10
+            retry_or_fail
         done
     fi
 }
@@ -99,21 +117,21 @@ bootstrap_remote_alpine()
             "
     fi
 
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         apk add -q ${packages} \
         && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 
     # Upgrade the `libexpat` package to ensure that an upgraded Python (`pyexpat`) continues to work.
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         apk upgrade -q libexpat \
         && break
-        echo "Failed to upgrade libexpat. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 }
 
@@ -138,12 +156,12 @@ bootstrap_remote_fedora()
             "
     fi
 
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         dnf install -q -y ${packages} \
         && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 }
 
@@ -194,13 +212,13 @@ bootstrap_remote_freebsd()
             "
     fi
 
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
         pkg install -q -y ${packages} \
         && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 
     install_pip
@@ -275,12 +293,12 @@ bootstrap_remote_rhel_9()
             "
     fi
 
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         dnf install -q -y ${packages} \
         && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 }
 
@@ -305,12 +323,12 @@ bootstrap_remote_rhel_10()
             "
     fi
 
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         dnf install -q -y ${packages} \
         && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 }
 
@@ -357,13 +375,13 @@ bootstrap_remote_ubuntu()
             "
     fi
 
+    retry_init
     while true; do
         # shellcheck disable=SC2086
         apt-get update -qq -y && \
         DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends ${packages} \
         && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
+        retry_or_fail
     done
 }
 
