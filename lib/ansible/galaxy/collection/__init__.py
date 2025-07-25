@@ -1839,10 +1839,13 @@ def _resolve_depenency_map(
         offline=offline,
     )
     try:
-        return collection_dep_resolver.resolve(
-            requested_requirements,
-            max_rounds=2000000,  # NOTE: same constant pip uses
-        ).mapping
+        return t.cast(
+            dict[str, Candidate],
+            collection_dep_resolver.resolve(
+                requested_requirements,
+                max_rounds=2000000,  # NOTE: same constant pip uses
+            ).mapping,
+        )
     except CollectionDependencyResolutionImpossible as dep_exc:
         conflict_causes = (
             '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
