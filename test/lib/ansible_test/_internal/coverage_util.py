@@ -6,11 +6,10 @@ import dataclasses
 import os
 import sqlite3
 import tempfile
+import textwrap
 import typing as t
 
 from .config import (
-    IntegrationConfig,
-    SanityConfig,
     TestConfig,
 )
 
@@ -218,7 +217,7 @@ def get_coverage_config(args: TestConfig) -> str:
     except AttributeError:
         pass
 
-    coverage_config = generate_coverage_config(args)
+    coverage_config = generate_coverage_config()
 
     if args.explain:
         temp_dir = '/tmp/coverage-temp-dir'
@@ -236,10 +235,10 @@ def get_coverage_config(args: TestConfig) -> str:
     return path
 
 
-def generate_coverage_config(args: TestConfig) -> str:
+def generate_coverage_config() -> str:
     """Generate code coverage configuration for tests."""
     if data_context().content.collection:
-        coverage_config = generate_collection_coverage_config(args)
+        coverage_config = generate_collection_coverage_config()
     else:
         coverage_config = generate_ansible_coverage_config()
 
@@ -266,12 +265,29 @@ omit =
     */test/results/*
 """
 
+    coverage_config = coverage_config.lstrip()
+
     return coverage_config
 
 
-def generate_collection_coverage_config(args: TestConfig) -> str:
+def generate_collection_coverage_config() -> str:
     """Generate code coverage configuration for Ansible Collection tests."""
-    coverage_config = """
+    include_patterns = [
+        # {base}/ansible_collections/{ns}/{col}/*
+        os.path.join(data_context().content.root, '*'),
+        # */ansible_collections/{ns}/{col}/* (required to pick up AnsiballZ coverage)
+        os.path.join('*', data_context().content.collection.directory, '*'),
+    ]
+
+    omit_patterns = [
+        # {base}/ansible_collections/{ns}/{col}/tests/output/*
+        os.path.join(data_context().content.root, data_context().content.results_path, '*'),
+    ]
+
+    include = textwrap.indent('\n'.join(include_patterns), ' ' * 4)
+    omit = textwrap.indent('\n'.join(omit_patterns), ' ' * 4)
+
+    coverage_config = f"""
 [run]
 branch = True
 concurrency =
@@ -280,28 +296,15 @@ concurrency =
 parallel = True
 disable_warnings =
     no-data-collected
-"""
 
-    if isinstance(args, IntegrationConfig):
-        coverage_config += """
 include =
-    %s/*
-    */%s/*
-""" % (data_context().content.root, data_context().content.collection.directory)
-    elif isinstance(args, SanityConfig):
-        # temporary work-around for import sanity test
-        coverage_config += """
-include =
-    %s/*
+{include}
 
 omit =
-    %s/*
-""" % (data_context().content.root, os.path.join(data_context().content.root, data_context().content.results_path))
-    else:
-        coverage_config += """
-include =
-     %s/*
-""" % data_context().content.root
+{omit}
+"""
+
+    coverage_config = coverage_config.lstrip()
 
     return coverage_config
 
