@@ -813,7 +813,7 @@ def main():
         elif requirements:
             cmd.extend(['-r', requirements])
         elif venv_created and not name and not requirements:
-            # ONLY creating and empty venv
+            # ONLY creating an empty venv
             module.exit_json(changed=venv_created, cmd=venv_cmd, name=name, version=version,
                              state=state, requirements=requirements, virtualenv=env,
                              stdout=out, stderr=err)
