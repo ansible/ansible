@@ -7,7 +7,7 @@ freebsd/14.2 python=3.11 python_dir=/usr/local/bin become=su_sudo provider=aws a
 freebsd python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64
 macos/15.3 python=3.13 python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
 macos python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
-rhel/9.5 python=3.9,3.12 become=sudo provider=aws arch=x86_64
+rhel/9.6 python=3.9,3.12 become=sudo provider=aws arch=x86_64
 rhel/10.0 python=3.12 become=sudo provider=aws arch=x86_64
 rhel become=sudo provider=aws arch=x86_64
 ubuntu/22.04 python=3.10 become=sudo provider=aws arch=x86_64
