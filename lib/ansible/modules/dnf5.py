@@ -401,11 +401,12 @@ def is_installed(base, spec):
         available_query.filter_available()
         available_query.resolve_pkg_spec(spec, settings, True)
 
-        return not (
-            {p.get_name() for p in available_query} - {p.get_name() for p in installed_query}
-        )
-    else:
-        return match
+        available_pkg_set = {p.get_name() for p in available_query}
+        installed_pkg_set = {p.get_name() for p in installed_query}
+        if not available_pkg_set:
+            return False
+        return not (available_pkg_set - installed_pkg_set)
+    return match
 
 
 def is_newer_version_installed(base, spec):

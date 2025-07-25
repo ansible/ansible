@@ -265,6 +265,17 @@
     that:
       - non_existent_rpm is failed
 
+- name: install non-existent package with bracket
+  dnf:
+    name: does-not-exist[foo]
+  register: non_existent_rpm
+  ignore_errors: True
+
+- name: check non-existent package with bracket install failed
+  assert:
+    that:
+      - non_existent_rpm is failed
+
 # Install in installroot='/'.  This should be identical to default
 - name: install sos in /
   dnf: name=sos state=present installroot='/'
