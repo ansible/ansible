@@ -16,6 +16,8 @@ if t.TYPE_CHECKING:
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
     from ansible.galaxy.api import GalaxyAPI
 
+    from resolvelib.structs import RequirementInformation
+
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
@@ -48,14 +50,14 @@ class CollectionDependencyProvider(AbstractProvider):
 
     def __init__(
             self,
-            apis,  # type: MultiGalaxyAPIProxy
-            concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
-            preferred_candidates=None,  # type: t.Iterable[Candidate]
-            with_deps=True,  # type: bool
-            with_pre_releases=False,  # type: bool
-            upgrade=False,  # type: bool
-            include_signatures=True,  # type: bool
-    ):  # type: (...) -> None
+            apis: MultiGalaxyAPIProxy,
+            concrete_artifacts_manager: ConcreteArtifactsManager | None = None,
+            preferred_candidates: _c.Iterable[Candidate] | None = None,
+            with_deps: bool = True,
+            with_pre_releases: bool = False,
+            upgrade: bool = False,
+            include_signatures: bool = True,
+    ) -> None:
         r"""Initialize helper attributes.
 
         :param api: An instance of the multiple Galaxy APIs wrapper.
@@ -91,8 +93,10 @@ class CollectionDependencyProvider(AbstractProvider):
         self._upgrade = upgrade
         self._include_signatures = include_signatures
 
-    def identify(self, requirement_or_candidate):
-        # type: (t.Union[Candidate, Requirement]) -> str
+    def identify(
+        self,
+        requirement_or_candidate: Candidate | Requirement,
+    ) -> str:
         """Given requirement or candidate, return an identifier for it.
 
         This is used to identify a requirement or candidate, e.g.
@@ -108,8 +112,13 @@ class CollectionDependencyProvider(AbstractProvider):
         identifier: str,
         resolutions: _c.Mapping[str, Candidate],
         candidates: _c.Mapping[str, _c.Iterator[Candidate]],
-        information: _c.Iterator[t.NamedTuple],
-        backtrack_causes: _c.Sequence,
+        information: _c.Mapping[
+            str,
+            _c.Iterator[RequirementInformation[Requirement, Candidate]],
+        ],
+        backtrack_causes: _c.Sequence[
+            RequirementInformation[Requirement, Candidate],
+        ],
     ) -> float | int:
         """Return sort key function return value for given requirement.
 
@@ -205,7 +214,10 @@ class CollectionDependencyProvider(AbstractProvider):
                 all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
             }
         try:
-            coll_versions = [] if preinstalled_candidates else self._api_proxy.get_collection_versions(first_req)  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
+            coll_versions: _c.Iterable[tuple[str, GalaxyAPI]] = (
+                [] if preinstalled_candidates
+                else self._api_proxy.get_collection_versions(first_req)
+            )
         except TypeError as exc:
             if first_req.is_concrete_artifact:
                 # Non hashable versions will cause a TypeError
@@ -248,7 +260,7 @@ class CollectionDependencyProvider(AbstractProvider):
 
         latest_matches = []
         signatures = []
-        extra_signature_sources = []  # type: list[str]
+        extra_signature_sources: list[str] = []
 
         discarding_pre_releases_acceptable = any(
             not is_pre_release(candidate_version)
@@ -353,8 +365,11 @@ class CollectionDependencyProvider(AbstractProvider):
 
         return list(preinstalled_candidates) + latest_matches
 
-    def is_satisfied_by(self, requirement, candidate):
-        # type: (Requirement, Candidate) -> bool
+    def is_satisfied_by(
+        self,
+        requirement: Requirement,
+        candidate: Candidate,
+    ) -> bool:
         r"""Whether the given requirement is satisfiable by a candidate.
 
         :param requirement: A requirement that produced the `candidate`.
@@ -380,8 +395,7 @@ class CollectionDependencyProvider(AbstractProvider):
             requirements=requirement.ver,
         )
 
-    def get_dependencies(self, candidate):
-        # type: (Candidate) -> list[Candidate]
+    def get_dependencies(self, candidate: Candidate) -> list[Requirement]:
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \
