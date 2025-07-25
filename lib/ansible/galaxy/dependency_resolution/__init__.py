@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import collections.abc as _c
 import typing as t
 
 if t.TYPE_CHECKING:
@@ -21,15 +22,15 @@ from ansible.galaxy.dependency_resolution.resolvers import CollectionDependencyR
 
 
 def build_collection_dependency_resolver(
-        galaxy_apis,  # type: t.Iterable[GalaxyAPI]
-        concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        preferred_candidates=None,  # type: t.Iterable[Candidate]
-        with_deps=True,  # type: bool
-        with_pre_releases=False,  # type: bool
-        upgrade=False,  # type: bool
-        include_signatures=True,  # type: bool
-        offline=False,  # type: bool
-):  # type: (...) -> CollectionDependencyResolver
+        galaxy_apis: _c.Iterable[GalaxyAPI],
+        concrete_artifacts_manager: ConcreteArtifactsManager,
+        preferred_candidates: _c.Iterable[Candidate] | None = None,
+        with_deps: bool = True,
+        with_pre_releases: bool = False,
+        upgrade: bool = False,
+        include_signatures: bool = True,
+        offline: bool = False,
+) -> CollectionDependencyResolver:
     """Return a collection dependency resolver.
 
     The returned instance will have a ``resolve()`` method for
