@@ -1,0 +1,3 @@
+bugfixes:
+	- dnf module now correctly fails when provided with invalid package names containing brackets or question marks ( https://github.com/ansible/ansible/issues/85554).
+

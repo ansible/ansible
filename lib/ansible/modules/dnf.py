@@ -391,6 +391,7 @@ EXAMPLES = """
 
 import os
 import sys
+import re
 
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import fetch_file
@@ -906,6 +907,54 @@ class DnfModule(YumDnf):
             'results': [],
             'rc': 1
         }
+
+              # --- START OF PROPOSED FIX ---
+        # Validate package names for problematic characters.
+        # These characters are known to cause issues with DNF when not properly quoted/escaped
+        # and often indicate malformed input or an attempt at path traversal/command injection.
+        # For this specific bug, `[` `]` and `?` are the culprits.
+        # The regex checks for any of: [ ] { } ( ) < > | & ; $ * ? ~ ! ' " ` \ # ^ =
+        # We explicitly *allow* colons and forward slashes here, as they are used in:
+        # - version comparisons (e.g., `name >= 1.0`)
+        # - local file paths (e.g., `/path/to/package.rpm`)
+        # - URLs (e.g., `http://example.com/package.rpm`)
+        # - DNF modularity streams (e.g., `@postgresql:9.6/client`)
+        # - DNF group/environment names (e.g., `@Development tools`)
+        #
+        # The pattern focuses on shell metacharacters and other symbols typically not found
+        # in valid *unquoted* package names themselves, and specifically targets the reported issue characters `[`, `]`, `?`.
+        # Note: The original issue description implies these chars appear directly in package names,
+        # not as part of versions or paths. This regex targets that.
+        invalid_chars_pattern = re.compile(r'[\]\[{}()<>&;$\*\~!"`\\#^=]')
+
+        # Ensure self.names is a list, even if it's None initially for some code paths
+        # (though argument_spec already makes it a list with default=[])
+        package_names_to_check = self.names if self.names is not None else []
+
+        # '*' is a special valid case for dnf module to update all, so it should be skipped from validation
+        if package_names_to_check == ['*']:
+            pass # Skip validation for the special "*" case
+        else:
+            for pkg_name in package_names_to_check:
+                # Exclude validation for URLs and absolute paths (these are handled by dnf directly)
+                if '://' in pkg_name or pkg_name.startswith('/'):
+                    continue
+
+                # Allow comparison operators like "name >= 1.0"
+                # Split by space, check individual components, except the operator itself.
+                # This is a heuristic and might need refinement if more complex DNF-specific
+                # name patterns are valid but contain these chars.
+                parts = pkg_name.split()
+                for part in parts:
+                    if part in ['<', '>', '<=', '>=', '=']: # DNF comparison operators
+                        continue
+                    if invalid_chars_pattern.search(part):
+                        self.module.fail_json(
+                            msg="Invalid character(s) detected in package name '{}'. "
+                                "Package names should not contain special characters that confuse the dnf parser, such as [], (), {}, <>, ?, *, $, etc.".format(pkg_name),
+                            issue_link="https://github.com/ansible/ansible/issues/85554"
+                        )
+        # --- END OF PROPOSED FIX ---
 
         # Autoremove is called alone
         # Jump to remove path where base.autoremove() is run
