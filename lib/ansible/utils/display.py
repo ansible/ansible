@@ -110,7 +110,6 @@ def get_text_width(text: str) -> int:
     """
     if not isinstance(text, text_type):
         raise TypeError('get_text_width requires text, not %s' % type(text))
-
     try:
         width = _LIBC.wcswidth(text, _MAX_INT)
     except ctypes.ArgumentError:
@@ -215,7 +214,7 @@ b_COW_PATHS = (
 )
 
 
-def _synchronize_textiowrapper(tio: t.TextIO, lock: threading.RLock):
+def _synchronize_textiowrapper(tio: t.TextIO, lock: ForkSafeRLock):
     """
     This decorator ensures that the supplied RLock is held before invoking the wrapped methods.
     It is intended to prevent background threads from holding the Python stdout/stderr buffer lock on a file object during a fork.
@@ -301,6 +300,33 @@ def setupterm() -> None:
         CLEAR_TO_EOL = curses.tigetstr('el') or CLEAR_TO_EOL
 
 
+class ForkSafeRLock:
+    def __init__(self):
+        self._pid = os.getpid()
+        self._lock = threading.RLock()
+
+    def _check_fork(self):
+        pid = os.getpid()
+        if pid != self._pid:
+            # We are in a forked child process, so replace the lock
+            self._pid = pid
+            self._lock = threading.RLock()
+
+    def acquire(self, *args, **kwargs):
+        self._check_fork()
+        return self._lock.acquire(*args, **kwargs)
+
+    def release(self):
+        return self._lock.release()
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *args):
+        self.release()
+
+
 class Display(metaclass=Singleton):
 
     def __init__(self, verbosity: int = 0) -> None:
@@ -309,7 +335,7 @@ class Display(metaclass=Singleton):
 
         # NB: this lock is used to both prevent intermingled output between threads and to block writes during forks.
         # Do not change the type of this lock or upgrade to a shared lock (eg multiprocessing.RLock).
-        self._lock = threading.RLock()
+        self._lock = ForkSafeRLock()
 
         self.columns = None
         self.verbosity = verbosity
