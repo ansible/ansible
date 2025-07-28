@@ -228,11 +228,12 @@ class ServiceScanService(BaseService):
             if len(line_data) < 2:
                 continue
             service_name = line_data[0]
-            # Skip lines which are not service names
-            if service_name == "*":
-                continue
             service_state = line_data[1]
-            service_runlevels = all_services_runlevels[service_name]
+            try:
+                service_runlevels = all_services_runlevels[service_name]
+            except KeyError:
+                self.module.warn(f"Service {service_name} not found in the service list")
+                continue
             service_data = {"name": service_name, "runlevels": service_runlevels, "state": service_state, "source": "openrc"}
             services[service_name] = service_data
 
