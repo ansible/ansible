@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Set
 
-from ansible.module_utils.common import warnings as _warnings
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible._internal._datatag._tags import TrustedAsTemplate
@@ -79,20 +79,4 @@ def to_unsafe_text(*args, **kwargs):
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings."""
-    if importable_name in {"binary_type", "text_type"}:
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
-    else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!r})"
-        )
-
-    _warnings.deprecate(
-        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
-    )
-    return importable
+    return _no_six.deprecate(importable_name, "binary_type", "text_type")

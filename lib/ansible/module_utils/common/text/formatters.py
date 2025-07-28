@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 
-from ansible.module_utils.common import warnings as _warnings
+from ansible.module_utils._internal import _no_six
 
 SIZE_RANGES = {
     'Y': 1 << 80,
@@ -130,20 +130,4 @@ def bytes_to_human(size, isbits=False, unit=None):
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings."""
-    if importable_name == "iteritems":
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
-    else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
-        )
-
-    _warnings.deprecate(
-        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
-    )
-    return importable
+    return _no_six.deprecate(importable_name, "iteritems")

@@ -21,9 +21,10 @@ from collections.abc import (
 from itertools import chain  # pylint: disable=unused-import
 
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils._internal._datatag import AnsibleSerializable, AnsibleTagHelper
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.common.warnings import warn, deprecate
+from ansible.module_utils.common.warnings import warn
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.errors import (
     AliasError,
@@ -929,24 +930,4 @@ def remove_values(value, no_log_strings):
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings."""
-    if importable_name in {
-        "binary_type", "text_type",
-        "integer_types", "string_types",
-        "PY2", "PY3",
-    }:
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
-    else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
-        )
-
-    deprecate(
-        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
-    )
-    return importable
+    return _no_six.deprecate(importable_name, "binary_type", "text_type", "integer_types", "string_types", "PY2", "PY3")

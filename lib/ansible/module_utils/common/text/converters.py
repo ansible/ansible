@@ -8,7 +8,7 @@ from __future__ import annotations
 import codecs
 import json
 
-from ansible.module_utils.common import warnings as _warnings
+from ansible.module_utils._internal import _no_six
 
 
 try:
@@ -290,20 +290,4 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings."""
-    if importable_name in {"binary_type", "text_type", "iteritems"}:
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
-    else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
-        )
-
-    _warnings.deprecate(
-        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
-    )
-    return importable
+    return _no_six.deprecate(importable_name, "binary_type", "text_type", "iteritems")

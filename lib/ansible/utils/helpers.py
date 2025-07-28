@@ -17,9 +17,7 @@
 
 from __future__ import annotations
 
-from ansible.utils.display import Display as _Display
-
-_display = _Display()
+from ansible.module_utils._internal import _no_six
 
 
 def pct_to_int(value, num_items, min_value=1):
@@ -52,20 +50,4 @@ def deduplicate_list(original_list):
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings."""
-    if importable_name == "string_types":
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
-    else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
-        )
-
-    _display.deprecated(
-        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
-    )
-    return importable
+    return _no_six.deprecate(importable_name, "string_types")

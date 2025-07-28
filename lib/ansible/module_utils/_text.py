@@ -26,13 +26,11 @@ def __getattr__(importable_name):
         )
         help_text = "Use ansible.module_utils.common.text.converters instead."
     else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
-        )
+        raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     _warnings.deprecate(
         msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
+        version="2.24",
         help_text=help_text,
     )
     return importable

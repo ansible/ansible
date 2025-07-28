@@ -53,7 +53,7 @@ from ansible.constants import config
 from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive, AnsibleError
 from ansible._internal._errors import _error_utils, _error_factory
 from ansible._internal import _event_formatting
-from ansible.module_utils._internal import _ambient_context, _deprecator, _messages
+from ansible.module_utils._internal import _ambient_context, _deprecator, _messages, _no_six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
@@ -1284,20 +1284,4 @@ _report_config_warnings(_deprecator.ANSIBLE_CORE_DEPRECATOR)
 
 
 def __getattr__(importable_name):
-    """Inject import-time deprecation warnings."""
-    if importable_name == "text_type":
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
-    else:
-        raise AttributeError(
-            f"Cannot import name {importable_name!r} from {__name__!r} ({__file__!s})"
-        )
-
-    _display.deprecated(
-        msg=f"Importing {importable_name!r} from {__name__!r} is deprecated.",
-        version="2.23",
-    )
-    return importable
+    return _no_six.deprecate(importable_name, "text_type")
