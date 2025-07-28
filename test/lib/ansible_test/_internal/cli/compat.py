@@ -69,7 +69,7 @@ def controller_python(version: t.Optional[str]) -> t.Optional[str]:
 
 def get_fallback_remote_controller() -> str:
     """Return the remote fallback platform for the controller."""
-    platform = 'freebsd'  # lower cost than RHEL and macOS
+    platform = 'fedora'  # Fedora is lower cost than other remotes and always supports a recent Python version
     candidates = [item for item in filter_completion(remote_completion()).values() if item.controller_supported and item.platform == platform]
     fallback = sorted(candidates, key=lambda value: str_to_version(value.version), reverse=True)[0]
     return fallback.name

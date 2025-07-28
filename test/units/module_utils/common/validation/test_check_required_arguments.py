@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from ansible.module_utils.common.text.converters import to_native
@@ -84,4 +86,5 @@ def test_check_required_arguments_missing_none():
 def test_check_required_arguments_no_params(arguments_terms):
     with pytest.raises(TypeError) as te:
         check_required_arguments(arguments_terms, None)
-    assert "'NoneType' is not iterable" in to_native(te.value)
+    expected = "argument of type 'NoneType' is not a container or iterable" if sys.version_info >= (3, 14) else "'NoneType' is not iterable"
+    assert expected in to_native(te.value)

@@ -21,6 +21,8 @@ def main() -> None:
     remote_only_python_versions = os.environ['ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS'].split(',')
     fix_mode = bool(int(os.environ['ANSIBLE_TEST_FIX_MODE']))
 
+    controller_python_versions.remove('3.14')  # black does not yet support formatting for Python 3.14
+
     target_python_versions = remote_only_python_versions + controller_python_versions
 
     black(controller_paths, controller_python_versions, fix_mode)

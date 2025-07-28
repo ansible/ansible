@@ -130,7 +130,7 @@ class TestImmutableDict:
         # ImmutableDict is unhashable when one of its values is unhashable
         imdict = ImmutableDict({u'café': u'くらとみ', 1: [1, 2]})
 
-        expected_reason = r"^unhashable type: 'list'$"
+        expected_reason = r"unhashable type: 'list'"
 
         with pytest.raises(TypeError, match=expected_reason):
             hash(imdict)

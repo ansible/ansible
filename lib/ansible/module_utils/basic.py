@@ -11,12 +11,13 @@ import typing as t
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 8)
+_PY_MIN = (3, 9)
 
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(
         failed=True,
-        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+        msg=f"Ansible requires Python {'.'.join(map(str, _PY_MIN))} or newer on the target. "
+            f"Current version: {''.join(sys.version.splitlines())}",
     )))
     sys.exit(1)
 

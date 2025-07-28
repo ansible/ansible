@@ -54,12 +54,12 @@ stages:
           nameFormat: Python {0}
           testFormat: units/{0}
           targets:
-            - test: 3.8
             - test: 3.9
             - test: '3.10'
             - test: 3.11
             - test: 3.12
             - test: 3.13
+            - test: 3.14
   - stage: Windows
     dependsOn: []
     jobs:
