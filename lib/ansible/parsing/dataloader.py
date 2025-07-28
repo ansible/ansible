@@ -49,7 +49,7 @@ class DataLoader:
     Usage:
 
         dl = DataLoader()
-        # optionally: dl.set_vault_secrets([('default', ansible.parsing.vault.PrompVaultSecret(...),)])
+        # optionally: dl.set_vault_secrets([('default', ansible.parsing.vault.PromptVaultSecret(...),)])
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
     """
