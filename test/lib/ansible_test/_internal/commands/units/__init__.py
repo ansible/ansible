@@ -241,19 +241,7 @@ def command_units(args: UnitsConfig) -> None:
         sys.exit()
 
     for test_context, python, paths, env in test_sets:
-        # When using pytest-mock, make sure that features introduced in Python 3.8 are available to older Python versions.
-        # This is done by enabling the mock_use_standalone_module feature, which forces use of mock even when unittest.mock is available.
-        # Later Python versions have not introduced additional unittest.mock features, so use of mock is not needed as of Python 3.8.
-        # If future Python versions introduce new unittest.mock features, they will not be available to older Python versions.
-        # Having the cutoff at Python 3.8 also eases packaging of ansible-core since no supported controller version requires the use of mock.
-        #
-        # NOTE: This only affects use of pytest-mock.
-        #       Collection unit tests may directly import mock, which will be provided by ansible-test when it installs requirements using pip.
-        #       Although mock is available for ansible-core unit tests, they should import unittest.mock instead.
-        if str_to_version(python.version) < (3, 8):
-            config_name = 'legacy.ini'
-        else:
-            config_name = 'default.ini'
+        config_name = 'default.ini'
 
         cmd = [
             'pytest',

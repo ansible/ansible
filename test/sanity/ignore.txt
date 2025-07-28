@@ -27,12 +27,12 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
-lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.13!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.14!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
@@ -57,6 +57,7 @@ lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
 lib/ansible/_internal/_wrapt.py mypy-3.11!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.12!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.14!skip # vendored code
 lib/ansible/_internal/_wrapt.py pep8!skip # vendored code
 lib/ansible/_internal/_wrapt.py pylint!skip # vendored code
 lib/ansible/_internal/ansible_collections/ansible/_protomatter/README.md no-unwanted-files
@@ -211,16 +212,17 @@ test/units/module_utils/facts/test_facts.py mypy-3.9:assignment
 test/units/modules/mount_facts_data.py mypy-3.9:arg-type
 test/units/modules/test_apt.py mypy-3.9:name-match
 test/units/modules/test_mount_facts.py mypy-3.9:index
-test/units/module_utils/basic/test_exit_json.py mypy-3.8:assignment
-test/units/module_utils/basic/test_exit_json.py mypy-3.8:misc
-test/units/module_utils/facts/other/test_facter.py mypy-3.8:assignment
-test/units/module_utils/facts/other/test_ohai.py mypy-3.8:assignment
-test/units/module_utils/facts/system/test_lsb.py mypy-3.8:assignment
-test/units/module_utils/facts/test_collectors.py mypy-3.8:assignment
-test/units/module_utils/facts/test_facts.py mypy-3.8:assignment
-test/units/modules/mount_facts_data.py mypy-3.8:arg-type
-test/units/modules/test_apt.py mypy-3.8:name-match
-test/units/modules/test_mount_facts.py mypy-3.8:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.14:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.14:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.14:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.14:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.14:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.14:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.14:assignment
+test/units/modules/mount_facts_data.py mypy-3.14:arg-type
+test/units/modules/test_apt.py mypy-3.14:name-match
+test/units/modules/test_mount_facts.py mypy-3.14:index
+test/units/playbook/test_base.py mypy-3.14:assignment
 test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
 test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang
 test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/lookup/deprecated.py pylint!skip  # validated as a collection

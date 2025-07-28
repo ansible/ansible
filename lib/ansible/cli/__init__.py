@@ -23,10 +23,12 @@ if 1 <= len(sys.argv) <= 2 and os.path.basename(sys.argv[0]) == "ansible" and os
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-if sys.version_info < (3, 11):
+_PY_MIN = (3, 11)
+
+if sys.version_info < _PY_MIN:
     raise SystemExit(
-        'ERROR: Ansible requires Python 3.11 or newer on the controller. '
-        'Current version: %s' % ''.join(sys.version.splitlines())
+        f"ERROR: Ansible requires Python {'.'.join(map(str, _PY_MIN))} or newer on the controller. "
+        f"Current version: {''.join(sys.version.splitlines())}"
     )
 
 
