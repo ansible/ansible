@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import unittest.mock
+
 import pytest
 
 from ansible.modules.copy import AnsibleModuleError, split_pre_existing_dir
@@ -97,38 +99,38 @@ ONE_DIR_DATA += tuple(item[:3] for item in TWO_DIRS_DATA)
 
 @pytest.mark.parametrize('directory, expected', ((d[0], d[4]) for d in THREE_DIRS_DATA))
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_three_levels_exist(directory, expected, mocker):
-    mocker.patch('os.path.exists', side_effect=[True, True, True])
-    assert split_pre_existing_dir(directory) == expected
+def test_split_pre_existing_dir_three_levels_exist(directory, expected):
+    with unittest.mock.patch('os.path.exists', side_effect=[True, True, True]):
+        assert split_pre_existing_dir(directory) == expected
 
 
 @pytest.mark.parametrize('directory, expected', ((d[0], d[3]) for d in TWO_DIRS_DATA))
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_two_levels_exist(directory, expected, mocker):
-    mocker.patch('os.path.exists', side_effect=[True, True, False])
-    assert split_pre_existing_dir(directory) == expected
+def test_split_pre_existing_dir_two_levels_exist(directory, expected):
+    with unittest.mock.patch('os.path.exists', side_effect=[True, True, False]):
+        assert split_pre_existing_dir(directory) == expected
 
 
 @pytest.mark.parametrize('directory, expected', ((d[0], d[2]) for d in ONE_DIR_DATA))
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_one_level_exists(directory, expected, mocker):
-    mocker.patch('os.path.exists', side_effect=[True, False, False])
-    assert split_pre_existing_dir(directory) == expected
+def test_split_pre_existing_dir_one_level_exists(directory, expected):
+    with unittest.mock.patch('os.path.exists', side_effect=[True, False, False]):
+        assert split_pre_existing_dir(directory) == expected
 
 
 @pytest.mark.parametrize('directory', (d[0] for d in ONE_DIR_DATA if d[1] is None))
-def test_split_pre_existing_dir_root_does_not_exist(directory, mocker):
-    mocker.patch('os.path.exists', return_value=False)
-    with pytest.raises(AnsibleModuleError) as excinfo:
-        split_pre_existing_dir(directory)
+def test_split_pre_existing_dir_root_does_not_exist(directory):
+    with unittest.mock.patch('os.path.exists', return_value=False):
+        with pytest.raises(AnsibleModuleError) as excinfo:
+            split_pre_existing_dir(directory)
     assert excinfo.value.results['msg'].startswith("The '/' directory doesn't exist on this machine.")
 
 
 @pytest.mark.parametrize('directory, expected', ((d[0], d[1]) for d in ONE_DIR_DATA if not d[0].startswith('/')))
 @pytest.mark.xfail(reason='broken test and/or code, original test missing assert', strict=False)
-def test_split_pre_existing_dir_working_dir_exists(directory, expected, mocker):
-    mocker.patch('os.path.exists', return_value=False)
-    assert split_pre_existing_dir(directory) == expected
+def test_split_pre_existing_dir_working_dir_exists(directory, expected):
+    with unittest.mock.patch('os.path.exists', return_value=False):
+        assert split_pre_existing_dir(directory) == expected
 
 
 #
@@ -206,26 +208,26 @@ INVALID_DATA = (
 
 
 @pytest.mark.parametrize('stat_info, mode_string, expected', DATA)
-def test_good_symbolic_modes(mocker, stat_info, mode_string, expected):
-    mock_stat = mocker.MagicMock()
+def test_good_symbolic_modes(stat_info, mode_string, expected):
+    mock_stat = unittest.mock.MagicMock()
     mock_stat.st_mode = stat_info
     assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == expected
 
 
 @pytest.mark.parametrize('stat_info, mode_string, expected', UMASK_DATA)
-def test_umask_with_symbolic_modes(mocker, stat_info, mode_string, expected):
-    mock_umask = mocker.patch('os.umask')
-    mock_umask.return_value = 0o7
+def test_umask_with_symbolic_modes(stat_info, mode_string, expected):
+    with unittest.mock.patch('os.umask') as mock_umask:
+        mock_umask.return_value = 0o7
 
-    mock_stat = mocker.MagicMock()
-    mock_stat.st_mode = stat_info
+        mock_stat = unittest.mock.MagicMock()
+        mock_stat.st_mode = stat_info
 
-    assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == expected
+        assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == expected
 
 
 @pytest.mark.parametrize('stat_info, mode_string, expected', INVALID_DATA)
-def test_invalid_symbolic_modes(mocker, stat_info, mode_string, expected):
-    mock_stat = mocker.MagicMock()
+def test_invalid_symbolic_modes(stat_info, mode_string, expected):
+    mock_stat = unittest.mock.MagicMock()
     mock_stat.st_mode = stat_info
     with pytest.raises(ValueError) as exc:
         assert AnsibleModule._symbolic_mode_to_octal(mock_stat, mode_string) == 'blah'
