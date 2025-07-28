@@ -372,17 +372,14 @@ def write_signed_by_key(module, v, slug):
 
 def install_python_debian(module, deb_pkg_name):
 
-    if not module.check_mode:
-        apt_path = module.get_bin_path('apt', required=True)
-        if apt_path:
-            rc, so, se = module.run_command([apt_path, 'update'])
-            if rc != 0:
-                module.fail_json(msg=f"Failed update while auto installing {deb_pkg_name} due to '{se.strip()}'")
-            rc, so, se = module.run_command([apt_path, 'install', deb_pkg_name, '-y', '-q'])
-            if rc != 0:
-                module.fail_json(msg=f"Failed to auto-install {deb_pkg_name} due to : '{se.strip()}'")
-    else:
-        module.fail_json(msg=f"{deb_pkg_name} must be installed to use check mode")
+    apt_path = module.get_bin_path('apt', required=True)
+    if apt_path:
+        rc, so, se = module.run_command([apt_path, 'update'])
+        if rc != 0:
+            module.fail_json(msg=f"Failed update while auto installing {deb_pkg_name} due to '{se.strip()}'")
+        rc, so, se = module.run_command([apt_path, 'install', deb_pkg_name, '-y', '-q'])
+        if rc != 0:
+            module.fail_json(msg=f"Failed to auto-install {deb_pkg_name} due to : '{se.strip()}'")
 
 
 def main():
