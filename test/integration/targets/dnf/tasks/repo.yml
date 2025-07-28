@@ -738,3 +738,15 @@
     - file:
         name: /etc/yum.repos.d/{{ repo_name }}.repo
         state: absent
+
+
+- name: Attempt to install a package with invalid name
+  dnf:
+    name: invalid[package_name]
+  register: r
+  ignore_errors: true
+
+- assert:
+    that:
+      - r is failed
+      - r.msg is contains("Failed to install some of the specified packages")
