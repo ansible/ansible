@@ -18,8 +18,10 @@
 
 from __future__ import annotations
 
+import sys
 from io import StringIO
 import pytest
+import typing as t
 
 from ansible.module_utils import _internal
 from ansible.plugins.connection import paramiko_ssh as paramiko_ssh_module
@@ -59,17 +61,25 @@ def test_paramiko_connect(play_context, in_stream, mocker):
     assert connection._connected is True
 
 
-def test_deprecation_warning_controller():
+def test_deprecation_warning_controller(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensures deprecation warnings are generated for external paramiko imports."""
     assert _internal.is_controller
+
+    sentinel: t.Any = object()
+
+    monkeypatch.delitem(sys.modules, 'ansible')
+    monkeypatch.delitem(sys.modules, 'ansible.module_utils')
+    monkeypatch.delitem(sys.modules, 'ansible.module_utils.compat')
+    monkeypatch.delitem(sys.modules, 'ansible.module_utils.compat.paramiko')
+    monkeypatch.setitem(sys.modules, 'paramiko', sentinel)
 
     # ensure direct access to `_` prefixed attrs does not warn
     with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
         from ansible.module_utils.compat import paramiko
-        assert paramiko._paramiko is not None
+        assert paramiko._paramiko is sentinel
         assert isinstance(paramiko._PARAMIKO_IMPORT_ERR, (Exception, type(None)))
 
     with emits_warnings(deprecation_pattern=["The 'paramiko' compat import is deprecated", "The 'PARAMIKO_IMPORT_ERR' compat import is deprecated"]):
         from ansible.module_utils.compat import paramiko
-        assert paramiko.paramiko is not None
+        assert paramiko.paramiko is sentinel
         assert isinstance(paramiko.PARAMIKO_IMPORT_ERR, (Exception, type(None)))
