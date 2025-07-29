@@ -16,7 +16,7 @@
   register: user_test0_1
 
 - debug:
-    var: user_test0
+    var: user_test0_0
     verbosity: 2
 
 - name: make a list of users
