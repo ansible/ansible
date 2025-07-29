@@ -6,7 +6,7 @@ class ModuleDocFragment(object):
     # Standard documentation fragment
     RETURN = r'''
 y_notlast:
-    description: A return from fragment 
+    description: A return from fragment
     type: str
     returned: it depends TM
 
