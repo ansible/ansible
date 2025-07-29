@@ -135,6 +135,13 @@ options:
       - If specified, the environment variable will be inserted before the declaration of specified environment variable.
     type: str
     version_added: "2.1"
+  crontab_bin:
+    description:
+      - The path or name of the crontab binary to use (e.g., C(fcrontab) or C(/usr/sbin/fcrontab)).
+      - If a name is given, it must be in the system C(PATH).
+      - If not set, defaults to C(crontab).
+    type: str
+    required: false
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
 notes:
