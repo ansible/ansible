@@ -5,8 +5,13 @@ class ModuleDocFragment(object):
 
     # Standard documentation fragment
     RETURN = r'''
+y_notlast:
+    description: A return from fragment 
+    type: str
+    returned: it depends TM
+
 z_last:
-    description: A last result, from fragment.
+    description: A a return from fragment with merge.
     type: str
     returned: success
 '''
