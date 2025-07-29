@@ -169,7 +169,6 @@ test/units/module_utils/facts/test_facts.py mypy-3.13:assignment
 test/units/modules/mount_facts_data.py mypy-3.13:arg-type
 test/units/modules/test_apt.py mypy-3.13:name-match
 test/units/modules/test_mount_facts.py mypy-3.13:index
-test/units/playbook/test_base.py mypy-3.13:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.12:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.12:misc
 test/units/module_utils/facts/other/test_facter.py mypy-3.12:assignment
@@ -180,7 +179,6 @@ test/units/module_utils/facts/test_facts.py mypy-3.12:assignment
 test/units/modules/mount_facts_data.py mypy-3.12:arg-type
 test/units/modules/test_apt.py mypy-3.12:name-match
 test/units/modules/test_mount_facts.py mypy-3.12:index
-test/units/playbook/test_base.py mypy-3.12:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.11:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.11:misc
 test/units/module_utils/facts/other/test_facter.py mypy-3.11:assignment
@@ -191,7 +189,6 @@ test/units/module_utils/facts/test_facts.py mypy-3.11:assignment
 test/units/modules/mount_facts_data.py mypy-3.11:arg-type
 test/units/modules/test_apt.py mypy-3.11:name-match
 test/units/modules/test_mount_facts.py mypy-3.11:index
-test/units/playbook/test_base.py mypy-3.11:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.10:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.10:misc
 test/units/module_utils/facts/other/test_facter.py mypy-3.10:assignment
@@ -222,7 +219,6 @@ test/units/module_utils/facts/test_facts.py mypy-3.14:assignment
 test/units/modules/mount_facts_data.py mypy-3.14:arg-type
 test/units/modules/test_apt.py mypy-3.14:name-match
 test/units/modules/test_mount_facts.py mypy-3.14:index
-test/units/playbook/test_base.py mypy-3.14:assignment
 test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
 test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang
 test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/lookup/deprecated.py pylint!skip  # validated as a collection

@@ -194,7 +194,7 @@ class TemplateEngine:
         return self._variables
 
     @available_variables.setter
-    def available_variables(self, variables: dict[str, t.Any]) -> None:
+    def available_variables(self, variables: dict[str, t.Any] | ChainMap[str, t.Any]) -> None:
         self._variables = variables
 
     def resolve_variable_expression(
