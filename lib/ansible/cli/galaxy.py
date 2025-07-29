@@ -1655,13 +1655,13 @@ class GalaxyCLI(CLI):
             validate_collection_name(collection_name)
             namespace_filter, collection_filter = collection_name.split('.')
 
-        collections = [c for c in find_existing_collections(
+        collections = list(find_existing_collections(
             list(collections_search_paths),
             artifacts_manager,
             namespace_filter=namespace_filter,
             collection_filter=collection_filter,
             dedupe=False
-        ) if c.fqcn != 'ansible._protomatter']
+        ))
 
         seen = set()
         fqcn_width, version_width = _get_collection_widths(collections)
