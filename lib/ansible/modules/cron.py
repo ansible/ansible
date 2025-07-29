@@ -238,16 +238,24 @@ class CronTab(object):
 
         user      - the user of the crontab (defaults to current user)
         cron_file - a cron file under /etc/cron.d, or an absolute path
+        crontab_bin - the path to the crontab binary, if not specified, will use the system default
     """
 
-    def __init__(self, module, user=None, cron_file=None):
+    def __init__(self, module, user=None, cron_file=None, crontab_bin=None):
         self.module = module
         self.user = user
         self.root = (os.getuid() == 0)
         self.lines = None
         self.ansible = "#Ansible: "
         self.n_existing = ''
-        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
+        # Allow override of crontab binary
+        if crontab_bin:
+            if os.path.isabs(crontab_bin):
+                self.cron_cmd = crontab_bin
+            else:
+                self.cron_cmd = self.module.get_bin_path(crontab_bin, required=True)
+        else:
+            self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
 
@@ -591,6 +599,7 @@ def main():
             env=dict(type='bool', default=False),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
+            crontab_bin=dict(type='str', default=None),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -602,6 +611,7 @@ def main():
     user = module.params['user']
     job = module.params['job']
     cron_file = module.params['cron_file']
+    crontab_bin = module.params.get('crontab_bin')
     state = module.params['state']
     backup = module.params['backup']
     minute = module.params['minute']
@@ -631,7 +641,7 @@ def main():
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
-    crontab = CronTab(module, user, cron_file)
+    crontab = CronTab(module, user, cron_file, crontab_bin=crontab_bin)
 
     module.debug('cron instantiated - name: "%s"' % name)
 
