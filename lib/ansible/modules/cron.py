@@ -142,6 +142,7 @@ options:
       - If not set, defaults to C(crontab).
     type: str
     required: false
+    version_added: "2.20"
 requirements:
   - cron (any 'vixie cron' conformant variant, like cronie)
 notes:
