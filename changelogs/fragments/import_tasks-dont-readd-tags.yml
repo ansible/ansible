@@ -1,0 +1,2 @@
+bugfixes:
+  - Do not re-add ``tags`` on blocks from within ``import_tasks``.
