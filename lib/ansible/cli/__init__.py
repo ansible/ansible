@@ -23,7 +23,7 @@ if 1 <= len(sys.argv) <= 2 and os.path.basename(sys.argv[0]) == "ansible" and os
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 11)
+_PY_MIN = (3, 12)
 
 if sys.version_info < _PY_MIN:
     raise SystemExit(

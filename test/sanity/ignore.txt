@@ -54,7 +54,6 @@ lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub f
 lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
-lib/ansible/_internal/_wrapt.py mypy-3.11!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.12!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.14!skip # vendored code
@@ -237,3 +236,4 @@ lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/utils/ssh_functions.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version-comment  # TODO: 2.20
 lib/ansible/vars/plugins.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/galaxy/role.py pylint:ansible-deprecated-python-version-comment  # TODO: 2.20
