@@ -52,9 +52,6 @@
         cmd: which apt
       register: aptpath
 
-    - name: view
-      debug:
-        var: aptpath
     - name: hide apt from ansible
       command:
         cmd: mv {{ aptpath.stdout_lines[0] }} /usr/bin/apthidden
