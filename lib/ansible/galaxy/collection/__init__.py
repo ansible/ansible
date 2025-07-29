@@ -146,6 +146,7 @@ SIGNATURE_COUNT_RE = r"^(?P<strict>\+)?(?:(?P<count>\d+)|(?P<all>all))$"
 
 _ANSIBLE_PACKAGE_PATH = pathlib.Path(ansible.__file__).parent
 
+
 @dataclass
 class ManifestControl:
     directives: list[str] = None
