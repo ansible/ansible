@@ -178,8 +178,8 @@ options:
         packages to install (because dependencies between the downgraded
         package and others can cause changes to the packages which were
         in the earlier transaction).
-      - Since this feature is not provided by dnf itself but by ansible's dnf module, using this in combination
-        with wildcard characters in O(name) may result in an unexpected results.
+      - Since this feature is not provided by C(dnf5) itself but by M(ansible.builtin.dnf5) module,
+        using this in combination with wildcard characters in O(name) may result in an unexpected results.
     type: bool
     default: "no"
   download_only:
