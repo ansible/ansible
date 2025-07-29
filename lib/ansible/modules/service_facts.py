@@ -228,6 +228,9 @@ class ServiceScanService(BaseService):
             if len(line_data) < 2:
                 continue
             service_name = line_data[0]
+            # Skip lines which are not service names
+            if service_name == "*":
+                continue
             service_state = line_data[1]
             try:
                 service_runlevels = all_services_runlevels[service_name]
