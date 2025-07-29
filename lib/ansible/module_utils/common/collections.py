@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
 
 from ansible.module_utils._internal import _no_six
+from ansible.module_utils.common import warnings as _warnings
 
 
 class ImmutableDict(Hashable, Mapping):

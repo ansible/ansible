@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 
 from ansible.module_utils.common import warnings
@@ -9,10 +11,8 @@ def deprecate(importable_name, *args):
 
     if importable_name in args:
         import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
+
+        importable = getattr(importlib.import_module("ansible.module_utils.six"), importable_name)
     else:
         raise AttributeError(f"module {parent__name__!r} has no attribute {importable_name!r}")
 
