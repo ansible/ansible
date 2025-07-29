@@ -34,6 +34,8 @@ a_first:
     type: str
     returned: success
 
+z_last:
+    example: this is a merge
 extends_documentation_fragment:
     - test_return_frag
 '''
