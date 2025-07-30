@@ -67,8 +67,6 @@ if t.TYPE_CHECKING:
     # avoid circular import at runtime
     from ansible.executor.task_queue_manager import FinalQueue
 
-P = t.ParamSpec('P')
-
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
 # restype is assumed to be c_int
@@ -388,7 +386,7 @@ class Display(metaclass=Singleton):
                     self.b_cowsay = b_cow_path
 
     @staticmethod
-    def _proxy(
+    def _proxy[**P](
         func: c.Callable[t.Concatenate[Display, P], None]
     ) -> c.Callable[..., None]:
         @wraps(func)

@@ -459,8 +459,6 @@ else:
 
 display = Display()
 
-P = t.ParamSpec('P')
-
 # error messages that indicate 255 return code is not from ssh itself.
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
                                                             #   while invoking a script via -m
@@ -547,7 +545,7 @@ def _handle_error(
         display.vvv(msg, host=host)
 
 
-def _ssh_retry(
+def _ssh_retry[**P](
     func: c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]],
 ) -> c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]]:
     """
