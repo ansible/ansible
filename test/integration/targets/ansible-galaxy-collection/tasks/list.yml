@@ -67,7 +67,7 @@
       - 'list_result.stdout is regex "dev.collection4\s+\*"'
       - 'list_result.stdout is regex "dev.collection5\s+\*"'
       - 'list_result.stdout is regex "dev.collection6\s+\*"'
-      - 'list_result.stdout is not regex "ansible._protomatter\s+\*"'
+      - 'list_result.stdout is not regex "ansible._protomatter\s+.*"'
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
