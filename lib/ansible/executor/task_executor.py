@@ -94,7 +94,7 @@ class TaskExecutor:
     '''
 
     def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, variable_manager):
-        q("Inside INIT: ", task.action)
+#         q("Inside INIT: ", task.action)
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -116,13 +116,13 @@ class TaskExecutor:
         or self._execute(). After that, the returned results are parsed and
         returned as a dict.
         '''
-        q("ansible/executor/task_executor.py => run")
+#         q("ansible/executor/task_executor.py => run")
         display.debug("in run() - task %s" % self._task._uuid)
 
         try:
             try:
                 items = self._get_loop_items()
-                q(items)
+#                 q(items)
             except AnsibleUndefinedVariable as e:
                 # save the error raised here for use later
                 items = None
@@ -176,7 +176,7 @@ class TaskExecutor:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
                 display.debug("calling self._execute()")
-                q("ANSIBLE_TASK_EXECUTOR: calling self._execute method")
+#                 q("ANSIBLE_TASK_EXECUTOR: calling self._execute method")
                 res = self._execute()
                 display.debug("_execute() done")
 
@@ -448,13 +448,13 @@ class TaskExecutor:
         """This method is responsible for effectively pre-validating Task.delegate_to and will
         happen before Task.post_validate is executed
         """
-        q("ANSIBLE_TASKEXECUTOR: inside _calculate_delegate_to") 
+#         q("ANSIBLE_TASKEXECUTOR: inside _calculate_delegate_to") 
         delegated_vars, delegated_host_name = self._variable_manager.get_delegated_vars_and_hostname(templar, self._task, variables)
         # At the point this is executed it is safe to mutate self._task,
         # since `self._task` is either a copy referred to by `tmp_task` in `_run_loop`
         # or just a singular non-looped task
-        q("ANSIBLE_TASKEXECUTOR: _calculate_delegate_to=> delegate_hostname", delegated_host_name) 
-        q("ANSIBLE_TASKEXECUTOR: _calculate_delegate_to=> delegated_vars", delegated_vars) 
+#         q("ANSIBLE_TASKEXECUTOR: _calculate_delegate_to=> delegate_hostname", delegated_host_name) 
+#         q("ANSIBLE_TASKEXECUTOR: _calculate_delegate_to=> delegated_vars", delegated_vars) 
         if delegated_host_name:
             self._task.delegate_to = delegated_host_name
             variables.update(delegated_vars)
@@ -465,8 +465,8 @@ class TaskExecutor:
         on the specified host (which may be the delegated_to host) and handles
         the retry/until and block rescue/always execution
         '''
-        q("ANSIBLE_TASKEXECUTOR: _execute method") 
-        q(variables)
+#         q("ANSIBLE_TASKEXECUTOR: _execute method") 
+#         q(variables)
         if variables is None:
             variables = self._job_vars
 
@@ -478,8 +478,8 @@ class TaskExecutor:
 
         # a certain subset of variables exist.
         tempvars = variables.copy()
-        q("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        q(tempvars)
+#         q("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+#         q(tempvars)
 
         try:
             # TODO: remove play_context as this does not take delegation nor loops correctly into account,
@@ -490,7 +490,7 @@ class TaskExecutor:
             # which may override some fields already set by the play or
             # the options specified on the command line
             self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=variables, templar=templar)
-            q("ANSIBLE_MAIN: ", self._play_context)
+#             q("ANSIBLE_MAIN: ", self._play_context)
 
             # fields set from the play/task may be based on variables, so we have to
             # do the same kind of post validation step on it here before we use it.
@@ -577,7 +577,7 @@ class TaskExecutor:
             return dict(changed=False, failed=True, _ansible_no_log=no_log, exception=to_text(traceback.format_exc()))
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
-            q("TASKEXECUTOR:  Final task post validation variable_params", variable_params)
+#             q("TASKEXECUTOR:  Final task post validation variable_params", variable_params)
             if isinstance(variable_params, dict):
                 if C.INJECT_FACTS_AS_VARS:
                     display.warning("Using a variable for a task's 'args' is unsafe in some situations "
@@ -612,8 +612,8 @@ class TaskExecutor:
         else:
             current_connection = self._task.connection
             
-        q("ANSIBLE_MAIN: current_connection", current_connection)
-        q(self._play_context._remote_addr)
+#         q("ANSIBLE_MAIN: current_connection", current_connection)
+#         q(self._play_context._remote_addr)
 
         # get the connection and the handler for this execution
         if (not self._connection or
@@ -622,15 +622,15 @@ class TaskExecutor:
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            q("ANSIBLE_MAIN: calling self._get_connection() with vars", cvars, templar, current_connection)
+#             q("ANSIBLE_MAIN: calling self._get_connection() with vars", cvars, templar, current_connection)
             self._connection = self._get_connection(cvars, templar, current_connection)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
-            q("ANSIBLE EXECUTOR call _set_become plugin")
+#             q("ANSIBLE EXECUTOR call _set_become plugin")
             self._set_become_plugin(cvars, templar, self._connection)
-        q("ANSIBLE EXECUTOR call _set_connection_options")
+#         q("ANSIBLE EXECUTOR call _set_connection_options")
         plugin_vars = self._set_connection_options(cvars, templar)
 
         # make a copy of the job vars here, as we update them here and later,
@@ -651,10 +651,10 @@ class TaskExecutor:
             cvars['ansible_python_interpreter'] = sys.executable
 
         # get handler
-        q("ANSIBLE_MAIN: get action handler and module_context")
+#         q("ANSIBLE_MAIN: get action handler and module_context")
         self._handler, module_context = self._get_action_handler_with_module_context(templar=templar)
-        q("ANSIBLE_MAIN => self._handler: ", self._handler)
-        q("ANSIBLE_MAIN => self._module_context: ", module_context)
+#         q("ANSIBLE_MAIN => self._handler: ", self._handler)
+#         q("ANSIBLE_MAIN => self._module_context: ", module_context)
 
         if module_context is not None:
             module_defaults_fqcn = module_context.resolved_fqcn
@@ -690,7 +690,7 @@ class TaskExecutor:
                 if self._task.timeout:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
-                q("ANSIBLE EXECUTOR call self._handler")
+#                 q("ANSIBLE EXECUTOR call self._handler")
                 result = self._handler.run(task_vars=vars_copy)
             except (AnsibleActionFail, AnsibleActionSkip) as e:
                 return e.result
@@ -1017,7 +1017,7 @@ class TaskExecutor:
             task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )
-        q("ANSIBLE _get_connection=> connection: ", connection)
+#         q("ANSIBLE _get_connection=> connection: ", connection)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
@@ -1025,7 +1025,7 @@ class TaskExecutor:
 
         # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
-        q("ANSIBLE _get_connection=> return connection: ", connection)
+#         q("ANSIBLE _get_connection=> return connection: ", connection)
 
         return connection
 
@@ -1087,14 +1087,14 @@ class TaskExecutor:
         return option_vars
 
     def _set_connection_options(self, variables, templar):
-        q("ANSIBLE EXECUTOR Entering _set_connection_options")
+#         q("ANSIBLE EXECUTOR Entering _set_connection_options")
 
         # keep list of variable names possibly consumed
         varnames = []
 
         # grab list of usable vars for this plugin
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
-        q("ANSIBLE EXECUTOR Entering option_vars ", option_vars)
+#         q("ANSIBLE EXECUTOR Entering option_vars ", option_vars)
         varnames.extend(option_vars)
 
         task_keys = self._task.dump_attrs()
@@ -1144,7 +1144,7 @@ class TaskExecutor:
         sub_conn = getattr(self._connection, 'ssh_type_conn', None)
         if sub_conn is not None:
             varnames.extend(self._set_plugin_options("ssh_type_conn", variables, templar, task_keys))
-        q("ANSIBLE EXECUTOR Exiting _set_connection_options")
+#         q("ANSIBLE EXECUTOR Exiting _set_connection_options")
         return varnames
 
     def _get_action_handler(self, templar):
@@ -1157,58 +1157,58 @@ class TaskExecutor:
         '''
         Returns the correct action plugin to handle the requestion task action and the module context
         '''
-        q(self._task.action)
-        q("ANSIBLE EXECUTOR inside  _get_action_handler_with_module_context ")
+#         q(self._task.action)
+#         q("ANSIBLE EXECUTOR inside  _get_action_handler_with_module_context ")
         module_collection, separator, module_name = self._task.action.rpartition(".")
-        q("module_collection: ", module_collection)
-        q("separator: ", separator)
-        q("module_name: ", module_name)
+#         q("module_collection: ", module_collection)
+#         q("separator: ", separator)
+#         q("module_name: ", module_name)
         module_prefix = module_name.split('_')[0]
         if module_collection:
             # For network modules, which look for one action plugin per platform, look for the
             # action plugin in the same collection as the module by prefixing the action plugin
             # with the same collection.
             network_action = "{0}.{1}".format(module_collection, module_prefix)
-            q("if network_action: ", network_action)
+#             q("if network_action: ", network_action)
         else:
             network_action = module_prefix
-            q("else network_action: ", network_action)
+#             q("else network_action: ", network_action)
 
         collections = self._task.collections
-        q("collections: ", collections)
+#         q("collections: ", collections)
 
         # Check if the module has specified an action handler
         module = self._shared_loader_obj.module_loader.find_plugin_with_context(
             self._task.action, collection_list=collections
         )
-        q("module: ", module)
+#         q("module: ", module)
         if not module.resolved or not module.action_plugin:
             module = None
-            q("if module: ", module)
+#             q("if module: ", module)
             
-        q("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        q(module_prefix)
-        q(C.NETWORK_GROUP_MODULES)
-        q(collections)
-        q(network_action)
-        q(self._task.action)
+#         q("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+#         q(module_prefix)
+#         q(C.NETWORK_GROUP_MODULES)
+#         q(collections)
+#         q(network_action)
+#         q(self._task.action)
         if module is not None:
             handler_name = module.action_plugin
-            q("if handler_name: ", handler_name)
+#             q("if handler_name: ", handler_name)
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-            q("inside 1st elif handler_name: ", handler_name)
+#             q("inside 1st elif handler_name: ", handler_name)
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
             handler_name = network_action
-            q("inside 2nd elif handler_name: ", handler_name)
+#             q("inside 2nd elif handler_name: ", handler_name)
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
                          host=self._play_context.remote_addr)
         else:
             # use ansible.legacy.normal to allow (historic) local action_plugins/ override without collections search
             handler_name = 'ansible.legacy.normal'
-            q("inside last else: ", handler_name)
+#             q("inside last else: ", handler_name)
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
         # networking/psersistent connections handling
@@ -1240,7 +1240,7 @@ class TaskExecutor:
             shared_loader_obj=self._shared_loader_obj,
             collection_list=collections
         )
-        q("handler: ", handler)
+#         q("handler: ", handler)
 
         if not handler:
             raise AnsibleError("the handler '%s' was not found" % handler_name)

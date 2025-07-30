@@ -572,9 +572,9 @@ class Connection(ConnectionBase):
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
-        q(self.port)
-        q(self.user)
-        q(self.host)
+#         q(self.port)
+#         q(self.user)
+#         q(self.host)
         self.control_path: str | None = None
         self.control_path_dir: str | None = None
 
