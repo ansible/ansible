@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 
-# backwards compat
+# backward compat
 from builtins import zip  # pylint: disable=unused-import
 
 from struct import pack
