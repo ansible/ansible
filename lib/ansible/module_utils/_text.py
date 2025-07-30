@@ -13,17 +13,11 @@ def __getattr__(importable_name):
         import codecs
         importable = codecs
     elif importable_name in {"binary_type", "text_type", "PY3"}:
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.six"),
-            importable_name
-        )
+        from ansible.module_utils import six
+        importable = getattr(six, importable_name)
     elif importable_name in {"to_bytes", "to_native", "to_text"}:
-        import importlib
-        importable = getattr(
-            importlib.import_module("ansible.module_utils.common.text.converters"),
-            importable_name
-        )
+        from ansible.module_utils.common.text import converters
+        importable = getattr(converters, importable_name)
         help_text = "Use ansible.module_utils.common.text.converters instead."
     else:
         raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")

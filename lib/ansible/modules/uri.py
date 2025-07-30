@@ -743,9 +743,11 @@ def main():
 
     # Transmogrify the headers, replacing '-' with '_', since variables don't
     # work with dashes.
+    # In python3, the headers are title cased.  Lowercase them to be
+    # compatible with the python2 behaviour.
     uresp = {}
     for key, value in resp.items():
-        ukey = key.replace("-", "_")
+        ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
 
     if 'location' in uresp:
