@@ -112,10 +112,6 @@ stages:
               test: rhel/9.6
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
-            - name: FreeBSD 14.3
-              test: freebsd/14.3
           groups:
             - 3
             - 4
@@ -183,9 +179,9 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.11
             - test: 3.12
             - test: 3.13
+            - test: 3.14
   - stage: Generic
     dependsOn: []
     jobs:
@@ -194,9 +190,9 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.11
             - test: 3.12
             - test: 3.13
+            - test: 3.14
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []

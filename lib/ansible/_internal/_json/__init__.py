@@ -24,7 +24,6 @@ from ansible._internal._templating import _transform
 from ansible.module_utils import _internal
 from ansible.module_utils._internal import _datatag
 
-_T = t.TypeVar('_T')
 _sentinel = object()
 
 
@@ -115,7 +114,7 @@ class AnsibleVariableVisitor:
         if func := getattr(super(), '__exit__', None):
             func(*args, **kwargs)
 
-    def visit(self, value: _T) -> _T:
+    def visit[T](self, value: T) -> T:
         """
         Enforces Ansible's variable type system restrictions before a var is accepted in inventory. Also, conditionally implements template trust
         compatibility, depending on the plugin's declared understanding (or lack thereof). This always recursively copies inputs to fully isolate
@@ -143,7 +142,7 @@ class AnsibleVariableVisitor:
 
         return self._visit(None, key)  # key=None prevents state tracking from seeing the key as value
 
-    def _visit(self, key: t.Any, value: _T) -> _T:
+    def _visit[T](self, key: t.Any, value: T) -> T:
         """Internal implementation to recursively visit a data structure's contents."""
         self._current = key  # supports StateTrackingMixIn
 
@@ -168,7 +167,7 @@ class AnsibleVariableVisitor:
             value = value._native_copy()
             value_type = type(value)
 
-        result: _T
+        result: T
 
         # DTFIX-FUTURE: Visitor generally ignores dict/mapping keys by default except for debugging and schema-aware checking.
         #               It could be checking keys destined for variable storage to apply more strict rules about key shape and type.

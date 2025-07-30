@@ -9,8 +9,6 @@ from ansible.module_utils._internal._ansiballz import _extensions
 from ansible.module_utils._internal._ansiballz._extensions import _debugpy, _pydevd, _coverage
 from ansible.constants import config
 
-_T = t.TypeVar('_T')
-
 
 class ExtensionManager:
     """AnsiballZ extension manager."""
@@ -101,7 +99,7 @@ class ExtensionManager:
         )
 
     @classmethod
-    def _get_options(cls, name: str, config_type: type[_T], task_vars: dict[str, object]) -> _T | None:
+    def _get_options[T](cls, name: str, config_type: type[T], task_vars: dict[str, object]) -> T | None:
         """Parse configuration from the named environment variable as the specified type, or None if not configured."""
         if (value := config.get_config_value(name, variables=task_vars)) is None:
             return None

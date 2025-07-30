@@ -30,10 +30,7 @@ def import_controller_module(module_name: str, /) -> t.Any:
     return importlib.import_module(module_name)
 
 
-_T = t.TypeVar('_T')
-
-
-def experimental(obj: _T) -> _T:
+def experimental[T](obj: T) -> T:
     """
     Decorator for experimental types and methods outside the `_internal` package which accept or expose internal types.
     As with internal APIs, these are subject to change at any time without notice.

@@ -1271,11 +1271,7 @@ def test_sdist() -> None:
             except FileNotFoundError:
                 raise ApplicationError(f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}") from None
 
-            # deprecated: description='extractall fallback without filter' python_version='3.11'
-            if hasattr(tarfile, 'data_filter'):
-                sdist.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
-            else:
-                sdist.extractall(temp_dir)
+            sdist.extractall(temp_dir, filter='data')
 
         pyc_glob = "*.pyc*"
         pyc_files = sorted(path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob))
