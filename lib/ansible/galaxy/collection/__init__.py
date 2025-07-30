@@ -1943,15 +1943,9 @@ def _resolve_depenency_map(
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
     except CollectionDependencyResolverRuntimeError as resolvelib_crash:
         raise AnsibleError(
-            f'Collection dependency resolution crashed: {resolvelib_crash !s}.'
-            '\n\n'
-            "If you are seeing this, something's gone terribly wrong causing "
-            'the `resolvelib` library to misbehave. Please make sure that '
-            'the `resolvelib` version you have in the same environment that '
-            'runs `ansible-galaxy` is supported. Then, restart the command '
-            'with `ANSIBLE_DEBUG=1` environment variable and `-vvvvv`. Once '
-            'you have all the logs, please, file an issue with a reproducer '
-            'per <https://sscce.org>.',
+            f"Collection dependency resolution crashed: {resolvelib_crash !s}."
+            "\n\n"
+            "Please re-run the command with `-vvvvv` and report this as a bug."
         ) from resolvelib_crash
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc
