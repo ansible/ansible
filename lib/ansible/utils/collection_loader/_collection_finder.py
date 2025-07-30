@@ -182,7 +182,7 @@ class _AnsibleTraversableResources(TraversableResources):
 
 
 class _AnsibleCollectionFinder:
-    def __init__(self, paths=None, scan_sys_paths=True):
+    def __init__(self, paths=None, scan_sys_paths=True, internal_collections=None):
         # TODO: accept metadata loader override
         self._ansible_pkg_path = _to_text(os.path.dirname(_to_bytes(sys.modules['ansible'].__file__)))
 
@@ -209,6 +209,7 @@ class _AnsibleCollectionFinder:
             if p not in good_paths and os.path.isdir(_to_bytes(os.path.join(p, 'ansible_collections'))):
                 good_paths.append(p)
 
+        self._internal_collections = internal_collections
         self._n_configured_paths = good_paths
         self._n_cached_collection_paths = None
         self._n_cached_collection_qualified_paths = None

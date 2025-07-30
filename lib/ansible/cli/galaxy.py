@@ -218,9 +218,12 @@ class GalaxyCLI(CLI):
         """
         Exclude lib/ansible/_internal/ansible_collections/.
         """
-        # NOTE: keep in sync with ansible.plugins.loader._configure_collection_loader.
         # exclude bundled collections, e.g. ansible._protomatter
-        return AnsibleCollectionConfig.collection_paths[1:]
+        return [
+            path
+            for path in AnsibleCollectionConfig.collection_paths
+            if path != AnsibleCollectionConfig._internal_collections
+        ]
 
     def init_parser(self):
         """ create an options parser for bin/ansible """
