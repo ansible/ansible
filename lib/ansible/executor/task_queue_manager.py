@@ -58,8 +58,6 @@ STDERR_FILENO = 2
 
 display = Display()
 
-_T = t.TypeVar('_T')
-
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
@@ -413,7 +411,7 @@ class TaskQueueManager:
         return defunct
 
     @staticmethod
-    def _first_arg_of_type(value_type: t.Type[_T], args: t.Sequence) -> _T | None:
+    def _first_arg_of_type[T](value_type: t.Type[T], args: t.Sequence) -> T | None:
         return next((arg for arg in args if isinstance(arg, value_type)), None)
 
     @lock_decorator(attr='_callback_lock')

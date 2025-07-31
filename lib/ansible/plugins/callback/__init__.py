@@ -60,9 +60,6 @@ _YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 _SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
 
 
-_T_callable = t.TypeVar("_T_callable", bound=t.Callable)
-
-
 class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
     def __init__(self, *args, lossy: bool = False, **kwargs):
         super().__init__(*args, **kwargs)

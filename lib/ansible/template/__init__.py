@@ -25,7 +25,6 @@ if _t.TYPE_CHECKING:  # pragma: nocover
 
 _display: _t.Final[_Display] = _Display()
 _UNSET = _t.cast(_t.Any, object())
-_TTrustable = _t.TypeVar('_TTrustable', bound=str | _io.IOBase | _t.TextIO | _t.BinaryIO)
 _TRUSTABLE_TYPES = (str, _io.IOBase)
 
 AnsibleUndefined = _jinja_common.UndefinedMarker
@@ -361,7 +360,7 @@ def generate_ansible_template_vars(
     return _template_vars.generate_ansible_template_vars(path=path, fullpath=fullpath, dest_path=dest_path, include_ansible_managed=True)
 
 
-def trust_as_template(value: _TTrustable) -> _TTrustable:
+def trust_as_template[T: str | _io.IOBase | _t.TextIO | _t.BinaryIO](value: T) -> T:
     """
     Returns `value` tagged as trusted for templating.
     Raises a `TypeError` if `value` is not a supported type.
@@ -385,10 +384,7 @@ def is_trusted_as_template(value: object) -> bool:
     return isinstance(value, _TRUSTABLE_TYPES) and _tags.TrustedAsTemplate.is_tagged_on(value)
 
 
-_TCallable = _t.TypeVar('_TCallable', bound=_t.Callable)
-
-
-def accept_args_markers(plugin: _TCallable) -> _TCallable:
+def accept_args_markers[T: _t.Callable](plugin: T) -> T:
     """
     A decorator to mark a Jinja plugin as capable of handling `Marker` values for its top-level arguments.
     Non-decorated plugin invocation is skipped when a top-level argument is a `Marker`, with the first such value substituted as the plugin result.
@@ -399,7 +395,7 @@ def accept_args_markers(plugin: _TCallable) -> _TCallable:
     return plugin
 
 
-def accept_lazy_markers(plugin: _TCallable) -> _TCallable:
+def accept_lazy_markers[T: _t.Callable](plugin: T) -> T:
     """
     A decorator to mark a Jinja plugin as capable of handling `Marker` values retrieved from lazy containers.
     Non-decorated plugins will trigger a `MarkerError` exception when attempting to retrieve a `Marker` from a lazy container.
