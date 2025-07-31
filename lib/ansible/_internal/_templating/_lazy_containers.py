@@ -567,7 +567,7 @@ class _AnsibleLazyAccessTuple(_AnsibleTaggedTuple, _AnsibleLazyTemplateMixin):
 
     def __getitem__(self, key: t.SupportsIndex | slice, /) -> t.Any:
         if type(key) is slice:  # pylint: disable=unidiomatic-typecheck
-            return _AnsibleLazyAccessTuple(super().__getitem__(key))
+            return _AnsibleLazyAccessTuple(_LazyValueSource(source=super().__getitem__(key), templar=self._templar, lazy_options=self._lazy_options))
 
         value = super().__getitem__(key)
 

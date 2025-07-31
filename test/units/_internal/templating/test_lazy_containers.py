@@ -16,7 +16,8 @@ from ansible._internal._templating._jinja_common import CapturedExceptionMarker,
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible._internal._templating._utils import TemplateContext, LazyOptions
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
-from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin, _AnsibleLazyTemplateList, _AnsibleLazyTemplateDict, _LazyValue
+from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin, _AnsibleLazyTemplateList, _AnsibleLazyTemplateDict, _LazyValue, \
+    _AnsibleLazyAccessTuple
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject
 
 from ...module_utils.datatag.test_datatag import ExampleSingletonTag
@@ -308,6 +309,7 @@ def test_lazy_list_adapter_operators(template, variables, expected) -> None:
     ('list(reversed(l1))', [1], list),  # _AnsibleLazyTemplateList.__reversed__
     ('list(reversed(d1))', ['c', 'a'], list),  # dict.__reversed__ - keys only
     ('l1[:]', [_LazyValue(1)], _AnsibleLazyTemplateList),  # __getitem__ (slice)
+    ('t1[:]', (1,), _AnsibleLazyAccessTuple),  # __getitem__ (slice)
     ('d1["a"]', 1, int),  # __getitem__
     ('d1.get("a")', 1, int),  # get
     ('l1[0]', 1, int),  # __getitem__
@@ -387,6 +389,7 @@ def test_lazy_container_operators(expression: str, expected_value: t.Any, expect
             l1x=[TRUST.tag('{{ one }}')],
             l2=[TRUST.tag('{{ two }}')],
             l2f=l2f,
+            t1=(TRUST.tag('{{ one }}'),),
             d1=dict(a=TRUST.tag('{{ one }}'), c=TRUST.tag('{{ one }}')),
             d1x=dict(a=TRUST.tag('{{ one }}'), c=TRUST.tag('{{ one }}')),
             d2=dict(b=TRUST.tag('{{ two }}'), c=TRUST.tag('{{ two }}')),
@@ -436,6 +439,15 @@ def test_lazy_container_operators(expression: str, expected_value: t.Any, expect
             actual_list_types: list[type] = [type(value) for value in list.__iter__(result)]
 
             assert actual_list_types == expected_list_types
+        elif issubclass(expected_type, tuple):
+            assert isinstance(result, tuple)  # redundant, but assists mypy in understanding the type
+
+            expected_tuple_types = [type(value) for value in expected_value]
+            expected_result = expected_value
+
+            actual_tuple_types: list[type] = [type(value) for value in tuple.__iter__(result)]
+
+            assert actual_tuple_types == expected_tuple_types
         elif issubclass(expected_type, dict):
             assert isinstance(result, dict)  # redundant, but assists mypy in understanding the type
 
