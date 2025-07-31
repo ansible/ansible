@@ -11,9 +11,6 @@ import queue
 import typing as t
 
 
-TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
-
-
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
 
@@ -50,7 +47,7 @@ class WrappedThread(threading.Thread):
         return result
 
 
-def mutex(func: TCallable) -> TCallable:
+def mutex[TCallable: t.Callable[..., t.Any]](func: TCallable) -> TCallable:
     """Enforce exclusive access on a decorated function."""
     lock = threading.Lock()
 

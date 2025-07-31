@@ -144,11 +144,6 @@ from .debugging import (
     DebuggerSettings,
 )
 
-TControllerHostConfig = t.TypeVar('TControllerHostConfig', bound=ControllerHostConfig)
-THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
-TPosixConfig = t.TypeVar('TPosixConfig', bound=PosixConfig)
-TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
-
 
 class ControlGroupError(ApplicationError):
     """Raised when the container host does not have the necessary cgroup support to run a container."""
@@ -239,7 +234,7 @@ class Inventory:
         display.info(f'>>> Inventory\n{inventory_text}', verbosity=3)
 
 
-class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
+class HostProfile[THostConfig: HostConfig](metaclass=abc.ABCMeta):
     """Base class for host profiles."""
 
     def __init__(
@@ -296,7 +291,7 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         return f'{self.__class__.__name__}: {self.name}'
 
 
-class DebuggableProfile(HostProfile[THostConfig], DebuggerProfile, metaclass=abc.ABCMeta):
+class DebuggableProfile[THostConfig: HostConfig](HostProfile[THostConfig], DebuggerProfile, metaclass=abc.ABCMeta):
     """Base class for profiles remote debugging."""
 
     __DEBUGGING_PORT_KEY = 'debugging_port'
@@ -462,7 +457,7 @@ class DebuggableProfile(HostProfile[THostConfig], DebuggerProfile, metaclass=abc
         )
 
 
-class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
+class PosixProfile[TPosixConfig: PosixConfig](HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
     """Base class for POSIX host profiles."""
 
     @property
@@ -484,7 +479,7 @@ class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
         return python
 
 
-class ControllerHostProfile(PosixProfile[TControllerHostConfig], DebuggableProfile[TControllerHostConfig], metaclass=abc.ABCMeta):
+class ControllerHostProfile[T: ControllerHostConfig](PosixProfile[T], DebuggableProfile[T], metaclass=abc.ABCMeta):
     """Base class for profiles usable as a controller."""
 
     @abc.abstractmethod
@@ -496,7 +491,7 @@ class ControllerHostProfile(PosixProfile[TControllerHostConfig], DebuggableProfi
         """Return the working directory for the host."""
 
 
-class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
+class SshTargetHostProfile[THostConfig: HostConfig](HostProfile[THostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles offering SSH connectivity."""
 
     @abc.abstractmethod
@@ -504,7 +499,7 @@ class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
         """Return SSH connection(s) for accessing the host as a target from the controller."""
 
 
-class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
+class RemoteProfile[TRemoteConfig: RemoteConfig](SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
     """Base class for remote instance profiles."""
 
     @property
