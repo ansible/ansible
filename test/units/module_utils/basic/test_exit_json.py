@@ -154,7 +154,6 @@ class TestAnsibleModuleExitValuesRemoved:
 
         assert json.loads(out) == expected
 
-
     def test_record_module_result(self, mocker: pytest_mock.MockerFixture, stdin) -> None:
         """Ensure that the temporary _record_module_result hook is called correctly."""
         recorded_result = None
@@ -168,6 +167,7 @@ class TestAnsibleModuleExitValuesRemoved:
             recorded_result = o
 
         from ansible.module_utils.basic import AnsibleModule
+
         mocker.patch.object(AnsibleModule, '_record_module_result', _record_module_result)
 
         am = AnsibleModule(argument_spec=dict())
