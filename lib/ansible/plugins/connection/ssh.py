@@ -1222,7 +1222,7 @@ class Connection(ConnectionBase):
         # timeout usually fails
         default_timeout = 2 + self.get_option('timeout')
         privilege_esc_timeout = self.get_option("become_timeout")
-        timeout = privilege_esc_timeout if privilege_esc_timeout > default_timeout else default_timeout
+        timeout = privilege_esc_timeout if privilege_esc_timeout and privilege_esc_timeout > default_timeout else default_timeout
 
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
