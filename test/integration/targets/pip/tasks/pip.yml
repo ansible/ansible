@@ -213,6 +213,35 @@
     that:
       - "diff_case_check_mode is not changed"
 
+- name: ensure is a fresh venv
+  file:
+    state: absent
+    name: "{{ remote_tmp_dir }}/emptyvenv"
+
+- name: create an empty venv
+  pip:
+    name: []
+    virtualenv: "{{ remote_tmp_dir }}/emptyvenv"
+  register: empty_venv
+
+- name: check venv was created
+  file:
+    name: "{{ remote_tmp_dir }}/emptyvenv"
+  register: check_empty_venv_exists
+
+- name: try creating an empty venv so it isn't changed
+  pip:
+    name: []
+    virtualenv: "{{ remote_tmp_dir }}/emptyvenv"
+  register: second_empty_venv
+
+- name: assert that the venv was created and has no packages
+  assert:
+    that:
+      - empty_venv.changed
+      - not check_empty_venv_exists.changed
+      - not second_empty_venv.changed
+
 # ansible#23204
 - name: ensure is a fresh virtualenv
   file:
