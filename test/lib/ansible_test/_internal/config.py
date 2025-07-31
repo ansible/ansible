@@ -38,8 +38,6 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
-
 
 class TerminateMode(enum.Enum):
     """When to terminate instances."""
@@ -166,7 +164,7 @@ class EnvironmentConfig(CommonConfig):
         """Host configuration for the targets."""
         return self.host_settings.targets
 
-    def only_target(self, target_type: t.Type[THostConfig]) -> THostConfig:
+    def only_target[THostConfig: HostConfig](self, target_type: t.Type[THostConfig]) -> THostConfig:
         """
         Return the host configuration for the target.
         Requires that there is exactly one target of the specified type.
@@ -183,7 +181,7 @@ class EnvironmentConfig(CommonConfig):
 
         return target
 
-    def only_targets(self, target_type: t.Type[THostConfig]) -> list[THostConfig]:
+    def only_targets[THostConfig: HostConfig](self, target_type: t.Type[THostConfig]) -> list[THostConfig]:
         """
         Return a list of target host configurations.
         Requires that there are one or more targets, all the specified type.
@@ -316,9 +314,6 @@ class IntegrationConfig(TestConfig):
             ansible_config_path = super().get_ansible_config()
 
         return ansible_config_path
-
-
-TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound=IntegrationConfig)
 
 
 class PosixIntegrationConfig(IntegrationConfig):

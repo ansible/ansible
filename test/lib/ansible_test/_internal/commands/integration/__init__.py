@@ -41,7 +41,6 @@ from ...target import (
     walk_integration_targets,
     IntegrationTarget,
     walk_internal_targets,
-    TIntegrationTarget,
     IntegrationTargetType,
 )
 
@@ -50,7 +49,6 @@ from ...config import (
     NetworkIntegrationConfig,
     PosixIntegrationConfig,
     WindowsIntegrationConfig,
-    TIntegrationConfig,
 )
 
 from ...io import (
@@ -131,8 +129,6 @@ from .filters import (
 from .coverage import (
     CoverageManager,
 )
-
-THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 
 
 def generate_dependency_map(integration_targets: list[IntegrationTarget]) -> dict[str, set[IntegrationTarget]]:
@@ -856,7 +852,7 @@ class IntegrationCache(CommonCache):
         return self.get('dependency_map', lambda: generate_dependency_map(self.integration_targets))
 
 
-def filter_profiles_for_target(args: IntegrationConfig, profiles: list[THostProfile], target: IntegrationTarget) -> list[THostProfile]:
+def filter_profiles_for_target[T: HostProfile](args: IntegrationConfig, profiles: list[T], target: IntegrationTarget) -> list[T]:
     """Return a list of profiles after applying target filters."""
     if target.target_type == IntegrationTargetType.CONTROLLER:
         profile_filter = get_target_filter(args, [args.controller], True)
@@ -912,7 +908,7 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
     return exclude
 
 
-def command_integration_filter(
+def command_integration_filter[TIntegrationTarget: IntegrationTarget, TIntegrationConfig: IntegrationConfig](
     args: TIntegrationConfig,
     targets: c.Iterable[TIntegrationTarget],
 ) -> tuple[HostState, tuple[TIntegrationTarget, ...]]:

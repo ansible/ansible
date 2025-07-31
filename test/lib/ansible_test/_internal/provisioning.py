@@ -48,9 +48,6 @@ from .pypi_proxy import (
     run_pypi_proxy,
 )
 
-THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
-TEnvironmentConfig = t.TypeVar('TEnvironmentConfig', bound=EnvironmentConfig)
-
 
 class PrimeContainers(ApplicationError):
     """Exception raised to end execution early after priming containers."""
@@ -91,7 +88,7 @@ class HostState:
         return list(itertools.chain.from_iterable([target.get_controller_target_connections() for
                                                    target in self.target_profiles if isinstance(target, SshTargetHostProfile)]))
 
-    def targets(self, profile_type: t.Type[THostProfile]) -> list[THostProfile]:
+    def targets[THostProfile: HostProfile](self, profile_type: t.Type[THostProfile]) -> list[THostProfile]:
         """The list of target(s), verified to be of the specified type."""
         if not self.target_profiles:
             raise Exception('No target profiles found.')
@@ -101,7 +98,7 @@ class HostState:
         return t.cast(list[THostProfile], self.target_profiles)
 
 
-def prepare_profiles(
+def prepare_profiles[TEnvironmentConfig: EnvironmentConfig](
     args: TEnvironmentConfig,
     targets_use_pypi: bool = False,
     skip_setup: bool = False,

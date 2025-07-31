@@ -57,11 +57,6 @@ from .constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
-C = t.TypeVar('C')
-TBase = t.TypeVar('TBase')
-TKey = t.TypeVar('TKey')
-TValue = t.TypeVar('TValue')
-
 PYTHON_PATHS: dict[str, str] = {}
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
@@ -180,7 +175,7 @@ def is_valid_identifier(value: str) -> bool:
     return value.isidentifier() and not keyword.iskeyword(value)
 
 
-def cache(func: c.Callable[[], TValue]) -> c.Callable[[], TValue]:
+def cache[TValue](func: c.Callable[[], TValue]) -> c.Callable[[], TValue]:
     """Enforce exclusive access on a decorated function and cache the result."""
     storage: dict[None, TValue] = {}
     sentinel = object()
@@ -313,7 +308,7 @@ def read_lines_without_comments(path: str, remove_blank_lines: bool = False, opt
     return lines
 
 
-def exclude_none_values(data: dict[TKey, t.Optional[TValue]]) -> dict[TKey, TValue]:
+def exclude_none_values[TKey, TValue](data: dict[TKey, t.Optional[TValue]]) -> dict[TKey, TValue]:
     """Return the provided dictionary with any None values excluded."""
     return dict((key, value) for key, value in data.items() if value is not None)
 
@@ -1058,7 +1053,7 @@ def format_command_output(stdout: str | None, stderr: str | None) -> str:
     return message
 
 
-def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
+def retry[T](func: t.Callable[..., T], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> T:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
@@ -1091,7 +1086,7 @@ def parse_to_list_of_dict(pattern: str, value: str) -> list[dict[str, str]]:
     return matched
 
 
-def get_subclasses(class_type: t.Type[C]) -> list[t.Type[C]]:
+def get_subclasses[C](class_type: t.Type[C]) -> list[t.Type[C]]:
     """Returns a list of types that are concrete subclasses of the given type."""
     subclasses: set[t.Type[C]] = set()
     queue: list[t.Type[C]] = [class_type]
@@ -1167,7 +1162,7 @@ def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
         load_module(module_path, name)
 
 
-def load_plugins(base_type: t.Type[C], database: dict[str, t.Type[C]]) -> None:
+def load_plugins[C](base_type: t.Type[C], database: dict[str, t.Type[C]]) -> None:
     """
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
@@ -1194,19 +1189,19 @@ def sanitize_host_name(name: str) -> str:
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
 
-def get_generic_type(base_type: t.Type, generic_base_type: t.Type[TValue]) -> t.Optional[t.Type[TValue]]:
+def get_generic_type[TValue](base_type: t.Type, generic_base_type: t.Type[TValue]) -> t.Optional[t.Type[TValue]]:
     """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
     # noinspection PyUnresolvedReferences
     type_arg = t.get_args(base_type.__orig_bases__[0])[0]
     return None if isinstance(type_arg, generic_base_type) else type_arg
 
 
-def get_type_associations(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> list[tuple[t.Type[TValue], t.Type[TBase]]]:
+def get_type_associations[TBase, TValue](base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> list[tuple[t.Type[TValue], t.Type[TBase]]]:
     """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
     return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
 
 
-def get_type_map(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> dict[t.Type[TValue], t.Type[TBase]]:
+def get_type_map[TBase, TValue](base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> dict[t.Type[TValue], t.Type[TBase]]:
     """Create and return a mapping of generic_base_type derived types to base_type derived types."""
     return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
 
@@ -1227,7 +1222,7 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     return expected_executable
 
 
-def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
+def type_guard[C](sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
     """
     Raises an exception if any item in the given sequence does not match the specified guard type.
     Use with assert so that type checkers are aware of the type guard.

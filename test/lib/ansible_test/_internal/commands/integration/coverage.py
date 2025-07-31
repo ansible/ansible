@@ -79,10 +79,8 @@ from ...inventory import (
     create_posix_inventory,
 )
 
-THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 
-
-class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
+class CoverageHandler[THostConfig: HostConfig](metaclass=abc.ABCMeta):
     """Base class for configuring hosts for integration test code coverage."""
 
     def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
