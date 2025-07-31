@@ -208,6 +208,8 @@ options:
         packages to install (because dependencies between the downgraded
         package and others can cause changes to the packages which were
         in the earlier transaction).
+      - Since this feature is not provided by C(dnf) itself but by M(ansible.builtin.dnf) module,
+        using this in combination with wildcard characters in O(name) may result in an unexpected results.
     type: bool
     default: "no"
     version_added: "2.7"
@@ -701,72 +703,56 @@ class DnfModule(YumDnf):
         self.module.exit_json(msg="", results=results)
 
     def _is_installed(self, pkg):
-        installed_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed()
-        if dnf.util.is_glob_pattern(pkg):
-            available_query = dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).available()
-            return not (
-                {p.name for p in available_query} - {p.name for p in installed_query}
-            )
-        else:
-            return bool(installed_query)
+        return bool(dnf.subject.Subject(pkg).get_best_query(sack=self.base.sack).installed())
 
     def _is_newer_version_installed(self, pkg_spec):
+        # expects a versioned package spec
         try:
             if isinstance(pkg_spec, dnf.package.Package):
                 installed = sorted(self.base.sack.query().installed().filter(name=pkg_spec.name, arch=pkg_spec.arch))[-1]
                 return installed.evr_gt(pkg_spec)
             else:
-                available = dnf.subject.Subject(pkg_spec).get_best_query(sack=self.base.sack).available()
-                installed = self.base.sack.query().installed().filter(name=available[0].name)
-                for arch in sorted(set(p.arch for p in installed)):  # select only from already-installed arches for this case
-                    installed_pkg = sorted(installed.filter(arch=arch))[-1]
-                    try:
-                        available_pkg = sorted(available.filter(arch=arch))[-1]
-                    except IndexError:
-                        continue  # nothing currently available for this arch; keep going
-                    if installed_pkg.evr_gt(available_pkg):
-                        return True
-                return False
+                solution = dnf.subject.Subject(pkg_spec).get_best_solution(self.base.sack)
+                q = solution["query"]
+                if not q or not solution['nevra'] or solution['nevra'].has_just_name():
+                    return False
+                installed = self.base.sack.query().installed().filter(name=solution['nevra'].name)
+                if not installed:
+                    return False
+                return installed[0].evr_gt(q[0])
         except IndexError:
             return False
 
     def _mark_package_install(self, pkg_spec, upgrade=False):
         """Mark the package for install."""
-        is_newer_version_installed = self._is_newer_version_installed(pkg_spec)
-        is_installed = self._is_installed(pkg_spec)
         msg = ''
         try:
-            if is_newer_version_installed:
+            if dnf.util.is_glob_pattern(pkg_spec):
+                # Special case for package specs that contain glob characters.
+                # For these we skip `is_installed` and `is_newer_version_installed` tests that allow for the
+                # allow_downgrade feature and pass the package specs to dnf.
+                # Since allow_downgrade is not available in dnf and while it is relatively easy to implement it for
+                # package specs that evaluate to a single package, trying to mimic what would the dnf machinery do
+                # for glob package specs and then filtering those for allow_downgrade appears to always
+                # result in naive/inferior solution.
+                # NOTE this has historically never worked even before https://github.com/ansible/ansible/pull/82725
+                # where our (buggy) custom code ignored wildcards for the installed checks.
+                # TODO reasearch how feasible it is to implement the above
+                if upgrade:
+                    # for upgrade we pass the spec to both upgrade and install, to satisfy both available and installed
+                    # packages evaluated from the glob spec
+                    try:
+                        self.base.upgrade(pkg_spec)
+                    except dnf.exceptions.PackagesNotInstalledError:
+                        pass
+                self.base.install(pkg_spec, strict=self.base.conf.strict)
+            elif self._is_newer_version_installed(pkg_spec):
                 if self.allow_downgrade:
-                    # dnf only does allow_downgrade, we have to handle this ourselves
-                    # because it allows a possibility for non-idempotent transactions
-                    # on a system's package set (pending the yum repo has many old
-                    # NVRs indexed)
-                    if upgrade:
-                        if is_installed:  # Case 1
-                            # TODO: Is this case reachable?
-                            #
-                            # _is_installed() demands a name (*not* NVR) or else is always False
-                            # (wildcards are treated literally).
-                            #
-                            # Meanwhile, _is_newer_version_installed() demands something versioned
-                            # or else is always false.
-                            #
-                            # I fail to see how they can both be true at the same time for any
-                            # given pkg_spec. -re
-                            self.base.upgrade(pkg_spec)
-                        else:  # Case 2
-                            self.base.install(pkg_spec, strict=self.base.conf.strict)
-                    else:  # Case 3
-                        self.base.install(pkg_spec, strict=self.base.conf.strict)
-                else:  # Case 4, Nothing to do, report back
-                    pass
-            elif is_installed:  # A potentially older (or same) version is installed
-                if upgrade:  # Case 5
+                    self.base.install(pkg_spec, strict=self.base.conf.strict)
+            elif self._is_installed(pkg_spec):
+                if upgrade:
                     self.base.upgrade(pkg_spec)
-                else:  # Case 6, Nothing to do, report back
-                    pass
-            else:  # Case 7, The package is not installed, simply install it
+            else:
                 self.base.install(pkg_spec, strict=self.base.conf.strict)
         except dnf.exceptions.MarkingError as e:
             msg = "No package {0} available.".format(pkg_spec)

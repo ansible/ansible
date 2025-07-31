@@ -178,6 +178,8 @@ options:
         packages to install (because dependencies between the downgraded
         package and others can cause changes to the packages which were
         in the earlier transaction).
+      - Since this feature is not provided by C(dnf5) itself but by M(ansible.builtin.dnf5) module,
+        using this in combination with wildcard characters in O(name) may result in an unexpected results.
     type: bool
     default: "no"
   download_only:
@@ -362,7 +364,7 @@ libdnf5 = None
 LIBDNF5_ERRORS = RuntimeError
 
 
-def is_installed(base, spec):
+def get_resolve_spec_settings():
     settings = libdnf5.base.ResolveSpecSettings()
     try:
         settings.set_group_with_name(True)
@@ -388,47 +390,34 @@ def is_installed(base, spec):
         settings.group_with_name = True
         settings.with_binaries = False
         settings.with_provides = False
+    return settings
+
+
+def is_installed(base, spec):
+    settings = get_resolve_spec_settings()
 
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
     match, nevra = installed_query.resolve_pkg_spec(spec, settings, True)
-
-    # FIXME use `is_glob_pattern` function when available:
-    # https://github.com/rpm-software-management/dnf5/issues/1563
-    glob_patterns = set("*[?")
-    if any(set(char) & glob_patterns for char in spec):
-        available_query = libdnf5.rpm.PackageQuery(base)
-        available_query.filter_available()
-        available_query.resolve_pkg_spec(spec, settings, True)
-
-        return not (
-            {p.get_name() for p in available_query} - {p.get_name() for p in installed_query}
-        )
-    else:
-        return match
+    return match
 
 
 def is_newer_version_installed(base, spec):
-    # FIXME investigate whether this function can be replaced by dnf5's allow_downgrade option
+    # expects a versioned package spec
     if "/" in spec:
         spec = spec.split("/")[-1]
         if spec.endswith(".rpm"):
             spec = spec[:-4]
 
-    try:
-        spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except LIBDNF5_ERRORS:
+    settings = get_resolve_spec_settings()
+    match, spec_nevra = libdnf5.rpm.PackageQuery(base).resolve_pkg_spec(spec, settings, True)
+    if not match or spec_nevra.has_just_name():
         return False
-    except StopIteration:
-        return False
-
-    spec_version = spec_nevra.get_version()
-    if not spec_version:
-        return False
+    spec_name = spec_nevra.get_name()
 
     installed = libdnf5.rpm.PackageQuery(base)
     installed.filter_installed()
-    installed.filter_name([spec_nevra.get_name()])
+    installed.filter_name([spec_name])
     installed.filter_latest_evr()
     try:
         installed_package = list(installed)[-1]
@@ -436,8 +425,8 @@ def is_newer_version_installed(base, spec):
         return False
 
     target = libdnf5.rpm.PackageQuery(base)
-    target.filter_name([spec_nevra.get_name()])
-    target.filter_version([spec_version])
+    target.filter_name([spec_name])
+    target.filter_version([spec_nevra.get_version()])
     spec_release = spec_nevra.get_release()
     if spec_release:
         target.filter_release([spec_release])
@@ -719,8 +708,26 @@ class Dnf5Module(YumDnf):
             goal.add_rpm_upgrade(settings)
         elif self.state in {"installed", "present", "latest"}:
             upgrade = self.state == "latest"
+            # FIXME use `is_glob_pattern` function when available:
+            # https://github.com/rpm-software-management/dnf5/issues/1563
+            glob_patterns = set("*[?")
             for spec in self.names:
-                if is_newer_version_installed(base, spec):
+                if any(set(char) & glob_patterns for char in spec):
+                    # Special case for package specs that contain glob characters.
+                    # For these we skip `is_installed` and `is_newer_version_installed` tests that allow for the
+                    # allow_downgrade feature and pass the package specs to dnf.
+                    # Since allow_downgrade is not available in dnf and while it is relatively easy to implement it for
+                    # package specs that evaluate to a single package, trying to mimic what would the dnf machinery do
+                    # for glob package specs and then filtering those for allow_downgrade appears to always
+                    # result in naive/inferior solution.
+                    # TODO reasearch how feasible it is to implement the above
+                    if upgrade:
+                        # for upgrade we pass the spec to both upgrade and install, to satisfy both available and installed
+                        # packages evaluated from the glob spec
+                        goal.add_upgrade(spec, settings)
+                    if not self.update_only:
+                        goal.add_install(spec, settings)
+                elif is_newer_version_installed(base, spec):
                     if self.allow_downgrade:
                         goal.add_install(spec, settings)
                 elif is_installed(base, spec):
