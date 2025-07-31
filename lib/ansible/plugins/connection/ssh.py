@@ -409,6 +409,19 @@ DOCUMENTATION = """
           - {key: verbosity, section: ssh_connection}
         vars:
           - name: ansible_ssh_verbosity
+      become_timeout:
+            description: Timeout for privilege escalation operations
+            default: 10
+            type: int
+            env:
+              - name: ANSIBLE_BECOME_TIMEOUT
+            ini:
+              - key: become_timeout
+                section: defaults
+              - key: become_timeout
+                section: ssh_connection
+            vars:
+              - name: ansible_become_timeout
 """
 
 import collections.abc as c
@@ -1207,7 +1220,10 @@ class Connection(ConnectionBase):
         # select timeout should be longer than the connect timeout, otherwise
         # they will race each other when we can't connect, and the connect
         # timeout usually fails
-        timeout = 2 + self.get_option('timeout')
+        default_timeout = 2 + self.get_option('timeout')
+        privilege_esc_timeout = self.get_option("become_timeout")
+        timeout = privilege_esc_timeout if privilege_esc_timeout > default_timeout else default_timeout
+
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 

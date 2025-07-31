@@ -181,6 +181,8 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_pass=('ansible_become_password', 'ansible_become_pass'),
     become_exe=('ansible_become_exe', ),
     become_flags=('ansible_become_flags', ),
+    become_timeout=('ansible_become_timeout', 'become_timeout'),
+
 )
 
 # POPULATE SETTINGS FROM CONFIG ###

@@ -469,6 +469,25 @@ class TestSSHConnectionRun(object):
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is False
 
+    def test_become_timeout(self):
+        self.pc.prompt = b'Password:'
+        self.pc.become = True
+        self.pc.success_key = 'BECOME-SUCCESS-abcdefg'
+        self.conn.become.prompt = b'Password:'
+        self.conn.become._id = 'abcdefg'
+        self.conn._examine_output.side_effect = lambda x, s: (b'', b'')
+        self.conn.BECOME_TIMEOUT = 10
+        self.mock_popen_res.poll.return_value = None
+        self.mock_popen_res.stdout.read.return_value = b''
+        self.mock_popen_res.stderr.read.return_value = b''
+        self.mock_selector.select.return_value = []
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        with pytest.raises(AnsibleError) as excinfo:
+            self.conn._run("ssh", "some data")
+
+        assert "BECOME_TIMEOUT" in str(excinfo.value) or "timeout" in str(excinfo.value).lower()
+
 
 @pytest.mark.usefixtures('mock_run_env')
 class TestSSHConnectionRetries(object):

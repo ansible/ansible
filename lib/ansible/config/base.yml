@@ -2247,3 +2247,11 @@ _Z_TEST_ENTRY_2:
   ini:
     - section: testing
       key: valid2
+BECOME_TIMEOUT:
+  name: Connection timeout
+  default: 10
+  description: This is the default timeout for privilege escalation operations
+  env: [{ name: ANSIBLE_BECOME_TIMEOUT }]
+  ini:
+    - { key: become_timeout, section: defaults }
+  type: integer
