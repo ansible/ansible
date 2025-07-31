@@ -89,4 +89,4 @@ class GlobalCLIArgs(CLIArgs, metaclass=_ABCSingleton):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "binary_type", "text_type", "add_metaclass")
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type", "add_metaclass")

@@ -290,4 +290,4 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "binary_type", "text_type", "iteritems")
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type", "iteritems")

@@ -358,4 +358,4 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "string_types")
+    return _no_six.deprecate(importable_name, __name__, "string_types")

@@ -1284,4 +1284,4 @@ _report_config_warnings(_deprecator.ANSIBLE_CORE_DEPRECATOR)
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "text_type")
+    return _no_six.deprecate(importable_name, __name__, "text_type")

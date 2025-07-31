@@ -930,4 +930,4 @@ def remove_values(value, no_log_strings):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "binary_type", "text_type", "integer_types", "string_types", "PY2", "PY3")
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type", "integer_types", "string_types", "PY2", "PY3")

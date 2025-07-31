@@ -79,4 +79,4 @@ def to_unsafe_text(*args, **kwargs):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "binary_type", "text_type")
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type")

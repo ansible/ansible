@@ -50,4 +50,4 @@ def deduplicate_list(original_list):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "string_types")
+    return _no_six.deprecate(importable_name, __name__, "string_types")

@@ -204,4 +204,4 @@ class Connection(object):
 
 
 def __getattr__(importable_name):
-    return _no_six.deprecate(importable_name, "iteritems")
+    return _no_six.deprecate(importable_name, __name__, "iteritems")
