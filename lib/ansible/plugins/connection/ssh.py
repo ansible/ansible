@@ -413,8 +413,8 @@ DOCUMENTATION = """
         version_added: '2.20'
         default: 10
         type: int
-        description: 
-          - Timeout for privilege escalation operations
+        description:
+            - Timeout for privilege escalation operations
         env:
             - name: ANSIBLE_BECOME_TIMEOUT
         ini:
