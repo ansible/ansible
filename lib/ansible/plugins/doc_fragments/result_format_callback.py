@@ -30,6 +30,9 @@ class ModuleDocFragment(object):
         name: Indentation of the result
         description:
           - Allows to configure indentation for YAML and verbose/pretty JSON.
+          - Please note that for O(result_format=yaml), only values between 2 and 9 will be handled as expected by PyYAML.
+            If indentation is set to 1, or to 10 or larger, the first level of indentation will be used,
+            but all further indentations will be by 2 spaces.
         type: int
         default: 4
         env:
