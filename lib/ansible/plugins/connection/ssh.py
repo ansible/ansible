@@ -411,9 +411,10 @@ DOCUMENTATION = """
           - name: ansible_ssh_verbosity
       become_timeout:
         version_added: '2.20'
-        description: Timeout for privilege escalation operations
         default: 10
         type: int
+        description: 
+          - Timeout for privilege escalation operations
         env:
             - name: ANSIBLE_BECOME_TIMEOUT
         ini:
