@@ -2248,6 +2248,7 @@ _Z_TEST_ENTRY_2:
     - section: testing
       key: valid2
 BECOME_TIMEOUT:
+  version_added: '2.20'
   name: Connection timeout
   default: 10
   description: This is the default timeout for privilege escalation operations

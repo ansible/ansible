@@ -410,18 +410,19 @@ DOCUMENTATION = """
         vars:
           - name: ansible_ssh_verbosity
       become_timeout:
-            description: Timeout for privilege escalation operations
-            default: 10
-            type: int
-            env:
-              - name: ANSIBLE_BECOME_TIMEOUT
-            ini:
-              - key: become_timeout
-                section: defaults
-              - key: become_timeout
-                section: ssh_connection
-            vars:
-              - name: ansible_become_timeout
+        version_added: '2.20'
+        description: Timeout for privilege escalation operations
+        default: 10
+        type: int
+        env:
+            - name: ANSIBLE_BECOME_TIMEOUT
+        ini:
+            - key: become_timeout
+            section: defaults
+            - key: become_timeout
+            section: ssh_connection
+        vars:
+            - name: ansible_become_timeout
 """
 
 import collections.abc as c
