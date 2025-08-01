@@ -1,0 +1,47 @@
+- name: Ensure htop is not present
+  package:
+    name: htop
+    state: absent
+  become: true
+  ignore_errors: true
+
+- name: Install htop via glob using dnf5
+  dnf5:
+    name: "htop*"
+    state: present
+  become: true
+  when: dnf5
+
+- name: Install htop via glob using dnf
+  dnf:
+    name: "htop*"
+    state: present
+  become: true
+  when: not dnf5
+
+- name: Verify htop is installed
+  command: rpm -q htop
+  register: htop_check
+  changed_when: false
+  failed_when: htop_check.rc != 0
+
+- name: Remove htop via glob using dnf5
+  dnf5:
+    name: "htop*"
+    state: absent
+  become: true
+  when: dnf5
+
+- name: Remove htop via glob using dnf
+  dnf:
+    name: "htop*"
+    state: absent
+  become: true
+  when: not dnf5
+
+- name: Confirm htop is removed
+  command: rpm -q htop
+  register: htop_removed
+  changed_when: false
+  failed_when: htop_removed.rc == 0
+

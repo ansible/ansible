@@ -708,11 +708,8 @@ class Dnf5Module(YumDnf):
             goal.add_rpm_upgrade(settings)
         elif self.state in {"installed", "present", "latest"}:
             upgrade = self.state == "latest"
-            # FIXME use `is_glob_pattern` function when available:
-            # https://github.com/rpm-software-management/dnf5/issues/1563
-            glob_patterns = set("*[?")
             for spec in self.names:
-                if any(set(char) & glob_patterns for char in spec):
+                if libdnf5.utils.is_glob_pattern(spec):
                     # Special case for package specs that contain glob characters.
                     # For these we skip `is_installed` and `is_newer_version_installed` tests that allow for the
                     # allow_downgrade feature and pass the package specs to dnf.
@@ -727,17 +724,17 @@ class Dnf5Module(YumDnf):
                         goal.add_upgrade(spec, settings)
                     if not self.update_only:
                         goal.add_install(spec, settings)
-                elif is_newer_version_installed(base, spec):
-                    if self.allow_downgrade:
-                        goal.add_install(spec, settings)
-                elif is_installed(base, spec):
-                    if upgrade:
-                        goal.add_upgrade(spec, settings)
-                else:
-                    if self.update_only:
-                        results.append("Packages providing {} not installed due to update_only specified".format(spec))
+                    elif is_newer_version_installed(base, spec):
+                        if self.allow_downgrade:
+                            goal.add_install(spec, settings)
+                    elif is_installed(base, spec):
+                        if upgrade:
+                            goal.add_upgrade(spec, settings)
                     else:
-                        goal.add_install(spec, settings)
+                        if self.update_only:
+                            results.append("Packages providing {} not installed due to update_only specified".format(spec))
+                        else:
+                            goal.add_install(spec, settings)
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
                 goal.add_remove(spec, settings)

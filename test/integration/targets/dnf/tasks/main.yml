@@ -40,6 +40,7 @@
     - include_tasks: repo.yml
     - include_tasks: dnf_group_remove.yml
     - include_tasks: dnfinstallroot.yml
+    - include_tasks: is_glob_pattern.yml
     - include_tasks: logging.yml
     - include_tasks: cacheonly.yml
     - include_tasks: multilib.yml
