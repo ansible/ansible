@@ -418,10 +418,8 @@ DOCUMENTATION = """
         env:
             - name: ANSIBLE_BECOME_TIMEOUT
         ini:
-            - key: become_timeout
-            section: defaults
-            - key: become_timeout
-            section: ssh_connection
+            - { key: become_timeout, section: defaults }
+            - { key: become_timeout, section: ssh_connection }
         vars:
             - name: ansible_become_timeout
 """
