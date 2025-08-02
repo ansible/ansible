@@ -411,7 +411,7 @@ DOCUMENTATION = """
           - name: ansible_ssh_verbosity
       become_timeout:
         version_added: '2.20'
-        default: 10
+        default: ~
         type: int
         description:
             - Timeout for privilege escalation operations
@@ -1222,6 +1222,8 @@ class Connection(ConnectionBase):
         # timeout usually fails
         default_timeout = 2 + self.get_option('timeout')
         become_timeout = self.get_option("become_timeout")
+
+        print("become timeout: {become_timeout}")
         timeout = become_timeout if become_timeout and become_timeout > default_timeout else default_timeout
 
         for fd in (p.stdout, p.stderr):
