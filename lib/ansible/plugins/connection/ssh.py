@@ -1223,7 +1223,6 @@ class Connection(ConnectionBase):
         default_timeout = 2 + self.get_option('timeout')
         become_timeout = self.get_option("become_timeout")
 
-        print("become timeout: {become_timeout}")
         timeout = become_timeout if become_timeout and become_timeout > default_timeout else default_timeout
 
         for fd in (p.stdout, p.stderr):
