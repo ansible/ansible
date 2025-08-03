@@ -225,9 +225,8 @@ def load_options_vars(version):
                  'skip_tags': 'skip_tags',
                  'subset': 'limit',
                  'tags': 'run_tags',
-                 'verbosity': 'verbosity', 
+                 'verbosity': 'verbosity',
                  'become_timeout': 'become_timeout'}
-
         for attr, alias in attrs.items():
             opt = context.CLIARGS.get(attr)
             if opt is not None:
