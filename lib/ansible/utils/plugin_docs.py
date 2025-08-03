@@ -172,23 +172,17 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
 
         real_fragment_name = getattr(fragment_class, 'ansible_name')
         real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''
-        add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
+        add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module, return_docs=(section == 'RETURN'))
 
         if section == 'DOCUMENTATION':
             # notes, seealso, options and attributes entries are specificly merged, but only occur in documentation section
-            if 'notes' in fragment:
-                notes = fragment.pop('notes')
-                if notes:
-                    if 'notes' not in doc:
-                        doc['notes'] = []
-                    doc['notes'].extend(notes)
-
-            if 'seealso' in fragment:
-                seealso = fragment.pop('seealso')
-                if seealso:
-                    if 'seealso' not in doc:
-                        doc['seealso'] = []
-                    doc['seealso'].extend(seealso)
+            for doc_key in ['notes', 'seealso']:
+                if doc_key in fragment:
+                    entries = fragment.pop(doc_key)
+                    if entries:
+                        if doc_key not in doc:
+                            doc[doc_key] = []
+                        doc[doc_key].extend(entries)
 
             if 'options' not in fragment and 'attributes' not in fragment:
                 raise Exception("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
