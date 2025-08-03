@@ -387,7 +387,7 @@ def add_connect_options(parser):
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
     connect_group.add_argument('-T', '--timeout', default=None, type=int, dest='timeout',
                                help="override the connection timeout in seconds (default depends on connection)")
-    connect_group.add_argument('-TBE', '--become-timeout', default=None, type=int, dest='become_timeout',
+    connect_group.add_argument('--become-timeout', default=None, type=int, dest='become_timeout',
                                help="change the become connection timeout in seconds")
     # ssh only
     connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',
