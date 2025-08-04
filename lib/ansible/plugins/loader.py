@@ -517,7 +517,7 @@ class PluginLoader:
                 #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
 
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
+                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'), section='DOCUMENTATION')
 
                     if 'options' in dstring and isinstance(dstring['options'], dict):
                         C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])

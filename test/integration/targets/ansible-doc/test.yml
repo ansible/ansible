@@ -4,6 +4,7 @@
     ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
     ANSIBLE_NOCOLOR: 1
     ANSIBLE_DEPRECATION_WARNINGS: 1
+    ANSIBLE_DOC_FRAGMENT_PLUGINS: "{{ playbook_dir }}/doc_fragments"
   vars:
     # avoid header that has full path and won't work across random paths for tests
     actual_output_clean: '{{ actual_output.splitlines()[1:] }}'
@@ -26,28 +27,26 @@
       register: result
       ignore_errors: true
 
-    - set_fact:
-        actual_output: "{{ result.stdout }}"
-        expected_output: "{{ lookup('file', 'test_docs_suboptions.output') }}"
-
     - assert:
         that:
           - result is succeeded
           - actual_output_clean == expected_output_clean
+      vars:
+        actual_output: "{{ result.stdout }}"
+        expected_output: "{{ lookup('file', 'test_docs_suboptions.output') }}"
 
     - name: module with return docs
       shell: ansible-doc test_docs_returns| tail -n +3
       register: result
       ignore_errors: true
 
-    - set_fact:
-        actual_output: "{{ result.stdout }}"
-        expected_output: "{{ lookup('file', 'test_docs_returns.output') }}"
-
     - assert:
         that:
           - result is succeeded
           - actual_output_clean == expected_output_clean
+      vars:
+        actual_output: "{{ result.stdout }}"
+        expected_output: "{{ lookup('file', 'test_docs_returns.output') }}"
 
     - name: module with broken return docs
       command: ansible-doc test_docs_returns_broken
@@ -58,6 +57,22 @@
         that:
           - result is failed
           - '"module test_docs_returns_broken Missing documentation (or could not parse documentation)" in result.stderr'
+
+    - name: module with return docs with fragments
+      command: ansible-doc test_docs_return_fragments
+      register: result
+      ignore_errors: true
+
+    - name: test fragments work
+      assert:
+        that:
+          - result is success
+          - "'z_last' in actual_output"
+          - "'y_notlast' in actual_output"
+          - actual_output_clean == expected_output_clean
+      vars:
+        actual_output: "{{ result.stdout }}"
+        expected_output: "{{ lookup('file', 'test_docs_return_fragments.output') }}"
 
     - name: non-existent module
       command: ansible-doc test_does_not_exist
