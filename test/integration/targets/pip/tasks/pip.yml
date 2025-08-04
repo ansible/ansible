@@ -592,3 +592,45 @@
         - pip_prereleases is successful
         - pip_prereleases is not changed
         - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'
+
+  - name: Ensure fresh venv
+    pip:
+      name: []
+      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+
+  - name: Check installation of package via git
+    pip:
+      name: "git+https://github.com/bottlepy/bottle.git"
+      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+    check_mode: true
+    register: git_install_to_empty_venv
+
+  - name: Install package via git
+    pip:
+      name: "git+https://github.com/bottlepy/bottle.git"
+      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+
+  - name: Re-check to ensure not changed
+    pip:
+      name: "git+https://github.com/bottlepy/bottle.git"
+      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+    check_mode: true
+    register: reinstall_git_pkg
+
+  - name: Assert that git repo wasn't installed
+    assert:
+      that:
+        - git_install_to_empty_venv is changed
+        - reinstall_git_pkg is not changed
+
+  - name: Install nonsense git repo
+    pip:
+      name: "git+https://notawebsite.tld/doesntexist/doesntexist"
+      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+    check_mode: true
+    register: check_failure_on_bad_repo
+    ignore_errors: true
+
+  - name: Assert failure on nonsense git
+    assert:
+      that: check_failure_on_bad_repo is failed
