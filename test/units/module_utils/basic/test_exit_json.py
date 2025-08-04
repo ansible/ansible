@@ -10,7 +10,7 @@ import datetime
 import typing as t
 
 import pytest
-
+import pytest_mock
 
 EMPTY_INVOCATION: dict[str, dict[str, t.Any]] = {u'module_args': {}}
 DATETIME = datetime.datetime.strptime('2020-07-13 12:50:00', '%Y-%m-%d %H:%M:%S')
@@ -153,3 +153,26 @@ class TestAnsibleModuleExitValuesRemoved:
         out, err = capfd.readouterr()
 
         assert json.loads(out) == expected
+
+    def test_record_module_result(self, mocker: pytest_mock.MockerFixture, stdin) -> None:
+        """Ensure that the temporary _record_module_result hook is called correctly."""
+        recorded_result = None
+
+        expected_result = dict(changed=False, worked="yay")
+
+        def _record_module_result(_self, o: object) -> None:
+            assert isinstance(o, dict)
+
+            nonlocal recorded_result
+            recorded_result = o
+
+        from ansible.module_utils.basic import AnsibleModule
+
+        mocker.patch.object(AnsibleModule, '_record_module_result', _record_module_result)
+
+        am = AnsibleModule(argument_spec=dict())
+
+        with pytest.raises(SystemExit):
+            am.exit_json(**expected_result)
+
+        assert expected_result.items() <= recorded_result.items()
