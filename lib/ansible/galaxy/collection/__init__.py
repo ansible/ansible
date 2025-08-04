@@ -84,7 +84,6 @@ if t.TYPE_CHECKING:
     FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str, int, None]]
     FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
-import ansible
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
@@ -143,8 +142,6 @@ MANIFEST_FILENAME = 'MANIFEST.json'
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
 SIGNATURE_COUNT_RE = r"^(?P<strict>\+)?(?:(?P<count>\d+)|(?P<all>all))$"
-
-_ANSIBLE_PACKAGE_PATH = pathlib.Path(ansible.__file__).parent
 
 
 @dataclass
@@ -1432,12 +1429,9 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
     paths = set()
     for path in files('ansible_collections').glob('*/*/'):
         path = _normalize_collection_path(path)
-        if path.is_relative_to(_ANSIBLE_PACKAGE_PATH):
-            # skip internal path, those collections are not for galaxy use
+        if not path.is_dir():
             continue
-        elif not path.is_dir():
-            continue
-        elif path_filter:
+        if path_filter:
             for pf in path_filter:
                 try:
                     path.relative_to(_normalize_collection_path(pf))

@@ -67,6 +67,7 @@
       - 'list_result.stdout is regex "dev.collection4\s+\*"'
       - 'list_result.stdout is regex "dev.collection5\s+\*"'
       - 'list_result.stdout is regex "dev.collection6\s+\*"'
+      - 'list_result.stdout is not regex "ansible._protomatter\s+.*"'
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
@@ -158,9 +159,8 @@
 - name: Ensure we get the expected error
   assert:
     that:
-      # FIXME: This test is currently incorrect, but not a fix to do in this PR, proper test is the commented out one.
-      - "'{}' in list_result_error.stdout"
-      #- "'None of the provided paths were usable' in list_result_error.stderr"
+      - "'{}' not in list_result_error.stdout"
+      - "'None of the provided paths were usable' in list_result_error.stderr"
 
 - name: install an artifact to the second collections path
   command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng {{ galaxy_verbosity }} -p "{{ galaxy_dir }}/prod"

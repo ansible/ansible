@@ -1674,7 +1674,7 @@ def _configure_collection_loader(prefix_collections_path=None):
 
     # insert the internal ansible._protomatter collection up front
     paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
-    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
+    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH, internal_collections=paths[0])
     finder._install()
 
     # this should succeed now
