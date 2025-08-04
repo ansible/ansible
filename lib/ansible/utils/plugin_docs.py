@@ -238,8 +238,7 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
             add_collection_to_versions_and_dates(data['returndocs'], collection_name, is_module=is_module, return_docs=True)
 
         # add fragments to return
-        if not isinstance(data['returndocs'].get('extends_documentation_fragment'), Mapping):
-            add_fragments(data['returndocs'], filename, fragment_loader=fragment_loader, is_module=is_module, section='RETURN')
+        add_fragments(data['returndocs'], filename, fragment_loader=fragment_loader, is_module=is_module, section='RETURN')
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
 
