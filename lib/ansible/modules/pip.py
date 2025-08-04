@@ -610,6 +610,24 @@ def setup_virtualenv(module, env, chdir, out, err):
         _fail(module, cmd, out, err)
     return out, err, cmd
 
+def _normalize_vcs_packages(module, package_list, pip):
+    packages_to_check = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
+    other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
+
+    if not packages_to_check:
+        return package_list
+    rc, out, err = module.run_command(pip + ['install', ' '.join(packages_to_check), '--dry-run'])
+
+    if rc != 0:
+        module.fail_json(msg=err, rc=rc)
+
+    out_lines = out.splitlines()
+    if "Would install" not in out_lines[-1]:
+        return []
+    else:
+        raw_packages = out_lines[-1].split(" ")[2:]
+        # reconstite valid, versioned Package objects from the pip dry-run output and add them to the saved (non vcs) packages
+        return other_packages + [Package("-".join(pkg.split("-")[:-1]), version_string=pkg.split("-")[-1]) for pkg in raw_packages]
 
 class Package:
     """Python distribution package metadata wrapper.
@@ -845,7 +863,9 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                for package in packages:
+                normalized_package_list = _normalize_vcs_packages(module, packages, pip)
+
+                for package in normalized_package_list:
                     is_present = _is_present(module, package, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
