@@ -6,7 +6,7 @@ import json
 import typing as t
 
 from ansible.module_utils._internal._ansiballz import _extensions
-from ansible.module_utils._internal._ansiballz._extensions import _pydevd, _coverage
+from ansible.module_utils._internal._ansiballz._extensions import _debugpy, _pydevd, _coverage
 from ansible.constants import config
 
 _T = t.TypeVar('_T')
@@ -17,15 +17,18 @@ class ExtensionManager:
 
     def __init__(
         self,
-        debugger: _pydevd.Options | None = None,
+        pydevd: _pydevd.Options | None = None,
+        debugpy: _debugpy.Options | None = None,
         coverage: _coverage.Options | None = None,
     ) -> None:
         options = dict(
-            _pydevd=debugger,
+            _pydevd=pydevd,
+            _debugpy=debugpy,
             _coverage=coverage,
         )
 
-        self._debugger = debugger
+        self._pydevd = pydevd
+        self._debugpy = debugpy
         self._coverage = coverage
         self._extension_names = tuple(name for name, option in options.items() if option)
         self._module_names = tuple(f'{_extensions.__name__}.{name}' for name in self._extension_names)
@@ -35,7 +38,7 @@ class ExtensionManager:
     @property
     def debugger_enabled(self) -> bool:
         """Returns True if the debugger extension is enabled, otherwise False."""
-        return bool(self._debugger)
+        return bool(self._pydevd or self._debugpy)
 
     @property
     def extension_names(self) -> tuple[str, ...]:
@@ -51,10 +54,16 @@ class ExtensionManager:
         """Return the configured extensions and their options."""
         extension_options: dict[str, t.Any] = {}
 
-        if self._debugger:
+        if self._debugpy:
+            extension_options['_debugpy'] = dataclasses.replace(
+                self._debugpy,
+                source_mapping=self._get_source_mapping(self._debugpy.source_mapping),
+            )
+
+        if self._pydevd:
             extension_options['_pydevd'] = dataclasses.replace(
-                self._debugger,
-                source_mapping=self._get_source_mapping(),
+                self._pydevd,
+                source_mapping=self._get_source_mapping(self._pydevd.source_mapping),
             )
 
         if self._coverage:
@@ -64,18 +73,19 @@ class ExtensionManager:
 
         return extensions
 
-    def _get_source_mapping(self) -> dict[str, str]:
+    def _get_source_mapping(self, debugger_mapping: dict[str, str]) -> dict[str, str]:
         """Get the source mapping, adjusting the source root as needed."""
-        if self._debugger.source_mapping:
-            source_mapping = {self._translate_path(key): value for key, value in self.source_mapping.items()}
+        if debugger_mapping:
+            source_mapping = {self._translate_path(key, debugger_mapping): value for key, value in self.source_mapping.items()}
         else:
             source_mapping = self.source_mapping
 
         return source_mapping
 
-    def _translate_path(self, path: str) -> str:
+    @staticmethod
+    def _translate_path(path: str, debugger_mapping: dict[str, str]) -> str:
         """Translate a local path to a foreign path."""
-        for replace, match in self._debugger.source_mapping.items():
+        for replace, match in debugger_mapping.items():
             if path.startswith(match):
                 return replace + path[len(match) :]
 
@@ -85,7 +95,8 @@ class ExtensionManager:
     def create(cls, task_vars: dict[str, object]) -> t.Self:
         """Create an instance using the provided task vars."""
         return cls(
-            debugger=cls._get_options('_ANSIBALLZ_DEBUGGER_CONFIG', _pydevd.Options, task_vars),
+            pydevd=cls._get_options('_ANSIBALLZ_PYDEVD_CONFIG', _pydevd.Options, task_vars),
+            debugpy=cls._get_options('_ANSIBALLZ_DEBUGPY_CONFIG', _debugpy.Options, task_vars),
             coverage=cls._get_options('_ANSIBALLZ_COVERAGE_CONFIG', _coverage.Options, task_vars),
         )
 
