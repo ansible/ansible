@@ -4,6 +4,30 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-08-04
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Improve formatting of generated coverage config file.
+- ansible-test - Replace remote FreeBSD 13.3 with 13.5.
+- ansible-test - Use OS packages to satisfy controller requirements on FreeBSD 13.5 during managed instance bootstrapping.
+
+Bugfixes
+--------
+
+- ansible-test - Always exclude the ``tests/output/`` directory from a collection's code coverage. (https://github.com/ansible/ansible/issues/84244)
+- ansible-test - Limit package install retries during managed remote instance bootstrapping.
+- ansible-test - Use a consistent coverage config for all collection testing.
+- plugins config, get_option_and_origin now correctly displays the value and origin of the option.
+
 v2.18.7
 =======
 
