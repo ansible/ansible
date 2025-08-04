@@ -6,20 +6,25 @@ from __future__ import annotations
 from ansible.module_utils.common import warnings as _warnings
 
 
-def __getattr__(importable_name):
+_mini_six = {
+    "binary_type": bytes,
+    "text_type": str,
+    "PY3": True,
+}
+
+
+def __getattr__(importable_name: str) -> object:
     """Inject import-time deprecation warnings."""
-    help_text = ""
+    help_text: str | None = None
+    importable: object
     if importable_name == "codecs":
         import codecs
         importable = codecs
-    elif importable_name in {"binary_type", "text_type", "PY3"}:
-        from ansible.module_utils import six
-        importable = getattr(six, importable_name)
     elif importable_name in {"to_bytes", "to_native", "to_text"}:
         from ansible.module_utils.common.text import converters
         importable = getattr(converters, importable_name)
         help_text = "Use ansible.module_utils.common.text.converters instead."
-    else:
+    elif (importable := _mini_six.get(importable_name, ...)) is ...:
         raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     _warnings.deprecate(

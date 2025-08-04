@@ -29,7 +29,7 @@ from collections.abc import (  # pylint: disable=unused-import
 from ansible.module_utils.common import warnings as _warnings
 
 
-_warnings().deprecated(
+_warnings.deprecate(
     msg="The `ansible.module_utils.common._collections_compat` module is deprecated.",
     help_text="Use `collections.abc` from the Python standard library instead.",
     version="2.24",

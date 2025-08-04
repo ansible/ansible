@@ -2188,6 +2188,18 @@ def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
 
 
+_mini_six = {
+    "b": lambda s: s.encode("latin-1"),
+    "PY2": False,
+    "PY3": True,
+    "text_type": str,
+    "binary_type": bytes,
+    "string_types": (str,),
+    "integer_types": (int,),
+    "iteritems": lambda d, **kw: iter(d.items(**kw)),
+}
+
+
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
     if importable_name == 'datetime':
@@ -2205,24 +2217,12 @@ def __getattr__(importable_name):
     elif importable_name == 'repeat':
         from itertools import repeat
         importable = repeat
-    elif importable_name in {
-        'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
-        'iteritems', 'string_types', 'text_type',
-    }:
-        import importlib
-        importable = getattr(
-            importlib.import_module('ansible.module_utils.six'),
-            importable_name
-        )
     elif importable_name == 'map':
         importable = map
     elif importable_name == 'shlex_quote':
         importable = shlex.quote
-    else:
-        raise AttributeError(
-            f'cannot import name {importable_name !r} '
-            f"from '{__name__}' ({__file__ !s})"
-        )
+    elif (importable := _mini_six.get(importable_name, ...)) is ...:
+        raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     deprecate(
         msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
