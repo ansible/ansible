@@ -593,7 +593,12 @@
         - pip_prereleases is not changed
         - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'
 
-  - name: Ensure fresh venv with a package
+  - name: Ensure fresh venv
+    file:
+      path: "{{ remote_tmp_dir }}/gitvenv"
+      state: absent
+
+  - name: Create fresh venv with a package
     pip:
       name: q
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
