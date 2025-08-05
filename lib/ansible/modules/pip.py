@@ -870,7 +870,7 @@ def main():
                             if formatted_dep is not None:
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
-                foo = 1
+
                 normalized_package_list = _normalize_vcs_packages(module, packages, pip)
 
                 for package in normalized_package_list:
