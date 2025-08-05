@@ -610,6 +610,7 @@ def setup_virtualenv(module, env, chdir, out, err):
         _fail(module, cmd, out, err)
     return out, err, cmd
 
+
 def _normalize_vcs_packages(module, package_list, pip):
     """Converts vcs url packages to look non-vcs packages using pip --dry-run
        ex: Package(git+https://github.com/bottlepy/bottle.git) -> Package(bottle, version_string=1.0.4-dev1)"""
@@ -627,14 +628,15 @@ def _normalize_vcs_packages(module, package_list, pip):
     if "Would install" not in out_lines[-1]:
         return other_packages
     else:
-        raw_packages = out_lines[-1].split(" ")[2:] # remove "Would install from pip output"
+        raw_packages = out_lines[-1].split(" ")[2:]  # remove "Would install from pip output"
 
         # pip dry-run outputs packages in the form name-with-hyphens-version.version
-        package_objects = [Package("-".join(pkg.split("-")[:-1]), # isolate the pkg name
-                                   version_string=pkg.split("-")[-1]) # isolate the version
+        package_objects = [Package("-".join(pkg.split("-")[:-1]),  # isolate the pkg name
+                                   version_string=pkg.split("-")[-1])  # isolate the version
                            for pkg in raw_packages]
 
         return other_packages + package_objects
+
 
 class Package:
     """Python distribution package metadata wrapper.
