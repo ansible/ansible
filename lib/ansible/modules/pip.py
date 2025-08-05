@@ -612,30 +612,29 @@ def setup_virtualenv(module, env, chdir, out, err):
 
 
 def _normalize_vcs_packages(module, package_list, pip):
-    """Converts vcs url packages to look non-vcs packages using pip --dry-run
+    """Converts vcs url packages to look like non-vcs packages using pip download
        ex: Package(git+https://github.com/bottlepy/bottle.git) -> Package(bottle, version_string=1.0.4-dev1)"""
     vcs_packages = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
     other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
     if not vcs_packages:
         return package_list
-    rc, out, err = module.run_command(pip + ['install', ' '.join(vcs_packages), '--dry-run'])
+
+    tmpdir = tempfile.mkdtemp(dir=module.tmpdir)
+    rc, out, err = module.run_command(pip + ['download', f'--dest={tmpdir}', '--no-deps', ' '.join(vcs_packages)])
 
     if rc != 0:
         module.fail_json(msg=err, rc=rc)
 
     out_lines = out.splitlines()
-    if "Would install" not in out_lines[-1]:
-        return other_packages
-    else:
-        raw_packages = out_lines[-1].split(" ")[2:]  # remove "Would install from pip output"
+    saved_files = [os.path.basename(line.split(" ")[-1]) for line in out_lines if 'Saved' in line]  # Just the file path
+    package_names = [os.path.splitext(name)[0] for name in saved_files]  # Shave off the file extension
 
-        # pip dry-run outputs packages in the form name-with-hyphens-version.version
-        package_objects = [Package("-".join(pkg.split("-")[:-1]),  # isolate the pkg name
-                                   version_string=pkg.split("-")[-1])  # isolate the version
-                           for pkg in raw_packages]
+    package_objects = [Package('-'.join(pkg.split('-')[:-1]),  # isolate the pkg name
+                                version_string=pkg.split('-')[-1])  # isolate the version
+                        for pkg in package_names]
 
-        return other_packages + package_objects
+    return other_packages + package_objects
 
 
 class Package:
@@ -871,7 +870,7 @@ def main():
                             if formatted_dep is not None:
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
-
+                foo = 1
                 normalized_package_list = _normalize_vcs_packages(module, packages, pip)
 
                 for package in normalized_package_list:
