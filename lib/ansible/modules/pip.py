@@ -631,8 +631,8 @@ def _normalize_vcs_packages(module, package_list, pip):
     package_names = [os.path.splitext(name)[0] for name in saved_files]  # Shave off the file extension
 
     package_objects = [Package('-'.join(pkg.split('-')[:-1]),  # isolate the pkg name
-                                version_string=pkg.split('-')[-1])  # isolate the version
-                        for pkg in package_names]
+                               version_string=pkg.split('-')[-1])  # isolate the version
+                       for pkg in package_names]
 
     return other_packages + package_objects
 
