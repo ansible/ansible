@@ -625,11 +625,16 @@ def _normalize_vcs_packages(module, package_list, pip):
 
     out_lines = out.splitlines()
     if "Would install" not in out_lines[-1]:
-        return []
+        return other_packages
     else:
-        raw_packages = out_lines[-1].split(" ")[2:]
-        # reconstitute valid, versioned Package objects from the pip dry-run output and add them to the saved (non vcs) packages
-        return other_packages + [Package("-".join(pkg.split("-")[:-1]), version_string=pkg.split("-")[-1]) for pkg in raw_packages]
+        raw_packages = out_lines[-1].split(" ")[2:] # remove "Would install from pip output"
+
+        # pip dry-run outputs packages in the form name-with-hyphens-version.version
+        package_objects = [Package("-".join(pkg.split("-")[:-1]), # isolate the pkg name
+                                   version_string=pkg.split("-")[-1]) # isolate the version
+                           for pkg in raw_packages]
+
+        return other_packages + package_objects
 
 class Package:
     """Python distribution package metadata wrapper.
