@@ -593,9 +593,9 @@
         - pip_prereleases is not changed
         - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'
 
-  - name: Ensure fresh venv
+  - name: Ensure fresh venv with a package
     pip:
-      name: []
+      name: q
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
 
   - name: Check installation of package via git
@@ -615,12 +615,20 @@
       name: "git+https://github.com/bottlepy/bottle.git"
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
     check_mode: true
+    register: check_reinstall_git_pkg
+
+  - name: Re-install to ensure not changed
+    pip:
+      name: "git+https://github.com/bottlepy/bottle.git"
+      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+    check_mode: true
     register: reinstall_git_pkg
 
   - name: Assert that git repo wasn't installed
     assert:
       that:
         - git_install_to_empty_venv is changed
+        - check_reinstall_git_pkg is not changed
         - reinstall_git_pkg is not changed
 
   - name: Install nonsense git repo
