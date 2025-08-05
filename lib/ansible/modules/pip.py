@@ -611,12 +611,14 @@ def setup_virtualenv(module, env, chdir, out, err):
     return out, err, cmd
 
 def _normalize_vcs_packages(module, package_list, pip):
-    packages_to_check = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
+    """Converts vcs url packages to look non-vcs packages using pip --dry-run
+       ex: Package(git+https://github.com/bottlepy/bottle.git) -> Package(bottle, version_string=1.0.4-dev1)"""
+    vcs_packages = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
     other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
-    if not packages_to_check:
+    if not vcs_packages:
         return package_list
-    rc, out, err = module.run_command(pip + ['install', ' '.join(packages_to_check), '--dry-run'])
+    rc, out, err = module.run_command(pip + ['install', ' '.join(vcs_packages), '--dry-run'])
 
     if rc != 0:
         module.fail_json(msg=err, rc=rc)
@@ -626,7 +628,7 @@ def _normalize_vcs_packages(module, package_list, pip):
         return []
     else:
         raw_packages = out_lines[-1].split(" ")[2:]
-        # reconstite valid, versioned Package objects from the pip dry-run output and add them to the saved (non vcs) packages
+        # reconstitute valid, versioned Package objects from the pip dry-run output and add them to the saved (non vcs) packages
         return other_packages + [Package("-".join(pkg.split("-")[:-1]), version_string=pkg.split("-")[-1]) for pkg in raw_packages]
 
 class Package:
