@@ -126,9 +126,10 @@ options:
   encoding:
     description:
       - The character set in which the target file is encoded.
+      - For a list of available built-in encodings, see U(https://docs.python.org/3/library/codecs.html#standard-encodings)
     type: str
     default: utf-8
-    version_added: "2.19"
+    version_added: "2.20"
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
