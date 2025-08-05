@@ -1,0 +1,2 @@
+bugfixes:
+  - pip - Fix pip module output in check_mode to properly handle vcs packages
