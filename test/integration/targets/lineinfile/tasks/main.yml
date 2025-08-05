@@ -1469,6 +1469,31 @@
       - result2.stat.checksum == '1ac77f83a69c53b54fc16111694abe07e5a6703b'
 
 
+- name: encoding - attempt to write the same line again.
+  lineinfile:
+    line: "Another test line."
+    state: present
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    encoding: cp273
+  register: result1
+
+- name: assert that the file was not changed.
+  assert:
+    that:
+      - result1 is not changed
+
+- name: stat the file.
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: result2
+
+- name: assert the file content is as expected.
+  assert:
+    that:
+      - result2.stat.exists
+      - result2.stat.checksum == '1ac77f83a69c53b54fc16111694abe07e5a6703b'
+
+
 - name: encoding - write a line before regex match
   lineinfile:
     line: "In between test line."
