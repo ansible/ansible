@@ -318,15 +318,15 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
             lines = f.readlines()
 
     if module._diff:
-        diff['before'] = to_native(''.join(lines))
+        diff['before'] = ''.join(lines)
 
     if regexp is not None:
-        re_m = re.compile(to_text(regexp, errors='surrogate_or_strict'))
+        re_m = re.compile(regexp)
 
     if insertafter not in (None, 'BOF', 'EOF'):
-        re_ins = re.compile(to_text(insertafter, errors='surrogate_or_strict'))
+        re_ins = re.compile(insertafter)
     elif insertbefore not in (None, 'BOF'):
-        re_ins = re.compile(to_text(insertbefore, errors='surrogate_or_strict'))
+        re_ins = re.compile(insertbefore)
     else:
         re_ins = None
 
@@ -335,7 +335,6 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
     index = [-1, -1]
     match = None
     exact_line_match = False
-    line = to_text(line, errors='surrogate_or_strict')
 
     # The module's doc says
     # "If regular expressions are passed to both regexp and
@@ -358,7 +357,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
     # 2. Second check that there is no match for search_string:
     if search_string is not None:
         for lineno, cur_line in enumerate(lines):
-            match_found = to_text(search_string, errors='surrogate_or_strict') in cur_line
+            match_found = search_string in cur_line
             if match_found:
                 index[0] = lineno
                 match = match_found
@@ -388,7 +387,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
 
     msg = ''
     changed = False
-    linesep = to_text(os.linesep, errors='surrogate_or_strict')
+    linesep = os.linesep
     # Exact line or Regexp matched a line in the file
     if index[0] != -1:
         if backrefs and match:
@@ -485,7 +484,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
         changed = True
 
     if module._diff:
-        diff['after'] = to_native(''.join(lines))
+        diff['after'] = ''.join(lines)
 
     backupdest = ""
     if changed and not module.check_mode:
@@ -524,19 +523,18 @@ def absent(module, dest, regexp, search_string, line, backup):
         lines = f.readlines()
 
     if module._diff:
-        diff['before'] = to_native(''.join(lines))
+        diff['before'] = ''.join(lines)
 
     if regexp is not None:
-        re_c = re.compile(to_text(regexp, errors='surrogate_or_strict'))
+        re_c = re.compile(regexp)
     found = []
 
-    line = to_text(line, errors='surrogate_or_strict')
 
     def matcher(cur_line):
         if regexp is not None:
             match_found = re_c.search(cur_line)
         elif search_string is not None:
-            match_found = to_text(search_string, errors='surrogate_or_strict') in cur_line
+            match_found = search_string in cur_line
         else:
             match_found = line == cur_line.rstrip('\r\n')
         if match_found:
@@ -547,7 +545,7 @@ def absent(module, dest, regexp, search_string, line, backup):
     changed = len(found) > 0
 
     if module._diff:
-        diff['after'] = to_native(''.join(lines))
+        diff['after'] = ''.join(lines)
 
     backupdest = ""
     if changed and not module.check_mode:
