@@ -529,7 +529,6 @@ def absent(module, dest, regexp, search_string, line, backup):
         re_c = re.compile(regexp)
     found = []
 
-
     def matcher(cur_line):
         if regexp is not None:
             match_found = re_c.search(cur_line)
