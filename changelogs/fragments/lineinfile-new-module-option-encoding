@@ -1,0 +1,2 @@
+minor_changes:
+  - lineinfile - add new module option ``encoding`` to support files in encodings other than UTF-8 (https://github.com/ansible/ansible/pull/84999).
