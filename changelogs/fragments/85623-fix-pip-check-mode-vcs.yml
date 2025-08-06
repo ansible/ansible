@@ -1,2 +1,2 @@
 bugfixes:
-  - pip - Fix pip module output in check_mode to properly handle vcs packages
+  - pip - Fix output in check_mode to properly handle VCS packages (https://github.com/ansible/ansible/issues/85592).
