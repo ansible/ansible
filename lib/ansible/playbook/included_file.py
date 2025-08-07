@@ -203,7 +203,7 @@ class IncludedFile:
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:
                                 from_key = from_arg.removesuffix('_from')
-                                new_task._from_files[from_key] = include_args.pop(from_arg)
+                                new_task._from_files[from_key] = include_args.get(from_arg)
 
                         inc_file = IncludedFile(role_name, include_args, special_vars, new_task, is_role=True)
 

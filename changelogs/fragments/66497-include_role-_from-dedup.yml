@@ -1,0 +1,2 @@
+bugfixes:
+  - include_role - allow host specific values in all ``*_from`` arguments (https://github.com/ansible/ansible/issues/66497)

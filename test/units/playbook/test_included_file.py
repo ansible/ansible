@@ -312,8 +312,8 @@ def test_process_include_simulate_free_block_role_tasks(mock_iterator, mock_vari
     assert res[0]._hosts == [host1]
     assert res[1]._hosts == [host2]
 
-    assert res[0]._args == {}
-    assert res[1]._args == {}
+    assert res[0]._args == {'tasks_from': 'task1.yml'}
+    assert res[1]._args == {'tasks_from': 'task2.yml'}
 
     assert res[0]._vars == {}
     assert res[1]._vars == {}
