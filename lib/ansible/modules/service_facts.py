@@ -232,7 +232,11 @@ class ServiceScanService(BaseService):
             if service_name == "*":
                 continue
             service_state = line_data[1]
-            service_runlevels = all_services_runlevels[service_name]
+            try:
+                service_runlevels = all_services_runlevels[service_name]
+            except KeyError:
+                self.module.warn(f"Service {service_name} not found in the service list")
+                continue
             service_data = {"name": service_name, "runlevels": service_runlevels, "state": service_state, "source": "openrc"}
             services[service_name] = service_data
 

@@ -1,0 +1,4 @@
+---
+minor_changes:
+   - service_facts - warn user about missing service details instead of ignoring.
+   - service_facts - handle keyerror exceptions with warning.
