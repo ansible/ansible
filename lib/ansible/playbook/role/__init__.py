@@ -31,7 +31,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
-+from ansible.playbook.delegatable import Delegatable
+from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
@@ -55,6 +55,7 @@ __all__ = ['Role', 'hash_params']
 
 _display = Display()
 
+
 def hash_params(params):
     """
     DEPRECATED
@@ -71,9 +72,9 @@ def hash_params(params):
     """
 
     _display.deprecated(
-        msg="The hash_params function is deprecated as it's consumers have moved to internal alternatives"
+        msg="The hash_params function is deprecated as it's consumers have moved to internal alternatives",
         version='2.24',
-        help_text='Contact your plugin author to update his code'
+        help_text='Contact your plugin author to update his code',
     )
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
