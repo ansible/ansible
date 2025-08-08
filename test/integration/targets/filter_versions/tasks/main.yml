@@ -1,0 +1,18 @@
+# test code for versions filters
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: test loose_version filters
+  include_tasks: loose_version.yml
+
+- name: test strict_version filters
+  include_tasks: strict_version.yml
+
+- name: test semver_version filters
+  include_tasks: semver_version.yml
+
+- name: test semantic_version filters
+  include_tasks: semantic_version.yml
+
+- name: test pep440_version filters
+  include_tasks: pep440_version.yml

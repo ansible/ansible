@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: semantic_version
+  version_added: "2.20"
+  short_description: compare version strings that may conform to Semantic Versioning 2.0.0
+  description:
+    - Allow user to compare version strings that may conform to Semantic Versioning 2.0.0
+  positional: _input
+  options:
+    _input:
+      description: A string consisting of a version string.
+      type: string
+      required: true
+EXAMPLES: |
+  - name: test semantic_version with less than equal
+  - assert:
+      that:
+        - "'1.0.0' | semantic_version <= '1.1.0' | semantic_version"
+RETURN:
+  _value:
+    description: A SemanticVersion object
+    type: object

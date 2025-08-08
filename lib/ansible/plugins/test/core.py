@@ -1,19 +1,6 @@
-# (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -24,8 +11,7 @@ import operator as py_operator
 from collections.abc import MutableMapping, MutableSequence
 
 from jinja2.tests import test_defined, test_undefined
-
-from ansible.module_utils.compat.version import LooseVersion, StrictVersion
+from jinja2.utils import pass_environment
 
 from ansible import errors
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
@@ -33,14 +19,9 @@ from ansible._internal._templating._jinja_common import Marker, UndefinedMarker
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.template import accept_args_markers
 from ansible.parsing.vault import is_encrypted_file, VaultHelper, VaultLib
+from ansible.plugins.filter.versions import VERSION_TYPE_MAP
 from ansible.utils.display import Display
-from ansible.utils.version import SemanticVersion
 
-try:
-    from packaging.version import Version as PEP440Version
-    HAS_PACKAGING = True
-except ImportError:
-    HAS_PACKAGING = False
 
 display = Display()
 
@@ -189,7 +170,8 @@ def search(value, pattern='', ignorecase=False, multiline=False):
     return regex(value, pattern, ignorecase, multiline, 'search')
 
 
-def version_compare(value, version, operator='eq', strict=None, version_type=None):
+@pass_environment
+def version_compare(environment, value, version, operator='eq', strict=None, version_type=None):
     """ Perform a version comparison on a value """
     op_map = {
         '==': 'eq', '=': 'eq', 'eq': 'eq',
@@ -198,14 +180,6 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         '>': 'gt', 'gt': 'gt',
         '>=': 'ge', 'ge': 'ge',
         '!=': 'ne', '<>': 'ne', 'ne': 'ne'
-    }
-
-    type_map = {
-        'loose': LooseVersion,
-        'strict': StrictVersion,
-        'semver': SemanticVersion,
-        'semantic': SemanticVersion,
-        'pep440': PEP440Version,
     }
 
     if strict is not None and version_type is not None:
@@ -217,19 +191,13 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
     if not version:
         raise errors.AnsibleFilterError("Version parameter to compare against cannot be empty")
 
-    if version_type == 'pep440' and not HAS_PACKAGING:
-        raise errors.AnsibleFilterError("The pep440 version_type requires the Python 'packaging' library")
+    if not version_type:
+        version_type = 'loose'
+        if strict:
+            version_type = 'strict'
 
-    Version = LooseVersion
-    if strict:
-        Version = StrictVersion
-    elif version_type:
-        try:
-            Version = type_map[version_type]
-        except KeyError:
-            raise errors.AnsibleFilterError(
-                "Invalid version type (%s). Must be one of %s" % (version_type, ', '.join(map(repr, type_map)))
-            )
+    if version_type in VERSION_TYPE_MAP:
+        version_type = f'{version_type}_version'
 
     if operator in op_map:
         operator = op_map[operator]
@@ -238,9 +206,12 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
             'Invalid operator type (%s). Must be one of %s' % (operator, ', '.join(map(repr, op_map)))
         )
 
+    left = environment.call_filter(version_type, to_text(value))
+    right = environment.call_filter(version_type, to_text(version))
+
     try:
         method = getattr(py_operator, operator)
-        return method(Version(to_text(value)), Version(to_text(version)))
+        return method(left, right)
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison failed: %s' % to_native(e))
 

@@ -1,0 +1,50 @@
+---
+# test code for pep440_version filter
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: test pep440_version with equal
+  assert:
+    that:
+      - "(item[0] | pep440_version == item[1] | pep440_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', True]
+
+
+- name: test pep440_version with not equal
+  assert:
+    that:
+      - "(item[0] | pep440_version != item[1] | pep440_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', False]
+
+
+- name: test pep440_version with less than
+  assert:
+    that:
+      - "(item[0] | pep440_version < item[1] | pep440_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '2.0.0', True]
+
+- name: test pep440_version with greater than
+  assert:
+    that:
+      - "(item[0] | pep440_version > item[1] | pep440_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '2.0.0', False]
+
+- name: test pep440_version with less than equal
+  assert:
+    that:
+      - "(item[0] | pep440_version <= item[1] | pep440_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', True]
+    - ['1.0.0', '2.0.0', True]
+
+- name: test pep440_version with greater than equal
+  assert:
+    that:
+      - "(item[0] | pep440_version >= item[1] | pep440_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', True]
+    - ['1.0.0', '2.0.0', False]

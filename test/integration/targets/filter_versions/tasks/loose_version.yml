@@ -1,0 +1,72 @@
+---
+# test code for loose_version filter
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: test loose_version with equal
+  assert:
+    that:
+      - "(item[0] | loose_version == item[1] | loose_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', True]
+    - ['1.0.0', '1.0.0-beta', False]
+    - ['1.0.0-beta2+build1', '1.0.0-beta.2+build.1', True]
+    - ['1.0.0-beta+build', '1.0.0-beta+build', True]
+    - ['1.0.0-beta+build1', '1.0.0-beta+build2', False]
+    - ['1.0.0-beta+a', '1.0.0-alpha+bar', False]
+
+- name: test loose_version with not equal
+  assert:
+    that:
+      - "(item[0] | loose_version != item[1] | loose_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', False]
+    - ['1.0.0', '1.0.0-beta', True]
+    - ['1.0.0-beta2+build1', '1.0.0-beta.2+build.1', False]
+    - ['1.0.0-beta+build', '1.0.0-beta+build', False]
+    - ['1.0.0-beta+a', '1.0.0-alpha+bar', True]
+
+- name: test loose_version with less than
+  assert:
+    that:
+      - "(item[0] | loose_version < item[1] | loose_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '2.0.0', True]
+    - ['1.0.0-beta', '2.0.0-alpha', True]
+    - ['1.0.0-alpha', '2.0.0-beta', True]
+    - ['1.0.0-alpha', '1.0.0', False]
+    - ['1.0.0-beta', '1.0.0-alpha3', False]
+    - ['1.0.0+foo', '1.0.0-alpha', True]
+    - ['1.0.0-beta+a', '1.0.0-alpha+bar', False]
+
+- name: test loose_version with greater than
+  assert:
+    that:
+      - "(item[0] | loose_version > item[1] | loose_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '2.0.0', False]
+    - ['1.0.0-beta', '2.0.0-alpha', False]
+    - ['1.0.0-alpha', '2.0.0-beta', False]
+    - ['1.0.0-alpha', '1.0.0', True]
+    - ['1.0.0-beta', '1.0.0-alpha3', True]
+    - ['1.0.0-beta+a', '1.0.0-alpha+bar', True]
+
+- name: test loose_version with less than equal
+  assert:
+    that:
+      - "(item[0] | loose_version <= item[1] | loose_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', True]
+    - ['1.0.0', '2.0.0', True]
+    - ['1.0.0-alpha', '1.0.0-beta', True]
+    - ['1.0.0-beta', '1.0.0-alpha', False]
+
+- name: test loose_version with greater than equal
+  assert:
+    that:
+      - "(item[0] | loose_version >= item[1] | loose_version) == item[2] | bool"
+  loop:
+    - ['1.0.0', '1.0.0', True]
+    - ['1.0.0', '2.0.0', False]
+    - ['1.0.0-alpha', '1.0.0-beta', False]
+    - ['1.0.0-beta', '1.0.0-alpha', True]

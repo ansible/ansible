@@ -1,0 +1,3 @@
+---
+minor_changes:
+    - versions - add filters for comparing LooseVersion, StrictVersion, Semver, SemanticVersion and PEP440 version.
