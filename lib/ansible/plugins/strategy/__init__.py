@@ -588,6 +588,7 @@ class StrategyBase:
                                 ansible_failed_result=task_result._return_data,
                             ),
                         )
+                        iterator.end_host(original_host.name)
                     else:
                         self._tqm._stats.increment('failures', original_host.name)
                 else:
