@@ -303,6 +303,16 @@ class StrategyBase:
                     iterator.get_next_task_for_host(self._inventory.get_host(host))
 
         # return the appropriate code, depending on the status hosts after the run
+        failed_hosts = set(iterator.get_failed_hosts())
+        rescued_hosts = set()
+        for host in failed_hosts:
+            stats = self._tqm._stats.summarize(host)
+            if stats.get('rescued', 0) > 0:
+                rescued_hosts.add(host)
+
+        if failed_hosts and failed_hosts == rescued_hosts:
+            return self._tqm.RUN_OK  # All failed hosts were rescued, exit code is 0
+
         if not isinstance(result, bool) and result != self._tqm.RUN_OK:
             return result
         elif len(self._tqm._unreachable_hosts.keys()) > 0:
