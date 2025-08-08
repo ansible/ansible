@@ -9,3 +9,5 @@
 - assert:
     that:
       - nested_adjacent_count|int == 2
+
+- import_tasks: "{{ role_path }}/tests/main.yml"
