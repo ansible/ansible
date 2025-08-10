@@ -72,7 +72,7 @@ from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
 from ansible.plugins.loader import fragment_loader
 from ansible.plugins.list import IGNORE as REJECTLIST
-from ansible.utils.plugin_docs import add_collection_to_versions_and_dates, add_fragments, get_docstring
+from ansible.utils.plugin_docs import AnsibleFragmentError, add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_py_argument_spec, get_ps_argument_spec
@@ -1003,21 +1003,15 @@ class ModuleValidator(Validator):
             add_collection_to_versions_and_dates(doc, self.collection_name,
                                                  is_module=self.plugin_type == 'module')
 
-            missing_fragment = False
             with CaptureStd():
                 try:
                     get_docstring(os.path.abspath(self.path), fragment_loader=fragment_loader,
                                   verbose=True,
                                   collection_name=self.collection_name,
                                   plugin_type=self.plugin_type)
-                except AssertionError:
-                    fragment = doc['extends_documentation_fragment']
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='missing-doc-fragment',
-                        msg='DOCUMENTATION fragment missing: %s' % fragment
-                    )
-                    missing_fragment = True
+                except AnsibleFragmentError:
+                    # Will be re-triggered below when explicitly calling add_fragments()
+                    pass
                 except Exception as e:
                     self.reporter.trace(
                         path=self.object_path,
@@ -1029,9 +1023,16 @@ class ModuleValidator(Validator):
                         msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                     )
 
-            if not missing_fragment:
+            try:
                 add_fragments(doc, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
                               is_module=self.plugin_type == 'module', section='DOCUMENTATION')
+            except AnsibleFragmentError as exc:
+                error = str(exc).replace(os.path.abspath(self.object_path), self.object_path)
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-fragment-error',
+                    msg=f'Error while adding fragments: {error}'
+                )
 
             if 'options' in doc and doc['options'] is None:
                 self.reporter.error(
@@ -1130,8 +1131,16 @@ class ModuleValidator(Validator):
                     self.collection_name,
                     is_module=self.plugin_type == 'module',
                     return_docs=True)
-                add_fragments(returns, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
-                              is_module=self.plugin_type == 'module', section='RETURN')
+                try:
+                    add_fragments(returns, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
+                                  is_module=self.plugin_type == 'module', section='RETURN')
+                except AnsibleFragmentError as exc:
+                    error = str(exc).replace(os.path.abspath(self.object_path), self.object_path)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='return-fragment-error',
+                        msg=f'Error while adding fragments: {error}'
+                    )
             self._validate_docs_schema(
                 returns,
                 return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
