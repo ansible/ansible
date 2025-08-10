@@ -326,18 +326,12 @@ class StrategyModule(StrategyBase):
                     elif res.is_unreachable():
                         unreachable_hosts.append(res.host.name)
 
-                # Only apply any_errors_fatal if there are actual unrescued failures
-                # Check if any failures were rescued by looking at the stats
-                rescued_hosts = []
-                for host_name in failed_hosts[:]:  # Copy the list to avoid modification during iteration
-                    if self._tqm._stats.rescued.get(host_name, 0) > 0:
-                        # This host had failures but they were rescued, so don't treat it as failed for any_errors_fatal
-                        rescued_hosts.append(host_name)
-                        failed_hosts.remove(host_name)
-
                 if any_errors_fatal and (failed_hosts or unreachable_hosts):
+                    active_hosts = {host.name for host, task in host_tasks}
+                    
                     for host in hosts_left:
-                        if host.name not in failed_hosts and host.name not in unreachable_hosts:
+                        if (host.name not in failed_hosts and host.name not in unreachable_hosts and 
+                           (not active_hosts or host.name in active_hosts)):
                             self._tqm._failed_hosts[host.name] = True
                             iterator.mark_host_failed(host)
                 display.debug("done checking for any_errors_fatal")
