@@ -3,21 +3,12 @@
 from __future__ import annotations
 
 import abc
-import base64
+import dataclasses
+import datetime
 import json
-import os
+import pathlib
 import tempfile
 import typing as t
-
-from ..encoding import (
-    to_bytes,
-    to_text,
-)
-
-from ..io import (
-    read_text_file,
-    write_text_file,
-)
 
 from ..config import (
     CommonConfig,
@@ -32,6 +23,65 @@ from ..util import (
     raw_command,
     cache,
 )
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class AuthContext:
+    """Information about the request to which authentication will be applied."""
+
+    stage: str
+    provider: str
+    request_id: str
+
+
+class AuthHelper:
+    """Authentication helper."""
+
+    NAMESPACE: t.ClassVar = 'ci@core.ansible.com'
+
+    def __init__(self, key_file: pathlib.Path) -> None:
+        self.private_key_file = pathlib.Path(str(key_file).removesuffix('.pub'))
+        self.public_key_file = pathlib.Path(f'{self.private_key_file}.pub')
+
+    def sign_request(self, request: dict[str, object], context: AuthContext) -> None:
+        """Sign the given auth request using the provided context."""
+        request.update(
+            stage=context.stage,
+            provider=context.provider,
+            request_id=context.request_id,
+            timestamp=datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0).isoformat(),
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload_path = pathlib.Path(temp_dir) / 'auth.json'
+            payload_path.write_text(json.dumps(request, sort_keys=True))
+
+            cmd = ['ssh-keygen', '-q', '-Y', 'sign', '-f', str(self.private_key_file), '-n', self.NAMESPACE, str(payload_path)]
+            raw_command(cmd, capture=False, interactive=True)
+
+            signature_path = pathlib.Path(f'{payload_path}.sig')
+            signature = signature_path.read_text()
+
+        request.update(signature=signature)
+
+
+class GeneratingAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
+    """Authentication helper which generates a key pair on demand."""
+
+    def __init__(self) -> None:
+        super().__init__(pathlib.Path('~/.ansible/test/ansible-core-ci').expanduser())
+
+    def sign_request(self, request: dict[str, object], context: AuthContext) -> None:
+        if not self.private_key_file.exists():
+            self.generate_key_pair()
+
+        super().sign_request(request, context)
+
+    def generate_key_pair(self) -> None:
+        """Generate key pair."""
+        self.private_key_file.parent.mkdir(parents=True, exist_ok=True)
+
+        raw_command(['ssh-keygen', '-q', '-f', str(self.private_key_file), '-N', ''], capture=True)
 
 
 class ChangeDetectionNotSupported(ApplicationError):
@@ -75,8 +125,8 @@ class CIProvider(metaclass=abc.ABCMeta):
         """Return True if Ansible Core CI is supported."""
 
     @abc.abstractmethod
-    def prepare_core_ci_auth(self) -> dict[str, t.Any]:
-        """Return authentication details for Ansible Core CI."""
+    def prepare_core_ci_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
+        """Prepare an Ansible Core CI request using the given config and context."""
 
     @abc.abstractmethod
     def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
@@ -101,119 +151,3 @@ def get_ci_provider() -> CIProvider:
         display.info('Detected CI provider: %s' % provider.name)
 
     return provider
-
-
-class AuthHelper(metaclass=abc.ABCMeta):
-    """Public key based authentication helper for Ansible Core CI."""
-
-    def sign_request(self, request: dict[str, t.Any]) -> None:
-        """Sign the given auth request and make the public key available."""
-        payload_bytes = to_bytes(json.dumps(request, sort_keys=True))
-        signature_raw_bytes = self.sign_bytes(payload_bytes)
-        signature = to_text(base64.b64encode(signature_raw_bytes))
-
-        request.update(signature=signature)
-
-    def initialize_private_key(self) -> str:
-        """
-        Initialize and publish a new key pair (if needed) and return the private key.
-        The private key is cached across ansible-test invocations, so it is only generated and published once per CI job.
-        """
-        path = os.path.expanduser('~/.ansible-core-ci-private.key')
-
-        if os.path.exists(to_bytes(path)):
-            private_key_pem = read_text_file(path)
-        else:
-            private_key_pem = self.generate_private_key()
-            write_text_file(path, private_key_pem)
-
-        return private_key_pem
-
-    @abc.abstractmethod
-    def sign_bytes(self, payload_bytes: bytes) -> bytes:
-        """Sign the given payload and return the signature, initializing a new key pair if required."""
-
-    @abc.abstractmethod
-    def publish_public_key(self, public_key_pem: str) -> None:
-        """Publish the given public key."""
-
-    @abc.abstractmethod
-    def generate_private_key(self) -> str:
-        """Generate a new key pair, publishing the public key and returning the private key."""
-
-
-class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
-    """Cryptography based public key based authentication helper for Ansible Core CI."""
-
-    def sign_bytes(self, payload_bytes: bytes) -> bytes:
-        """Sign the given payload and return the signature, initializing a new key pair if required."""
-        # import cryptography here to avoid overhead and failures in environments which do not use/provide it
-        from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives import hashes
-        from cryptography.hazmat.primitives.asymmetric import ec
-        from cryptography.hazmat.primitives.serialization import load_pem_private_key
-
-        private_key_pem = self.initialize_private_key()
-        private_key = load_pem_private_key(to_bytes(private_key_pem), None, default_backend())
-
-        assert isinstance(private_key, ec.EllipticCurvePrivateKey)
-
-        signature_raw_bytes = private_key.sign(payload_bytes, ec.ECDSA(hashes.SHA256()))
-
-        return signature_raw_bytes
-
-    def generate_private_key(self) -> str:
-        """Generate a new key pair, publishing the public key and returning the private key."""
-        # import cryptography here to avoid overhead and failures in environments which do not use/provide it
-        from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives import serialization
-        from cryptography.hazmat.primitives.asymmetric import ec
-
-        private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
-        public_key = private_key.public_key()
-
-        private_key_pem = to_text(private_key.private_bytes(  # type: ignore[attr-defined]  # documented method, but missing from type stubs
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        ))
-
-        public_key_pem = to_text(public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        ))
-
-        self.publish_public_key(public_key_pem)
-
-        return private_key_pem
-
-
-class OpenSSLAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
-    """OpenSSL based public key based authentication helper for Ansible Core CI."""
-
-    def sign_bytes(self, payload_bytes: bytes) -> bytes:
-        """Sign the given payload and return the signature, initializing a new key pair if required."""
-        private_key_pem = self.initialize_private_key()
-
-        with tempfile.NamedTemporaryFile() as private_key_file:
-            private_key_file.write(to_bytes(private_key_pem))
-            private_key_file.flush()
-
-            with tempfile.NamedTemporaryFile() as payload_file:
-                payload_file.write(payload_bytes)
-                payload_file.flush()
-
-                with tempfile.NamedTemporaryFile() as signature_file:
-                    raw_command(['openssl', 'dgst', '-sha256', '-sign', private_key_file.name, '-out', signature_file.name, payload_file.name], capture=True)
-                    signature_raw_bytes = signature_file.read()
-
-        return signature_raw_bytes
-
-    def generate_private_key(self) -> str:
-        """Generate a new key pair, publishing the public key and returning the private key."""
-        private_key_pem = raw_command(['openssl', 'ecparam', '-genkey', '-name', 'secp384r1', '-noout'], capture=True)[0]
-        public_key_pem = raw_command(['openssl', 'ec', '-pubout'], data=private_key_pem, capture=True)[0]
-
-        self.publish_public_key(public_key_pem)
-
-        return private_key_pem

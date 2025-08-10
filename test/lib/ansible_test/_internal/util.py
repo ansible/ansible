@@ -702,6 +702,7 @@ def common_environment() -> dict[str, str]:
     optional = (
         'LD_LIBRARY_PATH',
         'SSH_AUTH_SOCK',
+        'SSH_SK_PROVIDER',
         # MacOS High Sierra Compatibility
         # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
         # Example configuration for macOS:
