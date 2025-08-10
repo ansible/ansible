@@ -1268,16 +1268,18 @@ class ModuleValidator(Validator):
         if not isinstance(options, dict):
             return
         for key, value in options.items():
-            self._validate_semantic_markup(value.get('description'))
-            self._validate_semantic_markup_options(value.get('suboptions'))
+            if isinstance(value, dict):
+                self._validate_semantic_markup(value.get('description'))
+                self._validate_semantic_markup_options(value.get('suboptions'))
 
     def _validate_semantic_markup_return_values(self, return_vars):
         if not isinstance(return_vars, dict):
             return
         for key, value in return_vars.items():
-            self._validate_semantic_markup(value.get('description'))
-            self._validate_semantic_markup(value.get('returned'))
-            self._validate_semantic_markup_return_values(value.get('contains'))
+            if isinstance(value, dict):
+                self._validate_semantic_markup(value.get('description'))
+                self._validate_semantic_markup(value.get('returned'))
+                self._validate_semantic_markup_return_values(value.get('contains'))
 
     def _validate_all_semantic_markup(self, docs, return_docs):
         if not isinstance(docs, dict):
