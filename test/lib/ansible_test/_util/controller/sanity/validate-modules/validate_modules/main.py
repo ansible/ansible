@@ -1031,7 +1031,7 @@ class ModuleValidator(Validator):
 
             if not missing_fragment:
                 add_fragments(doc, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
-                              is_module=self.plugin_type == 'module')
+                              is_module=self.plugin_type == 'module', section='DOCUMENTATION')
 
             if 'options' in doc and doc['options'] is None:
                 self.reporter.error(
@@ -1130,6 +1130,8 @@ class ModuleValidator(Validator):
                     self.collection_name,
                     is_module=self.plugin_type == 'module',
                     return_docs=True)
+                add_fragments(returns, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
+                              is_module=self.plugin_type == 'module', section='RETURN')
             self._validate_docs_schema(
                 returns,
                 return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
@@ -1619,7 +1621,7 @@ class ModuleValidator(Validator):
         try:
             if not context:
                 add_fragments(docs, os.path.abspath(self.object_path), fragment_loader=fragment_loader,
-                              is_module=self.plugin_type == 'module')
+                              is_module=self.plugin_type == 'module', section='DOCUMENTATION')
         except Exception:
             # Cannot merge fragments
             return
