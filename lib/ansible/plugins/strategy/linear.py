@@ -328,9 +328,9 @@ class StrategyModule(StrategyBase):
 
                 if any_errors_fatal and (failed_hosts or unreachable_hosts):
                     active_hosts = {host.name for host, task in host_tasks}
-                    
+
                     for host in hosts_left:
-                        if (host.name not in failed_hosts and host.name not in unreachable_hosts and 
+                        if (host.name not in failed_hosts and host.name not in unreachable_hosts and
                            (not active_hosts or host.name in active_hosts)):
                             self._tqm._failed_hosts[host.name] = True
                             iterator.mark_host_failed(host)
