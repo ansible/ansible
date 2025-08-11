@@ -24,7 +24,6 @@ DOCUMENTATION:
     match_type:
       description:
         - Decide which function to be used to do the matching.
-        - The V(fullmatch) is added version Ansible Core 2.20.
       type: string
       choices: [match, search, fullmatch]
       default: search

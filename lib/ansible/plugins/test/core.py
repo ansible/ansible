@@ -144,7 +144,7 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     """
     valid_match_types = ('search', 'match', 'fullmatch')
     if match_type not in valid_match_types:
-        raise errors.AnsibleTemplatePluginError(f"Invalid match_type specified. Expected one of: {valid_match_types}.", obj=match_type)
+        raise errors.AnsibleTemplatePluginError(f"Invalid match_type specified. Expected one of: {', '.join(valid_match_types)}.", obj=match_type)
     value = to_text(value, errors='surrogate_or_strict')
     flags = 0
     if ignorecase:
