@@ -137,9 +137,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             try:
                 return self._resolve_action(self.action)
             except AnsibleParserError:
-                display.warning(self._resolved_action_warning, obj=self._ds)
+                display.warning(self._resolved_action_warning, obj=self.action)
         else:
-            display.warning(self._resolved_action_warning, obj=self._ds)
+            display.warning(self._resolved_action_warning, obj=self.action)
         return None
 
     def get_name(self, include_role_fqcn=True):
