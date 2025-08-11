@@ -303,7 +303,7 @@ class Play(Base, Taggable, CollectionSearch):
 
         t = Task(block=flush_block)
         t.action = 'meta'
-        t.resolved_action = 'ansible.builtin.meta'
+        t._resolved_action = 'ansible.builtin.meta'
         t.args['_raw_params'] = 'flush_handlers'
         t.implicit = True
         t.set_loader(self._loader)

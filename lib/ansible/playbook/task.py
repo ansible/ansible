@@ -41,7 +41,7 @@ from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible._internal import _task
 from ansible._internal._templating import _marker_behaviors
-from ansible._internal._templating._jinja_bits import is_possibly_all_template
+from ansible._internal._templating._jinja_bits import is_possibly_all_template, is_possibly_template
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
@@ -101,7 +101,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         self._role = role
         self._parent = None
         self.implicit = False
-        self.resolved_action: str | None = None
+        self._resolved_action: str | None = None
 
         if task_include:
             self._parent = task_include
@@ -109,6 +109,38 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent = block
 
         super(Task, self).__init__()
+
+    _resolved_action_warning = (
+        "A plugin is sampling the task's resolved_action when it is not resolved. "
+        "This can be caused by callback plugins using the resolved_action attribute too "
+        "early (such as in v2_playbook_on_task_start for a task using the action/local_action "
+        "keyword), or too late (such as in v2_runner_on_ok for a task with a loop). "
+        "To maximize compatibility with user features, callback plugins should "
+        "only use this attribute in v2_runner_on_ok/v2_runner_on_failed for tasks "
+        "without a loop, and v2_runner_item_on_ok/v2_runner_item_on_failed otherwise."
+    )
+
+    @property
+    def resolved_action(self) -> str | None:
+        """The templated and resolved FQCN of the task action or None.
+
+        If the action is a template, callback plugins can only use this value in certain methods.
+        - v2_runner_on_ok and v2_runner_on_failed if there's no task loop
+        - v2_runner_item_on_ok and v2_runner_item_on_failed if there is a task loop
+        """
+        # Consider deprecating this because it's difficult to use?
+        # Moving it to the task result would improve the no-loop limitation on v2_runner_on_ok
+        # but then wouldn't be accessible to v2_playbook_on_task_start, *_on_skipped, etc.
+        if self._resolved_action is not None:
+            return self._resolved_action
+        if not is_possibly_template(self.action):
+            try:
+                return self._resolve_action(self.action)
+            except AnsibleParserError:
+                display.warning(self._resolved_action_warning, obj=self.action)
+        else:
+            display.warning(self._resolved_action_warning, obj=self.action)
+        return None
 
     def get_name(self, include_role_fqcn=True):
         """ return the name of the task """
@@ -168,7 +200,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         else:
             module_or_action_context = action_context.plugin_load_context
 
-        self.resolved_action = module_or_action_context.resolved_fqcn
+        self._resolved_action = module_or_action_context.resolved_fqcn
 
         action_type: type[ActionBase] = action_context.object
 
@@ -281,6 +313,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 raise
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError("Error parsing task arguments.", obj=ds) from ex
+
+        if args_parser._resolved_action is not None:
+            self._resolved_action = args_parser._resolved_action
 
         new_ds['action'] = action
         new_ds['args'] = args
@@ -465,7 +500,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             new_me._role = self._role
 
         new_me.implicit = self.implicit
-        new_me.resolved_action = self.resolved_action
+        new_me._resolved_action = self._resolved_action
         new_me._uuid = self._uuid
 
         return new_me
@@ -482,7 +517,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 data['role'] = self._role.serialize()
 
             data['implicit'] = self.implicit
-            data['resolved_action'] = self.resolved_action
+            data['_resolved_action'] = self._resolved_action
 
         return data
 
@@ -513,7 +548,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             del data['role']
 
         self.implicit = data.get('implicit', False)
-        self.resolved_action = data.get('resolved_action')
+        self._resolved_action = data.get('_resolved_action')
 
         super(Task, self).deserialize(data)
 
@@ -591,7 +626,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def dump_attrs(self):
         """Override to smuggle important non-FieldAttribute values back to the controller."""
         attrs = super().dump_attrs()
-        attrs.update(resolved_action=self.resolved_action)
+        attrs.update(_resolved_action=self._resolved_action)
         return attrs
 
     def _resolve_conditional(
