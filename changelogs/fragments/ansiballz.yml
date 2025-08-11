@@ -1,5 +1,0 @@
-minor_changes:
-  - ansiballz - Refactored AnsiballZ and module respawn.
-  - ansiballz - Added support for AnsiballZ extensions.
-  - ansiballz - Moved AnsiballZ code coverage support into an extension.
-  - ansiballz - Added an experimental AnsiballZ extension for remote debugging.

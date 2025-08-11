@@ -1,5 +1,0 @@
-minor_changes:
-  - >-
-    winrm - Remove need for pexpect on macOS hosts when using ``kinit`` to retrieve the Kerberos TGT.
-    By default the code will now only use the builtin ``subprocess`` library which should handle issues
-    with select and a high fd count and also simplify the code.

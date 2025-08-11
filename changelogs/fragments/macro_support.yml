@@ -1,3 +1,0 @@
-bugfixes:
-  - templating - Jinja macros returned from a template expression can now be called from another template expression.
-  - templating - Fixed cases where template expression blocks halted prematurely when a Jinja macro invocation returned an undefined value.

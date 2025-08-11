@@ -58,8 +58,6 @@ STDERR_FILENO = 2
 
 display = Display()
 
-_T = t.TypeVar('_T')
-
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
@@ -179,7 +177,7 @@ class TaskQueueManager:
             for fd in (STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO):
                 os.set_inheritable(fd, False)
         except Exception as ex:
-            self.warning(f"failed to set stdio as non inheritable: {ex}")
+            display.error_as_warning("failed to set stdio as non inheritable", exception=ex)
 
         self._callback_lock = threading.Lock()
 
@@ -269,7 +267,7 @@ class TaskQueueManager:
                     display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
                     continue
             except Exception as ex:
-                display.warning_as_error(f"Failed to load callback plugin {callback_name!r}.", exception=ex)
+                display.error_as_warning(f"Failed to load callback plugin {callback_name!r}.", exception=ex)
                 continue
 
     def run(self, play):
@@ -413,7 +411,7 @@ class TaskQueueManager:
         return defunct
 
     @staticmethod
-    def _first_arg_of_type(value_type: t.Type[_T], args: t.Sequence) -> _T | None:
+    def _first_arg_of_type[T](value_type: t.Type[T], args: t.Sequence) -> T | None:
         return next((arg for arg in args if isinstance(arg, value_type)), None)
 
     @lock_decorator(attr='_callback_lock')

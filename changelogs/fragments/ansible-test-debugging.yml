@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-test - Added experimental support for remote debugging.
-  - ansible-test - The ``shell`` command has been augmented to propagate remote debug configurations and other test-related settings when running on the controller.
-    Use the ``--raw`` argument to bypass the additional environment configuration.

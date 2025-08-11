@@ -1,4 +1,0 @@
----
-minor_changes:
-  - callback plugins - add has_option() to CallbackBase to match other functions overloaded from AnsiblePlugin
-  - callback plugins - fix get_options() for CallbackBase

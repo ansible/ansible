@@ -1,2 +1,0 @@
-bugfixes:
-  - include_tasks - fix templating options when used as a handler (https://github.com/ansible/ansible/pull/85015).

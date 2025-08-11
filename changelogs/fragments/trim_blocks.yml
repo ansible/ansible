@@ -1,3 +1,0 @@
----
-minor_changes:
-  - lookup_template - add an option to trim blocks while templating (https://github.com/ansible/ansible/issues/75962).

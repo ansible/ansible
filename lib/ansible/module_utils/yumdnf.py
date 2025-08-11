@@ -32,10 +32,6 @@ yumdnf_argument_spec = dict(
         enablerepo=dict(type='list', elements='str', default=[]),
         exclude=dict(type='list', elements='str', default=[]),
         installroot=dict(type='str', default="/"),
-        install_repoquery=dict(
-            type='bool', default=True,
-            removed_in_version='2.20', removed_from_collection='ansible.builtin',
-        ),
         install_weak_deps=dict(type='bool', default=True),
         list=dict(type='str'),
         name=dict(type='list', elements='str', aliases=['pkg'], default=[]),
@@ -85,7 +81,6 @@ class YumDnf(metaclass=ABCMeta):
         self.enablerepo = self.module.params.get('enablerepo', [])
         self.exclude = self.module.params['exclude']
         self.installroot = self.module.params['installroot']
-        self.install_repoquery = self.module.params['install_repoquery']
         self.install_weak_deps = self.module.params['install_weak_deps']
         self.list = self.module.params['list']
         self.names = [p.strip() for p in self.module.params['name']]

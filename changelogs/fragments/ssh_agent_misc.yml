@@ -1,4 +1,0 @@
-bugfixes:
-  - ssh agent - Fixed several potential startup hangs for badly-behaved or overloaded ssh agents.
-minor_changes:
-  - ssh agent - Added ``SSH_AGENT_EXECUTABLE`` config to allow override of ssh-agent.

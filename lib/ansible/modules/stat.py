@@ -44,6 +44,14 @@ options:
     version_added: "2.3"
   get_checksum:
     version_added: "1.8"
+  get_selinux_context:
+    description:
+      - Get file SELinux context in a list V([user, role, type, range]),
+        and will get V([None, None, None, None]) if it is not possible to retrieve the context,
+        either because it does not exist or some other issue.
+    type: bool
+    default: no
+    version_added: '2.20'
 extends_documentation_fragment:
   -  action_common_attributes
   -  checksum_common
@@ -346,6 +354,12 @@ stat:
             type: list
             sample: [ immutable, extent ]
             version_added: 2.3
+        selinux_context:
+            description: The SELinux context of a path
+            returned: success, path exists and user can execute the path
+            type: list
+            sample: [ user, role, type, range ]
+            version_added: '2.20'
         version:
             description: The version/generation attribute of a file according to the filesystem
             returned: success, path exists, user can execute the path, lsattr is available and filesystem supports
@@ -434,6 +448,7 @@ def main():
             get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
+            get_selinux_context=dict(type='bool', default=False),
             checksum_algorithm=dict(type='str', default='sha1',
                                     choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum', 'checksum_algo']),
@@ -448,6 +463,7 @@ def main():
     get_attr = module.params.get('get_attributes')
     get_checksum = module.params.get('get_checksum')
     checksum_algorithm = module.params.get('checksum_algorithm')
+    get_selinux_context = module.params.get('get_selinux_context')
 
     # main stat data
     try:
@@ -514,6 +530,10 @@ def main():
         for x in ('version', 'attributes', 'attr_flags'):
             if x in out:
                 output[x] = out[x]
+
+    # try to get SELinux context
+    if get_selinux_context:
+        output['selinux_context'] = module.selinux_context(b_path)
 
     module.exit_json(changed=False, stat=output)
 

@@ -138,7 +138,7 @@ test "$output" -eq 4
 echo "testing standalone roles"
 # Include normal roles (no collection filter)
 output=$(ansible-doc -t role -l --playbook-dir . | wc -l)
-test "$output" -eq 8
+test "$output" -eq 11
 
 echo "testing role precedence"
 # Test that a role in the playbook dir with the same name as a role in the
@@ -288,5 +288,8 @@ echo "test 'sidecar' for no extension module  with .py doc"
 echo "test 'sidecar' for no extension module  with .yml doc"
 [ "$(ansible-doc -M ./library -l ansible.legacy |grep -v 'UNDOCUMENTED' |grep -c facts_one)" == "1" ]
 
-echo "Test j2 plugins get jinja2 instead of path"
+echo "test j2 plugins get jinja2 instead of path"
 ansible-doc -t filter map 2>&1 |grep "${GREP_OPTS[@]}" '(Jinja2)'
+
+echo "test missing description in test_role4 argument spec"
+ansible-doc -t role -r ./roles test_role4 2>&1 >/dev/null | grep -q 'Error extracting role docs from '\''test_role4'\'': All (sub-)options and return values must have a '\''description'\'' field'

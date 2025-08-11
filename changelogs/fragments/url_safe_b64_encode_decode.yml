@@ -1,3 +1,0 @@
----
-minor_changes:
-    - filter - add support for URL-safe encoding and decoding in b64encode and b64decode (https://github.com/ansible/ansible/issues/84147).

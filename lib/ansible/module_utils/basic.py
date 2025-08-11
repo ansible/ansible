@@ -11,12 +11,13 @@ import typing as t
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 8)
+_PY_MIN = (3, 9)
 
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(
         failed=True,
-        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+        msg=f"Ansible requires Python {'.'.join(map(str, _PY_MIN))} or newer on the target. "
+            f"Current version: {''.join(sys.version.splitlines())}",
     )))
     sys.exit(1)
 
@@ -1512,11 +1513,19 @@ class AnsibleModule(object):
         # strip no_log collisions
         kwargs = remove_values(kwargs, self.no_log_values)
 
-        # return preserved
+        # graft preserved values back on
         kwargs.update(preserved)
 
+        self._record_module_result(kwargs)
+
+    def _record_module_result(self, o: dict[str, t.Any]) -> None:
+        """
+        Temporary internal hook to enable modification/bypass of module result serialization.
+
+        Monkeypatched by ansible.netcommon for direct in-worker module execution.
+        """
         encoder = _json.get_module_encoder(_ANSIBLE_PROFILE, _json.Direction.MODULE_TO_CONTROLLER)
-        print('\n%s' % json.dumps(kwargs, cls=encoder))
+        print('\n%s' % json.dumps(o, cls=encoder))
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """

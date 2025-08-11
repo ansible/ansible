@@ -31,7 +31,7 @@ variables:
   - name: fetchDepth
     value: 500
   - name: defaultContainer
-    value: quay.io/ansible/azure-pipelines-test-container:6.0.0
+    value: quay.io/ansible/azure-pipelines-test-container:7.0.0
 
 pool: Standard
 
@@ -54,12 +54,12 @@ stages:
           nameFormat: Python {0}
           testFormat: units/{0}
           targets:
-            - test: 3.8
             - test: 3.9
             - test: '3.10'
             - test: 3.11
             - test: 3.12
             - test: 3.13
+            - test: 3.14
   - stage: Windows
     dependsOn: []
     jobs:
@@ -90,16 +90,16 @@ stages:
           targets:
             - name: macOS 15.3
               test: macos/15.3
-            - name: RHEL 9.5 py39
-              test: rhel/9.5@3.9
-            - name: RHEL 9.5 py312
-              test: rhel/9.5@3.12
+            - name: RHEL 9.6 py39
+              test: rhel/9.6@3.9
+            - name: RHEL 9.6 py312
+              test: rhel/9.6@3.12
             - name: RHEL 10.0
               test: rhel/10.0
             - name: FreeBSD 13.5
               test: freebsd/13.5
-            - name: FreeBSD 14.2
-              test: freebsd/14.2
+            - name: FreeBSD 14.3
+              test: freebsd/14.3
           groups:
             - 1
             - 2
@@ -108,14 +108,10 @@ stages:
           targets:
             - name: macOS 15.3
               test: macos/15.3
-            - name: RHEL 9.5
-              test: rhel/9.5
+            - name: RHEL 9.6
+              test: rhel/9.6
             - name: RHEL 10.0
               test: rhel/10.0
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
-            - name: FreeBSD 14.2
-              test: freebsd/14.2
           groups:
             - 3
             - 4
@@ -123,12 +119,12 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.21
-              test: alpine/3.21
-            - name: Fedora 41
-              test: fedora/41
-            - name: RHEL 9.5
-              test: rhel/9.5
+            - name: Alpine 3.22
+              test: alpine/3.22
+            - name: Fedora 42
+              test: fedora/42
+            - name: RHEL 9.6
+              test: rhel/9.6
             - name: RHEL 10.0
               test: rhel/10.0
             - name: Ubuntu 24.04
@@ -142,10 +138,10 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.21
-              test: alpine321
-            - name: Fedora 41
-              test: fedora41
+            - name: Alpine 3.22
+              test: alpine322
+            - name: Fedora 42
+              test: fedora42
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -157,10 +153,10 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.21
-              test: alpine321
-            - name: Fedora 41
-              test: fedora41
+            - name: Alpine 3.22
+              test: alpine322
+            - name: Fedora 42
+              test: fedora42
             - name: Ubuntu 24.04
               test: ubuntu2404
           groups:
@@ -171,8 +167,8 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Fedora 41
-              test: fedora41
+            - name: Fedora 42
+              test: fedora42
           groups:
             - 7
   - stage: Galaxy
@@ -183,9 +179,9 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.11
             - test: 3.12
             - test: 3.13
+            - test: 3.14
   - stage: Generic
     dependsOn: []
     jobs:
@@ -194,9 +190,9 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.11
             - test: 3.12
             - test: 3.13
+            - test: 3.14
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -220,15 +216,6 @@ stages:
               test: 2025/psrp/http
             - name: 2025 SSH Key
               test: 2025/ssh/key
-  - stage: Incidental
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}/1
-          targets:
-            - name: IOS Python
-              test: ios/csr1000v/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
@@ -240,6 +227,5 @@ stages:
       - Galaxy
       - Generic
       - Incidental_Windows
-      - Incidental
     jobs:
       - template: templates/coverage.yml

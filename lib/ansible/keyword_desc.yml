@@ -1,6 +1,3 @@
-accelerate: "*DEPRECATED*, set to True to use accelerate connection plugin."
-accelerate_ipv6: "*DEPRECATED*, set to True to force accelerate plugin to use ipv6 for its connection."
-accelerate_port: "*DEPRECATED*, set to override default port use for accelerate connection."
 action: "The 'action' to execute for a task, it normally translates into a C(module) or action plugin."
 args: "A secondary way to add arguments into a task. Takes a dictionary in which keys map to options and values."
 always: List of tasks, in a block, that execute no matter if there is an error in the block or not.

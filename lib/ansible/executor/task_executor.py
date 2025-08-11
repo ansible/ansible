@@ -19,7 +19,7 @@ from ansible.errors import (
     AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
-from ansible.executor.task_result import _RawTaskResult
+from ansible.executor.task_result import _RawTaskResult, _SUB_PRESERVE
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _messages
 from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name
@@ -712,7 +712,10 @@ class TaskExecutor:
                     condname = 'failed'
 
                     if self._task.failed_when:
-                        result['failed_when_result'] = result['failed'] = self._task._resolve_conditional(self._task.failed_when, vars_copy)
+                        is_failed = result['failed_when_result'] = result['failed'] = self._task._resolve_conditional(self._task.failed_when, vars_copy)
+
+                        if not is_failed and (suppressed_exception := result.pop('exception', None)):
+                            result['failed_when_suppressed_exception'] = suppressed_exception
 
                 except AnsibleError as e:
                     result['failed'] = True
@@ -771,14 +774,18 @@ class TaskExecutor:
         # on the results side without having to do any further templating
         # also now add connection vars results when delegating
         if self._task.delegate_to:
-            result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
-            for k in plugin_vars:
-                result["_ansible_delegated_vars"][k] = cvars.get(k)
+            result["_ansible_delegated_vars"] = {
+                "ansible_delegated_host": self._task.delegate_to,
+                "ansible_connection": current_connection,
+            }
 
             # note: here for callbacks that rely on this info to display delegation
-            for requireshed in ('ansible_host', 'ansible_port', 'ansible_user', 'ansible_connection'):
-                if requireshed not in result["_ansible_delegated_vars"] and requireshed in cvars:
-                    result["_ansible_delegated_vars"][requireshed] = cvars.get(requireshed)
+            for k in plugin_vars:
+                if k not in _SUB_PRESERVE["_ansible_delegated_vars"]:
+                    continue
+
+                for o in C.config.get_plugin_options_from_var("connection", current_connection, k):
+                    result["_ansible_delegated_vars"][k] = self._connection.get_option(o)
 
         # and return
         display.debug("attempt loop complete, returning result")
@@ -1129,7 +1136,7 @@ class TaskExecutor:
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
+        elif module_prefix in C.NETWORK_GROUP_MODULES and self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections):
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),

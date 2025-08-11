@@ -1,5 +1,0 @@
-minor_changes:
-  - pipelining logic has mostly moved to connection plugins so they can decide/override settings.
-  - ssh connection plugin now overrides pipelining when a tty is requested.
-  - become plugins get new property 'pipelining' to show support or lack there of for the feature.
-  - removed hardcoding of su plugin as it now works with pipelining.

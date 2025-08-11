@@ -1,2 +1,0 @@
-bugfixes:
-  - "Remove use of `required` parameter in `get_bin_path` which has been deprecated."

@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy - Small adjustments to URL building for ``download_url`` and relative redirects.

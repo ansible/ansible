@@ -1,2 +1,0 @@
-bugfixes:
-  - Ansible will now ensure predictable permissions on remote artifacts, until now it only ensured executable and relied on system masks for the rest.

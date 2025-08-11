@@ -1,2 +1,0 @@
-deprecated_features:
-- paramiko - The paramiko connection plugin has been deprecated with planned removal in 2.21.

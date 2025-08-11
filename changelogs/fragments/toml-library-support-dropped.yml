@@ -1,4 +1,0 @@
-breaking_changes:
-  - Support for the ``toml`` library has been removed from TOML inventory parsing and dumping.
-    Use ``tomli`` for parsing on Python 3.10. Python 3.11 and later have built-in support for parsing.
-    Use ``tomli-w`` to support outputting inventory in TOML format.

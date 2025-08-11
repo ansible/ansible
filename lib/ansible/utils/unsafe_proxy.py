@@ -12,11 +12,7 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.six import binary_type, text_type
 
-import typing as t
-
 __all__ = ['AnsibleUnsafe', 'wrap_var']
-
-T = t.TypeVar('T')
 
 
 class AnsibleUnsafe:

@@ -1,5 +1,0 @@
----
-bugfixes:
-  - find - skip ENOENT error code while recursively enumerating files.
-    find module will now be tolerant to race conditions that remove files or directories
-    from the target it is currently inspecting. (https://github.com/ansible/ansible/issues/84873).

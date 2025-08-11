@@ -1,4 +1,0 @@
-minor_changes:
-  - ssh connection plugin - Added ``verbosity`` config to decouple SSH debug output verbosity from Ansible verbosity.
-    Previously, the Ansible verbosity value was always applied to the SSH client command-line, leading to excessively verbose output.
-    Set the ``ANSIBLE_SSH_VERBOSITY`` envvar or ``ansible_ssh_verbosity`` Ansible variable to a positive integer to increase SSH client verbosity.

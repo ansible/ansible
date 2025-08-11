@@ -29,7 +29,6 @@ from ._utils import LazyOptions, TemplateContext
 
 _display = Display()
 
-_TCallable = t.TypeVar("_TCallable", bound=t.Callable)
 _ITERATOR_TYPES: t.Final = (c.Iterator, c.ItemsView, c.KeysView, c.ValuesView, range)
 
 
@@ -169,7 +168,7 @@ class _DirectCall:
     _marker_attr: t.Final[str] = "_directcall"
 
     @classmethod
-    def mark(cls, src: _TCallable) -> _TCallable:
+    def mark[T: t.Callable](cls, src: T) -> T:
         setattr(src, cls._marker_attr, True)
         return src
 

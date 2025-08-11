@@ -1,0 +1,2 @@
+bugfixes:
+  - import_tasks - fix templating parent include arguments.

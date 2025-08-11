@@ -210,8 +210,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         mock_ospe.return_value = True
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
-        conn.host = "some_host"
 
+        conn.set_option("host", "some_host")
         conn.set_option('reconnection_retries', 9)
         conn.set_option('ssh_transfer_method', None)  # default is smart
 
@@ -261,8 +261,8 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
-        conn.host = "some_host"
 
+        conn.set_option("host", "some_host")
         conn.set_option('reconnection_retries', 9)
         conn.set_option('ssh_transfer_method', None)  # default is smart
 

@@ -1,0 +1,28 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Check if to_json works
+  set_fact:
+    msg: "{{ list_one | to_json }}"
+  vars:
+    list_one:
+      - one
+      - two
+  register: json_01
+
+- name: Check if to_nice_json works
+  set_fact:
+    msg: "{{ list_one | to_json }}"
+  vars:
+    list_one:
+      - one
+      - two
+  register: json_02
+
+- name: Assert
+  assert:
+    that:
+      - not json_01.failed
+      - json_01.ansible_facts.msg == "[\"one\", \"two\"]"
+      - not json_02.failed
+      - json_02.ansible_facts.msg == "[\"one\", \"two\"]"

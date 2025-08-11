@@ -1,4 +1,0 @@
-bugfixes:
-  - ansible-test - Enable the ``sys.unraisablehook`` work-around for the ``pylint`` sanity test on Python 3.11.
-    Previously the work-around was only enabled for Python 3.12 and later.
-    However, the same issue has been discovered on Python 3.11.

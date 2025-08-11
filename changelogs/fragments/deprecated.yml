@@ -1,3 +1,0 @@
----
-minor_changes:
-  - docs - add collection name in message from which the module is being deprecated (https://github.com/ansible/ansible/issues/84116).

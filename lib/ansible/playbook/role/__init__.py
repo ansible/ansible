@@ -374,8 +374,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             task_name = task_name + ' - ' + argument_spec['short_description']
 
         return {
-            'action': {
-                'module': 'ansible.builtin.validate_argument_spec',
+            'action': 'ansible.builtin.validate_argument_spec',
+            'args': {
                 # Pass only the 'options' portion of the arg spec to the module.
                 'argument_spec': argument_spec.get('options', {}),
                 'provided_arguments': self._role_params,

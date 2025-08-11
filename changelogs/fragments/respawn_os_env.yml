@@ -1,3 +1,0 @@
----
-bugfixes:
-   - respawn - use copy of env variables to update existing PYTHONPATH value (https://github.com/ansible/ansible/issues/84954).

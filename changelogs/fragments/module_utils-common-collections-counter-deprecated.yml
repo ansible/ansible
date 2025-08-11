@@ -1,2 +1,0 @@
-deprecated_features:
-  - "The ``ansible.module_utils.common.collections.count()`` function is deprecated and will be removed in ansible-core 2.23. Use ``collections.Counter()`` from the Python standard library instead."

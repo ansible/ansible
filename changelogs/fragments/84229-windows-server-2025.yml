@@ -1,4 +1,0 @@
-minor_changes:
-  - >-
-    Windows - Add support for Windows Server 2025 to Ansible and as an ``ansible-test``
-    remote target - https://github.com/ansible/ansible/issues/84229

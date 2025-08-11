@@ -1,2 +1,0 @@
-minor_changes:
-  - "Use ``importlib.metadata.version()`` to detect Jinja version as jinja2.__version__ is deprecated and will be removed in Jinja 3.3."

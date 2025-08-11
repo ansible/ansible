@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Removed support for automatic provisioning of obsolete instances for network-integration tests.

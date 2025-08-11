@@ -1,3 +1,0 @@
-minor_changes:
-  - assemble action added check_mode support
-  - module_utils.basic.backup_local enforces check_mode now

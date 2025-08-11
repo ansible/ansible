@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - When detection of the current container network fails, a warning is now issued and execution continues.
-    This simplifies usage in cases where the current container cannot be inspected, such as when running in GitHub Codespaces.

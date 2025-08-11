@@ -9,6 +9,7 @@ import dataclasses
 import datetime
 import functools
 import pathlib
+import re
 
 import astroid
 import astroid.context
@@ -156,7 +157,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         ),
     )
 
-    ANSIBLE_VERSION = StrictVersion('.'.join(ansible.release.__version__.split('.')[:3]))
+    ANSIBLE_VERSION = StrictVersion(re.match('[0-9.]*[0-9]', ansible.release.__version__)[0])
     """The current ansible-core X.Y.Z version."""
 
     DEPRECATION_MODULE_FUNCTIONS: dict[tuple[str, str], tuple[str, ...]] = {

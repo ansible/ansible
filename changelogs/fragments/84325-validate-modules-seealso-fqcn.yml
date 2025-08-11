@@ -1,2 +1,0 @@
-minor_changes:
-  - "validate-modules sanity test - make sure that ``module`` and ``plugin`` ``seealso`` entries use FQCNs (https://github.com/ansible/ansible/pull/84325)."

@@ -20,20 +20,37 @@ DOCUMENTATION:
       description: Affects sorting of dictionary keys.
       default: True
       type: bool
+    default_style:
+      description:
+        - Indicates the style of the scalar.
+      choices:
+        - ''
+        - "'"
+        - '"'
+        - '|'
+        - '>'
+      type: string
+    canonical:
+      description:
+        - If set to V(True), export tag type to the output.
+      type: bool
+    width:
+      description: Set the preferred line width.
+      type: integer
+    line_break:
+      description: Specify the line break.
+      type: string
+    encoding:
+      description: Specify the output encoding.
+      type: string
+    explicit_start:
+      description: If set to V(True), adds an explicit start using "---".
+      type: bool
+    explicit_end:
+      description: If set to V(True), adds an explicit end using "...".
+      type: bool
   notes:
     - More options may be available, see L(PyYAML documentation, https://pyyaml.org/wiki/PyYAMLDocumentation) for details.
-
-    # TODO: find docs for these
-    #default_flow_style
-    #default_style
-    #canonical=None,
-    #width=None,
-    #line_break=None,
-    #encoding=None,
-    #explicit_start=None,
-    #explicit_end=None,
-    #version=None,
-    #tags=None
 
 EXAMPLES: |
   # dump variable in a template to create a YAML document

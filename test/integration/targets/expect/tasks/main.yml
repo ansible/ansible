@@ -241,3 +241,95 @@
     that:
     - "non_zero_result.failed"
     - "non_zero_result.msg == 'non-zero return code'"
+
+- name: run tests in venv
+  vars:
+    venv_dir:  "{{ output_dir }}/pexpected_venv"
+    venv_python: "{{ venv_dir }}/bin/python"
+  block:
+    - name: ensure venv exists
+      pip:
+        name: coverage
+        virtualenv: "{{ venv_dir }}"
+        virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+    - name: trigger pexpect dependency absence
+      expect:
+        command: "echo expectThePexpected"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_dependency_absence
+      ignore_errors: true
+
+    - name: assert pexpect dependency absence
+      assert:
+        that:
+          - pexpect_dependency_absence is failed
+          - pexpect_dependency_absence.msg is contains 'pexpect'
+
+    - name: Install pexpect3.3
+      pip:
+        name: pexpect
+        version: 3.3
+        virtualenv: "{{ venv_dir }}"
+
+    - name: trigger fallback to pexpect3.3 methods
+      expect:
+        command: "echo pexpectIsABitOutOfDate"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_version_three_dot_three
+
+    - name: install pexpect3.0
+      pip:
+        name: pexpect
+        version: 3.0
+        virtualenv: "{{ venv_dir }}"
+
+    - name: trigger failure with out of date pexpect version
+      expect:
+        command: "echo pexpectIsTooOutOfDate"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_version_out_of_date
+      ignore_errors: true
+
+    - name: assert failure with out of date pexpect
+      assert:
+        that:
+        - pexpect_version_out_of_date is failed
+        - pexpect_version_out_of_date.msg is contains 'Insufficient version of pexpect installed'
+
+- name: trigger TypeError on timeout value
+  expect:
+    command: "echo piIsNotAnInt"
+    responses:
+      foo: bar
+    timeout: pi
+  register: pexpect_timeout_typeerror
+  ignore_errors: true
+
+- name: assert timeout triggers TypeError when not an int
+  assert:
+    that:
+    - pexpect_timeout_typeerror is failed
+    - pexpect_timeout_typeerror.msg is contains 'cannot be converted to an int'
+
+- name: trigger pexpect.ExceptionPexpect
+  expect:
+    command: commandthatdoesntexist
+    responses:
+      foo: bar
+  register: pexpect_exception_pexpect
+  ignore_errors: true
+
+- name: assert failure for a nonexistent command
+  assert:
+    that:
+      - pexpect_exception_pexpect is failed

@@ -42,9 +42,6 @@ from packaging.version import Version, InvalidVersion
 # region CLI Framework
 
 
-C = t.TypeVar("C", bound=t.Callable[..., None])
-
-
 def path_to_str(value: t.Any) -> str:
     """Return the given value converted to a string suitable for use as a command line argument."""
     return f"{value}/" if isinstance(value, pathlib.Path) and value.is_dir() else str(value)
@@ -188,7 +185,7 @@ class CommandFramework:
         self.arguments = kwargs
         self.parsed_arguments: argparse.Namespace | None = None
 
-    def __call__(self, func: C) -> C:
+    def __call__[T: t.Callable[..., None]](self, func: T) -> T:
         """Register the decorated function as a CLI command."""
         self.commands.append(func)
         return func
@@ -1271,11 +1268,7 @@ def test_sdist() -> None:
             except FileNotFoundError:
                 raise ApplicationError(f"Missing sdist: {sdist_file.relative_to(CHECKOUT_DIR)}") from None
 
-            # deprecated: description='extractall fallback without filter' python_version='3.11'
-            if hasattr(tarfile, 'data_filter'):
-                sdist.extractall(temp_dir, filter='data')  # type: ignore[call-arg]
-            else:
-                sdist.extractall(temp_dir)
+            sdist.extractall(temp_dir, filter='data')
 
         pyc_glob = "*.pyc*"
         pyc_files = sorted(path.relative_to(temp_dir) for path in temp_dir.rglob(pyc_glob))

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - vault - improved vault filter documentation by adding missing example content for dump_template_data.j2, refining examples for clarity, and ensuring variable consistency (https://github.com/ansible/ansible/issues/83583).

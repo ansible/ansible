@@ -53,6 +53,9 @@ from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
+if t.TYPE_CHECKING:
+    from ansible.playbook.role_include import IncludeRole
+
 display = Display()
 
 __all__ = ['StrategyBase']
@@ -799,7 +802,7 @@ class StrategyBase:
 
         return ret_results
 
-    def _copy_included_file(self, included_file: IncludedFile) -> IncludedFile:
+    def _copy_included_file(self, included_file: IncludedFile) -> TaskInclude | IncludeRole:
         """
         A proven safe and performant way to create a copy of an included file
         """

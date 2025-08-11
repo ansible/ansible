@@ -34,8 +34,6 @@ DOCUMENTATION = """
                - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
-               - name: delegated_vars['ansible_host']
-               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if SSH should reject or not a connection after checking host keys.
           default: True
@@ -461,8 +459,6 @@ else:
 
 display = Display()
 
-P = t.ParamSpec('P')
-
 # error messages that indicate 255 return code is not from ssh itself.
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
                                                             #   while invoking a script via -m
@@ -549,7 +545,7 @@ def _handle_error(
         display.vvv(msg, host=host)
 
 
-def _ssh_retry(
+def _ssh_retry[**P](
     func: c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]],
 ) -> c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]]:
     """
@@ -640,11 +636,11 @@ def _clean_shm(func):
                 self.shm.close()
                 with contextlib.suppress(FileNotFoundError):
                     self.shm.unlink()
-                if not _HAS_RESOURCE_TRACK:
-                    # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
-                    # There is a resource tracking issue where the resource is deleted, but tracking still has a record
-                    # This will effectively overwrite the record and remove it
-                    SharedMemory(name=self.shm.name, create=True, size=1).unlink()
+                    if not _HAS_RESOURCE_TRACK:
+                        # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
+                        # There is a resource tracking issue where the resource is deleted, but tracking still has a record
+                        # This will effectively overwrite the record and remove it
+                        SharedMemory(name=self.shm.name, create=True, size=1).unlink()
         return ret
     return inner
 
@@ -960,6 +956,13 @@ class Connection(ConnectionBase):
                     )
                 b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
+
+        if password_mechanism == "ssh_askpass":
+            self._add_args(
+                b_command,
+                (b"-o", b"NumberOfPasswordPrompts=1"),
+                "Restrict number of password prompts in case incorrect password is provided.",
+            )
 
         # Finally, we add any caller-supplied extras.
         if other_args:

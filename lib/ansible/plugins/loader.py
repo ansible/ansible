@@ -517,7 +517,7 @@ class PluginLoader:
                 #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
 
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
+                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'), section='DOCUMENTATION')
 
                     if 'options' in dstring and isinstance(dstring['options'], dict):
                         C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
@@ -1674,7 +1674,7 @@ def _configure_collection_loader(prefix_collections_path=None):
 
     # insert the internal ansible._protomatter collection up front
     paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
-    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
+    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH, internal_collections=paths[0])
     finder._install()
 
     # this should succeed now

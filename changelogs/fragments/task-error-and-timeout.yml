@@ -1,7 +1,0 @@
-bugfixes:
-  - task timeout - Specifying a negative task timeout now results in an error.
-  - error handling - Error details and tracebacks from connection and built-in action exceptions are preserved.
-    Previously, much of the detail was lost or mixed into the error message.
-
-minor_changes:
-  - task timeout - Specifying a timeout greater than 100,000,000 now results in an error.

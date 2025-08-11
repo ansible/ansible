@@ -1,3 +1,0 @@
----
-removed_features:
-  - manager - remove deprecated include_delegate_to parameter from get_vars API.
