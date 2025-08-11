@@ -371,6 +371,7 @@ def write_signed_by_key(module, v, slug):
 
 
 def install_python_debian(module, deb_pkg_name):
+
     if not module.check_mode:
         apt_path = module.get_bin_path('apt', required=True)
         if apt_path:
