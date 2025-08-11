@@ -1,0 +1,2 @@
+bugfixes:
+  - callback plugins - improve consistency accessing the Task object's resolved_action attribute.

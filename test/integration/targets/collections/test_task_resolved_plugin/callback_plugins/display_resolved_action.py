@@ -9,6 +9,12 @@ DOCUMENTATION = """
     short_description: Displays the requested and resolved actions at the end of a playbook.
     description:
         - Displays the requested and resolved actions in the format "requested == resolved".
+    options:
+      test_on_task_start:
+        description: Test using task.resolved_action before it is reliably resolved.
+        default: False
+        env:
+          - name: ANSIBLE_TEST_ON_TASK_START
     requirements:
       - Enable in configuration.
 """
@@ -25,11 +31,14 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, *args, **kwargs):
         super(CallbackModule, self).__init__(*args, **kwargs)
-        self.requested_to_resolved = {}
+
+    def v2_playbook_on_task_start(self, task, is_conditional):
+        if self.get_option("test_on_task_start"):
+            self._display.display(f"v2_playbook_on_task_start: {task.action} == {task.resolved_action}")
+
+    def v2_runner_item_on_ok(self, result):
+        self._display.display(f"v2_runner_item_on_ok: {result.task.action} == {result.task.resolved_action}")
 
     def v2_runner_on_ok(self, result):
-        self.requested_to_resolved[result.task.action] = result.task.resolved_action
-
-    def v2_playbook_on_stats(self, stats):
-        for requested, resolved in self.requested_to_resolved.items():
-            self._display.display("%s == %s" % (requested, resolved), screen_only=True)
+        if not result.task.loop:
+            self._display.display(f"v2_runner_on_ok: {result.task.action} == {result.task.resolved_action}")
