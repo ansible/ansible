@@ -909,6 +909,17 @@ releases:
     - pull_changed_fix.yml
     - user_passphrase.yml
     release_date: '2025-07-08'
+  2.18.8:
+    changes:
+      release_summary: '| Release Date: 2025-08-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.8_summary.yaml
+    release_date: '2025-08-11'
   2.18.8rc1:
     changes:
       bugfixes:
