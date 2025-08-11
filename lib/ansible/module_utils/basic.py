@@ -1515,8 +1515,16 @@ class AnsibleModule(object):
         # return preserved
         kwargs.update(preserved)
 
+        self._record_module_result(kwargs)
+
+    def _record_module_result(self, o: dict[str, t.Any]) -> None:
+        """
+        Temporary internal hook to enable modification/bypass of module result serialization.
+
+        Monkeypatched by ansible.netcommon for direct in-worker module execution.
+        """
         encoder = _json.get_module_encoder(_ANSIBLE_PROFILE, _json.Direction.MODULE_TO_CONTROLLER)
-        print('\n%s' % json.dumps(kwargs, cls=encoder))
+        print('\n%s' % json.dumps(o, cls=encoder))
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """
