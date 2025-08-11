@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-doc - show ``notes``, ``seealso``, and top-level ``version_added`` for role entrypoints (https://github.com/ansible/ansible/pull/81796)."
