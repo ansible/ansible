@@ -16,7 +16,8 @@ from ansible._internal._templating._jinja_common import CapturedExceptionMarker,
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 from ansible._internal._templating._utils import TemplateContext, LazyOptions
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
-from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin, _AnsibleLazyTemplateList, _AnsibleLazyTemplateDict, _LazyValue
+from ansible._internal._templating._lazy_containers import _AnsibleLazyTemplateMixin, _AnsibleLazyTemplateList, _AnsibleLazyTemplateDict, _LazyValue, \
+    _AnsibleLazyAccessTuple, UnsupportedConstructionMethodError
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject
 
 from ...module_utils.datatag.test_datatag import ExampleSingletonTag
@@ -299,6 +300,7 @@ def test_lazy_list_adapter_operators(template, variables, expected) -> None:
     ('type(d1)(d1)', dict(a=_LazyValue(1), c=_LazyValue(1)), _AnsibleLazyTemplateDict),  # _AnsibleLazyTemplateDict.__init__ copy
     ('l1.copy()', [_LazyValue(1)], _AnsibleLazyTemplateList),  # _AnsibleLazyTemplateList.copy
     ('type(l1)(l1)', [_LazyValue(1)], _AnsibleLazyTemplateList),  # _AnsibleLazyTemplateList.__init__ copy
+    ('type(t1)(t1)', (1,), _AnsibleLazyAccessTuple),
     ('copy.copy(l1)', [_LazyValue(1)], _AnsibleLazyTemplateList),
     ('copy.copy(d1)', dict(a=_LazyValue(1), c=_LazyValue(1)), _AnsibleLazyTemplateDict),
     ('copy.deepcopy(l1)', [_LazyValue(1)], _AnsibleLazyTemplateList),  # __AnsibleLazyTemplateList.__deepcopy__
@@ -308,6 +310,7 @@ def test_lazy_list_adapter_operators(template, variables, expected) -> None:
     ('list(reversed(l1))', [1], list),  # _AnsibleLazyTemplateList.__reversed__
     ('list(reversed(d1))', ['c', 'a'], list),  # dict.__reversed__ - keys only
     ('l1[:]', [_LazyValue(1)], _AnsibleLazyTemplateList),  # __getitem__ (slice)
+    ('t1[:]', (1,), _AnsibleLazyAccessTuple),  # __getitem__ (slice)
     ('d1["a"]', 1, int),  # __getitem__
     ('d1.get("a")', 1, int),  # get
     ('l1[0]', 1, int),  # __getitem__
@@ -366,6 +369,9 @@ def test_lazy_list_adapter_operators(template, variables, expected) -> None:
     ('tuple() + l1', 'can only concatenate tuple (not "_AnsibleLazyTemplateList") to tuple', TypeError),  # __radd__ (relies on tuple.__add__)
     ('tuple() + d1', 'can only concatenate tuple (not "_AnsibleLazyTemplateDict") to tuple', TypeError),  # relies on tuple.__add__
     ('l1.pop(42)', "pop index out of range", IndexError),
+    ('type(l1)([])', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
+    ('type(t1)([])', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
+    ('type(d1)({})', 'Direct construction of lazy containers is not supported.', UnsupportedConstructionMethodError),
 ], ids=str)
 def test_lazy_container_operators(expression: str, expected_value: t.Any, expected_type: type) -> None:
     """
@@ -387,6 +393,7 @@ def test_lazy_container_operators(expression: str, expected_value: t.Any, expect
             l1x=[TRUST.tag('{{ one }}')],
             l2=[TRUST.tag('{{ two }}')],
             l2f=l2f,
+            t1=(TRUST.tag('{{ one }}'),),
             d1=dict(a=TRUST.tag('{{ one }}'), c=TRUST.tag('{{ one }}')),
             d1x=dict(a=TRUST.tag('{{ one }}'), c=TRUST.tag('{{ one }}')),
             d2=dict(b=TRUST.tag('{{ two }}'), c=TRUST.tag('{{ two }}')),
@@ -436,6 +443,15 @@ def test_lazy_container_operators(expression: str, expected_value: t.Any, expect
             actual_list_types: list[type] = [type(value) for value in list.__iter__(result)]
 
             assert actual_list_types == expected_list_types
+        elif issubclass(expected_type, tuple):
+            assert isinstance(result, tuple)  # redundant, but assists mypy in understanding the type
+
+            expected_tuple_types = [type(value) for value in expected_value]
+            expected_result = expected_value
+
+            actual_tuple_types: list[type] = [type(value) for value in tuple.__iter__(result)]
+
+            assert actual_tuple_types == expected_tuple_types
         elif issubclass(expected_type, dict):
             assert isinstance(result, dict)  # redundant, but assists mypy in understanding the type
 
@@ -867,3 +883,12 @@ def test_lazy_copies(value: list | dict, deep: bool, template_context: TemplateC
     assert all((base_type.__getitem__(copied, key) is base_type.__getitem__(original, key)) != deep for key in keys)
     assert (copied._templar is original._templar) != deep
     assert (copied._lazy_options is original._lazy_options) != deep
+
+
+def test_lazy_template_mixin_init() -> None:
+    """
+    Verify `_AnsibleLazyTemplateMixin` checks the __init__ arg type.
+    This code path is not normally reachable, since types which use it perform the same check before invoking the mixin.
+    """
+    with pytest.raises(UnsupportedConstructionMethodError):
+        _AnsibleLazyTemplateMixin(t.cast(t.Any, None))
