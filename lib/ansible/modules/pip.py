@@ -640,7 +640,6 @@ def _normalize_vcs_packages(module: AnsibleModule,
         # Else, if that fails due to --dry-run not being present in pip
         # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
         # the potentially faulty pip download method and warn the user.
-        module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
 
         pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
         if pip_downloads_dir.exists():
@@ -650,9 +649,13 @@ def _normalize_vcs_packages(module: AnsibleModule,
         rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *vcs_packages])
 
         if rc != 0:
-            # If it fails, just fail with error (should also catch a bad vcs url in the dry-run case)
+            # If it fails, just dump the error
             os.environ.update(frozen_env)
             module.fail_json(rc=rc, msg=out, err=err)
+
+        # Only from this point onward can we be sure that we're using the fallback, warn now.
+        module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
+
         out_lines = out.splitlines()
         saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
         package_names = [Path(name).stem for name in saved_files]
