@@ -22,7 +22,6 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -70,7 +69,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) and not isinstance(ds, string_types):
+        if not isinstance(ds, dict) and not isinstance(ds, str):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
@@ -113,11 +112,11 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         string), just that string
         """
 
-        if isinstance(ds, string_types):
+        if isinstance(ds, str):
             return ds
 
         role_name = ds.get('role', ds.get('name'))
-        if not role_name or not isinstance(role_name, string_types):
+        if not role_name or not isinstance(role_name, str):
             raise AnsibleError('role definitions must contain a role name', obj=ds)
 
         # if we have the required datastructures, and if the role_name

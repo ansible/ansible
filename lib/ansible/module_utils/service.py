@@ -36,7 +36,6 @@ import select
 import shlex
 import subprocess
 
-from ansible.module_utils.six import b
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
@@ -200,7 +199,7 @@ def daemonize(module, cmd):
         fds = [p.stdout, p.stderr]
 
         # loop reading output till it is done
-        output = {p.stdout: b(""), p.stderr: b("")}
+        output = {p.stdout: b"", p.stderr: b""}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll() is None:
@@ -234,7 +233,7 @@ def daemonize(module, cmd):
         os.waitpid(pid, 0)
 
         # Grab response data after child finishes
-        return_data = b("")
+        return_data = b""
         while True:
             rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
             if pipe[0] in rfd:

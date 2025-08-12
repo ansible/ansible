@@ -28,7 +28,6 @@ from contextlib import contextmanager
 
 from ansible.executor.powershell.module_manifest import PSModuleDepFinder
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS, AnsibleModule
-from ansible.module_utils.six import reraise
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 from .utils import CaptureStd, find_executable, get_module_name_from_filename
@@ -153,7 +152,7 @@ def get_py_argument_spec(filename, collection):
             pass
         except BaseException as e:
             # we want to catch all exceptions here, including sys.exit
-            reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
+            raise AnsibleModuleImportError from e
 
         if not fake.called:
             raise AnsibleModuleNotInitialized()

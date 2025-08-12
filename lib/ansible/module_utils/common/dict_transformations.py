@@ -7,9 +7,8 @@ from __future__ import annotations
 
 
 import re
+from collections.abc import MutableMapping
 from copy import deepcopy
-
-from ansible.module_utils.six.moves.collections_abc import MutableMapping
 
 
 def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):

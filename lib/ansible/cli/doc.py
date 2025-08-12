@@ -32,7 +32,6 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
-from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -1274,7 +1273,7 @@ class DocCLI(CLI, RoleMixin):
             sub_indent = inline_indent + extra_indent
             if is_sequence(opt['description']):
                 for entry_idx, entry in enumerate(opt['description'], 1):
-                    if not isinstance(entry, string_types):
+                    if not isinstance(entry, str):
                         raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
                     if entry_idx == 1:
                         text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(entry), limit,
@@ -1282,7 +1281,7 @@ class DocCLI(CLI, RoleMixin):
                     else:
                         text.append(DocCLI.warp_fill(DocCLI.tty_ify(entry), limit, initial_indent=sub_indent, subsequent_indent=sub_indent))
             else:
-                if not isinstance(opt['description'], string_types):
+                if not isinstance(opt['description'], str):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
                 text.append(key + DocCLI.warp_fill(DocCLI.tty_ify(opt['description']), limit,
                             initial_indent=inline_indent, subsequent_indent=sub_indent, initial_extra=len(extra_indent)))
@@ -1466,7 +1465,7 @@ class DocCLI(CLI, RoleMixin):
                 if k not in doc:
                     continue
                 text.append('')
-                if isinstance(doc[k], string_types):
+                if isinstance(doc[k], str):
                     text.append('%s: %s' % (k.upper(), DocCLI.warp_fill(DocCLI.tty_ify(doc[k]),
                                             limit - (len(k) + 2), subsequent_indent=opt_indent)))
                 elif isinstance(doc[k], (list, tuple)):
@@ -1478,7 +1477,7 @@ class DocCLI(CLI, RoleMixin):
             if doc.get('examples', False):
                 text.append('')
                 text.append(_format("EXAMPLES:", 'bold'))
-                if isinstance(doc['examples'], string_types):
+                if isinstance(doc['examples'], str):
                     text.append(doc.pop('examples').strip())
                 else:
                     try:
@@ -1572,7 +1571,7 @@ class DocCLI(CLI, RoleMixin):
                 continue
             text.append('')
             header = _format(k.upper(), 'bold')
-            if isinstance(doc[k], string_types):
+            if isinstance(doc[k], str):
                 text.append('%s: %s' % (header, DocCLI.warp_fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (header, ', '.join(doc[k])))
@@ -1584,7 +1583,7 @@ class DocCLI(CLI, RoleMixin):
         if doc.get('plainexamples', False):
             text.append('')
             text.append(_format("EXAMPLES:", 'bold'))
-            if isinstance(doc['plainexamples'], string_types):
+            if isinstance(doc['plainexamples'], str):
                 text.append(doc.pop('plainexamples').strip())
             else:
                 try:
@@ -1621,7 +1620,7 @@ def _do_yaml_snippet(doc):
 
     for o in sorted(doc['options'].keys()):
         opt = doc['options'][o]
-        if isinstance(opt['description'], string_types):
+        if isinstance(opt['description'], str):
             desc = DocCLI.tty_ify(opt['description'])
         else:
             desc = DocCLI.tty_ify(" ".join(opt['description']))

@@ -131,7 +131,6 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils.common.text.converters import to_native
 
 
@@ -141,6 +140,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
+    b_linesep = os.linesep.encode()
 
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
@@ -153,7 +153,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
 
         # always put a newline between fragments if the previous fragment didn't end with a newline.
         if add_newline:
-            tmp.write(b('\n'))
+            tmp.write(b_linesep)
 
         # delimiters should only appear between fragments
         if delimit_me:
@@ -163,16 +163,12 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
                 tmp.write(delimiter)
                 # always make sure there's a newline after the
                 # delimiter, so lines don't run together
-
-                # byte indexing differs on Python 2 and 3,
-                # use indexbytes for compat
-                # chr(10) == '\n'
-                if indexbytes(delimiter, -1) != 10:
-                    tmp.write(b('\n'))
+                if not delimiter.endswith(b_linesep):
+                    tmp.write(b_linesep)
 
         tmp.write(fragment_content)
         delimit_me = True
-        if fragment_content.endswith(b('\n')):
+        if fragment_content.endswith(b_linesep):
             add_newline = False
         else:
             add_newline = True

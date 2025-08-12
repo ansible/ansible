@@ -29,7 +29,6 @@ from ansible._internal._templating import _lazy_containers
 from ansible.errors import AnsibleFilterError, AnsibleTypeError, AnsibleTemplatePluginError
 from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.json import get_encoder, get_decoder
-from ansible.module_utils.six import string_types, integer_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -278,7 +277,7 @@ def rand(environment, end, start=None, step=None, seed=None):
         r = SystemRandom()
     else:
         r = Random(seed)
-    if isinstance(end, integer_types):
+    if isinstance(end, int):
         if not start:
             start = 0
         if not step:
@@ -555,7 +554,7 @@ def subelements(obj, subelements, skip_missing=False):
 
     if isinstance(subelements, list):
         subelement_list = subelements[:]
-    elif isinstance(subelements, string_types):
+    elif isinstance(subelements, str):
         subelement_list = subelements.split('.')
     else:
         raise AnsibleTypeError('subelements must be a list or a string')
@@ -617,7 +616,7 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
 def path_join(paths):
     """ takes a sequence or a string, and return a concatenation
         of the different members """
-    if isinstance(paths, string_types):
+    if isinstance(paths, str):
         return os.path.join(paths)
     if is_sequence(paths):
         return os.path.join(*paths)
@@ -809,7 +808,7 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
-            'split': partial(unicode_wrap, text_type.split),
+            'split': partial(unicode_wrap, str.split),
             # FDI038 - replace this with a standard type compat shim
             'groupby': _cleansed_groupby,
 

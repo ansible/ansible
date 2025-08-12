@@ -18,12 +18,13 @@ from __future__ import annotations
 import re
 import time
 
+from functools import reduce
+
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts import timeout
-from ansible.module_utils.six.moves import reduce
 
 
 class SunOSHardware(Hardware):

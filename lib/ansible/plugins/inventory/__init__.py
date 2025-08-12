@@ -34,7 +34,6 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.plugins import AnsiblePlugin, _ConfigurablePlugin
 from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, load_extra_vars
 
@@ -439,7 +438,7 @@ class Constructable(_BaseInventoryPlugin):
                         new_raw_group_names = []
                         if use_default:
                             new_raw_group_names.append(default_value_name)
-                        elif isinstance(key, string_types):
+                        elif isinstance(key, str):
                             new_raw_group_names.append(key)
                         elif isinstance(key, list):
                             for name in key:

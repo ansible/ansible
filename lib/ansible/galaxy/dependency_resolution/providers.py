@@ -24,7 +24,6 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 try:
@@ -278,7 +277,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 # NOTE: Another known mistake is setting a minor part of the SemVer notation
                 # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
                 # NOTE: after the conversion to string.
-                if not isinstance(version, string_types):
+                if not isinstance(version, str):
                     raise ValueError(version_err)
                 elif version != '*':
                     try:

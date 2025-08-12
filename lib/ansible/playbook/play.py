@@ -22,7 +22,6 @@ from ansible import context
 from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -53,11 +52,11 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-2)
+    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=(str,), always_post_validate=True, priority=-2)
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=(str,), always_post_validate=True)
     gather_timeout = NonInheritableFieldAttribute(isa='int', default=None, always_post_validate=True)
     fact_path = NonInheritableFieldAttribute(isa='string', default=None)
 
@@ -120,10 +119,10 @@ class Play(Base, Taggable, CollectionSearch):
                 for entry in value:
                     if entry is None:
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
-                    elif not isinstance(entry, (binary_type, text_type)):
+                    elif not isinstance(entry, (bytes, str)):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
 
-            elif not isinstance(value, (binary_type, text_type, EncryptedString)):
+            elif not isinstance(value, (bytes, str, EncryptedString)):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):

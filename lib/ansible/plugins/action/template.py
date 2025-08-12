@@ -23,7 +23,6 @@ from ansible.config.manager import ensure_type
 from ansible.errors import AnsibleError, AnsibleActionFail
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.template import trust_as_template
 from ansible._internal._templating import _template_vars
@@ -49,7 +48,7 @@ class ActionModule(ActionBase):
                        'block_end_string', 'comment_start_string', 'comment_end_string'):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], 'string')
-                if value is not None and not isinstance(value, string_types):
+                if value is not None and not isinstance(value, str):
                     raise AnsibleActionFail("%s is expected to be a string, but got %s instead" % (s_type, type(value)))
                 self._task.args[s_type] = value
 

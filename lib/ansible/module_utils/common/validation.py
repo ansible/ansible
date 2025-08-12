@@ -10,15 +10,13 @@ import os
 import re
 
 from ast import literal_eval
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common import json as _common_json
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import (
-    string_types,
-)
 
 
 def count_terms(terms, parameters):
@@ -43,7 +41,7 @@ def safe_eval(value, locals=None, include_exceptions=False):
         version="2.21",
     )
     # do not allow method calls to modules
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         # already templated to a datavaluestructure, perhaps?
         if include_exceptions:
             return (value, None)
@@ -194,7 +192,7 @@ def check_required_by(requirements, parameters, options_context=None):
         if key not in parameters or parameters[key] is None:
             continue
         # Support strings (single-item lists)
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = [value]
 
         if missing := [required for required in value if required not in parameters or parameters[required] is None]:
@@ -373,7 +371,7 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     :returns: Original value if it is a string, the value converted to a string
         if allow_conversion=True, or raises a TypeError if allow_conversion=False.
     """
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         return value
 
     if allow_conversion and value is not None:
@@ -403,7 +401,7 @@ def check_type_list(value):
         return value
 
     # DTFIX-FUTURE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):
         return [str(value)]
@@ -431,7 +429,7 @@ def check_type_dict(value):
     if isinstance(value, dict):
         return value
 
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         if value.startswith("{"):
             try:
                 return json.loads(value)
@@ -494,7 +492,7 @@ def check_type_bool(value):
     if isinstance(value, bool):
         return value
 
-    if isinstance(value, string_types) or isinstance(value, (int, float)):
+    if isinstance(value, str) or isinstance(value, (int, float)):
         return boolean(value)
 
     raise TypeError('%s cannot be converted to a bool' % type(value))
@@ -594,3 +592,7 @@ def check_type_jsonarg(value):
         return json.dumps(value, cls=_common_json._get_legacy_encoder(), _decode_bytes=True)
 
     raise TypeError('%s cannot be converted to a json string' % type(value))
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "string_types")

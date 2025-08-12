@@ -27,7 +27,6 @@ from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import write_to_stream
-from ansible.module_utils.six import string_types
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
@@ -340,7 +339,7 @@ class TaskExecutor:
                 })
 
             # if plugin is loaded, get resolved name, otherwise leave original task connection
-            if self._connection and not isinstance(self._connection, string_types):
+            if self._connection and not isinstance(self._connection, str):
                 task_fields['connection'] = getattr(self._connection, 'ansible_name')
 
             tr = _RawTaskResult(

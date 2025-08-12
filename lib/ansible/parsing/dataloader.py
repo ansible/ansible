@@ -19,7 +19,6 @@ from ansible._internal._errors import _error_utils
 from ansible.module_utils.basic import is_executable
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, SourceWasEncrypted
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
@@ -418,7 +417,7 @@ class DataLoader:
         Temporary files are cleanup in the destructor
         """
 
-        if not file_path or not isinstance(file_path, (binary_type, text_type)):
+        if not file_path or not isinstance(file_path, (bytes, str)):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_path))
 
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')

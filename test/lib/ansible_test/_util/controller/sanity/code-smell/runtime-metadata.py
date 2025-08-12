@@ -17,14 +17,13 @@ from voluptuous import Required, Schema, Invalid
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
-from ansible.module_utils.six import string_types
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.version import SemanticVersion
 
 
 def fqcr(value):
     """Validate a FQCR."""
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         raise Invalid('Must be a string that is a FQCR')
     if not AnsibleCollectionRef.is_valid_fqcr(value):
         raise Invalid('Must be a FQCR')
@@ -33,7 +32,7 @@ def fqcr(value):
 
 def fqcr_or_shortname(value):
     """Validate a FQCR or a shortname."""
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         raise Invalid('Must be a string that is a FQCR or a short name')
     if '.' in value and not AnsibleCollectionRef.is_valid_fqcr(value):
         raise Invalid('Must be a FQCR or a short name')
@@ -48,7 +47,7 @@ def isodate(value, check_deprecation_date=False, is_tombstone=False):
     else:
         # make sure we have a string
         msg = 'Expected ISO 8601 date string (YYYY-MM-DD), or YAML date'
-        if not isinstance(value, string_types):
+        if not isinstance(value, str):
             raise Invalid(msg)
         # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
         # we have to do things manually.
@@ -80,7 +79,7 @@ def removal_version(value, is_ansible, current_version=None, is_tombstone=False)
         'Removal version must be a string' if is_ansible else
         'Removal version must be a semantic version (https://semver.org/)'
     )
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         raise Invalid(msg)
     try:
         if is_ansible:
@@ -191,7 +190,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
                 'removal_version': partial(removal_version, is_ansible=is_ansible,
                                            current_version=current_version),
                 'removal_date': partial(isodate, check_deprecation_date=check_deprecation_dates),
-                'warning_text': Any(*string_types),
+                'warning_text': str,
             }
         ),
         avoid_additional_data
@@ -204,7 +203,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
                 'removal_version': partial(removal_version, is_ansible=is_ansible,
                                            current_version=current_version, is_tombstone=True),
                 'removal_date': partial(isodate, is_tombstone=True),
-                'warning_text': Any(*string_types),
+                'warning_text': str,
             }
         ),
         avoid_additional_data
@@ -228,18 +227,15 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
     # Adjusted schema for module_utils
     plugin_routing_schema_mu = Any(
         plugins_routing_common_schema.extend({
-            ('redirect'): Any(*string_types)}
+            ('redirect'): str}
         ),
     )
 
-    list_dict_plugin_routing_schema = [{str_type: plugin_routing_schema}
-                                       for str_type in string_types]
+    list_dict_plugin_routing_schema = [{str: plugin_routing_schema}]
 
-    list_dict_plugin_routing_schema_mu = [{str_type: plugin_routing_schema_mu}
-                                          for str_type in string_types]
+    list_dict_plugin_routing_schema_mu = [{str: plugin_routing_schema_mu}]
 
-    list_dict_plugin_routing_schema_modules = [{str_type: plugin_routing_schema_modules}
-                                               for str_type in string_types]
+    list_dict_plugin_routing_schema_modules = [{str: plugin_routing_schema_modules}]
 
     plugin_schema = Schema({
         ('action'): Any(None, *list_dict_plugin_routing_schema),
@@ -267,13 +263,12 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
 
     import_redirection_schema = Any(
         Schema({
-            ('redirect'): Any(*string_types),
+            ('redirect'): str,
             # import_redirect doesn't currently support deprecation
         }, extra=PREVENT_EXTRA)
     )
 
-    list_dict_import_redirection_schema = [{str_type: import_redirection_schema}
-                                           for str_type in string_types]
+    list_dict_import_redirection_schema = [{str: import_redirection_schema}]
 
     # action_groups schema
 
@@ -289,7 +284,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         }, extra=PREVENT_EXTRA)
     }, extra=PREVENT_EXTRA)
     action_group_schema = All([metadata_dict, fqcr_or_shortname], at_most_one_dict)
-    list_dict_action_groups_schema = [{str_type: action_group_schema} for str_type in string_types]
+    list_dict_action_groups_schema = [{str: action_group_schema}]
 
     # top level schema
 
@@ -298,7 +293,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         ('plugin_routing'): Any(plugin_schema),
         ('import_redirection'): Any(None, *list_dict_import_redirection_schema),
         # requires_ansible: In the future we should validate this with SpecifierSet
-        ('requires_ansible'): Any(*string_types),
+        ('requires_ansible'): str,
         ('action_groups'): Any(*list_dict_action_groups_schema),
     }, extra=PREVENT_EXTRA)
 

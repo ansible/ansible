@@ -21,7 +21,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
 from ansible.utils.display import Display
@@ -74,7 +73,7 @@ class ActionModule(ActionBase):
         if groups:
             if isinstance(groups, list):
                 group_list = groups
-            elif isinstance(groups, string_types):
+            elif isinstance(groups, str):
                 group_list = groups.split(",")
             else:
                 raise AnsibleActionFail("Groups must be specified as a list.", obj=groups)

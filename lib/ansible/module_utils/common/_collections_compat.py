@@ -2,7 +2,7 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 """Collections ABC import shim.
 
-Use `ansible.module_utils.six.moves.collections_abc` instead, which has been available since ansible-core 2.11.
+Use `collections.abc` instead.
 This module exists only for backwards compatibility.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 # Although this was originally intended for internal use only, it has wide adoption in collections.
 # This is due in part to sanity tests previously recommending its use over `collections` imports.
-from ansible.module_utils.six.moves.collections_abc import (  # pylint: disable=unused-import
+from collections.abc import (  # pylint: disable=unused-import
     MappingView,
     ItemsView,
     KeysView,
@@ -24,4 +24,13 @@ from ansible.module_utils.six.moves.collections_abc import (  # pylint: disable=
     Callable,
     Iterable,
     Iterator,
+)
+
+from ansible.module_utils.common import warnings as _warnings
+
+
+_warnings.deprecate(
+    msg="The `ansible.module_utils.common._collections_compat` module is deprecated.",
+    help_text="Use `collections.abc` from the Python standard library instead.",
+    version="2.24",
 )

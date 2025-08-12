@@ -54,7 +54,6 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils import six
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible._internal._templating._engine import TemplateEngine
@@ -65,7 +64,6 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.utils.vars import load_extra_vars
 
 display = Display()
-urlparse = six.moves.urllib.parse.urlparse
 
 
 def with_collection_artifacts_manager(wrapped_method):

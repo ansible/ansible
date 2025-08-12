@@ -291,7 +291,6 @@ import time
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 
 
 class _Object:
@@ -496,7 +495,7 @@ def main():
 
     params = module.params
 
-    if params['mode'] and not isinstance(params['mode'], string_types):
+    if params['mode'] and not isinstance(params['mode'], str):
         module.fail_json(
             msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s" % params['mode'].__class__.__name__
         )

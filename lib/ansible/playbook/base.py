@@ -19,7 +19,6 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError, AnsibleFieldAttributeError
 from ansible.module_utils.datatag import native_type_name
 from ansible._internal._datatag._tags import Origin
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
@@ -37,7 +36,7 @@ display = Display()
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
     valid_metadata = {
         'extend_group': {
-            'types': (list, string_types,),
+            'types': (list, str,),
             'errortype': 'list',
         },
     }
@@ -204,7 +203,7 @@ class FieldAttributeBase:
             value = self.set_to_context(attr.name)
 
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
-        if value and isinstance(value, string_types) and value not in valid_values:
+        if value and isinstance(value, str) and value not in valid_values:
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
         return value
 
@@ -350,14 +349,14 @@ class FieldAttributeBase:
         found_group_metadata = False
         for action in action_group:
             # Everything should be a string except the metadata entry
-            if not isinstance(action, string_types):
+            if not isinstance(action, str):
                 _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
 
                 if isinstance(action['metadata'], dict):
                     found_group_metadata = True
 
                     include_groups = action['metadata'].get('extend_group', [])
-                    if isinstance(include_groups, string_types):
+                    if isinstance(include_groups, str):
                         include_groups = [include_groups]
                     if not isinstance(include_groups, list):
                         # Bad entries may be a warning above, but prevent tracebacks by setting it back to the acceptable type.
@@ -472,7 +471,7 @@ class FieldAttributeBase:
         elif attribute.isa == 'percent':
             # special value, which may be an integer or float
             # with an optional '%' at the end
-            if isinstance(value, string_types) and '%' in value:
+            if isinstance(value, str) and '%' in value:
                 value = value.replace('%', '')
             value = float(value)
         elif attribute.isa == 'list':

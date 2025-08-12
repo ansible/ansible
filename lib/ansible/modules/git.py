@@ -343,7 +343,6 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.six import b, string_types
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
@@ -443,12 +442,12 @@ def write_ssh_wrapper(module):
         fd, wrapper_path = tempfile.mkstemp()
 
     # use existing git_ssh/ssh_command, fallback to 'ssh'
-    template = b("""#!/bin/sh
+    template = """#!/bin/sh
 %s $GIT_SSH_OPTS "$@"
-""" % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh')))
+""" % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh'))
 
     # write it
-    with os.fdopen(fd, 'w+b') as fh:
+    with os.fdopen(fd, 'w') as fh:
         fh.write(template)
 
     # set execute
@@ -1257,7 +1256,7 @@ def main():
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
-        if not isinstance(umask, string_types):
+        if not isinstance(umask, str):
             module.fail_json(msg="umask must be defined as a quoted octal integer")
         try:
             umask = int(umask, 8)

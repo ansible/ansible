@@ -25,7 +25,6 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser, RAW_PARAM_MODULES
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import action_loader, module_loader, lookup_loader
@@ -161,7 +160,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _merge_kv(self, ds):
         if ds is None:
             return ""
-        elif isinstance(ds, string_types):
+        elif isinstance(ds, str):
             return ds
         elif isinstance(ds, dict):
             buf = ""

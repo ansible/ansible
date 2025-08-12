@@ -11,7 +11,7 @@ import yaml
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
-from ansible.module_utils.six import string_types
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -133,7 +133,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
 
     fragments = doc.pop('extends_documentation_fragment', [])
 
-    if isinstance(fragments, string_types):
+    if isinstance(fragments, str):
         fragments = fragments.split(',')
 
     unknown_fragments = []
@@ -355,3 +355,7 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     docs[0]['plugin_name'] = context.resolved_fqcn
 
     return docs
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "string_types")

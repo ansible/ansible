@@ -29,7 +29,6 @@ from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text import formatters
-from ansible.module_utils.six import binary_type, text_type
 from ansible.utils.display import Display
 
 try:
@@ -180,7 +179,7 @@ def rekey_on_member(data, key, duplicates='error'):
 
     if isinstance(data, Mapping):
         iterate_over = data.values()
-    elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
+    elif isinstance(data, Iterable) and not isinstance(data, (str, bytes)):
         iterate_over = data
     else:
         raise AnsibleError("Type is not a valid list, set, or dict")

@@ -27,7 +27,6 @@ from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.datatag import deprecator_from_collection_name
-from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, AnsibleJinja2Plugin
@@ -96,7 +95,7 @@ def get_shell_plugin(shell_type=None, executable=None):
 
         # mostly for backwards compat
         if executable:
-            if isinstance(executable, string_types):
+            if isinstance(executable, str):
                 shell_filename = os.path.basename(executable)
                 try:
                     shell = shell_loader.get(shell_filename)

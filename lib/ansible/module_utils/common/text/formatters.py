@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 
-from ansible.module_utils.six import iteritems
+from ansible.module_utils._internal import _no_six
 
 SIZE_RANGES = {
     'Y': 1 << 80,
@@ -117,7 +117,7 @@ def bytes_to_human(size, isbits=False, unit=None):
         base = 'bits'
     suffix = ''
 
-    for suffix, limit in sorted(iteritems(SIZE_RANGES), key=lambda item: -item[1]):
+    for suffix, limit in sorted(SIZE_RANGES.items(), key=lambda item: -item[1]):
         if (unit is None and size >= limit) or unit is not None and unit.upper() == suffix[0]:
             break
 
@@ -127,3 +127,7 @@ def bytes_to_human(size, isbits=False, unit=None):
         suffix = base
 
     return '%.2f %s' % (size / limit, suffix)
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "iteritems")

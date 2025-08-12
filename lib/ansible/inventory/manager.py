@@ -33,7 +33,6 @@ from ansible._internal import _json, _wrapt
 from ansible._internal._json import EncryptedStringBehavior
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.data import InventoryData
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
@@ -112,7 +111,7 @@ def split_host_pattern(pattern):
         results = (split_host_pattern(p) for p in pattern)
         # flatten the results
         return list(itertools.chain.from_iterable(results))
-    elif not isinstance(pattern, string_types):
+    elif not isinstance(pattern, str):
         pattern = to_text(pattern, errors='surrogate_or_strict')
 
     # If it's got commas in it, we'll treat it as a straightforward
@@ -162,7 +161,7 @@ class InventoryManager(object):
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
             self._sources = []
-        elif isinstance(sources, string_types):
+        elif isinstance(sources, str):
             self._sources = [sources]
         else:
             self._sources = sources

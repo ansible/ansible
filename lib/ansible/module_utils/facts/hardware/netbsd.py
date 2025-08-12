@@ -19,7 +19,7 @@ import os
 import re
 import time
 
-from ansible.module_utils.six.moves import reduce
+from functools import reduce
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.timeout import TimeoutError, timeout

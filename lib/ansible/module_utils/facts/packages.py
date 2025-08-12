@@ -7,7 +7,7 @@ import ansible.module_utils.compat.typing as t
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.module_utils.six import with_metaclass
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
@@ -19,7 +19,7 @@ def get_all_pkg_managers():
     return {obj.__name__.lower(): obj for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr, RespawningLibMgr)}
 
 
-class PkgMgr(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
+class PkgMgr(metaclass=ABCMeta):
 
     @abstractmethod
     def is_available(self, handle_exceptions):
@@ -125,3 +125,7 @@ class CLIMgr(PkgMgr):
             if not handle_exceptions:
                 raise
         return found
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "with_metaclass")

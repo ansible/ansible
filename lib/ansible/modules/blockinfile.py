@@ -192,7 +192,6 @@ EXAMPLES = r"""
 import re
 import os
 import tempfile
-from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 
@@ -291,7 +290,8 @@ def main():
     block = to_bytes(params['block'])
     marker = to_bytes(params['marker'])
     present = params['state'] == 'present'
-    blank_line = [b(os.linesep)]
+    b_linesep = os.linesep.encode()
+    blank_line = [b_linesep]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
@@ -306,11 +306,11 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
-    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
+    marker0 = re.sub(r'{mark}'.encode(), to_bytes(params['marker_begin']), marker) + b_linesep
+    marker1 = re.sub(r'{mark}'.encode(), to_bytes(params['marker_end']), marker) + b_linesep
     if present and block:
-        if not block.endswith(b(os.linesep)):
-            block += b(os.linesep)
+        if not block.endswith(b_linesep):
+            block += b_linesep
         blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
@@ -352,15 +352,15 @@ def main():
 
     # Ensure there is a line separator before the block of lines to be inserted
     if n0 > 0:
-        if not lines[n0 - 1].endswith(b(os.linesep)):
-            lines[n0 - 1] += b(os.linesep)
+        if not lines[n0 - 1].endswith(b_linesep):
+            lines[n0 - 1] += b_linesep
 
     # Before the block: check if we need to prepend a blank line
     # If yes, we need to add the blank line if we are not at the beginning of the file
     # and the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
-        if n0 != 0 and lines[n0 - 1] != b(os.linesep):
+        if n0 != 0 and lines[n0 - 1] != b_linesep:
             lines[n0:n0] = blank_line
             n0 += 1
 
@@ -372,7 +372,7 @@ def main():
     # and the line right after is not a blank line
     if params['append_newline'] and present:
         line_after_block = n0 + len(blocklines)
-        if line_after_block < len(lines) and lines[line_after_block] != b(os.linesep):
+        if line_after_block < len(lines) and lines[line_after_block] != b_linesep:
             lines[line_after_block:line_after_block] = blank_line
 
     if lines:

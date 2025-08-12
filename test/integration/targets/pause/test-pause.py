@@ -7,7 +7,6 @@ import pexpect
 import sys
 import termios
 
-from ansible.module_utils.six import PY2
 
 args = sys.argv[1:]
 
@@ -22,11 +21,6 @@ try:
 except Exception:
     backspace = b'\x7f'
 
-if PY2:
-    log_buffer = sys.stdout
-else:
-    log_buffer = sys.stdout.buffer
-
 os.environ.update(env_vars)
 
 # -- Plain pause -- #
@@ -40,7 +34,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Press enter to continue, Ctrl\+C to interrupt:')
 pause_test.send('\r')
 pause_test.expect('Task after pause')
@@ -56,7 +50,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Press enter to continue, Ctrl\+C to interrupt:')
 pause_test.send('\x03')
 pause_test.expect("Press 'C' to continue the play or 'A' to abort")
@@ -74,7 +68,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Press enter to continue, Ctrl\+C to interrupt:')
 pause_test.send('\x03')
 pause_test.expect("Press 'C' to continue the play or 'A' to abort")
@@ -94,7 +88,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Custom prompt:')
 pause_test.send('\r')
 pause_test.expect('Task after pause')
@@ -110,7 +104,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Custom prompt:')
 pause_test.send('\x03')
 pause_test.expect("Press 'C' to continue the play or 'A' to abort")
@@ -128,7 +122,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Custom prompt:')
 pause_test.send('\x03')
 pause_test.expect("Press 'C' to continue the play or 'A' to abort")
@@ -149,7 +143,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.expect('Task after pause')
@@ -164,7 +158,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.send('\n')  # test newline does not stop the prompt - waiting for a timeout or ctrl+C
@@ -184,7 +178,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.send('\x03')
@@ -206,7 +200,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.expect(r"Waiting for two seconds:")
@@ -222,7 +216,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.expect(r"Waiting for two seconds:")
@@ -242,7 +236,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Pausing for \d+ seconds')
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.expect(r"Waiting for two seconds:")
@@ -264,7 +258,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Enter some text:')
 pause_test.send('hello there')
 pause_test.send('\r')
@@ -290,7 +284,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r'Wait for three seconds:')
 pause_test.send('ignored user input')
 pause_test.expect('Task after pause')
@@ -307,7 +301,7 @@ pause_test = pexpect.spawn(
     env=os.environ
 )
 
-pause_test.logfile = log_buffer
+pause_test.logfile = sys.stdout.buffer
 pause_test.expect(r"\(ctrl\+C then 'C' = continue early, ctrl\+C then 'A' = abort\)")
 pause_test.send('\r')
 pause_test.expect(pexpect.EOF)

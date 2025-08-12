@@ -219,13 +219,13 @@ import os
 import platform
 import pwd
 import re
+import shlex
 import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWU_RWG_RWO
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.six.moves import shlex_quote
 
 
 class CronTabError(Exception):
@@ -529,13 +529,13 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
+                return "su %s -c '%s -l'" % (shlex.quote(self.user), shlex.quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
+                return "%s -l %s" % (shlex.quote(self.cron_cmd), shlex.quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex.quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % shlex_quote(self.user)
+                user = '-u %s' % shlex.quote(self.user)
         return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
@@ -546,10 +546,10 @@ class CronTab(object):
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
                 return "chown %s %s ; su '%s' -c '%s %s'" % (
-                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
+                    shlex.quote(self.user), shlex.quote(path), shlex.quote(self.user), self.cron_cmd, shlex.quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
+                user = '-u %s' % shlex.quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, shlex.quote(path))
 
 
 def main():
