@@ -293,7 +293,9 @@ virtualenv:
 """
 
 import argparse
+import json
 import os
+from pathlib import Path
 import re
 import sys
 import tempfile
@@ -612,27 +614,34 @@ def setup_virtualenv(module, env, chdir, out, err):
 
 
 def _normalize_vcs_packages(module, package_list, pip):
-    """Converts vcs url packages to look like non-vcs packages using pip download
-       ex: Package(git+https://github.com/bottlepy/bottle.git) -> Package(bottle, version_string=1.0.4-dev1)"""
+    """Converts Packages with vcs urls to have a standard name"""
     vcs_packages = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
-    other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
     if not vcs_packages:
         return package_list
 
-    tmpdir = tempfile.mkdtemp(dir=module.tmpdir)
-    rc, out, err = module.run_command(pip + ['download', f'--dest={tmpdir}', '--no-deps', ' '.join(vcs_packages)])
+    other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
-    if rc != 0:
-        module.fail_json(msg=err, rc=rc)
+    # First, install as a dry-run report to get JSON output
+    rc, out, err = module.run_command([*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages])
 
-    out_lines = out.splitlines()
-    saved_files = [os.path.basename(line.split(" ")[-1]) for line in out_lines if 'Saved' in line]  # Just the file path
-    package_names = [os.path.splitext(name)[0] for name in saved_files]  # Shave off the file extension
+    if rc == 0:
+        # If it succeeds, handle the report
+        report = json.loads(out)
+        package_objects = [Package(install_report['metadata']['name'], version_string=install_report['metadata']['version']) for install_report in report['install']]
+    else:
+        # Else, if that fails due to --dry-run not being present in pip
+        # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
+        # the potentially faulty pip download method and warn the user.
+        tempdir = os.mkdir(os.path.join(module.tmpdir, 'pipdownloads'))
+        rc, out, err = module.run_command([*pip, 'download', f'--dest={tmpdir}', '--no-deps', *vcs_packages])
+        out_lines = out.splitlines()
+        saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
+        package_names = [Path(name).stem for name in saved_files]
 
-    package_objects = [Package('-'.join(pkg.split('-')[:-1]),  # isolate the pkg name
-                               version_string=pkg.split('-')[-1])  # isolate the version
-                       for pkg in package_names]
+        package_objects = [Package('-'.join(pkg.split('-')[:-1]),
+                                   version_string=pkg.split('-')[-1])
+                           for pkg in package_names]
 
     return other_packages + package_objects
 
