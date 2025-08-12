@@ -625,6 +625,10 @@ def _normalize_vcs_packages(module: AnsibleModule,
     other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
     # First, install as a dry-run report to get JSON output
+    frozen_env = os.environ.copy()
+    os.environ['TTY_COMPATIBLE'] = "0"
+    if os.environ.get('FORCE_COLOR'):
+        os.environ.pop('FORCE_COLOR')
     rc, out, err = module.run_command([*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages])
 
     if rc == 0:
@@ -647,6 +651,7 @@ def _normalize_vcs_packages(module: AnsibleModule,
 
         if rc != 0:
             # If it fails, just fail with error (should also catch a bad vcs url in the dry-run case)
+            os.environ.update(frozen_env)
             module.fail_json(rc=rc, msg=out, err=err)
         out_lines = out.splitlines()
         saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
@@ -656,6 +661,7 @@ def _normalize_vcs_packages(module: AnsibleModule,
                                    version_string=pkg.split('-')[-1])
                            for pkg in package_names]
 
+    os.environ.update(frozen_env)
     return other_packages + package_objects
 
 
