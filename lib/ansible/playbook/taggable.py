@@ -41,7 +41,6 @@ def _flatten_tags(tags: list[str | int]) -> list[str | int]:
 
 class Taggable:
 
-
     _RESERVED = frozenset(['tagged', 'all', 'untagged'])
     untagged = frozenset(['untagged'])
     tags = FieldAttribute(isa='list', default=list, listof=(str, int), extend=True)
