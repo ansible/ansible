@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import shutil
 
 DOCUMENTATION = """
 ---
@@ -623,7 +624,7 @@ def _normalize_vcs_packages(module, package_list, pip):
     other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
     # First, install as a dry-run report to get JSON output
-    rc, out, err = module.run_command([*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--yes' '--report=-', *vcs_packages])
+    rc, out, err = module.run_command([*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages])
 
     if rc == 0:
         # If it succeeds, handle the report
@@ -635,8 +636,13 @@ def _normalize_vcs_packages(module, package_list, pip):
         # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
         # the potentially faulty pip download method and warn the user.
         module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
-        tempdir = os.mkdir(os.path.join(module.tmpdir, 'pipdownloads'))
-        rc, out, err = module.run_command([*pip, 'download', f'--dest={tempdir}', '--no-deps', '--yes', *vcs_packages])
+
+        pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
+        if pip_downloads_dir.exists():
+            shutil.rmtree(pip_downloads_dir)
+            pip_downloads_dir.mkdir()
+
+        rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *vcs_packages])
 
         if rc != 0:
             # If it fails, just fail with error (should also catch a bad vcs url in the dry-run case)
