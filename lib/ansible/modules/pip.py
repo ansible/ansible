@@ -628,7 +628,8 @@ def _normalize_vcs_packages(module, package_list, pip):
     if rc == 0:
         # If it succeeds, handle the report
         report = json.loads(out)
-        package_objects = [Package(install_report['metadata']['name'], version_string=install_report['metadata']['version']) for install_report in report['install']]
+        package_objects = [Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
+                           for install_report in report['install']]
     else:
         # Else, if that fails due to --dry-run not being present in pip
         # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
