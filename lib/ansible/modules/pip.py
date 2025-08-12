@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import shutil
-
 DOCUMENTATION = """
 ---
 module: pip
@@ -298,6 +296,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import sys
 import tempfile
 import operator
