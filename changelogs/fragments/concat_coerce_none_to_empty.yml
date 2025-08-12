@@ -1,0 +1,2 @@
+bugfixes:
+  - templating - Multi-node template results coerce embedded ``None`` nodes to empty string (instead of rendering literal ``None`` to the output).
