@@ -1,0 +1,2 @@
+bugfixes:
+  - user - The seuser parameter will be ignored on Alpine and print warning

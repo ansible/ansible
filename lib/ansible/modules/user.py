@@ -44,6 +44,7 @@ options:
     seuser:
         description:
             - Optionally sets the C(seuser) type C(user_u) on SELinux enabled systems.
+            - This parameter will be ignored on Alpine and Buildroot.
         type: str
         version_added: "2.1"
     group:
@@ -3163,6 +3164,9 @@ class BusyBox(User):
         if self.uid_max is not None:
             cmd.append('-K')
             cmd.append('UID_MAX=' + str(self.uid_max))
+
+        if self.seuser is not None:
+            self.module.warn(f"The 'seuser' parameter is not supported on {self.distribution} as it lacks SELinux support and has been ignored.")
 
         cmd.append(self.name)
 

@@ -1,0 +1,10 @@
+- name: Try creating user with nonexistent SELinux user
+  user:
+    name: badseuser
+    seuser: nonexistent_u
+    state: present
+  register: test_seuser
+
+- name: there should be warnings
+  assert:
+    that: "'warnings' in test_seuser"
