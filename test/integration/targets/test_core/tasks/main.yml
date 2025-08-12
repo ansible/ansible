@@ -218,6 +218,18 @@
       - "'hello' is not regex('.L')"
       - "'hello\nAnsible' is not regex('^Ansible')"
 
+- name: Try regex test with an invalid match_type
+  set_fact:
+    result: "{{ '1.0' is regex('.l', match_type='invalid') }}"
+  ignore_errors: yes
+  register: regex_invalid_match_type
+
+- name: Assert regex test raises an error when a match_type is invalid
+  assert:
+    that:
+    - regex_invalid_match_type is failed
+    - "'Invalid match_type specified.' in regex_invalid_match_type.msg"
+
 - name: Try version tests with bad operator
   set_fact:
     result: "{{ '1.0' is version('1.0', 'equals') }}"

@@ -142,6 +142,9 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
         This is likely only useful for `search` and `match` which already
         have their own filters.
     """
+    valid_match_types = ('search', 'match', 'fullmatch')
+    if match_type not in valid_match_types:
+        raise errors.AnsibleTemplatePluginError(f"Invalid match_type specified. Expected one of: {', '.join(valid_match_types)}.", obj=match_type)
     value = to_text(value, errors='surrogate_or_strict')
     flags = 0
     if ignorecase:
@@ -149,7 +152,7 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    return bool(getattr(_re, match_type, 'search')(value))
+    return bool(getattr(_re, match_type)(value))
 
 
 @accept_args_markers
