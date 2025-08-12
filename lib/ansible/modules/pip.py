@@ -616,7 +616,7 @@ def setup_virtualenv(module, env, chdir, out, err):
 def _normalize_vcs_packages(module: AnsibleModule,
                             package_list: list[Package],
                             pip: list[str]) -> list[Package]:
-    """Converts Packages with vcs urls to have a standard name"""
+    """Return list[Package] where all vcs URL packages are converted to actual package names"""
     vcs_packages = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
 
     if not vcs_packages:
