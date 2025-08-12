@@ -28,6 +28,18 @@
     path: "{{ remote_tmp_dir_test }}/encoding_file.txt"
   register: result1
 
+- name: check idempotency by adding same block at end of file again
+  ansible.builtin.blockinfile:
+    path: "{{ remote_tmp_dir_test }}/encoding_file.txt"
+    block: |
+      This is a block added to the end of the file.
+      Line EOF 1
+      Line EOF 2
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR EOF"
+    insertafter: EOF
+    encoding: cp273
+  register: add_block_eof_1
+
 - name: assert the results for adding block EOF and BOF
   assert:
     that:
@@ -36,6 +48,7 @@
       - 'add_block_eof.msg == "Block inserted"'
       - result1.stat.exists
       - result1.stat.checksum == '724f92d56c2bdaf8e701359e71091bce898af988'
+      - add_block_eof_1 is not changed
 
 - name: Add block after Line
   blockinfile:
