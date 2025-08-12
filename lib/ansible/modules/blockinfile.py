@@ -105,9 +105,10 @@ options:
   encoding:
     description:
       - The character set in which the target file is encoded.
+      - For a list of available built-in encodings, see U(https://docs.python.org/3/library/codecs.html#standard-encodings)
     type: str
     default: utf-8
-    version_added: '2.19'
+    version_added: '2.20'  
 notes:
   - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
@@ -200,7 +201,7 @@ import os
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native, to_text
+from ansible.module_utils.common.text.converters import to_native
 
 
 def write_changes(module, contents, path, encoding=None):
@@ -297,8 +298,8 @@ def main():
 
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
-    block = to_text(params['block'])
-    marker = to_text(params['marker'])
+    block = params['block']
+    marker = params['marker']
     present = params['state'] == 'present'
     blank_line = [(os.linesep)]
 
@@ -309,9 +310,9 @@ def main():
         insertafter = 'EOF'
 
     if insertafter not in (None, 'EOF'):
-        insertre = re.compile(to_text(insertafter, errors='surrogate_or_strict'))
+        insertre = re.compile(insertafter)
     elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(to_text(insertbefore, errors='surrogate_or_strict'))
+        insertre = re.compile(insertbefore)
     else:
         insertre = None
 
@@ -339,9 +340,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = to_native(original).count('\n', 0, match.end())
+                        n0 = original.count('\n', 0, match.end())
                     elif insertbefore:
-                        n0 = to_native(original).count('\n', 0, match.start())
+                        n0 = original.count('\n', 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
@@ -433,3 +434,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
