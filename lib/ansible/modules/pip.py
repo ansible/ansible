@@ -634,7 +634,7 @@ def _normalize_vcs_packages(module, package_list, pip):
         # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
         # the potentially faulty pip download method and warn the user.
         tempdir = os.mkdir(os.path.join(module.tmpdir, 'pipdownloads'))
-        rc, out, err = module.run_command([*pip, 'download', f'--dest={tmpdir}', '--no-deps', *vcs_packages])
+        rc, out, err = module.run_command([*pip, 'download', f'--dest={tempdir}', '--no-deps', *vcs_packages])
         out_lines = out.splitlines()
         saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
         package_names = [Path(name).stem for name in saved_files]
