@@ -634,8 +634,13 @@ def _normalize_vcs_packages(module, package_list, pip):
         # Else, if that fails due to --dry-run not being present in pip
         # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
         # the potentially faulty pip download method and warn the user.
+        module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
         tempdir = os.mkdir(os.path.join(module.tmpdir, 'pipdownloads'))
         rc, out, err = module.run_command([*pip, 'download', f'--dest={tempdir}', '--no-deps', *vcs_packages])
+
+        if rc == 0:
+            # If it fails, just fail with error
+            module.fail_json(rc=rc, msg=out, err=err)
         out_lines = out.splitlines()
         saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
         package_names = [Path(name).stem for name in saved_files]
