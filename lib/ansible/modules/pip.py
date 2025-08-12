@@ -638,8 +638,8 @@ def _normalize_vcs_packages(module, package_list, pip):
         tempdir = os.mkdir(os.path.join(module.tmpdir, 'pipdownloads'))
         rc, out, err = module.run_command([*pip, 'download', f'--dest={tempdir}', '--no-deps', *vcs_packages])
 
-        if rc == 0:
-            # If it fails, just fail with error
+        if rc != 0:
+            # If it fails, just fail with error (should also catch a bad vcs url in the dry-run case)
             module.fail_json(rc=rc, msg=out, err=err)
         out_lines = out.splitlines()
         saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
