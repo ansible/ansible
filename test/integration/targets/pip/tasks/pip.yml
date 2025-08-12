@@ -620,9 +620,18 @@
     name: "git+https://github.com/bottlepy/bottle.git"
     virtualenv: "{{ remote_tmp_dir }}/gitvenv"
   check_mode: true
-  register: check_reinstall_git_pkg
+  register: check_reinstall_one_pkg
 
-- name: Re-install to ensure not changed
+- name: Re-check with multiple to ensure changed
+  pip:
+    name:
+      - "git+https://github.com/bottlepy/bottle.git"
+      - "git+https://github.com/psf/requests"
+    virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+  check_mode: true
+  register: check_reinstall_two
+
+- name: Re-install bottle to ensure not changed
   pip:
     name: "git+https://github.com/bottlepy/bottle.git"
     virtualenv: "{{ remote_tmp_dir }}/gitvenv"
@@ -633,7 +642,8 @@
   assert:
     that:
       - check_git_install_to_empty_venv is changed
-      - check_reinstall_git_pkg is not changed
+      - check_reinstall_one_pkg is not changed
+      - check_reinstall_two is changed
       - reinstall_git_pkg is not changed
 
 - name: Install nonsense git repo
