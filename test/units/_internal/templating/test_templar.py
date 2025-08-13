@@ -1080,6 +1080,16 @@ def test_marker_from_test_plugin() -> None:
         assert TemplateEngine(variables=dict(something=TRUST.tag("{{ nope }}"))).template(TRUST.tag("{{ (something is eq {}) is undefined }}"))
 
 
+@pytest.mark.parametrize("template,expected", (
+    ("{{ none }}", None),  # concat sees one node, NoneType result is preserved
+    ("{% if False %}{% endif %}", None),  # concat sees one node, NoneType result is preserved
+    ("{{''}}{% if False %}{% endif %}", ""),  # multiple blocks with an embedded None result, concat is in play, the result is an empty string
+    ("hey {{ none }}", "hey "),  # composite template, the result is an empty string
+))
+def test_none_concat(template: str, expected: object) -> None:
+    assert TemplateEngine().template(TRUST.tag(template)) == expected
+
+
 def test_filter_generator() -> None:
     """Verify that filters which return a generator are converted to a list while under the filter's JinjaCallContext."""
     variables = dict(
