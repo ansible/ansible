@@ -1,2 +1,2 @@
 bugfixes:
-  - user - The seuser parameter will be ignored on Alpine and print warning
+  - user - The seuser parameter will be ignored on Alpine and print a warning (https://github.com/ansible/ansible/issues/85542).

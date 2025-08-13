@@ -44,7 +44,7 @@ options:
     seuser:
         description:
             - Optionally sets the C(seuser) type C(user_u) on SELinux enabled systems.
-            - This parameter will be ignored on Alpine and Buildroot.
+            - This parameter will be ignored on macOS, *BSD, BusyBox-based distros and Buildroot.
         type: str
         version_added: "2.1"
     group:
