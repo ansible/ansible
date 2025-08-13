@@ -1,0 +1,3 @@
+bugfixes:
+  - templating - Ensure filter plugin result processing occurs under the correct call context.
+    (https://github.com/ansible/ansible/issues/85585)
