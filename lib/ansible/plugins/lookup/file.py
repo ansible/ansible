@@ -51,7 +51,8 @@ RETURN = """
     elements: str
 """
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleTypeError
+from ansible.module_utils.datatag import native_type_name
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.display import Display
 
@@ -67,6 +68,9 @@ class LookupModule(LookupBase):
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
+            if not isinstance(term, str):
+                raise AnsibleTypeError(f'File name must be {native_type_name(str)!r} not {native_type_name(term)!r}.', obj=term)
+
             # Find the file in the expected search path
             try:
                 lookupfile = self.find_file_in_search_path(variables, 'files', term, ignore_missing=True)

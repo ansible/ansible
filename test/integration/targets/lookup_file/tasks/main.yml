@@ -11,3 +11,15 @@
   assert:
     that:
         - "foo == 'bar'"
+
+- name: load the file name as a list
+  set_fact:
+    foo: "{{ lookup('file', ['hello.txt']) }}"
+  ignore_errors: yes
+  register: file_list
+
+- name: assert that file raises an error
+  assert:
+    that:
+        - file_list.failed
+        - "'File name must be' in file_list.msg"

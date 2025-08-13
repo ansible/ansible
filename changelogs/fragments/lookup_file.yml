@@ -1,0 +1,4 @@
+---
+minor_changes:
+    - lookup - check the type of filename variable before processing in file lookup.
+
