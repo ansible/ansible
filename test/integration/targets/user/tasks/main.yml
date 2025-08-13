@@ -36,4 +36,4 @@
 - import_tasks: ssh_keygen.yml
 - import_tasks: test_seuser.yml
   when:
-    - ansible_distribution == 'Alpine'
+    - ansible_facts.system in ['FreeBSD', 'OpenBSD', 'Darwin'] or ansible_distribution == 'Alpine'

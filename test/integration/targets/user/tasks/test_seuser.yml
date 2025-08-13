@@ -7,4 +7,10 @@
 
 - name: there should be warnings
   assert:
-    that: "'warnings' in test_seuser"
+    that: test_seuser.warnings[0] is contains "lacks SELinux support"
+
+- name: Cleanup test account
+  user:
+    name: badseuser
+    state: absent
+    remove: yes

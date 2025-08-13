@@ -1346,6 +1346,12 @@ class User(object):
             return None
         return ssh_public_key
 
+    def check_seuser_support(self):
+        # Now only Generic platform supports the seuser parameter
+        if self.platform != 'Generic':
+            self.module.warn(f"The 'seuser' parameter is not supported on {self.distribution or self.platform} "
+                             "as it lacks SELinux support and has been ignored.")
+
     def create_user(self):
         # by default we use the create_user_useradd method
         return self.create_user_useradd()
@@ -3165,9 +3171,6 @@ class BusyBox(User):
             cmd.append('-K')
             cmd.append('UID_MAX=' + str(self.uid_max))
 
-        if self.seuser is not None:
-            self.module.warn(f"The 'seuser' parameter is not supported on {self.distribution} as it lacks SELinux support and has been ignored.")
-
         cmd.append(self.name)
 
         rc, out, err = self.execute_command(cmd)
@@ -3358,6 +3361,9 @@ def main():
                 parent = os.path.dirname(user.home)
                 if not os.path.isdir(parent):
                     path_needs_parents = True
+
+            if user.seuser:
+                user.check_seuser_support()
 
             (rc, out, err) = user.create_user()
 
