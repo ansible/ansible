@@ -12,6 +12,7 @@ from ansible.module_utils.common.validation import check_type_str, _check_type_s
 
 TEST_CASES = (
     ('string', 'string'),
+    (None, '',),  # 2.19+ relaxed restriction on None<->empty for backward compatibility
     (100, '100'),
     (1.5, '1.5'),
     ({'k1': 'v1'}, "{'k1': 'v1'}"),
@@ -25,7 +26,7 @@ def test_check_type_str(value, expected):
     assert expected == check_type_str(value)
 
 
-@pytest.mark.parametrize('value, expected', TEST_CASES[1:])
+@pytest.mark.parametrize('value, expected', TEST_CASES[2:])
 def test_check_type_str_no_conversion(value, expected):
     with pytest.raises(TypeError) as e:
         _check_type_str_no_conversion(value)

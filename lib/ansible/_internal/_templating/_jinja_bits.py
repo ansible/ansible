@@ -753,7 +753,7 @@ class AnsibleEnvironment(SandboxedEnvironment):
         except MarkerError as ex:
             return ex.source  # return the first Marker encountered
 
-        return ''.join([to_text(v) for v in node_list])
+        return ''.join([to_text(v) for v in node_list if v is not None])  # skip concat on `None`-valued nodes to avoid literal "None" in template results
 
     @staticmethod
     def _access_const(const_template: t.LiteralString) -> t.Any:
