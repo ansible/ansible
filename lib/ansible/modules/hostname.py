@@ -109,7 +109,7 @@ class BaseStrategy(object):
     def update_current_hostname(self):
         name = self.module.params['name']
         current_name = self.get_current_hostname()
-        if current_name != name:
+        if current_name is not None and current_name != name:
             if not self.module.check_mode:
                 self.set_current_hostname(name)
             self.changed = True
@@ -122,7 +122,7 @@ class BaseStrategy(object):
                 self.set_permanent_hostname(name)
             self.changed = True
 
-    def get_current_hostname(self):
+    def get_current_hostname(self) -> None | str:
         return self.get_permanent_hostname()
 
     def set_current_hostname(self, name):
@@ -171,9 +171,9 @@ class UnimplementedStrategy(BaseStrategy):
 class CommandStrategy(BaseStrategy):
     COMMAND = 'hostname'
 
-    def __init__(self, module):
+    def __init__(self, module: AnsibleModule, cmd_required: bool = True):
         super(CommandStrategy, self).__init__(module)
-        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, True)
+        self.hostname_cmd = self.module.get_bin_path(self.COMMAND, cmd_required)
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd]
@@ -195,8 +195,31 @@ class CommandStrategy(BaseStrategy):
         pass
 
 
+def requires_hostname_cmd(strategy_method):
+    def wrapper(self, *args, **kwargs):
+        if self.hostname_cmd is None:
+            self.module.warn(
+                f"The command '{self.COMMAND}' is not in the PATH, "
+                f"falling back to use the file {self.FILE} exclusively."
+            )
+            return
+        return strategy_method(self, *args, **kwargs)
+    return wrapper
+
+
 class FileStrategy(CommandStrategy):
     FILE = '/etc/hostname'
+
+    def __init__(self, module: AnsibleModule, cmd_required: bool = False):
+        super().__init__(module, cmd_required=cmd_required)
+
+    @requires_hostname_cmd
+    def set_current_hostname(self, name):
+        return super().set_current_hostname(name)
+
+    @requires_hostname_cmd
+    def get_current_hostname(self):
+        return super().get_current_hostname()
 
     def get_permanent_hostname(self):
         if not os.path.isfile(self.FILE):
@@ -875,7 +898,7 @@ def main():
 
     changed = hostname.update_current_and_permanent_hostname()
 
-    if name != current_hostname:
+    if current_hostname is not None and name != current_hostname:
         name_before = current_hostname
     else:
         name_before = permanent_hostname
