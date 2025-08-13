@@ -614,10 +614,12 @@ def setup_virtualenv(module, env, chdir, out, err):
     return out, err, cmd
 
 
-def _normalize_vcs_packages(module: AnsibleModule,
-                            package_list: list[Package],
-                            pip: list[str]) -> list[Package]:
-    """Return list[Package] where all vcs URL packages are converted to actual package names"""
+def _normalize_vcs_packages(
+        module: AnsibleModule,
+        package_list: list[Package],
+        pip: list[str]
+) -> list[Package]:
+    """Return a list of packages with names extracted from metadata in VCS"""
     vcs_packages = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
 
     if not vcs_packages:
