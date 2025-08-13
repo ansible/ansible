@@ -108,7 +108,7 @@ options:
       - For a list of available built-in encodings, see U(https://docs.python.org/3/library/codecs.html#standard-encodings)
     type: str
     default: utf-8
-    version_added: '2.20'  
+    version_added: '2.20'
 notes:
   - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
@@ -436,4 +436,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
