@@ -81,6 +81,14 @@ class AnsibleUnwantedChecker(BaseChecker):
     )
 
     unwanted_imports = {
+        # see https://docs.python.org/2/library/urllib2.html
+        'urllib2': UnwantedEntry(
+            'ansible.module_utils.urls',
+            ignore_paths=(
+                '/lib/ansible/module_utils/urls.py',
+            )
+        ),
+
         # see https://docs.python.org/3/library/collections.abc.html
         'collections': UnwantedEntry(
             'collections.abc',
