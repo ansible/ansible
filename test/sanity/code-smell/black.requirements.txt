@@ -1,0 +1,7 @@
+# edit "black.requirements.in" and generate with: hacking/update-sanity-requirements.py --test black
+black==25.1.0
+click==8.2.1
+mypy_extensions==1.1.0
+packaging==25.0
+pathspec==0.12.1
+platformdirs==4.3.8

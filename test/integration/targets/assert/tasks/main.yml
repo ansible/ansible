@@ -1,0 +1,242 @@
+# validate initial simple `assert` behavior upfront via `failed_when` and `fail` so we can safely
+# use `assert` itself for the rest of the test
+
+- set_fact:
+    a_var: one
+
+- name: simple scalar true conditional expression
+  assert:
+    that: a_var == "one"
+  register: result
+  failed_when: result is not success or result.msg != "All assertions passed"
+
+- name: simple scalar false conditional expression
+  assert:
+    that: a_var != "one"
+  register: result
+  failed_when:
+  - result is not failed or result.msg is not contains("Assertion failed") or result.assertion is not contains('a_var != "one"')
+
+- name: list of all true conditional expressions
+  assert:
+    that:
+      - a_var == "one"
+      - 1 == 1
+  register: result
+  failed_when: result is not success or result.msg != "All assertions passed"
+
+- name: list of one true conditional expression and two false
+  assert:
+    that:
+      - a_var == "one"
+      - 1 == 2
+      - a_var == "two"
+  register: result
+  failed_when: result is not failed or result.msg is not contains("Assertion failed") or result.assertion is not contains('1 == 2')
+
+# from here on, just use `assert` to validate behavior
+
+- name: arg splat loopable success cases
+  assert: '{{ item }}'
+  args:
+    quiet: yes
+  loop:
+    - that: 1 == 1
+    - that: a_var == "one"
+    - that: '{{ a_var == "one" }}'
+    - that:
+        - 1 == 1
+        - 2 == 2
+        - a_var == "one"
+        - '{{ a_var == "one" }}'
+
+- name: arg splat loopable failure case
+  assert: '{{ item }}'
+  args:
+    quiet: yes
+  ignore_errors: true
+  loop:
+    - that: |
+        "hi mom" == '{{ "hi mom" }}'  # not implemented; requires lazy loop templating
+  register: loop_fail
+
+- name: check results from previous assert failures
+  assert:
+    that:
+      - loop_fail is failed
+      - loop_fail.results[0].msg is contains "untrusted"
+
+- name: arg splat fail cases
+  assert: '{{ item }}'
+  args:
+    quiet: yes
+  loop:
+    - that: 1 == 2
+    - that: a_var == "two"
+    - that: '{{ a_var == "two" }}'
+    - that:
+        - 1 == 2
+        - 2 == 3
+        - a_var == "two"
+        - '{{ a_var == "two" }}'
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+    - result.results | select('success') | length == 0
+    - result.results | rejectattr('msg', 'contains', 'Assertion failed') | length == 0
+
+- name: test misc other assert failures
+  assert: '{{ item.args }}'
+  loop:
+    - args: { }
+      checks:
+        - item is failed
+        - 'item.msg is contains("missing required arguments: that")'
+    - args: {that: }
+      checks:
+        - item is failed
+        - item.msg is contains("Empty conditional expression")
+
+  ignore_errors: true
+  register: result
+
+
+- name: validate per-item assertions
+  assert:
+    that: '{{ item.item.checks }}'
+  loop: '{{ result.results }}'
+
+- name: ensure deprecation warning from handlebarred `that`
+  assert:
+    that: '{{ true }}'
+  vars:
+    ansible_deprecation_warnings: true
+  register: res
+
+- assert:
+    that:
+      - res.deprecations | map(attribute="msg") | select('contains', 'should not be surrounded by templating delimiters') | length == 1
+
+- name: quoted string literal templates in conditional expressions are processed
+  # solution: enable visit_Const trust tagging when processing a conditional expression (not a conditional template)
+  assert:
+    that: |
+      "dude" == "du{{'de'}}"
+
+- name: templated strings in function args are processed in conditional expressions
+  assert:
+    that: |
+      dict({"dude": "{{ 'dude' }}"})["dude"] == "dude"
+
+- name: templated strings in function args are not processed in conditional templates
+  assert:
+    that: |
+      {{ dict({"dude": "{{ 'dude' }}"})["dude"] == "{" + "{ 'dude' }}" }}
+
+- name: templated strings in templates are ignored
+  # solution: do *not* enable visit_Const trust tagging when processing a conditional template (expressions are OK)
+  assert:
+    that: |
+      {{ "du{" + "{'de'}}" == "du{{'de'}}" }}
+
+- name: templated string literals in non-lookup function args are ignored
+  # solution: do not template values in visit_Const, do not apply trust tags to const tagged values unless the function is a lookup
+  debug:
+    msg: |-
+      {% set pipe = joiner('{{ "dude" }}') %}
+      x{{ pipe() }}{{ pipe() }}x
+  register: debug
+  failed_when: debug.msg is not contains('{')
+
+
+# DTFIX-FUTURE: move to templating integration test
+- name: templated strings in lookup/query args are processed in a conditional
+  assert:
+    that:
+      - |
+        {{ lookup('pipe', 'echo {{ "dude" }}') == "dude" }}
+      - lookup('pipe', 'echo {{ "dude" }}') == "dude"
+      - |
+        {{ query('pipe', 'echo {{ "dude" }}') == ["dude"] }}
+      - query('pipe', 'echo {{ "dude" }}') == ["dude"]
+
+# DTFIX-FUTURE: move to templating integration test
+- name: templated strings in lookup/query args are processed in a non-conditional
+  debug:
+    msg:
+      - |
+        {{ lookup('pipe', 'echo {{ "dude" }}') == "dude" }}
+      - |
+        {{ query('pipe', 'echo {{ "dude" }}') == ["dude"] }}
+  register: result
+  failed_when: result.msg | reject | length != 0
+
+- name: templated strings in lookup names are ignored
+  # solution: exclude the lookup name from trust tagging and templating
+  debug:
+    msg: |-
+      {{ lookup('{{ "pipe" }}') }}
+  register: debug
+  ignore_errors: yes
+
+- assert:
+    that:
+      - debug.msg is contains ('lookup plugin')
+      - debug.msg is contains ('not found')
+
+- name: meta-templating expressions is not supported
+  assert:
+    that: |
+      {{ 'hello' }} == {{ 'world' }}
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+    - result is failed
+    - result.msg is contains("untrusted template or expression")
+
+- name: validate template-indirected conditional expression success
+  assert:
+    that: '{{ item }}'  # only allowed when the template result is a trusted string literal; no meta-expressions!
+  loop:
+    - 1 == 1
+    - 2 == 2
+
+- name: validate template-indirected conditional expression failure
+  assert:
+    that: '{{ item }}'
+  loop:
+    - 1 == 1
+    - 1 == 42  # a false expression; ensure that we're actually evaluating
+  ignore_errors: true
+  register: cond_fail
+
+- assert:
+    that:
+    - cond_fail is failed
+    - cond_fail.results[1].msg is contains "Assertion failed"
+    - cond_fail.results[1].item == "1 == 42"
+
+- name: ensure that arg-splatted expressions that are template-wrapped provide a deprecation warning
+  assert:
+    that: '{{ thats }}'
+  vars:
+    ansible_deprecation_warnings: true
+    thats:
+      - '{{ 1 == 1 }}'
+  register: result
+
+- assert:
+    that:
+    - result.deprecations | length == 1
+    - result.deprecations[0].msg is contains "should not be surrounded by templating delimiters"
+
+- name: ensure that expressions with embedded lookup arg templates are not early-resolved by args templating
+  assert:
+    that: lookup('yield_terms', '{{ bang }}', 42)[1] == 42  # this would blow up if it were arg-templated
+
+# DTFIX-FUTURE: restore tests for `quiet` arg with a custom callback or output validation test
+# see: https://github.com/ansible/ansible/tree/d2bdbadb0327d519c1c353bf3e28f83ba1b59485/test/integration/targets/assert

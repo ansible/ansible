@@ -60,7 +60,7 @@ options:
   virtualenv_python:
     description:
       - The Python executable used for creating the virtual environment.
-        For example V(python3.12), V(python2.7). When not specified, the
+        For example V(python3.13). When not specified, the
         Python version used to run the ansible module is used. This parameter
         should not be used when O(virtualenv_command) is using V(pyvenv) or
         the C(-m venv) module.
@@ -93,8 +93,8 @@ options:
     description:
       - The explicit executable or pathname for the C(pip) executable,
         if different from the Ansible Python interpreter. For
-        example V(pip3.3), if there are both Python 2.7 and 3.3 installations
-        in the system and you want to run pip for the Python 3.3 installation.
+        example V(pip3.13), if there are multiple Python installations
+        in the system and you want to run pip for the Python 3.13 installation.
       - Mutually exclusive with O(virtualenv) (added in 2.1).
       - Does not affect the Ansible Python interpreter.
       - The C(setuptools) package must be installed for both the Ansible Python interpreter
@@ -134,7 +134,7 @@ notes:
      the virtualenv needs to be created.
    - Although it executes using the Ansible Python interpreter, the pip module shells out to
      run the actual pip command, so it can use any pip version you specify with O(executable).
-     By default, it uses the pip version for the Ansible Python interpreter. For example, pip3 on python 3, and pip2 or pip on python 2.
+     By default, it uses the pip version for the Ansible Python interpreter.
    - The interpreter used by Ansible
      (see R(ansible_python_interpreter, ansible_python_interpreter))
      requires the setuptools package, regardless of the version of pip set with
@@ -197,11 +197,11 @@ EXAMPLES = """
     virtualenv: /my_app/venv
     virtualenv_site_packages: yes
 
-- name: Install bottle into the specified (virtualenv), using Python 2.7
+- name: Install bottle into the specified (virtualenv), using Python 3.13
   ansible.builtin.pip:
     name: bottle
     virtualenv: /my_app/venv
-    virtualenv_command: virtualenv-2.7
+    virtualenv_command: virtualenv-3.13
 
 - name: Install bottle within a user home directory
   ansible.builtin.pip:
@@ -227,10 +227,10 @@ EXAMPLES = """
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
-- name: Install bottle for Python 3.3 specifically, using the 'pip3.3' executable
+- name: Install bottle for Python 3.13 specifically, using the 'pip3.13' executable
   ansible.builtin.pip:
     name: bottle
-    executable: pip3.3
+    executable: pip3.13
 
 - name: Install bottle, forcing reinstallation if it's already installed
   ansible.builtin.pip:
@@ -299,7 +299,6 @@ import sys
 import tempfile
 import operator
 import shlex
-import traceback
 
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -309,10 +308,10 @@ HAS_SETUPTOOLS = False
 try:
     from packaging.requirements import Requirement as parse_requirement
     HAS_PACKAGING = True
-except Exception:
+except Exception as ex:
     # This is catching a generic Exception, due to packaging on EL7 raising a TypeError on import
     HAS_PACKAGING = False
-    PACKAGING_IMP_ERR = traceback.format_exc()
+    PACKAGING_IMP_ERR = ex
     try:
         from pkg_resources import Requirement
         parse_requirement = Requirement.parse  # type: ignore[misc,assignment]
@@ -461,9 +460,7 @@ def _get_pip(module, env=None, executable=None):
             candidate_pip_basenames = (executable,)
     elif executable is None and env is None and _have_pip_module():
         # If no executable or virtualenv were specified, use the pip module for the current Python interpreter if available.
-        # Use of `__main__` is required to support Python 2.6 since support for executing packages with `runpy` was added in Python 2.7.
-        # Without it Python 2.6 gives the following error: pip is a package and cannot be directly executed
-        pip = [sys.executable, '-m', 'pip.__main__']
+        pip = [sys.executable, '-m', 'pip']
 
     if pip is None:
         if env is None:
@@ -611,7 +608,7 @@ def setup_virtualenv(module, env, chdir, out, err):
     err += err_venv
     if rc != 0:
         _fail(module, cmd, out, err)
-    return out, err
+    return out, err, cmd
 
 
 class Package:
@@ -744,11 +741,12 @@ def main():
 
         err = ''
         out = ''
+        venv_cmd = ''
 
         if env:
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 venv_created = True
-                out, err = setup_virtualenv(module, env, chdir, out, err)
+                out, err, venv_cmd = setup_virtualenv(module, env, chdir, out, err)
             py_bin = os.path.join(env, 'bin', 'python')
         else:
             py_bin = module.params['executable'] or sys.executable
@@ -814,11 +812,14 @@ def main():
             cmd.extend(to_native(p) for p in packages)
         elif requirements:
             cmd.extend(['-r', requirements])
+        elif venv_created and not name and not requirements:
+            # ONLY creating an empty venv
+            module.exit_json(changed=venv_created, cmd=venv_cmd, name=name, version=version,
+                             state=state, requirements=requirements, virtualenv=env,
+                             stdout=out, stderr=err)
         else:
-            module.exit_json(
-                changed=False,
-                warnings=["No valid name or requirements file found."],
-            )
+            module.warn("No valid name or requirements file found.")
+            module.exit_json(changed=False)
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:

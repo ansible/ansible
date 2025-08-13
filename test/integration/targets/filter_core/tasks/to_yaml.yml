@@ -1,0 +1,27 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Check to_yaml exception handling
+  set_fact:
+    msg: "{{ 'thing' | to_yaml(nonexistent_argument=True) }}"
+  register: yaml_test_01
+  ignore_errors: yes
+
+- name: Check default_style
+  set_fact:
+    msg: "{{ 'thing' | to_yaml(default_style='|') }}"
+  register: yaml_test_02
+  ignore_errors: yes
+
+- name: Check canonical
+  set_fact:
+    msg: "{{ 'thing' | to_yaml(canonical=True) }}"
+  register: yaml_test_03
+  ignore_errors: yes
+
+- name: Test to_yaml
+  assert:
+    that:
+      - yaml_test_01.failed
+      - yaml_test_02.ansible_facts.msg == "|-\n  thing\n"
+      - yaml_test_03.ansible_facts.msg == "---\n!!str \"thing\"\n"

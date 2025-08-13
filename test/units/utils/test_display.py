@@ -4,14 +4,19 @@
 
 from __future__ import annotations
 
+import datetime
 import locale
 import sys
+import typing as t
 import unicodedata
+
 from unittest.mock import MagicMock
 
 import pytest
 
-from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width
+from ansible.module_utils.datatag import deprecator_from_collection_name
+from ansible.module_utils._internal import _deprecator, _errors, _messages
+from ansible.utils.display import _LIBC, _MAX_INT, Display, get_text_width, _format_message
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
@@ -116,7 +121,7 @@ def test_Display_display_warn_fork(display_resource):
         display = Display()
         display.set_queue(queue)
         display.warning('foo')
-        queue.send_display.assert_called_once_with('warning', 'foo')
+        queue.send_display.assert_called_once_with('_warning', _messages.WarningSummary(event=_messages.Event(msg='foo')))
 
     p = multiprocessing_context.Process(target=test)
     p.start()
@@ -139,3 +144,115 @@ def test_Display_display_lock_fork(monkeypatch, display_resource):
     monkeypatch.setattr(display, '_final_q', MagicMock())
     display.display('foo')
     lock.__enter__.assert_not_called()
+
+
+def test_format_message_deprecation_with_multiple_details() -> None:
+    """
+    Verify that a DeprecationSummary with multiple Detail entries can be formatted.
+    No existing code generates deprecations with multiple details, but a future deprecation exception type would need to make use of this.
+    """
+    event = _messages.Event(
+        msg='Ignoring ExceptionX.',
+        help_text='Plugins must handle it internally.',
+        chain=_messages.EventChain(
+            msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
+            traceback_reason='',  # not used in this test
+            event=_messages.Event(
+                msg='Something went wrong.',
+                formatted_source_context='Origin: /some/path\n\n...',
+            ),
+        ),
+    )
+
+    result = _format_message(_messages.DeprecationSummary(event=event), False)
+
+    assert result == '''Ignoring ExceptionX. This feature will be removed in the future: Something went wrong.
+
+Ignoring ExceptionX. This feature will be removed in the future. Plugins must handle it internally.
+
+<<< caused by >>>
+
+Something went wrong.
+Origin: /some/path
+
+...
+
+'''
+
+
+A_DATE = datetime.date(2025, 1, 1)
+CORE = deprecator_from_collection_name('ansible.builtin')
+CORE_MODULE = _messages.PluginInfo(resolved_name='ansible.builtin.ping', type=_messages.PluginType.MODULE)
+CORE_PLUGIN = _messages.PluginInfo(resolved_name='ansible.builtin.debug', type=_messages.PluginType.ACTION)
+COLL = deprecator_from_collection_name('ns.col')
+COLL_MODULE = _messages.PluginInfo(resolved_name='ns.col.ping', type=_messages.PluginType.MODULE)
+COLL_PLUGIN = _messages.PluginInfo(resolved_name='ns.col.debug', type=_messages.PluginType.ACTION)
+INDETERMINATE = _deprecator.INDETERMINATE_DEPRECATOR
+LEGACY_MODULE = _messages.PluginInfo(resolved_name='ping', type=_messages.PluginType.MODULE)
+LEGACY_PLUGIN = _messages.PluginInfo(resolved_name='debug', type=_messages.PluginType.ACTION)
+
+
+@pytest.mark.parametrize('kwargs, expected', (
+    # removed
+    (dict(msg="Hi", removed=True), "Hi. This feature was removed."),
+    (dict(msg="Hi", version="2.99", deprecator=CORE, removed=True), "Hi. This feature was removed from ansible-core version 2.99."),
+    (dict(msg="Hi", date=A_DATE, deprecator=COLL_MODULE, removed=True),
+     "Hi. This feature was removed from module 'ping' in collection 'ns.col' in a release after 2025-01-01."),
+    # no deprecator or indeterminate
+    (dict(msg="Hi"), "Hi. This feature will be removed in the future."),
+    (dict(msg="Hi", version="2.99"), "Hi. This feature will be removed in the future."),
+    (dict(msg="Hi", date=A_DATE), "Hi. This feature will be removed in the future."),
+    (dict(msg="Hi", version="2.99", deprecator=INDETERMINATE), "Hi. This feature will be removed in the future."),
+    (dict(msg="Hi", date=A_DATE, deprecator=INDETERMINATE), "Hi. This feature will be removed in the future."),
+    # deprecator without plugin
+    (dict(msg="Hi", deprecator=CORE), "Hi. This feature will be removed from ansible-core in a future release."),
+    (dict(msg="Hi", deprecator=COLL), "Hi. This feature will be removed from collection 'ns.col' in a future release."),
+    (dict(msg="Hi", version="2.99", deprecator=CORE), "Hi. This feature will be removed from ansible-core version 2.99."),
+    (dict(msg="Hi", version="2.99", deprecator=COLL), "Hi. This feature will be removed from collection 'ns.col' version 2.99."),
+    (dict(msg="Hi", date=A_DATE, deprecator=COLL), "Hi. This feature will be removed from collection 'ns.col' in a release after 2025-01-01."),
+    # deprecator with module
+    (dict(msg="Hi", deprecator=CORE_MODULE), "Hi. This feature will be removed from module 'ping' in ansible-core in a future release."),
+    (dict(msg="Hi", deprecator=COLL_MODULE), "Hi. This feature will be removed from module 'ping' in collection 'ns.col' in a future release."),
+    (dict(msg="Hi", deprecator=LEGACY_MODULE), "Hi. This feature will be removed from module 'ping' in the future."),
+    (dict(msg="Hi", version="2.99", deprecator=CORE_MODULE), "Hi. This feature will be removed from module 'ping' in ansible-core version 2.99."),
+    (dict(msg="Hi", version="2.99", deprecator=COLL_MODULE), "Hi. This feature will be removed from module 'ping' in collection 'ns.col' version 2.99."),
+    (dict(msg="Hi", version="2.99", deprecator=LEGACY_MODULE), "Hi. This feature will be removed from module 'ping' in the future."),
+    (dict(msg="Hi", date=A_DATE, deprecator=COLL_MODULE),
+     "Hi. This feature will be removed from module 'ping' in collection 'ns.col' in a release after 2025-01-01."),
+    (dict(msg="Hi", date=A_DATE, deprecator=LEGACY_MODULE), "Hi. This feature will be removed from module 'ping' in the future."),
+    # deprecator with plugin
+    (dict(msg="Hi", deprecator=CORE_PLUGIN), "Hi. This feature will be removed from action plugin 'debug' in ansible-core in a future release."),
+    (dict(msg="Hi", deprecator=COLL_PLUGIN), "Hi. This feature will be removed from action plugin 'debug' in collection 'ns.col' in a future release."),
+    (dict(msg="Hi", deprecator=LEGACY_PLUGIN), "Hi. This feature will be removed from action plugin 'debug' in the future."),
+    (dict(msg="Hi", version="2.99", deprecator=CORE_PLUGIN), "Hi. This feature will be removed from action plugin 'debug' in ansible-core version 2.99."),
+    (dict(msg="Hi", version="2.99", deprecator=COLL_PLUGIN),
+     "Hi. This feature will be removed from action plugin 'debug' in collection 'ns.col' version 2.99."),
+    (dict(msg="Hi", version="2.99", deprecator=LEGACY_PLUGIN), "Hi. This feature will be removed from action plugin 'debug' in the future."),
+    (dict(msg="Hi", date=A_DATE, deprecator=COLL_PLUGIN),
+     "Hi. This feature will be removed from action plugin 'debug' in collection 'ns.col' in a release after 2025-01-01."),
+    (dict(msg="Hi", date=A_DATE, deprecator=LEGACY_PLUGIN), "Hi. This feature will be removed from action plugin 'debug' in the future."),
+))
+def test_get_deprecation_message_with_plugin_info(kwargs: dict[str, t.Any], expected: str) -> None:
+    for kwarg in ('version', 'date', 'deprecator'):
+        kwargs.setdefault(kwarg, None)
+
+    msg = Display()._get_deprecation_message_with_plugin_info(**kwargs)
+
+    assert msg == expected
+
+
+@pytest.mark.parametrize("kw,expected", (
+    (dict(msg="hi"), "[DEPRECATION WARNING]: hi. This feature will be removed in the future."),
+    (dict(msg="hi", removed=True), "[DEPRECATED]: hi. This feature was removed."),
+    (dict(msg="hi", version="1.23"), "[DEPRECATION WARNING]: hi. This feature will be removed in the future."),
+    (dict(msg="hi", date="2025-01-01"), "[DEPRECATION WARNING]: hi. This feature will be removed in the future."),
+    (dict(msg="hi", collection_name="foo.bar"), "[DEPRECATION WARNING]: hi. This feature will be removed from collection 'foo.bar' in a future release."),
+    (dict(msg="hi", version="1.23", collection_name="foo.bar"),
+     "[DEPRECATION WARNING]: hi. This feature will be removed from collection 'foo.bar' version 1.23."),
+    (dict(msg="hi", date="2025-01-01", collection_name="foo.bar"),
+     "[DEPRECATION WARNING]: hi. This feature will be removed from collection 'foo.bar' in a release after 2025-01-01."),
+))
+def test_get_deprecation_message(kw: dict[str, t.Any], expected: str) -> None:
+    """Validate the deprecated public version of this function."""
+
+    assert Display().get_deprecation_message(**kw) == expected

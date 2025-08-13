@@ -3,49 +3,26 @@
 
 from __future__ import annotations
 
-import pytest
+import typing as t
 
-from ansible.template import Templar
+import pytest
+import pytest_mock
+
+from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 
-from units.mock.loader import DictDataLoader
 
+@pytest.mark.parametrize("test_input, expected", (
+    ([], []),
+    ("foo", ["foo"]),
+    (["foo"], ["foo"]),
+), ids=str)
+def test_listify_lookup_plugin_terms(test_input: t.Any, expected: t.Any, mocker: pytest_mock.MockerFixture) -> None:
+    with mocker.patch.object(Display(), 'deprecated'):  # as deprecated:
+        assert listify_lookup_plugin_terms(test_input) == expected
 
-@pytest.mark.parametrize(
-    ("test_input", "expected"),
-    [
-        pytest.param(
-            [],
-            [],
-            id="empty-list",
-        ),
-        pytest.param(
-            "foo",
-            ["foo"],
-            id="string-types",
-        ),
-        pytest.param(
-            ["foo"],
-            ["foo"],
-            id="list-types",
-        ),
-    ],
-)
-def test_listify_lookup_plugin_terms(test_input, expected):
-    fake_loader = DictDataLoader({})
-    templar = Templar(loader=fake_loader)
-
-    terms = listify_lookup_plugin_terms(
-        test_input, templar=templar, fail_on_undefined=False
-    )
-    assert terms == expected
-
-
-def test_negative_listify_lookup_plugin_terms():
-    fake_loader = DictDataLoader({})
-    templar = Templar(loader=fake_loader)
-
-    with pytest.raises(TypeError, match=".*got an unexpected keyword argument 'loader'"):
-        listify_lookup_plugin_terms(
-            "foo", templar=templar, loader=fake_loader, fail_on_undefined=False
-        )
+    # deprecated: description="Calling listify_lookup_plugin_terms function is not necessary; the function should be deprecated." core_version="2.23"
+    # deprecated.assert_called_once_with(
+    #     msg='"listify_lookup_plugin_terms" is obsolete and in most cases unnecessary',
+    #     version='2.23',
+    # )

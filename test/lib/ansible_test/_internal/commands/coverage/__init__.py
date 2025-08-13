@@ -1,4 +1,5 @@
 """Common logic for the coverage subcommand."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -76,7 +77,7 @@ class CoverageConfig(EnvironmentConfig):
 def initialize_coverage(args: CoverageConfig, host_state: HostState) -> coverage_module:
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     configure_pypi_proxy(args, host_state.controller_profile)  # coverage
-    install_requirements(args, host_state.controller_profile.python, coverage=True)  # coverage
+    install_requirements(args, host_state.controller_profile, host_state.controller_profile.python, coverage=True)  # coverage
 
     try:
         import coverage
@@ -226,7 +227,7 @@ def read_python_coverage_legacy(path: str) -> PythonArcs:
     """Return coverage arcs from the specified coverage file, which must be in the legacy JSON format."""
     try:
         contents = read_text_file(path)
-        contents = re.sub(r'''^!coverage.py: This is a private format, don't read it directly!''', '', contents)
+        contents = re.sub(r"""^!coverage.py: This is a private format, don't read it directly!""", '', contents)
         data = json.loads(contents)
         arcs: PythonArcs = {filename: [t.cast(tuple[int, int], tuple(arc)) for arc in arc_list] for filename, arc_list in data['arcs'].items()}
     except Exception as ex:

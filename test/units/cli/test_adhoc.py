@@ -62,7 +62,7 @@ def test_play_ds_positive():
     adhoc_cli.parse()
     ret = adhoc_cli._play_ds('command', 10, 2)
     assert ret['name'] == 'Ansible Ad-Hoc'
-    assert ret['tasks'] == [{'action': {'module': 'command', 'args': {}}, 'async_val': 10, 'poll': 2, 'timeout': 0}]
+    assert ret['tasks'] == [{'action': 'command', 'args': {}, 'async_val': 10, 'poll': 2, 'timeout': 0}]
 
 
 def test_play_ds_with_include_role():
@@ -108,4 +108,4 @@ def test_ansible_version(capsys):
     assert re.match('  executable location = .*$', version_lines[5]), 'Incorrect executable locaction in "ansible --version" output'
     assert re.match('  python version = .*$', version_lines[6]), 'Incorrect python version in "ansible --version" output'
     assert re.match('  jinja version = .*$', version_lines[7]), 'Incorrect jinja version in "ansible --version" output'
-    assert re.match('  libyaml = .*$', version_lines[8]), 'Missing libyaml in "ansible --version" output'
+    assert re.match('  pyyaml version = .*$', version_lines[8]), 'Missing pyyaml version in "ansible --version" output'

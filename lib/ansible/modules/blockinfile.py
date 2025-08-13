@@ -301,6 +301,7 @@ def main():
     block = params['block']
     marker = params['marker']
     present = params['state'] == 'present'
+
     blank_line = [os.linesep]
 
     if not present and not path_exists:
@@ -322,6 +323,7 @@ def main():
     if present and block:
         if not block.endswith(os.linesep):
             block += os.linesep
+
         blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []

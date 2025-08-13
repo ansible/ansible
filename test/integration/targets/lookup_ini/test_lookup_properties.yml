@@ -10,7 +10,7 @@
         field_with_space: "{{lookup('ini', 'field.with.space  type=properties  file=lookup.properties')}}"
 
     - assert:
-        that: "{{item}} is defined"
+        that: "item is defined"
       with_items: [ 'test1', 'test2', 'test_dot', 'field_with_space' ]
 
     - name: "read ini value"

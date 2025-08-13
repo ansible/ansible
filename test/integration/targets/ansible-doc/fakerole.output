@@ -2,6 +2,8 @@
 
 ENTRY POINT: *main* - test_role1 from roles subdir
 
+ADDED IN: version 1.2.0
+
           In to am attended desirous raptures *declared* diverted
           confined at. Collected instantly remaining up certainly to
           `necessary' as. Over walk dull into son boy door went new.
@@ -32,5 +34,18 @@ ATTRIBUTES:
             check_mode), when in diff mode
           details: Not all modules used support this
           support: partial
+
+NOTES:
+        * This is a role.
+        * More text.
+
+SEE ALSO:
+        * Module ansible.builtin.file
+             The official documentation on the
+             ansible.builtin.file module.
+             https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_module.html
+        * Lookup plugin ansible.builtin.file
+             Reads a file from the controller.
+             https://docs.ansible.com/ansible-core/devel/collections/ansible/builtin/file_lookup.html
 
 AUTHOR: John Doe (@john), Jane Doe (@jane)

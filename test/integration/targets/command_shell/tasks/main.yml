@@ -27,8 +27,7 @@
   assert:
     that:
       - no_command is failed
-      - no_command.msg == 'no command given'
-      - no_command.rc == 256
+      - no_command.msg is contains 'one of the following is required'
 
 - name: use argv
   command:
@@ -56,8 +55,7 @@
   assert:
     that:
       - argv_and_string_command is failed
-      - argv_and_string_command.msg == 'only command or argv can be given, not both'
-      - argv_and_string_command.rc == 256
+      - argv_and_string_command.msg is contains 'parameters are mutually exclusive'
 
 - set_fact:
     remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_command_shell"
@@ -320,7 +318,7 @@
   assert:
     that:
     - shell_result0 is changed
-    - shell_result0.cmd == '{{ remote_tmp_dir_test }}/test.sh'
+    - shell_result0.cmd == remote_tmp_dir_test + '/test.sh'
     - shell_result0.rc == 0
     - shell_result0.stderr == ''
     - shell_result0.stdout == 'win'
@@ -582,3 +580,8 @@
   shell: '{{ role_path }}/scripts/yoink.sh &'
   delegate_to: localhost
   timeout: 5
+
+- name: Run command that does not exist
+  command: commandthatdoesnotexist --would-be-awkward
+  register: res
+  failed_when: res.stdout != '' or res.stderr != ''

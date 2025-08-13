@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import typing as t
 
 from collections import namedtuple
@@ -24,7 +25,6 @@ if t.TYPE_CHECKING:
         'Candidate', 'Requirement',
         '_ComputedReqKindsMixin',
     )
-
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
@@ -224,6 +224,7 @@ class _ComputedReqKindsMixin:
         if dir_path.endswith(to_bytes(os.path.sep)):
             dir_path = dir_path.rstrip(to_bytes(os.path.sep))
         if not _is_collection_dir(dir_path):
+            dir_pathlib = pathlib.Path(to_text(dir_path))
             display.warning(
                 u"Collection at '{path!s}' does not have a {manifest_json!s} "
                 u'file, nor has it {galaxy_yml!s}: cannot detect version.'.

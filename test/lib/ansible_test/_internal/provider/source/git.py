@@ -1,4 +1,5 @@
 """Source provider for a content root managed by git version control."""
+
 from __future__ import annotations
 
 import os

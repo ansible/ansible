@@ -219,13 +219,13 @@ import os
 import platform
 import pwd
 import re
+import shlex
 import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWU_RWG_RWO
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.six.moves import shlex_quote
 
 
 class CronTabError(Exception):
@@ -271,13 +271,13 @@ class CronTab(object):
                 with open(self.b_cron_file, 'rb') as f:
                     self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
                     self.lines = self.n_existing.splitlines()
-            except IOError:
+            except OSError:
                 # cron file does not exist
                 return
             except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
-            # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
+            # FIXME: using safely quoted shell for now, but this really should be two non-shell calls instead.
             (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
@@ -328,7 +328,7 @@ class CronTab(object):
 
         # Add the entire crontab back to the user crontab
         if not self.cron_file:
-            # quoting shell args for now but really this should be two non-shell calls.  FIXME
+            # FIXME: quoting shell args for now but really this should be two non-shell calls.
             (rc, out, err) = self.module.run_command(self._write_execute(path), use_unsafe_shell=True)
             os.unlink(path)
 
@@ -529,13 +529,13 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
+                return "su %s -c '%s -l'" % (shlex.quote(self.user), shlex.quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
+                return "%s -l %s" % (shlex.quote(self.cron_cmd), shlex.quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex.quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % shlex_quote(self.user)
+                user = '-u %s' % shlex.quote(self.user)
         return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
@@ -546,10 +546,10 @@ class CronTab(object):
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
                 return "chown %s %s ; su '%s' -c '%s %s'" % (
-                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
+                    shlex.quote(self.user), shlex.quote(path), shlex.quote(self.user), self.cron_cmd, shlex.quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % shlex_quote(self.user)
-        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
+                user = '-u %s' % shlex.quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, shlex.quote(path))
 
 
 def main():
@@ -618,7 +618,6 @@ def main():
 
     changed = False
     res_args = dict()
-    warnings = list()
 
     if cron_file:
 
@@ -627,8 +626,8 @@ def main():
 
         cron_file_basename = os.path.basename(cron_file)
         if not re.search(r'^[A-Z0-9_-]+$', cron_file_basename, re.I):
-            warnings.append('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
-                            ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
+            module.warn('Filename portion of cron_file ("%s") should consist' % cron_file_basename +
+                        ' solely of upper- and lower-case letters, digits, underscores, and hyphens')
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(int('022', 8))
@@ -693,7 +692,7 @@ def main():
         if do_install:
             for char in ['\r', '\n']:
                 if char in job.strip('\r\n'):
-                    warnings.append('Job should not contain line breaks')
+                    module.warn('Job should not contain line breaks')
                     break
 
             job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
@@ -734,7 +733,6 @@ def main():
     res_args = dict(
         jobs=crontab.get_jobnames(),
         envs=crontab.get_envnames(),
-        warnings=warnings,
         changed=changed
     )
 

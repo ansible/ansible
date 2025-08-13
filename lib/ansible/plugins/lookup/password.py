@@ -126,6 +126,7 @@ _raw:
   elements: str
 """
 
+import contextlib
 import os
 import string
 import time
@@ -133,7 +134,6 @@ import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
@@ -269,15 +269,12 @@ def _get_lock(b_path):
     b_pathdir = os.path.dirname(b_path)
     lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
     lockfile = os.path.join(b_pathdir, lockfile_name)
-    if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
-        try:
-            makedirs_safe(b_pathdir, mode=0o700)
+    if b_path != b'/dev/null':
+        makedirs_safe(b_pathdir, mode=0o700)
+        with contextlib.suppress(FileExistsError):
             fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
             os.close(fd)
             first_process = True
-        except OSError as e:
-            if e.strerror != 'File exists':
-                raise
 
     counter = 0
     # if the lock is got by other process, wait until it's released
@@ -337,7 +334,7 @@ class LookupModule(LookupBase):
 
         # chars still might need more
         chars = params.get('chars', self.get_option('chars'))
-        if chars and isinstance(chars, string_types):
+        if chars and isinstance(chars, str):
             tmp_chars = []
             if u',,' in chars:
                 tmp_chars.append(u',')
@@ -350,7 +347,7 @@ class LookupModule(LookupBase):
 
         return relpath, params
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         ret = []
 
         for term in terms:

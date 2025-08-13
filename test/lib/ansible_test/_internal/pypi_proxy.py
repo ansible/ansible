@@ -1,4 +1,5 @@
 """PyPI proxy management."""
+
 from __future__ import annotations
 
 import os
@@ -134,11 +135,11 @@ def configure_target_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, p
 def configure_pypi_proxy_pip(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure a custom index for pip based installs."""
     pip_conf_path = os.path.expanduser('~/.pip/pip.conf')
-    pip_conf = '''
+    pip_conf = """
 [global]
 index-url = {0}
 trusted-host = {1}
-'''.format(pypi_endpoint, pypi_hostname).strip()
+""".format(pypi_endpoint, pypi_hostname).strip()
 
     def pip_conf_cleanup() -> None:
         """Remove custom pip PyPI config."""
@@ -159,10 +160,10 @@ trusted-host = {1}
 def configure_pypi_proxy_easy_install(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str) -> None:
     """Configure a custom index for easy_install based installs."""
     pydistutils_cfg_path = os.path.expanduser('~/.pydistutils.cfg')
-    pydistutils_cfg = '''
+    pydistutils_cfg = """
 [easy_install]
 index_url = {0}
-'''.format(pypi_endpoint).strip()
+""".format(pypi_endpoint).strip()
 
     if os.path.exists(pydistutils_cfg_path) and not profile.config.is_managed:
         raise ApplicationError('Refusing to overwrite existing file: %s' % pydistutils_cfg_path)

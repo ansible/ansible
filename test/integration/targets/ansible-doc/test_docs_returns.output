@@ -17,7 +17,7 @@ RETURN VALUES:
         type: dict
         contains:
 
-        - suboption          A suboption.
+        - suboption  A suboption.
           choices: [ARF, BARN, c_without_capital_first_letter]
           type: str
 

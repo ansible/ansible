@@ -438,13 +438,12 @@ import os
 import re
 import shutil
 import tempfile
+from collections.abc import Mapping, Sequence
+from datetime import datetime, timezone
+from urllib.parse import urlencode, urljoin
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
-from ansible.module_utils.six import binary_type, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils.common.text.converters import to_native, to_text
-from ansible.module_utils.compat.datetime import utcnow, utcfromtimestamp
-from ansible.module_utils.six.moves.collections_abc import Mapping, Sequence
 from ansible.module_utils.urls import (
     fetch_url,
     get_response_filename,
@@ -479,7 +478,7 @@ def write_file(module, dest, content, resp):
     try:
         fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
         with os.fdopen(fd, 'wb') as f:
-            if isinstance(content, binary_type):
+            if isinstance(content, bytes):
                 f.write(content)
             else:
                 shutil.copyfileobj(content, f)
@@ -505,27 +504,6 @@ def write_file(module, dest, content, resp):
         os.remove(tmpsrc)
 
 
-def absolute_location(url, location):
-    """Attempts to create an absolute URL based on initial URL, and
-    next URL, specifically in the case of a ``Location`` header.
-    """
-
-    if '://' in location:
-        return location
-
-    elif location.startswith('/'):
-        parts = urlsplit(url)
-        base = url.replace(parts[2], '')
-        return '%s%s' % (base, location)
-
-    elif not location.startswith('/'):
-        base = os.path.dirname(url)
-        return '%s/%s' % (base, location)
-
-    else:
-        return location
-
-
 def kv_list(data):
     """ Convert data into a list of key-value tuples """
     if data is None:
@@ -542,14 +520,14 @@ def kv_list(data):
 
 def form_urlencoded(body):
     """ Convert data into a form-urlencoded string """
-    if isinstance(body, string_types):
+    if isinstance(body, str):
         return body
 
     if isinstance(body, (Mapping, Sequence)):
         result = []
         # Turn a list of lists into a list of tuples that urlencode accepts
         for key, values in kv_list(body):
-            if isinstance(values, string_types) or not isinstance(values, (Mapping, Sequence)):
+            if isinstance(values, str) or not isinstance(values, (Mapping, Sequence)):
                 values = [values]
             for value in values:
                 if value is not None:
@@ -579,7 +557,10 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     kwargs = {}
     if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        kwargs['last_mod_time'] = utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = datetime.fromtimestamp(
+            os.path.getmtime(dest),
+            tz=timezone.utc,
+        )
 
     if module.params.get('follow_redirects') in ('no', 'yes'):
         module.deprecate(
@@ -659,12 +640,12 @@ def main():
 
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
-        if not isinstance(body, string_types):
+        if not isinstance(body, str):
             body = json.dumps(body)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/json'
     elif body_format == 'form-urlencoded':
-        if not isinstance(body, string_types):
+        if not isinstance(body, str):
             try:
                 body = form_urlencoded(body)
             except ValueError as e:
@@ -693,12 +674,12 @@ def main():
             module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
-    start = utcnow()
+    start = datetime.now(timezone.utc)
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers,
                   decompress, ciphers, use_netrc)
 
-    elapsed = (utcnow() - start).seconds
+    elapsed = (datetime.now(timezone.utc) - start).seconds
 
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'
@@ -765,15 +746,15 @@ def main():
     # In python3, the headers are title cased.  Lowercase them to be
     # compatible with the python2 behaviour.
     uresp = {}
-    for key, value in iteritems(resp):
+    for key, value in resp.items():
         ukey = key.replace("-", "_").lower()
         uresp[ukey] = value
 
     if 'location' in uresp:
-        uresp['location'] = absolute_location(url, uresp['location'])
+        uresp['location'] = urljoin(url, uresp['location'])
 
     # Default content_encoding to try
-    if isinstance(content, binary_type):
+    if isinstance(content, bytes):
         u_content = to_text(content, encoding=content_encoding)
         if maybe_json:
             try:

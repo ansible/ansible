@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -38,8 +38,8 @@ class SystemCapabilitiesFactCollector(BaseFactCollector):
                 # NOTE: -> get_caps_data()/parse_caps_data() for easier mocking -akl
                 try:
                     rc, out, err = module.run_command([capsh_path, "--print"], errors='surrogate_then_replace', handle_exceptions=False)
-                except (IOError, OSError) as e:
-                    module.warn('Could not query system capabilities: %s' % str(e))
+                except OSError as ex:
+                    module.error_as_warning('Could not query system capabilities.', exception=ex)
 
             if rc == 0:
                 enforced_caps = []

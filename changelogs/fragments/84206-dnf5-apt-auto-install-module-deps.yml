@@ -1,2 +1,0 @@
-minor_changes:
-  - dnf5, apt - add ``auto_install_module_deps`` option (https://github.com/ansible/ansible/issues/84206)

@@ -1,9 +1,9 @@
 [build-system]
-requires = ["setuptools >= 66.1.0, <= 72.1.0"]  # lower bound to support controller Python versions, upper bound for latest version tested at release
+requires = ["setuptools >= 66.1.0, <= 80.3.1", "wheel == 0.45.1"]  # lower bound to support controller Python versions, upper bound for latest version tested at release
 build-backend = "setuptools.build_meta"
 
 [project]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 name = "ansible-core"
 authors = [
     {name = "Ansible Project"},
@@ -20,9 +20,9 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: System :: Installation/Setup",
     "Topic :: System :: Systems Administration",
@@ -54,6 +54,8 @@ where = ["lib", "test/lib"]
 
 [tool.setuptools.package-data]
 ansible = [
+    "_internal/ansible_collections/*/*/plugins/*/*.yml",
+    "_internal/ansible_collections/*/*/*.md",
     "config/*.yml",
     "executor/powershell/*.ps1",
     "galaxy/data/COPYING",

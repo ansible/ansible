@@ -30,9 +30,11 @@ DOCUMENTATION = """
 import os
 
 from ansible.constants import TREE_DIR
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.executor.task_result import CallbackTaskResult
+from ansible.module_utils.common.text.converters import to_bytes
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe, unfrackpath
+from ansible.module_utils._internal import _deprecator
 
 
 class CallbackModule(CallbackBase):
@@ -44,6 +46,15 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_ENABLED = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+            msg='The tree callback plugin is deprecated.',
+            version='2.23',
+            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
+        )
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         """ override to set self.tree """
@@ -62,24 +73,24 @@ class CallbackModule(CallbackBase):
         buf = to_bytes(buf)
         try:
             makedirs_safe(self.tree)
-        except (OSError, IOError) as e:
-            self._display.warning(u"Unable to access or create the configured directory (%s): %s" % (to_text(self.tree), to_text(e)))
+        except OSError as ex:
+            self._display.error_as_warning(f"Unable to access or create the configured directory {self.tree!r}.", exception=ex)
 
         try:
             path = to_bytes(os.path.join(self.tree, hostname))
             with open(path, 'wb+') as fd:
                 fd.write(buf)
-        except (OSError, IOError) as e:
-            self._display.warning(u"Unable to write to %s's file: %s" % (hostname, to_text(e)))
+        except OSError as ex:
+            self._display.error_as_warning(f"Unable to write to {hostname!r}'s file.", exception=ex)
 
-    def result_to_tree(self, result):
-        self.write_tree_file(result._host.get_name(), self._dump_results(result._result))
+    def result_to_tree(self, result: CallbackTaskResult) -> None:
+        self.write_tree_file(result.host.get_name(), self._dump_results(result.result))
 
-    def v2_runner_on_ok(self, result):
+    def v2_runner_on_ok(self, result: CallbackTaskResult) -> None:
         self.result_to_tree(result)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result: CallbackTaskResult, ignore_errors: bool = False) -> None:
         self.result_to_tree(result)
 
-    def v2_runner_on_unreachable(self, result):
+    def v2_runner_on_unreachable(self, result: CallbackTaskResult) -> None:
         self.result_to_tree(result)

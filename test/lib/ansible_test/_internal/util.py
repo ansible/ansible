@@ -1,4 +1,5 @@
 """Miscellaneous utility functions and classes."""
+
 from __future__ import annotations
 
 import abc
@@ -55,11 +56,6 @@ from .thread import (
 from .constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
-
-C = t.TypeVar('C')
-TBase = t.TypeVar('TBase')
-TKey = t.TypeVar('TKey')
-TValue = t.TypeVar('TValue')
 
 PYTHON_PATHS: dict[str, str] = {}
 
@@ -179,7 +175,7 @@ def is_valid_identifier(value: str) -> bool:
     return value.isidentifier() and not keyword.iskeyword(value)
 
 
-def cache(func: c.Callable[[], TValue]) -> c.Callable[[], TValue]:
+def cache[TValue](func: c.Callable[[], TValue]) -> c.Callable[[], TValue]:
     """Enforce exclusive access on a decorated function and cache the result."""
     storage: dict[None, TValue] = {}
     sentinel = object()
@@ -253,12 +249,29 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
     """Return a filtered version of the given command line arguments."""
     remaining = 0
     result = []
+    pass_through_args: list[str] = []
+    pass_through_explicit = False
+    pass_through_implicit = False
 
     for arg in args:
-        if not arg.startswith('-') and remaining:
-            remaining -= 1
+        if pass_through_explicit:
+            pass_through_args.append(arg)
             continue
 
+        if arg == '--':
+            pass_through_explicit = True
+            continue
+
+        if not arg.startswith('-') and remaining:
+            remaining -= 1
+            pass_through_implicit = not remaining
+            continue
+
+        if not arg.startswith('-') and pass_through_implicit:
+            pass_through_args.append(arg)
+            continue
+
+        pass_through_implicit = False
         remaining = 0
 
         parts = arg.split('=', 1)
@@ -269,6 +282,9 @@ def filter_args(args: list[str], filters: dict[str, int]) -> list[str]:
             continue
 
         result.append(arg)
+
+    if pass_through_args:
+        result += ['--'] + pass_through_args
 
     return result
 
@@ -292,7 +308,7 @@ def read_lines_without_comments(path: str, remove_blank_lines: bool = False, opt
     return lines
 
 
-def exclude_none_values(data: dict[TKey, t.Optional[TValue]]) -> dict[TKey, TValue]:
+def exclude_none_values[TKey, TValue](data: dict[TKey, t.Optional[TValue]]) -> dict[TKey, TValue]:
     """Return the provided dictionary with any None values excluded."""
     return dict((key, value) for key, value in data.items() if value is not None)
 
@@ -512,16 +528,23 @@ def raw_command(
 
     try:
         try:
-            cmd_bytes = [to_bytes(arg) for arg in cmd]
-            env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
+            process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
         except FileNotFoundError as ex:
             raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
 
         if communicate:
             data_bytes = to_optional_bytes(data)
-            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
-                                                                  output_stream=output_stream)
+
+            stdout_bytes, stderr_bytes = communicate_with_process(
+                name=cmd[0],
+                process=process,
+                stdin=data_bytes,
+                stdout=stdout == subprocess.PIPE,
+                stderr=stderr == subprocess.PIPE,
+                capture=capture,
+                output_stream=output_stream,
+            )
+
             stdout_text = to_optional_text(stdout_bytes, str_errors) or ''
             stderr_text = to_optional_text(stderr_bytes, str_errors) or ''
         else:
@@ -545,6 +568,7 @@ def raw_command(
 
 
 def communicate_with_process(
+    name: str,
     process: subprocess.Popen,
     stdin: t.Optional[bytes],
     stdout: bool,
@@ -562,16 +586,16 @@ def communicate_with_process(
         reader = OutputThread
 
     if stdin is not None:
-        threads.append(WriterThread(process.stdin, stdin))
+        threads.append(WriterThread(process.stdin, stdin, name))
 
     if stdout:
-        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer))
+        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer), name)
         threads.append(stdout_reader)
     else:
         stdout_reader = None
 
     if stderr:
-        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer))
+        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer), name)
         threads.append(stderr_reader)
     else:
         stderr_reader = None
@@ -603,8 +627,8 @@ def communicate_with_process(
 class WriterThread(WrappedThread):
     """Thread to write data to stdin of a subprocess."""
 
-    def __init__(self, handle: t.IO[bytes], data: bytes) -> None:
-        super().__init__(self._run)
+    def __init__(self, handle: t.IO[bytes], data: bytes, name: str) -> None:
+        super().__init__(self._run, f'{self.__class__.__name__}: {name}')
 
         self.handle = handle
         self.data = data
@@ -621,8 +645,8 @@ class WriterThread(WrappedThread):
 class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
     """Thread to read stdout from a subprocess."""
 
-    def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO) -> None:
-        super().__init__(self._run)
+    def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO, name: str) -> None:
+        super().__init__(self._run, f'{self.__class__.__name__}: {name}')
 
         self.handle = handle
         self.buffer = buffer
@@ -1029,7 +1053,7 @@ def format_command_output(stdout: str | None, stderr: str | None) -> str:
     return message
 
 
-def retry(func: t.Callable[..., TValue], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> TValue:
+def retry[T](func: t.Callable[..., T], ex_type: t.Type[BaseException] = SubprocessError, sleep: int = 10, attempts: int = 10, warn: bool = True) -> T:
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
@@ -1062,7 +1086,7 @@ def parse_to_list_of_dict(pattern: str, value: str) -> list[dict[str, str]]:
     return matched
 
 
-def get_subclasses(class_type: t.Type[C]) -> list[t.Type[C]]:
+def get_subclasses[C](class_type: t.Type[C]) -> list[t.Type[C]]:
     """Returns a list of types that are concrete subclasses of the given type."""
     subclasses: set[t.Type[C]] = set()
     queue: list[t.Type[C]] = [class_type]
@@ -1138,7 +1162,7 @@ def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
         load_module(module_path, name)
 
 
-def load_plugins(base_type: t.Type[C], database: dict[str, t.Type[C]]) -> None:
+def load_plugins[C](base_type: t.Type[C], database: dict[str, t.Type[C]]) -> None:
     """
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
@@ -1165,19 +1189,19 @@ def sanitize_host_name(name: str) -> str:
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
 
-def get_generic_type(base_type: t.Type, generic_base_type: t.Type[TValue]) -> t.Optional[t.Type[TValue]]:
+def get_generic_type[TValue](base_type: t.Type, generic_base_type: t.Type[TValue]) -> t.Optional[t.Type[TValue]]:
     """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
     # noinspection PyUnresolvedReferences
     type_arg = t.get_args(base_type.__orig_bases__[0])[0]
     return None if isinstance(type_arg, generic_base_type) else type_arg
 
 
-def get_type_associations(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> list[tuple[t.Type[TValue], t.Type[TBase]]]:
+def get_type_associations[TBase, TValue](base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> list[tuple[t.Type[TValue], t.Type[TBase]]]:
     """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
     return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
 
 
-def get_type_map(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> dict[t.Type[TValue], t.Type[TBase]]:
+def get_type_map[TBase, TValue](base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> dict[t.Type[TValue], t.Type[TBase]]:
     """Create and return a mapping of generic_base_type derived types to base_type derived types."""
     return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
 
@@ -1198,7 +1222,7 @@ def verify_sys_executable(path: str) -> t.Optional[str]:
     return expected_executable
 
 
-def type_guard(sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
+def type_guard[C](sequence: c.Sequence[t.Any], guard_type: t.Type[C]) -> t.TypeGuard[c.Sequence[C]]:
     """
     Raises an exception if any item in the given sequence does not match the specified guard type.
     Use with assert so that type checkers are aware of the type guard.

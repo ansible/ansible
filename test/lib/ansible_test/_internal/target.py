@@ -1,4 +1,5 @@
 """Test target identification, iteration and inclusion/exclusion."""
+
 from __future__ import annotations
 
 import collections
@@ -64,7 +65,7 @@ def walk_completion_targets(targets: c.Iterable[CompletionTarget], prefix: str, 
     return tuple(sorted(matches))
 
 
-def walk_internal_targets(
+def walk_internal_targets[TCompletionTarget: CompletionTarget](
     targets: c.Iterable[TCompletionTarget],
     includes: t.Optional[list[str]] = None,
     excludes: t.Optional[list[str]] = None,
@@ -86,7 +87,7 @@ def walk_internal_targets(
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
-def filter_targets(
+def filter_targets[TCompletionTarget: CompletionTarget](
     targets: c.Iterable[TCompletionTarget],
     patterns: list[str],
     include: bool = True,
@@ -581,6 +582,14 @@ class IntegrationTarget(CompletionTarget):
         else:
             static_aliases = tuple()
 
+        # non-group aliases which need to be extracted before group mangling occurs
+
+        self.env_set: dict[str, str] = {
+            match.group('key'): match.group('value') for match in (
+                re.match(r'env/set/(?P<key>[^/]+)/(?P<value>.*)', alias) for alias in static_aliases
+            ) if match
+        }
+
         # modules
 
         if self.name in modules:
@@ -702,7 +711,3 @@ class TargetPatternsNotMatched(ApplicationError):
             message = 'Target pattern not matched: %s' % self.patterns[0]
 
         super().__init__(message)
-
-
-TCompletionTarget = t.TypeVar('TCompletionTarget', bound=CompletionTarget)
-TIntegrationTarget = t.TypeVar('TIntegrationTarget', bound=IntegrationTarget)

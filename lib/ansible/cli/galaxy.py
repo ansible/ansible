@@ -53,17 +53,17 @@ from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils import six
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
+from ansible.template import trust_as_template
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.utils.vars import load_extra_vars
 
 display = Display()
-urlparse = six.moves.urllib.parse.urlparse
 
 
 def with_collection_artifacts_manager(wrapped_method):
@@ -210,6 +210,18 @@ class GalaxyCLI(CLI):
         self.galaxy = None
         self.lazy_role_api = None
         super(GalaxyCLI, self).__init__(args)
+
+    @property
+    def collection_paths(self):
+        """
+        Exclude lib/ansible/_internal/ansible_collections/.
+        """
+        # exclude bundled collections, e.g. ansible._protomatter
+        return [
+            path
+            for path in AnsibleCollectionConfig.collection_paths
+            if path != AnsibleCollectionConfig._internal_collections
+        ]
 
     def init_parser(self):
         """ create an options parser for bin/ansible """
@@ -915,8 +927,8 @@ class GalaxyCLI(CLI):
 
     @staticmethod
     def _get_skeleton_galaxy_yml(template_path, inject_data):
-        with open(to_bytes(template_path, errors='surrogate_or_strict'), 'rb') as template_obj:
-            meta_template = to_text(template_obj.read(), errors='surrogate_or_strict')
+        with open(to_bytes(template_path, errors='surrogate_or_strict'), 'r') as template_obj:
+            meta_template = TrustedAsTemplate().tag(to_text(template_obj.read(), errors='surrogate_or_strict'))
 
         galaxy_meta = get_collections_galaxy_meta_info()
 
@@ -952,7 +964,7 @@ class GalaxyCLI(CLI):
             return textwrap.fill(v, width=117, initial_indent="# ", subsequent_indent="# ", break_on_hyphens=False)
 
         loader = DataLoader()
-        templar = Templar(loader, variables={'required_config': required_config, 'optional_config': optional_config})
+        templar = TemplateEngine(loader, variables={'required_config': required_config, 'optional_config': optional_config})
         templar.environment.filters['comment_ify'] = comment_ify
 
         meta_value = templar.template(meta_template)
@@ -1154,7 +1166,7 @@ class GalaxyCLI(CLI):
 
         loader = DataLoader()
         inject_data.update(load_extra_vars(loader))
-        templar = Templar(loader, variables=inject_data)
+        templar = TemplateEngine(loader, variables=inject_data)
 
         # create role directory
         if not os.path.exists(b_obj_path):
@@ -1196,7 +1208,7 @@ class GalaxyCLI(CLI):
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(root, f)
                     dest_file = os.path.join(obj_path, rel_root, filename)
-                    template_data = to_text(loader._get_file_contents(src_template)[0], errors='surrogate_or_strict')
+                    template_data = trust_as_template(loader.get_text_file_contents(src_template))
                     try:
                         b_rendered = to_bytes(templar.template(template_data), errors='surrogate_or_strict')
                     except AnsibleError as e:
@@ -1279,7 +1291,7 @@ class GalaxyCLI(CLI):
         """Compare checksums with the collection(s) found on the server and the installed copy. This does not verify dependencies."""
 
         collections = context.CLIARGS['args']
-        search_paths = AnsibleCollectionConfig.collection_paths
+        search_paths = self.collection_paths
         ignore_errors = context.CLIARGS['ignore_errors']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
@@ -1421,7 +1433,7 @@ class GalaxyCLI(CLI):
         collections_path = C.COLLECTIONS_PATHS
 
         managed_paths = set(validate_collection_path(p) for p in C.COLLECTIONS_PATHS)
-        read_req_paths = set(validate_collection_path(p) for p in AnsibleCollectionConfig.collection_paths)
+        read_req_paths = set(validate_collection_path(p) for p in self.collection_paths)
 
         unexpected_path = C.GALAXY_COLLECTIONS_PATH_WARNING and not any(p.startswith(path) for p in managed_paths)
         if unexpected_path and any(p.startswith(path) for p in read_req_paths):
@@ -1637,7 +1649,7 @@ class GalaxyCLI(CLI):
         collection_name = context.CLIARGS['collection']
         default_collections_path = set(C.COLLECTIONS_PATHS)
         collections_search_paths = (
-            set(context.CLIARGS['collections_path'] or []) | default_collections_path | set(AnsibleCollectionConfig.collection_paths)
+            set(context.CLIARGS['collections_path'] or []) | default_collections_path | set(self.collection_paths)
         )
         collections_in_paths = {}
 
@@ -1764,6 +1776,8 @@ class GalaxyCLI(CLI):
 
         return 0
 
+    _task_check_delay_sec = 10  # allows unit test override
+
     def execute_import(self):
         """ used to import a role into Ansible Galaxy """
 
@@ -1817,7 +1831,7 @@ class GalaxyCLI(CLI):
                     rc = ['SUCCESS', 'FAILED'].index(state)
                     finished = True
                 else:
-                    time.sleep(10)
+                    time.sleep(self._task_check_delay_sec)
 
         return rc
 

@@ -17,11 +17,13 @@
 
 from __future__ import annotations
 
+import collections.abc as c
+
 from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 
 display = Display()
@@ -30,10 +32,8 @@ display = Display()
 def get_reserved_names(include_private: bool = True) -> set[str]:
     """ this function returns the list of reserved names associated with play objects"""
 
-    templar = Templar(loader=None)
-    public = set(templar.environment.globals.keys())
+    public = set(TemplateEngine().environment.globals.keys())
     private = set()
-    result = set()
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = [Play, Role, Block, Task]
@@ -60,16 +60,13 @@ def get_reserved_names(include_private: bool = True) -> set[str]:
     else:
         result = public
 
-    # due to Collectors always adding, need to ignore this
-    # eventually should remove after we deprecate it in setup.py
-    result.remove('gather_subset')
+    result.discard('gather_subset')
 
     return result
 
 
-def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> None:
-    """ this function warns if any variable passed conflicts with internally reserved names """
-
+def warn_if_reserved(myvars: c.Iterable[str], additional: c.Iterable[str] | None = None) -> None:
+    """Issue a warning for any variable which conflicts with an internally reserved name."""
     if additional is None:
         reserved = _RESERVED_NAMES
     else:
@@ -77,8 +74,12 @@ def warn_if_reserved(myvars: list[str], additional: list[str] | None = None) -> 
 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
-    for varname in varnames.intersection(reserved):
-        display.warning('Found variable using reserved name: %s' % varname)
+
+    if conflicts := varnames.intersection(reserved):
+        # Ensure the varname used for obj is the tagged one from myvars and not the untagged one from reserved.
+        # This can occur because tags do not affect value equality, and intersection can return values from either the left or right side.
+        for varname in (name for name in myvars if name in conflicts):
+            display.warning(f'Found variable using reserved name {varname!r}.', obj=varname)
 
 
 def is_reserved_name(name: str) -> bool:

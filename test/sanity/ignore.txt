@@ -1,8 +1,6 @@
 .github/ISSUE_TEMPLATE/internal_issue.md pymarkdown!skip
+lib/ansible/_internal/_wrapt.py black!skip  # vendored code
 lib/ansible/config/base.yml no-unwanted-files
-lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/keyword_desc.yml no-unwanted-files
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
@@ -29,12 +27,12 @@ lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
-lib/ansible/module_utils/compat/selinux.py import-3.8!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.11!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.12!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.13!skip # pass/fail depends on presence of libselinux.so
+lib/ansible/module_utils/compat/selinux.py import-3.14!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
@@ -50,13 +48,20 @@ lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck
 lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/urls.py replace-urlopen
-lib/ansible/parsing/yaml/objects.py pylint:arguments-renamed
 lib/ansible/playbook/role/include.py pylint:arguments-renamed
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
+lib/ansible/_internal/_wrapt.py mypy-3.12!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
+lib/ansible/_internal/_wrapt.py mypy-3.14!skip # vendored code
+lib/ansible/_internal/_wrapt.py pep8!skip # vendored code
+lib/ansible/_internal/_wrapt.py pylint!skip # vendored code
+lib/ansible/_internal/ansible_collections/ansible/_protomatter/README.md no-unwanted-files
+test/integration/targets/ansible-doc/library/bogus_facts shebang
+test/integration/targets/ansible-doc/library/facts_one shebang
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
 test/integration/targets/ansible-test-sanity/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
@@ -71,8 +76,6 @@ test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/un
 test/integration/targets/ansible-test-no-tty/ansible_collections/ns/col/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
-test/integration/targets/config/lookup_plugins/casting.py pylint:unidiomatic-typecheck
-test/integration/targets/config/lookup_plugins/casting_individual.py pylint:unidiomatic-typecheck
 test/integration/targets/fork_safe_stdio/vendored_pty.py pep8!skip # vendored code
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/dummy1 shebang
@@ -98,17 +101,20 @@ test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
 test/integration/targets/template/templates/encoding_1252.j2 no-unwanted-characters
 test/integration/targets/unicode/unicode.yml no-smart-quotes
 test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslint!skip
+test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 pslint:PSCustomUseLiteralPath  # We want to use wildcard matching with -Path
+test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
+test/integration/targets/win_app_control/files/Set-ManifestSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
-test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
+test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quotes in the file name to fetch
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
+test/integration/targets/ssh_agent/fake_agents/ssh-agent-bad-shebang shebang  # required for test
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
-test/support/network-integration/collections/ansible_collections/cisco/ios/plugins/cliconf/ios.py pylint:arguments-renamed
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/module_utils/WebRequest.psm1 pslint!skip
 test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/modules/win_uri.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
@@ -145,8 +151,6 @@ README.md pymarkdown:line-length
 test/units/cli/test_data/role_skeleton/README.md pymarkdown:line-length
 test/integration/targets/find/files/hello_world.gbk no-smart-quotes
 test/integration/targets/find/files/hello_world.gbk no-unwanted-characters
-lib/ansible/plugins/action/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
-lib/ansible/template/__init__.py pylint:ansible-deprecated-version  # 2.18 deprecation
 lib/ansible/module_utils/facts/hardware/aix.py pylint:used-before-assignment
 lib/ansible/modules/rpm_key.py pylint:used-before-assignment
 lib/ansible/modules/service.py pylint:used-before-assignment
@@ -154,10 +158,8 @@ lib/ansible/modules/user.py pylint:used-before-assignment
 lib/ansible/plugins/action/copy.py pylint:undefined-variable
 test/integration/targets/module_utils/library/test_optional.py pylint:used-before-assignment
 test/support/windows-integration/plugins/action/win_copy.py pylint:undefined-variable
-lib/ansible/plugins/connection/__init__.py pylint:ansible-deprecated-version
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.13:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.13:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.13:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.13:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.13:assignment
@@ -166,10 +168,8 @@ test/units/module_utils/facts/test_facts.py mypy-3.13:assignment
 test/units/modules/mount_facts_data.py mypy-3.13:arg-type
 test/units/modules/test_apt.py mypy-3.13:name-match
 test/units/modules/test_mount_facts.py mypy-3.13:index
-test/units/playbook/test_base.py mypy-3.13:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.12:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.12:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.12:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.12:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.12:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.12:assignment
@@ -178,10 +178,8 @@ test/units/module_utils/facts/test_facts.py mypy-3.12:assignment
 test/units/modules/mount_facts_data.py mypy-3.12:arg-type
 test/units/modules/test_apt.py mypy-3.12:name-match
 test/units/modules/test_mount_facts.py mypy-3.12:index
-test/units/playbook/test_base.py mypy-3.12:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.11:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.11:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.11:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.11:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.11:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.11:assignment
@@ -190,10 +188,8 @@ test/units/module_utils/facts/test_facts.py mypy-3.11:assignment
 test/units/modules/mount_facts_data.py mypy-3.11:arg-type
 test/units/modules/test_apt.py mypy-3.11:name-match
 test/units/modules/test_mount_facts.py mypy-3.11:index
-test/units/playbook/test_base.py mypy-3.11:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.10:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.10:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.10:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.10:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.10:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.10:assignment
@@ -204,7 +200,6 @@ test/units/modules/test_apt.py mypy-3.10:name-match
 test/units/modules/test_mount_facts.py mypy-3.10:index
 test/units/module_utils/basic/test_exit_json.py mypy-3.9:assignment
 test/units/module_utils/basic/test_exit_json.py mypy-3.9:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.9:abstract
 test/units/module_utils/facts/other/test_facter.py mypy-3.9:assignment
 test/units/module_utils/facts/other/test_ohai.py mypy-3.9:assignment
 test/units/module_utils/facts/system/test_lsb.py mypy-3.9:assignment
@@ -213,14 +208,32 @@ test/units/module_utils/facts/test_facts.py mypy-3.9:assignment
 test/units/modules/mount_facts_data.py mypy-3.9:arg-type
 test/units/modules/test_apt.py mypy-3.9:name-match
 test/units/modules/test_mount_facts.py mypy-3.9:index
-test/units/module_utils/basic/test_exit_json.py mypy-3.8:assignment
-test/units/module_utils/basic/test_exit_json.py mypy-3.8:misc
-test/units/module_utils/common/text/converters/test_json_encode_fallback.py mypy-3.8:abstract
-test/units/module_utils/facts/other/test_facter.py mypy-3.8:assignment
-test/units/module_utils/facts/other/test_ohai.py mypy-3.8:assignment
-test/units/module_utils/facts/system/test_lsb.py mypy-3.8:assignment
-test/units/module_utils/facts/test_collectors.py mypy-3.8:assignment
-test/units/module_utils/facts/test_facts.py mypy-3.8:assignment
-test/units/modules/mount_facts_data.py mypy-3.8:arg-type
-test/units/modules/test_apt.py mypy-3.8:name-match
-test/units/modules/test_mount_facts.py mypy-3.8:index
+test/units/module_utils/basic/test_exit_json.py mypy-3.14:assignment
+test/units/module_utils/basic/test_exit_json.py mypy-3.14:misc
+test/units/module_utils/facts/other/test_facter.py mypy-3.14:assignment
+test/units/module_utils/facts/other/test_ohai.py mypy-3.14:assignment
+test/units/module_utils/facts/system/test_lsb.py mypy-3.14:assignment
+test/units/module_utils/facts/test_collectors.py mypy-3.14:assignment
+test/units/module_utils/facts/test_facts.py mypy-3.14:assignment
+test/units/modules/mount_facts_data.py mypy-3.14:arg-type
+test/units/modules/test_apt.py mypy-3.14:name-match
+test/units/modules/test_mount_facts.py mypy-3.14:index
+test/integration/targets/interpreter_discovery_python/library/test_non_python_interpreter.py shebang  # test needs non-standard shebang
+test/integration/targets/inventory_script/bad_shebang shebang  # test needs an invalid shebang
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/lookup/deprecated.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/action/do_deprecated_stuff.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/ansible_collections/ns/col/plugins/module_utils/deprecated_utils.py pylint!skip  # validated as a collection
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-no-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-invalid-deprecated-version  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-date-not-permitted  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-unnecessary-collection-name  # required to verify plugin against core
+test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:ansible-deprecated-collection-name-not-permitted  # required to verify plugin against core
+lib/ansible/cli/doc.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/galaxy/api.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/plugins/filter/encryption.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/utils/ssh_functions.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/vars/manager.py pylint:ansible-deprecated-version-comment  # TODO: 2.20
+lib/ansible/vars/plugins.py pylint:ansible-deprecated-version  # TODO: 2.20
+lib/ansible/galaxy/role.py pylint:ansible-deprecated-python-version-comment  # TODO: 2.20

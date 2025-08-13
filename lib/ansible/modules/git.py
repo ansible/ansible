@@ -21,6 +21,10 @@ options:
     repo:
         description:
             - git, SSH, or HTTP(S) protocol address of the git repository.
+            - Avoid embedding usernames and passwords within Git repository URLs.
+              This practice is insecure and can lead to unauthorized access to your repositories.
+              For secure authentication, configure SSH keys (recommended) or use a credential helper.
+              See Git documentation on SSH keys/credential helpers for instructions.
         type: str
         required: true
         aliases: [ name ]
@@ -313,11 +317,6 @@ remote_url_changed:
     returned: success
     type: bool
     sample: True
-warnings:
-    description: List of warnings if requested features were not available due to a too old git version.
-    returned: error
-    type: str
-    sample: git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
     description: Contains the new path of .git directory if it is changed.
     returned: success
@@ -344,7 +343,6 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.six import b, string_types
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
@@ -358,11 +356,11 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
                 dot_git_file.write('gitdir: %s' % repo_dir)
             result['git_dir_before'] = old_repo_dir
             result['git_dir_now'] = repo_dir
-        except (IOError, OSError) as err:
+        except OSError as ex:
             # if we already moved the .git dir, roll it back
             if os.path.exists(repo_dir):
                 shutil.move(repo_dir, old_repo_dir)
-            module.fail_json(msg=u'Unable to move git dir. %s' % to_text(err))
+            raise Exception('Unable to move git dir.') from ex
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
@@ -440,16 +438,16 @@ def write_ssh_wrapper(module):
             fd, wrapper_path = tempfile.mkstemp(prefix=module.tmpdir + '/')
         else:
             raise OSError
-    except (IOError, OSError):
+    except OSError:
         fd, wrapper_path = tempfile.mkstemp()
 
     # use existing git_ssh/ssh_command, fallback to 'ssh'
-    template = b("""#!/bin/sh
+    template = """#!/bin/sh
 %s $GIT_SSH_OPTS "$@"
-""" % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh')))
+""" % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh'))
 
     # write it
-    with os.fdopen(fd, 'w+b') as fh:
+    with os.fdopen(fd, 'w') as fh:
         fh.write(template)
 
     # set execute
@@ -825,13 +823,14 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     """
     try:
         repo_path = get_repo_path(dest, bare)
-    except (IOError, ValueError) as err:
+    except (OSError, ValueError) as ex:
         # No repo path found
         # ``.git`` file does not have a valid format for detached Git dir.
         module.fail_json(
             msg='Current repo does not have a valid reference to a '
             'separate Git dir or it refers to the invalid path',
-            details=to_text(err),
+            details=str(ex),
+            exception=ex,
         )
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
@@ -1236,7 +1235,7 @@ def main():
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
 
-    result = dict(changed=False, warnings=list())
+    result = dict(changed=False)
 
     if module.params['accept_hostkey']:
         if ssh_opts is not None:
@@ -1257,7 +1256,7 @@ def main():
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
-        if not isinstance(umask, string_types):
+        if not isinstance(umask, str):
             module.fail_json(msg="umask must be defined as a quoted octal integer")
         try:
             umask = int(umask, 8)
@@ -1291,13 +1290,14 @@ def main():
                 if not module.check_mode:
                     relocate_repo(module, result, separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
-        except (IOError, ValueError) as err:
+        except (OSError, ValueError) as ex:
             # No repo path found
             # ``.git`` file does not have a valid format for detached Git dir.
             module.fail_json(
                 msg='Current repo does not have a valid reference to a '
                 'separate Git dir or it refers to the invalid path',
-                details=to_text(err),
+                details=str(ex),
+                exception=ex,
             )
         gitconfig = os.path.join(repo_path, 'config')
 

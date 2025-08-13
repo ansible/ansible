@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import isidentifier
+from ansible.utils.vars import validate_variable_name
 
 
 class ActionModule(ActionBase):
@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
             data = self._task.args.get('data', {})
 
             if not isinstance(data, dict):
-                data = self._templar.template(data, convert_bare=False, fail_on_undefined=True)
+                data = self._templar.template(data)
 
             if not isinstance(data, dict):
                 result['failed'] = True
@@ -59,14 +59,9 @@ class ActionModule(ActionBase):
                         stats[opt] = val
 
             for (k, v) in data.items():
-
                 k = self._templar.template(k)
 
-                if not isidentifier(k):
-                    result['failed'] = True
-                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
-                                     "letters, numbers and underscores." % k)
-                    return result
+                validate_variable_name(k)
 
                 stats['data'][k] = self._templar.template(v)
 

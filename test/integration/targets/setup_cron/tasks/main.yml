@@ -18,11 +18,11 @@
 - name: install cron package
   package:
     name: '{{ cron_pkg }}'
-  when: cron_pkg | default(false, true)
+  when: cron_pkg | default(false, true) is truthy
   register: cron_package_installed
   until: cron_package_installed is success
 
-- when: faketime_pkg | default(false, true)
+- when: faketime_pkg | default(false, true) is truthy
   block:
     - name: install faketime packages
       package:

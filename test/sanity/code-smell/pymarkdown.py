@@ -1,4 +1,5 @@
 """Sanity test for Markdown files."""
+
 from __future__ import annotations
 
 import pathlib
@@ -14,8 +15,10 @@ def main() -> None:
 
     cmd = [
         sys.executable,
-        '-m', 'pymarkdown',
-        '--config', pathlib.Path(__file__).parent / 'pymarkdown.config.json',
+        '-m',
+        'pymarkdown',
+        '--config',
+        pathlib.Path(__file__).parent / 'pymarkdown.config.json',
         '--strict-config',
         'scan',
     ] + paths

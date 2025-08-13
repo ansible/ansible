@@ -4,11 +4,15 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import subprocess
 import sys
 import typing as t
 
 from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils._internal._ansiballz import _respawn
+
+_ANSIBLE_PARENT_PATH = pathlib.Path(__file__).parents[3]
 
 
 def has_respawned():
@@ -36,7 +40,7 @@ def respawn_module(interpreter_path) -> t.NoReturn:
         raise Exception('module has already been respawned')
 
     # FUTURE: we need a safe way to log that a respawn has occurred for forensic/debug purposes
-    payload = _create_payload()
+    payload = _respawn.create_payload()
     stdin_read, stdin_write = os.pipe()
     os.write(stdin_write, to_bytes(payload))
     os.close(stdin_write)
@@ -53,45 +57,30 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
     :arg interpreter_paths: iterable of paths to Python interpreters. The paths will be probed
     in order, and the first path that exists and can successfully import the named module will
     be returned (or ``None`` if probing fails for all supplied paths).
-    :arg module_name: fully-qualified Python module name to probe for (eg, ``selinux``)
+    :arg module_name: fully-qualified Python module name to probe for (for example, ``selinux``)
     """
+    PYTHONPATH = os.getenv('PYTHONPATH', '')
+
+    env = os.environ.copy()
+    env.update({
+        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')
+    })
+
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
         try:
-            rc = subprocess.call([interpreter_path, '-c', 'import {0}'.format(module_name)])
+            rc = subprocess.call(
+                [
+                    interpreter_path,
+                    '-c',
+                    f'import {module_name}, ansible.module_utils.basic',
+                ],
+                env=env,
+            )
             if rc == 0:
                 return interpreter_path
         except Exception:
             continue
 
     return None
-
-
-def _create_payload():
-    from ansible.module_utils import basic
-    smuggled_args = getattr(basic, '_ANSIBLE_ARGS')
-    if not smuggled_args:
-        raise Exception('unable to access ansible.module_utils.basic._ANSIBLE_ARGS (not launched by AnsiballZ?)')
-    module_fqn = sys.modules['__main__']._module_fqn
-    modlib_path = sys.modules['__main__']._modlib_path
-    respawn_code_template = """
-import runpy
-import sys
-
-module_fqn = {module_fqn!r}
-modlib_path = {modlib_path!r}
-smuggled_args = {smuggled_args!r}
-
-if __name__ == '__main__':
-    sys.path.insert(0, modlib_path)
-
-    from ansible.module_utils import basic
-    basic._ANSIBLE_ARGS = smuggled_args
-
-    runpy.run_module(module_fqn, init_globals=dict(_respawned=True), run_name='__main__', alter_sys=True)
-    """
-
-    respawn_code = respawn_code_template.format(module_fqn=module_fqn, modlib_path=modlib_path, smuggled_args=smuggled_args.strip())
-
-    return respawn_code

@@ -1,1 +1,0 @@
-ios/csr1000v collection=cisco.ios connection=ansible.netcommon.network_cli provider=aws arch=x86_64

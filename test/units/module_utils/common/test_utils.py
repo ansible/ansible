@@ -33,6 +33,18 @@ class TestGetAllSubclasses:
     class BranchIIB(BranchII):
         pass
 
+    class MultipleInheritanceBase:
+        pass
+
+    class MultipleInheritanceBranchI(MultipleInheritanceBase):
+        pass
+
+    class MultipleInheritanceBranchII(MultipleInheritanceBase):
+        pass
+
+    class MultipleInheritanceChild(MultipleInheritanceBranchI, MultipleInheritanceBranchII):
+        pass
+
     def test_bottom_level(self):
         assert get_all_subclasses(self.BranchIIB) == set()
 
@@ -43,3 +55,8 @@ class TestGetAllSubclasses:
         assert set(get_all_subclasses(self.Base)) == set([self.BranchI, self.BranchII,
                                                           self.BranchIA, self.BranchIB,
                                                           self.BranchIIA, self.BranchIIB])
+
+    def test_multiple_inheritance(self) -> None:
+        assert get_all_subclasses(self.MultipleInheritanceBase) == {self.MultipleInheritanceBranchI,
+                                                                    self.MultipleInheritanceBranchII,
+                                                                    self.MultipleInheritanceChild}

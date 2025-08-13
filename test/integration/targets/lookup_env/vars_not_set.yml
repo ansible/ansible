@@ -1,0 +1,23 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: look up an environment variable which is not set with various default behaviors
+      ansible._protomatter.debug:
+        expression:
+          - lookup('env', 'USR') == ''  # expect '' (the default fallback value)
+          - lookup('env', 'USR', default='nobody') == 'nobody'  # expect 'nobody'
+          - lookup('env', 'USR', default=undef())  # expect a hint-ed undefined from the env lookup
+          - lookup('env', 'USR', default=undef('custom'))  #  expect an undefined whose hint is 'custom'
+          - lookup('env', 'USR', default=bogus_var)  #  expect an undefined hinting at bogus_var
+      register: result
+
+    - name: verify the lookups returned the expected results
+      assert:
+        that:
+          - result.expression_result[0:2] == [true, true]
+          - result.expression_result[2] is search("environment variable 'USR' is not set")
+          - result.expression_result[3] is search("custom")
+          - result.expression_result[4] is search("'bogus_var' is undefined")
+          - result.warnings | select("search", "'USR' is not set") | length == 1
+          - result.warnings | select("search", "custom") | length == 1
+          - result.warnings | select("search", "'bogus_var' is undefined") | length == 1

@@ -80,7 +80,7 @@ attributes:
     bypass_host_loop:
       support: none
     check_mode:
-      support: none
+      support: full
     diff_mode:
       support: full
     platform:
@@ -131,7 +131,6 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b, indexbytes
 from ansible.module_utils.common.text.converters import to_native
 
 
@@ -141,6 +140,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     tmp = os.fdopen(tmpfd, 'wb')
     delimit_me = False
     add_newline = False
+    b_linesep = os.linesep.encode()
 
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
@@ -153,7 +153,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
 
         # always put a newline between fragments if the previous fragment didn't end with a newline.
         if add_newline:
-            tmp.write(b('\n'))
+            tmp.write(b_linesep)
 
         # delimiters should only appear between fragments
         if delimit_me:
@@ -163,16 +163,12 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
                 tmp.write(delimiter)
                 # always make sure there's a newline after the
                 # delimiter, so lines don't run together
-
-                # byte indexing differs on Python 2 and 3,
-                # use indexbytes for compat
-                # chr(10) == '\n'
-                if indexbytes(delimiter, -1) != 10:
-                    tmp.write(b('\n'))
+                if not delimiter.endswith(b_linesep):
+                    tmp.write(b_linesep)
 
         tmp.write(fragment_content)
         delimit_me = True
-        if fragment_content.endswith(b('\n')):
+        if fragment_content.endswith(b_linesep):
             add_newline = False
         else:
             add_newline = True
@@ -181,15 +177,15 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     return temp_path
 
 
-def cleanup(path, result=None):
+def cleanup(module, path, result=None):
     # cleanup just in case
     if os.path.exists(path):
         try:
             os.remove(path)
-        except (IOError, OSError) as e:
+        except OSError as ex:
             # don't error on possible race conditions, but keep warning
             if result is not None:
-                result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, to_native(e))]
+                module.error_as_warning(f'Unable to remove temp file {path!r}.', exception=ex)
 
 
 def main():
@@ -212,6 +208,7 @@ def main():
             decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     changed = False
@@ -261,17 +258,18 @@ def main():
             (rc, out, err) = module.run_command(validate % path)
             result['validation'] = dict(rc=rc, stdout=out, stderr=err)
             if rc != 0:
-                cleanup(path)
+                cleanup(module, path)
                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
 
-        module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
+        if not module.check_mode:
+            module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
         changed = True
 
-    cleanup(path, result)
+    cleanup(module, path, result)
 
-    # handle file permissions
+    # handle file permissions (check mode aware)
     file_args = module.load_file_common_arguments(module.params)
     result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
 

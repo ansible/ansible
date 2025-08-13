@@ -10,17 +10,13 @@ import os
 import re
 
 from ast import literal_eval
+from ansible.module_utils._internal import _no_six
+from ansible.module_utils.common import json as _common_json
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
-from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import (
-    binary_type,
-    string_types,
-    text_type,
-)
 
 
 def count_terms(terms, parameters):
@@ -45,7 +41,7 @@ def safe_eval(value, locals=None, include_exceptions=False):
         version="2.21",
     )
     # do not allow method calls to modules
-    if not isinstance(value, string_types):
+    if not isinstance(value, str):
         # already templated to a datavaluestructure, perhaps?
         if include_exceptions:
             return (value, None)
@@ -196,7 +192,7 @@ def check_required_by(requirements, parameters, options_context=None):
         if key not in parameters or parameters[key] is None:
             continue
         # Support strings (single-item lists)
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             value = [value]
 
         if missing := [required for required in value if required not in parameters or parameters[required] is None]:
@@ -375,14 +371,21 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
     :returns: Original value if it is a string, the value converted to a string
         if allow_conversion=True, or raises a TypeError if allow_conversion=False.
     """
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         return value
 
-    if allow_conversion and value is not None:
+    if value is None:
+        return ''  # approximate pre-2.19 templating None->empty str equivalency here for backward compatibility
+
+    if allow_conversion:
         return to_native(value, errors='surrogate_or_strict')
 
     msg = "'{0!r}' is not a string and conversion is not allowed".format(value)
     raise TypeError(to_native(msg))
+
+
+def _check_type_str_no_conversion(value) -> str:
+    return check_type_str(value, allow_conversion=False)
 
 
 def check_type_list(value):
@@ -400,12 +403,21 @@ def check_type_list(value):
     if isinstance(value, list):
         return value
 
-    if isinstance(value, string_types):
+    # DTFIX-FUTURE: deprecate legacy comma split functionality, eventually replace with `_check_type_list_strict`
+    if isinstance(value, str):
         return value.split(",")
     elif isinstance(value, int) or isinstance(value, float):
         return [str(value)]
 
     raise TypeError('%s cannot be converted to a list' % type(value))
+
+
+def _check_type_list_strict(value):
+    # FUTURE: this impl should replace `check_type_list`
+    if isinstance(value, list):
+        return value
+
+    return [value]
 
 
 def check_type_dict(value):
@@ -420,7 +432,7 @@ def check_type_dict(value):
     if isinstance(value, dict):
         return value
 
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         if value.startswith("{"):
             try:
                 return json.loads(value)
@@ -483,7 +495,7 @@ def check_type_bool(value):
     if isinstance(value, bool):
         return value
 
-    if isinstance(value, string_types) or isinstance(value, (int, float)):
+    if isinstance(value, str) or isinstance(value, (int, float)):
         return boolean(value)
 
     raise TypeError('%s cannot be converted to a bool' % type(value))
@@ -565,14 +577,25 @@ def check_type_bits(value):
 
 
 def check_type_jsonarg(value):
-    """Return a jsonified string. Sometimes the controller turns a json string
-    into a dict/list so transform it back into json here
-
-    Raises :class:`TypeError` if unable to convert the value
-
     """
-    if isinstance(value, (text_type, binary_type)):
+    JSON serialize dict/list/tuple, strip str and bytes.
+    Previously required for cases where Ansible/Jinja classic-mode literal eval pass could inadvertently deserialize objects.
+    """
+    # deprecated: description='deprecate jsonarg type support' core_version='2.23'
+    # deprecate(
+    #     msg="The `jsonarg` type is deprecated.",
+    #     version="2.27",
+    #     help_text="JSON string arguments should use `str`; structures can be explicitly serialized as JSON with the `to_json` filter.",
+    # )
+
+    if isinstance(value, (str, bytes)):
         return value.strip()
-    elif isinstance(value, (list, tuple, dict)):
-        return jsonify(value)
+
+    if isinstance(value, (list, tuple, dict)):
+        return json.dumps(value, cls=_common_json._get_legacy_encoder(), _decode_bytes=True)
+
     raise TypeError('%s cannot be converted to a json string' % type(value))
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "string_types")

@@ -39,5 +39,5 @@ class CallbackModule(CallbackBase):
         self._display.display(task.name or task.action)
 
     def v2_runner_on_ok(self, result):
-        if result._task.name == "end":
+        if result.task.name == "end":
             self._executing_hosts_counter -= 1

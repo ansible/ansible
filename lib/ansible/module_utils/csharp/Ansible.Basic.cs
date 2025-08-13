@@ -46,6 +46,10 @@ namespace Ansible.Basic
 
         public static bool _DebugArgSpec = false;
 
+        // Used by the executor scripts to store warnings from the wrapper functions.
+        // This is public to avoid reflection but should not be used by modules.
+        public static List<string> _WrapperWarnings;
+
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
@@ -75,6 +79,7 @@ namespace Ansible.Basic
             { "socket", null },
             { "syslog_facility", null },
             { "target_log_info", "TargetLogInfo"},
+            { "tracebacks_for", null},
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
@@ -1024,16 +1029,7 @@ namespace Ansible.Basic
             foreach (DictionaryEntry entry in param)
             {
                 string paramKey = (string)entry.Key;
-                if (paramKey == "_ansible_exec_wrapper_warnings")
-                {
-                    // Special key used in module_powershell_wrapper to pass
-                    // along any warnings that should be returned back to
-                    // Ansible.
-                    removedParameters.Add(paramKey);
-                    foreach (string warning in (IList<string>)entry.Value)
-                        Warn(warning);
-                }
-                else if (!legalInputs.Contains(paramKey, StringComparer.OrdinalIgnoreCase))
+                if (!legalInputs.Contains(paramKey, StringComparer.OrdinalIgnoreCase))
                     unsupportedParameters.Add(paramKey);
                 else if (!legalInputs.Contains(paramKey))
                     // For backwards compatibility we do not care about the case but we need to warn the users as this will
@@ -1341,6 +1337,14 @@ namespace Ansible.Basic
         {
             if (!result.ContainsKey("invocation"))
                 result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
+
+            if (_WrapperWarnings != null)
+            {
+                foreach (string warning in _WrapperWarnings)
+                {
+                    warnings.Add(warning);
+                }
+            }
 
             if (warnings.Count > 0)
                 result["warnings"] = warnings;
@@ -1692,7 +1696,7 @@ namespace Ansible.Basic
                 if ((attr & FileAttributes.ReadOnly) != 0)
                 {
                     // Windows does not allow files set with ReadOnly to be
-                    // deleted. Pre-emptively unset the attribute.
+                    // deleted. Preemptively unset the attribute.
                     // FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE is quite new,
                     // look at using that flag with POSIX delete once Server 2019
                     // is the baseline.

@@ -23,21 +23,8 @@ class SeqStub:
 Sequence.register(SeqStub)
 
 
-class FakeAnsibleVaultEncryptedUnicode(Sequence):
-    __ENCRYPTED__ = True
-
-    def __init__(self, data):
-        self.data = data
-
-    def __getitem__(self, index):
-        raise NotImplementedError()  # pragma: nocover
-
-    def __len__(self):
-        raise NotImplementedError()  # pragma: nocover
-
-
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
-TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS) + (FakeAnsibleVaultEncryptedUnicode(u'foo'),)
+TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS)
 
 TEST_ITEMS_NON_SEQUENCES: tuple = (
     {}, object(), frozenset(),
@@ -143,7 +130,7 @@ class TestImmutableDict:
         # ImmutableDict is unhashable when one of its values is unhashable
         imdict = ImmutableDict({u'café': u'くらとみ', 1: [1, 2]})
 
-        expected_reason = r"^unhashable type: 'list'$"
+        expected_reason = r"unhashable type: 'list'"
 
         with pytest.raises(TypeError, match=expected_reason):
             hash(imdict)

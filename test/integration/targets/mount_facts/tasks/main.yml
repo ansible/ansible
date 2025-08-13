@@ -175,9 +175,9 @@
     - name: Test any devices have a UUID (Linux)
       assert:
         that:
-          - dynamic.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
-          - dynamic_mount.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
-          - static.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 1
+          - dynamic.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 0
+          - dynamic_mount.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 0
+          - static.ansible_facts.mount_points.values() | list | map(attribute='uuid') | unique | length > 0
       when: ansible_os_family not in ("Darwin", "FreeBSD")
 
 - name: Test duplicate sources

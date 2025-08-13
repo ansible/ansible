@@ -6,12 +6,6 @@ import os
 import pexpect
 import sys
 
-from ansible.module_utils.six import PY2
-
-if PY2:
-    log_buffer = sys.stdout
-else:
-    log_buffer = sys.stdout.buffer
 
 env_vars = {
     'ANSIBLE_ROLES_PATH': './roles',
@@ -36,7 +30,7 @@ def run_test(playbook, test_spec, args=None, timeout=10, env=None):
         env=env,
     )
 
-    vars_prompt_test.logfile = log_buffer
+    vars_prompt_test.logfile = sys.stdout.buffer
     for item in test_spec[0]:
         vars_prompt_test.expect(item[0])
         if item[1]:

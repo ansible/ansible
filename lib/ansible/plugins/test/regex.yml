@@ -3,7 +3,7 @@ DOCUMENTATION:
   author: Ansible Core
   short_description: Does string match regular expression from the start
   description:
-    - Compare string against regular expression using Python's match or search functions.
+    - Compare string against regular expression using Python's match, fullmatch or search functions.
   options:
     _input:
       description: String to match.
@@ -22,14 +22,26 @@ DOCUMENTATION:
       type: boolean
       default: False
     match_type:
-      description: Decide which function to be used to do the matching.
+      description:
+        - Decide which function to be used to do the matching.
       type: string
-      choices: [match, search]
+      choices: [match, search, fullmatch]
       default: search
 
-EXAMPLES: |
-  url: "https://example.com/users/foo/resources/bar"
-  foundmatch: url is regex("example\.com/\w+/foo")
+EXAMPLES:
+  - name: check if string matches regex
+    assert:
+      that:
+        - 'url is regex("example\.com/\w+/foo")'
+    vars:
+      url: "https://example.com/users/foo/resources/bar"
+
+  - name: check if string matches regex ignoring case
+    assert:
+      that:
+        - 'url is regex("EXAMPLE\.COM/\w+/foo", ignorecase=True)'
+    vars:
+      url: "https://Example.com/users/foo/resources/bar"
 
 RETURN:
   _value:

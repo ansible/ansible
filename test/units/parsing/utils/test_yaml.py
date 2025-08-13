@@ -1,33 +1,41 @@
-# -*- coding: utf-8 -*-
-# (c) 2017, Ansible Project
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 from __future__ import annotations
+
+import pathlib
+import tempfile
 
 import pytest
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleJSONParserError
+from ansible._internal._errors._error_utils import format_exception_message
+from ansible._internal._datatag._tags import Origin
 from ansible.parsing.utils.yaml import from_yaml
 
 
-def test_from_yaml_simple():
-    assert from_yaml(u'---\n- test: 1\n  test2: "2"\n- caf\xe9: "caf\xe9"') == [{u'test': 1, u'test2': u"2"}, {u"caf\xe9": u"caf\xe9"}]
+def test_json_parser_error() -> None:
+    # This is basically a copy of test_yaml_parser_error in test/units/parsing/yaml/test_errors.py.
+    # Most of the coverage for parsing.utils.yaml is achieved while testing parsing.yaml.errors.
 
+    content = 'x'
+    expected_message = 'JSON parsing failed: Expecting value: line 1 column 1 (char 0)'
+    line = 1
+    col = 1
+    expect_help_text = False
 
-def test_bad_yaml():
-    with pytest.raises(AnsibleParserError):
-        from_yaml(u'foo: bar: baz')
+    with tempfile.TemporaryDirectory() as tempdir:
+        source_path = pathlib.Path(tempdir) / 'source.yml'
+        source_path.write_text(str(content))
+
+        with pytest.raises(AnsibleJSONParserError) as error:
+            from_yaml(content, file_name=str(source_path), json_only=True)
+
+    assert error.value.message == expected_message
+    assert error.value._original_message == expected_message
+    assert format_exception_message(error.value) == expected_message
+    assert str(error.value) == expected_message
+
+    assert error.value.obj == Origin(path=str(source_path), line_num=line, col_num=col)
+
+    if expect_help_text:
+        assert error.value._help_text is not None  # DTFIX-FUTURE: check the content later once it's less volatile
+    else:
+        assert error.value._help_text is None

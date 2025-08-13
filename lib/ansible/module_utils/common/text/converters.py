@@ -6,16 +6,10 @@
 from __future__ import annotations
 
 import codecs
-import datetime
 import json
 
-from ansible.module_utils.six.moves.collections_abc import Set
-from ansible.module_utils.six import (
-    PY3,
-    binary_type,
-    iteritems,
-    text_type,
-)
+from ansible.module_utils._internal import _no_six
+
 
 try:
     codecs.lookup_error('surrogateescape')
@@ -93,7 +87,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         Added the ``surrogate_then_replace`` error handler and made it the default error handler.
     """
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         return obj
 
     # We're given a text string
@@ -107,7 +101,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         try:
             # Try this first as it's the fastest
             return obj.encode(encoding, errors)
@@ -197,7 +191,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 
         Added the surrogate_then_replace error handler and made it the default error handler.
     """
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         return obj
 
     if errors in _COMPOSED_ERROR_HANDLERS:
@@ -208,7 +202,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         else:
             errors = 'replace'
 
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         # Note: We don't need special handling for surrogate_then_replace
         # because all bytes will either be made into surrogates or are valid
         # to decode.
@@ -237,44 +231,21 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     return to_text(value, encoding, errors)
 
 
-#: :py:func:`to_native`
-#:      Transform a variable into the native str type for the python version
-#:
-#:      On Python2, this is an alias for
-#:      :func:`~ansible.module_utils.to_bytes`.  On Python3 it is an alias for
-#:      :func:`~ansible.module_utils.to_text`.  It makes it easier to
-#:      transform a variable into the native str type for the python version
-#:      the code is running on.  Use this when constructing the message to
-#:      send to exceptions or when dealing with an API that needs to take
-#:      a native string.  Example::
-#:
-#:          try:
-#:              1//0
-#:          except ZeroDivisionError as e:
-#:              raise MyException('Encountered and error: %s' % to_native(e))
-if PY3:
-    to_native = to_text
-else:
-    to_native = to_bytes
-
-
-def _json_encode_fallback(obj):
-    if isinstance(obj, Set):
-        return list(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("Cannot json serialize %s" % to_native(obj))
+to_native = to_text
 
 
 def jsonify(data, **kwargs):
-    # After 2.18, we should remove this loop, and hardcode to utf-8 in alignment with requiring utf-8 module responses
-    for encoding in ("utf-8", "latin-1"):
-        try:
-            new_data = container_to_text(data, encoding=encoding)
-        except UnicodeDecodeError:
-            continue
-        return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-    raise UnicodeError('Invalid unicode encoding encountered')
+    from ansible.module_utils.common import json as _common_json
+    # from ansible.module_utils.common.warnings import deprecate
+
+    # deprecated: description='deprecate jsonify()' core_version='2.23'
+    # deprecate(
+    #     msg="The `jsonify` function is deprecated.",
+    #     version="2.27",
+    #     # help_text="",  # DTFIX-FUTURE: fill in this help text
+    # )
+
+    return json.dumps(data, cls=_common_json._get_legacy_encoder(), _decode_bytes=True, **kwargs)
 
 
 def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
@@ -283,11 +254,12 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
         Specialized for json return because this only handles, lists, tuples,
         and dict container types (the containers that the json module returns)
     """
+    # DTFIX-FUTURE: deprecate
 
-    if isinstance(d, text_type):
+    if isinstance(d, str):
         return to_bytes(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_bytes(o, encoding, errors) for o in iteritems(d))
+        return dict(container_to_bytes(o, encoding, errors) for o in d.items())
     elif isinstance(d, list):
         return [container_to_bytes(o, encoding, errors) for o in d]
     elif isinstance(d, tuple):
@@ -302,15 +274,20 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
     Specialized for json return because this only handles, lists, tuples,
     and dict container types (the containers that the json module returns)
     """
+    # DTFIX-FUTURE: deprecate
 
-    if isinstance(d, binary_type):
+    if isinstance(d, bytes):
         # Warning, can traceback
         return to_text(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_text(o, encoding, errors) for o in iteritems(d))
+        return dict(container_to_text(o, encoding, errors) for o in d.items())
     elif isinstance(d, list):
         return [container_to_text(o, encoding, errors) for o in d]
     elif isinstance(d, tuple):
         return tuple(container_to_text(o, encoding, errors) for o in d)
     else:
         return d
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type", "iteritems")

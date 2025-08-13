@@ -1,4 +1,5 @@
 """General purpose composite argument parsing and completion."""
+
 from __future__ import annotations
 
 import abc

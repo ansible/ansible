@@ -1,4 +1,5 @@
 """Composite parsers for the various types of hosts."""
+
 from __future__ import annotations
 
 import typing as t

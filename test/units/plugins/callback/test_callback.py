@@ -25,7 +25,7 @@ import types
 import unittest
 from unittest.mock import MagicMock
 
-from ansible.executor.task_result import TaskResult
+from ansible.executor.task_result import CallbackTaskResult
 from ansible.inventory.host import Host
 from ansible.plugins.callback import CallbackBase
 
@@ -52,16 +52,17 @@ class TestCallback(unittest.TestCase):
         self.assertIs(cb._display, display_mock)
 
     def test_host_label(self):
-        result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
+        result = CallbackTaskResult(host=Host('host1'), task=mock_task, return_data={}, task_fields={})
 
         self.assertEqual(CallbackBase.host_label(result), 'host1')
 
     def test_host_label_delegated(self):
         mock_task.delegate_to = 'host2'
-        result = TaskResult(
+        result = CallbackTaskResult(
             host=Host('host1'),
             task=mock_task,
             return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
+            task_fields={},
         )
         self.assertEqual(CallbackBase.host_label(result), 'host1 -> host2')
 
@@ -412,3 +413,13 @@ class TestCallbackOnMethods(unittest.TestCase):
         cb = CallbackBase()
         cb.v2_on_any('whatever', some_keyword='blippy')
         cb.on_any('whatever', some_keyword='blippy')
+
+
+def test_v2_v1_method_map() -> None:
+    """Ensure that all v2 callback methods appear in the method map."""
+    expected_names = [name for name in dir(CallbackBase) if name.startswith('v2_')]
+    mapped_names = {method.__name__ for method in CallbackBase._v2_v1_method_map}
+
+    missing = [name for name in expected_names if name not in mapped_names]
+
+    assert not missing

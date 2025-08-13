@@ -1,4 +1,9 @@
 ---
+- name: sample config for traceback behavior
+  set_fact:
+    traceback_on_error: |
+      {{ lookup('ansible._protomatter.config', 'DISPLAY_TRACEBACK') is contains 'error' }}
+
 - name: fetch current target date/time for log filtering
   raw: '[datetime]::now | Out-String'
   register: test_starttime
@@ -23,7 +28,7 @@
     that:
     - fail_module is failed
     - fail_module.msg == "fail message"
-    - not fail_module.exception is defined
+    - fail_module.exception is defined
 
 - name: test module with exception thrown
   test_fail:
@@ -36,7 +41,8 @@
     that:
     - throw_module is failed
     - 'throw_module.msg == "Unhandled exception while executing module: module is thrown"'
-    - '"throw [ArgumentException]\"module is thrown\"" in throw_module.exception'
+    - not traceback_on_error or '"throw [ArgumentException]\"module is thrown\"" in throw_module.exception'
+    - not traceback_on_error or throw_module.exception is search "at <ScriptBlock>, ansible.modules.test_fail.ps1. line 39"
 
 - name: test module with error msg
   test_fail:
@@ -53,7 +59,7 @@
     that:
     - error_module is failed
     - 'error_module.msg == "Unhandled exception while executing module: error"'
-    - '"Write-Error -Message $data" in error_module.exception'
+    - not traceback_on_error or "Write-Error -Message $data" in error_module.exception
 
 - name: test module with cmdlet error
   test_fail:
@@ -66,7 +72,7 @@
     that:
     - cmdlet_error is failed
     - 'cmdlet_error.msg == "Unhandled exception while executing module: Cannot find drive. A drive with the name ''fake'' does not exist."'
-    - '"Get-Item -Path \"fake:\\path\"" in cmdlet_error.exception'
+    - not traceback_on_error or "Get-Item -Path \"fake:\\path\"" in cmdlet_error.exception
 
 - name: test module with .NET exception
   test_fail:
@@ -79,7 +85,7 @@
     that:
     - dotnet_exception is failed
     - 'dotnet_exception.msg == "Unhandled exception while executing module: Exception calling \"GetFullPath\" with \"1\" argument(s): \"The path is not of a legal form.\""'
-    - '"[System.IO.Path]::GetFullPath($null)" in dotnet_exception.exception'
+    - not traceback_on_error or "[System.IO.Path]::GetFullPath($null)" in dotnet_exception.exception
 
 - name: test module with function exception
   test_fail:
@@ -94,8 +100,8 @@
     that:
     - function_exception is failed
     - 'function_exception.msg == "Unhandled exception while executing module: exception in function"'
-    - '"throw \"exception in function\"" in function_exception.exception'
-    - '"at Test-ThrowException, <No file>: line" in function_exception.exception'
+    - 'not traceback_on_error or "throw \"exception in function\"" in function_exception.exception'
+    - 'not traceback_on_error or "at Test-ThrowException, ansible.modules.test_fail.ps1: line" in function_exception.exception'
 
 - name: test module with fail process but Exit-Json
   test_fail:
@@ -118,7 +124,7 @@
     that:
     - proc_exit_fail is failed
     - proc_exit_fail.msg == "proc_exit_fail"
-    - not proc_exit_fail.exception is defined
+    - proc_exit_fail.exception is defined
 
 - name: test out invalid options
   test_invalid_requires:
@@ -288,16 +294,6 @@
       path: C:\Windows\TEMP\test-dir
       state: absent
 
-- name: test common functions in exec
-  test_common_functions:
-  register: common_functions_res
-
-- name: assert test common functions in exec
-  assert:
-    that:
-    - not common_functions_res is failed
-    - common_functions_res.msg == "good"
-
 - name: get PS events containing module args or envvars created since test start
   raw: |
     $dt=[datetime]"{{ test_starttime.stdout|trim }}"
@@ -318,3 +314,28 @@
   assert:
     that:
     - module_had_errors.rc == 0
+
+- name: test module cannot access exec wrapper scope
+  test_exec_wrapper_scope:
+  register: exec_wrapper_scope
+
+- name: assert test module cannot access exec wrapper scope
+  assert:
+    that:
+    - exec_wrapper_scope.module_using_namespace == 'System.Management.Automation.Language.Parser'
+    - exec_wrapper_scope.missing_using_namespace == True
+    - exec_wrapper_scope.script_var == 'foo'
+    - exec_wrapper_scope.util_res.module_using_namespace == 'System.Security.Cryptography.X509Certificates.X509Certificate2'
+    - exec_wrapper_scope.util_res.missing_using_namespace == True
+    - exec_wrapper_scope.util_res.script_var == 'bar'
+
+- name: test module without any util references
+  test_no_utils:
+    foo: bar
+  register: no_utils_res
+
+- name: assert test module without any util references
+  assert:
+    that:
+    - no_utils_res is not changed
+    - "no_utils_res.complex_args == {'foo': 'bar'}"

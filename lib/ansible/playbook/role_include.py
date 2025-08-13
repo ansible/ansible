@@ -23,8 +23,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
-from ansible.module_utils.six import string_types
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 
 __all__ = ['IncludeRole']
 
@@ -79,7 +78,7 @@ class IncludeRole(TaskInclude):
             available_variables = variable_manager.get_vars(play=myplay, task=self)
         else:
             available_variables = {}
-        templar = Templar(loader=loader, variables=available_variables)
+        templar = TemplateEngine(loader=loader, variables=available_variables)
         from_files = templar.template(self._from_files)
 
         # build role
@@ -137,7 +136,7 @@ class IncludeRole(TaskInclude):
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
             from_key = key.removesuffix('_from')
             args_value = ir.args.get(key)
-            if not isinstance(args_value, string_types):
+            if not isinstance(args_value, str):
                 raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
             ir._from_files[from_key] = args_value
 

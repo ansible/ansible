@@ -291,7 +291,6 @@ import time
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 
 
 class _Object:
@@ -496,7 +495,7 @@ def main():
 
     params = module.params
 
-    if params['mode'] and not isinstance(params['mode'], string_types):
+    if params['mode'] and not isinstance(params['mode'], str):
         module.fail_json(
             msg="argument 'mode' is not a string and conversion is not allowed, value is of type %s" % params['mode'].__class__.__name__
         )
@@ -515,7 +514,7 @@ def main():
     skipped = {}
 
     def handle_walk_errors(e):
-        if e.errno in (errno.EPERM, errno.EACCES):
+        if e.errno in (errno.EPERM, errno.EACCES, errno.ENOENT):
             skipped[e.filename] = to_text(e)
             return
         raise e
@@ -571,9 +570,9 @@ def main():
 
                     try:
                         st = os.lstat(fsname)
-                    except (IOError, OSError) as e:
-                        module.warn("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
-                        skipped[fsname] = to_text(e)
+                    except OSError as ex:
+                        module.error_as_warning(f"Skipped entry {fsname!r} due to access issue.", exception=ex)
+                        skipped[fsname] = str(ex)
                         has_warnings = True
                         continue
 

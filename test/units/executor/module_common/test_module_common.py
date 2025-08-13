@@ -38,7 +38,7 @@ class TestStripComments:
             # Being as it is
             # To be
             """
-        assert amc._strip_comments(all_comments) == u""
+        assert amc._strip_comments(all_comments) == u"\n\n\n"
 
     def test_all_whitespace(self):
         all_whitespace = (
@@ -51,7 +51,7 @@ class TestStripComments:
             '            '
         )
 
-        assert amc._strip_comments(all_whitespace) == u""
+        assert amc._strip_comments(all_whitespace) == u"\n\n\n\n\n\n"
 
     def test_somewhat_normal(self):
         mixed = u"""#!/usr/bin/python
@@ -63,9 +63,14 @@ def test(arg):
     return thing
 # End
 """
-        mixed_results = u"""def test(arg):
+        mixed_results = u"""
+
+
+def test(arg):
+
     thing = '# test'
-    return thing"""
+    return thing
+"""
         assert amc._strip_comments(mixed) == mixed_results
 
 

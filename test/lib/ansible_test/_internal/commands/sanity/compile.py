@@ -1,4 +1,5 @@
 """Sanity test for proper python syntax."""
+
 from __future__ import annotations
 
 import os

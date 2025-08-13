@@ -70,7 +70,6 @@ import os
 from collections.abc import MutableMapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
@@ -80,6 +79,8 @@ NoneType = type(None)
 class InventoryModule(BaseFileInventoryPlugin):
 
     NAME = 'yaml'
+
+    # implicit trust behavior is already added by the YAML parser invoked by the loader
 
     def __init__(self):
 
@@ -101,7 +102,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         self.set_options()
 
         try:
-            data = self.loader.load_from_file(path, cache='none')
+            data = self.loader.load_from_file(path, cache='none', trusted_as_template=True)
         except Exception as e:
             raise AnsibleParserError(e)
 
@@ -134,7 +135,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 for section in ['vars', 'children', 'hosts']:
                     if section in group_data:
                         # convert strings to dicts as these are allowed
-                        if isinstance(group_data[section], string_types):
+                        if isinstance(group_data[section], str):
                             group_data[section] = {group_data[section]: None}
 
                         if not isinstance(group_data[section], (MutableMapping, NoneType)):  # type: ignore[misc]

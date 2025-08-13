@@ -8,13 +8,17 @@ DOCUMENTATION = """
     options:
       plugin:
         description: the load name of the plugin
+      plugin_expression:
+        description: an expression that must be trusted whose default resolves to 2
+        default: 1 + 1
     extends_documentation_fragment:
       - constructed
+      - fragment_with_expression
 """
 
 from ansible.errors import AnsibleParserError
-from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible._internal import _testing
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
@@ -28,6 +32,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         config = self._read_config_data(path)
 
+        with _testing.hard_fail_context("ensure config defaults are trusted and runnable as expressions") as ctx:
+            ctx.check(self._compose(self.get_option('plugin_expression'), variables={}) == 2)
+            ctx.check(self._compose(self.get_option('fragment_expression'), variables={}) == 4)
+
         strict = self.get_option('strict')
         try:
             for host in inventory.hosts:
@@ -39,5 +47,5 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 # constructed groups based variable values
                 self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict, fetch_hostvars=True)
 
-        except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)), orig_exc=e)
+        except Exception as ex:
+            raise AnsibleParserError(f"Failed to parse {path}.") from ex

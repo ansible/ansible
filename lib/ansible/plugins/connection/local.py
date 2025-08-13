@@ -46,8 +46,7 @@ import time
 import typing as t
 
 import ansible.constants as C
-from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils.six import text_type, binary_type
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleConnectionFailure
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
@@ -100,10 +99,10 @@ class Connection(ConnectionBase):
         display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self._play_context.remote_addr)
         display.debug("opening command with Popen()")
 
-        if isinstance(cmd, (text_type, binary_type)):
-            cmd = to_bytes(cmd)
+        if isinstance(cmd, (str, bytes)):
+            cmd = to_text(cmd)
         else:
-            cmd = map(to_bytes, cmd)
+            cmd = map(to_text, cmd)
 
         pty_primary = None
         stdin = subprocess.PIPE
@@ -114,12 +113,12 @@ class Connection(ConnectionBase):
             # privileges or the command otherwise needs a pty.
             try:
                 pty_primary, stdin = pty.openpty()
-            except (IOError, OSError) as e:
-                display.debug("Unable to open pty: %s" % to_native(e))
+            except OSError as ex:
+                display.debug(f"Unable to open pty: {ex}")
 
         p = subprocess.Popen(
             cmd,
-            shell=isinstance(cmd, (text_type, binary_type)),
+            shell=isinstance(cmd, (str, bytes)),
             executable=executable,
             cwd=self.cwd,
             stdin=stdin,
@@ -173,7 +172,7 @@ class Connection(ConnectionBase):
         expect_password_prompt = self.become.expect_prompt()
         sent_password = False
 
-        def become_error(reason: str) -> t.NoReturn:
+        def become_error_msg(reason: str) -> str:
             error_message = f'{reason} waiting for become success'
 
             if expect_password_prompt and not sent_password:
@@ -187,7 +186,7 @@ class Connection(ConnectionBase):
             if become_stderr:
                 error_message += f'\n>>> Standard Error\n{to_text(bytes(become_stderr))}'
 
-            raise AnsibleError(error_message)
+            return error_message
 
         os.set_blocking(p.stdout.fileno(), False)
         os.set_blocking(p.stderr.fileno(), False)
@@ -198,14 +197,14 @@ class Connection(ConnectionBase):
 
             while not self.become.check_success(become_stdout):
                 if not selector.get_map():  # we only reach end of stream after all descriptors are EOF
-                    become_error('Premature end of stream')
+                    raise AnsibleError(become_error_msg('Premature end of stream'))
 
                 if expect_password_prompt and (
                     self.become.check_password_prompt(become_stdout[last_stdout_prompt_offset:]) or
                     self.become.check_password_prompt(become_stderr[last_stderr_prompt_offset:])
                 ):
                     if sent_password:
-                        become_error('Duplicate become password prompt encountered')
+                        raise AnsibleError(become_error_msg('Duplicate become password prompt encountered'))
 
                     last_stdout_prompt_offset = len(become_stdout)
                     last_stderr_prompt_offset = len(become_stderr)
@@ -225,7 +224,7 @@ class Connection(ConnectionBase):
 
                 if not events:
                     # ignoring remaining output after timeout to prevent hanging
-                    become_error('Timed out')
+                    raise AnsibleConnectionFailure(become_error_msg('Timed out'))
 
                 # read all content (non-blocking) from streams that signaled available input and append to the associated buffer
                 for key, event in events:
@@ -252,7 +251,7 @@ class Connection(ConnectionBase):
     def _become_success_timeout(self) -> int:
         """Timeout value for become success in seconds."""
         if (timeout := self.get_option('become_success_timeout')) < 1:
-            timeout = C.config.get_configuration_definitions('connection', 'local')['become_success_timeout']['default']
+            timeout = C.config.get_config_default('become_success_timeout', plugin_type='connection', plugin_name='local')
 
         return timeout
 
@@ -271,8 +270,8 @@ class Connection(ConnectionBase):
             shutil.copyfile(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except shutil.Error:
             raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_native(in_path), to_native(out_path)))
-        except IOError as e:
-            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_native(out_path), to_native(e)))
+        except OSError as ex:
+            raise AnsibleError(f"Failed to transfer file to {out_path!r}.") from ex
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
         """ fetch a file from local to local -- for compatibility """

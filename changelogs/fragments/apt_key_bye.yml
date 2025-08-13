@@ -1,5 +1,0 @@
-minor_changes:
-  - apt_key module - add notes to docs and errors to point at the CLI tool deprecation by Debian and alternatives
-  - apt_repository module - add notes to errors to point at the CLI tool deprecation by Debian and alternatives
-bugfixes:
-  - apt_key module - prevent tests from running when apt-key was removed

@@ -2,6 +2,8 @@
 
 ENTRY POINT: *alternate* - testns.testcol.testrole short description for alternate entry point
 
+ADDED IN: version 2.1.0
+
           Longer description for testns.testcol.testrole alternate
           entry point.
 

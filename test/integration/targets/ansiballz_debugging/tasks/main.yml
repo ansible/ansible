@@ -1,0 +1,13 @@
+- name: Run a module with remote debugging configured to use a bogus debugger module
+  ping:
+  vars:
+    _ansible_ansiballz_pydevd_config:
+      module: not_a_valid_debugger_module
+  register: result
+  ignore_errors: yes
+
+- name: Verify the module failed due to not being able to import the bogus debugger module
+  assert:
+    that:
+      - result is failed
+      - result.msg is contains "No module named 'not_a_valid_debugger_module'"

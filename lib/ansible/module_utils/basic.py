@@ -4,18 +4,20 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import sys
 import typing as t
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY_MIN = (3, 8)
+_PY_MIN = (3, 9)
 
 if sys.version_info < _PY_MIN:
     print(json.dumps(dict(
         failed=True,
-        msg=f"ansible-core requires a minimum of Python version {'.'.join(map(str, _PY_MIN))}. Current version: {''.join(sys.version.splitlines())}",
+        msg=f"Ansible requires Python {'.'.join(map(str, _PY_MIN))} or newer on the target. "
+            f"Current version: {''.join(sys.version.splitlines())}",
     )))
     sys.exit(1)
 
@@ -25,6 +27,7 @@ if sys.version_info < _PY_MIN:
 
 import __main__
 import atexit
+import dataclasses as _dataclasses
 import errno
 import grp
 import fcntl
@@ -43,6 +46,15 @@ import tempfile
 import time
 import traceback
 
+from collections.abc import (
+    KeysView,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    MutableSequence,
+    Set,
+    MutableSet,
+)
 from functools import reduce
 
 try:
@@ -50,6 +62,8 @@ try:
     HAS_SYSLOG = True
 except ImportError:
     HAS_SYSLOG = False
+
+_UNSET = t.cast(t.Any, object())
 
 try:
     from systemd import journal, daemon as systemd_daemon
@@ -71,8 +85,12 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
-from ._text import to_native, to_bytes, to_text
-from ansible.module_utils.common.text.converters import (
+from ._internal import _traceback, _errors, _debugging, _deprecator, _messages
+
+from .common.text.converters import (
+    to_native,
+    to_bytes,
+    to_text,
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
     container_to_text as json_dict_bytes_to_unicode,
@@ -86,6 +104,8 @@ from ansible.module_utils.common.text.formatters import (
     human_to_bytes,
     SIZE_RANGES,
 )
+
+from ansible.module_utils.common import json as _common_json
 
 import hashlib
 
@@ -111,12 +131,7 @@ def _get_available_hash_algorithms():
 
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
 
-from ansible.module_utils.six.moves.collections_abc import (
-    KeysView,
-    Mapping, MutableMapping,
-    Sequence, MutableSequence,
-    Set, MutableSet,
-)
+from ansible.module_utils.common import json as _json
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
@@ -152,8 +167,9 @@ from ansible.module_utils.common._utils import get_all_subclasses as _get_all_su
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
     deprecate,
-    get_deprecation_messages,
-    get_warning_messages,
+    error_as_warning,
+    get_deprecations,
+    get_warnings,
     warn,
 )
 
@@ -169,7 +185,9 @@ imap = map
 # multiple AnsibleModules are created.  Otherwise each AnsibleModule would
 # attempt to read from stdin.  Other code should not use this directly as it
 # is an internal implementation detail
-_ANSIBLE_ARGS = None
+_ANSIBLE_ARGS: bytes | None = None
+_ANSIBLE_PROFILE: str | None = None
+_PARSED_MODULE_ARGS: dict[str, t.Any] | None = None
 
 
 FILE_COMMON_ARGUMENTS = dict(
@@ -307,40 +325,31 @@ def _load_params():
     to call this function and consume its outputs than to implement the logic
     inside it as a copy in your own code.
     """
-    global _ANSIBLE_ARGS
-    if _ANSIBLE_ARGS is not None:
-        buffer = _ANSIBLE_ARGS
-    else:
-        # debug overrides to read args from file or cmdline
+    global _ANSIBLE_ARGS, _ANSIBLE_PROFILE
 
-        # Avoid tracebacks when locale is non-utf8
-        # We control the args and we pass them as utf8
-        if len(sys.argv) > 1:
-            if os.path.isfile(sys.argv[1]):
-                with open(sys.argv[1], 'rb') as fd:
-                    buffer = fd.read()
-            else:
-                buffer = sys.argv[1].encode('utf-8', errors='surrogateescape')
-        # default case, read from stdin
-        else:
-            buffer = sys.stdin.buffer.read()
-        _ANSIBLE_ARGS = buffer
+    if _ANSIBLE_ARGS is None:
+        _ANSIBLE_ARGS, _ANSIBLE_PROFILE = _debugging.load_params()
+
+    buffer = _ANSIBLE_ARGS
+    profile = _ANSIBLE_PROFILE
+
+    if not profile:
+        raise Exception("No serialization profile was specified.")
 
     try:
-        params = json.loads(buffer.decode('utf-8'))
-    except ValueError:
-        # This helper is used too early for fail_json to work.
-        print('\n{"msg": "Error: Module unable to decode stdin/parameters as valid JSON. Unable to parse what parameters were passed", "failed": true}')
-        sys.exit(1)
+        decoder = _json.get_module_decoder(profile, _json.Direction.CONTROLLER_TO_MODULE)
+        params = json.loads(buffer.decode(), cls=decoder)
+    except Exception as ex:
+        raise Exception("Failed to decode JSON module parameters.") from ex
 
-    try:
-        return params['ANSIBLE_MODULE_ARGS']
-    except KeyError:
-        # This helper does not have access to fail_json so we have to print
-        # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in JSON data from stdin. Unable to figure out what parameters were passed", '
-              '"failed": true}')
-        sys.exit(1)
+    if (ansible_module_args := params.get('ANSIBLE_MODULE_ARGS', _UNSET)) is _UNSET:
+        raise Exception("ANSIBLE_MODULE_ARGS not provided.")
+
+    global _PARSED_MODULE_ARGS
+
+    _PARSED_MODULE_ARGS = copy.deepcopy(ansible_module_args)  # AnsibleModule mutates the returned dict, so a copy is needed
+
+    return ansible_module_args
 
 
 def missing_required_lib(library, reason=None, url=None):
@@ -474,9 +483,11 @@ class AnsibleModule(object):
             if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
-                except (OSError, IOError) as e:
-                    self.warn("Unable to use %s as temporary directory, "
-                              "failing back to system: %s" % (basedir, to_native(e)))
+                except OSError as ex:
+                    self.error_as_warning(
+                        msg=f"Unable to use {basedir!r} as temporary directory, falling back to system default.",
+                        exception=ex,
+                    )
                     basedir = None
                 else:
                     self.warn("Module remote_tmp %s did not exist and was "
@@ -488,31 +499,71 @@ class AnsibleModule(object):
             basefile = "ansible-moduletmp-%s-" % time.time()
             try:
                 tmpdir = tempfile.mkdtemp(prefix=basefile, dir=basedir)
-            except (OSError, IOError) as e:
-                self.fail_json(
-                    msg="Failed to create remote module tmp path at dir %s "
-                        "with prefix %s: %s" % (basedir, basefile, to_native(e))
-                )
+            except OSError as ex:
+                raise Exception(
+                    f"Failed to create remote module tmp path at dir {basedir!r} "
+                    f"with prefix {basefile!r}.",
+                ) from ex
             if not self._keep_remote_files:
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
 
         return self._tmpdir
 
-    def warn(self, warning):
-        warn(warning)
-        self.log('[WARNING] %s' % warning)
+    def warn(
+        self,
+        warning: str,
+        *,
+        help_text: str | None = None,
+    ) -> None:
+        _skip_stackwalk = True
 
-    def deprecate(self, msg, version=None, date=None, collection_name=None):
-        if version is not None and date is not None:
-            raise AssertionError("implementation error -- version and date must not both be set")
-        deprecate(msg, version=version, date=date, collection_name=collection_name)
-        # For compatibility, we accept that neither version nor date is set,
-        # and treat that the same as if version would not have been set
-        if date is not None:
-            self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
-        else:
-            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
+        warn(
+            warning=warning,
+            help_text=help_text,
+        )
+
+    def error_as_warning(
+        self,
+        msg: str | None,
+        exception: BaseException,
+        *,
+        help_text: str | None = None,
+    ) -> None:
+        """Display an exception as a warning."""
+        _skip_stackwalk = True
+
+        error_as_warning(
+            msg=msg,
+            exception=exception,
+            help_text=help_text,
+        )
+
+    def deprecate(
+        self,
+        msg: str,
+        version: str | None = None,
+        date: str | None = None,
+        collection_name: str | None = None,
+        *,
+        deprecator: _messages.PluginInfo | None = None,
+        help_text: str | None = None,
+    ) -> None:
+        """
+        Record a deprecation warning to be returned with the module result.
+        Most callers do not need to provide `collection_name` or `deprecator` -- but provide only one if needed.
+        Specify `version` or `date`, but not both.
+        If `date` is a string, it must be in the form `YYYY-MM-DD`.
+        """
+        _skip_stackwalk = True
+
+        deprecate(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+            msg=msg,
+            version=version,
+            date=date,
+            deprecator=_deprecator.get_best_deprecator(deprecator=deprecator, collection_name=collection_name),
+            help_text=help_text,
+        )
 
     def load_file_common_arguments(self, params, path=None):
         """
@@ -612,11 +663,8 @@ class AnsibleModule(object):
             return context
         try:
             ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.fail_json(path=path, msg='path %s does not exist' % path)
-            else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
+        except OSError as ex:
+            self.fail_json(path=path, msg='Failed to retrieve selinux context.', exception=ex)
         if ret[0] == -1:
             return context
         # Limit split to 4 because the selevel, the last in the list,
@@ -756,9 +804,9 @@ class AnsibleModule(object):
                 return True
             try:
                 os.lchown(b_path, uid, -1)
-            except (IOError, OSError) as e:
+            except OSError as ex:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
+                self.fail_json(path=path, msg='chown failed', exception=ex)
             changed = True
         return changed
 
@@ -878,8 +926,7 @@ class AnsibleModule(object):
                     raise
             except Exception as e:
                 path = to_text(b_path)
-                self.fail_json(path=path, msg='chmod failed', details=to_native(e),
-                               exception=traceback.format_exc())
+                self.fail_json(path=path, msg='chmod failed', details=to_native(e))
 
             path_stat = os.lstat(b_path)
             new_mode = stat.S_IMODE(path_stat.st_mode)
@@ -927,8 +974,7 @@ class AnsibleModule(object):
                         if rc != 0 or err:
                             raise Exception("Error while setting attributes: %s" % (out + err))
                     except Exception as e:
-                        self.fail_json(path=to_text(b_path), msg='chattr failed',
-                                       details=to_native(e), exception=traceback.format_exc())
+                        self.fail_json(path=to_text(b_path), msg='chattr failed', details=to_native(e))
         return changed
 
     def get_file_attributes(self, path, include_version=True):
@@ -1173,8 +1219,7 @@ class AnsibleModule(object):
             os.environ['LC_ALL'] = best_locale
             os.environ['LC_MESSAGES'] = best_locale
         except Exception as e:
-            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
-                           to_native(e), exception=traceback.format_exc())
+            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % to_native(e))
 
     def _set_internal_properties(self, argument_spec=None, module_parameters=None):
         if argument_spec is None:
@@ -1224,7 +1269,6 @@ class AnsibleModule(object):
                     msg='Failed to log to syslog (%s). To proceed anyway, '
                         'disable syslog logging by setting no_target_syslog '
                         'to True in your Ansible config.' % to_native(e),
-                    exception=traceback.format_exc(),
                     msg_to_log=msg,
                 )
 
@@ -1288,7 +1332,7 @@ class AnsibleModule(object):
                     else:
                         journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
                                      **dict(journal_args))
-                except IOError:
+                except OSError:
                     # fall back to syslog since logging to journal failed
                     self._log_to_syslog(journal_msg)
             else:
@@ -1378,8 +1422,15 @@ class AnsibleModule(object):
             self.fail_json(msg=to_native(e))
 
     def jsonify(self, data):
+        # deprecated: description='deprecate AnsibleModule.jsonify()' core_version='2.23'
+        # deprecate(
+        #     msg="The `AnsibleModule.jsonify' method is deprecated.",
+        #     version="2.27",
+        #     # help_text="",  # DTFIX-FUTURE: fill in this help text
+        # )
+
         try:
-            return jsonify(data)
+            return json.dumps(data, cls=_common_json._get_legacy_encoder())
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
@@ -1395,6 +1446,7 @@ class AnsibleModule(object):
             self.cleanup(path)
 
     def _return_formatted(self, kwargs):
+        _skip_stackwalk = True
 
         self.add_path_info(kwargs)
 
@@ -1402,30 +1454,58 @@ class AnsibleModule(object):
             kwargs['invocation'] = {'module_args': self.params}
 
         if 'warnings' in kwargs:
+            self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+                msg='Passing `warnings` to `exit_json` or `fail_json` is deprecated.',
+                version='2.23',
+                help_text='Use `AnsibleModule.warn` instead.',
+                deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+            )
+
             if isinstance(kwargs['warnings'], list):
                 for w in kwargs['warnings']:
                     self.warn(w)
             else:
                 self.warn(kwargs['warnings'])
 
-        warnings = get_warning_messages()
+        warnings = get_warnings()
         if warnings:
             kwargs['warnings'] = warnings
 
         if 'deprecations' in kwargs:
+            self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
+                msg='Passing `deprecations` to `exit_json` or `fail_json` is deprecated.',
+                version='2.23',
+                help_text='Use `AnsibleModule.deprecate` instead.',
+                deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+            )
+
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
-                        self.deprecate(d[0], version=d[1])
+                    if isinstance(d, (KeysView, Sequence)) and len(d) == 2:
+                        self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-invalid-deprecated-version
+                            msg=d[0],
+                            version=d[1],
+                            deprecator=_deprecator.get_best_deprecator(),
+                        )
                     elif isinstance(d, Mapping):
-                        self.deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
-                                       collection_name=d.get('collection_name'))
+                        self.deprecate(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+                            msg=d['msg'],
+                            version=d.get('version'),
+                            date=d.get('date'),
+                            deprecator=_deprecator.get_best_deprecator(collection_name=d.get('collection_name')),
+                        )
                     else:
-                        self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
+                        self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-deprecated-no-version
+                            msg=d,
+                            deprecator=_deprecator.get_best_deprecator(),
+                        )
             else:
-                self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
+                self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name,ansible-deprecated-no-version
+                    msg=kwargs['deprecations'],
+                    deprecator=_deprecator.get_best_deprecator(),
+                )
 
-        deprecations = get_deprecation_messages()
+        deprecations = get_deprecations()
         if deprecations:
             kwargs['deprecations'] = deprecations
 
@@ -1435,31 +1515,89 @@ class AnsibleModule(object):
         # strip no_log collisions
         kwargs = remove_values(kwargs, self.no_log_values)
 
-        # return preserved
+        # graft preserved values back on
         kwargs.update(preserved)
 
-        print('\n%s' % self.jsonify(kwargs))
+        self._record_module_result(kwargs)
+
+    def _record_module_result(self, o: dict[str, t.Any]) -> None:
+        """
+        Temporary internal hook to enable modification/bypass of module result serialization.
+
+        Monkeypatched by ansible.netcommon for direct in-worker module execution.
+        """
+        encoder = _json.get_module_encoder(_ANSIBLE_PROFILE, _json.Direction.MODULE_TO_CONTROLLER)
+        print('\n%s' % json.dumps(o, cls=encoder))
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """
+        _skip_stackwalk = True
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, msg, **kwargs) -> t.NoReturn:
-        """ return from the module, with an error message """
+    def fail_json(self, msg: str, *, exception: BaseException | str | None = _UNSET, **kwargs) -> t.NoReturn:
+        """
+        Return from the module with an error message and optional exception/traceback detail.
+        A traceback will only be included in the result if error traceback capturing has been enabled.
 
-        kwargs['failed'] = True
-        kwargs['msg'] = msg
+        When `exception` is an exception object, its message chain will be automatically combined with `msg` to create the final error message.
+        The message chain includes the exception's message as well as messages from any __cause__ exceptions.
+        The traceback from `exception` will be used for the formatted traceback.
 
-        # Add traceback if debug or high verbosity and it is missing
-        # NOTE: Badly named as exception, it really always has been a traceback
-        if 'exception' not in kwargs and sys.exc_info()[2] and (self._debug or self._verbosity >= 3):
-            kwargs['exception'] = ''.join(traceback.format_tb(sys.exc_info()[2]))
+        When `exception` is a string, it will be used as the formatted traceback.
+
+        When `exception` is set to `None`, the current call stack will be used for the formatted traceback.
+
+        When `exception` is not specified, a formatted traceback will be retrieved from the current exception.
+        If no exception is pending, the current call stack will be used instead.
+        """
+        _skip_stackwalk = True
+
+        msg = str(msg)  # coerce to str instead of raising an error due to an invalid type
+
+        kwargs.update(
+            failed=True,
+            msg=msg,
+        )
+
+        if isinstance(exception, BaseException):
+            # Include a `_messages.Event` in the result.
+            # The `msg` is included in the chain to ensure it is not lost when looking only at `exception` from the result.
+
+            kwargs.update(
+                exception=_messages.ErrorSummary(
+                    event=_messages.Event(
+                        msg=msg,
+                        formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR),
+                        chain=_messages.EventChain(
+                            msg_reason=_errors.MSG_REASON_DIRECT_CAUSE,
+                            traceback_reason="The above exception was the direct cause of the following error:",
+                            event=_errors.EventFactory.from_exception(exception, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+                        ),
+                    ),
+                ),
+            )
+        elif _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR):
+            # Include only a formatted traceback string in the result.
+            # The controller will combine this with `msg` to create an `_messages.ErrorSummary`.
+
+            formatted_traceback: str | None
+
+            if isinstance(exception, str):
+                formatted_traceback = exception
+            elif exception is _UNSET and (current_exception := t.cast(t.Optional[BaseException], sys.exc_info()[1])):
+                formatted_traceback = _traceback.maybe_extract_traceback(current_exception, _traceback.TracebackEvent.ERROR)
+            else:
+                formatted_traceback = _traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.ERROR)
+
+            if formatted_traceback:
+                kwargs.update(exception=formatted_traceback)
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
+
         sys.exit(1)
 
     def fail_on_missing_params(self, required_params=None):
@@ -1530,10 +1668,11 @@ class AnsibleModule(object):
             ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
             backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
-            try:
-                self.preserved_copy(fn, backupdest)
-            except (shutil.Error, IOError) as e:
-                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, to_native(e)))
+            if not self.check_mode:
+                try:
+                    self.preserved_copy(fn, backupdest)
+                except (shutil.Error, IOError) as ex:
+                    raise Exception(f'Could not make backup of {fn!r} to {backupdest!r}.') from ex
 
         return backupdest
 
@@ -1607,29 +1746,25 @@ class AnsibleModule(object):
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(b_src, b_dest)
-        except (IOError, OSError) as e:
-            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
+        except OSError as ex:
+            if ex.errno in (errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY):
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
-            else:
                 # Use bytes here.  In the shippable CI, this fails with
                 # a UnicodeError with surrogateescape'd strings for an unknown
                 # reason (doesn't happen in a local Ubuntu16.04 VM)
                 b_dest_dir = os.path.dirname(b_dest)
                 b_suffix = os.path.basename(b_dest)
-                error_msg = None
                 tmp_dest_name = None
                 try:
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp(prefix=b'.ansible_tmp', dir=b_dest_dir, suffix=b_suffix)
-                except (OSError, IOError) as e:
-                    error_msg = 'The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e))
-                finally:
-                    if error_msg:
-                        if unsafe_writes:
-                            self._unsafe_writes(b_src, b_dest)
-                        else:
-                            self.fail_json(msg=error_msg, exception=traceback.format_exc())
+                except OSError as ex:
+                    if unsafe_writes:
+                        self._unsafe_writes(b_src, b_dest)
+                    else:
+                        raise Exception(
+                            f'The destination directory {os.path.dirname(dest)!r} is not writable by the current user.'
+                        ) from ex
 
                 if tmp_dest_name:
                     b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
@@ -1658,24 +1793,27 @@ class AnsibleModule(object):
                                     if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
                                         os.chown(b_tmp_dest_name, dest_stat.st_uid, dest_stat.st_gid)
                                     os.utime(b_tmp_dest_name, times=(time.time(), time.time()))
-                            except OSError as e:
-                                if e.errno != errno.EPERM:
+                            except OSError as ex:
+                                if ex.errno != errno.EPERM:
                                     raise
                             try:
                                 os.rename(b_tmp_dest_name, b_dest)
-                            except (shutil.Error, OSError, IOError) as e:
-                                if unsafe_writes and e.errno == errno.EBUSY:
+                            except (shutil.Error, OSError) as ex:
+                                if unsafe_writes and ex.errno == errno.EBUSY:
                                     self._unsafe_writes(b_tmp_dest_name, b_dest)
                                 else:
-                                    self.fail_json(msg='Unable to make %s into to %s, failed final rename from %s: %s' %
-                                                       (src, dest, b_tmp_dest_name, to_native(e)), exception=traceback.format_exc())
-                        except (shutil.Error, OSError, IOError) as e:
+                                    raise Exception(
+                                        f'Unable to make {src!r} into to {dest!r}, failed final rename from {to_text(b_tmp_dest_name)!r}.'
+                                    ) from ex
+                        except (shutil.Error, OSError) as ex:
                             if unsafe_writes:
                                 self._unsafe_writes(b_src, b_dest)
                             else:
-                                self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
+                                raise Exception(f'Failed to replace {dest!r} with {src!r}.') from ex
                     finally:
                         self.cleanup(b_tmp_dest_name)
+            else:
+                raise Exception(f'Could not replace {dest!r} with {src!r}.') from ex
 
         if creating:
             # make sure the file has the correct permissions
@@ -1702,19 +1840,11 @@ class AnsibleModule(object):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
         try:
-            out_dest = in_src = None
-            try:
-                out_dest = open(dest, 'wb')
-                in_src = open(src, 'rb')
-                shutil.copyfileobj(in_src, out_dest)
-            finally:  # assuring closed files in 2.4 compatible way
-                if out_dest:
-                    out_dest.close()
-                if in_src:
-                    in_src.close()
-        except (shutil.Error, OSError, IOError) as e:
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
-                           exception=traceback.format_exc())
+            with open(dest, 'wb') as out_dest:
+                with open(src, 'rb') as in_src:
+                    shutil.copyfileobj(in_src, out_dest)
+        except (shutil.Error, OSError) as ex:
+            raise Exception(f'Could not write data to file {dest!r} from {src!r}.') from ex
 
     def _clean_args(self, args):
 
@@ -1781,18 +1911,18 @@ class AnsibleModule(object):
             the execution to hang (especially if no input data is specified)
         :kw environ_update: dictionary to *update* environ variables with
         :kw umask: Umask to be used when running the command. Default None
-        :kw encoding: Since we return native strings, on python3 we need to
+        :kw encoding: Since we return strings, we need to
             know the encoding to use to transform from bytes to text.  If you
             want to always get bytes back, use encoding=None.  The default is
             "utf-8".  This does not affect transformation of strings given as
             args.
-        :kw errors: Since we return native strings, on python3 we need to
+        :kw errors: Since we return strings, we need to
             transform stdout and stderr from bytes to text.  If the bytes are
             undecodable in the ``encoding`` specified, then use this error
             handler to deal with them.  The default is ``surrogate_or_strict``
             which means that the bytes will be decoded using the
             surrogateescape error handler if available (available on all
-            python3 versions we support) otherwise a UnicodeError traceback
+            Python versions we support) otherwise a UnicodeError traceback
             will be raised.  This does not affect transformations of strings
             given as args.
         :kw expand_user_and_vars: When ``use_unsafe_shell=False`` this argument
@@ -1800,10 +1930,8 @@ class AnsibleModule(object):
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
-        :kw pass_fds: When running on Python 3 this argument
-            dictates which file descriptors should be passed
-            to an underlying ``Popen`` constructor. On Python 2, this will
-            set ``close_fds`` to False.
+        :kw pass_fds: This argument dictates which file descriptors should be passed
+            to an underlying ``Popen`` constructor.
         :kw before_communicate_callback: This function will be called
             after ``Popen`` object will be created
             but before communicating to the process.
@@ -1814,11 +1942,10 @@ class AnsibleModule(object):
         :kw handle_exceptions: This flag indicates whether an exception will
             be handled inline and issue a failed_json or if the caller should
             handle it.
-        :returns: A 3-tuple of return code (integer), stdout (native string),
-            and stderr (native string).  On python2, stdout and stderr are both
-            byte strings.  On python3, stdout and stderr are text strings converted
-            according to the encoding and errors parameters.  If you want byte
-            strings on python3, use encoding=None to turn decoding to text off.
+        :returns: A 3-tuple of return code (int), stdout (str), and stderr (str).
+            stdout and stderr are text strings converted according to the encoding
+            and errors parameters.  If you want byte strings, use encoding=None
+            to turn decoding to text off.
         """
         # used by clean args later on
         self._clean = None
@@ -2000,18 +2127,16 @@ class AnsibleModule(object):
             selector.close()
 
             rc = cmd.returncode
-        except (OSError, IOError) as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
+        except OSError as ex:
             if handle_exceptions:
-                self.fail_json(rc=e.errno, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+                self.fail_json(rc=ex.errno, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
-        except Exception as e:
-            self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
+                raise
+        except Exception as ex:
             if handle_exceptions:
-                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
+                self.fail_json(rc=257, stdout='', stderr='', msg="Error executing command.", cmd=self._clean_args(args), exception=ex)
             else:
-                raise e
+                raise
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
@@ -2063,6 +2188,18 @@ def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
 
 
+_mini_six = {
+    "b": lambda s: s.encode("latin-1"),
+    "PY2": False,
+    "PY3": True,
+    "text_type": str,
+    "binary_type": bytes,
+    "string_types": (str,),
+    "integer_types": (int,),
+    "iteritems": lambda d, **kw: iter(d.items(**kw)),
+}
+
+
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
     if importable_name == 'datetime':
@@ -2080,24 +2217,12 @@ def __getattr__(importable_name):
     elif importable_name == 'repeat':
         from itertools import repeat
         importable = repeat
-    elif importable_name in {
-        'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
-        'iteritems', 'string_types', 'test_type'
-    }:
-        import importlib
-        importable = getattr(
-            importlib.import_module('ansible.module_utils.six'),
-            importable_name
-        )
     elif importable_name == 'map':
         importable = map
     elif importable_name == 'shlex_quote':
         importable = shlex.quote
-    else:
-        raise AttributeError(
-            f'cannot import name {importable_name !r} '
-            f"from '{__name__}' ({__file__ !s})"
-        )
+    elif (importable := _mini_six.get(importable_name, ...)) is ...:
+        raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     deprecate(
         msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",

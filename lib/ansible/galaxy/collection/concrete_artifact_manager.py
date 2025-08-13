@@ -449,9 +449,9 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     except subprocess.CalledProcessError as proc_err:
         raise AnsibleError(  # should probably be LookupError
             'Failed to switch a cloned Git repo `{repo_url!s}` '
-            'to the requested revision `{commitish!s}`.'.
+            'to the requested revision `{revision!s}`.'.
             format(
-                commitish=to_native(version),
+                revision=to_native(version),
                 repo_url=to_native(git_url),
             ),
         ) from proc_err
@@ -485,16 +485,13 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     display.display("Downloading %s to %s" % (url, to_text(b_tarball_dir)))
     # NOTE: Galaxy redirects downloads to S3 which rejects the request
     # NOTE: if an Authorization header is attached so don't redirect it
-    try:
-        resp = open_url(
-            to_native(url, errors='surrogate_or_strict'),
-            validate_certs=validate_certs,
-            headers=None if token is None else token.headers(),
-            unredirected_headers=['Authorization'], http_agent=user_agent(),
-            timeout=timeout
-        )
-    except Exception as err:
-        raise AnsibleError(to_native(err), orig_exc=err)
+    resp = open_url(
+        to_native(url, errors='surrogate_or_strict'),
+        validate_certs=validate_certs,
+        headers=None if token is None else token.headers(),
+        unredirected_headers=['Authorization'], http_agent=user_agent(),
+        timeout=timeout
+    )
 
     with open(b_file_path, 'wb') as download_file:  # type: t.BinaryIO
         actual_hash = _consume_file(resp, write_to=download_file)
@@ -659,14 +656,8 @@ def _get_json_from_installed_dir(
     try:
         with open(b_json_filepath, 'rb') as manifest_fd:
             b_json_text = manifest_fd.read()
-    except (IOError, OSError):
-        raise LookupError(
-            "The collection {manifest!s} path '{path!s}' does not exist.".
-            format(
-                manifest=filename,
-                path=to_native(b_json_filepath),
-            )
-        )
+    except OSError as ex:
+        raise LookupError(f"The collection {filename!r} path {to_text(b_json_filepath)!r} does not exist.") from ex
 
     manifest_txt = to_text(b_json_text, errors='surrogate_or_strict')
 

@@ -2,7 +2,20 @@
 
 set -eux -o pipefail
 
+export ANSIBLE_DEPRECATION_WARNINGS=False
+
+ansible-playbook deprecated.yml -i ../../inventory "${@}" 2>&1 | tee disabled.txt
+
+grep "This is a warning" disabled.txt  # should be visible
+
+if grep "DEPRECATION" disabled.txt; then
+  echo "ERROR: deprecation warnings should not be visible"
+  exit 1
+fi
+
 export ANSIBLE_DEPRECATION_WARNINGS=True
+
+ansible-playbook deprecated.yml -i ../../inventory "${@}"
 
 ### check general config
 

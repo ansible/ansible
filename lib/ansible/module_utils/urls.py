@@ -580,7 +580,7 @@ def get_ca_certs(cafile=None, capath=None):
                             cadata[b_der] = None
                     except Exception:
                         continue
-                except (OSError, IOError):
+                except OSError:
                     pass
 
     # paths_checked isn't used any more, but is kept just for ease of debugging
@@ -694,7 +694,7 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
         try:
             rc = netrc.netrc(os.environ.get('NETRC'))
             login = rc.authenticators(parsed.hostname)
-        except IOError:
+        except OSError:
             login = None
 
         if login:
@@ -1155,7 +1155,7 @@ def url_argument_spec():
 
 def url_redirect_argument_spec():
     """
-    Creates an addition arugment spec to `url_argument_spec`
+    Creates an addition argument spec to `url_argument_spec`
     for  `follow_redirects` argument
     """
     return dict(
@@ -1198,7 +1198,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data),
+                               data=json.dumps(data),
                                headers={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
@@ -1276,7 +1276,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
     except MissingModuleError as e:
-        module.fail_json(msg=to_text(e), exception=e.import_traceback)
+        module.fail_json(msg=to_text(e))
     except urllib.error.HTTPError as e:
         r = e
         try:
@@ -1303,13 +1303,12 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except urllib.error.URLError as e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
-    except socket.error as e:
-        info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except OSError as ex:
+        info.update(dict(msg=f"Connection failure: {ex}", status=-1))
     except http.client.BadStatusLine as e:
         info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
-    except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+    except Exception as ex:
+        info.update(dict(msg="An unknown error occurred: %s" % to_native(ex), status=-1, exception=traceback.format_exc()))
     finally:
         tempfile.tempdir = old_tempdir
 

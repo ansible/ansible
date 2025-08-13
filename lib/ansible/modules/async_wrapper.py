@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 
-import errno
 import json
 import shlex
 import shutil
@@ -122,24 +121,14 @@ def _get_interpreter(module_path):
         return head[2:head.index(b'\n')].strip().split(b' ')
 
 
-def _make_temp_dir(path):
-    # TODO: Add checks for permissions on path.
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
 def jwrite(info):
-
     jobfile = job_path + ".tmp"
     tjob = open(jobfile, "w")
     try:
         tjob.write(json.dumps(info))
-    except (IOError, OSError) as e:
-        notice('failed to write to %s: %s' % (jobfile, str(e)))
-        raise e
+    except OSError as ex:
+        notice(f'failed to write to {jobfile!r}: {ex}')
+        raise
     finally:
         tjob.close()
         os.rename(jobfile, job_path)
@@ -147,7 +136,9 @@ def jwrite(info):
 
 def _run_module(wrapped_cmd, jid):
 
-    jwrite({"started": 1, "finished": 0, "ansible_job_id": jid})
+    # DTFIX-FUTURE: needs rework for serialization profiles
+
+    jwrite({"started": True, "finished": False, "ansible_job_id": jid})
 
     result = {}
 
@@ -188,6 +179,9 @@ def _run_module(wrapped_cmd, jid):
             module_warnings = result.get('warnings', [])
             if not isinstance(module_warnings, list):
                 module_warnings = [module_warnings]
+
+            # this relies on the controller's fallback conversion of string warnings to WarningMessageDetail instances, and assumes
+            # that the module result and warning collection are basic JSON datatypes (eg, no tags or other custom collections).
             module_warnings.extend(json_warnings)
             result['warnings'] = module_warnings
 
@@ -195,10 +189,10 @@ def _run_module(wrapped_cmd, jid):
             result['stderr'] = stderr
         jwrite(result)
 
-    except (OSError, IOError):
+    except OSError:
         e = sys.exc_info()[1]
         result = {
-            "failed": 1,
+            "failed": True,
             "cmd": wrapped_cmd,
             "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
@@ -207,9 +201,9 @@ def _run_module(wrapped_cmd, jid):
         result['ansible_job_id'] = jid
         jwrite(result)
 
-    except (ValueError, Exception):
+    except Exception:
         result = {
-            "failed": 1,
+            "failed": True,
             "cmd": wrapped_cmd,
             "data": outdata,  # temporary notice only
             "stderr": stderr,
@@ -252,12 +246,13 @@ def main():
     job_path = os.path.join(jobdir, jid)
 
     try:
-        _make_temp_dir(jobdir)
+        # TODO: Add checks for permissions on path.
+        os.makedirs(jobdir, exist_ok=True)
     except Exception as e:
         end({
-            "failed": 1,
+            "failed": True,
             "msg": "could not create directory: %s - %s" % (jobdir, to_text(e)),
-            "exception": to_text(traceback.format_exc()),
+            "exception": to_text(traceback.format_exc()),  # NB: task executor compat will coerce to the correct dataclass type
         }, 1)
 
     # immediately exit this process, leaving an orphaned process
@@ -288,7 +283,7 @@ def main():
                     continue
 
             notice("Return async_wrapper task started.")
-            end({"failed": 0, "started": 1, "finished": 0, "ansible_job_id": jid, "results_file": job_path,
+            end({"failed": False, "started": True, "finished": False, "ansible_job_id": jid, "results_file": job_path,
                  "_ansible_suppress_tmpdir_delete": (not preserve_tmp)}, 0)
         else:
             # The actual wrapper process

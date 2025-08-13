@@ -15,7 +15,7 @@
 
     - assert:
         that:
-          - ansible_run_tags == ['all']
+          - ansible_run_tags|sort == ['all']
       when: expect == 'all'
       tags:
         - always
@@ -29,7 +29,7 @@
 
     - assert:
         that:
-          - ansible_run_tags == ['untagged']
+          - ansible_run_tags|sort == ['untagged']
       when: expect == 'untagged'
       tags:
         - always
@@ -43,7 +43,7 @@
 
     - assert:
         that:
-          - ansible_run_tags == ['tagged']
+          - ansible_run_tags|sort == ['tagged']
       when: expect == 'tagged'
       tags:
         - always

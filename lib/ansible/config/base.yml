@@ -1,6 +1,36 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+_ANSIBALLZ_COVERAGE_CONFIG:
+  name: Configure the AnsiballZ code coverage extension
+  description:
+    - Enables and configures the AnsiballZ code coverage extension.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_COVERAGE_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_coverage_config}
+  version_added: '2.19'
+_ANSIBALLZ_DEBUGPY_CONFIG:
+  name: Configure the AnsiballZ remote debugging extension for debugpy
+  description:
+    - Enables and configures the AnsiballZ remote debugging extension for debugpy.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_DEBUGPY_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_debugpy_config}
+  version_added: '2.20'
+_ANSIBALLZ_PYDEVD_CONFIG:
+  name: Configure the AnsiballZ remote debugging extension for pydevd
+  description:
+    - Enables and configures the AnsiballZ remote debugging extension for pydevd.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_PYDEVD_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_pydevd_config}
+  version_added: '2.20'
 _ANSIBLE_CONNECTION_PATH:
   env:
   - name: _ANSIBLE_CONNECTION_PATH
@@ -9,6 +39,59 @@ _ANSIBLE_CONNECTION_PATH:
     - For internal use only.
   type: path
   version_added: "2.18"
+_CALLBACK_DISPATCH_ERROR_BEHAVIOR:
+  name: Callback dispatch error behavior
+  default: warning
+  description:
+    - Action to take when a callback dispatch results in an error.
+  type: choices
+  choices: &basic_error
+    error: issue a 'fatal' error and stop the play
+    warning: issue a warning but continue
+    ignore: just continue silently
+  env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
+  version_added: '2.19'
+_MODULE_METADATA:
+  name: Enable experimental module metadata
+  description:
+    - Enables experimental module-level metadata controls for serialization profile selection.
+    - This is for internal use only.
+  type: boolean
+  default: false
+  env: [ { name: _ANSIBLE_MODULE_METADATA } ]
+  version_added: '2.19'
+ALLOW_BROKEN_CONDITIONALS:
+  # This config option will be deprecated once it no longer has any effect (2.23).
+  name: Allow broken conditionals
+  default: false
+  description:
+    - When enabled, this option allows conditionals with non-boolean results to be used.
+    - A deprecation warning will be emitted in these cases.
+    - By default, non-boolean conditionals result in an error.
+    - Such results often indicate unintentional use of templates where they are not supported, resulting in a conditional that is always true.
+    - When this option is enabled, conditional expressions which are a literal ``None`` or empty string will evaluate as true for backwards compatibility.
+  env: [{name: ANSIBLE_ALLOW_BROKEN_CONDITIONALS}]
+  ini:
+  - {key: allow_broken_conditionals, section: defaults}
+  type: boolean
+  version_added: "2.19"
+ALLOW_EMBEDDED_TEMPLATES:
+  name: Allow embedded templates
+  default: true
+  description:
+    - When enabled, this option allows embedded templates to be used for specific backward compatibility scenarios.
+    - A deprecation warning will be emitted in these cases.
+    - First, conditionals (for example, ``failed_when``, ``until``, ``assert.that``) fully enclosed in template delimiters.
+    - "Second, string constants in conditionals (for example, ``when: some_var == '{{ some_other_var }}'``)."
+    - Finally, positional arguments to lookups (for example, ``lookup('pipe', 'echo {{ some_var }}')``).
+    - This feature is deprecated, since embedded templates are unnecessary in these cases.
+    - When disabled, use of embedded templates will result in an error.
+    - A future release will disable this feature by default.
+  env: [{name: ANSIBLE_ALLOW_EMBEDDED_TEMPLATES}]
+  ini:
+  - {key: allow_embedded_templates, section: defaults}
+  type: boolean
+  version_added: "2.19"
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
@@ -160,33 +243,33 @@ AGNOSTIC_BECOME_PROMPT:
   yaml: {key: privilege_escalation.agnostic_become_prompt}
   version_added: "2.5"
 CACHE_PLUGIN:
-  name: Persistent Cache plugin
+  name: Persistent Fact Cache plugin
   default: memory
-  description: Chooses which cache plugin to use, the default 'memory' is ephemeral.
+  description: Chooses which fact cache plugin to use. By default, no cache is used and facts do not persist between runs.
   env: [{name: ANSIBLE_CACHE_PLUGIN}]
   ini:
   - {key: fact_caching, section: defaults}
   yaml: {key: facts.cache.plugin}
 CACHE_PLUGIN_CONNECTION:
-  name: Cache Plugin URI
+  name: Fact Cache Plugin URI
   default: ~
-  description: Defines connection or path information for the cache plugin.
+  description: Defines connection or path information for the fact cache plugin.
   env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
   ini:
   - {key: fact_caching_connection, section: defaults}
   yaml: {key: facts.cache.uri}
 CACHE_PLUGIN_PREFIX:
-  name: Cache Plugin table prefix
+  name: Fact Cache Plugin table prefix
   default: ansible_facts
-  description: Prefix to use for cache plugin files/tables.
+  description: Prefix to use for fact cache plugin files/tables.
   env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
   ini:
   - {key: fact_caching_prefix, section: defaults}
   yaml: {key: facts.cache.prefix}
 CACHE_PLUGIN_TIMEOUT:
-  name: Cache Plugin expiration timeout
+  name: Fact Cache Plugin expiration timeout
   default: 86400
-  description: Expiration timeout for the cache plugin data.
+  description: Expiration timeout for the fact cache plugin data.
   env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
   ini:
   - {key: fact_caching_timeout, section: defaults}
@@ -224,10 +307,7 @@ COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   - When a collection is loaded that does not support the running Ansible version (with the collection metadata key `requires_ansible`).
   env: [{name: ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH}]
   ini: [{key: collections_on_ansible_version_mismatch, section: defaults}]
-  choices: &basic_error
-    error: issue a 'fatal' error and stop the play
-    warning: issue a warning but continue
-    ignore: just continue silently
+  choices: *basic_error
   default: warning
 COLOR_CHANGED:
   name: Color for 'changed' task status
@@ -496,6 +576,10 @@ DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   - {key: allow_unsafe_lookups, section: defaults}
   type: boolean
   version_added: "2.2.3"
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: Lookup plugins are responsible for tagging strings containing templates to allow evaluation as a template.
 DEFAULT_ASK_PASS:
   name: Ask for the login password
   default: False
@@ -712,7 +796,7 @@ DEFAULT_HASH_BEHAVIOUR:
   - {key: hash_behaviour, section: defaults}
 DEFAULT_HOST_LIST:
   name: Inventory Source
-  default: /etc/ansible/hosts
+  default: [/etc/ansible/hosts]
   description: Comma-separated list of Ansible inventory sources
   env:
     - name: ANSIBLE_INVENTORY
@@ -755,15 +839,20 @@ DEFAULT_INVENTORY_PLUGIN_PATH:
 DEFAULT_JINJA2_EXTENSIONS:
   name: Enabled Jinja2 extensions
   default: []
+  type: list
   description:
     - This is a developer-specific feature that allows enabling additional Jinja2 extensions.
     - "See the Jinja2 documentation for details. If you do not know what these do, you probably don't need to change this setting :)"
   env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
   ini:
   - {key: jinja2_extensions, section: defaults}
+  deprecated:
+    why: Jinja2 extensions have been deprecated
+    version: "2.23"
+    alternatives: Ansible-supported Jinja plugins (tests, filters, lookups)
 DEFAULT_JINJA2_NATIVE:
   name: Use Jinja2's NativeEnvironment for templating
-  default: False
+  default: True
   description: This option preserves variable types during template operations.
   env: [{name: ANSIBLE_JINJA2_NATIVE}]
   ini:
@@ -771,6 +860,10 @@ DEFAULT_JINJA2_NATIVE:
   type: boolean
   yaml: {key: jinja2_native}
   version_added: 2.7
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: Jinja2 native mode is now the default and only option.
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
@@ -852,6 +945,10 @@ DEFAULT_MANAGED_STR:
   ini:
   - {key: ansible_managed, section: defaults}
   yaml: {key: defaults.ansible_managed}
+  deprecated:
+    why: The `ansible_managed` variable can be set just like any other variable, or a different variable can be used.
+    version: "2.23"
+    alternatives: Set the `ansible_managed` variable, or use any custom variable in templates.
 DEFAULT_MODULE_ARGS:
   name: Adhoc default arguments
   default: ~
@@ -930,6 +1027,10 @@ DEFAULT_NULL_REPRESENTATION:
   ini:
   - {key: null_representation, section: defaults}
   type: raw
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 DEFAULT_POLL_INTERVAL:
   name: Async poll interval
   default: 15
@@ -996,7 +1097,7 @@ DEFAULT_ROLES_PATH:
   yaml: {key: defaults.roles_path}
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
-  default: fuse, nfs, vboxsf, ramfs, 9p, vfat
+  default: [fuse, nfs, vboxsf, ramfs, 9p, vfat]
   description:
     - "Some filesystems do not support safe operations and/or return inconsistent errors,
        this setting makes Ansible 'tolerate' those in the list without causing fatal errors."
@@ -1129,6 +1230,10 @@ DEFAULT_UNDEFINED_VAR_BEHAVIOR:
   ini:
   - {key: error_on_undefined_vars, section: defaults}
   type: boolean
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
 DEFAULT_VARS_PLUGIN_PATH:
   name: Vars Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/vars:/usr/share/ansible/plugins/vars" }}'
@@ -1137,15 +1242,6 @@ DEFAULT_VARS_PLUGIN_PATH:
   ini:
   - {key: vars_plugins, section: defaults}
   type: pathspec
-# TODO: unused?
-#DEFAULT_VAR_COMPRESSION_LEVEL:
-#  default: 0
-#  description: 'TODO: write it'
-#  env: [{name: ANSIBLE_VAR_COMPRESSION_LEVEL}]
-#  ini:
-#  - {key: var_compression_level, section: defaults}
-#  type: integer
-#  yaml: {key: defaults.var_compression_level}
 DEFAULT_VAULT_ID_MATCH:
   name: Force vault id match
   default: False
@@ -1213,6 +1309,9 @@ DEPRECATION_WARNINGS:
   ini:
   - {key: deprecation_warnings, section: defaults}
   type: boolean
+  vars:
+    - name: ansible_deprecation_warnings
+      version_added: '2.19'
 DEVEL_WARNING:
   name: Running devel warning
   default: True
@@ -1266,6 +1365,23 @@ DISPLAY_SKIPPED_HOSTS:
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
+DISPLAY_TRACEBACK:
+  name: Control traceback display
+  default: [never]
+  description: When to include tracebacks in extended error messages
+  env:
+    - name: ANSIBLE_DISPLAY_TRACEBACK
+  ini:
+    - {key: display_traceback, section: defaults}
+  type: list
+  choices:
+    - error
+    - warning
+    - deprecated
+    - deprecated_value
+    - always
+    - never
+  version_added: "2.19"
 DOCSITE_ROOT_URL:
   name: Root docsite URL
   default: https://docs.ansible.com/ansible-core/
@@ -1399,15 +1515,6 @@ GALAXY_COLLECTIONS_PATH_WARNING:
   ini:
     - {key: collections_path_warning, section: galaxy}
   version_added: "2.16"
-# TODO: unused?
-#GALAXY_SCMS:
-#  name: Galaxy SCMS
-#  default: git, hg
-#  description: Available galaxy source control management systems.
-#  env: [{name: ANSIBLE_GALAXY_SCMS}]
-#  ini:
-#  - {key: scms, section: galaxy}
-#  type: list
 GALAXY_SERVER:
   default: https://galaxy.ansible.com
   description: "URL to prepend when roles don't specify the full URI, assume they are referencing this server as the source."
@@ -1573,30 +1680,21 @@ INTERPRETER_PYTHON:
   description:
   - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
     Supported discovery modes are ``auto`` (the default), ``auto_silent``, ``auto_legacy``, and ``auto_legacy_silent``.
-    All discovery modes employ a lookup table to use the included system Python (on distributions known to include one),
-    falling back to a fixed ordered list of well-known Python interpreter locations if a platform-specific default is not
-    available. The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
-    installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent`` or
-    ``auto_legacy_silent``. The value of ``auto_legacy`` provides all the same behavior, but for backward-compatibility
-    with older Ansible releases that always defaulted to ``/usr/bin/python``, will use that interpreter if present.
-_INTERPRETER_PYTHON_DISTRO_MAP:
-  name: Mapping of known included platform pythons for various Linux distros
-  default:
-    # Entry only for testing
-    ansible test:
-      '99': /usr/bin/python99
-  version_added: "2.8"
-  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
-  # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
+    All discovery modes match against an ordered list of well-known Python interpreter locations. 
+    The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
+    installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``.
+    The ``auto_legacy`` modes are deprecated and behave the same as their respective ``auto`` modes.
+    They exist for backward-compatibility with older Ansible releases that always defaulted to ``/usr/bin/python3``,
+    which will use that interpreter if present.
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
+  - python3.14
   - python3.13
   - python3.12
   - python3.11
   - python3.10
   - python3.9
-  - python3.8
   - /usr/bin/python3
   - python3
   vars:
@@ -1659,7 +1757,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(REJECT_EXTS + ('.orig', '.cfg', '.retry'))}}"
+  default: "{{ REJECT_EXTS + ['.orig', '.cfg', '.retry'] }}"
   description: List of extensions to ignore when using a directory as an inventory source.
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
@@ -1716,7 +1814,7 @@ INJECT_FACTS_AS_VARS:
   version_added: "2.5"
 MODULE_IGNORE_EXTS:
   name: Module ignore extensions
-  default: "{{(REJECT_EXTS + ('.yaml', '.yml', '.ini'))}}"
+  default: "{{ REJECT_EXTS + ['.yaml', '.yml', '.ini'] }}"
   description:
     - List of extensions to ignore when looking for modules to load.
     - This is for rejecting script and binary module fallback extensions.
@@ -1756,29 +1854,6 @@ PAGER:
     - name: ANSIBLE_PAGER
       version_added: '2.15'
     - name: PAGER
-PARAMIKO_HOST_KEY_AUTO_ADD:
-  default: False
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD}]
-  ini:
-  - {key: host_key_auto_add, section: paramiko_connection}
-  type: boolean
-  deprecated:
-    why: This option was moved to the plugin itself
-    version: "2.20"
-    alternatives: Use the option from the plugin itself.
-PARAMIKO_LOOK_FOR_KEYS:
-  name: look for keys
-  default: True
-  description: 'TODO: write it'
-  env: [{name: ANSIBLE_PARAMIKO_LOOK_FOR_KEYS}]
-  ini:
-  - {key: look_for_keys, section: paramiko_connection}
-  type: boolean
-  deprecated:
-    why: This option was moved to the plugin itself
-    version: "2.20"
-    alternatives: Use the option from the plugin itself.
 PERSISTENT_CONTROL_PATH_DIR:
   name: Persistence socket path
   default: '{{ ANSIBLE_HOME ~ "/pc" }}'
@@ -1897,6 +1972,32 @@ SHOW_CUSTOM_STATS:
   ini:
   - {key: show_custom_stats, section: defaults}
   type: bool
+SSH_AGENT:
+  name: Manage an SSH Agent
+  description: Manage an SSH Agent via Ansible. A configuration of ``none`` will not interact with an agent,
+               ``auto`` will start and destroy an agent via ``ssh-agent`` binary during the run, and a path
+               to an SSH_AUTH_SOCK will allow interaction with a pre-existing agent.
+  default: none
+  type: string
+  env: [{name: ANSIBLE_SSH_AGENT}]
+  ini: [{key: ssh_agent, section: connection}]
+  version_added: '2.19'
+SSH_AGENT_EXECUTABLE:
+  name: Executable to start for the ansible-managed SSH agent
+  description: When ``SSH_AGENT`` is ``auto``, the path or name of the ssh agent executable to start.
+  default: ssh-agent
+  type: str
+  env: [ { name: ANSIBLE_SSH_AGENT_EXECUTABLE } ]
+  ini: [ { key: ssh_agent_executable, section: connection } ]
+  version_added: '2.19'
+SSH_AGENT_KEY_LIFETIME:
+  name: Set a maximum lifetime when adding identities to an agent
+  description: For keys inserted into an agent defined by ``SSH_AGENT``, define a lifetime, in seconds, that the key may remain
+               in the agent.
+  type: int
+  env: [{name: ANSIBLE_SSH_AGENT_KEY_LIFETIME}]
+  ini: [{key: ssh_agent_key_lifetime, section: connection}]
+  version_added: '2.19'
 STRING_TYPE_FILTERS:
   name: Filters to preserve strings
   default: [string, to_json, to_nice_json, to_yaml, to_nice_yaml, ppretty, json]
@@ -1907,6 +2008,10 @@ STRING_TYPE_FILTERS:
   ini:
   - {key: dont_type_filters, section: jinja2}
   type: list
+  deprecated:
+    why: This option has no effect.
+    version: "2.23"
+    alternatives: None; native types returned from filters are always preserved.
 SYSTEM_WARNINGS:
   name: System warnings
   default: True
@@ -1959,6 +2064,52 @@ TASK_TIMEOUT:
   - {key: task_timeout, section: defaults}
   type: integer
   version_added: '2.10'
+_TEMPLAR_SANDBOX_MODE:
+  name: Control Jinja template sandbox behavior
+  default: default
+  description:
+    - The default Jinja sandbox behavior blocks template access to all `_` prefixed object attributes and known collection mutation methods (e.g., `dict.clear()`, `list.append()`).
+  type: choices
+  choices:
+    - default
+    - allow_unsafe_attributes
+  env: [{name: _ANSIBLE_TEMPLAR_SANDBOX_MODE}]
+  deprecated:
+    why: controlling sandbox behavior is a temporary workaround
+    version: '2.23'
+_TEMPLAR_UNKNOWN_TYPE_CONVERSION:
+  name: Templar unknown type conversion behavior
+  default: warning
+  description:
+    - Action to take when an unknown type is converted for variable storage during template finalization.
+    - This setting has no effect on the inability to store unsupported variable types as the result of templating.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *basic_error
+  env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_CONVERSION}]
+  version_added: '2.19'
+_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
+  name: Templar unknown type encountered behavior
+  default: ignore
+  description:
+    - Action to take when an unknown type is encountered inside a template pipeline.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *basic_error
+  env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED}]
+  version_added: '2.19'
+_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
+  name: Templar untrusted template behavior
+  default: ignore
+  description:
+    - Action to take when processing of an untrusted template is skipped.
+    - For `ignore` or `warn`, the input template string is returned as-is.
+    - This setting has no effect on expressions.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *basic_error
+  env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
+  version_added: '2.19'
 WORKER_SHUTDOWN_POLL_COUNT:
   name: Worker Shutdown Poll Count
   default: 0

@@ -1,0 +1,4 @@
+---
+minor_changes:
+    - regex - Document the match_type fullmatch.
+    - regex - Ensure that match_type is one of match, fullmatch, or search (https://github.com/ansible/ansible/pull/85629).

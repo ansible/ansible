@@ -1,12 +1,61 @@
 - meta: end_play
   when: ansible_os_family != 'Debian'
 
+- set_fact:
+    python_debian: python3-debian
+
 - block:
+    # UNINSTALL 'python3-debian'
+    #  The `deb822_repository` module has the smarts to auto-install `python3-debian`.  To
+    # test, we will first uninstall `python3-debian`.
+    - name: check {{ python_debian }} with dpkg
+      shell: dpkg -s {{ python_debian }}
+      register: dpkg_result
+      ignore_errors: true
+
+    - name: uninstall {{ python_debian }} with apt
+      apt: pkg={{ python_debian }} state=absent purge=yes
+      register: apt_result
+      when: dpkg_result is successful
+
+    - name: check failure when python3-debian is absent
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+      register: no_python3_debian
+      ignore_errors: true
+
+    - name: Assert failure with absent python3-debian
+      assert:
+        that: no_python3_debian.msg is contains 'python3-debian is not installed'
+
+    - name: run deb822 to check for python3-debian installation
+      deb822_repository:
+        name: myrepo
+        types: deb
+        uris: "http://example.com/debian/"
+        suites: stable
+        components: main
+        install_python_debian: true
+
+    - name: Clean up the previously added basic Debian repository
+      deb822_repository:
+        name: myrepo
+        state: absent
+
     - name: install python3-debian
       apt:
         name: python3-debian
         state: present
       register: py3_deb_install
+
+    - name: assert python3-debian already installed
+      assert:
+        that:
+           - not py3_deb_install.changed
 
     - import_tasks: test.yml
 

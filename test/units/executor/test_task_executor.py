@@ -22,14 +22,11 @@ from unittest import mock
 import unittest
 from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
-from ansible.executor.task_executor import TaskExecutor, remove_omit
+from ansible.executor.task_executor import TaskExecutor
 from ansible.plugins.loader import action_loader, lookup_loader
-from ansible.parsing.yaml.objects import AnsibleUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 
 from collections import namedtuple
 from units.mock.loader import DictDataLoader
-
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
 
@@ -42,7 +39,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task = MagicMock()
         mock_play_context = MagicMock()
         mock_shared_loader = MagicMock()
-        new_stdin = None
         job_vars = dict()
         mock_queue = MagicMock()
         te = TaskExecutor(
@@ -50,7 +46,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=mock_task,
             job_vars=job_vars,
             play_context=mock_play_context,
-            new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
@@ -70,7 +65,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_shared_loader = MagicMock()
         mock_queue = MagicMock()
 
-        new_stdin = None
         job_vars = dict()
 
         te = TaskExecutor(
@@ -78,7 +72,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=mock_task,
             job_vars=job_vars,
             play_context=mock_play_context,
-            new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
@@ -100,28 +93,6 @@ class TestTaskExecutor(unittest.TestCase):
         res = te.run()
         self.assertIn("failed", res)
 
-    def test_task_executor_run_clean_res(self):
-        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None, None)
-        te._get_loop_items = MagicMock(return_value=[1])
-        te._run_loop = MagicMock(
-            return_value=[
-                {
-                    'unsafe_bytes': AnsibleUnsafeBytes(b'{{ $bar }}'),
-                    'unsafe_text': AnsibleUnsafeText(u'{{ $bar }}'),
-                    'bytes': b'bytes',
-                    'text': u'text',
-                    'int': 1,
-                }
-            ]
-        )
-        res = te.run()
-        data = res['results'][0]
-        self.assertIsInstance(data['unsafe_bytes'], AnsibleUnsafeText)
-        self.assertIsInstance(data['unsafe_text'], AnsibleUnsafeText)
-        self.assertIsInstance(data['bytes'], str)
-        self.assertIsInstance(data['text'], str)
-        self.assertIsInstance(data['int'], int)
-
     def test_task_executor_get_loop_items(self):
         fake_loader = DictDataLoader({})
 
@@ -136,7 +107,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_shared_loader = MagicMock()
         mock_shared_loader.lookup_loader = lookup_loader
 
-        new_stdin = None
         job_vars = dict()
         mock_queue = MagicMock()
 
@@ -145,7 +115,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=mock_task,
             job_vars=job_vars,
             play_context=mock_play_context,
-            new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
@@ -176,7 +145,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_shared_loader = MagicMock()
         mock_queue = MagicMock()
 
-        new_stdin = None
         job_vars = dict()
 
         te = TaskExecutor(
@@ -184,14 +152,15 @@ class TestTaskExecutor(unittest.TestCase):
             task=mock_task,
             job_vars=job_vars,
             play_context=mock_play_context,
-            new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
             variable_manager=MagicMock(),
         )
 
-        def _execute(variables):
+        te._task.loop_control.label = "bob"
+
+        def _execute(templar, variables):
             return dict(item=variables.get('item'))
 
         te._execute = MagicMock(side_effect=_execute)
@@ -205,7 +174,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=MagicMock(),
             job_vars={},
             play_context=MagicMock(),
-            new_stdin=None,
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
@@ -233,7 +201,7 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.get.assert_called_with(
             te._task.action, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
-            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            templar=unittest.mock.ANY, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
 
     def test_task_executor_get_handler_prefix(self):
@@ -242,7 +210,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=MagicMock(),
             job_vars={},
             play_context=MagicMock(),
-            new_stdin=None,
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
@@ -272,7 +239,7 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.get.assert_called_with(
             module_prefix, task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
-            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            templar=unittest.mock.ANY, shared_loader_obj=te._shared_loader_obj,
             collection_list=te._task.collections)
 
     def test_task_executor_get_handler_normal(self):
@@ -281,7 +248,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=MagicMock(),
             job_vars={},
             play_context=MagicMock(),
-            new_stdin=None,
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
@@ -307,13 +273,12 @@ class TestTaskExecutor(unittest.TestCase):
 
         self.assertIs(mock.sentinel.handler, handler)
 
-        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
-                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_with(
             'ansible.legacy.normal', task=te._task, connection=te._connection,
             play_context=te._play_context, loader=te._loader,
-            templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
+            templar=unittest.mock.ANY, shared_loader_obj=te._shared_loader_obj,
             collection_list=None)
 
     def test_task_executor_execute(self):
@@ -339,6 +304,7 @@ class TestTaskExecutor(unittest.TestCase):
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async_val = 1
         mock_task.poll = 0
+        mock_task.timeout = None
         mock_task.evaluate_conditional_with_result.return_value = (True, None)
 
         mock_play_context = MagicMock()
@@ -358,6 +324,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_vm.get_delegated_vars_and_hostname.return_value = {}, None
 
         shared_loader = MagicMock()
+        shared_loader.action_loader.get.return_value = mock_action
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
@@ -366,7 +333,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=mock_task,
             job_vars=job_vars,
             play_context=mock_play_context,
-            new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
@@ -380,23 +346,23 @@ class TestTaskExecutor(unittest.TestCase):
             te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
 
         mock_action.run.return_value = dict(ansible_facts=dict())
-        res = te._execute()
+        res = te._execute(te._task_templar, te._job_vars)
 
-        mock_task.changed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
-        res = te._execute()
+        mock_task.changed_when = MagicMock(return_value="1 == 1")
+        res = te._execute(te._task_templar, te._job_vars)
 
         mock_task.changed_when = None
-        mock_task.failed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
-        res = te._execute()
+        mock_task.failed_when = MagicMock(return_value="1 == 1")
+        res = te._execute(te._task_templar, te._job_vars)
 
         mock_task.failed_when = None
         mock_task.evaluate_conditional.return_value = False
-        res = te._execute()
+        res = te._execute(te._task_templar, te._job_vars)
 
         mock_task.evaluate_conditional.return_value = True
         mock_task.args = dict(_raw_params='foo.yml', a='foo', b='bar')
         mock_task.action = 'include'
-        res = te._execute()
+        res = te._execute(te._task_templar, te._job_vars)
 
     def test_task_executor_poll_async_result(self):
         fake_loader = DictDataLoader({})
@@ -415,7 +381,6 @@ class TestTaskExecutor(unittest.TestCase):
         shared_loader = MagicMock()
         shared_loader.action_loader = action_loader
 
-        new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
         te = TaskExecutor(
@@ -423,7 +388,6 @@ class TestTaskExecutor(unittest.TestCase):
             task=mock_task,
             job_vars=job_vars,
             play_context=mock_play_context,
-            new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
@@ -456,50 +420,3 @@ class TestTaskExecutor(unittest.TestCase):
             mock_templar = MagicMock()
             res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
             self.assertEqual(res, dict(finished=1))
-
-    def test_recursive_remove_omit(self):
-        omit_token = 'POPCORN'
-
-        data = {
-            'foo': 'bar',
-            'baz': 1,
-            'qux': ['one', 'two', 'three'],
-            'subdict': {
-                'remove': 'POPCORN',
-                'keep': 'not_popcorn',
-                'subsubdict': {
-                    'remove': 'POPCORN',
-                    'keep': 'not_popcorn',
-                },
-                'a_list': ['POPCORN'],
-            },
-            'a_list': ['POPCORN'],
-            'list_of_lists': [
-                ['some', 'thing'],
-            ],
-            'list_of_dicts': [
-                {
-                    'remove': 'POPCORN',
-                }
-            ],
-        }
-
-        expected = {
-            'foo': 'bar',
-            'baz': 1,
-            'qux': ['one', 'two', 'three'],
-            'subdict': {
-                'keep': 'not_popcorn',
-                'subsubdict': {
-                    'keep': 'not_popcorn',
-                },
-                'a_list': ['POPCORN'],
-            },
-            'a_list': ['POPCORN'],
-            'list_of_lists': [
-                ['some', 'thing'],
-            ],
-            'list_of_dicts': [{}],
-        }
-
-        self.assertEqual(remove_omit(data, omit_token), expected)

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-galaxy - support ``resolvelib >= 0.5.3, < 2.0.0`` (https://github.com/ansible/ansible/issues/84217).

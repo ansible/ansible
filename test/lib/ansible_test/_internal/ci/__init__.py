@@ -1,4 +1,5 @@
 """Support code for CI environments."""
+
 from __future__ import annotations
 
 import abc

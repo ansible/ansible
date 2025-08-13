@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import os
+import typing as _t
 
 from collections.abc import Container, Mapping, Set, Sequence
 from types import MappingProxyType
@@ -26,8 +27,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import binary_type, text_type
-from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -39,6 +38,16 @@ from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
+
+# NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
+#       available by using forward references this seems not to work well with commonly used IDEs.
+#       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
+#       References:
+#       * https://stackoverflow.com/q/39740632/199513
+#       * https://peps.python.org/pep-0484/#forward-references
+if _t.TYPE_CHECKING:
+    from ansible.playbook.block import Block
+    from ansible.playbook.play import Play
 
 __all__ = ['Role', 'hash_params']
 
@@ -64,7 +73,7 @@ def hash_params(params):
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
     # cannot be hashed)
-    if isinstance(params, Container) and not isinstance(params, (text_type, binary_type)):
+    if isinstance(params, Container) and not isinstance(params, (str, bytes)):
         if isinstance(params, Mapping):
             try:
                 # Optimistically hope the contents are all hashable
@@ -98,13 +107,19 @@ def hash_params(params):
 
 class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
-    def __init__(self, play=None, from_files=None, from_include=False, validate=True, public=None, static=True):
-        self._role_name = None
-        self._role_path = None
-        self._role_collection = None
-        self._role_params = dict()
+    def __init__(self,
+                 play: Play = None,
+                 from_files: dict[str, list[str]] = None,
+                 from_include: bool = False,
+                 validate: bool = True,
+                 public: bool = None,
+                 static: bool = True) -> None:
+        self._role_name: str = None
+        self._role_path: str = None
+        self._role_collection: str = None
+        self._role_params: dict[str, dict[str, str]] = dict()
         self._loader = None
-        self.static = static
+        self.static: bool = static
 
         # includes (static=false) default to private, while imports (static=true) default to public
         # but both can be overridden by global config if set
@@ -117,26 +132,26 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         else:
             self.public = public
 
-        self._metadata = RoleMetadata()
-        self._play = play
-        self._parents = []
-        self._dependencies = []
-        self._all_dependencies = None
-        self._task_blocks = []
-        self._handler_blocks = []
-        self._compiled_handler_blocks = None
-        self._default_vars = dict()
-        self._role_vars = dict()
-        self._had_task_run = dict()
-        self._completed = dict()
-        self._should_validate = validate
+        self._metadata: RoleMetadata = RoleMetadata()
+        self._play: Play = play
+        self._parents: list[Role] = []
+        self._dependencies: list[Role] = []
+        self._all_dependencies: list[Role] | None = None
+        self._task_blocks: list[Block] = []
+        self._handler_blocks: list[Block] = []
+        self._compiled_handler_blocks: list[Block] | None = None
+        self._default_vars: dict[str, str] | None = dict()
+        self._role_vars: dict[str, str] | None = dict()
+        self._had_task_run: dict[str, bool] = dict()
+        self._completed: dict[str, bool] = dict()
+        self._should_validate: bool = validate
 
         if from_files is None:
             from_files = {}
-        self._from_files = from_files
+        self._from_files: dict[str, list[str]] = from_files
 
         # Indicates whether this role was included via include/import_role
-        self.from_include = from_include
+        self.from_include: bool = from_include
 
         self._hash = None
 
@@ -200,9 +215,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
             return r
 
-        except RuntimeError:
+        except RecursionError as ex:
             raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
-                               obj=role_include._ds)
+                               obj=role_include._ds) from ex
 
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name = role_include.role
@@ -274,18 +289,17 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
-            except AssertionError as e:
-                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
-                                         obj=task_data, orig_exc=e)
+            except AssertionError as ex:
+                raise AnsibleParserError(f"The tasks/main.yml file for role {self._role_name!r} must contain a list of tasks.", obj=task_data) from ex
 
         handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
                                                            variable_manager=self._variable_manager)
-            except AssertionError as e:
-                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
-                                         obj=handler_data, orig_exc=e)
+            except AssertionError as ex:
+                raise AnsibleParserError(f"The handlers/main.yml file for role {self._role_name!r} must contain a list of tasks.",
+                                         obj=handler_data) from ex
 
     def _get_role_argspecs(self):
         """Get the role argument spec data.
@@ -359,8 +373,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             task_name = task_name + ' - ' + argument_spec['short_description']
 
         return {
-            'action': {
-                'module': 'ansible.builtin.validate_argument_spec',
+            'action': 'ansible.builtin.validate_argument_spec',
+            'args': {
                 # Pass only the 'options' portion of the arg spec to the module.
                 'argument_spec': argument_spec.get('options', {}),
                 'provided_arguments': self._role_params,
@@ -412,7 +426,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                         raise AnsibleParserError("Failed loading '%s' for role (%s) as it is not inside the expected role path: '%s'" %
                                                  (to_text(found), self._role_name, to_text(file_path)))
 
-                    new_data = self._loader.load_from_file(found)
+                    new_data = self._loader.load_from_file(found, trusted_as_template=True)
                     if new_data:
                         if data is not None and isinstance(new_data, Mapping):
                             data = combine_vars(data, new_data)

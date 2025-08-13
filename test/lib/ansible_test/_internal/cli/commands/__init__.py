@@ -1,4 +1,5 @@
 """Command line parsing for all commands."""
+
 from __future__ import annotations
 
 import argparse
@@ -92,6 +93,16 @@ def do_commands(
     )
 
     common.add_argument(
+        '--display-traceback',
+        dest='display_traceback',
+        metavar='TB',
+        type=str,
+        default='never',
+        choices=('error', 'warning', 'deprecated', 'always', 'never'),
+        help='set ANSIBLE_DISPLAY_TRACEBACK (%(choices)s) (default: %(default)s)',
+    )
+
+    common.add_argument(
         '--redact',
         dest='redact',
         action='store_true',
@@ -149,11 +160,6 @@ def do_commands(
         '--coverage-check',
         action='store_true',
         help='only verify code coverage can be enabled',
-    )
-
-    testing.add_argument(
-        '--metadata',
-        help=argparse.SUPPRESS,
     )
 
     testing.add_argument(

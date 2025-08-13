@@ -202,11 +202,11 @@
   stat:
     path: '{{ item }}'
   loop:
+    - '{{ cafile_path.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
     - /etc/ssl/certs/ca-bundle.crt
     - /etc/ssl/certs/ca-certificates.crt
     - /var/lib/ca-certificates/ca-bundle.pem
     - /usr/local/share/certs/ca-root-nss.crt
-    - '{{ cafile_path.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
     - /etc/ssl/cert.pem
   register: ca_bundle_candidates
 
@@ -227,7 +227,7 @@
 - name: Assert location header
   assert:
     that:
-      - 'result.location|default("") == "https://{{ httpbin_host }}/relative-redirect/1"'
+      - 'result.location|default("") == "https://" + httpbin_host + "/relative-redirect/1"'
 
 - name: Check SSL with redirect
   uri:
@@ -237,7 +237,7 @@
 - name: Assert SSL with redirect
   assert:
     that:
-      - 'result.url|default("") == "https://{{ httpbin_host }}/get"'
+      - 'result.url|default("") == "https://" + httpbin_host + "/get"'
 
 - name: redirect to bad SSL site
   uri:
@@ -475,7 +475,7 @@
     body:
       integer_value: 1
   register: multipart_invalid
-  failed_when: 'multipart_invalid.msg != "failed to parse body as form-multipart: value must be a string, or mapping, cannot be type int"'
+  failed_when: '"failed to parse body as form-multipart: value must be a string, or mapping, cannot be type" not in multipart_invalid.msg'
 
 - name: Validate invalid method
   uri:
@@ -619,7 +619,7 @@
 - name: assert that keys were sanitized
   assert:
     that:
-      - sanitize_keys.json.args['key-********'] == 'value-********'
+    - sanitize_keys.json.args['key-********'] == 'value-********'
 
 - name: Test gzip encoding
   uri:

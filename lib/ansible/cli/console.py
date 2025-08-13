@@ -29,6 +29,7 @@ from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.utils.display import Display
 
 display = Display()
@@ -71,6 +72,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     # use specific to console, but fallback to highlight for backwards compatibility
     NORMAL_PROMPT = C.COLOR_CONSOLE_PROMPT or C.COLOR_HIGHLIGHT
+
+    USES_CONNECTION = True
 
     def __init__(self, args):
 
@@ -179,6 +182,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 else:
                     module_args = ''
 
+        module_args = TrustedAsTemplate().tag(module_args)
+
         if self.callback:
             cb = self.callback
         elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
@@ -189,7 +194,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         result = None
         try:
             check_raw = module in C._ACTION_ALLOWS_RAW_ARGS
-            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
+            task = dict(action=module, args=parse_kv(module_args, check_raw=check_raw), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,
@@ -217,7 +222,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     variable_manager=self.variable_manager,
                     loader=self.loader,
                     passwords=self.passwords,
-                    stdout_callback=cb,
+                    stdout_callback_name=cb,
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                     run_tree=False,
                     forks=self.forks,
@@ -237,11 +242,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         except KeyboardInterrupt:
             display.error('User interrupted execution')
             return False
-        except Exception as e:
-            if self.verbosity >= 3:
-                import traceback
-                display.v(traceback.format_exc())
-            display.error(to_text(e))
+        except Exception as ex:
+            display.error(ex)
             return False
 
     def emptyline(self):
@@ -571,7 +573,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         histfile = os.path.join(os.path.expanduser("~"), ".ansible-console_history")
         try:
             readline.read_history_file(histfile)
-        except IOError:
+        except OSError:
             pass
 
         atexit.register(readline.write_history_file, histfile)

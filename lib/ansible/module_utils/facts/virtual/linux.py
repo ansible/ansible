@@ -129,7 +129,7 @@ class LinuxVirtual(Virtual):
                 for line in get_file_lines('/proc/xen/capabilities'):
                     if "control_d" in line:
                         is_xen_host = True
-            except IOError:
+            except OSError:
                 pass
 
             if is_xen_host:
@@ -151,7 +151,7 @@ class LinuxVirtual(Virtual):
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
         product_family = get_file_content('/sys/devices/virtual/dmi/id/product_family')
 
-        if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
+        if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV', 'CloudStack KVM Hypervisor'):
             guest_tech.add('kvm')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'kvm'
@@ -201,7 +201,7 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'virtualbox'
                 found_virt = True
 
-        if bios_vendor in ('Amazon EC2', 'DigitalOcean', 'Hetzner'):
+        if bios_vendor in ('Amazon EC2', 'DigitalOcean', 'Hetzner', 'Linode'):
             guest_tech.add('kvm')
             if not found_virt:
                 virtual_facts['virtualization_type'] = 'kvm'

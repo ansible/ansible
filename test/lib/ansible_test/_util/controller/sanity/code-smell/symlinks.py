@@ -1,4 +1,5 @@
 """Check for unwanted symbolic links."""
+
 from __future__ import annotations
 
 import os

@@ -1,4 +1,0 @@
-minor_changes:
-  - "ansible-test acme test container - bump `version to 2.3.0 <https://github.com/ansible/acme-test-container/releases/tag/2.3.0>`__
-     to include newer versions of Pebble, dependencies, and runtimes. This adds support for ACME profiles, ``dns-account-01`` support,
-     and some smaller improvements (https://github.com/ansible/ansible/pull/84547)."

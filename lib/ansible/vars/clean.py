@@ -10,7 +10,6 @@ from collections.abc import MutableMapping, MutableSequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils import six
 from ansible.plugins.loader import connection_loader
 from ansible.utils.display import Display
 
@@ -42,13 +41,13 @@ def module_response_deepcopy(v):
     backwards compatibility, in case we need to extend this function
     to handle our specific needs:
 
-    * ``ansible.executor.task_result.TaskResult.clean_copy``
+    * ``ansible.executor.task_result._RawTaskResult.as_callback_task_result``
     * ``ansible.vars.clean.clean_facts``
     * ``ansible.vars.namespace_facts``
     """
     if isinstance(v, dict):
         ret = v.copy()
-        items = six.iteritems(ret)
+        items = ret.items()
     elif isinstance(v, list):
         ret = v[:]
         items = enumerate(ret)
@@ -80,7 +79,7 @@ def strip_internal_keys(dirty, exceptions=None):
 
         # listify to avoid updating dict while iterating over it
         for k in list(dirty.keys()):
-            if isinstance(k, six.string_types):
+            if isinstance(k, str):
                 if k.startswith('_ansible_') and k not in exceptions:
                     del dirty[k]
                     continue

@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 name: powershell
 version_added: historical
 short_description: Windows PowerShell
@@ -12,18 +12,22 @@ description:
 - Can also be used when using 'ssh' as a connection plugin and the C(DefaultShell) has been configured to PowerShell.
 extends_documentation_fragment:
 - shell_windows
-'''
+"""
 
 import base64
 import os
 import re
 import shlex
-import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
+from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script, _get_powershell_script
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.plugins.shell import ShellBase
+from ansible.plugins.shell import ShellBase, _ShellCommand
+from ansible.utils.display import Display
+
+
+display = Display()
 
 # This is weird, we are matching on byte sequences that match the utf-16-be
 # matches for '_x(a-fA-F0-9){4}_'. The \x00 and {4} will match the hex sequence
@@ -221,30 +225,64 @@ class ShellModule(ShellBase):
     def remove(self, path, recurse=False):
         path = self._escape(self._unquote(path))
         if recurse:
-            return self._encode_script('''Remove-Item '%s' -Force -Recurse;''' % path)
+            return self._encode_script("""Remove-Item '%s' -Force -Recurse;""" % path)
         else:
-            return self._encode_script('''Remove-Item '%s' -Force;''' % path)
+            return self._encode_script("""Remove-Item '%s' -Force;""" % path)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
-        # Windows does not have an equivalent for the system temp files, so
-        # the param is ignored
+    def mkdtemp(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> str:
+        # This is not called in Ansible anymore but it is kept for backwards
+        # compatibility in case other action plugins outside Ansible calls this.
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = self._escape(tmpdir if tmpdir else self.get_option('remote_tmp'))
 
-        script = f'''
+        script = f"""
         {self._CONSOLE_ENCODING}
         $tmp_path = [System.Environment]::ExpandEnvironmentVariables('{basetmpdir}')
         $tmp = New-Item -Type Directory -Path $tmp_path -Name '{basefile}'
         Write-Output -InputObject $tmp.FullName
-        '''
+        """
         return self._encode_script(script.strip())
 
-    def expand_user(self, user_home_path, username=''):
-        # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
-        # not seem to work remotely, though by default we are always starting
-        # in the user's home directory.
+    def _mkdtemp2(
+        self,
+        basefile: str | None = None,
+        system: bool = False,
+        mode: int = 0o700,
+        tmpdir: str | None = None,
+    ) -> _ShellCommand:
+        # Windows does not have an equivalent for the system temp files, so
+        # the param is ignored
+        if not basefile:
+            basefile = self.__class__._generate_temp_dir_name()
+
+        basefile = self._unquote(basefile)
+        basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
+
+        script, stdin = _bootstrap_powershell_script("powershell_mkdtemp.ps1", {
+            'Directory': basetmpdir,
+            'Name': basefile,
+        })
+
+        return _ShellCommand(
+            command=self._encode_script(script),
+            input_data=stdin,
+        )
+
+    def expand_user(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> str:
+        # This is not called in Ansible anymore but it is kept for backwards
+        # compatibility in case other actions plugins outside Ansible called this.
         user_home_path = self._unquote(user_home_path)
         if user_home_path == '~':
             script = 'Write-Output (Get-Location).Path'
@@ -254,9 +292,24 @@ class ShellModule(ShellBase):
             script = "Write-Output '%s'" % self._escape(user_home_path)
         return self._encode_script(f"{self._CONSOLE_ENCODING}; {script}")
 
+    def _expand_user2(
+        self,
+        user_home_path: str,
+        username: str = '',
+    ) -> _ShellCommand:
+        user_home_path = self._unquote(user_home_path)
+        script, stdin = _bootstrap_powershell_script("powershell_expand_user.ps1", {
+            'Path': user_home_path,
+        })
+
+        return _ShellCommand(
+            command=self._encode_script(script),
+            input_data=stdin,
+        )
+
     def exists(self, path):
         path = self._escape(self._unquote(path))
-        script = '''
+        script = """
             If (Test-Path '%s')
             {
                 $res = 0;
@@ -267,12 +320,17 @@ class ShellModule(ShellBase):
             }
             Write-Output '$res';
             Exit $res;
-         ''' % path
+         """ % path
         return self._encode_script(script)
 
     def checksum(self, path, *args, **kwargs):
+        display.deprecated(
+            msg="The `ShellModule.checksum` method is deprecated.",
+            version="2.23",
+            help_text="Use `ActionBase._execute_remote_stat()` instead.",
+        )
         path = self._escape(self._unquote(path))
-        script = '''
+        script = """
             If (Test-Path -PathType Leaf '%(path)s')
             {
                 $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
@@ -288,11 +346,11 @@ class ShellModule(ShellBase):
             {
                 Write-Output "1";
             }
-        ''' % dict(path=path)
+        """ % dict(path=path)
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
-        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
+        bootstrap_wrapper = _get_powershell_script("bootstrap_wrapper.ps1")
 
         # pipelining bypass
         if cmd == '':
@@ -303,18 +361,35 @@ class ShellModule(ShellBase):
         cmd_parts = shlex.split(cmd, posix=False)
         cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
-            if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
-                # we're running a module via the bootstrap wrapper
-                cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
-            return wrapper_cmd
+            if arg_path:
+                # Running a module without the exec_wrapper and with an argument
+                # file.
+                script_path = self._unquote(cmd_parts[0])
+                if not script_path.lower().endswith('.ps1'):
+                    script_path += '.ps1'
+
+                cmd_parts.insert(0, '-File')
+                cmd_parts[1] = f'"{script_path}"'
+                if arg_path:
+                    cmd_parts.append(f'"{arg_path}"')
+
+                wrapper_cmd = " ".join(_common_args + cmd_parts)
+                return wrapper_cmd
+
+            else:
+                # Running a module with ANSIBLE_KEEP_REMOTE_FILES=true, the script
+                # arg is actually the input manifest JSON to provide to the bootstrap
+                # wrapper.
+                wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
+                return wrapper_cmd
+
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:
             # The module is assumed to be a binary
             cmd_parts[0] = self._unquote(cmd_parts[0])
             cmd_parts.append(arg_path)
-        script = '''
+        script = """
             Try
             {
                 %s
@@ -349,7 +424,7 @@ class ShellModule(ShellBase):
                 Echo $_obj | ConvertTo-Json -Compress -Depth 99
                 Exit 1
             }
-        ''' % (env_string, ' '.join(cmd_parts))
+        """ % (env_string, ' '.join(cmd_parts))
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):

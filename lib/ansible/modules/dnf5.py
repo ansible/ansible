@@ -178,14 +178,10 @@ options:
         packages to install (because dependencies between the downgraded
         package and others can cause changes to the packages which were
         in the earlier transaction).
+      - Since this feature is not provided by C(dnf5) itself but by M(ansible.builtin.dnf5) module,
+        using this in combination with wildcard characters in O(name) may result in an unexpected results.
     type: bool
     default: "no"
-  install_repoquery:
-    description:
-      - This is effectively a no-op in DNF as it is not needed with DNF.
-      - This option is deprecated and will be removed in ansible-core 2.20.
-    type: bool
-    default: "yes"
   download_only:
     description:
       - Only download the packages, do not install them.
@@ -364,9 +360,11 @@ from ansible.module_utils.common.respawn import has_respawned, probe_interpreter
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
 libdnf5 = None
+# Through dnf5-5.2.12 all exceptions raised through swig became RuntimeError
+LIBDNF5_ERRORS = RuntimeError
 
 
-def is_installed(base, spec):
+def get_resolve_spec_settings():
     settings = libdnf5.base.ResolveSpecSettings()
     try:
         settings.set_group_with_name(True)
@@ -378,49 +376,48 @@ def is_installed(base, spec):
         # If users wish to target the `sssd` binary they can by specifying the full path `name=/usr/sbin/sssd` explicitly
         # due to settings.set_with_filenames(True) being default.
         settings.set_with_binaries(False)
+        # Disable checking whether SPEC is provided by an installed package.
+        # Consider following real scenario from the rpmfusion repo:
+        #   * the `ffmpeg-libs` package is installed and provides `libavcodec-freeworld`
+        #   * but `libavcodec-freeworld` is NOT installed (???)
+        #   * due to `set_with_provides(True)` being default `is_installed(base, "libavcodec-freeworld")`
+        #     would  "unexpectedly" return True
+        # We disable provides only for this `is_installed` check, for actual installation we leave the default
+        # setting to mirror the dnf cmdline behavior.
+        settings.set_with_provides(False)
     except AttributeError:
         # dnf5 < 5.2.0.0
         settings.group_with_name = True
         settings.with_binaries = False
+        settings.with_provides = False
+    return settings
+
+
+def is_installed(base, spec):
+    settings = get_resolve_spec_settings()
 
     installed_query = libdnf5.rpm.PackageQuery(base)
     installed_query.filter_installed()
     match, nevra = installed_query.resolve_pkg_spec(spec, settings, True)
-
-    # FIXME use `is_glob_pattern` function when available:
-    # https://github.com/rpm-software-management/dnf5/issues/1563
-    glob_patterns = set("*[?")
-    if any(set(char) & glob_patterns for char in spec):
-        available_query = libdnf5.rpm.PackageQuery(base)
-        available_query.filter_available()
-        available_query.resolve_pkg_spec(spec, settings, True)
-
-        return not (
-            {p.get_name() for p in available_query} - {p.get_name() for p in installed_query}
-        )
-    else:
-        return match
+    return match
 
 
 def is_newer_version_installed(base, spec):
-    # FIXME investigate whether this function can be replaced by dnf5's allow_downgrade option
+    # expects a versioned package spec
     if "/" in spec:
         spec = spec.split("/")[-1]
         if spec.endswith(".rpm"):
             spec = spec[:-4]
 
-    try:
-        spec_nevra = next(iter(libdnf5.rpm.Nevra.parse(spec)))
-    except (RuntimeError, StopIteration):
+    settings = get_resolve_spec_settings()
+    match, spec_nevra = libdnf5.rpm.PackageQuery(base).resolve_pkg_spec(spec, settings, True)
+    if not match or spec_nevra.has_just_name():
         return False
-
-    spec_version = spec_nevra.get_version()
-    if not spec_version:
-        return False
+    spec_name = spec_nevra.get_name()
 
     installed = libdnf5.rpm.PackageQuery(base)
     installed.filter_installed()
-    installed.filter_name([spec_nevra.get_name()])
+    installed.filter_name([spec_name])
     installed.filter_latest_evr()
     try:
         installed_package = list(installed)[-1]
@@ -428,8 +425,8 @@ def is_newer_version_installed(base, spec):
         return False
 
     target = libdnf5.rpm.PackageQuery(base)
-    target.filter_name([spec_nevra.get_name()])
-    target.filter_version([spec_version])
+    target.filter_name([spec_name])
+    target.filter_version([spec_nevra.get_version()])
     spec_release = spec_nevra.get_release()
     if spec_release:
         target.filter_release([spec_release])
@@ -505,11 +502,18 @@ class Dnf5Module(YumDnf):
         os.environ["LANGUAGE"] = os.environ["LANG"] = locale
 
         global libdnf5
+        global LIBDNF5_ERRORS
         has_dnf = True
         try:
             import libdnf5  # type: ignore[import]
         except ImportError:
             has_dnf = False
+
+        try:
+            import libdnf5.exception  # type: ignore[import-not-found]
+            LIBDNF5_ERRORS = (libdnf5.exception.Error, libdnf5.exception.NonLibdnf5Exception)
+        except (ImportError, AttributeError):
+            pass
 
         if has_dnf:
             return
@@ -562,15 +566,7 @@ class Dnf5Module(YumDnf):
         if self.conf_file:
             conf.config_file_path = self.conf_file
 
-        try:
-            base.load_config()
-        except RuntimeError as e:
-            self.module.fail_json(
-                msg=str(e),
-                conf_file=self.conf_file,
-                failures=[],
-                rc=1,
-            )
+        base.load_config()
 
         if self.releasever is not None:
             variables = base.get_vars()
@@ -588,7 +584,14 @@ class Dnf5Module(YumDnf):
         elif self.best is not None:
             conf.best = self.best
         conf.install_weak_deps = self.install_weak_deps
-        conf.gpgcheck = not self.disable_gpg_check
+        try:
+            # raises AttributeError only on getter if not available
+            conf.pkg_gpgcheck   # pylint: disable=pointless-statement
+        except AttributeError:
+            # dnf5 < 5.2.7.0
+            conf.gpgcheck = not self.disable_gpg_check
+        else:
+            conf.pkg_gpgcheck = not self.disable_gpg_check
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
         conf.clean_requirements_on_remove = self.autoremove
@@ -696,6 +699,7 @@ class Dnf5Module(YumDnf):
             if self.security:
                 types.append("security")
             advisory_query.filter_type(types)
+            conf.skip_unavailable = True  # ignore packages that are of a different type, for backwards compat
             settings.set_advisory_filter(advisory_query)
 
         goal = libdnf5.base.Goal(base)
@@ -704,8 +708,26 @@ class Dnf5Module(YumDnf):
             goal.add_rpm_upgrade(settings)
         elif self.state in {"installed", "present", "latest"}:
             upgrade = self.state == "latest"
+            # FIXME use `is_glob_pattern` function when available:
+            # https://github.com/rpm-software-management/dnf5/issues/1563
+            glob_patterns = set("*[?")
             for spec in self.names:
-                if is_newer_version_installed(base, spec):
+                if any(set(char) & glob_patterns for char in spec):
+                    # Special case for package specs that contain glob characters.
+                    # For these we skip `is_installed` and `is_newer_version_installed` tests that allow for the
+                    # allow_downgrade feature and pass the package specs to dnf.
+                    # Since allow_downgrade is not available in dnf and while it is relatively easy to implement it for
+                    # package specs that evaluate to a single package, trying to mimic what would the dnf machinery do
+                    # for glob package specs and then filtering those for allow_downgrade appears to always
+                    # result in naive/inferior solution.
+                    # TODO reasearch how feasible it is to implement the above
+                    if upgrade:
+                        # for upgrade we pass the spec to both upgrade and install, to satisfy both available and installed
+                        # packages evaluated from the glob spec
+                        goal.add_upgrade(spec, settings)
+                    if not self.update_only:
+                        goal.add_install(spec, settings)
+                elif is_newer_version_installed(base, spec):
                     if self.allow_downgrade:
                         goal.add_install(spec, settings)
                 elif is_installed(base, spec):
@@ -718,19 +740,13 @@ class Dnf5Module(YumDnf):
                         goal.add_install(spec, settings)
         elif self.state in {"absent", "removed"}:
             for spec in self.names:
-                try:
-                    goal.add_remove(spec, settings)
-                except RuntimeError as e:
-                    self.module.fail_json(msg=str(e), failures=[], rc=1)
+                goal.add_remove(spec, settings)
             if self.autoremove:
                 for pkg in get_unneeded_pkgs(base):
                     goal.add_rpm_remove(pkg, settings)
 
         goal.set_allow_erasing(self.allowerasing)
-        try:
-            transaction = goal.resolve()
-        except RuntimeError as e:
-            self.module.fail_json(msg=str(e), failures=[], rc=1)
+        transaction = goal.resolve()
 
         if transaction.get_problems():
             failures = []
@@ -771,7 +787,7 @@ class Dnf5Module(YumDnf):
         if self.module.check_mode:
             if results:
                 msg = "Check mode: No changes made, but would have if not in check mode"
-        else:
+        elif changed:
             transaction.download()
             if not self.download_only:
                 transaction.set_description("ansible dnf5 module")
@@ -806,7 +822,11 @@ def main():
             auto_install_module_deps=dict(type="bool", default=True),
         )
     )
-    Dnf5Module(AnsibleModule(**yumdnf_argument_spec)).run()
+    module = AnsibleModule(**yumdnf_argument_spec)
+    try:
+        Dnf5Module(module).run()
+    except LIBDNF5_ERRORS as e:
+        module.fail_json(msg=str(e), failures=[], rc=1)
 
 
 if __name__ == "__main__":

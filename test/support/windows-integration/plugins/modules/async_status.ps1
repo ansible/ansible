@@ -17,7 +17,7 @@ $log_path = [System.IO.Path]::Combine($async_dir, $jid)
 
 If(-not $(Test-Path $log_path))
 {
-    Fail-Json @{ansible_job_id=$jid; started=1; finished=1} "could not find job at '$async_dir'"
+    Fail-Json @{ansible_job_id=$jid; started=$true; finished=$true} "could not find job at '$async_dir'"
 }
 
 If($mode -eq "cleanup") {
@@ -48,11 +48,11 @@ Catch {
 }
 
 If (-not $data.ContainsKey("started")) {
-    $data['finished'] = 1
+    $data['finished'] = $true
     $data['ansible_job_id'] = $jid
 }
 ElseIf (-not $data.ContainsKey("finished")) {
-    $data['finished'] = 0
+    $data['finished'] = $false
 }
 
 Exit-Json $data

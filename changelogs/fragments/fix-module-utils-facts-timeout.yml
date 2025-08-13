@@ -1,2 +1,0 @@
-bugfixes:
-  - Use the requested error message in the ansible.module_utils.facts.timeout timeout function instead of hardcoding one.

@@ -6,34 +6,40 @@
 
 from __future__ import annotations
 
+import functools
 import glob
 import os
 import os.path
 import pkgutil
 import sys
+import types
 import warnings
+import typing as t
+
+import yaml
 
 from collections import defaultdict, namedtuple
 from importlib import import_module
-from traceback import format_exc
-
-import ansible.module_utils.compat.typing as t
-
-from .filter import AnsibleJinja2Filter
-from .test import AnsibleJinja2Test
+from yaml.parser import ParserError
 
 from ansible import __version__ as ansible_version
-from ansible import constants as C
+from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
-from ansible.module_utils.six import string_types
-from ansible.parsing.utils.yaml import from_yaml
+from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
+from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, AnsibleJinja2Plugin
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
+from ansible._internal._datatag import _tags
+
+from . import _AnsiblePluginInfoMixin
+from .filter import AnsibleJinja2Filter
+from .test import AnsibleJinja2Test
+from .._internal._plugins import _cache
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
 
@@ -46,14 +52,26 @@ except ImportError:
 
 import importlib.util
 
+if t.TYPE_CHECKING:
+    from ansible.plugins.cache import BaseCacheModule
+
 _PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
 
 
-def get_all_plugin_loaders():
+@functools.cache
+def get_all_plugin_loaders() -> list[tuple[str, 'PluginLoader']]:
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
+
+
+@functools.cache
+def get_plugin_loader_namespace() -> types.SimpleNamespace:
+    ns = types.SimpleNamespace()
+    for name, obj in get_all_plugin_loaders():
+        setattr(ns, name, obj)
+    return ns
 
 
 def add_all_plugin_dirs(path):
@@ -77,7 +95,7 @@ def get_shell_plugin(shell_type=None, executable=None):
 
         # mostly for backwards compat
         if executable:
-            if isinstance(executable, string_types):
+            if isinstance(executable, str):
                 shell_filename = os.path.basename(executable)
                 try:
                     shell = shell_loader.get(shell_filename)
@@ -116,29 +134,44 @@ class PluginPathContext(object):
 
 
 class PluginLoadContext(object):
-    def __init__(self):
-        self.original_name = None
-        self.redirect_list = []
-        self.error_list = []
-        self.import_error_list = []
-        self.load_attempts = []
-        self.pending_redirect = None
-        self.exit_reason = None
-        self.plugin_resolved_path = None
-        self.plugin_resolved_name = None
-        self.plugin_resolved_collection = None  # empty string for resolved plugins from user-supplied paths
-        self.deprecated = False
-        self.removal_date = None
-        self.removal_version = None
-        self.deprecation_warnings = []
-        self.resolved = False
-        self._resolved_fqcn = None
-        self.action_plugin = None
+    def __init__(self, plugin_type: str, legacy_package_name: str) -> None:
+        self.original_name: str | None = None
+        self.redirect_list: list[str] = []
+        self.raw_error_list: list[Exception] = []
+        """All exception instances encountered during the plugin load."""
+        self.error_list: list[str] = []
+        """Stringified exceptions, excluding import errors."""
+        self.import_error_list: list[Exception] = []
+        """All ImportError exception instances encountered during the plugin load."""
+        self.load_attempts: list[str] = []
+        self.pending_redirect: str | None = None
+        self.exit_reason: str | None = None
+        self.plugin_resolved_path: str | None = None
+        self.plugin_resolved_name: str | None = None
+        """For collection plugins, the resolved Python module FQ __name__; for non-collections, the short name."""
+        self.plugin_resolved_collection: str | None = None  # empty string for resolved plugins from user-supplied paths
+        """For collection plugins, the resolved collection {ns}.{col}; empty string for non-collection plugins."""
+        self.deprecated: bool = False
+        self.removal_date: str | None = None
+        self.removal_version: str | None = None
+        self.deprecation_warnings: list[str] = []
+        self.resolved: bool = False
+        self._resolved_fqcn: str | None = None
+        self.action_plugin: str | None = None
+        self._plugin_type: str = plugin_type
+        """The type of the plugin."""
+        self._legacy_package_name = legacy_package_name
+        """The legacy sys.modules package name from the plugin loader instance; stored to prevent potentially incorrect manual computation."""
+        self._python_module_name: str | None = None
+        """
+        The fully qualified Python module name for the plugin (accessible via `sys.modules`).
+        For non-collection non-core plugins, this may include a non-existent synthetic package element with a hash of the file path to avoid collisions.
+        """
 
     @property
-    def resolved_fqcn(self):
+    def resolved_fqcn(self) -> str | None:
         if not self.resolved:
-            return
+            return None
 
         if not self._resolved_fqcn:
             final_plugin = self.redirect_list[-1]
@@ -150,7 +183,7 @@ class PluginLoadContext(object):
 
         return self._resolved_fqcn
 
-    def record_deprecation(self, name, deprecation, collection_name):
+    def record_deprecation(self, name: str, deprecation: dict[str, t.Any] | None, collection_name: str) -> t.Self:
         if not deprecation:
             return self
 
@@ -164,7 +197,12 @@ class PluginLoadContext(object):
             removal_version = None
         warning_text = '{0} has been deprecated.{1}{2}'.format(name, ' ' if warning_text else '', warning_text)
 
-        display.deprecated(warning_text, date=removal_date, version=removal_version, collection_name=collection_name)
+        display.deprecated(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+            msg=warning_text,
+            date=removal_date,
+            version=removal_version,
+            deprecator=deprecator_from_collection_name(collection_name),
+        )
 
         self.deprecated = True
         if removal_date:
@@ -174,27 +212,78 @@ class PluginLoadContext(object):
         self.deprecation_warnings.append(warning_text)
         return self
 
-    def resolve(self, resolved_name, resolved_path, resolved_collection, exit_reason, action_plugin):
+    def resolve(self, resolved_name: str, resolved_path: str, resolved_collection: str, exit_reason: str, action_plugin: str) -> t.Self:
+        """Record a resolved collection plugin."""
         self.pending_redirect = None
         self.plugin_resolved_name = resolved_name
         self.plugin_resolved_path = resolved_path
         self.plugin_resolved_collection = resolved_collection
         self.exit_reason = exit_reason
+        self._python_module_name = resolved_name
         self.resolved = True
         self.action_plugin = action_plugin
+
         return self
 
-    def redirect(self, redirect_name):
+    def resolve_legacy(self, name: str, pull_cache: dict[str, PluginPathContext]) -> t.Self:
+        """Record a resolved legacy plugin."""
+        plugin_path_context = pull_cache[name]
+
+        self.plugin_resolved_name = name
+        self.plugin_resolved_path = plugin_path_context.path
+        self.plugin_resolved_collection = 'ansible.builtin' if plugin_path_context.internal else ''
+        self._resolved_fqcn = 'ansible.builtin.' + name if plugin_path_context.internal else name
+        self._python_module_name = self._make_legacy_python_module_name()
+        self.resolved = True
+
+        return self
+
+    def resolve_legacy_jinja_plugin(self, name: str, known_plugin: AnsibleJinja2Plugin) -> t.Self:
+        """Record a resolved legacy Jinja plugin."""
+        internal = known_plugin.ansible_name.startswith('ansible.builtin.')
+
+        self.plugin_resolved_name = name
+        self.plugin_resolved_path = known_plugin._original_path
+        self.plugin_resolved_collection = 'ansible.builtin' if internal else ''
+        self._resolved_fqcn = known_plugin.ansible_name
+        self._python_module_name = self._make_legacy_python_module_name()
+        self.resolved = True
+
+        return self
+
+    def redirect(self, redirect_name: str) -> t.Self:
         self.pending_redirect = redirect_name
         self.exit_reason = 'pending redirect resolution from {0} to {1}'.format(self.original_name, redirect_name)
         self.resolved = False
+
         return self
 
-    def nope(self, exit_reason):
+    def nope(self, exit_reason: str) -> t.Self:
         self.pending_redirect = None
         self.exit_reason = exit_reason
         self.resolved = False
+
         return self
+
+    def _make_legacy_python_module_name(self) -> str:
+        """
+        Generate a fully-qualified Python module name for a legacy/builtin plugin.
+
+        The same package namespace is shared for builtin and legacy plugins.
+        Explicit requests for builtins via `ansible.builtin` are handled elsewhere with an aliased collection package resolved by the collection loader.
+        Only unqualified and `ansible.legacy`-qualified requests land here; whichever plugin is visible at the time will end up in sys.modules.
+        Filter and test plugin host modules receive special name suffixes to avoid collisions unrelated to the actual plugin name.
+        """
+        name = os.path.splitext(self.plugin_resolved_path)[0]
+        basename = os.path.basename(name)
+
+        if self._plugin_type in ('filter', 'test'):
+            # Unlike other plugin types, filter and test plugin names are independent of the file where they are defined.
+            # As a result, the Python module name must be derived from the full path of the plugin.
+            # This prevents accidental shadowing of unrelated plugins of the same type.
+            basename += f'_{abs(hash(self.plugin_resolved_path))}'
+
+        return f'{self._legacy_package_name}.{basename}'
 
 
 class PluginLoader:
@@ -205,7 +294,15 @@ class PluginLoader:
     paths, and the python path.  The first match is used.
     """
 
-    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
+    def __init__(
+        self,
+        class_name: str,
+        package: str,
+        config: str | list[str],
+        subdir: str,
+        aliases: dict[str, str] | None = None,
+        required_base_class: str | None = None,
+    ) -> None:
         aliases = {} if aliases is None else aliases
 
         self.class_name = class_name
@@ -231,15 +328,15 @@ class PluginLoader:
             PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
 
         # hold dirs added at runtime outside of config
-        self._extra_dirs = []
+        self._extra_dirs: list[str] = []
 
         # caches
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
-        self._plugin_instance_cache = {} if self.subdir == 'vars_plugins' else None
+        self._plugin_instance_cache: dict[str, tuple[object, PluginLoadContext]] | None = {} if self.subdir == 'vars_plugins' else None
 
-        self._searched_paths = set()
+        self._searched_paths: set[str] = set()
 
     @property
     def type(self):
@@ -407,15 +504,19 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
-                dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                # trust-tagged source propagates to loaded values; expressions and templates in config require trust
+                documentation_source = _tags.TrustedAsTemplate().tag(getattr(module, 'DOCUMENTATION', ''))
+                try:
+                    dstring = yaml.load(_tags.Origin(path=path).tag(documentation_source), Loader=AnsibleLoader)
+                except ParserError as e:
+                    raise AnsibleError(f"plugin {name} has malformed documentation!") from e
 
                 # TODO: allow configurable plugins to use sidecar
                 # if not dstring:
                 #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
-                #     # TODO: dstring = AnsibleLoader(, file_name=path).get_single_data()
 
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
+                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'), section='DOCUMENTATION')
 
                     if 'options' in dstring and isinstance(dstring['options'], dict):
                         C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
@@ -466,7 +567,13 @@ class PluginLoader:
             entry = collection_meta.get('plugin_routing', {}).get(plugin_type, {}).get(subdir_qualified_resource, None)
         return entry
 
-    def _find_fq_plugin(self, fq_name, extension, plugin_load_context, ignore_deprecated=False):
+    def _find_fq_plugin(
+        self,
+        fq_name: str,
+        extension: str | None,
+        plugin_load_context: PluginLoadContext,
+        ignore_deprecated: bool = False,
+    ) -> PluginLoadContext:
         """Search builtin paths to find a plugin. No external paths are searched,
         meaning plugins inside roles inside collections will be ignored.
         """
@@ -496,15 +603,20 @@ class PluginLoader:
                 removal_date = tombstone.get('removal_date')
                 removal_version = tombstone.get('removal_version')
                 warning_text = tombstone.get('warning_text') or ''
-                warning_text = '{0} has been removed.{1}{2}'.format(fq_name, ' ' if warning_text else '', warning_text)
-                removed_msg = display.get_deprecation_message(msg=warning_text, version=removal_version,
-                                                              date=removal_date, removed=True,
-                                                              collection_name=acr.collection)
-                plugin_load_context.removal_date = removal_date
-                plugin_load_context.removal_version = removal_version
+                warning_plugin_type = "module" if self.type == "modules" else f'{self.type} plugin'
+                warning_text = f'The {fq_name!r} {warning_plugin_type} has been removed.{" " if warning_text else ""}{warning_text}'
+                removed_msg = display._get_deprecation_message_with_plugin_info(
+                    msg=warning_text,
+                    version=removal_version,
+                    date=removal_date,
+                    removed=True,
+                    deprecator=deprecator_from_collection_name(acr.collection),
+                )
+                plugin_load_context.date = removal_date
+                plugin_load_context.version = removal_version
                 plugin_load_context.resolved = True
                 plugin_load_context.exit_reason = removed_msg
-                raise AnsiblePluginRemovedError(removed_msg, plugin_load_context=plugin_load_context)
+                raise AnsiblePluginRemovedError(message=removed_msg, plugin_load_context=plugin_load_context)
 
             redirect = routing_metadata.get('redirect', None)
 
@@ -561,7 +673,7 @@ class PluginLoader:
         # look for any matching extension in the package location (sans filter)
         found_files = [f
                        for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*')
-                       if os.path.isfile(f) and not f.endswith(C.MODULE_IGNORE_EXTS)]
+                       if os.path.isfile(f) and not any(f.endswith(ext) for ext in C.MODULE_IGNORE_EXTS)]
 
         if not found_files:
             return plugin_load_context.nope('failed fuzzy extension match for {0} in {1}'.format(full_name, acr.collection))
@@ -583,9 +695,16 @@ class PluginLoader:
 
         return None
 
-    def find_plugin_with_context(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
+    def find_plugin_with_context(
+        self,
+        name: str,
+        mod_type: str = '',
+        ignore_deprecated: bool = False,
+        check_aliases: bool = False,
+        collection_list: list[str] | None = None,
+    ) -> PluginLoadContext:
         """ Find a plugin named name, returning contextual info about the load, recursively resolving redirection """
-        plugin_load_context = PluginLoadContext()
+        plugin_load_context = PluginLoadContext(self.type, self.package)
         plugin_load_context.original_name = name
         while True:
             result = self._resolve_plugin_step(name, mod_type, ignore_deprecated, check_aliases, collection_list, plugin_load_context=plugin_load_context)
@@ -598,11 +717,8 @@ class PluginLoader:
             else:
                 break
 
-        # TODO: smuggle these to the controller when we're in a worker, reduce noise from normal things like missing plugin packages during collection search
-        if plugin_load_context.error_list:
-            display.warning("errors were encountered during the plugin load for {0}:\n{1}".format(name, plugin_load_context.error_list))
-
-        # TODO: display/return import_error_list? Only useful for forensics...
+        for ex in plugin_load_context.raw_error_list:
+            display.error_as_warning(f"Error loading plugin {name!r}.", ex)
 
         # FIXME: store structured deprecation data in PluginLoadContext and use display.deprecate
         # if plugin_load_context.deprecated and C.config.get_config_value('DEPRECATION_WARNINGS'):
@@ -612,9 +728,15 @@ class PluginLoader:
 
         return plugin_load_context
 
-    # FIXME: name bikeshed
-    def _resolve_plugin_step(self, name, mod_type='', ignore_deprecated=False,
-                             check_aliases=False, collection_list=None, plugin_load_context=PluginLoadContext()):
+    def _resolve_plugin_step(
+        self,
+        name: str,
+        mod_type: str = '',
+        ignore_deprecated: bool = False,
+        check_aliases: bool = False,
+        collection_list: list[str] | None = None,
+        plugin_load_context: PluginLoadContext | None = None,
+    ) -> PluginLoadContext:
         if not plugin_load_context:
             raise ValueError('A PluginLoadContext is required')
 
@@ -669,11 +791,14 @@ class PluginLoader:
                 except (AnsiblePluginRemovedError, AnsiblePluginCircularRedirect, AnsibleCollectionUnsupportedVersionError):
                     # these are generally fatal, let them fly
                     raise
-                except ImportError as ie:
-                    plugin_load_context.import_error_list.append(ie)
                 except Exception as ex:
-                    # FIXME: keep actual errors, not just assembled messages
-                    plugin_load_context.error_list.append(to_native(ex))
+                    plugin_load_context.raw_error_list.append(ex)
+
+                    # DTFIX-FUTURE: can we deprecate/remove these stringified versions?
+                    if isinstance(ex, ImportError):
+                        plugin_load_context.import_error_list.append(ex)
+                    else:
+                        plugin_load_context.error_list.append(str(ex))
 
             if plugin_load_context.error_list:
                 display.debug(msg='plugin lookup for {0} failed; errors: {1}'.format(name, '; '.join(plugin_load_context.error_list)))
@@ -699,13 +824,7 @@ class PluginLoader:
         # requested mod_type
         pull_cache = self._plugin_path_cache[suffix]
         try:
-            path_with_context = pull_cache[name]
-            plugin_load_context.plugin_resolved_path = path_with_context.path
-            plugin_load_context.plugin_resolved_name = name
-            plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
-            plugin_load_context._resolved_fqcn = ('ansible.builtin.' + name if path_with_context.internal else name)
-            plugin_load_context.resolved = True
-            return plugin_load_context
+            return plugin_load_context.resolve_legacy(name=name, pull_cache=pull_cache)
         except KeyError:
             # Cache miss.  Now let's find the plugin
             pass
@@ -758,13 +877,7 @@ class PluginLoader:
 
             self._searched_paths.add(path)
             try:
-                path_with_context = pull_cache[name]
-                plugin_load_context.plugin_resolved_path = path_with_context.path
-                plugin_load_context.plugin_resolved_name = name
-                plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
-                plugin_load_context._resolved_fqcn = 'ansible.builtin.' + name if path_with_context.internal else name
-                plugin_load_context.resolved = True
-                return plugin_load_context
+                return plugin_load_context.resolve_legacy(name=name, pull_cache=pull_cache)
             except KeyError:
                 # Didn't find the plugin in this directory. Load modules from the next one
                 pass
@@ -772,18 +885,18 @@ class PluginLoader:
         # if nothing is found, try finding alias/deprecated
         if not name.startswith('_'):
             alias_name = '_' + name
-            # We've already cached all the paths at this point
-            if alias_name in pull_cache:
-                path_with_context = pull_cache[alias_name]
-                if not ignore_deprecated and not os.path.islink(path_with_context.path):
-                    # FIXME: this is not always the case, some are just aliases
-                    display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
-                                       'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))
-                plugin_load_context.plugin_resolved_path = path_with_context.path
-                plugin_load_context.plugin_resolved_name = alias_name
-                plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
-                plugin_load_context._resolved_fqcn = 'ansible.builtin.' + alias_name if path_with_context.internal else alias_name
-                plugin_load_context.resolved = True
+
+            try:
+                plugin_load_context.resolve_legacy(name=alias_name, pull_cache=pull_cache)
+            except KeyError:
+                pass
+            else:
+                display.deprecated(
+                    msg=f'Plugin {name!r} automatically redirected to {alias_name!r}.',
+                    help_text=f'Use {alias_name!r} instead of {name!r} to refer to the plugin.',
+                    version='2.23',
+                )
+
                 return plugin_load_context
 
         # last ditch, if it's something that can be redirected, look for a builtin redirect before giving up
@@ -793,7 +906,7 @@ class PluginLoader:
 
         return plugin_load_context.nope('{0} is not eligible for last-chance resolution'.format(name))
 
-    def has_plugin(self, name, collection_list=None):
+    def has_plugin(self, name: str, collection_list: list[str] | None = None) -> bool:
         """ Checks if a plugin named name exists """
 
         try:
@@ -804,45 +917,49 @@ class PluginLoader:
             # log and continue, likely an innocuous type/package loading failure in collections import
             display.debug('has_plugin error: {0}'.format(to_text(ex)))
 
+            return False
+
     __contains__ = has_plugin
 
-    def _load_module_source(self, name, path):
-
-        # avoid collisions across plugins
-        if name.startswith('ansible_collections.'):
-            full_name = name
-        else:
-            full_name = '.'.join([self.package, name])
-
-        if full_name in sys.modules:
+    def _load_module_source(self, *, python_module_name: str, path: str) -> types.ModuleType:
+        if python_module_name in sys.modules:
             # Avoids double loading, See https://github.com/ansible/ansible/issues/13110
-            return sys.modules[full_name]
+            return sys.modules[python_module_name]
 
         with warnings.catch_warnings():
             # FIXME: this still has issues if the module was previously imported but not "cached",
             #  we should bypass this entire codepath for things that are directly importable
             warnings.simplefilter("ignore", RuntimeWarning)
-            spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+            spec = importlib.util.spec_from_file_location(to_native(python_module_name), to_native(path))
             module = importlib.util.module_from_spec(spec)
 
             # mimic import machinery; make the module-being-loaded available in sys.modules during import
             # and remove if there's a failure...
-            sys.modules[full_name] = module
+            sys.modules[python_module_name] = module
 
             try:
                 spec.loader.exec_module(module)
             except Exception:
-                del sys.modules[full_name]
+                del sys.modules[python_module_name]
                 raise
 
         return module
 
-    def _update_object(self, obj, name, path, redirected_names=None, resolved=None):
+    def _update_object(
+        self,
+        *,
+        obj: _AnsiblePluginInfoMixin,
+        name: str,
+        path: str,
+        redirected_names: list[str] | None = None,
+        resolved: str | None = None,
+    ) -> None:
+        # DTFIX-FUTURE: clean this up- standardize types, document, split/remove redundant bits
 
         # set extra info on the module, in case we want it later
-        setattr(obj, '_original_path', path)
-        setattr(obj, '_load_name', name)
-        setattr(obj, '_redirected_names', redirected_names or [])
+        obj._original_path = path
+        obj._load_name = name
+        obj._redirected_names = redirected_names or []
 
         names = []
         if resolved:
@@ -853,14 +970,26 @@ class PluginLoader:
         if not names:
             raise AnsibleError(f"Missing FQCN for plugin source {name}")
 
-        setattr(obj, 'ansible_aliases', names)
-        setattr(obj, 'ansible_name', names[0])
+        obj.ansible_aliases = names
+        obj.ansible_name = names[0]
 
     def get(self, name, *args, **kwargs):
-        return self.get_with_context(name, *args, **kwargs).object
+        ctx = self.get_with_context(name, *args, **kwargs)
+        is_core_plugin = ctx.plugin_load_context.plugin_resolved_collection == 'ansible.builtin'
+        if self.class_name == 'StrategyModule' and not is_core_plugin:
+            display.deprecated(  # pylint: disable=ansible-deprecated-no-version
+                msg='Use of strategy plugins not included in ansible.builtin are deprecated and do not carry '
+                    'any backwards compatibility guarantees. No alternative for third party strategy plugins '
+                    'is currently planned.',
+            )
 
-    def get_with_context(self, name, *args, **kwargs):
+        return ctx.object
+
+    def get_with_context(self, name, *args, **kwargs) -> get_with_context_result:
         """ instantiates a plugin of the given name using arguments """
+
+        if not name:
+            raise ValueError('A non-empty plugin name is required.')
 
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
@@ -881,8 +1010,6 @@ class PluginLoader:
             return get_with_context_result(None, plugin_load_context)
 
         fq_name = plugin_load_context.resolved_fqcn
-        if '.' not in fq_name and plugin_load_context.plugin_resolved_collection:
-            fq_name = '.'.join((plugin_load_context.plugin_resolved_collection, fq_name))
         resolved_type_name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
         if (cached_result := (self._plugin_instance_cache or {}).get(fq_name)) and cached_result[1].resolved:
@@ -892,7 +1019,7 @@ class PluginLoader:
         redirected_names = plugin_load_context.redirect_list or []
 
         if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source(resolved_type_name, path)
+            self._module_cache[path] = self._load_module_source(python_module_name=plugin_load_context._python_module_name, path=path)
             found_in_cache = False
 
         self._load_config_defs(resolved_type_name, self._module_cache[path], path)
@@ -909,6 +1036,7 @@ class PluginLoader:
             except AttributeError:
                 return get_with_context_result(None, plugin_load_context)
             if not issubclass(obj, plugin_class):
+                display.warning(f"Ignoring {self.type} plugin {resolved_type_name!r} due to missing base class {self.base_class!r}.")
                 return get_with_context_result(None, plugin_load_context)
 
         # FIXME: update this to use the load context
@@ -919,7 +1047,7 @@ class PluginLoader:
                 # A plugin may need to use its _load_name in __init__ (for example, to set
                 # or get options from config), so update the object before using the constructor
                 instance = object.__new__(obj)
-                self._update_object(instance, resolved_type_name, path, redirected_names, fq_name)
+                self._update_object(obj=instance, name=resolved_type_name, path=path, redirected_names=redirected_names, resolved=fq_name)
                 obj.__init__(instance, *args, **kwargs)  # pylint: disable=unnecessary-dunder-call
                 obj = instance
             except TypeError as e:
@@ -929,12 +1057,12 @@ class PluginLoader:
                     return get_with_context_result(None, plugin_load_context)
                 raise
 
-        self._update_object(obj, resolved_type_name, path, redirected_names, fq_name)
+        self._update_object(obj=obj, name=resolved_type_name, path=path, redirected_names=redirected_names, resolved=fq_name)
         if self._plugin_instance_cache is not None and getattr(obj, 'is_stateless', False):
             self._plugin_instance_cache[fq_name] = (obj, plugin_load_context)
         elif self._plugin_instance_cache is not None:
             # The cache doubles as the load order, so record the FQCN even if the plugin hasn't set is_stateless = True
-            self._plugin_instance_cache[fq_name] = (None, PluginLoadContext())
+            self._plugin_instance_cache[fq_name] = (None, PluginLoadContext(self.type, self.package))
         return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -1009,10 +1137,15 @@ class PluginLoader:
             basename = os.path.basename(name)
             is_j2 = isinstance(self, Jinja2Loader)
 
+            if path in legacy_excluding_builtin:
+                fqcn = basename
+            else:
+                fqcn = f"ansible.builtin.{basename}"
+
             if is_j2:
                 ref_name = path
             else:
-                ref_name = basename
+                ref_name = fqcn
 
             if not is_j2 and basename in _PLUGIN_FILTERS[self.package]:
                 # j2 plugins get processed in own class, here they would just be container files
@@ -1035,26 +1168,18 @@ class PluginLoader:
                 yield path
                 continue
 
-            if path in legacy_excluding_builtin:
-                fqcn = basename
-            else:
-                fqcn = f"ansible.builtin.{basename}"
-
             if (cached_result := (self._plugin_instance_cache or {}).get(fqcn)) and cached_result[1].resolved:
                 # Here just in case, but we don't call all() multiple times for vars plugins, so this should not be used.
                 yield cached_result[0]
                 continue
 
             if path not in self._module_cache:
-                if self.type in ('filter', 'test'):
-                    # filter and test plugin files can contain multiple plugins
-                    # they must have a unique python module name to prevent them from shadowing each other
-                    full_name = '{0}_{1}'.format(abs(hash(path)), basename)
-                else:
-                    full_name = basename
+                path_context = PluginPathContext(path, path not in legacy_excluding_builtin)
+                load_context = PluginLoadContext(self.type, self.package)
+                load_context.resolve_legacy(basename, {basename: path_context})
 
                 try:
-                    module = self._load_module_source(full_name, path)
+                    module = self._load_module_source(python_module_name=load_context._python_module_name, path=path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s), cannot load: %s" % (path, to_text(e)))
                     continue
@@ -1092,7 +1217,7 @@ class PluginLoader:
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
-            self._update_object(obj, basename, path, resolved=fqcn)
+            self._update_object(obj=obj, name=basename, path=path, resolved=fqcn)
 
             if self._plugin_instance_cache is not None:
                 needs_enabled = False
@@ -1105,6 +1230,21 @@ class PluginLoader:
             yield obj
 
 
+class _CacheLoader(PluginLoader):
+    """Customized loader for cache plugins that wraps the requested plugin with an interposer that schema-qualifies keys and JSON encodes the values."""
+
+    def get(self, name: str, *args, **kwargs) -> BaseCacheModule:
+        plugin = super().get(name, *args, **kwargs)
+
+        if not plugin:
+            raise AnsibleError(f'Unable to load the cache plugin {name!r}.')
+
+        if plugin._persistent:
+            return _cache.PluginInterposer(plugin)
+
+        return plugin
+
+
 class Jinja2Loader(PluginLoader):
     """
     PluginLoader optimized for Jinja2 plugins
@@ -1113,10 +1253,12 @@ class Jinja2Loader(PluginLoader):
     We need to do a few things differently in the base class because of file == plugin
     assumptions and dedupe logic.
     """
-    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None):
+
+    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None) -> None:
         super(Jinja2Loader, self).__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=required_base_class)
         self._plugin_wrapper_type = plugin_wrapper_type
-        self._cached_non_collection_wrappers = {}
+        self._plugin_type_friendly_name = 'filter' if plugin_wrapper_type is AnsibleJinja2Filter else 'test'
+        self._cached_non_collection_wrappers: dict[str, AnsibleJinja2Filter | AnsibleJinja2Test | _DeferredPluginLoadFailure] = {}
 
     def _clear_caches(self):
         super(Jinja2Loader, self)._clear_caches()
@@ -1129,6 +1271,36 @@ class Jinja2Loader(PluginLoader):
     def method_map_name(self):
         return get_plugin_class(self.class_name) + 's'
 
+    def _wrap_func(self, name: str, resolved: str, func: t.Callable) -> AnsibleJinja2Test | AnsibleJinja2Filter:
+        """Wrap a Jinja builtin function in a `AnsibleJinja2Plugin` instance."""
+        try:
+            path = sys.modules[func.__module__].__file__
+        except AttributeError:
+            path = None
+
+        wrapper = self._plugin_wrapper_type(func)
+
+        self._update_object(obj=wrapper, name=name, path=path, resolved=resolved)
+
+        return wrapper
+
+    def _wrap_funcs(self, plugins: dict[str, t.Callable], aliases: dict[str, str]) -> dict[str, AnsibleJinja2Test | AnsibleJinja2Filter]:
+        """Map a dictionary of Jinja builtin functions to one containing `AnsibleJinja2Plugin` instances."""
+        wrappers: dict[str, AnsibleJinja2Test | AnsibleJinja2Filter] = {}
+
+        for load_name, func in plugins.items():
+            name = aliases.get(load_name, load_name)
+            resolved = f'ansible.builtin.{name}'
+
+            wrappers[load_name] = self._wrap_func(load_name, resolved, func)
+
+            if resolved not in wrappers:
+                # When the resolved name hasn't been cached, do so.
+                # Functions that have aliases will appear more than once, and we don't need to overwrite them.
+                wrappers[resolved] = self._wrap_func(resolved, resolved, func)
+
+        return wrappers
+
     def get_contained_plugins(self, collection, plugin_path, name):
 
         plugins = []
@@ -1137,7 +1309,7 @@ class Jinja2Loader(PluginLoader):
         try:
             # use 'parent' loader class to find files, but cannot return this as it can contain multiple plugins per file
             if plugin_path not in self._module_cache:
-                self._module_cache[plugin_path] = self._load_module_source(full_name, plugin_path)
+                self._module_cache[plugin_path] = self._load_module_source(python_module_name=full_name, path=plugin_path)
             module = self._module_cache[plugin_path]
             obj = getattr(module, self.class_name)
         except Exception as e:
@@ -1160,19 +1332,21 @@ class Jinja2Loader(PluginLoader):
             plugin = self._plugin_wrapper_type(func)
             if plugin in plugins:
                 continue
-            self._update_object(plugin, full, plugin_path, resolved=fq_name)
+            self._update_object(obj=plugin, name=full, path=plugin_path, resolved=fq_name)
             plugins.append(plugin)
 
         return plugins
 
     # FUTURE: now that the resulting plugins are closer, refactor base class method with some extra
     # hooks so we can avoid all the duplicated plugin metadata logic, and also cache the collection results properly here
-    def get_with_context(self, name, *args, **kwargs):
+    def get_with_context(self, name: str, *args, **kwargs) -> get_with_context_result:
         # pop N/A kwargs to avoid passthrough to parent methods
         kwargs.pop('class_only', False)
         kwargs.pop('collection_list', None)
 
-        context = PluginLoadContext()
+        requested_name = name
+
+        context = PluginLoadContext(self.type, self.package)
 
         # avoid collection path for legacy
         name = name.removeprefix('ansible.legacy.')
@@ -1181,11 +1355,11 @@ class Jinja2Loader(PluginLoader):
 
         # check for stuff loaded via legacy/builtin paths first
         if known_plugin := self._cached_non_collection_wrappers.get(name):
-            context.resolved = True
-            context.plugin_resolved_name = name
-            context.plugin_resolved_path = known_plugin._original_path
-            context.plugin_resolved_collection = 'ansible.builtin' if known_plugin.ansible_name.startswith('ansible.builtin.') else ''
-            context._resolved_fqcn = known_plugin.ansible_name
+            if isinstance(known_plugin, _DeferredPluginLoadFailure):
+                raise known_plugin.ex
+
+            context.resolve_legacy_jinja_plugin(name, known_plugin)
+
             return get_with_context_result(known_plugin, context)
 
         plugin = None
@@ -1207,7 +1381,7 @@ class Jinja2Loader(PluginLoader):
                 ts = _get_collection_metadata(acr.collection)
             except ValueError as e:
                 # no collection
-                raise KeyError('Invalid plugin FQCN ({0}): {1}'.format(key, to_native(e)))
+                raise KeyError('Invalid plugin FQCN ({0}): {1}'.format(key, to_native(e))) from e
 
             # TODO: implement cycle detection (unified across collection redir as well)
             routing_entry = ts.get('plugin_routing', {}).get(self.type, {}).get(leaf_key, {})
@@ -1221,7 +1395,12 @@ class Jinja2Loader(PluginLoader):
 
                 warning_text = f'{self.type.title()} "{key}" has been deprecated.{" " if warning_text else ""}{warning_text}'
 
-                display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
+                display.deprecated(  # pylint: disable=ansible-deprecated-date-not-permitted,ansible-deprecated-unnecessary-collection-name
+                    msg=warning_text,
+                    version=removal_version,
+                    date=removal_date,
+                    deprecator=deprecator_from_collection_name(acr.collection),
+                )
 
             # check removal
             tombstone_entry = routing_entry.get('tombstone')
@@ -1229,11 +1408,15 @@ class Jinja2Loader(PluginLoader):
                 warning_text = tombstone_entry.get('warning_text') or ''
                 removal_date = tombstone_entry.get('removal_date')
                 removal_version = tombstone_entry.get('removal_version')
+                warning_text = f'The {key!r} {self.type} plugin has been removed.{" " if warning_text else ""}{warning_text}'
 
-                warning_text = f'{self.type.title()} "{key}" has been removed.{" " if warning_text else ""}{warning_text}'
-
-                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
-                                                          collection_name=acr.collection, removed=True)
+                exc_msg = display._get_deprecation_message_with_plugin_info(
+                    msg=warning_text,
+                    version=removal_version,
+                    date=removal_date,
+                    removed=True,
+                    deprecator=deprecator_from_collection_name(acr.collection),
+                )
 
                 raise AnsiblePluginRemovedError(exc_msg)
 
@@ -1285,20 +1468,16 @@ class Jinja2Loader(PluginLoader):
                         plugin = self._plugin_wrapper_type(func)
                         if plugin:
                             context = plugin_impl.plugin_load_context
-                            self._update_object(plugin, src_name, plugin_impl.object._original_path, resolved=fq_name)
+                            self._update_object(obj=plugin, name=requested_name, path=plugin_impl.object._original_path, resolved=fq_name)
                             # context will have filename, which for tests/filters might not be correct
                             context._resolved_fqcn = plugin.ansible_name
                             # FIXME: once we start caching these results, we'll be missing functions that would have loaded later
                             break  # go to next file as it can override if dupe (dont break both loops)
 
-        except AnsiblePluginRemovedError as apre:
-            raise AnsibleError(to_native(apre), 0, orig_exc=apre)
         except (AnsibleError, KeyError):
             raise
         except Exception as ex:
-            display.warning('An unexpected error occurred during Jinja2 plugin loading: {0}'.format(to_native(ex)))
-            display.vvv('Unexpected error during Jinja2 plugin loading: {0}'.format(format_exc()))
-            raise AnsibleError(to_native(ex), 0, orig_exc=ex)
+            raise AnsibleError('An unexpected error occurred during Jinja2 plugin loading.') from ex
 
         return get_with_context_result(plugin, context)
 
@@ -1312,10 +1491,13 @@ class Jinja2Loader(PluginLoader):
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
         self._ensure_non_collection_wrappers(*args, **kwargs)
+
+        plugins = [plugin for plugin in self._cached_non_collection_wrappers.values() if not isinstance(plugin, _DeferredPluginLoadFailure)]
+
         if path_only:
-            yield from (w._original_path for w in self._cached_non_collection_wrappers.values())
+            yield from (w._original_path for w in plugins)
         else:
-            yield from (w for w in self._cached_non_collection_wrappers.values())
+            yield from (w for w in plugins)
 
     def _ensure_non_collection_wrappers(self, *args, **kwargs):
         if self._cached_non_collection_wrappers:
@@ -1342,27 +1524,39 @@ class Jinja2Loader(PluginLoader):
                     display.debug("%s skipped due to a defined plugin filter" % plugin_name)
                     continue
 
-                # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
-                # its own surrogate wrapper instance here to ease the bookkeeping...
-                wrapper = self._plugin_wrapper_type(plugins[plugin_name])
                 fqcn = plugin_name
                 collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
                 if not plugin_name.startswith(collection):
                     fqcn = f"{collection}.{plugin_name}"
 
-                self._update_object(wrapper, plugin_name, p_map._original_path, resolved=fqcn)
-
                 target_names = {plugin_name, fqcn}
+
                 if is_builtin:
                     target_names.add(f'ansible.builtin.{plugin_name}')
 
                 for target_name in target_names:
+                    # the plugin class returned by the loader may host multiple Jinja plugins, but we wrap each plugin in
+                    # its own surrogate wrapper instance here to ease the bookkeeping...
+                    try:
+                        wrapper = self._plugin_wrapper_type(plugins[plugin_name])
+                    except Exception as ex:
+                        wrapper = _DeferredPluginLoadFailure(ex)
+
+                    self._update_object(obj=wrapper, name=target_name, path=p_map._original_path, resolved=fqcn)
+
                     if existing_plugin := self._cached_non_collection_wrappers.get(target_name):
                         display.debug(f'Jinja plugin {target_name} from {p_map._original_path} skipped; '
                                       f'shadowed by plugin from {existing_plugin._original_path})')
                         continue
 
                     self._cached_non_collection_wrappers[target_name] = wrapper
+
+
+class _DeferredPluginLoadFailure:
+    """Represents a plugin which failed to load. For internal use only within plugin loader."""
+
+    def __init__(self, ex: Exception) -> None:
+        self.ex = ex
 
 
 def get_fqcr_and_name(resource, collection='ansible.builtin'):
@@ -1388,7 +1582,7 @@ def _load_plugin_filter():
     if os.path.exists(filter_cfg):
         with open(filter_cfg, 'rb') as f:
             try:
-                filter_data = from_yaml(f.read())
+                filter_data = yaml.load(f, Loader=AnsibleInstrumentedLoader)
             except Exception as e:
                 display.warning(u'The plugin filter file, {0} was not parsable.'
                                 u' Skipping: {1}'.format(filter_cfg, to_text(e)))
@@ -1477,8 +1671,9 @@ def _configure_collection_loader(prefix_collections_path=None):
     if prefix_collections_path is None:
         prefix_collections_path = []
 
-    paths = list(prefix_collections_path) + C.COLLECTIONS_PATHS
-    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
+    # insert the internal ansible._protomatter collection up front
+    paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
+    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH, internal_collections=paths[0])
     finder._install()
 
     # this should succeed now
@@ -1517,7 +1712,7 @@ action_loader = PluginLoader(
     required_base_class='ActionBase',
 )
 
-cache_loader = PluginLoader(
+cache_loader = _CacheLoader(
     'CacheModule',
     'ansible.plugins.cache',
     C.DEFAULT_CACHE_PLUGIN_PATH,
@@ -1529,6 +1724,7 @@ callback_loader = PluginLoader(
     'ansible.plugins.callback',
     C.DEFAULT_CALLBACK_PLUGIN_PATH,
     'callback_plugins',
+    required_base_class='CallbackBase',
 )
 
 connection_loader = PluginLoader(

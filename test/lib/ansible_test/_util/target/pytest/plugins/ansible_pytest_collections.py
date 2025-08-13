@@ -1,4 +1,5 @@
 """Enable unit testing of Ansible collections. PYTEST_DONT_REWRITE"""
+
 from __future__ import annotations
 
 import os

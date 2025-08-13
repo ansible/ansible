@@ -3,17 +3,18 @@
 
 from __future__ import annotations
 
+import configparser
 import glob
 import json
 import os
 import stat
+import typing as t
 
-import ansible.module_utils.compat.typing as t
+from io import StringIO
 
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.six.moves import configparser, StringIO
 
 
 class LocalFactCollector(BaseFactCollector):
@@ -51,7 +52,7 @@ class LocalFactCollector(BaseFactCollector):
                     rc, out, err = module.run_command(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
-                except (IOError, OSError) as e:
+                except OSError as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
 
                 if failed is not None:

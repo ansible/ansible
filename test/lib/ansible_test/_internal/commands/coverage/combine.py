@@ -1,4 +1,5 @@
 """Combine code coverage files."""
+
 from __future__ import annotations
 
 import collections.abc as c
@@ -61,8 +62,6 @@ from . import (
     CoverageConfig,
     PathChecker,
 )
-
-TValue = t.TypeVar('TValue')
 
 
 def command_coverage_combine(args: CoverageCombineConfig) -> None:
@@ -286,7 +285,7 @@ def _get_coverage_targets(args: CoverageCombineConfig, walk_func: c.Callable) ->
     return sources
 
 
-def _build_stub_groups(
+def _build_stub_groups[TValue](
     args: CoverageCombineConfig,
     sources: list[tuple[str, int]],
     default_stub_value: c.Callable[[list[str]], dict[str, TValue]],

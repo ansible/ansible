@@ -61,6 +61,8 @@ DOCUMENTATION = """
         - The Secondary Logon service (seclogon) must be running to use runas
 """
 
+from ansible.errors import AnsibleError
+from ansible.parsing.splitter import split_args
 from ansible.plugins.become import BecomeBase
 
 
@@ -72,3 +74,72 @@ class BecomeModule(BecomeBase):
         # this is a noop, the 'real' runas is implemented
         # inside the windows powershell execution subsystem
         return cmd
+
+    def _build_powershell_wrapper_action(self) -> tuple[str, dict[str, object], dict[str, object]]:
+        # See ansible.executor.powershell.become_wrapper.ps1 for the
+        # parameter names
+        params = {
+            'BecomeUser': self.get_option('become_user'),
+        }
+        secure_params = {}
+
+        password = self.get_option('become_pass')
+        if password:
+            secure_params['BecomePassword'] = password
+
+        flags = self.get_option('become_flags')
+        if flags:
+            split_flags = split_args(flags)
+            for flag in split_flags:
+                if '=' not in flag:
+                    raise ValueError(f"become_flags entry '{flag}' is in an invalid format, must be a key=value pair")
+
+                k, v = flag.split('=', 1)
+
+                param_name, param_value = self._parse_flag(k, v)
+                params[param_name] = param_value
+
+        return 'become_wrapper.ps1', params, secure_params
+
+    def _parse_flag(self, name: str, value: str) -> tuple[str, str]:
+        logon_types = {
+            'interactive': 'Interactive',
+            'network': 'Network',
+            'batch': 'Batch',
+            'service': 'Service',
+            'unlock': 'Unlock',
+            'network_cleartext': 'NetworkCleartext',
+            'new_credentials': 'NewCredentials',
+        }
+        logon_flags = {
+            'none': 'None',
+            'with_profile': 'WithProfile',
+            'netcredentials_only': 'NetCredentialsOnly',
+        }
+
+        match name.lower():
+            case 'logon_type':
+                param_name = 'LogonType'
+                if param_value := logon_types.get(value.lower(), None):
+                    return param_name, param_value
+                else:
+                    raise AnsibleError(f"become_flags logon_type value '{value}' is not valid, valid values are: {', '.join(logon_types.keys())}")
+
+            case 'logon_flags':
+                param_name = 'LogonFlags'
+                flags = value.split(',')
+
+                param_values: list[str] = []
+                for flag in flags:
+                    if not flag:
+                        continue
+
+                    if flag_value := logon_flags.get(flag.lower(), None):
+                        param_values.append(flag_value)
+                    else:
+                        raise AnsibleError(f"become_flags logon_flags value '{flag}' is not valid, valid values are: {', '.join(logon_flags.keys())}")
+
+                return param_name, ", ".join(param_values)
+
+            case _:
+                raise AnsibleError(f"become_flags key '{name}' is not a valid runas flag, must be 'logon_type' or 'logon_flags'")

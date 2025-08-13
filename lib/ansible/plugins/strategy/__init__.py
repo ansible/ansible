@@ -26,37 +26,35 @@ import sys
 import threading
 import time
 import typing as t
+import collections.abc as _c
 
 from collections import deque
 
 
-from jinja2.exceptions import UndefinedError
-
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
-from ansible.executor import action_write_locks
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleTemplateError
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
-from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend
-from ansible.module_utils.six import string_types
-from ansible.module_utils.common.sentinel import Sentinel
+from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
-from ansible.template import Templar
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
-from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
+
+if t.TYPE_CHECKING:
+    from ansible.playbook.role_include import IncludeRole
 
 display = Display()
 
@@ -75,22 +73,8 @@ class StrategySentinel:
 
 _sentinel = StrategySentinel()
 
-
-def post_process_whens(result, task, templar, task_vars):
-    cond = None
-    if task.changed_when:
-        with templar.set_temporary_context(available_variables=task_vars):
-            cond = Conditional(loader=templar._loader)
-            cond.when = task.changed_when
-            result['changed'] = cond.evaluate_conditional(templar, templar.available_variables)
-
-    if task.failed_when:
-        with templar.set_temporary_context(available_variables=task_vars):
-            if cond is None:
-                cond = Conditional(loader=templar._loader)
-            cond.when = task.failed_when
-            failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
-            result['failed_when_result'] = result['failed'] = failed_when_result
+if t.TYPE_CHECKING:
+    from ansible.inventory.host import Host
 
 
 def _get_item_vars(result, task):
@@ -109,7 +93,9 @@ def _get_item_vars(result, task):
     return item_vars
 
 
-def results_thread_main(strategy):
+def results_thread_main(strategy: StrategyBase) -> None:
+    value: object
+
     while True:
         try:
             result = strategy._final_q.get()
@@ -119,13 +105,10 @@ def results_thread_main(strategy):
                 dmethod = getattr(display, result.method)
                 dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
-                for arg in result.args:
-                    if isinstance(arg, TaskResult):
-                        strategy.normalize_task_result(arg)
-                        break
-                strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
-            elif isinstance(result, TaskResult):
-                strategy.normalize_task_result(result)
+                task_result = strategy._convert_wire_task_result_to_raw(result.wire_task_result)
+                strategy._tqm.send_callback(result.method_name, task_result)
+            elif isinstance(result, _WireTaskResult):
+                result = strategy._convert_wire_task_result_to_raw(result)
                 with strategy._results_lock:
                     strategy._results.append(result)
             elif isinstance(result, PromptSend):
@@ -148,7 +131,7 @@ def results_thread_main(strategy):
                 strategy._workers[result.worker_id].worker_queue.put(value)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
-        except (IOError, EOFError):
+        except (OSError, EOFError):
             break
         except queue.Empty:
             pass
@@ -157,7 +140,7 @@ def results_thread_main(strategy):
 def debug_closure(func):
     """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
     @functools.wraps(func)
-    def inner(self, iterator, one_pass=False, max_passes=None):
+    def inner(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[_RawTaskResult]:
         status_to_stats_map = (
             ('is_failed', 'failures'),
             ('is_unreachable', 'dark'),
@@ -168,12 +151,12 @@ def debug_closure(func):
         # We don't know the host yet, copy the previous states, for lookup after we process new results
         prev_host_states = iterator.host_states.copy()
 
-        results = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
-        _processed_results = []
+        results: list[_RawTaskResult] = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
+        _processed_results: list[_RawTaskResult] = []
 
         for result in results:
-            task = result._task
-            host = result._host
+            task = result.task
+            host = result.host
             _queued_task_args = self._queued_task_cache.pop((host.name, task._uuid), None)
             task_vars = _queued_task_args['task_vars']
             play_context = _queued_task_args['play_context']
@@ -233,7 +216,7 @@ class StrategyBase:
     # the throttling internally (as `free` does)
     ALLOW_BASE_THROTTLING = True
 
-    def __init__(self, tqm):
+    def __init__(self, tqm: TaskQueueManager) -> None:
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
         self._workers = tqm._workers
@@ -246,7 +229,7 @@ class StrategyBase:
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
         # the task args/vars and play context info used to queue the task.
-        self._queued_task_cache = {}
+        self._queued_task_cache: dict[tuple[str, str], dict[str, t.Any]] = {}
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -257,12 +240,10 @@ class StrategyBase:
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
-        self._blocked_hosts = dict()
+        self._blocked_hosts: dict[str, bool] = dict()
 
-        self._results = deque()
+        self._results: deque[_RawTaskResult] = deque()
         self._results_lock = threading.Condition(threading.Lock())
-
-        self._worker_queues = dict()
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
@@ -271,13 +252,13 @@ class StrategyBase:
 
         # holds the list of active (persistent) connections to be shutdown at
         # play completion
-        self._active_connections = dict()
+        self._active_connections: dict[Host, str] = dict()
 
         # Caches for get_host calls, to avoid calling excessively
         # These values should be set at the top of the ``run`` method of each
         # strategy plugin. Use ``_set_hosts_cache`` to set these values
-        self._hosts_cache = []
-        self._hosts_cache_all = []
+        self._hosts_cache: list[str] = []
+        self._hosts_cache_all: list[str] = []
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
@@ -289,7 +270,7 @@ class StrategyBase:
         if not refresh and all((self._hosts_cache, self._hosts_cache_all)):
             return
 
-        if not play.finalized and Templar(None).is_template(play.hosts):
+        if not play.finalized and TemplateEngine().is_template(play.hosts):
             _pattern = 'all'
         else:
             _pattern = play.hosts or 'all'
@@ -353,28 +334,13 @@ class StrategyBase:
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
-        # Add a write lock for tasks.
-        # Maybe this should be added somewhere further up the call stack but
-        # this is the earliest in the code where we have task (1) extracted
-        # into its own variable and (2) there's only a single code path
-        # leading to the module being run.  This is called by two
-        # functions: linear.py::run(), and
-        # free.py::run() so we'd have to add to both to do it there.
-        # The next common higher level is __init__.py::run() and that has
-        # tasks inside of play_iterator so we'd have to extract them to do it
-        # there.
-
-        if task.action not in action_write_locks.action_write_locks:
-            display.debug('Creating lock for %s' % task.action)
-            action_write_locks.action_write_locks[task.action] = multiprocessing_context.Lock()
-
         # create a templar and template things we need later for the queuing process
-        templar = Templar(loader=self._loader, variables=task_vars)
+        templar = TemplateEngine(loader=self._loader, variables=task_vars)
 
         try:
             throttle = int(templar.template(task.throttle))
-        except Exception as e:
-            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+        except Exception as ex:
+            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task.throttle) from ex
 
         # and then queue the new task
         try:
@@ -400,6 +366,8 @@ class StrategyBase:
 
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
+                    if worker_prc:
+                        worker_prc.close()
                     self._queued_task_cache[(host.name, task._uuid)] = {
                         'host': host,
                         'task': task,
@@ -409,7 +377,16 @@ class StrategyBase:
 
                     # Pass WorkerProcess its strategy worker number so it can send an identifier along with intra-task requests
                     worker_prc = WorkerProcess(
-                        self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader, self._cur_worker,
+                        final_q=self._final_q,
+                        task_vars=task_vars,
+                        host=host,
+                        task=task,
+                        play_context=play_context,
+                        loader=self._loader,
+                        variable_manager=self._variable_manager,
+                        shared_loader_obj=plugin_loader.get_plugin_loader_namespace(),
+                        worker_id=self._cur_worker,
+                        cliargs=context.CLIARGS,
                     )
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
@@ -428,9 +405,9 @@ class StrategyBase:
                     time.sleep(0.0001)
 
             self._pending_results += 1
-        except (EOFError, IOError, AssertionError) as e:
+        except (EOFError, OSError, AssertionError) as ex:
             # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
+            display.debug(f"got an error while queuing: {ex}")
             return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
@@ -473,69 +450,67 @@ class StrategyBase:
             for target_host in host_list:
                 _set_host_facts(target_host, always_facts)
 
-    def normalize_task_result(self, task_result):
-        """Normalize a TaskResult to reference actual Host and Task objects
-        when only given the ``Host.name``, or the ``Task._uuid``
+    def _convert_wire_task_result_to_raw(self, wire_task_result: _WireTaskResult) -> _RawTaskResult:
+        """Return a `_RawTaskResult` created from a `_WireTaskResult`."""
+        host = self._inventory.get_host(wire_task_result.host_name)
+        queue_cache_entry = (host.name, wire_task_result.task_uuid)
 
-        Only the ``Host.name`` and ``Task._uuid`` are commonly sent back from
-        the ``TaskExecutor`` or ``WorkerProcess`` due to performance concerns
+        try:
+            found_task = self._queued_task_cache[queue_cache_entry]['task']
+        except KeyError:
+            # This should only happen due to an implicit task created by the
+            # TaskExecutor, restrict this behavior to the explicit use case
+            # of an implicit async_status task
+            if wire_task_result.task_fields.get('action') != 'async_status':
+                raise
 
-        Mutates the original object
-        """
+            task = Task()
+        else:
+            task = found_task.copy(exclude_parent=True, exclude_tasks=True)
+            task._parent = found_task._parent
 
-        if isinstance(task_result._host, string_types):
-            # If the value is a string, it is ``Host.name``
-            task_result._host = self._inventory.get_host(to_text(task_result._host))
+        task.from_attrs(wire_task_result.task_fields)
 
-        if isinstance(task_result._task, string_types):
-            # If the value is a string, it is ``Task._uuid``
-            queue_cache_entry = (task_result._host.name, task_result._task)
-            try:
-                found_task = self._queued_task_cache[queue_cache_entry]['task']
-            except KeyError:
-                # This should only happen due to an implicit task created by the
-                # TaskExecutor, restrict this behavior to the explicit use case
-                # of an implicit async_status task
-                if task_result._task_fields.get('action') != 'async_status':
-                    raise
-                original_task = Task()
-            else:
-                original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-                original_task._parent = found_task._parent
-            original_task.from_attrs(task_result._task_fields)
-            task_result._task = original_task
-
-        return task_result
+        return _RawTaskResult(
+            host=host,
+            task=task,
+            return_data=wire_task_result.return_data,
+            task_fields=wire_task_result.task_fields,
+        )
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
-        templar = Templar(None)
         handlers = [h for b in reversed(iterator._play.handlers) for h in b.block]
         # iterate in reversed order since last handler loaded with the same name wins
         for handler in handlers:
             if not handler.name:
                 continue
+
             if not handler.cached_name:
-                if templar.is_template(handler.name):
-                    templar.available_variables = self._variable_manager.get_vars(
+                def variables_factory() -> dict[str, t.Any]:
+                    return self._variable_manager.get_vars(
                         play=iterator._play,
                         task=handler,
                         _hosts=self._hosts_cache,
                         _hosts_all=self._hosts_cache_all
                     )
-                    try:
-                        handler.name = templar.template(handler.name)
-                    except (UndefinedError, AnsibleUndefinedVariable) as e:
-                        # We skip this handler due to the fact that it may be using
-                        # a variable in the name that was conditionally included via
-                        # set_fact or some other method, and we don't want to error
-                        # out unnecessarily
-                        if not handler.listen:
-                            display.warning(
-                                "Handler '%s' is unusable because it has no listen topics and "
-                                "the name could not be templated (host-specific variables are "
-                                "not supported in handler names). The error: %s" % (handler.name, to_text(e))
-                            )
-                        continue
+
+                templar = TemplateEngine(variables_factory=variables_factory)
+
+                try:
+                    handler.name = templar.template(handler.name)
+                except AnsibleTemplateError as e:
+                    # We skip this handler due to the fact that it may be using
+                    # a variable in the name that was conditionally included via
+                    # set_fact or some other method, and we don't want to error
+                    # out unnecessarily
+                    if not handler.listen:
+                        display.warning(
+                            "Handler '%s' is unusable because it has no listen topics and "
+                            "the name could not be templated (host-specific variables are "
+                            "not supported in handler names). The error: %s" % (handler.name, to_text(e))
+                        )
+                    continue
+
                 handler.cached_name = True
 
             # first we check with the full result of get_name(), which may
@@ -559,7 +534,7 @@ class StrategyBase:
                 yield handler
 
     @debug_closure
-    def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
+    def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[_RawTaskResult]:
         """
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
@@ -575,8 +550,8 @@ class StrategyBase:
             finally:
                 self._results_lock.release()
 
-            original_host = task_result._host
-            original_task = task_result._task
+            original_host = task_result.host
+            original_task: Task = task_result.task
 
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
@@ -609,8 +584,8 @@ class StrategyBase:
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(
-                                ansible_failed_task=wrap_var(original_task.serialize()),
-                                ansible_failed_result=task_result._result,
+                                ansible_failed_task=original_task.serialize(),
+                                ansible_failed_result=task_result._return_data,
                             ),
                         )
                     else:
@@ -618,7 +593,7 @@ class StrategyBase:
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
                     self._tqm._stats.increment('ignored', original_host.name)
-                    if 'changed' in task_result._result and task_result._result['changed']:
+                    if task_result.is_changed():
                         self._tqm._stats.increment('changed', original_host.name)
                 self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
             elif task_result.is_unreachable():
@@ -640,9 +615,9 @@ class StrategyBase:
                 if original_task.loop:
                     # this task had a loop, and has more than one result, so
                     # loop over all of them instead of a single result
-                    result_items = task_result._result.get('results', [])
+                    result_items = task_result._loop_results
                 else:
-                    result_items = [task_result._result]
+                    result_items = [task_result._return_data]
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item and task_result.is_changed():
@@ -651,7 +626,7 @@ class StrategyBase:
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
                         for notification in result_item['_ansible_notify']:
-                            handler = Sentinel
+                            handler: type[Sentinel] | Handler = Sentinel
                             for handler in self.search_handlers_by_notification(notification, iterator):
                                 if host_state.run_state == IteratingStates.HANDLERS:
                                     # we're currently iterating handlers, so we need to expand this now
@@ -687,25 +662,32 @@ class StrategyBase:
 
                     if 'add_host' in result_item or 'add_group' in result_item:
                         item_vars = _get_item_vars(result_item, original_task)
-                        found_task_vars = self._queued_task_cache.get((original_host.name, task_result._task._uuid))['task_vars']
+                        found_task_vars = self._queued_task_cache.get((original_host.name, task_result.task._uuid))['task_vars']
                         if item_vars:
                             all_task_vars = combine_vars(found_task_vars, item_vars)
                         else:
                             all_task_vars = found_task_vars
-                        all_task_vars[original_task.register] = wrap_var(result_item)
-                        post_process_whens(result_item, original_task, Templar(self._loader), all_task_vars)
+                        all_task_vars[original_task.register] = result_item
+
+                        if original_task.changed_when:
+                            result_item['changed'] = original_task._resolve_conditional(original_task.changed_when, all_task_vars)
+
+                        if original_task.failed_when:
+                            result_item['failed_when_result'] = result_item['failed'] = (
+                                original_task._resolve_conditional(original_task.failed_when, all_task_vars))
+
                         if original_task.loop or original_task.loop_with:
-                            new_item_result = TaskResult(
-                                task_result._host,
-                                task_result._task,
+                            new_item_result = _RawTaskResult(
+                                task_result.host,
+                                task_result.task,
                                 result_item,
-                                task_result._task_fields,
+                                task_result.task_fields,
                             )
                             self._tqm.send_callback('v2_runner_item_on_ok', new_item_result)
                             if result_item.get('changed', False):
-                                task_result._result['changed'] = True
+                                task_result._return_data['changed'] = True
                             if result_item.get('failed', False):
-                                task_result._result['failed'] = True
+                                task_result._return_data['failed'] = True
 
                     if 'ansible_facts' in result_item and original_task.action not in C._ACTION_DEBUG:
                         # if delegated fact and we are delegating facts, we need to change target host for them
@@ -753,13 +735,13 @@ class StrategyBase:
                                 else:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
-                if 'diff' in task_result._result:
+                if 'diff' in task_result._return_data:
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
                 if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
-                    if 'changed' in task_result._result and task_result._result['changed']:
+                    if task_result.is_changed():
                         self._tqm._stats.increment('changed', original_host.name)
 
                 # finally, send the ok for this task
@@ -769,7 +751,7 @@ class StrategyBase:
             if original_task.register:
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
+                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._return_data))
                 if 'invocation' in clean_copy:
                     del clean_copy['invocation']
 
@@ -820,7 +802,7 @@ class StrategyBase:
 
         return ret_results
 
-    def _copy_included_file(self, included_file):
+    def _copy_included_file(self, included_file: IncludedFile) -> TaskInclude | IncludeRole:
         """
         A proven safe and performant way to create a copy of an included file
         """
@@ -833,7 +815,7 @@ class StrategyBase:
 
         return ti_copy
 
-    def _load_included_file(self, included_file, iterator, is_handler=False, handle_stats_and_callbacks=True):
+    def _load_included_file(self, included_file: IncludedFile, iterator, is_handler=False, handle_stats_and_callbacks=True):
         """
         Loads an included YAML file of tasks, applying the optional set of variables.
 
@@ -843,16 +825,16 @@ class StrategyBase:
         """
         if handle_stats_and_callbacks:
             display.deprecated(
-                "Reporting play recap stats and running callbacks functionality for "
-                "``include_tasks`` in ``StrategyBase._load_included_file`` is deprecated. "
-                "See ``https://github.com/ansible/ansible/pull/79260`` for guidance on how to "
-                "move the reporting into specific strategy plugins to account for "
-                "``include_role`` tasks as well.",
-                version="2.21"
+                msg="Reporting play recap stats and running callbacks functionality for "
+                    "``include_tasks`` in ``StrategyBase._load_included_file`` is deprecated. "
+                    "See ``https://github.com/ansible/ansible/pull/79260`` for guidance on how to "
+                    "move the reporting into specific strategy plugins to account for "
+                    "``include_role`` tasks as well.",
+                version="2.21",
             )
         display.debug("loading included file: %s" % included_file._filename)
         try:
-            data = self._loader.load_from_file(included_file._filename)
+            data = self._loader.load_from_file(included_file._filename, trusted_as_template=True)
             if data is None:
                 return []
             elif not isinstance(data, list):
@@ -880,11 +862,11 @@ class StrategyBase:
             else:
                 reason = to_text(e)
             if handle_stats_and_callbacks:
-                for r in included_file._results:
-                    r._result['failed'] = True
+                for tr in included_file._results:
+                    tr._return_data['failed'] = True
 
                 for host in included_file._hosts:
-                    tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
+                    tr = _RawTaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason), task_fields={})
                     self._tqm._stats.increment('failures', host.name)
                     self._tqm.send_callback('v2_runner_on_failed', tr)
             raise AnsibleError(reason) from e
@@ -920,19 +902,19 @@ class StrategyBase:
     def _cond_not_supported_warn(self, task_name):
         display.warning("%s task does not support when conditional" % task_name)
 
-    def _execute_meta(self, task, play_context, iterator, target_host):
+    def _execute_meta(self, task: Task, play_context, iterator, target_host: Host):
+        task._resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that
-        meta_action = task.args.get('_raw_params')
+        meta_action = task._get_meta()
 
-        def _evaluate_conditional(h):
+        def _evaluate_conditional(conditional_host: Host) -> bool:
             if not task.when:
                 return True
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
-                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
-            templar = Templar(loader=self._loader, variables=all_vars)
-            return task.evaluate_conditional(templar, all_vars)
+
+            return task._resolve_conditional(task.when, self._variable_manager.get_vars(
+                play=iterator._play, host=conditional_host, task=task, _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all))
 
         skipped = False
         msg = meta_action
@@ -1032,7 +1014,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 while True:
                     state, task = iterator.get_next_task_for_host(target_host, peek=True)
-                    if task.action in C._ACTION_META and task.args.get("_raw_params") == "role_complete":
+                    if task._get_meta() == "role_complete":
                         break
                     iterator.set_state_for_host(target_host.name, state)
                     display.debug("'%s' skipped because role has been ended via 'end_role'" % task)
@@ -1043,7 +1025,7 @@ class StrategyBase:
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
-            templar = Templar(loader=self._loader, variables=all_vars)
+            templar = TemplateEngine(loader=self._loader, variables=all_vars)
 
             # apply the given task's information to the connection info,
             # which may override some fields already set by the play or
@@ -1085,7 +1067,7 @@ class StrategyBase:
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-        result = {'msg': msg}
+        result: dict[str, object] = {'msg': msg}
         if skipped:
             result['skipped'] = True
             result['skip_reason'] = skip_reason
@@ -1098,7 +1080,7 @@ class StrategyBase:
         else:
             display.vv(f"META: {header}")
 
-        res = TaskResult(target_host, task, result)
+        res = _RawTaskResult(target_host, task, result, {})
         if skipped:
             self._tqm.send_callback('v2_runner_on_skipped', res)
         return [res]
@@ -1118,14 +1100,14 @@ class StrategyBase:
                     hosts_left.append(self._inventory.get_host(host))
         return hosts_left
 
-    def update_active_connections(self, results):
+    def update_active_connections(self, results: _c.Iterable[_RawTaskResult]) -> None:
         """ updates the current active persistent connections """
         for r in results:
-            if 'args' in r._task_fields:
-                socket_path = r._task_fields['args'].get('_ansible_socket')
+            if 'args' in r.task_fields:
+                socket_path = r.task_fields['args'].get('_ansible_socket')
                 if socket_path:
-                    if r._host not in self._active_connections:
-                        self._active_connections[r._host] = socket_path
+                    if r.host not in self._active_connections:
+                        self._active_connections[r.host] = socket_path
 
 
 class NextAction(object):
@@ -1191,7 +1173,7 @@ class Debugger(cmd.Cmd):
 
     def do_update_task(self, args):
         """Recreate the task from ``task._ds``, and template with updated ``task_vars``"""
-        templar = Templar(None, variables=self.scope['task_vars'])
+        templar = TemplateEngine(variables=self.scope['task_vars'])
         task = self.scope['task']
         task = task.load_data(task._ds)
         task.post_validate(templar)

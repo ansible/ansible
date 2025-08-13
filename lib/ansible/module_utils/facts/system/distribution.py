@@ -8,8 +8,7 @@ from __future__ import annotations
 import os
 import platform
 import re
-
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
@@ -101,7 +100,7 @@ class DistributionFiles:
         return get_file_content(path)
 
     def _get_dist_file_content(self, path, allow_empty=False):
-        # cant find that dist file or it is incorrectly empty
+        # can't find that dist file, or it is incorrectly empty
         if not _file_exists(path, allow_empty=allow_empty):
             return False, None
 
@@ -208,7 +207,7 @@ class DistributionFiles:
 
         return dist_file_facts
 
-    # TODO: FIXME: split distro file parsing into its own module or class
+    # FIXME: split distro file parsing into its own module or class
     def parse_distribution_file_Slackware(self, name, data, path, collected_facts):
         slackware_facts = {}
         if 'Slackware' not in data:
@@ -311,15 +310,28 @@ class DistributionFiles:
                         suse_facts['distribution_release'] = release.group(1)
                         suse_facts['distribution_version'] = collected_facts['distribution_version'] + '.' + release.group(1)
 
-        # See https://www.suse.com/support/kb/doc/?id=000019341 for SLES for SAP
-        if os.path.islink('/etc/products.d/baseproduct') and os.path.realpath('/etc/products.d/baseproduct').endswith('SLES_SAP.prod'):
-            suse_facts['distribution'] = 'SLES_SAP'
+        # Check VARIANT_ID first for SLES4SAP or SL-Micro
+        variant_id_match = re.search(r'^VARIANT_ID="?([^"\n]*)"?', data, re.MULTILINE)
+        if variant_id_match:
+            variant_id = variant_id_match.group(1)
+            if variant_id in ('server-sap', 'sles-sap'):
+                suse_facts['distribution'] = 'SLES_SAP'
+            elif variant_id == 'transactional':
+                suse_facts['distribution'] = 'SL-Micro'
+        else:
+            # Fallback for older SLES 15 using baseproduct symlink
+            if os.path.islink('/etc/products.d/baseproduct'):
+                resolved = os.path.realpath('/etc/products.d/baseproduct')
+                if resolved.endswith('SLES_SAP.prod'):
+                    suse_facts['distribution'] = 'SLES_SAP'
+                elif resolved.endswith('SL-Micro.prod'):
+                    suse_facts['distribution'] = 'SL-Micro'
 
         return True, suse_facts
 
     def parse_distribution_file_Debian(self, name, data, path, collected_facts):
         debian_facts = {}
-        if 'Debian' in data or 'Raspbian' in data:
+        if any(distro in data for distro in ('Debian', 'Raspbian')):
             debian_facts['distribution'] = 'Debian'
             release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
@@ -398,6 +410,8 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'LMDE' in data:
+            debian_facts['distribution'] = 'Linux Mint Debian Edition'
         else:
             return False, debian_facts
 
@@ -515,7 +529,8 @@ class Distribution(object):
                                 'EuroLinux', 'Kylin Linux Advanced Server', 'MIRACLE'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin', 'OSMC',
+                                'Linux Mint Debian Edition', 'Univention Corporate Server'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap', 'ALP-Dolomite', 'SL-Micro',
                               'openSUSE MicroOS'],
@@ -571,8 +586,7 @@ class Distribution(object):
             distribution_facts.update(dist_file_facts)
 
         distro = distribution_facts['distribution']
-
-        # look for a os family alias for the 'distribution', if there isnt one, use 'distribution'
+        # look for an os family alias for the 'distribution', if there isn't one, use 'distribution'
         distribution_facts['os_family'] = self.OS_FAMILY.get(distro, None) or distro
 
         return distribution_facts

@@ -16,6 +16,9 @@ DOCUMENTATION = """
         description: command(s) to run
         required: True
     notes:
+      - The given commands are passed to a shell for execution, therefore all variables that are part of the commands and
+        come from a remote/untrusted source MUST be sanitized using the P(ansible.builtin.quote#filter) filter to avoid
+        shell injection vulnerabilities. See the example section.
       - Like all lookups, this runs on the Ansible controller and is unaffected by other keywords such as 'become'.
         If you need to use different permissions, you must change the command or run Ansible as another user.
       - Alternatively, you can use a shell/command task that runs against localhost and registers the result.
@@ -26,6 +29,10 @@ EXAMPLES = """
 - name: We could read the file directly, but this shows output from command
   ansible.builtin.debug: msg="{{ item }} is an output line from running cat on /etc/motd"
   with_lines: cat /etc/motd
+
+- name: Always use quote filter to make sure your variables are safe to use with shell
+  ansible.builtin.debug: msg="{{ item }} is an output line from running given command"
+  with_lines: "cat {{ file_name | quote }}"
 
 - name: More useful example of looping over a command result
   ansible.builtin.shell: "/usr/bin/frobnicate {{ item }}"
@@ -49,7 +56,7 @@ from ansible.module_utils.common.text.converters import to_text
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = []
         for term in terms:

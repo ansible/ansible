@@ -85,7 +85,6 @@ import base64
 import errno
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native
 
 
 def main():
@@ -99,20 +98,18 @@ def main():
 
     try:
         with open(source, 'rb') as source_fh:
-            source_content = source_fh.read()
-    except (IOError, OSError) as e:
-        if e.errno == errno.ENOENT:
-            msg = "file not found: %s" % source
-        elif e.errno == errno.EACCES:
-            msg = "file is not readable: %s" % source
-        elif e.errno == errno.EISDIR:
-            msg = "source is a directory and must be a file: %s" % source
+            data = base64.b64encode(source_fh.read())
+    except OSError as ex:
+        if ex.errno == errno.ENOENT:
+            msg = f"File not found: {source}"
+        elif ex.errno == errno.EACCES:
+            msg = f"File is not readable: {source}"
+        elif ex.errno == errno.EISDIR:
+            msg = f"Source is a directory and must be a file: {source}"
         else:
-            msg = "unable to slurp file: %s" % to_native(e, errors='surrogate_then_replace')
+            msg = "Unable to slurp file: {source}"
 
-        module.fail_json(msg)
-
-    data = base64.b64encode(source_content)
+        module.fail_json(msg, exception=ex)
 
     module.exit_json(content=data, source=source, encoding='base64')
 

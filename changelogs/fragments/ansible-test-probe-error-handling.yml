@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Improve container runtime probe error handling.
-    When unexpected probe output is encountered, an error with more useful debugging information is provided.

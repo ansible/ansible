@@ -9,10 +9,11 @@ import typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleActionFail
-from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.executor.module_common import _apply_action_arg_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
+from ansible._internal._errors import _error_utils
 
 
 class ActionModule(ActionBase):
@@ -28,10 +29,8 @@ class ActionModule(ActionBase):
 
             # TODO: remove in favor of controller side argspec detecting valid arguments
             # network facts modules must support gather_subset
-            try:
-                name = self._connection.ansible_name.removeprefix('ansible.netcommon.')
-            except AttributeError:
-                name = self._connection._load_name.split('.')[-1]
+            name = self._connection.ansible_name.removeprefix('ansible.netcommon.')
+
             if name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
                 if subset not in ('all', ['all'], None):
@@ -54,10 +53,7 @@ class ActionModule(ActionBase):
             fact_module, collection_list=self._task.collections
         ).resolved_fqcn
 
-        mod_args = get_action_args_with_defaults(
-            resolved_fact_module, mod_args, self._task.module_defaults, self._templar,
-            action_groups=self._task._parent._play._action_groups
-        )
+        mod_args = _apply_action_arg_defaults(resolved_fact_module, self._task, mod_args, self._templar)
 
         return mod_args
 
@@ -95,7 +91,7 @@ class ActionModule(ActionBase):
                 self._display.warning("Detected 'setup' module and a network OS is set, the output when running it will reflect 'localhost'"
                                       " and not the target when a networking connection plugin is used.")
 
-        elif not set(modules).difference(set(C._ACTION_SETUP)):
+        elif not set(modules).intersection(set(C._ACTION_SETUP)):
             # no network OS and setup not in list, add setup by default since 'smart'
             modules.append('ansible.legacy.setup')
 
@@ -162,7 +158,7 @@ class ActionModule(ActionBase):
                 for module in jobs:
                     poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
                     res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
-                    if res.get('finished', 0) == 1:
+                    if res.get('finished', False):
                         if res.get('failed', False):
                             failed[module] = res
                         elif res.get('skipped', False):
@@ -181,15 +177,18 @@ class ActionModule(ActionBase):
             self._task.async_val = async_val
 
         if skipped:
-            result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
+            result['msg'] = f"The following modules were skipped: {', '.join(skipped.keys())}."
             result['skipped_modules'] = skipped
             if len(skipped) == len(modules):
                 result['skipped'] = True
 
         if failed:
-            result['failed'] = True
-            result['msg'] = "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
             result['failed_modules'] = failed
+
+            result.update(_error_utils.result_dict_from_captured_errors(
+                msg=f"The following modules failed to execute: {', '.join(failed.keys())}.",
+                errors=[r['exception'] for r in failed.values()],
+            ))
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True

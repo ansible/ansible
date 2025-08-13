@@ -33,6 +33,7 @@ class RPM:
     requires: list[str] | None = None
     file: str | None = None
     binary: str | None = None
+    provides: list[str] | None = None
 
 
 SPECS = [
@@ -63,6 +64,8 @@ SPECS = [
     RPM(name='broken-d', version='1.0', requires=['broken-a']),
     RPM(name='provides-binary', version='1.0', arch=[expectedArch], binary='/usr/sbin/package-name'),
     RPM(name='package-name', version='1.0'),
+    RPM(name='provides-package', version='1.0', provides=['provided-package']),
+    RPM(name='provided-package', version='1.0'),
 ]
 
 
@@ -77,6 +80,9 @@ def create_repo():
 
         for recommend in spec.recommends or []:
             pkg.add_recommends(recommend)
+
+        for provide in spec.provides or []:
+            pkg.add_provides(provide)
 
         if spec.file:
             pkg.add_installed_file(

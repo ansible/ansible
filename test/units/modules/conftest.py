@@ -3,19 +3,32 @@
 
 from __future__ import annotations
 
-import json
+import typing as t
 
 import pytest
 
-from ansible.module_utils.common.text.converters import to_bytes
+from ansible.module_utils.testing import patch_module_args
+
+from ..mock.module import module_env_mocker  # expose shared fixture in this part of the unit test tree
+
+assert module_env_mocker is not None  # avoid unused imports
 
 
 @pytest.fixture
-def patch_ansible_module(request, mocker):
-    request.param = {'ANSIBLE_MODULE_ARGS': request.param}
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
-    request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
+def set_module_args() -> t.Iterator[t.Callable[[dict[str, t.Any] | None], None]]:
+    ctx: t.ContextManager | None = None
 
-    args = json.dumps(request.param)
+    def set_module_args(args: dict[str, t.Any] | None = None) -> None:
+        nonlocal ctx
 
-    mocker.patch('ansible.module_utils.basic._ANSIBLE_ARGS', to_bytes(args))
+        args['_ansible_remote_tmp'] = '/tmp'
+        args['_ansible_keep_remote_files'] = False
+
+        ctx = t.cast(t.ContextManager, patch_module_args(args))
+        ctx.__enter__()
+
+    try:
+        yield set_module_args
+    finally:
+        if ctx:
+            ctx.__exit__(None, None, None)

@@ -15,14 +15,12 @@ DOCUMENTATION = r"""
         description: command(s) to run.
         required: True
     notes:
+      - The given command is passed to a shell for execution, therefore all variables that are part of the command and
+        come from a remote/untrusted source MUST be sanitized using the P(ansible.builtin.quote#filter) filter to avoid
+        shell injection vulnerabilities. See the example section.
       - Like all lookups this runs on the Ansible controller and is unaffected by other keywords, such as become,
         so if you need to different permissions you must change the command or run Ansible as another user.
       - Alternatively you can use a shell/command task that runs against localhost and registers the result.
-      - Pipe lookup internally invokes Popen with shell=True (this is required and intentional).
-        This type of invocation is considered a security issue if appropriate care is not taken to sanitize any user provided or variable input.
-        It is strongly recommended to pass user input or variable input via quote filter before using with pipe lookup.
-        See example section for this.
-        Read more about this L(Bandit B602 docs,https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html)
       - The directory of the play is used as the current working directory.
 """
 
@@ -52,7 +50,7 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         ret = []
         for term in terms:
@@ -65,7 +63,7 @@ class LookupModule(LookupBase):
             # https://github.com/ansible/ansible/issues/6550
             term = str(term)
 
-            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(term, cwd=self._templar.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.append(stdout.decode("utf-8").rstrip())

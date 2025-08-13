@@ -1,4 +1,5 @@
 """Timeout management for tests."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -125,6 +126,6 @@ def configure_test_timeout(args: TestConfig) -> None:
 
     signal.signal(signal.SIGUSR1, timeout_handler)
 
-    instance = WrappedThread(functools.partial(timeout_waiter, timeout_remaining.total_seconds()))
+    instance = WrappedThread(functools.partial(timeout_waiter, timeout_remaining.total_seconds()), 'Timeout Watchdog')
     instance.daemon = True
     instance.start()

@@ -60,13 +60,14 @@
 
 - assert:
     that:
-      - "'dev.collection1  *' in list_result.stdout"
+      - 'list_result.stdout is regex "dev.collection1\s+\*"'
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
-      - "'dev.collection2  placeholder' in list_result.stdout"
-      - "'dev.collection3  *' in list_result.stdout"
-      - "'dev.collection4  *' in list_result.stdout"
-      - "'dev.collection5  *' in list_result.stdout"
-      - "'dev.collection6  *' in list_result.stdout"
+      - 'list_result.stdout is regex "dev.collection2\s+placeholder"'
+      - 'list_result.stdout is regex "dev.collection3\s+\*"'
+      - 'list_result.stdout is regex "dev.collection4\s+\*"'
+      - 'list_result.stdout is regex "dev.collection5\s+\*"'
+      - 'list_result.stdout is regex "dev.collection6\s+\*"'
+      - 'list_result.stdout is not regex "ansible._protomatter\s+.*"'
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
@@ -76,12 +77,13 @@
 
 - assert:
     that:
-      - "'dev.collection1  *' in list_result_human.stdout"
+      - 'list_result_human.stdout is regex "dev.collection1\s+\*"'
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
-      - "'dev.collection2  placeholder' in list_result_human.stdout"
-      - "'dev.collection3  *' in list_result_human.stdout"
-      - "'dev.collection5  *' in list_result.stdout"
-      - "'dev.collection6  *' in list_result.stdout"
+      - 'list_result_human.stdout is regex "dev.collection2\s+placeholder"'
+      - 'list_result_human.stdout is regex "dev.collection3\s+\*"'
+      - 'list_result_human.stdout is regex "dev.collection4\s+\*"'
+      - 'list_result_human.stdout is regex "dev.collection5\s+\*"'
+      - 'list_result_human.stdout is regex "dev.collection6\s+\*"'
 
 - name: list collections in yaml format
   command: ansible-galaxy collection list --format yaml
@@ -154,9 +156,11 @@
   environment:
     ANSIBLE_COLLECTIONS_PATH: "i_dont_exist"
 
-- assert:
+- name: Ensure we get the expected error
+  assert:
     that:
       - "'{}' not in list_result_error.stdout"
+      - "'None of the provided paths were usable' in list_result_error.stderr"
 
 - name: install an artifact to the second collections path
   command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng {{ galaxy_verbosity }} -p "{{ galaxy_dir }}/prod"

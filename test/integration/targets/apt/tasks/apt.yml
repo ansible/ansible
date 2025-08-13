@@ -1,13 +1,3 @@
-- name: use Debian mirror
-  set_fact:
-    distro_mirror: http://ftp.debian.org/debian
-  when: ansible_distribution == 'Debian'
-
-- name: use Ubuntu mirror
-  set_fact:
-    distro_mirror: http://archive.ubuntu.com/ubuntu
-  when: ansible_distribution == 'Ubuntu'
-
 # UNINSTALL 'python3-apt'
 #  The `apt` module has the smarts to auto-install `python3-apt`.  To test, we
 #  will first uninstall `python3-apt`.
@@ -287,7 +277,7 @@
   apt: pkg=hello state=absent purge=yes
 
 - name: install deb file from URL
-  apt: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   register: apt_url
 
 - name: verify installation of hello
@@ -468,7 +458,7 @@
 
 # https://github.com/ansible/ansible/issues/65325
 - name: Download and install old version of hello (to test allow_change_held_packages option)
-  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_amd64.deb"
+  apt: "deb=https://ci-files.testing.ansible.com/test/integration/targets/apt/hello_{{ hello_old_version }}_{{ hello_architecture.stdout }}.deb"
   notify:
     - remove package hello
 

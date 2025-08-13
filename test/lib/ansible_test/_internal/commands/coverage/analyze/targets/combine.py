@@ -1,4 +1,5 @@
 """Combine integration test target code coverage reports."""
+
 from __future__ import annotations
 import typing as t
 

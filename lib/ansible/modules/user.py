@@ -503,13 +503,13 @@ import socket
 import subprocess
 import time
 import math
+import typing as t
 
 from ansible.module_utils import distro
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
-import ansible.module_utils.compat.typing as t
 
 
 class StructSpwdType(ctypes.Structure):
@@ -1341,7 +1341,7 @@ class User(object):
         try:
             with open(ssh_public_key_file, 'r') as f:
                 ssh_public_key = f.read().strip()
-        except IOError:
+        except OSError:
             return None
         return ssh_public_key
 
@@ -2504,11 +2504,10 @@ class DarwinUser(User):
         Please note that password must be cleartext.
         """
         # some documentation on how is stored passwords on OSX:
-        # http://blog.lostpassword.com/2012/07/cracking-mac-os-x-lion-accounts-passwords/
         # http://null-byte.wonderhowto.com/how-to/hack-mac-os-x-lion-passwords-0130036/
         # http://pastebin.com/RYqxi7Ca
         # on OSX 10.8+ hash is SALTED-SHA512-PBKDF2
-        # https://pythonhosted.org/passlib/lib/passlib.hash.pbkdf2_digest.html
+        # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.pbkdf2_digest.html
         # https://gist.github.com/nueh/8252572
         cmd = self._get_dscl()
         if self.password:

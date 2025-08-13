@@ -35,9 +35,7 @@ import platform
 import select
 import shlex
 import subprocess
-import traceback
 
-from ansible.module_utils.six import PY2, b
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 
 
@@ -180,18 +178,16 @@ def daemonize(module, cmd):
         pipe = os.pipe()
         pid = fork_process()
     except (OSError, RuntimeError):
-        module.fail_json(msg="Error while attempting to fork: %s", exception=traceback.format_exc())
+        module.fail_json(msg="Error while attempting to fork.")
+    except Exception as exc:
+        module.fail_json(msg=to_text(exc))
 
     # we don't do any locking as this should be a unique module/process
     if pid == 0:
         os.close(pipe[0])
 
-        # if command is string deal with  py2 vs py3 conversions for shlex
         if not isinstance(cmd, list):
-            if PY2:
-                cmd = shlex.split(to_bytes(cmd, errors=errors))
-            else:
-                cmd = shlex.split(to_text(cmd, errors=errors))
+            cmd = shlex.split(to_text(cmd, errors=errors))
 
         # make sure we always use byte strings
         run_cmd = []
@@ -203,7 +199,7 @@ def daemonize(module, cmd):
         fds = [p.stdout, p.stderr]
 
         # loop reading output till it is done
-        output = {p.stdout: b(""), p.stderr: b("")}
+        output = {p.stdout: b"", p.stderr: b""}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll() is None:
@@ -237,7 +233,7 @@ def daemonize(module, cmd):
         os.waitpid(pid, 0)
 
         # Grab response data after child finishes
-        return_data = b("")
+        return_data = b""
         while True:
             rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
             if pipe[0] in rfd:
@@ -246,9 +242,6 @@ def daemonize(module, cmd):
                     break
                 return_data += to_bytes(data, errors=errors)
 
-        # Note: no need to specify encoding on py3 as this module sends the
-        # pickle to itself (thus same python interpreter so we aren't mixing
-        # py2 and py3)
         return pickle.loads(to_bytes(return_data, errors=errors))
 
 
@@ -292,7 +285,7 @@ def is_systemd_managed(module):
             with open('/proc/1/comm', 'r') as init_proc:
                 init = init_proc.readline().strip()
                 return init == 'systemd'
-        except IOError:
+        except OSError:
             # If comm doesn't exist, old kernel, no systemd
             return False
 
