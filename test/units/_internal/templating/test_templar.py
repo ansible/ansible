@@ -1078,3 +1078,18 @@ def test_marker_from_test_plugin() -> None:
     """Verify test plugins can raise MarkerError to return a Marker, and that no warnings or deprecations are emitted."""
     with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
         assert TemplateEngine(variables=dict(something=TRUST.tag("{{ nope }}"))).template(TRUST.tag("{{ (something is eq {}) is undefined }}"))
+
+
+def test_filter_generator() -> None:
+    """Verify that filters which return a generator are converted to a list while under the filter's JinjaCallContext."""
+    variables = dict(
+        foo=[
+            dict(x=1, optional_var=0),
+            dict(x=2),
+        ],
+        bar=TRUST.tag("{{ foo | selectattr('optional_var', 'defined') }}"),
+    )
+
+    te = TemplateEngine(variables=variables)
+    te.template(TRUST.tag("{{ bar }}"))
+    te.template(TRUST.tag("{{ lookup('vars', 'bar') }}"))
