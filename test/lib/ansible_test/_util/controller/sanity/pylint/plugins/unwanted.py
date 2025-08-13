@@ -81,19 +81,6 @@ class AnsibleUnwantedChecker(BaseChecker):
     )
 
     unwanted_imports = {
-        # Additional imports that we may want to start checking:
-        # 'boto': UnwantedEntry('boto3', modules_only=True),
-        # 'requests': UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-        # 'urllib': UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-
-        # see https://docs.python.org/2/library/urllib2.html
-        'urllib2': UnwantedEntry(
-            'ansible.module_utils.urls',
-            ignore_paths=(
-                '/lib/ansible/module_utils/urls.py',
-            )
-        ),
-
         # see https://docs.python.org/3/library/collections.abc.html
         'collections': UnwantedEntry(
             'collections.abc',
