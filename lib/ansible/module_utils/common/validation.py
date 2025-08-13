@@ -375,7 +375,7 @@ def check_type_str(value, allow_conversion=True, param=None, prefix=''):
         return value
 
     if value is None:
-        return ''
+        return ''  # approximate pre-2.19 templating None->empty str equivalency here for backward compatibility
 
     if allow_conversion:
         return to_native(value, errors='surrogate_or_strict')
