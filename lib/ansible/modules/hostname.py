@@ -195,7 +195,7 @@ class CommandStrategy(BaseStrategy):
         pass
 
 
-class FileStrategy(BaseStrategy):
+class FileStrategy(CommandStrategy):
     FILE = '/etc/hostname'
 
     def get_permanent_hostname(self):

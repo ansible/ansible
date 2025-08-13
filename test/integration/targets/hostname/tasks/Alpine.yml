@@ -1,0 +1,20 @@
+---
+- name: Test AlpineStrategy by setting hostname
+  become: 'yes'
+  hostname:
+    use: alpine
+    name: "{{ ansible_distribution_release }}-bebop.ansible.example.com"
+
+- name: Test AlpineStrategy by getting current hostname
+  command: hostname
+  register: get_hostname
+
+- name: Test AlpineStrategy by verifying /etc/hostname content
+  command: grep -v '^#' /etc/hostname
+  register: grep_hostname
+
+- name: Test AlpineStrategy using assertions
+  assert:
+    that:
+      - "ansible_distribution_release ~ '-bebop.ansible.example.com' in get_hostname.stdout"
+      - "ansible_distribution_release ~ '-bebop.ansible.example.com' in grep_hostname.stdout"
