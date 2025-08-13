@@ -18,3 +18,50 @@
     that:
       - "ansible_distribution_release ~ '-bebop.ansible.example.com' in get_hostname.stdout"
       - "ansible_distribution_release ~ '-bebop.ansible.example.com' in grep_hostname.stdout"
+
+- name: Test DebianStrategy without hostname
+  block:
+    - name: Get hostname command
+      shell: which hostname
+      register: hostname
+      ignore_errors: True
+
+    - name: Move hostname command
+      shell: "mv {{ hostname.stdout }} {{ hostname.stdout }}.bak"
+      when: hostname.stdout != ""
+      become: True
+      register: moved_hostname
+
+    - name: Test no change is made without hostname in the PATH
+      hostname:
+        name: "{{ ansible_distribution_release }}-bebop.ansible.example.com"
+        use: debian
+      register: debian_no_change
+
+    - assert:
+        that: debian_no_change is not changed
+
+    - name: Test updating /etc/hostname
+      hostname:
+        name: "{{ ansible_distribution_release }}-bop.ansible.example.com"
+        use: debian
+      register: debian_changed
+
+    - name: Verify /etc/hostname content
+      command: grep -v '^#' /etc/hostname
+      register: grep_hostname
+
+    - name: Assert /etc/hostname has been modified
+      assert:
+        that:
+          - debian_changed is changed
+          - "ansible_distribution_release ~ '-bop.ansible.example.com' in grep_hostname.stdout"
+  always:
+    - command: "mv {{ hostname.stdout }}.bak {{ hostname.stdout }}"
+      when: moved_hostname is defined and moved_hostname is changed
+      become: True
+
+    - name: Verify the current hostname is unchanged
+      command: hostname
+      register: current_hostname
+      failed_when: "ansible_distribution_release ~ '-bop.ansible.example.com' in current_hostname.stdout"

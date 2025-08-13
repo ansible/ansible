@@ -34,27 +34,3 @@
 
 - assert:
     that: hn4 is not changed
-
-- name: Test use=generic without hostname
-  become: True
-  when: hostname is undefined or hostname.stdout is truthy
-  block:
-    - name: Get hostname command
-      shell: command -v hostname || which hostname
-      register: hostname
-      ignore_errors: True
-
-    - name: Move hostname command to verify it is optional
-      shell: "mv {{ hostname.stdout }} {{ hostname.stdout }}_hidden"
-
-    - name: Test use=generic without hostname in the PATH
-      hostname:
-        name: crocodile.ansible.test.doesthiswork.net.example.com
-        use: generic
-      register: hn5
-
-    - assert:
-        that: hn5 is not changed
-  always:
-    - command: "mv {{ hostname.stdout }}_hidden {{ hostname.stdout }}"
-      when: hostname is defined
