@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - Fixed use=generic and use=debian and automatic detection for minimal Debian install without dbus (https://github.com/ansible/ansible/issues/85069).

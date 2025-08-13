@@ -81,9 +81,9 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 
 STRATS = {
     'alpine': 'Alpine',
-    'debian': 'Systemd',
+    'debian': 'File',
     'freebsd': 'FreeBSD',
-    'generic': 'Base',
+    'generic': 'File',
     'macos': 'Darwin',
     'macosx': 'Darwin',
     'darwin': 'Darwin',
@@ -295,6 +295,11 @@ class SystemdStrategy(BaseStrategy):
     def __init__(self, module):
         super(SystemdStrategy, self).__init__(module)
         self.hostnamectl_cmd = self.module.get_bin_path(self.COMMAND, True)
+
+    @property
+    def has_hostnamectl(self):
+        rc, out, err = self.module.run_command(self.hostnamectl_cmd)
+        return bool(rc == 0)
 
     def get_current_hostname(self):
         cmd = [self.hostnamectl_cmd, '--transient', 'status']
@@ -612,7 +617,10 @@ class Hostname(object):
             self.strategy = strategy(module)
         elif platform.system() == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
             # This is Linux and systemd is active
-            self.strategy = SystemdStrategy(module)
+            if (strategy := SystemdStrategy(module)) and strategy.has_hostnamectl:
+                self.strategy = strategy
+            else:
+                self.strategy = self.strategy_class(module)
         else:
             self.strategy = self.strategy_class(module)
 
