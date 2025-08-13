@@ -1,2 +1,2 @@
 bugfixes:
-  - pip - Fix output in check_mode to properly handle VCS packages (https://github.com/ansible/ansible/issues/85592).
+  - pip - Running pip with check_mode on a vcs url package now correctly outputs changed/not changed where previously it always reported changed due to improper package name resolution
