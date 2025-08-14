@@ -241,8 +241,8 @@ class LookupModule(LookupBase):
             subdir += "s"  # convert to the matching directory name
         else:
             terms = _recurse_terms(terms, omit_undefined=False)  # undefined values are only omitted when invoked using `with`
-
-            subdir = None
+            # set default value to 'files' to look under files directory in the role
+            subdir = "files"
 
         self.set_options(var_options=variables, direct=kwargs)
 
