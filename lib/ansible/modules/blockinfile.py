@@ -302,7 +302,8 @@ def main():
     marker = params['marker']
     present = params['state'] == 'present'
 
-    blank_line = [os.linesep]
+    line_separator = os.linesep
+    blank_line = [line_separator]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
