@@ -1,0 +1,2 @@
+minor_changes:
+  - "lib/ansible/config/manager.py:306 - fail loud if ansible.cfg is in a global writable directory. (https://github.com/ansible/ansible/issues/85087)"

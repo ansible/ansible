@@ -35,6 +35,14 @@ def setup_env(request, monkeypatch):
     else:
         monkeypatch.setenv('ANSIBLE_CONFIG', request.param[0])
 
+    cur_ignore = os.environ.get('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG', None)
+    ignore_env = request.param[1]
+
+    if ignore_env is not None:
+        monkeypatch.setenv('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG', request.param[0])
+    elif cur_ignore:
+        monkeypatch.delenv('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG')
+
     yield
 
 
@@ -59,7 +67,7 @@ def setup_existing_files(request, monkeypatch):
 
 class TestFindIniFile:
     # This tells us to run twice, once with a file specified and once with a directory
-    @pytest.mark.parametrize('setup_env, expected', (([alt_cfg_file], alt_cfg_file), ([cfg_dir], cfg_file)), indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env, expected', (([alt_cfg_file, None], alt_cfg_file), ([cfg_dir, None], cfg_file)), indirect=['setup_env'])
     # This just passes the list of files that exist to the fixture
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, alt_cfg_file, cfg_file)]],
@@ -70,7 +78,7 @@ class TestFindIniFile:
         assert find_ini_config_file(warnings) == expected
         assert warnings == set()
 
-    @pytest.mark.parametrize('setup_env', ([alt_cfg_file], [cfg_dir]), indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', ([alt_cfg_file, None], [cfg_dir, None]), indirect=['setup_env'])
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd)]],
                              indirect=['setup_existing_files'])
@@ -84,7 +92,7 @@ class TestFindIniFile:
         assert warnings == set()
 
     # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
     # All config files are present
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
@@ -96,7 +104,7 @@ class TestFindIniFile:
         assert warnings == set()
 
     # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
     # No config in cwd
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_file, alt_cfg_file)]],
@@ -108,7 +116,7 @@ class TestFindIniFile:
         assert warnings == set()
 
     # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
     # No config in cwd
     @pytest.mark.parametrize('setup_existing_files', [[('/etc/ansible/ansible.cfg', cfg_file, alt_cfg_file)]], indirect=['setup_existing_files'])
     def test_ini_in_systemdir(self, setup_env, setup_existing_files):
@@ -118,7 +126,7 @@ class TestFindIniFile:
         assert warnings == set()
 
     # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
     # No config in cwd
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_file, alt_cfg_file)]],
@@ -133,7 +141,7 @@ class TestFindIniFile:
         assert find_ini_config_file(warnings) == cfg_in_homedir
         assert warnings == set()
 
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
     # No config in cwd
     @pytest.mark.parametrize('setup_existing_files', [[list()]], indirect=['setup_existing_files'])
     def test_no_config(self, setup_env, setup_existing_files):
@@ -143,7 +151,7 @@ class TestFindIniFile:
         assert warnings == set()
 
     # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
     # All config files are present except in cwd
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_file, alt_cfg_file)]],
@@ -166,7 +174,30 @@ class TestFindIniFile:
         assert len(warnings) == 0
 
     # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env', [[None, None]], indirect=['setup_env'])
+    # All config files are present
+    @pytest.mark.parametrize('setup_existing_files',
+                             [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
+                             indirect=['setup_existing_files'])
+    def test_cwd_exception_on_writable(self, setup_env, setup_existing_files, monkeypatch):
+        """If the cwd is writable, and env is not set, throw an exception and exit """
+        real_stat = os.stat
+
+        def _os_stat(path):
+            assert path == working_dir
+            from posix import stat_result
+            stat_info = list(real_stat(path))
+            stat_info[stat.ST_MODE] |= stat.S_IWOTH
+            return stat_result(stat_info)
+
+        monkeypatch.setattr('os.stat', _os_stat)
+
+        warnings = set()
+        with pytest.raises(Exception) as e:
+            find_ini_config_file(warnings)
+
+    # ANSIBLE_CONFIG not specified
+    @pytest.mark.parametrize('setup_env', [[None, 'True']], indirect=['setup_env'])
     # All config files are present
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
@@ -192,7 +223,7 @@ class TestFindIniFile:
         assert u'ignoring it as an ansible.cfg source' in warning
 
     # ANSIBLE_CONFIG is sepcified
-    @pytest.mark.parametrize('setup_env, expected', (([alt_cfg_file], alt_cfg_file), ([cfg_in_cwd], cfg_in_cwd)), indirect=['setup_env'])
+    @pytest.mark.parametrize('setup_env, expected', (([alt_cfg_file, None], alt_cfg_file), ([cfg_in_cwd, None], cfg_in_cwd)), indirect=['setup_env'])
     # All config files are present
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
@@ -215,24 +246,3 @@ class TestFindIniFile:
         warnings = set()
         assert find_ini_config_file(warnings) == expected
         assert warnings == set()
-
-    # ANSIBLE_CONFIG not specified
-    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
-    # All config files are present
-    @pytest.mark.parametrize('setup_existing_files',
-                             [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
-                             indirect=['setup_existing_files'])
-    def test_cwd_warning_on_writable_no_warning_set(self, setup_env, setup_existing_files, monkeypatch):
-        """Smoketest that the function succeeds even though no warning set was passed in"""
-        real_stat = os.stat
-
-        def _os_stat(path):
-            assert path == working_dir
-            from posix import stat_result
-            stat_info = list(real_stat(path))
-            stat_info[stat.ST_MODE] |= stat.S_IWOTH
-            return stat_result(stat_info)
-
-        monkeypatch.setattr('os.stat', _os_stat)
-
-        assert find_ini_config_file() == cfg_in_homedir

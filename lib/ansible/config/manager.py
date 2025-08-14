@@ -303,11 +303,30 @@ def find_ini_config_file(warnings=None):
     # * We did not use a config from ANSIBLE_CONFIG
     # * There's an ansible.cfg in the current working directory that we skipped
     if path_from_env != path and warn_cmd_public:
-        warnings.add(u"Ansible is being run in a world writable directory (%s),"
-                     u" ignoring it as an ansible.cfg source."
-                     u" For more information see"
-                     u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
-                     % to_text(cwd))
+        ignore_cwd_config = os.getenv("ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG", Sentinel)
+        if ignore_cwd_config is Sentinel:
+            raise AnsibleError(
+                u"Ansible is being run in a world writable directory (%s),"
+                u" and an ansible.cfg is inside."
+                u" Using it as an ansible.cfg source causes security issues."
+                u" We are not sure about what you want,"
+                u" so we decide to fail loud."
+                u" If you want to ignore the ansible.cfg and continue the search,"
+                u" please set an environment variable ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG to any non-empty value."
+                u" For more information see"
+                u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
+                % to_text(cwd)
+            )
+        else:
+            warnings.add(
+                u"Ansible is being run in a world writable directory (%s),"
+                u" ignoring it as an ansible.cfg source."
+                u" If you want to fail loud,"
+                u" please unset the environment variable ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG."
+                u" For more information see"
+                u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
+                % to_text(cwd)
+            )
 
     return path
 
