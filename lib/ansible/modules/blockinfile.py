@@ -207,7 +207,8 @@ from ansible.module_utils.common.text.converters import to_native
 def write_changes(module, contents, path, encoding=None):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'w', encoding=encoding) as tf:
+    # newline param set to translate newline sequences with system default line separator
+    with os.fdopen(tmpfd, 'w', encoding=encoding, newline=None) as tf:
         tf.write(contents)
 
     validate = module.params.get('validate', None)
@@ -284,6 +285,7 @@ def main():
         original = None
         lines = []
     else:
+      # newline param set to preserve newline sequences read from file
         with open(path, 'r', encoding=encoding, newline='') as f:
             original = f.read()
         lines = original.splitlines(True)
