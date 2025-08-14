@@ -229,21 +229,18 @@ class LookupModule(LookupBase):
         if _jinja_plugins._LookupContext.current().invoked_as_with:
             # we're being invoked by TaskExecutor.get_loop_items(), special backwards compatibility behavior
             terms = _recurse_terms(terms, omit_undefined=True)  # recursively drop undefined values from terms for backwards compatibility
-
-            # invoked_as_with shouldn't be possible outside a TaskContext
-            te_action = _task.TaskContext.current().task.action  # FIXME: this value has not been templated, it should be (historical problem)...
-
-            # based on the presence of `var`/`template`/`file` in the enclosing task action name, choose a subdir to search
-            for subdir in ['template', 'var', 'file']:
-                if subdir in te_action:
-                    break
-
-            subdir += "s"  # convert to the matching directory name
         else:
             terms = _recurse_terms(terms, omit_undefined=False)  # undefined values are only omitted when invoked using `with`
-            # set default value to 'files' to look under files directory in the role
-            subdir = "files"
 
+        # invoked_as_with shouldn't be possible outside a TaskContext
+        te_action = _task.TaskContext.current().task.action  # FIXME: this value has not been templated, it should be (historical problem)...
+
+        # based on the presence of `var`/`template`/`file` in the enclosing task action name, choose a subdir to search
+        for subdir in ['template', 'var', 'file']:
+            if subdir in te_action:
+                break
+
+        subdir += "s"  # convert to the matching directory name
         self.set_options(var_options=variables, direct=kwargs)
 
         if not terms:
