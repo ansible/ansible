@@ -102,6 +102,13 @@ options:
     type: bool
     default: no
     version_added: '2.16'
+  encoding:
+    description:
+      - The character set in which the target file is encoded.
+      - For a list of available built-in encodings, see U(https://docs.python.org/3/library/codecs.html#standard-encodings)
+    type: str
+    default: utf-8
+    version_added: '2.20'
 notes:
   - When using C(with_*) loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the O(dest) option has been changed to O(path) as default, but O(dest) still works as well.
@@ -192,14 +199,16 @@ EXAMPLES = r"""
 import re
 import os
 import tempfile
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_native
 
 
-def write_changes(module, contents, path):
+def write_changes(module, contents, path, encoding=None):
 
     tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
-    with os.fdopen(tmpfd, 'wb') as tf:
+    # newline param set to translate newline sequences with system default line separator
+    with os.fdopen(tmpfd, 'w', encoding=encoding, newline=None) as tf:
         tf.write(contents)
 
     validate = module.params.get('validate', None)
@@ -245,6 +254,7 @@ def main():
             marker_end=dict(type='str', default='END'),
             append_newline=dict(type='bool', default=False),
             prepend_newline=dict(type='bool', default=False),
+            encoding=dict(type='str', default='utf-8'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -252,6 +262,8 @@ def main():
     )
     params = module.params
     path = params['path']
+
+    encoding = module.params.get('encoding', None)
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
@@ -273,7 +285,8 @@ def main():
         original = None
         lines = []
     else:
-        with open(path, 'rb') as f:
+        # newline param set to preserve newline sequences read from file
+        with open(path, 'r', encoding=encoding, newline='') as f:
             original = f.read()
         lines = original.splitlines(True)
 
@@ -287,11 +300,12 @@ def main():
 
     insertbefore = params['insertbefore']
     insertafter = params['insertafter']
-    block = to_bytes(params['block'])
-    marker = to_bytes(params['marker'])
+    block = params['block']
+    marker = params['marker']
     present = params['state'] == 'present'
-    b_linesep = os.linesep.encode()
-    blank_line = [b_linesep]
+
+    line_separator = os.linesep
+    blank_line = [line_separator]
 
     if not present and not path_exists:
         module.exit_json(changed=False, msg="File %s not present" % path)
@@ -300,17 +314,19 @@ def main():
         insertafter = 'EOF'
 
     if insertafter not in (None, 'EOF'):
-        insertre = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
+        insertre = re.compile(insertafter)
     elif insertbefore not in (None, 'BOF'):
-        insertre = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
+        insertre = re.compile(insertbefore)
     else:
         insertre = None
 
-    marker0 = re.sub(r'{mark}'.encode(), to_bytes(params['marker_begin']), marker) + b_linesep
-    marker1 = re.sub(r'{mark}'.encode(), to_bytes(params['marker_end']), marker) + b_linesep
+    marker0 = re.sub(r'{mark}', params['marker_begin'], marker) + os.linesep
+    marker1 = re.sub(r'{mark}', params['marker_end'], marker) + os.linesep
+
     if present and block:
-        if not block.endswith(b_linesep):
-            block += b_linesep
+        if not block.endswith(os.linesep):
+            block += os.linesep
+
         blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
@@ -329,9 +345,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = to_native(original).count('\n', 0, match.end())
+                        n0 = original.count('\n', 0, match.end())
                     elif insertbefore:
-                        n0 = to_native(original).count('\n', 0, match.start())
+                        n0 = original.count('\n', 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
@@ -352,15 +368,15 @@ def main():
 
     # Ensure there is a line separator before the block of lines to be inserted
     if n0 > 0:
-        if not lines[n0 - 1].endswith(b_linesep):
-            lines[n0 - 1] += b_linesep
+        if not lines[n0 - 1].endswith(os.linesep):
+            lines[n0 - 1] += os.linesep
 
     # Before the block: check if we need to prepend a blank line
     # If yes, we need to add the blank line if we are not at the beginning of the file
     # and the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
-        if n0 != 0 and lines[n0 - 1] != b_linesep:
+        if n0 != 0 and lines[n0 - 1] != os.linesep:
             lines[n0:n0] = blank_line
             n0 += 1
 
@@ -372,13 +388,13 @@ def main():
     # and the line right after is not a blank line
     if params['append_newline'] and present:
         line_after_block = n0 + len(blocklines)
-        if line_after_block < len(lines) and lines[line_after_block] != b_linesep:
+        if line_after_block < len(lines) and lines[line_after_block] != os.linesep:
             lines[line_after_block:line_after_block] = blank_line
 
     if lines:
-        result = b''.join(lines)
+        result = ''.join(lines)
     else:
-        result = b''
+        result = ''
 
     if module._diff:
         diff['after'] = result
@@ -402,7 +418,7 @@ def main():
             backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
         real_path = os.path.realpath(params['path'])
-        write_changes(module, result, real_path)
+        write_changes(module, result, real_path, encoding)
 
     if module.check_mode and not path_exists:
         module.exit_json(changed=changed, msg=msg, diff=diff)
