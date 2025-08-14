@@ -285,7 +285,7 @@ def main():
         original = None
         lines = []
     else:
-      # newline param set to preserve newline sequences read from file
+        # newline param set to preserve newline sequences read from file
         with open(path, 'r', encoding=encoding, newline='') as f:
             original = f.read()
         lines = original.splitlines(True)
