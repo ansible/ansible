@@ -457,7 +457,7 @@ def test_build_requirement_from_name(galaxy_server, monkeypatch, tmp_path_factor
     )['collections']
     actual = collection._resolve_depenency_map(
         requirements, [galaxy_server], concrete_artifact_cm, None, True, False, False, False, False
-    )['namespace.collection']
+    ).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -486,7 +486,7 @@ def test_build_requirement_from_name_with_prerelease(galaxy_server, monkeypatch,
     )['collections']
     actual = collection._resolve_depenency_map(
         requirements, [galaxy_server], concrete_artifact_cm, None, True, False, False, False, False
-    )['namespace.collection']
+    ).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -516,7 +516,7 @@ def test_build_requirement_from_name_with_prerelease_explicit(galaxy_server, mon
     )['collections']
     actual = collection._resolve_depenency_map(
         requirements, [galaxy_server], concrete_artifact_cm, None, True, False, False, False, False
-    )['namespace.collection']
+    ).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -551,7 +551,7 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch, t
     )['collections']
     actual = collection._resolve_depenency_map(
         requirements, [broken_server, galaxy_server], concrete_artifact_cm, None, True, False, False, False, False
-    )['namespace.collection']
+    ).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -629,7 +629,7 @@ def test_build_requirement_from_name_single_version(galaxy_server, monkeypatch, 
     )['collections']
 
     actual = collection._resolve_depenency_map(
-        requirements, [galaxy_server], concrete_artifact_cm, None, False, True, False, False, False)['namespace.collection']
+        requirements, [galaxy_server], concrete_artifact_cm, None, False, True, False, False, False).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -637,7 +637,7 @@ def test_build_requirement_from_name_single_version(galaxy_server, monkeypatch, 
     assert actual.ver == u'2.0.0'
     assert [c.ver for c in matches.candidates] == [u'2.0.0']
 
-    assert mock_get_info.call_count == 1
+    assert mock_get_info.call_count == 2
     assert mock_get_info.mock_calls[0][1] == ('namespace', 'collection', '2.0.0')
 
 
@@ -666,7 +666,7 @@ def test_build_requirement_from_name_multiple_versions_one_match(galaxy_server, 
     )['collections']
 
     actual = collection._resolve_depenency_map(
-        requirements, [galaxy_server], concrete_artifact_cm, None, False, True, False, False, False)['namespace.collection']
+        requirements, [galaxy_server], concrete_artifact_cm, None, False, True, False, False, False).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -708,7 +708,7 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
     )['collections']
 
     actual = collection._resolve_depenency_map(
-        requirements, [galaxy_server], concrete_artifact_cm, None, False, True, False, False, False)['namespace.collection']
+        requirements, [galaxy_server], concrete_artifact_cm, None, False, True, False, False, False).mapping['namespace.collection']
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
@@ -751,12 +751,16 @@ def test_dep_candidate_with_conflict(monkeypatch, tmp_path_factory, galaxy_serve
 
     mock_get_info_return = [
         api.CollectionVersionMetadata('parent', 'collection', '2.0.5', None, None, {'namespace.collection': '!=1.0.0'}, None, None),
+        api.CollectionVersionMetadata('parent', 'collection', '2.0.5', None, None, {'namespace.collection': '!=1.0.0'}, None, None),
         api.CollectionVersionMetadata('namespace', 'collection', '1.0.0', None, None, {}, None, None),
     ]
     mock_get_info = MagicMock(side_effect=mock_get_info_return)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
-    mock_get_versions = MagicMock(side_effect=[['2.0.5'], ['1.0.0']])
+    # Only one response needed for get_collection_versions because the fast path
+    # optimization skips the version list call for parent.collection:2.0.5 (exact version),
+    # so only the dependency resolution for namespace.collection makes this call
+    mock_get_versions = MagicMock(side_effect=[['1.0.0']])
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_get_versions)
 
     cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'parent.collection:2.0.5'])
@@ -1012,3 +1016,217 @@ def test_verify_file_signatures(signatures: list[str], required_successful_count
                 required_successful_count,
                 ignore_errors
             ) == expected_success
+
+
+@pytest.mark.parametrize(
+    'dependency_map,expected_order',
+    [
+        # No dependencies - all collections independent
+        (
+            {
+                'namespace.a': [],
+                'namespace.b': [],
+            },
+            [{'namespace.a', 'namespace.b'}]
+        ),
+        # Linear dependency chain: A -> B -> C
+        (
+            {
+                'namespace.a': ['namespace.b'],
+                'namespace.b': ['namespace.c'],
+                'namespace.c': [],
+            },
+            ['namespace.c', 'namespace.b', 'namespace.a']
+        ),
+        # Complex dependencies: D depends on B,C; B,C depend on A
+        (
+            {
+                'namespace.d': ['namespace.b', 'namespace.c'],
+                'namespace.b': ['namespace.a'],
+                'namespace.c': ['namespace.a'],
+                'namespace.a': [],
+            },
+            ['namespace.a', ['namespace.b', 'namespace.c'], 'namespace.d']  # B,C can be in any order
+        ),
+        # External dependencies (not in mapping) - should be ignored
+        (
+            {
+                'namespace.a': ['external.collection'],  # external not in mapping
+                'namespace.b': ['namespace.a'],
+            },
+            ['namespace.a', 'namespace.b']
+        ),
+        # Single collection
+        (
+            {
+                'namespace.only': [],
+            },
+            ['namespace.only']
+        ),
+        # Empty mapping
+        (
+            {},
+            []
+        ),
+    ]
+)
+def test_topological_sort_collections(dependency_map, expected_order):
+    """Test topological sorting of collections with various dependency patterns."""
+
+    mock_graph = MagicMock()
+
+    def mock_iter_children(collection):
+        return dependency_map.get(collection, [])
+
+    def mock_iter_parents(collection):
+        parents = []
+        for coll, deps in dependency_map.items():
+            if collection in deps:
+                parents.append(coll)
+        return parents
+
+    mock_graph.iter_children.side_effect = mock_iter_children
+    mock_graph.iter_parents.side_effect = mock_iter_parents
+
+    mapping = {coll: MagicMock() for coll in dependency_map.keys()}
+
+    mock_result = MagicMock()
+    mock_result.graph = mock_graph
+    mock_result.mapping = mapping
+
+    result = list(collection._topological_sort_collections(mock_result))
+
+    # Validate the result based on expected_order format
+    if not expected_order:
+        assert result == []
+    elif len(expected_order) == 1 and isinstance(expected_order[0], set):
+        # Unordered case - all collections should be present, order doesn't matter
+        assert set(result) == expected_order[0]
+    elif any(isinstance(item, list) for item in expected_order):
+        # Mixed ordering case - validate constraints
+        assert len(result) == sum(len(item) if isinstance(item, list) else 1 for item in expected_order)
+
+        result_index = 0
+        for constraint in expected_order:
+            if isinstance(constraint, list):
+                # These items can be in any order relative to each other
+                items_in_result = result[result_index:result_index + len(constraint)]
+                assert set(items_in_result) == set(constraint)
+                result_index += len(constraint)
+            else:
+                # This item must be in this exact position
+                assert result[result_index] == constraint
+                result_index += 1
+    else:
+        # Exact ordering case
+        assert result == expected_order
+
+
+def test_topological_sort_circular_dependencies():
+    """Test that circular dependencies fall back to yielding remaining collections."""
+
+    mock_graph = MagicMock()
+
+    def mock_iter_children(collection):
+        deps = {
+            'namespace.a': ['namespace.b'],
+            'namespace.b': ['namespace.a'],  # Circular
+            'namespace.c': []  # Independent collection
+        }
+        return deps.get(collection, [])
+
+    def mock_iter_parents(collection):
+        dependents = {
+            'namespace.a': ['namespace.b'],
+            'namespace.b': ['namespace.a'],  # Circular
+            'namespace.c': []
+        }
+        return dependents.get(collection, [])
+
+    mock_graph.iter_children.side_effect = mock_iter_children
+    mock_graph.iter_parents.side_effect = mock_iter_parents
+
+    mapping = {
+        'namespace.a': MagicMock(),
+        'namespace.b': MagicMock(),
+        'namespace.c': MagicMock(),
+    }
+
+    mock_result = MagicMock()
+    mock_result.graph = mock_graph
+    mock_result.mapping = mapping
+
+    result = list(collection._topological_sort_collections(mock_result))
+
+    # All collections should be included (C processed normally, A+B in fallback)
+    assert len(result) == 3
+    assert set(result) == {'namespace.a', 'namespace.b', 'namespace.c'}
+    # C should come first since it has no dependencies
+    assert result[0] == 'namespace.c'
+
+
+def test_fast_path_backtracking_with_dependency_conflict(monkeypatch, tmp_path_factory, galaxy_server):
+    """Test that fast path backtracking works when dependency conflicts require different versions.
+
+    Scenario:
+    - foo.bar has versions 1.0.0 and 2.0.0 (fast path picks 2.0.0)
+    - bar.baz has version 1.0.0
+    - foo.bar:1.0.0 depends on baz.qux:0.5.0
+    - foo.bar:2.0.0 depends on baz.qux:1.0.0
+    - bar.baz:1.0.0 depends on baz.qux:0.5.0
+    - Only solution: foo.bar:1.0.0, bar.baz:1.0.0, baz.qux:0.5.0
+    """
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-backtrack'))
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
+
+    def mock_get_versions(namespace, name):
+        versions = {
+            ('foo', 'bar'): ['1.0.0', '2.0.0'],
+            ('bar', 'baz'): ['1.0.0'],
+            ('baz', 'qux'): ['0.5.0', '1.0.0']
+        }
+        return versions.get((namespace, name), [])
+
+    def mock_get_metadata(namespace, name):
+        if namespace == 'foo' and name == 'bar':
+            return api.CollectionMetadata('foo', 'bar', None, None, {'version': '2.0.0'})
+        return api.CollectionMetadata(namespace, name, None, None, {'version': '1.0.0'})
+
+    def mock_get_version_metadata(namespace, name, version):
+        dependencies = {
+            ('foo', 'bar', '1.0.0'): {'baz.qux': '0.5.0'},
+            ('foo', 'bar', '2.0.0'): {'baz.qux': '1.0.0'},
+            ('bar', 'baz', '1.0.0'): {'baz.qux': '0.5.0'},
+            ('baz', 'qux', '0.5.0'): {},
+            ('baz', 'qux', '1.0.0'): {},
+        }
+        deps = dependencies.get((namespace, name, version), {})
+        return api.CollectionVersionMetadata(namespace, name, version, None, None, deps, None, [])
+
+    monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_get_versions)
+    monkeypatch.setattr(galaxy_server, 'get_collection_metadata', mock_get_metadata)
+    monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_version_metadata)
+
+    requirements = [
+        Requirement.from_requirement_dict({'name': 'foo.bar'}, concrete_artifact_cm),
+        Requirement.from_requirement_dict({'name': 'bar.baz'}, concrete_artifact_cm)
+    ]
+
+    result = collection._resolve_depenency_map(
+        requirements,
+        [galaxy_server],
+        concrete_artifact_cm,
+        None,
+        False,
+        False,
+        False,
+        False,
+        False
+    )
+
+    mapping = result.mapping
+    assert len(mapping) == 3
+
+    assert mapping['foo.bar'].ver == '1.0.0'
+    assert mapping['bar.baz'].ver == '1.0.0'
+    assert mapping['baz.qux'].ver == '0.5.0'

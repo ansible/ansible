@@ -24,7 +24,7 @@ import threading
 import time
 import typing as t
 
-from collections import namedtuple
+from collections import namedtuple, deque
 from contextlib import contextmanager
 from dataclasses import dataclass
 from hashlib import sha256
@@ -55,6 +55,7 @@ if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
+    from resolvelib.resolvers import Result
 
     ManifestKeysType = t.Literal[
         'collection_info', 'file_manifest_file', 'format',
@@ -540,7 +541,7 @@ def download_collections(
             # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
             include_signatures=False,
             offline=False,
-        )
+        ).mapping
 
     b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
 
@@ -636,6 +637,37 @@ def publish_collection(collection_path, api, wait, timeout):
                         % (api.name, api.api_server, import_uri))
 
 
+def _topological_sort_collections(result):
+    # type: (Result) -> t.Iterator[str]
+    """
+    Yield collections in topological order using Kahn's algorithm.
+    Dependencies will be yielded before their dependents.
+    """
+    in_degree = {}
+
+    for collection in result.mapping:
+        dependencies = list(result.graph.iter_children(collection))
+        in_degree[collection] = len([dep for dep in dependencies if dep in result.mapping])
+
+    queue = deque((collection for collection, degree in in_degree.items() if degree == 0))
+    processed = set()
+
+    while queue:
+        current = queue.popleft()
+        processed.add(current)
+        yield current
+
+        for dependent in result.graph.iter_parents(current):
+            if dependent in in_degree:
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+
+    missing = set(result.mapping.keys()) - processed
+    if missing:
+        yield from missing
+
+
 def install_collections(
         collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
@@ -719,7 +751,7 @@ def install_collections(
         for coll in preferred_requirements
     }
     with _display_progress("Process install dependency map"):
-        dependency_map = _resolve_depenency_map(
+        result = _resolve_depenency_map(
             collections,
             galaxy_apis=apis,
             preferred_candidates=preferred_collections,
@@ -733,7 +765,8 @@ def install_collections(
 
     keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
-        for fqcn, concrete_coll_pin in dependency_map.items():
+        for fqcn in _topological_sort_collections(result):
+            concrete_coll_pin = result.mapping[fqcn]
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
                     "Encountered {coll!s}, skipping.".
@@ -885,7 +918,7 @@ def verify_collections(
                 if local_verify_only:
                     remote_collection = None
                 else:
-                    signatures = api_proxy.get_signatures(local_collection)
+                    signatures = api_proxy.get_signatures(local_collection).data
                     signatures.extend([
                         get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
@@ -1796,8 +1829,8 @@ def _resolve_depenency_map(
         upgrade,  # type: bool
         include_signatures,  # type: bool
         offline,  # type: bool
-):  # type: (...) -> dict[str, Candidate]
-    """Return the resolved dependency map."""
+):  # type: (...) -> Result
+    """Return the resolved dependency result."""
     if not HAS_RESOLVELIB:
         raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")
     if not HAS_PACKAGING:
@@ -1842,7 +1875,7 @@ def _resolve_depenency_map(
         return collection_dep_resolver.resolve(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
-        ).mapping
+        )
     except CollectionDependencyResolutionImpossible as dep_exc:
         conflict_causes = (
             '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(

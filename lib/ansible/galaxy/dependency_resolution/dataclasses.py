@@ -166,7 +166,7 @@ def _is_concrete_artifact_pointer(tested_str):
 
 
 class _ComputedReqKindsMixin:
-    UNIQUE_ATTRS = ('fqcn', 'ver', 'src', 'type')
+    UNIQUE_ATTRS = ('fqcn', 'ver', 'type')
 
     def __init__(self, *args, **kwargs):
         if not self.may_have_offline_galaxy_info:
@@ -182,7 +182,11 @@ class _ComputedReqKindsMixin:
             )
 
     def __hash__(self):
-        return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
+        # Only include src for concrete artifacts to allow lru_cache to work for GalaxyAPI
+        # since src will be None before any API request has been made, but should be equivalent
+        # to later requests that have GalaxyAPI as src
+        attrs = _ComputedReqKindsMixin.UNIQUE_ATTRS + (('src',) if self.is_concrete_artifact else ())
+        return hash(tuple(getattr(self, attr) for attr in attrs))
 
     def __eq__(self, candidate):
         return hash(self) == hash(candidate)

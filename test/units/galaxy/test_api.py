@@ -62,6 +62,20 @@ def cache_dir(tmp_path_factory, monkeypatch):
     yield cache_dir
 
 
+def get_collection_version_metadata_mock(namespace='namespace', name='collection', version='1.0.0', signatures=None):
+    """Helper function to create a complete Galaxy API collection version metadata response."""
+    return {
+        'download_url': f'https://galaxy.server.com/download/{namespace}-{name}-{version}.tar.gz',
+        'artifact': {'sha256': 'abc123'},
+        'namespace': {'name': namespace},
+        'collection': {'name': name},
+        'version': version,
+        'metadata': {'dependencies': {}},
+        'href': f'https://galaxy.server.com/api/v3/collections/{namespace}/{name}/versions/{version}/',
+        'signatures': signatures,
+    }
+
+
 def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache=True):
     token_value = token_value or "my token"
     token_ins = token_ins or GalaxyToken(token_value)
@@ -791,7 +805,12 @@ def test_get_collection_signatures_backwards_compat(api_version, token_type, tok
 
     mock_open = MagicMock()
     mock_open.side_effect = [
-        StringIO("{}")
+        StringIO(json.dumps(get_collection_version_metadata_mock(
+            namespace='namespace',
+            name='collection',
+            version=version,
+            signatures=None
+        )))
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
@@ -819,24 +838,29 @@ def test_get_collection_signatures(api_version, token_type, token_ins, version, 
         mock_token_get.return_value = 'my token'
         monkeypatch.setattr(token_ins, 'get', mock_token_get)
 
+    signatures_data = [
+        {
+            "signature": "-----BEGIN PGP SIGNATURE-----\nSIGNATURE1\n-----END PGP SIGNATURE-----\n",
+            "pubkey_fingerprint": "FINGERPRINT",
+            "signing_service": "ansible-default",
+            "pulp_created": "2022-01-14T14:05:53.835605Z",
+        },
+        {
+            "signature": "-----BEGIN PGP SIGNATURE-----\nSIGNATURE2\n-----END PGP SIGNATURE-----\n",
+            "pubkey_fingerprint": "FINGERPRINT",
+            "signing_service": "ansible-default",
+            "pulp_created": "2022-01-14T14:05:53.835605Z",
+        },
+    ]
+
     mock_open = MagicMock()
     mock_open.side_effect = [
-        StringIO(to_text(json.dumps({
-            'signatures': [
-                {
-                    "signature": "-----BEGIN PGP SIGNATURE-----\nSIGNATURE1\n-----END PGP SIGNATURE-----\n",
-                    "pubkey_fingerprint": "FINGERPRINT",
-                    "signing_service": "ansible-default",
-                    "pulp_created": "2022-01-14T14:05:53.835605Z",
-                },
-                {
-                    "signature": "-----BEGIN PGP SIGNATURE-----\nSIGNATURE2\n-----END PGP SIGNATURE-----\n",
-                    "pubkey_fingerprint": "FINGERPRINT",
-                    "signing_service": "ansible-default",
-                    "pulp_created": "2022-01-14T14:05:53.835605Z",
-                },
-            ],
-        }))),
+        StringIO(json.dumps(get_collection_version_metadata_mock(
+            namespace='namespace',
+            name='collection',
+            version=version,
+            signatures=signatures_data
+        ))),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 

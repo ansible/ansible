@@ -13,8 +13,9 @@ if t.TYPE_CHECKING:
         ConcreteArtifactsManager,
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
-    from ansible.galaxy.api import GalaxyAPI
 
+from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.collection.galaxy_api_proxy import ProxyResponse
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
@@ -24,6 +25,7 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
+from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 try:
@@ -37,9 +39,11 @@ except ImportError:
 
 
 # TODO: add python requirements to ansible-test's ansible-core distribution info and remove the hardcoded lowerbound/upperbound fallback
-RESOLVELIB_LOWERBOUND = SemanticVersion("0.5.3")
+RESOLVELIB_LOWERBOUND = SemanticVersion("0.6.0")
 RESOLVELIB_UPPERBOUND = SemanticVersion("2.0.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
+
+display = Display()
 
 
 class CollectionDependencyProviderBase(AbstractProvider):
@@ -89,6 +93,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
         self._include_signatures = include_signatures
+        self._fast_path_used = set()  # type: set[str]
 
     def identify(self, requirement_or_candidate):
         # type: (t.Union[Candidate, Requirement]) -> str
@@ -111,7 +116,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         The lower the return value is, the more preferred this
         group of arguments is.
 
-        resolvelib >=0.5.3, <0.7.0
+        resolvelib >=0.6.0, <0.7.0
 
         :param resolution: Currently pinned candidate, or ``None``.
 
@@ -191,8 +196,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
             return float('-inf')
         return len(candidates)
 
-    def find_matches(self, *args, **kwargs):
-        # type: (t.Any, t.Any) -> list[Candidate]
+    def find_matches(self, identifier, requirements, incompatibilities):
+        # type: (str, t.Mapping[str, t.Iterator[Requirement]], t.Mapping[str, t.Iterator[Requirement]]) -> list[Candidate]
         r"""Find all possible candidates satisfying given requirements.
 
         This tries to get candidates based on the requirements' types.
@@ -203,16 +208,6 @@ class CollectionDependencyProviderBase(AbstractProvider):
         For a "named" requirement, Galaxy-compatible APIs are consulted
         to find concrete candidates for this requirement. If there's a
         pre-installed candidate, it's prepended in front of others.
-
-        resolvelib >=0.5.3, <0.6.0
-
-        :param requirements: A collection of requirements which all of \
-                             the returned candidates must match. \
-                             All requirements are guaranteed to have \
-                             the same identifier. \
-                             The collection is never empty.
-
-        resolvelib >=0.6.0
 
         :param identifier: The value returned by ``identify()``.
 
@@ -225,7 +220,10 @@ class CollectionDependencyProviderBase(AbstractProvider):
         :returns: An iterable that orders candidates by preference, \
                   e.g. the most preferred candidate comes first.
         """
-        raise NotImplementedError
+        return [
+            match for match in self._find_matches(list(requirements[identifier]))
+            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
+        ]
 
     def _find_matches(self, requirements):
         # type: (list[Requirement]) -> list[Candidate]
@@ -249,7 +247,12 @@ class CollectionDependencyProviderBase(AbstractProvider):
                 all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
             }
         try:
-            coll_versions = [] if preinstalled_candidates else self._api_proxy.get_collection_versions(first_req)  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
+            coll_versions = []  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
+            if not preinstalled_candidates:
+                coll_versions.extend(
+                    (response.data, response.api) for response in
+                    self._get_collection_versions_with_fast_paths(first_req, requirements)
+                )
         except TypeError as exc:
             if first_req.is_concrete_artifact:
                 # Non hashable versions will cause a TypeError
@@ -397,6 +400,81 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         return list(preinstalled_candidates) + latest_matches
 
+    def _try_exact_version_fast_path(self, first_req):
+        # type: (Requirement) -> t.Optional[list[ProxyResponse[str]]]
+        """Attempt fast path for exact version specifications."""
+        exact_version = first_req.ver.lstrip('=').strip()
+
+        if not (exact_version and exact_version[0].isdigit()):
+            return None
+
+        test_candidate = Candidate(
+            first_req.fqcn,
+            exact_version,
+            first_req.src,
+            'galaxy',
+            None
+        )
+
+        try:
+            response = self._api_proxy.get_collection_version_metadata(test_candidate)
+        except Exception:
+            return None
+
+        return [ProxyResponse(exact_version, response.api)]
+
+    def _try_unconstrained_version_fast_path(self, first_req):
+        # type: (Requirement) -> t.Optional[list[ProxyResponse[str]]]
+        """Attempt fast path for unconstrained version specifications."""
+        # If we've already used fast path for this collection, don't try again
+        if first_req.fqcn in self._fast_path_used:
+            return None
+
+        try:
+            response = self._api_proxy.get_collection_metadata(first_req)
+        except Exception:
+            return None
+
+        highest_version = response.data.highest_version
+        if highest_version:
+            latest_version = highest_version.get('version')
+            if latest_version:
+                if is_pre_release(latest_version) and not self._with_pre_releases:
+                    return None
+
+                self._fast_path_used.add(first_req.fqcn)
+
+                return [ProxyResponse(latest_version, response.api)]
+
+        return None
+
+    def _get_collection_versions_with_fast_paths(self, first_req, requirements):
+        # type: (Requirement, list[Requirement]) -> t.Iterable[ProxyResponse[str]]
+        """Get collection versions using fast paths when possible.
+
+        Fast paths:
+        1. Exact version: Skip full version list, try direct version metadata lookup
+        2. Unconstrained: Try collection metadata first to get latest non-prerelease
+        3. Complex constraints: Fall back to full version list
+        """
+        if first_req.type != 'galaxy':
+            return self._api_proxy.get_collection_versions(first_req)
+
+        if len(requirements) != 1:
+            return self._api_proxy.get_collection_versions(first_req)
+
+        if first_req.is_pinned:
+            exact_versions = self._try_exact_version_fast_path(first_req)
+            if exact_versions is not None:
+                return exact_versions
+
+        if first_req.ver == '*' or not first_req.ver:
+            unconstrained_versions = self._try_unconstrained_version_fast_path(first_req)
+            if unconstrained_versions is not None:
+                return unconstrained_versions
+
+        return self._api_proxy.get_collection_versions(first_req)
+
     def is_satisfied_by(self, requirement, candidate):
         # type: (Requirement, Candidate) -> bool
         r"""Whether the given requirement is satisfiable by a candidate.
@@ -437,7 +515,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # FIXME: Taking into account a pinned hash? Exploding on
         # FIXME: any differences?
         # NOTE: The underlying implementation currently uses first found
-        req_map = self._api_proxy.get_collection_dependencies(candidate)
+        req_map = self._api_proxy.get_collection_dependencies(candidate).data
 
         # NOTE: This guard expression MUST perform an early exit only
         # NOTE: after the `get_collection_dependencies()` call because
@@ -459,24 +537,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
 
 # Classes to handle resolvelib API changes between minor versions for 0.X
-class CollectionDependencyProvider050(CollectionDependencyProviderBase):
-    def find_matches(self, requirements):  # type: ignore[override]
-        # type: (list[Requirement]) -> list[Candidate]
-        return self._find_matches(requirements)
-
-    def get_preference(self, resolution, candidates, information):  # type: ignore[override]
-        # type: (t.Optional[Candidate], list[Candidate], list[t.NamedTuple]) -> t.Union[float, int]
-        return self._get_preference(candidates)
-
-
 class CollectionDependencyProvider060(CollectionDependencyProviderBase):
-    def find_matches(self, identifier, requirements, incompatibilities):  # type: ignore[override]
-        # type: (str, t.Mapping[str, t.Iterator[Requirement]], t.Mapping[str, t.Iterator[Requirement]]) -> list[Candidate]
-        return [
-            match for match in self._find_matches(list(requirements[identifier]))
-            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
-        ]
-
     def get_preference(self, resolution, candidates, information):  # type: ignore[override]
         # type: (t.Optional[Candidate], list[Candidate], list[t.NamedTuple]) -> t.Union[float, int]
         return self._get_preference(candidates)
@@ -499,9 +560,7 @@ def _get_provider():  # type () -> CollectionDependencyProviderBase
         return CollectionDependencyProvider080
     if RESOLVELIB_VERSION >= SemanticVersion("0.7.0"):
         return CollectionDependencyProvider070
-    if RESOLVELIB_VERSION >= SemanticVersion("0.6.0"):
-        return CollectionDependencyProvider060
-    return CollectionDependencyProvider050
+    return CollectionDependencyProvider060
 
 
 CollectionDependencyProvider = _get_provider()

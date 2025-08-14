@@ -240,7 +240,7 @@ class GalaxyError(AnsibleError):
 
 # Keep the raw string results for the date. It's too complex to parse as a datetime object and the various APIs return
 # them in different formats.
-CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 'name', 'created_str', 'modified_str'])
+CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 'name', 'created_str', 'modified_str', 'highest_version'])
 
 
 class CollectionVersionMetadata:
@@ -769,6 +769,7 @@ class GalaxyAPI:
                 ('created_str', 'created'),
                 ('modified_str', 'modified'),
             ]
+        field_map.append(('highest_version', 'highest_version'))
 
         info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
         error_context_msg = 'Error when getting the collection info for %s.%s from %s (%s)' \
@@ -782,6 +783,7 @@ class GalaxyAPI:
         return CollectionMetadata(namespace, name, **metadata)
 
     @g_connect(['v2', 'v3'])
+    @functools.lru_cache(maxsize=128)
     def get_collection_version_metadata(self, namespace, name, version):
         """
         Gets the collection information from the Galaxy server about a specific Collection version.
@@ -911,16 +913,9 @@ class GalaxyAPI:
         :param version: Version of the collection to get the information for.
         :return: A list of signature strings.
         """
-        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
-        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
+        version_metadata = self.get_collection_version_metadata(namespace, name, version)
 
-        n_collection_url = _urljoin(*url_paths)
-        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
-                            % (namespace, name, version, self.name, self.api_server)
-        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
-        self._set_cache()
-
-        signatures = [signature_info["signature"] for signature_info in data.get("signatures") or []]
+        signatures = [signature_info["signature"] for signature_info in version_metadata.signatures or []]
         if not signatures:
             display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
         return signatures
