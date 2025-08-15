@@ -625,7 +625,6 @@ def _normalize_vcs_packages(
     if not vcs_packages:
         return package_list
 
-
     os.environ.pop('FORCE_COLOR', None)
     rc, json_out, err = module.run_command(
         [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages],
@@ -638,8 +637,8 @@ def _normalize_vcs_packages(
     if rc == 0:
         # If it succeeds, handle the report
         report = json.loads(json_out)
-        package_objects = [Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
-                           for install_report in report['install']]
+        package_objects = (Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
+                           for install_report in report['install'])
     else:
         # Else, if that fails due to --dry-run not being present in pip
         # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
