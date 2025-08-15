@@ -1,0 +1,4 @@
+known_issues:
+  - templating - Exceptions raised in a Jinja ``set`` or ``with`` block which are not accessed by the template are ignored in the same manner as undefined values.
+  - templating - Passing a container created in a Jinja ``set`` or ``with`` block to a method results in a copy of that container.
+    Mutations to that container which are not returned by the method will be discarded.
