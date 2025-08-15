@@ -299,33 +299,31 @@ def find_ini_config_file(warnings=None):
     else:
         path = None
 
-    # Emit a warning if all the following are true:
+    # If all the following are true:
     # * We did not use a config from ANSIBLE_CONFIG
     # * There's an ansible.cfg in the current working directory that we skipped
+    # then the program will:
+    # * If user didn't set a environment variable named ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG, throw an exception
+    # * otherwise, print a warning
     if path_from_env != path and warn_cmd_public:
         ignore_cwd_config = os.getenv("ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG", Sentinel)
         if ignore_cwd_config is Sentinel:
             raise AnsibleError(
-                u"Ansible is being run in a world writable directory (%s),"
-                u" and an ansible.cfg is inside."
-                u" Using it as an ansible.cfg source causes security issues."
-                u" We are not sure about what you want,"
-                u" so we decide to fail loud."
-                u" If you want to ignore the ansible.cfg and continue the search,"
-                u" please set an environment variable ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG to any non-empty value."
-                u" For more information see"
-                u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
-                % to_text(cwd)
+                f"Ansible is being run in a world writable directory ({to_text(cwd)}), and an ansible.cfg is inside."
+                f" Using it as an ansible.cfg source causes security issues."
+                f" We are not sure about what you want, so we decide to fail loud."
+                f" If you want to ignore the ansible.cfg and continue the search,"
+                f" please set an environment variable ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG to any non-empty value."
+                f" For more information see"
+                f" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
             )
         else:
             warnings.add(
-                u"Ansible is being run in a world writable directory (%s),"
-                u" ignoring it as an ansible.cfg source."
-                u" If you want to fail loud,"
-                u" please unset the environment variable ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG."
-                u" For more information see"
-                u" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
-                % to_text(cwd)
+                f"Ansible is being run in a world writable directory ({to_text(cwd)}),"
+                f" ignoring it as an ansible.cfg source. If you want to fail loud,"
+                f" please unset the environment variable ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG."
+                f" For more information see"
+                f" https://docs.ansible.com/ansible/devel/reference_appendices/config.html#cfg-in-world-writable-dir"
             )
 
     return path
