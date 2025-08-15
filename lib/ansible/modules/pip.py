@@ -625,18 +625,19 @@ def _normalize_vcs_packages(
     if not vcs_packages:
         return package_list
 
-    other_packages = [pkg for pkg in package_list if not _is_vcs_url(str(pkg))]
 
-    # First, install as a dry-run report to get JSON output
-    frozen_env = os.environ.copy()
-    os.environ['TTY_COMPATIBLE'] = "0"
-    if os.environ.get('FORCE_COLOR'):
-        os.environ.pop('FORCE_COLOR')
-    rc, out, err = module.run_command([*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages])
+    os.environ.pop('FORCE_COLOR', None)
+    rc, json_out, err = module.run_command(
+        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages],
+        environ_update={
+            'NO_COLOR': '1',
+            'TTY_COMPATIBLE': '0',
+        },
+    )
 
     if rc == 0:
         # If it succeeds, handle the report
-        report = json.loads(out)
+        report = json.loads(json_out)
         package_objects = [Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
                            for install_report in report['install']]
     else:
@@ -652,23 +653,22 @@ def _normalize_vcs_packages(
         rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *vcs_packages])
 
         if rc != 0:
-            # If it fails, just dump the error
-            os.environ.update(frozen_env)
+            # If it fails (usually due to no pkg at url), just dump the error
             module.fail_json(rc=rc, msg=out, err=err)
 
         # Only from this point onward can we be sure that we're using the fallback, warn now.
         module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
 
         out_lines = out.splitlines()
-        saved_files = [Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line]
-        package_names = [Path(name).stem for name in saved_files]
+        saved_files = (Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line)
+        package_names = (Path(name).stem for name in saved_files)
 
-        package_objects = [Package('-'.join(pkg.split('-')[:-1]),
+        package_objects = (Package('-'.join(pkg.split('-')[:-1]),
                                    version_string=pkg.split('-')[-1])
-                           for pkg in package_names]
+                           for pkg in package_names)
 
-    os.environ.update(frozen_env)
-    return other_packages + package_objects
+    other_packages = (pkg for pkg in package_list if str(pkg) not in vcs_packages)
+    return [*other_packages, *package_objects]
 
 
 class Package:
