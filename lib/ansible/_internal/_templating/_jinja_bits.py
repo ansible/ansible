@@ -753,7 +753,7 @@ class AnsibleEnvironment(SandboxedEnvironment):
         except MarkerError as ex:
             return ex.source  # return the first Marker encountered
 
-        return ''.join([to_text(v) for v in node_list if v is not None])  # skip concat on `None`-valued nodes to avoid literal "None" in template results
+        return ''.join([to_text(v) for v in node_list])
 
     @staticmethod
     def _access_const(const_template: t.LiteralString) -> t.Any:
@@ -891,6 +891,8 @@ def _flatten_nodes(nodes: t.Iterable[t.Any]) -> t.Iterable[t.Any]:
         else:
             if type(node) is TemplateModule:  # pylint: disable=unidiomatic-typecheck
                 yield from _flatten_nodes(node._body_stream)
+            elif node is None:
+                continue  # avoid yielding `None`-valued nodes to avoid literal "None" in stringified template results
             else:
                 yield node
 
