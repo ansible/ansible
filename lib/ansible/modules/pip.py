@@ -620,7 +620,7 @@ def _normalize_vcs_packages(
         pip: list[str]
 ) -> list[Package]:
     """Return a list of packages with names extracted from metadata in VCS"""
-    vcs_packages = [str(pkg) for pkg in package_list if _is_vcs_url(str(pkg))]
+    vcs_packages = [pkg_str for pkg in package_list if _is_vcs_url(pkg_str := str(pkg))]
 
     if not vcs_packages:
         return package_list
