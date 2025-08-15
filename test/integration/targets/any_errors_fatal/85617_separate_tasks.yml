@@ -1,0 +1,13 @@
+- block:
+    - fail:
+  rescue:
+    - debug:
+        msg: "Rescuing host"
+      when: inventory_hostname == "host_B"
+  always:
+    - set_fact:
+        run_clear_host_errors: "{{ ansible_failed_hosts | ternary(True, False, False) }}"
+      run_once: True
+
+    - meta: clear_host_errors
+      when: run_clear_host_errors

@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict as _defaultdict
 import fnmatch
 
 from enum import IntEnum, IntFlag
@@ -51,6 +52,70 @@ class FailedStates(IntFlag):
     RESCUE = 4
     ALWAYS = 8
     HANDLERS = 16  # NOTE not in use anymore
+
+
+def is_nested_state(derivative: HostState, state: HostState) -> bool:
+    if derivative.cur_block != state.cur_block:
+        return False
+
+    for (run_state, count_attr, child_state) in [
+        (IteratingStates.TASKS, "cur_regular_task", "tasks_child_state"),
+        (IteratingStates.RESCUE, "cur_rescue_task", "rescue_child_state"),
+        (IteratingStates.ALWAYS, "cur_always_task", "always_child_state"),
+    ]:
+        if derivative.run_state != run_state:
+            continue
+        if getattr(derivative, count_attr) > getattr(state, count_attr):
+            return True
+
+        child = getattr(derivative, child_state)
+        reference_child = getattr(state, child_state)
+        if child_state == reference_child or (child is not None and reference_child is None):
+            return True
+        elif child is None:
+            return False
+        return is_nested_state(child, reference_child)
+    return False
+
+
+class FailedByProxy:
+    def __init__(self, iterator) -> None:
+        self._contingent_on: _defaultdict[str, set[str]] = _defaultdict(set)
+        self._last_state: dict[str, HostState] = dict()
+        self._iterator: PlayIterator = iterator
+
+    def add(self, host: str, fatal_hosts: list[str]):
+        host_state = self._iterator._host_states[host]
+        fail_state = self._iterator._host_states[fatal_hosts[0]]
+
+        if not is_nested_state(fail_state, host_state):
+            return
+
+        self._contingent_on[host].update(fatal_hosts)
+        self._last_state[host] = host_state
+
+    def remove(self, recovered_host: str) -> None:
+        recovered_state = self._iterator._host_states[recovered_host]
+        finalize_failed = []
+        recovered_hosts = []
+        for contingent_host, failed_hosts in self._contingent_on.items():
+            if recovered_host not in failed_hosts:
+                continue
+            if not is_nested_state(recovered_state, self._last_state[contingent_host]):
+                finalize_failed.append(contingent_host)
+                continue
+
+            failed_hosts.remove(recovered_host)
+            if not failed_hosts:
+                recovered_hosts.append(contingent_host)
+
+        for failed_host in finalize_failed:
+            del self._contingent_on[failed_host]
+            del self._last_state[failed_host]
+
+        for recovered_host in recovered_hosts:
+            del self._contingent_on[recovered_host]
+            self._iterator.set_state_for_host(recovered_host, self._last_state.pop(recovered_host))
 
 
 class HostState:
@@ -227,6 +292,11 @@ class PlayIterator:
         self.end_play = False
         self.cur_task = 0
 
+        # Helper for the linear strategy feature any_errors_fatal.
+        # A host failed by proxy has an opportunity to recover if
+        # all failures it was contingent upon in a child state recover.
+        self._failed_by_proxy = FailedByProxy(self)
+
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,
         # in the event that a previous host was not in the current inventory
@@ -373,6 +443,7 @@ class PlayIterator:
                             state.fail_state = FailedStates.NONE
                         state.run_state = IteratingStates.ALWAYS
                         state.did_rescue = True
+                        self._failed_by_proxy.remove(host.name)
                     else:
                         task = block.rescue[state.cur_rescue_task]
                         if isinstance(task, Block):

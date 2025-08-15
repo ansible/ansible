@@ -967,6 +967,7 @@ class StrategyBase:
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator.clear_host_errors(host)
+                    iterator._failed_by_proxy.remove(host.name)
                 msg = "cleared host errors"
             else:
                 skipped = True

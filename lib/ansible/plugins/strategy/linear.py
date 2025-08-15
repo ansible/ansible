@@ -330,6 +330,7 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
                             self._tqm._failed_hosts[host.name] = True
+                            iterator._failed_by_proxy.add(host.name, failed_hosts + unreachable_hosts)
                             iterator.mark_host_failed(host)
                 display.debug("done checking for any_errors_fatal")
 

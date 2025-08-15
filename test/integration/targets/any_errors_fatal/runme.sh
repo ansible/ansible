@@ -47,3 +47,7 @@ ansible-playbook -i inventory "$@" 80981.yml | tee out.txt
 [ "$(grep -c 'SHOULD NOT HAPPEN' out.txt)" -eq 0 ]
 [ "$(grep -c 'rescuedd' out.txt)" -eq 2 ]
 [ "$(grep -c 'recovered' out.txt)" -eq 2 ]
+
+ansible-playbook -i host_A,host_B,host_C "$@" 85617.yml | tee out.txt
+[ "$(grep -c '3 hosts execute 3 debug tasks' out.txt)" -eq 9 ]
+[ "$(grep -c 'rescued=2' out.txt)" -eq 2 ]

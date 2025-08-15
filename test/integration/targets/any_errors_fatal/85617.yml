@@ -1,0 +1,24 @@
+- name: Test failing and rescuing in nested includes
+  hosts: host_A,host_B,host_C
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - include_tasks: 85617_separate_tasks.yml
+      when: inventory_hostname == "host_A"
+
+    - debug:
+        msg: '3 hosts execute 3 debug tasks'
+
+    - include_role:
+        name: ./
+        tasks_from: 85617_separate_tasks.yml
+      when: inventory_hostname == "host_B"
+
+    - debug:
+        msg: '3 hosts execute 3 debug tasks'
+
+    - include_tasks: 85617_separate_tasks.yml
+      when: inventory_hostname in ["host_A", "host_B"]
+
+    - debug:
+        msg: '3 hosts execute 3 debug tasks'
