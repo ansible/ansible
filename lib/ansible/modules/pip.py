@@ -660,12 +660,11 @@ def _normalize_vcs_packages(
         module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
 
         out_lines = out.splitlines()
-        saved_files = (Path(line.split(" ")[-1]).name for line in out_lines if 'Saved' in line)
-        package_names = (Path(name).stem for name in saved_files)
+        saved_packages = (Path(line.split(" ")[-1]).stem for line in out_lines if 'Saved' in line)
 
         package_objects = (Package('-'.join(pkg.split('-')[:-1]),
                                    version_string=pkg.split('-')[-1])
-                           for pkg in package_names)
+                           for pkg in saved_packages)
 
     other_packages = (pkg for pkg in package_list if str(pkg) not in vcs_packages)
     return [*other_packages, *package_objects]
