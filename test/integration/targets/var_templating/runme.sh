@@ -13,3 +13,7 @@ ansible-playbook task_vars_templating.yml -v "$@"
 
 # there should be an attempt to use 'sudo' in the connection debug output
 ANSIBLE_BECOME_ALLOW_SAME_USER=true ansible-playbook test_connection_vars.yml -vvvv "$@" | tee /dev/stderr | grep 'sudo \-H \-S'
+
+# test vars deprecation
+ansible -m debug  -a 'msg=access all {{vars}}' localhost | grep 'The internal "vars" dictionary is deprecated'
+ansible -m debug  -a 'msg=access specific {{vars["ansible_playbook_python"]}}' localhost | grep 'The internal "vars" dictionary is deprecated'
