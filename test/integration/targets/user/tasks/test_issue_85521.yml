@@ -19,7 +19,7 @@
     - name: Create file in old home
       shell: |
         mkdir -p /tmp/movefuser
-        echo "Old home file" > /tmp/movefuser/testfile.txt
+        echo -n "Old home file" > /tmp/movefuser/testfile.txt
         chown movefuser:movefuser /tmp/movefuser/testfile.txt
       become: true
 

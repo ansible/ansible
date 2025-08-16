@@ -20,7 +20,7 @@
     - name: Create test file in initial home directory
       shell: |
         mkdir -p /tmp/movehome_initial
-        echo "This is a test file in the initial home directory" > /tmp/movehome_initial/testfile.txt
+        echo -n "This is a test file in the initial home directory" > /tmp/movehome_initial/testfile.txt
         chown movehomeuser:movehomeuser /tmp/movehome_initial/testfile.txt
       become: true
 
