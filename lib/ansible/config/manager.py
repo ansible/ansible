@@ -303,11 +303,12 @@ def find_ini_config_file(warnings=None):
     # * We did not use a config from ANSIBLE_CONFIG
     # * There's an ansible.cfg in the current working directory that we skipped
     # then the program will:
-    # * If user didn't set a environment variable named ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG, throw an exception
-    # * otherwise, print a warning
+    # * If user didn't set an environment variable named ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG to any non-empty value, throw an exception
+    # * otherwise, emit a warning
     if path_from_env != path and warn_cmd_public:
-        ignore_cwd_config = os.getenv("ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG", Sentinel)
-        if ignore_cwd_config is Sentinel:
+        ignore_cwd_config = os.getenv("ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG")
+        # Test ignore_cwd_config not exists or is empty
+        if not ignore_cwd_config:
             raise AnsibleError(
                 f"Ansible is being run in a world writable directory ({to_text(cwd)}), and an ansible.cfg is inside."
                 f" Using it as an ansible.cfg source causes security issues."

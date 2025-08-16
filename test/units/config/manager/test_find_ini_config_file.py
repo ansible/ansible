@@ -35,13 +35,14 @@ def setup_env(request, monkeypatch):
     else:
         monkeypatch.setenv('ANSIBLE_CONFIG', request.param[0])
 
-    cur_ignore = os.environ.get('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG', None)
+    cur_ignore = os.environ.get('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG')
     ignore_env = request.param[1]
 
-    if ignore_env is not None:
-        monkeypatch.setenv('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG', request.param[0])
-    elif cur_ignore:
+    # If ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG exists, we will delete it
+    if ignore_env is None and cur_ignore is not None:
         monkeypatch.delenv('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG')
+    elif ignore_env is not None:
+        monkeypatch.setenv('ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG', ignore_env)
 
     yield
 
@@ -179,8 +180,8 @@ class TestFindIniFile:
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
                              indirect=['setup_existing_files'])
-    def test_cwd_exception_on_writable(self, setup_env, setup_existing_files, monkeypatch):
-        """If the cwd is writable, and env is not set, throw an exception and exit """
+    def test_cwd_on_writable_no_env(self, setup_env, setup_existing_files, monkeypatch):
+        """If the cwd is writable, and ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG is not set, throw an exception and exit """
         real_stat = os.stat
 
         def _os_stat(path):
@@ -196,14 +197,14 @@ class TestFindIniFile:
         with pytest.raises(Exception) as e:
             find_ini_config_file(warnings)
 
-    # ANSIBLE_CONFIG not specified
+    # ANSIBLE_CONFIG not specified, but ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG is set to True
     @pytest.mark.parametrize('setup_env', [[None, 'True']], indirect=['setup_env'])
     # All config files are present
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
                              indirect=['setup_existing_files'])
-    def test_cwd_warning_on_writable(self, setup_env, setup_existing_files, monkeypatch):
-        """If the cwd is writable, warn and skip it """
+    def test_cwd_on_writable_with_env(self, setup_env, setup_existing_files, monkeypatch):
+        """If the cwd is writable, and ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG is not empty, warn and skip it """
         real_stat = os.stat
 
         def _os_stat(path):
@@ -221,6 +222,29 @@ class TestFindIniFile:
         warning = warnings.pop()
         assert u'Ansible is being run in a world writable directory' in warning
         assert u'ignoring it as an ansible.cfg source' in warning
+
+    # ANSIBLE_CONFIG not specified, but ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG is set to empty string
+    @pytest.mark.parametrize('setup_env', [[None, '']], indirect=['setup_env'])
+    # All config files are present
+    @pytest.mark.parametrize('setup_existing_files',
+                             [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],
+                             indirect=['setup_existing_files'])
+    def test_cwd_on_writable_with_empty_env(self, setup_env, setup_existing_files, monkeypatch):
+        """If the cwd is writable, and ANSIBLE_IGNORE_WORLD_WRITABLE_CWD_CONFIG is empty, throw an exception and exit """
+        real_stat = os.stat
+
+        def _os_stat(path):
+            assert path == working_dir
+            from posix import stat_result
+            stat_info = list(real_stat(path))
+            stat_info[stat.ST_MODE] |= stat.S_IWOTH
+            return stat_result(stat_info)
+
+        monkeypatch.setattr('os.stat', _os_stat)
+
+        warnings = set()
+        with pytest.raises(Exception) as e:
+            find_ini_config_file(warnings)
 
     # ANSIBLE_CONFIG is sepcified
     @pytest.mark.parametrize('setup_env, expected', (([alt_cfg_file, None], alt_cfg_file), ([cfg_in_cwd, None], cfg_in_cwd)), indirect=['setup_env'])
