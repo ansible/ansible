@@ -1,0 +1,94 @@
+# Test code to reproduce and verify fix for issue #85521
+# user module incorrectly reports success on move_home in Alpine without changing user home
+
+- name: Reproduce issue #85521 - move_home soundness bug on Alpine
+  block:
+    - name: Create user with home /tmp/movefuser
+      user:
+        name: movefuser
+        home: /tmp/movefuser
+        create_home: yes
+        state: present
+      register: create_user_result
+
+    - name: Verify user creation
+      assert:
+        that:
+          - create_user_result is changed
+
+    - name: Create file in old home
+      copy:
+        dest: /tmp/movefuser/testfile.txt
+        content: Old home file
+        owner: movefuser
+        group: movefuser
+        mode: '0644'
+
+    - name: Attempt to move home to /tmp/movefuser_new
+      user:
+        name: movefuser
+        home: /tmp/movefuser_new
+        move_home: true
+        state: present
+      register: move_home_result
+
+    - name: Verify move_home operation reports changed
+      assert:
+        that:
+          - move_home_result is changed
+          - move_home_result.move_home == true
+          - move_home_result.home == '/tmp/movefuser_new'
+
+    - name: Stat testfile.txt in new home
+      stat:
+        path: /tmp/movefuser_new/testfile.txt
+      register: movedfile
+
+    - name: Assert file exists in new home (this should now pass with the fix)
+      assert:
+        that:
+          - movedfile.stat.exists
+        fail_msg: "File was not moved to new home directory - move_home functionality is broken"
+        success_msg: "File successfully moved to new home directory - move_home functionality is working"
+
+    - name: Verify file content is preserved
+      slurp:
+        src: /tmp/movefuser_new/testfile.txt
+      register: file_content_check
+
+    - name: Assert file content is preserved
+      assert:
+        that:
+          - file_content_check.content | b64decode == "Old home file"
+
+    - name: Verify user's home directory is updated in system
+      getent:
+        database: passwd
+        key: movefuser
+      register: user_info
+
+    - name: Assert home directory is correctly updated in /etc/passwd
+      assert:
+        that:
+          - user_info.ansible_facts.getent_passwd.movefuser[4] == '/tmp/movefuser_new'
+        fail_msg: "Home directory not updated in /etc/passwd"
+        success_msg: "Home directory correctly updated in /etc/passwd"
+
+  always:
+    - name: Clean up test user and directories
+      block:
+        - name: Remove test user
+          user:
+            name: movefuser
+            state: absent
+            remove: yes
+          ignore_errors: yes
+
+        - name: Clean up test directories
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /tmp/movefuser
+            - /tmp/movefuser_new
+          ignore_errors: yes

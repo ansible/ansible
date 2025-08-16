@@ -34,3 +34,7 @@
     - ansible_facts.system == 'Linux'
     - ansible_distribution != 'Alpine'
 - import_tasks: ssh_keygen.yml
+- include_tasks: test_move_home_alpine.yml
+  when: ansible_distribution == 'Alpine'
+- include_tasks: test_issue_85521.yml
+  when: ansible_distribution == 'Alpine'

@@ -3213,6 +3213,7 @@ class BusyBox(User):
         info = self.user_info()
         add_cmd_bin = self.module.get_bin_path('adduser', True)
         remove_cmd_bin = self.module.get_bin_path('delgroup', True)
+        changed = False
 
         # Manage group membership
         if self.groups is not None and len(self.groups):
@@ -3226,6 +3227,7 @@ class BusyBox(User):
                         rc, out, err = self.execute_command(add_cmd)
                         if rc is not None and rc != 0:
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
+                        changed = True
 
                 for g in group_diff:
                     if g not in groups and not self.append:
@@ -3233,6 +3235,82 @@ class BusyBox(User):
                         rc, out, err = self.execute_command(remove_cmd)
                         if rc is not None and rc != 0:
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
+                        changed = True
+
+        # Manage home directory changes
+        # BusyBox doesn't have usermod, so we need to handle home directory changes manually
+        if self.home is not None and info[5] != self.home:
+            old_home = info[5]
+            new_home = self.home
+
+            # Check if move_home is requested and old home exists
+            if self.move_home and old_home and os.path.exists(old_home):
+                # Move the home directory contents
+                try:
+                    # Create new home directory if it doesn't exist
+                    if not os.path.exists(new_home):
+                        os.makedirs(new_home, mode=0o755)
+
+                    # Move contents from old home to new home
+                    import shutil
+                    for item in os.listdir(old_home):
+                        old_path = os.path.join(old_home, item)
+                        new_path = os.path.join(new_home, item)
+                        if os.path.exists(new_path):
+                            # If destination exists, we need to handle it carefully
+                            if os.path.isdir(old_path) and os.path.isdir(new_path):
+                                # Merge directories
+                                shutil.copytree(old_path, new_path, dirs_exist_ok=True)
+                                shutil.rmtree(old_path)
+                            else:
+                                # For files or mixed types, backup and replace
+                                backup_path = new_path + '.ansible_backup'
+                                if os.path.exists(backup_path):
+                                    os.remove(backup_path)
+                                shutil.move(new_path, backup_path)
+                                shutil.move(old_path, new_path)
+                        else:
+                            shutil.move(old_path, new_path)
+
+                    # Remove old home directory if it's empty
+                    try:
+                        os.rmdir(old_home)
+                    except OSError:
+                        # Directory not empty or other error, leave it
+                        pass
+
+                    # Set proper ownership for the new home directory
+                    uid = info[2]
+                    gid = info[3]
+                    self.chown_homedir(uid, gid, new_home)
+
+                except (OSError, IOError, shutil.Error) as e:
+                    self.module.fail_json(
+                        name=self.name,
+                        msg="Failed to move home directory from %s to %s: %s" % (old_home, new_home, str(e))
+                    )
+            elif not self.move_home and not os.path.exists(new_home):
+                # Create new home directory if it doesn't exist and move_home is False
+                try:
+                    os.makedirs(new_home, mode=0o755)
+                    uid = info[2]
+                    gid = info[3]
+                    self.chown_homedir(uid, gid, new_home)
+                except (OSError, IOError) as e:
+                    self.module.fail_json(
+                        name=self.name,
+                        msg="Failed to create home directory %s: %s" % (new_home, str(e))
+                    )
+
+            # Update /etc/passwd with new home directory
+            try:
+                self._update_passwd_home(self.name, new_home)
+                changed = True
+            except Exception as e:
+                self.module.fail_json(
+                    name=self.name,
+                    msg="Failed to update home directory in /etc/passwd: %s" % str(e)
+                )
 
         # Manage password
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
@@ -3243,8 +3321,53 @@ class BusyBox(User):
 
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
+            changed = True
+
+        # Return appropriate rc based on whether changes were made
+        if changed:
+            rc = 0
 
         return rc, out, err
+
+    def _update_passwd_home(self, username, new_home):
+        """
+        Update the home directory for a user in /etc/passwd.
+        BusyBox doesn't have usermod, so we need to edit /etc/passwd directly.
+        """
+        import tempfile
+
+        passwd_file = '/etc/passwd'
+        temp_file = None
+
+        try:
+            # Read current passwd file
+            with open(passwd_file, 'r') as f:
+                lines = f.readlines()
+
+            # Create temporary file
+            temp_fd, temp_file = tempfile.mkstemp(dir='/etc', prefix='.passwd.tmp.')
+
+            with os.fdopen(temp_fd, 'w') as f:
+                for line in lines:
+                    if line.startswith(username + ':'):
+                        # Parse the passwd line: username:password:uid:gid:gecos:home:shell
+                        fields = line.strip().split(':')
+                        if len(fields) >= 6:
+                            fields[5] = new_home  # Update home directory field
+                            line = ':'.join(fields) + '\n'
+                    f.write(line)
+
+            # Atomically replace the passwd file
+            os.rename(temp_file, passwd_file)
+            temp_file = None  # Prevent cleanup since we renamed it
+
+        except (IOError, OSError) as e:
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                except OSError:
+                    pass
+            raise Exception("Failed to update /etc/passwd: %s" % str(e))
 
 
 class Alpine(BusyBox):

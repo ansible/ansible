@@ -1,0 +1,160 @@
+# Test code for the user module move_home functionality on Alpine/BusyBox systems.
+# This test addresses issue #85521 - user module incorrectly reports success on move_home in Alpine
+
+- name: Test move_home functionality on Alpine/BusyBox systems
+  block:
+    - name: Create test user with initial home directory
+      user:
+        name: movehomeuser
+        home: /tmp/movehome_initial
+        create_home: yes
+        state: present
+      register: create_result
+
+    - name: Verify user was created
+      assert:
+        that:
+          - create_result is changed
+          - create_result.home == '/tmp/movehome_initial'
+
+    - name: Create test file in initial home directory
+      copy:
+        dest: /tmp/movehome_initial/testfile.txt
+        content: "This is a test file in the initial home directory"
+        owner: movehomeuser
+        group: movehomeuser
+        mode: '0644'
+
+    - name: Verify test file exists in initial home
+      stat:
+        path: /tmp/movehome_initial/testfile.txt
+      register: initial_file_stat
+
+    - name: Assert test file exists in initial home
+      assert:
+        that:
+          - initial_file_stat.stat.exists
+          - initial_file_stat.stat.owner == 'movehomeuser'
+
+    - name: Move user home directory using move_home=true
+      user:
+        name: movehomeuser
+        home: /tmp/movehome_new
+        move_home: true
+        state: present
+      register: move_result
+
+    - name: Verify move_home operation was successful
+      assert:
+        that:
+          - move_result is changed
+          - move_result.home == '/tmp/movehome_new'
+          - move_result.move_home == true
+
+    - name: Verify test file exists in new home directory
+      stat:
+        path: /tmp/movehome_new/testfile.txt
+      register: moved_file_stat
+
+    - name: Assert test file was moved to new home
+      assert:
+        that:
+          - moved_file_stat.stat.exists
+          - moved_file_stat.stat.owner == 'movehomeuser'
+
+    - name: Verify test file content is preserved
+      slurp:
+        src: /tmp/movehome_new/testfile.txt
+      register: file_content
+
+    - name: Assert file content is preserved
+      assert:
+        that:
+          - file_content.content | b64decode == "This is a test file in the initial home directory"
+
+    - name: Verify old home directory is removed or empty
+      stat:
+        path: /tmp/movehome_initial
+      register: old_home_stat
+
+    - name: Check if old home directory was properly cleaned up
+      assert:
+        that:
+          - not old_home_stat.stat.exists or (old_home_stat.stat.exists and old_home_stat.stat.isdir)
+
+    - name: Verify user's home directory is updated in /etc/passwd
+      getent:
+        database: passwd
+        key: movehomeuser
+      register: passwd_entry
+
+    - name: Assert home directory is updated in passwd
+      assert:
+        that:
+          - passwd_entry.ansible_facts.getent_passwd.movehomeuser[4] == '/tmp/movehome_new'
+
+    - name: Test move_home=false (should not move existing content)
+      block:
+        - name: Create another test file in current home
+          copy:
+            dest: /tmp/movehome_new/testfile2.txt
+            content: "Second test file"
+            owner: movehomeuser
+            group: movehomeuser
+            mode: '0644'
+
+        - name: Change home directory without move_home
+          user:
+            name: movehomeuser
+            home: /tmp/movehome_final
+            move_home: false
+            state: present
+          register: no_move_result
+
+        - name: Verify home directory change without move
+          assert:
+            that:
+              - no_move_result is changed
+              - no_move_result.home == '/tmp/movehome_final'
+              - no_move_result.move_home == false
+
+        - name: Verify new home directory exists but is empty
+          find:
+            paths: /tmp/movehome_final
+            file_type: file
+          register: final_home_files
+
+        - name: Assert new home is empty (no files moved)
+          assert:
+            that:
+              - final_home_files.files | length == 0
+
+        - name: Verify old files remain in previous location
+          stat:
+            path: /tmp/movehome_new/testfile2.txt
+          register: old_file_stat
+
+        - name: Assert old files were not moved
+          assert:
+            that:
+              - old_file_stat.stat.exists
+
+  always:
+    - name: Clean up test user and directories
+      block:
+        - name: Remove test user
+          user:
+            name: movehomeuser
+            state: absent
+            remove: yes
+          ignore_errors: yes
+
+        - name: Clean up test directories
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /tmp/movehome_initial
+            - /tmp/movehome_new
+            - /tmp/movehome_final
+          ignore_errors: yes

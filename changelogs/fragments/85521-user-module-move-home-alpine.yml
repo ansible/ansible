@@ -1,0 +1,2 @@
+bugfixes:
+  - user - Fix move_home functionality on Alpine Linux (BusyBox backend) where the module incorrectly reported success without actually moving the user's home directory or updating /etc/passwd. The BusyBox class now properly handles home directory changes by manually moving directory contents and updating the passwd file when move_home=true is specified (https://github.com/ansible/ansible/issues/85521).
