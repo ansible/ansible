@@ -3252,16 +3252,14 @@ class BusyBox(User):
                         os.makedirs(new_home, mode=0o755)
 
                     # Move contents from old home to new home
-                    import shutil
                     for item in os.listdir(old_home):
                         old_path = os.path.join(old_home, item)
                         new_path = os.path.join(new_home, item)
                         if os.path.exists(new_path):
                             # If destination exists, we need to handle it carefully
                             if os.path.isdir(old_path) and os.path.isdir(new_path):
-                                # Merge directories
-                                shutil.copytree(old_path, new_path, dirs_exist_ok=True)
-                                shutil.rmtree(old_path)
+                                # Merge directories - use a more compatible approach
+                                self._merge_directories(old_path, new_path)
                             else:
                                 # For files or mixed types, backup and replace
                                 backup_path = new_path + '.ansible_backup'
@@ -3279,15 +3277,20 @@ class BusyBox(User):
                         # Directory not empty or other error, leave it
                         pass
 
-                    # Set proper ownership for the new home directory
+                    # Set proper ownership for the new home directory and all contents
                     uid = info[2]
                     gid = info[3]
                     self.chown_homedir(uid, gid, new_home)
 
-                except (OSError, IOError, shutil.Error) as e:
+                except (OSError, IOError) as e:
                     self.module.fail_json(
                         name=self.name,
                         msg="Failed to move home directory from %s to %s: %s" % (old_home, new_home, str(e))
+                    )
+                except Exception as e:
+                    self.module.fail_json(
+                        name=self.name,
+                        msg="Unexpected error moving home directory from %s to %s: %s" % (old_home, new_home, str(e))
                     )
             elif not self.move_home and not os.path.exists(new_home):
                 # Create new home directory if it doesn't exist and move_home is False
@@ -3368,6 +3371,40 @@ class BusyBox(User):
                 except OSError:
                     pass
             raise Exception("Failed to update /etc/passwd: %s" % str(e))
+
+    def _merge_directories(self, src_dir, dst_dir):
+        """
+        Merge contents of src_dir into dst_dir, then remove src_dir.
+        This is a compatibility function for older Python versions that don't have
+        shutil.copytree with dirs_exist_ok parameter.
+        """
+        try:
+            for item in os.listdir(src_dir):
+                src_path = os.path.join(src_dir, item)
+                dst_path = os.path.join(dst_dir, item)
+
+                if os.path.isdir(src_path):
+                    if os.path.exists(dst_path):
+                        # Recursively merge subdirectories
+                        self._merge_directories(src_path, dst_path)
+                    else:
+                        # Move the entire subdirectory
+                        shutil.move(src_path, dst_path)
+                else:
+                    # For files, move them (overwriting if necessary)
+                    if os.path.exists(dst_path):
+                        os.remove(dst_path)
+                    shutil.move(src_path, dst_path)
+
+            # Remove the now-empty source directory
+            try:
+                os.rmdir(src_dir)
+            except OSError:
+                # Directory not empty, leave it
+                pass
+
+        except (OSError, IOError) as e:
+            raise Exception("Failed to merge directories %s to %s: %s" % (src_dir, dst_dir, str(e)))
 
 
 class Alpine(BusyBox):

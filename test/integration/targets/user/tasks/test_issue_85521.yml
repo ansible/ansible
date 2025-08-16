@@ -17,12 +17,11 @@
           - create_user_result is changed
 
     - name: Create file in old home
-      copy:
-        dest: /tmp/movefuser/testfile.txt
-        content: Old home file
-        owner: movefuser
-        group: movefuser
-        mode: '0644'
+      shell: |
+        mkdir -p /tmp/movefuser
+        echo "Old home file" > /tmp/movefuser/testfile.txt
+        chown movefuser:movefuser /tmp/movefuser/testfile.txt
+      become: true
 
     - name: Attempt to move home to /tmp/movefuser_new
       user:
@@ -81,8 +80,8 @@
           user:
             name: movefuser
             state: absent
-            remove: yes
-          ignore_errors: yes
+            remove: true
+          ignore_errors: true
 
         - name: Clean up test directories
           file:
@@ -91,4 +90,4 @@
           loop:
             - /tmp/movefuser
             - /tmp/movefuser_new
-          ignore_errors: yes
+          ignore_errors: true
