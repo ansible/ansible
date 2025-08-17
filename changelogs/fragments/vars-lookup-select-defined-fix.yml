@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "vars lookup plugin - Fixed issue where the plugin would re-template already-processed template results containing ``select('defined')`` filters, causing ``'var' is undefined`` errors when undefined variables were referenced in the original template. The plugin now only templates string values that contain template syntax, preventing re-evaluation of processed results (https://github.com/ansible/ansible/issues/XXXXX)."

@@ -77,6 +77,7 @@ from ansible.errors import AnsibleTypeError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.datatag import native_type_name
 from ansible._internal._templating import _jinja_bits
+from ansible._internal._templating._jinja_bits import is_possibly_template
 
 
 class LookupModule(LookupBase):
@@ -101,4 +102,13 @@ class LookupModule(LookupBase):
 
             ret.append(value)
 
-        return self._templar._engine.template(ret)
+        # Only template values that are strings and contain template syntax
+        # This prevents re-templating of already-processed template results
+        templated_ret = []
+        for value in ret:
+            if isinstance(value, str) and is_possibly_template(value):
+                templated_ret.append(self._templar._engine.template(value))
+            else:
+                templated_ret.append(value)
+        
+        return templated_ret
