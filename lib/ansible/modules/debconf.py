@@ -121,12 +121,20 @@ EXAMPLES = r"""
     value: "{{ site_passphrase }}"
     vtype: password
   no_log: True
+
+- name: Set seen flag to true for locales
+  ansible.builtin.debconf:
+    name: locales
+    question: locales/default_environment_locale
+    vtype: seen
+    value: 'true'
 """
 
 RETURN = r"""#"""
 
-from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text.converters import to_text, to_native
+from ansible.module_utils.common.validation import _check_type_str_no_conversion
 
 
 def get_password_value(module, pkg, question, vtype):
@@ -162,12 +170,17 @@ def get_selections(module, pkg):
         module.fail_json(msg=err)
 
     selections = {}
-
+    seen = []  # list of seen questions
     for line in out.splitlines():
         (key, value) = line.split(':', 1)
-        selections[key.strip('*').strip()] = value.strip()
+        if key.startswith('*'):
+            key = key.strip('*').strip()
+            seen.append(key)
+            selections[key] = value.strip()
+        else:
+            selections[key.strip()] = value.strip()
 
-    return selections
+    return selections, seen
 
 
 def set_selection(module, pkg, question, vtype, value, unseen):
@@ -201,7 +214,7 @@ def main():
     value = module.params["value"]
     unseen = module.params["unseen"]
 
-    prev = get_selections(module, pkg)
+    prev, seen_list = get_selections(module, pkg)
 
     changed = False
     msg = ""
@@ -213,6 +226,15 @@ def main():
         # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
         if vtype == 'boolean':
             value = to_text(value).lower()
+
+        if vtype == 'seen':
+            input_value = to_text(value).lower()
+            if input_value not in ['true', 'false']:
+                module.fail_json(msg=f"Invalid value provided for vtype 'seen': {input_value}")
+            value = input_value
+
+        if vtype not in ('boolean', 'seen', 'multiselect'):
+            value = _check_type_str_no_conversion(value)
 
         # if question doesn't exist, value cannot match
         if question not in prev:
@@ -230,6 +252,13 @@ def main():
                 except TypeError as exc:
                     module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
                 existing = sorted([i.strip() for i in existing.split(",")])
+            elif vtype == 'seen':
+                # vtype seen is a special case where we only care if the question is seen or not
+                if question in seen_list:
+                    # if the question is seen, the value must be true
+                    existing = 'true'
+                else:
+                    existing = 'false'
 
             if value != existing:
                 changed = True
