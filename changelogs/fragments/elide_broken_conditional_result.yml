@@ -1,0 +1,3 @@
+bugfixes:
+  - conditionals - When displaying a broken conditional error or deprecation warning, 
+    the origin of the non-boolean result is included (if available), and the raw result is omitted.
