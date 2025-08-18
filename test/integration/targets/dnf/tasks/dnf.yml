@@ -910,7 +910,7 @@
     - name: Make bad conf file
       copy:
         dest: "{{ remote_tmp_dir }}/bad_conf_file"
-        contents: '[broken_section\nname=value'
+        content: '[broken_section\nname=value'
 
     - name: Run dnf with bad conf file
       dnf:
