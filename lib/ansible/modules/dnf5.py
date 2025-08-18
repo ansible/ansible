@@ -569,7 +569,7 @@ class Dnf5Module(YumDnf):
         try:
             base.load_config()
         except libdnf5.exception.InvalidConfigErrorNested as e:
-            self.module.fail_json(msg=f"Failed to load configuration file", exception=e, conf_file=conf.config_file_path)
+            self.module.fail_json(msg="Failed to load configuration file", exception=e, conf_file=conf.config_file_path)
 
         if self.releasever is not None:
             variables = base.get_vars()
