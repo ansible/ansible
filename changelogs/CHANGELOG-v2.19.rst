@@ -4,6 +4,45 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-08-18
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- AnsibleModule - Add temporary internal monkeypatch-able hook to alter module result serialization by splitting serialization from ``_return_formatted`` into ``_record_module_result``.
+- ansible-test - Improve formatting of generated coverage config file.
+- ansible-test - Use OS packages to satisfy controller requirements on FreeBSD 13.5 during managed instance bootstrapping.
+- encrypt - check datatype of salt_size in password_hash filter.
+- service_facts - handle keyerror exceptions with warning.
+- service_facts - warn user about missing service details instead of ignoring.
+
+Bugfixes
+--------
+
+- ansible-test - Always exclude the ``tests/output/`` directory from a collection's code coverage. (https://github.com/ansible/ansible/issues/84244)
+- ansible-test - Limit package install retries during managed remote instance bootstrapping.
+- ansible-test - Use a consistent coverage config for all collection testing.
+- argspec validation - The ``str`` argspec type treats ``None`` values as empty string for better consistency with pre-2.19 templating conversions.
+- conditionals - When displaying a broken conditional error or deprecation warning, the origin of the non-boolean result is included (if available), and the raw result is omitted.
+- failed_when - When using ``failed_when`` to suppress an error, the ``exception`` key in the result is renamed to ``failed_when_suppressed_exception``. This prevents the error from being displayed by callbacks after being suppressed. (https://github.com/ansible/ansible/issues/85505)
+- import_tasks - fix templating parent include arguments.
+- plugins config, get_option_and_origin now correctly displays the value and origin of the option.
+- template lookup - Skip finalization on the internal templating operation to allow markers to be returned and handled by, e.g. the ``default`` filter. Previously, finalization tripped markers, causing an exception to end processing of the current template pipeline. (https://github.com/ansible/ansible/issues/85674)
+- templating - Avoid tripping markers within Jinja generated code. (https://github.com/ansible/ansible/issues/85674)
+- templating - Ensure filter plugin result processing occurs under the correct call context. (https://github.com/ansible/ansible/issues/85585)
+- templating - Fix slicing of tuples in templating (https://github.com/ansible/ansible/issues/85606).
+- templating - Multi-node template results coerce embedded ``None`` nodes to empty string (instead of rendering literal ``None`` to the output).
+- templating - Undefined marker values sourced from the Jinja ``getattr->getitem`` fallback are now accessed correctly, raising AnsibleUndefinedVariable for user plugins that do not understand markers. Previously, these values were erroneously returned to user plugin code that had not opted in to marker acceptance.
+- tqm - use display.error_as_warning instead of display.warning_as_error.
+- tqm - use display.error_as_warning instead of self.warning.
+
 v2.19.0
 =======
 
