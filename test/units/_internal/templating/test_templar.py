@@ -1111,3 +1111,15 @@ def test_filter_generator() -> None:
     te = TemplateEngine(variables=variables)
     te.template(TRUST.tag("{{ bar }}"))
     te.template(TRUST.tag("{{ lookup('vars', 'bar') }}"))
+
+
+def test_call_context_reset() -> None:
+    """Ensure that new template invocations do not inherit trip behavior from running Jinja plugins."""
+    templar = TemplateEngine(variables=dict(
+        somevar=TRUST.tag("{{ somedict.somekey | default('ok') }}"),
+        somedict=dict(
+            somekey=TRUST.tag("{{ not_here }}"),
+        )
+    ))
+
+    assert templar.template(TRUST.tag("{{ lookup('vars', 'somevar') }}")) == 'ok'
