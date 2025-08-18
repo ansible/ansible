@@ -44,7 +44,7 @@ from ._jinja_bits import (
     _finalize_template_result,
     FinalizeMode,
 )
-from ._jinja_common import _TemplateConfig, MarkerError, ExceptionMarker
+from ._jinja_common import _TemplateConfig, MarkerError, ExceptionMarker, JinjaCallContext
 from ._lazy_containers import _AnsibleLazyTemplateMixin
 from ._marker_behaviors import MarkerBehavior, FAIL_ON_UNDEFINED
 from ._transform import _type_transform_mapping
@@ -260,6 +260,7 @@ class TemplateEngine:
             with (
                 TemplateContext(template_value=variable, templar=self, options=options, stop_on_template=stop_on_template) as ctx,
                 DeprecatedAccessAuditContext.when(ctx.is_top_level),
+                JinjaCallContext(accept_lazy_markers=True),  # let default Jinja marker behavior apply, since we're descending into a new template
             ):
                 try:
                     if not value_is_str:
