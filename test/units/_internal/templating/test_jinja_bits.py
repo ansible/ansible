@@ -12,7 +12,7 @@ import pytest_mock
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject
-from ansible._internal._templating._jinja_common import CapturedExceptionMarker, MarkerError, Marker, UndefinedMarker
+from ansible._internal._templating._jinja_common import CapturedExceptionMarker, MarkerError, Marker, UndefinedMarker, JinjaCallContext
 from ansible._internal._templating._utils import TemplateContext
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible._internal._templating._jinja_bits import (AnsibleEnvironment, TemplateOverrides, _TEMPLATE_OVERRIDE_FIELD_NAMES, defer_template_error,
@@ -443,3 +443,17 @@ def test_mutation_methods(template: str, result: object) -> None:
     This feature may be deprecated and removed in a future release by using Jinja's ImmutableSandboxedEnvironment.
     """
     assert TemplateEngine().template(TRUST.tag(template)) == result
+
+
+@pytest.mark.parametrize("template", (
+    '{{ adict["bogus"] | default("ok") }}',
+    '{{ adict.bogus | default("ok") }}',
+))
+def test_marker_access_getattr_and_getitem(template: str) -> None:
+    """Ensure that getattr and getitem always access markers."""
+    # the absence of a JinjaCallContext should cause the access done by getattr and getitem not to trip when a marker is encountered
+    assert TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template)) == "ok"
+
+    with pytest.raises(AnsibleUndefinedVariable):
+        with JinjaCallContext(accept_lazy_markers=False):  # the access done by getattr and getitem should immediately trip when a marker is encountered
+            TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template))

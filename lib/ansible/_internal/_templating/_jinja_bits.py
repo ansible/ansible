@@ -811,7 +811,7 @@ class AnsibleEnvironment(SandboxedEnvironment):
             try:
                 value = obj[attribute]
             except (TypeError, LookupError):
-                return self.undefined(obj=obj, name=attribute) if is_safe else self.unsafe_undefined(obj, attribute)
+                value = self.undefined(obj=obj, name=attribute) if is_safe else self.unsafe_undefined(obj, attribute)
 
         AnsibleAccessContext.current().access(value)
 
