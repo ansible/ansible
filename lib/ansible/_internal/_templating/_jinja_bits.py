@@ -891,6 +891,8 @@ def _flatten_nodes(nodes: t.Iterable[t.Any]) -> t.Iterable[t.Any]:
         else:
             if type(node) is TemplateModule:  # pylint: disable=unidiomatic-typecheck
                 yield from _flatten_nodes(node._body_stream)
+            elif node is None:
+                continue  # avoid yielding `None`-valued nodes to avoid literal "None" in stringified template results
             else:
                 yield node
 

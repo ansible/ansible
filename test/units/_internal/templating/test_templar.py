@@ -27,6 +27,7 @@ import typing as t
 import pytest_mock
 
 from jinja2.runtime import Context
+from jinja2.loaders import DictLoader
 
 import unittest
 
@@ -1078,6 +1079,23 @@ def test_marker_from_test_plugin() -> None:
     """Verify test plugins can raise MarkerError to return a Marker, and that no warnings or deprecations are emitted."""
     with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
         assert TemplateEngine(variables=dict(something=TRUST.tag("{{ nope }}"))).template(TRUST.tag("{{ (something is eq {}) is undefined }}"))
+
+
+@pytest.mark.parametrize("template,expected", (
+    ("{{ none }}", None),  # concat sees one node, NoneType result is preserved
+    ("{% if False %}{% endif %}", None),  # concat sees one node, NoneType result is preserved
+    ("{{''}}{% if False %}{% endif %}", ""),  # multiple blocks with an embedded None result, concat is in play, the result is an empty string
+    ("hey {{ none }}", "hey "),  # composite template, the result is an empty string
+    ("{% import 'importme' as imported %}{{ imported }}", "imported template result"),
+))
+def test_none_concat(template: str, expected: object) -> None:
+    """Validate that None values are omitted from composite template concat."""
+    te = TemplateEngine()
+
+    # set up an importable template to exercise TemplateModule code paths
+    te.environment.loader = DictLoader(dict(importme=TRUST.tag("{{ none }}{{ 'imported template result' }}{{ none }}")))
+
+    assert te.template(TRUST.tag(template)) == expected
 
 
 def test_filter_generator() -> None:
