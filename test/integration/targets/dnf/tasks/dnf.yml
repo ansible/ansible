@@ -904,3 +904,20 @@
           - '"nonexisting" in enable_plugin_result.msg'
           - '"nonexisting" in disable_plugin_result.msg'
   when: dnf5
+
+- name: test an invalid conf_file
+  block:
+    - name: Make bad conf file
+      copy:
+        dest: "{{ remote_tmp_dir }}/bad_conf_file"
+        contents: '[broken_section\nname=value'
+    - name: Run dnf with bad conf file
+      dnf:
+        conf_file: "{{ remote_tmp_dir }}/bad_conf_file"
+      ignore_errors: true
+      register: bad_conf_file_error
+    - name: Assert failure
+      assert:
+        that:
+          - bad_conf_file_error is failed
+          - "configuration file" in bad_conf_file_error.msg
