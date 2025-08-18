@@ -32,29 +32,29 @@ class TestVarsLookupPlugin:
             'var1': 'foo',
             # var2 is intentionally undefined
         }
-        
-    # Create templar with variables (use available_variables API)
-    templar = TemplateEngine(variables=variables)
-        
+
+        # Create templar with variables (use available_variables API)
+        templar = TemplateEngine(variables=variables)
+
         # First, template the select('defined') expression
         # This should work and filter out undefined var2
         template_expr = "{{ [var1, var2] | select('defined') }}"
         defined_vals_result = templar.template(TrustedAsTemplate().tag(template_expr))
-        
+
         # The result should be ['foo'] (var2 filtered out)
         assert defined_vals_result == ['foo']
-        
-    # Add the result to variables (simulating what happens in a playbook)
-    variables['defined_vals'] = defined_vals_result
-    templar.available_variables = variables
-        
+
+        # Add the result to variables (simulating what happens in a playbook)
+        variables['defined_vals'] = defined_vals_result
+        templar.available_variables = variables
+
         # Now test the vars lookup - this should NOT re-template the result
         lookup = LookupModule()
         lookup._templar = templar
-        
+
         # This should work without throwing AnsibleUndefinedVariable
         result = lookup.run(['defined_vals'], variables)
-        
+
         # Verify the result is correct
         assert result == [['foo']]
         assert len(result) == 1
@@ -66,14 +66,14 @@ class TestVarsLookupPlugin:
             'var1': 'world',
             'template_string': 'Hello {{ var1 }}!',
         }
-        
-    templar = TemplateEngine(variables=variables)
-        
+
+        templar = TemplateEngine(variables=variables)
+
         lookup = LookupModule()
         lookup._templar = templar
-        
+
         result = lookup.run(['template_string'], variables)
-        
+
         # The template string should be templated
         assert result == ['Hello world!']
     
@@ -86,13 +86,12 @@ class TestVarsLookupPlugin:
             'bool_val': True,
             'none_val': None,
         }
-        
-    templar = TemplateEngine(variables=variables)
-        
+
+        templar = TemplateEngine(variables=variables)
+
         lookup = LookupModule()
         lookup._templar = templar
-        
-        # Test each type
+
         for var_name, expected in variables.items():
             result = lookup.run([var_name], variables)
             assert result == [expected], f"Failed for {var_name}: got {result}, expected {[expected]}"
@@ -103,12 +102,12 @@ class TestVarsLookupPlugin:
             'plain_string': 'just a plain string',
             'string_with_braces': 'not a {template} at all',
         }
-        
-    templar = TemplateEngine(variables=variables)
-        
+
+        templar = TemplateEngine(variables=variables)
+
         lookup = LookupModule()
         lookup._templar = templar
-        
+
         for var_name, expected in variables.items():
             result = lookup.run([var_name], variables)
             assert result == [expected], f"Failed for {var_name}: got {result}, expected {[expected]}"
