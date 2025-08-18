@@ -6,7 +6,6 @@ from __future__ import annotations
 import copy
 import dataclasses
 import enum
-import textwrap
 import typing as t
 import collections.abc as c
 import re
@@ -560,9 +559,11 @@ class TemplateEngine:
 
         bool_result = bool(result)
 
+        result_origin = Origin.get_tag(result) or Origin.UNKNOWN
+
         msg = (
-            f'Conditional result was {textwrap.shorten(str(result), width=40)!r} of type {native_type_name(result)!r}, '
-            f'which evaluates to {bool_result}. Conditionals must have a boolean result.'
+            f'Conditional result ({bool_result}) was derived from value of type {native_type_name(result)!r} at {str(result_origin)!r}. '
+            'Conditionals must have a boolean result.'
         )
 
         if _TemplateConfig.allow_broken_conditionals:
