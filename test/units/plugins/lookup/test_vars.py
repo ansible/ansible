@@ -33,9 +33,8 @@ class TestVarsLookupPlugin:
             # var2 is intentionally undefined
         }
         
-        # Create templar and set variables
-        templar = TemplateEngine()
-        templar.set_available_variables(variables)
+    # Create templar with variables (use available_variables API)
+    templar = TemplateEngine(variables=variables)
         
         # First, template the select('defined') expression
         # This should work and filter out undefined var2
@@ -45,9 +44,9 @@ class TestVarsLookupPlugin:
         # The result should be ['foo'] (var2 filtered out)
         assert defined_vals_result == ['foo']
         
-        # Add the result to variables (simulating what happens in a playbook)
-        variables['defined_vals'] = defined_vals_result
-        templar.set_available_variables(variables)
+    # Add the result to variables (simulating what happens in a playbook)
+    variables['defined_vals'] = defined_vals_result
+    templar.available_variables = variables
         
         # Now test the vars lookup - this should NOT re-template the result
         lookup = LookupModule()
@@ -68,8 +67,7 @@ class TestVarsLookupPlugin:
             'template_string': 'Hello {{ var1 }}!',
         }
         
-        templar = TemplateEngine()
-        templar.set_available_variables(variables)
+    templar = TemplateEngine(variables=variables)
         
         lookup = LookupModule()
         lookup._templar = templar
@@ -89,8 +87,7 @@ class TestVarsLookupPlugin:
             'none_val': None,
         }
         
-        templar = TemplateEngine()
-        templar.set_available_variables(variables)
+    templar = TemplateEngine(variables=variables)
         
         lookup = LookupModule()
         lookup._templar = templar
@@ -107,8 +104,7 @@ class TestVarsLookupPlugin:
             'string_with_braces': 'not a {template} at all',
         }
         
-        templar = TemplateEngine()
-        templar.set_available_variables(variables)
+    templar = TemplateEngine(variables=variables)
         
         lookup = LookupModule()
         lookup._templar = templar
