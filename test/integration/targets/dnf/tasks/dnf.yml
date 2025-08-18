@@ -911,13 +911,15 @@
       copy:
         dest: "{{ remote_tmp_dir }}/bad_conf_file"
         contents: '[broken_section\nname=value'
+
     - name: Run dnf with bad conf file
       dnf:
         conf_file: "{{ remote_tmp_dir }}/bad_conf_file"
       ignore_errors: true
       register: bad_conf_file_error
+
     - name: Assert failure
       assert:
         that:
           - bad_conf_file_error is failed
-          - "configuration file" in bad_conf_file_error.msg
+          - '"configuration file" in bad_conf_file_error.msg'
