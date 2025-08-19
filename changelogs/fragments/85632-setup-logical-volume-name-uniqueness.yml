@@ -1,0 +1,6 @@
+minor_changes:
+- >-
+  setup - added new subkey ``lvs`` within each entry of ``ansible_facts['vgs']``
+  to provide complete logical volume data scoped by volume group.
+  The top level ``lvs`` fact by comparison, deduplicates logical volume names
+  across volume groups and may be incomplete. (https://github.com/ansible/ansible/issues/85632)
