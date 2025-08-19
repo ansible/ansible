@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - Fail gracefully when an invalid ``conf_file`` is used instead of dumping raw exception and traceback. (https://github.com/ansible/ansible/issues/85681)
