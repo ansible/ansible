@@ -25,7 +25,7 @@ class TestVarsLookupPlugin:
         2. The vars lookup plugin retrieves this variable
         3. The plugin re-templates the result, causing undefined variable errors
         
-        See: https://github.com/ansible/ansible/issues/XXXXX
+        See: https://github.com/ansible/ansible/issues/85685
         """
         # Set up the scenario from the bug report
         variables = {
@@ -41,10 +41,8 @@ class TestVarsLookupPlugin:
         template_expr = "{{ [var1, var2] | select('defined') }}"
         defined_vals_result = templar.template(TrustedAsTemplate().tag(template_expr))
 
-        # The result should be ['foo'] (var2 filtered out)
         assert defined_vals_result == ['foo']
 
-        # Add the result to variables (simulating what happens in a playbook)
         variables['defined_vals'] = defined_vals_result
         templar.available_variables = variables
 
