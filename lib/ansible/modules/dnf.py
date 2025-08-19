@@ -526,7 +526,10 @@ class DnfModule(YumDnf):
                 conf.config_file_path = conf_file
 
         # Read the configuration file
-        conf.read()
+        try:
+            conf.read()
+        except dnf.exceptions.ConfigError as e:
+            self.module.fail_json(msg="Failed to read configuration file", exception=e, conf_file=conf_file)
 
         # Turn off debug messages in the output
         conf.debuglevel = 0
