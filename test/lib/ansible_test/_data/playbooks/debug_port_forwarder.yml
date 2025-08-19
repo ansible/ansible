@@ -1,0 +1,19 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: Verify we are running with a single host
+    ansible.builtin.assert:
+      that:
+        - ansible_play_hosts_all | length == 1
+    run_once: true
+
+  - name: Verify the connection plugin is SSH
+    ansible.builtin.assert:
+      that:
+        - ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
+
+  - name: Run long running command to keep connection alive
+    ansible.builtin.raw: >-
+      {{ "pause" if is_windows else "while :; do sleep 2073600; done" }}
+    vars:
+      is_windows: "{{ ansible_shell_type | default('') in ['cmd', 'ansible.builtin.cmd', 'powershell', 'ansible.builtin.powershell'] }}"

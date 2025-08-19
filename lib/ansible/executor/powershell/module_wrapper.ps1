@@ -39,7 +39,15 @@ param(
 
     [Parameter()]
     [switch]
-    $ForModule
+    $ForModule,
+
+    [Parameter()]
+    [switch]
+    $WaitForDebugger,
+
+    [Parameter()]
+    [IDictionary]
+    $DebugParam = @{}
 )
 
 Function Write-AnsibleErrorDetail {
@@ -151,6 +159,49 @@ $parseScriptWithName = {
 }
 
 $scriptInfo = Get-AnsibleScript -Name $Script
+$pwshUtilInfo = @(
+    if ($PowerShellModules) {
+        foreach ($utilName in $PowerShellModules) {
+            Get-AnsibleScript -Name $utilName
+        }
+    }
+)
+
+$debugger = $null
+if ($DebugParam.Count) {
+    if ($scriptInfo.ShouldConstrain) {
+        throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with a debugger."
+    }
+
+    # Get a more friendly name for debug session but fallback to the original
+    # name if using an unexpected format.
+    $DebugParam.Name = if ($scriptInfo.Name.StartsWith('ansible.builtin.script.')) {
+        "script: $($scriptInfo.Name.Substring(23))"
+    }
+    elseif ($scriptInfo.Name -match 'ansible_collections\.(.+?)\.plugins\.modules\.(.+)') {
+        "$($matches[1]).$($matches[2])"
+    }
+    else {
+        $scriptInfo.Name
+    }
+
+    $DebugParam.Pipeline = $ps
+    $DebugParam.PathMapping = @(
+        @{
+            localRoot = $scriptInfo.Path
+            remoteRoot = $scriptInfo.Name
+        }
+        foreach ($utilInfo in $pwshUtilInfo) {
+            @{
+                localRoot = $utilInfo.Path
+                remoteRoot = $utilInfo.Name
+            }
+        }
+    )
+    $debugWrapper = Get-AnsibleScript -Name 'debug_wrapper.ps1' -IncludeScriptBlock
+    $debugger = & $debugWrapper.ScriptBlock @DebugParam
+}
+
 if ($scriptInfo.ShouldConstrain) {
     # Fail if there are any module utils, in the future we may allow unsigned
     # PowerShell utils in CLM but for now we don't.
@@ -168,22 +219,19 @@ if ($scriptInfo.ShouldConstrain) {
     $null = $ps.AddCommand($scriptPath, $false).AddStatement()
 }
 else {
-    if ($PowerShellModules) {
-        foreach ($utilName in $PowerShellModules) {
-            $utilInfo = Get-AnsibleScript -Name $utilName
-            if ($utilInfo.ShouldConstrain) {
-                throw "PowerShell module util '$utilName' is not trusted and cannot be loaded."
-            }
+    foreach ($utilInfo in $pwshUtilInfo) {
+        if ($utilInfo.ShouldConstrain) {
+            throw "PowerShell module util '$($utilInfo.Name)' is not trusted and cannot be loaded."
+        }
 
-            $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
-                    Name = $utilName
-                    Script = $utilInfo.Script
-                })
-            $null = $ps.AddScript(@'
+        $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
+                Name = $utilInfo.Name
+                Script = $utilInfo.Script
+            })
+        $null = $ps.AddScript(@'
 New-Module -Name $args[0] -ScriptBlock @($input)[0] |
     Import-Module -WarningAction SilentlyContinue -Scope Global
-'@).AddArgument([Path]::GetFileNameWithoutExtension($utilName)).AddStatement()
-        }
+'@).AddArgument([Path]::GetFileNameWithoutExtension($utilInfo.Name)).AddStatement()
     }
 
     if ($CSharpModules) {
@@ -201,6 +249,15 @@ New-Module -Name $args[0] -ScriptBlock @($input)[0] |
         }).AddScript(@'
 ${function:<AnsibleModule>} = @($input)[0]
 '@).AddStatement()
+
+    if ($debugger -and ($WaitForDebugger -or $PSVersionTable.PSVersion -lt '6.0')) {
+        # The debugger is set to stop on the next command which is the module
+        # code. PowerShell 5.1 must have this or else it'll never receive the
+        # breakpoint information as the debugger never has a chance to run any
+        # commands.
+        $null = $ps.AddCommand('Wait-Debugger').AddStatement()
+    }
+
     $null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
 }
 
@@ -256,4 +313,9 @@ foreach ($err in $ps.Streams.Error) {
         }
         return
     }
+}
+
+if ($debugger) {
+    $debugger.WaitForExit()
+    $debugger.Dispose()
 }

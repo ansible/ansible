@@ -520,6 +520,21 @@ def _create_powershell_wrapper(
             )
         )
 
+    debug_config_raw = C.config.get_config_value('_ANSIBALLZ_PWSH_DEBUGGER_CONFIG', variables=task_vars)
+    if debug_config_raw:
+        debug_config = json.loads(debug_config_raw)
+        debug_token = debug_config.get('token', None)
+        if not debug_token:
+            raise AnsibleError("PowerShell debugger configuration does not contain the 'token' value.")
+
+        finder.scan_exec_script('debug_wrapper.ps1')
+        module_params['WaitForDebugger'] = debug_config.get('wait', False)
+        module_params['DebugParam'] = {
+            'AccessToken': debug_token,
+            'DebugHost': debug_config.get('host', 'localhost'),
+            'DebugPort': int(debug_config.get('port', 5678)),
+        }
+
     actions.append(
         _ManifestAction(
             name='module_wrapper.ps1',

@@ -3,30 +3,49 @@
 from __future__ import annotations
 
 import dataclasses
+import io
 import itertools
 import json
 import os
+import pathlib
 import random
 import re
 import subprocess
 import shlex
+import shutil
+import sys
+import tempfile
+import time
+import types
 import typing as t
 
 from .encoding import (
     to_text,
 )
 
+from .host_configs import (
+    NativePythonConfig,
+)
+
 from .util import (
     ApplicationError,
+    ANSIBLE_TEST_DATA_ROOT,
     common_environment,
     display,
     exclude_none_values,
     sanitize_host_name,
 )
 
+from .util_common import (
+    get_injector_env,
+)
+
 from .config import (
+    CommonConfig,
     EnvironmentConfig,
 )
+
+PORT_FORWARD_RE = re.compile(r'^Allocated port (?P<src_port>[0-9]+) for remote forward to (?P<dst_host>[^:]+):(?P<dst_port>[0-9]+)$')
 
 
 @dataclasses.dataclass
@@ -105,52 +124,91 @@ class SshProcess:
 
     def collect_port_forwards(self) -> dict[tuple[str, int], int]:
         """Collect port assignments for dynamic SSH port forwards."""
-        errors: list[str] = []
-
-        display.info('Collecting %d SSH port forward(s).' % len(self.pending_forwards), verbosity=2)
-
-        while self.pending_forwards:
-            if self._process:
-                line_bytes = self._process.stderr.readline()
-
-                if not line_bytes:
-                    if errors:
-                        details = ':\n%s' % '\n'.join(errors)
-                    else:
-                        details = '.'
-
-                    raise ApplicationError('SSH port forwarding failed%s' % details)
-
-                line = to_text(line_bytes).strip()
-
-                match = re.search(r'^Allocated port (?P<src_port>[0-9]+) for remote forward to (?P<dst_host>[^:]+):(?P<dst_port>[0-9]+)$', line)
-
-                if not match:
-                    if re.search(r'^Warning: Permanently added .* to the list of known hosts\.$', line):
-                        continue
-
-                    display.warning('Unexpected SSH port forwarding output: %s' % line, verbosity=2)
-
-                    errors.append(line)
-                    continue
-
-                src_port = int(match.group('src_port'))
-                dst_host = str(match.group('dst_host'))
-                dst_port = int(match.group('dst_port'))
-
-                dst = (dst_host, dst_port)
-            else:
-                # explain mode
-                dst = self.pending_forwards[0]
-                src_port = random.randint(40000, 50000)
-
-            self.pending_forwards.remove(dst)
-            self.forwards[dst] = src_port
-
-        display.info('Collected %d SSH port forward(s):\n%s' % (
-            len(self.forwards), '\n'.join('%s -> %s:%s' % (src_port, dst[0], dst[1]) for dst, src_port in sorted(self.forwards.items()))), verbosity=2)
+        if self.pending_forwards:
+            self.forwards = _collect_port_forwards(self._process.stderr if self._process else None, self.pending_forwards)
+            self.pending_forwards = []
 
         return self.forwards
+
+
+class AnsibleSshForwarder:
+    """Wrapper around ansible-playbook process that is forwarding ports over SSH."""
+
+    def __init__(
+        self,
+        process: subprocess.Popen | None,
+        forwards: list[tuple[str, int]],
+        temp_dir: pathlib.Path,
+        stdout: pathlib.Path,
+        log: pathlib.Path,
+    ) -> None:
+        self._process = process
+        self._pending_forwards = forwards
+        self._temp_dir = temp_dir
+        self._stdout = stdout
+        self._log = log
+
+        self._forwards: dict[tuple[str, int], int] | None = None
+
+    def __enter__(self) -> AnsibleSshForwarder:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
+        self._terminate_process()
+        shutil.rmtree(self._temp_dir, ignore_errors=True)
+        return
+
+    def collect_port_forwards(self, timeout: int | None = None) -> dict[tuple[str, int], int]:
+        """Collect port assignments for dynamic SSH port forwards."""
+        if self._forwards is None:
+            # As the reader is a file we cannot rely on it to block a read when
+            # waiting for output. Instead we provide a callback that checks if
+            # the process is still running and adds a simple sleep to avoid
+            # busy looping.
+            def is_alive() -> bool:
+                if self._process and self._process.poll() is None:
+                    time.sleep(1)
+                    return True
+
+                return False
+
+            try:
+                with open(self._log, 'r') as log_file:
+                    self._forwards = _collect_port_forwards(
+                        reader=log_file if self._process else None,
+                        pending_forwards=self._pending_forwards,
+                        ignore_unexpected_output=True,
+                        timeout=timeout,
+                        alive_check=is_alive,
+                    )
+
+            except (ApplicationError, TimeoutError) as e:
+                rc = self._terminate_process()
+                stdout = self._stdout.read_text()
+                msg = f'Failed to retrieve SSH port forwards. Ansible process exited with code {rc}. Ansible playbook output:\n{stdout}'
+                raise ApplicationError(msg) from e
+
+        return self._forwards
+
+    def _terminate_process(self) -> int:
+        if not self._process:
+            return 0  # explain mode
+
+        if self._process.poll() is None:
+            self._process.terminate()
+
+        try:
+            self._process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            self._process.kill()
+            self._process.wait()
+
+        return self._process.returncode
 
 
 def create_ssh_command(
@@ -210,7 +268,7 @@ def ssh_options_to_str(options: t.Union[dict[str, t.Union[int, str]], dict[str, 
 
 
 def run_ssh_command(
-    args: EnvironmentConfig,
+    args: CommonConfig,
     ssh: SshConnectionDetail,
     options: t.Optional[dict[str, t.Union[str, int]]] = None,
     cli_args: list[str] = None,
@@ -233,7 +291,7 @@ def run_ssh_command(
 
 
 def create_ssh_port_forwards(
-    args: EnvironmentConfig,
+    args: CommonConfig,
     ssh: SshConnectionDetail,
     forwards: list[tuple[str, int]],
 ) -> SshProcess:
@@ -258,7 +316,7 @@ def create_ssh_port_forwards(
 
 
 def create_ssh_port_redirects(
-    args: EnvironmentConfig,
+    args: CommonConfig,
     ssh: SshConnectionDetail,
     redirects: list[tuple[int, str, int]],
 ) -> SshProcess:
@@ -272,6 +330,89 @@ def create_ssh_port_redirects(
     process = run_ssh_command(args, ssh, options, cli_args)
 
     return process
+
+
+def create_ansible_ssh_port_forwards(
+    args: CommonConfig,
+    forwards: list[tuple[str, int]],
+    *,
+    inventory: str | None = None,
+    host_limit: str | None = None,
+) -> AnsibleSshForwarder:
+    if isinstance(args, EnvironmentConfig):
+        python = args.controller_python
+    else:
+        python = NativePythonConfig()
+        python.version = '.'.join(str(v) for v in sys.version_info[:2])
+        python.path = sys.executable
+
+    ansible_env = os.environ.copy()
+    ansible_env |= dict(
+        ANSIBLE_DEVEL_WARNING='false',
+        ANSIBLE_DISPLAY_TRACEBACK=args.display_traceback,
+        ANSIBLE_FORCE_COLOR='false',
+        ANSIBLE_NOCOLOR='true',
+    )
+
+    temp_dir = pathlib.Path(tempfile.mkdtemp())
+    try:
+        # Stores the ssh port forward information. We create an empty file
+        # so we can open it before the Ansible process had started.
+        ssh_log_path = temp_dir / 'ssh_debug.log'
+        ssh_log_path.write_text('')
+
+        # To avoid a deadlock on the Ansible process if it writes too much
+        # to stdout/stderr, we capture it in a temporary file.
+        ansible_stdout = pathlib.Path(temp_dir) / 'ansible_stdout.log'
+
+        ssh_args = [
+            '-C',
+            '-E',
+            str(ssh_log_path.resolve())
+        ]
+        for forward_host, forward_port in forwards:
+            bind_port = 0  # request SSH to automatically assign a port on the remote side
+            ssh_args.extend(['-R', f'{bind_port}:{forward_host}:{forward_port}'])
+
+        playbook_path = pathlib.Path(ANSIBLE_TEST_DATA_ROOT) / 'playbooks' / 'debug_port_forwarder.yml'
+        playbook_extra_args = dict(
+            ansible_ssh_args=shlex.join(ssh_args),
+        )
+
+        playbook_cmd = [
+            'ansible-playbook',
+            str(playbook_path.resolve()),
+            '--extra-vars',
+            json.dumps(playbook_extra_args),
+        ]
+        if inventory:
+            playbook_cmd.extend(['--inventory', inventory])
+        if host_limit:
+            playbook_cmd.extend(['--limit', host_limit])
+
+        if args.explain:
+            proc = None
+        else:
+            with open(ansible_stdout, 'w') as stdout:
+                proc = subprocess.Popen(
+                    playbook_cmd,
+                    stdout=stdout,
+                    stderr=subprocess.STDOUT,
+                    stdin=subprocess.DEVNULL,
+                    env=get_injector_env(python, ansible_env),
+                )
+
+        return AnsibleSshForwarder(
+            process=proc,
+            forwards=forwards,
+            temp_dir=temp_dir,
+            stdout=ansible_stdout,
+            log=ssh_log_path,
+        )
+
+    except:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
 
 
 def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
@@ -299,3 +440,69 @@ def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
     display.info('>>> SSH Inventory\n%s' % inventory_text, verbosity=3)
 
     return inventory_text
+
+
+def _collect_port_forwards(
+    reader: io.BufferedReader | None,
+    pending_forwards: list[tuple[str, int]],
+    ignore_unexpected_output: bool = False,
+    alive_check: t.Callable[[], bool] | None = None,
+    timeout: int | None = None,
+) -> dict[tuple[str, int], int]:
+    """Collect port assignments for dynamic SSH port forwards from the provided reader."""
+    errors: list[str] = []
+
+    display.info('Collecting %d SSH port forward(s).' % len(pending_forwards), verbosity=2)
+
+    start_time = time.time()
+    forwards = {}
+    pending = pending_forwards.copy()
+    while pending:
+        if timeout is not None and time.time() - start_time > timeout:
+            raise TimeoutError('Timed out while waiting for SSH port forwards to be established.')
+
+        if reader:
+            line_bytes = reader.readline()
+
+            if not line_bytes:
+                if alive_check and alive_check():
+                    continue  # process is still alive, keep waiting for output
+
+                if errors:
+                    details = ':\n%s' % '\n'.join(errors)
+                else:
+                    details = '.'
+
+                raise ApplicationError('SSH port forwarding failed%s' % details)
+
+            line = to_text(line_bytes).strip()
+
+            match = re.search(r'^Allocated port (?P<src_port>[0-9]+) for remote forward to (?P<dst_host>[^:]+):(?P<dst_port>[0-9]+)$', line)
+
+            if match:
+                src_port = int(match.group('src_port'))
+                dst_host = str(match.group('dst_host'))
+                dst_port = int(match.group('dst_port'))
+
+                dst = (dst_host, dst_port)
+
+            elif ignore_unexpected_output or re.search(r'^Warning: Permanently added .* to the list of known hosts\.$', line):
+                continue
+
+            else:
+                display.warning('Unexpected SSH port forwarding output: %s' % line, verbosity=2)
+
+                errors.append(line)
+                continue
+        else:
+            # explain mode
+            dst = pending[0]
+            src_port = random.randint(40000, 50000)
+
+        pending.remove(dst)
+        forwards[dst] = src_port
+
+    display.info('Collected %d SSH port forward(s):\n%s' % (
+        len(forwards), '\n'.join('%s -> %s:%s' % (src_port, dst[0], dst[1]) for dst, src_port in sorted(forwards.items()))), verbosity=2)
+
+    return forwards
