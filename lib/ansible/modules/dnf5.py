@@ -562,7 +562,10 @@ class Dnf5Module(YumDnf):
         if self.conf_file:
             conf.config_file_path = self.conf_file
 
-        base.load_config()
+        try:
+            base.load_config()
+        except LIBDNF5_ERRORS as e:
+            self.module.fail_json(msg="Failed to load configuration file", exception=e, conf_file=conf.config_file_path)
 
         if self.releasever is not None:
             variables = base.get_vars()
