@@ -41,6 +41,16 @@ _ANSIBALLZ_PWSH_COMPRESSION:
   type: boolean
   default: true
   version_added: '2.22'
+_ANSIBALLZ_PWSH_DEBUGGER_CONFIG:
+  name: Configure the AnsiballZ PowerShell remote debugging extensions.
+  description:
+    - Enables and configures the AnsiballZ PowerShell remote debugging extensions.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_PWSH_DEBUGGER_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_pwsh_debugger_config}
+  version_added: '2.23'
 _ANSIBLE_CONNECTION_PATH:
   env:
   - name: _ANSIBLE_CONNECTION_PATH
