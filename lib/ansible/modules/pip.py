@@ -625,7 +625,9 @@ def _normalize_vcs_packages(
     if not vcs_packages:
         return package_list
 
+    # Removing 'FORCE_COLOR' prevents color codes from corrupting JSON output.
     os.environ.pop('FORCE_COLOR', None)
+
     rc, json_out, err = module.run_command(
         [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages],
         environ_update={
