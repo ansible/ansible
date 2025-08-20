@@ -668,6 +668,35 @@ def _topological_sort_collections(result):
         yield from missing
 
 
+def resolve_collection_dependencies(
+        requirements: t.Iterable[Requirement],
+        galaxy_apis: t.Iterable[GalaxyAPI],
+        allow_pre_release: bool = False,
+        concrete_artifacts_manager: ConcreteArtifactsManager | None = None,
+        offline: bool = False,
+) -> Result:
+    """
+    Resolve collection dependencies and return the result object.
+    Used by the graph command to get dependency information without installation.
+    """
+    with _display_progress("Process dependency resolution"):
+        collection_dep_resolver = build_collection_dependency_resolver(
+            galaxy_apis=galaxy_apis,
+            concrete_artifacts_manager=concrete_artifacts_manager,
+            preferred_candidates=None,
+            with_deps=True,
+            with_pre_releases=allow_pre_release,
+            upgrade=False,
+            include_signatures=False,
+            offline=offline,
+        )
+
+        return collection_dep_resolver.resolve(
+            requirements,
+            max_rounds=2000000,
+        )
+
+
 def install_collections(
         collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
