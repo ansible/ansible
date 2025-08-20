@@ -661,9 +661,7 @@ def _normalize_vcs_packages(
         out_lines = out.splitlines()
         saved_packages = (Path(line.split(" ")[-1]).stem for line in out_lines if 'Saved' in line)
 
-        package_objects = (Package('-'.join(pkg.split('-')[:-1]),
-                                   version_string=pkg.split('-')[-1])
-                           for pkg in saved_packages)
+        package_objects = (Package.from_dist(dist) for dist in saved_packages)
 
     other_packages = (pkg for pkg in package_list if str(pkg) not in vcs_packages)
     return [*other_packages, *package_objects]
@@ -725,6 +723,12 @@ class Package:
     def canonicalize_name(name):
         # This is taken from PEP 503.
         return Package._CANONICALIZE_RE.sub("-", name).lower()
+
+    @classmethod
+    def from_dist(cls, dist_path: str) -> Package:
+        """Creates a Package object from the distribution (pkg-name-0.0.0version) outputted by pip download"""
+        pkgname, pkgver = dist_path.rsplit('-', 1)
+        return Package(pkgname, version_string=pkgver)
 
     def __str__(self):
         if self._plain_package:
