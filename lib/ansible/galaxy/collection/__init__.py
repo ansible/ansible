@@ -32,6 +32,7 @@ from io import BytesIO
 from importlib.metadata import distribution
 from importlib.resources import files
 from itertools import chain
+from types import SimpleNamespace
 
 try:
     from packaging.requirements import Requirement as PkgReq
@@ -793,7 +794,7 @@ def install_collections(
         )
 
     keyring_exists = artifacts_manager.keyring is not None
-    with _display_progress("Starting collection install process"):
+    with _display_progress("Starting collection install process") as progress:
         for fqcn in _topological_sort_collections(result):
             concrete_coll_pin = result.mapping[fqcn]
             if concrete_coll_pin.is_virtual:
@@ -824,6 +825,7 @@ def install_collections(
             if concrete_coll_pin.type == 'galaxy':
                 concrete_coll_pin = concrete_coll_pin.with_signatures_repopulated()
 
+            progress.pause()
             try:
                 install(concrete_coll_pin, output_path, artifacts_manager)
             except AnsibleError as err:
@@ -1019,35 +1021,55 @@ def _display_progress(msg=None):
     display_wheel = sys.stdout.isatty() if config_display is None else config_display
 
     global display
-    if msg is not None:
-        display.display(msg)
 
-    if not display_wheel:
-        yield
+    if not display_wheel or display.verbosity:
+        if msg:
+            display.display(msg)
+        yield SimpleNamespace(pause=lambda: None, unpause=lambda: None)
         return
 
-    def progress(display_queue, actual_display):
-        actual_display.debug("Starting display_progress display thread")
-        t = threading.current_thread()
+    class Progress(threading.Thread):
+        def __init__(self, display_queue, actual_display):
+            self.display_queue = display_queue
+            self.actual_display = actual_display
+            self._paused = False
+            super().__init__()
 
-        while True:
-            for c in "|/-\\":
-                actual_display.display(c + "\b", newline=False)
-                time.sleep(0.1)
+        def pause(self):
+            if self._paused:
+                return
+            self.actual_display.display('', stderr=True)
+            self._paused = True
 
-                # Display a message from the main thread
-                while True:
-                    try:
-                        method, args, kwargs = display_queue.get(block=False, timeout=0.1)
-                    except queue.Empty:
-                        break
-                    else:
-                        func = getattr(actual_display, method)
-                        func(*args, **kwargs)
+        def unpause(self):
+            self._paused = False
 
-                if getattr(t, "finish", False):
-                    actual_display.debug("Received end signal for display_progress display thread")
-                    return
+        def run(self):
+            actual_display = self.actual_display
+            display_queue = self.display_queue
+
+            actual_display.debug("Starting display_progress display thread")
+            t = threading.current_thread()
+
+            while True:
+                for c in ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']:
+                    if not self._paused:
+                        actual_display.display(f'\r{c} {msg or ""}', newline=False, stderr=True)
+                        time.sleep(0.1)
+
+                    # Display a message from the main thread
+                    while True:
+                        try:
+                            method, args, kwargs = display_queue.get(block=False, timeout=0.1)
+                        except queue.Empty:
+                            break
+                        else:
+                            func = getattr(actual_display, method)
+                            func(*args, **kwargs)
+
+                    if getattr(t, "finish", False):
+                        actual_display.debug("Received end signal for display_progress display thread")
+                        return
 
     class DisplayThread(object):
 
@@ -1065,12 +1087,12 @@ def _display_progress(msg=None):
     try:
         display_queue = queue.Queue()
         display = DisplayThread(display_queue)
-        t = threading.Thread(target=progress, args=(display_queue, old_display))
+        t = Progress(display_queue, old_display)
         t.daemon = True
         t.start()
 
         try:
-            yield
+            yield t
         finally:
             t.finish = True
             t.join()
@@ -1079,6 +1101,7 @@ def _display_progress(msg=None):
         raise
     finally:
         display = old_display
+    display.display('', stderr=True)
 
 
 def _verify_file_hash(b_path, filename, expected_hash, error_queue):
