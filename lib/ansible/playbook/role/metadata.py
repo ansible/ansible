@@ -108,8 +108,8 @@ class RoleMetadata(Base, CollectionSearch):
 
     def serialize(self):
         return dict(
-            allow_duplicates=self._allow_duplicates,
-            dependencies=self._dependencies
+            allow_duplicates=self.allow_duplicates,
+            dependencies=self.dependencies
         )
 
     def deserialize(self, data):
