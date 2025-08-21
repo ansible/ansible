@@ -36,6 +36,7 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.display import Display
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
@@ -51,14 +52,12 @@ if _t.TYPE_CHECKING:
 
 __all__ = ['Role', 'hash_params']
 
-# TODO: this should be a utility function, but can't be a member of
-#       the role due to the fact that it would require the use of self
-#       in a static method. This is also used in the base class for
-#       strategies (ansible/plugins/strategy/__init__.py)
+_display = Display()
 
 
 def hash_params(params):
     """
+    DEPRECATED
     Construct a data structure of parameters that is hashable.
 
     This requires changing any mutable data structures into immutable ones.
@@ -70,6 +69,12 @@ def hash_params(params):
         1) There shouldn't be any unhashable scalars specified in the yaml
         2) Our only choice would be to return an error anyway.
     """
+
+    _display.deprecated(
+        msg="The hash_params function is deprecated as its consumers have moved to internal alternatives",
+        version='2.24',
+        help_text='Contact the plugin author to update their code',
+    )
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
     # cannot be hashed)
