@@ -15,5 +15,4 @@ ansible-playbook task_vars_templating.yml -v "$@"
 ANSIBLE_BECOME_ALLOW_SAME_USER=true ansible-playbook test_connection_vars.yml -vvvv "$@" | tee /dev/stderr | grep 'sudo \-H \-S'
 
 # test vars deprecation
-[ $(ansible -m debug  -a "msg='{{vars}}'" localhost 2>&1 | grep -c 'The internal "vars" dictionary is deprecated') = 1 ]
-[ $(ansible -m debug  -a 'msg="{{vars["'"ansible_python_interpreter"'"]}}"' localhost 2>&1 | grep -c 'The internal "vars" dictionary is deprecated') = 1 ]
+ansible-playbook vars_deprecation.yml "$@"
