@@ -33,6 +33,7 @@ from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils._internal import _datatag
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible._internal._yaml import _dumper
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.color import stringc
@@ -244,6 +245,17 @@ class CallbackBase(AnsiblePlugin):
         # load from config
         self._plugin_options, self._origins = C.config.get_plugin_options_and_origins(self.plugin_type, self._load_name,
                                                                                       keys=task_keys, variables=var_options, direct=direct)
+
+    def _resolve_option_variables(self, variables, templar):
+        """
+        Return a dict of variable -> templated value, for any variables that
+        that match options registered by this plugin.
+        """
+        callback_variables = {}
+        for var_name in C.config.get_plugin_vars(self.plugin_type, self._load_name):
+            if (variable := variables.get(var_name, Sentinel)) is not Sentinel:
+                callback_variables[var_name] = templar.template(variable)
+        self.set_options(var_options=callback_variables)
 
     @staticmethod
     def host_label(result: CallbackTaskResult) -> str:

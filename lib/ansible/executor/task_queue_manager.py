@@ -248,8 +248,10 @@ class TaskQueueManager:
         if not stdout_callback:
             raise AnsibleError(f"Could not load {self._stdout_callback_name!r} callback plugin.")
 
+        templar = TemplateEngine(loader=self._loader, variables=self._variable_manager._extra_vars)
+
         stdout_callback._init_callback_methods()
-        stdout_callback.set_options()
+        stdout_callback._resolve_option_variables(self._variable_manager._extra_vars, templar)
 
         self._callback_plugins.append(stdout_callback)
 
@@ -303,7 +305,7 @@ class TaskQueueManager:
                 # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
                     callback_obj._init_callback_methods()
-                    callback_obj.set_options()
+                    callback_obj._resolve_option_variables(self._variable_manager._extra_vars, templar)
                     self._callback_plugins.append(callback_obj)
                 else:
                     display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
