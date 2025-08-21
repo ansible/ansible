@@ -72,9 +72,9 @@ def hash_params(params):
     """
 
     _display.deprecated(
-        msg="The hash_params function is deprecated as it's consumers have moved to internal alternatives",
+        msg="The hash_params function is deprecated as its consumers have moved to internal alternatives",
         version='2.24',
-        help_text='Contact your plugin author to update his code',
+        help_text='Contact the plugin author to update their code',
     )
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
