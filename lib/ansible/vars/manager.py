@@ -56,6 +56,12 @@ _DEPRECATE_TOP_LEVEL_FACT_TAG = _tags.Deprecated(
     deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
     help_text='Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.',
 )
+_DEPRECATE_VARS = _tags.Deprecated(
+    msg='The internal "vars" dictionary is deprecated.',
+    version='2.24',
+    deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+    help_text='Use the `vars` and `varnames` lookups instead.',
+)
 
 
 def _deprecate_top_level_fact(value: t.Any) -> t.Any:
@@ -420,8 +426,10 @@ class VariableManager:
 
         # 'vars' magic var
         if task or play:
-            # has to be copy, otherwise recursive ref
-            all_vars['vars'] = all_vars.copy()
+            all_vars['vars'] = _DEPRECATE_VARS.tag({})
+            for k, v in all_vars.items():
+                # has to be copy, otherwise recursive ref
+                all_vars['vars'][k] = _DEPRECATE_VARS.tag(v)
 
         display.debug("done with get_vars()")
         return all_vars
