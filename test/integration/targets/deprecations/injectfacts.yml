@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: true
+  tasks:
+  - debug:
+      msg: '{{ansible_distribution}}'
