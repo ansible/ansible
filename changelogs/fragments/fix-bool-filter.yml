@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - bool - Changed redefinition of value from integer to boolean on bool filter.

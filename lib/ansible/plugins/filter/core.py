@@ -101,7 +101,7 @@ def to_bool(value: object) -> bool:
     if isinstance(value, str):
         value_to_check = value.lower()  # accept mixed case variants
     elif isinstance(value, int):  # bool is also an int
-        value_to_check = str(value).lower()  # accept int (0, 1) and bool (True, False) -- not just string versions
+        value_to_check = str(bool(value)).lower()  # accept int (0, 1) and bool (True, False) -- not just string versions
     else:
         value_to_check = value
 
