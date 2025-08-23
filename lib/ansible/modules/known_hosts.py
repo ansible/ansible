@@ -257,7 +257,7 @@ def search_for_host_key(module, host, key, path, sshkeygen):
         return True, False, None
 
     lines = stdout.split('\n')
-    new_key = normalize_known_hosts_key(key)
+    new_key = normalize_known_hosts_key(module, key)
 
     for lnum, l in enumerate(lines):
         if l == '':
@@ -270,7 +270,7 @@ def search_for_host_key(module, host, key, path, sshkeygen):
             except IndexError:
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
-            found_key = normalize_known_hosts_key(l)
+            found_key = normalize_known_hosts_key(module, l)
 
             if 'options' in found_key and found_key['options'][:15] == '@cert-authority':
                 if new_key == found_key:  # found a match
@@ -300,7 +300,7 @@ def hash_host_key(host, key):
     return ' '.join(parts)
 
 
-def normalize_known_hosts_key(key):
+def normalize_known_hosts_key(module, key):
     """
     Transform a key, either taken from a known_host file or provided by the
     user, into a normalized form.
@@ -310,6 +310,8 @@ def normalize_known_hosts_key(key):
     absent in known_hosts files)
     """
     key = key.strip()  # trim trailing newline
+    if "\n" in key or "\r" in key:
+        module.fail_json(msg="Argument 'key' contains newlines. This module only accepts a single key.")
     k = key.split()
     d = dict()
     # The optional "marker" field, used for @cert-authority or @revoked

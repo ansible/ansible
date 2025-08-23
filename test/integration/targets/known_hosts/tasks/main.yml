@@ -507,3 +507,17 @@
     that:
       - result is failed
       - result.msg == 'Host parameter does not match hashed host field in supplied key'
+
+- name: Try passing multiple keys separated by newlines
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_multiple_keys }}"
+    path: "{{remote_tmp_dir}}/known_hosts"
+  ignore_errors: yes
+  register: result
+
+- name: Assert that key normalizing failed with error message
+  assert:
+    that:
+      - result is failed
+      - result.msg == "Argument 'key' contains newlines. This module only accepts a single key."
