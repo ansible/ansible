@@ -655,65 +655,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         return block_list
 
-    def serialize(self, include_deps=True):
-        res = super(Role, self).serialize()
-
-        res['_role_name'] = self._role_name
-        res['_role_path'] = self._role_path
-        res['_role_vars'] = self._role_vars
-        res['_role_params'] = self._role_params
-        res['_default_vars'] = self._default_vars
-        res['_had_task_run'] = self._had_task_run.copy()
-        res['_completed'] = self._completed.copy()
-
-        res['_metadata'] = self._metadata.serialize()
-
-        if include_deps:
-            deps = []
-            for role in self.get_direct_dependencies():
-                deps.append(role.serialize())
-            res['_dependencies'] = deps
-
-        parents = []
-        for parent in self._parents:
-            parents.append(parent.serialize(include_deps=False))
-        res['_parents'] = parents
-
-        return res
-
-    def deserialize(self, data, include_deps=True):
-        self._role_name = data.get('_role_name', '')
-        self._role_path = data.get('_role_path', '')
-        self._role_vars = data.get('_role_vars', dict())
-        self._role_params = data.get('_role_params', dict())
-        self._default_vars = data.get('_default_vars', dict())
-        self._had_task_run = data.get('_had_task_run', dict())
-        self._completed = data.get('_completed', dict())
-
-        if include_deps:
-            deps = []
-            for dep in data.get('_dependencies', []):
-                r = Role()
-                r.deserialize(dep)
-                deps.append(r)
-            setattr(self, '_dependencies', deps)
-
-        parent_data = data.get('_parents', [])
-        parents = []
-        for parent in parent_data:
-            r = Role()
-            r.deserialize(parent, include_deps=False)
-            parents.append(r)
-        setattr(self, '_parents', parents)
-
-        metadata_data = data.get('_metadata')
-        if metadata_data:
-            m = RoleMetadata()
-            m.deserialize(metadata_data)
-            self._metadata = m
-
-        super(Role, self).deserialize(data)
-
     def set_loader(self, loader):
         self._loader = loader
         for parent in self._parents:

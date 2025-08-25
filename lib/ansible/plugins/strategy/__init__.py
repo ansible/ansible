@@ -584,7 +584,7 @@ class StrategyBase:
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(
-                                ansible_failed_task=original_task.serialize(),
+                                ansible_failed_task=original_task.dump_attrs(),
                                 ansible_failed_result=task_result._return_data,
                             ),
                         )

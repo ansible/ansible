@@ -399,36 +399,6 @@ class Play(Base, Taggable, CollectionSearch):
                 tasklist.append(task)
         return tasklist
 
-    def serialize(self):
-        data = super(Play, self).serialize()
-
-        roles = []
-        for role in self.get_roles():
-            roles.append(role.serialize())
-        data['roles'] = roles
-        data['included_path'] = self._included_path
-        data['action_groups'] = self._action_groups
-        data['group_actions'] = self._group_actions
-
-        return data
-
-    def deserialize(self, data):
-        super(Play, self).deserialize(data)
-
-        self._included_path = data.get('included_path', None)
-        self._action_groups = data.get('action_groups', {})
-        self._group_actions = data.get('group_actions', {})
-        if 'roles' in data:
-            role_data = data.get('roles', [])
-            roles = []
-            for role in role_data:
-                r = Role()
-                r.deserialize(role)
-                roles.append(r)
-
-            setattr(self, 'roles', roles)
-            del data['roles']
-
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.role_cache = self.role_cache.copy()

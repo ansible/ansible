@@ -36,7 +36,6 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.notifiable import Notifiable
-from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible._internal import _task
 from ansible._internal._templating import _marker_behaviors
@@ -503,53 +502,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         new_me._uuid = self._uuid
 
         return new_me
-
-    def serialize(self):
-        data = super(Task, self).serialize()
-
-        if not self._squashed and not self._finalized:
-            if self._parent:
-                data['parent'] = self._parent.serialize()
-                data['parent_type'] = self._parent.__class__.__name__
-
-            if self._role:
-                data['role'] = self._role.serialize()
-
-            data['implicit'] = self.implicit
-            data['_resolved_action'] = self._resolved_action
-
-        return data
-
-    def deserialize(self, data):
-
-        # import is here to avoid import loops
-        from ansible.playbook.task_include import TaskInclude
-        from ansible.playbook.handler_task_include import HandlerTaskInclude
-
-        parent_data = data.get('parent', None)
-        if parent_data:
-            parent_type = data.get('parent_type')
-            if parent_type == 'Block':
-                p = Block()
-            elif parent_type == 'TaskInclude':
-                p = TaskInclude()
-            elif parent_type == 'HandlerTaskInclude':
-                p = HandlerTaskInclude()
-            p.deserialize(parent_data)
-            self._parent = p
-            del data['parent']
-
-        role_data = data.get('role')
-        if role_data:
-            r = Role()
-            r.deserialize(role_data)
-            self._role = r
-            del data['role']
-
-        self.implicit = data.get('implicit', False)
-        self._resolved_action = data.get('_resolved_action')
-
-        super(Task, self).deserialize(data)
 
     def set_loader(self, loader):
         """
