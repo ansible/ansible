@@ -27,13 +27,6 @@
       state: directory
       mode: '0755'
 
-  - name: Create the root-level package source file
-    copy:
-      dest: "{{ repo_path }}/dummy-root/main.py"
-      content: |
-        def return_one():
-            return 1
-
   - name: Create the subdirectory for the nested package
     file:
       path: "{{ repo_path }}/dummy-root/dummy-subdirectory"
