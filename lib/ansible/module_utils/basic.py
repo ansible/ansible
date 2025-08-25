@@ -1853,7 +1853,10 @@ class AnsibleModule(object):
         else:
             # ensure args are a list
             if isinstance(args, (bytes, str)):
-                args = shlex.split(to_text(args, errors='surrogateescape'))
+                try:
+                    args = shlex.split(to_text(args, errors='surrogateescape'))
+                except ValueError as ex:
+                    self.fail_json(msg=f"failed to split args given to run_command: {ex}")
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
