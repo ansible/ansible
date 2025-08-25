@@ -59,36 +59,6 @@
         def return_two():
             return 2
 
-  - name: Create the directory for the egg-formatted package
-    file:
-      path: "{{ repo_path }}/dummy-root/dummy-egg-package"
-      state: directory
-      mode: '0755'
-
-  - name: Create egg-formatted package's setup.py
-    copy:
-      dest: "{{ repo_path }}/dummy-root/dummy-egg-package/setup.py"
-      content: |
-        from setuptools import setup, find_packages
-        setup(
-            name='egg-package',
-            version='0.0.1',
-            packages=find_packages(),
-        )
-
-  - name: Create the source directory for the egg package
-    file:
-      path: "{{ repo_path }}/dummy-root/dummy-egg-package/egg_package"
-      state: directory
-      mode: '0755'
-
-  - name: Create egg-formatted package's source file
-    copy:
-      dest: "{{ repo_path }}/dummy-root/dummy-egg-package/egg_package/utility.py"
-      content: |
-        def return_three():
-            return 3
-
   - name: Add __init__.py files
     file:
       path: "{{ item }}"
@@ -96,8 +66,6 @@
     with_items:
       - "{{ repo_path }}/dummy-root/__init__.py"
       - "{{ repo_path }}/dummy-root/dummy-subdirectory/__init__.py"
-      - "{{ repo_path }}/dummy-root/dummy-egg-package/__init__.py"
-      - "{{ repo_path }}/dummy-root/dummy-egg-package/egg_package/__init__.py"
 
   - name: Create git repository
     command:
@@ -123,19 +91,19 @@
 
   - name: Check installation of packages via git
     pip:
-      name: "git+file://{{ repo_path }}"
+      name: "git+file://{{ repo_path }}/.git"
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
     check_mode: true
     register: check_git_install_to_empty_venv
 
   - name: Install package via git
     pip:
-      name: "git+file://{{ repo_path }}"
+      name: "git+file://{{ repo_path }}/.git"
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
 
   - name: Re-check to ensure not changed
     pip:
-      name: "git+file://{{ repo_path }}"
+      name: "git+file://{{ repo_path }}/.git"
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
     check_mode: true
     register: check_reinstall_one_pkg
@@ -143,16 +111,15 @@
   - name: Re-check with multiple to ensure changed
     pip:
       name:
-        - "git+file://{{ repo_path }}"
-        - "nested-package @ git+file://{{ repo_path }}#subdirectory=dummy-root/dummy-subdirectory"
-        - "git+file://{{ repo_path }}#egg=egg-package&subdirectory=dummy-root/dummy-egg-package"
+        - "git+file://{{ repo_path }}/.git"
+        - "nested-package @ git+file://{{ repo_path }}/.git#subdirectory=dummy-root/dummy-subdirectory"
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
     check_mode: true
     register: check_reinstall_two
 
   - name: Re-install dummy-root to ensure not changed
     pip:
-      name: "git+file://{{ repo_path }}"
+      name: "git+file://{{ repo_path }}/.git"
       virtualenv: "{{ remote_tmp_dir }}/gitvenv"
     check_mode: true
     register: reinstall_git_pkg
