@@ -27,14 +27,6 @@ Options (= indicates it is required):
           default: null
           type: str
 
-ATTRIBUTES:
-
-          `diff_mode:`
-          description: Will return details on what has changed (or possibly needs changing in
-            check_mode), when in diff mode
-          details: Not all modules used support this
-          support: partial
-
 NOTES:
         * This is a role.
         * More text.

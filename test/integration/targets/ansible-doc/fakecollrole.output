@@ -12,13 +12,6 @@ Options (= indicates it is required):
 = altopt1   altopt1 description
           type: int
 
-ATTRIBUTES:
-
-          `check_mode:`
-          description: Can run in check_mode and return changed status prediction without modifying
-            target
-          support: full
-
 AUTHOR: Ansible Core (@ansible)
 
 EXAMPLES:

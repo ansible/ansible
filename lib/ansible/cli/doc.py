@@ -1431,23 +1431,6 @@ class DocCLI(CLI, RoleMixin):
                 text.append(_format("Options", 'bold') + " (%s indicates it is required):" % ("=" if C.ANSIBLE_NOCOLOR else 'red'))
                 DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
 
-            if doc.get('attributes', False):
-                display.deprecated(
-                    f'The role {role}\'s argument spec {entry_point} contains the key "attributes", '
-                    'which will not be displayed by ansible-doc in the future. '
-                    'This was unintentionally allowed when plugin attributes were added, '
-                    'but the feature does not map well to role argument specs.',
-                    version='2.20',
-                )
-                text.append("")
-                text.append(_format("ATTRIBUTES:", 'bold'))
-                for k in doc['attributes'].keys():
-                    text.append('')
-                    text.append(DocCLI.warp_fill(DocCLI.tty_ify(_format('%s:' % k, 'UNDERLINE')), limit - 6, initial_indent=opt_indent,
-                                                 subsequent_indent=opt_indent))
-                    text.append(DocCLI._indent_lines(DocCLI._dump_yaml(doc['attributes'][k]), opt_indent))
-                del doc['attributes']
-
             if notes := doc.pop('notes', False):
                 text.append("")
                 text.append(_format("NOTES:", 'bold'))
