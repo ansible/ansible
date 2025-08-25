@@ -36,6 +36,7 @@ options:
         description:
             - Character used to split the database values into lists/arrays such as V(:) or V(\\t),
               otherwise it will try to pick one depending on the database.
+            - The value must be a non-empty string.
         type: str
     fail_key:
         description:
@@ -138,6 +139,14 @@ def main():
     service = module.params.get('service')
     fail_key = module.params.get('fail_key')
 
+    # Normalize split: treat falsy/invalid values (e.g., empty string) as autodetect.
+    # If user provided an invalid value (not None but falsy), emit a warning.
+    if not split:
+        if split is not None:
+            module.warn("Ignoring invalid split option (%r), using autodetection" % (split,))
+        # autodetect default based on database
+        split = ':' if database in colon else None
+
     getent_bin = module.get_bin_path('getent', True)
 
     if key is not None:
@@ -147,6 +156,9 @@ def main():
 
     if service is not None:
         cmd.extend(['-s', service])
+
+    if not split and split != None:
+        module.fail_json(msg="Invalid split value. The value must be a non-empty string")
 
     if split is None and database in colon:
         split = ':'
@@ -163,6 +175,7 @@ def main():
     if rc == 0:
         seen = {}
         for line in out.splitlines():
+            # Split line using the (possibly autodetected) separator
             record = line.split(split)
 
             if record[0] in seen:
