@@ -306,11 +306,20 @@ class CronTab(object):
         Write the crontab to the system. Saves all information.
         """
         if backup_file:
-            fileh = open(backup_file, 'wb')
+            try:
+                fileh = open(backup_file, 'wb')
+            except FileNotFoundError as ex:
+                self.module.fail_json(msg=f'Failed to create backup file {backup_file}: {ex}')
         elif self.cron_file:
-            fileh = open(self.b_cron_file, 'wb')
+            try:
+                fileh = open(self.b_cron_file, 'wb')
+            except FileNotFoundError as ex:
+                self.module.fail_json(msg=f'Failed to create crontab file {self.b_cron_file}: {ex}')
         else:
-            filed, path = tempfile.mkstemp(prefix='crontab')
+            try:
+                filed, path = tempfile.mkstemp(prefix='crontab')
+            except OSError as ex:
+                self.module.fail_json(msg=f'Failed to create temporary crontab file: {ex}')
             os.chmod(path, S_IRWU_RWG_RWO)
             fileh = os.fdopen(filed, 'wb')
 
@@ -664,7 +673,10 @@ def main():
 
     # if requested make a backup before making a change
     if backup and not module.check_mode:
-        (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
+        try:
+            (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
+        except OSError as ex:
+            module.fail_json(msg=f"Failed to create temporary backup file: {ex}")
         crontab.write(backup_file)
 
     if env:
