@@ -788,7 +788,7 @@ class FunctionWrapper(_FunctionWrapperBase):
         #
         # 4. The wrapper is being applied when performing monkey
         # patching of an instance of a class. In this case binding will
-        # have been perfomed where the instance was not None.
+        # have been performed where the instance was not None.
         #
         # This case is a problem because we can no longer tell if the
         # method was a static method.
