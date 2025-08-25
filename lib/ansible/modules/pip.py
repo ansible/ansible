@@ -661,9 +661,9 @@ def _normalize_vcs_packages(
         module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
 
         out_lines = out.splitlines()
-        saved_packages = (Path(line.split(" ")[-1]).stem for line in out_lines if 'Saved' in line)
+        saved_packages = (Path(line.rsplit(" ", 1)[0]) for line in out_lines if 'Saved' in line)
 
-        package_objects = (Package.from_dist(dist) for dist in saved_packages)
+        package_objects = (Package.from_dist_path(path) for path in saved_packages)
 
     other_packages = (pkg for pkg in package_list if str(pkg) not in vcs_packages)
     return [*other_packages, *package_objects]
@@ -727,10 +727,15 @@ class Package:
         return Package._CANONICALIZE_RE.sub("-", name).lower()
 
     @classmethod
-    def from_dist(cls, dist_path: str) -> Package:
-        """Creates a Package object from the distribution (pkg-name-0.0.0version) outputted by pip download"""
-        pkgname, pkgver = dist_path.rsplit('-', 1)
-        return Package(pkgname, version_string=pkgver)
+    def from_dist_path(cls, file_path: Path, /) -> Package:
+        """Construct a Package object from the distribution path.
+
+        :param file_path: A pathlib object containing a dash-separated project
+                          name and version in the file name.
+                          Example: ``Path("some/dir/pkg-name-0.0.0version.whl")``.
+        """
+        pkg_name, pkg_ver = file_path.stem.rsplit('-', 1)
+        return cls(pkg_name, pkg_ver)
 
     def __str__(self):
         if self._plain_package:
