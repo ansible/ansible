@@ -661,7 +661,7 @@ def _normalize_vcs_packages(
         module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
 
         out_lines = out.splitlines()
-        saved_packages = (Path(line.rsplit(" ", 1)[0]) for line in out_lines if 'Saved' in line)
+        saved_packages = (Path(line.rsplit(" ", 1)[1]) for line in out_lines if 'Saved' in line)
 
         package_objects = (Package.from_dist_path(path) for path in saved_packages)
 
