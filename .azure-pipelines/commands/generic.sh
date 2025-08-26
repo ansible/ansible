@@ -13,6 +13,9 @@ else
     target="shippable/generic/"
 fi
 
+stage="${S:-prod}"
+
 # shellcheck disable=SC2086
 ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    --remote-terminate always --remote-stage "${stage}" \
     --docker default --python "${python}"
