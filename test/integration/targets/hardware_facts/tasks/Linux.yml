@@ -68,6 +68,9 @@
           - ansible_facts['lvm']['vgs']['second']['lvs'] | sort == ['two', 'uno']
           # only one lv named 'two' is represented in the top level lvs fact
           - ansible_facts['lvm']['lvs']['two']['vg'] == 'second'
+          - (vgs_lvs | unique | sort) == (ansible_facts['lvm']['lvs'] | sort)
+      vars:
+        vgs_lvs: "{{ ansible_facts['lvm']['vgs'].values() | map(attribute='lvs') | map('list') | flatten }}"
 
   always:
     - name: remove lvs
