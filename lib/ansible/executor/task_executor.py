@@ -146,7 +146,7 @@ class TaskExecutor:
                     if res['skipped']:
                         res['msg'] = 'All items skipped'
                 else:
-                    res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
+                    res = dict(changed=False, skipped=True, skip_reason='No items in the list', results=[])
             else:
                 display.debug("calling self._execute()")
                 res = self._execute(self._task_templar, self._job_vars)

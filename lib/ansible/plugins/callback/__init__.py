@@ -172,7 +172,7 @@ class CallbackBase(AnsiblePlugin):
             self.set_options(options)
 
         self._hide_in_debug = (
-            'changed', 'failed', 'skipped', 'invocation', 'skip_reason',
+            'changed', 'failed', 'skipped', 'invocation', 'skip_reason', 'skipped_reason',
             'ansible_loop_var', 'ansible_index_var', 'ansible_loop',
         )
 
