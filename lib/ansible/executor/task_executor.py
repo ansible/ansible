@@ -1221,7 +1221,7 @@ def start_connection(play_context, options, task_uuid):
     )
 
     write_to_stream(p.stdin, options)
-    write_to_stream(p.stdin, play_context.serialize())
+    write_to_stream(p.stdin, play_context.dump_attrs())
 
     (stdout, stderr) = p.communicate()
 
