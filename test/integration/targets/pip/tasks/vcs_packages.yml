@@ -52,21 +52,6 @@
       state: directory
       mode: '0755'
 
-  - name: Create nested package's source file
-    copy:
-      dest: "{{ repo_path }}/dummy-root/dummy-subdirectory/src/nested_package.py"
-      content: |
-        def return_two():
-            return 2
-
-  - name: Add __init__.py files
-    file:
-      path: "{{ item }}"
-      state: touch
-    with_items:
-      - "{{ repo_path }}/dummy-root/__init__.py"
-      - "{{ repo_path }}/dummy-root/dummy-subdirectory/__init__.py"
-
   - name: Create git repository
     command:
       cmd: "{{ item }}"
