@@ -580,6 +580,16 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         attrs.update(_resolved_action=self._resolved_action)
         return attrs
 
+    def from_attrs(self, attrs):
+        super().from_attrs(attrs)
+
+        # from_attrs is only used to create a finalized task
+        # from attrs from the Worker/TaskExecutor
+        # Those attrs are finalized and squashed in the TE
+        # and controller side use needs to reflect that
+        self._finalized = True
+        self._squashed = True
+
     def _resolve_conditional(
         self,
         conditional: list[str | bool],

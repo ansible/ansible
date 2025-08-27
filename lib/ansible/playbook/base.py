@@ -681,13 +681,6 @@ class FieldAttributeBase:
             else:
                 setattr(self, attr, value)  # overridden dump_attrs in derived types may dump attributes which are not field attributes
 
-        # from_attrs is only used to create a finalized task
-        # from attrs from the Worker/TaskExecutor
-        # Those attrs are finalized and squashed in the TE
-        # and controller side use needs to reflect that
-        self._finalized = True
-        self._squashed = True
-
 
 class Base(FieldAttributeBase):
 
