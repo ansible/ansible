@@ -57,7 +57,7 @@
       assert:
         that:
             - invalid_install_root.failed
-            - "'Installroot must be a directory' in invalid_install_root.msg"
+            - "'Installroot ' ~ remote_tmp_dir ~ '/file_root must be a directory' in invalid_install_root.msg"
   always:
     - name: Cleanup invalid installroot
       file:
