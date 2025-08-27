@@ -625,7 +625,8 @@ def _normalize_vcs_packages(
     if not vcs_packages:
         return package_list
 
-    # Removing 'FORCE_COLOR' prevents color codes from corrupting JSON output.
+    # Unsetting 'FORCE_COLOR' with 'NO_COLOR' and TTY_COMPATIBLE settings, helps to
+    # prevent color codes from being injected into and corrupting the JSON output.
     os.environ.pop('FORCE_COLOR', None)
 
     rc, json_out, err = module.run_command(
