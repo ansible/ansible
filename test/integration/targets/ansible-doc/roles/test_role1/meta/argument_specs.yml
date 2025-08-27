@@ -11,11 +11,6 @@ argument_specs:
         author:
           - John Doe (@john)
           - Jane Doe (@jane)
-        attributes:
-          diff_mode:
-            description: Will return details on what has changed (or possibly needs changing in check_mode), when in diff mode
-            support: partial
-            details: Not all modules used support this
         version_added: 1.2.0
         notes:
           - This is a role.

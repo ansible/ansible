@@ -20,10 +20,6 @@ argument_specs:
         description:
             - Longer description for testns.testcol.testrole alternate entry point.
         author: Ansible Core (@ansible)
-        attributes:
-            check_mode:
-                description: Can run in check_mode and return changed status prediction without modifying target
-                support: full
         version_added: 2.1.0
         options:
             altopt1:

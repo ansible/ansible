@@ -1,0 +1,2 @@
+removed_features:
+  - "ansible-doc - role entrypoint attributes are no longer shown"
