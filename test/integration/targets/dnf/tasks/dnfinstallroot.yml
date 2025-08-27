@@ -46,7 +46,7 @@
         dest: "{{ remote_tmp_dir }}/file_root"
 
     - name: Try with invalid installroot
-      ansible.builtin.dnf:
+      dnf:
         name: bash
         state: present
         installroot: "{{ remote_tmp_dir }}/file_root"
