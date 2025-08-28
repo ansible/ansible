@@ -644,7 +644,7 @@ def _normalize_vcs_packages(
                            for install_report in report['install'])
     else:
         # Else, if that fails due to --dry-run not being present in pip
-        # versions older than 22.2 (ex: Ubuntu 2204), fallback to using
+        # versions older than 22.2 (ex: Ubuntu 22.04), fall back to using
         # the potentially faulty pip download method and warn the user.
 
         pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
