@@ -9,6 +9,16 @@ class ModuleDocFragment(object):
 
     DOCUMENTATION = r"""
     options:
+      display_included_hosts:
+        name: Show included hosts
+        description: "Toggle to control displaying included task/host results in a task."
+        type: bool
+        default: yes
+        env:
+          - name: ANSIBLE_DISPLAY_INCLUDED_HOSTS
+        ini:
+          - key: display_included_hosts
+            section: defaults
       display_skipped_hosts:
         name: Show skipped hosts
         description: "Toggle to control displaying skipped task/host results in a task."
