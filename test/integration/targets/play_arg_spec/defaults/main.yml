@@ -1,0 +1,3 @@
+play_argspec: "{{ role_path }}/playbooks/play_argspec.yml"
+variable_keyword: "{{ role_path }}/playbooks/variable_validate_argspec.yml"
+missing_meta: "{{ role_path }}/playbooks/missing_metadata.yml"

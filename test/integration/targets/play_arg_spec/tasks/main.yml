@@ -1,0 +1,86 @@
+- environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+  block:
+
+  - name: Test successful argument validation
+    command: ansible-playbook {{ play_argspec }} -e 'play_name="Test play spec" required_str="valid" optional="option1"'
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - result is success
+
+  - name: Test failed argument validation when required argument is not defined
+    command: ansible-playbook {{ play_argspec }} -e 'play_name="Test play spec"'
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - result is failed
+        - 'result.stdout is search("missing required arguments: required_str")'
+
+  - name: Test failed argument validation when an argument choice is wrong
+    command: ansible-playbook {{ play_argspec }} -e 'play_name="Test play spec" required_str="" optional="invalid"'
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - result is failed
+        - 'result.stdout is search("value of optional must be one of: option1, option2, got: invalid")'
+
+  - name: Test using module_defaults to require documentation/detect typos
+    command: ansible-playbook {{ play_argspec }} -e 'play_name="Test play spec" required_str="strict" typo=True'
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - result is failed
+        - 'result.stdout is search("typo. Supported parameters include: optional, play_name, required_str.")'
+
+  - name: Test missing playbook meta file
+    command: ansible-playbook {{ missing_meta }}
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - result is failed
+        - result.stderr is search("No playbook meta path could be found.")
+
+  - name: Test invalid play argument spec
+    command: ansible-playbook {{ play_argspec }} -e 'play_name="No argument spec"'
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - result is failed
+        - result.stderr is search("No argument spec found for play 'No argument spec'")
+
+  - name: Test invalid configuration
+    command: "ansible-playbook {{ variable_keyword }} -e 'test_variable={{ invalid_variable }}'"
+    register: result
+    ignore_errors: True
+    vars:
+      invalid_variable: !unsafe '{{ inventory_hostname != "localhost" }}'
+
+  - assert:
+      that:
+        - result is failed
+        - result.stderr is search("'inventory_hostname' is undefined")
+
+  - name: Test valid variable configuration
+    command: "ansible-playbook {{ variable_keyword }} -e 'test_variable={{ valid_variable }}'"
+    register: result
+    ignore_errors: True
+    vars:
+      valid_variable: !unsafe '{{ "false" is falsy }}'
+
+  - assert:
+      that:
+        - result is success

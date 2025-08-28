@@ -17,6 +17,10 @@
 
 from __future__ import annotations
 
+import functools as _functools
+import pathlib as _pathlib
+import yaml as _yaml
+
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
@@ -63,6 +67,8 @@ class Play(Base, Taggable, CollectionSearch):
     # Variable Attributes
     vars_files = NonInheritableFieldAttribute(isa='list', default=list, priority=99)
     vars_prompt = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=False)
+
+    validate_argspec = NonInheritableFieldAttribute(isa='bool', default=False, always_post_validate=True)
 
     # Role Attributes
     roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
@@ -437,3 +443,72 @@ class Play(Base, Taggable, CollectionSearch):
         new_me._action_groups = self._action_groups
         new_me._group_actions = self._group_actions
         return new_me
+
+    @property
+    def _has_argument_spec(self) -> bool:
+        """Check if the play has an argument spec, and ignore any related errors."""
+        if self._metadata_path is None or not self.name:
+            return False
+        try:
+            metadata = self._loader.load_from_file(self._metadata_path)
+        except AnsibleError:
+            return False
+        try:
+            metadata['argument_specs'][self.name]['options'].keys()
+        except (TypeError, KeyError, AttributeError):
+            return False
+
+        return True
+
+    @property
+    def _metadata_candidate_paths(self) -> list[_pathlib.Path]:
+        """Locate potential playbook metadata paths.
+
+        playbook{ext?} -> playbook.meta{ext?}
+        """
+        if self._origin is None:
+            # no candidate paths for adhoc
+            return []
+
+        extensions = C.config.get_config_value("YAML_FILENAME_EXTENSIONS")
+        if self._origin.path.endswith(tuple(extensions)):
+            playbook_without_ext = self._origin.path.rsplit('.', 1)[0]
+        else:
+            playbook_without_ext = self._origin.path
+
+        return [_pathlib.Path(playbook_without_ext + ".meta" + ext) for ext in extensions + ['']]
+
+    @_functools.cached_property
+    def _metadata_path(self) -> str | None:
+        """Locate playbook metadata path:
+
+        playbook{ext?} -> playbook.meta{ext?}
+        """
+        for candidate in self._metadata_candidate_paths:
+            if candidate.is_file():
+                return candidate.as_posix()
+        return None
+
+    @property
+    def argument_spec(self) -> dict:
+        """Retrieve the argument spec and raise an AnsibleError if it is required and missing/invalid."""
+        if self._has_argument_spec:
+            return self._loader.load_from_file(self._metadata_path)['argument_specs'][self.name]['options']
+        elif not self.validate_argspec:
+            return {}
+
+        msg = (
+            "The validate_argspec keyword requires a play name "
+            "and an argument spec defined for the play in the playbook "
+            "meta file. "
+        )
+        if not self.name:
+            msg += "No play name is defined. "
+        if self._metadata_path is None:
+            msg += "No playbook meta path could be found. Considered:\n  - "
+            msg += "\n  - ".join([path.name for path in self._metadata_candidate_paths])
+        if self.name and self._metadata_path is not None:
+            msg += f"No argument spec found for play '{self.name}' in {self._metadata_path}. Minimally expected:\n"
+            msg += _yaml.dump({"argument_specs": {f"{self.name!s}": {"options": {}}}})
+
+        raise AnsibleError(msg, obj=self._origin)

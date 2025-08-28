@@ -1,0 +1,7 @@
+minor_changes:
+- >-
+  Add tech preview play argument spec validation, which can be
+  enabled by setting the play keyword ``validate_argspec`` to ``True``.
+  This will load a file matching the pattern <playbook_name>.meta.yml,
+  which should contain a top dictionary "argument_specs", containing
+  the play name, containing an "options" dictionary.
