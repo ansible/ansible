@@ -38,13 +38,16 @@ class ActionModule(ActionBase):
             self.ignore_files = list()
 
         if isinstance(self.ignore_files, str):
+            self._display.deprecated(
+                msg="Specifying 'ignore_files' as a string is deprecated.",
+                version="2.24",
+                help_text="Use a list of strings instead.",
+                obj=self.ignore_files,
+            )
             self.ignore_files = self.ignore_files.split()
 
-        elif isinstance(self.ignore_files, dict):
-            return {
-                'failed': True,
-                'message': '{0} must be a list'.format(self.ignore_files)
-            }
+        if not isinstance(self.ignore_files, list):
+            raise AnsibleError("The 'ignore_files' option must be a list.", obj=self.ignore_files)
 
     def _set_args(self):
         """ Set instance variables based on the arguments that were passed """
@@ -64,11 +67,8 @@ class ActionModule(ActionBase):
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
 
-        # convert/validate extensions list
-        if isinstance(self.valid_extensions, str):
-            self.valid_extensions = list(self.valid_extensions)
         if not isinstance(self.valid_extensions, list):
-            raise AnsibleError('Invalid type for "extensions" option, it must be a list')
+            raise AnsibleError("The 'extensions' option must be a list.", obj=self.valid_extensions)
 
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
@@ -92,10 +92,10 @@ class ActionModule(ActionBase):
             elif arg in self.VALID_ALL:
                 pass
             else:
-                raise AnsibleError('{0} is not a valid option in include_vars'.format(to_native(arg)))
+                raise AnsibleError(f'{arg} is not a valid option in include_vars', obj=arg)
 
         if dirs and files:
-            raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible")
+            raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible", obj=self._task.args)
 
         # set internal vars from args
         self._set_args()
@@ -107,13 +107,13 @@ class ActionModule(ActionBase):
             self._set_root_dir()
             if not path.exists(self.source_dir):
                 failed = True
-                err_msg = ('{0} directory does not exist'.format(to_native(self.source_dir)))
+                err_msg = f"{self.source_dir} directory does not exist"
             elif not path.isdir(self.source_dir):
                 failed = True
-                err_msg = ('{0} is not a directory'.format(to_native(self.source_dir)))
+                err_msg = f"{self.source_dir} is not a directory"
             else:
                 for root_dir, filenames in self._traverse_dir_depth():
-                    failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
+                    failed, err_msg, updated_results = self._load_files_in_dir(root_dir, filenames)
                     if failed:
                         break
                     results.update(updated_results)
@@ -174,7 +174,7 @@ class ActionModule(ActionBase):
                 self.source_dir = path.join(current_dir, self.source_dir)
 
     def _log_walk(self, error):
-        self._display.vvv('Issue with walking through "%s": %s' % (to_native(error.filename), to_native(error)))
+        self._display.vvv(f"Issue with walking through {error.filename}: {error}")
 
     def _traverse_dir_depth(self):
         """ Recursively iterate over a directory and sort the files in
@@ -203,9 +203,8 @@ class ActionModule(ActionBase):
             try:
                 if re.search(r'{0}$'.format(file_type), filename):
                     return True
-            except Exception:
-                err_msg = 'Invalid regular expression: {0}'.format(file_type)
-                raise AnsibleError(err_msg)
+            except Exception as ex:
+                raise AnsibleError(f'Invalid regular expression: {file_type!r}', obj=file_type) from ex
         return False
 
     def _is_valid_file_ext(self, source_file):
@@ -231,7 +230,7 @@ class ActionModule(ActionBase):
         err_msg = ''
         if validate_extensions and not self._is_valid_file_ext(filename):
             failed = True
-            err_msg = ('{0} does not have a valid extension: {1}'.format(to_native(filename), ', '.join(self.valid_extensions)))
+            err_msg = f"{filename!r} does not have a valid extension: {', '.join(self.valid_extensions)}"
         else:
             data = self._loader.load_from_file(filename, cache='none', trusted_as_template=True)
 
@@ -242,7 +241,7 @@ class ActionModule(ActionBase):
 
             if not isinstance(data, dict):
                 failed = True
-                err_msg = ('{0} must be stored as a dictionary/hash'.format(to_native(filename)))
+                err_msg = f"{filename!r} must be stored as a dictionary/hash"
             else:
                 self.included_files.append(filename)
                 results.update(data)

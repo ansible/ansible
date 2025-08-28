@@ -61,6 +61,61 @@
       - no_auto_unsafe.yml
   register: include_every_dir
 
+- name: invalid type for ignore_files
+  include_vars:
+    dir: vars
+    ignore_files: 123
+  register: invalid_ignore_files
+  ignore_errors: True
+
+- name: non-existent directory
+  include_vars:
+    dir: non_existent_dir
+  register: non_existent_dir_results
+  ignore_errors: True
+
+- name: invalid option
+  include_vars:
+    blah: 123
+  ignore_errors: True
+  register: invalid_option_results
+
+- name: provide non-compatible files and dir parameter together
+  include_vars:
+    dir: vars
+    file: main.yml
+  ignore_errors: True
+  register: invalid_files_dir_results
+
+- name: provide file value to a dir param
+  include_vars:
+    dir: environments/development/all.yml
+  register: non_file_dir_results
+  ignore_errors: True
+
+- name: invalid extensions value
+  include_vars:
+    dir: vars
+    extensions: 123
+  register: invalid_extensions_results
+  ignore_errors: True
+
+- name: verify all parameters are validated
+  assert:
+    that:
+      - "invalid_ignore_files is failed"
+      - "'option must be a list' in invalid_ignore_files.msg"
+      - "non_existent_dir_results is failed"
+      - "'directory does not exist' in non_existent_dir_results.message"
+      - "invalid_option_results is failed"
+      - "'is not a valid option' in invalid_option_results.msg"
+      - "invalid_files_dir_results is failed"
+      - "'these are incompatible' in invalid_files_dir_results.msg"
+      - "non_file_dir_results is failed"
+      - "'is not a directory' in non_file_dir_results.message"
+      - "invalid_extensions_results is failed"
+      - "'option must be a list' in invalid_extensions_results.msg"
+
 - name: verify that the correct files have been loaded and overwrite based on alphabetical order
   assert:
     that:
