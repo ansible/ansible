@@ -538,7 +538,7 @@ class DnfModule(YumDnf):
 
         # Set installroot
         if not os.path.isdir(installroot):
-            self.module.fail_json(msg=f"Installroot {installroot} must be a directory")
+            raise ValueError(f"Installroot {installroot} must be a directory")
 
         conf.installroot = installroot
 
