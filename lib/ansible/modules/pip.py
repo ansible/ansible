@@ -824,8 +824,8 @@ def main():
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
-                diff = {"prepared": "diff unknown: extra_args or requirements or state == 'latest' or not name"}
-                module.exit_json(changed=True, diff=diff)
+                # TODO more information for the user would be nice
+                module.exit_json(changed=True)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
 
