@@ -2,9 +2,9 @@
 application_properties==0.9.0
 Columnar==1.4.1
 pyjson5==1.6.9
-pymarkdownlnt==0.9.31
+pymarkdownlnt==0.9.32
 PyYAML==6.0.2
 tomli==2.2.1
 toolz==1.0.0
-typing_extensions==4.14.1
+typing_extensions==4.15.0
 wcwidth==0.2.13
