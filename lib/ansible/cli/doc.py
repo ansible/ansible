@@ -1244,6 +1244,11 @@ class DocCLI(CLI, RoleMixin):
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent='', man=False):
 
         for o in sorted(fields):
+
+            if o == 'extends_documentation_fragment':
+                display.warning('Skipping unsupported documentation fragment in return')
+                continue
+
             # Create a copy so we don't modify the original (in case YAML anchors have been used)
             opt = dict(fields[o])
 
