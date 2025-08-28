@@ -910,7 +910,7 @@ class LinuxHardware(Hardware):
                     try:
                         vgs[vg_name]['lvs'][lv_name] = {'size_g': items[3]}
                     except KeyError:
-                        module.warn(
+                        self.module.warn(
                             "An LVM volume group was created while gathering LVM facts, "
                             "and is not included in ansible_facts['vgs']."
                         )
