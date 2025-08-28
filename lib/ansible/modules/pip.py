@@ -625,8 +625,8 @@ def _normalize_vcs_packages(
     if not vcs_packages:
         return package_list
 
-    # Unsetting 'FORCE_COLOR' with 'NO_COLOR' and TTY_COMPATIBLE settings, helps to
-    # prevent color codes from being injected into and corrupting the JSON output.
+    # Unsetting 'FORCE_COLOR' with 'NO_COLOR' and 'TTY_COMPATIBLE' env vars, helps to
+    # make pip output clean JSON without injected ANSI sequences that might corrupt it.
     os.environ.pop('FORCE_COLOR', None)
 
     rc, json_out, err = module.run_command(
