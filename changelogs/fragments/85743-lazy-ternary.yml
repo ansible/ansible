@@ -1,0 +1,2 @@
+bugfixes:
+  - "``ternary`` filter - evaluate values lazily (https://github.com/ansible/ansible/issues/85743)"
