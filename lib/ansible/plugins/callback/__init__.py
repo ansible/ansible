@@ -246,11 +246,8 @@ class CallbackBase(AnsiblePlugin):
         self._plugin_options, self._origins = C.config.get_plugin_options_and_origins(self.plugin_type, self._load_name,
                                                                                       keys=task_keys, variables=var_options, direct=direct)
 
-    def _resolve_option_variables(self, variables, templar):
-        """
-        Return a dict of variable -> templated value, for any variables that
-        that match options registered by this plugin.
-        """
+    def _resolve_option_variables(self, variables: dict, templar: _engine.TemplateEngine) -> None:
+        """Set callback options defined by documented variables."""
         callback_variables = {}
         for var_name in C.config.get_plugin_vars(self.plugin_type, self._load_name):
             if (variable := variables.get(var_name, Sentinel)) is not Sentinel:
