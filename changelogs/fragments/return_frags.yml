@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc will now warn on unsupported return doc fragments entries (supported in >=2.20).
