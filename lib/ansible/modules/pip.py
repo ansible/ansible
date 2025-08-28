@@ -297,7 +297,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import sys
 import tempfile
 import operator
@@ -648,9 +647,6 @@ def _normalize_vcs_packages(
         # the potentially faulty pip download method and warn the user.
 
         pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
-        if pip_downloads_dir.exists():
-            shutil.rmtree(pip_downloads_dir)
-            pip_downloads_dir.mkdir()
 
         rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *vcs_packages])
 
