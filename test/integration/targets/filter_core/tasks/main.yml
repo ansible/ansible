@@ -430,6 +430,13 @@
       - '123|ternary("seven", "eight") == "seven"'
       - '"haha"|ternary("seven", "eight") == "seven"'
 
+- name: Verify ternary does not evaluate unused values
+  assert:
+    that:
+      - (false | ternary(undefined_variable, 'seven')) == (false | ternary(d.no_such_key, 'seven'))
+  vars:
+    d: {}
+
 - name: Verify regex_escape raises on posix_extended (failure expected)
   set_fact:
     foo: '{{"]]^"|regex_escape(re_type="posix_extended")}}'
