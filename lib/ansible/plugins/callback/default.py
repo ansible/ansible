@@ -293,12 +293,14 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
-        if self.get_option("display_included_hosts"):
-            msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-            label = self._get_item_label(included_file._vars)
-            if label:
-                msg += " => (item=%s)" % label
-            self._display.display(msg, color=C.COLOR_INCLUDED)
+        if not self.get_option("display_included_hosts"):
+            return
+
+        msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
+        label = self._get_item_label(included_file._vars)
+        if label:
+            msg += " => (item=%s)" % label
+        self._display.display(msg, color=C.COLOR_INCLUDED)
 
     def v2_playbook_on_stats(self, stats):
         self._display.banner("PLAY RECAP")
