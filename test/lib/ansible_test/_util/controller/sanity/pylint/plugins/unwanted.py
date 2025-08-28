@@ -110,7 +110,7 @@ class AnsibleUnwantedChecker(BaseChecker):
         ),
 
         'ansible.module_utils.six': UnwantedEntry(
-            'the Python standard library equivalents'
+            'the Python standard library equivalent'
         ),
     }
 
