@@ -123,7 +123,7 @@ attributes:
     check_mode:
         support: full
     diff_mode:
-        support: none
+        support: partial
     platform:
         platforms: posix
 notes:
@@ -562,7 +562,8 @@ def _get_package_info(module, package, python_bin=None):
 
 def setup_virtualenv(module, env, chdir, out, err):
     if module.check_mode:
-        module.exit_json(changed=True)
+        diff = {"before": {"state": "absent"}, "after": {"state": "present"}}
+        module.exit_json(changed=True, diff=diff)
 
     cmd = shlex.split(module.params['virtualenv_command'])
 
@@ -823,7 +824,8 @@ def main():
 
         if module.check_mode:
             if extra_args or requirements or state == 'latest' or not name:
-                module.exit_json(changed=True)
+                diff = {"prepared": "diff unknown: extra_args or requirements or state == 'latest' or not name"}
+                module.exit_json(changed=True, diff=diff)
 
             pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
 
@@ -845,12 +847,19 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
+                diff_msg = ""
                 for package in packages:
                     is_present = _is_present(module, package, pkg_list, pkg_cmd)
-                    if (state == 'present' and not is_present) or (state == 'absent' and is_present):
+                    if (state == 'present' and not is_present):
                         changed = True
+                        diff_msg += f"installed {package}\n"
                         break
-            module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
+                    if (state == 'absent' and is_present):
+                        changed = True
+                        diff_msg += f"uninstalled {package}\n"
+                        break
+            diff = {"prepared": diff_msg}
+            module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err, diff=diff)
 
         out_freeze_before = None
         if requirements or has_vcs:
@@ -876,9 +885,11 @@ def main():
 
         changed = changed or venv_created
 
+        diff = {"prepared": out}
+
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,
-                         stdout=out, stderr=err)
+                         stdout=out, stderr=err, diff=diff)
     finally:
         if old_umask is not None:
             os.umask(old_umask)
