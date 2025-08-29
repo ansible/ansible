@@ -116,10 +116,19 @@
   - name: Check installation of file-path package
     pip:
       virtualenv: "{{ venv_path }}"
-      name: "{{ repo_path }}/dummy-root/dummy-subdirectory"
+      name: "{{ repo_path }}"
     check_mode: true
-    register: check_file_install
+    register: check_file_install_root
 
-  - name: Assert changed for file-path package
+  - name: Check installation of file-path package
+    pip:
+      virtualenv: "{{ venv_path }}"
+      name: "{{ repo_path }}/dummy_root/dummy_subdirectory"
+    check_mode: true
+    register: check_file_install_subdirectory
+
+  - name: Assert changed for file-path packages
     assert:
-      that: check_file_install is changed
+      that:
+        - check_file_install_root is not changed
+        - check_file_install_subdirectory is changed
