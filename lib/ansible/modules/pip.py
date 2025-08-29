@@ -659,9 +659,13 @@ def _resolve_package_names(
         module.warn("Using check mode with URL-sourced packages is potentially error-prone on pip versions older than 22.2")
 
         out_lines = out.splitlines()
-        saved_packages = (Path(line.rsplit(" ", 1)[1]) for line in out_lines if 'Saved' in line)
 
-        package_objects = (Package.from_dist_path(path) for path in saved_packages)
+        saved_packages = [Path(line.rsplit(" ", 1)[1]) for line in out_lines if 'Saved' in line]
+
+        if saved_packages:
+            package_objects = (Package.from_dist_path(path) for path in saved_packages)
+
+        package_objects = [Package(line.rsplit(" ", 1)[1]) for line in out_lines if 'Successfully downloaded' in line]
 
     other_packages = (pkg for pkg in package_list if pkg.has_requirement)
     return [*other_packages, *package_objects]
