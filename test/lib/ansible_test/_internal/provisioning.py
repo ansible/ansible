@@ -129,6 +129,9 @@ def prepare_profiles[TEnvironmentConfig: EnvironmentConfig](
 
         ExitHandler.register(functools.partial(cleanup_profiles, host_state))
 
+        for pre_profile in host_state.profiles:
+            pre_profile.pre_provision()
+
         def provision(profile: HostProfile) -> None:
             """Provision the given profile."""
             profile.provision()

@@ -31,9 +31,10 @@ from ..util import (
 )
 
 from . import (
+    AuthContext,
     ChangeDetectionNotSupported,
     CIProvider,
-    CryptographyAuthHelper,
+    GeneratingAuthHelper,
 )
 
 CODE = 'azp'
@@ -112,10 +113,11 @@ class AzurePipelines(CIProvider):
         """Return True if Ansible Core CI is supported."""
         return True
 
-    def prepare_core_ci_auth(self) -> dict[str, t.Any]:
-        """Return authentication details for Ansible Core CI."""
+    def prepare_core_ci_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
         try:
-            request = dict(
+            request: dict[str, object] = dict(
+                type="azp:ssh",
+                config=config,
                 org_name=os.environ['SYSTEM_COLLECTIONURI'].strip('/').split('/')[-1],
                 project_name=os.environ['SYSTEM_TEAMPROJECT'],
                 build_id=int(os.environ['BUILD_BUILDID']),
@@ -124,13 +126,9 @@ class AzurePipelines(CIProvider):
         except KeyError as ex:
             raise MissingEnvironmentVariable(name=ex.args[0]) from None
 
-        self.auth.sign_request(request)
+        self.auth.sign_request(request, context)
 
-        auth = dict(
-            azp=request,
-        )
-
-        return auth
+        return request
 
     def get_git_details(self, args: CommonConfig) -> t.Optional[dict[str, t.Any]]:
         """Return details about git in the current environment."""
@@ -144,14 +142,14 @@ class AzurePipelines(CIProvider):
         return details
 
 
-class AzurePipelinesAuthHelper(CryptographyAuthHelper):
-    """
-    Authentication helper for Azure Pipelines.
-    Based on cryptography since it is provided by the default Azure Pipelines environment.
-    """
+class AzurePipelinesAuthHelper(GeneratingAuthHelper):
+    """Authentication helper for Azure Pipelines."""
 
-    def publish_public_key(self, public_key_pem: str) -> None:
-        """Publish the given public key."""
+    def generate_key_pair(self) -> None:
+        super().generate_key_pair()
+
+        public_key_pem = self.public_key_file.read_text()
+
         try:
             agent_temp_directory = os.environ['AGENT_TEMPDIRECTORY']
         except KeyError as ex:
