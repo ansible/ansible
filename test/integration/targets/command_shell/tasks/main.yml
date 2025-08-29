@@ -204,6 +204,28 @@
     that:
       - command_result3 is not changed
 
+- name: verify that skip.txt is absent
+  file:
+    path: "{{ remote_tmp_dir_test }}/skip.txt"
+    state: absent
+
+- name: Create a file which allow to skip the command execution
+  file:
+    state: touch
+    path: "{{ remote_tmp_dir_test }}/skip.txt"
+
+- name: Skip running command as the file already exists
+  command:
+    cmd: echo "Hello"
+    creates: "{{ remote_tmp_dir_test }}/skip.txt"
+  register: command_skip_reason
+
+- name: Check if we present skip_reason in output
+  assert:
+    that:
+      - command_skip_reason.skip_reason == "skipped, since " ~ remote_tmp_dir_test ~ "/skip.txt exists"
+      - not command_skip_reason.changed
+
 # removes
 
 - name: remove afile.txt with remote_afile.sh via command (check mode)
@@ -254,6 +276,23 @@
   assert:
     that:
       - command_result4.changed != True
+
+- name: verify that skip.txt is absent
+  file:
+    path: "{{ remote_tmp_dir_test }}/skip.txt"
+    state: absent
+
+- name: Skip running command as the file does not exist
+  command:
+    cmd: echo "Hello"
+    removes: "{{ remote_tmp_dir_test }}/skip.txt"
+  register: command_skip_reason
+
+- name: Check if we present skip_reason in output
+  assert:
+    that:
+      - command_skip_reason.skip_reason == "skipped, since " ~ remote_tmp_dir_test ~ "/skip.txt does not exist"
+      - not command_skip_reason.changed
 
 - name: pass stdin to cat via command
   command: cat

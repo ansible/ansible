@@ -1,0 +1,3 @@
+---
+deprecated_features:
+    - command - deprecate unnecessary stdout when creates or removes is used (https://github.com/ansible/ansible/issues/84107).

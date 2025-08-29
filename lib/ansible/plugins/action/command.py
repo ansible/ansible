@@ -5,6 +5,16 @@ from __future__ import annotations
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
+from ansible.module_utils._internal import _deprecator
+from ansible.module_utils._internal._datatag import _tags
+
+
+_DEPRECATE_SKIPPED_STDOUT = _tags.Deprecated(
+    msg='Using `stdout` when creates/removes is used is deprecated',
+    version='2.25',
+    deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+    help_text='Use `skip_reason` instead.',
+)
 
 
 class ActionModule(ActionBase):
@@ -22,5 +32,10 @@ class ActionModule(ActionBase):
         if not wrap_async:
             # remove a temporary path we created
             self._remove_tmp_path(self._connection._shell.tmpdir)
+
+        if results.get('stdout', '').startswith('skipped'):
+            results['skip_reason'] = results['stdout']
+            results['stdout_lines'] = _DEPRECATE_SKIPPED_STDOUT.tag(results['stdout_lines'])
+            results['stdout'] = _DEPRECATE_SKIPPED_STDOUT.tag(results['stdout'])
 
         return results
