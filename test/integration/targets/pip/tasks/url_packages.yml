@@ -1,10 +1,12 @@
 - name: Check vcs package installation and checking functionality
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
+    venv_path: "{{ remote_tmp_dir }}/gitvenv"
   block:
-  - name: Ensure the main repository directory exists
+  - name: Create a nested package directory layout
     file:
-      path: "{{ repo_path }}"
+      path: "{{ repo_path }}/dummy-root/dummy-subdirectory"
+      recurse: yes
       state: directory
       mode: '0755'
 
@@ -21,18 +23,6 @@
         version = "0.0.1"
         dependencies = []
 
-  - name: Create root-level package directory
-    file:
-      path: "{{ repo_path }}/dummy-root"
-      state: directory
-      mode: '0755'
-
-  - name: Create the subdirectory for the nested package
-    file:
-      path: "{{ repo_path }}/dummy-root/dummy-subdirectory"
-      state: directory
-      mode: '0755'
-
   - name: Create nested package's pyproject.toml
     copy:
       dest: "{{ repo_path }}/dummy-root/dummy-subdirectory/pyproject.toml"
@@ -45,12 +35,6 @@
         name = "nested-package"
         version = "0.0.1"
         dependencies = []
-
-  - name: Create nested package's source directory
-    file:
-      path: "{{ repo_path }}/dummy-root/dummy-subdirectory/src"
-      state: directory
-      mode: '0755'
 
   - name: Create git repository
     command:
@@ -66,30 +50,30 @@
 
   - name: Ensure fresh venv
     file:
-      path: "{{ remote_tmp_dir }}/gitvenv"
+      path: "{{ venv_path }}"
       state: absent
 
   - name: Create fresh venv with no packages
     pip:
       name: []
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
 
   - name: Check installation of packages via git
     pip:
       name: "git+file://{{ repo_path }}/.git"
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
     check_mode: true
     register: check_git_install_to_empty_venv
 
   - name: Install package via git
     pip:
       name: "git+file://{{ repo_path }}/.git"
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
 
   - name: Re-check to ensure not changed
     pip:
       name: "git+file://{{ repo_path }}/.git"
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
     check_mode: true
     register: check_reinstall_one_pkg
 
@@ -98,14 +82,14 @@
       name:
         - "git+file://{{ repo_path }}/.git"
         - "nested-package @ git+file://{{ repo_path }}/.git#subdirectory=dummy-root/dummy-subdirectory"
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
     check_mode: true
     register: check_reinstall_two
 
   - name: Re-install dummy-root to ensure not changed
     pip:
       name: "git+file://{{ repo_path }}/.git"
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
     check_mode: true
     register: reinstall_git_pkg
 
@@ -120,7 +104,7 @@
   - name: Install nonsense git repo
     pip:
       name: "git+https://notawebsite.tld/doesntexist/doesntexist"
-      virtualenv: "{{ remote_tmp_dir }}/gitvenv"
+      virtualenv: "{{ venv_path }}"
     check_mode: true
     register: check_failure_on_bad_repo
     ignore_errors: true
@@ -128,3 +112,10 @@
   - name: Assert failure on nonsense git
     assert:
       that: check_failure_on_bad_repo is failed
+
+  - name: Check installation of file-path package
+    pip:
+      virtualenv: "{{ venv_path }}"
+      name: "{{ repo_path }}"
+    check_mode: true
+    register: check_file_install
