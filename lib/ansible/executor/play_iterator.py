@@ -319,11 +319,9 @@ class PlayIterator:
 
                     state.cur_regular_task += 1
                 else:
-                    # This is the last trip through IteratingStates.SETUP, so we clear
-                    # the flag and move onto the next block in the list while setting
-                    # the run state to IteratingStates.TASKS
-                    state.pending_setup = False
-
+                    # This is the last trip through IteratingStates.SETUP, so we
+                    # move onto the next block in the list while setting the run
+                    # state to IteratingStates.TASKS
                     state.run_state = IteratingStates.TASKS
                     if not state.did_start_at_task:
                         state.cur_block += 1
