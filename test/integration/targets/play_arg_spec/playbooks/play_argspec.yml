@@ -1,15 +1,6 @@
-- name: "{{ play_name | default(omit) }}"
+- name: "{{ play_name | default(_play_name) }}"
+  vars:
+    _play_name: "{{ play_name_from_vars }}"
   hosts: localhost
-  module_defaults:
-    validate_argument_spec:
-      provided_arguments: |
-          {% set defined_vars = {} %}
-          {% set ignore = ['group_names', 'groups', 'inventory_hostname', 'inventory_hostname_short', 'playbook_dir'] %}
-          {% for key, value in hostvars[inventory_hostname].items() %}
-          {% if value is defined and not (key is search("^ansible_.*$") or key in ignore) %}
-          {% set _ = defined_vars.update({key: value}) %}
-          {% endif %}
-          {% endfor %}
-          {{ (required_str|default('') == 'strict') | ternary(defined_vars, omit) }}
   gather_facts: no
   validate_argspec: True

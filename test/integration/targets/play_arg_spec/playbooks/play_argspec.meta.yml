@@ -1,9 +1,6 @@
 argument_specs:
   Test play spec:
     options:
-      play_name:
-        required: True
-        type: str
       required_str:
         required: True
         type: str
