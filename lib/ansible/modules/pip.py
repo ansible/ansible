@@ -728,7 +728,7 @@ class Package:
         if "@" not in self.package_name:
             return self.package_name
 
-        _, url = self.package_name.rsplit('@', 1)
+        _package_name, url = self.package_name.rsplit('@', 1)
 
         return url
 
