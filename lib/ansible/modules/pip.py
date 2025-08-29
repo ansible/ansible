@@ -720,17 +720,15 @@ class Package:
             )
 
     @property
-    def has_requirement(self):
+    def has_requirement(self) -> bool:
         return self._requirement is not None
 
     @property
-    def download_information(self):
+    def download_information(self) -> str:
         """Returns the necessary information to pass into pip download"""
         if "@" not in self.package_name:
             return self.package_name
-
         _package_name, url = self.package_name.rsplit('@', 1)
-
         return url
 
     @staticmethod
