@@ -648,7 +648,8 @@ def _resolve_package_names(
 
         pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
 
-        rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *(pkg.download_information for pkg in pkgs_to_resolve)])
+        rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps',
+                                           *(pkg.download_information for pkg in pkgs_to_resolve)])
 
         if rc != 0:
             # If it fails (usually due to no pkg at url), just dump the error
