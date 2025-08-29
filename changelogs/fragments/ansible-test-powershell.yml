@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Add PowerShell support to managed containers and remotes.
+
+bugfixes:
+  - ansible-test - Add missing bootstrapping for a target Python version in a controller container.

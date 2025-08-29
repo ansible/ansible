@@ -93,6 +93,88 @@ install_pip() {
     fi
 }
 
+install_powershell() {
+    if [ ! "${powershell_versions}" ]; then
+        return
+    fi
+
+    for powershell_version in ${powershell_versions}; do
+        install_powershell_version
+    done
+}
+
+install_powershell_version() {
+    version="${powershell_version}"
+    major_version="$(echo "${version}" | cut -f 1 -d .)"
+    minor_version="$(echo "${version}" | cut -f 2 -d .)"
+    major_minor_version="${major_version}.${minor_version}"
+    install_dir="/opt/microsoft/powershell/${major_minor_version}"
+    pwsh_installed_bin="${install_dir}/pwsh"
+    pwsh_versioned_bin="/usr/local/bin/pwsh${major_minor_version}"
+
+    if [ -x "${pwsh_versioned_bin}" ]; then
+        echo "Detected PowerShell ${major_minor_version} at: ${pwsh_versioned_bin}"
+        return
+    fi
+
+    echo "Bootstrapping PowerShell ${major_minor_version} at: ${pwsh_versioned_bin}"
+
+    system="$("${python_interpreter}" -c 'import platform; print(platform.system());')"
+
+    case "${system}" in
+        Linux)
+            if ! "${python_interpreter}" -c "import os; os.confstr('CS_GNU_LIBC_VERSION');" 2>/dev/null; then
+                echo "Only glibc-based Linux distributions are supported."
+                exit 1
+            fi
+
+            system="linux"
+            ;;
+        Darwin)
+            system="osx"
+            ;;
+        *)
+            echo "Unsupported system: ${system}"
+            exit 1
+            ;;
+    esac
+
+    arch="$("${python_interpreter}" -c 'import platform; print(platform.machine());')"
+
+    case "${arch}" in
+        x86_64)
+            arch="x64"
+            ;;
+        aarch64)
+            arch="arm64"
+            ;;
+        arm64)
+            arch="arm64"
+            ;;
+        *)
+            echo "Unsupported architecture: ${arch}"
+            exit 1
+            ;;
+    esac
+
+    url="https://github.com/PowerShell/PowerShell/releases/download/v${version}/powershell-${version}-${system}-${arch}.tar.gz"
+    tmp_file="/tmp/powershell-${major_minor_version}.tgz"
+
+    retry_init
+    while true; do
+        curl --silent --show-error --location "${url}" -o "${tmp_file}" \
+        && break
+        retry_or_fail
+    done
+
+    mkdir -p "${install_dir}"
+    tar zxf "${tmp_file}" --no-same-owner --no-same-permissions -C "${install_dir}"
+    rm "${tmp_file}"
+    find "${install_dir}" -type f -exec chmod -x "{}" ";"
+    chmod +x "${pwsh_installed_bin}"
+    ln -s "${pwsh_installed_bin}" "${pwsh_versioned_bin}"
+}
+
 optimize_dnf()
 {
     if ! grep ansible-test /etc/dnf/dnf.conf > /dev/null; then
@@ -158,6 +240,7 @@ bootstrap_remote_fedora()
         acl
         gcc
         ${py_pkg_prefix}-devel
+        which
         "
 
     if [ "${controller}" ]; then
@@ -465,6 +548,8 @@ bootstrap()
         "docker") bootstrap_docker ;;
         "remote") bootstrap_remote ;;
     esac
+
+    install_powershell
 }
 
 # These variables will be templated before sending the script to the host.
@@ -477,5 +562,6 @@ python_interpreters=#{python_interpreters}
 ssh_key_type=#{ssh_key_type}
 ssh_private_key=#{ssh_private_key}
 ssh_public_key=#{ssh_public_key}
+powershell_versions=#{powershell_versions}
 
 bootstrap

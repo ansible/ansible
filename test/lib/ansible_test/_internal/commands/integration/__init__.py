@@ -70,6 +70,7 @@ from ...util_common import (
     run_command,
     write_json_test_results,
     check_pyyaml,
+    get_powershell_injector_env,
 )
 
 from ...coverage_util import (
@@ -677,6 +678,7 @@ def command_integration_script(
 
             test_env.update_environment(env)
             env.update(coverage_manager.get_environment(target.name, target.aliases))
+            env.update(get_powershell_injector_env(host_state.controller_profile.powershell, env))
             cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
@@ -797,6 +799,7 @@ def command_integration_role(
 
             test_env.update_environment(env)
             env.update(coverage_manager.get_environment(target.name, target.aliases))
+            env.update(get_powershell_injector_env(host_state.controller_profile.powershell, env))
             cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
