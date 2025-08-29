@@ -613,15 +613,15 @@ def setup_virtualenv(module, env, chdir, out, err):
     return out, err, cmd
 
 
-def _normalize_vcs_packages(
+def _resolve_package_names(
         module: AnsibleModule,
         package_list: list[Package],
         pip: list[str]
 ) -> list[Package]:
-    """Return a list of packages with names extracted from metadata in VCS"""
-    vcs_packages = [pkg_str for pkg in package_list if _is_vcs_url(pkg_str := str(pkg))]
+    """Return a list of Packages with names extracted from metadata using pip"""
+    pkgs_to_resolve = [pkg for pkg in package_list if not pkg.has_requirement]
 
-    if not vcs_packages:
+    if not pkgs_to_resolve:
         return package_list
 
     # Unsetting 'FORCE_COLOR' with 'NO_COLOR' and 'TTY_COMPATIBLE' env vars, helps to
@@ -629,7 +629,7 @@ def _normalize_vcs_packages(
     os.environ.pop('FORCE_COLOR', None)
 
     rc, json_out, err = module.run_command(
-        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *vcs_packages],
+        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
         environ_update={
             'NO_COLOR': '1',
             'TTY_COMPATIBLE': '0',
@@ -648,7 +648,7 @@ def _normalize_vcs_packages(
 
         pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
 
-        rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *vcs_packages])
+        rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps', *(pkg.download_information for pkg in pkgs_to_resolve)])
 
         if rc != 0:
             # If it fails (usually due to no pkg at url), just dump the error
@@ -662,7 +662,7 @@ def _normalize_vcs_packages(
 
         package_objects = (Package.from_dist_path(path) for path in saved_packages)
 
-    other_packages = (pkg for pkg in package_list if str(pkg) not in vcs_packages)
+    other_packages = (pkg for pkg in package_list if pkg.has_requirement)
     return [*other_packages, *package_objects]
 
 
@@ -717,6 +717,20 @@ class Package:
                 op_dict[op](version_to_test, LooseVersion(ver))
                 for op, ver in self._requirement.specs
             )
+
+    @property
+    def has_requirement(self):
+        return self._requirement is not None
+
+    @property
+    def download_information(self):
+        """Returns the necessary information to pass into pip download"""
+        if "@" not in self.package_name:
+            return self.package_name
+
+        _, url = self.package_name.rsplit('@', 1)
+
+        return url
 
     @staticmethod
     def canonicalize_name(name):
@@ -911,7 +925,7 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                normalized_package_list = _normalize_vcs_packages(module, packages, pip)
+                normalized_package_list = _resolve_package_names(module, packages, pip)
 
                 for package in normalized_package_list:
                     is_present = _is_present(module, package, pkg_list, pkg_cmd)
