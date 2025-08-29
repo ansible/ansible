@@ -1,0 +1,2 @@
+bugfixes:
+  - script inventory plugin will now show correct 'incorrect' type when doing implicit conversions on groups.
