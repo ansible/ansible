@@ -656,7 +656,7 @@ def _resolve_package_names(
             module.fail_json(rc=rc, msg=out, err=err)
 
         # Only from this point onward can we be sure that we're using the fallback, warn now.
-        module.warn("Using check_mode with vcs packages is potentially error prone on pip versions <22.2")
+        module.warn("Using check mode with URL-sourced packages is potentially error-prone on pip versions older than 22.2")
 
         out_lines = out.splitlines()
         saved_packages = (Path(line.rsplit(" ", 1)[1]) for line in out_lines if 'Saved' in line)
