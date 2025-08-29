@@ -279,10 +279,10 @@ class ShellBase(AnsiblePlugin):
         )
         return cmd
 
-    def quote(self, cmd):
+    def quote(self, cmd: str) -> str:
         """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
         return shlex.quote(cmd)
 
-    def join(self, cmd_parts):
+    def join(self, cmd_parts: list[str]) -> str:
         """Returns a shell-escaped string from a list that can be safely used in a shell command line"""
         return shlex.join(cmd_parts)

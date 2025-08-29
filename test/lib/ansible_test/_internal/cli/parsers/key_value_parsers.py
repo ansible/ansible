@@ -19,6 +19,7 @@ from ...completion import (
 from ...util import (
     REMOTE_ARCHITECTURES,
     WINDOWS_CONNECTIONS,
+    WINDOWS_POWERSHELL_VERSIONS,
 )
 
 from ...host_configs import (

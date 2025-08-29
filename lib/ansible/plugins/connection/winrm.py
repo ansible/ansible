@@ -183,6 +183,7 @@ except ImportError:
     pass
 
 from ansible import constants as C
+from ansible._internal._powershell import _clixml, _script
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.executor.powershell.module_manifest import _bootstrap_powershell_script
@@ -190,8 +191,8 @@ from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import _parse_clixml
-from ansible.plugins.shell.powershell import ShellBase as PowerShellBase
+from ansible.plugins.shell import ShellBase
+from ansible.plugins.shell.cmd import ShellModule as CmdShellModule
 from ansible.utils.hashing import secure_hash
 from ansible.utils.display import Display
 
@@ -250,10 +251,21 @@ class Connection(ConnectionBase):
         self.protocol: winrm.Protocol | None = None
         self.shell_id: str | None = None
         self.delegate = None
-        self._shell: PowerShellBase
-        self._shell_type = 'powershell'
+        self._shell: ShellBase
+        self._shell_type = 'cmd'  # Default shell for the WinRS protocol is always cmd
 
         super(Connection, self).__init__(*args, **kwargs)
+        if not isinstance(self._shell, CmdShellModule):
+            # This only happens if ansible_shell_type=powershell is set.
+            # It probably will work but edge cases like spaces in executables
+            # will most likely fail.
+            display.warning(
+                msg=(
+                    "The winrm connection plugin should have the shell type of cmd and not powershell. "
+                    "This may result in an error when attempting to run more complex commands."
+                ),
+                help_text="Unset ansible_shell_type or set to cmd to use the required cmd shell.",
+            )
 
         if not C.DEFAULT_DEBUG:
             logging.getLogger('requests_credssp').setLevel(logging.INFO)
@@ -633,9 +645,8 @@ class Connection(ConnectionBase):
 
             # This is done after logging so we can still see the raw stderr for
             # debugging purposes.
-            if b_stderr.startswith(b"#< CLIXML"):
-                b_stderr = _parse_clixml(b_stderr)
-                stderr = to_text(stderr)
+            b_stderr = _clixml.replace_stderr_clixml(b_stderr)
+            stderr = to_text(stderr)
 
             if stdin_push_failed:
                 # There are cases where the stdin input failed but the WinRM service still processed it. We attempt to
@@ -729,15 +740,20 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        encoded_prefix = self._shell._encode_script('', as_list=False, strict_mode=False, preserve_rc=False)
-        if cmd.startswith(encoded_prefix) or cmd.startswith("type "):
-            # Avoid double encoding the script, the first means we are already
-            # running the standard PowerShell command, the latter is used for
-            # the no pipeline case where it uses type to pipe the script into
-            # powershell which is known to work without re-encoding as pwsh.
-            cmd_parts = cmd.split(" ")
+        if cmd.find(" -EncodedCommand ") != -1:
+            # Avoid double encoding the script if we can help it. This is a
+            # rudimentary check but seeing -EncodedCommand as an argument most
+            # likely means we are running PowerShell or at least any executable
+            # with an argument rather than a shell command. While WinRM accepts
+            # a command and args separately it is just joined together with a
+            # space on the remote side and we expect cmd to already be safely
+            # escaped.
+            cmd_parts = [cmd]
         else:
-            cmd_parts = self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False)
+            # For backwards compatibility winrm always wrapped every command
+            # within PowerShell. This makes raw not very raw but we can't
+            # change that now.
+            cmd_parts = _script.get_pwsh_encoded_cmdline(cmd, override_execution_policy=True)
 
         # TODO: display something meaningful here
         display.vvv("EXEC (via pipeline wrapper)")
@@ -782,7 +798,7 @@ class Connection(ConnectionBase):
         copy_script, copy_script_stdin = _bootstrap_powershell_script('winrm_put_file.ps1', {
             'Path': out_path,
         }, has_input=True)
-        cmd_parts = self._shell._encode_script(copy_script, as_list=True, strict_mode=False, preserve_rc=False)
+        cmd_parts = _script.get_pwsh_encoded_cmdline(copy_script, override_execution_policy=True)
 
         status_code, b_stdout, b_stderr = self._winrm_exec(
             cmd_parts[0],
@@ -827,7 +843,7 @@ class Connection(ConnectionBase):
                         'Offset': offset,
                     })
                     display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
-                    cmd_parts = self._shell._encode_script(script, as_list=True, preserve_rc=False)
+                    cmd_parts = _script.get_pwsh_encoded_cmdline(script, override_execution_policy=True)
                     status_code, b_stdout, b_stderr = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._wrapper_payload_stream(in_data))
                     stdout = to_text(b_stdout)
                     stderr = to_text(b_stderr)
@@ -851,7 +867,6 @@ class Connection(ConnectionBase):
                             break
                         offset += len(data)
                 except Exception:
-                    traceback.print_exc()
                     raise AnsibleError('failed to transfer file to "%s"' % to_native(out_path))
         finally:
             if out_file:

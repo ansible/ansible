@@ -72,7 +72,7 @@ Assert-Equal -actual $actual.executable.ToUpper() -expected "$env:SystemRoot\Sys
 $test_name = "working directory override"
 $actual = Run-Command -command "cmd.exe /c cd" -working_directory $env:SystemRoot
 Assert-Equal -actual $actual.rc -expected 0
-Assert-Equal -actual $actual.stdout -expected "$env:SystemRoot`r`n"
+Assert-Equal -actual $actual.stdout.ToUpper() -expected "$env:SystemRoot`r`n".ToUpper()
 Assert-Equal -actual $actual.stderr -expected ""
 Assert-Equal -actual $actual.executable.ToUpper() -expected "$env:SystemRoot\System32\cmd.exe".ToUpper()
 

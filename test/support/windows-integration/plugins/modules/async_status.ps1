@@ -13,6 +13,33 @@ $mode = Get-AnsibleParam $parsed_args "mode" -Default "status" -ValidateSet "sta
 # parsed in from the async_status action plugin
 $async_dir = Get-AnsibleParam $parsed_args "_async_dir" -type "path" -failifempty $true
 
+Function Convert-JsonObject {
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [AllowNull()]
+        [object]
+        $InputObject
+    )
+
+    process {
+        # Using the full type name is important as PSCustomObject is an
+        # alias for PSObject which all piped objects are.
+        if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+            $value = @{}
+            foreach ($prop in $InputObject.PSObject.Properties) {
+                $value[$prop.Name] = Convert-JsonObject -InputObject $prop.Value
+            }
+            $value
+        }
+        elseif ($InputObject -is [Array]) {
+            , @($InputObject | Convert-JsonObject)
+        }
+        else {
+            $InputObject
+        }
+    }
+}
+
 $log_path = [System.IO.Path]::Combine($async_dir, $jid)
 
 If(-not $(Test-Path $log_path))
@@ -34,8 +61,7 @@ Try {
     $data_raw = Get-Content $log_path
 
     # TODO: move this into module_utils/powershell.ps1?
-    $jss = New-Object System.Web.Script.Serialization.JavaScriptSerializer
-    $data = $jss.DeserializeObject($data_raw)
+    $data = $data_raw | ConvertFrom-Json | Convert-JsonObject
 }
 Catch {
     If(-not $data_raw) {

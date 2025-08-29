@@ -68,20 +68,26 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - name: 2016 WinRM HTTP
-              test: 2016/winrm/http
-            - name: 2019 WinRM HTTPS
-              test: 2019/winrm/https
-            - name: 2022 WinRM HTTPS
-              test: 2022/winrm/https
-            - name: 2022 PSRP HTTP
-              test: 2022/psrp/http
-            - name: 2022 SSH Key
-              test: 2022/ssh/key
-            - name: 2025 PSRP HTTP
-              test: 2025/psrp/http
-            - name: 2025 SSH Key
-              test: 2025/ssh/key
+            - name: 2016 WinRM HTTP WinPS
+              test: 2016/winrm/http/5.1
+            - name: 2019 WinRM HTTPS WinPS
+              test: 2019/winrm/https/5.1
+            - name: 2022 WinRM HTTPS WinPS
+              test: 2022/winrm/https/5.1
+            - name: 2022 PSRP HTTP WinPS
+              test: 2022/psrp/http/5.1
+            - name: 2022 SSH Key WinPS
+              test: 2022/ssh/key/5.1
+            - name: 2025 PSRP HTTP WinPS
+              test: 2025/psrp/http/5.1
+            - name: 2025 SSH Key WinPS
+              test: 2025/ssh/key/5.1
+            - name: 2025 WinRM HTTP Pwsh
+              test: 2025/winrm/http/7.6
+            - name: 2025 PSRP HTTP Pwsh
+              test: 2025/psrp/http/7.6
+            - name: 2025 SSH Key Pwsh
+              test: 2025/ssh/key/7.6
   - stage: Remote
     dependsOn: []
     jobs:
@@ -204,20 +210,26 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - name: 2016 WinRM HTTP
-              test: 2016/winrm/http
-            - name: 2019 WinRM HTTPS
-              test: 2019/winrm/https
-            - name: 2022 WinRM HTTPS
-              test: 2022/winrm/https
-            - name: 2022 PSRP HTTP
-              test: 2022/psrp/http
-            - name: 2022 SSH Key
-              test: 2022/ssh/key
-            - name: 2025 PSRP HTTP
-              test: 2025/psrp/http
-            - name: 2025 SSH Key
-              test: 2025/ssh/key
+            - name: 2016 WinRM HTTP WinPS
+              test: 2016/winrm/http/5.1
+            - name: 2019 WinRM HTTPS WinPS
+              test: 2019/winrm/https/5.1
+            - name: 2022 WinRM HTTPS WinPS
+              test: 2022/winrm/https/5.1
+            - name: 2022 PSRP HTTP WinPS
+              test: 2022/psrp/http/5.1
+            - name: 2022 SSH Key WinPS
+              test: 2022/ssh/key/5.1
+            - name: 2025 PSRP HTTP WinPS
+              test: 2025/psrp/http/5.1
+            - name: 2025 SSH Key WinPS
+              test: 2025/ssh/key/5.1
+            - name: 2025 WinRM HTTP Pwsh
+              test: 2025/winrm/http/7.6
+            - name: 2025 PSRP HTTP Pwsh
+              test: 2025/psrp/http/7.6
+            - name: 2025 SSH Key Pwsh
+              test: 2025/ssh/key/7.6
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:

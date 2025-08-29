@@ -292,6 +292,7 @@ class WindowsRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote Windows platforms."""
 
     connection: str = ''
+    pwsh: str = '5.1'
 
 
 def load_completion[TCompletionConfig: CompletionConfig](name: str, completion_type: t.Type[TCompletionConfig]) -> dict[str, TCompletionConfig]:

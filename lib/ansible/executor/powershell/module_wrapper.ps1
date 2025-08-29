@@ -92,7 +92,10 @@ Function Write-AnsibleErrorDetail {
     }
 }
 
-$ps = [PowerShell]::Create()
+# It is important we use CreateDefault2 to ensure that builtin modules are
+# imported when requested. CreateDefault only imports the builtin modules
+# as snapins which miss things like ETS type definitions.
+$ps = [PowerShell]::Create([InitialSessionState]::CreateDefault2())
 
 if ($ForModule) {
     $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")

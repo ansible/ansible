@@ -75,7 +75,12 @@ try {
 }
 catch {
     $failed = $true
-    Assert-Equal -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
+    if ($PSVersionTable.PSVersion -lt '6.0') {
+        Assert-Equal -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
+    }
+    else {
+        Assert-Equal -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"The filename, directory name, or volume label syntax is incorrect. : 'C:\Windows\*.exe'.`""
+    }
 }
 Assert-Equal -actual $failed -expected $true
 
@@ -89,6 +94,24 @@ Assert-Equal -actual $actual -expected $true
 
 # Test-AnsiblePath on environment variable that does not exist
 $actual = Test-AnsiblePath -Path env:FakeEnvValue
+Assert-Equal -actual $actual -expected $false
+
+# Test-AnsiblePath on UNC path
+$actual = Test-AnsiblePath -Path "\\localhost\C$\Windows"
+Assert-Equal -actual $actual -expected $true
+
+# Test-AnsiblePath on UNC path with changed location
+try {
+    Push-Location -Path Cert:\LocalMachine\My
+    $actual = Test-AnsiblePath -Path "\\localhost\C$\Windows"
+    Assert-Equal -actual $actual -expected $true
+}
+finally {
+    $null = Pop-Location
+}
+
+# Test-AnsiblePath on unknown drive
+$actual = Test-AnsiblePath -Path fake:\somepath
 Assert-Equal -actual $actual -expected $false
 
 # Get-AnsibleItem doesn't exist with -ErrorAction SilentlyContinue param

@@ -148,7 +148,7 @@
     that:
     - become_res.language_mode == 'FullLanguage'
     - become_res.test == 'signed'
-    - become_res.whoami == 'SYSTEM'
+    - become_res.whoami == system_user
     - become_res.ünicode == 'café'
 
 - name: signed module with async

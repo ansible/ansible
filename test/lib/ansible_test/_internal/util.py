@@ -172,6 +172,10 @@ WINDOWS_CONNECTION_VARIABLES: dict[str, t.Any] = {
 WINDOWS_CONNECTIONS = list(WINDOWS_CONNECTION_VARIABLES)
 
 
+WINDOWS_POWERSHELL_VERSIONS = ['5.1', '7.6']
+"""Supported pwsh versions for Windows."""
+
+
 def is_valid_identifier(value: str) -> bool:
     """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
     return value.isidentifier() and not keyword.iskeyword(value)
