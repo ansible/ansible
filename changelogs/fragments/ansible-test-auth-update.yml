@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Implement new authentication methods for accessing the Ansible Core CI service.
