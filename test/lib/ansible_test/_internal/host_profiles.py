@@ -265,6 +265,9 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     def name(self) -> str:
         """The name of the host profile."""
 
+    def pre_provision(self) -> None:
+        """Pre-provision the host profile."""
+
     def provision(self) -> None:
         """Provision the host before delegation."""
 
@@ -522,8 +525,8 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
         """The saved Ansible Core CI state."""
         self.state['core_ci'] = value
 
-    def provision(self) -> None:
-        """Provision the host before delegation."""
+    def pre_provision(self) -> None:
+        """Pre-provision the host before delegation."""
         self.core_ci = self.create_core_ci(load=True)
         self.core_ci.start()
 
