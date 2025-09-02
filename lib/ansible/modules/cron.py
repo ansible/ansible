@@ -232,7 +232,7 @@ class CronTabError(Exception):
     pass
 
 
-class CronTab(object):
+class CronTab:
     """
         CronTab object to write time based crontab file
 
@@ -243,8 +243,8 @@ class CronTab(object):
     def __init__(self, module, user=None, cron_file=None):
         self.module = module
         self.user = user
-        self.root = (os.getuid() == 0)
-        self.lines = None
+        self.root = os.getuid() == 0
+        self.lines = []
         self.ansible = "#Ansible: "
         self.n_existing = ''
         self.cron_cmd = self.module.get_bin_path('crontab', required=True)
@@ -264,7 +264,6 @@ class CronTab(object):
 
     def read(self):
         # Read in the crontab from the system
-        self.lines = []
         if self.cron_file:
             # read the cronfile
             try:
@@ -280,7 +279,7 @@ class CronTab(object):
             # FIXME: using safely quoted shell for now, but this really should be two non-shell calls instead.
             (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
-            if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
+            if rc not in (0, 1):  # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
             self.n_existing = out
@@ -300,11 +299,10 @@ class CronTab(object):
     def is_empty(self):
         if len(self.lines) == 0:
             return True
-        else:
-            for line in self.lines:
-                if line.strip():
-                    return False
-            return True
+        for line in self.lines:
+            if line.strip():
+                return False
+        return True
 
     def write(self, backup_file=None):
         """
@@ -451,13 +449,10 @@ class CronTab(object):
         if special:
             if self.cron_file:
                 return "%s@%s %s %s" % (disable_prefix, special, self.user, job)
-            else:
-                return "%s@%s %s" % (disable_prefix, special, job)
-        else:
-            if self.cron_file:
-                return "%s%s %s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, self.user, job)
-            else:
-                return "%s%s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, job)
+            return "%s@%s %s" % (disable_prefix, special, job)
+        if self.cron_file:
+            return "%s%s %s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, self.user, job)
+        return "%s%s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, job)
 
     def get_jobnames(self):
         jobnames = []
@@ -495,8 +490,7 @@ class CronTab(object):
 
         if len(newlines) == 0:
             return True
-        else:
-            return False  # TODO add some more error testing
+        return False  # TODO add some more error testing
 
     def _update_env(self, name, decl, addenvfunction):
         newlines = []
@@ -530,11 +524,11 @@ class CronTab(object):
         if self.user:
             if platform.system() == 'SunOS':
                 return "su %s -c '%s -l'" % (shlex.quote(self.user), shlex.quote(self.cron_cmd))
-            elif platform.system() == 'AIX':
+            if platform.system() == 'AIX':
                 return "%s -l %s" % (shlex.quote(self.cron_cmd), shlex.quote(self.user))
-            elif platform.system() == 'HP-UX':
+            if platform.system() == 'HP-UX':
                 return "%s %s %s" % (self.cron_cmd, '-l', shlex.quote(self.user))
-            elif pwd.getpwuid(os.getuid())[0] != self.user:
+            if pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex.quote(self.user)
         return "%s %s %s" % (self.cron_cmd, user, '-l')
 
@@ -547,7 +541,7 @@ class CronTab(object):
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
                 return "chown %s %s ; su '%s' -c '%s %s'" % (
                     shlex.quote(self.user), shlex.quote(path), shlex.quote(self.user), self.cron_cmd, shlex.quote(path))
-            elif pwd.getpwuid(os.getuid())[0] != self.user:
+            if pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % shlex.quote(self.user)
         return "%s %s %s" % (self.cron_cmd, user, shlex.quote(path))
 
@@ -668,7 +662,7 @@ def main():
 
     # if requested make a backup before making a change
     if backup and not module.check_mode:
-        (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
+        (dummy, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
     if env:
@@ -762,9 +756,6 @@ def main():
         res_args['cron_file'] = cron_file
 
     module.exit_json(**res_args)
-
-    # --- should never get here
-    module.exit_json(msg="Unable to execute cron task.")
 
 
 if __name__ == '__main__':
