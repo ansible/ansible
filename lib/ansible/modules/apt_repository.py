@@ -508,7 +508,7 @@ class UbuntuSourcesList(SourcesList):
                 try:
                     rc, out, err = self.module.run_command([self.gpg_bin, '--list-packets', key_file])
                 except OSError as ex:
-                    self.debug(f"Could check key against file {key_file!r}: {ex}")
+                    self.module.debug(f"Could check key against file {key_file!r}: {ex}")
                     continue
 
                 if key_fingerprint in out:
