@@ -428,6 +428,7 @@ class ShellModule(ShellBase):
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):
+        super().wrap_for_exec(cmd)
         return '& %s; exit $LASTEXITCODE' % cmd
 
     def _unquote(self, value):

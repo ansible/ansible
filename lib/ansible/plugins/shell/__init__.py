@@ -27,6 +27,9 @@ import time
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins import AnsiblePlugin
+from ansible.utils.display import Display
+
+display = Display()
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
@@ -269,6 +272,11 @@ class ShellBase(AnsiblePlugin):
 
     def wrap_for_exec(self, cmd):
         """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
+        display.deprecated(
+            msg='The Shell.wrap_for_exec method is deprecated.',
+            help_text="Contact plugin author to update their plugin to not use this method.",
+            version='2.24',
+        )
         return cmd
 
     def quote(self, cmd):
