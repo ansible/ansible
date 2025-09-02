@@ -1280,3 +1280,25 @@ releases:
     - templating-filter-generators.yml
     - tqm.yml
     release_date: '2025-08-18'
+  2.19.2rc1:
+    changes:
+      bugfixes:
+      - The ``ansible_failed_task`` variable is now correctly exposed in a rescue
+        section, even when a failing handler is triggered by the ``flush_handlers``
+        task in the corresponding ``block`` (https://github.com/ansible/ansible/issues/85682)
+      - '``ternary`` filter - evaluate values lazily (https://github.com/ansible/ansible/issues/85743)'
+      minor_changes:
+      - ansible-test - Implement new authentication methods for accessing the Ansible
+        Core CI service.
+      release_summary: '| Release Date: 2025-09-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.2rc1_summary.yaml
+    - 85682-rescue-flush_handlers.yml
+    - 85743-lazy-ternary.yml
+    - ansible-test-auth-update.yml
+    release_date: '2025-09-02'
