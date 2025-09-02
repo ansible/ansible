@@ -895,3 +895,22 @@
           - enable_plugin_result.msg is contains("'enable_plugin' requires python3-libdnf5 5.2.0.0+")
           - disable_plugin_result.msg is contains("'disable_plugin' requires python3-libdnf5 5.2.0.0+")
   when: dnf5|default(false)
+
+- name: test an invalid conf_file
+  block:
+    - name: Make bad conf file
+      copy:
+        dest: "{{ remote_tmp_dir }}/bad_conf_file"
+        content: '[broken_section\nname=value'
+
+    - name: Run dnf with bad conf file
+      dnf:
+        conf_file: "{{ remote_tmp_dir }}/bad_conf_file"
+      ignore_errors: true
+      register: bad_conf_file_error
+
+    - name: Assert failure
+      assert:
+        that:
+          - bad_conf_file_error is failed
+          - '"configuration file" in bad_conf_file_error.msg'
