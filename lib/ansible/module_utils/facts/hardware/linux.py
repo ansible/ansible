@@ -890,7 +890,8 @@ class LinuxHardware(Hardware):
                     'size_g': items[-2],
                     'free_g': items[-1],
                     'num_lvs': items[2],
-                    'num_pvs': items[1]
+                    'num_pvs': items[1],
+                    'lvs': {},
                 }
 
             lvs_path = self.module.get_bin_path('lvs')
@@ -901,7 +902,18 @@ class LinuxHardware(Hardware):
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
                     items = lv_line.strip().split(',')
-                    lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+                    vg_name = items[1]
+                    lv_name = items[0]
+                    # The LV name is only unique per VG, so the top level fact lvs can be misleading.
+                    # TODO: deprecate lvs in favor of vgs
+                    lvs[lv_name] = {'size_g': items[3], 'vg': vg_name}
+                    try:
+                        vgs[vg_name]['lvs'][lv_name] = {'size_g': items[3]}
+                    except KeyError:
+                        self.module.warn(
+                            "An LVM volume group was created while gathering LVM facts, "
+                            "and is not included in ansible_facts['vgs']."
+                        )
 
             pvs_path = self.module.get_bin_path('pvs')
             # pvs fields: PV VG #Fmt #Attr PSize PFree

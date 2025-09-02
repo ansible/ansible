@@ -52,7 +52,25 @@
           - ansible_lvm.lvs.two.vg == 'first'
           - ansible_lvm.lvs.uno.vg == 'second'
           - ansible_lvm.vgs.first.num_lvs == "2"
+          - ansible_facts['lvm']['vgs']['first']['lvs'] | sort == ['one', 'two']
           - ansible_lvm.vgs.second.num_lvs == "1"
+          - ansible_facts['lvm']['vgs']['second']['lvs'] | sort == ['uno']
+
+    - name: Create another lv using duplicate name
+      command: lvcreate -L 4M second --name two
+
+    - name: Gather facts
+      setup:
+
+    - assert:
+        that:
+          - ansible_facts['lvm']['vgs']['first']['lvs'] | sort == ['one', 'two']
+          - ansible_facts['lvm']['vgs']['second']['lvs'] | sort == ['two', 'uno']
+          # only one lv named 'two' is represented in the top level lvs fact
+          - ansible_facts['lvm']['lvs']['two']['vg'] == 'second'
+          - (vgs_lvs | unique | sort) == (ansible_facts['lvm']['lvs'] | sort)
+      vars:
+        vgs_lvs: "{{ ansible_facts['lvm']['vgs'].values() | map(attribute='lvs') | map('list') | flatten }}"
 
   always:
     - name: remove lvs
