@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - dnf - Check if installroot is directory or not (https://github.com/ansible/ansible/issues/85680).
