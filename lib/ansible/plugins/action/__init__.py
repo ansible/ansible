@@ -101,6 +101,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._top_level_facts: dict[str, t.Any] = {}
+
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
@@ -1432,3 +1434,11 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)
+
+    @t.final
+    def set_top_level_facts(self, **kwargs):
+        """
+        Saves given variables to be set as top-level facts after the action is completed.
+        Top-level facts will be available for subsequent actions.
+        """
+        self._top_level_facts.update(kwargs)

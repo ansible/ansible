@@ -719,6 +719,16 @@ class StrategyBase:
                                 if is_set_fact:
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
+                    if top_level_facts := result_item.pop('_ansible_top_level_facts', None):
+                        if original_task.delegate_to is not None and original_task.delegate_facts:
+                            host_list = self.get_delegated_hosts(result_item, original_task)
+                        else:
+                            host_list = self.get_task_hosts(iterator, original_host, original_task)
+
+                        for target_host in host_list:
+                            # TODO cacheable?
+                            self._variable_manager.set_nonpersistent_facts(target_host, top_level_facts.copy())
+
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
                         if 'per_host' not in result_item['ansible_stats'] or result_item['ansible_stats']['per_host']:

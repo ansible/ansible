@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - inject_top_level_facts:
+        v: 1
+      delegate_to: testhost
+      delegate_facts: true
+
+    - assert:
+        that:
+          - hostvars['testhost']['top_level_fact1'] == 'hello1'
+          - "'top_level_fact1' not in hostvars['localhost']"

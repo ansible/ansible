@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - inject_top_level_facts:
+        v: "{{ item }}"
+      loop:
+        - 1
+        - 2
+
+    - assert:
+        that:
+          - var_names | length == 4
+          - q('vars', *var_names) | length == 4
+          - old_top_level_fact == 'overwritten'
+          - old_top_level_fact_not_overwritten is defined  # triggers deprecation warning
+      vars:
+        var_names: "{{ q('varnames', 'top_level_fact.*') }}"

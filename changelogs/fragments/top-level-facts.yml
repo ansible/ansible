@@ -1,0 +1,2 @@
+minor_features:
+  - "Introduce a new method ``ActionBase.set_top_level_facts(**kwargs)`` for setting top-level variables in action plugins (https://github.com/ansible/ansible/issues/84830)."
