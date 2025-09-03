@@ -295,14 +295,15 @@ class Play(Base, Taggable, CollectionSearch):
         roles (which are themselves compiled recursively) and/or the list of
         tasks specified in the play.
         """
+        block_list = []
+
         # create a block so these task can inherit from the play
         flush_block = Block(play=self)
 
-        # early skip if play itself is tagged to be skipped
-        # task does not get added to play, it is just here for tags eval
+        # throw away task to test if we just skip the play and avoid a LOT of work
         skip_test_task = Task(block=flush_block)
         if not skip_test_task.evaluate_tags([], self.skip_tags, all_vars=self.vars):
-            return []
+            return block_list
 
         t = Task(block=flush_block)
         t.action = 'meta'
@@ -312,59 +313,29 @@ class Play(Base, Taggable, CollectionSearch):
         t.set_loader(self._loader)
         t.tags = ['always']
 
-        flush_block.block = [t]
+        all_tasks = (self.pre_tasks, self._compile_roles() + self.tasks, self.post_tasks):
 
-        # NOTE keep flush_handlers tasks even if a section has no regular tasks,
-        #      there may be notified handlers from the previous section
-        #      (typically when a handler notifies a handler defined before)
-        block_list = []
         if self.force_handlers:
-            noop_task = Task()
-            noop_task.action = 'meta'
-            noop_task.args['_raw_params'] = 'noop'
-            noop_task.implicit = True
-            noop_task.set_loader(self._loader)
+            # NOTE keep flush_handlers tasks even if a section has no regular tasks,
+            #      there may be notified handlers from the previous section
+            #      (typically when a handler notifies a handler defined before)
 
-            b = Block(play=self)
-            if self.pre_tasks:
-                b.block = self.pre_tasks
-            else:
-                nt = noop_task.copy(exclude_parent=True)
+            def _copy_and_reparent(t: Task, b: Block):
+                nt = t.copy(exclude_parent=True)
                 nt._parent = b
-                b.block = [nt]
-            b.always = [flush_block]
-            block_list.append(b)
+                return nt
 
-            tasks = self._compile_roles() + self.tasks
-            b = Block(play=self)
-            if tasks:
-                b.block = tasks
-            else:
-                nt = noop_task.copy(exclude_parent=True)
-                nt._parent = b
-                b.block = [nt]
-            b.always = [flush_block]
-            block_list.append(b)
-
-            b = Block(play=self)
-            if self.post_tasks:
-                b.block = self.post_tasks
-            else:
-                nt = noop_task.copy(exclude_parent=True)
-                nt._parent = b
-                b.block = [nt]
-            b.always = [flush_block]
-            block_list.append(b)
-
-            return block_list
-
-        block_list.extend(self.pre_tasks)
-        block_list.append(flush_block)
-        block_list.extend(self._compile_roles())
-        block_list.extend(self.tasks)
-        block_list.append(flush_block)
-        block_list.extend(self.post_tasks)
-        block_list.append(flush_block)
+            for tasklist in all_tasks:
+                b = Block(play=self)
+                nt = _copy_and_reparent(t, b)
+                b.block = tasklist or nt
+                b.always = [nt]
+                block_list.append(b)
+        else:
+            flush_block.block = [t]
+            for tasklist in all_tasks:
+                block_list.extend(tasklist)
+                block_list.append(flush_block)
 
         return block_list
 
