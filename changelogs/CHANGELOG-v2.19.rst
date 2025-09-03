@@ -4,6 +4,26 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-09-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Implement new authentication methods for accessing the Ansible Core CI service.
+
+Bugfixes
+--------
+
+- The ``ansible_failed_task`` variable is now correctly exposed in a rescue section, even when a failing handler is triggered by the ``flush_handlers`` task in the corresponding ``block`` (https://github.com/ansible/ansible/issues/85682)
+- ``ternary`` filter - evaluate values lazily (https://github.com/ansible/ansible/issues/85743)
+
 v2.19.1
 =======
 
