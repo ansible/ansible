@@ -4,6 +4,29 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.9rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-09-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Implement new authentication methods for accessing the Ansible Core CI service.
+- service_facts - handle keyerror exceptions with warning.
+- service_facts - warn user about missing service details instead of ignoring.
+
+Bugfixes
+--------
+
+- dnf - Fail gracefully when an invalid ``conf_file`` is used instead of dumping raw exception and traceback. (https://github.com/ansible/ansible/issues/85681)
+- service_facts - skip lines which does not contain service names in openrc output (https://github.com/ansible/ansible/issues/84512).
+- user - Use higher precedence HOME_MODE as UMASK for path provided (https://github.com/ansible/ansible/pull/84482).
+
 v2.18.8
 =======
 

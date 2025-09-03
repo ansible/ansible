@@ -949,3 +949,30 @@ releases:
     - ansible-test-remotes.yml
     - plugins_fix_origin.yml
     release_date: '2025-08-04'
+  2.18.9rc1:
+    changes:
+      bugfixes:
+      - dnf - Fail gracefully when an invalid ``conf_file`` is used instead of dumping
+        raw exception and traceback. (https://github.com/ansible/ansible/issues/85681)
+      - service_facts - skip lines which does not contain service names in openrc
+        output (https://github.com/ansible/ansible/issues/84512).
+      - user - Use higher precedence HOME_MODE as UMASK for path provided (https://github.com/ansible/ansible/pull/84482).
+      minor_changes:
+      - ansible-test - Implement new authentication methods for accessing the Ansible
+        Core CI service.
+      - service_facts - handle keyerror exceptions with warning.
+      - service_facts - warn user about missing service details instead of ignoring.
+      release_summary: '| Release Date: 2025-09-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.9rc1_summary.yaml
+    - 85704-fix-dnf-conf-file-error-handling.yml
+    - ansible-test-auth-update.yml
+    - openrc-status.yml
+    - openrc.yml
+    - user_module.yml
+    release_date: '2025-09-02'
