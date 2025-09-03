@@ -4,6 +4,27 @@ ansible-core 2.17 "Gallows Pole" Release Notes
 
 .. contents:: Topics
 
+v2.17.14rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-09-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Implement new authentication methods for accessing the Ansible Core CI service.
+- ansible-test - Replace remote FreeBSD 13.3 with 13.5.
+- ansible-test - Use OS packages to satisfy controller requirements on FreeBSD 13.5 during managed instance bootstrapping.
+
+Bugfixes
+--------
+
+- ansible-test - Limit package install retries during managed remote instance bootstrapping.
+
 v2.17.13
 ========
 
