@@ -1,0 +1,2 @@
+minor_changes:
+  - "default callback plugin - add option to configure indentation for JSON and YAML output (https://github.com/ansible/ansible/pull/85497)."
