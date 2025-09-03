@@ -313,7 +313,7 @@ class Play(Base, Taggable, CollectionSearch):
         t.set_loader(self._loader)
         t.tags = ['always']
 
-        all_tasks = (self.pre_tasks, self._compile_roles() + self.tasks, self.post_tasks):
+        all_tasks = (self.pre_tasks, self._compile_roles() + self.tasks, self.post_tasks)
 
         if self.force_handlers:
             # NOTE keep flush_handlers tasks even if a section has no regular tasks,
