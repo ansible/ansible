@@ -1,5 +1,38 @@
 from __future__ import annotations
 
+DOCUMENTATION = """
+options:
+  persistent_connect_timeout:
+    type: int
+    default: 30
+    ini:
+    - section: persistent_connection
+      key: connect_timeout
+    env:
+    - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+    - name: ansible_connect_timeout
+  persistent_command_timeout:
+    type: int
+    default: 30
+    ini:
+      - section: persistent_connection
+        key: command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
+    vars:
+      - name: ansible_command_timeout
+  persistent_log_messages:
+    type: boolean
+    ini:
+      - section: persistent_connection
+        key: log_messages
+    env:
+      - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
+    vars:
+      - name: ansible_persistent_log_messages
+"""
+
 import json
 import os
 import pickle
