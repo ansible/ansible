@@ -305,13 +305,13 @@ class Play(Base, Taggable, CollectionSearch):
         if not skip_test_task.evaluate_tags([], self.skip_tags, all_vars=self.vars):
             return block_list
 
-        t = Task(block=flush_block)
-        t.action = 'meta'
-        t._resolved_action = 'ansible.builtin.meta'
-        t.args['_raw_params'] = 'flush_handlers'
-        t.implicit = True
-        t.set_loader(self._loader)
-        t.tags = ['always']
+        flush = Task(block=flush_block)
+        flush.action = 'meta'
+        flush._resolved_action = 'ansible.builtin.meta'
+        flush.args['_raw_params'] = 'flush_handlers'
+        flush.implicit = True
+        flush.set_loader(self._loader)
+        flush.tags = ['always']
 
         all_tasks = (self.pre_tasks, self._compile_roles() + self.tasks, self.post_tasks)
 
@@ -320,19 +320,26 @@ class Play(Base, Taggable, CollectionSearch):
             #      there may be notified handlers from the previous section
             #      (typically when a handler notifies a handler defined before)
 
-            def _copy_and_reparent(t: Task, b: Block):
+            noop = Task()
+            noop.action = 'meta'
+            noop._resolved_action = 'ansible.builtin.meta'
+            noop.args['_raw_params'] = 'noop'
+            noop.implicit = True
+            noop.set_loader(self._loader)
+
+            def _copy_and_reparent(t: Task, b: Block) -> Task:
                 nt = t.copy(exclude_parent=True)
                 nt._parent = b
                 return nt
 
             for tasklist in all_tasks:
                 b = Block(play=self)
-                nt = _copy_and_reparent(t, b)
+                nt = _copy_and_reparent(noop, b)
                 b.block = tasklist or nt
-                b.always = [nt]
+                b.always = [_copy_and_reparent(flush, b)]
                 block_list.append(b)
         else:
-            flush_block.block = [t]
+            flush_block.block = [flush]
             for tasklist in all_tasks:
                 block_list.extend(tasklist)
                 block_list.append(flush_block)
