@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from ansible_collections.testns.testcol.plugins.module_utils import test as test_abs_import
+from ansible_collections.testns.testcol.plugins.module_utils import Display
 # Test for https://github.com/ansible/ansible/issues/85754
-from ...module_utils import test as test_rel_import
+from ...module_utils import Display
+
+display = Display()
 
 
 def nochange(a):
