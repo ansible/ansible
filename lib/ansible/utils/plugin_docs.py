@@ -126,6 +126,10 @@ def remove_current_collection_from_versions_and_dates(fragment, collection_name,
     _process_versions_and_dates(fragment, is_module, return_docs, remove)
 
 
+class AnsibleFragmentError(AnsibleError):
+    pass
+
+
 def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCUMENTATION'):
 
     if section not in _FRAGMENTABLE:
@@ -185,7 +189,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
                         doc[doc_key].extend(entries)
 
             if 'options' not in fragment and 'attributes' not in fragment:
-                raise Exception("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
+                raise AnsibleFragmentError("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
             # ensure options themselves are directly merged
             for doc_key in ['options', 'attributes']:
@@ -194,7 +198,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
                         try:
                             merge_fragment(doc[doc_key], fragment.pop(doc_key))
                         except Exception as e:
-                            raise AnsibleError("%s %s (%s) of unknown type: %s" % (to_native(e), doc_key, fragment_name, filename))
+                            raise AnsibleFragmentError("%s %s (%s) of unknown type: %s" % (to_native(e), doc_key, fragment_name, filename))
                     else:
                         doc[doc_key] = fragment.pop(doc_key)
 
@@ -202,10 +206,10 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
         try:
             merge_fragment(doc, fragment)
         except Exception as e:
-            raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+            raise AnsibleFragmentError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
     if unknown_fragments:
-        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
+        raise AnsibleFragmentError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=None, plugin_type=None):
