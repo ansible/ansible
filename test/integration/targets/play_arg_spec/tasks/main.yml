@@ -2,11 +2,12 @@
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
   vars:
-    play_name: "Test play spec"
+    play_name: Test play spec
+    playbook_name: play_argspec
   block:
 
   - name: Test successful argument validation
-    command: ansible-playbook {{ play_argspec }} -e 'play_name="{{ play_name }}" required_str=""'
+    command: ansible-playbook {{ playbook }} -e 'play_name="{{ play_name }}" required_str=""'
     register: result
 
   - assert:
@@ -14,14 +15,14 @@
         - result.stdout is search("Validating arguments against arg spec " ~ play_name)
 
   - name: Test templating the play name using play vars
-    command: ansible-playbook {{ play_argspec }} -e 'play_name_from_vars="{{ play_name }}" required_str=""'
+    command: ansible-playbook {{ playbook }} -e 'play_name_from_vars="{{ play_name }}" required_str=""'
 
   - assert:
       that:
         - result.stdout is search("Validating arguments against arg spec " ~ play_name)
 
   - name: Test error when using an invalid variable source for the play name
-    command: ansible-playbook {{ play_argspec }} -e 'play_name="{{ invalid_play_name }}" required_str=""'
+    command: ansible-playbook {{ playbook }} -e 'play_name="{{ invalid_play_name }}" required_str=""'
     ignore_errors: True
     register: result
     vars:
@@ -34,7 +35,7 @@
           result.stderr is search("Error processing keyword 'name': .* is undefined")
 
   - name: Test failed argument validation when required argument is not defined
-    command: ansible-playbook {{ play_argspec }} -e 'play_name="{{ play_name }}"'
+    command: ansible-playbook {{ playbook }} -e 'play_name="{{ play_name }}"'
     register: result
     ignore_errors: True
 
@@ -44,7 +45,7 @@
         - 'result.stdout is search("missing required arguments: required_str")'
 
   - name: Test failed argument validation when an argument choice is wrong
-    command: ansible-playbook {{ play_argspec }} -e 'play_name="{{ play_name }}" required_str="" optional="fail"'
+    command: ansible-playbook {{ playbook }} -e 'play_name="{{ play_name }}" required_str="" optional="fail"'
     register: result
     ignore_errors: True
 
@@ -54,7 +55,9 @@
         - 'result.stdout is search("value of optional must be one of: option1, option2, got: fail")'
 
   - name: Test using module_defaults to validate arbitrary variables
-    command: ansible-playbook {{ customize_validation }} -e 'nodoc="fail"'
+    command: ansible-playbook {{ playbook }} -e 'nodoc="fail"'
+    vars:
+      playbook_name: module_defaults
     register: result
     ignore_errors: True
 
@@ -64,7 +67,9 @@
         - 'result.stdout is search("nodoc. Supported parameters include: valid_argument.")'
 
   - name: Test missing playbook meta file
-    command: ansible-playbook {{ missing_meta }}
+    command: ansible-playbook {{ playbook }}
+    vars:
+      playbook_name: missing_metadata
     register: result
     ignore_errors: True
 
@@ -74,7 +79,7 @@
         - result.stderr is search("No playbook meta path could be found.")
 
   - name: Test invalid play argument spec
-    command: ansible-playbook {{ play_argspec }} -e 'play_name="No argument spec"'
+    command: ansible-playbook {{ playbook }} -e 'play_name="No argument spec"'
     register: result
     ignore_errors: True
 
@@ -84,11 +89,12 @@
         - result.stderr is search("No argument spec found for play 'No argument spec'")
 
   - name: Test invalid configuration
-    command: "ansible-playbook {{ variable_keyword }} -e 'test_variable={{ invalid_variable }}'"
+    command: ansible-playbook {{ playbook }} -e 'test_variable="{{ invalid_variable }}"'
+    vars:
+      playbook_name: variable_validate_argspec
+      invalid_variable: !unsafe '{{ inventory_hostname != "localhost" }}'
     register: result
     ignore_errors: True
-    vars:
-      invalid_variable: !unsafe '{{ inventory_hostname != "localhost" }}'
 
   - assert:
       that:
@@ -97,14 +103,30 @@
           result.stderr is search("Error processing keyword 'validate_argspec': .* is undefined")
 
   - name: Test valid variable configuration
-    command: "ansible-playbook {{ variable_keyword }} -e 'test_variable={{ valid_variable }}'"
+    command: ansible-playbook {{ playbook }} -e 'test_variable="{{ valid_variable }}"'
+    vars:
+      playbook_name: variable_validate_argspec
+      valid_variable: !unsafe '{{ "false" is falsy }}'
     register: result
     ignore_errors: True
-    vars:
-      valid_variable: !unsafe '{{ "false" is falsy }}'
 
   - name: Validate the lack of an argument spec is ignored if validate_argspec is False
     assert:
       that:
         - result is success
         - result.stdout is not search("Validating arguments against arg spec")
+
+  - name: Test skipping the whole play, including argspec validation
+    command: ansible-playbook {{ playbook }} --skip-tags play_level_tag
+    vars:
+      playbook_name: tagged_play
+
+  - name: Test validation always runs otherwise
+    command: ansible-playbook {{ playbook }} --tags task_level_tag -e 'required_str="success"'
+    vars:
+      playbook_name: tagged_play
+    register: result
+
+  - assert:
+      that:
+        - result.stdout is search("Validating arguments against arg spec Tagged Play")

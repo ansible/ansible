@@ -187,7 +187,7 @@ class PlayIterator:
                     'path': self._play._metadata_path,
                 },
             },
-            'tags': ['always'] if not self._play.tags else [],
+            'tags': ['always'],
         }, block=setup_block)
 
         validation_task.set_loader(self._play._loader)
