@@ -8,8 +8,8 @@ from __future__ import annotations
 import codecs
 import json
 
+from ansible.module_utils.compat import typing as _t
 from ansible.module_utils._internal import _no_six
-
 
 try:
     codecs.lookup_error('surrogateescape')
@@ -22,8 +22,54 @@ _COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_replace',
                                       'surrogate_or_strict',
                                       'surrogate_then_replace'))
 
+_T = _t.TypeVar('_T')
 
-def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+_NonStringPassthru: _t.TypeAlias = _t.Literal['passthru']
+_NonStringOther: _t.TypeAlias = _t.Literal['simplerepr', 'empty', 'strict']
+_NonStringAll: _t.TypeAlias = _t.Union[_NonStringPassthru, _NonStringOther]
+
+
+@_t.overload
+def to_bytes(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+) -> bytes: ...
+
+
+@_t.overload
+def to_bytes(
+    obj: bytes | str,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> bytes: ...
+
+
+@_t.overload
+def to_bytes(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> _T: ...
+
+
+@_t.overload
+def to_bytes(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringOther = 'simplerepr',
+) -> bytes: ...
+
+
+def to_bytes(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringAll = 'simplerepr'
+) -> _T | bytes:
     """Make sure that a string is a byte string
 
     :arg obj: An object to make sure is a byte string.  In most cases this
@@ -81,7 +127,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         string is valid in the specified encoding.  If it's important that the
         byte string is in the specified encoding do::
 
-            encoded_string = to_bytes(to_text(input_string, 'latin-1'), 'utf-8')
+            encoded_string = to_bytes(to_text(input_string, encoding='latin-1'), encoding='utf-8')
 
     .. version_changed:: 2.3
 
@@ -126,21 +172,60 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 value = repr(obj)
             except UnicodeError:
                 # Giving up
-                return to_bytes('')
+                return b''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':
-        # python2.4 doesn't have b''
-        return to_bytes('')
+        return b''
     elif nonstring == 'strict':
         raise TypeError('obj must be a string type')
     else:
         raise TypeError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
 
-    return to_bytes(value, encoding, errors)
+    return to_bytes(value, encoding=encoding, errors=errors)
 
 
-def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+@_t.overload
+def to_text(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+) -> str: ...
+
+
+@_t.overload
+def to_text(
+    obj: str | bytes,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> str: ...
+
+
+@_t.overload
+def to_text(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringPassthru = 'passthru',
+) -> _T: ...
+
+
+@_t.overload
+def to_text(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringOther = 'simplerepr',
+) -> str: ...
+
+
+def to_text(
+    obj: _T,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    nonstring: _NonStringAll = 'simplerepr'
+) -> _T | str:
     """Make sure that a string is a text string
 
     :arg obj: An object to make sure is a text string.  In most cases this
@@ -218,17 +303,17 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
                 value = repr(obj)
             except UnicodeError:
                 # Giving up
-                return u''
+                return ''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'empty':
-        return u''
+        return ''
     elif nonstring == 'strict':
         raise TypeError('obj must be a string type')
     else:
         raise TypeError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
 
-    return to_text(value, encoding, errors)
+    return to_text(value, encoding=encoding, errors=errors)
 
 
 to_native = to_text
