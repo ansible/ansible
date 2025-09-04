@@ -50,20 +50,3 @@ def check_for_controlpersist(ssh_executable):
 
     _HAS_CONTROLPERSIST[ssh_executable] = has_cp
     return has_cp
-
-
-def set_default_transport():
-
-    # deal with 'smart' connection .. one time ..
-    if C.DEFAULT_TRANSPORT == 'smart':
-        display.deprecated(
-            msg="The `smart` option for connections is deprecated.",
-            version="2.20",
-            help_text="Set the connection plugin directly instead.",
-        )
-
-        # see if SSH can support ControlPersist if not use paramiko
-        if not check_for_controlpersist('ssh') and paramiko is not None:
-            C.DEFAULT_TRANSPORT = "paramiko"
-        else:
-            C.DEFAULT_TRANSPORT = "ssh"
