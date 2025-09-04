@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import errno
 import datetime
-import functools
 import os
 import tarfile
 import tempfile
@@ -44,32 +43,6 @@ from ansible.utils.display import Display
 from ansible.utils.path import is_subpath, unfrackpath
 
 display = Display()
-
-
-@functools.cache
-def _check_working_data_filter() -> bool:
-    """
-    Check if tarfile.data_filter implementation is working
-    for the current Python version or not
-    """
-
-    # Implemented the following code to circumvent broken implementation of data_filter
-    # in tarfile. See for more information - https://github.com/python/cpython/issues/107845
-    # deprecated: description='probing broken data filter implementation' python_version='3.11'
-    ret = False
-    if hasattr(tarfile, 'data_filter'):
-        # We explicitly check if tarfile.data_filter is broken or not
-        ti = tarfile.TarInfo('docs/README.md')
-        ti.type = tarfile.SYMTYPE
-        ti.linkname = '../README.md'
-
-        try:
-            tarfile.data_filter(ti, '/foo')
-        except tarfile.LinkOutsideDestinationError:
-            pass
-        else:
-            ret = True
-    return ret
 
 
 class GalaxyRole(object):
@@ -418,12 +391,7 @@ class GalaxyRole(object):
                                 relative_path = os.path.join(*full_path.replace(relative_path_dir, "", 1).split(os.sep))
                                 setattr(member, attr, relative_path)
 
-                            if _check_working_data_filter():
-                                # deprecated: description='extract fallback without filter' python_version='3.11'
-                                role_tar_file.extract(member, to_native(self.path), filter='data')  # type: ignore[call-arg]
-                            else:
-                                # Remove along with manual path filter once Python 3.12 is minimum supported version
-                                role_tar_file.extract(member, to_native(self.path))
+                            role_tar_file.extract(member, to_native(self.path), filter='data')
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
