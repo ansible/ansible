@@ -11,13 +11,6 @@ import json
 from ansible.module_utils.compat import typing as _t
 from ansible.module_utils._internal import _no_six
 
-_T = _t.TypeVar('_T')
-
-_NonStringPassthru: _t.TypeAlias = _t.Literal['passthru']
-_NonStringOther: _t.TypeAlias = _t.Literal['simplerepr', 'empty', 'strict']
-_NonStringAll: _t.TypeAlias = _t.Union[_NonStringPassthru, _NonStringOther]
-
-
 try:
     codecs.lookup_error('surrogateescape')
     HAS_SURROGATEESCAPE = True
@@ -29,6 +22,22 @@ _COMPOSED_ERROR_HANDLERS = frozenset((None, 'surrogate_or_replace',
                                       'surrogate_or_strict',
                                       'surrogate_then_replace'))
 
+_T = _t.TypeVar('_T')
+
+_NonStringPassthru: _t.TypeAlias = _t.Literal['passthru']
+_NonStringOther: _t.TypeAlias = _t.Literal['simplerepr', 'empty', 'strict']
+_NonStringAll: _t.TypeAlias = _t.Union[_NonStringPassthru, _NonStringOther]
+
+
+@_t.overload
+def to_bytes(
+    obj: bytes | str,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    *,
+    nonstring: _NonStringPassthru,
+) -> bytes: ...
+
 
 @_t.overload
 def to_bytes(
@@ -37,7 +46,7 @@ def to_bytes(
     errors: str | None = None,
     *,
     nonstring: _NonStringPassthru,
-) -> _T | bytes: ...
+) -> _T: ...
 
 
 @_t.overload
@@ -174,12 +183,22 @@ def to_bytes(
 
 @_t.overload
 def to_text(
+    obj: str | bytes,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+    *,
+    nonstring: _NonStringPassthru,
+) -> str: ...
+
+
+@_t.overload
+def to_text(
     obj: _T,
     encoding: str = 'utf-8',
     errors: str | None = None,
     *,
     nonstring: _NonStringPassthru,
-) -> _T | str: ...
+) -> _T: ...
 
 
 @_t.overload
