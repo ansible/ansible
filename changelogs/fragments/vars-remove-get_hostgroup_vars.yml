@@ -1,0 +1,4 @@
+removed_features:
+  - >-
+    vars plugins - removed the deprecated ``get_host_vars`` or ``get_group_vars`` fallback for vars plugins that do
+    not inherit from ``BaseVarsPlugin`` and define a ``get_vars`` method.
