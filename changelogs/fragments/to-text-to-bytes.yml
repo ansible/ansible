@@ -1,5 +1,2 @@
 minor_changes:
   - Python type hints applied to ``to_text`` and ``to_bytes`` functions for better type hint interactions with code utilizing these functions.
-  - Change the ``nonstring` argument for ``to_text`` and ``to_bytes`` to be keyword only to enable proper type hinting
-breaking_changes:
-  - Change the ``nonstring` argument for ``to_text`` and ``to_bytes`` to be keyword only to enable proper type hinting

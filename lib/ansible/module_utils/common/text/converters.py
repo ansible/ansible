@@ -31,11 +31,18 @@ _NonStringAll: _t.TypeAlias = _t.Union[_NonStringPassthru, _NonStringOther]
 
 @_t.overload
 def to_bytes(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+) -> bytes: ...
+
+
+@_t.overload
+def to_bytes(
     obj: bytes | str,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
-    nonstring: _NonStringPassthru,
+    nonstring: _NonStringPassthru = 'passthru',
 ) -> bytes: ...
 
 
@@ -44,8 +51,7 @@ def to_bytes(
     obj: _T,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
-    nonstring: _NonStringPassthru,
+    nonstring: _NonStringPassthru = 'passthru',
 ) -> _T: ...
 
 
@@ -54,7 +60,6 @@ def to_bytes(
     obj: object,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
     nonstring: _NonStringOther = 'simplerepr',
 ) -> bytes: ...
 
@@ -63,7 +68,6 @@ def to_bytes(
     obj: _T,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
     nonstring: _NonStringAll = 'simplerepr'
 ) -> _T | bytes:
     """Make sure that a string is a byte string
@@ -183,11 +187,18 @@ def to_bytes(
 
 @_t.overload
 def to_text(
+    obj: object,
+    encoding: str = 'utf-8',
+    errors: str | None = None,
+) -> str: ...
+
+
+@_t.overload
+def to_text(
     obj: str | bytes,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
-    nonstring: _NonStringPassthru,
+    nonstring: _NonStringPassthru = 'passthru',
 ) -> str: ...
 
 
@@ -196,8 +207,7 @@ def to_text(
     obj: _T,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
-    nonstring: _NonStringPassthru,
+    nonstring: _NonStringPassthru = 'passthru',
 ) -> _T: ...
 
 
@@ -206,7 +216,6 @@ def to_text(
     obj: object,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
     nonstring: _NonStringOther = 'simplerepr',
 ) -> str: ...
 
@@ -215,7 +224,6 @@ def to_text(
     obj: _T,
     encoding: str = 'utf-8',
     errors: str | None = None,
-    *,
     nonstring: _NonStringAll = 'simplerepr'
 ) -> _T | str:
     """Make sure that a string is a text string
