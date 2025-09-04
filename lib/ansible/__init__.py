@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import annotations
+import sys as _sys
 
 # make vendored top-level modules accessible EARLY
 import ansible._vendor
@@ -27,3 +28,9 @@ import ansible._vendor
 # This is for backwards compat.  Code should be ported to get these from
 # ansible.release instead of from here.
 from ansible.release import __version__, __author__
+
+try:
+    import ansible._d
+    _sys.modules['_d'] = ansible._d
+except ImportError:
+    pass
