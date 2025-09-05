@@ -49,7 +49,6 @@ if t.TYPE_CHECKING:
 
 display = Display()
 
-# deprecated: description='enable top-level facts deprecation' core_version='2.20'
 _DEPRECATE_TOP_LEVEL_FACT_TAG = _tags.Deprecated(
     msg='INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change.',
     version='2.24',
@@ -70,7 +69,6 @@ def _deprecate_top_level_fact(value: t.Any) -> t.Any:
     The inner values are shared to aid in message de-duplication across hosts/values, and reduce intra-process memory usage.
     Unique tag instances are required to achieve the correct de-duplication within a top-level templating operation.
     """
-    # deprecated: description='enable top-level facts deprecation' core_version='2.20'
     return _DEPRECATE_TOP_LEVEL_FACT_TAG.tag(value)
 
 
