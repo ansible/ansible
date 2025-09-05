@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Fix a traceback that can occur when using delegation before the ansible-test temp directory is created.
