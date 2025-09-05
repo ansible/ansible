@@ -31,7 +31,6 @@ from ansible.utils.helpers import pct_to_int
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.path import makedirs_safe
-from ansible.utils.ssh_functions import set_default_transport
 from ansible.utils.display import Display
 
 
@@ -64,14 +63,6 @@ class PlaybookExecutor:
                 passwords=self.passwords,
                 forks=context.CLIARGS.get('forks'),
             )
-
-        # Note: We run this here to cache whether the default ansible ssh
-        # executable supports control persist.  Sometime in the future we may
-        # need to enhance this to check that ansible_ssh_executable specified
-        # in inventory is also cached.  We can't do this caching at the point
-        # where it is used (in task_executor) because that is post-fork and
-        # therefore would be discarded after every task.
-        set_default_transport()
 
     def run(self):
         """

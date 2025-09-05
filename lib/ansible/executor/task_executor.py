@@ -967,9 +967,6 @@ class TaskExecutor:
 
         self._play_context.connection = current_connection
 
-        # TODO: play context has logic to update the connection for 'smart'
-        # (default value, will chose between ssh and paramiko) and 'persistent'
-        # (really paramiko), eventually this should move to task object itself.
         conn_type = self._play_context.connection
 
         connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(

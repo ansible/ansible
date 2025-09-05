@@ -1,0 +1,4 @@
+removed_features:
+  - >-
+    Removed the option to set the ``DEFAULT_TRANSPORT`` configuration to ``smart`` that selects the default transport
+    as either ``ssh`` or ``paramiko`` based on the underlying platform configuraton.
