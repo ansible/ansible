@@ -1,0 +1,3 @@
+removed_features:
+  - >-
+    Removed the deprecated function ``passlib_or_crypt``, use ``do_encrypt`` instead.

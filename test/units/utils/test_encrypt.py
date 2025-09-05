@@ -21,7 +21,7 @@ def assert_hash(expected, secret, algorithm, **settings):
 @pytest.mark.skipif(not encrypt.PASSLIB_AVAILABLE, reason='passlib must be installed to run this test')
 def test_passlib():
     expected = "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
-    assert encrypt.passlib_or_crypt("123", "sha256_crypt", salt="12345678", rounds=5000) == expected
+    assert encrypt.do_encrypt("123", "sha256_crypt", salt="12345678", rounds=5000) == expected
 
 
 @pytest.mark.skipif(not encrypt.PASSLIB_AVAILABLE, reason='passlib must be installed to run this test')
