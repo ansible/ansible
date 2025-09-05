@@ -120,6 +120,7 @@ EXAMPLES = r"""
   ansible.builtin.assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
+    delimiter: Match all # close any open Match blocks
     validate: /usr/sbin/sshd -t -f %s
 """
 
