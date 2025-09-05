@@ -287,14 +287,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 elif leaf_module_name == 'async_status' and collection_name in rewrite_collection_names:
                     module_name = '%s.%s' % (win_collection, leaf_module_name)
 
-                # TODO: move this tweak down to the modules, not extensible here
-                # Remove extra quotes surrounding path parameters before sending to module.
-                if leaf_module_name in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
-                        hasattr(self._connection._shell, '_unquote'):
-                    for key in ('src', 'dest', 'path'):
-                        if key in module_args:
-                            module_args[key] = self._connection._shell._unquote(module_args[key])
-
             result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=self._task.collections)
 
             if not result.resolved:

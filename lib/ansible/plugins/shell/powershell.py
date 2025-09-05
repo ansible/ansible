@@ -192,7 +192,7 @@ class ShellModule(ShellBase):
 
     def join_path(self, *args):
         # use normpath() to remove doubled slashed and convert forward to backslashes
-        parts = [ntpath.normpath(self._unquote(arg)) for arg in args]
+        parts = [ntpath.normpath(arg) for arg in args]
 
         # Because ntpath.join treats any component that begins with a backslash as an absolute path,
         # we have to strip slashes from at least the beginning, otherwise join will ignore all previous
@@ -210,7 +210,6 @@ class ShellModule(ShellBase):
 
     def path_has_trailing_slash(self, path):
         # Allow Windows paths to be specified using either slash.
-        path = self._unquote(path)
         return path.endswith('/') or path.endswith('\\')
 
     def chmod(self, paths, mode):
@@ -223,11 +222,11 @@ class ShellModule(ShellBase):
         raise NotImplementedError('set_user_facl is not implemented for Powershell')
 
     def remove(self, path, recurse=False):
-        path = self._escape(self._unquote(path))
+        quoted_path = self._escape(path)
         if recurse:
-            return self._encode_script("""Remove-Item '%s' -Force -Recurse;""" % path)
+            return self._encode_script("""Remove-Item '%s' -Force -Recurse;""" % quoted_path)
         else:
-            return self._encode_script("""Remove-Item '%s' -Force;""" % path)
+            return self._encode_script("""Remove-Item '%s' -Force;""" % quoted_path)
 
     def mkdtemp(
         self,
@@ -240,7 +239,6 @@ class ShellModule(ShellBase):
         # compatibility in case other action plugins outside Ansible calls this.
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
-        basefile = self._escape(self._unquote(basefile))
         basetmpdir = self._escape(tmpdir if tmpdir else self.get_option('remote_tmp'))
 
         script = f"""
@@ -263,7 +261,6 @@ class ShellModule(ShellBase):
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
 
-        basefile = self._unquote(basefile)
         basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 
         script, stdin = _bootstrap_powershell_script("powershell_mkdtemp.ps1", {
@@ -283,7 +280,6 @@ class ShellModule(ShellBase):
     ) -> str:
         # This is not called in Ansible anymore but it is kept for backwards
         # compatibility in case other actions plugins outside Ansible called this.
-        user_home_path = self._unquote(user_home_path)
         if user_home_path == '~':
             script = 'Write-Output (Get-Location).Path'
         elif user_home_path.startswith('~\\'):
@@ -297,7 +293,6 @@ class ShellModule(ShellBase):
         user_home_path: str,
         username: str = '',
     ) -> _ShellCommand:
-        user_home_path = self._unquote(user_home_path)
         script, stdin = _bootstrap_powershell_script("powershell_expand_user.ps1", {
             'Path': user_home_path,
         })
@@ -308,7 +303,7 @@ class ShellModule(ShellBase):
         )
 
     def exists(self, path):
-        path = self._escape(self._unquote(path))
+        path = self._escape(path)
         script = """
             If (Test-Path '%s')
             {
@@ -329,7 +324,7 @@ class ShellModule(ShellBase):
             version="2.23",
             help_text="Use `ActionBase._execute_remote_stat()` instead.",
         )
-        path = self._escape(self._unquote(path))
+        path = self._escape(path)
         script = """
             If (Test-Path -PathType Leaf '%(path)s')
             {
@@ -364,7 +359,7 @@ class ShellModule(ShellBase):
             if arg_path:
                 # Running a module without the exec_wrapper and with an argument
                 # file.
-                script_path = self._unquote(cmd_parts[0])
+                script_path = cmd_parts[0]
                 if not script_path.lower().endswith('.ps1'):
                     script_path += '.ps1'
 
@@ -387,7 +382,6 @@ class ShellModule(ShellBase):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:
             # The module is assumed to be a binary
-            cmd_parts[0] = self._unquote(cmd_parts[0])
             cmd_parts.append(arg_path)
         script = """
             Try
@@ -430,17 +424,6 @@ class ShellModule(ShellBase):
     def wrap_for_exec(self, cmd):
         super().wrap_for_exec(cmd)
         return '& %s; exit $LASTEXITCODE' % cmd
-
-    def _unquote(self, value):
-        """Remove any matching quotes that wrap the given value."""
-        value = to_text(value or '')
-        m = re.match(r'^\s*?\'(.*?)\'\s*?$', value)
-        if m:
-            return m.group(1)
-        m = re.match(r'^\s*?"(.*?)"\s*?$', value)
-        if m:
-            return m.group(1)
-        return value
 
     def _escape(self, value):
         """Return value escaped for use in PowerShell single quotes."""
