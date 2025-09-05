@@ -1275,7 +1275,7 @@ DEFAULT_VAULT_ENCRYPT_IDENTITY:
 DEFAULT_VAULT_IDENTITY_LIST:
   name: Default vault ids
   default: []
-  description: 'A list of vault-ids to use by default. Equivalent to multiple ``--vault-id`` args. Vault-ids are tried in order.'
+  description: 'Comma-separated list of vault-ids to use by default. Equivalent to multiple ``--vault-id`` args. Vault-ids are tried in order.'
   env: [{name: ANSIBLE_VAULT_IDENTITY_LIST}]
   ini:
   - {key: vault_identity_list, section: defaults}
