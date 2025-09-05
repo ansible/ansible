@@ -49,6 +49,13 @@ class Connection(NetworkConnectionBase):
         self._connected = True
 
     def update_play_context(self, pc_data):
+        """
+        This is to ensure that the PlayContext.deserialize method remains functional,
+        preventing it from breaking the network connection plugins that rely on it.
+
+        See:
+        https://github.com/ansible-collections/ansible.netcommon/blob/50fafb6875bb2f57e932a7a50123513b48bd4fd5/plugins/connection/httpapi.py#L258
+        """
         pc = self._play_context = PlayContext()
 
         pc.deserialize(
