@@ -232,5 +232,4 @@ test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:a
 lib/ansible/galaxy/api.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/utils/encrypt.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/vars/manager.py pylint:ansible-deprecated-version-comment  # TODO: 2.20
-lib/ansible/vars/plugins.py pylint:ansible-deprecated-version  # TODO: 2.20
 lib/ansible/galaxy/role.py pylint:ansible-deprecated-python-version-comment  # TODO: 2.20

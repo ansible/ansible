@@ -8,8 +8,6 @@ import os
 from functools import lru_cache
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.inventory.group import InventoryObjectType
 from ansible.plugins.loader import vars_loader
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -24,34 +22,6 @@ def _prime_vars_loader():
         if not plugin_name:
             continue
         vars_loader.get(plugin_name)
-
-
-def get_plugin_vars(loader, plugin, path, entities):
-
-    data = {}
-    try:
-        data = plugin.get_vars(loader, path, entities)
-    except AttributeError:
-        if hasattr(plugin, 'get_host_vars') or hasattr(plugin, 'get_group_vars'):
-            display.deprecated(
-                msg=f"The vars plugin {plugin.ansible_name} from {plugin._original_path} is relying "
-                    "on the deprecated entrypoints `get_host_vars` and `get_group_vars`.",
-                version="2.20",
-                help_text="This plugin should be updated to inherit from `BaseVarsPlugin` and define "
-                          "a `get_vars` method as the main entrypoint instead.",
-            )
-        try:
-            for entity in entities:
-                if entity.base_type is InventoryObjectType.HOST:
-                    data |= plugin.get_host_vars(entity.name)
-                else:
-                    data |= plugin.get_group_vars(entity.name)
-        except AttributeError:
-            if hasattr(plugin, 'run'):
-                raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-            else:
-                raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-    return data
 
 
 # optimized for stateless plugins; non-stateless plugin instances will fall out quickly
@@ -99,7 +69,7 @@ def get_vars_from_path(loader, path, entities, stage):
         if not _plugin_should_run(plugin, stage):
             continue
 
-        if (new_vars := get_plugin_vars(loader, plugin, path, entities)) != {}:
+        if (new_vars := plugin.get_vars(loader, path, entities)) != {}:
             data = combine_vars(data, new_vars)
 
     return data
