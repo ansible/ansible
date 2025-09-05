@@ -139,8 +139,6 @@ class ActionModule(ActionBase):
             else:
                 script_cmd = ' '.join([env_string, target_command])
 
-            script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
-
             exec_data = None
             # PowerShell runs the script in a special wrapper to enable things
             # like become and environment args
@@ -149,7 +147,7 @@ class ActionModule(ActionBase):
                 pc = self._task
                 exec_data = ps_manifest._create_powershell_wrapper(
                     name=f"ansible.builtin.script.{pathlib.Path(source).stem}",
-                    module_data=to_bytes(script_cmd),
+                    module_data=to_bytes(f"& {script_cmd}; exit $LASTEXITCODE"),
                     module_path=source,
                     module_args={},
                     environment=env_dict,

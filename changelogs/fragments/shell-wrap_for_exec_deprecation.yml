@@ -1,0 +1,5 @@
+deprecated_features:
+  - >-
+    Deprecated the shell plugin's ``wrap_for_exec`` function. This API is not used in Ansible or any known collection
+    and is being removed to simplify the plugin API. Plugin authors should wrap their command to execute within an
+    explicit shell or other known executable.
