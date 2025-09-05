@@ -124,6 +124,8 @@ def delegate(args: CommonConfig, host_state: HostState, exclude: list[str], requ
 @contextlib.contextmanager
 def metadata_context(args: EnvironmentConfig) -> t.Generator[None]:
     """A context manager which exports delegation metadata."""
+    os.makedirs(ResultType.TMP.path, exist_ok=True)
+
     with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
         args.metadata_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(metadata_fd.name))
         args.metadata.to_file(args.metadata_path)
