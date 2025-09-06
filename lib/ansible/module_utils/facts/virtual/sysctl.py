@@ -70,6 +70,7 @@ class VirtualSysctlDetectionMixin:
                     if not found_virt:
                         virtual_product_facts['virtualization_type'] = 'bhyve'
                         virtual_product_facts['virtualization_role'] = 'guest'
+                        found_virt = True
                 if (key == 'security.jail.jailed') and (out.rstrip() == '1'):
                     guest_tech.add('jails')
                     if not found_virt:
