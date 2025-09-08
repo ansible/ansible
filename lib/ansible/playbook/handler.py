@@ -71,8 +71,3 @@ class Handler(Task):
 
     def is_host_notified(self, host):
         return host in self.notified_hosts
-
-    def serialize(self):
-        result = super(Handler, self).serialize()
-        result['is_handler'] = True
-        return result

@@ -659,8 +659,8 @@ class FieldAttributeBase:
         attrs = {}
         for (name, attribute) in self.fattributes.items():
             attr = getattr(self, name)
-            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
-                attrs[name] = attr.serialize()
+            if attribute.isa == 'class':
+                attrs[name] = attr.dump_attrs()
             else:
                 attrs[name] = attr
         return attrs
@@ -674,59 +674,12 @@ class FieldAttributeBase:
                 attribute = self.fattributes[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
-                    obj.deserialize(value)
+                    obj.from_attrs(value)
                     setattr(self, attr, obj)
                 else:
                     setattr(self, attr, value)
             else:
                 setattr(self, attr, value)  # overridden dump_attrs in derived types may dump attributes which are not field attributes
-
-        # from_attrs is only used to create a finalized task
-        # from attrs from the Worker/TaskExecutor
-        # Those attrs are finalized and squashed in the TE
-        # and controller side use needs to reflect that
-        self._finalized = True
-        self._squashed = True
-
-    def serialize(self):
-        """
-        Serializes the object derived from the base object into
-        a dictionary of values. This only serializes the field
-        attributes for the object, so this may need to be overridden
-        for any classes which wish to add additional items not stored
-        as field attributes.
-        """
-
-        repr = self.dump_attrs()
-
-        # serialize the uuid field
-        repr['uuid'] = self._uuid
-        repr['finalized'] = self._finalized
-        repr['squashed'] = self._squashed
-
-        return repr
-
-    def deserialize(self, data):
-        """
-        Given a dictionary of values, load up the field attributes for
-        this object. As with serialize(), if there are any non-field
-        attribute data members, this method will need to be overridden
-        and extended.
-        """
-
-        if not isinstance(data, dict):
-            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
-
-        for (name, attribute) in self.fattributes.items():
-            if name in data:
-                setattr(self, name, data[name])
-            else:
-                self.set_to_context(name)
-
-        # restore the UUID field
-        setattr(self, '_uuid', data.get('uuid'))
-        self._finalized = data.get('finalized', False)
-        self._squashed = data.get('squashed', False)
 
 
 class Base(FieldAttributeBase):
