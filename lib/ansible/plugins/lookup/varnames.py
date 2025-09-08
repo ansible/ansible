@@ -52,7 +52,6 @@ import re
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 
 
@@ -69,7 +68,7 @@ class LookupModule(LookupBase):
         variable_names = list(variables.keys())
         for term in terms:
 
-            if not isinstance(term, string_types):
+            if not isinstance(term, str):
                 raise AnsibleError('Invalid setting identifier, "%s" is not a string, it is a %s' % (term, type(term)))
 
             try:

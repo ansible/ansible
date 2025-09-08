@@ -903,7 +903,7 @@ class StrategyBase:
         display.warning("%s task does not support when conditional" % task_name)
 
     def _execute_meta(self, task: Task, play_context, iterator, target_host: Host):
-        task.resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
+        task._resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that

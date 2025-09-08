@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import collections.abc as c
 
-from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_text
 
 
@@ -20,7 +20,7 @@ def boolean(value, strict=True):
 
     normalized_value = value
 
-    if isinstance(value, (text_type, binary_type)):
+    if isinstance(value, (str, bytes)):
         normalized_value = to_text(value, errors='surrogate_or_strict').lower().strip()
 
     if not isinstance(value, c.Hashable):
@@ -32,3 +32,7 @@ def boolean(value, strict=True):
         return False
 
     raise TypeError("The value '%s' is not a valid boolean. Valid booleans include: %s" % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type")

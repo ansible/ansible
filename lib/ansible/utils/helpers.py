@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.six import string_types
+from ansible.module_utils._internal import _no_six
 
 
 def pct_to_int(value, num_items, min_value=1):
@@ -25,7 +25,7 @@ def pct_to_int(value, num_items, min_value=1):
     Converts a given value to a percentage if specified as "x%",
     otherwise converts the given value to an integer.
     """
-    if isinstance(value, string_types) and value.endswith('%'):
+    if isinstance(value, str) and value.endswith('%'):
         value_pct = int(value.replace("%", ""))
         return int((value_pct / 100.0) * num_items) or min_value
     else:
@@ -47,3 +47,7 @@ def deduplicate_list(original_list):
     """
     seen = set()
     return [x for x in original_list if x not in seen and not seen.add(x)]
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "string_types")

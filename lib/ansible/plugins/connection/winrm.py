@@ -768,7 +768,6 @@ class Connection(ConnectionBase):
 
     def put_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).put_file(in_path, out_path)
-        out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % to_native(in_path))
@@ -806,7 +805,6 @@ class Connection(ConnectionBase):
 
     def fetch_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).fetch_file(in_path, out_path)
-        in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
         # consistent with other connection plugins, we assume the caller has created the target dir
         display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)

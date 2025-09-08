@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible now warns if you use reserved tags that were only meant for selection and not for use in play.

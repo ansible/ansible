@@ -26,7 +26,6 @@ from ansible.plugins.loader import init_plugin_loader
 MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/__init__.py',
                                       'ansible/module_utils/basic.py',
-                                      'ansible/module_utils/six/__init__.py',
                                       'ansible/module_utils/_internal/__init__.py',
                                       'ansible/module_utils/_internal/_ansiballz/__init__.py',
                                       'ansible/module_utils/_internal/_ansiballz/_loader.py',
@@ -46,6 +45,7 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/_internal/_traceback.py',
                                       'ansible/module_utils/_internal/_validation.py',
                                       'ansible/module_utils/_internal/_messages.py',
+                                      'ansible/module_utils/_internal/_no_six.py',
                                       'ansible/module_utils/_internal/_patches/_dataclass_annotation_patch.py',
                                       'ansible/module_utils/_internal/_patches/_socket_patch.py',
                                       'ansible/module_utils/_internal/_patches/_sys_intern_patch.py',
@@ -78,7 +78,6 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
                                       'ansible/module_utils/errors.py',
                                       'ansible/module_utils/parsing/__init__.py',
                                       'ansible/module_utils/parsing/convert_bool.py',
-                                      'ansible/module_utils/six/__init__.py',
                                       ))
 
 ONLY_BASIC_FILE = frozenset(('ansible/module_utils/basic.py',))

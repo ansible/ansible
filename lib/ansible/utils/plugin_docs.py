@@ -11,7 +11,7 @@ import yaml
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
-from ansible.module_utils.six import string_types
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -126,6 +126,10 @@ def remove_current_collection_from_versions_and_dates(fragment, collection_name,
     _process_versions_and_dates(fragment, is_module, return_docs, remove)
 
 
+class AnsibleFragmentError(AnsibleError):
+    pass
+
+
 def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCUMENTATION'):
 
     if section not in _FRAGMENTABLE:
@@ -133,7 +137,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
 
     fragments = doc.pop('extends_documentation_fragment', [])
 
-    if isinstance(fragments, string_types):
+    if isinstance(fragments, str):
         fragments = fragments.split(',')
 
     unknown_fragments = []
@@ -185,7 +189,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
                         doc[doc_key].extend(entries)
 
             if 'options' not in fragment and 'attributes' not in fragment:
-                raise Exception("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
+                raise AnsibleFragmentError("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
             # ensure options themselves are directly merged
             for doc_key in ['options', 'attributes']:
@@ -194,7 +198,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
                         try:
                             merge_fragment(doc[doc_key], fragment.pop(doc_key))
                         except Exception as e:
-                            raise AnsibleError("%s %s (%s) of unknown type: %s" % (to_native(e), doc_key, fragment_name, filename))
+                            raise AnsibleFragmentError("%s %s (%s) of unknown type: %s" % (to_native(e), doc_key, fragment_name, filename))
                     else:
                         doc[doc_key] = fragment.pop(doc_key)
 
@@ -202,10 +206,10 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
         try:
             merge_fragment(doc, fragment)
         except Exception as e:
-            raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+            raise AnsibleFragmentError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
     if unknown_fragments:
-        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
+        raise AnsibleFragmentError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=None, plugin_type=None):
@@ -355,3 +359,7 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     docs[0]['plugin_name'] = context.resolved_fqcn
 
     return docs
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "string_types")

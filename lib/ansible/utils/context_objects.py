@@ -9,14 +9,14 @@ from __future__ import annotations
 from abc import ABCMeta
 from collections.abc import Container, Mapping, Sequence, Set
 
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.collections import ImmutableDict
-from ansible.module_utils.six import add_metaclass, binary_type, text_type
 from ansible.utils.singleton import Singleton
 
 
 def _make_immutable(obj):
     """Recursively convert a container and objects inside of it into immutable data types"""
-    if isinstance(obj, (text_type, binary_type)):
+    if isinstance(obj, (str, bytes)):
         # Strings first because they are also sequences
         return obj
     elif isinstance(obj, Mapping):
@@ -79,11 +79,14 @@ class CLIArgs(ImmutableDict):
         return cls(vars(options))
 
 
-@add_metaclass(_ABCSingleton)
-class GlobalCLIArgs(CLIArgs):
+class GlobalCLIArgs(CLIArgs, metaclass=_ABCSingleton):
     """
     Globally hold a parsed copy of cli arguments.
 
     Only one of these exist per program as it is for global context
     """
     pass
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type", "add_metaclass")

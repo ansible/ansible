@@ -107,7 +107,6 @@ from ansible import context
 from ansible.utils import display as _display
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
@@ -403,8 +402,8 @@ class CLI(ABC):
                 options = super(MyCLI, self).post_process_args(options)
                 if options.addition and options.subtraction:
                     raise AnsibleOptionsError('Only one of --addition and --subtraction can be specified')
-                if isinstance(options.listofhosts, string_types):
-                    options.listofhosts = string_types.split(',')
+                if isinstance(options.listofhosts, str):
+                    options.listofhosts = options.listofhosts.split(',')
                 return options
         """
 
@@ -440,7 +439,7 @@ class CLI(ABC):
             if options.inventory:
 
                 # should always be list
-                if isinstance(options.inventory, string_types):
+                if isinstance(options.inventory, str):
                     options.inventory = [options.inventory]
 
                 # Ensure full paths when needed

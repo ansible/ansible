@@ -250,7 +250,6 @@ from ansible.module_utils.common.file import S_IRWXU_RXG_RXO, S_IRWU_RG_RO
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.six import raise_from  # type: ignore[attr-defined]
 from ansible.module_utils.urls import generic_urlparse
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.urls import get_user_agent
@@ -339,7 +338,7 @@ def write_signed_by_key(module, v, slug):
         try:
             r = open_url(v, http_agent=get_user_agent())
         except Exception as exc:
-            raise_from(RuntimeError(to_native(exc)), exc)
+            raise RuntimeError('Could not fetch signed_by key.') from exc
         else:
             b_data = r.read()
     else:
@@ -587,14 +586,9 @@ def main():
         elif is_sequence(value):
             value = format_list(value)
         elif key == 'signed_by':
-            try:
-                key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug)
-                value = signed_by_filename or signed_by_data
-                changed |= key_changed
-            except RuntimeError as exc:
-                module.fail_json(
-                    msg='Could not fetch signed_by key: %s' % to_native(exc)
-                )
+            key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug)
+            value = signed_by_filename or signed_by_data
+            changed |= key_changed
 
         if value.count('\n') > 0:
             value = format_multiline(value)

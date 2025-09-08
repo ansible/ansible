@@ -80,36 +80,39 @@ class AnsibleUnwantedChecker(BaseChecker):
                'Identifies imports which should not be used.'),
     )
 
-    unwanted_imports = dict(
-        # Additional imports that we may want to start checking:
-        # boto=UnwantedEntry('boto3', modules_only=True),
-        # requests=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-        # urllib=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-
+    unwanted_imports = {
         # see https://docs.python.org/2/library/urllib2.html
-        urllib2=UnwantedEntry('ansible.module_utils.urls',
-                              ignore_paths=(
-                                  '/lib/ansible/module_utils/urls.py',
-                              )),
+        'urllib2': UnwantedEntry(
+            'ansible.module_utils.urls',
+            ignore_paths=(
+                '/lib/ansible/module_utils/urls.py',
+            )
+        ),
 
         # see https://docs.python.org/3/library/collections.abc.html
-        collections=UnwantedEntry('ansible.module_utils.six.moves.collections_abc',
-                                  names=(
-                                      'MappingView',
-                                      'ItemsView',
-                                      'KeysView',
-                                      'ValuesView',
-                                      'Mapping', 'MutableMapping',
-                                      'Sequence', 'MutableSequence',
-                                      'Set', 'MutableSet',
-                                      'Container',
-                                      'Hashable',
-                                      'Sized',
-                                      'Callable',
-                                      'Iterable',
-                                      'Iterator',
-                                  )),
-    )
+        'collections': UnwantedEntry(
+            'collections.abc',
+            names=(
+                'MappingView',
+                'ItemsView',
+                'KeysView',
+                'ValuesView',
+                'Mapping', 'MutableMapping',
+                'Sequence', 'MutableSequence',
+                'Set', 'MutableSet',
+                'Container',
+                'Hashable',
+                'Sized',
+                'Callable',
+                'Iterable',
+                'Iterator',
+            )
+        ),
+
+        'ansible.module_utils.six': UnwantedEntry(
+            'the Python standard library equivalent'
+        ),
+    }
 
     unwanted_functions = {
         # see https://docs.python.org/3/library/tempfile.html#tempfile.mktemp

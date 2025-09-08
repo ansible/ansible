@@ -6,7 +6,6 @@ from __future__ import annotations
 import copy
 import dataclasses
 import enum
-import textwrap
 import typing as t
 import collections.abc as c
 import re
@@ -44,7 +43,7 @@ from ._jinja_bits import (
     _finalize_template_result,
     FinalizeMode,
 )
-from ._jinja_common import _TemplateConfig, MarkerError, ExceptionMarker
+from ._jinja_common import _TemplateConfig, MarkerError, ExceptionMarker, JinjaCallContext
 from ._lazy_containers import _AnsibleLazyTemplateMixin
 from ._marker_behaviors import MarkerBehavior, FAIL_ON_UNDEFINED
 from ._transform import _type_transform_mapping
@@ -260,6 +259,7 @@ class TemplateEngine:
             with (
                 TemplateContext(template_value=variable, templar=self, options=options, stop_on_template=stop_on_template) as ctx,
                 DeprecatedAccessAuditContext.when(ctx.is_top_level),
+                JinjaCallContext(accept_lazy_markers=True),  # let default Jinja marker behavior apply, since we're descending into a new template
             ):
                 try:
                     if not value_is_str:
@@ -559,9 +559,11 @@ class TemplateEngine:
 
         bool_result = bool(result)
 
+        result_origin = Origin.get_tag(result) or Origin.UNKNOWN
+
         msg = (
-            f'Conditional result was {textwrap.shorten(str(result), width=40)!r} of type {native_type_name(result)!r}, '
-            f'which evaluates to {bool_result}. Conditionals must have a boolean result.'
+            f'Conditional result ({bool_result}) was derived from value of type {native_type_name(result)!r} at {str(result_origin)!r}. '
+            'Conditionals must have a boolean result.'
         )
 
         if _TemplateConfig.allow_broken_conditionals:

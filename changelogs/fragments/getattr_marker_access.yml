@@ -1,0 +1,4 @@
+bugfixes:
+  - templating - Undefined marker values sourced from the Jinja ``getattr->getitem`` fallback are now accessed correctly,
+    raising AnsibleUndefinedVariable for user plugins that do not understand markers.
+    Previously, these values were erroneously returned to user plugin code that had not opted in to marker acceptance.

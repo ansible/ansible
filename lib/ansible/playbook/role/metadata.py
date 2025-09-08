@@ -20,7 +20,6 @@ from __future__ import annotations
 import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -70,7 +69,7 @@ class RoleMetadata(Base, CollectionSearch):
 
             for role_def in ds:
                 # FIXME: consolidate with ansible-galaxy to keep this in sync
-                if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
+                if isinstance(role_def, str) or 'role' in role_def or 'name' in role_def:
                     roles.append(role_def)
                     continue
                 try:

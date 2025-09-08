@@ -18,8 +18,6 @@ from __future__ import annotations
 
 import re
 
-from ansible.module_utils.six import text_type
-
 
 _UNSAFE_C = re.compile(u'[\\s\t"]')
 _UNSAFE_CMD = re.compile(u'[\\s\\(\\)\\^\\|%!"<>&]')
@@ -30,7 +28,7 @@ _UNSAFE_CMD = re.compile(u'[\\s\\(\\)\\^\\|%!"<>&]')
 _UNSAFE_PWSH = re.compile(u"(['\u2018\u2019\u201a\u201b])")
 
 
-def quote_c(s):  # type: (text_type) -> text_type
+def quote_c(s):  # type: (str) -> str
     """Quotes a value for the raw Win32 process command line.
 
     Quotes a value to be safely used by anything that calls the Win32
@@ -40,7 +38,7 @@ def quote_c(s):  # type: (text_type) -> text_type
         s: The string to quote.
 
     Returns:
-        (text_type): The quoted string value.
+        (str): The quoted string value.
     """
     # https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way
     if not s:
@@ -62,7 +60,7 @@ def quote_c(s):  # type: (text_type) -> text_type
     return u'"{0}"'.format(s)
 
 
-def quote_cmd(s):  # type: (text_type) -> text_type
+def quote_cmd(s):  # type: (str) -> str
     """Quotes a value for cmd.
 
     Quotes a value to be safely used by a command prompt call.
@@ -71,7 +69,7 @@ def quote_cmd(s):  # type: (text_type) -> text_type
         s: The string to quote.
 
     Returns:
-        (text_type): The quoted string value.
+        (str): The quoted string value.
     """
     # https://docs.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way#a-better-method-of-quoting
     if not s:
@@ -92,7 +90,7 @@ def quote_cmd(s):  # type: (text_type) -> text_type
     return u'^"{0}^"'.format(s)
 
 
-def quote_pwsh(s):  # type: (text_type) -> text_type
+def quote_pwsh(s):  # type: (str) -> str
     """Quotes a value for PowerShell.
 
     Quotes a value to be safely used by a PowerShell expression. The input
@@ -102,7 +100,7 @@ def quote_pwsh(s):  # type: (text_type) -> text_type
         s: The string to quote.
 
     Returns:
-        (text_type): The quoted string value.
+        (str): The quoted string value.
     """
     # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules?view=powershell-5.1
     if not s:

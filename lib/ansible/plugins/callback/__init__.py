@@ -290,7 +290,11 @@ class CallbackBase(AnsiblePlugin):
         )
 
         if not indent and any(indent_conditions):
-            indent = 4
+            try:
+                indent = self.get_option('result_indentation')
+            except KeyError:
+                # Callback does not declare result_indentation nor extend result_format_callback
+                indent = 4
         if pretty_results is False:
             # pretty_results=False overrides any specified indentation
             indent = None
@@ -391,8 +395,14 @@ class CallbackBase(AnsiblePlugin):
             # Callback does not declare pretty_results nor extend result_format_callback
             pretty_results = None
 
+        try:
+            indent = self.get_option('result_indentation')
+        except KeyError:
+            # Callback does not declare result_indentation nor extend result_format_callback
+            indent = 4
+
         if result_format == 'json':
-            return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+            return json.dumps(diff, sort_keys=True, indent=indent, separators=(u',', u': ')) + u'\n'
 
         if result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior
@@ -404,7 +414,7 @@ class CallbackBase(AnsiblePlugin):
                     allow_unicode=True,
                     Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
-                    indent=4,
+                    indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
                 '    '

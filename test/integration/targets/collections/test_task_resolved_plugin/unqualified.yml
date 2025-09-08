@@ -4,5 +4,5 @@
   tasks:
     - legacy_action:
     - legacy_module:
-    - debug:
-    - ping:
+    - local_action: debug
+    - action: ping
