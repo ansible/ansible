@@ -1,0 +1,3 @@
+bugfixes:
+  - >-
+    Windows async - Handle running PowerShell modules with trailing data after the module result
