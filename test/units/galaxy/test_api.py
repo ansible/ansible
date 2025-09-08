@@ -126,37 +126,32 @@ def get_v3_collection_versions(namespace='namespace', name='collection'):
 
 
 def get_collection_versions(namespace='namespace', name='collection'):
-    base_url = 'https://galaxy.server.com/api/v2/collections/{0}/{1}/'.format(namespace, name)
-    versions_url = base_url + 'versions/'
+    base_url = f'/api/v3/plugin/ansible/content/published/collections/index/{namespace}/{name}/'
+    versions_url = f'{base_url}versions/'
 
     # Response for collection info
     responses = [
         {
-            "id": 1000,
             "href": base_url,
             "name": name,
-            "namespace": {
-                "id": 30000,
-                "href": "https://galaxy.ansible.com/api/v1/namespaces/30000/",
-                "name": namespace,
+            "namespace": namespace,
+            "highest_version": {
+                "href": f"{versions_url}1.0.5",
+                "version": "1.0.5",
             },
             "versions_url": versions_url,
-            "latest_version": {
-                "version": "1.0.5",
-                "href": versions_url + "1.0.5/"
-            },
             "deprecated": False,
-            "created": "2021-02-09T16:55:42.749915-05:00",
-            "modified": "2021-02-09T16:55:42.749915-05:00",
+            "created_at": "2021-02-09T16:55:42.749915-05:00",
+            "updated_at": "2021-02-09T16:55:42.749915-05:00",
         }
     ]
 
     # Paginated responses for versions
     page_versions = (('1.0.0', '1.0.1',), ('1.0.2', '1.0.3',), ('1.0.4', '1.0.5'),)
-    last_page = None
+    prev_page = None
     for page in range(1, len(page_versions) + 1):
         if page < len(page_versions):
-            next_page = versions_url + '?page={0}'.format(page + 1)
+            next_page = f'{versions_url}?limit=2&offset={page + 1}'
         else:
             next_page = None
 
@@ -168,13 +163,19 @@ def get_collection_versions(namespace='namespace', name='collection'):
 
         responses.append(
             {
-                'count': 6,
-                'next': next_page,
-                'previous': last_page,
-                'results': version_results,
+                'meta': {
+                    'count': 6,
+                },
+                'links': {
+                    'first': f'{versions_url}?limit=2&offset=0',
+                    'next': next_page,
+                    'previous': prev_page,
+                    'last': f'{versions_url}?limit=2&offset={len(page_versions)}',
+                },
+                'data': version_results,
             }
         )
-        last_page = page
+        prev_page = page
 
     return responses
 
@@ -265,9 +266,8 @@ def test_initialise_galaxy(monkeypatch):
     api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/")
     actual = api.authenticate("github_token")
 
-    assert len(api.available_api_versions) == 2
+    assert len(api.available_api_versions) == 1
     assert api.available_api_versions['v1'] == u'v1/'
-    assert api.available_api_versions['v2'] == u'v2/'
     assert actual == {u'token': u'my token'}
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
@@ -288,9 +288,8 @@ def test_initialise_galaxy_with_auth(monkeypatch):
     api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/", token=GalaxyToken(token='my_token'))
     actual = api.authenticate("github_token")
 
-    assert len(api.available_api_versions) == 2
+    assert len(api.available_api_versions) == 1
     assert api.available_api_versions['v1'] == u'v1/'
-    assert api.available_api_versions['v2'] == u'v2/'
     assert actual == {u'token': u'my token'}
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
@@ -303,7 +302,7 @@ def test_initialise_galaxy_with_auth(monkeypatch):
 def test_initialise_automation_hub(monkeypatch):
     mock_open = MagicMock()
     mock_open.side_effect = [
-        StringIO(u'{"available_versions":{"v2": "v2/", "v3":"v3/"}}'),
+        StringIO(u'{"available_versions":{"v3":"v3/"}}'),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
     token = KeycloakToken(auth_url='https://api.test/')
@@ -313,8 +312,7 @@ def test_initialise_automation_hub(monkeypatch):
 
     api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/", token=token)
 
-    assert len(api.available_api_versions) == 2
-    assert api.available_api_versions['v2'] == u'v2/'
+    assert len(api.available_api_versions) == 1
     assert api.available_api_versions['v3'] == u'v3/'
 
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
@@ -341,7 +339,7 @@ def test_initialise_unknown(monkeypatch):
 def test_get_available_api_versions(monkeypatch):
     mock_open = MagicMock()
     mock_open.side_effect = [
-        StringIO(u'{"available_versions":{"v1":"v1/","v2":"v2/"}}'),
+        StringIO(u'{"available_versions":{"v1":"v1/","v3":"v3/"}}'),
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
@@ -349,7 +347,7 @@ def test_get_available_api_versions(monkeypatch):
     actual = api.available_api_versions
     assert len(actual) == 2
     assert actual['v1'] == u'v1/'
-    assert actual['v2'] == u'v2/'
+    assert actual['v3'] == u'v3/'
 
     assert mock_open.call_count == 1
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
@@ -360,7 +358,7 @@ def test_publish_collection_missing_file():
     fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
     expected = to_native("The collection path specified '%s' does not exist." % fake_path)
 
-    api = get_test_galaxy_api("https://galaxy.ansible.com/api/", "v2")
+    api = get_test_galaxy_api("https://galaxy.ansible.com/api/", "v3")
     with pytest.raises(AnsibleError, match=expected):
         api.publish_collection(fake_path)
 
@@ -369,7 +367,7 @@ def test_publish_collection_not_a_tarball():
     expected = "The collection path specified '{0}' is not a tarball, use 'ansible-galaxy collection build' to " \
                "create a proper release artifact."
 
-    api = get_test_galaxy_api("https://galaxy.ansible.com/api/", "v2")
+    api = get_test_galaxy_api("https://galaxy.ansible.com/api/", "v3")
     with tempfile.NamedTemporaryFile(prefix=u'ÅÑŚÌβŁÈ') as temp_file:
         temp_file.write(b"\x00")
         temp_file.flush()
@@ -378,7 +376,7 @@ def test_publish_collection_not_a_tarball():
 
 
 def test_publish_collection_unsupported_version():
-    expected = "Galaxy action publish_collection requires API versions 'v2, v3' but only 'v1' are available on test " \
+    expected = "Galaxy action publish_collection requires API versions 'v3' but only 'v1' are available on test " \
                "https://galaxy.ansible.com/api/"
 
     api = get_test_galaxy_api("https://galaxy.ansible.com/api/", "v1")
@@ -387,7 +385,6 @@ def test_publish_collection_unsupported_version():
 
 
 @pytest.mark.parametrize('api_version, collection_url', [
-    ('v2', 'collections'),
     ('v3', 'artifacts/collections'),
 ])
 def test_publish_collection(api_version, collection_url, collection_artifact, monkeypatch):
@@ -410,12 +407,6 @@ def test_publish_collection(api_version, collection_url, collection_artifact, mo
 
 
 @pytest.mark.parametrize('api_version, collection_url, response, expected', [
-    ('v2', 'collections', {},
-     'Error when publishing collection to test (%s) (HTTP Code: 500, Message: msg Code: Unknown)'),
-    ('v2', 'collections', {
-        'message': u'Galaxy error messäge',
-        'code': 'GWE002',
-    }, u'Error when publishing collection to test (%s) (HTTP Code: 500, Message: Galaxy error messäge Code: GWE002)'),
     ('v3', 'artifact/collections', {},
      'Error when publishing collection to test (%s) (HTTP Code: 500, Message: msg Code: Unknown)'),
     ('v3', 'artifact/collections', {
@@ -452,8 +443,6 @@ def test_publish_failure(api_version, collection_url, response, expected, collec
 
 
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, full_import_uri', [
-    ('https://galaxy.server.com/api', 'v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
@@ -482,8 +471,6 @@ def test_wait_import_task(server_url, api_version, token_type, token_ins, full_i
 
 
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, full_import_uri', [
-    ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
@@ -526,8 +513,6 @@ def test_wait_import_task_multiple_requests(server_url, api_version, token_type,
 
 
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, full_import_uri,', [
-    ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
@@ -600,8 +585,6 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
 
 
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, full_import_uri', [
-    ('https://galaxy.server.com/api/', 'v2', 'Token', GalaxyToken('my_token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub/', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
@@ -670,8 +653,6 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
 
 
 @pytest.mark.parametrize('server_url, api_version, token_type, token_ins, full_import_uri', [
-    ('https://galaxy.server.com/api', 'v2', 'Token', GalaxyToken('my token'),
-     'https://galaxy.server.com/api/v2/collection-imports/1234/'),
     ('https://galaxy.server.com/api/automation-hub', 'v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'),
      'https://galaxy.server.com/api/automation-hub/v3/imports/collections/1234/'),
 ])
@@ -725,7 +706,6 @@ def test_wait_import_task_timeout(server_url, api_version, token_type, token_ins
 
 
 @pytest.mark.parametrize('api_version, token_type, version, token_ins', [
-    ('v2', None, 'v2.1.13', None),
     ('v3', 'Bearer', 'v1.0.0', KeycloakToken(auth_url='https://api.test/api/automation-hub/')),
 ])
 def test_get_collection_version_metadata_no_version(api_version, token_type, version, token_ins, monkeypatch):
@@ -777,11 +757,11 @@ def test_get_collection_version_metadata_no_version(api_version, token_type, ver
         assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
 
 
-@pytest.mark.parametrize('api_version, token_type, token_ins, version', [
-    ('v2', None, None, '2.1.13'),
-    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/api/automation-hub/'), '1.0.0'),
+@pytest.mark.parametrize('api_version, token_type, token_ins', [
+    ('v3', None, None),
+    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/api/automation-hub/')),
 ])
-def test_get_collection_signatures_backwards_compat(api_version, token_type, token_ins, version, monkeypatch):
+def test_get_collection_signatures_backwards_compat(api_version, token_type, token_ins, monkeypatch):
     api = get_test_galaxy_api('https://galaxy.server.com/api/', api_version, token_ins=token_ins)
 
     if token_ins:
@@ -795,23 +775,23 @@ def test_get_collection_signatures_backwards_compat(api_version, token_type, tok
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
-    actual = api.get_collection_signatures('namespace', 'collection', version)
+    actual = api.get_collection_signatures('namespace', 'collection', '1.0.0')
     assert actual == []
 
     assert mock_open.call_count == 1
-    assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/%s/' \
-        % (api.api_server, api_version, version)
+    assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/1.0.0/' \
+        % (api.api_server, api_version)
 
-    # v2 calls dont need auth, so no authz header or token_type
+    # v3 calls dont need auth, so no authz header or token_type
     if token_type:
         assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
 
 
-@pytest.mark.parametrize('api_version, token_type, token_ins, version', [
-    ('v2', None, None, '2.1.13'),
-    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/api/automation-hub/'), '1.0.0'),
+@pytest.mark.parametrize('api_version, token_type, token_ins', [
+    ('v3', None, None),
+    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/api/automation-hub/')),
 ])
-def test_get_collection_signatures(api_version, token_type, token_ins, version, monkeypatch):
+def test_get_collection_signatures(api_version, token_type, token_ins, monkeypatch):
     api = get_test_galaxy_api('https://galaxy.server.com/api/', api_version, token_ins=token_ins)
 
     if token_ins:
@@ -840,7 +820,7 @@ def test_get_collection_signatures(api_version, token_type, token_ins, version, 
     ]
     monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
 
-    actual = api.get_collection_signatures('namespace', 'collection', version)
+    actual = api.get_collection_signatures('namespace', 'collection', '1.0.0')
 
     assert actual == [
         "-----BEGIN PGP SIGNATURE-----\nSIGNATURE1\n-----END PGP SIGNATURE-----\n",
@@ -848,48 +828,41 @@ def test_get_collection_signatures(api_version, token_type, token_ins, version, 
     ]
 
     assert mock_open.call_count == 1
-    assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/%s/' \
-        % (api.api_server, api_version, version)
+    assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/1.0.0/' \
+        % (api.api_server, api_version)
 
-    # v2 calls dont need auth, so no authz header or token_type
+    # v3 calls dont need auth, so no authz header or token_type
     if token_type:
         assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
 
 
-@pytest.mark.parametrize('api_version, token_type, token_ins, response', [
-    ('v2', None, None, {
-        'count': 2,
-        'next': None,
-        'previous': None,
-        'results': [
-            {
-                'version': '1.0.0',
-                'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.0',
-            },
-            {
-                'version': '1.0.1',
-                'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.1',
-            },
-        ],
-    }),
-    # TODO: Verify this once Automation Hub is actually out
-    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'), {
-        'count': 2,
-        'next': None,
-        'previous': None,
+@pytest.mark.parametrize('api_version, token_type, token_ins', [
+    ('v3', None, None),
+    ('v3', 'Bearer', KeycloakToken(auth_url='https://ah.test/'))
+])
+def test_get_collection_versions(api_version, token_type, token_ins, monkeypatch):
+    response = {
+        'meta': {
+            'count': 2
+        },
+        'links': {
+            'first': '/api/v3/plugin/ansible/content/published/collections/index/ns/col/versions/?limit=100&offset=0',
+            'previous': None,
+            'next': None,
+            'last': '/api/v3/plugin/ansible/content/published/collections/index/ns/col/versions/?limit=100&offset=0'
+        },
         'data': [
             {
                 'version': '1.0.0',
-                'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.0',
+                'href': '/api/v3/plugin/ansible/content/published/collections/index/ns/col/versions/1.0.0/',
             },
             {
                 'version': '1.0.1',
-                'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.1',
+                'href': '/api/v3/plugin/ansible/content/pubished/collections/index/ns/col/versions/1.0.1/',
             },
         ],
-    }),
-])
-def test_get_collection_versions(api_version, token_type, token_ins, response, monkeypatch):
+    }
+
     api = get_test_galaxy_api('https://galaxy.server.com/api/', api_version, token_ins=token_ins)
 
     if token_ins:
@@ -906,7 +879,7 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
     actual = api.get_collection_versions('namespace', 'collection')
     assert actual == [u'1.0.0', u'1.0.1']
 
-    page_query = '?limit=100' if api_version == 'v3' else '?page_size=100'
+    page_query = '?limit=100'
     assert mock_open.call_count == 1
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.server.com/api/%s/collections/namespace/collection/' \
                                             'versions/%s' % (api_version, page_query)
@@ -915,53 +888,6 @@ def test_get_collection_versions(api_version, token_type, token_ins, response, m
 
 
 @pytest.mark.parametrize('api_version, token_type, token_ins, responses', [
-    ('v2', None, None, [
-        {
-            'count': 6,
-            'next': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=2&page_size=100',
-            'previous': None,
-            'results': [  # Pay no mind, using more manageable results than page_size would indicate
-                {
-                    'version': '1.0.0',
-                    'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.0',
-                },
-                {
-                    'version': '1.0.1',
-                    'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.1',
-                },
-            ],
-        },
-        {
-            'count': 6,
-            'next': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=3&page_size=100',
-            'previous': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions',
-            'results': [
-                {
-                    'version': '1.0.2',
-                    'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.2',
-                },
-                {
-                    'version': '1.0.3',
-                    'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.3',
-                },
-            ],
-        },
-        {
-            'count': 6,
-            'next': None,
-            'previous': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/?page=2&page_size=100',
-            'results': [
-                {
-                    'version': '1.0.4',
-                    'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.4',
-                },
-                {
-                    'version': '1.0.5',
-                    'href': 'https://galaxy.server.com/api/v2/collections/namespace/collection/versions/1.0.5',
-                },
-            ],
-        },
-    ]),
     ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/'), [
         {
             'count': 6,
@@ -1034,14 +960,9 @@ def test_get_collection_versions_pagination(api_version, token_type, token_ins, 
 
     assert mock_open.call_count == 3
 
-    if api_version == 'v3':
-        query_1 = 'limit=100'
-        query_2 = 'limit=100&offset=100'
-        query_3 = 'limit=100&offset=200'
-    else:
-        query_1 = 'page_size=100'
-        query_2 = 'page=2&page_size=100'
-        query_3 = 'page=3&page_size=100'
+    query_1 = 'limit=100'
+    query_2 = 'limit=100&offset=100'
+    query_3 = 'limit=100&offset=200'
 
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.server.com/api/%s/collections/namespace/collection/' \
                                             'versions/?%s' % (api_version, query_1)
@@ -1160,7 +1081,7 @@ def test_cache_complete_pagination(cache_dir, monkeypatch):
     responses = get_collection_versions()
     cache_file = os.path.join(cache_dir, 'api.json')
 
-    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v2', no_cache=False)
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v3', no_cache=False)
 
     mock_open = MagicMock(
         side_effect=[
@@ -1177,7 +1098,7 @@ def test_cache_complete_pagination(cache_dir, monkeypatch):
         final_cache = json.loads(fd.read())
 
     cached_server = final_cache['galaxy.server.com:']
-    cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_collection = cached_server['/api/v3/collections/namespace/collection/versions/']
     cached_versions = [r['version'] for r in cached_collection['results']]
 
     assert final_cache == api._cache
@@ -1218,14 +1139,14 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
     responses = get_collection_versions()
     cache_file = os.path.join(cache_dir, 'api.json')
 
-    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v2', no_cache=False)
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v3', no_cache=False)
 
     # First attempt, fail midway through
     mock_open = MagicMock(
         side_effect=[
             StringIO(to_text(json.dumps(responses[0]))),
             StringIO(to_text(json.dumps(responses[1]))),
-            urllib.error.HTTPError(responses[1]['next'], 500, 'Error', {}, StringIO()),
+            urllib.error.HTTPError(responses[1]['links']['next'], 500, 'Error', {}, StringIO()),
             StringIO(to_text(json.dumps(responses[3]))),
         ]
     )
@@ -1246,13 +1167,13 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
         'version': 1,
         'galaxy.server.com:': {
             'modified': {
-                'namespace.collection': responses[0]['modified']
+                'namespace.collection': responses[0]['updated_at']
             }
         }
     }
 
     # Reset API
-    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v2', no_cache=False)
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v3', no_cache=False)
 
     # Second attempt is successful so cache should be populated
     mock_open = MagicMock(
@@ -1270,7 +1191,7 @@ def test_cache_flaky_pagination(cache_dir, monkeypatch):
         final_cache = json.loads(fd.read())
 
     cached_server = final_cache['galaxy.server.com:']
-    cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_collection = cached_server['/api/v3/collections/namespace/collection/versions/']
     cached_versions = [r['version'] for r in cached_collection['results']]
 
     assert cached_versions == actual_versions

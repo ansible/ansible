@@ -74,13 +74,8 @@
     test_server: '{{ item.server }}'
     test_api_server: '{{ item.api_server|default(item.server) }}'
   loop:
-  - name: pulp_v2
-    api_server: '{{ galaxy_ng_server }}'
-    server: '{{ pulp_server }}primary/api/'
-    v2: true
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
-    v3: true
 
 - include_tasks: setup_gpg.yml
 
@@ -109,7 +104,6 @@
     test_server: '{{ item.server }}'
     test_api_server: '{{ item.api_server|default(item.server) }}'
     requires_auth: '{{ item.requires_auth|default(false) }}'
-    v2: '{{ item.v2|default(false) }}'
   args:
     apply:
       environment:
@@ -117,12 +111,7 @@
   loop:
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
-    v3: true
     requires_auth: true
-  - name: pulp_v2
-    server: '{{ pulp_server }}primary/api/'
-    api_server: '{{ galaxy_ng_server }}'
-    v2: true
 
 - name: test installing and downloading collections with the range of supported resolvelib versions
   include_tasks: supported_resolvelib.yml
