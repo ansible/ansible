@@ -831,6 +831,17 @@ releases:
     - ansible-test-rhel-10.yml
     - user_passphrase.yml
     release_date: '2025-07-08'
+  2.17.14:
+    changes:
+      release_summary: '| Release Date: 2025-09-08
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.17/porting_guides/porting_guide_core_2.17.html>`__
+
+        '
+    codename: Gallows Pole
+    fragments:
+    - 2.17.14_summary.yaml
+    release_date: '2025-09-08'
   2.17.14rc1:
     changes:
       bugfixes:
