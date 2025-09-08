@@ -58,7 +58,7 @@ class FreeBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         if virtual_facts['virtualization_type'] == '':
             # We call update here, then re-set virtualization_tech_host/guest
             # later.
-            for sysctl in [ kern_vm_guest, hw_hv_vendor, sec_jail_jailed]:
+            for sysctl in [kern_vm_guest, hw_hv_vendor, sec_jail_jailed]:
                 if sysctl:
                     virtual_facts.update(sysctl)
 
