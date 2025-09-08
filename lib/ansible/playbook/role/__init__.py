@@ -44,7 +44,7 @@ from ansible.utils.vars import combine_vars
 # NOTE: This import is only needed for the type-checking in __init__. While there's an alternative
 #       available by using forward references this seems not to work well with commonly used IDEs.
 #       Therefore the TYPE_CHECKING hack seems to be a more universal approach, even if not being very elegant.
-#       References:
+#       Refs:
 #       * https://stackoverflow.com/q/39740632/199513
 #       * https://peps.python.org/pep-0484/#forward-references
 if _t.TYPE_CHECKING:
