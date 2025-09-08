@@ -1358,7 +1358,8 @@ def _split_multiext(name, min=3, max=4, count=2):
 
 def fetch_file(module, url, data=None, headers=None, method=None,
                use_proxy=True, force=False, last_mod_time=None, timeout=10,
-               unredirected_headers=None, decompress=True, ciphers=None):
+               unredirected_headers=None, decompress=True, ciphers=None,
+               ca_path=None, cookies=None):
     """Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
@@ -1375,6 +1376,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
     :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
     :kwarg ciphers: (optional) List of ciphers to use
+    :kwarg ca_path: (optional) Path to CA bundle
+    :kwarg cookies: (optional) CookieJar object to send with the request
 
     :returns: A string, the path to the downloaded file.
     """
@@ -1386,7 +1389,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
-                              unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers)
+                              unredirected_headers=unredirected_headers, decompress=decompress, ciphers=ciphers,
+                              ca_path=ca_path, cookies=cookies)
         if not rsp or (rsp.code and rsp.code >= 400):
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
         data = rsp.read(bufsize)
