@@ -54,6 +54,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             self._parent = task_include
         elif parent_block:
             self._parent = parent_block
+        elif role:
+            self._parent = role
+        elif play:
+            self._parent = play
 
         super(Block, self).__init__()
 
@@ -278,18 +282,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             p.deserialize(parent_data)
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
-
-    def set_loader(self, loader):
-        self._loader = loader
-        if self._parent:
-            self._parent.set_loader(loader)
-        elif self._role:
-            self._role.set_loader(loader)
-
-        dep_chain = self.get_dep_chain()
-        if dep_chain:
-            for dep in dep_chain:
-                dep.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
         """

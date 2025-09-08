@@ -833,3 +833,16 @@ class Base(FieldAttributeBase):
             path_stack.append(task_dir)
 
         return path_stack
+
+    def set_loader(self, loader):
+        """
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        """
+        self._loader = loader
+        dep_chain = self.get_dep_chain()
+        if dep_chain:
+            self._parent.set_loader(loader)
+            for dep in dep_chain:
+                dep.set_loader(loader)
