@@ -114,7 +114,13 @@ class JinjaPluginIntercept(c.MutableMapping):
 
         try:
             with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
-                return instance.j2_function(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
+                result = instance.j2_function(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
+
+                if instance.plugin_type == 'filter':
+                    # ensure list conversion occurs under the call context
+                    result = _wrap_plugin_output(result)
+
+                return result
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
@@ -155,7 +161,6 @@ class JinjaPluginIntercept(c.MutableMapping):
         @functools.wraps(instance.j2_function)
         def wrapper(*args, **kwargs) -> t.Any:
             result = self._invoke_plugin(instance, *args, **kwargs)
-            result = _wrap_plugin_output(result)
 
             return result
 

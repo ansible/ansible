@@ -595,6 +595,10 @@ class Dnf5Module(YumDnf):
         conf.localpkg_gpgcheck = not self.disable_gpg_check
         conf.sslverify = self.sslverify
         conf.clean_requirements_on_remove = self.autoremove
+
+        if not os.path.isdir(self.installroot):
+            self.module.fail_json(msg=f"Installroot {self.installroot} must be a directory")
+
         conf.installroot = self.installroot
         conf.use_host_config = True  # needed for installroot
         conf.cacheonly = "all" if self.cacheonly else "none"

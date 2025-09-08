@@ -53,11 +53,10 @@ from ansible.constants import config
 from ansible.errors import AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive, AnsibleError
 from ansible._internal._errors import _error_utils, _error_factory
 from ansible._internal import _event_formatting
-from ansible.module_utils._internal import _ambient_context, _deprecator, _messages
+from ansible.module_utils._internal import _ambient_context, _deprecator, _messages, _no_six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils.six import text_type
 from ansible.module_utils._internal import _traceback, _errors
 from ansible.utils.color import stringc
 from ansible.utils.multiprocessing import context as multiprocessing_context
@@ -106,7 +105,7 @@ def get_text_width(text: str) -> int:
     character and using wcwidth individually, falling back to a value of 0
     for non-printable wide characters.
     """
-    if not isinstance(text, text_type):
+    if not isinstance(text, str):
         raise TypeError('get_text_width requires text, not %s' % type(text))
 
     try:
@@ -1282,3 +1281,7 @@ def _report_config_warnings(deprecator: _messages.PluginInfo) -> None:
 # emit any warnings or deprecations
 # in the event config fails before display is up, we'll lose warnings -- but that's OK, since everything is broken anyway
 _report_config_warnings(_deprecator.ANSIBLE_CORE_DEPRECATOR)
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "text_type")

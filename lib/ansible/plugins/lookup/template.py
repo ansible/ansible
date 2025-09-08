@@ -107,6 +107,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.template import trust_as_template
 from ansible._internal._templating import _template_vars
+from ansible._internal._templating._engine import TemplateOptions, TemplateOverrides
 from ansible.utils.display import Display
 
 
@@ -174,7 +175,11 @@ class LookupModule(LookupBase):
                 )
 
                 data_templar = templar.copy_with_new_env(available_variables=vars, searchpath=searchpath)
-                res = data_templar.template(template_data, escape_backslashes=False, overrides=overrides)
+                # use the internal template API to avoid forced top-level finalization behavior imposed by the public API
+                res = data_templar._engine.template(template_data, options=TemplateOptions(
+                    escape_backslashes=False,
+                    overrides=TemplateOverrides.from_kwargs(overrides),
+                ))
 
                 ret.append(res)
             else:

@@ -25,7 +25,6 @@ from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
@@ -595,11 +594,11 @@ class GalaxyAPI:
         page_size = kwargs.get('page_size', None)
         author = kwargs.get('author', None)
 
-        if tags and isinstance(tags, string_types):
+        if tags and isinstance(tags, str):
             tags = tags.split(',')
             search_url += '&tags_autocomplete=' + '+'.join(tags)
 
-        if platforms and isinstance(platforms, string_types):
+        if platforms and isinstance(platforms, str):
             platforms = platforms.split(',')
             search_url += '&platforms_autocomplete=' + '+'.join(platforms)
 

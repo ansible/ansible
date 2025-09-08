@@ -3,7 +3,7 @@ astroid==3.3.11
 dill==0.4.0
 isort==6.0.1
 mccabe==0.7.0
-platformdirs==4.3.8
-pylint==3.3.7
+platformdirs==4.4.0
+pylint==3.3.8
 PyYAML==6.0.2
 tomlkit==0.13.3

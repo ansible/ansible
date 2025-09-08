@@ -6,9 +6,10 @@
 from __future__ import annotations
 
 
+from collections.abc import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
+
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common import warnings as _warnings
-from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.six.moves.collections_abc import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
 
 
 class ImmutableDict(Hashable, Mapping):
@@ -67,7 +68,7 @@ class ImmutableDict(Hashable, Mapping):
 
 def is_string(seq):
     """Identify whether the input has a string-like type (including bytes)."""
-    return isinstance(seq, (text_type, binary_type))
+    return isinstance(seq, (str, bytes))
 
 
 def is_iterable(seq, include_strings=False):
@@ -114,3 +115,7 @@ def count(seq):
     for elem in seq:
         counters[elem] = counters.get(elem, 0) + 1
     return counters
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type")

@@ -180,7 +180,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.service import fail_if_missing, is_systemd_managed
-from ansible.module_utils.six import b
 
 
 class Service(object):
@@ -292,8 +291,8 @@ class Service(object):
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
-            stdout = b("")
-            stderr = b("")
+            stdout = b""
+            stderr = b""
             fds = [p.stdout, p.stderr]
             # Wait for all output, or until the main process is dead and its output is done.
             while fds:
@@ -322,7 +321,7 @@ class Service(object):
             os.close(pipe[1])
             os.waitpid(pid, 0)
             # Wait for data from daemon process and process it.
-            data = b("")
+            data = b""
             while True:
                 rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
                 if pipe[0] in rfd:

@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Set
 
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils.six import binary_type, text_type
 
 __all__ = ['AnsibleUnsafe', 'wrap_var']
 
@@ -62,9 +62,9 @@ def wrap_var(v):
         v = _wrap_set(v)
     elif is_sequence(v):
         v = _wrap_sequence(v)
-    elif isinstance(v, binary_type):
+    elif isinstance(v, bytes):
         v = AnsibleUnsafeBytes(v)
-    elif isinstance(v, text_type):
+    elif isinstance(v, str):
         v = AnsibleUnsafeText(v)
 
     return v
@@ -76,3 +76,7 @@ def to_unsafe_bytes(*args, **kwargs):
 
 def to_unsafe_text(*args, **kwargs):
     return wrap_var(to_text(*args, **kwargs))
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "binary_type", "text_type")

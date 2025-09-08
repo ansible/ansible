@@ -63,6 +63,11 @@ class _AnsibleCollectionConfig(type):
         return [_to_text(p) for p in cls._collection_finder._n_collection_paths]
 
     @property
+    def _internal_collections(cls):
+        cls._require_finder()
+        return cls._collection_finder._internal_collections
+
+    @property
     def default_collection(cls):
         return cls._default_collection
 

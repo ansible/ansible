@@ -13,24 +13,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False, vaultid=None):
+def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=False):
     if not isinstance(secret, (str, bytes)):
         raise TypeError(f"Secret passed is required to be a string, instead we got {type(secret)}.")
 
     if not isinstance(data, (str, bytes)):
         raise TypeError(f"Can only vault strings, instead we got {type(data)}.")
-
-    if vaultid is not None:
-        display.deprecated(
-            msg="Use of undocumented `vaultid`.",
-            version="2.20",
-            help_text="Use `vault_id` instead.",
-        )
-
-        if vault_id == 'filter_default':
-            vault_id = vaultid
-        else:
-            display.warning("Ignoring vaultid as vault_id is already set.")
 
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib()
@@ -48,11 +36,11 @@ def do_vault(data, secret, salt=None, vault_id='filter_default', wrap_object=Fal
 
 
 @_template.accept_args_markers
-def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
+def do_unvault(vault, secret, vault_id='filter_default'):
     if isinstance(vault, VaultExceptionMarker):
         vault = vault._disarm()
 
-    if (first_marker := _template.get_first_marker_arg((vault, secret, vault_id, vaultid), {})) is not None:
+    if (first_marker := _template.get_first_marker_arg((vault, secret, vault_id), {})) is not None:
         return first_marker
 
     if not isinstance(secret, (str, bytes)):
@@ -60,18 +48,6 @@ def do_unvault(vault, secret, vault_id='filter_default', vaultid=None):
 
     if not isinstance(vault, (str, bytes)):
         raise TypeError(f"Vault should be in the form of a string, instead we got {type(vault)}.")
-
-    if vaultid is not None:
-        display.deprecated(
-            msg="Use of undocumented `vaultid`.",
-            version="2.20",
-            help_text="Use `vault_id` instead.",
-        )
-
-        if vault_id == 'filter_default':
-            vault_id = vaultid
-        else:
-            display.warning("Ignoring vaultid as vault_id is already set.")
 
     vs = VaultSecret(to_bytes(secret))
     vl = VaultLib([(vault_id, vs)])

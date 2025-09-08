@@ -27,7 +27,6 @@ from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.datatag import deprecator_from_collection_name
-from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible._internal._yaml._loader import AnsibleInstrumentedLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, AnsibleJinja2Plugin
@@ -96,7 +95,7 @@ def get_shell_plugin(shell_type=None, executable=None):
 
         # mostly for backwards compat
         if executable:
-            if isinstance(executable, string_types):
+            if isinstance(executable, str):
                 shell_filename = os.path.basename(executable)
                 try:
                     shell = shell_loader.get(shell_filename)
@@ -517,7 +516,7 @@ class PluginLoader:
                 #     filename, cn = find_plugin_docfile( name, type_name, self, [os.path.dirname(path)], C.YAML_DOC_EXTENSIONS)
 
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
+                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'), section='DOCUMENTATION')
 
                     if 'options' in dstring and isinstance(dstring['options'], dict):
                         C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
@@ -1674,7 +1673,7 @@ def _configure_collection_loader(prefix_collections_path=None):
 
     # insert the internal ansible._protomatter collection up front
     paths = [os.path.dirname(_internal.__file__)] + list(prefix_collections_path) + C.COLLECTIONS_PATHS
-    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
+    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH, internal_collections=paths[0])
     finder._install()
 
     # this should succeed now

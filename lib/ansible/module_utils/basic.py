@@ -46,6 +46,15 @@ import tempfile
 import time
 import traceback
 
+from collections.abc import (
+    KeysView,
+    Mapping,
+    MutableMapping,
+    Sequence,
+    MutableSequence,
+    Set,
+    MutableSet,
+)
 from functools import reduce
 
 try:
@@ -123,13 +132,6 @@ def _get_available_hash_algorithms():
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
 
 from ansible.module_utils.common import json as _json
-
-from ansible.module_utils.six.moves.collections_abc import (
-    KeysView,
-    Mapping, MutableMapping,
-    Sequence, MutableSequence,
-    Set, MutableSet,
-)
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
@@ -1513,11 +1515,19 @@ class AnsibleModule(object):
         # strip no_log collisions
         kwargs = remove_values(kwargs, self.no_log_values)
 
-        # return preserved
+        # graft preserved values back on
         kwargs.update(preserved)
 
+        self._record_module_result(kwargs)
+
+    def _record_module_result(self, o: dict[str, t.Any]) -> None:
+        """
+        Temporary internal hook to enable modification/bypass of module result serialization.
+
+        Monkeypatched by ansible.netcommon for direct in-worker module execution.
+        """
         encoder = _json.get_module_encoder(_ANSIBLE_PROFILE, _json.Direction.MODULE_TO_CONTROLLER)
-        print('\n%s' % json.dumps(kwargs, cls=encoder))
+        print('\n%s' % json.dumps(o, cls=encoder))
 
     def exit_json(self, **kwargs) -> t.NoReturn:
         """ return from the module, without error """
@@ -2178,6 +2188,18 @@ def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
 
 
+_mini_six = {
+    "b": lambda s: s.encode("latin-1"),
+    "PY2": False,
+    "PY3": True,
+    "text_type": str,
+    "binary_type": bytes,
+    "string_types": (str,),
+    "integer_types": (int,),
+    "iteritems": lambda d, **kw: iter(d.items(**kw)),
+}
+
+
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
     if importable_name == 'datetime':
@@ -2195,24 +2217,12 @@ def __getattr__(importable_name):
     elif importable_name == 'repeat':
         from itertools import repeat
         importable = repeat
-    elif importable_name in {
-        'PY2', 'PY3', 'b', 'binary_type', 'integer_types',
-        'iteritems', 'string_types', 'text_type',
-    }:
-        import importlib
-        importable = getattr(
-            importlib.import_module('ansible.module_utils.six'),
-            importable_name
-        )
     elif importable_name == 'map':
         importable = map
     elif importable_name == 'shlex_quote':
         importable = shlex.quote
-    else:
-        raise AttributeError(
-            f'cannot import name {importable_name !r} '
-            f"from '{__name__}' ({__file__ !s})"
-        )
+    elif (importable := _mini_six.get(importable_name, ...)) is ...:
+        raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     deprecate(
         msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",

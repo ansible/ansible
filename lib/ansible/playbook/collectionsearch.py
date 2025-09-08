@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
@@ -32,7 +31,7 @@ def _ensure_default_collection(collection_list=None):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection, always_post_validate=True, static=True)
+    collections = FieldAttribute(isa='list', listof=(str,), priority=100, default=_ensure_default_collection, always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
         # We are always a mixin with Base, so we can validate this untemplated

@@ -10,7 +10,6 @@ import pathlib
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible._internal._datatag._tags import SourceWasEncrypted
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_native
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
@@ -38,7 +37,7 @@ class ActionModule(ActionBase):
         if not self.ignore_files:
             self.ignore_files = list()
 
-        if isinstance(self.ignore_files, string_types):
+        if isinstance(self.ignore_files, str):
             self.ignore_files = self.ignore_files.split()
 
         elif isinstance(self.ignore_files, dict):
@@ -66,7 +65,7 @@ class ActionModule(ActionBase):
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
 
         # convert/validate extensions list
-        if isinstance(self.valid_extensions, string_types):
+        if isinstance(self.valid_extensions, str):
             self.valid_extensions = list(self.valid_extensions)
         if not isinstance(self.valid_extensions, list):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')

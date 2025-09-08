@@ -537,6 +537,9 @@ class DnfModule(YumDnf):
         conf.sslverify = sslverify
 
         # Set installroot
+        if not os.path.isdir(installroot):
+            self.module.fail_json(msg=f"Installroot {installroot} must be a directory")
+
         conf.installroot = installroot
 
         # Load substitutions from the filesystem

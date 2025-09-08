@@ -229,14 +229,14 @@ class _AnsibleLazyTemplateDict(_AnsibleTaggedDict, _AnsibleLazyTemplateMixin):
     __slots__ = _AnsibleLazyTemplateMixin._SLOTS
 
     def __init__(self, contents: t.Iterable | _LazyValueSource, /, **kwargs) -> None:
-        _AnsibleLazyTemplateMixin.__init__(self, contents)
-
         if isinstance(contents, _AnsibleLazyTemplateDict):
             super().__init__(dict.items(contents), **kwargs)
         elif isinstance(contents, _LazyValueSource):
             super().__init__(contents.source, **kwargs)
         else:
             raise UnsupportedConstructionMethodError()
+
+        _AnsibleLazyTemplateMixin.__init__(self, contents)
 
     def get(self, key: t.Any, default: t.Any = None) -> t.Any:
         if (value := super().get(key, _NoKeySentinel)) is _NoKeySentinel:
@@ -372,14 +372,14 @@ class _AnsibleLazyTemplateList(_AnsibleTaggedList, _AnsibleLazyTemplateMixin):
     __slots__ = _AnsibleLazyTemplateMixin._SLOTS
 
     def __init__(self, contents: t.Iterable | _LazyValueSource, /) -> None:
-        _AnsibleLazyTemplateMixin.__init__(self, contents)
-
         if isinstance(contents, _AnsibleLazyTemplateList):
             super().__init__(list.__iter__(contents))
         elif isinstance(contents, _LazyValueSource):
             super().__init__(contents.source)
         else:
             raise UnsupportedConstructionMethodError()
+
+        _AnsibleLazyTemplateMixin.__init__(self, contents)
 
     def __getitem__(self, key: t.SupportsIndex | slice, /) -> t.Any:
         if type(key) is slice:  # pylint: disable=unidiomatic-typecheck
@@ -567,7 +567,7 @@ class _AnsibleLazyAccessTuple(_AnsibleTaggedTuple, _AnsibleLazyTemplateMixin):
 
     def __getitem__(self, key: t.SupportsIndex | slice, /) -> t.Any:
         if type(key) is slice:  # pylint: disable=unidiomatic-typecheck
-            return _AnsibleLazyAccessTuple(super().__getitem__(key))
+            return _AnsibleLazyAccessTuple(_LazyValueSource(source=super().__getitem__(key), templar=self._templar, lazy_options=self._lazy_options))
 
         value = super().__getitem__(key)
 

@@ -42,6 +42,7 @@ from .config import (
 )
 
 from .ci import (
+    AuthContext,
     get_ci_provider,
 )
 
@@ -68,6 +69,10 @@ class Resource(metaclass=abc.ABCMeta):
     def persist(self) -> bool:
         """True if the resource is persistent, otherwise false."""
 
+    @abc.abstractmethod
+    def get_config(self, core_ci: AnsibleCoreCI) -> dict[str, object]:
+        """Return the configuration for this resource."""
+
 
 @dataclasses.dataclass(frozen=True)
 class VmResource(Resource):
@@ -92,6 +97,16 @@ class VmResource(Resource):
         """True if the resource is persistent, otherwise false."""
         return True
 
+    def get_config(self, core_ci: AnsibleCoreCI) -> dict[str, object]:
+        """Return the configuration for this resource."""
+        return dict(
+            type="vm",
+            platform=self.platform,
+            version=self.version,
+            architecture=self.architecture,
+            public_key=core_ci.ssh_key.pub_contents,
+        )
+
 
 @dataclasses.dataclass(frozen=True)
 class CloudResource(Resource):
@@ -111,6 +126,12 @@ class CloudResource(Resource):
     def persist(self) -> bool:
         """True if the resource is persistent, otherwise false."""
         return False
+
+    def get_config(self, core_ci: AnsibleCoreCI) -> dict[str, object]:
+        """Return the configuration for this resource."""
+        return dict(
+            type="cloud",
+        )
 
 
 class AnsibleCoreCI:
@@ -189,7 +210,7 @@ class AnsibleCoreCI:
             display.info(f'Skipping started {self.label} instance.', verbosity=1)
             return None
 
-        return self._start(self.ci_provider.prepare_core_ci_auth())
+        return self._start()
 
     def stop(self) -> None:
         """Stop instance."""
@@ -288,26 +309,25 @@ class AnsibleCoreCI:
     def _uri(self) -> str:
         return f'{self.endpoint}/{self.stage}/{self.provider}/{self.instance_id}'
 
-    def _start(self, auth) -> dict[str, t.Any]:
+    def _start(self) -> dict[str, t.Any]:
         """Start instance."""
         display.info(f'Initializing new {self.label} instance using: {self._uri}', verbosity=1)
 
-        data = dict(
-            config=dict(
-                platform=self.platform,
-                version=self.version,
-                architecture=self.arch,
-                public_key=self.ssh_key.pub_contents,
-            )
+        config = self.resource.get_config(self)
+
+        context = AuthContext(
+            request_id=self.instance_id,
+            stage=self.stage,
+            provider=self.provider,
         )
 
-        data.update(auth=auth)
+        request = self.ci_provider.prepare_core_ci_request(config, context)
 
         headers = {
             'Content-Type': 'application/json',
         }
 
-        response = self._start_endpoint(data, headers)
+        response = self._start_endpoint(request, headers)
 
         self.started = True
         self._save()
