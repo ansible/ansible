@@ -203,9 +203,9 @@
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   vars:
-    test_api_fallback: 'galaxy_ng'
+    test_api_fallback: 'secondary'
     test_api_fallback_versions: 'v3, pulp-v3, v1'
-    test_name: 'secondary'
+    test_name: 'galaxy_ng'
 
 - name: run ansible-galaxy collection list tests
   include_tasks: list.yml
