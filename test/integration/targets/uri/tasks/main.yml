@@ -477,6 +477,25 @@
   register: multipart_invalid
   failed_when: '"failed to parse body as form-multipart: value must be a string, or mapping, cannot be type" not in multipart_invalid.msg'
 
+- name: multipart/form-data with file and retry
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      file:
+        filename: formdata.txt
+  retries: 1
+  delay: 0.01
+  register: result
+  failed_when: result is failed or result.attempts == 1
+
+- name: Assert multipart/form-data with file and retry
+  assert:
+    that:
+      - result.json.files.file | b64decode == '_multipart/form-data_\n'
+      - result.attempts == 2
+
 - name: Validate invalid method
   uri:
     url: https://{{ httpbin_host }}/anything

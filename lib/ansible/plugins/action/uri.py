@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import collections.abc as _c
 import os
+from copy import deepcopy
 
 from ansible.errors import AnsibleActionFail
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -53,7 +54,8 @@ class ActionModule(ActionBase):
                     raise AnsibleActionFail(
                         'body must be mapping, cannot be type %s' % body.__class__.__name__
                     )
-                for field, value in body.items():
+                new_body = deepcopy(body)
+                for field, value in new_body.items():
                     if not isinstance(value, _c.MutableMapping):
                         continue
                     content = value.get('content')
@@ -70,7 +72,7 @@ class ActionModule(ActionBase):
                     value['filename'] = tmp_src
                     self._transfer_file(filename, tmp_src)
                     self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
-                kwargs['body'] = body
+                kwargs['body'] = new_body
 
             new_module_args = self._task.args | kwargs
 
