@@ -73,9 +73,6 @@
         password:
           value: my_pass
           origin: role_path ~ "/files/galaxy_server.ini"
-        api_version:
-          value: None
-          origin: default
       release_galaxy:
       test_galaxy:
       my_galaxy_ng:
@@ -120,7 +117,6 @@
           auth_url:
           username:
           password:
-          api_version:
           timeout:
       origin: '{{ role_path ~ "/files/galaxy_server.ini" }}'
       gs_keys: '{{ gs.keys()|list|sort }}'

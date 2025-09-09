@@ -36,7 +36,6 @@ GALAXY_SERVER_DEF = [
     ('password', False, 'str'),
     ('token', False, 'str'),
     ('auth_url', False, 'str'),
-    ('api_version', False, 'int'),
     ('validate_certs', False, 'bool'),
     ('client_id', False, 'str'),
     ('client_secret', False, 'str'),
@@ -45,7 +44,6 @@ GALAXY_SERVER_DEF = [
 
 # config definition fields
 GALAXY_SERVER_ADDITIONAL = {
-    'api_version': {'default': None, 'choices': [2, 3]},
     'validate_certs': {'cli': [{'name': 'validate_certs'}]},
     'timeout': {'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
