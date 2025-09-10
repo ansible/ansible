@@ -162,12 +162,12 @@
 
     - name: Install file-path package to fresh venv
       pip:
-        name: "{{ repo_path }}/dummy-root"
+        name: "{{ repo_path }}"
         virtualenv: "{{ venv_path }}"
 
     - name: Check installation of file-path package to venv
       pip:
-        name: "{{ repo_path }}/dummy-root"
+        name: "{{ repo_path }}"
         virtualenv: "{{ venv_path }}"
       check_mode: true
       register: pip_result
