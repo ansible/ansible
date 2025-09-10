@@ -1,12 +1,7 @@
 # Get version of pip
-- name: Run pip --version command
-  shell: pip --version
-  register: pip_version_output
-
-- name: Parse pip version string
-  set_fact:
-    pip_major_version: "{{ pip_version_output.stdout | regex_search('\\d+\\.') | replace('.', '') }}"
-    pip_minor_version: "{{ pip_version_output.stdout | regex_search('\\.\\d+') | replace('.', '') }}"
+- name: Get the pip version
+  command: "{{ ansible_python_interpreter }} -c 'import pip; print(pip.__version__)'"
+  register: pip_version
 
 - name: Create local package
   vars:
@@ -62,7 +57,7 @@
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
     venv_path: "{{ remote_tmp_dir }}/gitvenv"
-  when: pip_major_version | int > 22 or (pip_major_version | int == 22 and pip_minor_version | int > 2)
+  when: pip_version.stdout is version("22.2", ">=")
   block:
   - name: Ensure fresh venv
     file:
@@ -153,7 +148,7 @@
   vars:
     venv_path: "{{ remote_tmp_dir }}/outdated_venv"
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
-  when: pip_major_version | int < 22 or (pip_major_version | int == 22 and pip_minor_version | int < 2)
+  when: pip_version.stdout is version("22.2", "<")
   block:
     - name: Ensure fresh venv
       file:
