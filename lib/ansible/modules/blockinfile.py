@@ -320,12 +320,12 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(r'{mark}', params['marker_begin'], marker) + os.linesep
-    marker1 = re.sub(r'{mark}', params['marker_end'], marker) + os.linesep
+    marker0 = re.sub(r'{mark}', params['marker_begin'], marker) + line_separator
+    marker1 = re.sub(r'{mark}', params['marker_end'], marker) + line_separator
 
     if present and block:
-        if not block.endswith(os.linesep):
-            block += os.linesep
+        if not block.endswith(line_separator):
+            block += line_separator
 
         blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
@@ -368,15 +368,15 @@ def main():
 
     # Ensure there is a line separator before the block of lines to be inserted
     if n0 > 0:
-        if not lines[n0 - 1].endswith(os.linesep):
-            lines[n0 - 1] += os.linesep
+        if not lines[n0 - 1].endswith(line_separator):
+            lines[n0 - 1] += line_separator
 
     # Before the block: check if we need to prepend a blank line
     # If yes, we need to add the blank line if we are not at the beginning of the file
     # and the previous line is not a blank line
     # In both cases, we need to shift by one on the right the inserting position of the block
     if params['prepend_newline'] and present:
-        if n0 != 0 and lines[n0 - 1] != os.linesep:
+        if n0 != 0 and lines[n0 - 1] != line_separator:
             lines[n0:n0] = blank_line
             n0 += 1
 
@@ -388,7 +388,7 @@ def main():
     # and the line right after is not a blank line
     if params['append_newline'] and present:
         line_after_block = n0 + len(blocklines)
-        if line_after_block < len(lines) and lines[line_after_block] != os.linesep:
+        if line_after_block < len(lines) and lines[line_after_block] != line_separator:
             lines[line_after_block:line_after_block] = blank_line
 
     if lines:
