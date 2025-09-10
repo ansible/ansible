@@ -295,8 +295,6 @@ virtualenv:
 import argparse
 import json
 import os
-from pathlib import Path
-from pip import __version__ as pip_version
 import re
 import sys
 import tempfile
