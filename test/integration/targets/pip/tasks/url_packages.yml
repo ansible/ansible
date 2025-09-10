@@ -1,7 +1,16 @@
-- name: Check vcs package installation and checking functionality
+# Get version of pip
+- name: Run pip --version command
+  shell: pip --version
+  register: pip_version_output
+
+- name: Parse pip version string
+  set_fact:
+    pip_major_version: "{{ pip_version_output.stdout | regex_search('\\d+\\.') | replace('.', '') }}"
+    pip_minor_version: "{{ pip_version_output.stdout | regex_search('\\.\\d+') | replace('.', '') }}"
+
+- name: Create local package
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
-    venv_path: "{{ remote_tmp_dir }}/gitvenv"
   block:
   - name: Create a nested package directory layout
     file:
@@ -48,6 +57,13 @@
       - git add .
       - git -c user.name="Ansible Test" -c user.email="ansible@ansible.ansible" commit -m "First commit"
 
+# Test for correct handling of vcs packages in pip versions > 22.2
+- name: Check vcs package installation and checking functionality
+  vars:
+    repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
+    venv_path: "{{ remote_tmp_dir }}/gitvenv"
+  when: pip_major_version | int > 22 or (pip_major_version | int == 22 and pip_minor_version | int > 2)
+  block:
   - name: Ensure fresh venv
     file:
       path: "{{ venv_path }}"
@@ -123,7 +139,7 @@
   - name: Check installation of file-path package
     pip:
       virtualenv: "{{ venv_path }}"
-      name: "{{ repo_path }}/dummy_root/dummy_subdirectory"
+      name: "{{ repo_path }}/dummy-root/dummy-subdirectory"
     check_mode: true
     register: check_file_install_subdirectory
 
@@ -132,3 +148,30 @@
       that:
         - check_file_install_root is not changed
         - check_file_install_subdirectory is changed
+
+- name: Check for failure in handling vcs packages with outdated pip
+  vars:
+    venv_path: "{{ remote_tmp_dir }}/outdated_venv"
+    repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
+  when: pip_major_version | int < 22 or (pip_major_version | int == 22 and pip_minor_version | int < 2)
+  block:
+    - name: Ensure fresh venv
+      file:
+        path: "{{ venv_path }}"
+        state: absent
+
+    - name: Install file-path package to fresh venv
+      pip:
+        name: "{{ repo_path }}/dummy-root"
+        virtualenv: "{{ venv_path }}"
+
+    - name: Check installation of file-path package to venv
+      pip:
+        name: "{{ repo_path }}/dummy-root"
+        virtualenv: "{{ venv_path }}"
+      check_mode: true
+      register: pip_result
+
+    - name: Assert improper name resolution due to outdated pip
+      assert:
+        that: pip_result is changed

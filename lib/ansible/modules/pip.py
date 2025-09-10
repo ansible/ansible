@@ -296,6 +296,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from pip import __version__ as pip_version
 import re
 import sys
 import tempfile
@@ -616,7 +617,8 @@ def setup_virtualenv(module, env, chdir, out, err):
 def _resolve_package_names(
         module: AnsibleModule,
         package_list: list[Package],
-        pip: list[str]
+        pip: list[str],
+        python_bin: str
 ) -> list[Package]:
     """Return a list of Packages with names extracted from metadata using pip"""
     pkgs_to_resolve = [pkg for pkg in package_list if not pkg.has_requirement]
@@ -625,8 +627,23 @@ def _resolve_package_names(
         return package_list
 
     # Unsetting 'FORCE_COLOR' with 'NO_COLOR' and 'TTY_COMPATIBLE' env vars, helps to
-    # make pip output clean JSON without injected ANSI sequences that might corrupt it.
+    # clean pip output without injected ANSI sequences that might corrupt it.
     os.environ.pop('FORCE_COLOR', None)
+
+    # pip install --dry-run is not available in pip versions older than 22.2, so check for this
+    # and use the non-resolved package names if pip is outdated
+    pip_dep = _get_package_info(module, "pip", python_bin)
+
+    if not pip_dep:
+        module.warn("Could not determine pip version, check module may not behave as expected")
+        return package_list
+
+    installed_pip = LooseVersion(pip_dep.split('==')[1])
+    minimum_pip = LooseVersion("22.2")
+
+    if installed_pip < minimum_pip:
+        module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <22.2")
+        return package_list  # Just use the default behavior
 
     rc, json_out, err = module.run_command(
         [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
@@ -642,30 +659,7 @@ def _resolve_package_names(
         package_objects = (Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
                            for install_report in report['install'])
     else:
-        # Else, if that fails due to --dry-run not being present in pip
-        # versions older than 22.2 (ex: Ubuntu 22.04), fall back to using
-        # the potentially faulty pip download method and warn the user.
-
-        pip_downloads_dir = Path(module.tmpdir) / 'pipdownloads'
-
-        rc, out, err = module.run_command([*pip, 'download', f'--dest={pip_downloads_dir}', '--no-deps',
-                                           *(pkg.download_information for pkg in pkgs_to_resolve)])
-
-        if rc != 0:
-            # If it fails (usually due to no pkg at url), just dump the error
-            module.fail_json(rc=rc, msg=out, err=err)
-
-        # Only from this point onward can we be sure that we're using the fallback, warn now.
-        module.warn("Using check mode with URL-sourced packages is potentially error-prone on pip versions older than 22.2")
-
-        out_lines = out.splitlines()
-
-        saved_packages = [Path(line.rsplit(" ", 1)[1]) for line in out_lines if 'Saved' in line]
-
-        if saved_packages:
-            package_objects = (Package.from_dist_path(path) for path in saved_packages)
-
-        package_objects = [Package(line.rsplit(" ", 1)[1]) for line in out_lines if 'Successfully downloaded' in line]
+        module.fail_json(rc=rc, msg=json_out, err=err)
 
     other_packages = (pkg for pkg in package_list if pkg.has_requirement)
     return [*other_packages, *package_objects]
@@ -726,14 +720,6 @@ class Package:
     @property
     def has_requirement(self) -> bool:
         return self._requirement is not None
-
-    @property
-    def download_information(self) -> str:
-        """Returns the necessary information to pass into pip download"""
-        if "@" not in self.package_name:
-            return self.package_name
-        _package_name, url = self.package_name.rsplit('@', 1)
-        return url
 
     @staticmethod
     def canonicalize_name(name):
@@ -928,7 +914,7 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                normalized_package_list = _resolve_package_names(module, packages, pip)
+                normalized_package_list = _resolve_package_names(module, packages, pip, py_bin)
 
                 for package in normalized_package_list:
                     is_present = _is_present(module, package, pkg_list, pkg_cmd)
