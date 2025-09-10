@@ -675,10 +675,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             return remote_paths
         if res['rc'] == 127:
             # setfacl binary does not exists or we don't have permission to use it.
-            self._display.vvv(f"setfacl binary does not exist or does not have permission to use it. Trying chmod instead. Err: {res['stderr']}")
+            self._display.debug(f"setfacl binary does not exist or does not have permission to use it. Trying chmod instead. Err: {res!r}")
         if res['rc'] == 2:
-            # invalid syntax
-            self._display.vvv(f"setfacl command failed with an invalid syntax. Trying chmod instead. err: {res['stderr']}")
+            # invalid syntax (for example, missing user, missing colon)
+            self._display.debug(f"setfacl command failed with an invalid syntax. Trying chmod instead. Err: {res!r}")
 
         # Step 3b: Set execute if we need to. We do this before anything else
         # because some of the methods below might work but not let us set
