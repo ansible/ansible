@@ -654,8 +654,10 @@ def _resolve_package_names(
     if rc == 0:
         # If it succeeds, handle the report
         report = json.loads(json_out)
-        package_objects = (Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
-                           for install_report in report['install'])
+        package_objects = (
+            Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
+            for install_report in report['install']
+        )
     else:
         module.fail_json(rc=rc, msg=json_out, err=err)
 
@@ -717,6 +719,7 @@ class Package:
 
     @property
     def has_requirement(self) -> bool:
+        """Compute whether the object represents complex requirement."""
         return self._requirement is not None
 
     @staticmethod
