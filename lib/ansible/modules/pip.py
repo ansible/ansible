@@ -300,7 +300,6 @@ import sys
 import tempfile
 import operator
 import shlex
-from urllib import parse
 
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -646,7 +645,7 @@ def _resolve_package_names(
         return package_list  # Just use the default behavior
 
     rc, json_out, err = module.run_command(
-        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--no-color' '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
+        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--no-color', '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
         environ_update={
             'NO_COLOR': '1',
             'TTY_COMPATIBLE': '0',
