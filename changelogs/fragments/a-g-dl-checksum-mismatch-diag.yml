@@ -1,0 +1,3 @@
+minor_changes:
+- ansible-galaxy - Update the error message in regards to collection download checksum mismatch to include the downloaded size,
+  information about incomplete reads if the ``Content-Length`` differs from the downloaded file size.
