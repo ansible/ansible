@@ -7,7 +7,7 @@ set -x
 # common args for all tests
 common=(--venv --color --truncate 0 "${@}")
 
-# run a lightweight test that generates code coverge output
+# run a lightweight test that generates code coverage output
 ansible-test sanity --test import "${common[@]}" --coverage
 
 # report on code coverage in all supported formats
