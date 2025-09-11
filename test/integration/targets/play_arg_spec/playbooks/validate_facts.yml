@@ -1,0 +1,7 @@
+- name: Gather Facts
+  hosts: localhost
+  gather_facts: True
+  validate_argspec: True
+  vars:
+    ansible_facts_modules:
+      - custom_facts

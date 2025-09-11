@@ -175,15 +175,15 @@ class PlayIterator:
         setup_block.block = [setup_task]
 
         validation_task = Task.load({
-            'name': f'Validating arguments against arg spec {self._play.name}',
+            'name': f'Validating arguments against arg spec {self._play.validate_argspec}',
             'action': 'ansible.builtin.validate_argument_spec',
             'args': {
                 # 'provided_arguments': {},  # allow configuration via module_defaults
                 'argument_spec': self._play.argument_spec,
                 'validate_args_context': {
                     'type': 'play',
-                    'name': self._play.name,
-                    'argument_spec_name': self._play.name,
+                    'name': self._play.validate_argspec,
+                    'argument_spec_name': self._play.validate_argspec,
                     'path': self._play._metadata_path,
                 },
             },
@@ -193,7 +193,8 @@ class PlayIterator:
         validation_task.set_loader(self._play._loader)
         if self._play._included_conditional is not None:
             validation_task.when = self._play._included_conditional[:]
-        setup_block.block.append(validation_task)
+        if self._play.validate_argspec:
+            setup_block.block.append(validation_task)
 
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
