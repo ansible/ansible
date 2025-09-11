@@ -37,7 +37,7 @@ def get_signature_from_source(source, display=None):  # type: (str, t.Optional[D
             f"Failed to get signature for collection verification from '{source}': {e}"
         ) from e
 
-    return signature
+    return signature.decode('utf-8')
 
 
 def run_gpg_verify(

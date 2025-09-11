@@ -9,7 +9,7 @@ from ansible.module_utils import urls
 
 def test_basic_auth_header():
     header = urls.basic_auth_header('user', 'passwd')
-    assert header == b'Basic dXNlcjpwYXNzd2Q='
+    assert header == 'Basic dXNlcjpwYXNzd2Q='
 
 
 def test_ParseResultDottedDict():

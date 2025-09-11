@@ -90,7 +90,7 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
 
     req = args[0]
     assert req.headers == {
-        'Authorization': b'Basic dXNlcjpwYXNzd2Q=',
+        'Authorization': 'Basic dXNlcjpwYXNzd2Q=',
         'Cache-control': 'no-cache',
         'Foo': 'bar',
         'User-agent': 'ansible-tests'
@@ -177,7 +177,7 @@ def test_Request_open_headers(urlopen_mock, install_opener_mock):
 
 
 def test_Request_open_username(urlopen_mock, install_opener_mock):
-    r = Request().open('GET', 'http://ansible.com/', url_username='user')
+    r = Request().open('GET', 'http://ansible.com/', url_username='user', url_password='passwd')
 
     opener = install_opener_mock.call_args[0][0]
     handlers = opener.handlers
@@ -192,7 +192,7 @@ def test_Request_open_username(urlopen_mock, install_opener_mock):
         if isinstance(handler, expected_handlers):
             found_handlers.append(handler)
     assert len(found_handlers) == 2
-    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user', None)}
+    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user', 'passwd')}
 
 
 @pytest.mark.parametrize('url, expected', (
@@ -238,7 +238,7 @@ def test_Request_open_username_force_basic(urlopen_mock, install_opener_mock):
 
     args = urlopen_mock.call_args[0]
     req = args[0]
-    assert req.headers.get('Authorization') == b'Basic dXNlcjpwYXNzd2Q='
+    assert req.headers.get('Authorization') == 'Basic dXNlcjpwYXNzd2Q='
 
 
 def test_Request_open_auth_in_netloc(urlopen_mock, install_opener_mock):
@@ -270,7 +270,7 @@ def test_Request_open_netrc(urlopen_mock, install_opener_mock, monkeypatch):
     r = Request().open('GET', 'http://ansible.com/')
     args = urlopen_mock.call_args[0]
     req = args[0]
-    assert req.headers.get('Authorization') == b'Basic dXNlcjpwYXNzd2Q='
+    assert req.headers.get('Authorization') == 'Basic dXNlcjpwYXNzd2Q='
 
     r = Request().open('GET', 'http://foo.ansible.com/')
     args = urlopen_mock.call_args[0]
