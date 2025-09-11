@@ -71,10 +71,6 @@
       name: []
       virtualenv: "{{ venv_path }}"
 
-  - name: Re-get the pip version to properly skip
-    command: "{{ venv_path }}/bin/python -c 'import pip; print(pip.__version__)'"
-    register: pip_version
-
   - name: Check installation of packages via git
     pip:
       name: "git+file://{{ repo_path }}/.git"
@@ -166,6 +162,10 @@
     - name: Re-get the pip version to properly skip
       command: "{{ venv_path }}/bin/python -c 'import pip; print(pip.__version__)'"
       register: pip_version
+
+    - name: View the pip version second time
+      debug:
+        var: pip_version
 
     - name: Install file-path package to fresh venv
       pip:
