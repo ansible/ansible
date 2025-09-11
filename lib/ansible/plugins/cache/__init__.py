@@ -162,6 +162,7 @@ class BaseFileCacheModule(BaseCacheModule):
             except OSError as ex:
                 display.error_as_warning(f"Error in {self.plugin_name!r} cache plugin while trying to write to {tmpfile_path!r}.", exception=ex)
             try:
+                os.close(tmpfile_handle)  # os.rename fails if handle is still open in WSL
                 os.rename(tmpfile_path, cachefile)
                 os.chmod(cachefile, mode=S_IRWU_RG_RO)
             except OSError as ex:
