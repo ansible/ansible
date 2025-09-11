@@ -1,0 +1,2 @@
+ci_files_url: "https://ci-files.testing.ansible.com/test/integration/targets/dnf"
+updateinfo_repo: "https://ci-files.testing.ansible.com/test/integration/targets/setup_rpm_repo/repo-with-updateinfo"

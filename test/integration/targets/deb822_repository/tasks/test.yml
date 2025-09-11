@@ -179,7 +179,7 @@
       - main
       - contrib
       - non-free
-    signed_by: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+    signed_by: "{{ ci_files_url }}/apt-key-example-binary.gpg"
   register: signed_by_url
 
 - assert:
