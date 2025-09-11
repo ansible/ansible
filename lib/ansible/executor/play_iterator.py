@@ -193,8 +193,7 @@ class PlayIterator:
         validation_task.set_loader(self._play._loader)
         if self._play._included_conditional is not None:
             validation_task.when = self._play._included_conditional[:]
-        if self._play.validate_argspec:
-            setup_block.block.append(validation_task)
+        setup_block.block.append(validation_task)
 
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
