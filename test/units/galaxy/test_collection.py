@@ -919,10 +919,12 @@ def test_download_file_hash_mismatch(tmp_path_factory, monkeypatch):
     data = b"\x00\x01\x02\x03"
 
     mock_open = MagicMock()
-    mock_open.return_value = BytesIO(data)
+    mock_open.return_value = resp = MagicMock()
+    resp.read = BytesIO(data).read
+    resp.headers = {'content-length': f'{len(data)}'}
     monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
 
-    expected = "Mismatch artifact hash with downloaded file"
+    expected = "Mismatched artifact hash with downloaded file of 4 bytes."
     with pytest.raises(AnsibleError, match=expected):
         collection._download_file('http://google.com/file', temp_dir, 'bad', True)
 
