@@ -36,6 +36,7 @@ from ansible.galaxy.collection import (
     find_existing_collections,
     install_collections,
     publish_collection,
+    resolve_collection_dependencies,
     validate_collection_name,
     validate_collection_path,
     verify_collections,
@@ -293,6 +294,7 @@ class GalaxyCLI(CLI):
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
+        self.add_graph_options(collection_parser, parents=[common, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
@@ -587,6 +589,21 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                         default=False,
                                         help='Use tar instead of the scm archive option when packaging the role.')
+
+    def add_graph_options(self, parser, parents=None):
+        graph_parser = parser.add_parser('graph', parents=parents,
+                                         help='Display a dependency graph of collections.')
+        graph_parser.set_defaults(func=self.execute_graph)
+
+        graph_parser.add_argument('args', metavar='collection_name', nargs='*',
+                                  help='The collection(s) name or path/url to a tar.gz collection artifact. This is '
+                                       'mutually exclusive with --requirements-file.')
+        graph_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                  help='A file containing a list of collections to be resolved.')
+        graph_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                  help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
+        graph_parser.add_argument('--format', dest='output_format', choices=['text', 'dot'], default='text',
+                                  help='Output format for the dependency graph (text or dot).')
 
     def add_build_options(self, parser, parents=None):
         build_parser = parser.add_parser('build', parents=parents,
@@ -1885,6 +1902,101 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return 0
+
+    @with_collection_artifacts_manager
+    def execute_graph(self, artifacts_manager=None):
+        """
+        Display a dependency graph of collections.
+        """
+        requirements = self._require_one_of_collections_requirements(
+            context.CLIARGS['args'],
+            context.CLIARGS['requirements'],
+            artifacts_manager=artifacts_manager,
+        )
+
+        collection_requirements = requirements['collections']
+        if not collection_requirements:
+            display.display("No collection requirements found")
+            return
+
+        allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
+        output_format = context.CLIARGS.get('output_format', 'text')
+
+        try:
+            result = resolve_collection_dependencies(
+                collection_requirements,
+                self.api_servers,
+                allow_pre_release=allow_pre_release,
+                concrete_artifacts_manager=artifacts_manager,
+                offline=context.CLIARGS.get('offline', False),
+            )
+
+            self._display_dependency_graph(result, output_format)
+        except Exception as e:
+            display.error(f"Failed to resolve collection dependencies: {e}")
+            return 1
+
+        return 0
+
+    def _display_dependency_graph(self, result, output_format):
+        """Display the dependency graph in the specified format."""
+        if output_format == 'dot':
+            self._display_dot_graph(result)
+        else:
+            self._display_text_graph(result)
+
+    def _display_text_graph(self, result):
+        """Display the dependency graph in text format."""
+        all_collections = set(result.mapping.keys())
+        dependencies = set()
+        for collection in all_collections:
+            dependencies.update(result.graph.iter_children(collection))
+
+        root_collections = all_collections - dependencies
+
+        for collection in sorted(root_collections):
+            candidate = result.mapping[collection]
+            display.display(f"{candidate.fqcn}:{candidate.ver}")
+            self._display_dependency_tree(result, collection, "    ", set())
+            display.display("")
+
+    def _display_dependency_tree(self, result, collection, prefix, visited):
+        """Recursively display the dependency tree for a collection."""
+        if collection in visited:
+            return
+
+        visited.add(collection)
+        dependencies = sorted(result.graph.iter_children(collection))
+
+        for i, dep in enumerate(dependencies):
+            dep_candidate = result.mapping[dep]
+            is_last = i == len(dependencies) - 1
+
+            tree_char = "└── " if is_last else "├── "
+            display.display(f"{prefix}{tree_char}{dep_candidate.fqcn}:{dep_candidate.ver}")
+
+            next_prefix = prefix + ("    " if is_last else "│   ")
+            self._display_dependency_tree(result, dep, next_prefix, visited.copy())
+
+    def _display_dot_graph(self, result):
+        """Display the dependency graph in DOT format for Graphviz."""
+        display.display("digraph dependencies {")
+        display.display('  rankdir=TB;')
+        display.display('  node [shape=box];')
+        display.display("")
+
+        for collection, candidate in result.mapping.items():
+            display.display(f'  "{candidate.fqcn}" [label="{candidate.fqcn}\\n{candidate.ver}"];')
+
+        display.display("")
+
+        for collection, candidate in result.mapping.items():
+            dependencies = list(result.graph.iter_children(collection))
+            for dep in dependencies:
+                dep_candidate = result.mapping[dep]
+                display.display(f'  "{candidate.fqcn}" -> "{dep_candidate.fqcn}";')
+
+        display.display("}")
 
 
 def main(args=None):

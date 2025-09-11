@@ -9,7 +9,6 @@ offline_server: https://test-hub.demolab.local/api/galaxy/content/api/
 # It would be redundant to test every minor version since 0.8.0, so we just test against the latest minor release.
 # NOTE: If ansible-galaxy incorporates new resolvelib features, this matrix should be updated to verify the features work on all supported versions.
 supported_resolvelib_versions:
-  - "0.5.3"  # test CollectionDependencyProvider050
   - "0.6.0"  # test CollectionDependencyProvider060
   - "0.7.0"  # test CollectionDependencyProvider070
   - "<2.0.0"  # test CollectionDependencyProvider080

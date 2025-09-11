@@ -24,7 +24,7 @@ import threading
 import time
 import typing as t
 
-from collections import namedtuple
+from collections import namedtuple, deque
 from contextlib import contextmanager
 from dataclasses import dataclass
 from hashlib import sha256
@@ -32,6 +32,7 @@ from io import BytesIO
 from importlib.metadata import distribution
 from importlib.resources import files
 from itertools import chain
+from types import SimpleNamespace
 
 try:
     from packaging.requirements import Requirement as PkgReq
@@ -55,6 +56,7 @@ if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
+    from resolvelib.resolvers import Result
 
     ManifestKeysType = t.Literal[
         'collection_info', 'file_manifest_file', 'format',
@@ -540,7 +542,7 @@ def download_collections(
             # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
             include_signatures=False,
             offline=False,
-        )
+        ).mapping
 
     b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
 
@@ -636,6 +638,66 @@ def publish_collection(collection_path, api, wait, timeout):
                         % (api.name, api.api_server, import_uri))
 
 
+def _topological_sort_collections(result):
+    # type: (Result) -> t.Iterator[str]
+    """
+    Yield collections in topological order using Kahn's algorithm.
+    Dependencies will be yielded before their dependents.
+    """
+    in_degree = {}
+
+    for collection in result.mapping:
+        dependencies = list(result.graph.iter_children(collection))
+        in_degree[collection] = len([dep for dep in dependencies if dep in result.mapping])
+
+    queue = deque((collection for collection, degree in in_degree.items() if degree == 0))
+    processed = set()
+
+    while queue:
+        current = queue.popleft()
+        processed.add(current)
+        yield current
+
+        for dependent in result.graph.iter_parents(current):
+            if dependent in in_degree:
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+
+    missing = set(result.mapping.keys()) - processed
+    if missing:
+        yield from missing
+
+
+def resolve_collection_dependencies(
+        requirements: t.Iterable[Requirement],
+        galaxy_apis: t.Iterable[GalaxyAPI],
+        allow_pre_release: bool = False,
+        concrete_artifacts_manager: ConcreteArtifactsManager | None = None,
+        offline: bool = False,
+) -> Result:
+    """
+    Resolve collection dependencies and return the result object.
+    Used by the graph command to get dependency information without installation.
+    """
+    with _display_progress("Process dependency resolution"):
+        collection_dep_resolver = build_collection_dependency_resolver(
+            galaxy_apis=galaxy_apis,
+            concrete_artifacts_manager=concrete_artifacts_manager,
+            preferred_candidates=None,
+            with_deps=True,
+            with_pre_releases=allow_pre_release,
+            upgrade=False,
+            include_signatures=False,
+            offline=offline,
+        )
+
+        return collection_dep_resolver.resolve(
+            requirements,
+            max_rounds=2000000,
+        )
+
+
 def install_collections(
         collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
@@ -719,7 +781,7 @@ def install_collections(
         for coll in preferred_requirements
     }
     with _display_progress("Process install dependency map"):
-        dependency_map = _resolve_depenency_map(
+        result = _resolve_depenency_map(
             collections,
             galaxy_apis=apis,
             preferred_candidates=preferred_collections,
@@ -732,8 +794,9 @@ def install_collections(
         )
 
     keyring_exists = artifacts_manager.keyring is not None
-    with _display_progress("Starting collection install process"):
-        for fqcn, concrete_coll_pin in dependency_map.items():
+    with _display_progress("Starting collection install process") as progress:
+        for fqcn in _topological_sort_collections(result):
+            concrete_coll_pin = result.mapping[fqcn]
             if concrete_coll_pin.is_virtual:
                 display.vvvv(
                     "Encountered {coll!s}, skipping.".
@@ -762,6 +825,7 @@ def install_collections(
             if concrete_coll_pin.type == 'galaxy':
                 concrete_coll_pin = concrete_coll_pin.with_signatures_repopulated()
 
+            progress.pause()
             try:
                 install(concrete_coll_pin, output_path, artifacts_manager)
             except AnsibleError as err:
@@ -885,7 +949,7 @@ def verify_collections(
                 if local_verify_only:
                     remote_collection = None
                 else:
-                    signatures = api_proxy.get_signatures(local_collection)
+                    signatures = api_proxy.get_signatures(local_collection).data
                     signatures.extend([
                         get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
@@ -957,35 +1021,55 @@ def _display_progress(msg=None):
     display_wheel = sys.stdout.isatty() if config_display is None else config_display
 
     global display
-    if msg is not None:
-        display.display(msg)
 
-    if not display_wheel:
-        yield
+    if not display_wheel or display.verbosity:
+        if msg:
+            display.display(msg)
+        yield SimpleNamespace(pause=lambda: None, unpause=lambda: None)
         return
 
-    def progress(display_queue, actual_display):
-        actual_display.debug("Starting display_progress display thread")
-        t = threading.current_thread()
+    class Progress(threading.Thread):
+        def __init__(self, display_queue, actual_display):
+            self.display_queue = display_queue
+            self.actual_display = actual_display
+            self._paused = False
+            super().__init__()
 
-        while True:
-            for c in "|/-\\":
-                actual_display.display(c + "\b", newline=False)
-                time.sleep(0.1)
+        def pause(self):
+            if self._paused:
+                return
+            self.actual_display.display('', stderr=True)
+            self._paused = True
 
-                # Display a message from the main thread
-                while True:
-                    try:
-                        method, args, kwargs = display_queue.get(block=False, timeout=0.1)
-                    except queue.Empty:
-                        break
-                    else:
-                        func = getattr(actual_display, method)
-                        func(*args, **kwargs)
+        def unpause(self):
+            self._paused = False
 
-                if getattr(t, "finish", False):
-                    actual_display.debug("Received end signal for display_progress display thread")
-                    return
+        def run(self):
+            actual_display = self.actual_display
+            display_queue = self.display_queue
+
+            actual_display.debug("Starting display_progress display thread")
+            t = threading.current_thread()
+
+            while True:
+                for c in ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']:
+                    if not self._paused:
+                        actual_display.display(f'\r{c} {msg or ""}', newline=False, stderr=True)
+                        time.sleep(0.1)
+
+                    # Display a message from the main thread
+                    while True:
+                        try:
+                            method, args, kwargs = display_queue.get(block=False, timeout=0.1)
+                        except queue.Empty:
+                            break
+                        else:
+                            func = getattr(actual_display, method)
+                            func(*args, **kwargs)
+
+                    if getattr(t, "finish", False):
+                        actual_display.debug("Received end signal for display_progress display thread")
+                        return
 
     class DisplayThread(object):
 
@@ -1003,12 +1087,12 @@ def _display_progress(msg=None):
     try:
         display_queue = queue.Queue()
         display = DisplayThread(display_queue)
-        t = threading.Thread(target=progress, args=(display_queue, old_display))
+        t = Progress(display_queue, old_display)
         t.daemon = True
         t.start()
 
         try:
-            yield
+            yield t
         finally:
             t.finish = True
             t.join()
@@ -1017,6 +1101,7 @@ def _display_progress(msg=None):
         raise
     finally:
         display = old_display
+    display.display('', stderr=True)
 
 
 def _verify_file_hash(b_path, filename, expected_hash, error_queue):
@@ -1796,8 +1881,8 @@ def _resolve_depenency_map(
         upgrade,  # type: bool
         include_signatures,  # type: bool
         offline,  # type: bool
-):  # type: (...) -> dict[str, Candidate]
-    """Return the resolved dependency map."""
+):  # type: (...) -> Result
+    """Return the resolved dependency result."""
     if not HAS_RESOLVELIB:
         raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")
     if not HAS_PACKAGING:
@@ -1842,7 +1927,7 @@ def _resolve_depenency_map(
         return collection_dep_resolver.resolve(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
-        ).mapping
+        )
     except CollectionDependencyResolutionImpossible as dep_exc:
         conflict_causes = (
             '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
