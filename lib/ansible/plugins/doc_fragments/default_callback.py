@@ -9,16 +9,6 @@ class ModuleDocFragment(object):
 
     DOCUMENTATION = r"""
     options:
-      display_included_hosts:
-        name: Show included hosts
-        description: "Toggle to control displaying included task/host results in a task."
-        type: bool
-        default: yes
-        env:
-          - name: ANSIBLE_DISPLAY_INCLUDED_HOSTS
-        ini:
-          - key: display_included_hosts
-            section: defaults
       display_skipped_hosts:
         name: Show skipped hosts
         description: "Toggle to control displaying skipped task/host results in a task."
@@ -54,6 +44,17 @@ class ModuleDocFragment(object):
           - key: display_failed_stderr
             section: defaults
         version_added: '2.7'
+      display_included_hosts:
+        name: Show included hosts
+        description: "Toggle to control displaying included task/host results in a task."
+        type: bool
+        default: yes
+        env:
+          - name: ANSIBLE_DISPLAY_INCLUDED_HOSTS
+        ini:
+          - key: display_included_hosts
+            section: defaults
+        version_added: '2.20'
       show_custom_stats:
         name: Show custom stats
         description: 'This adds the custom stats set via the set_stats plugin to the play recap.'
