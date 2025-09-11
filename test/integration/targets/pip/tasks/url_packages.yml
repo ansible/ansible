@@ -3,6 +3,10 @@
   command: "{{ ansible_python_interpreter }} -c 'import pip; print(pip.__version__)'"
   register: pip_version
 
+- name: View version
+  debug:
+    var: pip_version
+
 - name: Create local package
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
@@ -70,6 +74,10 @@
     pip:
       name: []
       virtualenv: "{{ venv_path }}"
+
+  - name: Re-get the pip version to properly skip
+    command: "{{ venv_path }}/bin/python -c 'import pip; print(pip.__version__)'"
+    register: pip_version
 
   - name: Check installation of packages via git
     pip:
@@ -163,6 +171,10 @@
       pip:
         name: "{{ repo_path }}"
         virtualenv: "{{ venv_path }}"
+
+    - name: Re-get the pip version to properly skip
+      command: "{{ venv_path }}/bin/python -c 'import pip; print(pip.__version__)'"
+      register: pip_version
 
     - name: Check installation of file-path package to venv
       pip:
