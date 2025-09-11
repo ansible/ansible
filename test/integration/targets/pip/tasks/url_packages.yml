@@ -34,7 +34,7 @@
         [build-system]
         requires = ["setuptools>=61.0"]
         build-backend = "setuptools.build_meta"
-
+        
         [project]
         name = "nested-package"
         version = "0.0.1"
@@ -52,12 +52,14 @@
       - git add .
       - git -c user.name="Ansible Test" -c user.email="ansible@ansible.ansible" commit -m "First commit"
 
-# Test for correct handling of vcs packages in pip versions > 22.2
+# Test for correct handling of vcs packages in pip versions >= 24.1
+# Despite dry-run being added in 22.2, it fails in several cases until
+# version 24.1
 - name: Check vcs package installation and checking functionality
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
     venv_path: "{{ remote_tmp_dir }}/gitvenv"
-  when: pip_version.stdout is version("22.2", ">=")
+  when: pip_version.stdout is version("24.1", ">=")
   block:
   - name: Ensure fresh venv
     file:
@@ -144,11 +146,13 @@
         - check_file_install_root is not changed
         - check_file_install_subdirectory is changed
 
+# This tests for default behavior in the unsupported versions
+# of pip (<24.1)
 - name: Check for failure in handling vcs packages with outdated pip
   vars:
     venv_path: "{{ remote_tmp_dir }}/outdated_venv"
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
-  when: pip_version.stdout is version("22.2", "<")
+  when: pip_version.stdout is version("24.1", "<")
   block:
     - name: Ensure fresh venv
       file:

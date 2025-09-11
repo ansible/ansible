@@ -300,6 +300,7 @@ import sys
 import tempfile
 import operator
 import shlex
+from urllib import parse
 
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -628,8 +629,9 @@ def _resolve_package_names(
     # clean pip output without injected ANSI sequences that might corrupt it.
     os.environ.pop('FORCE_COLOR', None)
 
-    # pip install --dry-run is not available in pip versions older than 22.2, so check for this
-    # and use the non-resolved package names if pip is outdated
+    # pip install --dry-run is not available in pip versions older than 22.2 and it doesn't
+    # work correctly on all cases until 24.1, so check for this and use the non-resolved
+    # package names if pip is outdated.
     pip_dep = _get_package_info(module, "pip", python_bin)
 
     if not pip_dep:
@@ -637,14 +639,14 @@ def _resolve_package_names(
         return package_list
 
     installed_pip = LooseVersion(pip_dep.split('==')[1])
-    minimum_pip = LooseVersion("22.2")
+    minimum_pip = LooseVersion("24.1")
 
     if installed_pip < minimum_pip:
-        module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <22.2")
+        module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <24.1")
         return package_list  # Just use the default behavior
 
     rc, json_out, err = module.run_command(
-        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
+        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--no-color' '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
         environ_update={
             'NO_COLOR': '1',
             'TTY_COMPATIBLE': '0',
