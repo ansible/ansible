@@ -50,7 +50,7 @@ DOCKER_COMMANDS = [
     'podman',
 ]
 
-UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:3.2.0'
+UTILITY_IMAGE = 'quay.io/ansible/ansible-test-utility-container:3.4.0'
 
 # Max number of open files in a docker container.
 # Passed with --ulimit option to the docker run command.
