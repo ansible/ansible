@@ -1,0 +1,2 @@
+- hosts: localhost
+  validate_argspec: True

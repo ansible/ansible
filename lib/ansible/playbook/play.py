@@ -464,21 +464,25 @@ class Play(Base, Taggable, CollectionSearch):
             return None
 
         # Use the requested argument spec or fall back to the play name
+        argspec_name = None
         if isinstance(value, str):
-            argspec_name = value or self.name
-        else:
+            argspec_name = value
+        elif self._ds.get("name"):
             argspec_name = self.name
 
-        config_err = ""
+        metadata_err = argspec_err = ""
         if not argspec_name:
-            config_err += "No play name is defined. When validate_argspec is True, a play name is required. "
-            config_err += "Alternatively, set validate_argspec to the name of an argument spec. "
+            argspec_err = (
+                "A play name is required when validate_argspec is True. "
+                "Alternatively, set validate_argspec to the name of an argument spec."
+            )
         if self._metadata_path is None:
-            config_err += "No playbook meta path could be found. Considered:\n  - "
-            config_err += "\n  - ".join([path.name for path in self._metadata_candidate_paths])
+            metadata_err = "A playbook meta file is required. Considered:\n  - "
+            metadata_err += "\n  - ".join([path.as_posix() for path in self._metadata_candidate_paths])
 
-        if config_err:
-            raise AnsibleParserError(config_err, obj=self._origin)
+        if metadata_err or argspec_err:
+            error = f"{argspec_err + (' ' if argspec_err else '')}{metadata_err}"
+            raise AnsibleParserError(error, obj=self._origin)
 
         metadata = self._loader.load_from_file(self._metadata_path)
 
