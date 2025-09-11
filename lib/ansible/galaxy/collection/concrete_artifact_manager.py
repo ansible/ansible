@@ -503,9 +503,9 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
             format(actual_hash=actual_hash, expected_hash=expected_hash)
         )
         if expected_hash != actual_hash:
-            msg = 'Mismatch artifact hash with downloaded file'
             st = os.stat(b_file_path)
             cl = int(resp.headers['content-length'])
+            msg = f'Mismatched artifact hash with downloaded file of {st.st_size} bytes.'
             if st.st_size != cl:
                 diff = cl - st.st_size
                 msg += f' Incomplete read, ({resp.length=}, {cl=}, {st.st_size=}) failed to read remaining {diff} bytes.'
