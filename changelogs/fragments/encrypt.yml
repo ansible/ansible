@@ -1,0 +1,3 @@
+---
+removed_features:
+    - encrypt - remove deprecated passlib_or_crypt API.

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import collections.abc as c
 import fcntl
-import io
 import os
 import shlex
 import typing as t
@@ -16,7 +15,7 @@ from functools import wraps
 
 from ansible import constants as C
 from ansible.errors import AnsibleValueOmittedError
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.become import BecomeBase
@@ -32,9 +31,6 @@ __all__ = ['ConnectionBase', 'ensure_connect']
 
 BUFSIZE = 65536
 
-P = t.ParamSpec('P')
-T = t.TypeVar('T')
-
 
 class ConnectionKwargs(t.TypedDict):
     task_uuid: str
@@ -42,7 +38,7 @@ class ConnectionKwargs(t.TypedDict):
     shell: t.NotRequired[ShellBase]
 
 
-def ensure_connect(
+def ensure_connect[T, **P](
     func: c.Callable[t.Concatenate[ConnectionBase, P], T],
 ) -> c.Callable[t.Concatenate[ConnectionBase, P], T]:
     @wraps(func)
@@ -135,7 +131,7 @@ class ConnectionBase(AnsiblePlugin):
         pass
 
     @abstractmethod
-    def _connect(self: T) -> T:
+    def _connect[T](self: T) -> T:
         """Connect to the host we've been initialized with"""
 
     @ensure_connect

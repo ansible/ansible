@@ -9,6 +9,7 @@ from contextlib import nullcontext
 import pytest
 import pytest_mock
 
+from ansible._internal._templating._access import NotifiableAccessContextBase
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject
@@ -443,3 +444,27 @@ def test_mutation_methods(template: str, result: object) -> None:
     This feature may be deprecated and removed in a future release by using Jinja's ImmutableSandboxedEnvironment.
     """
     assert TemplateEngine().template(TRUST.tag(template)) == result
+
+
+class ExampleMarkerAccessTracker(NotifiableAccessContextBase):
+    def __init__(self) -> None:
+        self._type_interest = frozenset(Marker._concrete_subclasses)
+        self._markers: list[Marker] = []
+
+    def _notify(self, o: Marker) -> None:
+        self._markers.append(o)
+
+
+@pytest.mark.parametrize("template", (
+    '{{ adict["bogus"] | default("ok") }}',
+    '{{ adict.bogus | default("ok") }}',
+))
+def test_marker_access_getattr_and_getitem(template: str) -> None:
+    """Ensure that getattr and getitem always access markers."""
+    # the absence of a JinjaCallContext should cause the access done by getattr and getitem not to trip when a marker is encountered
+    assert TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template)) == "ok"
+
+    with ExampleMarkerAccessTracker() as tracker:  # the access done by getattr and getitem should immediately trip when a marker is encountered
+        TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template))
+
+    assert type(tracker._markers[0]) is UndefinedMarker  # pylint: disable=unidiomatic-typecheck

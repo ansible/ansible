@@ -2450,8 +2450,8 @@
 
 - name: Verify atime and mtime update on content change (same partition)
   vars:
-    remote_file: "{{ remote_tmp_dir }}/foo.txt"
-    ansible_remote_tmp: "{{ remote_tmp_dir }}"
+    remote_file: "/tmp/foo.txt"
+    ansible_remote_tmp: "/tmp"
   block:
     - name: Create a dest file
       shell: "echo Test content > {{ remote_file }}"

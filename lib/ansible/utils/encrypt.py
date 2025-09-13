@@ -99,6 +99,8 @@ class PasslibHash(BaseHash):
         salt = self._clean_salt(salt)
         rounds = self._clean_rounds(rounds)
         ident = self._clean_ident(ident)
+        if salt_size is not None and not isinstance(salt_size, int):
+            raise TypeError("salt_size must be an integer")
         return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
     def _clean_ident(self, ident):
@@ -172,11 +174,6 @@ class PasslibHash(BaseHash):
         # we need to traceback and then block such algorithms because it may
         # impact calling code.
         return to_text(result, errors='strict')
-
-
-def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, ident=None):
-    display.deprecated("passlib_or_crypt API is deprecated in favor of do_encrypt", version='2.20')
-    return do_encrypt(secret, algorithm, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
 
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None, rounds=None):

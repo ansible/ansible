@@ -19,7 +19,6 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError, AnsibleFieldAttributeError
 from ansible.module_utils.datatag import native_type_name
 from ansible._internal._datatag._tags import Origin
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
@@ -37,7 +36,7 @@ display = Display()
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
     valid_metadata = {
         'extend_group': {
-            'types': (list, string_types,),
+            'types': (list, str,),
             'errortype': 'list',
         },
     }
@@ -204,7 +203,7 @@ class FieldAttributeBase:
             value = self.set_to_context(attr.name)
 
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
-        if value and isinstance(value, string_types) and value not in valid_values:
+        if value and isinstance(value, str) and value not in valid_values:
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
         return value
 
@@ -350,14 +349,14 @@ class FieldAttributeBase:
         found_group_metadata = False
         for action in action_group:
             # Everything should be a string except the metadata entry
-            if not isinstance(action, string_types):
+            if not isinstance(action, str):
                 _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
 
                 if isinstance(action['metadata'], dict):
                     found_group_metadata = True
 
                     include_groups = action['metadata'].get('extend_group', [])
-                    if isinstance(include_groups, string_types):
+                    if isinstance(include_groups, str):
                         include_groups = [include_groups]
                     if not isinstance(include_groups, list):
                         # Bad entries may be a warning above, but prevent tracebacks by setting it back to the acceptable type.
@@ -472,7 +471,7 @@ class FieldAttributeBase:
         elif attribute.isa == 'percent':
             # special value, which may be an integer or float
             # with an optional '%' at the end
-            if isinstance(value, string_types) and '%' in value:
+            if isinstance(value, str) and '%' in value:
                 value = value.replace('%', '')
             value = float(value)
         elif attribute.isa == 'list':
@@ -660,8 +659,8 @@ class FieldAttributeBase:
         attrs = {}
         for (name, attribute) in self.fattributes.items():
             attr = getattr(self, name)
-            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
-                attrs[name] = attr.serialize()
+            if attribute.isa == 'class':
+                attrs[name] = attr.dump_attrs()
             else:
                 attrs[name] = attr
         return attrs
@@ -675,59 +674,12 @@ class FieldAttributeBase:
                 attribute = self.fattributes[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
-                    obj.deserialize(value)
+                    obj.from_attrs(value)
                     setattr(self, attr, obj)
                 else:
                     setattr(self, attr, value)
             else:
                 setattr(self, attr, value)  # overridden dump_attrs in derived types may dump attributes which are not field attributes
-
-        # from_attrs is only used to create a finalized task
-        # from attrs from the Worker/TaskExecutor
-        # Those attrs are finalized and squashed in the TE
-        # and controller side use needs to reflect that
-        self._finalized = True
-        self._squashed = True
-
-    def serialize(self):
-        """
-        Serializes the object derived from the base object into
-        a dictionary of values. This only serializes the field
-        attributes for the object, so this may need to be overridden
-        for any classes which wish to add additional items not stored
-        as field attributes.
-        """
-
-        repr = self.dump_attrs()
-
-        # serialize the uuid field
-        repr['uuid'] = self._uuid
-        repr['finalized'] = self._finalized
-        repr['squashed'] = self._squashed
-
-        return repr
-
-    def deserialize(self, data):
-        """
-        Given a dictionary of values, load up the field attributes for
-        this object. As with serialize(), if there are any non-field
-        attribute data members, this method will need to be overridden
-        and extended.
-        """
-
-        if not isinstance(data, dict):
-            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
-
-        for (name, attribute) in self.fattributes.items():
-            if name in data:
-                setattr(self, name, data[name])
-            else:
-                self.set_to_context(name)
-
-        # restore the UUID field
-        setattr(self, '_uuid', data.get('uuid'))
-        self._finalized = data.get('finalized', False)
-        self._squashed = data.get('squashed', False)
 
 
 class Base(FieldAttributeBase):

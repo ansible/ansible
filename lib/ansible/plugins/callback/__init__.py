@@ -60,9 +60,6 @@ _YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 _SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
 
 
-_T_callable = t.TypeVar("_T_callable", bound=t.Callable)
-
-
 class _AnsibleCallbackDumper(_dumper.AnsibleDumper):
     def __init__(self, *args, lossy: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -228,9 +225,13 @@ class CallbackBase(AnsiblePlugin):
 
     def set_option(self, k, v):
         self._plugin_options[k] = C.config.get_config_value(k, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={k: v})
+        self._origins[k] = 'direct'
 
     def get_option(self, k, hostvars=None):
         return self._plugin_options[k]
+
+    def get_option_and_origin(self, k, hostvars=None):
+        return self._plugin_options[k], self._origins[k]
 
     def has_option(self, option):
         return (option in self._plugin_options)
@@ -241,7 +242,8 @@ class CallbackBase(AnsiblePlugin):
         """
 
         # load from config
-        self._plugin_options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._plugin_options, self._origins = C.config.get_plugin_options_and_origins(self.plugin_type, self._load_name,
+                                                                                      keys=task_keys, variables=var_options, direct=direct)
 
     @staticmethod
     def host_label(result: CallbackTaskResult) -> str:
@@ -288,7 +290,11 @@ class CallbackBase(AnsiblePlugin):
         )
 
         if not indent and any(indent_conditions):
-            indent = 4
+            try:
+                indent = self.get_option('result_indentation')
+            except KeyError:
+                # Callback does not declare result_indentation nor extend result_format_callback
+                indent = 4
         if pretty_results is False:
             # pretty_results=False overrides any specified indentation
             indent = None
@@ -389,8 +395,14 @@ class CallbackBase(AnsiblePlugin):
             # Callback does not declare pretty_results nor extend result_format_callback
             pretty_results = None
 
+        try:
+            indent = self.get_option('result_indentation')
+        except KeyError:
+            # Callback does not declare result_indentation nor extend result_format_callback
+            indent = 4
+
         if result_format == 'json':
-            return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+            return json.dumps(diff, sort_keys=True, indent=indent, separators=(u',', u': ')) + u'\n'
 
         if result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior
@@ -402,7 +414,7 @@ class CallbackBase(AnsiblePlugin):
                     allow_unicode=True,
                     Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
-                    indent=4,
+                    indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
                 '    '

@@ -19,11 +19,14 @@ from __future__ import annotations
 
 import typing as t
 
+from ansible._internal._templating._engine import TemplateEngine
 from ansible.errors import AnsibleError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import FieldAttribute
-from ansible._internal._templating._engine import TemplateEngine
+from ansible.utils.display import Display
+
+_display = Display()
 
 
 def _flatten_tags(tags: list[str | int]) -> list[str | int]:
@@ -38,17 +41,25 @@ def _flatten_tags(tags: list[str | int]) -> list[str | int]:
 
 class Taggable:
 
+    _RESERVED = frozenset(['tagged', 'all', 'untagged'])
     untagged = frozenset(['untagged'])
     tags = FieldAttribute(isa='list', default=list, listof=(str, int), extend=True)
 
     def _load_tags(self, attr, ds):
+
+        tags = None
         if isinstance(ds, list):
-            return ds
+            tags = ds
+        elif isinstance(ds, str):
+            tags = [AnsibleTagHelper.tag_copy(ds, item.strip()) for item in ds.split(',')]
 
-        if isinstance(ds, str):
-            return [AnsibleTagHelper.tag_copy(ds, item.strip()) for item in ds.split(',')]
+        if tags is None:
+            raise AnsibleError('tags must be specified as a list', obj=ds)
 
-        raise AnsibleError('tags must be specified as a list', obj=ds)
+        if found := self._RESERVED.intersection(tags):
+            _display.warning(f"Found reserved tagnames in tags: {list(found)!r}, we do not recommend doing this as it might give unexpected results", obj=ds)
+
+        return tags
 
     def _get_all_taggable_objects(self) -> t.Iterable[Taggable]:
         obj = self

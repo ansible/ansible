@@ -608,7 +608,7 @@ def setup_virtualenv(module, env, chdir, out, err):
     err += err_venv
     if rc != 0:
         _fail(module, cmd, out, err)
-    return out, err
+    return out, err, cmd
 
 
 class Package:
@@ -741,11 +741,12 @@ def main():
 
         err = ''
         out = ''
+        venv_cmd = ''
 
         if env:
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 venv_created = True
-                out, err = setup_virtualenv(module, env, chdir, out, err)
+                out, err, venv_cmd = setup_virtualenv(module, env, chdir, out, err)
             py_bin = os.path.join(env, 'bin', 'python')
         else:
             py_bin = module.params['executable'] or sys.executable
@@ -811,6 +812,11 @@ def main():
             cmd.extend(to_native(p) for p in packages)
         elif requirements:
             cmd.extend(['-r', requirements])
+        elif venv_created and not name and not requirements:
+            # ONLY creating an empty venv
+            module.exit_json(changed=venv_created, cmd=venv_cmd, name=name, version=version,
+                             state=state, requirements=requirements, virtualenv=env,
+                             stdout=out, stderr=err)
         else:
             module.warn("No valid name or requirements file found.")
             module.exit_json(changed=False)

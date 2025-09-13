@@ -3,7 +3,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
-from __future__ import annotations
 
 import copy
 import os
@@ -19,7 +18,6 @@ from ansible._internal._errors import _error_utils
 from ansible.module_utils.basic import is_executable
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate, SourceWasEncrypted
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
@@ -32,7 +30,7 @@ display = Display()
 
 # Tries to determine if a path is inside a role, last dir must be 'tasks'
 # this is not perfect but people should really avoid 'tasks' dirs outside roles when using Ansible.
-RE_TASKS = re.compile(u'(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
+RE_TASKS = re.compile('(?:^|%s)+tasks%s?$' % (os.path.sep, os.path.sep))
 
 
 class DataLoader:
@@ -49,28 +47,27 @@ class DataLoader:
     Usage:
 
         dl = DataLoader()
-        # optionally: dl.set_vault_secrets([('default', ansible.parsing.vault.PrompVaultSecret(...),)])
+        # optionally: dl.set_vault_secrets([('default', ansible.parsing.vault.PromptVaultSecret(...),)])
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self._basedir = '.'
+        self._basedir: str = '.'
 
         # NOTE: not effective with forks as the main copy does not get updated.
         # avoids rereading files
-        self._FILE_CACHE = dict()
+        self._FILE_CACHE: dict[str, object] = {}
 
         # NOTE: not thread safe, also issues with forks not returning data to main proc
         #       so they need to be cleaned independently. See WorkerProcess for example.
         # used to keep track of temp files for cleaning
-        self._tempfiles = set()
+        self._tempfiles: set[str] = set()
 
         # initialize the vault stuff with an empty password
         # TODO: replace with a ref to something that can get the password
         #       a creds/auth provider
-        self._vaults = {}
         self._vault = VaultLib()
         self.set_vault_secrets(None)
 
@@ -230,23 +227,19 @@ class DataLoader:
 
     def set_basedir(self, basedir: str) -> None:
         """ sets the base directory, used to find files when a relative path is given """
-
-        if basedir is not None:
-            self._basedir = to_text(basedir)
+        self._basedir = basedir
 
     def path_dwim(self, given: str) -> str:
         """
         make relative paths work like folks expect.
         """
 
-        given = to_text(given, errors='surrogate_or_strict')
         given = unquote(given)
 
-        if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
+        if given.startswith(os.path.sep) or given.startswith('~'):
             path = given
         else:
-            basedir = to_text(self._basedir, errors='surrogate_or_strict')
-            path = os.path.join(basedir, given)
+            path = os.path.join(self._basedir, given)
 
         return unfrackpath(path, follow=False)
 
@@ -294,10 +287,9 @@ class DataLoader:
         """
 
         search = []
-        source = to_text(source, errors='surrogate_or_strict')
 
         # I have full path, nothing else needs to be looked at
-        if source.startswith(to_text(os.path.sep)) or source.startswith(u'~'):
+        if source.startswith(os.path.sep) or source.startswith('~'):
             search.append(unfrackpath(source, follow=False))
         else:
             # base role/play path + templates/files/vars + relative filename
@@ -364,7 +356,7 @@ class DataLoader:
             if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
                 result = test_path
         else:
-            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
+            display.debug('evaluation_path:\n\t%s' % '\n\t'.join(paths))
             for path in paths:
                 upath = unfrackpath(path, follow=False)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
@@ -385,9 +377,9 @@ class DataLoader:
                 search.append(os.path.join(to_bytes(self.get_basedir(), errors='surrogate_or_strict'), b_dirname, b_source))
             search.append(os.path.join(to_bytes(self.get_basedir(), errors='surrogate_or_strict'), b_source))
 
-            display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
+            display.debug('search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
             for b_candidate in search:
-                display.vvvvv(u'looking for "%s" at "%s"' % (source, to_text(b_candidate)))
+                display.vvvvv('looking for "%s" at "%s"' % (source, to_text(b_candidate)))
                 if os.path.exists(b_candidate):
                     result = to_text(b_candidate)
                     break
@@ -418,11 +410,10 @@ class DataLoader:
         Temporary files are cleanup in the destructor
         """
 
-        if not file_path or not isinstance(file_path, (binary_type, text_type)):
+        if not file_path or not isinstance(file_path, (bytes, str)):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_path))
 
-        b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
-        if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
+        if not self.path_exists(file_path) or not self.is_file(file_path):
             raise AnsibleFileNotFound(file_name=file_path)
 
         real_path = self.path_dwim(file_path)
@@ -480,7 +471,7 @@ class DataLoader:
         """
 
         b_path = to_bytes(os.path.join(path, name))
-        found = []
+        found: list[str] = []
 
         if extensions is None:
             # Look for file with no extension first to find dir before file
@@ -489,27 +480,29 @@ class DataLoader:
         for ext in extensions:
 
             if '.' in ext:
-                full_path = b_path + to_bytes(ext)
+                b_full_path = b_path + to_bytes(ext)
             elif ext:
-                full_path = b'.'.join([b_path, to_bytes(ext)])
+                b_full_path = b'.'.join([b_path, to_bytes(ext)])
             else:
-                full_path = b_path
+                b_full_path = b_path
+
+            full_path = to_text(b_full_path)
 
             if self.path_exists(full_path):
                 if self.is_directory(full_path):
                     if allow_dir:
-                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
+                        found.extend(self._get_dir_vars_files(full_path, extensions))
                     else:
                         continue
                 else:
-                    found.append(to_text(full_path))
+                    found.append(full_path)
                 break
         return found
 
     def _get_dir_vars_files(self, path: str, extensions: list[str]) -> list[str]:
         found = []
         for spath in sorted(self.list_directory(path)):
-            if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
+            if not spath.startswith('.') and not spath.endswith('~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]
                 full_spath = os.path.join(path, spath)

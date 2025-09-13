@@ -27,6 +27,7 @@ import typing as t
 import pytest_mock
 
 from jinja2.runtime import Context
+from jinja2.loaders import DictLoader
 
 import unittest
 
@@ -1078,3 +1079,47 @@ def test_marker_from_test_plugin() -> None:
     """Verify test plugins can raise MarkerError to return a Marker, and that no warnings or deprecations are emitted."""
     with emits_warnings(deprecation_pattern=[], warning_pattern=[]):
         assert TemplateEngine(variables=dict(something=TRUST.tag("{{ nope }}"))).template(TRUST.tag("{{ (something is eq {}) is undefined }}"))
+
+
+@pytest.mark.parametrize("template,expected", (
+    ("{{ none }}", None),  # concat sees one node, NoneType result is preserved
+    ("{% if False %}{% endif %}", None),  # concat sees one node, NoneType result is preserved
+    ("{{''}}{% if False %}{% endif %}", ""),  # multiple blocks with an embedded None result, concat is in play, the result is an empty string
+    ("hey {{ none }}", "hey "),  # composite template, the result is an empty string
+    ("{% import 'importme' as imported %}{{ imported }}", "imported template result"),
+))
+def test_none_concat(template: str, expected: object) -> None:
+    """Validate that None values are omitted from composite template concat."""
+    te = TemplateEngine()
+
+    # set up an importable template to exercise TemplateModule code paths
+    te.environment.loader = DictLoader(dict(importme=TRUST.tag("{{ none }}{{ 'imported template result' }}{{ none }}")))
+
+    assert te.template(TRUST.tag(template)) == expected
+
+
+def test_filter_generator() -> None:
+    """Verify that filters which return a generator are converted to a list while under the filter's JinjaCallContext."""
+    variables = dict(
+        foo=[
+            dict(x=1, optional_var=0),
+            dict(x=2),
+        ],
+        bar=TRUST.tag("{{ foo | selectattr('optional_var', 'defined') }}"),
+    )
+
+    te = TemplateEngine(variables=variables)
+    te.template(TRUST.tag("{{ bar }}"))
+    te.template(TRUST.tag("{{ lookup('vars', 'bar') }}"))
+
+
+def test_call_context_reset() -> None:
+    """Ensure that new template invocations do not inherit trip behavior from running Jinja plugins."""
+    templar = TemplateEngine(variables=dict(
+        somevar=TRUST.tag("{{ somedict.somekey | default('ok') }}"),
+        somedict=dict(
+            somekey=TRUST.tag("{{ not_here }}"),
+        )
+    ))
+
+    assert templar.template(TRUST.tag("{{ lookup('vars', 'somevar') }}")) == 'ok'

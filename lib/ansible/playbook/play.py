@@ -22,7 +22,6 @@ from ansible import context
 from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -53,11 +52,11 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-2)
+    hosts = NonInheritableFieldAttribute(isa='list', required=True, listof=(str,), always_post_validate=True, priority=-2)
 
     # Facts
     gather_facts = NonInheritableFieldAttribute(isa='bool', default=None, always_post_validate=True)
-    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    gather_subset = NonInheritableFieldAttribute(isa='list', default=None, listof=(str,), always_post_validate=True)
     gather_timeout = NonInheritableFieldAttribute(isa='int', default=None, always_post_validate=True)
     fact_path = NonInheritableFieldAttribute(isa='string', default=None)
 
@@ -120,10 +119,10 @@ class Play(Base, Taggable, CollectionSearch):
                 for entry in value:
                     if entry is None:
                         raise AnsibleParserError("Hosts list cannot contain values of 'None'. Please check your playbook")
-                    elif not isinstance(entry, (binary_type, text_type)):
+                    elif not isinstance(entry, (bytes, str)):
                         raise AnsibleParserError("Hosts list contains an invalid host value: '{host!s}'".format(host=entry))
 
-            elif not isinstance(value, (binary_type, text_type, EncryptedString)):
+            elif not isinstance(value, (bytes, str, EncryptedString)):
                 raise AnsibleParserError("Hosts list must be a sequence or string. Please check your playbook.")
 
     def get_name(self):
@@ -303,7 +302,7 @@ class Play(Base, Taggable, CollectionSearch):
 
         t = Task(block=flush_block)
         t.action = 'meta'
-        t.resolved_action = 'ansible.builtin.meta'
+        t._resolved_action = 'ansible.builtin.meta'
         t.args['_raw_params'] = 'flush_handlers'
         t.implicit = True
         t.set_loader(self._loader)
@@ -399,36 +398,6 @@ class Play(Base, Taggable, CollectionSearch):
             else:
                 tasklist.append(task)
         return tasklist
-
-    def serialize(self):
-        data = super(Play, self).serialize()
-
-        roles = []
-        for role in self.get_roles():
-            roles.append(role.serialize())
-        data['roles'] = roles
-        data['included_path'] = self._included_path
-        data['action_groups'] = self._action_groups
-        data['group_actions'] = self._group_actions
-
-        return data
-
-    def deserialize(self, data):
-        super(Play, self).deserialize(data)
-
-        self._included_path = data.get('included_path', None)
-        self._action_groups = data.get('action_groups', {})
-        self._group_actions = data.get('group_actions', {})
-        if 'roles' in data:
-            role_data = data.get('roles', [])
-            roles = []
-            for role in role_data:
-                r = Role()
-                r.deserialize(role)
-                roles.append(r)
-
-            setattr(self, 'roles', roles)
-            del data['roles']
 
     def copy(self):
         new_me = super(Play, self).copy()

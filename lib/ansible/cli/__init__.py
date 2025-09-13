@@ -23,10 +23,12 @@ if 1 <= len(sys.argv) <= 2 and os.path.basename(sys.argv[0]) == "ansible" and os
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-if sys.version_info < (3, 11):
+_PY_MIN = (3, 12)
+
+if sys.version_info < _PY_MIN:
     raise SystemExit(
-        'ERROR: Ansible requires Python 3.11 or newer on the controller. '
-        'Current version: %s' % ''.join(sys.version.splitlines())
+        f"ERROR: Ansible requires Python {'.'.join(map(str, _PY_MIN))} or newer on the controller. "
+        f"Current version: {''.join(sys.version.splitlines())}"
     )
 
 
@@ -105,7 +107,6 @@ from ansible import context
 from ansible.utils import display as _display
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.file import is_executable
@@ -401,8 +402,8 @@ class CLI(ABC):
                 options = super(MyCLI, self).post_process_args(options)
                 if options.addition and options.subtraction:
                     raise AnsibleOptionsError('Only one of --addition and --subtraction can be specified')
-                if isinstance(options.listofhosts, string_types):
-                    options.listofhosts = string_types.split(',')
+                if isinstance(options.listofhosts, str):
+                    options.listofhosts = options.listofhosts.split(',')
                 return options
         """
 
@@ -438,7 +439,7 @@ class CLI(ABC):
             if options.inventory:
 
                 # should always be list
-                if isinstance(options.inventory, string_types):
+                if isinstance(options.inventory, str):
                     options.inventory = [options.inventory]
 
                 # Ensure full paths when needed

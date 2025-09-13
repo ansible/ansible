@@ -67,14 +67,34 @@ try {
     $result.finished = $true
 
     if ($jobAsyncResult.IsCompleted) {
-        $jobOutput = $ps.EndInvoke($jobAsyncResult)
+        $jobOutput = @($ps.EndInvoke($jobAsyncResult) | Out-String) -join "`n"
         $jobError = $ps.Streams.Error
 
         # write success/output/error to result object
-        # TODO: cleanse leading/trailing junk
-        $moduleResult = $jobOutput | ConvertFrom-Json | Convert-JsonObject
+        $moduleResultJson = $jobOutput
+        $startJsonChar = $moduleResultJson.IndexOf([char]'{')
+        if ($startJsonChar -eq -1) {
+            throw "No start of json char found in module result"
+        }
+        $moduleResultJson = $moduleResultJson.Substring($startJsonChar)
+
+        $endJsonChar = $moduleResultJson.LastIndexOf([char]'}')
+        if ($endJsonChar -eq -1) {
+            throw "No end of json char found in module result"
+        }
+
+        $trailingJunk = $moduleResultJson.Substring($endJsonChar + 1).Trim()
+        $moduleResultJson = $moduleResultJson.Substring(0, $endJsonChar + 1)
+        $moduleResult = $moduleResultJson | ConvertFrom-Json | Convert-JsonObject
         # TODO: check for conflicting keys
         $result = $result + $moduleResult
+
+        if ($trailingJunk) {
+            if (-not $result.warnings) {
+                $result.warnings = @()
+            }
+            $result.warnings += "Module invocation had junk after the JSON data: $trailingJunk"
+        }
     }
     else {
         # We can't call Stop() as pwsh won't respond if it is busy calling a .NET
@@ -103,7 +123,7 @@ catch {
     $result.failed = $true
     $result.msg = "failure during async watchdog: $_"
     # return output back, if available, to Ansible to help with debugging errors
-    $result.stdout = $jobOutput | Out-String
+    $result.stdout = $jobOutput
     $result.stderr = $jobError | Out-String
 }
 finally {

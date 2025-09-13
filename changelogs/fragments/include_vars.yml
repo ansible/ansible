@@ -1,0 +1,6 @@
+---
+deprecated_features:
+    - include_vars - Specifying 'ignore_files' as a string is deprecated.
+minor_changes:
+    - include_vars - Raise an error if 'ignore_files' is not specified as a list.
+    - include_vars - Raise an error if 'extensions' is not specified as a list.

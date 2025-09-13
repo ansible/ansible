@@ -25,7 +25,6 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
-from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser, RAW_PARAM_MODULES
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import action_loader, module_loader, lookup_loader
@@ -37,11 +36,10 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.notifiable import Notifiable
-from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible._internal import _task
 from ansible._internal._templating import _marker_behaviors
-from ansible._internal._templating._jinja_bits import is_possibly_all_template
+from ansible._internal._templating._jinja_bits import is_possibly_all_template, is_possibly_template
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
@@ -101,7 +99,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         self._role = role
         self._parent = None
         self.implicit = False
-        self.resolved_action: str | None = None
+        self._resolved_action: str | None = None
 
         if task_include:
             self._parent = task_include
@@ -109,6 +107,38 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             self._parent = block
 
         super(Task, self).__init__()
+
+    _resolved_action_warning = (
+        "A plugin is sampling the task's resolved_action when it is not resolved. "
+        "This can be caused by callback plugins using the resolved_action attribute too "
+        "early (such as in v2_playbook_on_task_start for a task using the action/local_action "
+        "keyword), or too late (such as in v2_runner_on_ok for a task with a loop). "
+        "To maximize compatibility with user features, callback plugins should "
+        "only use this attribute in v2_runner_on_ok/v2_runner_on_failed for tasks "
+        "without a loop, and v2_runner_item_on_ok/v2_runner_item_on_failed otherwise."
+    )
+
+    @property
+    def resolved_action(self) -> str | None:
+        """The templated and resolved FQCN of the task action or None.
+
+        If the action is a template, callback plugins can only use this value in certain methods.
+        - v2_runner_on_ok and v2_runner_on_failed if there's no task loop
+        - v2_runner_item_on_ok and v2_runner_item_on_failed if there is a task loop
+        """
+        # Consider deprecating this because it's difficult to use?
+        # Moving it to the task result would improve the no-loop limitation on v2_runner_on_ok
+        # but then wouldn't be accessible to v2_playbook_on_task_start, *_on_skipped, etc.
+        if self._resolved_action is not None:
+            return self._resolved_action
+        if not is_possibly_template(self.action):
+            try:
+                return self._resolve_action(self.action)
+            except AnsibleParserError:
+                display.warning(self._resolved_action_warning, obj=self.action)
+        else:
+            display.warning(self._resolved_action_warning, obj=self.action)
+        return None
 
     def get_name(self, include_role_fqcn=True):
         """ return the name of the task """
@@ -129,7 +159,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def _merge_kv(self, ds):
         if ds is None:
             return ""
-        elif isinstance(ds, string_types):
+        elif isinstance(ds, str):
             return ds
         elif isinstance(ds, dict):
             buf = ""
@@ -168,7 +198,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         else:
             module_or_action_context = action_context.plugin_load_context
 
-        self.resolved_action = module_or_action_context.resolved_fqcn
+        self._resolved_action = module_or_action_context.resolved_fqcn
 
         action_type: type[ActionBase] = action_context.object
 
@@ -281,6 +311,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 raise
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError("Error parsing task arguments.", obj=ds) from ex
+
+        if args_parser._resolved_action is not None:
+            self._resolved_action = args_parser._resolved_action
 
         new_ds['action'] = action
         new_ds['args'] = args
@@ -465,57 +498,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             new_me._role = self._role
 
         new_me.implicit = self.implicit
-        new_me.resolved_action = self.resolved_action
+        new_me._resolved_action = self._resolved_action
         new_me._uuid = self._uuid
 
         return new_me
-
-    def serialize(self):
-        data = super(Task, self).serialize()
-
-        if not self._squashed and not self._finalized:
-            if self._parent:
-                data['parent'] = self._parent.serialize()
-                data['parent_type'] = self._parent.__class__.__name__
-
-            if self._role:
-                data['role'] = self._role.serialize()
-
-            data['implicit'] = self.implicit
-            data['resolved_action'] = self.resolved_action
-
-        return data
-
-    def deserialize(self, data):
-
-        # import is here to avoid import loops
-        from ansible.playbook.task_include import TaskInclude
-        from ansible.playbook.handler_task_include import HandlerTaskInclude
-
-        parent_data = data.get('parent', None)
-        if parent_data:
-            parent_type = data.get('parent_type')
-            if parent_type == 'Block':
-                p = Block()
-            elif parent_type == 'TaskInclude':
-                p = TaskInclude()
-            elif parent_type == 'HandlerTaskInclude':
-                p = HandlerTaskInclude()
-            p.deserialize(parent_data)
-            self._parent = p
-            del data['parent']
-
-        role_data = data.get('role')
-        if role_data:
-            r = Role()
-            r.deserialize(role_data)
-            self._role = r
-            del data['role']
-
-        self.implicit = data.get('implicit', False)
-        self.resolved_action = data.get('resolved_action')
-
-        super(Task, self).deserialize(data)
 
     def set_loader(self, loader):
         """
@@ -591,8 +577,18 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     def dump_attrs(self):
         """Override to smuggle important non-FieldAttribute values back to the controller."""
         attrs = super().dump_attrs()
-        attrs.update(resolved_action=self.resolved_action)
+        attrs.update(_resolved_action=self._resolved_action)
         return attrs
+
+    def from_attrs(self, attrs):
+        super().from_attrs(attrs)
+
+        # from_attrs is only used to create a finalized task
+        # from attrs from the Worker/TaskExecutor
+        # Those attrs are finalized and squashed in the TE
+        # and controller side use needs to reflect that
+        self._finalized = True
+        self._squashed = True
 
     def _resolve_conditional(
         self,

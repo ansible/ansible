@@ -250,10 +250,7 @@ class WindowsRemoteCompletionConfig(RemoteCompletionConfig):
     connection: str = ''
 
 
-TCompletionConfig = t.TypeVar('TCompletionConfig', bound=CompletionConfig)
-
-
-def load_completion(name: str, completion_type: t.Type[TCompletionConfig]) -> dict[str, TCompletionConfig]:
+def load_completion[TCompletionConfig: CompletionConfig](name: str, completion_type: t.Type[TCompletionConfig]) -> dict[str, TCompletionConfig]:
     """Load the named completion entries, returning them in dictionary form using the specified completion type."""
     lines = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
 
@@ -283,7 +280,7 @@ def parse_completion_entry(value: str) -> tuple[str, dict[str, str]]:
     return name, data
 
 
-def filter_completion(
+def filter_completion[TCompletionConfig: CompletionConfig](
     completion: dict[str, TCompletionConfig],
     controller_only: bool = False,
     include_defaults: bool = False,

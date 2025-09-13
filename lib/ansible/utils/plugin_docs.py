@@ -11,13 +11,14 @@ import yaml
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
-from ansible.module_utils.six import string_types
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
 from ansible._internal._datatag import _tags
 
+_FRAGMENTABLE = ('DOCUMENTATION', 'RETURN')
 display = Display()
 
 
@@ -125,23 +126,30 @@ def remove_current_collection_from_versions_and_dates(fragment, collection_name,
     _process_versions_and_dates(fragment, is_module, return_docs, remove)
 
 
-def add_fragments(doc, filename, fragment_loader, is_module=False):
+class AnsibleFragmentError(AnsibleError):
+    pass
+
+
+def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCUMENTATION'):
+
+    if section not in _FRAGMENTABLE:
+        raise AnsibleError(f"Invalid fragment section ({section}) passed to render {filename}, it can only be one of {_FRAGMENTABLE!r}")
 
     fragments = doc.pop('extends_documentation_fragment', [])
 
-    if isinstance(fragments, string_types):
+    if isinstance(fragments, str):
         fragments = fragments.split(',')
 
     unknown_fragments = []
 
-    # doc_fragments are allowed to specify a fragment var other than DOCUMENTATION
+    # doc_fragments are allowed to specify a fragment var other than DOCUMENTATION or RETURN
     # with a . separator; this is complicated by collections-hosted doc_fragments that
     # use the same separator. Assume it's collection-hosted normally first, try to load
     # as-specified. If failure, assume the right-most component is a var, split it off,
     # and retry the load.
     for fragment_slug in fragments:
         fragment_name = fragment_slug.strip()
-        fragment_var = 'DOCUMENTATION'
+        fragment_var = section
 
         fragment_class = fragment_loader.get(fragment_name)
         if fragment_class is None and '.' in fragment_slug:
@@ -157,7 +165,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
         # trust-tagged source propagates to loaded values; expressions and templates in config require trust
         fragment_yaml = _tags.TrustedAsTemplate().tag(getattr(fragment_class, fragment_var, None))
         if fragment_yaml is None:
-            if fragment_var != 'DOCUMENTATION':
+            if fragment_var not in _FRAGMENTABLE:
                 # if it's asking for something specific that's missing, that's an error
                 unknown_fragments.append(fragment_slug)
                 continue
@@ -168,44 +176,40 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
 
         real_fragment_name = getattr(fragment_class, 'ansible_name')
         real_collection_name = '.'.join(real_fragment_name.split('.')[0:2]) if '.' in real_fragment_name else ''
-        add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
+        add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module, return_docs=(section == 'RETURN'))
 
-        if 'notes' in fragment:
-            notes = fragment.pop('notes')
-            if notes:
-                if 'notes' not in doc:
-                    doc['notes'] = []
-                doc['notes'].extend(notes)
+        if section == 'DOCUMENTATION':
+            # notes, seealso, options and attributes entries are specificly merged, but only occur in documentation section
+            for doc_key in ['notes', 'seealso']:
+                if doc_key in fragment:
+                    entries = fragment.pop(doc_key)
+                    if entries:
+                        if doc_key not in doc:
+                            doc[doc_key] = []
+                        doc[doc_key].extend(entries)
 
-        if 'seealso' in fragment:
-            seealso = fragment.pop('seealso')
-            if seealso:
-                if 'seealso' not in doc:
-                    doc['seealso'] = []
-                doc['seealso'].extend(seealso)
+            if 'options' not in fragment and 'attributes' not in fragment:
+                raise AnsibleFragmentError("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
-        if 'options' not in fragment and 'attributes' not in fragment:
-            raise Exception("missing options or attributes in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
-
-        # ensure options themselves are directly merged
-        for doc_key in ['options', 'attributes']:
-            if doc_key in fragment:
-                if doc_key in doc:
-                    try:
-                        merge_fragment(doc[doc_key], fragment.pop(doc_key))
-                    except Exception as e:
-                        raise AnsibleError("%s %s (%s) of unknown type: %s" % (to_native(e), doc_key, fragment_name, filename))
-                else:
-                    doc[doc_key] = fragment.pop(doc_key)
+            # ensure options themselves are directly merged
+            for doc_key in ['options', 'attributes']:
+                if doc_key in fragment:
+                    if doc_key in doc:
+                        try:
+                            merge_fragment(doc[doc_key], fragment.pop(doc_key))
+                        except Exception as e:
+                            raise AnsibleFragmentError("%s %s (%s) of unknown type: %s" % (to_native(e), doc_key, fragment_name, filename))
+                    else:
+                        doc[doc_key] = fragment.pop(doc_key)
 
         # merge rest of the sections
         try:
             merge_fragment(doc, fragment)
         except Exception as e:
-            raise AnsibleError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
+            raise AnsibleFragmentError("%s (%s) of unknown type: %s" % (to_native(e), fragment_name, filename))
 
     if unknown_fragments:
-        raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
+        raise AnsibleFragmentError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=None, plugin_type=None):
@@ -230,12 +234,15 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
             add_collection_to_versions_and_dates(data['doc'], collection_name, is_module=is_module)
 
         # add fragments to documentation
-        add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module)
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module, section='DOCUMENTATION')
 
     if data.get('returndocs', False):
         # add collection name to versions and dates
         if collection_name is not None:
             add_collection_to_versions_and_dates(data['returndocs'], collection_name, is_module=is_module, return_docs=True)
+
+        # add fragments to return
+        add_fragments(data['returndocs'], filename, fragment_loader=fragment_loader, is_module=is_module, section='RETURN')
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
 
@@ -352,3 +359,7 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     docs[0]['plugin_name'] = context.resolved_fqcn
 
     return docs
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "string_types")

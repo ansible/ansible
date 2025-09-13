@@ -20,7 +20,6 @@ from __future__ import annotations
 import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -70,7 +69,7 @@ class RoleMetadata(Base, CollectionSearch):
 
             for role_def in ds:
                 # FIXME: consolidate with ansible-galaxy to keep this in sync
-                if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
+                if isinstance(role_def, str) or 'role' in role_def or 'name' in role_def:
                     roles.append(role_def)
                     continue
                 try:
@@ -106,13 +105,3 @@ class RoleMetadata(Base, CollectionSearch):
                                       collection_search_list=collection_search_list)
         except AssertionError as ex:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds) from ex
-
-    def serialize(self):
-        return dict(
-            allow_duplicates=self._allow_duplicates,
-            dependencies=self._dependencies
-        )
-
-    def deserialize(self, data):
-        setattr(self, 'allow_duplicates', data.get('allow_duplicates', False))
-        setattr(self, 'dependencies', data.get('dependencies', []))

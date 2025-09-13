@@ -1,0 +1,2 @@
+minor_changes:
+  - Python type hints applied to ``to_text`` and ``to_bytes`` functions for better type hint interactions with code utilizing these functions.

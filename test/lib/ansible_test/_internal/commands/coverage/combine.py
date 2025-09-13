@@ -63,8 +63,6 @@ from . import (
     PathChecker,
 )
 
-TValue = t.TypeVar('TValue')
-
 
 def command_coverage_combine(args: CoverageCombineConfig) -> None:
     """Patch paths in coverage files and merge into a single file."""
@@ -287,7 +285,7 @@ def _get_coverage_targets(args: CoverageCombineConfig, walk_func: c.Callable) ->
     return sources
 
 
-def _build_stub_groups(
+def _build_stub_groups[TValue](
     args: CoverageCombineConfig,
     sources: list[tuple[str, int]],
     default_stub_value: c.Callable[[list[str]], dict[str, TValue]],

@@ -1,0 +1,4 @@
+breaking_changes:
+  - >-
+      powershell - Removed code that tried to remote quotes from paths when performing Windows operations like copying
+      and fetching file. This should not affect normal playbooks unless a value is quoted too many times.

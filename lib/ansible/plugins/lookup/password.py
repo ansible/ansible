@@ -134,7 +134,6 @@ import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
@@ -335,7 +334,7 @@ class LookupModule(LookupBase):
 
         # chars still might need more
         chars = params.get('chars', self.get_option('chars'))
-        if chars and isinstance(chars, string_types):
+        if chars and isinstance(chars, str):
             tmp_chars = []
             if u',,' in chars:
                 tmp_chars.append(u',')

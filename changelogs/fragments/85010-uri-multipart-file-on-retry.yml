@@ -1,0 +1,2 @@
+bugfixes:
+  - uri - fix form-multipart file not being found when task is retried (https://github.com/ansible/ansible/issues/85009)

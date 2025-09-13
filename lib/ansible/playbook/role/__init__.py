@@ -27,7 +27,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import binary_type, text_type
 from ansible.playbook.base import Base
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
@@ -37,6 +36,7 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.display import Display
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
 
@@ -52,14 +52,12 @@ if _t.TYPE_CHECKING:
 
 __all__ = ['Role', 'hash_params']
 
-# TODO: this should be a utility function, but can't be a member of
-#       the role due to the fact that it would require the use of self
-#       in a static method. This is also used in the base class for
-#       strategies (ansible/plugins/strategy/__init__.py)
+_display = Display()
 
 
 def hash_params(params):
     """
+    DEPRECATED
     Construct a data structure of parameters that is hashable.
 
     This requires changing any mutable data structures into immutable ones.
@@ -71,10 +69,16 @@ def hash_params(params):
         1) There shouldn't be any unhashable scalars specified in the yaml
         2) Our only choice would be to return an error anyway.
     """
+
+    _display.deprecated(
+        msg="The hash_params function is deprecated as its consumers have moved to internal alternatives",
+        version='2.24',
+        help_text='Contact the plugin author to update their code',
+    )
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
     # cannot be hashed)
-    if isinstance(params, Container) and not isinstance(params, (text_type, binary_type)):
+    if isinstance(params, Container) and not isinstance(params, (str, bytes)):
         if isinstance(params, Mapping):
             try:
                 # Optimistically hope the contents are all hashable
@@ -650,65 +654,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         block_list.append(eor_block)
 
         return block_list
-
-    def serialize(self, include_deps=True):
-        res = super(Role, self).serialize()
-
-        res['_role_name'] = self._role_name
-        res['_role_path'] = self._role_path
-        res['_role_vars'] = self._role_vars
-        res['_role_params'] = self._role_params
-        res['_default_vars'] = self._default_vars
-        res['_had_task_run'] = self._had_task_run.copy()
-        res['_completed'] = self._completed.copy()
-
-        res['_metadata'] = self._metadata.serialize()
-
-        if include_deps:
-            deps = []
-            for role in self.get_direct_dependencies():
-                deps.append(role.serialize())
-            res['_dependencies'] = deps
-
-        parents = []
-        for parent in self._parents:
-            parents.append(parent.serialize(include_deps=False))
-        res['_parents'] = parents
-
-        return res
-
-    def deserialize(self, data, include_deps=True):
-        self._role_name = data.get('_role_name', '')
-        self._role_path = data.get('_role_path', '')
-        self._role_vars = data.get('_role_vars', dict())
-        self._role_params = data.get('_role_params', dict())
-        self._default_vars = data.get('_default_vars', dict())
-        self._had_task_run = data.get('_had_task_run', dict())
-        self._completed = data.get('_completed', dict())
-
-        if include_deps:
-            deps = []
-            for dep in data.get('_dependencies', []):
-                r = Role()
-                r.deserialize(dep)
-                deps.append(r)
-            setattr(self, '_dependencies', deps)
-
-        parent_data = data.get('_parents', [])
-        parents = []
-        for parent in parent_data:
-            r = Role()
-            r.deserialize(parent, include_deps=False)
-            parents.append(r)
-        setattr(self, '_parents', parents)
-
-        metadata_data = data.get('_metadata')
-        if metadata_data:
-            m = RoleMetadata()
-            m.deserialize(metadata_data)
-            self._metadata = m
-
-        super(Role, self).deserialize(data)
 
     def set_loader(self, loader):
         self._loader = loader

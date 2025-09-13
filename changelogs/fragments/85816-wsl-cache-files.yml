@@ -1,0 +1,2 @@
+bugfixes:
+  - cache plugins - close temp cache file before moving it to fix error on WSL. (https://github.com/ansible/ansible/pull/85816)

@@ -29,7 +29,6 @@ from ._utils import LazyOptions, TemplateContext
 
 _display = Display()
 
-_TCallable = t.TypeVar("_TCallable", bound=t.Callable)
 _ITERATOR_TYPES: t.Final = (c.Iterator, c.ItemsView, c.KeysView, c.ValuesView, range)
 
 
@@ -115,7 +114,13 @@ class JinjaPluginIntercept(c.MutableMapping):
 
         try:
             with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
-                return instance.j2_function(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
+                result = instance.j2_function(*lazify_container_args(args), **lazify_container_kwargs(kwargs))
+
+                if instance.plugin_type == 'filter':
+                    # ensure list conversion occurs under the call context
+                    result = _wrap_plugin_output(result)
+
+                return result
         except MarkerError as ex:
             return ex.source
         except Exception as ex:
@@ -156,7 +161,6 @@ class JinjaPluginIntercept(c.MutableMapping):
         @functools.wraps(instance.j2_function)
         def wrapper(*args, **kwargs) -> t.Any:
             result = self._invoke_plugin(instance, *args, **kwargs)
-            result = _wrap_plugin_output(result)
 
             return result
 
@@ -169,7 +173,7 @@ class _DirectCall:
     _marker_attr: t.Final[str] = "_directcall"
 
     @classmethod
-    def mark(cls, src: _TCallable) -> _TCallable:
+    def mark[T: t.Callable](cls, src: T) -> T:
         setattr(src, cls._marker_attr, True)
         return src
 
