@@ -6,6 +6,10 @@
         url: http://localhost:{{ http_port }}/bom_json
         return_content: true
       register: bom_json_result
+      # make it more resilient
+      until: bom_json_result.status == 200
+      retries: 3
+      delay: 1
 
     - name: Verify JSON is correctly parsed despite BOM prefix
       assert:
