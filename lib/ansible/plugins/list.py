@@ -105,18 +105,25 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0, docs=False):
                         ]):
                             continue
 
+                        resource_dir = to_native(os.path.dirname(full_path))
+                        resource_name = get_composite_name(collection, plugin, resource_dir, depth)
+
                         if ptype in ('test', 'filter'):
+                            # NOTE: pass the composite resource to ensure any relative
+                            # imports it contains are interpreted in the correct context
+                            if collection:
+                                resource_name = '.'.join(resource_name.split('.')[2:])
                             try:
-                                file_plugins = _list_j2_plugins_from_file(collection, full_path, ptype, plugin)
+                                file_plugins = _list_j2_plugins_from_file(collection, full_path, ptype, resource_name)
                             except KeyError as e:
                                 display.warning('Skipping file %s: %s' % (full_path, to_native(e)))
                                 continue
 
                             for plugin in file_plugins:
-                                plugin_name = get_composite_name(collection, plugin.ansible_name, os.path.dirname(to_native(full_path)), depth)
+                                plugin_name = get_composite_name(collection, plugin.ansible_name, resource_dir, depth)
                                 plugins[plugin_name] = full_path
                         else:
-                            plugin_name = get_composite_name(collection, plugin, os.path.dirname(to_native(full_path)), depth)
+                            plugin_name = resource_name
                             plugins[plugin_name] = full_path
             else:
                 display.debug("Skip listing plugins in '{0}' as it is not a directory".format(path))

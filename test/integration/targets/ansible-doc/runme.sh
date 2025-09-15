@@ -243,6 +243,7 @@ echo "testing sidecar docs for jinja plugins"
 [ "$(ansible-doc -t test --playbook-dir ./ testns.testcol.yolo| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ donothing| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
+[ "$(ansible-doc -t filter --playbook-dir ./ testns.testcol.filter_subdir.nested| wc -l)" -gt "0" ]
 
 echo "testing no docs and no sidecar"
 ansible-doc -t filter --playbook-dir ./ nodocs 2>&1| grep "${GREP_OPTS[@]}" -c 'missing documentation' || true
