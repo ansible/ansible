@@ -1393,7 +1393,7 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -
 
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
-    args = _get_action_arg_defaults(action, task, templar._engine)
+    args = templar.template(_get_action_arg_defaults(action, task, templar._engine))
     args.update(action_args)
 
     return args
