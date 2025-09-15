@@ -654,22 +654,9 @@ class GalaxyCLI(CLI):
             client_secret = server_options.pop('client_secret')
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
-            api_version = server_options.pop('api_version')
             if server_options['validate_certs'] is None:
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
-
-            # This allows a user to explicitly force use of an API version when
-            # multiple versions are supported. This was added for testing
-            # against pulp_ansible and I'm not sure it has a practical purpose
-            # outside of this use case. As such, this option is not documented
-            # as of now
-            if api_version:
-                display.warning(
-                    f'The specified "api_version" configuration for the galaxy server "{server_key}" is '
-                    'not a public configuration, and may be removed at any time without warning.'
-                )
-                server_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
 
             # default case if no auth info is provided.
             server_options['token'] = None
@@ -697,12 +684,6 @@ class GalaxyCLI(CLI):
             ))
 
         cmd_server = context.CLIARGS['api_server']
-        if context.CLIARGS['api_version']:
-            api_version = context.CLIARGS['api_version']
-            display.warning(
-                'The --api-version is not a public argument, and may be removed at any time without warning.'
-            )
-            galaxy_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
 
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 

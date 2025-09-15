@@ -846,7 +846,7 @@ def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
     monkeypatch.setattr(Display, 'display', mock_display)
 
     artifact_path, mock_open = collection_artifact
-    fake_import_uri = 'https://galaxy.server.com/api/v2/import/1234'
+    fake_import_uri = 'https://galaxy.server.com/api/v3/import/1234'
 
     mock_publish = MagicMock()
     mock_publish.return_value = fake_import_uri
@@ -869,7 +869,7 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
     monkeypatch.setattr(Display, 'display', mock_display)
 
     artifact_path, mock_open = collection_artifact
-    fake_import_uri = 'https://galaxy.server.com/api/v2/import/1234'
+    fake_import_uri = 'https://galaxy.server.com/api/v3/import/1234'
 
     mock_publish = MagicMock()
     mock_publish.return_value = fake_import_uri
