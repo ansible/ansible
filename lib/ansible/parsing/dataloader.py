@@ -191,6 +191,16 @@ class DataLoader:
 
         return AnsibleTagHelper.tag_copy(bytes_content, str_content)
 
+    def get_text_file_bcomponents(self, file_name: str) -> bytes:
+        """
+        Returns the raw byte contents of the specified (DWIM-expanded for relative) file path.
+        """
+        bytes_content, source_was_plaintext = self._get_file_contents(file_name)
+        if not source_was_plaintext:
+            bytes_content = SourceWasEncrypted().tag(bytes_content)
+
+        return AnsibleTagHelper.tag_copy(bytes_content, bytes_content)
+
     def _get_file_contents(self, file_name: str) -> tuple[bytes, bool]:
         """
         Reads the file contents from the given file name
