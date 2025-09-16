@@ -45,13 +45,6 @@ RESOLVELIB_UPPERBOUND = SemanticVersion("2.0.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
-# This is used by requires_ansible requirement error handling.
-# ResolutionImpossible causes have access to the parent,
-# i.e. the incompatible collection containing the metadata,
-# but not its origin.
-_dependency_origin: dict[str, Candidate] = {}
-
-
 class CollectionDependencyProviderBase(AbstractProvider):
     """Delegate providing a requirement interface for the resolver."""
 
@@ -474,10 +467,11 @@ class CollectionDependencyProviderBase(AbstractProvider):
             if not (self._with_deps or candidate.is_virtual):
                 continue
             dependency = self._make_req_from_dict({'name': dep_name, 'version': dep_req})
-            _dependency_origin[repr(dependency)] = candidate
+            dependency._parent = candidate
             yield dependency
 
         if (requires_ansible := self._get_ansible_requirement(candidate)):
+            requires_ansible._parent = candidate
             yield requires_ansible
 
 

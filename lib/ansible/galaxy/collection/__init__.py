@@ -110,7 +110,6 @@ try:
         CollectionDependencyInconsistentCandidate,
     )
     from ansible.galaxy.dependency_resolution.providers import (
-        _dependency_origin,
         RESOLVELIB_VERSION,
         RESOLVELIB_LOWERBOUND,
         RESOLVELIB_UPPERBOUND,
@@ -1855,10 +1854,7 @@ def _resolve_depenency_map(
                 if req_inf.requirement.supports_ansible:
                     continue
                 collection = str(req_inf.parent)
-                if (_dep := repr(req_inf.parent)) in _dependency_origin:
-                    dep_origin = f"dependency of {_dependency_origin[_dep]}"
-                else:
-                    dep_origin = "direct request"
+                dep_origin = 'direct request' if req_inf.parent._parent is None else f'dependency of {req_inf.parent._parent!s}'
             else:
                 collection = str(req_inf.requirement)
                 dep_origin = 'direct request' if req_inf.parent is None else f'dependency of {req_inf.parent!s}'

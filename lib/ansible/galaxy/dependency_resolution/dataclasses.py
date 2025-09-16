@@ -172,7 +172,7 @@ def _is_concrete_artifact_pointer(tested_str):
 class _ComputedReqKindsMixin:
     UNIQUE_ATTRS = ('fqcn', 'ver', 'src', 'type')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: object, **kwargs: object) -> None:
         if not self.may_have_offline_galaxy_info:
             self._source_info = None
         else:
@@ -184,6 +184,11 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
+        # This is used by requires_ansible requirement error handling.
+        # ResolutionImpossible causes have access to the parent,
+        # i.e. the incompatible collection containing the metadata,
+        # but not its origin.
+        self._parent: Candidate | None = None
 
     def __hash__(self):
         return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
