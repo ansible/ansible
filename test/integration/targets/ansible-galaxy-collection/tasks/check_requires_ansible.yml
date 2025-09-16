@@ -8,33 +8,34 @@
     install_or_download: "ansible-galaxy collection {{ subcommand }}{{ (subcommand == 'install') | ternary(' --force', '')}}"
     failed_error: |
         \[ERROR\]: Failed to resolve the requested dependencies map\. Could not satisfy the following requirements:
-        \* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(direct request\) requires Ansible <{{ ansible_version.major }}\.{{ ansible_version.minor }}
+        \* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(direct request\) requires ansible-core <{{ ansible_version.major }}\.{{ ansible_version.minor }}
     hint: >-
-        Hint: To disregard whether the collection supports the current version of Ansible, configure
-        COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore"
-    undocumented_from_server_warning: >-
-        \[WARNING\]: Galaxy server .* didn't return 'requires_ansible' metadata for
-        <ns_requires_ansible\.name_requires_ansible:.* of type 'galaxy' from .*> or
-        <ns_requires_ansible\.name_requires_ansible:.* of type 'galaxy' from .*> has not
-        documented 'requires_ansible' in the meta/runtime\.yml.
-        Assuming compatibility with Ansible {{ ansible_version.major }}\.{{ ansible_version.minor }}\.{{ ansible_version.revision }}\.
+        Hint: To disregard whether the collection supports the current version
+        of ansible-core, configure COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore"
     undocumented_warning: >-
       \[WARNING\]: <ns_requires_ansible\.name_requires_ansible:.* of type .*> has not
-      documented 'requires_ansible' in the meta/runtime\.yml. Assuming compatibility with Ansible
+      documented 'requires_ansible' in the meta/runtime\.yml. Assuming compatibility with ansible-core
       {{ ansible_version.major }}\.{{ ansible_version.minor }}\.{{ ansible_version.revision }}\.
   block:
-  # TODO: Once the test server is updated, this should fail as expected.
   - name: "{{ subcommand }} incompatible collection"
     command: "{{ install_or_download }} -p {{ temp1 }} ns_requires_ansible.name_requires_ansible"
-    register: expected_warning
-    # register: expected_fail
-    # failed_when: expected_fail is success
+    register: expected_fail
+    failed_when: expected_fail is success
 
   - assert:
       that:
-        - expected_warning.stderr is search(undocumented_from_server_warning)
-        # - expected_fail.stderr is search(failed_error, multiline=True)
-        # - expected_fail.stderr is search(hint)
+        - expected_fail.stderr is search(failed_error, multiline=True)
+        - expected_fail.stderr is search(hint)
+
+  - name: "{{ subcommand }} specific version of incompatible collection"
+    command: "{{ install_or_download }} -p {{ temp1 }} 'ns_requires_ansible.name_requires_ansible:1.0.0'"
+    register: expected_fail
+    failed_when: expected_fail is success
+
+  - assert:
+      that:
+        - expected_fail.stderr is search(failed_error, multiline=True)
+        - expected_fail.stderr is search(hint)
 
   - name: "{{ subcommand }} collection and allow mismatched version"
     command: ansible-galaxy collection download -p {{ temp1 }} ns_requires_ansible.name_requires_ansible

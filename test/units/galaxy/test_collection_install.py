@@ -645,7 +645,7 @@ def test_build_requirement_from_name_single_version(galaxy_server, monkeypatch, 
     assert len(matches.candidates[1]) == 1
     assert matches.candidates[0][0].fqcn == u'namespace.collection'
     assert matches.candidates[0][0].ver == u'2.0.0'
-    assert matches.candidates[1][0].fqcn == u'Ansible'
+    assert matches.candidates[1][0].fqcn == u'ansible-core'
 
     assert mock_get_info.call_count == 1
     assert mock_get_info.mock_calls[0][1] == ('namespace', 'collection', '2.0.0')
@@ -688,7 +688,7 @@ def test_build_requirement_from_name_multiple_versions_one_match(galaxy_server, 
     assert len(matches.candidates[1]) == 1
     assert matches.candidates[0][0].fqcn == u'namespace.collection'
     assert matches.candidates[0][0].ver == u'2.0.1'
-    assert matches.candidates[1][0].fqcn == u'Ansible'
+    assert matches.candidates[1][0].fqcn == u'ansible-core'
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -737,7 +737,7 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
     assert all(c.fqcn == u'namespace.collection' for c in matches.candidates[0])
     # should be ordered latest to earliest
     assert [c.ver for c in matches.candidates[0]] == [u'2.0.5', u'2.0.4', u'2.0.3', u'2.0.1', u'2.0.0']
-    assert matches.candidates[1][0].fqcn == u'Ansible'
+    assert matches.candidates[1][0].fqcn == u'ansible-core'
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')

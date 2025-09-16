@@ -17,7 +17,7 @@ if t.TYPE_CHECKING:
 
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
-    _ANSIBLE_CANDIDATE_VERSION,
+    _ANSIBLE_RUNTIME_VERSION,
     Candidate,
     Requirement,
     AnsibleRequirement,
@@ -255,7 +255,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         if first_req.type == "requires_ansible":
             if all(req.supports_ansible for req in requirements):
-                return [Candidate("Ansible", _ANSIBLE_CANDIDATE_VERSION, None, "requires_ansible", None)]
+                return [Candidate(first_req.fqcn, _ANSIBLE_RUNTIME_VERSION, None, "requires_ansible", None)]
             return []
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
@@ -443,7 +443,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             requirements=requirement.ver,
         )
 
-    def get_dependencies(self, candidate: Candidate) -> t.Generator[Requirement]:
+    def get_dependencies(self, candidate: Candidate) -> t.Iterator[Requirement]:
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \

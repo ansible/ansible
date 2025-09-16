@@ -26,7 +26,7 @@ if t.TYPE_CHECKING:
         '_ComputedReqKindsMixin',
     )
 
-from ansible import release
+from ansible import release, constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI, _DEFAULT_NORMALIZED_SERVER
 from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
@@ -38,7 +38,7 @@ from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 
-_ANSIBLE_CANDIDATE_VERSION = SemanticVersion.from_loose_version(LooseVersion(release.__version__)).vstring
+_ANSIBLE_RUNTIME_VERSION = SemanticVersion.from_loose_version(LooseVersion(release.__version__)).vstring
 _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
@@ -521,7 +521,7 @@ class _ComputedReqKindsMixin:
 
     @property
     def canonical_package_id(self):
-        if not self.is_virtual or self.is_ansible:
+        if not self.is_virtual or self.is_ansible_runtime:
             return to_native(self.fqcn)
 
         return (
@@ -531,10 +531,14 @@ class _ComputedReqKindsMixin:
 
     @property
     def is_virtual(self):
-        return self.is_scm or self.is_subdirs or self.is_ansible
+        # TODO: make it easier to plumb non-collection types through the dependency resolver.
+        # For example, if is_virtual is False, it shouldn't be assumed that the requirement
+        # is a collection, has metadata, has a SemVer version, and is installable.
+        # It would be safer to handle expected types explicitly, and error otherwise.
+        return self.is_scm or self.is_subdirs or self.is_ansible_runtime
 
     @property
-    def is_ansible(self):
+    def is_ansible_runtime(self):
         return self.type == "requires_ansible"
 
     @property
@@ -644,27 +648,28 @@ class Candidate(
 class AnsibleRequirement(Requirement):
     @property
     def supports_ansible(self):
+        """Whether the requires_ansible metadata is compatible with the ansible-core version.
+
+        If the version is unspecified/None/"", it is assumed to be compatible, to match runtime behavior.
         """
-        A boolean indicating whether the optional requires_ansible collection metadata is compatible with the running ansible version.
-        If the version is unspecified/None/"", it is assumed to be compatible to match runtime behavior.
-        """
-        # TODO: consider adding a toggle to make requires_ansible required.
-        # Besides being a documentation issue, missing metadata can cause a couple issues for galaxy type collections:
-        # - If no versions of the collection support the ansible version, an ancient version
-        #   missing the metadata would be selected instead of the latest.
-        # - Galaxy v2 servers and old GalaxyNG servers don't supply this metadata even when
-        #   the collection documents it.
+        # If no versions of a collection support ansible-core, the default behavior would select
+        # an ancient version missing metadata if there is one.
+        # TODO: add a toggle to require the metadata.
         if self.ver in ('', None) and C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH != 'ignore':
-            warning = (
-                "" if self._parent.type != 'galaxy' or self._parent.src.api_server == _DEFAULT_NORMALIZED_SERVER
-                else f"Galaxy server {self._parent.src.api_server} didn't return 'requires_ansible' metadata for {self._parent!r} or "
-            )
+
+            warning = ""
+
+            if self._parent.type == 'galaxy' and self._parent.src.api_server != _DEFAULT_NORMALIZED_SERVER:
+                # warning for custom galaxy servers
+                warning = f"Galaxy server {self._parent.src.api_server} didn't return " \
+                          f"'requires_ansible' metadata for {self._parent!r} or "
+
             display.warning(
                 f"{warning}{self._parent!r} has not documented 'requires_ansible' in the meta/runtime.yml. "
-                f"Assuming compatibility with Ansible {_ANSIBLE_CANDIDATE_VERSION}."
+                f"Assuming compatibility with ansible-core {_ANSIBLE_RUNTIME_VERSION}."
             )
         return (
-            _does_collection_support_ansible_version(self.ver or '', _ANSIBLE_CANDIDATE_VERSION)
+            _does_collection_support_ansible_version(self.ver or '', _ANSIBLE_RUNTIME_VERSION)
             or C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == "ignore"
         )
 
@@ -673,9 +678,9 @@ class AnsibleRequirement(Requirement):
         """
         Create a Requirement from a collection's requires_ansible metadata.
         """
-        # Note: This should be called in/after calling find_matches.
+        # NOTE: This should be called in/after calling find_matches.
         # The candidate.src.requires_ansible cache is populated in find_matches.
-        # The concrete artifact data is avaiable after the temporary artifact is downloaded or built.
+        # The concrete artifact data is available after the temporary artifact is downloaded or built.
         if candidate.is_virtual:
             return None
 
@@ -684,6 +689,7 @@ class AnsibleRequirement(Requirement):
         else:
             requires_ansible = concrete_art_mgr.get_direct_requires_ansible(candidate)
 
-        res = cls("Ansible", requires_ansible, None, "requires_ansible", None)
+        # Passing the "fqcn" attribute so __unicode__ doesn't need to be overridden.
+        res = cls("ansible-core", requires_ansible, None, "requires_ansible", None)
         res._parent = candidate
         return res

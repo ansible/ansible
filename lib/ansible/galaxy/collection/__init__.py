@@ -1830,7 +1830,7 @@ def _resolve_depenency_map(
     )
     requires_ansible_hint = '' if C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == 'ignore' else (
         'Hint: To disregard whether the collection supports the current version of '
-        'Ansible, configure COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore".'
+        'ansible-core, configure COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH as "ignore".'
     )
 
     collection_dep_resolver = build_collection_dependency_resolver(
