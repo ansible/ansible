@@ -37,8 +37,7 @@ class AdHocCLI(CLI):
 
     def init_parser(self):
         """ create an options parser for bin/ansible """
-        super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
-                                          desc="Define and run a single task 'playbook' against a set of hosts",
+        super(AdHocCLI, self).init_parser(desc="Define and run a single task 'playbook' against a set of hosts",
                                           epilog="Some actions do not make sense in Ad-Hoc (include, meta, etc)")
 
         opt_help.add_runas_options(self.parser)

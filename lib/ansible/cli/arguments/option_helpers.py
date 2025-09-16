@@ -322,7 +322,7 @@ def version(prog=None):
 # Functions to add pre-canned options to an OptionParser
 #
 
-def create_base_parser(prog, usage="", desc=None, epilog=None):
+def create_base_parser(prog, desc=None, epilog=None):
     """
     Create an options parser for all ansible scripts
     """
