@@ -4,7 +4,6 @@
   environment:
     ANSIBLE_INVENTORY_PLUGIN_SCRIPT_STDERR: '{{ item.show_stderr | default(omit) }}'
     ANSIBLE_DEPRECATION_WARNINGS: 1  # some tests assert deprecation warnings
-    INVENTORY_TEST_MODE: '{{ item.mode | default(omit) }}'
     INVENTORY_EMIT_STDERR: '{{ item.emit_stderr | default(omit) }}'
   register: inv_out
 

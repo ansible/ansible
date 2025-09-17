@@ -2,8 +2,8 @@
   shell: ansible-inventory -i {{ role_path | quote }}/{{ item.script_name | default('script_inventory_fixture.py') }} --list --export
   changed_when: false
   environment:
-    INVENTORY_TEST_MODE: '{{ item.mode | default(omit) }}'
     INVENTORY_EMIT_STDERR: '1'
+    ANSIBLE_DEPRECATION_WARNINGS: '{{ "deprecation" in item }}'
   ignore_errors: true
   register: inv_out
 
@@ -12,3 +12,4 @@
     that:
       - inv_out.stderr is contains("this is stderr") if item.script_name is undefined else true
       - inv_out.stderr is regex(item.expected_error)
+      - item.deprecation is undefined or inv_out.stderr is regex(item.deprecation)

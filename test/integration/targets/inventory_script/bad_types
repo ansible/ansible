@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo '{
+  "good_group": {
+    "vars": {
+       "test1": "value1",
+       "test2": "value2"
+    },
+    "hosts": ["example1", "example2"]
+  },
+  "bad_group": "should be list",
+  "_meta": {}
+}'
