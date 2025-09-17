@@ -191,7 +191,7 @@ class DataLoader:
 
         return AnsibleTagHelper.tag_copy(bytes_content, str_content)
 
-    def get_file_bcomponents(self, file_name: str) -> bytes:
+    def get_file_bcontents(self, file_name: str) -> bytes:
         """
         Returns an `Origin` tagged bytes object with the content of the specified
         (DWIM-expanded for relative) file path, decrypting if necessary, but without decoding.
