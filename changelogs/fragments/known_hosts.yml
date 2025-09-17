@@ -1,0 +1,3 @@
+---
+minor_changes:
+    - known_hosts - return rc and stderr when ssh-keygen command fails for further debugging (https://github.com/ansible/ansible/issues/85850).
