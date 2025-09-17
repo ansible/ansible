@@ -13,6 +13,24 @@
   vars:
     playbook_name: missing_metadata
 
+- name: Test configuring validate_argspec as no (False)
+  command: ansible-playbook {{ playbook }}
+  vars:
+    playbook_name: test_keyword_bool_no
+  register: result
+
+- assert:
+    that: "{{ result.stdout is not search('Validating arguments against arg spec') }}"
+
+- name: Test configuring validate_argspec as "no" (string)
+  command: ansible-playbook {{ playbook }}
+  vars:
+    playbook_name: test_keyword_str_no
+  register: result
+
+- assert:
+    that: "{{ result.stdout is search('Validating arguments against arg spec no') }}"
+
 - name: Test configuring argument spec validation
   vars:
     playbook_name: test_keyword
