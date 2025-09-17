@@ -926,12 +926,11 @@ class Request:
                 client_cert=client_cert,
                 client_key=client_key,
             )
-        if HAS_SSL:
-            if unix_socket and UnixHTTPSHandler:
-                ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, context=context)
-            else:
-                ssl_handler = urllib.request.HTTPSHandler(context=context)
-            handlers.append(ssl_handler)
+        if unix_socket and UnixHTTPSHandler:
+            ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, context=context)
+        else:
+            ssl_handler = urllib.request.HTTPSHandler(context=context)
+        handlers.append(ssl_handler)
 
         handlers.append(HTTPRedirectHandler(follow_redirects))
 
