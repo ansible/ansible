@@ -437,7 +437,7 @@ class DebugpyOptions:
 
     port: int
     adapter_access_token: str | None
-    debugpy_package_path: pathlib.Path
+    debugpy_package_path: str
 
 
 @cache
