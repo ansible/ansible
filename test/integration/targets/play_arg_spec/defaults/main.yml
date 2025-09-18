@@ -1,0 +1,4 @@
+playbook: "{{ role_path }}/playbooks/{{ playbook_name }}.yml"
+playbook_meta: "{{ role_path }}/playbooks/{{ playbook_name }}.meta.yml"
+playbook_name: play_argspec
+play_name: Test play spec

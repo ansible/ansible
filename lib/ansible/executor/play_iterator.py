@@ -174,6 +174,27 @@ class PlayIterator:
             setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
+        validation_task = Task.load({
+            'name': f'Validating arguments against arg spec {self._play.validate_argspec}',
+            'action': 'ansible.builtin.validate_argument_spec',
+            'args': {
+                # 'provided_arguments': {},  # allow configuration via module_defaults
+                'argument_spec': self._play.argument_spec,
+                'validate_args_context': {
+                    'type': 'play',
+                    'name': self._play.validate_argspec,
+                    'argument_spec_name': self._play.validate_argspec,
+                    'path': self._play._metadata_path,
+                },
+            },
+            'tags': ['always'],
+        }, block=setup_block)
+
+        validation_task.set_loader(self._play._loader)
+        if self._play._included_conditional is not None:
+            validation_task.when = self._play._included_conditional[:]
+        setup_block.block.append(validation_task)
+
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
 
@@ -271,35 +292,36 @@ class PlayIterator:
                 return (state, None)
 
             if state.run_state == IteratingStates.SETUP:
-                # First, we check to see if we were pending setup. If not, this is
-                # the first trip through IteratingStates.SETUP, so we set the pending_setup
-                # flag and try to determine if we do in fact want to gather facts for
-                # the specified host.
-                if not state.pending_setup:
-                    state.pending_setup = True
+                # First, we check to see if we completed both setup tasks injected
+                # during play compilation in __init__ above.
+                # If not, below we will determine if we do in fact want to gather
+                # facts or validate arguments for the specified host.
+                state.pending_setup = state.cur_regular_task < len(block.block)
+                if state.pending_setup:
+                    task = block.block[state.cur_regular_task]
 
                     # Gather facts if the default is 'smart' and we have not yet
                     # done it for this host; or if 'explicit' and the play sets
                     # gather_facts to True; or if 'implicit' and the play does
                     # NOT explicitly set gather_facts to False.
-
+                    gather_facts = bool(state.cur_regular_task == 0)
                     gathering = C.DEFAULT_GATHERING
                     implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
 
-                    if (gathering == 'implicit' and implied) or \
-                       (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name)):
-                        # The setup block is always self._blocks[0], as we inject it
-                        # during the play compilation in __init__ above.
-                        setup_block = self._blocks[0]
-                        if setup_block.has_tasks() and len(setup_block.block) > 0:
-                            task = setup_block.block[0]
-                else:
-                    # This is the second trip through IteratingStates.SETUP, so we clear
-                    # the flag and move onto the next block in the list while setting
-                    # the run state to IteratingStates.TASKS
-                    state.pending_setup = False
+                    if gather_facts and not (
+                        (gathering == 'implicit' and implied) or
+                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or
+                        (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name))
+                    ):
+                        task = None
+                    elif not gather_facts and not self._play.validate_argspec:
+                        task = None
 
+                    state.cur_regular_task += 1
+                else:
+                    # This is the last trip through IteratingStates.SETUP, so we
+                    # move onto the next block in the list while setting the run
+                    # state to IteratingStates.TASKS
                     state.run_state = IteratingStates.TASKS
                     if not state.did_start_at_task:
                         state.cur_block += 1

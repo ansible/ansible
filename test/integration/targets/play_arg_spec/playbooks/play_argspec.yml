@@ -1,0 +1,6 @@
+- name: "{{ play_name | default(_play_name) }}"
+  vars:
+    _play_name: "{{ play_name_from_vars }}"
+  hosts: localhost
+  gather_facts: no
+  validate_argspec: True
