@@ -155,3 +155,9 @@ ansible-playbook test_null_include_filename.yml 2>&1 | tee test_null_include_fil
 test "$(grep -c 'No file specified for ansible.builtin.include_tasks' test_null_include_filename.out)" = 1
 test "$(grep -c '.*/include_import/null_filename/tasks.yml:4:3.*' test_null_include_filename.out)" = 1
 test "$(grep -c '\- name: invalid include_task definition' test_null_include_filename.out)" = 1
+
+# https://github.com/ansible/ansible/issues/69882
+set +e
+ansible-playbook test_nested_non_existent_tasks.yml 2>&1 | tee test_nested_non_existent_tasks.out
+set -e
+test "$(grep -c 'Could not find or access' test_nested_non_existent_tasks.out)" = 3
