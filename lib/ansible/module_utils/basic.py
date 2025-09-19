@@ -2093,7 +2093,7 @@ class AnsibleModule(object):
                 stdout_changed = False
                 for key, event in events:
                     b_chunk = key.fileobj.read(32768)
-                    if not b_chunk:
+                    if not b_chunk and b_chunk is not None:
                         selector.unregister(key.fileobj)
                     elif key.fileobj == cmd.stdout:
                         stdout += b_chunk
