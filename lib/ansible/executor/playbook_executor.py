@@ -139,13 +139,48 @@ class PlaybookExecutor:
                             salt = var.get("salt", None)
                             unsafe = boolean(var.get("unsafe", False))
 
-                            if vname not in self._variable_manager.extra_vars:
-                                if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
-                                                            default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
-                                else:  # we are either in --list-<option> or syntax check
-                                    play.vars[vname] = default
+                            # 🔹 New: support for choices
+                            choices = var.get("choices")
+
+                            if self._tqm:
+                                self._tqm.send_callback(
+                                    'v2_playbook_on_vars_prompt',
+                                    vname, private, prompt, encrypt, confirm,
+                                    salt_size, salt, default, unsafe
+                                )
+
+                                # Skip prompt if provided via --extra-vars
+                                if vname in self._variable_manager.extra_vars:
+                                    play.vars[vname] = self._variable_manager.extra_vars[vname]
+
+                                    # If choices are defined, validate extra-vars value too
+                                    if choices and play.vars[vname] not in choices:
+                                        raise ValueError(
+                                            f"Invalid value for '{vname}': "
+                                            f"'{play.vars[vname]}' not in allowed choices {choices}"
+                                        )
+                                    continue
+
+                                answer = display.do_var_prompt(
+                                    vname, private, prompt, encrypt, confirm,
+                                    salt_size, salt, default, unsafe
+                                )
+
+                                # 🔹 Check choices for interactive input
+                                if choices:
+                                    while answer not in choices:
+                                        display.display(
+                                            f"Invalid choice. Must be one of: {choices}",
+                                            color='red'
+                                        )
+                                        answer = display.do_var_prompt(
+                                            vname, private, prompt, encrypt, confirm,
+                                            salt_size, salt, default, unsafe
+                                        )
+
+                                play.vars[vname] = answer
+                            else:
+                                play.vars[vname] = default
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
