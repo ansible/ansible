@@ -200,7 +200,7 @@ class DataLoader:
         if not source_was_plaintext:
             bytes_content = SourceWasEncrypted().tag(bytes_content)
 
-        return AnsibleTagHelper.tag_copy(bytes_content, bytes_content)
+        return bytes_content
 
     def _get_file_contents(self, file_name: str) -> tuple[bytes, bool]:
         """
