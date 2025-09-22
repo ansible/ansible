@@ -11,9 +11,7 @@ certifi==2025.8.3
 charset-normalizer==3.4.3
     # via requests
 click==8.2.1
-    # via
-    #   -c codecov-constraints.in
-    #   codecov-cli
+    # via codecov-cli
 codecov-cli==11.2.3
     # via -r codecov.in
 idna==3.10
