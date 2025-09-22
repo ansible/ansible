@@ -9,6 +9,7 @@ from contextlib import nullcontext
 import pytest
 import pytest_mock
 
+from ansible._internal import _display_utils
 from ansible._internal._templating._access import NotifiableAccessContextBase
 from ansible.errors import AnsibleUndefinedVariable, AnsibleTemplateError
 from ansible._internal._templating._errors import AnsibleTemplatePluginRuntimeError
@@ -21,8 +22,6 @@ from ansible._internal._templating._jinja_bits import (AnsibleEnvironment, Templ
 from ansible._internal._templating import _jinja_plugins
 from ansible._internal._templating._engine import TemplateEngine, TemplateOptions
 from jinja2.loaders import DictLoader
-
-from ansible.utils.display import _DeferredWarningContext
 
 if t.TYPE_CHECKING:
     import unittest.mock
@@ -79,7 +78,7 @@ def test_templatemodule_ignore(template_context):
     templar = TemplateEngine()
     templar.environment.loader = DictLoader(dict(foo=TRUST.tag('{{ undefined_in_import }}')))
 
-    with _DeferredWarningContext(variables=templar.available_variables) as warnings:
+    with _display_utils.DeferredWarningContext(variables=templar.available_variables) as warnings:
         result = templar.template(template)
 
     assert not warnings.get_warnings()

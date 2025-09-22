@@ -19,6 +19,8 @@ from ansible.errors import (
     AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleTaskError,
     AnsibleValueOmittedError,
 )
+
+from ansible._internal import _display_utils
 from ansible.executor.task_result import _RawTaskResult, _SUB_PRESERVE
 from ansible._internal._datatag import _utils
 from ansible.module_utils._internal import _messages
@@ -34,7 +36,7 @@ from ansible._internal._templating._jinja_plugins import _invoke_lookup, _Direct
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.display import Display, _DeferredWarningContext
+from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.manager import _deprecate_top_level_fact
@@ -416,7 +418,7 @@ class TaskExecutor:
     def _execute(self, templar: TemplateEngine, variables: dict[str, t.Any]) -> dict[str, t.Any]:
         result: dict[str, t.Any]
 
-        with _DeferredWarningContext(variables=variables) as warning_ctx:
+        with _display_utils.DeferredWarningContext(variables=variables) as warning_ctx:
             try:
                 # DTFIX-FUTURE: improve error handling to prioritize the earliest exception, turning the remaining ones into warnings
                 result = self._execute_internal(templar, variables)
@@ -431,7 +433,7 @@ class TaskExecutor:
 
             self._task.update_result_no_log(templar, result)
 
-        # The warnings/deprecations in the result have already been captured in the _DeferredWarningContext by _apply_task_result_compat.
+        # The warnings/deprecations in the result have already been captured in the DeferredWarningContext by _apply_task_result_compat.
         # The captured warnings/deprecations are a superset of the ones from the result, and may have been converted from a dict to a dataclass.
         # These are then used to supersede the entries in the result.
 
@@ -799,7 +801,7 @@ class TaskExecutor:
         return result
 
     @staticmethod
-    def _apply_task_result_compat(result: dict[str, t.Any], warning_ctx: _DeferredWarningContext) -> None:
+    def _apply_task_result_compat(result: dict[str, t.Any], warning_ctx: _display_utils.DeferredWarningContext) -> None:
         """Apply backward-compatibility mutations to the supplied task result."""
         if warnings := result.get('warnings'):
             if isinstance(warnings, list):

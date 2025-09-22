@@ -5,9 +5,9 @@ import pytest
 from ansible._internal._errors import _error_factory
 
 from ansible.errors import AnsibleError
+from ansible._internal import _display_utils
 from ansible._internal._datatag._tags import Origin
 from ansible._internal._errors._error_utils import format_exception_message
-from ansible.utils.display import _format_message
 from ansible.module_utils._internal import _messages
 from units.mock.error_helper import raise_exceptions
 
@@ -186,7 +186,7 @@ def test_error_messages(exceptions: list[BaseException], expected_message_chain:
     event = _error_factory.ControllerEventFactory.from_exception(error.value, False)
 
     message_chain = format_exception_message(error.value)
-    formatted_message = _format_message(_messages.ErrorSummary(event=event), False)
+    formatted_message = _display_utils.format_message(_messages.ErrorSummary(event=event), False)
 
     assert message_chain == expected_message_chain
     assert formatted_message.strip() == (expected_formatted_message or expected_message_chain)
