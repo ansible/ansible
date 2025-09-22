@@ -564,11 +564,6 @@ class FieldAttributeBase:
 
         from .role_include import IncludeRole
 
-        if not attribute.always_post_validate and isinstance(self, IncludeRole) and self.statically_loaded:  # import_role
-            # normal field attributes should not go through post validation on import_role/import_tasks
-            # only import_role is checked here because import_tasks never reaches this point
-            return Sentinel
-
         # Skip post validation unless always_post_validate is True, or the object requires post validation.
         if not attribute.always_post_validate and not self._post_validate_object:
             # Intermediate objects like Play() won't have their fields validated by
