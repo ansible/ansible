@@ -37,6 +37,7 @@ class IncludeRole(TaskInclude):
     A Role include is derived from a regular role to handle the special
     circumstances related to the `- include_role: ...`
     """
+    _post_validate_object = False
 
     BASE = frozenset(('name', 'role'))  # directly assigned
     FROM_ARGS = frozenset(('tasks_from', 'vars_from', 'defaults_from', 'handlers_from'))  # used to populate from dict in role
