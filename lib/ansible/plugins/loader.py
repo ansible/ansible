@@ -35,6 +35,7 @@ from ansible.utils.collection_loader._collection_finder import _AnsibleCollectio
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 from ansible._internal._datatag import _tags
+from ansible._internal import _display_utils
 
 from . import _AnsiblePluginInfoMixin
 from .filter import AnsibleJinja2Filter
@@ -605,7 +606,7 @@ class PluginLoader:
                 warning_text = tombstone.get('warning_text') or ''
                 warning_plugin_type = "module" if self.type == "modules" else f'{self.type} plugin'
                 warning_text = f'The {fq_name!r} {warning_plugin_type} has been removed.{" " if warning_text else ""}{warning_text}'
-                removed_msg = display._get_deprecation_message_with_plugin_info(
+                removed_msg = _display_utils.get_deprecation_message_with_plugin_info(
                     msg=warning_text,
                     version=removal_version,
                     date=removal_date,
@@ -1410,7 +1411,7 @@ class Jinja2Loader(PluginLoader):
                 removal_version = tombstone_entry.get('removal_version')
                 warning_text = f'The {key!r} {self.type} plugin has been removed.{" " if warning_text else ""}{warning_text}'
 
-                exc_msg = display._get_deprecation_message_with_plugin_info(
+                exc_msg = _display_utils.get_deprecation_message_with_plugin_info(
                     msg=warning_text,
                     version=removal_version,
                     date=removal_date,

@@ -4,8 +4,8 @@ import contextlib
 import re
 import typing as t
 
+from ansible._internal import _display_utils
 from ansible.module_utils._internal import _messages
-from ansible.utils.display import _DeferredWarningContext
 
 
 @contextlib.contextmanager
@@ -16,7 +16,7 @@ def emits_warnings(
     allow_unmatched_message: bool = False,
 ) -> t.Iterator[None]:
     """Assert that the code within the context manager body emits a warning or deprecation warning whose formatted output matches the supplied regex."""
-    with _DeferredWarningContext(variables=dict(ansible_deprecation_warnings=True)) as ctx:
+    with _display_utils.DeferredWarningContext(variables=dict(ansible_deprecation_warnings=True)) as ctx:
         yield
 
     deprecations = ctx.get_deprecation_warnings()
