@@ -50,16 +50,22 @@ def run(*args: str | pathlib.Path) -> None:
 
 
 def install_codecov(dest: pathlib.Path) -> pathlib.Path:
-    package = 'codecov-cli'
-    version = '11.0.3'
-
+    """Populate a transitively pinned venv with ``codecov-cli``."""
     venv_dir = dest / 'venv'
     python_bin = venv_dir / 'bin' / 'python'
     codecov_bin = venv_dir / 'bin' / 'codecovcli'
 
     venv.create(venv_dir, with_pip=True)
 
-    run(python_bin, '-m', 'pip', 'install', f'{package}=={version}', '--disable-pip-version-check')
+    run(
+        python_bin,
+        '-m',
+        'pip',
+        'install',
+        '--constraint=dependencies/codecov.txt',
+        '--requirement=dependencies/codecov.in',
+        '--disable-pip-version-check',
+    )
 
     return codecov_bin
 
