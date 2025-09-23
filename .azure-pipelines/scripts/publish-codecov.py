@@ -16,6 +16,10 @@ import typing as t
 import venv
 
 
+SCRIPTS_DIR = pathlib.Path(__file__).parent.resolve()
+DEPS_DIR = SCRIPTS_DIR / 'dependencies'
+
+
 @dataclasses.dataclass(frozen=True)
 class CoverageFile:
     name: str
@@ -51,6 +55,9 @@ def run(*args: str | pathlib.Path) -> None:
 
 def install_codecov(dest: pathlib.Path) -> pathlib.Path:
     """Populate a transitively pinned venv with ``codecov-cli``."""
+    requirement_file = DEPS_DIR / 'codecov.in'
+    constraint_file = requirement_file.with_suffix('.txt')
+
     venv_dir = dest / 'venv'
     python_bin = venv_dir / 'bin' / 'python'
     codecov_bin = venv_dir / 'bin' / 'codecovcli'
@@ -62,8 +69,8 @@ def install_codecov(dest: pathlib.Path) -> pathlib.Path:
         '-m',
         'pip',
         'install',
-        '--constraint=dependencies/codecov.txt',
-        '--requirement=dependencies/codecov.in',
+        f'--constraint={constraint_file!s}',
+        f'--requirement={requirement_file!s}',
         '--disable-pip-version-check',
     )
 
