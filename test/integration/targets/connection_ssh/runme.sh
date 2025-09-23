@@ -17,7 +17,7 @@ if command -v sshpass > /dev/null; then
         # ansible with timeout. If we time out, our custom prompt was successfully
         # searched for. It's a weird way of doing things, but it does ensure
         # that the flag gets passed to sshpass.
-        timeout 5 ansible -m ping \
+        ../test_utils/scripts/timeout.py 5 -- ansible -m ping \
             -e ansible_connection=ssh \
             -e ansible_ssh_password_mechanism=sshpass \
             -e ansible_sshpass_prompt=notThis: \

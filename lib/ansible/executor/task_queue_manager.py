@@ -18,10 +18,13 @@
 from __future__ import annotations
 
 import dataclasses
+import errno
 import os
 import sys
+import signal
 import tempfile
 import threading
+import traceback
 import time
 import typing as t
 import multiprocessing.queues
@@ -185,8 +188,50 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
+        self._workers: list[WorkerProcess | None] = []
+
+        # signal handlers to propagate signals to workers
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+
     def _initialize_processes(self, num: int) -> None:
-        self._workers: list[WorkerProcess | None] = [None] * num
+        # mutable update to ensure the reference stays the same
+        self._workers[:] = [None] * num
+
+    def _signal_handler(self, signum, frame) -> None:
+        """
+        terminate all running process groups created as a result of calling
+        setsid from within a WorkerProcess.
+
+        Since the children become process leaders, signals will not
+        automatically propagate to them.
+        """
+        signal.signal(signum, signal.SIG_DFL)
+
+        for worker in self._workers:
+            if worker is None or not worker.is_alive():
+                continue
+            if worker.pid:
+                try:
+                    # notify workers
+                    os.kill(worker.pid, signum)
+                except OSError as e:
+                    if e.errno != errno.ESRCH:
+                        signame = signal.strsignal(signum)
+                        display.debug(f'Unable to send {signame} to child[{worker.pid}]: {traceback.format_exc()}')
+                        display.error(f'Unable to send {signame} to child[{worker.pid}]: {e}')
+
+        if signum == signal.SIGINT:
+            # Defer to CLI handling
+            raise KeyboardInterrupt()
+        else:
+            ppid = os.getpid()
+            try:
+                os.kill(ppid, signum)
+            except OSError as e:
+                signame = signal.strsignal(signum)
+                display.debug(f'Unable to send {signame} to {ppid}: {traceback.format_exc()}')
+                display.error(f'Unable to send {signame} to {ppid}: {e}')
 
     def load_callbacks(self):
         """
