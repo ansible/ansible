@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: no
+  vars_prompt:
+    - name: color
+      prompt: "Choose a color"
+      choices:
+        - red
+        - green
+  tasks:
+    - debug:
+        var: color

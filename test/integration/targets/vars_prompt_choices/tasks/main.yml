@@ -1,0 +1,27 @@
+- name: Run playbook with valid choice
+  command: >
+    ansible-playbook test/integration/targets/vars_prompt_choices/main.yml
+    --extra-vars "color=red"
+  args:
+    chdir: "{{ lookup('env', 'ANSIBLE_TESTS') | default('/root/devs/ansible', true) }}"
+  register: result_valid
+  ignore_errors: yes
+
+- name: Assert valid choice succeeded
+  assert:
+    that:
+      - result_valid.rc == 0
+
+- name: Run playbook with invalid choice
+  command: >
+    ansible-playbook test/integration/targets/vars_prompt_choices/main.yml
+    --extra-vars "color=blue"
+  args:
+    chdir: "{{ lookup('env', 'ANSIBLE_TESTS') | default('/root/devs/ansible', true) }}"
+  register: result_invalid
+  ignore_errors: yes
+
+- name: Assert invalid choice failed
+  assert:
+    that:
+      - result_invalid.rc != 0
