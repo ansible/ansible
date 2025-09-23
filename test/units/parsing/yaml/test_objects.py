@@ -4,17 +4,17 @@ import typing as t
 
 import pytest
 
+from ansible._internal import _display_utils
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.parsing.vault import EncryptedString
 from ansible.parsing.yaml.objects import _AnsibleMapping, _AnsibleUnicode, _AnsibleSequence
-from ansible.utils.display import _DeferredWarningContext
 from ansible.parsing.yaml import objects
 
 
 @pytest.fixture(autouse=True, scope='function')
 def suppress_warnings() -> t.Generator[None]:
-    with _DeferredWarningContext(variables={}):
+    with _display_utils.DeferredWarningContext(variables={}):
         yield
 
 

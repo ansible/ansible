@@ -1,0 +1,3 @@
+bugfixes:
+  - display - Fixed reference to undefined `_DeferredWarningContext` when issuing early warnings during startup.
+    (https://github.com/ansible/ansible/issues/85886)
