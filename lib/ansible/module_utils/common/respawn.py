@@ -12,6 +12,7 @@ import typing as t
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils._internal._ansiballz import _respawn
 
+
 _ANSIBLE_PARENT_PATH = pathlib.Path(__file__).parents[3]
 
 
@@ -48,7 +49,7 @@ def respawn_module(interpreter_path) -> t.NoReturn:
     sys.exit(rc)  # pylint: disable=ansible-bad-function
 
 
-def probe_interpreters_for_module(interpreter_paths, module_name):
+def probe_interpreters_for_module(interpreter_paths: list[str], *module_name: str, **kwargs) -> str | None:
     """
     Probes a supplied list of Python interpreters, returning the first one capable of
     importing the named module. This is useful when attempting to locate a "system
@@ -66,6 +67,15 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
         'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')
     })
 
+    import_modules = ['ansible.module_utils.basic']
+
+    if not module_name:
+        return None
+
+    import_modules.extend(module_name)
+
+    import_string = f"import {', '.join(import_modules)}"
+
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
@@ -74,7 +84,7 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
                 [
                     interpreter_path,
                     '-c',
-                    f'import {module_name}, ansible.module_utils.basic',
+                    import_string,
                 ],
                 env=env,
             )

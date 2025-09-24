@@ -1,0 +1,41 @@
+- hosts: testhost
+  tasks:
+  - name: Uninstall sampleprojectpy2
+    pip:
+      name: sampleprojectpy2
+      state: absent
+
+  - name: Use a specially crafted module
+    test_respawn:
+    register: result
+    ignore_errors: true
+
+  - name: Check that the Python module is not installed and fails module
+    assert:
+      that:
+        - result is failed
+        - "'unable to find sample;' in result.msg"
+
+  - name: Install sampleprojectpy2
+    pip:
+      name: sampleprojectpy2
+      state: present
+
+  - name: Use a specially crafted module to see if things were imported correctly
+    test_respawn:
+    register: result
+
+  - name: Check that the Python module imported
+    assert:
+      that:
+        - result.changed
+
+  - name: Use a specially crafted module to see if multiple module names are supported
+    test_respawn:
+      test_multiple_modules: true
+    register: result
+
+  - name: Check that the Python modules were imported correctly
+    assert:
+      that:
+        - result.changed
