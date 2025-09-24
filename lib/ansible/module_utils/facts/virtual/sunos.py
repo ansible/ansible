@@ -115,6 +115,10 @@ class SunOSVirtual(Virtual):
                         guest_tech.add('kvm')
                         virtual_facts['virtualization_type'] = 'kvm'
                         virtual_facts['virtualization_role'] = 'guest'
+                    elif 'BHYVE' in line:
+                        guest_tech.add('bhyve')
+                        virtual_facts['virtualization_type'] = 'bhyve'
+                        virtual_facts['virtualization_role'] = 'guest'
 
         virtual_facts['virtualization_tech_guest'] = guest_tech
         virtual_facts['virtualization_tech_host'] = host_tech
