@@ -430,7 +430,7 @@ def statinfo(st):
     except Exception:
         pass
 
-    output =  {
+    output = {
         'mode': "%04o" % stat.S_IMODE(st.st_mode),
         'isdir': stat.S_ISDIR(st.st_mode),
         'ischr': stat.S_ISCHR(st.st_mode),
