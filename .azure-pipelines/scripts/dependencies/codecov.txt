@@ -6,7 +6,7 @@
 #
 certifi==2025.8.3         # via requests, sentry-sdk
 charset-normalizer==3.4.3  # via requests
-click==8.2.1              # via codecov-cli
+click==8.2.1              # via -c codecov-constraints.in, codecov-cli
 codecov-cli==11.2.3       # via -r codecov.in
 idna==3.10                # via requests
 ijson==3.4.0              # via codecov-cli
