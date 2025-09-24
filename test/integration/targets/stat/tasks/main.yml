@@ -61,6 +61,7 @@
         - "'xgrp' in stat_result.stat"
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
+        - "'disk_usage_bytes' in stat_result.stat"
 
 - name: make a symlink
   file:
