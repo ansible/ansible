@@ -820,7 +820,7 @@ class TgzArchive(object):
         self.tar_type = None
         self.zipflag = '-z'
         self._files_in_archive = []
-        self._files_created_by_archive: dict[str, None] | None = None
+        self._files_created_by_archive = None
 
     def _get_tar_type(self):
         cmd = [self.cmd_path, '--version']
