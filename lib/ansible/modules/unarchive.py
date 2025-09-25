@@ -251,6 +251,7 @@ import re
 import stat
 import time
 from functools import partial
+from pathlib import Path
 from zipfile import ZipFile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -1144,7 +1145,7 @@ def main():
     # Run only if we found differences (idempotence) or diff was missing
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
-        top_folders = []
+        folders = set()
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
@@ -1154,15 +1155,17 @@ def main():
                 module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
 
             if '/' in filename:
-                top_folder_path = filename.split('/')[0]
-                if top_folder_path not in top_folders:
-                    top_folders.append(top_folder_path)
+                folder_path = Path(filename).parent
+                if folder_path not in folders:
+                    folders.add(folder_path)
 
-        # make sure top folders have the right permissions
-        # https://github.com/ansible/ansible/issues/35426
-        if top_folders:
-            for f in top_folders:
-                file_args['path'] = "%s/%s" % (dest, f)
+        # make sure folders implicitly included in the archive have the right permissions
+        # https://github.com/ansible/ansible/issues/35426 <- top level folders
+        # https://github.com/ansible/ansible/issues/85815 <- sub level folders
+        if folders:
+            absolute_dest = Path(dest)
+            for folder in folders:
+                file_args['path'] = absolute_dest / folder
                 try:
                     res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
                 except OSError as ex:
