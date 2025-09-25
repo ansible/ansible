@@ -894,7 +894,8 @@ class TgzArchive(object):
             filepath = Path(file)
             self._files_created_by_archive[str(filepath)] = None
             for parent in filepath.parents:
-                self._files_created_by_archive[str(parent)] = None
+                if parent not in self._files_created_by_archive:
+                    self._files_created_by_archive[str(parent)] = None
 
         self._files_created_by_archive.pop('.', None)
         self._files_created_by_archive.pop('..', None)
