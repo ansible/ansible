@@ -884,14 +884,12 @@ class TgzArchive(object):
         When listing the files in an archive, archives can include files in directories
         while excluding the containing directory. This property includes those implicitly
         created directories so that their metadata can be properly set.
-        https://github.com/ansible/ansible/issues/35426 <- top level folders
-        https://github.com/ansible/ansible/issues/85815 <- sub level folders
         """
 
         if self._files_created_by_archive:
             return self._files_created_by_archive.keys()
 
-        self._files_created_by_archive = dict()
+        self._files_created_by_archive = dict()  # Use dict as ordered set
         for file in self.files_in_archive:
             filepath = Path(file)
             self._files_created_by_archive[str(filepath)] = None
