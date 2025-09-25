@@ -183,18 +183,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if isinstance(parent_include, IncludeRole):
                             parent_include_dir = parent_include._role_path
                         else:
-                            try:
-                                parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
-                            except AnsibleUndefinedVariable as ex:
-                                if not parent_include.statically_loaded:
-                                    raise AnsibleParserError(
-                                        message="Error when evaluating variable in dynamic parent "
-                                                f"include path {parent_include.args.get('_raw_params')!r}.",
-                                        help_text="When using static imports, the parent dynamic include "
-                                                  "cannot utilize host facts or variables from inventory.",
-                                        obj=task_ds,
-                                    ) from ex
-                                raise
+                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
