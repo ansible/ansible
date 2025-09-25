@@ -888,11 +888,10 @@ class TgzArchive(object):
         https://github.com/ansible/ansible/issues/85815 <- sub level folders
         """
 
-
         if self._files_created_by_archive:
             return self._files_created_by_archive.keys()
 
-        self._files_created_by_archive: dict[str, None] | None = dict()
+        self._files_created_by_archive = dict()
         for file in self.files_in_archive:
             filepath = Path(file)
             self._files_created_by_archive[str(filepath)] = None
