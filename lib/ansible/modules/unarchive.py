@@ -250,6 +250,7 @@ import pwd
 import re
 import stat
 import time
+from collections.abc import KeysView
 from functools import partial
 from pathlib import Path
 from zipfile import ZipFile
@@ -424,6 +425,8 @@ class ZipArchive(object):
 
             archive.close()
         return self._files_in_archive
+
+    files_created_by_archive = files_in_archive
 
     def _valid_time_stamp(self, timestamp_str):
         """ Return a valid time object from the given time string """
@@ -817,6 +820,7 @@ class TgzArchive(object):
         self.tar_type = None
         self.zipflag = '-z'
         self._files_in_archive = []
+        self._files_created_by_archive: dict[str, None] | None = None
 
     def _get_tar_type(self):
         cmd = [self.cmd_path, '--version']
@@ -872,6 +876,33 @@ class TgzArchive(object):
                 self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
+
+    @property
+    def files_created_by_archive(self) -> KeysView[str]:
+        """Return a list of files created implicitly or explicitly by the archive.
+
+        When listing the files in an archive, archives can include files in directories
+        while excluding the containing directory. This property includes those implicitly
+        created directories so that their metadata can be properly set.
+        https://github.com/ansible/ansible/issues/35426 <- top level folders
+        https://github.com/ansible/ansible/issues/85815 <- sub level folders
+        """
+
+
+        if self._files_created_by_archive:
+            return self._files_created_by_archive.keys()
+
+        self._files_created_by_archive: dict[str, None] | None = dict()
+        for file in self.files_in_archive:
+            filepath = Path(file)
+            self._files_created_by_archive[str(filepath)] = None
+            for parent in filepath.parents:
+                self._files_created_by_archive[str(parent)] = None
+
+        self._files_created_by_archive.pop('.', None)
+        self._files_created_by_archive.pop('..', None)
+
+        return self._files_created_by_archive.keys()
 
     def is_unarchived(self):
         cmd = [self.cmd_path, '--diff', '-C', self.b_dest]
@@ -1145,31 +1176,13 @@ def main():
     # Run only if we found differences (idempotence) or diff was missing
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
-        folders = set()
-        for filename in handler.files_in_archive:
+        for filename in handler.files_created_by_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except OSError as ex:
                 module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
-
-            if '/' in filename:
-                folder_path = Path(filename).parent
-                if folder_path not in folders:
-                    folders.add(folder_path)
-
-        # make sure folders implicitly included in the archive have the right permissions
-        # https://github.com/ansible/ansible/issues/35426 <- top level folders
-        # https://github.com/ansible/ansible/issues/85815 <- sub level folders
-        if folders:
-            absolute_dest = Path(dest)
-            for folder in folders:
-                file_args['path'] = absolute_dest / folder
-                try:
-                    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-                except OSError as ex:
-                    module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
