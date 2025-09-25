@@ -276,7 +276,7 @@ class GenericBsdIfconfigNetwork(Network):
         localhost6 = ['::1', '::1/128', 'fe80::1%lo0']
         if address['address'] not in localhost6:
             ips['all_ipv6_addresses'].append(address['address'])
-        current_if['ipv6'].append(address)
+        current_if['ipv6'].insert(0, address)
 
     def parse_tunnel_line(self, words, current_if, ips):
         current_if['type'] = 'tunnel'
