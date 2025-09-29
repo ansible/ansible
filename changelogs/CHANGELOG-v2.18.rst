@@ -4,6 +4,21 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.10rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-09-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Bugfixes
+--------
+
+- respawn - use copy of env variables to update existing PYTHONPATH value (https://github.com/ansible/ansible/issues/84954).
+- run_command - Fixed premature selector unregistration on empty read from stdout/stderr that caused truncated output or hangs in rare situations.
+
 v2.18.9
 =======
 
