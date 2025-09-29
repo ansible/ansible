@@ -238,6 +238,7 @@ class RoleMixin(object):
         for b_path in b_colldirs:
             path = to_text(b_path, errors='surrogate_or_strict')
             if not (collname := _get_collection_name_from_path(b_path)):
+                display.debug(f'Skipping invalid path {b_path!r}')
                 continue
 
             roles_dir = os.path.join(path, 'roles')

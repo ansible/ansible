@@ -19,6 +19,8 @@ def list_collections(coll_filter=None, search_paths=None, dedupe=True, artifacts
     for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter, artifacts_manager=artifacts_manager, dedupe=dedupe):
         if collection := _get_collection_name_from_path(candidate):
             collections[collection] = candidate
+        else:
+            display.debug(f'Skipping invalid collection in path: {candidate!r}')
     return collections
 
 
