@@ -1,0 +1,6 @@
+[tool.pip-tools]
+allow-unsafe = true  # weird outdated default
+annotation-style = "line"  # put the source tracking comments inline
+generate-hashes = false  # pip bug https://github.com/pypa/pip/issues/9243
+resolver = "backtracking"  # modern depresolver
+strip-extras = true  # so that output files are true pip constraints
