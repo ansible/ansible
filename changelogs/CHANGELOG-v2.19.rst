@@ -4,6 +4,29 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-09-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- fetch_file - add ca_path and cookies parameter arguments (https://github.com/ansible/ansible/issues/85172).
+
+Bugfixes
+--------
+
+- Windows async - Handle running PowerShell modules with trailing data after the module result
+- ansible-doc --list/--list_files/--metadata-dump - fixed relative imports in nested filter/test plugin files (https://github.com/ansible/ansible/issues/85753).
+- display - Fixed reference to undefined `_DeferredWarningContext` when issuing early warnings during startup. (https://github.com/ansible/ansible/issues/85886)
+- run_command - Fixed premature selector unregistration on empty read from stdout/stderr that caused truncated output or hangs in rare situations.
+- script inventory plugin will now show correct 'incorrect' type when doing implicit conversions on groups.
+
 v2.19.2
 =======
 
