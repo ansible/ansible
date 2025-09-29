@@ -206,6 +206,21 @@
     - not success_async_custom_dir_poll.failed
     - success_async_custom_dir_poll.results_file == win_output_dir + '\\' + async_custom_dir_poll.ansible_job_id
 
+- name: test async with trailing output
+  trailing_output:
+  async: 10
+  poll: 1
+  register: async_trailing_output
+
+- name: assert test async with trailing output
+  assert:
+    that:
+    - async_trailing_output is not changed
+    - async_trailing_output.test == 123
+    - async_trailing_output.warnings | count == 1
+    - >-
+      async_trailing_output.warnings[0] is search('Module invocation had junk after the JSON data: trailing junk after module result')
+
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success
 #  async_test:
