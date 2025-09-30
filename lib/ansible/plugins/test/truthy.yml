@@ -20,5 +20,5 @@ EXAMPLES: |
     thisisfalse: '{{ "" is truthy }}'
 RETURN:
   _value:
-    description: Returns V(True) if the condition is not "Python truthy", V(False) otherwise.
+    description: Returns V(True) if the condition is "Python truthy", V(False) otherwise.
     type: boolean
