@@ -5,7 +5,7 @@ DOCUMENTATION:
   short_description: Pythonic false
   description:
     - This check is a more Python version of what is 'false'.
-    - It is the opposite of 'truthy'.
+    - It is the opposite of P(ansible.builtin.truthy#test).
   options:
     _input:
       description: An expression that can be expressed in a boolean context.
