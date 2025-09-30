@@ -1,0 +1,3 @@
+bugfixes:
+  - "ansible-doc - prevent crash when scanning collections in paths that have more than one ``ansible_collections`` in it
+     (https://github.com/ansible/ansible/issues/84909, https://github.com/ansible/ansible/pull/85361)."
