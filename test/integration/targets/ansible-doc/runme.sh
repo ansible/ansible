@@ -212,11 +212,10 @@ output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-di
 test "${output}" -eq 1
 
 # ensure --metadata-dump does not crash if the ansible_collections is nested (https://github.com/ansible/ansible/issues/84909)
-testdir="$(pwd)"
-pbdir="collections/ansible_collections/testns/testcol/playbooks"
-cd "$pbdir"
-ANSIBLE_COLLECTIONS_PATH="$testdir/$pbdir/collections" ansible-doc -vvv --metadata-dump --no-fail-on-errors
-cd "$testdir"
+pbdir="$(pwd)/collections/ansible_collections/testns/testcol/playbooks"
+pushd "$pbdir"
+ANSIBLE_COLLECTIONS_PATH="$pbdir/collections" ansible-doc -vvv --metadata-dump --no-fail-on-errors
+popd
 
 echo "test doc list on broken role metadata"
 # ensure that role doc does not fail when --no-fail-on-errors is supplied
