@@ -225,7 +225,13 @@ def sanity_check(module, host, key, sshkeygen):
         rc, stdout, stderr = module.run_command(sshkeygen_command)
 
     if stdout == '':  # host not found
-        module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
+        results = {
+            "msg": "Host parameter does not match hashed host field in supplied key",
+            "rc": rc,
+        }
+        if stderr:
+            results["stderr"] = stderr
+        module.fail_json(**results)
 
 
 def search_for_host_key(module, host, key, path, sshkeygen):
