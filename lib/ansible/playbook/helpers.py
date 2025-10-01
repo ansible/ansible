@@ -165,17 +165,29 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     subdir = 'tasks'
                     if use_handlers:
                         subdir = 'handlers'
+                    try:
+                        include_target = templar.template(task.args['_raw_params'])
+                    except AnsibleUndefinedVariable as ex:
+                        raise AnsibleParserError(
+                            message=f"Error when evaluating variable in import path {task.args['_raw_params']!r}.",
+                            help_text="When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"
+                                      "or extra-vars passed in from the command line. Static imports cannot use variables from facts or inventory\n"
+                                      "sources like group or host vars.",
+                            obj=task_ds,
+                        ) from ex
+                    # FIXME this appears to be (almost?) duplicate code as in IncludedFile for include_tasks
                     while parent_include is not None:
                         if not isinstance(parent_include, TaskInclude):
                             parent_include = parent_include._parent
                             continue
-                        parent_include.post_validate(templar=templar)
-                        parent_include_dir = os.path.dirname(parent_include.args.get('_raw_params'))
+                        if isinstance(parent_include, IncludeRole):
+                            parent_include_dir = parent_include._role_path
+                        else:
+                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
                             cumulative_path = os.path.join(parent_include_dir, cumulative_path)
-                        include_target = templar.template(task.args['_raw_params'])
                         if task._role:
                             new_basedir = os.path.join(task._role._role_path, subdir, cumulative_path)
                             include_file = loader.path_dwim_relative(new_basedir, subdir, include_target)
@@ -189,16 +201,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             parent_include = parent_include._parent
 
                     if not found:
-                        try:
-                            include_target = templar.template(task.args['_raw_params'])
-                        except AnsibleUndefinedVariable as ex:
-                            raise AnsibleParserError(
-                                message=f"Error when evaluating variable in import path {task.args['_raw_params']!r}.",
-                                help_text="When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"
-                                "or extra-vars passed in from the command line. Static imports cannot use variables from facts or inventory\n"
-                                "sources like group or host vars.",
-                                obj=task_ds,
-                            ) from ex
                         if task._role:
                             include_file = loader.path_dwim_relative(task._role._role_path, subdir, include_target)
                         else:

@@ -10,4 +10,9 @@
     that:
       - nested_adjacent_count|int == 2
 
+- set_fact:
+    not_available_at_parsing: root
+
 - import_tasks: "{{ role_path }}/tests/main.yml"
+  become: true
+  become_user: "{{ not_available_at_parsing }}"
