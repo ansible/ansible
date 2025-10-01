@@ -1,0 +1,6 @@
+- command: whoami
+  register: r
+
+- assert:
+    that:
+      - r.stdout == not_available_at_parsing
