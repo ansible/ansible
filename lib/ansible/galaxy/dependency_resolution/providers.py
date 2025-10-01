@@ -47,7 +47,7 @@ class CollectionDependencyProvider(AbstractProvider):
     """Delegate providing a requirement interface for the resolver."""
 
     def __init__(
-            self,  # type: CollectionDependencyProviderBase
+            self,
             apis,  # type: MultiGalaxyAPIProxy
             concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
             preferred_candidates=None,  # type: t.Iterable[Candidate]
