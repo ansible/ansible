@@ -107,9 +107,6 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         """In child termination when notified by the parent"""
         signal.signal(signum, signal.SIG_DFL)
 
-        if not self.pid:
-            return
-
         try:
             os.killpg(self.pid, signum)
             os.kill(self.pid, signum)
