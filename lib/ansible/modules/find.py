@@ -463,13 +463,9 @@ def statinfo(st):
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
 
-    for other in [
-            ('st_blocks', 'blocks'),
-    ]:
-        if hasattr(st, other[0]):
-            output[other[1]] = getattr(st, other[0])
-            if other[0] == 'st_blocks':
-                output['disk_usage_bytes'] = st.st_blocks * 512
+    if hasattr(st, 'st_blocks'):
+        output['blocks'] = st.st_blocks
+        output['disk_usage_bytes'] = st.st_blocks * 512
 
     return output
 
