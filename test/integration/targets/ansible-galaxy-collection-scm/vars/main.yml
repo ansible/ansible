@@ -5,7 +5,5 @@ test_repo_path: "{{ galaxy_dir }}/development/ansible_test"
 test_error_repo_path: "{{ galaxy_dir }}/development/error_test"
 
 supported_resolvelib_versions:
-  - "0.5.3"  # Oldest supported
-  - "0.6.0"
-  - "0.7.0"
-  - "0.8.0"
+  - "0.8.0"  # Oldest supported
+  - "< 2.0.0"
