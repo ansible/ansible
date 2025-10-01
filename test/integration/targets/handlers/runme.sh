@@ -229,6 +229,13 @@ ansible-playbook handler_notify_earlier_handler.yml "$@" 2>&1 | tee out.txt
 
 ANSIBLE_DEBUG=1 ansible-playbook tagged_play.yml --skip-tags the_whole_play "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'META: triggered running handlers')" = "0" ]
+[ "$(grep out.txt -ce 'No handler notifications for')" = "0" ]
 [ "$(grep out.txt -ce 'handler_ran')" = "0" ]
+[ "$(grep out.txt -ce 'handler1_ran')" = "0" ]
 
 ansible-playbook rescue_flush_handlers.yml "$@"
+
+ANSIBLE_DEBUG=1 ansible-playbook tagged_play.yml --tags task_tag "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'META: triggered running handlers')" = "1" ]
+[ "$(grep out.txt -ce 'handler_ran')" = "0" ]
+[ "$(grep out.txt -ce 'handler1_ran')" = "1" ]

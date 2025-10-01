@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -316,8 +315,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                     filtered_block = evaluate_block(task)
                     if filtered_block.has_tasks():
                         tmp_list.append(filtered_block)
-                elif ((task.action in C._ACTION_META and task.implicit) or
-                        task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
+                elif task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
