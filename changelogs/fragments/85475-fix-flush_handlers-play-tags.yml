@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix issue where play tags prevented executing notified handlers (https://github.com/ansible/ansible/issues/85475)
