@@ -54,7 +54,7 @@ class DataLoader:
 
     def __init__(self) -> None:
 
-        self._basedir: str = '.'
+        self._basedir: str = os.path.abspath('.')
 
         # NOTE: not effective with forks as the main copy does not get updated.
         # avoids rereading files
@@ -227,7 +227,7 @@ class DataLoader:
 
     def set_basedir(self, basedir: str) -> None:
         """ sets the base directory, used to find files when a relative path is given """
-        self._basedir = basedir
+        self._basedir = os.path.abspath(basedir)
 
     def path_dwim(self, given: str) -> str:
         """
