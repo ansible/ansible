@@ -532,7 +532,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             else:
                 self._connection._shell.tmpdir = None
 
-    def _transfer_file(self, local_path, remote_path):
+    def _transfer_file(self, local_path: str, remote_path: str) -> str:
         """
         Copy a file from the controller to a remote path
 
@@ -550,7 +550,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         self._connection.put_file(local_path, remote_path)
         return remote_path
 
-    def _transfer_data(self, remote_path: str | bytes, data: str | bytes) -> str | bytes:
+    def _transfer_data(self, remote_path: str, data: str | bytes) -> str:
         """
         Copies the module data out to the temporary module path.
         """
@@ -1317,7 +1317,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
-            self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
+            self._connection.cwd = self._loader.get_basedir()
 
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
