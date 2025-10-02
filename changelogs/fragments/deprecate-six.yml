@@ -1,0 +1,2 @@
+deprecated_features:
+  - Deprecate the ``ansible.module_utils.six`` module. Use the Python standard library equivalent instead.
