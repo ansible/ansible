@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import typing as t
 
@@ -108,10 +109,6 @@ class AnsibleUnwantedChecker(BaseChecker):
                 'Iterator',
             )
         ),
-
-        'ansible.module_utils.six': UnwantedEntry(
-            'the Python standard library equivalent'
-        ),
     }
 
     unwanted_functions = {
@@ -135,6 +132,19 @@ class AnsibleUnwantedChecker(BaseChecker):
                                         ),
                                         modules_only=True),
     }
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # ansible.module_utils.six is deprecated and collections can still use it until it is removed
+        if self.is_ansible_core:
+            self.unwanted_imports['ansible.module_utils.six'] = UnwantedEntry(
+                'the Python standard library equivalent'
+            )
+
+    @functools.cached_property
+    def is_ansible_core(self) -> bool:
+        """True if ansible-core is being tested."""
+        return not self.linter.config.collection_name
 
     def visit_import(self, node):  # type: (astroid.node_classes.Import) -> None
         """Visit an import node."""
