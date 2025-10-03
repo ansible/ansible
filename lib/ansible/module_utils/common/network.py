@@ -6,10 +6,12 @@
 from __future__ import annotations
 
 import re
+
+# backward compat
+from builtins import zip  # pylint: disable=unused-import
+
 from struct import pack
 from socket import inet_ntoa
-
-from ansible.module_utils.six.moves import zip
 
 
 VALID_MASKS = [2**8 - 2**i for i in range(0, 9)]

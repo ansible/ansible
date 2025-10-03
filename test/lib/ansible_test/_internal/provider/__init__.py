@@ -12,12 +12,12 @@ from ..util import (
 )
 
 
-def get_path_provider_classes(provider_type: t.Type[TPathProvider]) -> list[t.Type[TPathProvider]]:
+def get_path_provider_classes[TPathProvider: PathProvider](provider_type: t.Type[TPathProvider]) -> list[t.Type[TPathProvider]]:
     """Return a list of path provider classes of the given type."""
     return sorted(get_subclasses(provider_type), key=lambda subclass: (subclass.priority, subclass.__name__))
 
 
-def find_path_provider(
+def find_path_provider[TPathProvider: PathProvider](
     provider_type: t.Type[TPathProvider],
     provider_classes: list[t.Type[TPathProvider]],
     path: str,
@@ -71,6 +71,3 @@ class PathProvider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
-
-
-TPathProvider = t.TypeVar('TPathProvider', bound=PathProvider)

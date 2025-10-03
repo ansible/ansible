@@ -36,9 +36,10 @@ import struct
 import uuid
 
 from functools import partial
+
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.common.json import _get_legacy_encoder
-from ansible.module_utils.six import iteritems
 
 
 def write_to_stream(stream, obj):
@@ -95,7 +96,7 @@ class ConnectionError(Exception):
 
     def __init__(self, message, *args, **kwargs):
         super(ConnectionError, self).__init__(message)
-        for k, v in iteritems(kwargs):
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
 
@@ -149,7 +150,7 @@ class Connection(object):
                 raise ConnectionError(
                     "Unable to decode JSON from response to {0}. Received '{1}'.".format(name, out)
                 )
-            params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in iteritems(kwargs)]
+            params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in kwargs.items()]
             params = ', '.join(params)
             raise ConnectionError(
                 "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
@@ -200,3 +201,7 @@ class Connection(object):
         sf.close()
 
         return to_text(response, errors='surrogate_or_strict')
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "iteritems")

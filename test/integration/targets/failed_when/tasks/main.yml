@@ -24,6 +24,8 @@
 - assert:
     that:
       - "'failed' in result and not result.failed"
+      - result.exception is undefined
+      - result.failed_when_suppressed_exception is undefined
 
 - name: command rc 0 failed_when_result False
   shell: exit 0
@@ -35,6 +37,8 @@
     that:
       - "'failed' in result and not result.failed"
       - "'failed_when_result' in result and not result.failed_when_result"
+      - result.exception is undefined
+      - result.failed_when_suppressed_exception is undefined
 
 - name: command rc 1 failed_when_result True
   shell: exit 1
@@ -46,6 +50,8 @@
     that:
       - "'failed' in result and result.failed"
       - "'failed_when_result' in result and result.failed_when_result"
+      - result.exception is defined
+      - result.failed_when_suppressed_exception is undefined
 
 - name: command rc 1 failed_when_result undef
   shell: exit 1
@@ -55,6 +61,8 @@
 - assert:
     that:
       - "'failed' in result and result.failed"
+      - result.exception is defined
+      - result.failed_when_suppressed_exception is undefined
 
 - name: command rc 1 failed_when_result False
   shell: exit 1
@@ -66,6 +74,8 @@
     that:
       - "'failed' in result and not result.failed"
       - "'failed_when_result' in result and not result.failed_when_result"
+      - result.exception is undefined
+      - result.failed_when_suppressed_exception is defined
 
 - name: invalid conditional
   command: echo foo

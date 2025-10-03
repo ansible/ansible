@@ -26,20 +26,16 @@ from . import _to_bytes, _to_text
 from ._collection_config import AnsibleCollectionConfig
 
 try:
-    try:
-        # Available on Python >= 3.11
-        # We ignore the import error that will trigger when running mypy with
-        # older Python versions.
-        from importlib.resources.abc import TraversableResources  # type: ignore[import]
-    except ImportError:
-        # Used with Python 3.9 and 3.10 only
-        # This member is still available as an alias up until Python 3.14 but
-        # is deprecated as of Python 3.12.
-        from importlib.abc import TraversableResources  # deprecated: description='TraversableResources move' python_version='3.10'
+    # Available on Python >= 3.11
+    # We ignore the import error that will trigger when running mypy with
+    # older Python versions.
+    from importlib.resources.abc import TraversableResources  # type: ignore[import]
 except ImportError:
-    # Python < 3.9
-    # deprecated: description='TraversableResources fallback' python_version='3.8'
-    TraversableResources = object  # type: ignore[assignment,misc]
+    # Used with Python 3.9 and 3.10 only
+    # This member is still available as an alias up until Python 3.14 but
+    # is deprecated as of Python 3.12.
+    # deprecated: description='TraversableResources move' python_version='3.10'
+    from importlib.abc import TraversableResources  # type: ignore[assignment,no-redef]
 
 # NB: this supports import sanity test providing a different impl
 try:
@@ -186,7 +182,7 @@ class _AnsibleTraversableResources(TraversableResources):
 
 
 class _AnsibleCollectionFinder:
-    def __init__(self, paths=None, scan_sys_paths=True):
+    def __init__(self, paths=None, scan_sys_paths=True, internal_collections=None):
         # TODO: accept metadata loader override
         self._ansible_pkg_path = _to_text(os.path.dirname(_to_bytes(sys.modules['ansible'].__file__)))
 
@@ -213,6 +209,7 @@ class _AnsibleCollectionFinder:
             if p not in good_paths and os.path.isdir(_to_bytes(os.path.join(p, 'ansible_collections'))):
                 good_paths.append(p)
 
+        self._internal_collections = internal_collections
         self._n_configured_paths = good_paths
         self._n_cached_collection_paths = None
         self._n_cached_collection_qualified_paths = None

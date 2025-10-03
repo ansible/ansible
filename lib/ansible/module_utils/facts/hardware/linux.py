@@ -24,13 +24,13 @@ import re
 import sys
 import time
 
+from ansible.module_utils._internal import _no_six
 from ansible.module_utils._internal._concurrent import _futures
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
-from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
@@ -653,7 +653,7 @@ class LinuxHardware(Hardware):
                     retval[target].add(entry)
                 except OSError:
                     continue
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return dict((k, list(sorted(v))) for (k, v) in retval.items())
         except OSError:
             return {}
 
@@ -665,7 +665,7 @@ class LinuxHardware(Hardware):
                 device = elements[3]
                 target = elements[5]
                 retval[target].add(device)
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return dict((k, list(sorted(v))) for (k, v) in retval.items())
         except OSError:
             return {}
 
@@ -750,7 +750,7 @@ class LinuxHardware(Hardware):
             d = {}
             d['virtual'] = virtual
             d['links'] = {}
-            for (link_type, link_values) in iteritems(links):
+            for (link_type, link_values) in links.items():
                 d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
@@ -801,7 +801,7 @@ class LinuxHardware(Hardware):
                     part_sysdir = sysdir + "/" + partname
 
                     part['links'] = {}
-                    for (link_type, link_values) in iteritems(links):
+                    for (link_type, link_values) in links.items():
                         part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start", 0)
@@ -890,7 +890,8 @@ class LinuxHardware(Hardware):
                     'size_g': items[-2],
                     'free_g': items[-1],
                     'num_lvs': items[2],
-                    'num_pvs': items[1]
+                    'num_pvs': items[1],
+                    'lvs': {},
                 }
 
             lvs_path = self.module.get_bin_path('lvs')
@@ -901,7 +902,18 @@ class LinuxHardware(Hardware):
                 rc, lv_lines, err = self.module.run_command('%s %s' % (lvs_path, lvm_util_options))
                 for lv_line in lv_lines.splitlines():
                     items = lv_line.strip().split(',')
-                    lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+                    vg_name = items[1]
+                    lv_name = items[0]
+                    # The LV name is only unique per VG, so the top level fact lvs can be misleading.
+                    # TODO: deprecate lvs in favor of vgs
+                    lvs[lv_name] = {'size_g': items[3], 'vg': vg_name}
+                    try:
+                        vgs[vg_name]['lvs'][lv_name] = {'size_g': items[3]}
+                    except KeyError:
+                        self.module.warn(
+                            "An LVM volume group was created while gathering LVM facts, "
+                            "and is not included in ansible_facts['vgs']."
+                        )
 
             pvs_path = self.module.get_bin_path('pvs')
             # pvs fields: PV VG #Fmt #Attr PSize PFree
@@ -925,3 +937,7 @@ class LinuxHardwareCollector(HardwareCollector):
     _fact_class = LinuxHardware
 
     required_facts = set(['platform'])
+
+
+def __getattr__(importable_name):
+    return _no_six.deprecate(importable_name, __name__, "iteritems")

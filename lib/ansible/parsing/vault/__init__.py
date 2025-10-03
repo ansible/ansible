@@ -59,7 +59,6 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
-from ansible.module_utils.six import binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe, unfrackpath
@@ -1237,7 +1236,7 @@ class VaultAES256:
 
         It would be nice if there were a library for this but hey.
         """
-        if not (isinstance(b_a, binary_type) and isinstance(b_b, binary_type)):
+        if not (isinstance(b_a, bytes) and isinstance(b_b, bytes)):
             raise TypeError('_is_equal can only be used to compare two byte strings')
 
         # http://codahale.com/a-lesson-in-timing-attacks/

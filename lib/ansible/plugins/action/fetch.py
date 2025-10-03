@@ -20,7 +20,6 @@ import os
 import base64
 from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.module_utils.common.text.converters import to_bytes, to_text
-from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
@@ -52,10 +51,10 @@ class ActionModule(ActionBase):
 
             msg = ''
             # FIXME: validate source and dest are strings; use basic.py and module specs
-            if not isinstance(source, string_types):
+            if not isinstance(source, str):
                 msg = "Invalid type supplied for source option, it must be a string"
 
-            if not isinstance(dest, string_types):
+            if not isinstance(dest, str):
                 msg = "Invalid type supplied for dest option, it must be a string"
 
             if source is None or dest is None:
@@ -131,7 +130,6 @@ class ActionModule(ActionBase):
 
             # calculate the destination name
             if os.path.sep not in self._connection._shell.join_path('a', ''):
-                source = self._connection._shell._unquote(source)
                 source_local = source.replace('\\', '/')
             else:
                 source_local = source
@@ -194,7 +192,7 @@ class ActionModule(ActionBase):
                                        msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
                                        checksum=new_checksum, remote_checksum=remote_checksum))
                 else:
-                    result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
+                    result.update({'changed': True, 'md5sum': new_md5, 'file': source, 'dest': dest,
                                    'remote_md5sum': None, 'checksum': new_checksum,
                                    'remote_checksum': remote_checksum})
             else:

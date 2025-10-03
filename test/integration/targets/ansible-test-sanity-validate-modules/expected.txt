@@ -3,6 +3,7 @@ plugins/modules/check_mode_attribute_1.py:0:0: attributes-check-mode: The module
 plugins/modules/check_mode_attribute_2.py:0:0: attributes-check-mode: The module does not declare support for check mode, but the check_mode attribute's support value is 'partial' and not 'none'
 plugins/modules/check_mode_attribute_3.py:0:0: attributes-check-mode: The module does declare support for check mode, but the check_mode attribute's support value is 'none'
 plugins/modules/check_mode_attribute_4.py:0:0: attributes-check-mode-details: The module declares it does not fully support check mode, but has no details on what exactly that means
+plugins/modules/doc_fragments_not_exist.py:0:0: doc-fragment-error: Error while adding fragments: unknown doc_fragment(s) in file plugins/modules/doc_fragments_not_exist.py: does.not.exist
 plugins/modules/import_order.py:7:0: import-before-documentation: Import found before documentation variables. All imports must appear below DOCUMENTATION/EXAMPLES/RETURN.
 plugins/modules/invalid_argument_spec_extra_key.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.extra_key: extra keys not allowed @ data['argument_spec']['foo']['extra_key']. Got 'bar'
 plugins/modules/invalid_argument_spec_incorrect_context.py:0:0: invalid-ansiblemodule-schema: AnsibleModule.argument_spec.foo.context: expected dict for dictionary value @ data['argument_spec']['foo']['context']. Got 'bar'
@@ -14,6 +15,8 @@ plugins/modules/invalid_yaml_syntax.py:11:15: invalid-examples: EXAMPLES is not 
 plugins/modules/invalid_yaml_syntax.py:15:15: return-syntax-error: RETURN is not valid YAML
 plugins/modules/option_name_casing.py:0:0: option-equal-up-to-casing: Multiple options/aliases are equal up to casing: option 'Bar', alias 'baR' of option 'bam', alias 'bar' of option 'foo'
 plugins/modules/option_name_casing.py:0:0: option-equal-up-to-casing: Multiple options/aliases are equal up to casing: option 'Foo', option 'foo'
+plugins/modules/return_fragments.py:0:0: invalid-documentation-markup: RETURN.bar.description.1: Directive "P(a.b.asfd#dfsa)" must contain a valid plugin type; found "dfsa" @ data['bar']['description'][1]. Got 'P(a.b.asfd#dfsa) this is an error.'
+plugins/modules/return_fragments_not_exist.py:0:0: return-fragment-error: Error while adding fragments: unknown doc_fragment(s) in file plugins/modules/return_fragments_not_exist.py: does.not.exist
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.0: While parsing "V(C\(" at index 1: Unnecessarily escaped "(" @ data['options']['a11']['suboptions']['b1']['description'][0]. Got 'V(C\\(foo\\)).'
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.2: While parsing "P(foo.bar#baz)" at index 1: Plugin name "foo.bar" is not a FQCN @ data['options']['a11']['suboptions']['b1']['description'][2]. Got 'P(foo.bar#baz).'
 plugins/modules/semantic_markup.py:0:0: invalid-documentation-markup: DOCUMENTATION.options.a11.suboptions.b1.description.3: While parsing "P(foo.bar.baz)" at index 1: Parameter "foo.bar.baz" is not of the form FQCN#type @ data['options']['a11']['suboptions']['b1']['description'][3]. Got 'P(foo.bar.baz).'

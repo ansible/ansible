@@ -54,7 +54,6 @@ from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible._internal._datatag._tags import TrustedAsTemplate
-from ansible.module_utils import six
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible._internal._templating._engine import TemplateEngine
@@ -65,7 +64,6 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.utils.vars import load_extra_vars
 
 display = Display()
-urlparse = six.moves.urllib.parse.urlparse
 
 
 def with_collection_artifacts_manager(wrapped_method):
@@ -212,6 +210,18 @@ class GalaxyCLI(CLI):
         self.galaxy = None
         self.lazy_role_api = None
         super(GalaxyCLI, self).__init__(args)
+
+    @property
+    def collection_paths(self):
+        """
+        Exclude lib/ansible/_internal/ansible_collections/.
+        """
+        # exclude bundled collections, e.g. ansible._protomatter
+        return [
+            path
+            for path in AnsibleCollectionConfig.collection_paths
+            if path != AnsibleCollectionConfig._internal_collections
+        ]
 
     def init_parser(self):
         """ create an options parser for bin/ansible """
@@ -644,22 +654,9 @@ class GalaxyCLI(CLI):
             client_secret = server_options.pop('client_secret')
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
-            api_version = server_options.pop('api_version')
             if server_options['validate_certs'] is None:
                 server_options['validate_certs'] = context.CLIARGS['resolved_validate_certs']
             validate_certs = server_options['validate_certs']
-
-            # This allows a user to explicitly force use of an API version when
-            # multiple versions are supported. This was added for testing
-            # against pulp_ansible and I'm not sure it has a practical purpose
-            # outside of this use case. As such, this option is not documented
-            # as of now
-            if api_version:
-                display.warning(
-                    f'The specified "api_version" configuration for the galaxy server "{server_key}" is '
-                    'not a public configuration, and may be removed at any time without warning.'
-                )
-                server_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
 
             # default case if no auth info is provided.
             server_options['token'] = None
@@ -687,12 +684,6 @@ class GalaxyCLI(CLI):
             ))
 
         cmd_server = context.CLIARGS['api_server']
-        if context.CLIARGS['api_version']:
-            api_version = context.CLIARGS['api_version']
-            display.warning(
-                'The --api-version is not a public argument, and may be removed at any time without warning.'
-            )
-            galaxy_options['available_api_versions'] = {'v%s' % api_version: '/v%s' % api_version}
 
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
 
@@ -1281,7 +1272,7 @@ class GalaxyCLI(CLI):
         """Compare checksums with the collection(s) found on the server and the installed copy. This does not verify dependencies."""
 
         collections = context.CLIARGS['args']
-        search_paths = AnsibleCollectionConfig.collection_paths
+        search_paths = self.collection_paths
         ignore_errors = context.CLIARGS['ignore_errors']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
@@ -1423,7 +1414,7 @@ class GalaxyCLI(CLI):
         collections_path = C.COLLECTIONS_PATHS
 
         managed_paths = set(validate_collection_path(p) for p in C.COLLECTIONS_PATHS)
-        read_req_paths = set(validate_collection_path(p) for p in AnsibleCollectionConfig.collection_paths)
+        read_req_paths = set(validate_collection_path(p) for p in self.collection_paths)
 
         unexpected_path = C.GALAXY_COLLECTIONS_PATH_WARNING and not any(p.startswith(path) for p in managed_paths)
         if unexpected_path and any(p.startswith(path) for p in read_req_paths):
@@ -1639,7 +1630,7 @@ class GalaxyCLI(CLI):
         collection_name = context.CLIARGS['collection']
         default_collections_path = set(C.COLLECTIONS_PATHS)
         collections_search_paths = (
-            set(context.CLIARGS['collections_path'] or []) | default_collections_path | set(AnsibleCollectionConfig.collection_paths)
+            set(context.CLIARGS['collections_path'] or []) | default_collections_path | set(self.collection_paths)
         )
         collections_in_paths = {}
 

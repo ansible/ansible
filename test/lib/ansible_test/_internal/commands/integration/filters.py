@@ -40,13 +40,8 @@ from ...host_profiles import (
     HostProfile,
 )
 
-THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
-TPosixConfig = t.TypeVar('TPosixConfig', bound=PosixConfig)
-TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
-THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 
-
-class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
+class TargetFilter[THostConfig: HostConfig](metaclass=abc.ABCMeta):
     """Base class for target filters."""
 
     def __init__(self, args: IntegrationConfig, configs: list[THostConfig], controller: bool) -> None:
@@ -92,7 +87,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         exclude.update(skipped)
         display.warning(f'Excluding {self.host_type} tests marked {marked} {reason}: {", ".join(skipped)}')
 
-    def filter_profiles(self, profiles: list[THostProfile], target: IntegrationTarget) -> list[THostProfile]:
+    def filter_profiles[THostProfile: HostProfile](self, profiles: list[THostProfile], target: IntegrationTarget) -> list[THostProfile]:
         """Filter the list of profiles, returning only those which are not skipped for the given target."""
         del target
         return profiles
@@ -138,7 +133,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
             self.skip('unstable', 'which require --allow-unstable or prefixing with "unstable/"', targets, exclude, override)
 
 
-class PosixTargetFilter(TargetFilter[TPosixConfig]):
+class PosixTargetFilter[TPosixConfig: PosixConfig](TargetFilter[TPosixConfig]):
     """Target filter for POSIX hosts."""
 
     def filter_targets(self, targets: list[IntegrationTarget], exclude: set[str]) -> None:
@@ -169,10 +164,10 @@ class PosixSshTargetFilter(PosixTargetFilter[PosixSshConfig]):
     """Target filter for POSIX SSH hosts."""
 
 
-class RemoteTargetFilter(TargetFilter[TRemoteConfig]):
+class RemoteTargetFilter[TRemoteConfig: RemoteConfig](TargetFilter[TRemoteConfig]):
     """Target filter for remote Ansible Core CI managed hosts."""
 
-    def filter_profiles(self, profiles: list[THostProfile], target: IntegrationTarget) -> list[THostProfile]:
+    def filter_profiles[THostProfile: HostProfile](self, profiles: list[THostProfile], target: IntegrationTarget) -> list[THostProfile]:
         """Filter the list of profiles, returning only those which are not skipped for the given target."""
         profiles = super().filter_profiles(profiles, target)
 

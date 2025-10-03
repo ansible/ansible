@@ -99,4 +99,8 @@ ansible-playbook test_template_role_tags.yml --tags tag1 "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'Tagged_task')" = "1" ]; rm out.txt
 
 ansible-playbook test_template_role_tags.yml --skip-tags tag1 "$@" 2>&1 | tee out.txt
-[ "$(grep out.txt -ce 'Tagged_task')" = "0" ]; rm out.txt
+[ "$(grep out.txt -ce 'Tagged_task')" = "0" ];
+[ "$(grep out.txt -ce 'Found reserved tagsnames')" = "0" ]; rm out.txt
+
+ansible-playbook warn_reserved.yml "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'Found reserved tagnames')" = "1" ]; rm out.txt

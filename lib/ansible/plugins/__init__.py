@@ -79,6 +79,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
 
     def __init__(self):
         self._options = {}
+        self._origins = {}
         self._defs = None
 
     @property
@@ -98,11 +99,16 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         return bool(possible_fqcns.intersection(set(self.ansible_aliases)))
 
     def get_option_and_origin(self, option, hostvars=None):
-        try:
-            option_value, origin = C.config.get_config_value_and_origin(option, plugin_type=self.plugin_type, plugin_name=self._load_name, variables=hostvars)
-        except AnsibleError as e:
-            raise KeyError(str(e))
-        return option_value, origin
+        if option not in self._options:
+            try:
+                # some plugins don't use set_option(s) and cannot use direct settings, so this populates the local copy for them
+                self._options[option], self._origins[option] = C.config.get_config_value_and_origin(option, plugin_type=self.plugin_type,
+                                                                                                    plugin_name=self._load_name, variables=hostvars)
+            except AnsibleError as e:
+                # callers expect key error on missing
+                raise KeyError() from e
+
+        return self._options[option], self._origins[option]
 
     @functools.cached_property
     def __plugin_info(self):
@@ -113,11 +119,10 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         return _plugin_info.get_plugin_info(self)
 
     def get_option(self, option, hostvars=None):
-
         if option not in self._options:
-            option_value, dummy = self.get_option_and_origin(option, hostvars=hostvars)
-            self.set_option(option, option_value)
-        return self._options.get(option)
+            # let it populate _options
+            self.get_option_and_origin(option, hostvars=hostvars)
+        return self._options[option]
 
     def get_options(self, hostvars=None):
         options = {}
@@ -127,6 +132,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
 
     def set_option(self, option, value):
         self._options[option] = C.config.get_config_value(option, plugin_type=self.plugin_type, plugin_name=self._load_name, direct={option: value})
+        self._origins[option] = 'Direct'
         _display._report_config_warnings(self.__plugin_info)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
@@ -137,12 +143,14 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         :arg var_options: Dict with either 'connection variables'
         :arg direct: Dict with 'direct assignment'
         """
-        self._options = C.config.get_plugin_options(self.plugin_type, self._load_name, keys=task_keys, variables=var_options, direct=direct)
+        self._options, self._origins = C.config.get_plugin_options_and_origins(self.plugin_type, self._load_name, keys=task_keys,
+                                                                               variables=var_options, direct=direct)
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
             # these are largely unvalidated passthroughs, either plugin or underlying API will validate
+            # TODO: deprecate and remove, most plugins that needed this don't use this facility anymore
             self._options['_extras'] = var_options['_extras']
         _display._report_config_warnings(self.__plugin_info)
 

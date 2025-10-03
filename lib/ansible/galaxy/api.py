@@ -25,7 +25,6 @@ from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
-from ansible.module_utils.six import string_types
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
@@ -114,13 +113,7 @@ def g_connect(versions):
                 # url + '/api/' appended.
                 self.api_server = n_url
 
-                # Default to only supporting v1, if only v1 is returned we also assume that v2 is available even though
-                # it isn't returned in the available_versions dict.
-                available_versions = data.get('available_versions', {u'v1': u'v1/'})
-                if list(available_versions.keys()) == [u'v1']:
-                    available_versions[u'v2'] = u'v2/'
-
-                self._available_api_versions = available_versions
+                self._available_api_versions = available_versions = data['available_versions']
                 display.vvvv("Found API version '%s' with Galaxy server %s (%s)"
                              % (', '.join(available_versions.keys()), self.name, self.api_server))
 
@@ -131,15 +124,6 @@ def g_connect(versions):
                 raise AnsibleError("Galaxy action %s requires API versions '%s' but only '%s' are available on %s %s"
                                    % (method.__name__, ", ".join(versions), ", ".join(available_versions),
                                       self.name, self.api_server))
-
-            # Warn only when we know we are talking to a collections API
-            if common_versions == {'v2'}:
-                display.deprecated(
-                    'The v2 Ansible Galaxy API is deprecated and no longer supported. '
-                    'Ensure that you have configured the ansible-galaxy CLI to utilize an '
-                    'updated and supported version of Ansible Galaxy.',
-                    version='2.20',
-                )
 
             return method(self, *args, **kwargs)
         return wrapped
@@ -214,11 +198,7 @@ class GalaxyError(AnsibleError):
             err_info = {}
 
         url_split = self.url.split('/')
-        if 'v2' in url_split:
-            galaxy_msg = err_info.get('message', http_error.reason)
-            code = err_info.get('code', 'Unknown')
-            full_error_msg = u"%s (HTTP Code: %d, Message: %s Code: %s)" % (message, self.http_code, galaxy_msg, code)
-        elif 'v3' in url_split:
+        if 'v3' in url_split:
             errors = err_info.get('errors', [])
             if not errors:
                 errors = [{}]  # Defaults are set below, we just need to make sure 1 error is present.
@@ -340,7 +320,7 @@ class GalaxyAPI:
         return self._priority > other_galaxy_api._priority
 
     @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
-    @g_connect(['v1', 'v2', 'v3'])
+    @g_connect(['v1', 'v3'])
     def available_api_versions(self):
         # Calling g_connect will populate self._available_api_versions
         return self._available_api_versions
@@ -595,11 +575,11 @@ class GalaxyAPI:
         page_size = kwargs.get('page_size', None)
         author = kwargs.get('author', None)
 
-        if tags and isinstance(tags, string_types):
+        if tags and isinstance(tags, str):
             tags = tags.split(',')
             search_url += '&tags_autocomplete=' + '+'.join(tags)
 
-        if platforms and isinstance(platforms, string_types):
+        if platforms and isinstance(platforms, str):
             platforms = platforms.split(',')
             search_url += '&platforms_autocomplete=' + '+'.join(platforms)
 
@@ -645,7 +625,7 @@ class GalaxyAPI:
 
     # Collection APIs #
 
-    @g_connect(['v2', 'v3'])
+    @g_connect(['v3'])
     def publish_collection(self, collection_path):
         """
         Publishes a collection to a Galaxy server and returns the import task URI.
@@ -680,19 +660,15 @@ class GalaxyAPI:
             'Content-length': len(b_form_data),
         }
 
-        if 'v3' in self.available_api_versions:
-            n_url = _urljoin(self.api_server, self.available_api_versions['v3'], 'artifacts', 'collections') + '/'
-        else:
-            n_url = _urljoin(self.api_server, self.available_api_versions['v2'], 'collections') + '/'
-
+        n_url = _urljoin(self.api_server, self.available_api_versions['v3'], 'artifacts', 'collections') + '/'
         resp = self._call_galaxy(n_url, args=b_form_data, headers=headers, method='POST', auth_required=True,
                                  error_context_msg='Error when publishing collection to %s (%s)'
                                                    % (self.name, self.api_server))
 
-        return resp['task']
+        return urljoin(self.api_server, resp['task'])
 
-    @g_connect(['v2', 'v3'])
-    def wait_import_task(self, task_id, timeout=0):
+    @g_connect(['v3'])
+    def wait_import_task(self, task_url, timeout=0):
         """
         Waits until the import process on the Galaxy server has completed or the timeout is reached.
 
@@ -703,22 +679,14 @@ class GalaxyAPI:
         state = 'waiting'
         data = None
 
-        # Construct the appropriate URL per version
-        if 'v3' in self.available_api_versions:
-            full_url = _urljoin(self.api_server, self.available_api_versions['v3'],
-                                'imports/collections', task_id, '/')
-        else:
-            full_url = _urljoin(self.api_server, self.available_api_versions['v2'],
-                                'collection-imports', task_id, '/')
-
-        display.display("Waiting until Galaxy import task %s has completed" % full_url)
+        display.display("Waiting until Galaxy import task %s has completed" % task_url)
         start = time.time()
         wait = C.GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
 
         while timeout == 0 or (time.time() - start) < timeout:
             try:
-                data = self._call_galaxy(full_url, method='GET', auth_required=True,
-                                         error_context_msg='Error when getting import task results at %s' % full_url)
+                data = self._call_galaxy(task_url, method='GET', auth_required=True,
+                                         error_context_msg='Error when getting import task results at %s' % task_url)
             except GalaxyError as e:
                 if e.http_code != 404:
                     raise
@@ -740,7 +708,7 @@ class GalaxyAPI:
             wait = min(30, wait * C.GALAXY_COLLECTION_IMPORT_POLL_FACTOR)
         if state == 'waiting':
             raise AnsibleError("Timeout while waiting for the Galaxy import process to finish, check progress at '%s'"
-                               % to_native(full_url))
+                               % to_native(task_url))
 
         for message in data.get('messages', []):
             level = message['level']
@@ -754,10 +722,10 @@ class GalaxyAPI:
         if state == 'failed':
             code = to_native(data['error'].get('code', 'UNKNOWN'))
             description = to_native(
-                data['error'].get('description', "Unknown error, see %s for more details" % full_url))
+                data['error'].get('description', "Unknown error, see %s for more details" % task_url))
             raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
 
-    @g_connect(['v2', 'v3'])
+    @g_connect(['v3'])
     def get_collection_metadata(self, namespace, name):
         """
         Gets the collection information from the Galaxy server about a specific Collection.
@@ -766,18 +734,11 @@ class GalaxyAPI:
         :param name: The collection name.
         return: CollectionMetadata about the collection.
         """
-        if 'v3' in self.available_api_versions:
-            api_path = self.available_api_versions['v3']
-            field_map = [
-                ('created_str', 'created_at'),
-                ('modified_str', 'updated_at'),
-            ]
-        else:
-            api_path = self.available_api_versions['v2']
-            field_map = [
-                ('created_str', 'created'),
-                ('modified_str', 'modified'),
-            ]
+        api_path = self.available_api_versions['v3']
+        field_map = [
+            ('created_str', 'created_at'),
+            ('modified_str', 'updated_at'),
+        ]
 
         info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
         error_context_msg = 'Error when getting the collection info for %s.%s from %s (%s)' \
@@ -790,7 +751,7 @@ class GalaxyAPI:
 
         return CollectionMetadata(namespace, name, **metadata)
 
-    @g_connect(['v2', 'v3'])
+    @g_connect(['v3'])
     def get_collection_version_metadata(self, namespace, name, version):
         """
         Gets the collection information from the Galaxy server about a specific Collection version.
@@ -800,7 +761,7 @@ class GalaxyAPI:
         :param version: Version of the collection to get the information for.
         :return: CollectionVersionMetadata about the collection at the version requested.
         """
-        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        api_path = self.available_api_versions['v3']
         url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
 
         n_collection_url = _urljoin(*url_paths)
@@ -824,7 +785,7 @@ class GalaxyAPI:
                                          download_url, data['artifact']['sha256'],
                                          data['metadata']['dependencies'], data['href'], signatures)
 
-    @g_connect(['v2', 'v3'])
+    @g_connect(['v3'])
     def get_collection_versions(self, namespace, name):
         """
         Gets a list of available versions for a collection on a Galaxy server.
@@ -833,17 +794,10 @@ class GalaxyAPI:
         :param name: The collection name.
         :return: A list of versions that are available.
         """
-        relative_link = False
-        if 'v3' in self.available_api_versions:
-            api_path = self.available_api_versions['v3']
-            pagination_path = ['links', 'next']
-            relative_link = True  # AH pagination results are relative an not an absolute URI.
-        else:
-            api_path = self.available_api_versions['v2']
-            pagination_path = ['next']
+        api_path = self.available_api_versions['v3']
+        pagination_path = ['links', 'next']
 
-        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
-        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
+        versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?limit=%d' % COLLECTION_PAGE_SIZE)
         versions_url_info = urlparse(versions_url)
         cache_key = versions_url_info.path
 
@@ -898,11 +852,10 @@ class GalaxyAPI:
 
             if not next_link:
                 break
-            elif relative_link:
-                next_link_info = urlparse(next_link)
-                if not next_link_info.scheme and not next_link_info.path.startswith('/'):
-                    raise AnsibleError(f'Invalid non absolute pagination link: {next_link}')
-                next_link = urljoin(self.api_server, next_link)
+            next_link_info = urlparse(next_link)
+            if not next_link_info.scheme and not next_link_info.path.startswith('/'):
+                raise AnsibleError(f'Invalid non absolute pagination link: {next_link}')
+            next_link = urljoin(self.api_server, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
@@ -910,7 +863,7 @@ class GalaxyAPI:
 
         return versions
 
-    @g_connect(['v2', 'v3'])
+    @g_connect(['v3'])
     def get_collection_signatures(self, namespace, name, version):
         """
         Gets the collection signatures from the Galaxy server about a specific Collection version.
@@ -920,7 +873,7 @@ class GalaxyAPI:
         :param version: Version of the collection to get the information for.
         :return: A list of signature strings.
         """
-        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        api_path = self.available_api_versions['v3']
         url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
 
         n_collection_url = _urljoin(*url_paths)

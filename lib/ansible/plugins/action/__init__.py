@@ -29,7 +29,6 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.common.json import Direction, get_module_encoder, get_module_decoder
-from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
@@ -52,7 +51,7 @@ if t.TYPE_CHECKING:
 
 
 def _validate_utf8_json(d):
-    if isinstance(d, text_type):
+    if isinstance(d, str):
         # Purposefully not using to_bytes here for performance reasons
         d.encode(encoding='utf-8', errors='strict')
     elif isinstance(d, dict):
@@ -287,14 +286,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     module_name = '%s.win_%s' % (win_collection, leaf_module_name)
                 elif leaf_module_name == 'async_status' and collection_name in rewrite_collection_names:
                     module_name = '%s.%s' % (win_collection, leaf_module_name)
-
-                # TODO: move this tweak down to the modules, not extensible here
-                # Remove extra quotes surrounding path parameters before sending to module.
-                if leaf_module_name in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
-                        hasattr(self._connection._shell, '_unquote'):
-                    for key in ('src', 'dest', 'path'):
-                        if key in module_args:
-                            module_args[key] = self._connection._shell._unquote(module_args[key])
 
             result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=self._task.collections)
 
@@ -680,8 +671,18 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             become_user,
             setfacl_mode)
 
-        if res['rc'] == 0:
-            return remote_paths
+        match res.get('rc'):
+            case 0:
+                return remote_paths
+            case 2:
+                # invalid syntax (for example, missing user, missing colon)
+                self._display.debug(f"setfacl command failed with an invalid syntax. Trying chmod instead. Err: {res!r}")
+            case 127:
+                # setfacl binary does not exists or we don't have permission to use it.
+                self._display.debug(f"setfacl binary does not exist or does not have permission to use it. Trying chmod instead. Err: {res!r}")
+            case _:
+                # generic debug message
+                self._display.debug(f'Failed to set facl {setfacl_mode}, got:{res!r}')
 
         # Step 3b: Set execute if we need to. We do this before anything else
         # because some of the methods below might work but not let us set
@@ -874,7 +875,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # happens sometimes when it is a dir and not on bsd
         if 'checksum' not in mystat['stat']:
             mystat['stat']['checksum'] = ''
-        elif not isinstance(mystat['stat']['checksum'], string_types):
+        elif not isinstance(mystat['stat']['checksum'], str):
             raise AnsibleError("Invalid checksum returned by stat: expected a string type but got %s" % type(mystat['stat']['checksum']))
 
         return mystat['stat']
@@ -1084,7 +1085,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
                 for k, v in module_args.items():
-                    args_data += '%s=%s ' % (k, shlex.quote(text_type(v)))
+                    args_data += '%s=%s ' % (k, shlex.quote(str(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
                 profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
@@ -1169,7 +1170,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._cleanup_remote_tmp = False
 
         # NOTE: dnf returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
-        if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], string_types)):
+        if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], str)):
             data['ansible_module_results'] = data['results']
             del data['results']
             display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
@@ -1322,16 +1323,16 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
-        if isinstance(stdout, binary_type):
+        if isinstance(stdout, bytes):
             out = to_text(stdout, errors=encoding_errors)
-        elif not isinstance(stdout, text_type):
+        elif not isinstance(stdout, str):
             out = to_text(b''.join(stdout.readlines()), errors=encoding_errors)
         else:
             out = stdout
 
-        if isinstance(stderr, binary_type):
+        if isinstance(stderr, bytes):
             err = to_text(stderr, errors=encoding_errors)
-        elif not isinstance(stderr, text_type):
+        elif not isinstance(stderr, str):
             err = to_text(b''.join(stderr.readlines()), errors=encoding_errors)
         else:
             err = stderr

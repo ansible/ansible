@@ -1,0 +1,2 @@
+bugfixes:
+  - "validate-modules sanity test - fix handling of missing doc fragments (https://github.com/ansible/ansible/pull/85638)."

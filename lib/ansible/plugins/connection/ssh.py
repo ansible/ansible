@@ -34,8 +34,6 @@ DOCUMENTATION = """
                - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
-               - name: delegated_vars['ansible_host']
-               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
           description: Determines if SSH should reject or not a connection after checking host keys.
           default: True
@@ -443,7 +441,6 @@ from ansible.errors import (
     AnsibleError,
     AnsibleFileNotFound,
 )
-from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.plugins.shell.powershell import _replace_stderr_clixml
@@ -460,8 +457,6 @@ else:
 
 
 display = Display()
-
-P = t.ParamSpec('P')
 
 # error messages that indicate 255 return code is not from ssh itself.
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
@@ -549,7 +544,7 @@ def _handle_error(
         display.vvv(msg, host=host)
 
 
-def _ssh_retry(
+def _ssh_retry[**P](
     func: c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]],
 ) -> c.Callable[t.Concatenate[Connection, P], tuple[int, bytes, bytes]]:
     """
@@ -1126,7 +1121,7 @@ class Connection(ConnectionBase):
 
         p = None
 
-        if isinstance(cmd, (text_type, binary_type)):
+        if isinstance(cmd, (str, bytes)):
             cmd = to_bytes(cmd)
         else:
             cmd = list(map(to_bytes, cmd))

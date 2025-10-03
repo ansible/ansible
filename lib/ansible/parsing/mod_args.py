@@ -130,6 +130,7 @@ class ModuleArgsParser:
         # HACK: why are these not FieldAttributes on task with a post-validate to check usage?
         self._task_attrs.update(['local_action', 'static'])
         self._task_attrs = frozenset(self._task_attrs)
+        self._resolved_action = None
 
     def _split_module_string(self, module_string: str) -> tuple[str, str]:
         """
@@ -344,6 +345,8 @@ class ModuleArgsParser:
                     raise e
 
                 is_action_candidate = context.resolved and bool(context.redirect_list)
+                if is_action_candidate:
+                    self._resolved_action = context.resolved_fqcn
 
             if is_action_candidate:
                 # finding more than one module name is a problem

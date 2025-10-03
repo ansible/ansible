@@ -33,6 +33,7 @@ options:
         - V(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
           including the fact cache.
         - V(clear_host_errors) (added in Ansible 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts.
+          This will make them available for targetting in subsequent plays, but not continue execution in the current play.
         - V(end_play) (added in Ansible 2.2) causes the play to end without failing the host(s). Note that this affects all hosts.
         - V(reset_connection) (added in Ansible 2.3) interrupts a persistent connection (i.e. ssh + control persist)
         - V(end_host) (added in Ansible 2.8) is a per-host variation of V(end_play). Causes the play to end for the current host without failing it.
@@ -108,7 +109,7 @@ EXAMPLES = r"""
 - name: Clear gathered facts from all currently targeted hosts
   ansible.builtin.meta: clear_facts
 
-# Example showing how to continue using a failed target
+# Example showing how to continue using a failed target, for the next play
 - name: Bring host back to play after failure
   ansible.builtin.copy:
     src: file

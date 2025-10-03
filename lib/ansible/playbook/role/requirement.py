@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 from ansible.utils.display import Display
 from ansible.utils.galaxy import scm_archive_resource
@@ -65,7 +64,7 @@ class RoleRequirement(RoleDefinition):
     @staticmethod
     def role_yaml_parse(role):
 
-        if isinstance(role, string_types):
+        if isinstance(role, str):
             name = None
             scm = None
             src = None

@@ -280,3 +280,68 @@
     that:
       - replace_test9 is failure
       - replace_test9.msg.startswith("Unable to process replace")
+
+# test replace operation in non-utf8 encoded files
+
+- name: create test file encoded in cp273
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    create: True
+    line: "Test line encoded in cp273"
+    state: present
+    encoding: cp273
+
+- name: stat the new test file
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: replace_test10
+
+- name: validate test file content
+  assert:
+    that:
+      - replace_test10.stat.exists
+      - replace_test10.stat.checksum == 'e0bf2bdca94727d03483a9adab66543bcec4b99a'
+
+- name: replace only the 'e' in 'line' with a '3' using both the before and after options
+  replace:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    before: 'encoded'
+    after: 'Test'
+    regexp: 'e'
+    replace: '3'
+    encoding: cp273
+  register: replace_test11
+
+- name: stat the modified file
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: replace_test12
+
+- name: validate the test file content is modified as expected.
+  assert:
+    that:
+      - replace_test11.msg == "1 replacements made"
+      - replace_test12.stat.exists
+      - replace_test12.stat.checksum == '485e97f6e38e50680228b8d49e1eb23160f19fdc'
+
+- name: idempotence check - replace only the 'e' 'line' with a '3' again
+  replace:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+    before: 'encoded'
+    after: 'Test'
+    regexp: 'e'
+    replace: '3'
+    encoding: cp273
+  register: replace_test13
+
+- name: stat the un-modified file
+  stat:
+    path: "{{ remote_tmp_dir }}/test-encoding-file.txt"
+  register: replace_test14
+
+- name: validate the test content is unchanged
+  assert:
+    that:
+      - replace_test13.changed == False
+      - replace_test14.stat.exists
+      - replace_test14.stat.checksum == '485e97f6e38e50680228b8d49e1eb23160f19fdc'

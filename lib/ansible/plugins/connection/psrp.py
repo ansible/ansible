@@ -489,7 +489,6 @@ class Connection(ConnectionBase):
     def put_file(self, in_path: str, out_path: str) -> None:
         super(Connection, self).put_file(in_path, out_path)
 
-        out_path = self._shell._unquote(out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
 
         script, in_data = _bootstrap_powershell_script('psrp_put_file.ps1', {
@@ -549,7 +548,6 @@ class Connection(ConnectionBase):
         display.vvv("FETCH %s TO %s" % (in_path, out_path),
                     host=self._psrp_host)
 
-        in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
         b_out_path = to_bytes(out_path, errors='surrogate_or_strict')
 

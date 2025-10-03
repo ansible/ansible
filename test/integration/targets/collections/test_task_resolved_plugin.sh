@@ -15,6 +15,22 @@ for result in "${action_resolution[@]}"; do
     grep -q out.txt -e "$result"
 done
 
+# Test local_action/action warning
+export ANSIBLE_TEST_ON_TASK_START=True
+ansible-playbook -i debug, test_task_resolved_plugin/dynamic_action.yml "$@" 2>&1 | tee out.txt
+grep -q out.txt -e "A plugin is sampling the task's resolved_action when it is not resolved"
+grep -q out.txt -e "v2_playbook_on_task_start: {{ inventory_hostname }} == None"
+grep -q out.txt -e "v2_runner_on_ok: debug == ansible.builtin.debug"
+grep -q out.txt -e "v2_runner_item_on_ok: debug == ansible.builtin.debug"
+
+# Test static actions don't cause a warning
+ansible-playbook test_task_resolved_plugin/unqualified.yml "$@" 2>&1 | tee out.txt
+grep -v out.txt -e "A plugin is sampling the task's resolved_action when it is not resolved"
+for result in "${action_resolution[@]}"; do
+    grep -q out.txt -e "v2_playbook_on_task_start: $result"
+done
+unset ANSIBLE_TEST_ON_TASK_START
+
 ansible-playbook test_task_resolved_plugin/unqualified_and_collections_kw.yml "$@" | tee out.txt
 action_resolution=(
     "legacy_action == legacy_action"

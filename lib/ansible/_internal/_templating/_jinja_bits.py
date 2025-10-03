@@ -811,7 +811,7 @@ class AnsibleEnvironment(SandboxedEnvironment):
             try:
                 value = obj[attribute]
             except (TypeError, LookupError):
-                return self.undefined(obj=obj, name=attribute) if is_safe else self.unsafe_undefined(obj, attribute)
+                value = self.undefined(obj=obj, name=attribute) if is_safe else self.unsafe_undefined(obj, attribute)
 
         AnsibleAccessContext.current().access(value)
 
@@ -891,6 +891,8 @@ def _flatten_nodes(nodes: t.Iterable[t.Any]) -> t.Iterable[t.Any]:
         else:
             if type(node) is TemplateModule:  # pylint: disable=unidiomatic-typecheck
                 yield from _flatten_nodes(node._body_stream)
+            elif node is None:
+                continue  # avoid yielding `None`-valued nodes to avoid literal "None" in stringified template results
             else:
                 yield node
 

@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 
@@ -29,8 +30,9 @@ def main(args=None):
     if any(not os.get_blocking(handle.fileno()) for handle in (sys.stdin, sys.stdout, sys.stderr)):
         raise SystemExit('Standard input, output and error file handles must be blocking to run ansible-test.')
 
-    # noinspection PyProtectedMember
-    from ansible_test._internal import main as cli_main
+    # avoid using import to hide it from mypy
+    internal = importlib.import_module('ansible_test._internal')
+    cli_main = getattr(internal, 'main')
 
     cli_main(args)
 

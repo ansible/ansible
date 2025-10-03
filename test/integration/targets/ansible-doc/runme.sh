@@ -211,6 +211,13 @@ ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --
 output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR' || true)
 test "${output}" -eq 1
 
+# ensure --metadata-dump does not crash if the ansible_collections is nested (https://github.com/ansible/ansible/issues/84909)
+testdir="$(pwd)"
+pbdir="collections/ansible_collections/testns/testcol/playbooks"
+cd "$pbdir"
+ANSIBLE_COLLECTIONS_PATH="$testdir/$pbdir/collections" ansible-doc -vvv --metadata-dump --no-fail-on-errors
+cd "$testdir"
+
 echo "test doc list on broken role metadata"
 # ensure that role doc does not fail when --no-fail-on-errors is supplied
 ANSIBLE_LIBRARY='./nolibrary' ansible-doc --no-fail-on-errors --playbook-dir broken-docs testns.testcol.testrole -t role 1>/dev/null 2>&1
@@ -243,6 +250,7 @@ echo "testing sidecar docs for jinja plugins"
 [ "$(ansible-doc -t test --playbook-dir ./ testns.testcol.yolo| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ donothing| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
+[ "$(ansible-doc -t filter --playbook-dir ./ testns.testcol.filter_subdir.nested| wc -l)" -gt "0" ]
 
 echo "testing no docs and no sidecar"
 ansible-doc -t filter --playbook-dir ./ nodocs 2>&1| grep "${GREP_OPTS[@]}" -c 'missing documentation' || true

@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 from ansible.plugins.action import ActionBase
-from ansible.module_utils.six import string_types
 
 
 class ActionModule(ActionBase):
@@ -42,7 +41,7 @@ class ActionModule(ActionBase):
 
         group_name = self._task.args.get('key')
         parent_groups = self._task.args.get('parents', ['all'])
-        if isinstance(parent_groups, string_types):
+        if isinstance(parent_groups, str):
             parent_groups = [parent_groups]
 
         result['changed'] = False

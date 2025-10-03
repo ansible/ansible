@@ -500,17 +500,9 @@ class AnsibleDatatagBase(AnsibleSerializableDataclass, metaclass=abc.ABCMeta):
 _known_tag_type_map: t.Dict[str, t.Type[AnsibleDatatagBase]] = {}
 _known_tag_types: t.Set[t.Type[AnsibleDatatagBase]] = set()
 
-if sys.version_info >= (3, 9):
-    # Include the key and value types in the type hints on Python 3.9 and later.
-    # Earlier versions do not support subscriptable dict.
-    # deprecated: description='always use subscriptable dict' python_version='3.8'
-    class _AnsibleTagsMapping(dict[type[_TAnsibleDatatagBase], _TAnsibleDatatagBase]):
-        __slots__ = _NO_INSTANCE_STORAGE
 
-else:
-
-    class _AnsibleTagsMapping(dict):
-        __slots__ = _NO_INSTANCE_STORAGE
+class _AnsibleTagsMapping(dict[type[_TAnsibleDatatagBase], _TAnsibleDatatagBase]):
+    __slots__ = _NO_INSTANCE_STORAGE
 
 
 class _EmptyROInternalTagsMapping(dict):

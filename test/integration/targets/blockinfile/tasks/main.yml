@@ -42,3 +42,4 @@
 - import_tasks: multiline_search.yml
 - import_tasks: append_newline.yml
 - import_tasks: prepend_newline.yml
+- import_tasks: encoding.yml

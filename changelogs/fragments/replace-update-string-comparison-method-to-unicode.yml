@@ -1,0 +1,3 @@
+minor_changes:
+  - replace - read/write files in text-mode as unicode chars instead of as bytes
+    and switch regex matching to unicode chars instead of bytes. (https://github.com/ansible/ansible/pull/85785).

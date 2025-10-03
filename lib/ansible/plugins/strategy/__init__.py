@@ -53,6 +53,9 @@ from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
+if t.TYPE_CHECKING:
+    from ansible.playbook.role_include import IncludeRole
+
 display = Display()
 
 __all__ = ['StrategyBase']
@@ -581,7 +584,7 @@ class StrategyBase:
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(
-                                ansible_failed_task=original_task.serialize(),
+                                ansible_failed_task=original_task.dump_attrs(),
                                 ansible_failed_result=task_result._return_data,
                             ),
                         )
@@ -799,7 +802,7 @@ class StrategyBase:
 
         return ret_results
 
-    def _copy_included_file(self, included_file: IncludedFile) -> IncludedFile:
+    def _copy_included_file(self, included_file: IncludedFile) -> TaskInclude | IncludeRole:
         """
         A proven safe and performant way to create a copy of an included file
         """
@@ -900,7 +903,7 @@ class StrategyBase:
         display.warning("%s task does not support when conditional" % task_name)
 
     def _execute_meta(self, task: Task, play_context, iterator, target_host: Host):
-        task.resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
+        task._resolved_action = 'ansible.builtin.meta'  # _post_validate_args is never called for meta actions, so resolved_action hasn't been set
 
         # meta tasks store their args in the _raw_params field of args,
         # since they do not use k=v pairs, so get that

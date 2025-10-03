@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import typing as t
 
@@ -80,36 +81,35 @@ class AnsibleUnwantedChecker(BaseChecker):
                'Identifies imports which should not be used.'),
     )
 
-    unwanted_imports = dict(
-        # Additional imports that we may want to start checking:
-        # boto=UnwantedEntry('boto3', modules_only=True),
-        # requests=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-        # urllib=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
-
+    unwanted_imports = {
         # see https://docs.python.org/2/library/urllib2.html
-        urllib2=UnwantedEntry('ansible.module_utils.urls',
-                              ignore_paths=(
-                                  '/lib/ansible/module_utils/urls.py',
-                              )),
+        'urllib2': UnwantedEntry(
+            'ansible.module_utils.urls',
+            ignore_paths=(
+                '/lib/ansible/module_utils/urls.py',
+            )
+        ),
 
         # see https://docs.python.org/3/library/collections.abc.html
-        collections=UnwantedEntry('ansible.module_utils.six.moves.collections_abc',
-                                  names=(
-                                      'MappingView',
-                                      'ItemsView',
-                                      'KeysView',
-                                      'ValuesView',
-                                      'Mapping', 'MutableMapping',
-                                      'Sequence', 'MutableSequence',
-                                      'Set', 'MutableSet',
-                                      'Container',
-                                      'Hashable',
-                                      'Sized',
-                                      'Callable',
-                                      'Iterable',
-                                      'Iterator',
-                                  )),
-    )
+        'collections': UnwantedEntry(
+            'collections.abc',
+            names=(
+                'MappingView',
+                'ItemsView',
+                'KeysView',
+                'ValuesView',
+                'Mapping', 'MutableMapping',
+                'Sequence', 'MutableSequence',
+                'Set', 'MutableSet',
+                'Container',
+                'Hashable',
+                'Sized',
+                'Callable',
+                'Iterable',
+                'Iterator',
+            )
+        ),
+    }
 
     unwanted_functions = {
         # see https://docs.python.org/3/library/tempfile.html#tempfile.mktemp
@@ -132,6 +132,19 @@ class AnsibleUnwantedChecker(BaseChecker):
                                         ),
                                         modules_only=True),
     }
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # ansible.module_utils.six is deprecated and collections can still use it until it is removed
+        if self.is_ansible_core:
+            self.unwanted_imports['ansible.module_utils.six'] = UnwantedEntry(
+                'the Python standard library equivalent'
+            )
+
+    @functools.cached_property
+    def is_ansible_core(self) -> bool:
+        """True if ansible-core is being tested."""
+        return not self.linter.config.collection_name
 
     def visit_import(self, node):  # type: (astroid.node_classes.Import) -> None
         """Visit an import node."""
