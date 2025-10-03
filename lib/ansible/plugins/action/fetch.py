@@ -192,7 +192,7 @@ class ActionModule(ActionBase):
                                        msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
                                        checksum=new_checksum, remote_checksum=remote_checksum))
                 else:
-                    result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
+                    result.update({'changed': True, 'md5sum': new_md5, 'file': source, 'dest': dest,
                                    'remote_md5sum': None, 'checksum': new_checksum,
                                    'remote_checksum': remote_checksum})
             else:

@@ -30,8 +30,10 @@
     that:
       - fetched is changed
       - fetched.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched.file == remote_tmp_dir ~ "/orig"
       - fetched_again is not changed
       - fetched_again.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched_again.file == remote_tmp_dir ~ "/orig"
       - fetched.remote_checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
       - lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"
       - fetch_check_mode is skipped
