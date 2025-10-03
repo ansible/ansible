@@ -27,7 +27,7 @@ from ansible.executor.interpreter_discovery import discover_interpreter, Interpr
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
-from ansible.module_utils.json_utils import _consume_json
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.common.json import Direction, get_module_encoder, get_module_decoder
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.release import __version__
@@ -309,7 +309,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for _dummy in (1, 2):
             try:
-<<<<<<< HEAD
                 module_bits = modify_module(
                     module_name=module_name,
                     module_path=module_path,
@@ -321,19 +320,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
+                    live_updates=bool(self._task.live),
                 )
-
-=======
-                (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
-                                                                            task_vars=use_vars,
-                                                                            module_compression=C.config.get_config_value('DEFAULT_MODULE_COMPRESSION',
-                                                                                                                         variables=task_vars),
-                                                                            async_timeout=self._task.async_val,
-                                                                            environment=final_environment,
-                                                                            remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
-                                                                            live_updates=bool(self._task.live),
-                                                                            **become_kwargs)
->>>>>>> aeb7f9d47f4 (Added ability to modules to emit 'update messsages')
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
@@ -1224,7 +1212,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
     def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
         try:
-            filtered_output, warnings = _consume_json(res.get('stdout', ''), objects_only=True)
+            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
             for w in warnings:
                 display.warning(w)
 

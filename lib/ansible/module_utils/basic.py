@@ -1456,7 +1456,8 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        if '_ansible_update' not in kwargs:
+        if '_ansible_update' in kwargs:
+            return kwargs
 
         if 'warnings' in kwargs:
             self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
@@ -1535,11 +1536,10 @@ class AnsibleModule(object):
         print('\n%s' % json.dumps(o, cls=encoder))
         sys.stdout.flush()
 
-        """ return from the module, without error """
+        # Return from the module, without error
         _skip_stackwalk = True
 
         self.do_cleanup_files()
-        self._return_formatted(kwargs)
         sys.exit(0)
 
     def fail_json(self, msg: str, *, exception: BaseException | str | None = _UNSET, **kwargs) -> t.NoReturn:

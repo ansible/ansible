@@ -19,7 +19,6 @@ from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.errors import AnsibleError
 from ansible.module_utils.json_utils import _filter_non_json_lines
-from ansible.module_utils.six import string_types
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.become import BecomeBase
 from ansible.plugins.shell import ShellBase
@@ -250,7 +249,7 @@ class ConnectionBase(AnsiblePlugin):
                 # TODO: once callbacks are expanded use those instead of restricting
                 display.display('[U]: <%s> %s' % (self._play_context.remote_addr, updates), color=C.COLOR_DEPRECATE, screen_only=True)
 
-        return is_update, to_bytes(rest_data)
+        return is_update, rest_data
 
     def reset(self) -> None:
         display.warning("Reset is not implemented for this connection")
