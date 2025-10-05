@@ -198,3 +198,22 @@
       - result.diff.after is defined
       - result.diff.before is defined
       - "result.state == 'file'"
+
+- name: Setup for validate test
+  ansible.builtin.file:
+    path: "{{ remote_tmp_dir }}/src_val_syntax"
+    state: directory
+
+- name: assemble with invalid validation command
+  ansible.builtin.assemble:
+    src: "{{ remote_tmp_dir }}/src_val_syntax"
+    dest: "{{ remote_tmp_dir }}/dest_val_syntax"
+    validate: "echo 'missing %s"
+  register: assemble_syntax_error
+  ignore_errors: yes
+
+- name: assert assemble failed with ignore_errors
+  assert:
+    that:
+      - assemble_syntax_error.failed
+      - "'Invalid command syntax' in assemble_syntax_error.msg"
