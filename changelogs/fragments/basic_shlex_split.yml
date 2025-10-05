@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - basic - handle exception raised while shlex.split (https://github.com/ansible/ansible/issues/85719).

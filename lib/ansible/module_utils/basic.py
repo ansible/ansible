@@ -1974,7 +1974,10 @@ class AnsibleModule(object):
         else:
             # ensure args are a list
             if isinstance(args, (bytes, str)):
-                args = shlex.split(to_text(args, errors='surrogateescape'))
+                try:
+                    args = shlex.split(to_text(args, errors='surrogateescape'))
+                except ValueError as e:
+                    self.fail_json(msg=f"Invalid command syntax in run_command: {e}")
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
