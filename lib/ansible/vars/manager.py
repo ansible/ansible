@@ -17,7 +17,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 import typing as t
 
@@ -447,7 +446,7 @@ class VariableManager:
         """
 
         variables = {}
-        variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
+        variables['playbook_dir'] = self._loader.get_basedir()
         variables['ansible_playbook_python'] = sys.executable
         variables['ansible_config_file'] = C.CONFIG_FILE
 

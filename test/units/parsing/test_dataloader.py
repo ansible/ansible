@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import collections
 import os
 import pathlib
 import tempfile
@@ -109,9 +110,9 @@ class TestDataLoader(unittest.TestCase):
             self.assertIn('/tmp/roles/testrole/tasks/included2.yml', called_args)
             self.assertIn('/tmp/roles/testrole/tasks/tasks/included2.yml', called_args)
 
-            # relative directories below are taken in account too:
-            self.assertIn('tasks/included2.yml', called_args)
-            self.assertIn('included2.yml', called_args)
+            c = collections.Counter(called_args)
+            assert c['/tmp/roles/testrole/tasks/included2.yml'] == 1
+            assert c['/tmp/roles/testrole/tasks/tasks/included2.yml'] == 2
 
     def test_path_dwim_root(self):
         self.assertEqual(self._loader.path_dwim('/'), '/')
@@ -167,7 +168,7 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
         self.assertRaisesRegex(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, None, None, None)
 
     def test_empty_strings(self):
-        self.assertEqual(self._loader.path_dwim_relative_stack('', '', ''), './')
+        self.assertEqual(self._loader.path_dwim_relative_stack('', '', ''), os.path.abspath('./') + '/')
 
     def test_empty_lists(self):
         self.assertEqual(self._loader.path_dwim_relative_stack([], '', '~/'), os.path.expanduser('~'))
