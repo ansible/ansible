@@ -4,6 +4,40 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2025-10-06
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Minor Changes
+-------------
+
+- DataLoader - Update ``DataLoader.get_basedir`` to be an abspath
+- known_hosts - return rc and stderr when ssh-keygen command fails for further debugging (https://github.com/ansible/ansible/issues/85850).
+
+Deprecated Features
+-------------------
+
+- Deprecate the ``ansible.module_utils.six`` module. Use the Python standard library equivalent instead.
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- ansible-galaxy - remove support for resolvelib >= 0.5.3, < 0.8.0.
+
+Bugfixes
+--------
+
+- Fix issue where play tags prevented executing notified handlers (https://github.com/ansible/ansible/issues/85475)
+- Fix issues with keywords being incorrectly validated on ``import_tasks`` (https://github.com/ansible/ansible/issues/85855, https://github.com/ansible/ansible/issues/85856)
+- Fix traceback when trying to import non-existing file via nested ``import_tasks`` (https://github.com/ansible/ansible/issues/69882)
+- ansible-doc - prevent crash when scanning collections in paths that have more than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909, https://github.com/ansible/ansible/pull/85361).
+- fetch - also return ``file`` in the result when changed is ``True`` (https://github.com/ansible/ansible/pull/85729).
+
 v2.20.0b1
 =========
 
