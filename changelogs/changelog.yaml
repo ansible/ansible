@@ -623,6 +623,17 @@ releases:
     fragments:
     - 2.18.1_summary.yaml
     release_date: '2024-12-02'
+  2.18.10:
+    changes:
+      release_summary: '| Release Date: 2025-10-06
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.10_summary.yaml
+    release_date: '2025-10-06'
   2.18.10rc1:
     changes:
       bugfixes:
