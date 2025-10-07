@@ -51,7 +51,7 @@ class CollectionDependencyProvider(AbstractProvider):
     def __init__(
             self,
             apis: MultiGalaxyAPIProxy,
-            concrete_artifacts_manager: ConcreteArtifactsManager | None = None,
+            concrete_artifacts_manager: ConcreteArtifactsManager,
             preferred_candidates: _c.Iterable[Candidate] | None = None,
             with_deps: bool = True,
             with_pre_releases: bool = False,
