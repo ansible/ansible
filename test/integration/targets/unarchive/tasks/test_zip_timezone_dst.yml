@@ -1,0 +1,47 @@
+---
+# Ensure timestamp verification for zip unarchive is correctly done
+- block:
+    - name: Create zip unarchive destination
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst'
+        state: directory
+      environment:
+        TZ: Europe/Paris
+
+    - name: Unarchive a zip file
+      unarchive:
+        src: '{{ remote_tmp_dir }}/test-datetime-dst.zip'
+        dest: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst'
+        list_files: True
+        remote_src: yes
+      environment:
+        TZ: Europe/Paris
+
+    - name: Verify that the file was marked as changed
+      assert:
+        that:
+          - unarchive_timezone.changed
+
+    - name: Unarchive a zip file again
+      unarchive:
+        src: '{{ remote_tmp_dir }}/test-datetime-dst.zip'
+        dest: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst'
+        list_files: True
+        remote_src: yes
+      register: unarchive_timezone
+      environment:
+        TZ: Europe/Paris
+
+    - name: Verify that the task was not marked as changed
+      assert:
+        that:
+          - not unarchive_timezone.changed
+      # FreeBSD fails because of permissions issues
+      # MacOSX fails because of group owner issues
+      when: not ansible_facts['distribution'] in ['FreeBSD', 'MacOSX']
+
+  always:
+    - name: Remove zip destination
+      file:
+        path: '{{remote_tmp_dir}}/test-unarchive-zip-timezone-dst'
+        state: absent
