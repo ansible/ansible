@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import collections
-
-from ansible.modules.apt import (
-    expand_pkgspec_from_fnmatches, 
-)
+from unittest.mock import Mock, patch, MagicMock
 
 import pytest
+from ansible.modules.apt import (
+    expand_pkgspec_from_fnmatches,
+    install_deb,
+)
 
 FakePackage = collections.namedtuple("Package", ("name",))
 fake_cache = [
@@ -48,61 +49,58 @@ def test_expand_pkgspec_from_fnmatches(test_input, expected):
     assert expand_pkgspec_from_fnmatches(None, test_input, fake_cache) == expected
 
 
-def test_virtual_package_resolution_fixed():
-    """Test that virtual package dependencies are properly resolved with the fix."""
-    # Scenario: A package depends on virtual package 'libglib2.0-0'
-    # which is provided by 'libglib2.0-0t64'
-    
-    virtual_dependency = 'libglib2.0-0'
-    providing_package = 'libglib2.0-0t64'
-    
-    class MockCache:
-        def is_virtual_package(self, pkg_name):
-            return pkg_name == virtual_dependency
-            
-        def get_providing_packages(self, pkg_name):
-            if pkg_name == virtual_dependency:
-                return [providing_package]
-            return []
-            
-        def __contains__(self, pkg_name):
-            # Virtual packages are not directly in cache, but have providers
-            return pkg_name == providing_package  # Only the provider is in cache
-            
-        def __getitem__(self, pkg_name):
-            if pkg_name == providing_package:
-                return MockPackage(installed=True)
-            raise KeyError(pkg_name)
-    
-    class MockPackage:
-        def __init__(self, installed=False):
-            self.installed = installed
-    
-    cache = MockCache()
-    unsatisfied_deps = []
-    
-    # SIMULATE THE FIXED LOGIC (what we implemented):
-    dep_name = virtual_dependency
-    
-    # FIXED IMPLEMENTATION (with virtual package handling):
-    if cache.is_virtual_package(dep_name):
-        providers = cache.get_providing_packages(dep_name)
-        if providers:
-            # Check if any provider is installed
-            provider_installed = False
-            for provider in providers:
-                if provider in cache and cache[provider].installed:
-                    provider_installed = True
-                    break
-            if not provider_installed:
-                unsatisfied_deps.append(dep_name)
-        else:
-            unsatisfied_deps.append(dep_name)
-    elif dep_name not in cache or not cache[dep_name].installed:
-        unsatisfied_deps.append(dep_name)
-    
-    # With the fixed logic, virtual dependencies with installed providers should be satisfied
-    assert virtual_dependency not in unsatisfied_deps, (
-        f"Virtual package {virtual_dependency} should be satisfied by {providing_package}"
-    )
-    assert len(unsatisfied_deps) == 0
+def test_install_deb_filters_virtual_packages():
+    """Test that install_deb filters virtual packages correctly."""
+
+    with patch('ansible.modules.apt.apt') as mock_apt, \
+         patch('ansible.modules.apt.apt_pkg') as mock_apt_pkg:
+
+        cache = MagicMock()
+        cache.is_virtual_package.side_effect = lambda x: x == 'libglib2.0-0'
+        cache.get_providing_packages.side_effect = lambda x: ['libglib2.0-0t64'] if x == 'libglib2.0-0' else []
+        cache.__contains__.side_effect = lambda x: x in ['libglib2.0-0t64', 'real-package']
+        cache.__getitem__.side_effect = lambda x: Mock(installed=True) if x == 'libglib2.0-0t64' else Mock(installed=False)
+
+        mock_debfile = Mock()
+        mock_pkg = Mock()
+        mock_pkg.missing_deps = ['libglib2.0-0', 'real-package']
+        mock_pkg.check.return_value = True
+        mock_debfile.DebPackage.return_value = mock_pkg
+        mock_apt.debfile = mock_debfile
+
+        mock_apt.Cache.return_value = cache
+        mock_apt_pkg.get_architectures.return_value = ['amd64']
+
+        with patch('ansible.modules.apt.get_field_of_deb') as mock_get_field:
+            mock_get_field.return_value = 'test-package'
+
+            with patch('ansible.modules.apt.install') as mock_install:
+                mock_install.return_value = (True, {})
+
+                m = Mock()
+                m.params = {"policy_rc_d": None}
+                m.get_bin_path.return_value = "/usr/bin/apt-mark"
+                m.run_command.return_value = (0, "", "")
+                m.warn = Mock()
+                m.fail_json = Mock(side_effect=AssertionError("Unexpected fail_json call"))
+
+                install_deb(
+                    m=m,
+                    debs='/tmp/test.deb',
+                    cache=cache,
+                    force=False,
+                    fail_on_autoremove=False,
+                    install_recommends=False,
+                    allow_unauthenticated=False,
+                    allow_downgrade=False,
+                    allow_change_held_packages=False,
+                    dpkg_options='force-confnew',
+                    lock_timeout=60
+                )
+
+                call_args = mock_install.call_args
+                installed_deps = call_args[1]['pkgspec']
+
+                print("deps_to_install:", installed_deps)
+                assert 'libglib2.0-0' not in installed_deps
+                assert 'real-package' in installed_deps

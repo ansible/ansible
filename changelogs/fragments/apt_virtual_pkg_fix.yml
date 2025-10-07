@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - apt - add support for installing ``.deb`` files whose dependencies include virtual packages (e.g. ``libglib2.0-0`` on Ubuntu 24.04) by recognizing installed providers such as ``libglib2.0-0t64``. This resolves errors like ``Dependency is not satisfiable`` when installing VS Code and other packages (https://github.com/ansible/ansible/issues/85807).

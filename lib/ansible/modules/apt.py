@@ -888,7 +888,7 @@ def install_deb(
                 else:
                     m.fail_json(msg=pkg._failure_string)
 
-           # Handle virtual package dependencies properly
+            # Handle virtual package dependencies properly
             missing_deps = []
             for dep in pkg.missing_deps:
                 if cache.is_virtual_package(dep):
