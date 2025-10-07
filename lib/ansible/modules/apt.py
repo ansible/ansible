@@ -888,9 +888,26 @@ def install_deb(
                 else:
                     m.fail_json(msg=pkg._failure_string)
 
-            # add any missing deps to the list of deps we need
-            # to install so they're all done in one shot
-            deps_to_install.extend(pkg.missing_deps)
+           # Handle virtual package dependencies properly
+            missing_deps = []
+            for dep in pkg.missing_deps:
+                if cache.is_virtual_package(dep):
+                    providers = cache.get_providing_packages(dep)
+                    if providers:
+                        # Check if any provider is already installed
+                        provider_installed = False
+                        for provider in providers:
+                            if provider in cache and cache[provider].installed:
+                                provider_installed = True
+                                break
+                        if not provider_installed:
+                            missing_deps.append(dep)
+                    else:
+                        missing_deps.append(dep)
+                else:
+                    missing_deps.append(dep)
+
+            deps_to_install.extend(missing_deps)
 
         except Exception as e:
             m.fail_json(msg="Unable to install package: %s" % to_native(e))
