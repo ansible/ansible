@@ -106,8 +106,12 @@ try:
         build_collection_dependency_resolver,
     )
     from ansible.galaxy.dependency_resolution.errors import (
-        CollectionDependencyResolutionImpossible,
+        CollectionDependencyResolverRuntimeError,
+        CollectionDependencyRequirementsConflicted,
         CollectionDependencyInconsistentCandidate,
+        CollectionDependencyResolutionError,
+        CollectionDependencyResolutionImpossible,
+        CollectionDependencyResolutionTooDeep,
     )
     from ansible.galaxy.dependency_resolution.providers import (
         RESOLVELIB_VERSION,
@@ -1843,10 +1847,20 @@ def _resolve_depenency_map(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
         ).mapping
+    except CollectionDependencyResolutionTooDeep as dep_backtrack_overflow:
+        raise AnsibleError(
+            f'The maximum of {dep_backtrack_overflow !s} dependency '
+            'resolution iterations has been exceeded. The resolver has been '
+            'unable to locate the perfect match. Giving up.\n\n'
+            'You may be able to help `ansible-galaxy` complete the search by '
+            'adding stricter constraints to your install request.',
+        ) from dep_backtrack_overflow
     except CollectionDependencyResolutionImpossible as dep_exc:
+        display.vvvvv(
+            f'Collection dependency resolution impossible: {dep_exc !s}',
+        )
         conflict_causes = (
-            '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
-                req=req_inf.requirement,
+            f'* {req_inf.requirement !s} ({{dep_origin!s}})'.format(
                 dep_origin='direct request'
                 if req_inf.parent is None
                 else 'dependency of {parent!s}'.
@@ -1864,7 +1878,22 @@ def _resolve_depenency_map(
         ))
         error_msg_lines.append(pre_release_hint)
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
+    except CollectionDependencyResolutionError as resolution_err:
+        # NOTE: This is unlikely to ever be hit as the exception is only used
+        # NOTE: within `resolvelib` as a base for `ResolutionImpossible` and
+        # NOTE: `ResolutionTooDeep`. Still, we catch it explicitly, just in
+        # NOTE: case.
+        raise AnsibleError(str(resolution_err)) from resolution_err
+    except CollectionDependencyRequirementsConflicted as req_conflict:
+        # NOTE: This is unlikely to ever be hit as the exception looks to be
+        # NOTE: either suppressed or transformed into `ResolutionImpossible`
+        # NOTE: within `resolvelib`. Still, we catch it explicitly, just in
+        # NOTE: case.
+        raise AnsibleError(str(req_conflict)) from req_conflict
     except CollectionDependencyInconsistentCandidate as dep_exc:
+        display.vvvvv(
+            f'Collection dependency inconsistent candidate: {dep_exc !s}',
+        )
         parents = [
             str(p) for p in dep_exc.criterion.iter_parent()
             if p is not None
@@ -1873,10 +1902,10 @@ def _resolve_depenency_map(
         error_msg_lines = [
             (
                 'Failed to resolve the requested dependencies map. '
-                'Got the candidate {req.fqcn!s}:{req.ver!s} ({dep_origin!s}) '
-                'which didn\'t satisfy all of the following requirements:'.
+                'A package index offered us an invalid candidate '
+                f'{dep_exc.candidate !s} ({{dep_origin!s}}) and it does '
+                'not satisfy all of the following requirements:'.
                 format(
-                    req=dep_exc.candidate,
                     dep_origin='direct request'
                     if not parents else 'dependency of {parent!s}'.
                     format(parent=', '.join(parents))
@@ -1886,10 +1915,16 @@ def _resolve_depenency_map(
 
         for req in dep_exc.criterion.iter_requirement():
             error_msg_lines.append(
-                f'* {req.fqcn!s}:{req.ver!s}'
+                f'* {req !s}'
             )
         error_msg_lines.append(pre_release_hint)
 
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
+    except CollectionDependencyResolverRuntimeError as resolvelib_crash:
+        raise AnsibleError(
+            f"Collection dependency resolution crashed: {resolvelib_crash !s}."
+            "\n\n"
+            "Please re-run the command with `-vvvvv` and report this as a bug."
+        ) from resolvelib_crash
     except ValueError as exc:
         raise AnsibleError(to_native(exc)) from exc

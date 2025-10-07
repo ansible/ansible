@@ -7,12 +7,49 @@ from __future__ import annotations
 
 try:
     from resolvelib.resolvers import (  # pylint: disable=unused-import
-        ResolutionImpossible as CollectionDependencyResolutionImpossible,
+        ResolverException as CollectionDependencyResolverRuntimeError,
+        RequirementsConflicted as CollectionDependencyRequirementsConflicted,
         InconsistentCandidate as CollectionDependencyInconsistentCandidate,
+        ResolutionError as CollectionDependencyResolutionError,
+        ResolutionImpossible as CollectionDependencyResolutionImpossible,
+        ResolutionTooDeep as CollectionDependencyResolutionTooDeep,
     )
 except ImportError:
-    class CollectionDependencyResolutionImpossible(Exception):  # type: ignore[no-redef]
-        pass
+    class CollectionDependencyResolverRuntimeError(Exception):  # type: ignore[no-redef]
+        """A resolvelib base exception.
 
-    class CollectionDependencyInconsistentCandidate(Exception):  # type: ignore[no-redef]
-        pass
+        This exception is intended to be handled within resolvelib itself. If
+        it leaks into our runtime, a bug must be filed against resolvelib.
+        """
+
+    class CollectionDependencyRequirementsConflicted(CollectionDependencyResolverRuntimeError):  # type: ignore[no-redef]
+        """Supplied requirements have no candidates satisfying all.
+
+        Happens when ``find_matches()`` returns empty candidate list.
+        It seems to be always handled by resolvelib internally.
+        """
+
+    class CollectionDependencyInconsistentCandidate(CollectionDependencyResolverRuntimeError):  # type: ignore[no-redef]
+        """Signal that package index returned non-matching candidate.
+
+        This generally happens with an index is broken.
+        """
+
+    class CollectionDependencyResolutionError(CollectionDependencyResolverRuntimeError):  # type: ignore[no-redef]
+        """Base exception for unsuccessful resolution."""
+
+    class CollectionDependencyResolutionImpossible(CollectionDependencyResolutionError):  # type: ignore[no-redef]
+        """Dependency has with no fully compatible candidate combos.
+
+        This happens when the dependency resolver determines that it will never
+        find a combination of collection candidates that would satisfy all the
+        requirements and compatibility constraint across each other. Every
+        possibility is exhausted.
+        """
+
+    class CollectionDependencyResolutionTooDeep(CollectionDependencyResolutionError):  # type: ignore[no-redef]
+        """Resolution didn't complete on time.
+
+        This happens when the dependency resolver's gone through the maximum
+        number of iterations and did not manage to complete its job by then.
+        """
