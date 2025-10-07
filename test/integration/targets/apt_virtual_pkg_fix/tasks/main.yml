@@ -1,46 +1,58 @@
 ---
-- name: Remove any existing packages to start fresh
+- name: Create directory for test .deb
+  ansible.builtin.file:
+    path: /tmp/virtual-test/DEBIAN
+    state: directory
+
+- name: Create a test .deb file that depends on a virtual package
+  ansible.builtin.shell: |
+    cat > /tmp/virtual-test/DEBIAN/control << EOF
+    Package: virtual-test-pkg
+    Version: 1.0
+    Architecture: all
+    Description: Test package depending on virtual package
+    Depends: mail-transport-agent
+    EOF
+    dpkg-deb --build /tmp/virtual-test /tmp/virtual-test.deb
+  args:
+    creates: /tmp/virtual-test.deb
+
+- name: Remove any existing MTA providers
   ansible.builtin.apt:
     name:
       - exim4
-      - postfix
+      - postfix  
       - sendmail
-      - mutt
     state: absent
 
-- name: Install a package that depends on a virtual package (mutt depends on mail-transport-agent)
+- name: Test the patch - install .deb with virtual package dependency
   ansible.builtin.apt:
-    name: mutt
+    deb: /tmp/virtual-test.deb
     state: present
-  register: apt_result
+  register: patch_test_result
 
-- name: Debug - Show what was installed
+- name: Debug - Show patch test result
   ansible.builtin.debug:
-    var: apt_result
+    var: patch_test_result
 
-- name: Check what package satisfied the mail-transport-agent virtual package
+- name: Check if a virtual package provider was automatically installed
   ansible.builtin.shell: |
-    dpkg -l | grep -E "^ii" | grep -E "(exim|postfix|sendmail)" || echo "No MTA provider found"
-  register: virtual_provider
+    dpkg -l | grep -E "^ii" | grep -E "(exim|postfix|sendmail)" && echo "SUCCESS: Virtual package provider was installed" || echo "FAIL: No provider installed"
+  register: provider_check
   changed_when: false
 
-- name: Show virtual provider result
+- name: Show provider check result
   ansible.builtin.debug:
-    var: virtual_provider.stdout
+    var: provider_check.stdout
 
-- name: Assert virtual package resolution worked
+- name: Assert the patch worked
   ansible.builtin.assert:
     that:
-      - apt_result is succeeded
-      - apt_result.changed  # Should have installed something
-      - "'exim4' in virtual_provider.stdout or 'postfix' in virtual_provider.stdout or 'sendmail' in virtual_provider.stdout"
-    fail_msg: "apt failed to resolve and install virtual package provider"
+      - patch_test_result is succeeded
+      - "'SUCCESS' in provider_check.stdout"
+    fail_msg: "The patch failed to properly resolve virtual package dependencies when installing .deb files"
 
-- name: Verify mutt is installed
-  ansible.builtin.command: dpkg -s mutt
-  register: mutt_status
-  changed_when: false
-
-- name: Show mutt status
-  ansible.builtin.debug:
-    var: mutt_status.rc
+- name: Clean up test package
+  ansible.builtin.file:
+    path: /tmp/virtual-test.deb
+    state: absent
