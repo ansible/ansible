@@ -396,6 +396,8 @@
     src: "testserver.py"
     dest: "{{ remote_tmp_dir }}/testserver.py"
 
+# NOTE: This http test server will live for only the timeout specified in "async", so all uses
+# of it must be grouped relatively close together.
 - name: start SimpleHTTPServer for issues 27617
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
   async: 90
@@ -577,6 +579,19 @@
       - "stat_result_sha256_with_asterisk_71420.stat.exists == true"
       - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
       - "stat_result_sha256_checksum_only.stat.exists == true"
+
+- name: Test for incomplete data read (issue 85164)
+  get_url:
+    url: 'http://localhost:{{ http_port }}/incompleteRead'
+    dest: '{{ remote_tmp_dir }}/85164.txt'
+  ignore_errors: true
+  register: result
+
+- name: Assert we have an incomplete read failure
+  assert:
+    that:
+      - result is failed
+      - '"Incomplete read" in result.msg'
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
@@ -761,16 +776,3 @@
 - assert:
     that:
       - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
-
-- name: Test for incomplete data read (issue 85164)
-  get_url:
-    url: 'http://localhost:{{ http_port }}/incompleteRead'
-    dest: '{{ remote_tmp_dir }}/85164.txt'
-  ignore_errors: true
-  register: result
-
-- name: Assert we have an incomplete read failure
-  assert:
-    that:
-      - result is failed
-      - '"Incomplete read" in result.msg'
