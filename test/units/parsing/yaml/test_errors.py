@@ -98,8 +98,9 @@ def test_yaml_parser_error(
         assert error.value._help_text is None
 
 
-def test_yaml_duplicate_key_warning(mocker: pytest_mock.MockerFixture) -> None:
-    set_duplicate_yaml_dict_key_config(mocker, 'warn')
+@pytest.mark.parametrize("mode", ['warn', 'warning'])
+def test_yaml_duplicate_key_warning(mocker: pytest_mock.MockerFixture, mode: str) -> None:
+    set_duplicate_yaml_dict_key_config(mocker, mode)
 
     patched_warning = mocker.patch.object(Display(), 'warning')
 

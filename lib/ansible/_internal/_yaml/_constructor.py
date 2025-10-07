@@ -74,7 +74,7 @@ class AnsibleInstrumentedConstructor(_BaseConstructor):
                 if self._duplicate_key_mode == 'error':
                     raise AnsibleConstructorError(problem=msg, problem_mark=key_node.start_mark)
 
-                if self._duplicate_key_mode == 'warn':
+                if self._duplicate_key_mode in ['warn', 'warning']:
                     display.warning(msg=msg, obj=key, help_text='Using last defined value only.')
 
             keys.add(key)

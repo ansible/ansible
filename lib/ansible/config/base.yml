@@ -1368,10 +1368,9 @@ DUPLICATE_YAML_DICT_KEY:
   ini:
   - {key: duplicate_dict_key, section: defaults}
   type: string
-  choices: &basic_error2
-    error: issue a 'fatal' error and stop the play
+  choices:
+    <<: *basic_error
     warn: issue a warning but continue
-    ignore: just continue silently
   version_added: "2.9"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
@@ -2071,7 +2070,7 @@ _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
   default: ignore
   description:
     - Action to take when processing of an untrusted template is skipped.
-    - For `ignore` or `warn`, the input template string is returned as-is.
+    - For `ignore` or `warning`, the input template string is returned as-is.
     - This setting has no effect on expressions.
     - Experimental diagnostic feature, subject to change.
   type: choices
