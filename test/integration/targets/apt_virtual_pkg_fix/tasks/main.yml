@@ -1,0 +1,46 @@
+---
+- name: Remove any existing packages to start fresh
+  ansible.builtin.apt:
+    name:
+      - exim4
+      - postfix
+      - sendmail
+      - mutt
+    state: absent
+
+- name: Install a package that depends on a virtual package (mutt depends on mail-transport-agent)
+  ansible.builtin.apt:
+    name: mutt
+    state: present
+  register: apt_result
+
+- name: Debug - Show what was installed
+  ansible.builtin.debug:
+    var: apt_result
+
+- name: Check what package satisfied the mail-transport-agent virtual package
+  ansible.builtin.shell: |
+    dpkg -l | grep -E "^ii" | grep -E "(exim|postfix|sendmail)" || echo "No MTA provider found"
+  register: virtual_provider
+  changed_when: false
+
+- name: Show virtual provider result
+  ansible.builtin.debug:
+    var: virtual_provider.stdout
+
+- name: Assert virtual package resolution worked
+  ansible.builtin.assert:
+    that:
+      - apt_result is succeeded
+      - apt_result.changed  # Should have installed something
+      - "'exim4' in virtual_provider.stdout or 'postfix' in virtual_provider.stdout or 'sendmail' in virtual_provider.stdout"
+    fail_msg: "apt failed to resolve and install virtual package provider"
+
+- name: Verify mutt is installed
+  ansible.builtin.command: dpkg -s mutt
+  register: mutt_status
+  changed_when: false
+
+- name: Show mutt status
+  ansible.builtin.debug:
+    var: mutt_status.rc
