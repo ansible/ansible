@@ -30,6 +30,8 @@
 
   - import_tasks: 'apt-builddep.yml'
 
+  - import_tasks: apt_virtual_pkg_fix.yml
+
   - block:
       - import_tasks: 'repo.yml'
     always:

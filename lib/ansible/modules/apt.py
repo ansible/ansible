@@ -876,35 +876,35 @@ def install_deb(
                 installed_pkg = apt.Cache()[pkg_key]
                 installed_version = installed_pkg.installed.version
                 if package_version_compare(pkg_version, installed_version) == 0:
-                    # Does not need to down-/upgrade, move on to next package
                     continue
             except Exception:
-                # Must not be installed, continue with installation
                 pass
-            # Check if package is installable
             if not pkg.check():
-                if force or ("later version" in pkg._failure_string and allow_downgrade):
+                missing = getattr(pkg, "missing_deps", [])
+                all_virtual = all(cache.is_virtual_package(dep) for dep in missing)
+                if all_virtual:
+                    pass
+                elif force or ("later version" in pkg._failure_string and allow_downgrade):
                     pass
                 else:
                     m.fail_json(msg=pkg._failure_string)
 
-            # Handle virtual package dependencies properly
+            # handle virtual package dependencies properly
             missing_deps = []
             for dep in pkg.missing_deps:
-                if cache.is_virtual_package(dep):
-                    providers = cache.get_providing_packages(dep)
-                    if providers:
-                        # Check if any provider is already installed
-                        provider_installed = False
-                        for provider in providers:
-                            if provider in cache and cache[provider].installed:
-                                provider_installed = True
-                                break
-                        if not provider_installed:
+                try:
+                    if cache.is_virtual_package(dep):
+                        providers = cache.get_providing_packages(dep)
+                        if providers:
+                            if any(cache[p].installed for p in providers if p in cache):
+                                continue
+                            else:
+                                missing_deps.append(dep)
+                        else:
                             missing_deps.append(dep)
                     else:
                         missing_deps.append(dep)
-                else:
+                except Exception as e:
                     missing_deps.append(dep)
 
             deps_to_install.extend(missing_deps)
@@ -912,15 +912,12 @@ def install_deb(
         except Exception as e:
             m.fail_json(msg="Unable to install package: %s" % to_native(e))
 
-        # Install 'Recommends' of this deb file
         if install_recommends:
             pkg_recommends = get_field_of_deb(m, deb_file, "Recommends")
             deps_to_install.extend([pkg_name.strip() for pkg_name in pkg_recommends.split()])
 
-        # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
 
-    # install the deps through apt
     retvals = {}
     if deps_to_install:
         install_dpkg_options = f"{expand_dpkg_options(dpkg_options)} -o DPkg::Lock::Timeout={lock_timeout}"
@@ -949,6 +946,44 @@ def install_deb(
 
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
+
+        # handle missing virtual dependencies
+        if rc != 0 and "dependency problems" in err:
+            missing_deps = []
+            for line in err.splitlines():
+                if "depends on" in line and "however" in line:
+                    dep = line.split("depends on", 1)[1].split(";", 1)[0].strip()
+                    if dep:
+                        missing_deps.append(dep)
+
+            resolved = []
+            for dep in missing_deps:
+                try:
+                    if cache.is_virtual_package(dep):
+                        providers = cache.get_providing_packages(dep)
+                        if providers:
+                            provider = providers[0]
+                            resolved.append(provider.name)
+                except Exception:
+                    continue
+
+            if resolved:
+                m.warn("dpkg dependency error — virtual deps: %s → installing providers: %s"
+                       % (', '.join(missing_deps), ', '.join(resolved)))
+                (success, retvals) = install(
+                    m=m, pkgspec=resolved, cache=cache,
+                    install_recommends=True,
+                    fail_on_autoremove=fail_on_autoremove,
+                    allow_unauthenticated=allow_unauthenticated,
+                    allow_downgrade=allow_downgrade,
+                    allow_change_held_packages=allow_change_held_packages,
+                    dpkg_options=expand_dpkg_options(dpkg_options),
+                )
+                if not success:
+                    m.warn("Provider install failed, attempting apt --fix-broken install")
+                    m.run_command("/usr/bin/apt-get -y --fix-broken install")
+
+                rc, out, err = m.run_command(cmd)
 
         if "stdout" in retvals:
             stdout = retvals["stdout"] + out

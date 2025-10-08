@@ -1,4 +1,0 @@
----
-# Ensure our fake APT repo is set up before running this test
-dependencies:
-  - setup_deb_repo
