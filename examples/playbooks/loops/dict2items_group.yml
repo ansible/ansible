@@ -1,0 +1,19 @@
+---
+# Example: Correct use of dict2items for group management
+
+- name: Create groups from dictionary data
+  hosts: all
+  gather_facts: false
+  vars:
+    global_groups:
+      devops:
+        gid: 1001
+      qa:
+        gid: 1002
+  tasks:
+    - name: Add groups using dict2items
+      ansible.builtin.group:
+        name: "{{ item.key }}"
+        gid: "{{ item.value.gid }}"
+        state: present
+      loop: "{{ global_groups | dict2items }}"
