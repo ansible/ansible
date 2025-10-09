@@ -67,7 +67,8 @@ DOCUMENTATION = """
         description:
           - A seed to initialize the random number generator.
           - Identical seeds will yield identical passwords.
-          - Use this for random-but-idempotent password generation.
+          - Use this only for idempotent password generation, which is unsafe and
+            should only be used for testing.
         type: str
     notes:
       - A great alternative to the password lookup plugin,
