@@ -1,4 +1,4 @@
-bcrypt ; python_version >= '3.12'  # controller only
+bcrypt < 5 ; python_version >= '3.12'  # controller only, bcrypt 5+ not compatible with passlib
 passlib ; python_version >= '3.12'  # controller only
 pexpect ; python_version >= '3.12'  # controller only
 pywinrm ; python_version >= '3.12'  # controller only
