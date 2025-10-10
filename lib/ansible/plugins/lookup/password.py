@@ -70,6 +70,11 @@ DOCUMENTATION = """
           - B(Note) that a weak seed, one without enough entropy, will not create a sufficiently secure encryption for the password.
         type: str
     notes:
+      - A great alternative to the password lookup plugin,
+        if you don't need to generate random passwords on a per-host basis,
+        would be to use Vault in playbooks.
+        Read the documentation there and consider using it first,
+        it will be more desirable for most applications.
       - If the file already exists, no data will be written to it.
         If the file has contents, those contents will be read in as the password.
         Empty files cause the password to return as an empty string.
