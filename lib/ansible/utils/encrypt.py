@@ -57,7 +57,6 @@ def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHA
         random_generator = secrets.SystemRandom()
     else:
         random_generator = random.Random(seed)
-        display.warning("The use of a seed is not secure and should only be used for testing.")
 
     return u''.join(random_generator.choice(chars) for dummy in range(length))
 
