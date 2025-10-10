@@ -67,10 +67,7 @@ DOCUMENTATION = """
         description:
           - A seed to initialize the random number generator.
           - Identical seeds will yield identical passwords.
-          - B(Note) that this drastically reduces the security of this plugin.
-            First, when O(seed) is provided, a non-cryptographic random number generator is used.
-            Second, if the seed does not contain enough entropy, the generated string is weak.
-            B(Do not use the generated string as a password or a token when using this option!)
+          - B(Note) that a weak seed, one without enough entropy, will not create a sufficiently secure encryption for the password.
         type: str
     notes:
       - If the file already exists, no data will be written to it.
