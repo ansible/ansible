@@ -67,15 +67,12 @@ DOCUMENTATION = """
         description:
           - A seed to initialize the random number generator.
           - Identical seeds will yield identical passwords.
-          - Use this only for idempotent password generation, which is unsafe and
-            should only be used for testing.
+          - B(Note) that this drastically reduces the security of this plugin.
+            First, when O(seed) is provided, a non-cryptographic random number generator is used.
+            Second, if the seed does not contain enough entropy, the generated string is weak.
+            B(Do not use the generated string as a password or a token when using this option!)
         type: str
     notes:
-      - A great alternative to the password lookup plugin,
-        if you don't need to generate random passwords on a per-host basis,
-        would be to use Vault in playbooks.
-        Read the documentation there and consider using it first,
-        it will be more desirable for most applications.
       - If the file already exists, no data will be written to it.
         If the file has contents, those contents will be read in as the password.
         Empty files cause the password to return as an empty string.
