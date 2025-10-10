@@ -113,10 +113,6 @@ EXAMPLES = """
 - name: create lowercase 8 character name for Kubernetes pod name
   ansible.builtin.set_fact:
     random_pod_name: "web-{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_lowercase', 'digits'], length=8) }}"
-
-- name: create random but idempotent password
-  ansible.builtin.set_fact:
-    password: "{{ lookup('ansible.builtin.password', '/dev/null', seed=inventory_hostname) }}"
 """
 
 RETURN = """
