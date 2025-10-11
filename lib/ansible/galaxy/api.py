@@ -363,7 +363,12 @@ class GalaxyAPI:
                         res['results'].append(result)
 
                 else:
-                    res = path_cache['results']
+                    try:
+                        res = path_cache['results']
+                    except KeyError:
+                        raise AnsibleError(
+                            f"Invalid response from galaxy, missing expected results: {server_cache.get(cache_key)!r}"
+                        )
 
                 return res
 
