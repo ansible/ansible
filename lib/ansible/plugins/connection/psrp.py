@@ -331,7 +331,7 @@ try:
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
     from pypsrp.wsman import WSMan
-    from requests.exceptions import ConnectionError, ConnectTimeout
+    from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
@@ -405,6 +405,11 @@ class Connection(ConnectionBase):
             except (ConnectionError, ConnectTimeout) as e:
                 raise AnsibleConnectionFailure(
                     "Failed to connect to the host via PSRP: %s"
+                    % to_native(e)
+                )
+            except ReadTimeout as e:
+                raise AnsibleConnectionFailure(
+                    "Failed to read from the host via PSRP: %s"
                     % to_native(e)
                 )
 
