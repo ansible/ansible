@@ -480,11 +480,11 @@ class Connection(ConnectionBase):
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
         try:
-          rc, stdout, stderr = self._exec_psrp_script(
-              script=script,
-              input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
-              arguments=script_args,
-          )
+            rc, stdout, stderr = self._exec_psrp_script(
+                script=script,
+                input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
+                arguments=script_args,
+            )
         except ReadTimeout as e:
             raise AnsibleConnectionFailure(
                 "Failed to read from the host via PSRP: %s"
