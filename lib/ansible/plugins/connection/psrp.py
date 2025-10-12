@@ -407,11 +407,6 @@ class Connection(ConnectionBase):
                     "Failed to connect to the host via PSRP: %s"
                     % to_native(e)
                 )
-            except ReadTimeout as e:
-                raise AnsibleConnectionFailure(
-                    "Failed to read from the host via PSRP: %s"
-                    % to_native(e)
-                )
 
             self._connected = True
             self._last_pipeline = None
@@ -484,11 +479,17 @@ class Connection(ConnectionBase):
             pwsh_in_data = in_data
             display.vvv(u"PSRP: EXEC %s" % script, host=self._psrp_host)
 
-        rc, stdout, stderr = self._exec_psrp_script(
-            script=script,
-            input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
-            arguments=script_args,
-        )
+        try:
+          rc, stdout, stderr = self._exec_psrp_script(
+              script=script,
+              input_data=pwsh_in_data.splitlines() if pwsh_in_data else None,
+              arguments=script_args,
+          )
+        except ReadTimeout as e:
+            raise AnsibleConnectionFailure(
+                "Failed to read from the host via PSRP: %s"
+                % to_native(e)
+            )
         return rc, stdout, stderr
 
     def put_file(self, in_path: str, out_path: str) -> None:
