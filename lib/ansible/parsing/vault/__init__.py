@@ -656,10 +656,10 @@ class VaultLib:
         b_vaulttext = to_bytes(vaulttext, nonstring='error')  # enforce vaulttext is str/bytes, keep type check if removing type conversion
 
         if self.secrets is None:
-            raise AnsibleVaultError("A vault password must be specified to decrypt data.", obj=vaulttext)
+            raise AnsibleVaultError("A vault password must be specified to decrypt data.")
 
         if not is_encrypted(b_vaulttext):
-            raise AnsibleVaultError("Input is not vault encrypted data.", obj=vaulttext)
+            raise AnsibleVaultError("Input is not vault encrypted data.")
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
@@ -668,10 +668,10 @@ class VaultLib:
         if cipher_name in CIPHER_ALLOWLIST:
             this_cipher = CIPHER_MAPPING[cipher_name]()
         else:
-            raise AnsibleVaultError(f"Cipher {cipher_name!r} could not be found.", obj=vaulttext)
+            raise AnsibleVaultError(f"Cipher {cipher_name!r} could not be found.")
 
         if not self.secrets:
-            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found.', obj=vaulttext)
+            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found.')
 
         # WARNING: Currently, the vault id is not required to match the vault id in the vault blob to
         #          decrypt a vault properly. The vault id in the vault blob is not part of the encrypted
@@ -729,7 +729,7 @@ class VaultLib:
                              (to_text(vault_secret_id), to_text(origin), e))
                 continue
         else:
-            raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt).", obj=vaulttext)
+            raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt).")
 
         return b_plaintext, vault_id_used, vault_secret_used
 
@@ -924,7 +924,7 @@ class VaultEditor:
             # TODO: return the vault_id that worked?
             plaintext, vault_id_used, vault_secret_used = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
+            raise AnsibleError(f"Failed to edit {filename}.") from e
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
