@@ -2,7 +2,7 @@
 antsibull-changelog==0.29.0
 docutils==0.18.1
 packaging==25.0
-PyYAML==6.0.2
+PyYAML==6.0.3
 rstcheck==5.0.0
 semantic-version==2.10.0
 types-docutils==0.18.3
