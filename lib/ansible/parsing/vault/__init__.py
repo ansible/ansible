@@ -659,7 +659,7 @@ class VaultLib:
             raise AnsibleVaultError("A vault password must be specified to decrypt data.", obj=vaulttext)
 
         if not is_encrypted(b_vaulttext):
-            raise AnsibleVaultError("Input is not vault encrypted data", obj=vaulttext)
+            raise AnsibleVaultError("Input is not vault encrypted data.", obj=vaulttext)
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
