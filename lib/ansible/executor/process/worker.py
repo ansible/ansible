@@ -113,7 +113,6 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         except OSError as e:
             if e.errno != errno.ESRCH:
                 signame = signal.strsignal(signum)
-                display.debug(f'Unable to send {signame} to child[{self.pid}]: {traceback.format_exc()}')
                 display.error(f'Unable to send {signame} to child[{self.pid}]: {e}')
 
         # fallthrough, if we are still here, just die
@@ -175,7 +174,6 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             # to give better errors, and to prevent fd 0 reuse
             sys.stdin.close()
         except Exception as e:
-            display.debug(f'Could not detach from stdio: {traceback.format_exc()}')
             display.error(f'Could not detach from stdio: {e}')
             os._exit(1)
 

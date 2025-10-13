@@ -24,7 +24,6 @@ import sys
 import signal
 import tempfile
 import threading
-import traceback
 import time
 import typing as t
 import multiprocessing.queues
@@ -218,7 +217,6 @@ class TaskQueueManager:
                 except OSError as e:
                     if e.errno != errno.ESRCH:
                         signame = signal.strsignal(signum)
-                        display.debug(f'Unable to send {signame} to child[{worker.pid}]: {traceback.format_exc()}')
                         display.error(f'Unable to send {signame} to child[{worker.pid}]: {e}')
 
         if signum == signal.SIGINT:
@@ -230,7 +228,6 @@ class TaskQueueManager:
                 os.kill(pid, signum)
             except OSError as e:
                 signame = signal.strsignal(signum)
-                display.debug(f'Unable to send {signame} to {pid}: {traceback.format_exc()}')
                 display.error(f'Unable to send {signame} to {pid}: {e}')
 
     def load_callbacks(self):
