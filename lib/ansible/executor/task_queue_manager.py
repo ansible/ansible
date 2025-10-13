@@ -222,13 +222,13 @@ class TaskQueueManager:
         if signum == signal.SIGINT:
             # Defer to CLI handling
             raise KeyboardInterrupt()
-        else:
-            pid = os.getpid()
-            try:
-                os.kill(pid, signum)
-            except OSError as e:
-                signame = signal.strsignal(signum)
-                display.error(f'Unable to send {signame} to {pid}: {e}')
+
+        pid = os.getpid()
+        try:
+            os.kill(pid, signum)
+        except OSError as e:
+            signame = signal.strsignal(signum)
+            display.error(f'Unable to send {signame} to {pid}: {e}')
 
     def load_callbacks(self):
         """
