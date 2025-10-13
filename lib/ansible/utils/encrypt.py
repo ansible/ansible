@@ -101,6 +101,7 @@ class BaseHash(object):
 
     def __init__(self, algorithm):
         self.algorithm = algorithm
+        display.vv(f"Using {self.__class__.__name__} to hash input with {algorithm!r}")
 
 
 class CryptHash(BaseHash):
@@ -204,8 +205,6 @@ class PasslibHash(BaseHash):
 
         if not PASSLIB_AVAILABLE:
             raise AnsibleError(f"The passlib Python package must be installed to hash with the {algorithm!r} algorithm.") from PASSLIB_E
-
-        display.vv(f"Using passlib to hash input with {algorithm!r}")
 
         try:
             self.crypt_algo = getattr(passlib.hash, algorithm)
