@@ -433,7 +433,7 @@ def get_venv_packages(python: PythonConfig) -> dict[str, str]:
     #       See: https://github.com/ansible/base-test-container/blob/main/files/installer.py
 
     default_packages = dict(
-        pip='24.2',
+        pip='25.2',
     )
 
     override_packages: dict[str, dict[str, str]] = {
