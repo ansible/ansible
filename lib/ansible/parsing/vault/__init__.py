@@ -942,6 +942,9 @@ class VaultEditor:
 
     def plaintext(self, filename):
 
+        # follow the symlink
+        filename = self._real_path(filename)
+
         b_vaulttext = self.read_data(filename)
         vaulttext = to_text(b_vaulttext)
 
