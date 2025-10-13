@@ -1,0 +1,3 @@
+bugfixes:
+- SIGINT/SIGTERM Handling - Make SIGINT/SIGTERM handling more robust by splitting concerns
+  between forks and the parent.

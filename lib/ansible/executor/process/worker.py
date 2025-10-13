@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import errno
 import io
 import os
 import signal
@@ -103,11 +104,19 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         self._cliargs = cliargs
 
     def _term(self, signum, frame) -> None:
-        """
-        terminate the process group created by calling setsid when
-        a terminate signal is received by the fork
-        """
-        os.killpg(self.pid, signum)
+        """In child termination when notified by the parent"""
+        signal.signal(signum, signal.SIG_DFL)
+
+        try:
+            os.killpg(self.pid, signum)
+            os.kill(self.pid, signum)
+        except OSError as e:
+            if e.errno != errno.ESRCH:
+                signame = signal.strsignal(signum)
+                display.error(f'Unable to send {signame} to child[{self.pid}]: {e}')
+
+        # fallthrough, if we are still here, just die
+        os._exit(1)
 
     def start(self) -> None:
         """
@@ -121,11 +130,6 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # FUTURE: this lock can be removed once a more generalized pre-fork thread pause is in place
         with display._lock:
             super(WorkerProcess, self).start()
-        # Since setsid is called later, if the worker is termed
-        # it won't term the new process group
-        # register a handler to propagate the signal
-        signal.signal(signal.SIGTERM, self._term)
-        signal.signal(signal.SIGINT, self._term)
 
     def _hard_exit(self, e: str) -> t.NoReturn:
         """
@@ -170,7 +174,6 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             # to give better errors, and to prevent fd 0 reuse
             sys.stdin.close()
         except Exception as e:
-            display.debug(f'Could not detach from stdio: {traceback.format_exc()}')
             display.error(f'Could not detach from stdio: {e}')
             os._exit(1)
 
@@ -187,6 +190,9 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # Set the queue on Display so calls to Display.display are proxied over the queue
         display.set_queue(self._final_q)
         self._detach()
+        # propagate signals
+        signal.signal(signal.SIGINT, self._term)
+        signal.signal(signal.SIGTERM, self._term)
         try:
             with _task.TaskContext(self._task):
                 return self._run()
