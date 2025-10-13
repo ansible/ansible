@@ -30,21 +30,10 @@
         path: "{{ brew_which.stdout }}"
       register: brew_stat
 
-    - become: yes
+    - name: MACOS | Install libxcrypt
+      command: brew install libxcrypt
+      notify: libxcrypt was installed
+      become: yes
       become_user: "{{ brew_stat.stat.pw_name }}"
       environment:
         HOMEBREW_NO_AUTO_UPDATE: True
-      block:
-        - name: MACOS | Install libxcrypt
-          command: brew install libxcrypt
-          notify: libxcrypt was installed
-
-        - name: MACOS | Get brew prefix
-          command: brew --prefix
-          register: brew_prefix
-
-        - name: MACOS | Link libxcrypt
-          file:
-            src: '{{ brew_prefix.stdout_lines.0 }}/opt/libxcrypt/lib/libcrypt.dylib'
-            dest: /usr/local/lib/libcrypt.dylib
-            state: link

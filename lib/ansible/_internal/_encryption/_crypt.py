@@ -18,19 +18,38 @@ _FAILURE_TOKENS = frozenset({b'*0', b'*1'})
 class _CryptLib:
     name: str | None
     exclude_platforms: frozenset[str] = frozenset()
+    include_platforms: frozenset[str] = frozenset()
+    is_path: bool = False
 
 
 _CRYPT_LIBS = (
-    _CryptLib('crypt'),
+    _CryptLib('crypt'),  # libxcrypt
     _CryptLib(None, exclude_platforms=frozenset({'darwin'})),  # fallback to default libc
+    _CryptLib(  # macOS Homebrew (Apple Silicon)
+        '/opt/homebrew/opt/libxcrypt/lib/libcrypt.dylib',
+        include_platforms=frozenset({'darwin'}),
+        is_path=True,
+    ),
+    _CryptLib(  # macOS Homebrew (Intel)
+        '/usr/local/opt/libxcrypt/lib/libcrypt.dylib',
+        include_platforms=frozenset({'darwin'}),
+        is_path=True,
+    ),
 )
 
 for _lib_config in _CRYPT_LIBS:
     if sys.platform in _lib_config.exclude_platforms:
         continue
+    if _lib_config.include_platforms and sys.platform not in _lib_config.include_platforms:
+        continue
 
     if _lib_config.name is None:
         _lib_so = None
+    elif _lib_config.is_path:
+        if os.path.exists(_lib_config.name):
+            _lib_so = _lib_config.name
+        else:
+            continue
     else:
         _lib_so = ctypes.util.find_library(_lib_config.name)
         if not _lib_so:
