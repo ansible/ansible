@@ -14,4 +14,4 @@ import string  # pylint: disable=unused-import
 #   'Call' object has no attribute 'value'
 result = {None: None}[{}.get('something')]
 
-foo = {}.keys()
+foo = {}.keys()  # should trigger disallowed-name, but doesn't in pylint 4.0.0, probably due to https://github.com/pylint-dev/pylint/issues/10652

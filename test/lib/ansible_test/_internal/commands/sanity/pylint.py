@@ -301,4 +301,15 @@ class PylintTest(SanitySingleVersion):
         else:
             messages = []
 
+        expected_paths = set(paths)
+
+        unexpected_messages = [message for message in messages if message["path"] not in expected_paths]
+        messages = [message for message in messages if message["path"] in expected_paths]
+
+        for unexpected_message in unexpected_messages:
+            display.info(f"Unexpected message: {json.dumps(unexpected_message)}", verbosity=4)
+
+        if unexpected_messages:
+            display.notice(f"Discarded {len(unexpected_messages)} unexpected messages. Use -vvvv to display.")
+
         return messages
