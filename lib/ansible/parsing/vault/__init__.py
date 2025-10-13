@@ -890,7 +890,7 @@ class VaultEditor:
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
+            raise AnsibleError(f"Failed to decrypt {filename}.") from e
         self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename, secret, vault_id=None):
@@ -949,7 +949,7 @@ class VaultEditor:
             plaintext = self.vault.decrypt(vaulttext)
             return plaintext
         except AnsibleError as e:
-            raise AnsibleVaultError("%s for %s" % (to_native(e), to_native(filename)))
+            raise AnsibleError(f"Failed to view {filename}.") from e
 
     # FIXME/TODO: make this use VaultSecret
     def rekey_file(self, filename, new_vault_secret, new_vault_id=None):
@@ -966,8 +966,7 @@ class VaultEditor:
         try:
             plaintext, vault_id_used, _dummy = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
-            raise AnsibleError("%s for %s" % (to_native(e), to_native(filename)))
-
+            raise AnsibleError(f"Failed to rekey {filename}.") from e
         # This is more or less an assert, see #18247
         if new_vault_secret is None:
             raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
