@@ -11,9 +11,11 @@ import functools
 import pathlib
 import re
 
-import astroid
-import astroid.context
+import astroid.bases
+import astroid.exceptions
+import astroid.nodes
 import astroid.typing
+import astroid.util
 
 import pylint.lint
 import pylint.checkers
@@ -42,7 +44,7 @@ class DeprecationCallArgs:
 
     def all_args_dynamic(self) -> bool:
         """True if all args are dynamic or None, otherwise False."""
-        return all(arg is None or isinstance(arg, astroid.NodeNG) for arg in dataclasses.asdict(self).values())
+        return all(arg is None or isinstance(arg, astroid.nodes.NodeNG) for arg in dataclasses.asdict(self).values())
 
 
 class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
@@ -177,7 +179,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.module_cache: dict[str, astroid.Module] = {}
+        self.module_cache: dict[str, astroid.nodes.Module] = {}
 
     @functools.cached_property
     def collection_name(self) -> str | None:
@@ -226,7 +228,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         return None
 
     @pylint.checkers.utils.only_required_for_messages(*(msgs.keys()))
-    def visit_call(self, node: astroid.Call) -> None:
+    def visit_call(self, node: astroid.nodes.Call) -> None:
         """Visit a call node."""
         if inferred := self.infer(node.func):
             name = self.get_fully_qualified_name(inferred)
@@ -234,50 +236,50 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
             if args := self.DEPRECATION_FUNCTIONS.get(name):
                 self.check_call(node, name, args)
 
-    def infer(self, node: astroid.NodeNG) -> astroid.NodeNG | None:
+    def infer(self, node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG | None:
         """Return the inferred node from the given node, or `None` if it cannot be unambiguously inferred."""
         names: list[str] = []
-        target: astroid.NodeNG | None = node
+        target: astroid.nodes.NodeNG | None = node
         inferred: astroid.typing.InferenceResult | None = None
 
         while target:
             if inferred := astroid.util.safe_infer(target):
                 break
 
-            if isinstance(target, astroid.Call):
+            if isinstance(target, astroid.nodes.Call):
                 inferred = self.infer(target.func)
                 break
 
-            if isinstance(target, astroid.FunctionDef):
+            if isinstance(target, astroid.nodes.FunctionDef):
                 inferred = target
                 break
 
-            if isinstance(target, astroid.Name):
+            if isinstance(target, astroid.nodes.Name):
                 target = self.infer_name(target)
-            elif isinstance(target, astroid.AssignName) and isinstance(target.parent, astroid.Assign):
+            elif isinstance(target, astroid.nodes.AssignName) and isinstance(target.parent, astroid.nodes.Assign):
                 target = target.parent.value
-            elif isinstance(target, astroid.Attribute):
+            elif isinstance(target, astroid.nodes.Attribute):
                 names.append(target.attrname)
                 target = target.expr
             else:
                 break
 
         for name in reversed(names):
-            if isinstance(inferred, astroid.Instance):
+            if isinstance(inferred, astroid.bases.Instance):
                 try:
                     attr = next(iter(inferred.getattr(name)), None)
-                except astroid.AttributeInferenceError:
+                except astroid.exceptions.AttributeInferenceError:
                     break
 
-                if isinstance(attr, astroid.AssignAttr):
+                if isinstance(attr, astroid.nodes.AssignAttr):
                     inferred = self.get_ansible_module(attr)
                     continue
 
-                if isinstance(attr, astroid.FunctionDef):
+                if isinstance(attr, astroid.nodes.FunctionDef):
                     inferred = attr
                     continue
 
-            if not isinstance(inferred, (astroid.Module, astroid.ClassDef)):
+            if not isinstance(inferred, (astroid.nodes.Module, astroid.nodes.ClassDef)):
                 inferred = None
                 break
 
@@ -288,15 +290,15 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
             else:
                 inferred = self.infer(inferred)
 
-        if isinstance(inferred, astroid.FunctionDef) and isinstance(inferred.parent, astroid.ClassDef):
-            inferred = astroid.BoundMethod(inferred, inferred.parent)
+        if isinstance(inferred, astroid.nodes.FunctionDef) and isinstance(inferred.parent, astroid.nodes.ClassDef):
+            inferred = astroid.bases.BoundMethod(inferred, inferred.parent)
 
         return inferred
 
-    def infer_name(self, node: astroid.Name) -> astroid.NodeNG | None:
+    def infer_name(self, node: astroid.nodes.Name) -> astroid.nodes.NodeNG | None:
         """Infer the node referenced by the given name, or `None` if it cannot be unambiguously inferred."""
         scope = node.scope()
-        inferred: astroid.NodeNG | None = None
+        inferred: astroid.nodes.NodeNG | None = None
         name = node.name
 
         while scope:
@@ -306,12 +308,12 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
                 scope = scope.parent.scope() if scope.parent else None
                 continue
 
-            if isinstance(assignment, astroid.AssignName) and isinstance(assignment.parent, astroid.Assign):
+            if isinstance(assignment, astroid.nodes.AssignName) and isinstance(assignment.parent, astroid.nodes.Assign):
                 inferred = assignment.parent.value
             elif (
-                isinstance(scope, astroid.FunctionDef)
-                and isinstance(assignment, astroid.AssignName)
-                and isinstance(assignment.parent, astroid.Arguments)
+                isinstance(scope, astroid.nodes.FunctionDef)
+                and isinstance(assignment, astroid.nodes.AssignName)
+                and isinstance(assignment.parent, astroid.nodes.Arguments)
                 and assignment.parent.annotations
             ):
                 idx, _node = assignment.parent.find_argname(name)
@@ -322,12 +324,12 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
                     except IndexError:
                         pass
                     else:
-                        if isinstance(annotation, astroid.Name):
+                        if isinstance(annotation, astroid.nodes.Name):
                             name = annotation.name
                             continue
-            elif isinstance(assignment, astroid.ClassDef):
+            elif isinstance(assignment, astroid.nodes.ClassDef):
                 inferred = assignment
-            elif isinstance(assignment, astroid.ImportFrom):
+            elif isinstance(assignment, astroid.nodes.ImportFrom):
                 if module := self.get_module(assignment):
                     name = assignment.real_name(name)
                     scope = module.scope()
@@ -337,7 +339,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
 
         return inferred
 
-    def get_module(self, node: astroid.ImportFrom) -> astroid.Module | None:
+    def get_module(self, node: astroid.nodes.ImportFrom) -> astroid.nodes.Module | None:
         """Import the requested module if possible and cache the result."""
         module_name = pylint.checkers.utils.get_import_name(node, node.modname)
 
@@ -357,21 +359,21 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         return module
 
     @staticmethod
-    def get_fully_qualified_name(node: astroid.NodeNG) -> str | None:
+    def get_fully_qualified_name(node: astroid.nodes.NodeNG) -> str | None:
         """Return the fully qualified name of the given inferred node."""
         parent = node.parent
         parts: tuple[str, ...] | None
 
-        if isinstance(node, astroid.FunctionDef) and isinstance(parent, astroid.Module):
+        if isinstance(node, astroid.nodes.FunctionDef) and isinstance(parent, astroid.nodes.Module):
             parts = (parent.name, node.name)
-        elif isinstance(node, astroid.BoundMethod) and isinstance(parent, astroid.ClassDef) and isinstance(parent.parent, astroid.Module):
+        elif isinstance(node, astroid.bases.BoundMethod) and isinstance(parent, astroid.nodes.ClassDef) and isinstance(parent.parent, astroid.nodes.Module):
             parts = (parent.parent.name, parent.name, node.name)
         else:
             parts = None
 
         return '.'.join(parts) if parts else None
 
-    def check_call(self, node: astroid.Call, name: str, args: tuple[str, ...]) -> None:
+    def check_call(self, node: astroid.nodes.Call, name: str, args: tuple[str, ...]) -> None:
         """Check the given deprecation call node for valid arguments."""
         call_args = self.get_deprecation_call_args(node, args)
 
@@ -400,7 +402,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
             self.check_version(node, name, call_args)
 
     @staticmethod
-    def get_deprecation_call_args(node: astroid.Call, args: tuple[str, ...]) -> DeprecationCallArgs:
+    def get_deprecation_call_args(node: astroid.nodes.Call, args: tuple[str, ...]) -> DeprecationCallArgs:
         """Get the deprecation call arguments from the given node."""
         fields: dict[str, object] = {}
 
@@ -413,12 +415,12 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
                 fields[keyword.arg] = keyword.value
 
         for key, value in fields.items():
-            if isinstance(value, astroid.Const):
+            if isinstance(value, astroid.nodes.Const):
                 fields[key] = value.value
 
         return DeprecationCallArgs(**fields)
 
-    def check_collection_name(self, node: astroid.Call, name: str, args: DeprecationCallArgs) -> None:
+    def check_collection_name(self, node: astroid.nodes.Call, name: str, args: DeprecationCallArgs) -> None:
         """Check the collection name provided to the given call node."""
         deprecator_requirement = self.is_deprecator_required()
 
@@ -459,14 +461,14 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         if args.collection_name and args.collection_name != expected_collection_name:
             self.add_message('wrong-collection-deprecated', node=node, args=(args.collection_name, name))
 
-    def check_version(self, node: astroid.Call, name: str, args: DeprecationCallArgs) -> None:
+    def check_version(self, node: astroid.nodes.Call, name: str, args: DeprecationCallArgs) -> None:
         """Check the version provided to the given call node."""
         if self.collection_name:
             self.check_collection_version(node, name, args)
         else:
             self.check_core_version(node, name, args)
 
-    def check_core_version(self, node: astroid.Call, name: str, args: DeprecationCallArgs) -> None:
+    def check_core_version(self, node: astroid.nodes.Call, name: str, args: DeprecationCallArgs) -> None:
         """Check the core version provided to the given call node."""
         try:
             if not isinstance(args.version, str) or not args.version:
@@ -480,7 +482,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         if self.ANSIBLE_VERSION >= strict_version:
             self.add_message('ansible-deprecated-version', node=node, args=(args.version, name))
 
-    def check_collection_version(self, node: astroid.Call, name: str, args: DeprecationCallArgs) -> None:
+    def check_collection_version(self, node: astroid.nodes.Call, name: str, args: DeprecationCallArgs) -> None:
         """Check the collection version provided to the given call node."""
         try:
             if not isinstance(args.version, str) or not args.version:
@@ -497,7 +499,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         if semantic_version.major != 0 and (semantic_version.minor != 0 or semantic_version.patch != 0):
             self.add_message('removal-version-must-be-major', node=node, args=(args.version,))
 
-    def check_date(self, node: astroid.Call, name: str, args: DeprecationCallArgs) -> None:
+    def check_date(self, node: astroid.nodes.Call, name: str, args: DeprecationCallArgs) -> None:
         """Check the date provided to the given call node."""
         try:
             date_parsed = self.parse_isodate(args.date)
@@ -515,18 +517,19 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
 
         raise TypeError(type(value))
 
-    def get_ansible_module(self, node: astroid.AssignAttr) -> astroid.Instance | None:
+    def get_ansible_module(self, node: astroid.nodes.AssignAttr) -> astroid.bases.Instance | None:
         """Infer an AnsibleModule instance node from the given assignment."""
-        if isinstance(node.parent, astroid.Assign) and isinstance(node.parent.type_annotation, astroid.Name):
+        if isinstance(node.parent, astroid.nodes.Assign) and isinstance(node.parent.type_annotation, astroid.nodes.Name):
             inferred = self.infer_name(node.parent.type_annotation)
-        elif isinstance(node.parent, astroid.Assign) and isinstance(node.parent.parent, astroid.FunctionDef) and isinstance(node.parent.value, astroid.Name):
+        elif (isinstance(node.parent, astroid.nodes.Assign) and isinstance(node.parent.parent, astroid.nodes.FunctionDef) and
+              isinstance(node.parent.value, astroid.nodes.Name)):
             inferred = self.infer_name(node.parent.value)
-        elif isinstance(node.parent, astroid.AnnAssign) and isinstance(node.parent.annotation, astroid.Name):
+        elif isinstance(node.parent, astroid.nodes.AnnAssign) and isinstance(node.parent.annotation, astroid.nodes.Name):
             inferred = self.infer_name(node.parent.annotation)
         else:
             inferred = None
 
-        if isinstance(inferred, astroid.ClassDef) and inferred.name == 'AnsibleModule':
+        if isinstance(inferred, astroid.nodes.ClassDef) and inferred.name == 'AnsibleModule':
             return inferred.instantiate_class()
 
         return None

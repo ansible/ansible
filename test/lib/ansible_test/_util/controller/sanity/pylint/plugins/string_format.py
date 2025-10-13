@@ -5,7 +5,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import astroid
+import astroid.bases
+import astroid.exceptions
+import astroid.nodes
 
 try:
     from pylint.checkers.utils import check_messages
@@ -39,22 +41,22 @@ class AnsibleStringFormatChecker(BaseChecker):
     def visit_call(self, node):
         """Visit a call node."""
         func = utils.safe_infer(node.func)
-        if (isinstance(func, astroid.BoundMethod)
-                and isinstance(func.bound, astroid.Instance)
+        if (isinstance(func, astroid.bases.BoundMethod)
+                and isinstance(func.bound, astroid.bases.Instance)
                 and func.bound.name in ('str', 'unicode', 'bytes')):
             if func.name == 'format':
                 self._check_new_format(node, func)
 
     def _check_new_format(self, node, func):
         """ Check the new string formatting """
-        if (isinstance(node.func, astroid.Attribute)
-                and not isinstance(node.func.expr, astroid.Const)):
+        if (isinstance(node.func, astroid.nodes.Attribute)
+                and not isinstance(node.func.expr, astroid.nodes.Const)):
             return
         try:
             strnode = next(func.bound.infer())
-        except astroid.InferenceError:
+        except astroid.exceptions.InferenceError:
             return
-        if not isinstance(strnode, astroid.Const):
+        if not isinstance(strnode, astroid.nodes.Const):
             return
 
         if isinstance(strnode.value, bytes):
