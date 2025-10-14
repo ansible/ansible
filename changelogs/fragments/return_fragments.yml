@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-doc adds support for RETURN documentation to support doc fragment plugins

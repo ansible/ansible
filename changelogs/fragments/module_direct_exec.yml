@@ -1,2 +1,0 @@
-minor_changes:
-  - AnsibleModule - Add temporary internal monkeypatch-able hook to alter module result serialization by splitting serialization from ``_return_formatted`` into ``_record_module_result``.

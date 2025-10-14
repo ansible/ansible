@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-doc --list/--list_files/--metadata-dump - fixed relative imports in nested filter/test plugin files (https://github.com/ansible/ansible/issues/85753).

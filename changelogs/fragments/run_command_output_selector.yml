@@ -1,2 +1,0 @@
-bugfixes:
-  - run_command - Fixed premature selector unregistration on empty read from stdout/stderr that caused truncated output or hangs in rare situations.

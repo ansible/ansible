@@ -1,3 +1,0 @@
----
-minor_changes:
-  - fetch_file - add ca_path and cookies parameter arguments (https://github.com/ansible/ansible/issues/85172).

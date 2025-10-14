@@ -1,4 +1,0 @@
-major_changes:
-  - ansible - Add support for Python 3.14.
-  - ansible - Drop support for Python 3.8 on targets.
-  - ansible - Drop support for Python 3.11 on the controller.

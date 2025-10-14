@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Limit package install retries during managed remote instance bootstrapping.

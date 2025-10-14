@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Use OS packages to satisfy controller requirements on FreeBSD 13.5 during managed instance bootstrapping.

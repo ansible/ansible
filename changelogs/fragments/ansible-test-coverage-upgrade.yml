@@ -1,2 +1,0 @@
-minor_changes:
- - ansible-test - Upgrade to ``coverage`` version 7.10.7 for Python 3.9 and later.

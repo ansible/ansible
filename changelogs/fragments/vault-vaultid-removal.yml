@@ -1,2 +1,0 @@
-removed_features:
-  - "``vault``/``unvault`` filters - remove the deprecated ``vaultid`` parameter."

@@ -1,2 +1,0 @@
-bugfixes:
-  - pip - Fix pip module output so that it returns changed when the only operation is initializing a venv.

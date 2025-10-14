@@ -1,6 +1,0 @@
-bugfixes:
-  - template lookup - Skip finalization on the internal templating operation to allow markers to be returned and handled by, e.g. the ``default`` filter.
-    Previously, finalization tripped markers, causing an exception to end processing of the current template pipeline.
-    (https://github.com/ansible/ansible/issues/85674)
-  - templating - Avoid tripping markers within Jinja generated code.
-    (https://github.com/ansible/ansible/issues/85674)

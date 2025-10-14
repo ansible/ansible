@@ -1,2 +1,0 @@
-bugfixes:
-  - templating - Fix slicing of tuples in templating (https://github.com/ansible/ansible/issues/85606).

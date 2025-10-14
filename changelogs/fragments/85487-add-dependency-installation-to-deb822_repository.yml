@@ -1,2 +1,0 @@
-minor_changes:
-  - deb822_repository - Add automatic installation of the ``python3-debian`` package if it is missing by adding the parameter ``install_python_debian``

@@ -1,2 +1,0 @@
-deprecated_features:
-  - vars, the internal variable cache will be removed in 2.24. This cache, once used internally exposes variables in inconsistent states, the 'vars' and 'varnames' lookups should be used instead.
