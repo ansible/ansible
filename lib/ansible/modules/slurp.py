@@ -118,7 +118,6 @@ def main():
 
     try:
         with open(source, 'rb') as source_fh:
-            data = source_fh.read()
             if armor:
                 encoding = 'base64'
                 data = base64.b64encode(source_fh.read())
