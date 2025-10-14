@@ -487,9 +487,8 @@ class Connection(ConnectionBase):
             )
         except ReadTimeout as e:
             raise AnsibleConnectionFailure(
-                "Failed to read from the host via PSRP: %s"
-                % to_native(e)
-            )
+                "HTTP read timeout during PSRP script execution"
+            ) from e
         return rc, stdout, stderr
 
     def put_file(self, in_path: str, out_path: str) -> None:
