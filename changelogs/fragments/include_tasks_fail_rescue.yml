@@ -1,0 +1,2 @@
+bugfixes:
+  - include_roles would emit a syntax error on X_from options errors, but a task failure when missing a role to make it consistent now it also emits a task failure on missing tasks_from, which makes it subject to error handling in the play.

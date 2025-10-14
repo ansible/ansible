@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import functools as _functools
 import os
 import typing as _t
 
@@ -24,7 +25,7 @@ from collections.abc import Container, Mapping, Set, Sequence
 from types import MappingProxyType
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError, AnsibleActionFail
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.playbook.base import Base
@@ -118,13 +119,16 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                  from_include: bool = False,
                  validate: bool = True,
                  public: bool = None,
-                 static: bool = True) -> None:
+                 static: bool = True,
+                 rescuable: bool = True) -> None:
+
         self._role_name: str = None
         self._role_path: str = None
         self._role_collection: str = None
         self._role_params: dict[str, dict[str, str]] = dict()
         self._loader = None
         self.static: bool = static
+        self._rescuable: bool = rescuable
 
         # includes (static=false) default to private, while imports (static=true) default to public
         # but both can be overridden by global config if set
@@ -165,6 +169,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def __repr__(self):
         return self.get_name()
 
+    @_functools.cached_property
+    def _FAIL(self):
+        return AnsibleActionFail if self._rescuable else AnsibleParserError
+
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:
             return '.'.join(x for x in (self._role_collection, self._role_name) if x)
@@ -198,7 +206,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         return self._get_hash_dict() == other._get_hash_dict()
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True, rescuable=True):
         if from_files is None:
             from_files = {}
         try:
@@ -206,7 +214,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             #  for the in-flight in role cache as a sentinel that we're already trying to load
             #  that role?)
             # see https://github.com/ansible/ansible/issues/61527
-            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static)
+            r = Role(play=play, from_files=from_files, from_include=from_include, validate=validate, public=public, static=static, rescuable=rescuable)
             r._load_role_data(role_include, parent_role=parent_role)
 
             role_path = r.get_role_path()
@@ -428,8 +436,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 for found in found_files:
 
                     if not is_subpath(found, file_path):
-                        raise AnsibleParserError("Failed loading '%s' for role (%s) as it is not inside the expected role path: '%s'" %
-                                                 (to_text(found), self._role_name, to_text(file_path)))
+                        raise self._FAIL(f"Failed loading '{found!r}' for role ({self._role_name}) "
+                                         f"as it is not inside the expected role path: {file_path!r}")
 
                     new_data = self._loader.load_from_file(found, trusted_as_template=True)
                     if new_data:
@@ -444,7 +452,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
             elif main is not None:
                 # this won't trigger with default only when <subdir>_from is specified
-                raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
+                raise self._FAIL(f"Could not find specified file in role: {subdir}/{main}")
+        elif main is not None:
+            # this won't trigger with default only when <subdir>_from is specified
+            raise self._FAIL(f"Could not find specified file in role, its '{subdir}/' is not usable.")
 
         return data
 

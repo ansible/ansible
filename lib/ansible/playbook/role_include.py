@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import ansible.constants as C
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
@@ -39,7 +39,7 @@ class IncludeRole(TaskInclude):
 
     BASE = frozenset(('name', 'role'))  # directly assigned
     FROM_ARGS = frozenset(('tasks_from', 'vars_from', 'defaults_from', 'handlers_from'))  # used to populate from dict in role
-    OTHER_ARGS = frozenset(('apply', 'public', 'allow_duplicates', 'rolespec_validate'))  # assigned to matching property
+    OTHER_ARGS = frozenset(('apply', 'public', 'allow_duplicates', 'rolespec_validate', 'rescuable'))  # assigned to matching property
     VALID_ARGS = BASE | FROM_ARGS | OTHER_ARGS  # all valid args
 
     # =================================================================================
@@ -49,6 +49,7 @@ class IncludeRole(TaskInclude):
     # private as this is a 'module options' vs a task property
     allow_duplicates = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
     rolespec_validate = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
+    rescuable = NonInheritableFieldAttribute(isa='bool', default=True, private=True, always_post_validate=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -71,7 +72,13 @@ class IncludeRole(TaskInclude):
         else:
             myplay = play
 
-        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
+        try:
+            ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
+        except AnsibleError as e:
+            if not self.rescuable:
+                raise AnsibleParserError("Could not include role.") from e
+            raise
+
         ri.vars |= self.vars
 
         if variable_manager is not None:
@@ -82,8 +89,8 @@ class IncludeRole(TaskInclude):
         from_files = templar.template(self._from_files)
 
         # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files,
-                                from_include=True, validate=self.rolespec_validate, public=self.public, static=self.statically_loaded)
+        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files, from_include=True,
+                                validate=self.rolespec_validate, public=self.public, static=self.statically_loaded, rescuable=self.rescuable)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
         # add role to play
@@ -140,12 +147,16 @@ class IncludeRole(TaskInclude):
                 raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
             ir._from_files[from_key] = args_value
 
-        # apply is only valid for includes, not imports as they inherit directly
+        # apply and rescuable are only valid for includes, not imports as they inherit directly
         apply_attrs = ir.args.get('apply', {})
         if apply_attrs and ir.action not in C._ACTION_INCLUDE_ROLE:
             raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
         elif not isinstance(apply_attrs, dict):
             raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
+
+        resc_attr = ir.args.get('rescuable', None)
+        if resc_attr and ir.action not in C._ACTION_INCLUDE_ROLE:
+            raise AnsibleParserError(f'Invalid options for {ir.action}: rescuable', obj=data)
 
         # manual list as otherwise the options would set other task parameters we don't want.
         for option in my_arg_names.intersection(IncludeRole.OTHER_ARGS):

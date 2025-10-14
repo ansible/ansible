@@ -71,6 +71,12 @@ options:
     type: bool
     default: yes
     version_added: '2.11'
+  rescuable:
+    description:
+      - This toggle allows for errors from the include itself to either be a task failure, which is 'rescuable', or fatal syntax errors.
+    type: bool
+    default: yes
+    version_added: '2.21'
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
@@ -83,6 +89,8 @@ attributes:
     diff_mode:
         support: none
 notes:
+  - Beginning in ansible 2.21 we have normalized how error types from the include itself are emitted.
+    Using the O(rescuable) option, you can control if it is a task failure or a syntax error.
   - Handlers and are made available to the whole play.
   - After Ansible 2.4, you can use M(ansible.builtin.import_role) for B(static) behaviour and this action for B(dynamic) one.
 seealso:
