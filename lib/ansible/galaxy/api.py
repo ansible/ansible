@@ -367,7 +367,10 @@ class GalaxyAPI:
                         res = path_cache['results']
                     except KeyError:
                         raise AnsibleError(
-                            f"Invalid response from galaxy, missing expected results: {server_cache.get(cache_key)!r}"
+                            f"Missing expected 'results' in ansible-galaxy cache: {path_cache!r}. "
+                            "This may indicate cache corruption (for example, from concurrent ansible-galaxy runs) "
+                            "or a bug in how the cache was generated. "
+                            "Try running with --clear-response-cache or --no-cache to work around the issue."
                         )
 
                 return res
