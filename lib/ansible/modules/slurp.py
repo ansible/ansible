@@ -23,13 +23,13 @@ options:
     required: true
     aliases: [ path ]
   armor:
-    description: 
+    description:
      - To safely deliver the data requested, armor it by base64 encoding it.
      - This is mainly done to avoid issues with binary data or to preserve non UTF-8 encodings
        as the content will be converted to utf-8 due to the JSON transport used.
-  type: bool
-  default: true
-  version_added: '2.21'
+    type: bool
+    default: true
+    version_added: '2.21'
 extends_documentation_fragment:
     - action_common_attributes
 attributes:
@@ -122,7 +122,7 @@ def main():
             if armor:
                 encoding = 'base64'
                 data = base64.b64encode(source_fh.read())
-            else:  
+            else:
                 # not current file encoding, but will be once passed as JSON
                 encoding = 'utf-8'
                 data = source_fh.read()
