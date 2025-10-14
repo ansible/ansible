@@ -356,7 +356,7 @@ def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(
                 else:
                     interpreter_out = facts_from_task_vars[discovered_interpreter_config]
         else:
-            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
+            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto')
 
     elif interpreter_config in task_vars:
         # for non python we consult vars for a possible direct override
