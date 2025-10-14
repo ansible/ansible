@@ -1,4 +1,0 @@
----
-bugfixes:
-    - tqm - use display.error_as_warning instead of self.warning.
-    - tqm - use display.error_as_warning instead of display.warning_as_error.

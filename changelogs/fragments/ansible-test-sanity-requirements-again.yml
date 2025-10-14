@@ -1,6 +1,0 @@
-minor_changes:
-  - ansible-test - Update pinned sanity test requirements, including upgrading to pylint 4.0.0.
-  - ansible-test - Filter out pylint messages for invalid filenames and display a notice when doing so.
-  - ansible-test - Update astroid imports in custom pylint checkers.
-  - ansible-test - Default to Python 3.14 in the ``base`` and ``default`` test containers.
-  - ansible-test - Update pinned ``pip`` version to 25.2.

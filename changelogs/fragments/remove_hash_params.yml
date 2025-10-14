@@ -1,2 +1,0 @@
-deprecated_features:
-  - hash_params function in roles/__init__ is being deprecated as it is not in use.

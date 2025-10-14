@@ -1,2 +1,0 @@
-minor_changes:
-- DataLoader - Update ``DataLoader.get_basedir`` to be an abspath

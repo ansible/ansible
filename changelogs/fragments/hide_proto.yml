@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy no longer shows the internal protomatter collection when listing.

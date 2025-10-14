@@ -1,2 +1,0 @@
-removed_features:
-- ansible-galaxy - removed the v2 Galaxy server API. Galaxy servers hosting collections must support v3.

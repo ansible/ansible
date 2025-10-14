@@ -1,2 +1,0 @@
-bugfixes:
-  - fetch - also return ``file`` in the result when changed is ``True`` (https://github.com/ansible/ansible/pull/85729).

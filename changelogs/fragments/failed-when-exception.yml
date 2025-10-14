@@ -1,4 +1,0 @@
-bugfixes:
-  - failed_when - When using ``failed_when`` to suppress an error, the ``exception`` key in the result is renamed to ``failed_when_suppressed_exception``.
-    This prevents the error from being displayed by callbacks after being suppressed.
-    (https://github.com/ansible/ansible/issues/85505)

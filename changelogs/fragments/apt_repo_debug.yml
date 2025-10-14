@@ -1,3 +1,0 @@
----
-minor_changes:
-    - apt_repository - use correct debug method to print debug message.

@@ -1,3 +1,0 @@
----
-minor_changes:
-    - wrapt - bump version from 1.15.0 to 1.17.2 (https://github.com/ansible/ansible/issues/85407).
