@@ -30,7 +30,6 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     found_interpreters = [_FALLBACK_INTERPRETER]  # fallback value
     is_silent = discovery_mode.endswith('_silent')
 
-
     try:
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 
