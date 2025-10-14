@@ -4,6 +4,29 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-10-14
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Default to Python 3.14 in the ``base`` and ``default`` test containers.
+- ansible-test - Filter out pylint messages for invalid filenames and display a notice when doing so.
+- ansible-test - Update astroid imports in custom pylint checkers.
+- ansible-test - Update pinned ``pip`` version to 25.2.
+- ansible-test - Update pinned sanity test requirements, including upgrading to pylint 4.0.0.
+
+Bugfixes
+--------
+
+- SIGINT/SIGTERM Handling - Make SIGINT/SIGTERM handling more robust by splitting concerns between forks and the parent.
+
 v2.20.0b2
 =========
 
@@ -71,11 +94,12 @@ Minor Changes
 - ansible-test - Replace FreeBSD 14.2 with 14.3.
 - ansible-test - Replace RHEL 9.5 with 9.6.
 - ansible-test - Update Ubuntu containers.
+- ansible-test - Update base/default containers to include Python 3.14.0.
 - ansible-test - Update pinned sanity test requirements.
 - ansible-test - Update test containers.
 - ansible-test - Upgrade Alpine 3.21 to 3.22.
 - ansible-test - Upgrade Fedora 41 to Fedora 42.
-- ansible-test - Upgrade to ``coverage`` version 7.10.6 for Python 3.9 and later.
+- ansible-test - Upgrade to ``coverage`` version 7.10.7 for Python 3.9 and later.
 - ansible-test - Use OS packages to satisfy controller requirements on FreeBSD 13.5 during managed instance bootstrapping.
 - apt_repository - use correct debug method to print debug message.
 - blockinfile - add new module option ``encoding`` to support files in encodings other than UTF-8 (https://github.com/ansible/ansible/pull/85291).
