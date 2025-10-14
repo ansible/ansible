@@ -132,16 +132,23 @@ def crypt_gensalt(prefix: bytes, count: int, rbytes: bytes) -> bytes:
     if not HAS_CRYPT_GENSALT:
         raise NotImplementedError('crypt_gensalt not available (requires libxcrypt)')
 
+    ctypes.set_errno(0)
+
     if _use_crypt_gensalt_rn:
         output = ctypes.create_string_buffer(256)
         result = _crypt_gensalt_impl(prefix, count, rbytes, len(rbytes), output, len(output))
-        if result is None:
-            raise ValueError('crypt_gensalt failed: unable to generate salt')
-        result = output.value
+        if result is not None:
+            result = output.value
     else:
         result = _crypt_gensalt_impl(prefix, count, rbytes, len(rbytes))
-        if result is None:
-            raise ValueError('crypt_gensalt failed: unable to generate salt')
+
+    errno = ctypes.get_errno()
+    if errno:
+        error_msg = os.strerror(errno)
+        raise OSError(errno, f'crypt_gensalt failed: {error_msg}')
+
+    if result is None:
+        raise ValueError('crypt_gensalt failed: unable to generate salt')
 
     if result in _FAILURE_TOKENS:
         raise ValueError('crypt_gensalt failed: invalid prefix or unsupported algorithm')
