@@ -47,13 +47,25 @@ def parse_args() -> Args:
     return Args(**kwargs)
 
 
-def run(*args: str | pathlib.Path) -> None:
+def run(
+    *args: str | pathlib.Path,
+    dry_run: bool = False,
+) -> None:
+    """
+    Log and run given command.
+
+    The command is not actually executed if ``dry_run`` is truthy.
+    """
     cmd = [str(arg) for arg in args]
-    print(f'==> {shlex.join(cmd)}', flush=True)
-    subprocess.run(cmd, check=True)
+
+    dry_prefix = '[would run] ' if dry_run else ''
+    print(f'==> {dry_prefix}{shlex.join(cmd)}', flush=True)
+
+    if not dry_run:
+        subprocess.run(cmd, check=True)
 
 
-def install_codecov(dest: pathlib.Path) -> pathlib.Path:
+def install_codecov(dest: pathlib.Path, dry_run: bool = False) -> pathlib.Path:
     """Populate a transitively pinned venv with ``codecov-cli``."""
     requirement_file = DEPS_DIR / 'codecov.in'
     constraint_file = requirement_file.with_suffix('.txt')
@@ -72,6 +84,7 @@ def install_codecov(dest: pathlib.Path) -> pathlib.Path:
         f'--constraint={constraint_file!s}',
         f'--requirement={requirement_file!s}',
         '--disable-pip-version-check',
+        dry_run=dry_run,
     )
 
     return codecov_bin
@@ -131,10 +144,7 @@ def report_upload_completion(
         'send-notifications',
     ]
 
-    if dry_run:
-        cmd.append('--dry-run')
-
-    run(*cmd)
+    run(*cmd, dry_run=dry_run)
 
 
 def main() -> None:
@@ -147,7 +157,10 @@ def main() -> None:
         # * https://docs.codecov.com/docs/notifications#preventing-notifications-until-youre-ready-to-send-notifications
         config_file.write_text('codecov:\n  notify:\n    manual_trigger: true')
 
-        codecov_bin = install_codecov(pathlib.Path(tmpdir))
+        codecov_bin = install_codecov(
+            pathlib.Path(tmpdir),
+            dry_run=args.dry_run,
+        )
         files = process_files(args.path)
         upload_files(codecov_bin, config_file, files, args.dry_run)
         # Ref: https://docs.codecov.com/docs/cli-options#send-notifications
