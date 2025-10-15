@@ -27,6 +27,7 @@ options:
      - To safely deliver the data requested, armor it by base64 encoding it.
      - This is mainly done to avoid issues with binary data or to preserve non-UTF-8 encodings,
         as the content will be converted to UTF-8 due to the JSON transport used.
+     - For windows support, check the ansible.windows collection.
     type: bool
     default: true
     version_added: '2.21'
