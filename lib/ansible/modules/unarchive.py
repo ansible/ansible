@@ -1176,10 +1176,7 @@ def main():
         for filename in handler.files_created_by_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
-            try:
-                res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
-            except OSError as ex:
-                module.fail_json("Unexpected error when accessing exploded file.", exception=ex, **res_args)
+            res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
