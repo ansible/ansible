@@ -29,15 +29,17 @@
   vars:
     pid: '{{ auto.stdout|regex_findall("ssh-agent\[(\d+)\]")|first }}'
 
-- command: ssh-agent -D -s -a '{{ output_dir }}/agent.sock'
-  async: 30
-  poll: 0
+- shell: ssh-agent -D -s -a '{{ output_dir }}/agent.sock' &
+  register: ssh_agent_result
 
-- command: ansible-playbook -i {{ ansible_inventory_sources|first|quote }} -vvv {{ role_path }}/auto.yml
-  environment:
-    ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
-    ANSIBLE_SSH_AGENT: '{{ output_dir }}/agent.sock'
-  register: existing
+- block:
+  - command: ansible-playbook -i {{ ansible_inventory_sources|first|quote }} -vvv {{ role_path }}/auto.yml
+    environment:
+      ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
+      ANSIBLE_SSH_AGENT: '{{ output_dir }}/agent.sock'
+    register: existing
+  always:
+    - command: "kill {{ ssh_agent_result.stdout | regex_search('Agent pid ([0-9]+)', '\\1') | first }}"
 
 - assert:
     that:
