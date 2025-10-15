@@ -89,7 +89,8 @@ content:
     type: str
     sample: "MjE3OQo="
 encoding:
-    description: Type of encoding used for file
+    description: Current encoding of the file content, it can be C(base64)
+                 or C(UTF-8) depending on the value of the O(armor) option.
     returned: success
     type: str
     sample: "base64"
