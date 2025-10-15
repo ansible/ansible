@@ -161,7 +161,6 @@ from ansible.module_utils.common.parameters import (
 from ansible.module_utils.errors import AnsibleFallbackNotFound, AnsibleValidationErrorMultiple, UnsupportedError
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
-    safe_eval,
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
@@ -1243,10 +1242,6 @@ class AnsibleModule(object):
                 # use defaults if not already set
                 if not hasattr(self, PASS_VARS[k][0]):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
-
-    def safe_eval(self, value, locals=None, include_exceptions=False):
-        # deprecated: description='no longer used in the codebase' core_version='2.21'
-        return safe_eval(value, locals, include_exceptions)
 
     def _load_params(self):
         """ read the input and set the params attribute.

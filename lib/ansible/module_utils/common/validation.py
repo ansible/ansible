@@ -35,38 +35,6 @@ def count_terms(terms, parameters):
     return len(set(terms).intersection(parameters))
 
 
-def safe_eval(value, locals=None, include_exceptions=False):
-    deprecate(
-        "The safe_eval function should not be used.",
-        version="2.21",
-    )
-    # do not allow method calls to modules
-    if not isinstance(value, str):
-        # already templated to a datavaluestructure, perhaps?
-        if include_exceptions:
-            return (value, None)
-        return value
-    if re.search(r'\w\.\w+\(', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    # do not allow imports
-    if re.search(r'import \w+', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    try:
-        result = literal_eval(value)
-        if include_exceptions:
-            return (result, None)
-        else:
-            return result
-    except Exception as e:
-        if include_exceptions:
-            return (value, e)
-        return value
-
-
 def check_mutually_exclusive(terms, parameters, options_context=None):
     """Check mutually exclusive terms against argument parameters
 
