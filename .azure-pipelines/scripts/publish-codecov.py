@@ -118,16 +118,40 @@ def upload_files(codecov_bin: pathlib.Path, config_file: pathlib.Path, files: t.
         run(*cmd)
 
 
+def report_upload_completion(
+    codecov_bin: pathlib.Path,
+    config_file: pathlib.Path,
+    dry_run: bool = False,
+) -> None:
+    """Notify Codecov backend that all reports we wanted are in."""
+    cmd = [
+        codecov_bin,
+        '--disable-telem',
+        f'--codecov-yml-path={config_file}',
+        'send-notifications',
+    ]
+
+    if dry_run:
+        cmd.append('--dry-run')
+
+    run(*cmd)
+
+
 def main() -> None:
     args = parse_args()
 
     with tempfile.TemporaryDirectory(prefix='codecov-') as tmpdir:
         config_file = pathlib.Path(tmpdir) / 'config.yml'
-        config_file.write_text('')
+        # Refs:
+        # * https://docs.codecov.com/docs/codecovyml-reference#codecovnotifymanual_trigger
+        # * https://docs.codecov.com/docs/notifications#preventing-notifications-until-youre-ready-to-send-notifications
+        config_file.write_text('codecov:\n  notify:\n    manual_trigger: true')
 
         codecov_bin = install_codecov(pathlib.Path(tmpdir))
         files = process_files(args.path)
         upload_files(codecov_bin, config_file, files, args.dry_run)
+        # Ref: https://docs.codecov.com/docs/cli-options#send-notifications
+        report_upload_completion(codecov_bin, config_file, args.dry_run)
 
 
 if __name__ == '__main__':
