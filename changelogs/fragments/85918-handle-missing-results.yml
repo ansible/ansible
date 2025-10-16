@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - galaxy - accessing cached responses without a ``results`` key raised a KeyError.
+    The fix adds a defensive check and raises a descriptive AnsibleError instead.
+    (https://github.com/ansible/ansible/issues/85918)
