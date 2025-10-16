@@ -175,7 +175,7 @@ When assisting with PR reviews, verify:
 
 - Changelog fragment exists in `changelogs/fragments/`
 - Appropriate tests are included and cover the changed code
-  - Unit tests should be functional rather than tightly coupled to mocking
+  - Unit tests should be pytest style, and functional rather than tightly coupled to mocking
   - Integration tests required for almost all plugin changes (tests the public API)
   - Tests should exercise the actual changed code, not just add random coverage
 

@@ -38,7 +38,7 @@ The command follows these numbered steps from CLAUDE.md:
    - Verify changelog fragment exists in `changelogs/fragments/`
    - Verify changelog uses correct section (check `changelogs/config.yaml`)
    - Verify tests exist and specifically cover the changed code paths
-   - Unit tests should be functional rather than tightly coupled to mocking
+   - Unit tests should be pytest style, and functional rather than tightly coupled to mocking
    - Integration tests required for almost all plugin changes
 5. **Checkout PR branch**: `gh pr checkout <number>` to examine code holistically
 6. **Review existing feedback**: `gh pr view <number> --comments` for all comments and previous reviews
