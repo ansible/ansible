@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import pathlib
 import sys
 
@@ -17,7 +18,14 @@ def load_params() -> tuple[bytes, str]:
     profile: str = parsed_args.profile
 
     if args:
-        if (args_path := pathlib.Path(args)).is_file():
+        args_path = pathlib.Path(args)
+        try:
+            is_file = args_path.is_file()
+        except OSError as e:
+            if e.errno != errno.ENAMETOOLONG:
+                raise
+            is_file = False
+        if is_file:
             buffer = args_path.read_bytes()
         else:
             buffer = args.encode(errors='surrogateescape')
