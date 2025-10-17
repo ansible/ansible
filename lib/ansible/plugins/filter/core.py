@@ -82,11 +82,18 @@ def to_json(a, profile: str | None = None, vault_to_text: t.Any = ..., preproces
     return json.dumps(a, cls=cls, **kwargs)
 
 
-def to_nice_json(a, indent=4, sort_keys=True, **kwargs):
-    """Make verbose, human-readable JSON."""
-    # TODO separators can be potentially exposed to the user as well
-    kwargs.pop('separators', None)
-    return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), **kwargs)
+def to_nice_json(a, indent=4, sort_keys=True, separators=None, **kwargs):
+    """Make verbose, human-readable JSON.
+    Args:
+        a: The object to serialize
+        indent: Number of spaces for indentation (default: 4)
+        sort_keys: Whether to sort dictionary keys (default: True)
+        separators: Tuple of (item_separator, key_separator) strings (default: (',', ': '))
+        **kwargs: Additional arguments passed to the JSON encoder
+    """
+    if separators is None:
+        separators = (',', ': ')
+    return to_json(a, indent=indent, sort_keys=sort_keys, separators=separators, **kwargs)
 
 
 # CAUTION: Do not put non-string values here since they can have unwanted logical equality, such as 1.0 (equal to 1 and True) or 0.0 (equal to 0 and False).
