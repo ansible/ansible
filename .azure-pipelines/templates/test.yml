@@ -12,34 +12,45 @@ jobs:
     - job: test_${{ replace(replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_'), '@', '_') }}
       displayName: ${{ job.name }}
       container: $[ variables.defaultContainer ]
+      timeoutInMinutes: 90  # 85 + 5
       workspace:
         clean: all
       steps:
         - checkout: self
           fetchDepth: $(fetchDepth)
           path: $(checkoutPath)
+          timeoutInMinutes: 1
         - bash: .azure-pipelines/scripts/run-tests.sh "$(entryPoint)" "${{ job.test }}" "$(coverageBranches)"
           displayName: Run Tests
+          timeoutInMinutes: 65  # 60 + 5
         - bash: .azure-pipelines/scripts/process-results.sh
           condition: succeededOrFailed()
           displayName: Process Results
+          timeoutInMinutes: 1
         - bash: .azure-pipelines/scripts/aggregate-coverage.sh "$(Agent.TempDirectory)"
           condition: eq(variables.haveCoverageData, 'true')
           displayName: Aggregate Coverage Data
+          # integration: < 4m
+          # units: < 14m 30s
+          # sanity: < 15s
+          timeoutInMinutes: 15
         - task: PublishTestResults@2
           condition: eq(variables.haveTestResults, 'true')
           inputs:
             testResultsFiles: "$(outputPath)/junit/*.xml"
           displayName: Publish Test Results
+          timeoutInMinutes: 1
         - task: PublishPipelineArtifact@1
           condition: eq(variables.haveBotResults, 'true')
           displayName: Publish Bot Results
           inputs:
             targetPath: "$(outputPath)/bot/"
             artifactName: "Bot $(System.JobAttempt) $(System.StageDisplayName) $(System.JobDisplayName)"
+          timeoutInMinutes: 1
         - task: PublishPipelineArtifact@1
           condition: eq(variables.haveCoverageData, 'true')
           displayName: Publish Coverage Data
           inputs:
             targetPath: "$(Agent.TempDirectory)/coverage/"
             artifactName: "Coverage $(System.JobAttempt) $(System.StageDisplayName) $(System.JobDisplayName)"
+          timeoutInMinutes: 1

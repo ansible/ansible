@@ -7,23 +7,29 @@ jobs:
   - job: Coverage
     displayName: Code Coverage
     container: $[ variables.defaultContainer ]
+    timeoutInMinutes: 13  # 8 + 5
     workspace:
       clean: all
     steps:
       - checkout: self
         fetchDepth: $(fetchDepth)
         path: $(checkoutPath)
+        timeoutInMinutes: 1
       - task: DownloadPipelineArtifact@2
         displayName: Download Coverage Data
         inputs:
           path: coverage/
           patterns: "Coverage */*=coverage.combined"
+        timeoutInMinutes: 2
       - bash: .azure-pipelines/scripts/combine-coverage.py coverage/
         displayName: Combine Coverage Data
+        timeoutInMinutes: 1
       - bash: .azure-pipelines/scripts/report-coverage.sh
         displayName: Generate Coverage Report
         condition: gt(variables.coverageFileCount, 0)
+        timeoutInMinutes: 3
       - bash: .azure-pipelines/scripts/publish-codecov.py "$(outputPath)"
         displayName: Publish to codecov.io
         condition: gt(variables.coverageFileCount, 0)
         continueOnError: true
+        timeoutInMinutes: 1
