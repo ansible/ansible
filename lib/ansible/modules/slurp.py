@@ -22,6 +22,15 @@ options:
     type: path
     required: true
     aliases: [ path ]
+  armor:
+    description:
+     - To safely deliver the data requested, armor it by base64 encoding it.
+     - This is mainly done to avoid issues with binary data or to preserve non-UTF-8 encodings,
+        as the content will be converted to UTF-8 due to the JSON transport used.
+     - For windows support, check the ansible.windows collection.
+    type: bool
+    default: true
+    version_added: '2.21'
 extends_documentation_fragment:
     - action_common_attributes
 attributes:
@@ -51,6 +60,16 @@ EXAMPLES = r"""
   ansible.builtin.debug:
     msg: "{{ mounts['content'] | b64decode }}"
 
+- name: Find out what the remote machine's mounts are, no armor
+  ansible.builtin.slurp:
+    src: /proc/mounts
+    armor: false
+  register: mounts
+
+- name: Print returned information
+  ansible.builtin.debug:
+    msg: "{{ mounts['content'] }}"
+
 # From the commandline, find the pid of the remote machine's sshd
 # $ ansible host -m ansible.builtin.slurp -a 'src=/var/run/sshd.pid'
 # host | SUCCESS => {
@@ -70,7 +89,8 @@ content:
     type: str
     sample: "MjE3OQo="
 encoding:
-    description: Type of encoding used for file
+    description: Current encoding of the file content, it can be C(base64)
+                 or C(UTF-8) depending on the value of the O(armor) option.
     returned: success
     type: str
     sample: "base64"
@@ -91,14 +111,22 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             src=dict(type='path', required=True, aliases=['path']),
+            armor=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
     source = module.params['src']
+    armor = module.params['armor']
 
     try:
         with open(source, 'rb') as source_fh:
-            data = base64.b64encode(source_fh.read())
+            if armor:
+                encoding = 'base64'
+                data = base64.b64encode(source_fh.read())
+            else:
+                # not current file encoding, but will be once passed as JSON
+                encoding = 'utf-8'
+                data = source_fh.read()
     except OSError as ex:
         if ex.errno == errno.ENOENT:
             msg = f"File not found: {source}"
@@ -111,7 +139,7 @@ def main():
 
         module.fail_json(msg, exception=ex)
 
-    module.exit_json(content=data, source=source, encoding='base64')
+    module.exit_json(content=data, source=source, encoding=encoding)
 
 
 if __name__ == '__main__':
