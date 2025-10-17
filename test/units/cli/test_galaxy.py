@@ -918,10 +918,21 @@ def test_collection_install_in_collection_dir(collection_install, monkeypatch):
     assert mock_install.call_args[0][6] is False  # force_deps
 
 
-def test_collection_install_with_url(monkeypatch, collection_install):
+def test_collection_install_with_url(
+    monkeypatch: pytest.MonkeyPatch,
+    collection_install: tuple[MagicMock, MagicMock, str]
+) -> None:
     mock_install, dummy, output_dir = collection_install
 
-    mock_open = MagicMock(return_value=BytesIO())
+    class MockHTTPResponse:
+        def __init__(self) -> None:
+            self._stream = BytesIO()
+            self.length = 'UNKNOWN'
+
+        def read(self, size: int = -1) -> bytes:
+            return self._stream.read(size)
+
+    mock_open = MagicMock(return_value=MockHTTPResponse())
     monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
 
     mock_metadata = MagicMock(return_value={'namespace': 'foo', 'name': 'bar', 'version': 'v1.0.0'})
