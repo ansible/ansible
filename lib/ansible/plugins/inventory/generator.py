@@ -33,7 +33,7 @@ DOCUMENTATION = """
           - A dictionary of layers, with the key being the layer name, used as a variable name in the C(host)
             C(name) and C(parents) keys. Each layer value is a list of possible values for that layer.
       use_extra_vars:
-        version_added: '2.20'
+        version_added: '2.21'
         description:
           - Merge extra vars into the available variables for composition (highest precedence).
         type: bool
