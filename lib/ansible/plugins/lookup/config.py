@@ -114,7 +114,7 @@ class LookupModule(LookupBase):
             # plugin creates settings on load, we ensure that happens here
             if pname:
                 # this is cached so not too expensive
-                loader = getattr(plugin_loader, '%s_loader' % ptype)
+                loader = getattr(plugin_loader, f'{ptype}_loader')
                 p = loader.get(pname, class_only=True)
                 if p is None:
                     raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
