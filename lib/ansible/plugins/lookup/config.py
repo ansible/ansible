@@ -115,10 +115,7 @@ class LookupModule(LookupBase):
             if pname:
                 # this is cached so not too expensive
                 loader = getattr(plugin_loader, '%s_loader' % ptype)
-                try:
-                    p = loader.get(pname, class_only=True)
-                except Exception as e:
-                    print(e)
+                p = loader.get(pname, class_only=True)
                 if p is None:
                     raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
             try:
