@@ -4,6 +4,20 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.0rc2
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-10-20
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Bugfixes
+--------
+
+- psrp - ReadTimeout exceptions now mark host as unreachable instead of fatal (https://github.com/ansible/ansible/issues/85966)
+
 v2.20.0rc1
 ==========
 
@@ -41,11 +55,6 @@ Minor Changes
 
 - DataLoader - Update ``DataLoader.get_basedir`` to be an abspath
 - known_hosts - return rc and stderr when ssh-keygen command fails for further debugging (https://github.com/ansible/ansible/issues/85850).
-
-Deprecated Features
--------------------
-
-- Deprecate the ``ansible.module_utils.six`` module. Use the Python standard library equivalent instead.
 
 Removed Features (previously deprecated)
 ----------------------------------------
