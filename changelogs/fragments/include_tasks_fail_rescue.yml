@@ -1,0 +1,5 @@
+minor_changes:
+  - include_role has new option `rescuable` to allow it to toggle between task failure and syntax errors.
+bugfixes:
+  - include_role would emit a syntax error on X_from options errors, but a task failure when missing a role to make it consistent now it also emits a task failure on missing tasks_from, which makes it subject to error handling in the play.
+  - include_role, would ignore missing X_from files if the subdir (tasks/vars/handlers/defaults) did not exist, now it is a proper error.

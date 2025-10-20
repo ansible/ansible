@@ -1,0 +1,37 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: test missing role rescue
+      vars:
+        rescue_1: false
+      block:
+        - name: Include a role that doesn't exist
+          include_role:
+            name: missing_role
+            rescuable: '{{ rescueme | default(omit) }}'
+
+      rescue:
+        - set_fact: 
+              rescue_1: true
+      always:
+        - assert:
+            that:
+              - rescue_1 == rescueme|default(True)
+
+    - name: Test _from rescue
+      vars:
+        rescue_2: false
+      block:
+        - name: Include a task file that doesn't exist, but role exists
+          include_role:
+            name: include_roles
+            tasks_from: missing_task_list
+            rescuable: '{{ rescueme | default(omit) }}'
+
+      rescue:
+        - set_fact: 
+              rescue_2: true
+      always:
+        - assert:
+            that:
+              - rescue_2 == rescueme|default(True)
