@@ -292,9 +292,6 @@ releases:
         than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909,
         https://github.com/ansible/ansible/pull/85361).
       - fetch - also return ``file`` in the result when changed is ``True`` (https://github.com/ansible/ansible/pull/85729).
-      deprecated_features:
-      - Deprecate the ``ansible.module_utils.six`` module. Use the Python standard
-        library equivalent instead.
       minor_changes:
       - DataLoader - Update ``DataLoader.get_basedir`` to be an abspath
       - known_hosts - return rc and stderr when ssh-keygen command fails for further
@@ -312,7 +309,6 @@ releases:
     - 85361-collection-name-from-path-none.yml
     - 85475-fix-flush_handlers-play-tags.yml
     - data-loader-basedir-abspath.yml
-    - deprecate-six.yml
     - drop-resolvelib-lt-0_8_0.yml
     - fix-fetch-return-file.yml
     - import_tasks-fixes.yml
@@ -343,3 +339,18 @@ releases:
     - ansible-test-sanity-requirements-again.yml
     - fix-signal-propagation.yml
     release_date: '2025-10-14'
+  2.20.0rc2:
+    changes:
+      bugfixes:
+      - psrp - ReadTimeout exceptions now mark host as unreachable instead of fatal
+        (https://github.com/ansible/ansible/issues/85966)
+      release_summary: '| Release Date: 2025-10-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.0rc2_summary.yaml
+    - 85966-psrp-readtimeout.yml
+    release_date: '2025-10-20'
