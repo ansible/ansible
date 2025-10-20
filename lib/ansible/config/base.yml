@@ -2233,6 +2233,8 @@ _Z_TEST_ENTRY:
         why: for testing
         version: '3.30'
         alternatives: nothing
+  vars:
+    - name: _z_test_entry
 _Z_TEST_ENTRY_2:
   version_added: '2.18'
   name: testentry

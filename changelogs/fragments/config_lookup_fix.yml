@@ -1,0 +1,2 @@
+bugfixes:
+ - config lookup now properly factors in variables and show_origin when checking entries from the global configuration.
