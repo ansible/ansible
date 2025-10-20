@@ -1,0 +1,5 @@
+bugfixes:
+  - >-
+    Windows - ignore temporary file cleanup warning when using AnsibleModule to
+    compile C# utils. This should reduce the number of warnings that can safely
+    be ignored when running PowerShell modules - https://github.com/ansible/ansible/issues/85976

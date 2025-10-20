@@ -278,10 +278,16 @@ Function Add-CSharpType {
         if ($PSCmdlet.ParameterSetName -eq "Module") {
             $temp_path = $AnsibleModule.Tmpdir
             $include_debug = $AnsibleModule.Verbosity -ge 3
+
+            # AnsibleModule will handle the cleanup after module execution
+            # which should be enough time for AVs or other processes to release
+            # any locks on the temp files.
+            $tmpdir_clean_is_error = $false
         }
         else {
             $temp_path = [System.IO.Path]::GetTempPath()
             $include_debug = $IncludeDebugInfo.IsPresent
+            $tmpdir_clean_is_error = $true
         }
         $temp_path = Join-Path -Path $temp_path -ChildPath ([Guid]::NewGuid().Guid)
 
@@ -388,17 +394,13 @@ Function Add-CSharpType {
             }
             finally {
                 # Try to delete the temp path, if this fails and we are running
-                # with a module object write a warning instead of failing.
+                # with a module object, ignore and let it cleanup later.
                 try {
                     [System.IO.Directory]::Delete($temp_path, $true)
                 }
                 catch {
-                    $msg = "Failed to cleanup temporary directory '$temp_path' used for compiling C# code."
-                    if ($AnsibleModule) {
-                        $AnsibleModule.Warn("$msg Files may still be present after the task is complete. Error: $_")
-                    }
-                    else {
-                        throw "$msg Error: $_"
+                    if ($tmpdir_clean_is_error) {
+                        throw "Failed to cleanup temporary directory '$temp_path' used for compiling C# code. Error: $_"
                     }
                 }
             }
