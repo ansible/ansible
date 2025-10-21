@@ -1977,7 +1977,7 @@ class AnsibleModule(object):
                 try:
                     args = shlex.split(to_text(args, errors='surrogateescape'))
                 except ValueError as e:
-                    self.fail_json(msg=f"Invalid command syntax in run_command", exception=e)
+                    self.fail_json(msg="Invalid command syntax in run_command", exception=e)
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
