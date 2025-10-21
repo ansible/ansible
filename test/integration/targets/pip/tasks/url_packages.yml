@@ -47,25 +47,50 @@
       - git add .
       - git -c user.name="Ansible Test" -c user.email="ansible@ansible.ansible" commit -m "First commit"
 
-- name: Setup venv
+- name: Setup venvs
   block:
-    - name: Set venv path
+    - name: Set venv paths
       set_fact:
-        venv_path: "{{ remote_tmp_dir }}/testvenv"
+        modern_pip_venv_path: "{{ remote_tmp_dir }}/modernvenv"
+        outdated_pip_venv_path: "{{ remote_tmp_dir }}/outdatedvenv"
 
-    - name: Ensure fresh venv
+    - name: Ensure fresh venvs
       file:
-        path: "{{ venv_path }}"
+        path: "{{ item }}"
         state: absent
+      loop:
+        - "{{ modern_pip_venv_path }}"
+        - "{{ outdated_pip_venv_path }}"
 
-    - name: Create fresh venv with no packages
+    - name: Create fresh venvs with no packages
       pip:
         name: []
-        virtualenv: "{{ venv_path }}"
+        virtualenv: "{{ item }}"
+      loop:
+        - "{{ modern_pip_venv_path }}"
+        - "{{ outdated_pip_venv_path }}"
 
-    - name: Get the pip version from the venv
-      command: "{{ venv_path }}/bin/python -c 'import pip; print(pip.__version__)'"
-      register: pip_version
+    - name: Get the pip version from the modern venv
+      command: >-
+        {{ modern_pip_venv_path }}/bin/python -Ic
+        'import importlib.metadata as meta; print(meta.version("pip"))'
+      register: modern_pip_version
+
+    - name: Get the pip version from the outdated venv
+      command: >-
+        {{ outdated_pip_venv_path }}/bin/python -Ic
+        'import importlib.metadata as meta; print(meta.version("pip"))'
+      register: outdated_pip_version
+
+    - name: Upgrade modern pip if necessary
+      when: modern_pip_version.stdout is version("24.1", "<")
+      command: >-
+        {{ modern_pip_venv_path }}/bin/pip install --upgrade pip
+
+    - name: Downgrade outdated pip if necessary
+      when: outdated_pip_version.stdout is version("24.1", ">=")
+      command: >-
+        {{ outdated_pip_venv_path }}/bin/pip install pip==24.0
 
 # Test for correct handling of vcs packages in pip versions >= 24.1
 # Despite dry-run being added in 22.2, it fails in several cases until
@@ -73,13 +98,8 @@
 - name: Check vcs package installation and checking functionality
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
-  when: pip_version.stdout is version("24.1", ">=")
+    venv_path: "{{ modern_pip_venv_path }}"
   block:
-  - name: Ensure fresh venv
-    file:
-      path: "{{ venv_path }}"
-      state: absent
-
   - name: Check installation of packages via git
     pip:
       name: "git+file://{{ repo_path }}/.git"
@@ -160,9 +180,9 @@
 - name: Check for failure in handling vcs packages with outdated pip
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
-  when: pip_version.stdout is version("24.1", "<")
+    venv_path: "{{ outdated_pip_venv_path }}"
   block:
-    - name: Install file-path package to fresh venv
+    - name: Install file-path package to fresh outdated venv
       pip:
         name: "{{ repo_path }}"
         virtualenv: "{{ venv_path }}"
