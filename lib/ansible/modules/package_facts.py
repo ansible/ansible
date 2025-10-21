@@ -278,11 +278,11 @@ class RPM(RespawningLibMgr):
         return self._lib.TransactionSet().dbMatch()
 
     def get_package_details(self, package):
-        return dict(name=package[self._lib.RPMTAG_NAME],
-                    version=package[self._lib.RPMTAG_VERSION],
-                    release=package[self._lib.RPMTAG_RELEASE],
-                    epoch=package[self._lib.RPMTAG_EPOCH],
-                    arch=package[self._lib.RPMTAG_ARCH],)
+        return dict(name=to_text(package[self._lib.RPMTAG_NAME]),
+                    version=to_text(package[self._lib.RPMTAG_VERSION]),
+                    release=to_text(package[self._lib.RPMTAG_RELEASE]),
+                    epoch=to_text(package[self._lib.RPMTAG_EPOCH]),
+                    arch=to_text(package[self._lib.RPMTAG_ARCH]),)
 
 
 class APT(RespawningLibMgr):
