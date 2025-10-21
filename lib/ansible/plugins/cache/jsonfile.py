@@ -38,15 +38,11 @@ DOCUMENTATION = """
           - key: fact_caching_timeout
             section: defaults
         type: integer
-        _version_invalidation:
-          description: Include Ansible core version in cache keys to avoid reuse of stale data across versions
-          ini:
-            - key: fact_caching_version_invalidation
-              section: defaults
-          env:
-            - name: ANSIBLE_CACHE_PLUGIN_VERSION_INVALIDATION
-          type: boolean
-          default: true
+
+    # Note: The behavior of including the Ansible core version in cache keys is
+    # controlled by the global config option `fact_caching_version_invalidation`.
+    # See the `defaults` section in the global configuration for enabling or
+    # disabling version-based cache key prefixing.
 """
 
 import json

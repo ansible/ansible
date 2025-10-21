@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import sys
 import importlib.util
-import os
 from pathlib import Path
 import json
 from types import ModuleType, SimpleNamespace
@@ -20,6 +19,7 @@ def load_cache_module_with_stubs(path: str):
 
     # Stub for ansible._internal._wrapt providing ObjectProxy
     wrapt_mod = ModuleType("ansible._internal._wrapt")
+    
     class _ObjectProxy:
         def __init__(self, wrapped):
             self.__wrapped__ = wrapped
@@ -29,12 +29,15 @@ def load_cache_module_with_stubs(path: str):
 
     # Stub for ansible._internal._json._profiles providing minimal _cache_persistence
     profiles_mod = ModuleType("ansible._internal._json._profiles")
+    
     class _Profile:
         schema_id = 1
 
+    
     class _Encoder(json.JSONEncoder):
         pass
 
+    
     class _Decoder(json.JSONDecoder):
         pass
 
@@ -45,6 +48,7 @@ def load_cache_module_with_stubs(path: str):
 
     # Stub ansible.utils.display to avoid importing platform-specific real display
     display_mod = ModuleType("ansible.utils.display")
+    
     class _StubDisplay:
         def __init__(self, *args, **kwargs):
             pass
