@@ -46,7 +46,7 @@ class TestDataLoader(unittest.TestCase):
 
     @patch('os.path.exists')
     def test__is_role(self, p_exists):
-        p_exists.side_effect = lambda p: p == b'test_path/tasks/main.yml'
+        p_exists.side_effect = lambda p: p == 'test_path/tasks/main.yml'
         self.assertTrue(self._loader._is_role('test_path/tasks'))
         self.assertTrue(self._loader._is_role('test_path/'))
 
@@ -222,9 +222,6 @@ class TestDataLoaderWithVault(unittest.TestCase):
         wrong_vault = [('default', TextVaultSecret('wrong_password'))]
         self._loader.set_vault_secrets(wrong_vault)
         self.assertRaises(AnsibleVaultError, self._loader.get_real_file, self.test_vault_data_path)
-
-    def test_get_real_file_not_a_path(self):
-        self.assertRaisesRegex(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
 
     def test_parse_from_vault_1_1_file(self):
         vaulted_data = """$ANSIBLE_VAULT;1.1;AES256

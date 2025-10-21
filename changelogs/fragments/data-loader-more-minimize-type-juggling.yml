@@ -1,0 +1,2 @@
+minor_changes:
+- DataLoader - Update ``DataLoader`` to deal exclusively in str
