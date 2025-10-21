@@ -236,7 +236,6 @@ test/integration/targets/ansible-test-sanity-pylint/deprecated_thing.py pylint:a
 lib/ansible/module_utils/basic.py pylint:ansible-deprecated-version  # TODO: 2.21
 lib/ansible/module_utils/basic.py pylint:ansible-deprecated-version-comment  # TODO: 2.21
 lib/ansible/module_utils/common/validation.py pylint:ansible-deprecated-version  # TODO: 2.21
-lib/ansible/module_utils/compat/datetime.py pylint:ansible-deprecated-version  # TODO: 2.21
 lib/ansible/module_utils/compat/paramiko.py pylint:ansible-deprecated-version  # TODO: 2.21
 lib/ansible/plugins/connection/paramiko_ssh.py pylint:ansible-deprecated-version  # TODO: 2.21
 lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version  # TODO: 2.21
