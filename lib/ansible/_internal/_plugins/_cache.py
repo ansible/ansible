@@ -8,6 +8,11 @@ import typing as t
 
 from .._wrapt import ObjectProxy
 from .._json._profiles import _cache_persistence
+from ansible import release as _release
+from ansible import constants as _constants
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class PluginInterposer(ObjectProxy):
@@ -17,7 +22,25 @@ class PluginInterposer(ObjectProxy):
     """The key used to store the serialized payload."""
 
     def get(self, key: str) -> dict[str, object]:
-        return self._decode(self.__wrapped__.get(self._get_key(key)))
+        value = self.__wrapped__.get(self._get_key(key))
+        if value is None:
+            # If there exists a wrapped key that restores to this key but does
+            # not start with the current prefix, it likely indicates a version
+            # mismatch. Log a verbose message to aid debugging.
+            try:
+                prefix = self._get_wrapped_key_prefix()
+                for wk in self.__wrapped__.keys():
+                    restored = self._restore_key(wk)
+                    if restored == key and not wk.startswith(prefix):
+                        display.vvv(f"Cache key '{key}' skipped due to Ansible version mismatch.")
+                        break
+            except Exception:
+                # Best-effort logging only; do not raise on errors
+                pass
+
+            return None
+
+        return self._decode(value)
 
     def set(self, key: str, value: dict[str, object]) -> None:
         self.__wrapped__.set(self._get_key(key), self._encode(value))
@@ -43,7 +66,27 @@ class PluginInterposer(ObjectProxy):
     @classmethod
     @functools.cache
     def _get_wrapped_key_prefix(cls) -> str:
-        return f's{_cache_persistence._Profile.schema_id}_'
+        # Base schema prefix (keeps existing behavior)
+        prefix = f's{_cache_persistence._Profile.schema_id}_'
+
+        # Optionally include Ansible core version as an additional prefix to
+        # invalidate caches automatically when core version changes. This is
+        # controlled by the `fact_caching_version_invalidation` config option
+        # (ini key: fact_caching_version_invalidation, env: ANSIBLE_CACHE_PLUGIN_VERSION_INVALIDATION).
+        try:
+            enabled = bool(_constants.config.get_config_value('fact_caching_version_invalidation'))
+        except Exception:
+            # If config subsystem isn't available for any reason, default to True
+            enabled = True
+
+        if enabled:
+            # Use release.__version__ for the current core version. Normalize to a safe string.
+            version = getattr(_release, '__version__', None) or ''
+            # Sanitize version by replacing whitespace or ':' to avoid interfering with key formats
+            version = str(version).replace(':', '_').replace(' ', '_')
+            return f'{version}:{prefix}'
+
+        return prefix
 
     @classmethod
     def _get_key(cls, key: str) -> str:

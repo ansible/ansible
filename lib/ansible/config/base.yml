@@ -275,6 +275,19 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+
+CACHE_PLUGIN_VERSION_INVALIDATION:
+  name: Fact Cache Plugin version invalidation
+  default: true
+  description: |
+    When enabled, the fact cache plugin will include the running Ansible core
+    version in cache keys. This prevents reuse of entries created by a different
+    Ansible core version which may have incompatible schema/data.
+  env: [{name: ANSIBLE_CACHE_PLUGIN_VERSION_INVALIDATION}]
+  ini:
+  - {key: fact_caching_version_invalidation, section: defaults}
+  type: boolean
+  version_added: '2.21'
 COLLECTIONS_SCAN_SYS_PATH:
   name: Scan PYTHONPATH for installed collections
   description: A boolean to enable or disable scanning the sys.path for installed collections.
