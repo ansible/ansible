@@ -33,6 +33,8 @@ import operator
 import sys
 import types
 
+# deprecated: description="Replace with ansible.module_utils.common.warnings.deprecate for 2.24" core_version="2.22"
+
 # The following makes it easier for us to script updates of the bundled code. It is not part of
 # upstream six
 _BUNDLED_METADATA = {"pypi_name": "six", "version": "1.17.0"}

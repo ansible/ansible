@@ -110,6 +110,10 @@ class AnsibleUnwantedChecker(BaseChecker):
                 'Iterator',
             )
         ),
+
+        'ansible.module_utils.six': UnwantedEntry(
+            'the Python standard library equivalent'
+        ),
     }
 
     unwanted_functions = {
@@ -133,14 +137,6 @@ class AnsibleUnwantedChecker(BaseChecker):
                                         ),
                                         modules_only=True),
     }
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        # ansible.module_utils.six is deprecated and collections can still use it until it is removed
-        if self.is_ansible_core:
-            self.unwanted_imports['ansible.module_utils.six'] = UnwantedEntry(
-                'the Python standard library equivalent'
-            )
 
     @functools.cached_property
     def is_ansible_core(self) -> bool:
