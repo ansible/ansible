@@ -141,4 +141,3 @@
       - bad_missing in lookup_config_13.msg
   vars:
     bad_missing: "Invalid value 'this should error' for config 'on_missing' for 'config' lookup plugin"
-
