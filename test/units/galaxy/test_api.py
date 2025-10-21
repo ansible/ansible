@@ -1265,3 +1265,37 @@ def test_clear_cache(cache_dir):
 def test_cache_id(url, expected):
     actual = galaxy_api.get_cache_id(url)
     assert actual == expected
+
+
+def test_cache_missing_results_raises_descriptive_error(mocker):
+    api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/")
+
+    mock_cache_entry = {
+        'expires': '2023-01-02T12:00:00Z',
+        'paginated': False
+    }
+
+    api._cache = {'galaxy.ansible.com': {'/api/v1/roles/': mock_cache_entry}}
+
+    mocker.patch('ansible.galaxy.api.urlparse')
+    mocker.patch('ansible.galaxy.api.parse_qs', return_value={})
+    mocker.patch('ansible.galaxy.api.get_cache_id',
+                 return_value='galaxy.ansible.com')
+
+    mock_datetime = mocker.patch('ansible.galaxy.api.datetime')
+
+    mock_comparison = mocker.Mock()
+    mock_comparison.__bool__ = mocker.Mock(return_value=True)
+
+    mock_now = mocker.Mock()
+    mock_expires = mocker.Mock()
+    mock_now.__lt__ = mocker.Mock(return_value=True)
+    mock_datetime.datetime.now.return_value = mock_now
+    mock_datetime.datetime.strptime.return_value = mock_expires
+
+    with pytest.raises(AnsibleError, match="Missing expected 'results' in ansible-galaxy cache"):
+        api._call_galaxy(
+            url='https://galaxy.ansible.com/api/v1/roles/',
+            cache=True,
+            cache_key='/api/v1/roles/'
+        )

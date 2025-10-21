@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - galaxy - previously, some corrupted cache files could cause Ansible Galaxy to fail
+    with a traceback. This has been corrected to display a clear error message explaining
+    how to resolve the problem. 
+    (https://github.com/ansible/ansible/issues/85918)
