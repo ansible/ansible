@@ -345,7 +345,7 @@ def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(
                                                        options=TemplateOptions(value_for_omit=C.config.get_config_default(interpreter_config_key)))
 
             # handle interpreter discovery if requested or empty interpreter was provided
-            if not interpreter_out or interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
+            if not interpreter_out or interpreter_out in ['auto', 'auto_silent']:
 
                 discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
                 facts_from_task_vars = task_vars.get('ansible_facts', {})
@@ -356,7 +356,7 @@ def _get_shebang(interpreter, task_vars, templar: _template.Templar, args=tuple(
                 else:
                     interpreter_out = facts_from_task_vars[discovered_interpreter_config]
         else:
-            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
+            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto')
 
     elif interpreter_config in task_vars:
         # for non python we consult vars for a possible direct override

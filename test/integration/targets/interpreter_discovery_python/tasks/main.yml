@@ -68,24 +68,6 @@
       - echoout_with_facts.ansible_facts is defined
       - echoout_with_facts.running_python_interpreter == normalized_discovered_interpreter
 
-- name: test that auto_legacy gives a deprecation warning
-  block:
-  - name: clear facts to force interpreter discovery to run
-    meta: clear_facts
-
-  - name: trigger discovery with auto_legacy
-    vars:
-      ansible_python_interpreter: auto_legacy
-      ansible_deprecation_warnings: true
-    ping:
-    register: legacy
-
-  - name: check for warning
-    assert:
-      that:
-      - legacy.deprecations | length == 1
-      - legacy.deprecations[0].msg is contains "The 'auto_legacy' option for 'INTERPRETER_PYTHON' now has the same effect as 'auto'."
-
 - name: test no interpreter found behavior
   block:
   - name: clear facts to force interpreter discovery to run
@@ -190,22 +172,6 @@
       that:
       - auto_silent_out.warnings is not defined
       - auto_silent_out.ansible_facts.discovered_interpreter_python == auto_out.ansible_facts.discovered_interpreter_python
-
-- name: test that auto_legacy_silent never warns and got the same answer as auto_legacy
-  block:
-  - name: clear facts to force interpreter discovery to run
-    meta: clear_facts
-
-  - name: trigger discovery with auto_legacy_silent
-    vars:
-      ansible_python_interpreter: auto_legacy_silent
-    ping:
-    register: legacy_silent
-
-  - assert:
-      that:
-        - legacy_silent.warnings is not defined
-        - legacy_silent.ansible_facts.discovered_interpreter_python == legacy.ansible_facts.discovered_interpreter_python
 
 - name: ensure modules can't set discovered_interpreter_X or ansible_X_interpreter
   block:
