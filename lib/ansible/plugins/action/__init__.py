@@ -20,7 +20,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ansible import constants as C
+from ansible import _internal
+from ansible._internal._datatag._tags import SourceWasEncrypted
 from ansible._internal._errors import _captured, _error_utils
+from ansible._internal._templating import _engine
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
@@ -35,8 +38,7 @@ from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
 from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
-from ansible import _internal
-from ansible._internal._templating import _engine
+
 
 from .. import _AnsiblePluginInfoMixin
 
@@ -100,6 +102,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
+
+        self.__internal_env = {}
 
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
@@ -320,7 +324,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
-                    module_env=self._task.module_environment,
                 )
                 break
             except InterpreterDiscoveryRequiredError as idre:
@@ -367,12 +370,19 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 temp_environment = self._templar.template(environment)
                 if not isinstance(temp_environment, dict):
                     raise AnsibleError("environment must be a dictionary, received %s (%s)" % (temp_environment, type(temp_environment)))
+
                 # very deliberately using update here instead of combine_vars, as
                 # these environment settings should not need to merge sub-dicts
-                final_environment.update(temp_environment)
+                if SourceWasEncrypted.is_tagged_on(environment):
+                    final_environment.update(temp_environment)
+                else:
+                    self.__internal_env.update(temp_environment)
 
         if len(final_environment) > 0:
             final_environment = self._templar.template(final_environment)
+
+        if len(self.__internal_env) > 0:
+            self.__internal_env = self._templar.template(self.__internal_env)
 
         if isinstance(raw_environment_out, dict):
             raw_environment_out.clear()
@@ -1006,7 +1016,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
         # pass through confidential environment variables
-        module_args['_ansible_module_env'] = getattr(self._task, 'module_environment', {})
+        module_args['_ansible_internal_env'] = self.__internal_env
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):
