@@ -240,5 +240,4 @@ lib/ansible/module_utils/compat/datetime.py pylint:ansible-deprecated-version  #
 lib/ansible/module_utils/compat/paramiko.py pylint:ansible-deprecated-version  # TODO: 2.21
 lib/ansible/plugins/connection/paramiko_ssh.py pylint:ansible-deprecated-version  # TODO: 2.21
 lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version  # TODO: 2.21
-lib/ansible/modules/git.py validate-modules:ansible-deprecated-version  # TODO: 2.21
 .github/RELEASE_NAMES.txt release-names  # TODO: 2.21

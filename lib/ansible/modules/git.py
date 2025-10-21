@@ -218,11 +218,9 @@ options:
            - Only used when O(verify_commit=yes).
            - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
            - Alias O(gpg_allowlist) is added in version 2.17.
-           - Alias O(gpg_whitelist) is deprecated and will be removed in version 2.21.
         type: list
         elements: str
         default: []
-        aliases: [ gpg_whitelist ]
         version_added: "2.9"
 
 requirements:
@@ -1185,14 +1183,7 @@ def main():
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
             gpg_allowlist=dict(
-                default=[], type='list', aliases=['gpg_whitelist'], elements='str',
-                deprecated_aliases=[
-                    dict(
-                        name='gpg_whitelist',
-                        version='2.21',
-                        collection_name='ansible.builtin',
-                    )
-                ],
+                default=[], type='list', elements='str',
             ),
             accept_hostkey=dict(default='no', type='bool'),
             accept_newhostkey=dict(default='no', type='bool'),
