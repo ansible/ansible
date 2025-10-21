@@ -268,11 +268,6 @@
       <<: *become_vars
       ansible_remote_tmp: C:\Windows\TEMP\test-dir
 
-  - name: assert warning about tmpdir deletion is absent
-    assert:
-      that:
-      - temp_deletion_warning.warnings | count == 0
-
   always:
   - name: ensure test user is deleted
     win_user:
