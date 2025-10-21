@@ -95,6 +95,14 @@
   vars:
     _z_test_entry: yolo
 
+
+- name: test bad on_missing
+  set_fact:
+    foobared: '{{lookup("config", "NOTTHERE", on_missing="this should error")}}'
+  ignore_errors: yes
+  register: lookup_config_13
+
+
 - name: Verify lookup_config
   assert:
     that:
@@ -129,3 +137,8 @@
       - config_origin1[1] == "default"
       - config_origin2[0] == 'yolo'
       - 'config_origin2[1] == "var: _z_test_entry"'
+      - lookup_config_13 is failed
+      - bad_missing in lookup_config_13.msg
+  vars:
+    bad_missing: "Invalid value 'this should error' for config 'on_missing' for 'config' lookup plugin"
+
