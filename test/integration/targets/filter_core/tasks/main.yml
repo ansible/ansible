@@ -546,12 +546,6 @@
   ignore_errors: yes
   register: password_hash_2
 
-- name: Verify password_hash throws on weird rounds
-  set_fact:
-    foo: '{{ "hey" | password_hash(rounds=1) }}'
-  ignore_errors: yes
-  register: password_hash_3
-
 - name: test using passlib with an unsupported hash type
   set_fact:
     foo: '{{"hey"|password_hash("msdcc")}}'
@@ -566,8 +560,6 @@
       - "'salt_size must be an integer' in password_hash_1.msg"
       - password_hash_2 is failed
       - "'is not in the list of supported passlib algorithms' in password_hash_2.msg"
-      - password_hash_3 is failed
-      - "'Could not hash the secret' in password_hash_3.msg"
       - "'msdcc is not in the list of supported passlib algorithms' in unsupported_hash_type.msg"
 
 - name: Verify to_uuid throws on weird namespace
@@ -845,6 +837,7 @@
       - "1,2,3"
       - "4,5,6"
 
+
 - name: test to_yaml and to_nice_yaml
   include_tasks: to_yaml.yml
 
@@ -867,3 +860,5 @@
     that:
       - '"/foo/bar" in commonpath_01.ansible_facts.msg'
       - "'|commonpath expects' in commonpath_02.msg"
+
+- include_tasks: password_hash.yml
