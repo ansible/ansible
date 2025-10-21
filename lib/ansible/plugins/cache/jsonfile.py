@@ -37,12 +37,7 @@ DOCUMENTATION = """
         ini:
           - key: fact_caching_timeout
             section: defaults
-        type: integer
-
-    # Note: The behavior of including the Ansible core version in cache keys is
-    # controlled by the global config option `fact_caching_version_invalidation`.
-    # See the `defaults` section in the global configuration for enabling or
-    # disabling version-based cache key prefixing.
+    type: integer
 """
 
 import json
