@@ -44,7 +44,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         self._play = play
         self._role = role
         self._parent = None
-        self._dep_chain = None
         self._use_handlers = use_handlers
         self._implicit = implicit
 
@@ -164,15 +163,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     _validate_rescue = _validate_always
 
-    def get_dep_chain(self):
-        if self._dep_chain is None:
-            if self._parent:
-                return self._parent.get_dep_chain()
-            else:
-                return None
-        else:
-            return self._dep_chain[:]
-
     def copy(self, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
@@ -199,9 +189,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         new_me._play = self._play
         new_me._use_handlers = self._use_handlers
 
-        if self._dep_chain is not None:
-            new_me._dep_chain = self._dep_chain[:]
-
         new_me._parent = None
         if self._parent and not exclude_parent:
             new_me._parent = self._parent.copy(exclude_tasks=True)
@@ -225,10 +212,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         elif self._role:
             self._role.set_loader(loader)
 
-        dep_chain = self.get_dep_chain()
-        if dep_chain:
-            for dep in dep_chain:
-                dep.set_loader(loader)
+        for dep in self.get_dep_chain():
+            dep.set_loader(loader)
 
     def _get_parent_attribute(self, attr, omit=False):
         """

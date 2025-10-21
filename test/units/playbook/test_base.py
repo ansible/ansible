@@ -47,8 +47,6 @@ class TestBase(unittest.TestCase):
         bsc = self.ClassUnderTest()
         parent = ExampleParentBaseSubClass()
         bsc._parent = parent
-        bsc._dep_chain = [parent]
-        parent._dep_chain = None
         bsc.load_data(ds)
         fake_loader = DictDataLoader({})
         templar = TemplateEngine(loader=fake_loader)
@@ -255,12 +253,7 @@ class ExampleParentBaseSubClass(base.Base):
     test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
 
     def __init__(self):
-
         super(ExampleParentBaseSubClass, self).__init__()
-        self._dep_chain = None
-
-    def get_dep_chain(self):
-        return self._dep_chain
 
 
 class ExampleSubClass(base.Base):

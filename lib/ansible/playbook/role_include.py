@@ -99,23 +99,19 @@ class IncludeRole(TaskInclude):
         # save this for later use
         self._role_path = actual_role._role_path
 
-        # compile role with parent roles as dependencies to ensure they inherit
-        # variables
-        dep_chain = actual_role.get_dep_chain()
-
         p_block = self.build_parent_block()
 
         # collections value is not inherited; override with the value we calculated during role setup
         p_block.collections = actual_role.collections
 
-        blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
+        blocks = actual_role.compile(play=myplay)
         for b in blocks:
             b._parent = p_block
             # HACK: parent inheritance doesn't seem to have a way to handle this intermediate override until squashed/finalized
             b.collections = actual_role.collections
 
         # updated available handlers in play
-        handlers = actual_role.get_handler_blocks(play=myplay, dep_chain=dep_chain)
+        handlers = actual_role.get_handler_blocks(play=myplay)
         for h in handlers:
             h._parent = p_block
         myplay.handlers = myplay.handlers + handlers

@@ -30,6 +30,9 @@ from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
 from ansible._internal._templating._engine import TemplateEngine
 
+if t.TYPE_CHECKING:
+    from ansible.playbook.role import Role
+
 display = Display()
 
 
@@ -130,10 +133,8 @@ class FieldAttributeBase:
         display.debug("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth + 2)
-            dep_chain = self._parent.get_dep_chain()
-            if dep_chain:
-                for dep in dep_chain:
-                    dep.dump_me(depth + 2)
+            for dep in self._parent.get_dep_chain():
+                dep.dump_me(depth + 2)
         if hasattr(self, '_play') and self._play:
             self._play.dump_me(depth + 2)
 
@@ -761,12 +762,11 @@ class Base(FieldAttributeBase):
 
         return path
 
-    def get_dep_chain(self):
-
-        if hasattr(self, '_parent') and self._parent:
-            return self._parent.get_dep_chain()
+    def get_dep_chain(self) -> list[Role]:
+        if role := getattr(self, '_role', None):
+            return role.get_dep_chain() + [role]
         else:
-            return None
+            return []
 
     def get_search_path(self):
         """
@@ -775,9 +775,8 @@ class Base(FieldAttributeBase):
         """
         path_stack = []
 
-        dep_chain = self.get_dep_chain()
         # inside role: add the dependency chain from current to dependent
-        if dep_chain:
+        if dep_chain := self.get_dep_chain():
             path_stack.extend(reversed([x._role_path for x in dep_chain if hasattr(x, '_role_path')]))
 
         # add path of task itself, unless it is already in the list

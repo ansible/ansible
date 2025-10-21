@@ -158,10 +158,25 @@ class TestVariableManager(unittest.TestCase):
             # and role2 depend on common-role.  Check that the tasks see
             # different values of role_var.
             blocks = play1.compile()
-            task = blocks[1].block[0]
-            res = v.get_vars(play=play1, task=task)
-            self.assertEqual(res['role_var'], 'role_var_from_role1')
 
-            task = blocks[2].block[0]
+            # compile returns the following layout of blocks
+            # (fact gathering is missing as that is added by PlayIterator):
+            # [TASK: meta (flush_handlers)]
+            # [TASK: common-role : debug]
+            # [TASK: meta (role_complete)]
+            # [TASK: meta (role_complete)]
+            # [TASK: common-role : debug]
+            # [TASK: meta (role_complete)]
+            # [TASK: meta (role_complete)]
+            # [TASK: meta (flush_handlers)]
+            # [TASK: meta (flush_handlers)]
+
+            task = blocks[1].block[0]
+            assert task.action == 'debug'
             res = v.get_vars(play=play1, task=task)
-            self.assertEqual(res['role_var'], 'role_var_from_role2')
+            assert res['role_var'] == 'role_var_from_role1'
+
+            task = blocks[4].block[0]
+            assert task.action == 'debug'
+            res = v.get_vars(play=play1, task=task)
+            assert res['role_var'] == 'role_var_from_role2'

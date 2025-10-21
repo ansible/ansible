@@ -155,6 +155,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         self._completed: dict[str, bool] = dict()
         self._should_validate: bool = validate
 
+        self._dep_chain: list[Role] | None = None
+
         if from_files is None:
             from_files = {}
         self._from_files: dict[str, list[str]] = from_files
@@ -472,8 +474,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         return deps
 
-    # other functions
-
     def add_parent(self, parent_role):
         """ adds a role to the list of this roles parents """
         if not isinstance(parent_role, Role):
@@ -485,12 +485,15 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def get_parents(self):
         return self._parents
 
-    def get_dep_chain(self):
-        dep_chain = []
-        for parent in self._parents:
-            dep_chain.extend(parent.get_dep_chain())
-            dep_chain.append(parent)
-        return dep_chain
+    def get_dep_chain(self) -> list[Role]:
+        """Returns a copy of the parent chain list."""
+        if self._dep_chain is None:
+            dep_chain = []
+            for parent in self._parents:
+                dep_chain.extend(parent.get_dep_chain())
+                dep_chain.append(parent)
+            self._dep_chain = dep_chain
+        return self._dep_chain[:]
 
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
@@ -528,8 +531,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     def get_vars(self, dep_chain=None, include_params=True, only_exports=False):
         dep_chain = [] if dep_chain is None else dep_chain
-
-        all_vars = {}
 
         # get role_vars: from parent objects
         # TODO: is this right precedence for inherited role_vars?
@@ -586,23 +587,17 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         #
         # ``get_handler_blocks`` may be called when handling ``import_role`` during parsing
         # as well as with ``Play.compile_roles_handlers`` from ``TaskExecutor``
+        # FIXME deprecate unused dep_chain parameter
         if self._compiled_handler_blocks:
             return self._compiled_handler_blocks
 
         self._compiled_handler_blocks = block_list = []
 
-        # update the dependency chain here
-        if dep_chain is None:
-            dep_chain = []
-        new_dep_chain = dep_chain + [self]
-
         for dep in self.get_direct_dependencies():
-            dep_blocks = dep.get_handler_blocks(play=play, dep_chain=new_dep_chain)
-            block_list.extend(dep_blocks)
+            block_list.extend(dep.get_handler_blocks(play=play))
 
         for task_block in self._handler_blocks:
             new_task_block = task_block.copy()
-            new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
             block_list.append(new_task_block)
 
@@ -626,24 +621,18 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         with each task, so tasks know by which route they were found, and
         can correctly take their parent's tags/conditionals into account.
         """
+        # FIXME deprecate unused dep_chain parameter
         from ansible.playbook.block import Block
         from ansible.playbook.task import Task
 
         block_list = []
 
-        # update the dependency chain here
-        if dep_chain is None:
-            dep_chain = []
-        new_dep_chain = dep_chain + [self]
-
-        deps = self.get_direct_dependencies()
-        for dep in deps:
-            dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
+        for dep in self.get_direct_dependencies():
+            dep_blocks = dep.compile(play=play)
             block_list.extend(dep_blocks)
 
         for task_block in self._task_blocks:
             new_task_block = task_block.copy()
-            new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
             block_list.append(new_task_block)
 
