@@ -656,10 +656,10 @@ class VaultLib:
         b_vaulttext = to_bytes(vaulttext, nonstring='error')  # enforce vaulttext is str/bytes, keep type check if removing type conversion
 
         if self.secrets is None:
-            raise AnsibleVaultError("A vault password must be specified to decrypt data.")
+            raise AnsibleVaultError("A vault password must be specified to decrypt data.", obj=vaulttext)
 
         if not is_encrypted(b_vaulttext):
-            raise AnsibleVaultError("Input is not vault encrypted data.")
+            raise AnsibleVaultError("Input is not vault encrypted data.", obj=vaulttext)
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext)
 
@@ -668,10 +668,10 @@ class VaultLib:
         if cipher_name in CIPHER_ALLOWLIST:
             this_cipher = CIPHER_MAPPING[cipher_name]()
         else:
-            raise AnsibleVaultError(f"Cipher {cipher_name!r} could not be found.")
+            raise AnsibleVaultError(f"Cipher {cipher_name!r} could not be found.", obj=vaulttext)
 
         if not self.secrets:
-            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found.')
+            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found.', obj=vaulttext)
 
         # WARNING: Currently, the vault id is not required to match the vault id in the vault blob to
         #          decrypt a vault properly. The vault id in the vault blob is not part of the encrypted
@@ -729,7 +729,7 @@ class VaultLib:
                              (to_text(vault_secret_id), to_text(origin), e))
                 continue
         else:
-            raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt).")
+            raise AnsibleVaultError("Decryption failed (no vault secrets were found that could decrypt).", obj=vaulttext)
 
         return b_plaintext, vault_id_used, vault_secret_used
 
