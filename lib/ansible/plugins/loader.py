@@ -1759,7 +1759,6 @@ connection_loader = PluginLoader(
     'ansible.plugins.connection',
     C.DEFAULT_CONNECTION_PLUGIN_PATH,
     'connection_plugins',
-    aliases={'paramiko': 'paramiko_ssh'},
     required_base_class='ConnectionBase',
 )
 
