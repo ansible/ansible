@@ -579,6 +579,19 @@ ansible-playbook realpath.yml "$@" --vault-password-file script/vault-secret.sh
 # using symlink
 ansible-playbook symlink.yml "$@" --vault-password-file symlink/get-password-symlink
 
+# test that ansible-vault view follows symlinks (https://github.com/ansible/ansible/pull/85977)
+SYMLINK_FILE="${MYTMPDIR}/symlinked_vault_file"
+REAL_FILE="${MYTMPDIR}/real_vault_file"
+
+echo "secret content" > "${REAL_FILE}"
+ansible-vault encrypt "$@" --vault-password-file vault-password "${REAL_FILE}"
+
+ln -s "${REAL_FILE}" "${SYMLINK_FILE}"
+
+# view via symlink
+OUTPUT=$(ansible-vault view "$@" --vault-password-file vault-password "${SYMLINK_FILE}")
+echo "${OUTPUT}" | grep "secret content"
+
 ### NEGATIVE TESTS
 
 ER='Attempting to decrypt but no vault secrets found'
