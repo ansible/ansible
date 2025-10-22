@@ -195,7 +195,7 @@ class ConnectionFieldAttribute(FieldAttribute):
             if not check_for_controlpersist('ssh') and paramiko is not None:
                 value = "paramiko"
 
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        # if someone did `connection: persistent`, default it to using a persistent connection
         elif value == 'persistent' and paramiko is not None:
             value = 'paramiko'
 
