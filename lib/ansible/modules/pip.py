@@ -616,7 +616,7 @@ def _resolve_package_names(
         module: AnsibleModule,
         package_list: list[Package],
         pip: list[str],
-        python_bin: str
+        python_bin: str,
 ) -> list[Package]:
     """Return a list of Packages with names extracted from metadata using pip"""
     pkgs_to_resolve = [pkg for pkg in package_list if not pkg.has_requirement]
