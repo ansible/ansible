@@ -1,0 +1,3 @@
+---
+removed_features:
+  - connection/paramiko - Remove deprecation warning for paramiko connection plugin (https://github.com/ansible/ansible/issues/86002).

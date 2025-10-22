@@ -254,7 +254,6 @@ from ansible.module_utils.compat.paramiko import _PARAMIKO_IMPORT_ERR as PARAMIK
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._internal import _deprecator
 
 display = Display()
 
@@ -329,12 +328,6 @@ class Connection(ConnectionBase):
     _log_channel: str | None = None
 
     def __init__(self, *args, **kwargs):
-        display.deprecated(  # pylint: disable=ansible-deprecated-unnecessary-collection-name
-            msg='The paramiko connection plugin is deprecated.',
-            version='2.21',
-            deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,  # entire plugin being removed; this improves the messaging
-        )
-
         super().__init__(*args, **kwargs)
 
     def _cache_key(self) -> str:
