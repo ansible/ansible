@@ -1,0 +1,2 @@
+minor_changes:
+  - apt - Added ``fail_on_update`` parameter allow tasks to continue if ``apt-get update`` fails after retries.

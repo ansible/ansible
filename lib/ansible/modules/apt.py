@@ -188,7 +188,7 @@ options:
       - If V(true) and O(update_cache) is enabled, failure to update apt cache within O(update_cache_retries) will fail the task.
     type: bool
     default: 'yes'
-    version_added: '2.20'
+    version_added: '2.21'
   force_apt_get:
     description:
       - Force usage of apt-get instead of aptitude.
