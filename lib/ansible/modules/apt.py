@@ -183,6 +183,12 @@ options:
     type: bool
     default: 'no'
     version_added: "2.11"
+  fail_on_update:
+    description:
+      - If V(true) and O(update_cache) is enabled, failure to update apt cache within O(update_cache_retries) will fail the task.
+    type: bool
+    default: 'yes'
+    version_added: '2.20'
   force_apt_get:
     description:
       - Force usage of apt-get instead of aptitude.
@@ -1237,6 +1243,7 @@ def main():
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
             fail_on_autoremove=dict(type='bool', default=False),
+            fail_on_update=dict(type='bool', default=True),
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
@@ -1434,7 +1441,10 @@ def main():
                             f"Failed to update apt cache after {update_cache_retries} retries: "
                             f"{err if err else 'unknown reason'}"
                         )
-                        module.fail_json(msg=msg)
+                        if p['fail_on_update']:
+                            module.fail_json(msg=msg)
+                        else:
+                            module.warn(msg)
 
                     cache.open(progress=None)
                     mtimestamp, post_cache_update_time = get_updated_cache_time()
