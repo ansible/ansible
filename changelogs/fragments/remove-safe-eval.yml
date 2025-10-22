@@ -1,0 +1,3 @@
+---
+removed_features:
+  - module_utils - Remove previously deprecated ``safe_eval`` function (#85996) (#85999)

@@ -7,7 +7,6 @@ from __future__ import annotations
 import decimal
 import json
 import os
-import re
 
 from ast import literal_eval
 from ansible.module_utils._internal import _no_six
@@ -15,7 +14,6 @@ from ansible.module_utils.common import json as _common_json
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.text.formatters import human_to_bytes
-from ansible.module_utils.common.warnings import deprecate
 from ansible.module_utils.parsing.convert_bool import boolean
 
 
@@ -33,38 +31,6 @@ def count_terms(terms, parameters):
         terms = [terms]
 
     return len(set(terms).intersection(parameters))
-
-
-def safe_eval(value, locals=None, include_exceptions=False):
-    deprecate(
-        "The safe_eval function should not be used.",
-        version="2.21",
-    )
-    # do not allow method calls to modules
-    if not isinstance(value, str):
-        # already templated to a datavaluestructure, perhaps?
-        if include_exceptions:
-            return (value, None)
-        return value
-    if re.search(r'\w\.\w+\(', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    # do not allow imports
-    if re.search(r'import \w+', value):
-        if include_exceptions:
-            return (value, None)
-        return value
-    try:
-        result = literal_eval(value)
-        if include_exceptions:
-            return (result, None)
-        else:
-            return result
-    except Exception as e:
-        if include_exceptions:
-            return (value, e)
-        return value
 
 
 def check_mutually_exclusive(terms, parameters, options_context=None):
