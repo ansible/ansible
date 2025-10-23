@@ -185,18 +185,20 @@ class FieldAttribute(Attribute):
 
 class ConnectionFieldAttribute(FieldAttribute):
     def __get__(self, obj, obj_type=None):
-        from ansible.module_utils.compat.paramiko import _paramiko as paramiko
         from ansible.utils.ssh_functions import check_for_controlpersist
         value = super().__get__(obj, obj_type)
 
         if value == 'smart':
             value = 'ssh'
-            # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist('ssh') and paramiko is not None:
-                value = "paramiko"
+            # see if SSH can support ControlPersist, if not we'll use ssh anyway
+            # since paramiko is no longer available
+            if not check_for_controlpersist('ssh'):
+                # log that we're using ssh despite ControlPersist limitations
+                # since paramiko alternative is removed
+                pass
 
-        # if someone did `connection: persistent`, default it to using a persistent connection
-        elif value == 'persistent' and paramiko is not None:
-            value = 'paramiko'
+        # if someone did `connection: persistent`, use ssh
+        elif value == 'persistent':
+            value = 'ssh'
 
         return value
