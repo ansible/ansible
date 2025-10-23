@@ -33,23 +33,15 @@ DOCUMENTATION = """
           type: integer
 """
 
-import os
-import pathlib
-import typing as t
-
 from ansible.plugins.cache import BaseFileCacheModule
 
 
 class CacheModule(BaseFileCacheModule):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def _load(self, filepath: str) -> object:
+        with open(filepath, 'r') as jfile:
+            return eval(filepath.read())
 
-
-    def _load(self, thefile: str) -> object:
-        with open(thefile, 'r') as jfile:
-            return eval(thefile.read())
-
-    def _dump(self, value: object, thefile: str) -> None:
-        with open(thefile, 'w') as afile:
+    def _dump(self, value: object, filepath: str) -> None:
+        with open(filepath, 'w') as afile:
             afile.write(str(value))
