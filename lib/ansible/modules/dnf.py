@@ -531,8 +531,6 @@ class DnfModule(YumDnf):
                 rc=1
             )
 
-
-
         # Turn off debug messages in the output
         conf.debuglevel = 0
 
