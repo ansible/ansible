@@ -44,6 +44,9 @@ class DeprecatedArgument:
     option: str | None = None
     """The specific option string that is deprecated; None applies to all options for this argument."""
 
+    alternatives: str | None = None
+    """The options to use instead."""
+
     def is_deprecated(self, option: str) -> bool:
         """Return True if the given option is deprecated, otherwise False."""
         return self.option is None or option == self.option
@@ -58,6 +61,7 @@ class DeprecatedArgument:
         Display().deprecated(  # pylint: disable=ansible-invalid-deprecated-version
             msg=f'The {option!r} argument is deprecated.',
             version=self.version,
+            help_text=f'Use {self.alternatives} instead.' if self.alternatives else None
         )
 
 
@@ -419,7 +423,7 @@ def add_inventory_options(parser):
     """Add options for commands that utilize inventory"""
     parser.add_argument('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
                         help="specify inventory host path or comma separated host list",
-                        deprecated=DeprecatedArgument(version='2.23', option='--inventory-file'))
+                        deprecated=DeprecatedArgument(version='2.23', option='--inventory-file', alternatives="-i or --inventory"))
     parser.add_argument('--list-hosts', dest='listhosts', action='store_true',
                         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_argument('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
@@ -444,10 +448,10 @@ def add_module_options(parser):
 
 def add_output_options(parser):
     """Add options for commands which can change their output"""
-    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true',
-                        help='condense output', deprecated=DeprecatedArgument(version='2.23'))
-    parser.add_argument('-t', '--tree', dest='tree', default=None,
-                        help='log output to this directory', deprecated=DeprecatedArgument(version='2.23'))
+    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true', help='condense output',
+                        deprecated=DeprecatedArgument(version='2.23', alternatives='callback configuration to enable the oneline callback'))
+    parser.add_argument('-t', '--tree', dest='tree', default=None, help='log output to this directory',
+                        deprecated=DeprecatedArgument(version='2.23', alternatives='callback configuration to enable the tree callback'))
 
 
 def add_runas_options(parser):
