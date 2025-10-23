@@ -624,43 +624,34 @@ def _resolve_package_names(
     if not pkgs_to_resolve:
         return package_list
 
-    # Unsetting 'FORCE_COLOR' with 'NO_COLOR' and 'TTY_COMPATIBLE' env vars, helps to
-    # clean pip output without injected ANSI sequences that might corrupt it.
-    os.environ.pop('FORCE_COLOR', None)
-
     # pip install --dry-run is not available in pip versions older than 22.2 and it doesn't
     # work correctly on all cases until 24.1, so check for this and use the non-resolved
     # package names if pip is outdated.
     pip_dep = _get_package_info(module, "pip", python_bin)
 
     if not pip_dep:
-        module.warn("Could not determine pip version, check module may not behave as expected")
+        module.warn("Could not determine pip version, check mode may not behave as expected")
         return package_list
 
     installed_pip = LooseVersion(pip_dep.split('==')[1])
     minimum_pip = LooseVersion("24.1")
 
     if installed_pip < minimum_pip:
-        module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <24.1")
+        module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <24.1.")
         return package_list  # Just use the default behavior
 
-    rc, json_out, err = module.run_command(
-        [*pip, 'install', '--dry-run', '--ignore-installed', '--quiet', '--no-color', '--report=-', *(str(pkg) for pkg in pkgs_to_resolve)],
-        environ_update={
-            'NO_COLOR': '1',
-            'TTY_COMPATIBLE': '0',
-        },
-    )
+    with tempfile.NamedTemporaryFile(mode='w+t') as tmp_file:
+        rc, json_out, err = module.run_command(
+            [*pip, 'install', '--dry-run', '--ignore-installed', '--report', f'{tmp_file.name}', *(str(pkg) for pkg in pkgs_to_resolve)],
+        )
+        if rc:
+            module.fail_json(rc=rc, msg=json_out, err=err)
 
-    if rc == 0:
-        # If it succeeds, handle the report
-        report = json.loads(json_out)
+        report = json.load(tmp_file)
         package_objects = (
             Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
             for install_report in report['install']
         )
-    else:
-        module.fail_json(rc=rc, msg=json_out, err=err)
 
     other_packages = (pkg for pkg in package_list if pkg.has_requirement)
     return [*other_packages, *package_objects]
