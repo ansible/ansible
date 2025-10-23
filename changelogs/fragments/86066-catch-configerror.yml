@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - dnf - Catch ``dnf.exceptions.ConfigError`` when ``conf_file`` has invalid syntax
+    to prevent module crash and provide a clean error message (Fixes #85681).
