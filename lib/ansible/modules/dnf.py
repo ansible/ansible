@@ -521,7 +521,14 @@ class DnfModule(YumDnf):
                 conf.config_file_path = conf_file
 
         # Read the configuration file
-        conf.read()
+       try:
+       conf.read()
+       except dnf.exceptions.ConfigError as e:
+        self.module.fail_json(
+        msg=f"Failed to parse configuration file '{conf.config_file_path}': {to_native(e)}",
+        results=[],
+        rc=1
+       )
 
         # Turn off debug messages in the output
         conf.debuglevel = 0
