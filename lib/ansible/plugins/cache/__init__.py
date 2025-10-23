@@ -41,7 +41,7 @@ display = Display()
 
 class BaseCacheModule(AnsiblePlugin):
 
-    _PATH_CHARS = frozenset({'/', '..', '\\', ':'})
+    _PATH_CHARS = frozenset({'/', '..', '<', '>'})
 
     # Backwards compat only.  Just import the global display instead
     _display = display
