@@ -250,7 +250,6 @@ class StrategyModule(StrategyBase):
                                     included_file,
                                     iterator=iterator,
                                     is_handler=is_handler,
-                                    handle_stats_and_callbacks=False,
                                 )
 
                             # let PlayIterator know about any new handlers included via include_role or
