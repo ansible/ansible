@@ -220,7 +220,7 @@ def get_platform():
     the result of calling :py:func:`platform.system`.
     """
     deprecate(
-        msg=f"The `get_platfrom()` function from `ansible.module_utils.basic` is deprecated.",
+        msg="The `get_platfrom()` function from `ansible.module_utils.basic` is deprecated.",
         version="2.24",
         help_text="Use `platform.system()` from the Python standard library instead.",
     )
@@ -229,7 +229,7 @@ def get_platform():
 
 def load_platform_subclass(cls, *args, **kwargs):
     deprecate(
-        msg=f"The `load_platform_subclass()` function from `ansible.module_utils.basic` is deprecated.",
+        msg="The `load_platform_subclass()` function from `ansible.module_utils.basic` is deprecated.",
         version="2.24",
         help_text="Use `get_platform_subclass()` from `ansible.module_utils.common.sys_info` instead.",
     )
@@ -239,7 +239,7 @@ def load_platform_subclass(cls, *args, **kwargs):
 
 def get_all_subclasses(cls):
     deprecate(
-        msg=f"The `get_all_subclasses()` function from `ansible.module_utils.basic` is deprecated.",
+        msg="The `get_all_subclasses()` function from `ansible.module_utils.basic` is deprecated.",
         version="2.24",
         help_text="Use `get_all_subclasses()` from `ansible.module_utils.common._utils` instead.",
     )
