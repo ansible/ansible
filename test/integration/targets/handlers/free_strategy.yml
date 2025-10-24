@@ -4,7 +4,7 @@
   vars:
     mytimeout:
       testhost: 5
-      testhost2: 70
+      localhost: 70
   tasks:
     - name: "Step #1"
       shell: "sleep {{ mytimeout[inventory_hostname] }}"
