@@ -1,13 +1,13 @@
 - name: Test handler
-  hosts: testhost, testhost2
+  hosts: testhost, localhost
   strategy: free
   vars:
-    timeout:
+    mytimeout:
       testhost: 5
       testhost2: 70
   tasks:
     - name: "Step #1"
-      shell: "sleep {{ timeout[inventory_hostname] }}"
+      shell: "sleep {{ mytimeout[inventory_hostname] }}"
       notify: stage1
 
     - name: "Step #2"
