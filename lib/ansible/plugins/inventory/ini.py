@@ -145,7 +145,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             self.display.deprecated(
                 f"Parsed inventory source with invalid extension {path!r}.",
                 help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
-                version="2.23"
+                version="2.24"
             )
         try:
             # Read in the hosts, groups, and variables defined in the inventory file.
