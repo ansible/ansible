@@ -149,8 +149,7 @@ class BecomeModule(BecomeBase):
             except AttributeError as ex:
                 raise AnsibleError(f'The {shell._load_name!r} shell plugin does not support sudo chdir. It is missing the {ex.name!r} attribute.')
 
-        selinux_role = self.get_option('selinux_role')
-        if selinux_role:
-            flags += '-r %s' % (selinux_role)
+        if selinux_role := self.get_option('selinux_role'):
+            flags += f'-r {shlex.quote(selinux_role)}'
 
         return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])
