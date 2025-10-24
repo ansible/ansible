@@ -371,7 +371,7 @@ stat:
             returned: success, path exists, user can execute the path, filesystem supports st_blocks
             type: int
             sample: 1024
-            version_added: 2.20
+            version_added: '2.21'
 """
 
 import grp
