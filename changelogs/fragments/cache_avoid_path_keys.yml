@@ -1,0 +1,2 @@
+bugfixes:
+  - cache plugins based on the BaseFileCache class will now sanitize keys to avoid names that could cause issues with the storage path

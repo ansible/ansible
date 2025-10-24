@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import os
 import tempfile
 import time
@@ -39,6 +40,8 @@ display = Display()
 
 
 class BaseCacheModule(AnsiblePlugin):
+
+    _PATH_CHARS = frozenset({'/', '..', '<', '>', '|'})
 
     # Backwards compat only.  Just import the global display instead
     _display = display
@@ -91,6 +94,8 @@ class BaseFileCacheModule(BaseCacheModule):
         self.plugin_name = resource_from_fqcr(self.__module__)
         self._cache = {}
         self.validate_cache_connection()
+        self._sanitized = {}
+        self._files = {}
 
     def _get_cache_connection(self, source):
         if source:
@@ -99,10 +104,23 @@ class BaseFileCacheModule(BaseCacheModule):
             except TypeError:
                 pass
 
+    def _sanitize_key(self, key: str) -> str:
+        """
+        Ensures key name is safe to use on the filesystem
+        """
+        if key not in self._sanitized:
+            for invalid in self._PATH_CHARS:
+                if invalid in key:
+                    self._sanitized[key] = hashlib.sha256(key.encode()).hexdigest()[:max(len(key), 12)]
+                    break
+            else:
+                self._sanitized[key] = key
+        return self._sanitized[key]
+
     def validate_cache_connection(self):
         if not self._cache_dir:
-            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option "
-                               "to be set (to a writeable directory path)" % self.plugin_name)
+            raise AnsibleError(f"'{self.plugin_name!r}' cache plugin requires the 'fact_caching_connection' configuration option "
+                               "to be set (to a writeable directory path)")
 
         if not os.path.exists(self._cache_dir):
             try:
@@ -112,16 +130,17 @@ class BaseFileCacheModule(BaseCacheModule):
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
-                    raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
-                        self.plugin_name, self._cache_dir))
+                    raise AnsibleError(f"'{self.plugin_name!r}' cache, configured path ({self._cache_dir}) does not have necessary permissions (rwx),"
+                                       " disabling plugin")
 
     def _get_cache_file_name(self, key: str) -> str:
-        prefix = self.get_option('_prefix')
-        if prefix:
-            cachefile = "%s/%s%s" % (self._cache_dir, prefix, key)
-        else:
-            cachefile = "%s/%s" % (self._cache_dir, key)
-        return cachefile
+        if key not in self._files:
+            safe = self._sanitize_key(key)  # use key or filesystem safe hash of key
+            prefix = self.get_option('_prefix')
+            if not prefix:
+                prefix = ''
+            self._files[key] = os.path.join(self._cache_dir, prefix + safe)
+        return self._files[key]
 
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
@@ -155,7 +174,7 @@ class BaseFileCacheModule(BaseCacheModule):
         self._cache[key] = value
 
         cachefile = self._get_cache_file_name(key)
-        tmpfile_handle, tmpfile_path = tempfile.mkstemp(dir=os.path.dirname(cachefile))
+        tmpfile_handle, tmpfile_path = tempfile.mkstemp(dir=self._cache_dir)
         try:
             try:
                 self._dump(value, tmpfile_path)
