@@ -640,18 +640,17 @@ def _resolve_package_names(
         module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <24.1.")
         return package_list  # Just use the default behavior
 
-    with tempfile.NamedTemporaryFile(mode='w+t') as tmp_file:
-        rc, json_out, err = module.run_command(
-            [*pip, 'install', '--dry-run', '--ignore-installed', '--report', f'{tmp_file.name}', *(str(pkg) for pkg in pkgs_to_resolve)],
+    with tempfile.NamedTemporaryFile() as tmp_file:
+        module.run_command(
+            [*pip, 'install', '--dry-run', '--ignore-installed', '--report', tmp_file.name, *(str(pkg) for pkg in pkgs_to_resolve)],
+            check_rc=True,
         )
-        if rc:
-            module.fail_json(rc=rc, msg=json_out, err=err)
-
         report = json.load(tmp_file)
-        package_objects = (
-            Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
-            for install_report in report['install']
-        )
+
+    package_objects = (
+        Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
+        for install_report in report['install']
+    )
 
     other_packages = (pkg for pkg in package_list if pkg.has_requirement)
     return [*other_packages, *package_objects]
