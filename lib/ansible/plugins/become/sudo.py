@@ -86,8 +86,8 @@ DOCUMENTATION = """
                 key: chdir
         selinux_role:
             description:
-                - For selinux systems, the role to assume when running commands.
-                - Note that your sudo executable needs to support this option, otherwise it will error out.
+                - For SELinux systems, the role to assume when running commands.
+                - Note that your sudo executable needs to support this option; otherwise, it will error out.
             version_added: '2.21'
             required: False
             vars:
