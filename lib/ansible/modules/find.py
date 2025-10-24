@@ -430,7 +430,7 @@ def statinfo(st):
     except Exception:
         pass
 
-    return {
+    output = {
         'mode': "%04o" % stat.S_IMODE(st.st_mode),
         'isdir': stat.S_ISDIR(st.st_mode),
         'ischr': stat.S_ISCHR(st.st_mode),
@@ -462,6 +462,12 @@ def statinfo(st):
         'isuid': bool(st.st_mode & stat.S_ISUID),
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
+
+    if hasattr(st, 'st_blocks'):
+        output['blocks'] = st.st_blocks
+        output['disk_usage_bytes'] = st.st_blocks * 512
+
+    return output
 
 
 def main():
