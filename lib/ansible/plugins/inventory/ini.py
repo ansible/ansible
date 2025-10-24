@@ -10,8 +10,8 @@ DOCUMENTATION = """
       allowed_extensions:
         description:
             - What extensions this plugin will activate for.
-            - Currently it allows all extensions but in the future it will be set to 'ini' by default.
-        version_added: "2.19"
+            - Currently, it allows all extensions, but in the future, it will be set to 'ini' by default.
+        version_added: "2.21"
         type: list
         elements: str
         ini:
@@ -143,7 +143,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         if self._show_deprecation:
             self.display.deprecated(
-                f"Parsed inventory source with invalid extension {path!r}.",
+                f"Parsed inventory source with an invalid extension {path!r}.",
                 help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
                 version="2.24"
             )
