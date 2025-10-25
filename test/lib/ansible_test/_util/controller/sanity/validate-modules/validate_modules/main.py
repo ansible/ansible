@@ -97,6 +97,10 @@ INDENT_REGEX = re.compile(r'([\t]*)')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 
+# Everything that should not be used in a dictionary of a return value,
+# since it will make user's life harder.
+FORBIDDEN_DICTIONARY_KEYS = frozenset(dict.__dict__.keys())
+
 
 REJECTLIST_IMPORTS = {
     'requests': {
@@ -905,6 +909,27 @@ class ModuleValidator(Validator):
                 msg=msg,
             )
 
+    def _validate_return_docs(self, returns, context=None):
+        if not isinstance(returns, dict):
+            return
+        if context is None:
+            context = []
+
+        for rv, data in returns.items():
+            if isinstance(data, dict) and "contains" in data:
+                self._validate_return_docs(data["contains"], context + [rv])
+
+            if str(rv) in FORBIDDEN_DICTIONARY_KEYS or not str(rv).isidentifier():
+                msg = f"Return value key {rv!r}"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " should not be used for return values since it cannot be accessed with dot notation in Jinja"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='bad-return-value-key',
+                    msg=msg,
+                )
+
     def _validate_docs(self):
         doc = None
         # We have three ways of marking deprecated/removed files.  Have to check each one
@@ -1145,6 +1170,7 @@ class ModuleValidator(Validator):
                 returns,
                 return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
                 'RETURN', 'return-syntax-error')
+            self._validate_return_docs(returns)
 
         elif self.plugin_type in PLUGINS_WITH_RETURN_VALUES:
             if self._is_new_module():
