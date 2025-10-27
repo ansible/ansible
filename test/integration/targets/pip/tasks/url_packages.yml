@@ -57,14 +57,6 @@
         modern_pip_venv_path: "{{ remote_tmp_dir }}/modernvenv"
         outdated_pip_venv_path: "{{ remote_tmp_dir }}/outdatedvenv"
 
-    - name: Ensure fresh venvs
-      file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - "{{ modern_pip_venv_path }}"
-        - "{{ outdated_pip_venv_path }}"
-
     - name: Create modern venv
       pip:
         name: pip=={{modern_pip_venv_version}}
