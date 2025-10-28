@@ -1621,9 +1621,9 @@ GALAXY_RETRY_HTTP_ERROR_CODES:
   description:
     - A list of HTTP status codes to retry when making API calls to the Galaxy server.
   default:
-    - 429 # Too Many Requests
-    - 502 # Bad Gateway
-    - 520 # Galaxy rate limit error code (Cloudflare unknown error)
+    - "429" # Too Many Requests
+    - "502" # Bad Gateway
+    - "520" # Galaxy rate limit error code (Cloudflare unknown error)
   env:
   - name: ANSIBLE_GALAXY_RETRY_HTTP_ERROR_CODES
   ini:
