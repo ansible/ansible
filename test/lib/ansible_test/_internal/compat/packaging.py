@@ -12,8 +12,8 @@ try:
 
     SpecifierSet: t.Optional[t.Type[specifiers.SpecifierSet]] = specifiers.SpecifierSet
     Version: t.Optional[t.Type[version.Version]] = version.Version
-    PACKAGING_IMPORT_ERROR = None
+    PACKAGING_IMPORT_ERROR = None  # pylint: disable=invalid-name
 except ImportError as ex:
     SpecifierSet = None  # pylint: disable=invalid-name
     Version = None  # pylint: disable=invalid-name
-    PACKAGING_IMPORT_ERROR = ex
+    PACKAGING_IMPORT_ERROR = ex  # pylint: disable=invalid-name

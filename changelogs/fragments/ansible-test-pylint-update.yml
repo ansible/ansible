@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the pylint sanity test to pylint 4.0.2.

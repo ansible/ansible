@@ -1,7 +1,7 @@
 # edit "mypy.requirements.in" and generate with: hacking/update-sanity-requirements.py --test mypy
 cffi==2.0.0
-cryptography==46.0.2
-iniconfig==2.1.0
+cryptography==46.0.3
+iniconfig==2.3.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
 mypy==1.18.2
