@@ -184,7 +184,7 @@ import re
 import tempfile
 
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 
 
 def write_changes(module, contents, path, encoding='utf-8'):
@@ -232,7 +232,7 @@ def main():
             validate=dict(type='str'),
             encoding=dict(type='str', default='utf-8'),
         ),
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True,
     )
 

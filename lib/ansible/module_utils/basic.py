@@ -204,6 +204,13 @@ FILE_COMMON_ARGUMENTS = dict(
     unsafe_writes=dict(type='bool', default=False, fallback=(env_fallback, ['ANSIBLE_UNSAFE_WRITES'])),  # should be available to any module using atomic_move
 )
 
+DECRYPT_COMMON_ARGUMENT = dict(
+    decrypt=dict(
+        type='bool',
+        default=True,
+        ),
+)
+
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 # Used for parsing symbolic file perms
@@ -368,7 +375,7 @@ def missing_required_lib(library, reason=None, url=None):
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  mutually_exclusive=None, required_together=None,
-                 required_one_of=None, add_file_common_args=False,
+                 required_one_of=None, extends_common_args=(),
                  supports_check_mode=False, required_if=None, required_by=None):
 
         """
@@ -408,8 +415,8 @@ class AnsibleModule(object):
         self._options_context = list()
         self._tmpdir = None
 
-        if add_file_common_args:
-            for k, v in FILE_COMMON_ARGUMENTS.items():
+        for shared_arguments in extends_common_args:
+            for k, v in shared_arguments.items():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 

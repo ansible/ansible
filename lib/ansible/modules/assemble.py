@@ -130,7 +130,7 @@ import os
 import re
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, DECRYPT_COMMON_ARGUMENT
 from ansible.module_utils.common.text.converters import to_native
 
 
@@ -201,13 +201,14 @@ def main():
             regexp=dict(type='str'),
             ignore_hidden=dict(type='bool', default=False),
             validate=dict(type='str'),
-
+        ),
+        extends_common_args=(
+            FILE_COMMON_ARGUMENTS,
             # Options that are for the action plugin, but ignored by the module itself.
             # We have them here so that the tests pass without ignores, which
             # reduces the likelihood of further bugs added.
-            decrypt=dict(type='bool', default=True),
+            DECRYPT_COMMON_ARGUMENT,
         ),
-        add_file_common_args=True,
         supports_check_mode=True,
     )
 

@@ -236,7 +236,7 @@ import time
 from pwd import getpwnam, getpwuid
 from grp import getgrnam, getgrgid
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.common.sentinel import Sentinel
 
@@ -963,16 +963,16 @@ def main():
             path=dict(type='path', required=True, aliases=['dest', 'name']),
             _original_basename=dict(type='str'),  # Internal use only, for recursive ops
             recurse=dict(type='bool', default=False),
-            force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
-            follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
+            force=dict(type='bool', default=False),
+            follow=dict(type='bool', default=True),
             _diff_peek=dict(type='bool'),  # Internal use only, for internal checks in the action plugins
-            src=dict(type='path'),  # Note: Should not be in file_common_args in future
+            src=dict(type='path'),
             modification_time=dict(type='str'),
             modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),
             access_time=dict(type='str'),
             access_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),
         ),
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True,
     )
 

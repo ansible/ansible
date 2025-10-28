@@ -253,7 +253,7 @@ import re
 import tempfile
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
@@ -585,7 +585,7 @@ def main():
         ),
         mutually_exclusive=[
             ['insertbefore', 'insertafter'], ['regexp', 'search_string'], ['backrefs', 'search_string']],
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True,
     )
 

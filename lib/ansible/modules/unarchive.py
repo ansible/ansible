@@ -254,7 +254,7 @@ from functools import partial
 from zipfile import ZipFile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, DECRYPT_COMMON_ARGUMENT
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
@@ -1067,9 +1067,11 @@ def main():
             # We have them here so that the sanity tests pass without ignores, which
             # reduces the likelihood of further bugs added.
             copy=dict(type='bool', default=True),
-            decrypt=dict(type='bool', default=True),
         ),
-        add_file_common_args=True,
+        extends_common_args=(
+            FILE_COMMON_ARGUMENTS,
+            DECRYPT_COMMON_ARGUMENT,  # Also here for the action plugin
+        ),
         # check-mode only works for zip files, we cover that later
         supports_check_mode=True,
         mutually_exclusive=[('include', 'exclude')],

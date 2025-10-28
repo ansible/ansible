@@ -25,6 +25,7 @@ import typing as _t
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.basic import DECRYPT_COMMON_ARGUMENT
 from ansible.plugins.action import ActionBase
 
 
@@ -49,7 +50,7 @@ class ActionModule(ActionBase):
                 'removes': {'type': 'str'},
                 'chdir': {'type': 'str'},
                 'executable': {'type': 'str'},
-            },
+            } | DECRYPT_COMMON_ARGUMENT,
             required_one_of=[['_raw_params', 'cmd']],
             mutually_exclusive=[['_raw_params', 'cmd']],
         )

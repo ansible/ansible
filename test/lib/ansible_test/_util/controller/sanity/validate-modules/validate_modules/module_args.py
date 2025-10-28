@@ -163,13 +163,14 @@ def get_py_argument_spec(filename, collection):
             fake.kwargs[arg_name] = arg
         # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
         argument_spec = fake.kwargs.get('argument_spec') or {}
-        # If add_file_common_args is truish, add options from FILE_COMMON_ARGUMENTS when not present.
+        # Add the common arguments from the extends_common_args
         # This is the only modification to argument_spec done by AnsibleModule itself, and which is
         # not caught by setup_env's AnsibleModule replacement
-        if fake.kwargs.get('add_file_common_args'):
-            for k, v in FILE_COMMON_ARGUMENTS.items():
-                if k not in argument_spec:
-                    argument_spec[k] = v
+        if args := fake.kwargs.get('extends_common_arguments'):
+            for common in args:
+                for k, v in common.items():
+                    if k not in argument_spec:
+                        argument_spec[k] = v
         return argument_spec, fake.kwargs
     except (TypeError, IndexError):
         return {}, {}

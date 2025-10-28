@@ -442,7 +442,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from urllib.parse import urlencode, urljoin
 
-from ansible.module_utils.basic import AnsibleModule, sanitize_keys
+from ansible.module_utils.basic import AnsibleModule, sanitize_keys, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import (
     fetch_url,
@@ -614,7 +614,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         mutually_exclusive=[['body', 'src']],
     )
 

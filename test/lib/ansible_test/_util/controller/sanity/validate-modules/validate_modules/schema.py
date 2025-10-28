@@ -367,7 +367,7 @@ def ansible_module_kwargs_schema(module_name, for_collection):
         'bypass_checks': bool,
         'no_log': bool,
         'check_invalid_arguments': Any(None, bool),
-        'add_file_common_args': bool,
+        'extends_common_args': tuple[dict],
         'supports_check_mode': bool,
     }
     if module_name.endswith(('_info', '_facts')):

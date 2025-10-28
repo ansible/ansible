@@ -293,7 +293,7 @@ import stat
 import tempfile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 
 
 class AnsibleModuleError(Exception):
@@ -479,7 +479,7 @@ def main():
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
         ),
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True,
     )
 

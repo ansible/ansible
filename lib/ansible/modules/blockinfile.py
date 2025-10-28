@@ -200,7 +200,7 @@ import re
 import os
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_native
 
 
@@ -257,7 +257,7 @@ def main():
             encoding=dict(type='str', default='utf-8'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True
     )
     params = module.params

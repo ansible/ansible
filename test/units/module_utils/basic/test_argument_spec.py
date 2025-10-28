@@ -15,6 +15,7 @@ import pytest
 from unittest.mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 import builtins
 
@@ -138,7 +139,7 @@ def complex_argspec():
         mutually_exclusive=mut_ex,
         required_together=req_to,
         no_log=True,
-        add_file_common_args=True,
+        extends_common_args=FILE_COMMON_ARGUMENTS,
         supports_check_mode=True,
     )
     return kwargs
@@ -188,7 +189,7 @@ def options_argspec_list():
     kwargs = dict(
         argument_spec=arg_spec,
         no_log=True,
-        add_file_common_args=True,
+        extends_common_args=FILE_COMMON_ARGUMENTS,
         supports_check_mode=True
     )
     return kwargs

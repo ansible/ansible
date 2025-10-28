@@ -376,7 +376,7 @@ import tempfile
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
@@ -535,7 +535,7 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=argument_spec,
-        add_file_common_args=True,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True,
     )
 

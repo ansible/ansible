@@ -586,7 +586,7 @@ def main():
             ["state", "present", ["description"]],
         ],
         argument_spec=argument_spec,
-        add_file_common_args=True,
+        extends_common_args=FILE_COMMON_ARGUMENTS,
         supports_check_mode=True,
     )
 
