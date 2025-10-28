@@ -1299,3 +1299,11 @@ def test_cache_missing_results_raises_descriptive_error(mocker):
             cache=True,
             cache_key='/api/v1/roles/'
         )
+
+
+def test_should_retry_error_with_invalid_code(monkeypatch):
+    expected = r"^Invalid value for HTTP retryable error code"
+    monkeypatch.setattr(C, 'GALAXY_RETRY_HTTP_ERROR_CODES', [429, "invalid"])
+
+    with pytest.raises(AnsibleError, match=expected):
+        galaxy_api.should_retry_error(Exception())

@@ -15,7 +15,6 @@ import tarfile
 import time
 import threading
 
-from http import HTTPStatus
 from http.client import BadStatusLine, IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
@@ -34,11 +33,6 @@ from ansible.utils.path import makedirs_safe
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
-RETRY_HTTP_ERROR_CODES = {  # TODO: Allow user-configuration
-    HTTPStatus.TOO_MANY_REQUESTS,
-    520,  # Galaxy rate limit error code (Cloudflare unknown error)
-    HTTPStatus.BAD_GATEWAY,  # Common error from galaxy that may represent any number of transient backend issues
-}
 
 
 def cache_lock(func):
@@ -53,7 +47,12 @@ def should_retry_error(exception):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    if isinstance(exception, GalaxyError) and exception.http_code in RETRY_HTTP_ERROR_CODES:
+    try:
+        retryable_http_codes = [int(code) for code in C.GALAXY_RETRY_HTTP_ERROR_CODES]
+    except ValueError as e:
+        raise AnsibleError("Invalid value for HTTP retryable error code. Only integer values are supported.") from e
+
+    if isinstance(exception, GalaxyError) and exception.http_code in retryable_http_codes:
         return True
 
     if isinstance(exception, AnsibleError) and (cause := exception.__cause__):

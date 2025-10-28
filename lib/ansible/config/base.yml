@@ -1616,6 +1616,20 @@ GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
   - KEYEXPIRED
   - KEYREVOKED
   - NO_SECKEY
+GALAXY_RETRY_HTTP_ERROR_CODES:
+  type: list
+  description:
+    - A list of HTTP status codes to retry when making API calls to the Galaxy server.
+  default:
+    - 429 # Too Many Requests
+    - 502 # Bad Gateway
+    - 520 # Galaxy rate limit error code (Cloudflare unknown error)
+  env:
+  - name: ANSIBLE_GALAXY_RETRY_HTTP_ERROR_CODES
+  ini:
+  - section: galaxy
+    key: retry_http_error_codes
+  version_added: "2.21"
 GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   type: str
   default: 1
