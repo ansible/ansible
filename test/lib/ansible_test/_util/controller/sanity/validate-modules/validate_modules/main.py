@@ -87,7 +87,6 @@ from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, par
 
 from .constants import (
     REJECTLIST_DIRS,
-    INDENT_REGEX,
     SYS_EXIT_REGEX,
     NO_LOG_REGEX,
     FORBIDDEN_DICTIONARY_KEYS,

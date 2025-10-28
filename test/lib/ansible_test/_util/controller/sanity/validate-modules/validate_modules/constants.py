@@ -21,7 +21,6 @@ import re
 
 
 REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
-INDENT_REGEX = re.compile(r'([\t]*)')
 SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
 
