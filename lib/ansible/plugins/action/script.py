@@ -50,7 +50,7 @@ class ActionModule(ActionBase):
                 'removes': {'type': 'str'},
                 'chdir': {'type': 'str'},
                 'executable': {'type': 'str'},
-            } | DECRYPT_COMMON_ARGUMENT,
+            },
             required_one_of=[['_raw_params', 'cmd']],
             mutually_exclusive=[['_raw_params', 'cmd']],
         )
