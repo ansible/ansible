@@ -85,6 +85,20 @@ from .schema import (
 
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
+from .constants import (
+    REJECTLIST_DIRS,
+    INDENT_REGEX,
+    SYS_EXIT_REGEX,
+    NO_LOG_REGEX,
+    FORBIDDEN_DICTIONARY_KEYS,
+    REJECTLIST_IMPORTS,
+    SUBPROCESS_REGEX,
+    OS_CALL_REGEX,
+    PLUGINS_WITH_RETURN_VALUES,
+    PLUGINS_WITH_EXAMPLES,
+    PLUGINS_WITH_YAML_EXAMPLES,
+)
+
 
 # Because there is no ast.TryExcept in Python 3 ast module
 TRY_EXCEPT = ast.Try
@@ -92,43 +106,7 @@ TRY_EXCEPT = ast.Try
 # string but we need unicode for Python 3
 REPLACER_WINDOWS = _REPLACER_WINDOWS.decode('utf-8')
 
-REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
-INDENT_REGEX = re.compile(r'([\t]*)')
-SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
-NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
-
-# Everything that should not be used in a dictionary of a return value,
-# since it will make user's life harder.
-FORBIDDEN_DICTIONARY_KEYS = frozenset(dict.__dict__.keys())
-
-
-REJECTLIST_IMPORTS = {
-    'requests': {
-        'new_only': True,
-        'error': {
-            'code': 'use-module-utils-urls',
-            'msg': ('requests import found, should use '
-                    'ansible.module_utils.urls instead')
-        }
-    },
-    r'boto(?:\.|$)': {
-        'new_only': True,
-        'error': {
-            'code': 'use-boto3',
-            'msg': 'boto import found, new modules should use boto3'
-        }
-    },
-}
-SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
-OS_CALL_REGEX = re.compile(r'os\.call.*')
-
-
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
-
-
-PLUGINS_WITH_RETURN_VALUES = ('module', )
-PLUGINS_WITH_EXAMPLES = ('module', )
-PLUGINS_WITH_YAML_EXAMPLES = ('module', )
 
 
 def is_potential_secret_option(option_name):
