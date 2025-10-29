@@ -261,7 +261,7 @@ omit =
     */pyshared/*
     */pytest
     */AnsiballZ_*.py
-    */test/results/*
+    */test/results/.tmp/delegation/*
 """
 
     coverage_config = coverage_config.lstrip()
@@ -279,8 +279,8 @@ def generate_collection_coverage_config() -> str:
     ]
 
     omit_patterns = [
-        # {base}/ansible_collections/{ns}/{col}/tests/output/*
-        os.path.join(data_context().content.root, data_context().content.results_path, '*'),
+        # {base}/ansible_collections/{ns}/{col}/tests/output/.tmp/delegation/*
+        os.path.join(data_context().content.root, data_context().content.results_path, '.tmp/delegation/*'),
     ]
 
     include = textwrap.indent('\n'.join(include_patterns), ' ' * 4)

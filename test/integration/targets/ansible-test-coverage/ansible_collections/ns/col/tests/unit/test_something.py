@@ -1,4 +1,5 @@
 from __future__ import annotations
 
 
-A_CONSTANT = True
+def test_me() -> None:
+    pass
