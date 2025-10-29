@@ -119,7 +119,6 @@ options:
     version_added: '2.5'
 extends_documentation_fragment:
     - decrypt
-    - files
     - validate
     - action_common_attributes
     - action_common_attributes.files
