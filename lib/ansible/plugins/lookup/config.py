@@ -88,31 +88,6 @@ from ansible.errors import AnsibleError, AnsibleUndefinedConfigEntry
 from ansible.plugins.lookup import LookupBase
 
 
-def _get_plugin_config(pname, ptype, config, variables):
-    # plugin creates settings on load, this is cached so not too expensive to redo
-    loader = getattr(plugin_loader, '%s_loader' % ptype)
-    p = loader.get(pname, class_only=True)
-
-    if p is None:
-        raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
-
-    result, origin = C.config.get_config_value_and_origin(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
-
-    return result, origin
-
-
-def _get_global_config(config):
-    try:
-        result = getattr(C, config)
-    except AttributeError:
-        raise AnsibleUndefinedConfigEntry(f"Setting {config!r} does not exist.") from None
-
-    if callable(result):
-        raise ValueError(f"Invalid setting {config!r} attempted.")
-
-    return result
-
-
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
@@ -135,18 +110,26 @@ class LookupModule(LookupBase):
 
             result = Sentinel
             origin = None
+
+            # plugin creates settings on load, we ensure that happens here
+            if pname:
+                # this is cached so not too expensive
+                loader = getattr(plugin_loader, f'{ptype}_loader')
+                p = loader.get(pname, class_only=True)
+                if p is None:
+                    raise AnsibleError(f"Unable to load {ptype} plugin {pname!r}.")
             try:
-                if pname:
-                    result, origin = _get_plugin_config(pname, ptype, term, variables)
-                else:
-                    result = _get_global_config(term)
-            except AnsibleUndefinedConfigEntry:
-                if missing == 'error':
-                    raise
-                elif missing == 'warn':
-                    self._display.warning(f"Skipping, did not find setting {term!r}.")
-                elif missing == 'skip':
-                    pass  # this is not needed, but added to have all 3 options stated
+                result, origin = C.config.get_config_value_and_origin(term, plugin_type=ptype, plugin_name=pname, variables=variables)
+            except AnsibleUndefinedConfigEntry as e:
+                match missing:
+                    case 'error':
+                        raise
+                    case 'skip':
+                        pass
+                    case 'warn':
+                        self._display.error_as_warning(msg=f"Skipping {term}.", exception=e)
+                    case _:
+                        raise AnsibleError(f"Invalid option for error handling, missing must be error, warn or skip, got: {missing}.") from e
 
             if result is not Sentinel:
                 if show_origin:
