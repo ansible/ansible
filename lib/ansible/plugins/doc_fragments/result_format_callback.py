@@ -59,7 +59,7 @@ class ModuleDocFragment(object):
         ini:
           - key: callback_result_yaml_line_width
             section: defaults
-        version_added: '2.20'
+        version_added: '2.21'
       pretty_results:
         name: Configure output for readability
         description:
