@@ -2200,30 +2200,11 @@ _mini_six = {
 
 def __getattr__(importable_name):
     """Inject import-time deprecation warnings."""
-    if importable_name == 'datetime':
-        import datetime
-        importable = datetime
-    elif importable_name == 'signal':
-        import signal
-        importable = signal
-    elif importable_name == 'types':
-        import types
-        importable = types
-    elif importable_name == 'chain':
-        from itertools import chain
-        importable = chain
-    elif importable_name == 'repeat':
-        from itertools import repeat
-        importable = repeat
-    elif importable_name == 'map':
-        importable = map
-    elif importable_name == 'shlex_quote':
-        importable = shlex.quote
-    elif (importable := _mini_six.get(importable_name, ...)) is ...:
+    if (importable := _mini_six.get(importable_name, ...)) is ...:
         raise AttributeError(f"module {__name__!r} has no attribute {importable_name!r}")
 
     deprecate(
         msg=f"Importing '{importable_name}' from '{__name__}' is deprecated.",
-        version="2.21",
+        version="2.24",
     )
     return importable
