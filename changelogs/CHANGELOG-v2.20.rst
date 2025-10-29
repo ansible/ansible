@@ -4,6 +4,29 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.0rc3
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-10-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Update default containers.
+- ansible-test - Update the pylint sanity test to pylint 4.0.2.
+
+Bugfixes
+--------
+
+- Windows - ignore temporary file cleanup warning when using AnsibleModule to compile C# utils. This should reduce the number of warnings that can safely be ignored when running PowerShell modules - https://github.com/ansible/ansible/issues/85976
+- config lookup now properly factors in variables and show_origin when checking entries from the global configuration.
+- option argument deprecations now have a proper alternative help text.
+- package_facts - typecast bytes to string while returning facts (https://github.com/ansible/ansible/issues/85937).
+
 v2.20.0rc2
 ==========
 
