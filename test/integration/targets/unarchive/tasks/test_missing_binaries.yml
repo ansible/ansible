@@ -40,7 +40,7 @@
         PATH: "{{ ENV_PATH }}"
       vars:
         ENV_PATH: "{{ ansible_env['PATH']| regex_replace(re, '') }}"
-        re: "[^A-Za-z](\/usr\/bin:?)"
+        re: '[^A-Za-z](\/usr\/bin:?)'
 
     - name: Ensure tasks worked as expected
       assert:
