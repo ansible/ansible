@@ -220,6 +220,7 @@ VALIDATE_COMMON_ARGUMENT = dict(
 COMMON_ARGUMENTS_TO_FRAGMENTS = {
     'FILE_COMMON_ARGUMENTS':   'files',
     'DECRYPT_COMMON_ARGUMENT': 'decrypt',
+    'VALIDATE_COMMON_ARGUMENT': 'validate',
 }
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
