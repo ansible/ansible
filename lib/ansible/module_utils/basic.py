@@ -211,6 +211,12 @@ DECRYPT_COMMON_ARGUMENT = dict(
         ),
 )
 
+VALIDATE_COMMON_ARGUMENT = dict(
+    validate=dict(
+        type='str',
+    ),
+)
+
 COMMON_ARGUMENTS_TO_FRAGMENTS = {
     'FILE_COMMON_ARGUMENTS':   'files',
     'DECRYPT_COMMON_ARGUMENT': 'decrypt',
