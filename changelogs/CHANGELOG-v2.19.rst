@@ -4,6 +4,30 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-10-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Bugfixes
+--------
+
+- Fix issue where play tags prevented executing notified handlers (https://github.com/ansible/ansible/issues/85475)
+- Fix issues with keywords being incorrectly validated on ``import_tasks`` (https://github.com/ansible/ansible/issues/85855, https://github.com/ansible/ansible/issues/85856)
+- Fix traceback when trying to import non-existing file via nested ``import_tasks`` (https://github.com/ansible/ansible/issues/69882)
+- SIGINT/SIGTERM Handling - Make SIGINT/SIGTERM handling more robust by splitting concerns between forks and the parent.
+- Windows - ignore temporary file cleanup warning when using AnsibleModule to compile C# utils. This should reduce the number of warnings that can safely be ignored when running PowerShell modules - https://github.com/ansible/ansible/issues/85976
+- ansible-doc - prevent crash when scanning collections in paths that have more than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909, https://github.com/ansible/ansible/pull/85361).
+- callback plugins - improve consistency accessing the Task object's resolved_action attribute.
+- config lookup now properly factors in variables and show_origin when checking entries from the global configuration.
+- option argument deprecations now have a proper alternative help text.
+- package_facts - typecast bytes to string while returning facts (https://github.com/ansible/ansible/issues/85937).
+- psrp - ReadTimeout exceptions now mark host as unreachable instead of fatal (https://github.com/ansible/ansible/issues/85966)
+
 v2.19.3
 =======
 
