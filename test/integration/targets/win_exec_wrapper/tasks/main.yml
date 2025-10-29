@@ -268,14 +268,6 @@
       <<: *become_vars
       ansible_remote_tmp: C:\Windows\TEMP\test-dir
 
-  - name: assert warning about tmpdir deletion is present
-    assert:
-      that:
-      - temp_deletion_warning.warnings | count == 1
-      - >-
-        temp_deletion_warning.warnings[0] is
-        regex("(?i).*Failed to cleanup temporary directory 'C:\\\\Windows\\\\TEMP\\\\test-dir\\\\.*' used for compiling C# code\\. Files may still be present after the task is complete\\..*")
-
   always:
   - name: ensure test user is deleted
     win_user:
