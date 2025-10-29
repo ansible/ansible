@@ -4,6 +4,20 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-10-29
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Bugfixes
+--------
+
+- ansible-doc - prevent crash when scanning collections in paths that have more than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909, https://github.com/ansible/ansible/pull/85361).
+
 v2.18.10
 ========
 

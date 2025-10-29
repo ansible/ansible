@@ -651,6 +651,22 @@ releases:
     - respawn_os_env.yml
     - run_command_output_selector.yml
     release_date: '2025-09-29'
+  2.18.11rc1:
+    changes:
+      bugfixes:
+      - ansible-doc - prevent crash when scanning collections in paths that have more
+        than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909,
+        https://github.com/ansible/ansible/pull/85361).
+      release_summary: '| Release Date: 2025-10-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.11rc1_summary.yaml
+    - 85361-collection-name-from-path-none.yml
+    release_date: '2025-10-29'
   2.18.1rc1:
     changes:
       bugfixes:
