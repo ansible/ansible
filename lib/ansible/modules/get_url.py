@@ -202,7 +202,6 @@ options:
     version_added: '2.14'
 # informational: requirements for nodes
 extends_documentation_fragment:
-    - files
     - action_common_attributes
 attributes:
     check_mode:

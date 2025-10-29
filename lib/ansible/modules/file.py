@@ -12,7 +12,7 @@ DOCUMENTATION = r"""
 module: file
 version_added: historical
 short_description: Manage files and file properties
-extends_documentation_fragment: [files, action_common_attributes]
+extends_documentation_fragment: [action_common_attributes]
 description:
 - Set attributes of files, directories, or symlinks and their targets.
 - Alternatively, remove files, symlinks or directories.

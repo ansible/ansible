@@ -118,8 +118,6 @@ options:
     type: str
     version_added: '2.5'
 extends_documentation_fragment:
-    - decrypt
-    - validate
     - action_common_attributes
     - action_common_attributes.files
     - action_common_attributes.flow
@@ -292,7 +290,7 @@ import stat
 import tempfile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT
 
 
 class AnsibleModuleError(Exception):
@@ -471,14 +469,13 @@ def main():
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True),
-            validate=dict(type='str'),
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool', default=False),
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
         ),
-        extends_common_args=(FILE_COMMON_ARGUMENTS,),
+        extends_common_args=(FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT),
         supports_check_mode=True,
     )
 

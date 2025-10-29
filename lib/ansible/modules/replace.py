@@ -14,8 +14,6 @@ author: Evan Kaufman (@EvanK)
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
-    - files
-    - validate
 attributes:
     check_mode:
         support: full
@@ -184,7 +182,7 @@ import re
 import tempfile
 
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT
 
 
 def write_changes(module, contents, path, encoding='utf-8'):
@@ -229,10 +227,9 @@ def main():
             after=dict(type='str'),
             before=dict(type='str'),
             backup=dict(type='bool', default=False),
-            validate=dict(type='str'),
             encoding=dict(type='str', default='utf-8'),
         ),
-        extends_common_args=(FILE_COMMON_ARGUMENTS,),
+        extends_common_args=(FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT),
         supports_check_mode=True,
     )
 

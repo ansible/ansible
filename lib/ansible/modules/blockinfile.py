@@ -118,8 +118,6 @@ notes:
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
-    - files
-    - validate
 attributes:
     check_mode:
         support: full
@@ -200,7 +198,7 @@ import re
 import os
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT
 from ansible.module_utils.common.text.converters import to_native
 
 
@@ -249,7 +247,6 @@ def main():
             insertbefore=dict(type='str'),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
-            validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
             append_newline=dict(type='bool', default=False),
@@ -257,7 +254,7 @@ def main():
             encoding=dict(type='str', default='utf-8'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
-        extends_common_args=(FILE_COMMON_ARGUMENTS,),
+        extends_common_args=(FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT),
         supports_check_mode=True
     )
     params = module.params

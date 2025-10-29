@@ -359,7 +359,6 @@ options:
 
 extends_documentation_fragment:
     - action_common_attributes
-    - files
 attributes:
     check_mode:
         support: full
@@ -586,7 +585,7 @@ def main():
             ["state", "present", ["description"]],
         ],
         argument_spec=argument_spec,
-        extends_common_args=FILE_COMMON_ARGUMENTS,
+        extends_common_args=(FILE_COMMON_ARGUMENTS,),
         supports_check_mode=True,
     )
 
