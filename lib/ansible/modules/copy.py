@@ -290,7 +290,7 @@ import stat
 import tempfile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT
+from ansible.module_utils.basic import AnsibleModule, FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT, DECRYPT_COMMON_ARGUMENT
 
 
 class AnsibleModuleError(Exception):
@@ -475,7 +475,7 @@ def main():
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
         ),
-        extends_common_args=(FILE_COMMON_ARGUMENTS, VALIDATE_COMMON_ARGUMENT),
+        extends_common_args=(FILE_COMMON_ARGUMENTS, DECRYPT_COMMON_ARGUMENT, VALIDATE_COMMON_ARGUMENT),
         supports_check_mode=True,
     )
 
