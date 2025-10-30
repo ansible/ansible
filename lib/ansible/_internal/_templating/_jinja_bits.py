@@ -496,6 +496,14 @@ def create_template_error(ex: Exception, variable: t.Any, is_expression: bool) -
         if isinstance(ex, RecursionError):
             msg = f"Recursive loop detected in {kind}."
         elif isinstance(ex, TemplateSyntaxError):
+            if (origin := Origin.get_tag(variable)) and origin.line_num is None and ex.lineno > 0:
+                # When there is an origin without a line number, use the line number provided by the Jinja syntax error.
+                # This should only occur on templates which represent the entire contents of a file.
+                # Templates loaded from within a file, such as YAML, will use the existing origin.
+                # It's not possible to combine origins here, due to potential layout differences between the original content and the parsed output.
+                # This can happen, for example, with YAML multi-line strings.
+                variable = origin.replace(line_num=ex.lineno, col_num=None).tag(variable)
+
             msg = f"Syntax error in {kind}."
 
             if is_expression and is_possibly_template(variable):
