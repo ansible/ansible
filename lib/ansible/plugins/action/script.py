@@ -25,7 +25,6 @@ import typing as _t
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.basic import DECRYPT_COMMON_ARGUMENT
 from ansible.plugins.action import ActionBase
 
 
