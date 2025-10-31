@@ -14,7 +14,7 @@
       dest: "{{ repo_path }}/pyproject.toml"
       content: |
         [build-system]
-        requires = ["setuptools >= 61.0"]
+        requires = ["setuptools == 61.0"]
         build-backend = "setuptools.build_meta"
 
         [project]
@@ -27,7 +27,7 @@
       dest: "{{ repo_path }}/dummy-root/dummy-subdirectory/pyproject.toml"
       content: |
         [build-system]
-        requires = ["setuptools >= 61.0"]
+        requires = ["setuptools == 61.0"]
         build-backend = "setuptools.build_meta"
 
         [project]
@@ -48,6 +48,8 @@
       - git -c user.name="Ansible Test" -c user.email="ansible@ansible.ansible" commit -m "First commit"
 
 - name: Setup venvs
+  # We test for correct handling of vcs packages only in pip versions >= 24.1
+  # Despite dry-run being added in 22.2, it fails in several cases until 24.1
   vars:
     modern_pip_venv_version: "25.2"
     outdated_pip_venv_version: "24.0"
@@ -67,9 +69,6 @@
         name: pip=={{outdated_pip_venv_version}}
         virtualenv: "{{ outdated_pip_venv_path }}"
 
-# Test for correct handling of vcs packages in pip versions >= 24.1
-# Despite dry-run being added in 22.2, it fails in several cases until
-# version 24.1
 - name: Check vcs package installation and checking functionality
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
@@ -150,8 +149,7 @@
         - check_file_install_root is not changed
         - check_file_install_subdirectory is changed
 
-# This tests for default behavior in the unsupported versions
-# of pip (<24.1)
+# This tests for default behavior in the outdated versions of pip
 - name: Check for failure in handling vcs packages with outdated pip
   vars:
     repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
