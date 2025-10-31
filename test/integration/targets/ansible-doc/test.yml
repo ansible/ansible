@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: true
+  gather_facts: false
   environment:
     ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
     ANSIBLE_NOCOLOR: 1
