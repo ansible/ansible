@@ -17,9 +17,7 @@
 
     - name: redirect stdout and stderr to file
       ansible.builtin.shell: |
-        ansible-doc test_docs &> {{ temp_file.path }}
-      args:
-        executable: "{{ ansible_facts.user_shell }}"
+        ansible-doc test_docs > {{ temp_file.path }} 2>&1
       environment:
         ANSIBLE_DEPRECATION_WARNINGS: 0
         ANSIBLE_DEVEL_WARNING: 0
