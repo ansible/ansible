@@ -19,13 +19,11 @@
       ansible.builtin.shell: |
         ansible-doc test_docs &> {{ temp_file.path }}
       args:
-        executable: "{{ ansible_user_shell }}"
+        executable: "{{ ansible_facts.user_shell }}"
       environment:
         ANSIBLE_DEPRECATION_WARNINGS: 0
         ANSIBLE_DEVEL_WARNING: 0
-        ANSIBLE_DOC_FRAGMENT_PLUGINS: "{{ playbook_dir }}/doc_fragments"
         ANSIBLE_FORCE_COLOR: 0
-        ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
         ANSIBLE_NOCOLOR: 0
 
     - name: assert that file does not contain ansi escape sequences
