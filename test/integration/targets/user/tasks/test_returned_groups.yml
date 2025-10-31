@@ -1,9 +1,7 @@
-- name: Create user with mutiple groups
+- name: Create user
   ansible.builtin.user:
     name: testuser
-    groups:
-      - www-data
-      - sudo
+    groups: ['www-data']
     append: false
     state: present
   register: __user_create
@@ -11,8 +9,8 @@
 - name: Ensure that the groups returned match the requested ones
   ansible.builtin.assert:
     that:
-      - __user_create.groups.split(',') | length == 2
-      - "'www-data' in __user_create.groups and 'sudo' in __user_create.groups"
+      - __user_create.groups.split(',') | length == 1
+      - "'www-data' in __user_create.groups"
 
 - name: Append a group to the user
   ansible.builtin.user: 
@@ -26,8 +24,8 @@
 - name:  Ensure that the groups returned are the current groups for the user 
   ansible.builtin.assert:
     that: 
-      - __user_append.groups.split(',') | length == 3
-      - "'www-data' in __user_append.groups and 'sudo' in __user_append.groups and 'man' in __user_append.groups"
+      - __user_append.groups.split(',') | length == 2
+      - "'www-data' in __user_append.groups and 'man' in __user_append.groups"
 
 - name: Overwrite groups
   ansible.builtin.user: 

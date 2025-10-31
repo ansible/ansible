@@ -904,7 +904,6 @@ class User(object):
         has_append = self._check_usermod_append()
 
         current_groups = self.user_group_membership(exclude_primary=False)
-    
         if self.groups is None or self.append:
             self.current_groups = current_groups
 
@@ -3402,12 +3401,10 @@ def main():
         result['group'] = info[3]
         result['comment'] = info[4]
         result['home'] = info[5]
-        result['shell'] = info[6]
-        
+        result['shell'] = info[6]       
         groups = set(user.current_groups)
         if (user.groups is not None):
             groups.update(user.groups.split(','))
-        
         result['groups'] = ','.join(list(groups))
 
         # handle missing homedirs
