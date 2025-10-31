@@ -629,10 +629,6 @@ def _resolve_package_names(
     # package names if pip is outdated.
     pip_dep = _get_package_info(module, "pip", python_bin)
 
-    if not pip_dep:
-        module.warn("Could not determine pip version, check mode may not behave as expected")
-        return package_list
-
     installed_pip = LooseVersion(pip_dep.split('==')[1])
     minimum_pip = LooseVersion("24.1")
 
@@ -642,7 +638,7 @@ def _resolve_package_names(
 
     with tempfile.NamedTemporaryFile() as tmp_file:
         module.run_command(
-            [*pip, 'install', '--dry-run', '--ignore-installed', '--report', tmp_file.name, *(str(pkg) for pkg in pkgs_to_resolve)],
+            [*pip, 'install', '--dry-run', '--ignore-installed', f'--report={tmp_file.name}', *(str(pkg) for pkg in pkgs_to_resolve)],
             check_rc=True,
         )
         report = json.load(tmp_file)
