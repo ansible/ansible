@@ -604,6 +604,7 @@ class User(object):
         self.expires = None
         self.password_lock = module.params['password_lock']
         self.groups = None
+        self.current_groups = []
         self.local = module.params['local']
         self.profile = module.params['profile']
         self.authorization = module.params['authorization']
@@ -902,6 +903,11 @@ class User(object):
         info = self.user_info()
         has_append = self._check_usermod_append()
 
+        current_groups = self.user_group_membership(exclude_primary=False)
+    
+        if self.groups is None or self.append:
+            self.current_groups = current_groups
+
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
             cmd.append(self.uid)
@@ -919,7 +925,6 @@ class User(object):
 
         if self.groups is not None:
             # get a list of all groups for the user, including the primary
-            current_groups = self.user_group_membership(exclude_primary=False)
             groups_need_mod = False
             groups = []
 
@@ -3398,8 +3403,12 @@ def main():
         result['comment'] = info[4]
         result['home'] = info[5]
         result['shell'] = info[6]
-        if user.groups is not None:
-            result['groups'] = user.groups
+        
+        groups = set(user.current_groups)
+        if (user.groups is not None):
+            groups.update(user.groups.split(','))
+        
+        result['groups'] = ','.join(list(groups))
 
         # handle missing homedirs
         info = user.user_info()

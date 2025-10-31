@@ -1,0 +1,65 @@
+- name: Create user with mutiple groups
+  ansible.builtin.user:
+    name: testuser
+    groups:
+      - www-data
+      - sudo
+    append: false
+    state: present
+  register: __user_create
+
+- name: Ensure that the groups returned match the requested ones
+  ansible.builtin.assert:
+    that:
+      - __user_create.groups.split(',') | length == 2
+      - "'www-data' in __user_create.groups and 'sudo' in __user_create.groups"
+
+- name: Append a group to the user
+  ansible.builtin.user: 
+    name: testuser
+    groups:
+      - man
+    append: true
+    state: present
+  register: __user_append
+
+- name:  Ensure that the groups returned are the current groups for the user 
+  ansible.builtin.assert:
+    that: 
+      - __user_append.groups.split(',') | length == 3
+      - "'www-data' in __user_append.groups and 'sudo' in __user_append.groups and 'man' in __user_append.groups"
+
+- name: Overwrite groups
+  ansible.builtin.user: 
+    name: testuser
+    groups: ['disk']
+    append: false
+  register: __overwrite_state
+
+- name: Ensure that old groups are removed
+  ansible.builtin.assert:
+    that: 
+      - __overwrite_state.groups.split(',') | length == 1
+      - "'disk' in __overwrite_state.groups"
+
+- name: Get user info 
+  ansible.builtin.user:
+    name: testuser 
+    state: present
+  register: __user_info
+
+- name: Ensure that the current groups are returned
+  ansible.builtin.assert:
+    that: 
+      - __user_info.groups.split(',') | length == 1
+      - "'disk' in __user_info.groups"
+
+- name: Delete user 
+  ansible.builtin.user: 
+    name: testuser
+    state: absent
+  register: __remove_user
+
+- name: Ensure groups are not returned 
+  ansible.builtin.assert:
+    that: __remove_user.groups is not defined or __remove_user.groups == ''
