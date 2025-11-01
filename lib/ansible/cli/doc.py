@@ -423,7 +423,7 @@ def _format(string, *args):
         if style not in ref_style and style.upper() not in STYLE and style not in C.COLOR_CODES:
             raise KeyError("Invalid format value supplied: %s" % style)
 
-        if C.ANSIBLE_NOCOLOR or not ANSIBLE_COLOR:
+        if not ANSIBLE_COLOR:
             # ignore most styles, but some already had 'identifier strings'
             if style in NOCOLOR:
                 string = NOCOLOR[style] % string
