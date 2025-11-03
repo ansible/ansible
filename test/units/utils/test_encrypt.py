@@ -6,6 +6,7 @@ from __future__ import annotations
 import warnings
 
 import pytest
+from pytest_mock import MockerFixture
 
 from ansible.errors import AnsibleError
 
@@ -251,11 +252,11 @@ def test_passlib_bcrypt_salt(recwarn):
     assert result == expected
 
 
-def test_do_encrypt_no_lib(mocker):
+def test_do_encrypt_no_lib(mocker: MockerFixture) -> None:
     """Test AnsibleError is raised when no encryption library is installed."""
     mocker.patch('ansible.utils.encrypt.HAS_CRYPT', False)
     mocker.patch('ansible.utils.encrypt.PASSLIB_AVAILABLE', False)
-    with pytest.raises(AnsibleError, match=r"Unable to encrypt nor hash, either libxcrypt \(recommended\), crypt, or passlib must be installed."):
+    with pytest.raises(AnsibleError, match=r"Unable to encrypt nor hash, either libxcrypt \(recommended\), crypt, or passlib must be installed\."):
         encrypt.do_encrypt("123", "sha256_crypt", salt="12345678")
 
 
@@ -266,18 +267,18 @@ class TestCryptHash:
     through integration tests, but necessary for more complete code coverage.
     """
 
-    def test_invalid_instantiation(self, mocker):
+    def test_invalid_instantiation(self, mocker: MockerFixture) -> None:
         """Should not be able to instantiate a CryptHash class without libxcrypt/libcrypt."""
         mocker.patch('ansible.utils.encrypt.HAS_CRYPT', False)
-        with pytest.raises(AnsibleError, match=r"crypt cannot be used as the 'libxcrypt' library is not installed or is unusable."):
+        with pytest.raises(AnsibleError, match=r"crypt cannot be used as the 'libxcrypt' library is not installed or is unusable\."):
             encrypt.CryptHash("sha256_crypt")
 
-    def test_ansible_unsupported_algorithm(self):
+    def test_ansible_unsupported_algorithm(self) -> None:
         """Test AnsibleError is raised when Ansible does not support requested algorithm."""
         with pytest.raises(AnsibleError, match=r"crypt does not support 'foo' algorithm"):
             encrypt.CryptHash("foo")
 
-    def test_library_unsupported_algorithm(self, mocker):
+    def test_library_unsupported_algorithm(self, mocker: MockerFixture) -> None:
         """Test AnsibleError is raised when crypt library does not support an Ansible supported algorithm."""
         # Pretend we have a crypt lib that doesn't like our algo
         mocker.patch('ansible.utils.encrypt.HAS_CRYPT', True)
@@ -296,8 +297,8 @@ class TestPasslibHash:
     These tests are hitting code paths that are otherwise impossible to reach
     through integration tests, but necessary for more complete code coverage."""
 
-    def test_invalid_instantiation(self, mocker):
+    def test_invalid_instantiation(self, mocker: MockerFixture) -> None:
         """Should not be able to instantiate a PasslibHash class without passlib."""
         mocker.patch('ansible.utils.encrypt.PASSLIB_AVAILABLE', False)
-        with pytest.raises(AnsibleError, match=r"The passlib Python package must be installed to hash with the 'sha256_crypt' algorithm."):
+        with pytest.raises(AnsibleError, match=r"The passlib Python package must be installed to hash with the 'sha256_crypt' algorithm\."):
             encrypt.PasslibHash("sha256_crypt")
