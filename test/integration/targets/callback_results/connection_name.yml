@@ -1,0 +1,37 @@
+- hosts: testhost
+  gather_facts: no
+  vars:
+    ansible_connection: '{{ "ansible.legacy.local" }}'  # use a templated value with the non-canonical name of the connection; this should resolve to `ansible.builtin.local`
+  name: validate that task.connection is always overwritten with the templated and resolved name of the connection
+  tasks:
+    - name: execute a successful non-loop task with the local connection
+      raw: echo hi
+
+    - name: execute a failing non-loop task with the local connection
+      raw: exit 1
+      ignore_errors: true
+
+    - name: execute a successful looped task with the local connection
+      raw: echo hi {{ item }}
+      loop: [1]
+
+    - name: execute a failing looped task with the local connection
+      raw: echo hi {{ item }}; exit 1
+      ignore_errors: true
+      loop: [1]
+
+    - name: execute a successful async task with the local connection
+      command: echo hi
+      async: 5
+      poll: 1
+
+    - name: execute a failing async task with the local connection
+      command: exit 1
+      async: 5
+      poll: 1
+
+    - name: execute a looped async task with the local connection
+      command: echo hi {{ item }}
+      async: 5
+      poll: 1
+      loop: [1]

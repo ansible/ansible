@@ -31,6 +31,7 @@ from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.connection import write_to_stream
 from ansible.playbook.task import Task
 from ansible.plugins import get_plugin_class
+from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible._internal._templating._jinja_plugins import _invoke_lookup, _DirectCall
 from ansible._internal._templating._engine import TemplateEngine
@@ -318,6 +319,9 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
+            # loop item task copies got connection field updated already; this updates the original outer task
+            self._update_task_connection()
+
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
@@ -340,10 +344,6 @@ class TaskExecutor:
                     'failed': True,
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
-
-            # if plugin is loaded, get resolved name, otherwise leave original task connection
-            if self._connection and not isinstance(self._connection, str):
-                task_fields['connection'] = getattr(self._connection, 'ansible_name')
 
             tr = _RawTaskResult(
                 host=self._host,
@@ -447,6 +447,18 @@ class TaskExecutor:
             result.update(deprecations=deprecation_warnings)
 
         return result
+
+    def _update_task_connection(self, task: Task | None = None) -> None:
+        """If a connection plugin is loaded, ensure the resolved name is propagated back to the controller as the task's connection."""
+
+        if not task:
+            task = self._task
+
+        # FUTURE: What value should be reported when there is no connection?
+        #         This is currently not possible, but it should be.
+
+        if isinstance(self._connection, ConnectionBase):
+            task.connection = self._connection.ansible_name
 
     def _execute_internal(self, templar: TemplateEngine, variables: dict[str, t.Any]) -> dict[str, t.Any]:
         """
@@ -602,6 +614,9 @@ class TaskExecutor:
 
         # get handler
         self._handler, _module_context = self._get_action_handler_with_module_context(templar=templar)
+
+        # self._connection should have its final value for this task/loop-item by this point; record on the task object
+        self._update_task_connection()
 
         retries = 1  # includes the default actual run + retries set by user/default
         if self._task.retries is not None:
@@ -865,6 +880,9 @@ class TaskExecutor:
             check_mode=self._task.check_mode,
             environment=self._task.environment,
         ))
+
+        # ensure that the synthetic async task has the resolved connection recorded on it
+        self._update_task_connection(async_task)
 
         # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
