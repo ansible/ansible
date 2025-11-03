@@ -793,7 +793,7 @@ def integration_environment(
     host_state: HostState,
 ) -> dict[str, str]:
     """Return a dictionary of environment variables to use when running the given integration test target."""
-    env = ansible_environment(args, ansible_config=ansible_config)
+    env = ansible_environment(args)
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
 
