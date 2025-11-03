@@ -128,8 +128,6 @@ class LookupModule(LookupBase):
                         pass
                     case 'warn':
                         self._display.error_as_warning(msg=f"Skipping {term}.", exception=e)
-                    case _:
-                        raise AnsibleError(f"Invalid option for error handling, missing must be error, warn or skip, got: {missing}.") from e
 
             if result is not Sentinel:
                 if show_origin:
