@@ -802,6 +802,12 @@ class Dnf5Module(YumDnf):
                         failures=[],
                         rc=1,
                     )
+                elif result == libdnf5.base.Transaction.TransactionRunResult_ERROR_RPM_RUN:
+                    self.module.fail_json(
+                        msg=f"Failed to install RPM: {','.join(transaction.get_rpm_messages())}",
+                        failures=[],
+                        rc=1,
+                    )
                 elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",

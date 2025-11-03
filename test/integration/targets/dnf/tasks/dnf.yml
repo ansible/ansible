@@ -618,6 +618,21 @@
         - "not dnf_result is changed"
         - "dnf_result is failed"
 
+- name: try to install an RPM with error in scriptlet
+  dnf:
+    name: https://github.com/Akasurde/ansible_pull_test_repo/raw/refs/heads/main/broken-scriptlet-test-1.0-1.noarch.rpm
+    state: present
+    disable_gpg_check: true
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify that dnf failed
+  assert:
+    that:
+        - "not dnf_result is changed"
+        - "dnf_result is failed"
+        - ansible_facts["pkg_mgr"] == "dnf5" and "'Failed to install RPM:' in dnf_result.msg"
+
 # setup for testing installing an RPM from local file
 
 - set_fact:
