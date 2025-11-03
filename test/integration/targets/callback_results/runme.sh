@@ -13,14 +13,13 @@ ansible-playbook "$@" -i ../../inventory task_name.yml | tee "${OUTFILE}"
 echo "Grepping for ${EXPECTED_REGEX} in stdout."
 grep -e "${EXPECTED_REGEX}" "${OUTFILE}"
 
-# test connection tracking
-EXPECTED_CONNECTION='{"testhost":{"ssh":4}}'
-OUTPUT_TAIL=$(tail -n5 ${OUTFILE} | tr -d '[:space:]')
-echo "Checking for connection string ${OUTPUT_TAIL} in stdout."
-[ "${EXPECTED_CONNECTION}" == "${OUTPUT_TAIL}" ]
-echo $?
-
 # check variables are interpolated in 'started'
 UNTEMPLATED_STARTED="^.*\[started .*{{.*}}.*$"
 echo "Checking we dont have untemplated started in stdout."
-grep -e "${UNTEMPLATED_STARTED}" "${OUTFILE}" || exit 0
+if grep -e "${UNTEMPLATED_STARTED}" "${OUTFILE}"; then
+  exit 1
+fi
+
+# test connection tracking
+ANSIBLE_CALLBACKS_ENABLED=track_connections ansible-playbook "$@" -i ../../inventory connection_name.yml | tee "${OUTFILE}"
+grep "FOUND EXPECTED EVENTS" "${OUTFILE}"
