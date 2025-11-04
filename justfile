@@ -8,6 +8,10 @@ test_unit_ansible_doc: start_docker
 	source hacking/env-setup && \
 		ansible-test units --docker -v test/units/cli/test_doc.py
 
+test_int_alpine: start_docker
+	source hacking/env-setup && \
+		time ansible-test integration --docker alpine322 -v
+
 [working-directory("test/integration/targets/ansible-doc")]
 test_int_ansible_doc: start_docker
 	source ../../../../hacking/env-setup && \
