@@ -202,13 +202,14 @@ class Inventory:
     def write(self, args: CommonConfig, path: str) -> None:
         """Write the given inventory to the specified path on disk."""
 
-        inventory_data: dict[str, t.Any] = dict()
+        inventory_data: dict[str, dict[str, dict[str, dict[str, object]]]] = dict()
+
         for group, hosts in self.host_groups.items():
-            group_data: dict[str, t.Any] = inventory_data.setdefault(group, dict())
-            hosts_data: dict[str, t.Any] = group_data.setdefault('hosts', dict())
+            group_data = inventory_data.setdefault(group, dict())
+            hosts_data = group_data.setdefault('hosts', dict())
 
             for host, variables in hosts.items():
-                host_entry: dict[str, t.Any] = hosts_data.setdefault(host, dict())
+                host_entry = hosts_data.setdefault(host, dict())
                 host_entry.update(variables)
 
         for group, children in (self.extra_groups or {}).items():
