@@ -651,6 +651,17 @@ releases:
     - respawn_os_env.yml
     - run_command_output_selector.yml
     release_date: '2025-09-29'
+  2.18.11:
+    changes:
+      release_summary: '| Release Date: 2025-11-04
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.11_summary.yaml
+    release_date: '2025-11-04'
   2.18.11rc1:
     changes:
       bugfixes:
