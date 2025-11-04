@@ -1,0 +1,4 @@
+deprecated_features:
+  - The ``get_platfrom()`` function from ``ansible.module_utils.basic`` is deprecated and will be removed in ansible-core 2.24. Use ``platform.system()`` from the Python standard library instead.
+  - The ``load_platform_subclass()`` function from ``ansible.module_utils.basic`` is deprecated and will be removed in ansible-core 2.24. Use ``get_platform_subclass()`` from ``ansible.module_utils.common.sys_info`` instead.
+  - The ``get_all_subclasses()`` function from ``ansible.module_utils.basic`` is deprecated and will be removed in ansible-core 2.24. Use ``get_all_subclasses()`` from ``ansible.module_utils.common._utils`` instead.

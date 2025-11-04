@@ -212,40 +212,38 @@ USERS_RE = re.compile(r'^[ugo]+$')
 PERMS_RE = re.compile(r'^[rwxXstugo]*$')
 
 
-#
-# Deprecated functions
-#
-
 def get_platform():
     """
-    **Deprecated** Use :py:func:`platform.system` directly.
-
     :returns: Name of the platform the module is running on in a native string
 
     Returns a native string that labels the platform ("Linux", "Solaris", etc). Currently, this is
     the result of calling :py:func:`platform.system`.
     """
+    deprecate(
+        msg="The `get_platfrom()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.24",
+        help_text="Use `platform.system()` from the Python standard library instead.",
+    )
     return platform.system()
 
-# End deprecated functions
-
-
-#
-# Compat shims
-#
 
 def load_platform_subclass(cls, *args, **kwargs):
-    """**Deprecated**: Use ansible.module_utils.common.sys_info.get_platform_subclass instead"""
+    deprecate(
+        msg="The `load_platform_subclass()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.24",
+        help_text="Use `get_platform_subclass()` from `ansible.module_utils.common.sys_info` instead.",
+    )
     platform_cls = get_platform_subclass(cls)
     return super(cls, platform_cls).__new__(platform_cls)
 
 
 def get_all_subclasses(cls):
-    """**Deprecated**: Use ansible.module_utils.common._utils.get_all_subclasses instead"""
+    deprecate(
+        msg="The `get_all_subclasses()` function from `ansible.module_utils.basic` is deprecated.",
+        version="2.24",
+        help_text="Use `get_all_subclasses()` from `ansible.module_utils.common._utils` instead.",
+    )
     return list(_get_all_subclasses(cls))
-
-
-# End compat shims
 
 
 def heuristic_log_sanitize(data, no_log_values=None):
