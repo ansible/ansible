@@ -631,12 +631,8 @@
     that:
         - "not dnf_result is changed"
         - "dnf_result is failed"
-
-- name: verify that dnf5 failed with the correct message
-  assert:
-    that:
-        - "'Failed to install RPM:' in dnf_result.msg"
-    when: ansible_facts["pkg_mgr"] == "dnf5"
+        - "'Failed to install some' in dnf_results.msg"
+        - dnf_results.failures | length > 0
 
 # setup for testing installing an RPM from local file
 
