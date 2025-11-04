@@ -14,7 +14,7 @@
       dest: "{{ repo_path }}/pyproject.toml"
       content: |
         [build-system]
-        requires = ["setuptools == 61.0"]
+        requires = ["setuptools == 80.0.0"]
         build-backend = "setuptools.build_meta"
 
         [project]
@@ -27,7 +27,7 @@
       dest: "{{ repo_path }}/dummy-root/dummy-subdirectory/pyproject.toml"
       content: |
         [build-system]
-        requires = ["setuptools == 61.0"]
+        requires = ["setuptools == 80.0.0"]
         build-backend = "setuptools.build_meta"
 
         [project]
