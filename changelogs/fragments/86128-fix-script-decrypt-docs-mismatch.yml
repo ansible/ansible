@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - script - remove the currently unsupported ``decrypt`` argument from the script module documentation - https://github.com/ansible/ansible/issues/86067
