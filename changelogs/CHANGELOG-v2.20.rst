@@ -4,102 +4,13 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
-v2.20.0rc3
-==========
+v2.20.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2025-10-29
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
-
-Minor Changes
--------------
-
-- ansible-test - Update default containers.
-- ansible-test - Update the pylint sanity test to pylint 4.0.2.
-
-Bugfixes
---------
-
-- Windows - ignore temporary file cleanup warning when using AnsibleModule to compile C# utils. This should reduce the number of warnings that can safely be ignored when running PowerShell modules - https://github.com/ansible/ansible/issues/85976
-- config lookup now properly factors in variables and show_origin when checking entries from the global configuration.
-- option argument deprecations now have a proper alternative help text.
-- package_facts - typecast bytes to string while returning facts (https://github.com/ansible/ansible/issues/85937).
-
-v2.20.0rc2
-==========
-
-Release Summary
----------------
-
-| Release Date: 2025-10-20
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
-
-Bugfixes
---------
-
-- psrp - ReadTimeout exceptions now mark host as unreachable instead of fatal (https://github.com/ansible/ansible/issues/85966)
-
-v2.20.0rc1
-==========
-
-Release Summary
----------------
-
-| Release Date: 2025-10-14
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
-
-Minor Changes
--------------
-
-- ansible-test - Default to Python 3.14 in the ``base`` and ``default`` test containers.
-- ansible-test - Filter out pylint messages for invalid filenames and display a notice when doing so.
-- ansible-test - Update astroid imports in custom pylint checkers.
-- ansible-test - Update pinned ``pip`` version to 25.2.
-- ansible-test - Update pinned sanity test requirements, including upgrading to pylint 4.0.0.
-
-Bugfixes
---------
-
-- SIGINT/SIGTERM Handling - Make SIGINT/SIGTERM handling more robust by splitting concerns between forks and the parent.
-
-v2.20.0b2
-=========
-
-Release Summary
----------------
-
-| Release Date: 2025-10-06
-| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
-
-Minor Changes
--------------
-
-- DataLoader - Update ``DataLoader.get_basedir`` to be an abspath
-- known_hosts - return rc and stderr when ssh-keygen command fails for further debugging (https://github.com/ansible/ansible/issues/85850).
-
-Removed Features (previously deprecated)
-----------------------------------------
-
-- ansible-galaxy - remove support for resolvelib >= 0.5.3, < 0.8.0.
-
-Bugfixes
---------
-
-- Fix issue where play tags prevented executing notified handlers (https://github.com/ansible/ansible/issues/85475)
-- Fix issues with keywords being incorrectly validated on ``import_tasks`` (https://github.com/ansible/ansible/issues/85855, https://github.com/ansible/ansible/issues/85856)
-- Fix traceback when trying to import non-existing file via nested ``import_tasks`` (https://github.com/ansible/ansible/issues/69882)
-- ansible-doc - prevent crash when scanning collections in paths that have more than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909, https://github.com/ansible/ansible/pull/85361).
-- fetch - also return ``file`` in the result when changed is ``True`` (https://github.com/ansible/ansible/pull/85729).
-
-v2.20.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2025-09-23
+| Release Date: 2025-11-04
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
 
 Major Changes
@@ -115,20 +26,28 @@ Minor Changes
 - Add tech preview play argument spec validation, which can be enabled by setting the play keyword ``validate_argspec`` to ``True`` or the name of an argument spec. When ``validate_argspec`` is set to ``True``, a play ``name`` is required and used as the argument spec name. When enabled, the argument spec is loaded from a file matching the pattern <playbook_name>.meta.yml. At minimum, this file should contain ``{"argument_specs": {"name": {"options": {}}}}``, where "name" is the name of the play or configured argument spec.
 - Added Univention Corporate Server as a part of Debian OS distribution family (https://github.com/ansible/ansible/issues/85490).
 - AnsibleModule - Add temporary internal monkeypatch-able hook to alter module result serialization by splitting serialization from ``_return_formatted`` into ``_record_module_result``.
+- DataLoader - Update ``DataLoader.get_basedir`` to be an abspath
 - Python type hints applied to ``to_text`` and ``to_bytes`` functions for better type hint interactions with code utilizing these functions.
 - ansible now warns if you use reserved tags that were only meant for selection and not for use in play.
 - ansible-doc - Return a more verbose error message when the ``description`` field is missing.
 - ansible-doc - show ``notes``, ``seealso``, and top-level ``version_added`` for role entrypoints (https://github.com/ansible/ansible/pull/81796).
 - ansible-doc adds support for RETURN documentation to support doc fragment plugins
+- ansible-test - Default to Python 3.14 in the ``base`` and ``default`` test containers.
+- ansible-test - Filter out pylint messages for invalid filenames and display a notice when doing so.
 - ansible-test - Implement new authentication methods for accessing the Ansible Core CI service.
 - ansible-test - Improve formatting of generated coverage config file.
 - ansible-test - Removed support for automatic provisioning of obsolete instances for network-integration tests.
 - ansible-test - Replace FreeBSD 14.2 with 14.3.
 - ansible-test - Replace RHEL 9.5 with 9.6.
 - ansible-test - Update Ubuntu containers.
+- ansible-test - Update astroid imports in custom pylint checkers.
 - ansible-test - Update base/default containers to include Python 3.14.0.
+- ansible-test - Update default containers.
+- ansible-test - Update pinned ``pip`` version to 25.2.
+- ansible-test - Update pinned sanity test requirements, including upgrading to pylint 4.0.0.
 - ansible-test - Update pinned sanity test requirements.
 - ansible-test - Update test containers.
+- ansible-test - Update the pylint sanity test to pylint 4.0.2.
 - ansible-test - Upgrade Alpine 3.21 to 3.22.
 - ansible-test - Upgrade Fedora 41 to Fedora 42.
 - ansible-test - Upgrade to ``coverage`` version 7.10.7 for Python 3.9 and later.
@@ -141,6 +60,7 @@ Minor Changes
 - fetch_file - add ca_path and cookies parameter arguments (https://github.com/ansible/ansible/issues/85172).
 - include_vars - Raise an error if 'extensions' is not specified as a list.
 - include_vars - Raise an error if 'ignore_files' is not specified as a list.
+- known_hosts - return rc and stderr when ssh-keygen command fails for further debugging (https://github.com/ansible/ansible/issues/85850).
 - lineinfile - add new module option ``encoding`` to support files in encodings other than UTF-8 (https://github.com/ansible/ansible/pull/84999).
 - regex - Document the match_type fullmatch.
 - regex - Ensure that match_type is one of match, fullmatch, or search (https://github.com/ansible/ansible/pull/85629).
@@ -173,6 +93,7 @@ Removed Features (previously deprecated)
 - Removed the option to set the ``DEFAULT_TRANSPORT`` configuration to ``smart`` that selects the default transport as either ``ssh`` or ``paramiko`` based on the underlying platform configuraton.
 - ``vault``/``unvault`` filters - remove the deprecated ``vaultid`` parameter.
 - ansible-doc - role entrypoint attributes are no longer shown
+- ansible-galaxy - remove support for resolvelib >= 0.5.3, < 0.8.0.
 - ansible-galaxy - removed the v2 Galaxy server API. Galaxy servers hosting collections must support v3.
 - dnf/dnf5 - remove deprecated ``install_repoquery`` option.
 - encrypt - remove deprecated passlib_or_crypt API.
@@ -185,10 +106,16 @@ Bugfixes
 --------
 
 - Do not re-add ``tags`` on blocks from within ``import_tasks``.
+- Fix issue where play tags prevented executing notified handlers (https://github.com/ansible/ansible/issues/85475)
+- Fix issues with keywords being incorrectly validated on ``import_tasks`` (https://github.com/ansible/ansible/issues/85855, https://github.com/ansible/ansible/issues/85856)
+- Fix traceback when trying to import non-existing file via nested ``import_tasks`` (https://github.com/ansible/ansible/issues/69882)
+- SIGINT/SIGTERM Handling - Make SIGINT/SIGTERM handling more robust by splitting concerns between forks and the parent.
 - The ``ansible_failed_task`` variable is now correctly exposed in a rescue section, even when a failing handler is triggered by the ``flush_handlers`` task in the corresponding ``block`` (https://github.com/ansible/ansible/issues/85682)
+- Windows - ignore temporary file cleanup warning when using AnsibleModule to compile C# utils. This should reduce the number of warnings that can safely be ignored when running PowerShell modules - https://github.com/ansible/ansible/issues/85976
 - Windows async - Handle running PowerShell modules with trailing data after the module result
 - ``ansible-galaxy collection list`` - fail when none of the configured collection paths exist.
 - ``ternary`` filter - evaluate values lazily (https://github.com/ansible/ansible/issues/85743)
+- ansible-doc - prevent crash when scanning collections in paths that have more than one ``ansible_collections`` in it (https://github.com/ansible/ansible/issues/84909, https://github.com/ansible/ansible/pull/85361).
 - ansible-doc --list/--list_files/--metadata-dump - fixed relative imports in nested filter/test plugin files (https://github.com/ansible/ansible/issues/85753).
 - ansible-galaxy - Use the provided import task url, instead of parsing to get the task id and reconstructing the URL
 - ansible-galaxy no longer shows the internal protomatter collection when listing.
@@ -202,13 +129,18 @@ Bugfixes
 - callback plugins - fix displaying the rendered ``ansible_host`` variable with ``delegate_to`` (https://github.com/ansible/ansible/issues/84922).
 - callback plugins - improve consistency accessing the Task object's resolved_action attribute.
 - conditionals - When displaying a broken conditional error or deprecation warning, the origin of the non-boolean result is included (if available), and the raw result is omitted.
+- config lookup now properly factors in variables and show_origin when checking entries from the global configuration.
 - display - Fixed reference to undefined `_DeferredWarningContext` when issuing early warnings during startup. (https://github.com/ansible/ansible/issues/85886)
 - dnf - Check if installroot is directory or not (https://github.com/ansible/ansible/issues/85680).
 - failed_when - When using ``failed_when`` to suppress an error, the ``exception`` key in the result is renamed to ``failed_when_suppressed_exception``. This prevents the error from being displayed by callbacks after being suppressed. (https://github.com/ansible/ansible/issues/85505)
+- fetch - also return ``file`` in the result when changed is ``True`` (https://github.com/ansible/ansible/pull/85729).
 - import_tasks - fix templating parent include arguments.
 - include_role - allow host specific values in all ``*_from`` arguments (https://github.com/ansible/ansible/issues/66497)
+- option argument deprecations now have a proper alternative help text.
+- package_facts - typecast bytes to string while returning facts (https://github.com/ansible/ansible/issues/85937).
 - pip - Fix pip module output so that it returns changed when the only operation is initializing a venv.
 - plugins config, get_option_and_origin now correctly displays the value and origin of the option.
+- psrp - ReadTimeout exceptions now mark host as unreachable instead of fatal (https://github.com/ansible/ansible/issues/85966)
 - run_command - Fixed premature selector unregistration on empty read from stdout/stderr that caused truncated output or hangs in rare situations.
 - script inventory plugin will now show correct 'incorrect' type when doing implicit conversions on groups.
 - ssh connection - fix documented variables for the ``host`` option. Connection options can be configured with delegated variables in general.
