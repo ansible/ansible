@@ -109,9 +109,7 @@ def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: l
         # The `testhost` group is needed to support the `binary_modules_winrm` integration test.
         # The test should be updated to remove the need for this.
         extra_groups={
-            'testhost:children': [
-                'windows',
-            ],
+            'testhost': ['windows'],
         },
     )
 
@@ -145,7 +143,7 @@ def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: l
         # see: https://github.com/ansible/ansible/pull/34661
         # see: https://github.com/ansible/ansible/pull/34707
         extra_groups={
-            'net:children': sorted(host_groups),
+            'net': list(sorted(host_groups)),
         },
     )
 

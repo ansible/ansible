@@ -202,31 +202,24 @@ class Inventory:
     def write(self, args: CommonConfig, path: str) -> None:
         """Write the given inventory to the specified path on disk."""
 
-        # NOTE: Switching the inventory generation to write JSON would be nice, but is currently not possible due to the use of hard-coded inventory filenames.
-        #       The name `inventory` works for the POSIX integration tests, but `inventory.winrm` and `inventory.networking` will only parse in INI format.
-        #       If tests are updated to use the `INVENTORY_PATH` environment variable, then this could be changed.
-        #       Also, some tests detect the test type by inspecting the suffix on the inventory filename, which would break if it were changed.
-
-        inventory_text = ''
+        inventory_data: dict[str, dict[str, dict[str, dict[str, object]]]] = dict()
 
         for group, hosts in self.host_groups.items():
-            inventory_text += f'[{group}]\n'
+            group_data = inventory_data.setdefault(group, dict())
+            hosts_data = group_data.setdefault('hosts', dict())
 
             for host, variables in hosts.items():
-                kvp = ' '.join(f"{key}={value!r}" for key, value in variables.items())
-                inventory_text += f'{host} {kvp}\n'
-
-            inventory_text += '\n'
+                host_entry = hosts_data.setdefault(host, dict())
+                host_entry.update(variables)
 
         for group, children in (self.extra_groups or {}).items():
-            inventory_text += f'[{group}]\n'
+            group_data = inventory_data.setdefault(group, dict())
+            group_children = group_data.setdefault('children', dict())
 
             for child in children:
-                inventory_text += f'{child}\n'
+                group_children[child] = dict()
 
-            inventory_text += '\n'
-
-        inventory_text = inventory_text.strip()
+        inventory_text = json.dumps(inventory_data, indent=4)
 
         if not args.explain:
             write_text_file(path, inventory_text + '\n')
@@ -1380,7 +1373,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         env = ansible_environment(self.args)
         module_name = f'{self.config.collection + "." if self.config.collection else ""}{self.config.platform}_command'
 
-        with tempfile.NamedTemporaryFile() as inventory_file:
+        with tempfile.NamedTemporaryFile(suffix='.json') as inventory_file:
             inventory.write(self.args, inventory_file.name)
 
             cmd = ['ansible', '-m', module_name, '-a', 'commands=?', '-i', inventory_file.name, 'all']
@@ -1636,7 +1629,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         env = ansible_environment(self.args)
         module_name = 'ansible.windows.win_ping'
 
-        with tempfile.NamedTemporaryFile() as inventory_file:
+        with tempfile.NamedTemporaryFile(suffix='.json') as inventory_file:
             inventory.write(self.args, inventory_file.name)
 
             cmd = ['ansible', '-m', module_name, '-i', inventory_file.name, 'all']

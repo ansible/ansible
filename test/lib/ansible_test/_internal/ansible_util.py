@@ -93,6 +93,7 @@ def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: 
 
     ansible = dict(
         ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE=str(SOFT_RLIMIT_NOFILE),
+        ANSIBLE_INVENTORY_PLUGIN_EXTS='.yaml, .yml, .json, .winrm, .networking',  # allows the yaml/json inventory format for windows and networking
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color and color else 'false',
         ANSIBLE_FORCE_HANDLERS='true',  # allow cleanup handlers to run when tests fail
         ANSIBLE_HOST_PATTERN_MISMATCH='error',  # prevent tests from unintentionally passing when hosts are not found
