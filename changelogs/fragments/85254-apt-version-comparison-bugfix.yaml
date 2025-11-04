@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - Stop the >= operator from being ignored for packages that are not already installed (https://github.com/ansible/ansible/pull/85254)

@@ -516,9 +516,12 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
     pkgver = policy.get_candidate_ver(pkg)
     if not pkgver:
         return None
+    # Check if the available version matches the requested version
     if version_cmp == "=" and not fnmatch.fnmatch(pkgver.ver_str, version):
         # Even though we put in a pin policy, it can be ignored if there is no
         # possible candidate.
+        return None
+    if version_cmp == ">=" and not apt_pkg.version_compare(pkgver.ver_str, version) >= 0:
         return None
     return pkgver.ver_str
 
@@ -591,19 +594,17 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
         except AttributeError:
             installed_version = pkg.installedVersion
 
+        # Check if the installed version already matches the requested version
         if version_cmp == "=":
-            # check if the version is matched as well
             version_is_installed = fnmatch.fnmatch(installed_version, version)
-            if version_best and installed_version != version_best and fnmatch.fnmatch(version_best, version):
-                version_installable = version_best
         elif version_cmp == ">=":
             version_is_installed = apt_pkg.version_compare(installed_version, version) >= 0
-            if version_best and installed_version != version_best and apt_pkg.version_compare(version_best, version) >= 0:
-                version_installable = version_best
         else:
             version_is_installed = True
-            if version_best and installed_version != version_best:
-                version_installable = version_best
+
+        # Check if a better version is available
+        if version_best and installed_version != version_best:
+            version_installable = version_best
     else:
         version_installable = version_best
 

@@ -221,6 +221,146 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
 
+### Get the most recent version string of the hello package
+### (It will be used in the subsequent tests)
+- name: Search the apt cache for the hello package
+  shell: apt-cache policy hello | grep Candidate | awk '{print $2}'
+  register: apt_cache_result
+
+- name: Store the latest hello package version string
+  set_fact:
+    hello_version_current: "{{ apt_cache_result.stdout_lines[0] }}"
+
+### Install an exact package version with =
+- name: Install an exact version of the hello package
+  apt:
+    name: "hello={{ hello_version_current }}"
+    state: present
+  register: apt_result
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version_installed
+
+- name: Check that the latest version was installed
+  assert:
+    that:
+    - hello_version_installed.stdout_lines[0] == hello_version_current
+
+- name: Uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+
+### Installing an unavailable package version with = must fail
+- name: Try to install an unavailable version of the hello package
+  apt:
+    name: "hello=10"
+    state: present
+  register: apt_result
+  ignore_errors: true
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - apt_result is failed
+        - "not apt_result.changed"
+        - "dpkg_result.rc != 0"
+
+### Install the latest package version with >=
+- name: Install the most recent version of a package with the >= operator
+  apt:
+    name: "hello>={{ hello_version_current }}"
+    state: present
+  register: apt_result
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Check hello version
+  shell: dpkg -s hello | grep Version | awk '{print $2}'
+  register: hello_version_installed
+
+- name: Check that the latest version was installed
+  assert:
+    that:
+    - hello_version_installed.stdout_lines[0] == hello_version_current
+
+- name: Uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+
+### Install a more recent package version with >=
+- name: Install some version of a package with the >= operator
+  apt:
+    name: "hello>=1"
+    state: present
+  register: apt_result
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Uninstall hello with apt
+  apt:
+    name: hello
+    state: absent
+    purge: yes
+
+### Installing an unavailable package version with >= must fail
+- name: Try to install an unavailable package version with the >= operator
+  apt:
+    name: "hello>=10"
+    state: present
+  register: apt_result
+  ignore_errors: true
+
+- name: Check hello version install with dpkg
+  shell: dpkg-query -l hello
+  failed_when: no
+  register: dpkg_result
+
+- name: Verify installation of hello
+  assert:
+    that:
+        - apt_result is failed
+        - "not apt_result.changed"
+        - "dpkg_result.rc != 0"
+
 # INSTALL WITHOUT REMOVALS
 - name: Install hello, that conflicts with hello-traditional
   apt:
@@ -235,7 +375,6 @@
 - name: verify installation of hello
   assert:
     that:
-        - "apt_result.changed"
         - "dpkg_result.rc == 0"
 
 - name: Try installing hello-traditional, that conflicts with hello
@@ -375,6 +514,11 @@
       - libslang2-dev
 
 # # https://github.com/ansible/ansible/issues/38995
+- name: Make sure that at least one build dependency is missing
+  apt:
+    name: build-essential
+    state: absent
+
 - name: build-dep for a package
   apt:
     name: tree
