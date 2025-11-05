@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - get_url - fix regex for GNU Digest line which is used in comparing checksums (https://github.com/ansible/ansible/issues/86132).
