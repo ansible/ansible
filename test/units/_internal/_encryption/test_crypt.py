@@ -33,7 +33,7 @@ class TestCryptFacade:
         assert crypt_facade._crypt_name is None
 
     def test_library_with_no_crypt_methods(self, mocker: MockerFixture) -> None:
-        """Test that a library wiithout crypt() and crypt_r() is skipped."""
+        """Test that a library without crypt() and crypt_r() is skipped."""
         mock_libs = (
             _CryptLib(None),
         )

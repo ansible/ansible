@@ -10,6 +10,8 @@ import sys
 import typing as t
 from dataclasses import dataclass
 
+__all__ = ['CryptFacade']
+
 _FAILURE_TOKENS = frozenset({b'*0', b'*1'})
 
 
@@ -43,7 +45,12 @@ class CryptFacade:
     """
 
     def __init__(self) -> None:
-        self._reset_state()
+        self._crypt_impl: t.Callable | None = None
+        self._crypt_gensalt_impl: t.Callable | None = None
+        self._use_crypt_r = False
+        self._use_crypt_gensalt_rn = False
+        self._crypt_name = ""
+
         self._setup()
 
     class _CryptData(ctypes.Structure):
@@ -52,14 +59,6 @@ class CryptFacade:
     @property
     def has_crypt_gensalt(self) -> bool:
         return self._crypt_gensalt_impl is not None
-
-    def _reset_state(self) -> None:
-        """Reset the state of the crypt implementation"""
-        self._crypt_impl: t.Callable | None = None
-        self._crypt_gensalt_impl: t.Callable | None = None
-        self._use_crypt_r = False
-        self._use_crypt_gensalt_rn = False
-        self._crypt_name = ""
 
     def _setup(self) -> None:
         """Setup crypt implementation"""
