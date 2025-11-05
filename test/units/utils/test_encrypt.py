@@ -6,6 +6,7 @@ from __future__ import annotations
 import warnings
 
 import pytest
+
 from pytest_mock import MockerFixture
 
 from ansible.errors import AnsibleError
@@ -256,6 +257,7 @@ def test_do_encrypt_no_lib(mocker: MockerFixture) -> None:
     """Test AnsibleError is raised when no encryption library is installed."""
     mocker.patch('ansible.utils.encrypt.HAS_CRYPT', False)
     mocker.patch('ansible.utils.encrypt.PASSLIB_AVAILABLE', False)
+
     with pytest.raises(AnsibleError, match=r"Unable to encrypt nor hash, either libxcrypt \(recommended\), crypt, or passlib must be installed\."):
         encrypt.do_encrypt("123", "sha256_crypt", salt="12345678")
 
@@ -270,6 +272,7 @@ class TestCryptHash:
     def test_invalid_instantiation(self, mocker: MockerFixture) -> None:
         """Should not be able to instantiate a CryptHash class without libxcrypt/libcrypt."""
         mocker.patch('ansible.utils.encrypt.HAS_CRYPT', False)
+
         with pytest.raises(AnsibleError, match=r"crypt cannot be used as the 'libxcrypt' library is not installed or is unusable\."):
             encrypt.CryptHash("sha256_crypt")
 
@@ -300,5 +303,6 @@ class TestPasslibHash:
     def test_invalid_instantiation(self, mocker: MockerFixture) -> None:
         """Should not be able to instantiate a PasslibHash class without passlib."""
         mocker.patch('ansible.utils.encrypt.PASSLIB_AVAILABLE', False)
+
         with pytest.raises(AnsibleError, match=r"The passlib Python package must be installed to hash with the 'sha256_crypt' algorithm\."):
             encrypt.PasslibHash("sha256_crypt")
