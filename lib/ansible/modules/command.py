@@ -63,14 +63,16 @@ options:
       - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
-    type: path
+    type: list
+    elements: str
     description:
-      - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(will not) be run.
+      - A list of filenames or (since 2.0) glob patterns. If all exist, this step B(will not) be run.
       - This is checked before O(removes) is checked.
   removes:
-    type: path
+    type: list
+    elements: str
     description:
-      - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
+      - A list of filenames or (since 2.0) glob patterns. If none exist, this step B(will not) be run.
       - This is checked after O(creates) is checked.
     version_added: "0.8"
   chdir:
@@ -104,6 +106,7 @@ notes:
        For instance, if you only want to run a command if a certain file does not exist, use this.
     -  Check mode is supported when passing O(creates) or O(removes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
+    -  C(changed_when) should not be specified when passing O(creates) or O(removes).
     -  The O(ignore:executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
     -  For Windows targets, use the M(ansible.windows.win_command) module instead.
     -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
@@ -254,8 +257,8 @@ def main():
             chdir=dict(type='path'),
             executable=dict(),
             expand_argument_vars=dict(type='bool', default=True),
-            creates=dict(type='path'),
-            removes=dict(type='path'),
+            creates=dict(type='list', elements='str'),
+            removes=dict(type='list', elements='str'),
             # The default for this really comes from the action plugin
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
@@ -311,17 +314,16 @@ def main():
 
     # special skips for idempotence if file exists (assumes command creates)
     if creates:
-        if glob.glob(creates):
-            r['msg'] = "%s not run command since '%s' exists" % (shoulda, creates)
-            r['stdout'] = "skipped, since %s exists" % creates  # TODO: deprecate
-
+        if all(glob.glob(x) for x in creates):
+            r['msg'] = "%s not run command since '%s' all exist" % (shoulda, creates)
+            r['stdout'] = "skipped, since %s all exist" % creates  # TODO: deprecate
             r['rc'] = 0
 
     # special skips for idempotence if file does not exist (assumes command removes)
     if not r['msg'] and removes:
-        if not glob.glob(removes):
-            r['msg'] = "%s not run command since '%s' does not exist" % (shoulda, removes)
-            r['stdout'] = "skipped, since %s does not exist" % removes  # TODO: deprecate
+        if (not any(glob.glob(x) for x in removes)):
+            r['msg'] = "%s not run command since none of '%s' exist" % (shoulda, removes)
+            r['stdout'] = "skipped, since none of %s exist" % removes  # TODO: deprecate
             r['rc'] = 0
 
     if r['msg']:
