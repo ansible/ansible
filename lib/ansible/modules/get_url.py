@@ -372,7 +372,6 @@ import os
 import re
 import shutil
 import tempfile
-import typing as t
 
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
@@ -478,7 +477,7 @@ def is_url(checksum):
     return urlsplit(checksum).scheme in supported_schemes
 
 
-def parse_digest_lines(filename: str, lines: list[str]) -> list[t.Union[tuple[str, str], list[None]]]:
+def parse_digest_lines(filename: str, lines: list[str]) -> list[tuple[str, str]]:
     """Returns a list of tuple containing the filename and digest depending upon
       the lines provided
     """
