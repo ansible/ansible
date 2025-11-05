@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import os
 import string
 import textwrap
 
@@ -31,6 +32,9 @@ from ansible.inventory.manager import InventoryManager, split_host_pattern
 
 from units.mock.loader import DictDataLoader
 
+
+# ensure ini plugin will read __file__
+os.environ['ANSIBLE_INVENTORY_PLUGIN_INI_EXT'] = 'ini, py,'
 
 class TestInventory(unittest.TestCase):
 
