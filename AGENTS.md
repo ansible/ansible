@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) and other compatible agentic tools when working with code in this repository.
 
 **Note:** This file is for AI assistant use only. For human developers, see the [Ansible Developer Guide](https://docs.ansible.com/ansible-core/devel/dev_guide/index.html).
 
