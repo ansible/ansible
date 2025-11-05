@@ -9,11 +9,14 @@ DOCUMENTATION = """
     options:
       allowed_extensions:
         description:
-            - What extensions this plugin will activate for.
-            - Currently, it allows all extensions, but in the future, it will be set to 'ini' by default.
+            - This option filters which inventroy source files will be processed by this plugin by matching the file extension.
+            - Passing an empty string C('') as part of this list allows matching files without an extension.
+            - For backwards compatiblity, setting to an empty list or C(null) will enable all extensions,
+              this is not recommended and will be removed in the future.
         version_added: "2.21"
         type: list
         elements: str
+        default: ['ini', '']
         ini:
            - section: inventory_plugin_ini
              key: allowed_extensions
@@ -40,9 +43,6 @@ DOCUMENTATION = """
         - Enabled in configuration by default.
         - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
           The YAML inventory plugin processes variable values consistently and correctly.
-        - Passing an empty string C('') as part of O(allowed_extensions) allows matching files without extension.
-        - Making O(allowed_extensions) an empty list or C(None) will match files regardless of extension.
-          This would make the inventory plugin match previous behaviour.
 """
 
 EXAMPLES = """# fmt: ini
@@ -121,7 +121,6 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         self.patterns: dict[str, re.Pattern] = {}
         self._origin: Origin | None = None
-        self._invalid_extension = False
 
     def verify_file(self, path):
 
@@ -129,24 +128,14 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         p = Path(path)
         allowed = self.get_option('allowed_extensions')
-        if valid:
-            if allowed:
-                if p.suffix[1:] not in allowed:
-                    valid = False
-            elif p.suffix[1:] != 'ini':
-                self._invalid_extension = True
+        if valid and allowed:
+            valid = p.suffix.lstrip('.') in allowed
         return valid
 
     def parse(self, inventory, loader, path: str, cache=True):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        if self._invalid_extension:
-            self.display.deprecated(
-                f"Parsed inventory source with an invalid extension {path!r}.",
-                help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
-                version="2.24"
-            )
         try:
             # Read in the hosts, groups, and variables defined in the inventory file.
             if self.loader:
