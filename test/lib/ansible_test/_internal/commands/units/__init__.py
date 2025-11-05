@@ -208,7 +208,7 @@ def command_units(args: UnitsConfig) -> None:
             if not paths:
                 continue
 
-            env = ansible_environment(args, False)
+            env = ansible_environment(args)
 
             env.update(
                 PYTHONPATH=get_units_ansible_python_path(args, test_context),

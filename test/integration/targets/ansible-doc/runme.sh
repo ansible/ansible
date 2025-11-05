@@ -36,7 +36,6 @@ ansible-doc --playbook-dir ./ testns.testcol.randommodule 2>&1 | grep "${GREP_OP
 # collections testing
 (
 unset ANSIBLE_PLAYBOOK_DIR
-export ANSIBLE_FORCE_COLOR=0
 export ANSIBLE_NOCOLOR=1
 
 cd "$(dirname "$0")"

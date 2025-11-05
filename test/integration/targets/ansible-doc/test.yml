@@ -3,7 +3,6 @@
   environment:
     ANSIBLE_DEPRECATION_WARNINGS: 1
     ANSIBLE_DOC_FRAGMENT_PLUGINS: "{{ playbook_dir }}/doc_fragments"
-    ANSIBLE_FORCE_COLOR: 0
     ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
     ANSIBLE_NOCOLOR: 1
   vars:
