@@ -134,14 +134,14 @@ class InventoryModule(BaseFileInventoryPlugin):
                 if p.suffix[1:] not in allowed:
                     valid = False
             elif p.suffix[1:] != 'ini':
-                self._show_deprecation = True
+                self._invalid_extension = True
         return valid
 
     def parse(self, inventory, loader, path: str, cache=True):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        if self._show_deprecation:
+        if self._invalid_extension:
             self.display.deprecated(
                 f"Parsed inventory source with an invalid extension {path!r}.",
                 help_text="Change the file extension to '.ini' or configure 'allowed_extensions'.",
