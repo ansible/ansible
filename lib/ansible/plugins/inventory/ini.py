@@ -121,7 +121,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         self.patterns: dict[str, re.Pattern] = {}
         self._origin: Origin | None = None
-        self._show_deprecation = False
+        self._invalid_extension = False
 
     def verify_file(self, path):
 
