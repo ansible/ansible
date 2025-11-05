@@ -54,7 +54,7 @@ notes:
   - This module is also supported for Windows targets.
   - If the script returns non-UTF-8 data, it must be encoded to avoid issues. One option is to pipe
     the output through C(base64).
-  - This module will automatically unvault the script. 
+  - This module will automatically unvault the script.
 seealso:
   - module: ansible.builtin.shell
   - module: ansible.windows.win_shell
