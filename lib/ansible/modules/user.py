@@ -3131,6 +3131,18 @@ class BusyBox(User):
         - remove_user()
         - modify_user()
     """
+    def _build_password_string(self, current_password=None):
+        lock = '!' if self.password_lock else ''
+        password = ''
+        if self.password is not None:
+            password = self.password
+        elif current_password:
+            password = current_password.lstrip('!')
+
+        # Ensure the account is locked at a minimum
+        result = '{lock}{password}'.format(lock=lock, password=password) or '!'
+
+        return result
 
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
@@ -3192,7 +3204,7 @@ class BusyBox(User):
         if self.password is not None:
             cmd = [self.module.get_bin_path('chpasswd', True)]
             cmd.append('--encrypted')
-            data = '{name}:{password}'.format(name=self.name, password=self.password)
+            data = '{name}:{password}'.format(name=self.name, password=self._build_password_string())
             rc, out, err = self.execute_command(cmd, data=data)
 
             if rc is not None and rc != 0:
@@ -3266,14 +3278,20 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage password
-        if self.update_password == 'always' and self.password is not None and user_info[1] != self.password:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
-            cmd.append('--encrypted')
-            data = '{name}:{password}'.format(name=self.name, password=self.password)
-            rc, out, err = self.execute_command(cmd, data=data)
+        current_password = user_info[1]
+        new_password = self._build_password_string(current_password)
+        if self.update_password == 'always':
+            if (
+                (self.password_lock and not current_password.startswith('!'))
+                or (new_password != current_password)
+            ):
+                cmd = [self.module.get_bin_path('chpasswd', True)]
+                cmd.append('--encrypted')
+                data = '{name}:{password}'.format(name=self.name, password=new_password)
+                rc, out, err = self.execute_command(cmd, data=data)
 
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage user settings
         uid = user_info[2]
