@@ -356,7 +356,7 @@ def generate_ansible_template_vars(
     Generate and return a dictionary with variable metadata about the template specified by `fullpath`.
     If `fullpath` is `None`, `path` will be used instead.
     """
-    # deprecated description="deprecate `generate_ansible_template_vars`, collections should inline the necessary variables" core_version="2.23"
+    # deprecated: description="deprecate `generate_ansible_template_vars`, collections should inline the necessary variables" core_version="2.23"
     return _template_vars.generate_ansible_template_vars(path=path, fullpath=fullpath, dest_path=dest_path, include_ansible_managed=True)
 
 
