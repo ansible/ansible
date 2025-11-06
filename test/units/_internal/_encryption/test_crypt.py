@@ -84,6 +84,7 @@ class TestCryptFacade:
         """Test crypt() setting failure errno raises OSError."""
         mocker.patch('ctypes.get_errno', return_value=errno.EBADFD)
         crypt_facade = CryptFacade()
+
         with pytest.raises(OSError, match=r'crypt failed:'):
             crypt_facade.crypt(b"test", b"123")
 
@@ -91,6 +92,7 @@ class TestCryptFacade:
         """Test crypt() implementation returning None raises ValueError."""
         crypt_facade = CryptFacade()
         mocker.patch.object(crypt_facade, '_crypt_impl', return_value=None)
+
         with pytest.raises(ValueError, match=r'crypt failed: invalid salt or unsupported algorithm'):
             crypt_facade.crypt(b"test", b"123")
 
@@ -98,6 +100,7 @@ class TestCryptFacade:
         """Test crypt() implementation returning failure token raises ValueError."""
         crypt_facade = CryptFacade()
         mocker.patch.object(crypt_facade, '_crypt_impl', return_value=list(_FAILURE_TOKENS)[0])
+
         with pytest.raises(ValueError, match=r'crypt failed: invalid salt or unsupported algorithm'):
             crypt_facade.crypt(b"test", b"123")
 
@@ -106,6 +109,7 @@ class TestCryptFacade:
         crypt_facade = CryptFacade()
         mock_prop = mocker.patch('ansible._internal._encryption._crypt.CryptFacade.has_crypt_gensalt', new_callable=mocker.PropertyMock)
         mock_prop.return_value = False
+
         with pytest.raises(NotImplementedError, match=r'crypt_gensalt not available \(requires libxcrypt\)'):
             crypt_facade.crypt_gensalt(b"", 1, b"")
 
@@ -114,6 +118,7 @@ class TestCryptFacade:
         crypt_facade = CryptFacade()
         crypt_facade._use_crypt_gensalt_rn = False
         mock_impl = mocker.patch.object(crypt_facade, '_crypt_gensalt_impl', return_value='')
+
         crypt_facade.crypt_gensalt(b'', 1, b'')
         mock_impl.assert_called_once_with(b'', 1, b'', 0)
 
@@ -121,6 +126,7 @@ class TestCryptFacade:
         """Test crypt_gensalt() setting failure errno raises OSError."""
         mocker.patch('ctypes.get_errno', return_value=errno.EBADFD)
         crypt_facade = CryptFacade()
+
         with pytest.raises(OSError, match=r'crypt_gensalt failed:'):
             crypt_facade.crypt_gensalt(b'', 1, b'')
 
@@ -128,6 +134,7 @@ class TestCryptFacade:
         """Test crypt_gensalt() implementation returning None raises ValueError."""
         crypt_facade = CryptFacade()
         mocker.patch.object(crypt_facade, '_crypt_gensalt_impl', return_value=None)
+
         with pytest.raises(ValueError, match=r'crypt_gensalt failed: unable to generate salt'):
             crypt_facade.crypt_gensalt(b'', 1, b'')
 
@@ -137,5 +144,6 @@ class TestCryptFacade:
         # Skip the _rn version as it modifies impl return value
         crypt_facade._use_crypt_gensalt_rn = False
         mocker.patch.object(crypt_facade, '_crypt_gensalt_impl', return_value=list(_FAILURE_TOKENS)[0])
+
         with pytest.raises(ValueError, match=r'crypt_gensalt failed: invalid prefix or unsupported algorithm'):
             crypt_facade.crypt_gensalt(b'', 1, b'')
