@@ -222,7 +222,7 @@ class AnsibleDeprecatedChecker(pylint.checkers.BaseChecker):
         if plugin_info is INDETERMINATE_DEPRECATOR:
             return True  # deprecator cannot be detected, caller must provide deprecator
 
-        # deprecation: description='deprecate collection_name/deprecator now that detection is widely available' core_version='2.23'
+        # deprecated: description='deprecate collection_name/deprecator now that detection is widely available' core_version='2.23'
         # When this deprecation triggers, change the return type here to False.
         # At that point, callers should be able to omit the collection_name/deprecator in all but a few cases (inline ignores can be used for those cases)
         return None
