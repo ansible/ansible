@@ -83,15 +83,8 @@ class AnsibleUnwantedChecker(BaseChecker):
     )
 
     unwanted_imports = {
-        # see https://docs.python.org/2/library/urllib2.html
-        'urllib2': UnwantedEntry(
-            'ansible.module_utils.urls',
-            ignore_paths=(
-                '/lib/ansible/module_utils/urls.py',
-            )
-        ),
-
         # see https://docs.python.org/3/library/collections.abc.html
+        # deprecated: description='remove collections check now that Python 3.9 is no longer supported' core_version='2.23'
         'collections': UnwantedEntry(
             'collections.abc',
             names=(
