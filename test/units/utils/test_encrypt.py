@@ -300,7 +300,8 @@ class TestPasslibHash:
     Tests for the PasslibHash class.
 
     These tests are hitting code paths that are otherwise impossible to reach
-    through integration tests, but necessary for more complete code coverage."""
+    through integration tests, but necessary for more complete code coverage.
+    """
 
     def test_invalid_instantiation(self, mocker: MockerFixture) -> None:
         """Should not be able to instantiate a PasslibHash class without passlib."""
