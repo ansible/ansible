@@ -263,7 +263,8 @@ def test_do_encrypt_no_lib(mocker: MockerFixture) -> None:
 
 
 class TestCryptHash:
-    """Tests for the CryptHash class.
+    """
+    Tests for the CryptHash class.
 
     These tests are hitting code paths that are otherwise impossible to reach
     through integration tests, but necessary for more complete code coverage.
@@ -295,7 +296,8 @@ class TestCryptHash:
 
 
 class TestPasslibHash:
-    """Tests for the PasslibHash class.
+    """
+    Tests for the PasslibHash class.
 
     These tests are hitting code paths that are otherwise impossible to reach
     through integration tests, but necessary for more complete code coverage."""
