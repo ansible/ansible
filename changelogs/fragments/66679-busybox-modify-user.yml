@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix modifying users when using busybox, such as on Alpine (https://github.com/ansible/ansible/issues/66679)
