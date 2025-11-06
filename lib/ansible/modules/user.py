@@ -506,6 +506,7 @@ import select
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 import math
 import typing as t
@@ -3143,6 +3144,7 @@ class BusyBox(User):
         if self.group is not None:
             if not self.group_exists(self.group):
                 self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+
             cmd.append('-G')
             cmd.append(self.group)
 
@@ -3197,8 +3199,8 @@ class BusyBox(User):
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Add to additional groups
-        if self.groups is not None and len(self.groups):
-            groups = self.get_groups_set()
+        if self.groups:
+            groups = self.get_groups_set() or set()
             add_cmd_bin = self.module.get_bin_path('adduser', True)
             for group in groups:
                 cmd = [add_cmd_bin, self.name, group]
@@ -3226,13 +3228,26 @@ class BusyBox(User):
         rc = None
         out = ''
         err = ''
-        info = self.user_info()
+        user_info = self.user_info()
+
+        if not user_info:
+            return rc, out, err
+
+        gid = user_info[3]
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg="Group %s does not exist" % self.group)
+
+            group_info = self.group_info(self.group)
+            if group_info:
+                gid = group_info[2]
+
         add_cmd_bin = self.module.get_bin_path('adduser', True)
         remove_cmd_bin = self.module.get_bin_path('delgroup', True)
 
         # Manage group membership
-        if self.groups is not None and len(self.groups):
-            groups = self.get_groups_set()
+        if self.groups:
+            groups = self.get_groups_set() or set()
             group_diff = set(current_groups).symmetric_difference(groups)
 
             if group_diff:
@@ -3251,7 +3266,7 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage password
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and user_info[1] != self.password:
             cmd = [self.module.get_bin_path('chpasswd', True)]
             cmd.append('--encrypted')
             data = '{name}:{password}'.format(name=self.name, password=self.password)
@@ -3259,6 +3274,42 @@ class BusyBox(User):
 
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Manage user settings
+        uid = user_info[2]
+        if self.uid is not None:
+            uid = self.uid
+
+        passwd_entry = [
+            self.name,
+            'x',
+            to_native(uid),
+            to_native(gid),
+            self.comment or user_info[4],
+            self.home or user_info[5],
+            self.shell or user_info[6],
+        ]
+
+        contents = []
+        change = False
+        with open(self.PASSWORDFILE, 'r') as password_file:
+            for line in password_file:
+                if line.startswith(self.name):
+                    fields = line.strip().split(':')
+                    if fields != passwd_entry:
+                        change = True
+                        line = ':'.join(passwd_entry) + '\n'
+
+                contents.append(line)
+
+        if change:
+            rc = 0
+            if not self.module.check_mode:
+                tmpfd, tmpfile = tempfile.mkstemp(dir=self.module.tmpdir)
+                with open(tmpfile, 'w') as f:
+                    f.writelines(contents)
+
+                self.module.atomic_move(tmpfile, self.PASSWORDFILE)
 
         return rc, out, err
 
