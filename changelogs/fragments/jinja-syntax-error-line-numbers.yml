@@ -1,0 +1,2 @@
+bugfixes:
+  - template module - Report the line number for Jinja syntax errors in template files.
