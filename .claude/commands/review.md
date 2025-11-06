@@ -7,7 +7,7 @@ allowed-tools: [TodoWrite, Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr ch
 PR Review Command
 =================
 
-Review an Ansible PR following the project's standardized process from CLAUDE.md.
+Review an Ansible PR following the project's standardized process from `CLAUDE.md`.
 
 Usage
 -----
@@ -32,7 +32,7 @@ Review Process Steps
 The command follows these numbered steps from CLAUDE.md:
 
 1. **Create TodoWrite list** for systematic review tracking
-2. **Get PR details**: `gh pr view <number>` to understand scope and description
+2. **Get PR details**: `gh pr view <number>` to understand scope, motivation and the desired outcome
 3. **Get PR diff**: `gh pr diff <number>` to see all changes
 4. **Check required components FIRST**:
    - Verify changelog fragment exists in `changelogs/fragments/`
@@ -52,4 +52,4 @@ Critical Review Elements
 - **Test scope**: Tests must exercise actual changed code, not just add random coverage
 - **Changelog validation**: Fragment structure follows sections defined in `changelogs/config.yaml`
 
-Each step is tracked in TodoWrite for visibility and systematic completion.
+Each step is tracked in TodoWrite for visibility and systematic completion. A review round should not exceed 20 feedback items.
