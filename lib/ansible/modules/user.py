@@ -315,7 +315,7 @@ notes:
   - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
   - On distributions using BusyBox, this module uses C(adduser), C(chpasswd), C(deluser), and C(delgroup).
-    The C(/etc/passwd) file is modified directly by this module.
+    The C(/etc/passwd) file is modified directly by this module and is backed up before modification.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
@@ -3327,6 +3327,7 @@ class BusyBox(User):
                 with open(tmpfile, 'w') as f:
                     f.writelines(contents)
 
+                self.module.backup_local(self.PASSWORDFILE)
                 self.module.atomic_move(tmpfile, self.PASSWORDFILE)
 
         return rc, out, err
