@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Remove pylint check for ``urllib2`` usage.
