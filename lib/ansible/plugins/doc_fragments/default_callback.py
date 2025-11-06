@@ -21,7 +21,7 @@ class ModuleDocFragment(object):
             section: defaults
         vars:
           - name: ansible_display_skipped_hosts
-            version_added: "2.20"
+            version_added: "2.21"
       display_ok_hosts:
         name: Show 'ok' hosts
         description: "Toggle to control displaying 'ok' task/host results in a task."

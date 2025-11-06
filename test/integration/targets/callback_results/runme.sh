@@ -25,13 +25,18 @@ ANSIBLE_CALLBACKS_ENABLED=track_connections ansible-playbook "$@" -i ../../inven
 grep "FOUND EXPECTED EVENTS" "${OUTFILE}"
 
 # test configuring display_skipped_hosts using --extra-vars
-omit_skipped="$(ansible-playbook skip_hosts.yml -v --extra-vars @./callback_vars.yml "$@")"
-if [[ "$omit_skipped" == *skip_reason* ]]; then
+hide_skipped="$(ansible-playbook skip_hosts.yml -v --extra-vars @./callback_vars.yml "$@")"
+if [[ "$hide_skipped" == *skip_reason* ]]; then
   echo "Failed to configure display_skipped_hosts (false)"
   exit 1
 fi
 include_skipped="$(ansible-playbook skip_hosts.yml -v --extra-vars @./callback_vars.yml --extra-vars indirect_extra=true "$@")"
 if [[ "$include_skipped" != *skip_reason* ]]; then
     echo "Failed to configure display_skipped_hosts (true)"
+    exit 1
+fi
+include_skipped="$(ansible-playbook skip_hosts.yml -v --extra-vars @./callback_vars.yml --extra-vars indirect_extra='{{ omit }}' "$@")"
+if [[ "$include_skipped" != *skip_reason* ]]; then
+    echo "Failed to omit display_skipped_hosts (default true)"
     exit 1
 fi
