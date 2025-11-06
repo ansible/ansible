@@ -1,0 +1,3 @@
+- @AGENTS.md
+- @~/.claude/ansible.md
+- @CLAUDE.local.md

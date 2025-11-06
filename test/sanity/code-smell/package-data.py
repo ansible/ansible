@@ -26,12 +26,15 @@ def collect_sdist_files(complete_file_list: list[str]) -> list[str]:
     ignore_patterns = (
         '.azure-pipelines/*',
         '.cherry_picker.toml',
+        '.claude/*',
         '.git*',
         '.mailmap',
         'bin/*',
         'changelogs/README.md',
         'changelogs/config.yaml',
         'changelogs/fragments/*',
+        'AGENTS.md',
+        'CLAUDE.md',
         'hacking/*',
     )
 

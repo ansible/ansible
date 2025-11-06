@@ -1,3 +1,4 @@
+.claude/commands/review.md pymarkdown!skip  # Claude Code command with YAML frontmatter
 .github/ISSUE_TEMPLATE/internal_issue.md pymarkdown!skip
 lib/ansible/_internal/_wrapt.py black!skip  # vendored code
 lib/ansible/config/base.yml no-unwanted-files
