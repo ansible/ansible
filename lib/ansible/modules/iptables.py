@@ -136,8 +136,8 @@ options:
       - The set of matches makes up the condition under which a target is invoked.
       - Matches are evaluated first to last if specified as an array and work in short-circuit
         fashion, in other words if one extension yields false, the evaluation will stop.
-      - The module automatically adds necessary extensions (for example, V(uid_owner: 1) corresponds 
-        to the command flags V(-m owner --uid-owner 1)), so it is often unnecessary to use the V(match) argument.
+      - The module automatically adds necessary extensions (for example, O(uid_owner=1) corresponds 
+        to the command flags C(-m owner --uid-owner 1)), so it is often unnecessary to use the O(match) argument.
     type: list
     elements: str
     default: []
