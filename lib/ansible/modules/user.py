@@ -3298,10 +3298,9 @@ class BusyBox(User):
         current_password = to_native(user_info[1])
         new_password = self._build_password_string(current_password)
         if self.update_password == 'always':
-            if (
-                (self.password_lock and not current_password.startswith('!'))
-                or (new_password != current_password)
-            ):
+            lock_status_mismatch = self.password_lock and not current_password.startswith('!')
+            password_changed = new_password != current_password
+            if lock_status_mismatch or password_changed:
                 cmd = [self.module.get_bin_path('chpasswd', True), '--encrypted']
                 data = f'{self.name}:{new_password}'
                 rc, out, err = self.execute_command(cmd, data=data)
