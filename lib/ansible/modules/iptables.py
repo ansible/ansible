@@ -136,7 +136,7 @@ options:
       - The set of matches makes up the condition under which a target is invoked.
       - Matches are evaluated first to last if specified as an array and work in short-circuit
         fashion, in other words if one extension yields false, the evaluation will stop.
-      - The module automatically adds necessary extensions (for example, O(uid_owner=1) corresponds 
+      - The module automatically adds necessary extensions (for example, O(uid_owner=1) corresponds
         to the command flags C(-m owner --uid-owner 1)), so it is often unnecessary to use the O(match) argument.
     type: list
     elements: str
@@ -622,7 +622,7 @@ def construct_rule(params):
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
     append_param(rule, params['match'], '-m', True)
-    loaded_extensions = {match for match in params['match']}  # Keep track of the above extensions
+    loaded_extensions = set(params['match'])  # Keep track of the above extensions
     append_tcp_flags(rule, params['tcp_flags'], '--tcp-flags')
     append_param(rule, params['jump'], '-j', False)
     if params.get('jump') and params['jump'].lower() == 'tee':
