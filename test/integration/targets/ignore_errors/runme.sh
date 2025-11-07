@@ -9,3 +9,14 @@ if ansible-playbook -i ../../inventory test_ignore_errors_false.yml "$@" > out.t
 fi
 # The first task should fail and not be ignored
 grep out.txt -e 'ok=0' | grep 'ignored=0' | grep 'failed=1'
+
+# Check if templated value of ansible_check_mode - False
+if ansible-playbook -i ../../inventory test_ignore_errors_check_mode.yml "$@" > out.txt; then
+    echo 'Playbook expected to fail succeeded'
+    exit 1
+fi
+grep out.txt -e 'ok=0' | grep 'ignored=0' | grep 'failed=1'
+
+# Check if templated value of ansible_check_mode - True
+ansible-playbook -i ../../inventory test_ignore_errors_check_mode.yml -C "$@" > out.txt
+grep out.txt -e 'ok=1' | grep 'ignored=1' | grep 'failed=0'
