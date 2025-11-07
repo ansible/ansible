@@ -1,0 +1,4 @@
+bugfixes:
+  - display - Fix ``getuser`` fallback error handling on Python 3.13 and later.
+    (https://github.com/ansible/ansible/issues/86142)
+  - local connection - Fix ``getuser`` fallback error handling on Python 3.13 and later.
