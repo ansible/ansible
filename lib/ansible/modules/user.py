@@ -3278,7 +3278,7 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage password
-        current_password = user_info[1]
+        current_password = to_native(user_info[1])
         new_password = self._build_password_string(current_password)
         if self.update_password == 'always':
             if (
