@@ -3139,7 +3139,8 @@ class BusyBox(User):
         This method will return '*' at a minimum to avoid creating an enabled
         account with no password.
         """
-        lock = '!' if self.password_lock else ''
+        lock_indicator = '!'
+        lock = lock_indicator if self.password_lock else ''
 
         # Order of precedence when choosing the password:
         #   1. password from module parameters
@@ -3149,15 +3150,15 @@ class BusyBox(User):
         if self.password is not None:
             password = self.password
         elif current_password:
-            if current_password == '!':
+            if current_password == lock_indicator:
                 # Special handling when the password is only a '!' to avoid
                 # unnecessary changes to the password to values like '!!' or '!*'.
                 lock = ''
                 password = current_password
-            elif current_password.startswith('!'):
+            elif current_password.startswith(lock_indicator):
                 # Preserve the existing password but unlock the account even if
                 # no password hash was provided in the module parameters.
-                password = current_password.lstrip('!')
+                password = current_password.lstrip(lock_indicator)
 
         return f'{lock}{password}'
 
