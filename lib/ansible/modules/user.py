@@ -3140,7 +3140,7 @@ class BusyBox(User):
             password = current_password.lstrip('!')
 
         # Ensure the account is locked at a minimum
-        result = '{lock}{password}'.format(lock=lock, password=password) or '!'
+        result = f'{lock}{password or "!"}'
 
         return result
 
@@ -3155,7 +3155,7 @@ class BusyBox(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+                self.module.fail_json(msg=f'Group {self.group} does not exist')
 
             cmd.append('-G')
             cmd.append(self.group)
@@ -3204,7 +3204,7 @@ class BusyBox(User):
         if self.password is not None:
             cmd = [self.module.get_bin_path('chpasswd', True)]
             cmd.append('--encrypted')
-            data = '{name}:{password}'.format(name=self.name, password=self._build_password_string())
+            data = f'{self.name}:{self._build_password_string()}'
             rc, out, err = self.execute_command(cmd, data=data)
 
             if rc is not None and rc != 0:
@@ -3248,7 +3248,7 @@ class BusyBox(User):
         gid = user_info[3]
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(msg=f'Group {self.group} does not exist')
 
             group_info = self.group_info(self.group)
             if group_info:
@@ -3287,7 +3287,7 @@ class BusyBox(User):
             ):
                 cmd = [self.module.get_bin_path('chpasswd', True)]
                 cmd.append('--encrypted')
-                data = '{name}:{password}'.format(name=self.name, password=new_password)
+                data = f'{self.name}:{new_password}'
                 rc, out, err = self.execute_command(cmd, data=data)
 
                 if rc is not None and rc != 0:
