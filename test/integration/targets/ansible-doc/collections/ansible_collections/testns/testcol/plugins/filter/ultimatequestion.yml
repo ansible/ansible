@@ -7,7 +7,7 @@ DOCUMENTATION:
     - read the book
   options:
     _input:
-      description: Anything you want, goign to ignore it anywayss ...
+      description: Anything you want, going to ignore it anywayss ...
       type: raw
       required: true
 
