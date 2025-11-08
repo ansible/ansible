@@ -9,39 +9,26 @@ import pytest
 from ansible.module_utils.basic import AnsibleModule
 
 
-DATA = [
+@pytest.mark.parametrize('value, isbits, expected', [
     ("4KB", False, 4096),
     ("4KB", None, 4096),
     ("4Kb", True, 4096),
-]
+])
+def test_validator_function(value: str, isbits: bool | None, expected: int) -> None:
+    assert AnsibleModule.human_to_bytes(value, isbits=isbits) == expected
 
-WO_ISBITS_DATA = [
+
+@pytest.mark.parametrize('value, expected', [
     ("4KB", 4096),
-]
+])
+def test_validator_function_default_isbits(value: str, expected: int) -> None:
+    assert AnsibleModule.human_to_bytes(value) == expected
 
-EXCEPTION_DATA = [
+
+@pytest.mark.parametrize('value, isbits', [
     ("4Kb", False),
     ("4KB", True),
-]
-
-
-@pytest.mark.usefixtures("stdin")
-@pytest.mark.parametrize('input, isbits, expected', DATA)
-def test_validator_function(input, isbits, expected):
-    am = AnsibleModule(argument_spec=dict())
-    assert am.human_to_bytes(input, isbits=isbits) == expected
-
-
-@pytest.mark.usefixtures("stdin")
-@pytest.mark.parametrize('input, expected', WO_ISBITS_DATA)
-def test_validator_functio(input, expected):
-    am = AnsibleModule(argument_spec=dict())
-    assert am.human_to_bytes(input) == expected
-
-
-@pytest.mark.usefixtures("stdin")
-@pytest.mark.parametrize('input, isbits', EXCEPTION_DATA)
-def test_validator_functions(input, isbits):
-    am = AnsibleModule(argument_spec=dict())
+])
+def test_validator_functions(value: str, isbits: bool) -> None:
     with pytest.raises(ValueError):
-        am.human_to_bytes(input, isbits=isbits)
+        AnsibleModule.human_to_bytes(value, isbits=isbits)
