@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import traceback
+import typing as t
 import warnings
 
 from collections import OrderedDict
@@ -886,7 +887,7 @@ class ModuleValidator(Validator):
                 msg=msg,
             )
 
-    def _validate_return_docs(self, returns, context=None):
+    def _validate_return_docs(self, returns: t.Any, context: t.Optional[list[str]] = None) -> None:
         if not isinstance(returns, dict):
             return
         if context is None:
