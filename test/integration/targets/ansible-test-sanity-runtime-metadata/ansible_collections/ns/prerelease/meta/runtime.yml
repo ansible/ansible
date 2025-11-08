@@ -12,6 +12,14 @@ plugin_routing:
       tombstone:
         removal_version: 3.0.0-a1
         warning_text: Is no longer there.
+    tombstoned_module_with_prerelease_and_build_meta_version:
+      tombstone:
+        removal_version: 3.0.0-a1+bla.test.1234567
+        warning_text: Is no longer there.
+    tombstoned_module_with_build_meta_version:
+      tombstone:
+        removal_version: 3.0.0+bla.test.1234567
+        warning_text: Is no longer there.
     module_with_invalid_removal_version:
       tombstone:
         removal_version: 4.0.0
