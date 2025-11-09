@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/soulsniper/ansible/logs/.8a2029b2cfec66c184061c9cf8d93c9ba86aacde-audit.json",
+    "files": [
+        {
+            "date": 1762657189763,
+            "name": "/Users/soulsniper/ansible/logs/mcp-puppeteer-2025-11-08.log",
+            "hash": "ebbfc3d33ac0066a684aaa9c018689f6f1b6cd547c1a78c9cb7ef381c54a7a41"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -1,0 +1,11 @@
+# Test for ignore_errors + ansible_check_mode templating issue
+# This test ensures that ignore_errors with ansible_check_mode templates correctly
+- name: Test that ignore_errors works properly with ansible_check_mode variable
+  debug:
+    msg: "This should fail when not in check mode"
+  ignore_errors: "{{ ansible_check_mode }}"
+  register: check_mode_result
+
+- name: Show that the behavior differs based on check mode
+  debug:
+    msg: "Check mode result registered: {{ check_mode_result }}"

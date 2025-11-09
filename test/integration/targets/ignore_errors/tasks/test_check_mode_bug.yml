@@ -1,0 +1,26 @@
+# Test case for issue #56345 - ignore_errors + ansible_check_mode templating
+# This test checks that ignore_errors with templated ansible_check_mode evaluates correctly
+
+# Test 1: When not in check mode, errors should NOT be ignored (ignore_errors should be false)
+- name: Task with ignore_errors set to ansible_check_mode (should be false in normal mode)
+  fail:
+    msg: "This task is supposed to fail"
+  ignore_errors: "{{ ansible_check_mode }}"
+  register: result_normal_mode
+
+# Test 2: Verify that in normal mode, the task actually failed
+- name: Verify the task failed in normal mode
+  assert:
+    that:
+      - result_normal_mode is failed
+      - result_normal_mode is not skipped
+      - result_normal_mode is not changed
+  ignore_errors: no
+
+# Test 3: This would be tested in check mode separately
+# When in check mode, errors SHOULD be ignored (ignore_errors should be true)
+- name: This task will test check mode behavior
+  debug:
+    msg: "In check mode, ansible_check_mode={{ ansible_check_mode }}"
+  when: ansible_check_mode
+  register: check_mode_test

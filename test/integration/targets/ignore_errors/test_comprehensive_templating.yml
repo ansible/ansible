@@ -1,0 +1,42 @@
+---
+- name: Test ignore_errors templating with ansible_check_mode - comprehensive test
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  
+  tasks:
+    - name: Show check mode value for verification
+      debug:
+        msg: "ansible_check_mode is {{ ansible_check_mode }}"
+    
+    # Test 1: In normal mode, ignore_errors: "{{ ansible_check_mode }}" should be false, so task should fail and not be ignored
+    - name: Test scenario where templated ignore_errors should be false (normal mode)
+      block:
+        - name: Run failing task with templated ignore_errors set to ansible_check_mode
+          fail:
+            msg: "This should fail and not be ignored in normal mode"
+          ignore_errors: "{{ ansible_check_mode }}"  # Should be 'false' in normal mode
+          register: mode_test_result
+      rescue:
+        # This executes when the task fails without being ignored
+        - name: Mark that the task failed without being ignored
+          set_fact:
+            mode_test_result:
+              failed: true
+              ignored: false
+              msg: "Task failed without being ignored as expected"
+      always:
+        - name: Verify result structure exists
+          set_fact:
+            mode_test_result: "{{ mode_test_result | default({'failed': false, 'ignored': true}) }}"
+    
+    # Verify in normal mode that the task was failed but not ignored (this is the important test for the bug fix)
+    - name: Verify templated ignore_errors worked correctly in normal mode
+      assert:
+        that:
+          - mode_test_result.failed | default(false)
+          - not mode_test_result.ignored | default(true)  # Should NOT be ignored when ansible_check_mode is false
+      when: not ansible_check_mode  # Only when not in check mode
+    
+    # Note: If the bug still existed, mode_test_result.ignored would be true even in normal mode
+    # That's what this test is designed to catch
