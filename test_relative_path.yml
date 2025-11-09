@@ -1,0 +1,40 @@
+---
+- name: Test relative path issue
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Ensure test directory exists
+      file:
+        path: /tmp/ansible_test_dir
+        state: directory
+
+    - name: Create a source directory for the link
+      file:
+        path: /tmp/ansible_test_dir/my_folder
+        state: directory
+
+    - name: Create a link with relative path (this should work after fix)
+      file:
+        state: link
+        src: 'my_folder'
+        follow: false
+        force: yes
+        path: '/tmp/ansible_test_dir/my_link'
+
+    - name: Create another source file for hard link test
+      copy:
+        content: "test content"
+        dest: /tmp/ansible_test_dir/test_source_file
+
+    - name: Create a hardlink with relative path (this should work after fix)
+      file:
+        state: hard
+        src: 'test_source_file'
+        follow: false
+        force: yes
+        path: '/tmp/ansible_test_dir/my_hardlink'
+
+    - name: Clean up test directory
+      file:
+        path: /tmp/ansible_test_dir
+        state: absent
