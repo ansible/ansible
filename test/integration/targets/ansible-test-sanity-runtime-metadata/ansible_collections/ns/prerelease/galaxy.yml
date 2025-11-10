@@ -1,0 +1,5 @@
+namespace: ns
+name: prerelease
+version: 3.0.0-prerelease
+authors:
+  - Ansible
