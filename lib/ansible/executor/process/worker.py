@@ -156,7 +156,15 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         with stdio fds.
         """
         try:
-            os.setsid()
+            # Skip os.setsid() for localhost with become to preserve sudo credential cache
+            # which relies on TTY information that gets lost when creating a new session
+            from ansible import constants as C
+            if (self._host.name in C.LOCALHOST and self._play_context.become):
+                # Don't create a new session to preserve TTY for sudo cache
+                pass
+            else:
+                os.setsid()
+            
             # Create new fds for stdin/stdout/stderr, but also capture python uses of sys.stdout/stderr
             for fds, mode in (
                     ((STDIN_FILENO,), os.O_RDWR | os.O_NONBLOCK),
