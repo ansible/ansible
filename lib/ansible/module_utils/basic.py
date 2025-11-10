@@ -2154,14 +2154,14 @@ class AnsibleModule(object):
             fh.write(str)
 
     @staticmethod
-    def bytes_to_human(size):
+    def bytes_to_human(size: int) -> str:
         return bytes_to_human(size)
 
     # for backwards compatibility
     pretty_bytes = bytes_to_human
 
     @staticmethod
-    def human_to_bytes(number, isbits=False):
+    def human_to_bytes(number: str, isbits: bool = False) -> int:
         return human_to_bytes(number, isbits=isbits)
 
     #
