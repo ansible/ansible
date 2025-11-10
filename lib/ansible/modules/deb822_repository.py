@@ -62,6 +62,18 @@ options:
         description:
         - Tells APT whether the source is enabled or not.
         type: bool
+    exclude:
+        description:
+        - Controls which packages APT should use from the repository.
+        - Mutually exclusive with O(include).
+        type: list
+        elements: str
+    include:
+        description:
+        - Controls which packages APT should not use from the repository.
+        - Mutually exclusive with O(exclude).
+        type: list
+        elements: str
     inrelease_path:
         description:
         - Determines the path to the C(InRelease) file, relative to the normal
@@ -419,6 +431,14 @@ def main():
             'enabled': {
                 'type': 'bool',
             },
+            'exclude': {
+                'elements': 'str',
+                'type': 'list',
+            },
+            'include': {
+                'elements': 'str',
+                'type': 'list',
+            },
             'inrelease_path': {
                 'type': 'str',
             },
@@ -480,6 +500,9 @@ def main():
                 'default': 'present',
             },
         },
+        mutually_exclusive=[
+            ['exclude', 'include']
+        ]
         supports_check_mode=True,
     )
 
