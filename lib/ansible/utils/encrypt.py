@@ -38,7 +38,8 @@ except Exception as e:
 CRYPT_E = None
 HAS_CRYPT = False
 try:
-    from ansible._internal._encryption import _crypt
+    from ansible._internal._encryption._crypt import CryptFacade
+    _crypt_facade = CryptFacade()
     HAS_CRYPT = True
 except Exception as e:
     CRYPT_E = e
@@ -121,14 +122,14 @@ class CryptHash(BaseHash):
 
         self.algo_data = self.algorithms[algorithm]
 
-        if self.algo_data.requires_gensalt and not _crypt.HAS_CRYPT_GENSALT:
+        if self.algo_data.requires_gensalt and not _crypt_facade.has_crypt_gensalt:
             raise AnsibleError(f"{self.algorithm!r} algorithm requires libxcrypt")
 
     def hash(self, secret: str, salt: str | None = None, salt_size: int | None = None, rounds: int | None = None, ident: str | None = None) -> str:
         rounds = self._rounds(rounds)
         ident = self._ident(ident)
 
-        if _crypt.HAS_CRYPT_GENSALT:
+        if _crypt_facade.has_crypt_gensalt:
             saltstring = self._gensalt(ident, rounds, salt, salt_size)
         else:
             saltstring = self._build_saltstring(ident, rounds, salt, salt_size)
@@ -174,7 +175,7 @@ class CryptHash(BaseHash):
         count = rounds or 0
 
         try:
-            salt_bytes = _crypt.crypt_gensalt(to_bytes(prefix), count, rbytes)
+            salt_bytes = _crypt_facade.crypt_gensalt(to_bytes(prefix), count, rbytes)
             return to_text(salt_bytes, errors='strict')
         except (NotImplementedError, ValueError) as e:
             raise AnsibleError(f"Failed to generate salt for {self.algorithm!r} algorithm") from e
@@ -192,7 +193,7 @@ class CryptHash(BaseHash):
 
     def _hash(self, secret: str, saltstring: str) -> str:
         try:
-            result = _crypt.crypt(to_bytes(secret), to_bytes(saltstring))
+            result = _crypt_facade.crypt(to_bytes(secret), to_bytes(saltstring))
         except (OSError, ValueError) as e:
             raise AnsibleError(f"crypt does not support {self.algorithm!r} algorithm") from e
 
