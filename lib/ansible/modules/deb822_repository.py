@@ -502,7 +502,7 @@ def main():
         },
         mutually_exclusive=[
             ['exclude', 'include']
-        ]
+        ],
         supports_check_mode=True,
     )
 
