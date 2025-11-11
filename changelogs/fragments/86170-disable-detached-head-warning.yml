@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-galaxy install - Dependencies of type git with tag or sha versions have caused detached head warning
+    messages (https://github.com/ansible/ansible/issues/86169).
