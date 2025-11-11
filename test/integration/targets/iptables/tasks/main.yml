@@ -35,4 +35,19 @@
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
 
+- name: Use iptables with unnecessary extension match
+  iptables:
+    chain: INPUT
+    source: 8.8.8.8
+    jump: DROP
+    match: comment
+    comment: Here to include an extension
+  register: unnecessary_extension
+
+- name: Assert success
+  assert:
+    that:
+      - unnecessary_extension is success
+      - unnecessary_extension.rule.count('-m comment') == 1
+
 - import_tasks: chain_management.yml

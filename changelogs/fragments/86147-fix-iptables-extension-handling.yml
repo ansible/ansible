@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - >-
+    iptables - The module can now detect when a extensions added with the module ``match`` argument have 
+    been automatically imported by other module arguments such as ``uid_owner`` and prevents duplicate
+    extension imports which previously caused an error (https://github.com/ansible/ansible/issues/84387). 
