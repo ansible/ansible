@@ -102,16 +102,16 @@ class TestTask(unittest.TestCase):
                 self.assertEqual(t.get_validated_value('delay', t.fattributes.get('delay'), delay, None), expected)
 
         bad_params = [
-            ('E', ValueError),
-            ('1.E', ValueError),
-            ('E.1', ValueError),
+            'E',
+            '1.E',
+            'E.1',
         ]
-        for delay, expected in bad_params:
-            with self.subTest(f'type "{type(delay)} was cast to float w/o error', delay=delay, expected=expected):
+        for delay in bad_params:
+            with self.subTest(f'type "{type(delay)} was cast to float w/o error', delay=delay):
                 p = dict(delay=delay)
                 p.update(self._task_base)
                 t = Task().load_data(p)
-                with self.assertRaises(expected):
+                with self.assertRaises(ValueError):
                     dummy = t.get_validated_value('delay', t.fattributes.get('delay'), delay, None)
 
     def test_task_auto_name_with_role(self):
