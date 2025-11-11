@@ -85,6 +85,19 @@ from .schema import (
 
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml, parse_isodate
 
+from .constants import (
+    REJECTLIST_DIRS,
+    SYS_EXIT_REGEX,
+    NO_LOG_REGEX,
+    FORBIDDEN_DICTIONARY_KEYS,
+    REJECTLIST_IMPORTS,
+    SUBPROCESS_REGEX,
+    OS_CALL_REGEX,
+    PLUGINS_WITH_RETURN_VALUES,
+    PLUGINS_WITH_EXAMPLES,
+    PLUGINS_WITH_YAML_EXAMPLES,
+)
+
 
 # Because there is no ast.TryExcept in Python 3 ast module
 TRY_EXCEPT = ast.Try
@@ -92,39 +105,7 @@ TRY_EXCEPT = ast.Try
 # string but we need unicode for Python 3
 REPLACER_WINDOWS = _REPLACER_WINDOWS.decode('utf-8')
 
-REJECTLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
-INDENT_REGEX = re.compile(r'([\t]*)')
-SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
-NO_LOG_REGEX = re.compile(r'(?:pass(?!ive)|secret|token|key)', re.I)
-
-
-REJECTLIST_IMPORTS = {
-    'requests': {
-        'new_only': True,
-        'error': {
-            'code': 'use-module-utils-urls',
-            'msg': ('requests import found, should use '
-                    'ansible.module_utils.urls instead')
-        }
-    },
-    r'boto(?:\.|$)': {
-        'new_only': True,
-        'error': {
-            'code': 'use-boto3',
-            'msg': 'boto import found, new modules should use boto3'
-        }
-    },
-}
-SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
-OS_CALL_REGEX = re.compile(r'os\.call.*')
-
-
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
-
-
-PLUGINS_WITH_RETURN_VALUES = ('module', )
-PLUGINS_WITH_EXAMPLES = ('module', )
-PLUGINS_WITH_YAML_EXAMPLES = ('module', )
 
 
 def is_potential_secret_option(option_name):
@@ -905,6 +886,27 @@ class ModuleValidator(Validator):
                 msg=msg,
             )
 
+    def _validate_return_docs(self, returns: object, context: list[str] | None = None) -> None:
+        if not isinstance(returns, dict):
+            return
+        if context is None:
+            context = []
+
+        for rv, data in returns.items():
+            if isinstance(data, dict) and "contains" in data:
+                self._validate_return_docs(data["contains"], context + [rv])
+
+            if str(rv) in FORBIDDEN_DICTIONARY_KEYS or not str(rv).isidentifier():
+                msg = f"Return value key {rv!r}"
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " should not be used for return values since it cannot be accessed with dot notation in Jinja"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='bad-return-value-key',
+                    msg=msg,
+                )
+
     def _validate_docs(self):
         doc = None
         # We have three ways of marking deprecated/removed files.  Have to check each one
@@ -1145,6 +1147,7 @@ class ModuleValidator(Validator):
                 returns,
                 return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
                 'RETURN', 'return-syntax-error')
+            self._validate_return_docs(returns)
 
         elif self.plugin_type in PLUGINS_WITH_RETURN_VALUES:
             if self._is_new_module():

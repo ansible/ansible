@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test validate-modules sanity test - now reports bad return value keys that cannot be used with the dot notation in Jinja expressions (https://github.com/ansible/ansible/issues/86079)."
