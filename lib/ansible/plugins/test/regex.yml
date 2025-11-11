@@ -28,7 +28,7 @@ DOCUMENTATION:
       choices: [match, search, fullmatch]
       default: search
 
-EXAMPLES:
+EXAMPLES: |
   - name: check if string matches regex
     assert:
       that:
