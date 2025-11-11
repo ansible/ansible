@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix ``AnsibleModule.human_to_bytes()``, which was never adjusted after the standalone ``human_to_bytes()`` got a new parameter ``default_unit`` (https://github.com/ansible/ansible/pull/85259)."

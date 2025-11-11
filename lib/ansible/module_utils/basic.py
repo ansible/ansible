@@ -2149,14 +2149,16 @@ class AnsibleModule(object):
         with open(filename, 'a') as fh:
             fh.write(str)
 
-    def bytes_to_human(self, size):
+    @staticmethod
+    def bytes_to_human(size: int) -> str:
         return bytes_to_human(size)
 
     # for backwards compatibility
     pretty_bytes = bytes_to_human
 
-    def human_to_bytes(self, number, isbits=False):
-        return human_to_bytes(number, isbits)
+    @staticmethod
+    def human_to_bytes(number: str, isbits: bool = False) -> int:
+        return human_to_bytes(number, isbits=isbits)
 
     #
     # Backwards compat
