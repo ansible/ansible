@@ -71,7 +71,7 @@ class Taggable:
 
             obj = obj._parent
 
-        yield self.get_play()
+        yield self.play
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         """Check if the current item should be executed depending on the specified tags.

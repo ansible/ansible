@@ -5,9 +5,6 @@ from __future__ import annotations
 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.display import Display
-
-display = Display()
 
 
 def _ensure_default_collection(collection_list=None):
@@ -36,7 +33,7 @@ class CollectionSearch:
     def _load_collections(self, attr, ds):
         # We are always a mixin with Base, so we can validate this untemplated
         # field early on to guarantee we are dealing with a list.
-        ds = self.get_validated_value('collections', self.fattributes.get('collections'), ds, None)
+        ds = self.get_validated_value('collections', ds, None)
 
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)

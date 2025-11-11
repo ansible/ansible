@@ -32,7 +32,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
-from ansible.playbook.role.include import RoleInclude
+from ansible.playbook.role.definition import RoleDefinition
 
 
 class MixinForMocks(object):
@@ -317,7 +317,7 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
                                          variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
         self.assertIsInstance(res, list)
         for r in res:
-            self.assertIsInstance(r, RoleInclude)
+            self.assertIsInstance(r, RoleDefinition)
 
     def test_block_unknown_action(self):
         ds = [{
@@ -328,7 +328,7 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
                                          variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
         self.assertIsInstance(res, list)
         for r in res:
-            self.assertIsInstance(r, RoleInclude)
+            self.assertIsInstance(r, RoleDefinition)
 
 
 @pytest.mark.usefixtures('collection_loader')

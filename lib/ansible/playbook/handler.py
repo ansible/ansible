@@ -38,7 +38,7 @@ class Handler(Task):
         return "HANDLER: %s" % self.get_name()
 
     def _validate_listen(self, attr, name, value):
-        new_value = self.get_validated_value(name, attr, value, None)
+        new_value = self.get_validated_value(name, value, None)
         if self._role is not None:
             for listener in new_value.copy():
                 new_value.extend([

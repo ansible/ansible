@@ -219,13 +219,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # nested includes, and we want the include order printed correctly
                     display.vv("statically imported: %s" % include_file)
 
-                    ti_copy = task.copy(exclude_parent=True)
-                    ti_copy._parent = block
                     included_blocks = load_list_of_blocks(
                         data,
                         play=play,
                         parent_block=None,
-                        task_include=ti_copy,
+                        task_include=task,
                         role=role,
                         use_handlers=use_handlers,
                         loader=loader,
@@ -291,7 +289,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
 def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None):
     """
-    Loads and returns a list of RoleInclude objects from the ds list of role definitions
+    Loads and returns a list of RoleDefinition objects from the ds list of role definitions
     :param ds: list of roles to load
     :param play: calling Play object
     :param current_role_path: path of the owning role, if any
@@ -301,15 +299,15 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
     :return:
     """
     # we import here to prevent a circular dependency with imports
-    from ansible.playbook.role.include import RoleInclude
+    from ansible.playbook.role.definition import RoleDefinition
 
     if not isinstance(ds, list):
         raise AnsibleAssertionError('ds (%s) should be a list but was a %s' % (ds, type(ds)))
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
-                             loader=loader, collection_list=collection_search_list)
+        i = RoleDefinition.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
+                                loader=loader, collection_list=collection_search_list)
         roles.append(i)
 
     return roles

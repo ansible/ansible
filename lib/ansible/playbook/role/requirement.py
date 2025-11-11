@@ -18,8 +18,6 @@
 from __future__ import annotations
 
 from ansible.errors import AnsibleError
-from ansible.playbook.role.definition import RoleDefinition
-from ansible.utils.display import Display
 from ansible.utils.galaxy import scm_archive_resource
 
 __all__ = ['RoleRequirement']
@@ -32,18 +30,12 @@ VALID_SPEC_KEYS = [
     'version',
 ]
 
-display = Display()
 
-
-class RoleRequirement(RoleDefinition):
-
+class RoleRequirement:
     """
     Helper class for Galaxy, which is used to parse both dependencies
     specified in meta/main.yml and requirements.yml files.
     """
-
-    def __init__(self):
-        pass
 
     @staticmethod
     def repo_url_to_role_name(repo_url):

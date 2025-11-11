@@ -28,9 +28,10 @@ class TaggableTestObj(Taggable):
         self._loader = DictDataLoader({})
         self.tags = []
         self._parent = None
+        self.play = None
 
-    def get_play(self):
-        return None
+    def finalized(self):
+        return False
 
 
 class TestTaggable(unittest.TestCase):

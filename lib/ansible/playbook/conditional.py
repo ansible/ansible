@@ -18,9 +18,6 @@
 from __future__ import annotations
 
 from ansible.playbook.attribute import FieldAttribute
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class Conditional:
@@ -30,9 +27,6 @@ class Conditional:
     """
 
     when = FieldAttribute(isa='list', default=list, extend=True, prepend=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__()
 
     def _validate_when(self, attr, name, value):
         if not isinstance(value, list):

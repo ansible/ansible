@@ -8,20 +8,10 @@ ansible-playbook -i ../../inventory types.yml -v "$@"
 # test timeout
 ansible-playbook -i ../../inventory timeout.yml -v "$@"
 
-# our Play class allows for 'user' or 'remote_user', but not both.
-# first test that both user and remote_user work individually
 set +e
 result="$(ansible-playbook -i ../../inventory user.yml -v "$@" 2>&1)"
 set -e
-grep -q "worked with user" <<< "$result"
-grep -q "worked with remote_user" <<< "$result"
-
-# then test that the play errors if user and remote_user both exist
-echo "EXPECTED ERROR: Ensure we fail properly if a play has both user and remote_user."
-set +e
-result="$(ansible-playbook -i ../../inventory remote_user_and_user.yml -v "$@" 2>&1)"
-set -e
-grep -q "both 'user' and 'remote_user' are set for this play." <<< "$result"
+grep -q "is not a valid attribute for a Play" <<< "$result"
 
 # test that playbook errors if len(plays) == 0
 echo "EXPECTED ERROR: Ensure we fail properly if a playbook is an empty list."

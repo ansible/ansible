@@ -98,11 +98,6 @@ class TaskInclude(Task):
 
         return ds
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
-        new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
-        new_me.statically_loaded = self.statically_loaded
-        return new_me
-
     def build_parent_block(self):
         """
         This method is used to create the parent block for the included tasks
@@ -123,3 +118,8 @@ class TaskInclude(Task):
             p_block = self
 
         return p_block
+
+    def get_include_params(self):
+        v = super().get_include_params()
+        v |= self.vars
+        return v

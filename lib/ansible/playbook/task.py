@@ -20,7 +20,6 @@ from __future__ import annotations
 import typing as t
 
 from ansible import constants as C
-from ansible.module_utils.common.sentinel import Sentinel
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.executor.module_common import _get_action_arg_defaults
 from ansible.module_utils.common.text.converters import to_native
@@ -30,7 +29,6 @@ from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import action_loader, module_loader, lookup_loader
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.delegatable import Delegatable
@@ -97,7 +95,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         """ constructors a task, without the Task.load classmethod, it will be pretty blank """
 
         self._role = role
-        self._parent = None
         self.implicit = False
         self._resolved_action: str | None = None
 
@@ -155,20 +152,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 return "%s : %s" % (role_name, self.action)
             else:
                 return "%s" % (self.action,)
-
-    def _merge_kv(self, ds):
-        if ds is None:
-            return ""
-        elif isinstance(ds, str):
-            return ds
-        elif isinstance(ds, dict):
-            buf = ""
-            for (k, v) in ds.items():
-                if k.startswith('_'):
-                    continue
-                buf = buf + "%s=%s " % (k, v)
-            buf = buf.strip()
-            return buf
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
@@ -283,7 +266,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         else:
             # Validate this untemplated field early on to guarantee we are dealing with a list.
             # This is also done in CollectionSearch._load_collections() but this runs before that call.
-            collections_list = self.get_validated_value('collections', self.fattributes.get('collections'), collections_list, None)
+            collections_list = self.get_validated_value('collections', collections_list, None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
@@ -374,17 +357,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         except Exception as ex:
             raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
 
-    def post_validate(self, templar):
-        """
-        Override of base class post_validate, to also do final validation on
-        the block and task include (if any) to which this task belongs.
-        """
-
-        if self._parent:
-            self._parent.post_validate(templar)
-
-        super(Task, self).post_validate(templar)
-
     def _post_validate_loop(self, attr, value, templar):
         """
         Override post validation for the loop field, which is templated
@@ -424,7 +396,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                     return
                 raise
 
-        # NB: the environment FieldAttribute definition ensures that value is always a list
         for env_item in value:
             if isinstance(env_item, dict):
                 for k in env_item:
@@ -470,36 +441,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         all_vars |= self.vars
 
-        if 'tags' in all_vars:
-            del all_vars['tags']
-        if 'when' in all_vars:
-            del all_vars['when']
+        all_vars.pop('tags', None)
+        all_vars.pop('when', None)
 
         return all_vars
 
     def get_include_params(self):
-        all_vars = dict()
         if self._parent:
-            all_vars |= self._parent.get_include_params()
-        if self.action in C._ACTION_ALL_INCLUDES:
-            all_vars |= self.vars
-        return all_vars
+            return self._parent.get_include_params()
+        else:
+            return {}
 
     def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Task:
         new_me = super(Task, self).copy()
-
         new_me._parent = None
         if self._parent and not exclude_parent:
             new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
-
-        new_me._role = None
-        if self._role:
-            new_me._role = self._role
-
-        new_me.implicit = self.implicit
-        new_me._resolved_action = self._resolved_action
-        new_me._uuid = self._uuid
-
         return new_me
 
     def set_loader(self, loader):
@@ -514,51 +471,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         if self._parent:
             self._parent.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, omit=False):
-        """
-        Generic logic to get the attribute or parent attribute for a task value.
-        """
-        fattr = self.fattributes[attr]
-
-        extend = fattr.extend
-        prepend = fattr.prepend
-
-        try:
-            # omit self, and only get parent values
-            if omit:
-                value = Sentinel
-            else:
-                value = getattr(self, f'_{attr}', Sentinel)
-
-            # If parent is static, we can grab attrs from the parent
-            # otherwise, defer to the grandparent
-            if getattr(self._parent, 'statically_loaded', True):
-                _parent = self._parent
-            else:
-                _parent = self._parent._parent
-
-            if _parent and (value is Sentinel or extend):
-                if getattr(_parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
-                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
-                        parent_value = _parent._get_parent_attribute(attr)
-                    else:
-                        parent_value = getattr(_parent, f'_{attr}', Sentinel)
-
-                    if extend:
-                        value = self._extend_value(value, parent_value, prepend)
-                    else:
-                        value = parent_value
-        except KeyError:
-            pass
-
-        return value
-
-    def all_parents_static(self):
-        if self._parent:
-            return self._parent.all_parents_static()
-        return True
-
     def get_first_parent_include(self):
         from ansible.playbook.task_include import TaskInclude
         if self._parent:
@@ -566,12 +478,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 return self._parent
             return self._parent.get_first_parent_include()
         return None
-
-    def get_play(self):
-        parent = self._parent
-        while not isinstance(parent, Block):
-            parent = parent._parent
-        return parent._play
 
     def dump_attrs(self):
         """Override to smuggle important non-FieldAttribute values back to the controller."""
@@ -584,10 +490,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
 
         # from_attrs is only used to create a finalized task
         # from attrs from the Worker/TaskExecutor
-        # Those attrs are finalized and squashed in the TE
+        # Those attrs are finalized in the TE
         # and controller side use needs to reflect that
         self._finalized = True
-        self._squashed = True
 
     def _resolve_conditional(
         self,

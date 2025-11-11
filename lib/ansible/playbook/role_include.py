@@ -21,13 +21,10 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
-from ansible.playbook.role.include import RoleInclude
-from ansible.utils.display import Display
+from ansible.playbook.role.definition import RoleDefinition
 from ansible._internal._templating._engine import TemplateEngine
 
 __all__ = ['IncludeRole']
-
-display = Display()
 
 
 class IncludeRole(TaskInclude):
@@ -59,6 +56,11 @@ class IncludeRole(TaskInclude):
         self._parent_role = role
         self._role_name = None
         self._role_path = None
+        self.statically_loaded = False
+
+    @property
+    def _post_validate_object(self):
+        return not self.statically_loaded
 
     def get_name(self):
         """ return the name of the task """
@@ -73,13 +75,13 @@ class IncludeRole(TaskInclude):
             myplay = play
 
         try:
-            ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
+            rd = RoleDefinition.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
         except AnsibleError as e:
             if not self.rescuable:
                 raise AnsibleParserError("Could not include role.") from e
             raise
 
-        ri.vars |= self.vars
+        rd.vars |= self.vars
 
         if variable_manager is not None:
             available_variables = variable_manager.get_vars(play=myplay, task=self)
@@ -89,7 +91,7 @@ class IncludeRole(TaskInclude):
         from_files = templar.template(self._from_files)
 
         # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=from_files, from_include=True,
+        actual_role = Role.load(rd, myplay, parent_role=self._parent_role, from_files=from_files, from_include=True,
                                 validate=self.rolespec_validate, public=self.public, static=self.statically_loaded, rescuable=self.rescuable)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
@@ -99,23 +101,19 @@ class IncludeRole(TaskInclude):
         # save this for later use
         self._role_path = actual_role._role_path
 
-        # compile role with parent roles as dependencies to ensure they inherit
-        # variables
-        dep_chain = actual_role.get_dep_chain()
-
         p_block = self.build_parent_block()
 
         # collections value is not inherited; override with the value we calculated during role setup
         p_block.collections = actual_role.collections
 
-        blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
+        blocks = actual_role.compile(play=myplay)
         for b in blocks:
             b._parent = p_block
             # HACK: parent inheritance doesn't seem to have a way to handle this intermediate override until squashed/finalized
             b.collections = actual_role.collections
 
         # updated available handlers in play
-        handlers = actual_role.get_handler_blocks(play=myplay, dep_chain=dep_chain)
+        handlers = actual_role.get_handler_blocks(play=myplay)
         for h in handlers:
             h._parent = p_block
         myplay.handlers = myplay.handlers + handlers
@@ -165,18 +163,12 @@ class IncludeRole(TaskInclude):
         return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
-
         new_me = super(IncludeRole, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
-        new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
-        new_me._parent_role = self._parent_role
-        new_me._role_name = self._role_name
-        new_me._role_path = self._role_path
-
         return new_me
 
     def get_include_params(self):
-        v = super(IncludeRole, self).get_include_params()
+        v = super().get_include_params()
         if self._parent_role:
             v |= self._parent_role.get_role_params()
             v.setdefault('ansible_parent_role_names', []).insert(0, self._parent_role.get_name())

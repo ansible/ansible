@@ -35,11 +35,8 @@ from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.playbook.taggable import Taggable
 from ansible.parsing.vault import EncryptedString
-from ansible.utils.display import Display
 
 from ansible._internal._templating._engine import TemplateEngine as _TE
-
-display = Display()
 
 
 __all__ = ['Play']
@@ -73,7 +70,7 @@ class Play(Base, Taggable, CollectionSearch):
     validate_argspec = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
-    roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
+    roles = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
 
     # Block (Task) Lists Attributes
     handlers = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
@@ -156,22 +153,8 @@ class Play(Base, Taggable, CollectionSearch):
         """
         Adjusts play datastructure to cleanup old/legacy items
         """
-
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
-
-        # The use of 'user' in the Play datastructure was deprecated to
-        # line up with the same change for Tasks, due to the fact that
-        # 'user' conflicted with the user module.
-        if 'user' in ds:
-            # this should never happen, but error out with a helpful message
-            # to the user if it does...
-            if 'remote_user' in ds:
-                raise AnsibleParserError("both 'user' and 'remote_user' are set for this play. "
-                                         "The use of 'user' is deprecated, and should be removed", obj=ds)
-
-            ds['remote_user'] = ds['user']
-            del ds['user']
 
         return super(Play, self).preprocess_data(ds)
 
@@ -200,17 +183,13 @@ class Play(Base, Taggable, CollectionSearch):
         Bare handlers outside of a block are given an implicit block.
         """
         try:
-            return self._extend_value(
-                self.handlers,
-                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
-                prepend=True
-            )
+            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader) + self.handlers
         except AssertionError as ex:
             raise AnsibleParserError("A malformed block was encountered while loading handlers.", obj=self._ds) from ex
 
     def _load_roles(self, attr, ds):
         """
-        Loads and returns a list of RoleInclude objects from the datastructure
+        Loads and returns a list of RoleDefinition objects from the datastructure
         list of role definitions and creates the Role from those objects
         """
 
@@ -369,28 +348,9 @@ class Play(Base, Taggable, CollectionSearch):
             return [self.vars_files]
         return self.vars_files
 
-    def get_handlers(self):
-        return self.handlers[:]
-
-    def get_roles(self):
-        return self.roles[:]
-
-    def get_tasks(self):
-        tasklist = []
-        for task in self.pre_tasks + self.tasks + self.post_tasks:
-            if isinstance(task, Block):
-                tasklist.append(task.block + task.rescue + task.always)
-            else:
-                tasklist.append(task)
-        return tasklist
-
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.role_cache = self.role_cache.copy()
-        new_me._included_conditional = self._included_conditional
-        new_me._included_path = self._included_path
-        new_me._action_groups = self._action_groups
-        new_me._group_actions = self._group_actions
         return new_me
 
     def _post_validate_validate_argspec(self, attr: NonInheritableFieldAttribute, value: object, templar: _TE) -> str | None:
