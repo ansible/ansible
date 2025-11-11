@@ -64,13 +64,13 @@ options:
         type: bool
     exclude:
         description:
-        - Controls which packages APT should use from the repository.
+        - Controls which packages APT should not use from the repository.
         - Mutually exclusive with O(include).
         type: list
         elements: str
     include:
         description:
-        - Controls which packages APT should not use from the repository.
+        - Controls which packages APT should use from the repository.
         - Mutually exclusive with O(exclude).
         type: list
         elements: str
