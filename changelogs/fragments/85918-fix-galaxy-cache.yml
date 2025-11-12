@@ -1,0 +1,10 @@
+bugfixes:
+  - >-
+    Fix initializing the in-memory ansible-galaxy server cache with required fields.
+    (https://github.com/ansible/ansible/issues/85918)
+  - >-
+    Fix ansible-galaxy server cache key uniqueness for servers that use the same hostname and port.
+    The cache version has been updated to 2 to reset files using the hostname and port as keys.
+  - >-
+    Fix updating the persistent ansible-galaxy server cache.
+    Now servers update their portion of the cache without overwriting cache updates of other servers.

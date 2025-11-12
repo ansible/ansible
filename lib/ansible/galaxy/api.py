@@ -141,13 +141,13 @@ def get_cache_id(url):
         pass  # While the URL is probably invalid, let the caller figure that out when using it
 
     # Cannot use netloc because it could contain credentials if the server specified had them in there.
-    return '%s:%s' % (url_info.hostname, port or '')
+    return f"{url_info.hostname}:{port or ''}{url_info.path}"
 
 
 @cache_lock
 def _load_cache(b_cache_path):
     """ Loads the cache file requested if possible. The file must not be world writable. """
-    cache_version = 1
+    cache_version = 2
 
     if not os.path.isfile(b_cache_path):
         display.vvvv("Creating Galaxy API response cache file at '%s'" % to_text(b_cache_path))
@@ -334,7 +334,7 @@ class GalaxyAPI:
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False, cache_key=None):
         url_info = urlparse(url)
-        cache_id = get_cache_id(url)
+        cache_id = get_cache_id(self.api_server)
         if not cache_key:
             cache_key = url_info.path
         query = parse_qs(url_info.query)
@@ -381,10 +381,7 @@ class GalaxyAPI:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.now(datetime.timezone.utc)
                 expires += datetime.timedelta(days=1)
-                server_cache[cache_key] = {
-                    'expires': expires.strftime(iso_datetime_format),
-                    'paginated': False,
-                }
+                server_cache.pop(cache_key, None)
 
         headers = headers or {}
         self._add_auth_token(headers, url, required=auth_required)
@@ -406,7 +403,12 @@ class GalaxyAPI:
                                % (resp.url, to_native(resp_data)))
 
         if cache and self._cache:
-            path_cache = self._cache[cache_id][cache_key]
+            if not valid and not is_paginated_url:
+                server_cache[cache_key] = {
+                    'expires': expires.strftime(iso_datetime_format),
+                    'paginated': False,
+                    'results': [],
+                }
 
             # v3 can return data or results for paginated results. Scan the result so we can determine what to cache.
             paginated_key = None
@@ -416,13 +418,12 @@ class GalaxyAPI:
                     break
 
             if paginated_key:
-                path_cache['paginated'] = True
-                results = path_cache.setdefault('results', [])
+                server_cache[cache_key]['paginated'] = True
                 for result in data[paginated_key]:
-                    results.append(result)
+                    server_cache[cache_key]['results'].append(result)
 
             else:
-                path_cache['results'] = data
+                server_cache[cache_key]['results'] = data
 
         return data
 
@@ -440,8 +441,20 @@ class GalaxyAPI:
 
     @cache_lock
     def _set_cache(self):
+        try:
+            with open(self._b_cache_path, mode='r') as fd:
+                global_cache = json.load(fd)
+        except FileNotFoundError:
+            global_cache = {}
+
+        cache_id = get_cache_id(self.api_server)
+        if self._cache and (data := self._cache.get(cache_id)):
+            global_cache[cache_id] = data
+        else:
+            global_cache[cache_id] = {}
+
         with open(self._b_cache_path, mode='wb') as fd:
-            fd.write(to_bytes(json.dumps(self._cache), errors='surrogate_or_strict'))
+            fd.write(to_bytes(json.dumps(global_cache), errors='surrogate_or_strict'))
 
     @g_connect(['v1'])
     def authenticate(self, github_token):
@@ -819,7 +832,7 @@ class GalaxyAPI:
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
         # we are not waiting a day before finding any new collections that have been published.
         if self._cache:
-            server_cache = self._cache.setdefault(get_cache_id(versions_url), {})
+            server_cache = self._cache.setdefault(get_cache_id(self.api_server), {})
             modified_cache = server_cache.setdefault('modified', {})
 
             try:
