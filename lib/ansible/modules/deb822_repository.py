@@ -64,14 +64,14 @@ options:
         type: bool
     exclude:
         description:
-        - Controls which packages APT should not use from the repository.
+        - Controls which packages C(APT) should exclude from the repository.
         - Mutually exclusive with O(include).
         type: list
         elements: str
         version_added: '2.21'
     include:
         description:
-        - Controls which packages APT should use from the repository.
+        - Controls which packages C(APT) should use from the repository.
         - Mutually exclusive with O(exclude).
         type: list
         elements: str
