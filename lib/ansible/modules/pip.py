@@ -621,7 +621,7 @@ def _resolve_package_names(
     """Resolve package references in the list.
 
     This helper function downloads metadata from PyPI
-    using ``pip download``\ 's ability to return JSON.
+    using ``pip install``'s ability to return JSON.
     """
     pkgs_to_resolve = [pkg for pkg in package_list if not pkg.has_requirement]
 
@@ -641,16 +641,17 @@ def _resolve_package_names(
         return package_list  # Just use the default behavior
 
     _rc, b_meta_json, _stderr = module.run_command(
-        (
+        ([
             *pip, 'install',
             '--dry-run',
             '--ignore-installed',
+            '--quiet',
             '--report=-',
             *map(str, pkgs_to_resolve),
-        ),
+        ]),
         check_rc=True,
     )
-    report = json.loads(to_native(b_meta_json))
+    report = json.loads(b_meta_json)
 
     package_objects = (
         Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
