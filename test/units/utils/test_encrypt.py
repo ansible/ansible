@@ -286,7 +286,7 @@ class TestCryptHash:
         """Test AnsibleError is raised when crypt library does not support an Ansible supported algorithm."""
         # Pretend we have a crypt lib that doesn't like our algo
         mocker.patch('ansible.utils.encrypt.HAS_CRYPT', True)
-        mocker.patch('ansible._internal._encryption._crypt.crypt', side_effect=ValueError)
+        mocker.patch('ansible._internal._encryption._crypt.CryptFacade.crypt', side_effect=ValueError)
 
         # instantiate with an Ansible supported algo
         crypt_hash = encrypt.CryptHash("sha256_crypt")
