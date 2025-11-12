@@ -358,6 +358,15 @@
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
 
+- name: create sha256 checksum file of src and a single space
+  copy:
+    dest: '{{ files_dir }}/sha256sum.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. 27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. 71420.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892 not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b not_target2.txt
+
 - name: create sha256 checksum file of src with a dot leading path
   copy:
     dest: '{{ files_dir }}/sha256sum_with_dot.txt'

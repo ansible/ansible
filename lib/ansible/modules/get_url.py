@@ -487,7 +487,7 @@ def parse_digest_lines(filename, lines):
     """
     checksum_map = []
     BSD_DIGEST_LINE = re.compile(r'^(\w+) ?\((?P<path>.+)\) ?= (?P<digest>[\w.]+)$')
-    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+) ([ *])(?P<path>.+)$')
+    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+)\s+\*?(?P<path>.+)$')
 
     if len(lines) == 1 and len(lines[0].split()) == 1:
         # Only a single line with a single string
