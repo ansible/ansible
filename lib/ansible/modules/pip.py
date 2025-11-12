@@ -618,7 +618,11 @@ def _resolve_package_names(
         pip: list[str],
         python_bin: str,
 ) -> list[Package]:
-    """Return a list of Packages with names extracted from metadata using pip"""
+    """Resolve package references in the list.
+
+    This helper function downloads metadata from PyPI
+    using ``pip download``\ 's ability to return JSON.
+    """
     pkgs_to_resolve = [pkg for pkg in package_list if not pkg.has_requirement]
 
     if not pkgs_to_resolve:
