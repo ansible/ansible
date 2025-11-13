@@ -1,4 +1,3 @@
-
 - name: Ensure that dest top directory doesn't exist
   file:
     path: '{{ remote_dir }}/{{ item }}'
