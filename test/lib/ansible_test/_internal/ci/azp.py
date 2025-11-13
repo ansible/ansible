@@ -243,7 +243,15 @@ class AzurePipelinesChanges:
             display.warning('Unable to find project. Cannot determine changes. All tests will be executed.')
             return set()
 
-        commits = set(build['sourceVersion'] for build in result['value'])
+        try:
+            commits = set(build['sourceVersion'] for build in result['value'])
+        except KeyError as key_err:
+            # most likely due to internal AZP issues it may return malformed objects w/o `sourceVersion`
+            display.warning(
+                'Unable to find recently successful merge commits due to a malformed AZP missing '
+                f'a key {key_err!s}. Cannot determine changes. All tests will be executed.',
+            )
+            return set()
 
         return commits
 
