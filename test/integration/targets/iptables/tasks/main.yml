@@ -35,6 +35,16 @@
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
 
+- name: install xt_comment for iptables `-m comment` tests on RHEL 10
+  dnf:
+    name:
+    - kernel-modules-extra-{{ ansible_facts.kernel }}
+    state: present
+    exclude:
+    # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
+    - kernel-core
+  when: ansible_distribution == 'RedHat'
+
 - name: Use iptables with unnecessary extension match
   iptables:
     chain: INPUT
