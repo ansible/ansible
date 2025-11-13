@@ -45,6 +45,7 @@ from ansible.utils.vars import combine_vars
 from ansible.vars.plugins import get_vars_from_inventory_sources
 
 if t.TYPE_CHECKING:
+    from ansible.inventory.host import Host
     from ansible.plugins.inventory import BaseInventoryPlugin
     from ansible.inventory.host import Host
     from ansible._internal._task import AddHost, AddGroup
@@ -70,10 +71,13 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
 )
 
 
-def order_patterns(patterns):
-    """ takes a list of patterns and reorders them by modifier to apply them consistently """
+def order_patterns(patterns: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """
+    Takes a list of patterns and groups them by modifier.
+    Returns tuple of (regular_patterns, intersection_patterns, exclude_patterns).
+    Regular patterns are unioned, then intersections applied, then exclusions.
+    """
 
-    # FIXME: this goes away if we apply patterns incrementally or by groups
     pattern_regular = []
     pattern_intersection = []
     pattern_exclude = []
@@ -88,14 +92,7 @@ def order_patterns(patterns):
         else:
             pattern_regular.append(p)
 
-    # if no regular pattern was given, hence only exclude and/or intersection
-    # make that magically work
-    if pattern_regular == []:
-        pattern_regular = ['all']
-
-    # when applying the host selectors, run those without the "&" or "!"
-    # first, then the &s, then the !s.
-    return pattern_regular + pattern_intersection + pattern_exclude
+    return pattern_regular, pattern_intersection, pattern_exclude
 
 
 def split_host_pattern(pattern):
@@ -411,17 +408,15 @@ class InventoryManager:
 
             if pattern_hash not in self._hosts_patterns_cache:
 
-                patterns = split_host_pattern(pattern)
-                hosts = self._evaluate_patterns(patterns)
+                hosts = list(self._inventory.hosts.values())
 
-                # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
-                    # exclude hosts not in a subset, if defined
-                    subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
-                    hosts = [h for h in hosts if h._uuid in subset_uuids]
+                    hosts = self._evaluate_patterns(self._subset, hosts)
+
+                patterns = split_host_pattern(pattern)
+                hosts = self._evaluate_patterns(patterns, hosts)
 
                 if not ignore_restrictions and self._restriction:
-                    # exclude hosts mentioned in any restriction (ex: failed hosts)
                     hosts = [h for h in hosts if h.name in self._restriction]
 
                 self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
@@ -440,30 +435,41 @@ class InventoryManager:
 
         return hosts
 
-    def _evaluate_patterns(self, patterns):
+    def _evaluate_patterns(self, patterns: list[str], hosts: list[Host]) -> list[Host]:
         """
-        Takes a list of patterns and returns a list of matching host names,
-        taking into account any negative and intersection patterns.
+        Filters a list of hosts by applying patterns.
         """
 
-        patterns = order_patterns(patterns)
-        hosts = []
+        pattern_regular, pattern_intersection, pattern_exclude = order_patterns(patterns)
+        hosts_set = set(hosts)
 
-        for p in patterns:
-            # avoid resolving a pattern that is a plain host
-            if p in self._inventory.hosts:
-                hosts.append(self._inventory.get_host(p))
-            else:
-                that = self._match_one_pattern(p)
-                if p[0] == "!":
-                    that = set(that)
-                    hosts = [h for h in hosts if h not in that]
-                elif p[0] == "&":
-                    that = set(that)
-                    hosts = [h for h in hosts if h in that]
+        if pattern_regular:
+            matched = set()
+            for p in pattern_regular:
+                if p in self._inventory.hosts:
+                    target_host = self._inventory.get_host(p)
+                    if target_host in hosts_set:
+                        matched.add(target_host)
                 else:
-                    existing_hosts = set(y.name for y in hosts)
-                    hosts.extend([h for h in that if h.name not in existing_hosts])
+                    that = self._match_one_pattern(p)
+                    matched.update(h for h in that if h in hosts_set or h.implicit)
+
+            hosts = [h for h in hosts if h in matched]
+            for h in matched - hosts_set:
+                if h.implicit:
+                    hosts.append(h)
+            hosts_set = matched
+
+        for p in pattern_intersection:
+            that = set(self._match_one_pattern(p))
+            hosts = [h for h in hosts if h in that]
+            hosts_set = hosts_set & that
+
+        for p in pattern_exclude:
+            that = set(self._match_one_pattern(p))
+            hosts = [h for h in hosts if h not in that]
+            hosts_set = hosts_set - that
+
         return hosts
 
     def _match_one_pattern(self, pattern):
