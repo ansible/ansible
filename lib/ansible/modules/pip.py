@@ -640,18 +640,20 @@ def _resolve_package_names(
         module.warn("Using check mode with packages from vcs urls, file paths, or archives will not behave as expected when using pip versions <24.1.")
         return package_list  # Just use the default behavior
 
-    _rc, b_meta_json, _stderr = module.run_command(
-        [
-            *pip, 'install',
-            '--dry-run',
-            '--ignore-installed',
-            '--quiet',
-            '--report=-',
-            *map(str, pkgs_to_resolve),
-        ],
-        check_rc=True,
-    )
-    report = json.loads(b_meta_json)
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        # Uses a tmpfile instead of capturing and parsing stdout because it circumvents the need to fuss with ANSI color output
+        module.run_command(
+         [
+                *pip, 'install',
+                '--dry-run',
+                '--ignore-installed',
+                '--quiet',
+                f'--report={tmpfile.name}',
+                *map(str, pkgs_to_resolve),
+            ],
+            check_rc=True,
+        )
+        report = json.load(tmpfile)
 
     package_objects = (
         Package(install_report['metadata']['name'], version_string=install_report['metadata']['version'])
