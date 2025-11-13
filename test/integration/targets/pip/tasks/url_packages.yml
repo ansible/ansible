@@ -80,6 +80,8 @@
       virtualenv: "{{ venv_path }}"
     check_mode: true
     register: check_git_install_to_empty_venv
+    environment:
+      FORCE_COLOR: "1"  # Here to encourage pip to include ansi color escape codes to validate pip output parsing
 
   - name: Install package via git
     pip:
