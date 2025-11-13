@@ -641,14 +641,14 @@ def _resolve_package_names(
         return package_list  # Just use the default behavior
 
     _rc, b_meta_json, _stderr = module.run_command(
-        ([
+        [
             *pip, 'install',
             '--dry-run',
             '--ignore-installed',
             '--quiet',
             '--report=-',
             *map(str, pkgs_to_resolve),
-        ]),
+        ],
         check_rc=True,
     )
     report = json.loads(b_meta_json)
