@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible_virtualization_role and ansible_virtualization_type facts - fix the detection of vms running inside FreeBSD Bhyve hypervisor and detection of jails  (https://github.com/ansible/ansible/pull/85767)

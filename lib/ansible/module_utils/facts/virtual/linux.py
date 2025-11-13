@@ -187,6 +187,12 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'openstack'
                 found_virt = True
 
+        if product_name == 'BHYVE':
+            guest_tech.add('bhyve')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'bhyve'
+                found_virt = True
+
         bios_vendor = get_file_content('/sys/devices/virtual/dmi/id/bios_vendor')
 
         if bios_vendor == 'Xen':
