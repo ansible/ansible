@@ -556,6 +556,7 @@ except AttributeError:
 
 
 _HASH_RE = re.compile(r'[^a-zA-Z0-9./=]')
+LOCK_INDICATOR = '!'
 
 
 def getspnam(b_name):
@@ -3139,8 +3140,7 @@ class BusyBox(User):
         This method will return '*' at a minimum to avoid creating an enabled
         account with no password.
         """
-        lock_indicator = '!'
-        lock = lock_indicator if self.password_lock else ''
+        lock = LOCK_INDICATOR if self.password_lock else ''
 
         # Order of precedence when choosing the password:
         #   1. password from module parameters
@@ -3150,15 +3150,15 @@ class BusyBox(User):
         if self.password is not None:
             password = self.password
         elif current_password:
-            if current_password == lock_indicator:
+            if current_password == LOCK_INDICATOR:
                 # Special handling when the password is only a '!' to avoid
                 # unnecessary changes to the password to values like '!!' or '!*'.
                 lock = ''
                 password = current_password
-            elif current_password.startswith(lock_indicator):
+            elif current_password.startswith(LOCK_INDICATOR):
                 # Preserve the existing password but unlock the account even if
                 # no password hash was provided in the module parameters.
-                password = current_password.lstrip(lock_indicator)
+                password = current_password.lstrip(LOCK_INDICATOR)
 
         return f'{lock}{password}'
 
