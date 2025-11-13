@@ -643,7 +643,7 @@ def _resolve_package_names(
     with tempfile.NamedTemporaryFile() as tmpfile:
         # Uses a tmpfile instead of capturing and parsing stdout because it circumvents the need to fuss with ANSI color output
         module.run_command(
-         [
+            [
                 *pip, 'install',
                 '--dry-run',
                 '--ignore-installed',
