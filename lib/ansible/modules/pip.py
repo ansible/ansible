@@ -647,7 +647,6 @@ def _resolve_package_names(
                 *pip, 'install',
                 '--dry-run',
                 '--ignore-installed',
-                '--quiet',
                 f'--report={tmpfile.name}',
                 *map(str, pkgs_to_resolve),
             ],
