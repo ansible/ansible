@@ -43,6 +43,9 @@
     exclude:
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     - kernel-core
-  when: ansible_distribution == 'RedHat'
+  when:
+  - ansible_distribution == 'RedHat'
+  - >-
+    ansible_distribution_major_version | int >= 10
 
 - import_tasks: chain_management.yml
