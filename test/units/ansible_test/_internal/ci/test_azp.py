@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import typing as t
 
 import pytest
@@ -42,15 +43,18 @@ def create_azure_pipelines_changes(mocker: pytest_mock.MockerFixture) -> AzurePi
     return AzurePipelinesChanges(config)
 
 
+string_indices_suffix = ", not 'str'" if sys.version_info >= (3, 11) else ""
+
+
 @pytest.mark.parametrize("status_code,response,expected_commits,expected_warning", (
     # valid 200 responses
     (200, dict(value=[]), None, None),
     (200, dict(value=[dict(sourceVersion='abc')]), {'abc'}, None),
     # invalid 200 responses
     (200, 'not-json', None, "Unable to find project due to HTTP 200 Non-JSON result."),
-    (200, '"not-a-dict"', None, "Unexpected response format from HTTP 200 JSON result: string indices must be integers, not 'str'"),
-    (200, dict(value='not-a-list'), None, "Unexpected response format from HTTP 200 JSON result: string indices must be integers, not 'str'"),
-    (200, dict(value=['not-a-dict']), None, "Unexpected response format from HTTP 200 JSON result: string indices must be integers, not 'str'"),
+    (200, '"not-a-dict"', None, f"Unexpected response format from HTTP 200 JSON result: string indices must be integers{string_indices_suffix}"),
+    (200, dict(value='not-a-list'), None, f"Unexpected response format from HTTP 200 JSON result: string indices must be integers{string_indices_suffix}"),
+    (200, dict(value=['not-a-dict']), None, f"Unexpected response format from HTTP 200 JSON result: string indices must be integers{string_indices_suffix}"),
     (200, dict(), None, "Missing 'value' key in response from HTTP 200 JSON result."),
     (200, dict(value=[{}]), None, "Missing 'sourceVersion' key in response from HTTP 200 JSON result."),
     # non-200 responses
