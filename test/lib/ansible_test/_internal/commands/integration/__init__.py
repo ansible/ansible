@@ -616,6 +616,10 @@ def command_integration_script(
         env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env, host_state)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
+        if os.path.exists(test_env.vars_file):
+            vars_file_relative_path = os.path.relpath(test_env.vars_file, cwd)
+            cmd += ['-e', '@%s' % vars_file_relative_path]
+
         env.update(
             # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
             ANSIBLE_PLAYBOOK_DIR=cwd,

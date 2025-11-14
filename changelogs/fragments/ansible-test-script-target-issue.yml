@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible-test - add vars file into command line when running integration script target (https://github.com/ansible/ansible/pull/86198).
