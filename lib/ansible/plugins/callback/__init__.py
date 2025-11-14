@@ -245,15 +245,6 @@ class CallbackBase(AnsiblePlugin):
         self._plugin_options, self._origins = C.config.get_plugin_options_and_origins(self.plugin_type, self._load_name,
                                                                                       keys=task_keys, variables=var_options, direct=direct)
 
-    def _resolve_option_variables(self, variables: dict[str, object], templar: _engine.TemplateEngine) -> None:
-        """Set callback options defined by documented variables."""
-        callback_variables = {
-            var_name: variables[var_name]
-            for var_name in C.config.get_plugin_vars(self.plugin_type, self._load_name)
-            if var_name in variables
-        }
-        self.set_options(var_options=templar.template(callback_variables))
-
     @staticmethod
     def host_label(result: CallbackTaskResult) -> str:
         """Return label for the hostname (& delegated hostname) of a task result."""
