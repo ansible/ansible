@@ -1,0 +1,5 @@
+bugfixes:
+  - >-
+    ``ansible.builtin.pip`` - Running the built-in pip module with ``check_mode`` and packages coming from VCS URLs, archives, or local filepaths now correctly outputs the ``changed`` status of the task.
+    Previously, it was always reported as changed due to improper package name resolution. 
+    (https://github.com/ansible/ansible/pull/85623)
