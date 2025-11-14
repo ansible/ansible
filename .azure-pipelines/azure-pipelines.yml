@@ -81,14 +81,14 @@ stages:
           targets:
             - name: RHEL 7.9
               test: rhel/7.9
-            - name: RHEL 8.8 py36
-              test: rhel/8.8@3.6
-            - name: RHEL 8.8 py311
-              test: rhel/8.8@3.11
-            - name: RHEL 9.2 py39
-              test: rhel/9.2@3.9
-            - name: RHEL 9.2 py311
-              test: rhel/9.2@3.11
+            - name: RHEL 8.10 py36
+              test: rhel/8.10@3.6
+            - name: RHEL 8.10 py311
+              test: rhel/8.10@3.11
+            - name: RHEL 9.6 py39
+              test: rhel/9.6@3.9
+            - name: RHEL 9.6 py311
+              test: rhel/9.6@3.11
             - name: RHEL 10.0
               test: rhel/10.0
           groups:
@@ -97,10 +97,10 @@ stages:
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: RHEL 8.8
-              test: rhel/8.8
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 8.10
+              test: rhel/8.10
+            - name: RHEL 9.6
+              test: rhel/9.6
             - name: RHEL 10.0
               test: rhel/10.0
           groups:
@@ -110,10 +110,10 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: RHEL 8.8
-              test: rhel/8.8
-            - name: RHEL 9.2
-              test: rhel/9.2
+            - name: RHEL 8.10
+              test: rhel/8.10
+            - name: RHEL 9.6
+              test: rhel/9.6
             - name: RHEL 10.0
               test: rhel/10.0
             - name: Ubuntu 22.04
