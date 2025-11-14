@@ -66,6 +66,7 @@ options:
         description:
         - Controls which packages C(APT) should exclude from the repository.
         - Mutually exclusive with O(include).
+        - This option is supported by apt>=3.1.0.
         type: list
         elements: str
         version_added: '2.21'
@@ -73,6 +74,7 @@ options:
         description:
         - Controls which packages C(APT) should use from the repository.
         - Mutually exclusive with O(exclude).
+        - This option is supported by apt>=3.1.0.
         type: list
         elements: str
         version_added: '2.21'
