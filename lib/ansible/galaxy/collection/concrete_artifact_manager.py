@@ -444,8 +444,6 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         ) from proc_err
 
     git_switch_cmd = git_executable, '-c', 'advice.detachedHead=false', 'checkout', to_text(version)
-    if display.verbosity > 0:
-        git_switch_cmd = git_executable, 'checkout', to_text(version)
 
     try:
         subprocess.check_call(git_switch_cmd, cwd=b_checkout_path)
