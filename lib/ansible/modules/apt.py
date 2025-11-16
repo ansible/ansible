@@ -761,7 +761,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             pkg_list.append("'%s=%s'" % (name, version))
     packages = ' '.join(pkg_list)
 
-    if packages:
+    if packages or autoremove:
         if force:
             force_yes = '--force-yes'
         else:
@@ -825,9 +825,11 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             diff = {}
         status = True
 
-        changed = True
+        changed = len(packages) > 0
         if build_dep:
             changed = APT_GET_ZERO not in out
+        if CLEAN_OP_CHANGED_STR["autoremove"] in out:
+            changed = True
 
         data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
         if rc:
@@ -969,7 +971,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
-    if not packages:
+    if not packages and not autoremove:
         m.exit_json(changed=False)
     else:
         if force:
@@ -1017,7 +1019,10 @@ def remove(m, pkgspec, cache, purge=False, force=False,
             diff = {}
         if rc:
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err, rc=rc)
-        m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
+
+        changed = len(packages) > 0 or CLEAN_OP_CHANGED_STR["autoremove"] in out
+
+        m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
 def cleanup(m, purge=False, force=False, operation=None,
@@ -1354,7 +1359,8 @@ def main():
         aptclean_stdout, aptclean_stderr, aptclean_diff = aptclean(module)
         # If there is nothing else to do exit. This will set state as
         #  changed based on if the cache was updated.
-        if not p['package'] and p['upgrade'] == 'no' and not p['deb']:
+        # Note: 'autoclean' is no longer needed at this point, because it's a subset of 'clean'.
+        if not p['package'] and p['upgrade'] == 'no' and not p['deb'] and not p['autoremove']:
             module.exit_json(
                 changed=True,
                 msg=aptclean_stdout,

@@ -763,3 +763,67 @@
       - not srcpkgcache_bin.stat.exists
     fail_msg: "apt cache files still exist."
     success_msg: "apt cache files are cleaned."
+
+# Test that 'autoremove' works when redundant package changes are requested
+- name: Install the hello package and mark it as automatically installed
+  shell: "apt-get -y install hello && apt-mark auto hello"
+
+- name: Autoremove while requesting an already installed package to be present
+  apt:
+    name: apt
+    state: present
+    autoremove: true
+  register: autoremove_1
+
+- name: Nothing to autoremove
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+
+- name: Install the hello package and mark it as automatically installed
+  shell: "apt-get -y install hello && apt-mark auto hello"
+
+- name: Autoremove while requesting an already absent package to be absent
+  apt:
+    name: hello-traditional
+    state: absent
+    autoremove: true
+  register: autoremove_1
+
+- name: Nothing to autoremove
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+
+# Test that 'autoremove' works with 'clean'
+- name: Install the hello package and mark it as automatically installed
+  shell: "apt-get -y install hello && apt-mark auto hello"
+
+- name: Autoremove while cleaning
+  apt:
+    clean: true
+    autoremove: true
+  register: autoremove_1
+
+- name: Nothing to autoremove
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
