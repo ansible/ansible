@@ -23,7 +23,7 @@ class LoadAvgFactCollector(BaseFactCollector):
                 '5m': loadavg[1],
                 '15m': loadavg[2]
             }
-        except OSError:
+        except (OSError, AttributeError):
             pass
 
         return facts
