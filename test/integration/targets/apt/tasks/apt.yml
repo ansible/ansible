@@ -827,3 +827,85 @@
     that:
       - autoremove_1 is changed
       - autoremove_2 is not changed
+
+# Test that the purge option works
+- name: Install the nano package
+  shell: "apt-get -y install nano"
+
+- name: Remove and purge it
+  apt:
+    name: nano
+    state: absent
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Autoremove and purge
+  apt:
+    autoremove: true
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Autoremove and purge while installing hello
+  apt:
+    name: hello
+    state: present
+    autoremove: true
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Autoremove and purge while removing hello
+  apt:
+    name: hello
+    state: absent
+    autoremove: true
+    purge: true
+  register: purge_test
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that purge worked
+  assert:
+    that:
+      - purge_test is changed
+      - "'nano*' not in config_check.stdout"
