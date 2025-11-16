@@ -236,6 +236,9 @@ class AIXHardware(Hardware):
                     fields = line.split()
                     if len(fields) != 0 and fields[0] != 'node' and fields[0][0] != '-' and re.match('^/.*|^[a-zA-Z].*|^[0-9].*', fields[0]):
                         if re.match('^/', fields[0]):
+                            # AIX VIO SSP mounts match above regexes, but show only 6 fields. we fix this by adding one empty field
+                            if len(fields) < 7:
+                                fields.append("")
                             # normal mount
                             mount = fields[1]
                             mount_info = {'mount': mount,
