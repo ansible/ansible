@@ -156,6 +156,7 @@ options:
   autoclean:
     description:
       - If V(true), cleans the local repository of retrieved package files that can no longer be downloaded.
+      - 'O(autoclean) cannot be used in combination with other parameters.'
     type: bool
     default: 'no'
     version_added: "2.4"
@@ -1517,10 +1518,10 @@ def main():
                         module.fail_json(msg="invalid package spec: %s" % package)
 
             if not packages:
-                if autoclean:
-                    cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
                 if autoremove:
                     cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
+                if autoclean:
+                    cleanup(module, p['purge'], force=force_yes, operation='autoclean', dpkg_options=dpkg_options)
 
             if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
                 state_upgrade = False
