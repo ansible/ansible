@@ -717,7 +717,7 @@ def mark_installed(m: AnsibleModule, packages: list[str], manual: bool) -> None:
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends=None, force=False,
+            install_recommends=None, purge=True, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
             allow_unauthenticated=False, allow_downgrade=False, allow_change_held_packages=False):
@@ -768,6 +768,11 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             force_yes = ''
 
+        if purge:
+            purge = '--purge'
+        else:
+            purge = ''
+
         if m.check_mode:
             check_arg = '--simulate'
         else:
@@ -796,8 +801,8 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if build_dep:
             cmd = "%s -y %s %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, fail_on_autoremove, check_arg, packages)
         else:
-            cmd = "%s -y %s %s %s %s %s %s %s install %s" % \
-                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, fail_on_autoremove, check_arg, packages)
+            cmd = "%s -y %s %s %s %s %s %s %s %s install %s" % \
+                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, purge, force_yes, autoremove, fail_on_autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -1541,6 +1546,7 @@ def main():
                     upgrade=state_upgrade,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
+                    purge=p['purge'],
                     force=force_yes,
                     dpkg_options=dpkg_options,
                     build_dep=state_builddep,
