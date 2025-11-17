@@ -477,17 +477,13 @@ def is_url(checksum):
     return urlsplit(checksum).scheme in supported_schemes
 
 
-def parse_digest_lines(filename, lines):
+def parse_digest_lines(filename: str, lines: list[str]) -> list[tuple[str, str]]:
     """Returns a list of tuple containing the filename and digest depending upon
       the lines provided
-
-    Args:
-        filename (str): Name of the filename, used only when the digest is one-liner
-        lines (list): A list of lines containing filenames and checksums
     """
     checksum_map = []
     BSD_DIGEST_LINE = re.compile(r'^(\w+) ?\((?P<path>.+)\) ?= (?P<digest>[\w.]+)$')
-    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+) ([ *])(?P<path>.+)$')
+    GNU_DIGEST_LINE = re.compile(r'^(?P<digest>[\w.]+)\s+(\*|\.\/|\.)?(?P<path>.+)$')
 
     if len(lines) == 1 and len(lines[0].split()) == 1:
         # Only a single line with a single string
