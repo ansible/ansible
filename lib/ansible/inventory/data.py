@@ -52,9 +52,6 @@ class InventoryData:
         # current localhost, implicit or explicit
         self.localhost: Host | None = None
 
-        # track if an explicit localhost ever existed
-        self._explicit_localhost_existed: bool = False
-
         self.current_source: str | None = None
         self.processed_sources: list[str] = []
 
@@ -66,9 +63,9 @@ class InventoryData:
 
     def _create_implicit_localhost(self, pattern: str) -> Host:
 
-        if self.localhost:
+        if self.localhost and self.localhost.implicit:
             new_host = self.localhost
-        elif self._explicit_localhost_existed:
+        elif self.localhost:
             return None
         else:
             new_host = Host(pattern)
@@ -209,7 +206,6 @@ class InventoryData:
 
                 # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
                 if host in C.LOCALHOST:
-                    self._explicit_localhost_existed = True
                     if self.localhost is None:
                         self.localhost = self.hosts[host]
                         display.vvvv("Set default localhost to %s" % h)
