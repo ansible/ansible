@@ -149,7 +149,7 @@ def main():
     if service is not None:
         cmd.extend(['-s', service])
 
-    if not split and split != None:
+    if not split and split is not None:
         module.fail_json(msg="Invalid split value. The value must be a non-empty string")
 
     if split is None and database in colon:
