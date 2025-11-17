@@ -8,22 +8,59 @@ import pytest
 
 from ansible.modules.get_url import parse_digest_lines
 
+FILENAME = "sample.txt"
+
 
 @pytest.mark.parametrize(
     ("lines", "expected"),
     [
         pytest.param(
             [
+                "2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25 sample.txt",
+            ],
+            [("2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25", FILENAME)],
+            id="single-line-digest-single-space",
+        ),
+        pytest.param(
+            [
+                "2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25         sample.txt",
+            ],
+            [("2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25", FILENAME)],
+            id="single-line-digest-multiple-spaces",
+        ),
+        pytest.param(
+            [
+                "2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25         .sample.txt",
+            ],
+            [("2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25", FILENAME)],
+            id="single-line-digest-multiple-spaces-with-dot",
+        ),
+        pytest.param(
+            [
+                "2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25         *sample.txt",
+            ],
+            [("2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25", FILENAME)],
+            id="single-line-digest-multiple-spaces-with-asterisk",
+        ),
+        pytest.param(
+            [
+                "2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25         ./sample.txt",
+            ],
+            [("2a32d433bf82355a3f78318a5affa21866c9a98b151785494b386e6b08f40b25", FILENAME)],
+            id="single-line-digest-multiple-spaces-with-dot-and-slash",
+        ),
+        pytest.param(
+            [
                 "a97e6837f60cec6da4491bab387296bbcd72bdba",
             ],
-            [("a97e6837f60cec6da4491bab387296bbcd72bdba", "sample.txt")],
+            [("a97e6837f60cec6da4491bab387296bbcd72bdba", FILENAME)],
             id="single-line-digest",
         ),
         pytest.param(
             [
                 "a97e6837f60cec6da4491bab387296bbcd72bdba  sample.txt",
             ],
-            [("a97e6837f60cec6da4491bab387296bbcd72bdba", "sample.txt")],
+            [("a97e6837f60cec6da4491bab387296bbcd72bdba", FILENAME)],
             id="GNU-style-digest",
         ),
         pytest.param(
@@ -33,7 +70,7 @@ from ansible.modules.get_url import parse_digest_lines
             [
                 (
                     "b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.",
-                    "sample.txt",
+                    FILENAME,
                 )
             ],
             id="BSD-style-digest",
@@ -41,5 +78,4 @@ from ansible.modules.get_url import parse_digest_lines
     ],
 )
 def test_parse_digest_lines(lines, expected):
-    filename = "sample.txt"
-    assert parse_digest_lines(filename, lines) == expected
+    assert parse_digest_lines(filename=FILENAME, lines=lines) == expected
