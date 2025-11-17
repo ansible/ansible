@@ -36,6 +36,7 @@ options:
         description:
             - Character used to split the database values into lists/arrays such as V(:) or V(\\t),
               otherwise it will try to pick one depending on the database.
+            - The value must be a non-empty string.
         type: str
     fail_key:
         description:
@@ -147,6 +148,9 @@ def main():
 
     if service is not None:
         cmd.extend(['-s', service])
+
+    if not split and split is not None:
+        module.fail_json(msg="Invalid split value. The value must be a non-empty string")
 
     if split is None and database in colon:
         split = ':'
