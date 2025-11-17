@@ -372,7 +372,8 @@ aix_mount = """node   mounted          mounted over  vfs    date              op
 ----   -------          ------------ ---  ------------   -------------------
        /dev/hd0         /            jfs   Dec 17 08:04   rw, log  =/dev/hd8
        /dev/hd2         /usr         jfs   Dec 17 08:06   rw, log  =/dev/hd8
-sue    /home/local/src  /usr/code    nfs   Dec 17 08:06   ro, log  =/dev/hd8"""
+sue    /home/local/src  /usr/code    nfs   Dec 17 08:06   ro, log  =/dev/hd8
+       /foo/bar         /baz         poolfs Aug 07 21:46"""
 
 aix_mount_parsed = [
     (
@@ -411,6 +412,18 @@ aix_mount_parsed = [
             "options": "ro, log  =/dev/hd8",
         },
     ),
+    (
+        "mount",
+        "/baz",
+        "       /foo/bar         /baz         poolfs Aug 07 21:46",
+        {
+            "mount": "/baz",
+            "device": "/foo/bar",
+            "fstype": "poolfs",
+            "time": "Aug 07 21:46",
+            "options": None,
+        },
+    )
 ]
 
 aix7_2 = AIXData(aix_filesystems, aix_filesystems_parsed, aix_mount, aix_mount_parsed)
