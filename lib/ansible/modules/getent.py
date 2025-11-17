@@ -139,14 +139,6 @@ def main():
     service = module.params.get('service')
     fail_key = module.params.get('fail_key')
 
-    # Normalize split: treat falsy/invalid values (e.g., empty string) as autodetect.
-    # If user provided an invalid value (not None but falsy), emit a warning.
-    if not split:
-        if split is not None:
-            module.warn("Ignoring invalid split option (%r), using autodetection" % (split,))
-        # autodetect default based on database
-        split = ':' if database in colon else None
-
     getent_bin = module.get_bin_path('getent', True)
 
     if key is not None:
@@ -175,7 +167,6 @@ def main():
     if rc == 0:
         seen = {}
         for line in out.splitlines():
-            # Split line using the (possibly autodetected) separator
             record = line.split(split)
 
             if record[0] in seen:

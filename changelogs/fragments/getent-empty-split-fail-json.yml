@@ -1,2 +1,2 @@
 bugfixes:
-  - "getent - handle empty or otherwise falsy ``split`` values gracefully by ignoring them with a warning and autodetecting a separator, instead of raising a Python ValueError traceback."
+  - getent - handle non-empty string for split parameter value (https://github.com/ansible/ansible/issues/85720).
