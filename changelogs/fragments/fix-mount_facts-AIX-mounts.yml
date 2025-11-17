@@ -1,0 +1,2 @@
+bugfixes:
+  - mount_facts - Fix listing AIX mounts with no options.
