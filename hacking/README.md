@@ -12,6 +12,7 @@ contributors. It is the recommended way to get started.
 ```
 
 This script will:
+
 - Check system requirements (Python 3.12+, pip, git)
 - Optionally create and activate a virtual environment
 - Run the env-setup script to configure your environment

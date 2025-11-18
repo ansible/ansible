@@ -151,10 +151,10 @@ prompt_yes_no() {
 
     local answer
     if [[ "$default" == "y" ]]; then
-        read -p "$prompt [Y/n]: " answer
+        read -r -p "$prompt [Y/n]: " answer
         answer="${answer:-y}"
     else
-        read -p "$prompt [y/N]: " answer
+        read -r -p "$prompt [y/N]: " answer
         answer="${answer:-n}"
     fi
 
@@ -169,7 +169,8 @@ check_system_requirements() {
 
     # Check git
     if command_exists git; then
-        local git_version=$(git --version | cut -d' ' -f3)
+        local git_version
+        git_version=$(git --version | cut -d' ' -f3)
         print_success "Git found (version $git_version)"
     else
         print_error "Git not found"
@@ -180,7 +181,8 @@ check_system_requirements() {
 
     # Check Python version
     if command_exists python3; then
-        local python_version=$(python3 --version | cut -d' ' -f2)
+        local python_version
+        python_version=$(python3 --version | cut -d' ' -f2)
         if version_ge "$python_version" "$REQUIRED_PYTHON_VERSION"; then
             print_success "Python found (version $python_version, required >=$REQUIRED_PYTHON_VERSION)"
         else
@@ -195,7 +197,8 @@ check_system_requirements() {
 
     # Check pip
     if python3 -m pip --version &> /dev/null; then
-        local pip_version=$(python3 -m pip --version | cut -d' ' -f2)
+        local pip_version
+        pip_version=$(python3 -m pip --version | cut -d' ' -f2)
         print_success "pip found (version $pip_version)"
     else
         print_error "pip not found"
@@ -282,7 +285,8 @@ install_dependencies() {
         return 1
     fi
 
-    local package_count=$(grep -c '^[^#]' "$requirements_file" || true)
+    local package_count
+    package_count=$(grep -c '^[^#]' "$requirements_file" || true)
     print_info "Installing $package_count required packages"
 
     if python3 -m pip install -q -r "$requirements_file"; then
@@ -316,7 +320,8 @@ verify_installation() {
 
     # Test 2: ansible version
     if ansible --version &> /dev/null; then
-        local version=$(ansible --version 2>/dev/null | head -n1)
+        local version
+        version=$(ansible --version 2>/dev/null | head -n1)
         print_success "ansible version check passed: $version"
         ((tests_passed++))
     else
@@ -333,7 +338,8 @@ verify_installation() {
 
     # Test 4: Python imports
     if python3 -c "import ansible; ansible.__version__" &> /dev/null; then
-        local py_version=$(python3 -c "import ansible; print(ansible.__version__)")
+        local py_version
+        py_version=$(python3 -c "import ansible; print(ansible.__version__)")
         print_success "Python module imports working (ansible $py_version)"
         ((tests_passed++))
     else
