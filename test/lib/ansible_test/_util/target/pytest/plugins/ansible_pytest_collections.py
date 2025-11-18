@@ -16,8 +16,9 @@ ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION = tuple(int(x) for x in os.environ['ANSIBL
 def collection_resolve_package_path(path):
     """Configure the Python package path so that pytest can find our collections."""
     for parent in path.parents:
-        if str(parent) == ANSIBLE_COLLECTIONS_PATH:
-            return parent
+        for collections_path in ANSIBLE_COLLECTIONS_PATH.split(os.pathsep):
+            if str(parent) == collections_path:
+                return parent
 
     raise Exception('File "%s" not found in collection path "%s".' % (path, ANSIBLE_COLLECTIONS_PATH))
 
@@ -89,7 +90,7 @@ def pytest_configure():
     # allow unit tests to import code from collections
 
     # noinspection PyProtectedMember
-    _AnsibleCollectionFinder(paths=[os.path.dirname(ANSIBLE_COLLECTIONS_PATH)])._install()  # pylint: disable=protected-access
+    _AnsibleCollectionFinder(paths=ANSIBLE_COLLECTIONS_PATH.split(os.pathsep))._install()  # pylint: disable=protected-access
 
     try:
         # noinspection PyProtectedMember
