@@ -1,11 +1,44 @@
 'Hacking' directory tools
 =========================
 
+quickstart.sh
+-------------
+
+The 'quickstart.sh' script automates the complete setup process for new Ansible
+contributors. It is the recommended way to get started.
+
+```shell
+./hacking/quickstart.sh
+```
+
+This script will:
+- Check system requirements (Python 3.12+, pip, git)
+- Optionally create and activate a virtual environment
+- Run the env-setup script to configure your environment
+- Install all required dependencies from requirements.txt
+- Verify the installation is working correctly
+- Create a convenience activation script for future sessions
+
+For automated/non-interactive setup (useful in CI/CD):
+
+```shell
+./hacking/quickstart.sh --silent
+```
+
+For more options, see:
+
+```shell
+./hacking/quickstart.sh --help
+```
+
 env-setup
 ---------
 
 The 'env-setup' script modifies your environment to allow you to run
 ansible from a git checkout using a supported Python version.
+
+Note: If you are setting up a development environment for the first time,
+consider using quickstart.sh instead, which automates this process.
 
 First, set up your environment to run from the checkout:
 
