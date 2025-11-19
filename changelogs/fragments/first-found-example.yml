@@ -1,0 +1,2 @@
+bugfixes:
+ - first_found - Correct the "Include tasks only if one of the files exists, otherwise skip" example.
