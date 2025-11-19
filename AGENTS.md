@@ -31,14 +31,14 @@ Most commonly used commands and patterns:
 
 ```bash
 # Testing
-ansible-test sanity -v --docker default                    # Run all sanity tests
+ansible-test sanity -v --docker default                   # Run all sanity tests
 ansible-test sanity -v --docker default --test <test>     # Run specific sanity test
 ansible-test units -v --docker default                    # Run unit tests
-ansible-test integration -v --docker fedora42             # Run integration tests
+ansible-test integration -v --docker ubuntu2404           # Run integration tests
 
 # PR Review and CI
-gh pr view <number>                                        # Get PR details
-gh pr view <number> --comments                           # Check for ansibot CI failures
+gh pr view <number>                                       # Get PR details
+gh pr view <number> --comments                            # Check for ansibot CI failures
 gh pr checks <number>                                     # Get Azure Pipelines URLs
 gh pr checkout <number>                                   # Switch to PR branch
 gh pr diff <number>                                       # See all changes
@@ -47,7 +47,7 @@ gh pr diff <number>                                       # See all changes
 **Container Selection:**
 
 - Sanity/Unit tests: `--docker default`
-- Integration tests: `--docker fedora42`, `--docker ubuntu2204`, etc. (NOT default/base)
+- Integration tests: `--docker ubuntu2204`, `--docker ubuntu2404`, etc. (NOT default/base)
 
 **Critical Reminders:**
 
@@ -88,10 +88,10 @@ ansible-test units -v --docker default
 ansible-test units -v --docker default test/units/modules/test_command.py
 
 # Run integration tests (choose appropriate container - NOT base/default)
-ansible-test integration -v --docker fedora42
+ansible-test integration -v --docker ubuntu2404
 
 # Run specific integration target (directory name in test/integration/targets/)
-ansible-test integration -v --docker ubuntu2204 setup_remote_tmp_dir
+ansible-test integration -v --docker ubuntu2404 setup_remote_tmp_dir
 
 # Run with coverage
 ansible-test units -v --docker default --coverage
@@ -102,7 +102,7 @@ ansible-test sanity -v --venv
 
 Available Docker containers for testing can be found in `./test/lib/ansible_test/_data/completion/docker.txt`.
 The `base` and `default` containers are for sanity/unit tests only. For integration tests, use distro-specific
-containers like `fedora42`, `ubuntu2204`, `ubuntu2404`, `alpine322` depending on the modules being tested.
+containers, depending on the modules being tested.
 
 **Test isolation options:**
 
