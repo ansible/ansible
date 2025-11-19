@@ -1080,7 +1080,7 @@ def aptclean(m):
     return (clean_out, clean_err, clean_diff)
 
 
-def upgrade(m, mode="yes", force=False, default_release=None,
+def upgrade(m, mode="yes", purge=False, force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
             allow_unauthenticated=False,
@@ -1089,8 +1089,17 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 
     if autoremove:
         autoremove = '--auto-remove'
+        autoremove_aptitude = '-o Aptitude::Delete-Unused=1'
     else:
         autoremove = ''
+        autoremove_aptitude = '-o Aptitude::Delete-Unused=0'
+
+    if purge:
+        purge = '--purge'
+        purge_aptitude = '-o Aptitude::Purge-Unused=1'
+    else:
+        purge = ''
+        purge_aptitude = '-o Aptitude::Purge-Unused=0'
 
     if m.check_mode:
         check_arg = '--simulate'
@@ -1102,19 +1111,19 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if mode == "dist" or (mode == "full" and use_apt_get):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
-        upgrade_command = "dist-upgrade %s" % (autoremove)
+        upgrade_command = "dist-upgrade %s %s" % (autoremove, purge)
     elif mode == "full" and not use_apt_get:
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
-        upgrade_command = "full-upgrade"
+        upgrade_command = "full-upgrade %s %s" % (autoremove_aptitude, purge_aptitude)
     else:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
-            upgrade_command = "upgrade --with-new-pkgs %s" % (autoremove)
+            upgrade_command = "upgrade --with-new-pkgs %s %s" % (autoremove, purge)
         else:
             # aptitude safe-upgrade # mode=yes # default
             apt_cmd = APTITUDE_CMD
-            upgrade_command = "safe-upgrade"
+            upgrade_command = "safe-upgrade %s %s" % (autoremove_aptitude, purge_aptitude)
             prompt_regex = r"(^Do you want to ignore this warning and proceed anyway\?|^\*\*\*.*\[default=.*\])"
 
     if force:
@@ -1469,15 +1478,16 @@ def main():
             if p['upgrade']:
                 upgrade(
                     module,
-                    p['upgrade'],
-                    force_yes,
-                    p['default_release'],
-                    use_apt_get,
-                    dpkg_options,
-                    autoremove,
-                    fail_on_autoremove,
-                    allow_unauthenticated,
-                    allow_downgrade
+                    mode=p['upgrade'],
+                    purge=p['purge'],
+                    force=force_yes,
+                    default_release=p['default_release'],
+                    use_apt_get=use_apt_get,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    fail_on_autoremove=fail_on_autoremove,
+                    allow_unauthenticated=allow_unauthenticated,
+                    allow_downgrade=allow_downgrade
                 )
 
             if p['deb']:
@@ -1506,15 +1516,16 @@ def main():
                     module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
                 upgrade(
                     module,
-                    'yes',
-                    force_yes,
-                    p['default_release'],
-                    use_apt_get,
-                    dpkg_options,
-                    autoremove,
-                    fail_on_autoremove,
-                    allow_unauthenticated,
-                    allow_downgrade
+                    mode='yes',
+                    purge=p['purge'],
+                    force=force_yes,
+                    default_release=p['default_release'],
+                    use_apt_get=use_apt_get,
+                    dpkg_options=dpkg_options,
+                    autoremove=autoremove,
+                    fail_on_autoremove=fail_on_autoremove,
+                    allow_unauthenticated=allow_unauthenticated,
+                    allow_downgrade=allow_downgrade
                 )
 
             if packages:

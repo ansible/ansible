@@ -909,3 +909,83 @@
     that:
       - purge_test is changed
       - "'nano*' not in config_check.stdout"
+
+# Test the purge and autoremove options during upgrades
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Full upgrade
+  apt:
+    upgrade: full
+    autoremove: true
+    purge: true
+  register: autoremove_1
+
+- name: Autoremove for a second time
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Safe upgrade
+  apt:
+    upgrade: safe
+    autoremove: true
+    purge: true
+  register: autoremove_1
+
+- name: Autoremove for a second time
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+      - "'nano*' not in config_check.stdout"
+
+- name: Install the nano package and mark it as automatically installed
+  shell: "apt-get -y install nano && apt-mark auto nano"
+
+- name: Safe upgrade with apt-get
+  apt:
+    upgrade: safe
+    force_apt_get: true
+    autoremove: true
+    purge: true
+  register: autoremove_1
+
+- name: Autoremove for a second time
+  apt:
+    autoremove: true
+  register: autoremove_2
+
+- name: Check if the configuration files have been removed
+  shell: "apt-get --dry-run purge ?config-files"
+  register: config_check
+
+- name: Verify that the first autoremove worked
+  assert:
+    that:
+      - autoremove_1 is changed
+      - autoremove_2 is not changed
+      - "'nano*' not in config_check.stdout"
