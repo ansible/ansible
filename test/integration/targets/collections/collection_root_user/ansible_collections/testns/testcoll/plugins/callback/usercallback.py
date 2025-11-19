@@ -8,6 +8,11 @@ DOCUMENTATION = """
     short_description: does stuff
     description:
       - does some stuff
+    options:
+      ok_msg:
+        default: "usercallback says ok"
+        vars:
+          - name: on_ok
 """
 
 
@@ -22,4 +27,4 @@ class CallbackModule(CallbackBase):
         self._display.display("loaded usercallback from collection, yay")
 
     def v2_runner_on_ok(self, result):
-        self._display.display("usercallback says ok")
+        self._display.display(self.get_option("ok_msg"))

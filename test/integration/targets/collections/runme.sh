@@ -31,6 +31,9 @@ ANSIBLE_CALLBACKS_ENABLED=formerly_core_removed_callback ansible localhost -m de
 # ensure non existing callback does not crash ansible
 ANSIBLE_CALLBACKS_ENABLED=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'charlie.gomez.notme'"
 
+# test configuring collection callback plugins with extra variables
+ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible-playbook noop.yml --extra-vars 'on_ok="configured msg"' | grep 'configured msg'
+
 unset ANSIBLE_LOAD_CALLBACK_PLUGINS
 # adhoc normally shouldn't load non-default plugins- let's be sure
 output=$(ANSIBLE_CALLBACKS_ENABLED=testns.testcoll.usercallback ansible localhost -m debug)

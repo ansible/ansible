@@ -1,0 +1,3 @@
+minor_changes:
+  - callback plugins - support configuration using extra variables.
+  - default callback plugin - add variable configuration for ``display_skipped_hosts`` (https://github.com/ansible/ansible/issues/84469).

@@ -40,6 +40,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
+from ansible.plugins.callback import CallbackBase
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible._internal._templating._engine import TemplateEngine
@@ -109,6 +110,16 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
 class AnsibleEndPlay(Exception):
     def __init__(self, result):
         self.result = result
+
+
+def _resolve_callback_option_variables(callback: CallbackBase, variables: dict[str, object], templar: TemplateEngine) -> None:
+    """Set callback plugin options using documented variables."""
+    callback_variables = {
+        var_name: variables[var_name]
+        for var_name in C.config.get_plugin_vars(callback.plugin_type, callback._load_name)
+        if var_name in variables
+    }
+    callback.set_options(var_options=templar.template(callback_variables))
 
 
 class TaskQueueManager:
@@ -248,8 +259,10 @@ class TaskQueueManager:
         if not stdout_callback:
             raise AnsibleError(f"Could not load {self._stdout_callback_name!r} callback plugin.")
 
+        templar = TemplateEngine(loader=self._loader, variables=self._variable_manager._extra_vars)
+
         stdout_callback._init_callback_methods()
-        stdout_callback.set_options()
+        _resolve_callback_option_variables(stdout_callback, self._variable_manager._extra_vars, templar)
 
         self._callback_plugins.append(stdout_callback)
 
@@ -303,7 +316,7 @@ class TaskQueueManager:
                 # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
                     callback_obj._init_callback_methods()
-                    callback_obj.set_options()
+                    _resolve_callback_option_variables(callback_obj, self._variable_manager._extra_vars, templar)
                     self._callback_plugins.append(callback_obj)
                 else:
                     display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
