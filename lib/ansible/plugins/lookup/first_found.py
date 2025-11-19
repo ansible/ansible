@@ -79,7 +79,7 @@ EXAMPLES = """
 
 - name: Include tasks only if one of the files exists, otherwise skip
   ansible.builtin.include_tasks: '{{ tasks_file }}'
-  when: tasks_file != ""
+  when: tasks_file is not none
   vars:
     tasks_file: "{{ lookup('ansible.builtin.first_found', files=['tasks.yaml', 'other_tasks.yaml'], errors='ignore') }}"
 
