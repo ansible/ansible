@@ -81,6 +81,14 @@ options:
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
+    dest:
+        description:
+            - Absolute path of where to download the file to.
+              If dest is a directory, either the server provided filename or, if none provided, the base name of the URL on the remote server will be used. If a directory, force has no effect.
+              If dest is a directory, the file will always be downloaded V(regardless of the force and checksum option), but replaced only if the contents changed.
+              Stores the destination path for a file to be written or retrieved by a task module.
+        type: path
+        required: true
 """
 
 EXAMPLES = """
