@@ -147,6 +147,12 @@ options:
             - The behavior is the same as C(userdel --remove), check the man page for details and support.
         type: bool
         default: no
+    selinux_user:
+        description:
+            - This only affects O(state=absent), it removes any SELinux user mapping for the user.
+            - The behavior is the same as C(userdel --selinux-user), check the man page for details and support.
+        type: bool
+        default: no
     login_class:
         description:
             - Optionally sets the user's login class, a feature of most BSD OSs.
@@ -610,6 +616,7 @@ class User(object):
         self.shell = module.params['shell']
         self.password = module.params['password']
         self.force = module.params['force']
+        self.selinux_user = module.params['selinux_user']
         self.remove = module.params['remove']
         self.create_home = module.params['create_home']
         self.move_home = module.params['move_home']
@@ -720,6 +727,8 @@ class User(object):
             command_name = 'userdel'
 
         cmd = [self.module.get_bin_path(command_name, True)]
+        if self.selinux_user and not self.local:
+            cmd.append('-Z')
         if self.force and not self.local:
             cmd.append('-f')
         if self.remove:
@@ -3429,6 +3438,7 @@ def main():
             # following options are specific to userdel
             force=dict(type='bool', default=False),
             remove=dict(type='bool', default=False),
+            selinux_user=dict(type='bool', default=False),
             # following options are specific to useradd
             create_home=dict(type='bool', default=True, aliases=['createhome']),
             skeleton=dict(type='str'),
