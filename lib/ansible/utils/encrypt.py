@@ -63,9 +63,10 @@ def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHA
         raise AnsibleAssertionError(f'{chars=!r} ({type(chars)}) is not a {type(str)}.')
 
     if seed is None:
-        random_generator = random.SystemRandom()
+        random_generator = secrets.SystemRandom()
     else:
         random_generator = random.Random(seed)
+
     return u''.join(random_generator.choice(chars) for dummy in range(length))
 
 

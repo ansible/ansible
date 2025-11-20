@@ -67,7 +67,7 @@ DOCUMENTATION = """
         description:
           - A seed to initialize the random number generator.
           - Identical seeds will yield identical passwords.
-          - Use this for random-but-idempotent password generation.
+          - B(Note) that a weak seed, one without enough entropy, will not create a sufficiently secure encryption for the password.
         type: str
     notes:
       - A great alternative to the password lookup plugin,
@@ -113,7 +113,7 @@ EXAMPLES = """
   ansible.builtin.set_fact:
     random_pod_name: "web-{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_lowercase', 'digits'], length=8) }}"
 
-- name: create random but idempotent password
+- name: create idempotent password for use in testing/CI, not recommended for production
   ansible.builtin.set_fact:
     password: "{{ lookup('ansible.builtin.password', '/dev/null', seed=inventory_hostname) }}"
 """
