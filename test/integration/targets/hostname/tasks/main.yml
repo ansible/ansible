@@ -1,6 +1,4 @@
-# Setting the hostname in our test containers doesn't work currently
-- when: ansible_facts.virtualization_tech_guest is not contains('container')
-  block:
+- block:
     - name: Include distribution specific variables
       include_vars: "{{ lookup('first_found', params) }}"
       vars:
