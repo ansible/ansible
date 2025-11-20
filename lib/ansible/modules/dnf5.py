@@ -803,9 +803,13 @@ class Dnf5Module(YumDnf):
                         rc=1,
                     )
                 elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
+                    failures = []
                     if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_RPM_RUN:
-                        failures = [transaction.get_rpm_messages()]
-                    else:
+                        try:
+                            failures = transaction.get_rpm_messages()
+                        except AttributeError:
+                            pass
+                    if not failures:
                         failures = ["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()]
 
                     self.module.fail_json(
