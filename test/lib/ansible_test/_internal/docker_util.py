@@ -507,7 +507,7 @@ def get_docker_hostname() -> str:
 
     if docker_host and docker_host.startswith(('tcp://', 'ssh://')):
         try:
-            hostname = urllib.parse.urlparse(docker_host)[1].split(':')[0]
+            hostname = urllib.parse.urlparse(docker_host).hostname
             display.info('Detected Docker host: %s' % hostname, verbosity=1)
         except ValueError:
             hostname = 'localhost'
@@ -516,7 +516,7 @@ def get_docker_hostname() -> str:
         hostname = 'localhost'
         display.info('Assuming Docker is available on localhost.', verbosity=1)
 
-    return hostname
+    return hostname or 'localhost'
 
 
 @cache
