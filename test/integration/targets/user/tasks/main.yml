@@ -1,6 +1,15 @@
 # Test code for the user module.
 # Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- name: determine if selinux is installed
+  shell: which getenforce || exit 0
+  register: selinux_installed
+
+- name: determine if selinux is enabled
+  shell: getenforce
+  register: selinux_enabled
+  when: selinux_installed.stdout != ""
+  ignore_errors: true
 
 - import_tasks: test_create_user.yml
 - import_tasks: test_create_system_user.yml
@@ -38,3 +47,5 @@
 - import_tasks: ssh_keygen.yml
 - include_tasks: test_modify_user_home.yml
 - include_tasks: test_invalid_shell.yml
+- include_tasks: test_selinux_enabled.yml
+  when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"

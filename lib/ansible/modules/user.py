@@ -149,6 +149,7 @@ options:
         default: no
     selinux_user:
         description:
+            - This option is applicable for SELinux-enabled systems.
             - This only affects O(state=absent), it removes any SELinux user mapping for the user.
             - The behavior is the same as C(userdel --selinux-user), check the man page for details and support.
         type: bool

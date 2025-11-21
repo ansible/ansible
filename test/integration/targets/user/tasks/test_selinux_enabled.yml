@@ -1,0 +1,26 @@
+- name: Test selinux user deletion
+  vars:
+    username: selinux_ansibull
+  block:
+
+  - name: Add {{ username }} user
+    user:
+      name: "{{ username }}"
+      state: present
+      seuser: unconfined_u
+
+  - name: Remove {{ username }} user
+    user:
+      name: "{{ username }}"
+      state: absent
+      force: true
+      selinux_user: true
+
+  - name: Check for residual {{ username }} data
+    shell: grep -r {{ username }} /etc/selinux 2> /dev/null | wc -l
+    register: residual_count
+
+  - name: Assert full removal of {{ username }}
+    assert:
+      that:
+        - 0 == "{{ residual_count.stdout | int }}"
