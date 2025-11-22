@@ -24,3 +24,30 @@
     assert:
       that:
         - 0 == "{{ residual_count.stdout | int }}"
+
+- name: Test selinux user deletion without -Z
+  vars:
+    username: selinux_ansibull_nosel
+  block:
+
+  - name: Add {{ username }} user
+    user:
+      name: "{{ username }}"
+      state: present
+      seuser: unconfined_u
+
+  - name: Remove {{ username }} user WITHOUT -Z behavior
+    user:
+      name: "{{ username }}"
+      state: absent
+      force: true
+      selinux_user: false
+
+  - name: Check for residual {{ username }} data
+    shell: grep -r {{ username }} /etc/selinux 2> /dev/null | wc -l
+    register: residual_count
+
+  - name: Assert SELinux data still exists since removal was done without selinux_user
+    assert:
+      that:
+        - 0 != "{{ residual_count.stdout | int }}"
