@@ -21,7 +21,7 @@ $certPath = Join-Path $tmpPath signing.cer
 $policyBinPath = "$env:windir\System32\CodeIntegrity\SiPolicy.p7b"
 $policyName = 'Ansible_AppControl_Test'
 
-Copy-Item "$env:windir\schemas\CodeIntegrity\ExamplePolicies\DefaultWindows_Enforced.xml" $policyPath
+Copy-Item -LiteralPath "$env:windir\schemas\CodeIntegrity\ExamplePolicies\DefaultWindows_Enforced.xml" $policyPath
 
 $signScript = {
     [CmdletBinding()]

@@ -58,12 +58,12 @@ Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($ca.Thumbprint)" -DeleteKey -Fo
 Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($cert.Thumbprint)" -DeleteKey -Force
 Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($certUntrusted.Thumbprint)" -DeleteKey -Force
 
-$root = Get-Item Cert:\LocalMachine\Root
+$root = Get-Item -LiteralPath Cert:\LocalMachine\Root
 $root.Open('ReadWrite')
 $root.Add($caWithoutKey)
 $root.Dispose()
 
-$trustedPublisher = Get-Item Cert:\LocalMachine\TrustedPublisher
+$trustedPublisher = Get-Item -LiteralPath Cert:\LocalMachine\TrustedPublisher
 $trustedPublisher.Open('ReadWrite')
 $trustedPublisher.Add($certWithoutKey)
 $trustedPublisher.Dispose()

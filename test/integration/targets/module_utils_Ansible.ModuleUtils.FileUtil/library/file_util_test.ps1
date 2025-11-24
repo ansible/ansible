@@ -79,7 +79,9 @@ catch {
         Assert-Equal -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"Illegal characters in path.`""
     }
     else {
-        Assert-Equal -actual $_.Exception.Message -expected "Exception calling `"GetAttributes`" with `"1`" argument(s): `"The filename, directory name, or volume label syntax is incorrect. : 'C:\Windows\*.exe'.`""
+        $expected = "Exception calling `"GetAttributes`" with `"1`" argument(s): "
+        $expected += '"The filename, directory name, or volume label syntax is incorrect. : ''C:\Windows\*.exe''."'
+        Assert-Equal -actual $_.Exception.Message -expected $expected
     }
 }
 Assert-Equal -actual $failed -expected $true
@@ -102,7 +104,7 @@ Assert-Equal -actual $actual -expected $true
 
 # Test-AnsiblePath on UNC path with changed location
 try {
-    Push-Location -Path Cert:\LocalMachine\My
+    Push-Location -LiteralPath Cert:\LocalMachine\My
     $actual = Test-AnsiblePath -Path "\\localhost\C$\Windows"
     Assert-Equal -actual $actual -expected $true
 }

@@ -802,7 +802,7 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.Keys.Count | Assert-Equal -Expected 3
-        ,@($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
         $actual.changed | Assert-Equal -Expected $false
         $actual.invocation | Assert-DictionaryEqual -Expected @{
             module_args = @{
@@ -854,7 +854,7 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.Keys.Count | Assert-Equal -Expected 3
-        ,@($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
         $actual.changed | Assert-Equal -Expected $false
         $actual.invocation | Assert-DictionaryEqual -Expected @{
             module_args = @{
@@ -956,7 +956,7 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.Keys.Count | Assert-Equal -Expected 3
-        ,@($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
         $actual.changed | Assert-Equal -Expected $false
         $actual.invocation | Assert-DictionaryEqual -Expected @{
             module_args = @{
