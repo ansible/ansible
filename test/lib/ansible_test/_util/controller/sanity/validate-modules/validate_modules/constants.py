@@ -60,6 +60,7 @@ REJECTLIST_IMPORTS = {
 }
 SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
 OS_CALL_REGEX = re.compile(r'os\.call.*')
+OS_SYSTEM_REGEX = re.compile(r'os\.system.*')
 
 
 PLUGINS_WITH_RETURN_VALUES = ('module', )

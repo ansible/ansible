@@ -93,6 +93,7 @@ from .constants import (
     REJECTLIST_IMPORTS,
     SUBPROCESS_REGEX,
     OS_CALL_REGEX,
+    OS_SYSTEM_REGEX,
     PLUGINS_WITH_RETURN_VALUES,
     PLUGINS_WITH_EXAMPLES,
     PLUGINS_WITH_YAML_EXAMPLES,
@@ -481,6 +482,19 @@ class ModuleValidator(Validator):
                         msg=('os.call() call found. Should be module.run_command'),
                         line=(line_no + 1),
                         column=(os_call_match.span()[0] + 1)
+                    )
+
+    def _check_for_os_system(self):
+        if 'os.system' in self.text:
+            for line_no, line in enumerate(self.text.splitlines()):
+                os_system_match = OS_SYSTEM_REGEX.search(line)
+                if os_system_match:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='use-run-command-not-os-system',
+                        msg=('os.system() call found. Should be module.run_command'),
+                        line=(line_no + 1),
+                        column=(os_system_match.span()[0] + 1)
                     )
 
     def _find_rejectlist_imports(self):
@@ -2448,6 +2462,7 @@ class ModuleValidator(Validator):
             if self.plugin_type == 'module':
                 self._check_for_subprocess()
                 self._check_for_os_call()
+                self._check_for_os_system()
 
         if self._powershell_module():
             self._validate_ps_replacers()
