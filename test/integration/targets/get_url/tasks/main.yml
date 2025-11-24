@@ -1,20 +1,6 @@
 # Test code for the get_url module
 # (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Determine if python looks like it will support modern ssl features like SNI
   command: "{{ ansible_python.executable }} -c 'from ssl import SSLContext'"
@@ -332,13 +318,13 @@
 
 - name: create src file
   copy:
-    dest: '{{ files_dir }}/27617.txt'
+    dest: '{{ files_dir }}/{{ item }}.txt'
     content: "ptux"
-
-- name: create duplicate src file
-  copy:
-    dest: '{{ files_dir }}/71420.txt'
-    content: "ptux"
+  loop:
+    - 27617
+    - 71420
+    - 86132
+    - 86132_single_space
 
 - name: create sha1 checksum file of src
   copy:
@@ -346,6 +332,8 @@
     content: |
       a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt
       a97e6837f60cec6da4491bab387296bbcd72bdba  71420.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba       86132.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba 86132_single_space.txt
       3911340502960ca33aece01129234460bfeb2791  not_target1.txt
       1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
 
@@ -355,6 +343,8 @@
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  71420.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.     86132.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. 86132_single_space.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
 
@@ -364,6 +354,8 @@
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./71420.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.     ./86132.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. ./86132_single_space.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt
 
@@ -373,6 +365,8 @@
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *27617.txt
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *71420.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.    *86132.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *86132_single_space.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892 *not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b *not_target2.txt
 
@@ -551,6 +545,61 @@
     path: "{{ remote_tmp_dir }}/27617.txt"
   register: stat_result_sha256_checksum_only
 
+- name: download 86132.txt with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132.txt"
+  register: stat_result_sha1_86132
+
+- name: download 86132.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}/86132sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132.txt"
+  register: stat_result_sha256_86132
+
+- name: download 86132.txt with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}/86132sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot_86132
+
+- name: download 86132.txt with sha256 checksum url with asterisk leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132.txt'
+    dest: '{{ remote_tmp_dir }}/86132sha256_with_asterisk.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_asterisk.txt'
+  register: result_sha256_with_asterisk_86132
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132sha256_with_asterisk.txt"
+  register: stat_result_sha256_with_asterisk_86132
+
+- name: download 86132_single_space.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/86132_single_space.txt'
+    dest: '{{ remote_tmp_dir }}/86132_single_space.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_86132_single_space
+
+- stat:
+    path: "{{ remote_tmp_dir }}/86132_single_space.txt"
+  register: stat_result_sha256_86132_single_space
+
 - name: Assert that the file was downloaded
   assert:
     that:
@@ -579,6 +628,16 @@
       - "stat_result_sha256_with_asterisk_71420.stat.exists == true"
       - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
       - "stat_result_sha256_checksum_only.stat.exists == true"
+      - result_sha1_86132 is changed
+      - result_sha256_86132 is changed
+      - result_sha256_with_dot_86132 is changed
+      - result_sha256_with_asterisk_86132 is changed
+      - "stat_result_sha1_86132.stat.exists == true"
+      - "stat_result_sha256_86132.stat.exists == true"
+      - "stat_result_sha256_with_dot_86132.stat.exists == true"
+      - "stat_result_sha256_with_asterisk_86132.stat.exists == true"
+      - result_sha256_86132_single_space is changed
+      - "stat_result_sha256_86132_single_space.stat.exists == true"
 
 - name: Test for incomplete data read (issue 85164)
   get_url:
