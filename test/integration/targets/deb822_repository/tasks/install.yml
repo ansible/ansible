@@ -93,20 +93,14 @@
 
   - name: Install package from local repo
     apt:
-      name: foo=1.0.0
-    register: deb822_install_pkg_exclude
-    ignore_errors: true
+      name: foobar=1.0.1
+    register: deb822_install_pkg_include
 
-  - name: Check if package was not installed
-    shell: dpkg-query -l foo
-    register: deb822_install_pkg_exclude_result
-    ignore_errors: true
-  - assert:
-      that:
-        - deb822_install_pkg_exclude is failed
-        - "'no packages found matching foo' in deb822_install_pkg_exclude_result.stderr"
+  - name: Check if package was installed
+    shell: dpkg-query -l foobar
+    register: deb822_install_pkg_include_result
 
-  when: ansible_facts["distribution"] == 'Ubuntu' and ansible_facts["distribution_version"] is version('25.10', '>=')
+  when: (ansible_facts["distribution"] == 'Ubuntu' and ansible_facts["distribution_version"] is version('25.10', '>=')) or (ansible_lsb["id"] == 'Debian' and 'sid' in ansible_lsb["description"] )
   always:
     - name: Remove repo
       deb822_repository:
