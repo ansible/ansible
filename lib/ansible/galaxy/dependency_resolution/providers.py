@@ -421,6 +421,8 @@ class CollectionDependencyProvider(AbstractProvider):
         """
         if candidate.type == "requires_ansible":
             return
+        if (requires_ansible := self._get_ansible_requirement(candidate)):
+            yield requires_ansible
 
         # FIXME: If there's several galaxy servers set, there may be a
         # FIXME: situation when the metadata of the same collection
@@ -446,6 +448,3 @@ class CollectionDependencyProvider(AbstractProvider):
             dependency = self._make_req_from_dict({'name': dep_name, 'version': dep_req})
             dependency._parent = candidate
             yield dependency
-
-        if (requires_ansible := self._get_ansible_requirement(candidate)):
-            yield requires_ansible
