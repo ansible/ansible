@@ -139,50 +139,6 @@ class LibRPM:
         ]
         self.lib.pgpParsePkts.restype = ctypes.c_int
 
-        # int pgpPubkeyKeyID(const uint8_t *pkt, size_t pktlen, pgpKeyID_t keyid)
-        # pgpKeyID_t is uint8_t[8]
-        self.lib.pgpPubkeyKeyID.argtypes = [
-            ctypes.POINTER(ctypes.c_uint8),
-            ctypes.c_size_t,
-            ctypes.POINTER(ctypes.c_uint8)
-        ]
-        self.lib.pgpPubkeyKeyID.restype = ctypes.c_int
-
-        # int pgpPubkeyFingerprint(const uint8_t *pkt, size_t pktlen,
-        #                          uint8_t **fp, size_t *fplen)
-        self.lib.pgpPubkeyFingerprint.argtypes = [
-            ctypes.POINTER(ctypes.c_uint8),
-            ctypes.c_size_t,
-            ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8)),
-            ctypes.POINTER(ctypes.c_size_t)
-        ]
-        self.lib.pgpPubkeyFingerprint.restype = ctypes.c_int
-
-        # int pgpPrtParams(const uint8_t *pkts, size_t pktlen, unsigned int pkttype,
-        #                  pgpDigParams *ret)
-        self.lib.pgpPrtParams.argtypes = [
-            ctypes.POINTER(ctypes.c_uint8),
-            ctypes.c_size_t,
-            ctypes.c_uint,
-            ctypes.POINTER(ctypes.c_void_p)
-        ]
-        self.lib.pgpPrtParams.restype = ctypes.c_int
-
-        # int pgpPrtParamsSubkeys(const uint8_t *pkts, size_t pktlen,
-        #                         pgpDigParams mainkey, pgpDigParams **subkeys, int *subkeysCount)
-        self.lib.pgpPrtParamsSubkeys.argtypes = [
-            ctypes.POINTER(ctypes.c_uint8),
-            ctypes.c_size_t,
-            ctypes.c_void_p,
-            ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p)),
-            ctypes.POINTER(ctypes.c_int)
-        ]
-        self.lib.pgpPrtParamsSubkeys.restype = ctypes.c_int
-
-        # pgpDigParams pgpDigParamsFree(pgpDigParams digp)
-        self.lib.pgpDigParamsFree.argtypes = [ctypes.c_void_p]
-        self.lib.pgpDigParamsFree.restype = ctypes.c_void_p
-
         # void free(void *ptr)
         self.libc.free.argtypes = [ctypes.c_void_p]
         self.libc.free.restype = None
@@ -202,53 +158,6 @@ class LibRPM:
             return None, 0
 
         return pkt, pktlen.value
-
-    def _get_key_id(self, pkt: PktPointer, pktlen: int) -> Optional[str]:
-        """
-        Get key ID using pgpPubkeyKeyID().
-        Returns hex string or None on error.
-        """
-        # Create buffer for key ID (8 bytes)
-        keyid = (ctypes.c_uint8 * 8)()
-
-        result = self.lib.pgpPubkeyKeyID(
-            pkt,
-            pktlen,
-            ctypes.cast(keyid, ctypes.POINTER(ctypes.c_uint8))
-        )
-
-        if result != 0:
-            return None
-
-        # Convert bytes to hex string
-        return bytes(keyid).hex().upper()
-
-    def _get_fingerprint(self, pkt: PktPointer, pktlen: int) -> Optional[str]:
-        """
-        Get fingerprint using pgpPubkeyFingerprint().
-        Returns hex string or None on error.
-        """
-        fp = ctypes.POINTER(ctypes.c_uint8)()
-        fplen = ctypes.c_size_t()
-
-        result = self.lib.pgpPubkeyFingerprint(
-            pkt,
-            pktlen,
-            ctypes.byref(fp),
-            ctypes.byref(fplen)
-        )
-
-        if result != 0 or not fp:
-            return None
-
-        # Convert fingerprint bytes to hex string
-        fp_bytes = bytes([fp[i] for i in range(fplen.value)])
-        fp_hex = fp_bytes.hex().upper()
-
-        # Free the fingerprint buffer allocated by the library
-        self.libc.free(fp)
-
-        return fp_hex
 
     def _parse_packet_header(self, pkt: PktPointer, offset: int, pktlen: int) -> Tuple[Optional[int], int, int]:
         """
@@ -320,12 +229,12 @@ class LibRPM:
                 # Indeterminate length (not supported)
                 return None, 0, 0
 
-    def _find_subkey_packets(self, pkt: PktPointer, pktlen: int) -> List[Tuple[int, int]]:
+    def _find_key_packets(self, pkt: PktPointer, pktlen: int) -> List[Tuple[int, int]]:
         """
-        Walk the packet stream and find all PGPTAG_PUBLIC_SUBKEY packets.
+        Walk the packet stream and find all PGPTAG_PUBLIC_KEY and PGPTAG_PUBLIC_SUBKEY packets.
         Returns list of (offset, total_packet_length) tuples.
         """
-        subkey_packets: List[Tuple[int, int]] = []
+        key_packets: List[Tuple[int, int]] = []
         offset = 0
 
         while offset < pktlen:
@@ -334,15 +243,15 @@ class LibRPM:
             if tag is None:
                 break
 
-            if tag == self.PGPTAG_PUBLIC_SUBKEY:
-                # Found a subkey packet
+            if tag in (self.PGPTAG_PUBLIC_KEY, self.PGPTAG_PUBLIC_SUBKEY):
+                # Found a key packet
                 total_len = header_len + body_len
-                subkey_packets.append((offset, total_len))
+                key_packets.append((offset, total_len))
 
             # Move to next packet
             offset += header_len + body_len
 
-        return subkey_packets
+        return key_packets
 
     def _get_key_version(self, pkt: PktPointer, offset: int, pktlen: int) -> Optional[int]:
         """
@@ -432,46 +341,12 @@ class LibRPM:
         fingerprint = hashlib.sha256(fp_data).digest()
         return fingerprint.hex().upper()
 
-    def _identify_subkeys(self, pkt: PktPointer, pktlen: int) -> list[dict[str, str]]:
-        """Return a list of dicts with key ID and fingerprint for each subkey"""
-        subkey_info: list[dict[str, str]] = []
+    def _identify_keys(self, pkt: PktPointer, pktlen: int) -> list[dict[str, str]]:
+        """Return a list of dicts with key ID and fingerprint for the primary key and each subkey"""
+        key_info: list[dict[str, str]] = []
 
-        # First, parse the main key
-        main_key = ctypes.c_void_p()
-
-        result = self.lib.pgpPrtParams(
-            pkt,
-            pktlen,
-            self.PGPTAG_PUBLIC_KEY,
-            ctypes.byref(main_key)
-        )
-
-        if result != 0 or not main_key:
-            raise Exception("Unable to parse main key for subkey identification")
-
-        # Get subkeys using pgpPrtParamsSubkeys
-        subkeys = ctypes.POINTER(ctypes.c_void_p)()
-        subkeys_count = ctypes.c_int()
-
-        result = self.lib.pgpPrtParamsSubkeys(
-            pkt,
-            pktlen,
-            main_key,
-            ctypes.byref(subkeys),
-            ctypes.byref(subkeys_count)
-        )
-
-        if result != 0:
-            self.lib.pgpDigParamsFree(main_key)
-            raise Exception("Unable to get subkey information")
-
-        count = subkeys_count.value
-
-        # Find all subkey packets in the stream and compute their fingerprints.
-        # Note that librpm does not provide an API to extract the fingerprint of a subkey,
-        # so we must compute this the hard way (manually).
-
-        subkey_packets = self._find_subkey_packets(pkt, pktlen)
+        # Find all key packets in the stream and compute their fingerprints.
+        subkey_packets = self._find_key_packets(pkt, pktlen)
 
         for offset, packet_len in subkey_packets:
             # Detect key version
@@ -483,51 +358,36 @@ class LibRPM:
                 if computed_fp:
                     # V4: Key ID is the last 8 bytes (16 hex chars) of the fingerprint
                     keyid_from_fp = computed_fp[-16:]
-                    subkey_info.append({'keyid': keyid_from_fp, 'fingerprint': computed_fp})
+                    key_info.append({'keyid': keyid_from_fp, 'fingerprint': computed_fp})
             elif version == 0x06:
                 # V6 key
                 computed_fp = self._compute_v6_fingerprint(pkt, offset, pktlen)
                 if computed_fp:
                     # V6: Key ID is the first 8 bytes (16 hex chars) of the fingerprint
                     keyid_from_fp = computed_fp[:16]
-                    subkey_info.append({'keyid': keyid_from_fp, 'fingerprint': computed_fp})
+                    key_info.append({'keyid': keyid_from_fp, 'fingerprint': computed_fp})
 
-        # Free allocated memory
-        for i in range(count):
-            self.lib.pgpDigParamsFree(subkeys[i])
+        return key_info
 
-        self.libc.free(subkeys)
-        self.lib.pgpDigParamsFree(main_key)
-
-        return subkey_info
-
-    def get_key_ids_from_armor(self, armor: str, include_subkeys: bool = False) -> str | list[str]:
+    def get_key_ids_from_armor(self, armor: str) -> list[str]:
         """
         Get the key IDs from the primary PGP key, and all subkeys of that key, from the ASCII armored key.
 
-        'armor' is expected to be a single ASCII armored PGP key (v4 or v6).
-
-        If 'include_subkeys' is True, this will return a list containing the key ID of the main PGP key,
-        as well as all of its subkeys. If 'include_subkeys' is False, this will return only the main PGP key ID.
+        'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
+        first item in the results, followed by its subkeys.
         """
+        key_ids: list[str] = []
+
         pkt, pktlen = self._parse_armor(armor)
         if not pkt:
-            raise Exception("Unable to parse PGP key")
+            raise Exception("Unable to parse PGP key armor")
 
-        # Get the key ID for the primary/main key
-        key_id = self._get_key_id(pkt, pktlen)
-        if not key_id:
-            raise Exception("Failed to get main key id")
+        key_info = self._identify_keys(pkt, pktlen)
+        if not key_info:
+            raise Exception("Unable to identify PGP key")
 
-        if not include_subkeys:
-            return key_id
-
-        key_ids: list[str] = []
-        key_ids.append(key_id)
-
-        subkey_info = self._identify_subkeys(pkt, pktlen)
-        for subkey in subkey_info:
-            key_ids.append(subkey['keyid'])
+        for key in key_info:
+            key_ids.append(key['keyid'])
 
         self.libc.free(pkt)
         return key_ids
@@ -536,30 +396,21 @@ class LibRPM:
         """
         Get the fingerprints from the primary PGP key, and all subkeys of that key, from the ASCII armored key.
 
-        'armor' is expected to be a single ASCII armored PGP key (v4 or v6).
-
-        If 'include_subkeys' is True, this will return a list containing the fingerprints of the main PGP key,
-        as well as all of its subkeys. If 'include_subkeys' is False, this will return only the main PGP fingerprint.
+        'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
+        first item in the results, followed by its subkeys.
         """
         fingerprints: list[str] = []
 
         pkt, pktlen = self._parse_armor(armor)
         if not pkt:
-            raise Exception("Unable to parse PGP key")
+            raise Exception("Unable to parse PGP key armor")
 
-        # Get the fingerprint for the primary/main key
-        fingerprint = self._get_fingerprint(pkt, pktlen)
-        if not fingerprint:
-            raise Exception("Failed to get main key fingerprint")
+        key_info = self._identify_keys(pkt, pktlen)
+        if not key_info:
+            raise Exception("Unable to identify PGP key")
 
-        if not include_subkeys:
-            return fingerprint
-
-        fingerprints.append(fingerprint)
-
-        subkey_info = self._identify_subkeys(pkt, pktlen)
-        for subkey in subkey_info:
-            fingerprints.append(subkey['fingerprint'])
+        for key in key_info:
+            fingerprints.append(key['fingerprint'])
 
         self.libc.free(pkt)
         return fingerprints
@@ -656,14 +507,14 @@ class RpmKey(object):
 
     def getkeyid(self, keyfile):
         with open(keyfile, "r") as key_fd:
-            key_id = self.librpm.get_key_ids_from_armor(key_fd.read())
-        if not key_id:
+            key_ids = self.librpm.get_key_ids_from_armor(key_fd.read())
+        if not key_ids:
             self.module.fail_json(msg="Failed to get keyid")
-        return key_id
+        return key_ids[0]
 
     def getfingerprints(self, keyfile):
         with open(keyfile, "r") as key_fd:
-            fingerprints = self.librpm.get_fingerprints_from_armor(key_fd.read(), include_subkeys=True)
+            fingerprints = self.librpm.get_fingerprints_from_armor(key_fd.read())
         if not fingerprints:
             self.module.fail_json(msg="Failed to get fingerprint")
         return frozenset(fingerprints)
@@ -708,8 +559,8 @@ class RpmKey(object):
                 current_block.append(line)
 
         for armor_string in key_blocks:
-            key_id = self.librpm.get_key_ids_from_armor(armor_string)
-            if keyid == key_id:
+            key_ids = self.librpm.get_key_ids_from_armor(armor_string)
+            if keyid in key_ids:
                 return True
 
         return False
