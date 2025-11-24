@@ -91,8 +91,7 @@ import hashlib
 import re
 import os.path
 import tempfile
-
-from typing import Optional, Tuple, List, Any
+import typing as t
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -101,7 +100,7 @@ from ansible.module_utils.common.text.converters import to_native
 
 # Type alias for ctypes pointer to uint8 array (packet data)
 # Using Any here because ctypes._Pointer is private, but documenting the actual type
-PktPointer = Any  # Actually: ctypes.POINTER(ctypes.c_uint8)
+PktPointer = t.Any  # Actually: ctypes.POINTER(ctypes.c_uint8)
 
 
 class LibRPM:
@@ -127,10 +126,6 @@ class LibRPM:
         self.PGPTAG_PUBLIC_KEY = 6
         self.PGPTAG_PUBLIC_SUBKEY = 14
 
-        self._define_signatures()
-
-    def _define_signatures(self) -> None:
-        """Define library function signatures"""
         # pgpArmor pgpParsePkts(const char *armor, uint8_t **pkt, size_t *pktlen)
         self.lib.pgpParsePkts.argtypes = [
             ctypes.c_char_p,
@@ -143,7 +138,7 @@ class LibRPM:
         self.libc.free.argtypes = [ctypes.c_void_p]
         self.libc.free.restype = None
 
-    def _parse_armor(self, armor_string: str) -> Tuple[Optional[PktPointer], int]:
+    def _parse_armor(self, armor: str) -> tuple[t.Optional[PktPointer], int]:
         """
         Parse ASCII armored PGP data using pgpParsePkts().
         Returns (pkt, pktlen) tuple or (None, 0) on error.
@@ -151,7 +146,7 @@ class LibRPM:
         pkt = ctypes.POINTER(ctypes.c_uint8)()
         pktlen = ctypes.c_size_t()
 
-        armor_bytes = armor_string.encode('utf-8')
+        armor_bytes = armor.encode('utf-8')
         result = self.lib.pgpParsePkts(armor_bytes, ctypes.byref(pkt), ctypes.byref(pktlen))
 
         if result < 0 or not pkt:
@@ -159,7 +154,7 @@ class LibRPM:
 
         return pkt, pktlen.value
 
-    def _parse_packet_header(self, pkt: PktPointer, offset: int, pktlen: int) -> Tuple[Optional[int], int, int]:
+    def _parse_packet_header(self, pkt: PktPointer, offset: int, pktlen: int) -> tuple[t.Optional[int], int, int]:
         """
         Parse a PGP packet header to get tag and packet length.
         Returns (tag, body_length, header_length) or (None, 0, 0) on error.
@@ -229,12 +224,12 @@ class LibRPM:
                 # Indeterminate length (not supported)
                 return None, 0, 0
 
-    def _find_key_packets(self, pkt: PktPointer, pktlen: int) -> List[Tuple[int, int]]:
+    def _find_key_packets(self, pkt: PktPointer, pktlen: int) -> list[tuple[int, int]]:
         """
         Walk the packet stream and find all PGPTAG_PUBLIC_KEY and PGPTAG_PUBLIC_SUBKEY packets.
         Returns list of (offset, total_packet_length) tuples.
         """
-        key_packets: List[Tuple[int, int]] = []
+        key_packets: list[tuple[int, int]] = []
         offset = 0
 
         while offset < pktlen:
@@ -253,13 +248,12 @@ class LibRPM:
 
         return key_packets
 
-    def _get_key_version(self, pkt: PktPointer, offset: int, pktlen: int) -> Optional[int]:
+    def _get_key_version(self, pkt: PktPointer, offset: int, pktlen: int) -> t.Optional[int]:
         """
         Get the version byte from a key packet.
         Returns version number (4 or 6) or None on error.
         """
         tag, body_len, header_len = self._parse_packet_header(pkt, offset, pktlen)
-
         if tag is None:
             return None
 
@@ -271,7 +265,7 @@ class LibRPM:
         # First byte of body is the version
         return pkt[body_offset]
 
-    def _compute_v4_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> Optional[str]:
+    def _compute_v4_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> t.Optional[str]:
         """
         Compute V4 fingerprint from packet data.
         For V4 keys, fingerprint = SHA-1(0x99 || 2-byte-length || packet_body)
@@ -305,7 +299,7 @@ class LibRPM:
         fingerprint = hashlib.sha1(fp_data).digest()
         return fingerprint.hex().upper()
 
-    def _compute_v6_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> Optional[str]:
+    def _compute_v6_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> t.Optional[str]:
         """
         Compute V6 fingerprint from packet data.
         For V6 keys, fingerprint = SHA-256(0x9B || 4-byte-length || packet_body)
@@ -346,9 +340,9 @@ class LibRPM:
         key_info: list[dict[str, str]] = []
 
         # Find all key packets in the stream and compute their fingerprints.
-        subkey_packets = self._find_key_packets(pkt, pktlen)
+        key_packets = self._find_key_packets(pkt, pktlen)
 
-        for offset, packet_len in subkey_packets:
+        for offset, packet_len in key_packets:
             # Detect key version
             version = self._get_key_version(pkt, offset, pktlen)
 
@@ -376,8 +370,6 @@ class LibRPM:
         'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
         first item in the results, followed by its subkeys.
         """
-        key_ids: list[str] = []
-
         pkt, pktlen = self._parse_armor(armor)
         if not pkt:
             raise Exception("Unable to parse PGP key armor")
@@ -386,11 +378,9 @@ class LibRPM:
         if not key_info:
             raise Exception("Unable to identify PGP key")
 
-        for key in key_info:
-            key_ids.append(key['keyid'])
-
         self.libc.free(pkt)
-        return key_ids
+
+        return [key['keyid'] for key in key_info]
 
     def get_fingerprints_from_armor(self, armor: str, include_subkeys: bool = False) -> str | list[str]:
         """
@@ -399,8 +389,6 @@ class LibRPM:
         'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
         first item in the results, followed by its subkeys.
         """
-        fingerprints: list[str] = []
-
         pkt, pktlen = self._parse_armor(armor)
         if not pkt:
             raise Exception("Unable to parse PGP key armor")
@@ -409,11 +397,9 @@ class LibRPM:
         if not key_info:
             raise Exception("Unable to identify PGP key")
 
-        for key in key_info:
-            fingerprints.append(key['fingerprint'])
-
         self.libc.free(pkt)
-        return fingerprints
+
+        return [key['fingerprint'] for key in key_info]
 
 
 def is_pubkey(string):
