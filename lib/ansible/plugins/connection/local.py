@@ -67,7 +67,8 @@ class Connection(ConnectionBase):
         self.cwd = None
         try:
             self.default_user = getpass.getuser()
-        except KeyError:
+        except (ImportError, KeyError, OSError):
+            # deprecated: description='only OSError is required for Python 3.13+' python_version='3.12'
             display.vv("Current user (uid=%s) does not seem to exist on this system, leaving user empty." % os.getuid())
             self.default_user = ""
 
