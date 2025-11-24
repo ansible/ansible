@@ -200,6 +200,25 @@ EXAMPLES = """
     components: stable
     architectures: amd64
     signed_by: https://download.example.com/linux/ubuntu/gpg
+
+- name: Add debian repo from file with key
+  deb822_repository:
+    name: debian
+    types: deb
+    uris: file:///tmp/repo
+    suites: stable
+    components:
+      - main
+    signed_by: |-
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+      mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+      CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+      IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+      dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+      3bHcln8DMpIJVXht78sL
+      =IE0r
+      -----END PGP PUBLIC KEY BLOCK-----
 """
 
 RETURN = """
