@@ -35,6 +35,10 @@ else:
             Parser.__init__(self)
             Composer.__init__(self)
 
+            # Compatability with pure Python PyYaml
+            if isinstance(stream, (str, bytes)):
+                self.name = None
+
 
 class AnsibleInstrumentedLoader(_YamlParser, AnsibleInstrumentedConstructor, Resolver):
     """Ansible YAML loader which supports Ansible custom behavior such as `Origin` tagging, but no Ansible-specific YAML tags."""
