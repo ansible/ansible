@@ -144,7 +144,7 @@ after:
     type: list
     sample: ["D8576A8BA88D21E9", "3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
 before:
-    description: List of apt key ids or fingprints before any modifications
+    description: List of apt key ids or fingerprints before any modifications
     returned: always
     type: list
     sample: ["3B4FE6ACC0B21F32", "D94AA3F0EFE21092", "871920D1991BC93C"]
