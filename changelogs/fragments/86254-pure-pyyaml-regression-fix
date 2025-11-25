@@ -1,0 +1,2 @@
+bugfixes:
+- Fix PyYAML pure Python parser compatibility with Origin validation
