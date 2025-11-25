@@ -7,6 +7,10 @@ DOCUMENTATION = """
     author: Ansible Core Team
     name: paramiko
     short_description: Run tasks via Python SSH (paramiko)
+    deprecated:
+      removed_in: "2.21"
+      why: Paramiko versions older than 3.3.2 and 3.4.1 will be incompatible with cryptography 48.0.0.
+      alternatives: ansible.builtin.ssh
     description:
         - Use the Python SSH implementation (Paramiko) to connect to targets
         - The paramiko transport is provided because many distributions, in particular EL6 and before do not support ControlPersist
