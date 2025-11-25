@@ -1,0 +1,43 @@
+- name: Ensure that dest top directory doesn't exist
+  file:
+    path: '{{ remote_dir }}/{{ item }}'
+    state: absent
+  loop:
+    - dir1
+    - dir2
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - dir1
+    - dir2
+
+- name: Copy file
+  copy:
+    src: 'dir1/'
+    dest: '{{ remote_dir }}/dir2/'
+    remote_src: true
+    mode: "0644"
+    directory_mode: "0755"
+  register: copy_result
+
+- name: assert copy worked
+  assert:
+    that:
+      - 'copy_result is successful'
+      - 'copy_result is changed'
+
+- name: stat copied file
+  stat:
+    path: '{{ remote_dir }}/dir2'
+  register: stat_dir2_result
+
+- name: assert that dir2 exists and has correct mode
+  assert:
+    that:
+    - stat_dir2_result.stat.exists
+    - stat_dir2_result.stat.isdir
+    - stat_dir2_result.stat.mode == "0755"

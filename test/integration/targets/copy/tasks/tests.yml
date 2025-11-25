@@ -1604,6 +1604,10 @@
     - 'new_sub_dir1/foo.txt'
   loop_control:
     loop_var: 'dest'
+
+# Test that directory_mode is respected when copying a directory with remote_src
+- include_tasks: file=dest_remote_src_directory_mode.yml
+
 #
 # Recursive copying on remote host
 #
