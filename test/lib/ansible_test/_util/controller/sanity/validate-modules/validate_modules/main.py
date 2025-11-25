@@ -456,19 +456,24 @@ class ModuleValidator(Validator):
                 )
 
     def _check_for_subprocess(self):
+        def _report_error():
+            for line_no, line in enumerate(self.text.splitlines()):
+                sp_match = SUBPROCESS_REGEX.search(line)
+                if sp_match:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='use-run-command-not-popen',
+                        msg=('subprocess.Popen call found. Should be module.run_command'),
+                        line=(line_no + 1),
+                        column=(sp_match.span()[0] + 1)
+                    )
         for child in self.ast.body:
             if isinstance(child, ast.Import):
                 if child.names[0].name == 'subprocess':
-                    for line_no, line in enumerate(self.text.splitlines()):
-                        sp_match = SUBPROCESS_REGEX.search(line)
-                        if sp_match:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='use-run-command-not-popen',
-                                msg=('subprocess.Popen call found. Should be module.run_command'),
-                                line=(line_no + 1),
-                                column=(sp_match.span()[0] + 1)
-                            )
+                    _report_error()
+            elif isinstance(child, ast.ImportFrom):
+                if child.module == 'subprocess':
+                    _report_error()
 
     def _check_for_os_call(self):
         if 'os.call' in self.text:

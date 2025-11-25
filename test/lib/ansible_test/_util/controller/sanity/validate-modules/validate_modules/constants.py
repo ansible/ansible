@@ -58,7 +58,7 @@ REJECTLIST_IMPORTS = {
         }
     },
 }
-SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
+SUBPROCESS_REGEX = re.compile(r'(?:subprocess\.)?Popen\(.*')
 OS_CALL_REGEX = re.compile(r'os\.call.*')
 
 
