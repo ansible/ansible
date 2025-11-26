@@ -63,7 +63,7 @@ def preprocess_vars(a):
 
     for item in data:
         if not isinstance(item, MutableMapping):
-            raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
+            raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s " % (type(a)))
 
     return data
 
@@ -364,6 +364,8 @@ class VariableManager:
                                 continue
                             except AnsibleParserError:
                                 raise
+                            except AnsibleError as e:
+                                raise AnsibleError("Invalid vars_file '%s'." % found_file, orig_exc=e)
                         else:
                             # if include_delegate_to is set to False or we don't have a host, we ignore the missing
                             # vars file here because we're working on a delegated host or require host vars, see NOTE above
