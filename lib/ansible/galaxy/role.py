@@ -240,6 +240,78 @@ class GalaxyRole(object):
 
         return False
 
+    def download(self, output_path="./"):
+        """
+        Download the role as a tarball to the specified output path.
+
+        :param output_path: Path where the tarball should be saved.
+        :return: Path to the downloaded tarball.
+        """
+        # Ensure the API client is available
+        if not self.api:
+            raise AnsibleError(
+                "Cannot download role %s: no API client available" % self.name
+            )
+
+        # Get role information to find download URL
+        role_data = self.api.lookup_role_by_name(self.name)
+        if not role_data:
+            raise AnsibleError("Role %s not found" % self.name)
+
+        # Find the download URL - try different possible locations
+        download_url = None
+
+        # Try different possible locations for the download URL
+        if "download_url" in role_data:
+            download_url = role_data["download_url"]
+        elif "github_repo" in role_data and "github_user" in role_data:
+            # Construct GitHub URL if we have repo info
+            download_url = "https://github.com/%s/%s/archive/%s.tar.gz" % (
+                role_data["github_user"],
+                role_data["github_repo"],
+                self.version or "master",
+            )
+        elif "versions" in role_data and role_data["versions"]:
+            # Try to get from versions
+            for version in role_data["versions"]:
+                if "download_url" in version:
+                    download_url = version["download_url"]
+                    break
+
+        if not download_url:
+            raise AnsibleError("No download URL found for role %s" % self.name)
+
+        # Download the tarball using open_url (like the fetch method does)
+        try:
+            display.display("- downloading role from %s" % download_url)
+
+            # Use open_url to download the file (like the existing fetch method)
+            url_file = open_url(
+                download_url,
+                validate_certs=self._validate_certs,
+                http_agent=user_agent(),
+                timeout=60,
+            )
+
+            # Determine filename
+            filename = "%s-%s.tar.gz" % (self.name, role_data.get("version", "latest"))
+            output_file = os.path.join(output_path, filename)
+
+            # Save the file
+            with open(output_file, "wb") as f:
+                data = url_file.read()
+                while data:
+                    f.write(data)
+                    data = url_file.read()
+
+            return output_file
+
+        except Exception as e:
+            raise AnsibleError(
+                "Failed to download role %s from %s: %s"
+                % (self.name, download_url, to_native(e))
+            )
+
     def install(self):
 
         if self.scm:

@@ -1358,3 +1358,96 @@ def test_install_collection_with_roles(requirements_file, monkeypatch):
     assert mock_role_install.call_count == 0
 
     assert any(list('contains roles which will be ignored' in mock_call[1][0] for mock_call in mock_display.mock_calls))
+
+
+def test_execute_download_role_single(mocker, tmp_path):
+    mock_galaxy = mocker.Mock()
+    mock_role = mocker.Mock()
+    mock_role.name = "test.role"
+    mock_role.download.return_value = str(tmp_path / "test.role-latest.tar.gz")
+
+    mocker.patch("ansible.cli.galaxy.GalaxyRole", return_value=mock_role)
+    mocker.patch(
+        "ansible.cli.galaxy.RoleRequirement.role_yaml_parse",
+        return_value={"name": "test.role"},
+    )
+
+    galaxy_cli = GalaxyCLI(
+        args=[
+            "ansible-galaxy",
+            "role",
+            "download",
+            "test.role",
+            "--output-path",
+            str(tmp_path),
+        ]
+    )
+    galaxy_cli.parse()
+    galaxy_cli.galaxy = mock_galaxy
+    galaxy_cli.lazy_role_api = mocker.Mock()
+
+    galaxy_cli.execute_download_role()
+
+    mock_role.download.assert_called_once_with(str(tmp_path))
+
+
+def test_execute_download_role_requirements_file(mocker, tmp_path):
+    mock_galaxy = mocker.Mock()
+    mock_role = mocker.Mock()
+    mock_role.name = "test.role"
+    mock_role.download.return_value = str(tmp_path / "test.role-latest.tar.gz")
+
+    mocker.patch(
+        "ansible.cli.galaxy.GalaxyCLI._parse_requirements_file",
+        return_value={"roles": [mock_role]},
+    )
+
+    galaxy_cli = GalaxyCLI(
+        args=[
+            "ansible-galaxy",
+            "role",
+            "download",
+            "-r",
+            "requirements.yml",
+            "--output-path",
+            str(tmp_path),
+        ]
+    )
+    galaxy_cli.parse()
+    galaxy_cli.galaxy = mock_galaxy
+    galaxy_cli.lazy_role_api = mocker.Mock()
+
+    galaxy_cli.execute_download_role()
+
+    mock_role.download.assert_called_once_with(str(tmp_path))
+
+
+def test_execute_download_role_no_requirements(mocker):
+    galaxy_cli = GalaxyCLI(args=["ansible-galaxy", "role", "download"])
+    galaxy_cli.parse()
+    galaxy_cli.galaxy = mocker.Mock()
+
+    with pytest.raises(
+        AnsibleError, match="No valid role requirements found to download"
+    ):
+        galaxy_cli.execute_download_role()
+
+
+def test_role_download_command_parser():
+    galaxy_cli = GalaxyCLI(
+        args=[
+            "ansible-galaxy",
+            "role",
+            "download",
+            "test.role",
+            "--output-path",
+            "/tmp",
+        ]
+    )
+
+    galaxy_cli.init_parser()
+    galaxy_cli.parse()
+
+    assert context.CLIARGS["func"] == galaxy_cli.execute_download_role
+    assert context.CLIARGS["args"] == ("test.role",)  # args is a tuple
+    assert context.CLIARGS["output_path"] == "/tmp"

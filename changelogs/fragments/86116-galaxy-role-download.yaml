@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - add new 'role download' command to download roles as tarballs for offline installation (https://github.com/ansible/ansible/issues/86116)

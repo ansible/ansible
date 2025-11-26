@@ -311,6 +311,34 @@ class GalaxyCLI(CLI):
 
         self.add_info_options(role_parser, parents=[common, roles_path, offline])
         self.add_install_options(role_parser, parents=[common, force, roles_path])
+        self.add_download_role_options(role_parser, parents=[common, force, roles_path])
+
+    def add_download_role_options(self, parser, parents=None):
+        download_parser = parser.add_parser(
+            "download",
+            parents=parents,
+            help="Download roles as tarballs for offline installation.",
+        )
+        download_parser.set_defaults(func=self.execute_download_role)
+
+        download_parser.add_argument(
+            "args",
+            metavar="role",
+            nargs="*",
+            help="Role(s) to download (name or name/version)",
+        )
+        download_parser.add_argument(
+            "-r",
+            "--role-file",
+            dest="role_file",
+            help="A file containing a list of roles to be downloaded",
+        )
+        download_parser.add_argument(
+            "--output-path",
+            dest="output_path",
+            default="./",
+            help="The path in which to download the role tarballs",
+        )
 
     def add_download_options(self, parser, parents=None):
         download_parser = parser.add_parser('download', parents=parents,
@@ -1388,6 +1416,60 @@ class GalaxyCLI(CLI):
             self._execute_install_collection(
                 collection_requirements, collection_path,
                 artifacts_manager=artifacts_manager,
+            )
+
+    def execute_download_role(self):
+        """
+        Download roles as tarballs for offline installation.
+        """
+        self._display_role_info = _display_role
+
+        # Use context.CLIARGS to access arguments
+        role_file = context.CLIARGS.get("role_file")
+        role_args = context.CLIARGS.get("args", [])
+        output_path = context.CLIARGS.get("output_path", "./")
+
+        # Parse role requirements
+        roles_to_download = []
+        if role_file:
+            requirements = self._parse_requirements_file(role_file)
+            # _parse_requirements_file returns GalaxyRole objects in the 'roles' key
+            roles_to_download = requirements.get("roles", [])
+        else:
+            # For direct role arguments, create GalaxyRole objects
+            for role_arg in role_args:
+                role_req = RoleRequirement.role_yaml_parse(role_arg.strip())
+                role_obj = GalaxyRole(self.galaxy, self.lazy_role_api, **role_req)
+                roles_to_download.append(role_obj)
+
+        if not roles_to_download:
+            raise AnsibleError("No valid role requirements found to download")
+
+        # Set output path
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+        display.display("Starting galaxy role download process")
+
+        # Download each role using the GalaxyRole objects
+        for role_obj in roles_to_download:
+            self._execute_download_single_role(role_obj, output_path)
+
+    def _execute_download_single_role(self, role_obj, output_path):
+        """
+        Download a single role as a tarball using a GalaxyRole object.
+        """
+        display.display("Downloading role %s" % role_obj.name)
+
+        # Use the GalaxyRole object directly to download
+        try:
+            tarball_path = role_obj.download(output_path)
+            display.display(
+                "Successfully downloaded role %s to %s" % (role_obj.name, tarball_path)
+            )
+        except Exception as e:
+            raise AnsibleError(
+                "Failed to download role %s: %s" % (role_obj.name, to_native(e))
             )
 
     def _execute_install_collection(
