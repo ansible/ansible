@@ -72,9 +72,7 @@ def _validate_mutable_mappings(a, b):
                 myvars.append(dumps(x))
             except Exception:
                 myvars.append(to_native(x))
-        raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
-            a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
-        )
+        raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}'.".format(a.__class__.__name__, b.__class__.__name__))
 
 
 def combine_vars(a, b, merge=None):
