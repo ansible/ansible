@@ -1,24 +1,28 @@
 DOCUMENTATION:
   name: strftime
   version_added: "2.4"
-  short_description: date formatting
+  short_description: Return a string representing a date and time formatted according to a format string.
   description:
-    - Using Python's C(strftime) function, take a data formatting string and a date/time to create a formatted date.
+    - Using Python's L(strftime, https://docs.python.org/3/library/datetime.html#datetime.datetime.strftime) function, take a data formatting string and a date/time to create a formatted date.
   notes:
-    - This is a passthrough to Python's C(stftime), for a complete set of formatting options go to https://strftime.org/.
+    - This is a passthrough to Python's C(datetime.datetime.strftime), for a complete set of formatting options go to https://strftime.org/.
   positional: _input, second, utc
   options:
     _input:
       description:
-        - A formatting string following C(stftime) conventions.
+        - A formatting string following C(strftime) conventions.
+        - Some additional directives are not supported by all platforms. See Python documentation for more details.
         - See L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior) for a reference.
       type: str
       required: true
     second:
-      description: Datetime in seconds from C(epoch) to format, if not supplied C(gmttime/localtime) will be used.
+      description:
+        - A datetime in seconds from C(epoch) to format.
       type: int
     utc:
-      description: Whether time supplied is in UTC.
+      description:
+        - Whether time supplied is in UTC.
+        - If C(utc) is true, the time will be in UTC, otherwise it will be in the local timezone.
       type: bool
       default: false
       version_added: '2.14'

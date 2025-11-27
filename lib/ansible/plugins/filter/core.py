@@ -130,18 +130,21 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.strptime(string, format)
 
 
-def strftime(string_format, second=None, utc=False):
-    """ return a date string using string. See https://docs.python.org/3/library/time.html#time.strftime for format """
-    if utc:
-        timefn = time.gmtime
+def strftime(string_format: str, second: float | None = None, utc: bool = False) -> str:
+    """ return a date string using string. See https://docs.python.org/3/library/datetime.html#datetime.datetime.strftime for format """
+    if second is None:
+        second = time.time()
     else:
-        timefn = time.localtime
-    if second is not None:
         try:
             second = float(second)
         except Exception:
-            raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
-    return time.strftime(string_format, timefn(second))
+            raise AnsibleFilterError(f'Invalid value for epoch value ({second})')
+
+    if utc:
+        datetime_obj = datetime.datetime.fromtimestamp(second, tz=datetime.timezone.utc)
+    else:
+        datetime_obj = datetime.datetime.fromtimestamp(second)
+    return datetime_obj.strftime(string_format)
 
 
 def quote(a):

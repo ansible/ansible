@@ -384,7 +384,8 @@
     that:
       - '"%Y-%m-%d"|strftime(1585247522) == "2020-03-26"'
       - '"%Y-%m-%d"|strftime("1585247522.0") == "2020-03-26"'
-      - '"%Y-%m-%d"|strftime("1585247522.0", utc=True) == "2020-03-26"'
+      - '"%Y-%m-%d%z"|strftime("1585247522.0", utc=True) == "2020-03-26+0000"'
+      - '"%:z"|strftime(None, utc=True) == "+00:00"'
       - '("%Y"|strftime(None)).startswith("20")' # Current date, can't check much there.
       - strftime_fail is failed
       - '"Invalid value for epoch value" in strftime_fail.msg'
