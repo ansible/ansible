@@ -36,9 +36,6 @@ from itertools import chain
 try:
     from packaging.requirements import Requirement as PkgReq
 except ImportError:
-    class PkgReq:  # type: ignore[no-redef]
-        pass
-
     HAS_PACKAGING = False
 else:
     HAS_PACKAGING = True
