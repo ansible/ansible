@@ -151,3 +151,127 @@
     that:
     - item not in tar_output.stdout_lines
   loop: '{{ collection_ignored_directories }}'
+
+# Additional comprehensive tests for FILES.json sorting robustness
+
+- name: Clean up previous extraction for new tests
+  file:
+    path: "{{ extraction_path }}"
+    state: absent
+
+- name: Test multiple builds produce identical FILES.json - Build 1
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection --force {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: first_build
+
+- name: Extract first build artifact
+  set_fact:
+    first_artifact: "{{ first_build.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first }}"
+
+- name: Create directory for first extraction
+  file:
+    path: "{{ extraction_path }}_1"
+    state: directory
+    mode: '0755'
+
+- name: Extract first build
+  unarchive:
+    src: "{{ first_artifact }}"
+    dest: "{{ extraction_path }}_1"
+    remote_src: yes
+
+- name: Read FILES.json from first build
+  slurp:
+    src: "{{ extraction_path }}_1/FILES.json"
+  register: first_files_json
+
+- name: Remove first build artifact to ensure clean build
+  file:
+    path: "{{ first_artifact }}"
+    state: absent
+
+- name: Test multiple builds produce identical FILES.json - Build 2
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection --force {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: second_build
+
+- name: Extract second build artifact
+  set_fact:
+    second_artifact: "{{ second_build.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first }}"
+
+- name: Create directory for second extraction
+  file:
+    path: "{{ extraction_path }}_2"
+    state: directory
+    mode: '0755'
+
+- name: Extract second build
+  unarchive:
+    src: "{{ second_artifact }}"
+    dest: "{{ extraction_path }}_2"
+    remote_src: yes
+
+- name: Read FILES.json from second build
+  slurp:
+    src: "{{ extraction_path }}_2/FILES.json"
+  register: second_files_json
+
+- name: Parse both FILES.json contents
+  set_fact:
+    first_files_content: "{{ first_files_json['content'] | b64decode | from_json }}"
+    second_files_content: "{{ second_files_json['content'] | b64decode | from_json }}"
+
+- name: Extract file order from both builds
+  set_fact:
+    first_order: "{{ first_files_content['files'] | map(attribute='name') | list }}"
+    second_order: "{{ second_files_content['files'] | map(attribute='name') | list }}"
+
+- name: Verify FILES.json is reproducible across builds
+  assert:
+    that:
+      - first_files_content == second_files_content
+      - first_order == second_order
+    fail_msg: "FILES.json differs between builds - reproducible build failed"
+    success_msg: "FILES.json is identical across multiple builds - reproducible build successful"
+
+- name: Verify all files in order are ASCII sorted
+  assert:
+    that:
+      - first_order == (first_order | sort)
+    fail_msg: "Files in first build are not ASCII sorted: {{ first_order }}"
+    success_msg: "All files in first build are correctly ASCII sorted"
+
+- name: Verify second build files are also ASCII sorted
+  assert:
+    that:
+      - second_order == (second_order | sort)
+    fail_msg: "Files in second build are not ASCII sorted: {{ second_order }}"
+    success_msg: "All files in second build are correctly ASCII sorted"
+
+- name: Validate FILES.json format and keys
+  assert:
+    that:
+      - first_files_content['format'] == 1
+      - second_files_content['format'] == 1
+      - first_files_content['files'] | length > 0
+      - second_files_content['files'] | length > 0
+    fail_msg: "FILES.json format or structure is invalid"
+
+- name: Verify each file entry has required fields
+  assert:
+    that:
+      - item | dict2items | map(attribute='key') | list | sort == ['chksum_sha256', 'chksum_type', 'ftype', 'format', 'name'] | sort
+    fail_msg: "File entry missing required fields: {{ item }}"
+  loop: "{{ first_files_content['files'][1:] }}"  # Skip root directory entry
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Clean up extraction directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ extraction_path }}_1"
+    - "{{ extraction_path }}_2"
