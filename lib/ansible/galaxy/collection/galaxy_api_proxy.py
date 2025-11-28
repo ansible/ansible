@@ -34,7 +34,7 @@ class MultiGalaxyAPIProxy:
         self._offline = offline  # Prevent all GalaxyAPI calls
 
     @property
-    def is_offline_mode_requested(self):
+    def is_offline_mode_requested(self) -> bool:
         return self._offline
 
     def _assert_that_offline_mode_is_not_requested(self) -> None:
@@ -117,7 +117,7 @@ class MultiGalaxyAPIProxy:
             else self._apis
         )
 
-        last_err: t.Optional[Exception]
+        last_err: Exception
 
         for api in api_lookup_order:
             try:
