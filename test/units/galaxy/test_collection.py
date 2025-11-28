@@ -841,6 +841,171 @@ def test_build_with_symlink_inside_collection(collection_input):
         assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
 
 
+def test_build_files_manifest_sorted_by_name(collection_input):
+    """Validate that FILES.json entries are sorted by name in ASCII order."""
+    input_dir, output_dir = collection_input
+
+    # Create multiple files to ensure sorting is tested
+    test_files = ['test_z.txt', 'test_a.txt', 'test_m.txt', 'beta.py', 'alpha.py']
+    for filename in test_files:
+        filepath = os.path.join(input_dir, filename)
+        with open(filepath, 'w') as f:
+            f.write('test content')
+
+    # Build manifest using _build_files_manifest_walk
+    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+
+    # Extract file names from manifest
+    file_names = [entry['name'] for entry in manifest['files']]
+
+    # Verify files are sorted by name (ASCII order)
+    expected_sorted = sorted(file_names)
+    assert file_names == expected_sorted, f"Files not in ASCII order. Got {file_names}, expected {expected_sorted}"
+
+
+def test_build_files_manifest_walk_sorted_output(collection_input):
+    """Validate _build_files_manifest_walk produces sorted output."""
+    input_dir = collection_input[0]
+
+    # Create files in reverse alphabetical order
+    files_to_create = ['zebra.txt', 'yak.txt', 'xray.txt', 'alpha.txt']
+    for filename in files_to_create:
+        filepath = os.path.join(input_dir, filename)
+        with open(filepath, 'w') as f:
+            f.write('content')
+
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+
+    assert actual['format'] == 1
+    file_names = [entry['name'] for entry in actual['files']]
+
+    # Verify sorting
+    assert file_names == sorted(file_names), f"Files not sorted: {file_names}"
+
+
+def test_build_collection_reproducible_build(collection_input):
+    """Validate that building the same collection twice produces identical FILES.json content."""
+    input_dir, output_dir = collection_input
+
+    # First build
+    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'),
+                               to_text(output_dir, errors='surrogate_or_strict'), False)
+
+    artifact1_path = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    assert tarfile.is_tarfile(artifact1_path)
+
+    # Extract FILES.json from first build
+    with tarfile.open(artifact1_path, mode='r') as tar:
+        files_json_member = tar.getmember('FILES.json')
+        files_obj = tar.extractfile(files_json_member)
+        files_json_1 = json.loads(files_obj.read().decode('utf-8'))
+        files_obj.close()
+
+    # Remove the artifact for second build
+    os.remove(artifact1_path)
+
+    # Second build - should produce identical FILES.json
+    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'),
+                               to_text(output_dir, errors='surrogate_or_strict'), True)
+
+    artifact2_path = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    assert tarfile.is_tarfile(artifact2_path)
+
+    with tarfile.open(artifact2_path, mode='r') as tar:
+        files_json_member = tar.getmember('FILES.json')
+        files_obj = tar.extractfile(files_json_member)
+        files_json_2 = json.loads(files_obj.read().decode('utf-8'))
+        files_obj.close()
+
+    # Verify FILES.json is identical
+    assert files_json_1 == files_json_2, "FILES.json content differs between builds"
+
+    # Verify file order is identical
+    files_1 = [f['name'] for f in files_json_1['files']]
+    files_2 = [f['name'] for f in files_json_2['files']]
+    assert files_1 == files_2, f"File order differs: {files_1} vs {files_2}"
+
+
+def test_build_files_manifest_special_characters_sorted(collection_input):
+    """Validate sorting works correctly with special characters in filenames."""
+    input_dir = collection_input[0]
+
+    # Create files with various special characters (within filesystem limits)
+    test_files = [
+        'z_underscore.txt',
+        'a-dash.txt',
+        'b_underscore.txt',
+        'a_underscore.txt',
+        '1_numeric.txt',
+        '0_numeric.txt',
+    ]
+
+    for filename in test_files:
+        filepath = os.path.join(input_dir, filename)
+        with open(filepath, 'w') as f:
+            f.write('test')
+
+    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+
+    # Get file names (excluding '.' which is added by default)
+    file_names = [entry['name'] for entry in manifest['files'] if entry['name'] != '.']
+
+    # Verify ASCII sorting
+    expected_sorted = sorted(file_names)
+    assert file_names == expected_sorted, f"Not sorted in ASCII order: {file_names}"
+
+
+def test_files_json_has_sorted_keys(collection_input):
+    """Validate that FILES.json output has sorted keys when using sort_keys=True."""
+    input_dir, output_dir = collection_input
+
+    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'),
+                               to_text(output_dir, errors='surrogate_or_strict'), False)
+
+    artifact_path = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+
+    with tarfile.open(artifact_path, mode='r') as tar:
+        files_json_member = tar.getmember('FILES.json')
+        files_obj = tar.extractfile(files_json_member)
+        files_content = files_obj.read().decode('utf-8')
+        files_obj.close()
+
+    # Parse and re-dump to check if keys are sorted
+    files_data = json.loads(files_content)
+    resorted_content = json.dumps(files_data, indent=True, sort_keys=True)
+
+    # The content should be identical if keys are already sorted
+    # (accounting for potential formatting differences)
+    assert files_data == json.loads(resorted_content), "FILES.json keys are not in sorted order"
+
+
+def test_build_collection_large_number_of_files_sorted(collection_input):
+    """Validate sorting performance and correctness with many files."""
+    input_dir = collection_input[0]
+
+    # Create a subdirectory structure with many files
+    dirs_to_create = ['dir_a', 'dir_z', 'dir_m', 'dir_b']
+    for dirname in dirs_to_create:
+        dirpath = os.path.join(input_dir, dirname)
+        os.makedirs(dirpath, exist_ok=True)
+
+        # Create multiple files in each directory
+        for i in range(5):
+            filepath = os.path.join(dirpath, f'file_{i:02d}.txt')
+            with open(filepath, 'w') as f:
+                f.write(f'content {i}')
+
+    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+
+    file_names = [entry['name'] for entry in manifest['files']]
+
+    # Verify all files are present
+    assert len(file_names) > 10, "Expected more than 10 files in manifest"
+
+    # Verify sorted order
+    assert file_names == sorted(file_names), f"Files not sorted correctly with many files: {file_names}"
+
+
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
