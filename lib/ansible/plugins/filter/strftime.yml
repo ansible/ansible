@@ -5,7 +5,7 @@ DOCUMENTATION:
   description:
     - Using Python's L(strftime, https://docs.python.org/3/library/datetime.html#datetime.datetime.strftime) function, take a data formatting string and a date/time to create a formatted date.
   notes:
-    - This is a passthrough to Python's C(datetime.datetime.strftime), for a complete set of formatting options go to https://strftime.org/.
+    - This is a passthrough to Python's C(datetime.datetime.strftime), for a complete set of formatting options go to L(the Python documentation, https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes).
     - Before Ansible Core 2.21, this was based upon C(time.strftime) Python API.
   positional: _input, second, utc
   options:
@@ -31,7 +31,7 @@ DOCUMENTATION:
       version_added: '2.14'
 
 EXAMPLES: |
-  # for a complete set of features go to  https://strftime.org/
+  # for a complete set of features go to https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 
   # Display year-month-day
   {{ '%Y-%m-%d' | strftime }}
