@@ -242,7 +242,7 @@ class LookupModule(LookupBase):
         else:
             terms = _recurse_terms(terms, omit_undefined=False)  # undefined values are only omitted when invoked using `with`
 
-            subdir = None
+            subdir = 'files'  # generic fallback for lookups
 
         self.set_options(var_options=variables, direct=kwargs)
 

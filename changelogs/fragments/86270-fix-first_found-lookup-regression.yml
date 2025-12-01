@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - >-
+    first_found - Fix regression introduced with Ansible 2.19 that the lookup does not search the
+    ``files`` paths when used outside of a ``with_first_found:`` block.
