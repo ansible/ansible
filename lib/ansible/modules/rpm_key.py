@@ -115,7 +115,7 @@ class LibRPM:
         try:
             self.lib = ctypes.CDLL(lib_path)
         except OSError:
-            raise ImportError("Error: Could not load librpm library from %s" % lib_path)
+            raise ImportError(f"Error: Could not load librpm library from {lib_path}")
 
         try:
             self.libc = ctypes.CDLL(None)
@@ -253,7 +253,7 @@ class LibRPM:
         Get the version byte from a key packet.
         Returns version number (4 or 6) or None on error.
         """
-        tag, body_len, header_len = self._parse_packet_header(pkt, offset, pktlen)
+        tag, dummy, header_len = self._parse_packet_header(pkt, offset, pktlen)
         if tag is None:
             return None
 
@@ -335,14 +335,18 @@ class LibRPM:
         fingerprint = hashlib.sha256(fp_data).digest()
         return fingerprint.hex().upper()
 
-    def _identify_keys(self, pkt: PktPointer, pktlen: int) -> list[dict[str, str]]:
+    def _identify_keys(self, armor: str) -> list[dict[str, str]]:
         """Return a list of dicts with key ID and fingerprint for the primary key and each subkey"""
         key_info: list[dict[str, str]] = []
+
+        pkt, pktlen = self._parse_armor(armor)
+        if not pkt:
+            raise Exception("Unable to parse PGP key armor")
 
         # Find all key packets in the stream and compute their fingerprints.
         key_packets = self._find_key_packets(pkt, pktlen)
 
-        for offset, packet_len in key_packets:
+        for offset, dummy in key_packets:
             # Detect key version
             version = self._get_key_version(pkt, offset, pktlen)
 
@@ -361,6 +365,11 @@ class LibRPM:
                     keyid_from_fp = computed_fp[:16]
                     key_info.append({'keyid': keyid_from_fp, 'fingerprint': computed_fp})
 
+        self.libc.free(pkt)
+
+        if not key_info:
+            raise Exception("Unable to identify PGP key")
+
         return key_info
 
     def get_key_ids_from_armor(self, armor: str) -> list[str]:
@@ -370,36 +379,16 @@ class LibRPM:
         'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
         first item in the results, followed by its subkeys.
         """
-        pkt, pktlen = self._parse_armor(armor)
-        if not pkt:
-            raise Exception("Unable to parse PGP key armor")
+        return [key['keyid'] for key in self._identify_keys(armor)]
 
-        key_info = self._identify_keys(pkt, pktlen)
-        if not key_info:
-            raise Exception("Unable to identify PGP key")
-
-        self.libc.free(pkt)
-
-        return [key['keyid'] for key in key_info]
-
-    def get_fingerprints_from_armor(self, armor: str, include_subkeys: bool = False) -> str | list[str]:
+    def get_fingerprints_from_armor(self, armor: str) -> str | list[str]:
         """
         Get the fingerprints from the primary PGP key, and all subkeys of that key, from the ASCII armored key.
 
         'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
         first item in the results, followed by its subkeys.
         """
-        pkt, pktlen = self._parse_armor(armor)
-        if not pkt:
-            raise Exception("Unable to parse PGP key armor")
-
-        key_info = self._identify_keys(pkt, pktlen)
-        if not key_info:
-            raise Exception("Unable to identify PGP key")
-
-        self.libc.free(pkt)
-
-        return [key['fingerprint'] for key in key_info]
+        return [key['fingerprint'] for key in self._identify_keys(armor)]
 
 
 def is_pubkey(string):
