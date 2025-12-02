@@ -358,7 +358,7 @@ class VariableManager:
                         except (AnsibleParserError, AnsibleUndefinedVariable):
                             raise
                         except AnsibleError as e:
-                            raise AnsibleError(f"Invalid vars_file {found_file!r}.") from e
+                            raise AnsibleError(f"Invalid vars_files file {found_file!r}.") from e
 
                 except AnsibleUndefinedVariable as ex:
                     if host is not None:
