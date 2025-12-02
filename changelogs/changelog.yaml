@@ -678,6 +678,26 @@ releases:
     - 2.18.11rc1_summary.yaml
     - 85361-collection-name-from-path-none.yml
     release_date: '2025-10-29'
+  2.18.12rc1:
+    changes:
+      bugfixes:
+      - Variable loading now uses file source instead of variables when invalidly
+        formmated vars file is loaded.
+      - ansible-test - The runtime-metadata sanity test now ignores pre-release and
+        build identifiers in collection versions. This prevents errors if a tombstone
+        version is ``X.0.0``, while the collection's version is ``X.0.0-prerelease``
+        (https://github.com/ansible/ansible/issues/85193)."
+      release_summary: '| Release Date: 2025-12-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.12rc1_summary.yaml
+    - 85193-runtime-metadata.yml
+    - varloaderror.yml
+    release_date: '2025-12-02'
   2.18.1rc1:
     changes:
       bugfixes:
