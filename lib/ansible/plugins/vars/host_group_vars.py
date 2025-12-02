@@ -77,7 +77,7 @@ class VarsModule(BaseVarsPlugin):
                 try:
                     data = combine_vars(data, new_data)
                 except AnsibleError as e:
-                    raise AnsibleParserError("Could not process '%s'." % found, orig_exc=e)
+                    raise AnsibleParserError(f"Could not process {found!r}.") from e
         return data
 
     def get_vars(self, loader, path, entities, cache=True):
