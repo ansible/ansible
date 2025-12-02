@@ -378,7 +378,7 @@ class LibRPM:
         """
         return [key['keyid'] for key in self._identify_keys(armor)]
 
-    def get_fingerprints_from_armor(self, armor: str) -> str | list[str]:
+    def get_fingerprints_from_armor(self, armor: str) -> list[str]:
         """
         Get the fingerprints from the primary PGP key, and all subkeys of that key, from the ASCII armored key.
 
