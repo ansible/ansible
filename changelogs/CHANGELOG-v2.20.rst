@@ -4,6 +4,26 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-12-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Bugfixes
+--------
+
+- Fix ``AnsibleModule.human_to_bytes()``, which was never adjusted after the standalone ``human_to_bytes()`` got a new parameter ``default_unit`` (https://github.com/ansible/ansible/pull/85259).
+- Variable loading now uses file source instead of variables when invalidly formmated vars file is loaded.
+- ansible-test - The runtime-metadata sanity test now ignores pre-release and build identifiers in collection versions. This prevents errors if a tombstone version is ``X.0.0``, while the collection's version is ``X.0.0-prerelease`` (https://github.com/ansible/ansible/issues/85193)."
+- display - Fix ``getuser`` fallback error handling on Python 3.13 and later. (https://github.com/ansible/ansible/issues/86142)
+- first_found - Correct the "Include tasks only if one of the files exists, otherwise skip" example.
+- get_url - fix regex for GNU Digest line which is used in comparing checksums (https://github.com/ansible/ansible/issues/86132).
+- local connection - Fix ``getuser`` fallback error handling on Python 3.13 and later.
+
 v2.20.0
 =======
 
