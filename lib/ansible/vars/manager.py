@@ -349,18 +349,16 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted', trusted_as_template=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
+                                    all_vars = _combine_and_track(all_vars, item, f"play vars_files from {vars_file!r}")
                             display.vvv(f"Read `vars_file` {found_file!r}.")
                             break
                         except AnsibleFileNotFound:
                             # we continue on loader failures
                             continue
-                        except AnsibleParserError:
+                        except (AnsibleParserError, AnsibleUndefinedVariable):
                             raise
-                        except AnsibleUndefinedVariable:
-                            raise
-                        except Exception as ex:
-                            raise AnsibleParserError(f"Error reading `vars_files` file {vars_file!r}.", obj=vars_file) from ex
+                        except AnsibleError as e:
+                            raise AnsibleError(f"Invalid vars_files file {found_file!r}.") from e
 
                 except AnsibleUndefinedVariable as ex:
                     if host is not None:
