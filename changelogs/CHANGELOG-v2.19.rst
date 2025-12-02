@@ -4,6 +4,24 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2025-12-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Bugfixes
+--------
+
+- Fix ``AnsibleModule.human_to_bytes()``, which was never adjusted after the standalone ``human_to_bytes()`` got a new parameter ``default_unit`` (https://github.com/ansible/ansible/pull/85259).
+- Variable loading now uses file source instead of variables when invalidly formmated vars file is loaded.
+- ansible-test - The runtime-metadata sanity test now ignores pre-release and build identifiers in collection versions. This prevents errors if a tombstone version is ``X.0.0``, while the collection's version is ``X.0.0-prerelease`` (https://github.com/ansible/ansible/issues/85193)."
+- first_found - Correct the "Include tasks only if one of the files exists, otherwise skip" example.
+- get_url - fix regex for GNU Digest line which is used in comparing checksums (https://github.com/ansible/ansible/issues/86132).
+
 v2.19.4
 =======
 

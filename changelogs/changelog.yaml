@@ -1408,3 +1408,32 @@ releases:
     - option_deprecation_help.yml
     - package_facts.yml
     release_date: '2025-10-29'
+  2.19.5rc1:
+    changes:
+      bugfixes:
+      - Fix ``AnsibleModule.human_to_bytes()``, which was never adjusted after the
+        standalone ``human_to_bytes()`` got a new parameter ``default_unit`` (https://github.com/ansible/ansible/pull/85259).
+      - Variable loading now uses file source instead of variables when invalidly
+        formmated vars file is loaded.
+      - ansible-test - The runtime-metadata sanity test now ignores pre-release and
+        build identifiers in collection versions. This prevents errors if a tombstone
+        version is ``X.0.0``, while the collection's version is ``X.0.0-prerelease``
+        (https://github.com/ansible/ansible/issues/85193)."
+      - first_found - Correct the "Include tasks only if one of the files exists,
+        otherwise skip" example.
+      - get_url - fix regex for GNU Digest line which is used in comparing checksums
+        (https://github.com/ansible/ansible/issues/86132).
+      release_summary: '| Release Date: 2025-12-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.5rc1_summary.yaml
+    - 85193-runtime-metadata.yml
+    - 85259-fix-human_to_bytes.yml
+    - first-found-example.yml
+    - get_url_regex.yml
+    - varloaderror.yml
+    release_date: '2025-12-02'
