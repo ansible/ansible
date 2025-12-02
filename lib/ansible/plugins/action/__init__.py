@@ -320,8 +320,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
+                    live_updates=bool(self._task.live),
                 )
-
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
@@ -949,6 +949,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
+
         else:
             module_args['_ansible_check_mode'] = False
 
@@ -996,6 +997,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
+
+        # enable live updates
+        module_args['_ansible_live_updates'] = self._task.live
 
         # tells the module to ignore options that are not in its argspec.
         module_args['_ansible_ignore_unknown_opts'] = ignore_unknown_opts
@@ -1159,7 +1163,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, live=bool(self._task.live))
 
         # parse the main result
         data = self._parse_returned_data(res, module_bits.serialization_profile)
@@ -1209,7 +1213,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
     def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
         try:
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
-
             for w in warnings:
                 display.warning(w)
 
@@ -1266,7 +1269,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         return data
 
     # FIXME: move to connection base
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None, live=False):
         """
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to

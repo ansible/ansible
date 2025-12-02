@@ -84,7 +84,7 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
+    def exec_command(self, cmd: str, in_data: bytes | None = None, sudoable: bool = True, live: bool = False) -> tuple[int, bytes, bytes]:
         """ run a command on the local host """
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -132,11 +132,45 @@ class Connection(ConnectionBase):
             os.close(stdin)
 
         display.debug("done running command with Popen()")
+        selector = selectors.DefaultSelector()
+        selector.register(p.stdout, selectors.EVENT_READ)
+        selector.register(p.stderr, selectors.EVENT_READ)
 
         become_stdout_bytes, become_stderr_bytes = self._ensure_become_success(p, pty_primary, sudoable)
 
-        display.debug("getting output with communicate()")
-        stdout, stderr = p.communicate(in_data)
+        display.debug("starting update loop")
+
+        stdout = b''
+        stdout_done = False
+        stderr = b''
+        stderr_done = False
+
+        while True:
+            events = selector.select(1)
+            for key, event in events:
+                output = b''
+                if key.fileobj == p.stdout:
+                    output = os.read(p.stdout.fileno(), 9000)
+                    if output == b'':
+                        stdout_done = True
+                        selector.unregister(p.stdout)
+                    stdout += output
+                elif key.fileobj == p.stderr:
+                    output = os.read(p.stderr.fileno(), 9000)
+                    if output == b'':
+                        stderr_done = True
+                        selector.unregister(p.stderr)
+                    stderr += output
+
+                is_update, rest = self._handle_updates(output)
+                if is_update:
+                    stdout = rest or b''
+
+            # Exit if the process has closed both fds and the process has
+            # finished
+            if stdout_done and stderr_done and p.poll() is not None:
+                break
+
         display.debug("done communicating")
 
         # preserve output from privilege escalation stage as `bytes`; it may contain actual output (eg `raw`) or error messages

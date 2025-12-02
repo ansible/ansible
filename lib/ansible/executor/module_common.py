@@ -987,7 +987,8 @@ def _find_module_utils(
         async_timeout: int,
         become_plugin: BecomeBase | None,
         environment: dict[str, str],
-        remote_is_local: bool = False
+        remote_is_local: bool = False,
+        live_updates: bool = False,
 ) -> _BuiltModule:
     """
     Given the source of the module, convert it to a Jinja2 template to insert
@@ -1164,6 +1165,7 @@ def _find_module_utils(
             params=encoded_params,
             extensions=extension_manager.get_extensions(),
             zip_data=to_text(cached_module.zip_data),
+            live_updates=live_updates,
         )
 
         args_string = '\n'.join(f'{key}={value!r},' for key, value in args.items())
@@ -1280,6 +1282,7 @@ def modify_module(
         become_plugin=None,
         environment=None,
         remote_is_local=False,
+        live_updates=False,
 ) -> _BuiltModule:
     """
     Used to insert chunks of code into modules before transfer rather than
@@ -1321,6 +1324,7 @@ def modify_module(
         become_plugin=become_plugin,
         environment=environment,
         remote_is_local=remote_is_local,
+        live_updates=live_updates,
     )
 
     b_module_data = module_bits.b_module_data
