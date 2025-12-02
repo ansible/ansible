@@ -413,6 +413,7 @@ class TaskExecutor:
         # or just a singular non-looped task
 
         self._task.delegate_to = delegated_host_name  # always override, since a templated result could be an omit (-> None)
+        variables['ansible_delegated_host'] = delegated_host_name
         variables.update(delegated_vars)
 
     def _execute(self, templar: TemplateEngine, variables: dict[str, t.Any]) -> dict[str, t.Any]:
