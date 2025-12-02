@@ -982,6 +982,57 @@ releases:
     - ansible-test-fix-command-traceback.yml
     - unsafe_hostvars_fix.yml
     release_date: '2024-11-25'
+  2.16.15rc1:
+    changes:
+      bugfixes:
+      - Variable loading now uses file source instead of variables when invalidly
+        formmated vars file is loaded.
+      - ansible-test - Fix Python relative import resolution from ``__init__.py``
+        files when using change detection.
+      - ansible-test - Fix up coverage reporting to properly translate the temporary
+        path of integration test modules to the expected static test module path.
+      - ansible-test - Limit package install retries during managed remote instance
+        bootstrapping.
+      - build - Pin ``wheel`` in ``pyproject.toml`` to ensure compatibility with supported
+        ``setuptools`` versions.
+      - run_command - Fixed premature selector unregistration on empty read from stdout/stderr
+        that caused truncated output or hangs in rare situations.
+      - user - Set timeout for passphrase interaction.
+      - user - Update prompt for SSH key passphrase (https://github.com/ansible/ansible/issues/84484).
+      minor_changes:
+      - ansible-test - Add RHEL 10.0 as a remote platform for testing.
+      - ansible-test - Automatically retry HTTP GET/PUT/DELETE requests on exceptions.
+      - ansible-test - Implement new authentication methods for accessing the Ansible
+        Core CI service.
+      - ansible-test - Replace FreeBSD 13.2 remote with 13.3.
+      - ansible-test - Switch from RHEL 8.8 to 8.10.
+      - ansible-test - Switch from RHEL 9.2 to 9.6.
+      - ansible-test - Use Python's ``urllib`` instead of ``curl`` for HTTP requests.
+      - ansible-test - Use the ``-t`` option to set the stop timeout when stopping
+        a container. This avoids use of the ``--time`` option which was deprecated
+        in Docker v28.0.
+      release_summary: '| Release Date: 2025-12-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.15rc1_summary.yaml
+    - ansible-test-auth-update.yml
+    - ansible-test-bootstrap-retry.yml
+    - ansible-test-change-detection-fix.yml
+    - ansible-test-container-stop.yml
+    - ansible-test-coverage-test-files.yml
+    - ansible-test-curl.yml
+    - ansible-test-rhel-10.yml
+    - ansible-test-rhel.yml
+    - ansible_test_freebsd-13.3.yml
+    - pin-wheel.yml
+    - run_command_output_selector.yml
+    - user_passphrase.yml
+    - varloaderror.yml
+    release_date: '2025-12-02'
   2.16.1rc1:
     changes:
       breaking_changes:

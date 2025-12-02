@@ -5,6 +5,40 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.15rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-12-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add RHEL 10.0 as a remote platform for testing.
+- ansible-test - Automatically retry HTTP GET/PUT/DELETE requests on exceptions.
+- ansible-test - Implement new authentication methods for accessing the Ansible Core CI service.
+- ansible-test - Replace FreeBSD 13.2 remote with 13.3.
+- ansible-test - Switch from RHEL 8.8 to 8.10.
+- ansible-test - Switch from RHEL 9.2 to 9.6.
+- ansible-test - Use Python's ``urllib`` instead of ``curl`` for HTTP requests.
+- ansible-test - Use the ``-t`` option to set the stop timeout when stopping a container. This avoids use of the ``--time`` option which was deprecated in Docker v28.0.
+
+Bugfixes
+--------
+
+- Variable loading now uses file source instead of variables when invalidly formmated vars file is loaded.
+- ansible-test - Fix Python relative import resolution from ``__init__.py`` files when using change detection.
+- ansible-test - Fix up coverage reporting to properly translate the temporary path of integration test modules to the expected static test module path.
+- ansible-test - Limit package install retries during managed remote instance bootstrapping.
+- build - Pin ``wheel`` in ``pyproject.toml`` to ensure compatibility with supported ``setuptools`` versions.
+- run_command - Fixed premature selector unregistration on empty read from stdout/stderr that caused truncated output or hangs in rare situations.
+- user - Set timeout for passphrase interaction.
+- user - Update prompt for SSH key passphrase (https://github.com/ansible/ansible/issues/84484).
+
 v2.16.14
 ========
 
