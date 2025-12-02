@@ -620,7 +620,7 @@
 
 - name: try to install an RPM with error in scriptlet
   dnf:
-    name: https://github.com/Akasurde/ansible_pull_test_repo/raw/refs/heads/main/broken-scriptlet-test-1.0-1.noarch.rpm
+    name: broken-scriptlet
     state: present
     disable_gpg_check: true
   register: dnf_result
@@ -631,8 +631,8 @@
     that:
         - "not dnf_result is changed"
         - "dnf_result is failed"
-        - "'Failed to install some' in dnf_result.msg"
         - dnf_result.failures | length > 0
+        - '"scriptlet failed, exit status 1" in dnf_result.failures[0]'
 
 # setup for testing installing an RPM from local file
 

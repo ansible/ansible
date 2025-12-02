@@ -808,6 +808,7 @@ class Dnf5Module(YumDnf):
                         try:
                             failures = transaction.get_rpm_messages()
                         except AttributeError:
+                            # get_rpm_messages is not available in dnf5 < 5.2.7.0
                             pass
                     if not failures:
                         failures = ["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()]
