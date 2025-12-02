@@ -3260,6 +3260,43 @@ class Buildroot(BusyBox):
     platform = 'Linux'
     distribution = 'Buildroot'
 
+def _cleanup_systemd_lingering(module, username):
+    """
+    Best-effort cleanup of systemd lingering for a user.
+
+    If /var/lib/systemd/linger/<username> exists, try to disable lingering
+    via loginctl; if that fails, fall back to removing the lingering file
+    directly. Any errors during cleanup are ignored so that user deletion
+    itself is not blocked.
+    """
+    linger_dir = "/var/lib/systemd/linger"
+    linger_file = os.path.join(linger_dir, username)
+
+    # If there is no lingering file, there is nothing to do
+    if not os.path.exists(linger_file):
+        return
+
+    # Try to use loginctl if available
+    loginctl = module.get_bin_path("loginctl", required=False)
+    if loginctl:
+        rc, out, err = module.run_command(
+            [loginctl, "disable-linger", username],
+            check_rc=False,
+        )
+        # If loginctl worked and the file is gone, we are done
+        if rc == 0 and not os.path.exists(linger_file):
+            return
+
+    # Fallback: try to remove the lingering file directly
+    try:
+        os.remove(linger_file)
+    except OSError:
+        # Do not fail the whole task just because lingering cleanup failed
+        try:
+            module.warn("Failed to clean systemd lingering file for user %s" % username)
+        except AttributeError:
+            # warn() may not exist in very old Ansible versions; ignore silently
+            pass
 
 def main():
     ssh_defaults = dict(
@@ -3337,6 +3374,10 @@ def main():
         if user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+                
+            # Best-effort cleanup of systemd lingering before deleting the user
+            _cleanup_systemd_lingering(module, user.name)
+
             (rc, out, err) = user.remove_user()
             if rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
