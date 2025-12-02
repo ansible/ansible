@@ -367,9 +367,6 @@ class LibRPM:
 
         self.libc.free(pkt)
 
-        if not key_info:
-            raise Exception("Unable to identify PGP key")
-
         return key_info
 
     def get_key_ids_from_armor(self, armor: str) -> list[str]:
