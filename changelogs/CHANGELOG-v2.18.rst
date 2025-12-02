@@ -4,6 +4,21 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2025-12-02
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Bugfixes
+--------
+
+- Variable loading now uses file source instead of variables when invalidly formmated vars file is loaded.
+- ansible-test - The runtime-metadata sanity test now ignores pre-release and build identifiers in collection versions. This prevents errors if a tombstone version is ``X.0.0``, while the collection's version is ``X.0.0-prerelease`` (https://github.com/ansible/ansible/issues/85193)."
+
 v2.18.11
 ========
 
