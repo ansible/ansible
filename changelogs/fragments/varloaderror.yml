@@ -1,0 +1,2 @@
+bugfixes:
+  - Variable loading now uses file source instead of variables when invalidly formmated vars file is loaded.

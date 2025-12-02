@@ -1,0 +1,14 @@
+- hosts: all
+  name: test vault errors
+  gather_facts: false
+  tasks:
+
+  - name: bad included vault
+    include_vars:
+      file: vars/bad_vault.yml
+    tags: includevault, never
+    no_log: false
+
+  - name: Show bad vault contents ... if i get here, it was a good vault!
+    debug:
+      msg: "{{ test_password }} {{ jdbc_test_password }} {{ api_test_password }}"
