@@ -39,3 +39,4 @@
 - include_tasks: test_modify_user_home.yml
 - include_tasks: test_invalid_shell.yml
 - import_tasks: uidmin_linux_behavior.yml
+  when: ansible_facts.system == 'FreeBSD'
