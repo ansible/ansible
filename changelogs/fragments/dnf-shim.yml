@@ -1,0 +1,5 @@
+minor_changes:
+- dnf - Separate module into module and utility script
+- package_facts - Switch from rpm python to rpm CLI to list packages
+- ansible-test - Add limited RHEL8 integration test remote supporting Python 3.12 only
+- ansiballz - Add tech preview to embed arbitrary files, not relying on python ``import``
