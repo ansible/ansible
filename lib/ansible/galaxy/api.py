@@ -782,6 +782,11 @@ class GalaxyAPI:
 
         signatures = data.get('signatures') or []
 
+        # NOTE: Galaxy and Hub already populated the cache when listing versions.
+        # NOTE: Allow 3rd party servers to provide version-specific metadata lazily.
+        if (requires_ansible := data.get('requires_ansible')):
+            self.requires_ansible[f"{namespace}.{name}"][version] = requires_ansible
+
         download_url_info = urlparse(data['download_url'])
         if not download_url_info.scheme and not download_url_info.path.startswith('/'):
             # galaxy does a lot of redirects, with much more complex pathing than we use

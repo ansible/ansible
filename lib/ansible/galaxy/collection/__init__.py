@@ -1861,10 +1861,11 @@ def _resolve_depenency_map(
                 if req_inf.requirement.supports_ansible:
                     continue
                 collection = str(req_inf.parent)
-                if req_inf.parent._parent is None:
+                parents = [str(r._parent) for r in req_inf.parent._requirements if r._parent is not None]
+                if not parents:
                     dep_origin = 'direct request'
                 else:
-                    dep_origin = f'dependency of {req_inf.parent._parent}'
+                    dep_origin = f'dependency of {", ".join(parents)}'
             else:
                 collection = str(req_inf.requirement)
                 dep_origin = 'direct request' if req_inf.parent is None else f'dependency of {req_inf.parent!s}'

@@ -22,13 +22,13 @@ from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
-    AnsibleCandidate,
     AnsibleRequirement,
 )
 from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
+from ansible.release import __version__
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 try:
@@ -89,7 +89,7 @@ class CollectionDependencyProvider(AbstractProvider):
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
-        self._get_ansible_requirement = functools.partial(
+        self._make_ansible_requirement = functools.partial(
             AnsibleRequirement.from_collection,
             concrete_artifacts_manager,
         )
@@ -200,7 +200,7 @@ class CollectionDependencyProvider(AbstractProvider):
                 continue
 
             # hack for backward compatible error handling
-            match._parent = list(requirements[identifier])[0]._parent
+            match._requirements = list(requirements[identifier])
             results.append(match)
         return results
 
@@ -216,9 +216,10 @@ class CollectionDependencyProvider(AbstractProvider):
         version_req += "This is an issue with the collection."
 
         if first_req.type == "requires_ansible":
-            if all(req.supports_ansible for req in requirements):
-                return [AnsibleCandidate]
-            return []
+            candidate = Candidate("ansible-core", __version__, None, "requires_ansible", None)
+            if any(not self.is_satisfied_by(r, candidate) for r in requirements):
+                return []
+            return [candidate]
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
@@ -403,10 +404,11 @@ class CollectionDependencyProvider(AbstractProvider):
                 requirement.is_virtual
                 or candidate.is_virtual
                 or requirement.ver == '*'
-                or requirement.type == 'requires_ansible'
-                or candidate.type == 'requires_ansible'
         ):
             return True
+
+        if requirement.type == 'requires_ansible':
+            return requirement.is_satisfied_by(candidate)
 
         return meets_requirements(
             version=candidate.ver,
@@ -421,8 +423,6 @@ class CollectionDependencyProvider(AbstractProvider):
         """
         if candidate.type == "requires_ansible":
             return
-        if (requires_ansible := self._get_ansible_requirement(candidate)):
-            yield requires_ansible
 
         # FIXME: If there's several galaxy servers set, there may be a
         # FIXME: situation when the metadata of the same collection
@@ -431,6 +431,10 @@ class CollectionDependencyProvider(AbstractProvider):
         # FIXME: any differences?
         # NOTE: The underlying implementation currently uses first found
         req_map = self._api_proxy.get_collection_dependencies(candidate)
+
+        if (requires_ansible := self._make_ansible_requirement(candidate)):
+            requires_ansible._parent = candidate
+            yield requires_ansible
 
         # NOTE: This guard expression MUST perform an early exit only
         # NOTE: after the `get_collection_dependencies()` call because

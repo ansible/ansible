@@ -105,9 +105,8 @@
         - expected_error.stderr is search(expected_message, multiline=True)
     vars:
       expected_message: |
-        \[ERROR\]: Failed to resolve the requested dependencies map\. Could not satisfy the following requirements\:
-        "* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(dependency of ns_requires_ansible\.dependency_requires_ansible:2\.0\.0\) requires ansible-core <{{ ansible_version.major }}\.{{ ansible_version.minor }}
-    ignore_errors: True
+        \[ERROR\]: Failed to resolve the requested dependencies map\. Could not satisfy the following requirements:
+        \* ns_requires_ansible\.name_requires_ansible:1\.0\.0 \(dependency of ns_requires_ansible\.dependency_requires_ansible:2\.0\.0\) requires ansible-core <{{ ansible_version.major }}\.{{ ansible_version.minor }}
 
   - name: "{{ subcommand }} collection version without incompatible dependency"
     command: "{{ install_or_download }} -p {{ temp1 }} ns_requires_ansible.dependency_requires_ansible"

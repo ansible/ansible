@@ -33,7 +33,7 @@ from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.plugins.loader import _does_collection_support_ansible_version
-from ansible.release import __version__ as _ANSIBLE_RUNTIME_VERSION
+from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -671,7 +671,7 @@ class AnsibleRequirement(Requirement):
     @property
     def supports_ansible(self):
         """Whether the requires_ansible metadata is compatible with the ansible-core version."""
-        return _does_collection_support_ansible_version(self.ver, _ANSIBLE_RUNTIME_VERSION)
+        return _does_collection_support_ansible_version(self.ver, __version__)
 
     @classmethod
     def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate):
@@ -695,7 +695,5 @@ class AnsibleRequirement(Requirement):
         res._parent = candidate
         return res
 
-
-AnsibleCandidate = Candidate(
-    "ansible-core", _ANSIBLE_RUNTIME_VERSION, None, "requires_ansible", None
-)
+    def is_satisfied_by(self, candidate: Candidate):
+        return candidate.type == "requires_ansible" and _does_collection_support_ansible_version(self.ver, candidate.ver)
