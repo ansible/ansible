@@ -1,3 +1,3 @@
 bugfixes:
-  - "user module: FreeBSD backend now correctly ignores uid_min, uid_max, and umask,
-    instead of passing unsupported '-K' options to pw(8). (fixes #86252)"
+  - "user: FreeBSD backend now correctly ignores uid_min, uid_max, and umask,
+    instead of passing unsupported '-K' options to pw(8) (https://github.com/ansible/ansible/issues/86252)."

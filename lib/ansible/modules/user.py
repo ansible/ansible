@@ -1507,6 +1507,7 @@ class FreeBsdUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
+            # Only use -K with useradd (Linux). FreeBSD's pw(8) does not support -K.
             if self.module.get_bin_path('useradd', required=False):
                 if self.umask is not None:
                     cmd.append('-K')
@@ -1527,6 +1528,7 @@ class FreeBsdUser(User):
             else:
                 cmd.append(str(calendar.timegm(self.expires)))
 
+        # Only use -K with useradd (Linux). FreeBSD's pw(8) does not support -K.
         if self.module.get_bin_path('useradd', required=False):
             if self.uid_min is not None:
                 cmd.append('-K')
