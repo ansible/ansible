@@ -810,8 +810,8 @@ class Dnf5Module(YumDnf):
                         except AttributeError:
                             # get_rpm_messages is not available in dnf5 < 5.2.7.0
                             pass
-                    if not failures:
-                        failures = ["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()]
+                    # Add the transaction problems to the failures
+                    failures.extend(["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()])
 
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
