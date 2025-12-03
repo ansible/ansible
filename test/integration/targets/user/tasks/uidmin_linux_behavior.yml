@@ -1,32 +1,52 @@
 ---
-- name: Verify uid_min, uid_max, and umask still work on Linux
+# Test that uid_min, uid_max, and umask are ignored on FreeBSD
+# FreeBSD's pw command doesn't support -K option (Linux-only)
+
+- name: Create user with uid_min and uid_max set to impossible constraints
   ansible.builtin.user:
-    name: testuser_integ
-    uid_min: 1500
-    uid_max: 2000
-    umask: "022"
-    state: present
-  register: user_result
+    name: uidtest
+    uid_min: 99999 # Set to impossible high value
+    uid_max: 99999 # Same impossible value
+    umask: "077"
+    create_home: yes
   become: true
+  register: user_create_result
+  when: ansible_os_family == "FreeBSD"
 
-- name: Ensure module did not fail
+- name: Get uid of created user
+  ansible.builtin.command: id -u uidtest
+  register: user_uid
+  become: true
+  when: ansible_os_family == "FreeBSD"
+
+- name: Verify user was created despite impossible uid_min/uid_max constraints
   ansible.builtin.assert:
     that:
-      - user_result is not failed
+      - user_create_result is not failed
+      - user_uid.stdout|int < 99999 # UID should be normal (not the impossible constraint)
+    msg: |
+      On FreeBSD, uid_min/uid_max constraints should be ignored.
+      User should be created with normal UID (not 99999).
+  when: ansible_os_family == "FreeBSD"
 
-- name: Check that user was created
-  ansible.builtin.getent:
-    database: passwd
-    key: testuser_integ
-  register: passwd_entry
+- name: Stat home directory
+  ansible.builtin.stat:
+    path: /home/uidtest
+  register: homestat
+  become: true
+  when: ansible_os_family == "FreeBSD"
 
-- name: Assert user exists
+- name: Verify umask was ignored (home dir has default permissions)
   ansible.builtin.assert:
     that:
-      - passwd_entry is not failed
+      - homestat.stat.mode != "0700" # If umask=077 was applied, dir would be 0700
+    msg: "On FreeBSD, umask should be ignored (home dir should have default permissions)"
+  when: ansible_os_family == "FreeBSD"
 
 - name: Cleanup test user
   ansible.builtin.user:
-    name: testuser_integ
+    name: uidtest
     state: absent
+    remove: yes
   become: true
+  when: ansible_os_family == "FreeBSD"

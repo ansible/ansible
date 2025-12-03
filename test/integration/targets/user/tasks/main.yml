@@ -34,3 +34,4 @@
     - ansible_facts.system == 'Linux'
     - ansible_distribution != 'Alpine'
 - import_tasks: ssh_keygen.yml
+- import_tasks: uidmin_linux_behavior.yml
