@@ -562,15 +562,7 @@ def _ssh_retry[**P](
     def wrapped(self: Connection, *args: P.args, **kwargs: P.kwargs) -> tuple[int, bytes, bytes]:
         remaining_tries = int(self.get_option('reconnection_retries')) + 1
         cmd_summary = u"%s..." % to_text(args[0])
-        conn_password = self.get_option('password') or self._play_context.password
-        is_sshpass = self.get_option('password_mechanism') == 'sshpass'
         for attempt in range(remaining_tries):
-            cmd = t.cast(list[bytes], args[0])
-            if attempt != 0 and is_sshpass and conn_password and isinstance(cmd, list):
-                # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
-                self.sshpass_pipe = os.pipe()
-                cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
-
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
@@ -584,15 +576,11 @@ def _ssh_retry[**P](
                     # 255 could be a failure from the ssh command itself
                 except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
-                    cmd = t.cast(list[bytes], args[0])
-                    if is_sshpass and conn_password and isinstance(cmd, list):
-                        # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
-                        self.sshpass_pipe = os.pipe()
-                        cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
                     display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 
                 remaining_retries = remaining_tries - attempt - 1
+                cmd = t.cast(list[bytes], args[0])
                 _handle_error(remaining_retries, cmd[0], return_tuple, self._play_context.no_log, self.host)
 
                 break
@@ -626,11 +614,17 @@ def _ssh_retry[**P](
     return wrapped
 
 
-def _clean_shm(func):
+def _clean_resources(func):
+    @wraps(func)
     def inner(self, *args, **kwargs):
         try:
             ret = func(self, *args, **kwargs)
         finally:
+            for fd in self.sshpass_pipe or ():
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
             if self.shm:
                 self.shm.close()
                 with contextlib.suppress(FileNotFoundError):
@@ -800,16 +794,13 @@ class Connection(ConnectionBase):
 
     def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         """
-        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
+        Takes an executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
         wrapped in local ssh shell commands and ready for execution.
 
         :arg binary: actual executable to use to execute command.
         :arg subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
         :arg other_args: dict of, value pairs passed as arguments to the ssh binary
-
         """
-
-        b_command = []
         conn_password = self.get_option('password') or self._play_context.password
         pkcs11_provider = self.get_option("pkcs11_provider")
         password_mechanism = self.get_option('password_mechanism')
@@ -818,26 +809,7 @@ class Connection(ConnectionBase):
         # First, the command to invoke
         #
 
-        # If we want to use sshpass for password authentication, we have to set up a pipe to
-        # write the password to sshpass.
-        if password_mechanism == 'sshpass' and (conn_password or pkcs11_provider):
-            if not self._sshpass_available():
-                raise AnsibleError("to use the password_mechanism=sshpass, you must install the sshpass program")
-            if not conn_password and pkcs11_provider:
-                raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
-
-            self.sshpass_pipe = os.pipe()
-            b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
-
-            password_prompt = self.get_option('sshpass_prompt')
-            if not password_prompt and pkcs11_provider:
-                # Set default password prompt for pkcs11_provider to make it clear its a PIN
-                password_prompt = PKCS11_DEFAULT_PROMPT
-
-            if password_prompt:
-                b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
-
-        b_command += [to_bytes(binary, errors='surrogate_or_strict')]
+        b_command = [to_bytes(binary, errors='surrogate_or_strict')]
 
         #
         # Next, additional arguments based on the configuration.
@@ -1052,7 +1024,6 @@ class Connection(ConnectionBase):
         return b''.join(output), remainder
 
     def _init_shm(self) -> dict[str, t.Any]:
-        env = os.environ.copy()
         popen_kwargs: dict[str, t.Any] = {}
 
         if self.get_option('password_mechanism') != 'ssh_askpass':
@@ -1085,6 +1056,7 @@ class Connection(ConnectionBase):
         shm.buf[:len(data)] = bytearray(data)
         shm.close()
 
+        env = os.environ.copy()
         env['_ANSIBLE_SSH_ASKPASS_SHM'] = str(self.shm.name)
         adhoc = pathlib.Path(sys.argv[0]).with_name('ansible')
         env['SSH_ASKPASS'] = str(adhoc) if adhoc.is_file() else 'ansible'
@@ -1101,7 +1073,32 @@ class Connection(ConnectionBase):
 
         return popen_kwargs
 
-    @_clean_shm
+    def _sshpass_cmd(self) -> list[bytes]:
+        # If we want to use sshpass for password authentication, we have to set up a pipe to
+        # write the password to sshpass.
+        conn_password = self.get_option('password') or self._play_context.password
+        pkcs11_provider = self.get_option("pkcs11_provider")
+        if not (self.get_option('password_mechanism') == 'sshpass' and (conn_password or pkcs11_provider)):
+            return []
+
+        if not self._sshpass_available():
+            raise AnsibleError("to use the password_mechanism=sshpass, you must install the sshpass program")
+        if not conn_password and pkcs11_provider:
+            raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
+
+        self.sshpass_pipe = os.pipe()
+        b_command = [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
+
+        password_prompt = self.get_option('sshpass_prompt')
+        if not password_prompt and pkcs11_provider:
+            # Set default password prompt for pkcs11_provider to make it clear it's a PIN
+            password_prompt = PKCS11_DEFAULT_PROMPT
+
+        if password_prompt:
+            b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
+        return b_command
+
+    @_clean_resources
     def _bare_run(self, cmd: list[bytes], in_data: bytes | None, sudoable: bool = True, checkrc: bool = True) -> tuple[int, bytes, bytes]:
         """
         Starts the command and communicates with it until it ends.
@@ -1128,7 +1125,8 @@ class Connection(ConnectionBase):
 
         popen_kwargs = self._init_shm()
 
-        if self.sshpass_pipe:
+        if b_ssh_pass_cmd := self._sshpass_cmd():
+            cmd[:0] = b_ssh_pass_cmd
             popen_kwargs['pass_fds'] = self.sshpass_pipe
 
         if not in_data:
@@ -1149,7 +1147,7 @@ class Connection(ConnectionBase):
             except OSError as ex:
                 raise AnsibleError('Unable to execute ssh command line on a controller.') from ex
 
-        if password_mechanism == 'sshpass' and conn_password:
+        if self.sshpass_pipe:
             os.close(self.sshpass_pipe[0])
             try:
                 os.write(self.sshpass_pipe[1], to_bytes(conn_password) + b'\n')
@@ -1158,6 +1156,7 @@ class Connection(ConnectionBase):
                 if e.errno != errno.EPIPE or p.poll() is None:
                     raise
             os.close(self.sshpass_pipe[1])
+            self.sshpass_pipe = None
 
         #
         # SSH state machine
@@ -1561,31 +1560,22 @@ class Connection(ConnectionBase):
         return self._file_transport_command(in_path, out_path, 'get')
 
     def reset(self) -> None:
-
-        run_reset = False
         self.host = self.get_option('host') or self._play_context.remote_addr
 
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
         # 'check' will determine this.
         cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
-        display.vvv(u'sending connection check: %s' % to_text(cmd), host=self.host)
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        status_code = p.wait()
-        if status_code != 0:
-            display.vvv(u"No connection to reset: %s" % to_text(stderr), host=self.host)
+        display.vvv('sending connection check: %s' % to_text(cmd), host=self.host)
+        p = subprocess.run(cmd, stderr=subprocess.PIPE, check=False, text=True)
+        if p.returncode != 0:
+            display.vvv(f"No connection to reset: {p.stderr}", host=self.host)
         else:
-            run_reset = True
-
-        if run_reset:
             cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
-            display.vvv(u'sending connection stop: %s' % to_text(cmd), host=self.host)
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            status_code = p.wait()
-            if status_code != 0:
-                display.warning(u"Failed to reset connection:%s" % to_text(stderr))
+            display.vvv('sending connection stop: %s' % to_text(cmd), host=self.host)
+            p = subprocess.run(cmd, stderr=subprocess.PIPE, check=False, text=True)
+            if p.returncode != 0:
+                display.warning(f"Failed to reset connection: {p.stderr}")
 
         self.close()
 
