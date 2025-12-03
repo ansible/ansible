@@ -401,9 +401,9 @@ class CollectionDependencyProvider(AbstractProvider):
         # NOTE: This is a set of Pipenv-inspired optimizations. Ref:
         # https://github.com/sarugaku/passa/blob/2ac00f1/src/passa/models/providers.py#L58-L74
         if (
-                requirement.is_virtual
-                or candidate.is_virtual
-                or requirement.ver == '*'
+                requirement.is_virtual or
+                candidate.is_virtual or
+                requirement.ver == '*'
         ):
             return True
 
