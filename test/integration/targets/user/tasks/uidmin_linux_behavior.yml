@@ -11,13 +11,11 @@
     create_home: yes
   become: true
   register: user_create_result
-  when: ansible_os_family == "FreeBSD"
 
 - name: Get uid of created user
   ansible.builtin.command: id -u uidtest
   register: user_uid
   become: true
-  when: ansible_os_family == "FreeBSD"
 
 - name: Verify user was created despite impossible uid_min/uid_max constraints
   ansible.builtin.assert:
@@ -27,21 +25,18 @@
     msg: |
       On FreeBSD, uid_min/uid_max constraints should be ignored.
       User should be created with normal UID (not 99999).
-  when: ansible_os_family == "FreeBSD"
 
 - name: Stat home directory
   ansible.builtin.stat:
     path: /home/uidtest
   register: homestat
   become: true
-  when: ansible_os_family == "FreeBSD"
 
 - name: Verify umask was ignored (home dir has default permissions)
   ansible.builtin.assert:
     that:
       - homestat.stat.mode != "0700" # If umask=077 was applied, dir would be 0700
     msg: "On FreeBSD, umask should be ignored (home dir should have default permissions)"
-  when: ansible_os_family == "FreeBSD"
 
 - name: Cleanup test user
   ansible.builtin.user:
@@ -49,4 +44,3 @@
     state: absent
     remove: yes
   become: true
-  when: ansible_os_family == "FreeBSD"

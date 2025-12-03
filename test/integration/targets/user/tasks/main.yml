@@ -35,3 +35,4 @@
     - ansible_distribution != 'Alpine'
 - import_tasks: ssh_keygen.yml
 - import_tasks: uidmin_linux_behavior.yml
+  when: ansible_facts.system == 'FreeBSD'
