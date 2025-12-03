@@ -1,0 +1,3 @@
+bugfixes:
+- >-
+  adhoc - fix executing ``- meta: end_play`` tasks.
