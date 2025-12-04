@@ -1,0 +1,12 @@
+[webservers]
+web1 ansible_connection=local
+web2 ansible_connection=local  
+web3 ansible_connection=local
+
+[dbservers]
+db1 ansible_connection=local
+db2 ansible_connection=local
+
+[all:children]
+webservers
+dbservers

@@ -1,0 +1,11 @@
+---
+- name: Test batch_groups
+  hosts: all
+  connection: local
+  batch_groups:
+    - webservers
+    - dbservers
+  serial: 1
+  tasks:
+    - debug:
+        msg: "Processing {{ inventory_hostname }} in order"

@@ -267,6 +267,33 @@ class PlaybookExecutor:
         all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
         all_hosts_len = len(all_hosts)
 
+        # If batch_groups is specified, reorder hosts by groups
+        if play.batch_groups:
+            reordered_hosts = []
+            # Track which hosts we've already added (by name)
+            added_host_names = set()
+
+            # Create a dict of hostname -> Host object from all_hosts
+            all_hosts_dict = {h.name: h for h in all_hosts}
+
+            for group_name in play.batch_groups:
+                # Get hosts in this group
+                group_hosts = self._inventory.get_hosts(group_name)
+                for host in group_hosts:
+                    # Check if this host (by name) is in all_hosts
+                    if host.name in all_hosts_dict and host.name not in added_host_names:
+                        reordered_hosts.append(all_hosts_dict[host.name])
+                        added_host_names.add(host.name)
+
+            # Add any remaining hosts that weren't in batch_groups
+            for host in all_hosts:
+                if host.name not in added_host_names:
+                    reordered_hosts.append(host)
+
+            # Update all_hosts with reordered list
+            all_hosts = reordered_hosts
+            all_hosts_len = len(all_hosts)
+
         # the serial value can be listed as a scalar or a list of
         # scalars, so we make sure it's a list here
         serial_batch_list = play.serial

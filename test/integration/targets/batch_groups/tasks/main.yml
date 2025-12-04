@@ -1,0 +1,3 @@
+---
+- debug:
+    msg: "Running on {{ inventory_hostname }}"
