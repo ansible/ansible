@@ -59,3 +59,6 @@ export ANSIBLE_CACHE_PLUGIN=notjsonfile
 
 # Injection default is deprecated
 [ "$(ANSIBLE_INJECT_FACT_VARS=1 ansible-playbook injectfacts.yml 2>&1 | grep -c 'INJECT_FACTS_AS_VARS')" -eq "0" ]
+
+# Injection default is deprecated but not ansible_local
+[ "$(ansible-playbook injectfacts.yml --tags alocal 2>&1 | grep -c 'INJECT_FACTS_AS_VARS')" -eq "0" ]
