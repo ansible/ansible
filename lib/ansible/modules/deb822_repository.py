@@ -62,6 +62,22 @@ options:
         description:
         - Tells APT whether the source is enabled or not.
         type: bool
+    exclude:
+        description:
+        - Controls which packages C(APT) should exclude from the repository.
+        - Mutually exclusive with O(include).
+        - This option is supported by apt>=3.1.0.
+        type: list
+        elements: str
+        version_added: '2.21'
+    include:
+        description:
+        - Controls which packages C(APT) should use from the repository.
+        - Mutually exclusive with O(exclude).
+        - This option is supported by apt>=3.1.0.
+        type: list
+        elements: str
+        version_added: '2.21'
     inrelease_path:
         description:
         - Determines the path to the C(InRelease) file, relative to the normal
@@ -419,6 +435,14 @@ def main():
             'enabled': {
                 'type': 'bool',
             },
+            'exclude': {
+                'elements': 'str',
+                'type': 'list',
+            },
+            'include': {
+                'elements': 'str',
+                'type': 'list',
+            },
             'inrelease_path': {
                 'type': 'str',
             },
@@ -480,6 +504,9 @@ def main():
                 'default': 'present',
             },
         },
+        mutually_exclusive=[
+            ['exclude', 'include']
+        ],
         supports_check_mode=True,
     )
 

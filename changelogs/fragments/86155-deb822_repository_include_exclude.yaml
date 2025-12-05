@@ -1,0 +1,2 @@
+minor_changes:
+  - deb822_repository - add include and exclude parameter arguments (https://github.com/ansible/ansible/issues/86155)
