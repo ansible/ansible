@@ -806,7 +806,7 @@ class Dnf5Module(YumDnf):
                     failures = []
                     if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_RPM_RUN:
                         try:
-                            failures = transaction.get_rpm_messages()
+                            failures = list(transaction.get_rpm_messages())
                         except AttributeError:
                             # get_rpm_messages is not available in dnf5 < 5.2.7.0
                             pass
