@@ -1,2 +1,2 @@
 bugfixes:
-  - ansible_local will no longer trigger varible injection default value deprecation.
+  - ansible_local will no longer trigger variable injection default value deprecation.
