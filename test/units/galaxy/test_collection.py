@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -51,13 +52,29 @@ def collection_input(tmp_path_factory, collection_path_suffix):
 
     namespace = 'ansible_namespace'
     collection = 'collection'
-    skeleton = os.path.join(os.path.dirname(os.path.split(__file__)[0]), 'cli', 'test_data', 'collection_skeleton')
+    skeleton = os.path.join(
+        os.path.dirname(
+            os.path.split(__file__)[0]),
+        'cli',
+        'test_data',
+        'collection_skeleton')
 
-    galaxy_args = ['ansible-galaxy', 'collection', 'init', '%s.%s' % (namespace, collection),
-                   '-c', '--init-path', test_dir, '--collection-skeleton', skeleton]
+    galaxy_args = [
+        'ansible-galaxy',
+        'collection',
+        'init',
+        '%s.%s' %
+        (namespace,
+         collection),
+        '-c',
+        '--init-path',
+        test_dir,
+        '--collection-skeleton',
+        skeleton]
     GalaxyCLI(args=galaxy_args).run()
     collection_dir = os.path.join(test_dir, namespace, collection)
-    output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Output'))
+    output_dir = to_text(tmp_path_factory.mktemp(
+        'test-ÅÑŚÌβŁÈ Collections Output'))
 
     return collection_dir, output_dir
 
@@ -66,7 +83,10 @@ def collection_input(tmp_path_factory, collection_path_suffix):
 def collection_artifact(monkeypatch, tmp_path_factory):
     """ Creates a temp collection artifact and mocked open_url instance for publishing tests """
     mock_open = MagicMock()
-    monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
+    monkeypatch.setattr(
+        collection.concrete_artifact_manager,
+        'open_url',
+        mock_open)
 
     mock_uuid = MagicMock()
     mock_uuid.return_value.hex = 'uuid'
@@ -99,7 +119,10 @@ def galaxy_yml_dir(request, tmp_path_factory):
 def tmp_tarfile(tmp_path_factory, manifest_info):
     """ Creates a temporary tar file for _extract_tar_file tests """
     filename = u'ÅÑŚÌβŁÈ'
-    temp_dir = to_bytes(tmp_path_factory.mktemp('test-%s Collections' % to_native(filename)))
+    temp_dir = to_bytes(
+        tmp_path_factory.mktemp(
+            'test-%s Collections' %
+            to_native(filename)))
     tar_file = os.path.join(temp_dir, to_bytes('%s.tar.gz' % filename))
     data = os.urandom(8)
 
@@ -110,7 +133,11 @@ def tmp_tarfile(tmp_path_factory, manifest_info):
         tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
-        b_data = to_bytes(json.dumps(manifest_info, indent=True), errors='surrogate_or_strict')
+        b_data = to_bytes(
+            json.dumps(
+                manifest_info,
+                indent=True),
+            errors='surrogate_or_strict')
         b_io = BytesIO(b_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
         tar_info.size = len(b_data)
@@ -127,14 +154,21 @@ def tmp_tarfile(tmp_path_factory, manifest_info):
 @pytest.fixture()
 def galaxy_server():
     context.CLIARGS._store = {'ignore_certs': False}
-    galaxy_api = api.GalaxyAPI(None, 'test_server', 'https://galaxy.ansible.com',
-                               token=token.GalaxyToken(token='key'))
+    galaxy_api = api.GalaxyAPI(
+        None,
+        'test_server',
+        'https://galaxy.ansible.com',
+        token=token.GalaxyToken(
+            token='key'))
     return galaxy_api
 
 
 @pytest.fixture()
 def manifest_template():
-    def get_manifest_info(namespace='ansible_namespace', name='collection', version='0.1.0'):
+    def get_manifest_info(
+            namespace='ansible_namespace',
+            name='collection',
+            version='0.1.0'):
         return {
             "collection_info": {
                 "namespace": namespace,
@@ -213,7 +247,10 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
 
     galaxy_cli = GalaxyCLI(args=cli_args)
     mock_execute_install = MagicMock()
-    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    monkeypatch.setattr(
+        galaxy_cli,
+        '_execute_install_collection',
+        mock_execute_install)
 
     if valid:
         galaxy_cli.run()
@@ -274,7 +311,10 @@ def test_bool_type_server_config_options(config, server, monkeypatch):
                 C.config._parse_config_file()
                 galaxy_cli = GalaxyCLI(args=cli_args)
                 mock_execute_install = MagicMock()
-                monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+                monkeypatch.setattr(
+                    galaxy_cli,
+                    '_execute_install_collection',
+                    mock_execute_install)
                 galaxy_cli.run()
 
     assert galaxy_cli.api_servers[0].name == 'server1'
@@ -294,7 +334,10 @@ def test_validate_certs(global_ignore_certs, monkeypatch):
 
     galaxy_cli = GalaxyCLI(args=cli_args)
     mock_execute_install = MagicMock()
-    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    monkeypatch.setattr(
+        galaxy_cli,
+        '_execute_install_collection',
+        mock_execute_install)
     galaxy_cli.run()
 
     assert len(galaxy_cli.api_servers) == 1
@@ -312,7 +355,11 @@ def test_validate_certs(global_ignore_certs, monkeypatch):
         (True, False, False),
     ]
 )
-def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, expected_validate_certs, monkeypatch):
+def test_validate_certs_with_server_url(
+        ignore_certs_cli,
+        ignore_certs_cfg,
+        expected_validate_certs,
+        monkeypatch):
     cli_args = [
         'ansible-galaxy',
         'collection',
@@ -328,25 +375,51 @@ def test_validate_certs_with_server_url(ignore_certs_cli, ignore_certs_cfg, expe
 
     galaxy_cli = GalaxyCLI(args=cli_args)
     mock_execute_install = MagicMock()
-    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    monkeypatch.setattr(
+        galaxy_cli,
+        '_execute_install_collection',
+        mock_execute_install)
     galaxy_cli.run()
 
     assert len(galaxy_cli.api_servers) == 1
     assert galaxy_cli.api_servers[0].validate_certs == expected_validate_certs
 
 
-@pytest.mark.parametrize(
-    ["ignore_certs_cli", "ignore_certs_cfg", "expected_server2_validate_certs", "expected_server3_validate_certs"],
-    [
-        (None, None, True, True),
-        (None, True, True, False),
-        (None, False, True, True),
-        (True, None, False, False),
-        (True, True, False, False),
-        (True, False, False, False),
-    ]
-)
-def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, expected_server2_validate_certs, expected_server3_validate_certs, monkeypatch):
+@pytest.mark.parametrize(["ignore_certs_cli",
+                          "ignore_certs_cfg",
+                          "expected_server2_validate_certs",
+                          "expected_server3_validate_certs"],
+                         [(None,
+                           None,
+                           True,
+                           True),
+                          (None,
+                           True,
+                           True,
+                           False),
+                          (None,
+                             False,
+                             True,
+                             True),
+                          (True,
+                             None,
+                             False,
+                             False),
+                          (True,
+                             True,
+                             False,
+                             False),
+                          (True,
+                             False,
+                             False,
+                             False),
+                          ])
+def test_validate_certs_server_config(
+        ignore_certs_cfg,
+        ignore_certs_cli,
+        expected_server2_validate_certs,
+        expected_server3_validate_certs,
+        monkeypatch):
     server_names = ['server1', 'server2', 'server3']
     cfg_lines = [
         "[galaxy]",
@@ -374,14 +447,20 @@ def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, expect
     monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', server_names)
 
     with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
-        tmp_file.write(to_bytes('\n'.join(cfg_lines), errors='surrogate_or_strict'))
+        tmp_file.write(
+            to_bytes(
+                '\n'.join(cfg_lines),
+                errors='surrogate_or_strict'))
         tmp_file.flush()
 
         monkeypatch.setattr(C.config, '_config_file', tmp_file.name)
         C.config._parse_config_file()
         galaxy_cli = GalaxyCLI(args=cli_args)
         mock_execute_install = MagicMock()
-        monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+        monkeypatch.setattr(
+            galaxy_cli,
+            '_execute_install_collection',
+            mock_execute_install)
         galaxy_cli.run()
 
     # (not) --ignore-certs > server's validate_certs > (not) GALAXY_IGNORE_CERTS > True
@@ -399,7 +478,12 @@ def test_validate_certs_server_config(ignore_certs_cfg, ignore_certs_cli, expect
         (30, 20, 10, 30),
     ]
 )
-def test_timeout_server_config(timeout_cli, timeout_cfg, timeout_fallback, expected_timeout, monkeypatch):
+def test_timeout_server_config(
+        timeout_cli,
+        timeout_cfg,
+        timeout_fallback,
+        expected_timeout,
+        monkeypatch):
     cli_args = [
         'ansible-galaxy',
         'collection',
@@ -413,19 +497,27 @@ def test_timeout_server_config(timeout_cli, timeout_cfg, timeout_fallback, expec
     if timeout_fallback is not None:
         cfg_lines.append(f"server_timeout={timeout_fallback}")
 
-        # fix default in server config since C.GALAXY_SERVER_TIMEOUT was already evaluated
+        # fix default in server config since C.GALAXY_SERVER_TIMEOUT was
+        # already evaluated
         server_additional = manager.GALAXY_SERVER_ADDITIONAL.copy()
         server_additional['timeout']['default'] = timeout_fallback
-        monkeypatch.setattr(manager, 'GALAXY_SERVER_ADDITIONAL', server_additional)
+        monkeypatch.setattr(
+            manager,
+            'GALAXY_SERVER_ADDITIONAL',
+            server_additional)
 
-    cfg_lines.extend(["[galaxy_server.server1]", "url=https://galaxy.ansible.com/api/"])
+    cfg_lines.extend(["[galaxy_server.server1]",
+                      "url=https://galaxy.ansible.com/api/"])
     if timeout_cfg is not None:
         cfg_lines.append(f"timeout={timeout_cfg}")
 
     monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1'])
 
     with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
-        tmp_file.write(to_bytes('\n'.join(cfg_lines), errors='surrogate_or_strict'))
+        tmp_file.write(
+            to_bytes(
+                '\n'.join(cfg_lines),
+                errors='surrogate_or_strict'))
         tmp_file.flush()
 
         monkeypatch.setattr(C.config, '_config_file', tmp_file.name)
@@ -433,7 +525,10 @@ def test_timeout_server_config(timeout_cli, timeout_cfg, timeout_fallback, expec
 
         galaxy_cli = GalaxyCLI(args=cli_args)
         mock_execute_install = MagicMock()
-        monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+        monkeypatch.setattr(
+            galaxy_cli,
+            '_execute_install_collection',
+            mock_execute_install)
         galaxy_cli.run()
 
     assert galaxy_cli.api_servers[0].timeout == expected_timeout
@@ -441,7 +536,9 @@ def test_timeout_server_config(timeout_cli, timeout_cfg, timeout_fallback, expec
 
 def test_build_collection_no_galaxy_yaml():
     fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
-    expected = to_native("The collection galaxy.yml path '%s/galaxy.yml' does not exist." % fake_path)
+    expected = to_native(
+        "The collection galaxy.yml path '%s/galaxy.yml' does not exist." %
+        fake_path)
 
     with pytest.raises(AnsibleError, match=expected):
         collection.build_collection(fake_path, u'output', False)
@@ -450,19 +547,24 @@ def test_build_collection_no_galaxy_yaml():
 def test_build_existing_output_file(collection_input):
     input_dir, output_dir = collection_input
 
-    existing_output_dir = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    existing_output_dir = os.path.join(
+        output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
     os.makedirs(existing_output_dir)
 
     expected = "The output collection artifact '%s' already exists, but is a directory - aborting" \
                % to_native(existing_output_dir)
     with pytest.raises(AnsibleError, match=expected):
-        collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'), to_text(output_dir, errors='surrogate_or_strict'), False)
+        collection.build_collection(
+            to_text(
+                input_dir, errors='surrogate_or_strict'), to_text(
+                output_dir, errors='surrogate_or_strict'), False)
 
 
 def test_build_existing_output_without_force(collection_input):
     input_dir, output_dir = collection_input
 
-    existing_output = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    existing_output = os.path.join(output_dir,
+                                   'ansible_namespace-collection-0.1.0.tar.gz')
     with open(existing_output, 'w+') as out_file:
         out_file.write("random garbage")
         out_file.flush()
@@ -470,7 +572,10 @@ def test_build_existing_output_without_force(collection_input):
     expected = "The file '%s' already exists. You can use --force to re-create the collection artifact." \
                % to_native(existing_output)
     with pytest.raises(AnsibleError, match=expected):
-        collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'), to_text(output_dir, errors='surrogate_or_strict'), False)
+        collection.build_collection(
+            to_text(
+                input_dir, errors='surrogate_or_strict'), to_text(
+                output_dir, errors='surrogate_or_strict'), False)
 
 
 @pytest.mark.parametrize(
@@ -484,12 +589,16 @@ def test_build_existing_output_without_force(collection_input):
 def test_build_existing_output_with_force(collection_input):
     input_dir, output_dir = collection_input
 
-    existing_output = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    existing_output = os.path.join(output_dir,
+                                   'ansible_namespace-collection-0.1.0.tar.gz')
     with open(existing_output, 'w+') as out_file:
         out_file.write("random garbage")
         out_file.flush()
 
-    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'), to_text(output_dir, errors='surrogate_or_strict'), True)
+    collection.build_collection(
+        to_text(
+            input_dir, errors='surrogate_or_strict'), to_text(
+            output_dir, errors='surrogate_or_strict'), True)
 
     # Verify the file was replaced with an actual tar file
     assert tarfile.is_tarfile(existing_output)
@@ -507,9 +616,13 @@ def test_build_with_existing_files_and_manifest(collection_input):
     with open(os.path.join(input_dir, "plugins", "MANIFEST.json"), "wb") as fd:
         fd.write(b"test data that should be in build")
 
-    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'), to_text(output_dir, errors='surrogate_or_strict'), False)
+    collection.build_collection(
+        to_text(
+            input_dir, errors='surrogate_or_strict'), to_text(
+            output_dir, errors='surrogate_or_strict'), False)
 
-    output_artifact = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    output_artifact = os.path.join(output_dir,
+                                   'ansible_namespace-collection-0.1.0.tar.gz')
     assert tarfile.is_tarfile(output_artifact)
 
     with tarfile.open(output_artifact, mode='r') as actual:
@@ -527,47 +640,63 @@ def test_build_with_existing_files_and_manifest(collection_input):
         json_file_obj.close()
         assert json_file_text != b'{"files": [], "format": 1}'
 
-        sub_manifest_file = [m for m in members if m.path == "plugins/MANIFEST.json"][0]
+        sub_manifest_file = [
+            m for m in members if m.path == "plugins/MANIFEST.json"][0]
         sub_manifest_file_obj = actual.extractfile(sub_manifest_file.name)
         sub_manifest_file_text = sub_manifest_file_obj.read()
         sub_manifest_file_obj.close()
         assert sub_manifest_file_text == b"test data that should be in build"
 
 
-@pytest.mark.parametrize('galaxy_yml_dir', [b'namespace: value: broken'], indirect=True)
+@pytest.mark.parametrize('galaxy_yml_dir',
+                         [b'namespace: value: broken'],
+                         indirect=True)
 def test_invalid_yaml_galaxy_file(galaxy_yml_dir):
     galaxy_file = os.path.join(galaxy_yml_dir, b'galaxy.yml')
-    expected = to_native(b"Failed to parse the galaxy.yml at '%s' with the following error:" % galaxy_file)
+    expected = to_native(
+        b"Failed to parse the galaxy.yml at '%s' with the following error:" %
+        galaxy_file)
 
     with pytest.raises(AnsibleError, match=expected):
-        collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
+        collection.concrete_artifact_manager._get_meta_from_src_dir(
+            galaxy_yml_dir)
 
 
-@pytest.mark.parametrize('galaxy_yml_dir', [b'namespace: test_namespace'], indirect=True)
+@pytest.mark.parametrize('galaxy_yml_dir',
+                         [b'namespace: test_namespace'],
+                         indirect=True)
 def test_missing_required_galaxy_key(galaxy_yml_dir):
     galaxy_file = os.path.join(galaxy_yml_dir, b'galaxy.yml')
     expected = "The collection galaxy.yml at '%s' is missing the following mandatory keys: authors, name, " \
                "readme, version" % to_native(galaxy_file)
 
     with pytest.raises(AnsibleError, match=expected):
-        collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
+        collection.concrete_artifact_manager._get_meta_from_src_dir(
+            galaxy_yml_dir)
 
 
-@pytest.mark.parametrize('galaxy_yml_dir', [b'namespace: test_namespace'], indirect=True)
+@pytest.mark.parametrize('galaxy_yml_dir',
+                         [b'namespace: test_namespace'],
+                         indirect=True)
 def test_galaxy_yaml_no_mandatory_keys(galaxy_yml_dir):
     expected = "The collection galaxy.yml at '%s/galaxy.yml' is missing the " \
                "following mandatory keys: authors, name, readme, version" % to_native(galaxy_yml_dir)
 
     with pytest.raises(ValueError, match=expected):
-        assert collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir, require_build_metadata=False) == expected
+        assert collection.concrete_artifact_manager._get_meta_from_src_dir(
+            galaxy_yml_dir, require_build_metadata=False) == expected
 
 
-@pytest.mark.parametrize('galaxy_yml_dir', [b'My life story is so very interesting'], indirect=True)
+@pytest.mark.parametrize('galaxy_yml_dir',
+                         [b'My life story is so very interesting'],
+                         indirect=True)
 def test_galaxy_yaml_no_mandatory_keys_bad_yaml(galaxy_yml_dir):
-    expected = "The collection galaxy.yml at '%s/galaxy.yml' is incorrectly formatted." % to_native(galaxy_yml_dir)
+    expected = "The collection galaxy.yml at '%s/galaxy.yml' is incorrectly formatted." % to_native(
+        galaxy_yml_dir)
 
     with pytest.raises(AnsibleError, match=expected):
-        collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
+        collection.concrete_artifact_manager._get_meta_from_src_dir(
+            galaxy_yml_dir)
 
 
 @pytest.mark.parametrize('galaxy_yml_dir', [b"""
@@ -595,7 +724,8 @@ authors: Jordan
 version: 0.1.0
 readme: README.md"""], indirect=True)
 def test_defaults_galaxy_yml(galaxy_yml_dir):
-    actual = collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
+    actual = collection.concrete_artifact_manager._get_meta_from_src_dir(
+        galaxy_yml_dir)
 
     assert actual['namespace'] == 'namespace'
     assert actual['name'] == 'collection'
@@ -627,7 +757,8 @@ readme: README.md
 license:
 - MIT""")], indirect=True)
 def test_galaxy_yml_list_value(galaxy_yml_dir):
-    actual = collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
+    actual = collection.concrete_artifact_manager._get_meta_from_src_dir(
+        galaxy_yml_dir)
     assert actual['license'] == ['MIT']
 
 
@@ -654,11 +785,17 @@ def test_build_ignore_files_and_folders(collection_input, monkeypatch):
         tests_file.write('random')
         tests_file.flush()
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    actual = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     assert actual['format'] == 1
     for manifest_entry in actual['files']:
-        assert manifest_entry['name'] not in ['.git', 'ansible.retry', 'galaxy.yml', 'tests/output', 'tests/output/result.txt']
+        assert manifest_entry['name'] not in [
+            '.git',
+            'ansible.retry',
+            'galaxy.yml',
+            'tests/output',
+            'tests/output/result.txt']
 
     expected_msgs = [
         "Skipping '%s/galaxy.yml' for collection build" % to_text(input_dir),
@@ -682,15 +819,18 @@ def test_build_ignore_older_release_in_root(collection_input, monkeypatch):
     # This is expected to be ignored because it is in the root collection dir.
     release_file = os.path.join(input_dir, 'namespace-collection-0.0.0.tar.gz')
 
-    # This is not expected to be ignored because it is not in the root collection dir.
-    fake_release_file = os.path.join(input_dir, 'plugins', 'namespace-collection-0.0.0.tar.gz')
+    # This is not expected to be ignored because it is not in the root
+    # collection dir.
+    fake_release_file = os.path.join(
+        input_dir, 'plugins', 'namespace-collection-0.0.0.tar.gz')
 
     for filename in [release_file, fake_release_file]:
         with open(filename, 'w+') as file_obj:
             file_obj.write('random')
             file_obj.flush()
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    actual = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
     assert actual['format'] == 1
 
     plugin_release_found = False
@@ -716,9 +856,9 @@ def test_build_ignore_patterns(collection_input, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'vvv', mock_display)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection',
-                                              ['*.md', 'plugins/action', 'playbooks/*.j2'],
-                                              Sentinel, None)
+    actual = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [
+            '*.md', 'plugins/action', 'playbooks/*.j2'], Sentinel, None)
     assert actual['format'] == 1
 
     expected_missing = [
@@ -729,7 +869,8 @@ def test_build_ignore_patterns(collection_input, monkeypatch):
         'playbooks/templates/subfolder/test.conf.j2',
     ]
 
-    # Files or dirs that are close to a match but are not, make sure they are present
+    # Files or dirs that are close to a match but are not, make sure they are
+    # present
     expected_present = [
         'docs',
         'roles/common/templates/test.conf.j2',
@@ -744,12 +885,18 @@ def test_build_ignore_patterns(collection_input, monkeypatch):
         assert p in actual_files
 
     expected_msgs = [
-        "Skipping '%s/galaxy.yml' for collection build" % to_text(input_dir),
-        "Skipping '%s/README.md' for collection build" % to_text(input_dir),
-        "Skipping '%s/docs/My Collection.md' for collection build" % to_text(input_dir),
-        "Skipping '%s/plugins/action' for collection build" % to_text(input_dir),
-        "Skipping '%s/playbooks/templates/test.conf.j2' for collection build" % to_text(input_dir),
-        "Skipping '%s/playbooks/templates/subfolder/test.conf.j2' for collection build" % to_text(input_dir),
+        "Skipping '%s/galaxy.yml' for collection build" %
+        to_text(input_dir),
+        "Skipping '%s/README.md' for collection build" %
+        to_text(input_dir),
+        "Skipping '%s/docs/My Collection.md' for collection build" %
+        to_text(input_dir),
+        "Skipping '%s/plugins/action' for collection build" %
+        to_text(input_dir),
+        "Skipping '%s/playbooks/templates/test.conf.j2' for collection build" %
+        to_text(input_dir),
+        "Skipping '%s/playbooks/templates/subfolder/test.conf.j2' for collection build" %
+        to_text(input_dir),
     ]
     assert mock_display.call_count == len(expected_msgs)
     assert mock_display.mock_calls[0][1][0] in expected_msgs
@@ -760,7 +907,8 @@ def test_build_ignore_patterns(collection_input, monkeypatch):
     assert mock_display.mock_calls[5][1][0] in expected_msgs
 
 
-def test_build_ignore_symlink_target_outside_collection(collection_input, monkeypatch):
+def test_build_ignore_symlink_target_outside_collection(
+        collection_input, monkeypatch):
     input_dir, outside_dir = collection_input
 
     mock_display = MagicMock()
@@ -769,7 +917,8 @@ def test_build_ignore_symlink_target_outside_collection(collection_input, monkey
     link_path = os.path.join(input_dir, 'plugins', 'connection')
     os.symlink(outside_dir, link_path)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    actual = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
     for manifest_entry in actual['files']:
         assert manifest_entry['name'] != 'plugins/connection'
 
@@ -793,9 +942,11 @@ def test_build_copy_symlink_target_inside_collection(collection_input):
 
     os.symlink(roles_target, roles_link)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    actual = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
-    linked_entries = [e for e in actual['files'] if e['name'].startswith('playbooks/roles/linked')]
+    linked_entries = [e for e in actual['files']
+                      if e['name'].startswith('playbooks/roles/linked')]
     assert len(linked_entries) == 1
     assert linked_entries[0]['name'] == 'playbooks/roles/linked'
     assert linked_entries[0]['ftype'] == 'dir'
@@ -818,15 +969,20 @@ def test_build_with_symlink_inside_collection(collection_input):
     os.symlink(roles_target, roles_link)
     os.symlink(os.path.join(input_dir, 'README.md'), file_link)
 
-    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'), to_text(output_dir, errors='surrogate_or_strict'), False)
+    collection.build_collection(
+        to_text(
+            input_dir, errors='surrogate_or_strict'), to_text(
+            output_dir, errors='surrogate_or_strict'), False)
 
-    output_artifact = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    output_artifact = os.path.join(output_dir,
+                                   'ansible_namespace-collection-0.1.0.tar.gz')
     assert tarfile.is_tarfile(output_artifact)
 
     with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
-        linked_folder = [m for m in members if m.path == 'playbooks/roles/linked'][0]
+        linked_folder = [m for m in members if m.path ==
+                         'playbooks/roles/linked'][0]
         assert linked_folder.type == tarfile.SYMTYPE
         assert linked_folder.linkname == '../../roles/linked'
 
@@ -838,7 +994,8 @@ def test_build_with_symlink_inside_collection(collection_input):
         actual_file = secure_hash_s(linked_file_obj.read())
         linked_file_obj.close()
 
-        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
+        # shasum test/units/cli/test_data/collection_skeleton/README.md
+        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'
 
 
 def test_build_files_manifest_sorted_by_name(collection_input):
@@ -846,14 +1003,20 @@ def test_build_files_manifest_sorted_by_name(collection_input):
     input_dir, output_dir = collection_input
 
     # Create multiple files to ensure sorting is tested
-    test_files = ['test_z.txt', 'test_a.txt', 'test_m.txt', 'beta.py', 'alpha.py']
+    test_files = [
+        'test_z.txt',
+        'test_a.txt',
+        'test_m.txt',
+        'beta.py',
+        'alpha.py']
     for filename in test_files:
         filepath = os.path.join(input_dir, filename)
         with open(filepath, 'w') as f:
             f.write('test content')
 
     # Build manifest using _build_files_manifest_walk
-    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    manifest = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     # Extract file names from manifest
     file_names = [entry['name'] for entry in manifest['files']]
@@ -874,7 +1037,8 @@ def test_build_files_manifest_walk_sorted_output(collection_input):
         with open(filepath, 'w') as f:
             f.write('content')
 
-    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    actual = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     assert actual['format'] == 1
     file_names = [entry['name'] for entry in actual['files']]
@@ -888,10 +1052,13 @@ def test_build_collection_reproducible_build(collection_input):
     input_dir, output_dir = collection_input
 
     # First build
-    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'),
-                               to_text(output_dir, errors='surrogate_or_strict'), False)
+    collection.build_collection(
+        to_text(
+            input_dir, errors='surrogate_or_strict'), to_text(
+            output_dir, errors='surrogate_or_strict'), False)
 
-    artifact1_path = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    artifact1_path = os.path.join(output_dir,
+                                  'ansible_namespace-collection-0.1.0.tar.gz')
     assert tarfile.is_tarfile(artifact1_path)
 
     # Extract FILES.json from first build
@@ -905,10 +1072,13 @@ def test_build_collection_reproducible_build(collection_input):
     os.remove(artifact1_path)
 
     # Second build - should produce identical FILES.json
-    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'),
-                               to_text(output_dir, errors='surrogate_or_strict'), True)
+    collection.build_collection(
+        to_text(
+            input_dir, errors='surrogate_or_strict'), to_text(
+            output_dir, errors='surrogate_or_strict'), True)
 
-    artifact2_path = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    artifact2_path = os.path.join(output_dir,
+                                  'ansible_namespace-collection-0.1.0.tar.gz')
     assert tarfile.is_tarfile(artifact2_path)
 
     with tarfile.open(artifact2_path, mode='r') as tar:
@@ -945,10 +1115,12 @@ def test_build_files_manifest_special_characters_sorted(collection_input):
         with open(filepath, 'w') as f:
             f.write('test')
 
-    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    manifest = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     # Get file names (excluding '.' which is added by default)
-    file_names = [entry['name'] for entry in manifest['files'] if entry['name'] != '.']
+    file_names = [entry['name']
+                  for entry in manifest['files'] if entry['name'] != '.']
 
     # Verify ASCII sorting
     expected_sorted = sorted(file_names)
@@ -959,10 +1131,13 @@ def test_files_json_has_sorted_keys(collection_input):
     """Validate that FILES.json output has sorted keys when using sort_keys=True."""
     input_dir, output_dir = collection_input
 
-    collection.build_collection(to_text(input_dir, errors='surrogate_or_strict'),
-                               to_text(output_dir, errors='surrogate_or_strict'), False)
+    collection.build_collection(
+        to_text(
+            input_dir, errors='surrogate_or_strict'), to_text(
+            output_dir, errors='surrogate_or_strict'), False)
 
-    artifact_path = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
+    artifact_path = os.path.join(output_dir,
+                                 'ansible_namespace-collection-0.1.0.tar.gz')
 
     with tarfile.open(artifact_path, mode='r') as tar:
         files_json_member = tar.getmember('FILES.json')
@@ -976,7 +1151,8 @@ def test_files_json_has_sorted_keys(collection_input):
 
     # The content should be identical if keys are already sorted
     # (accounting for potential formatting differences)
-    assert files_data == json.loads(resorted_content), "FILES.json keys are not in sorted order"
+    assert files_data == json.loads(
+        resorted_content), "FILES.json keys are not in sorted order"
 
 
 def test_build_collection_large_number_of_files_sorted(collection_input):
@@ -995,7 +1171,8 @@ def test_build_collection_large_number_of_files_sorted(collection_input):
             with open(filepath, 'w') as f:
                 f.write(f'content {i}')
 
-    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    manifest = collection._build_files_manifest(
+        to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
 
     file_names = [entry['name'] for entry in manifest['files']]
 
@@ -1003,7 +1180,8 @@ def test_build_collection_large_number_of_files_sorted(collection_input):
     assert len(file_names) > 10, "Expected more than 10 files in manifest"
 
     # Verify sorted order
-    assert file_names == sorted(file_names), f"Files not sorted correctly with many files: {file_names}"
+    assert file_names == sorted(
+        file_names), f"Files not sorted correctly with many files: {file_names}"
 
 
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
@@ -1064,10 +1242,17 @@ def test_download_file(tmp_path_factory, monkeypatch):
 
     mock_open = MagicMock()
     mock_open.return_value = BytesIO(data)
-    monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
+    monkeypatch.setattr(
+        collection.concrete_artifact_manager,
+        'open_url',
+        mock_open)
 
     expected = temp_dir
-    actual = collection._download_file('http://google.com/file', temp_dir, sha256_hash.hexdigest(), True)
+    actual = collection._download_file(
+        'http://google.com/file',
+        temp_dir,
+        sha256_hash.hexdigest(),
+        True)
 
     assert actual.startswith(expected)
     assert os.path.isfile(actual)
@@ -1085,25 +1270,32 @@ def test_download_file_hash_mismatch(tmp_path_factory, monkeypatch):
 
     mock_open = MagicMock()
     mock_open.return_value = BytesIO(data)
-    monkeypatch.setattr(collection.concrete_artifact_manager, 'open_url', mock_open)
+    monkeypatch.setattr(
+        collection.concrete_artifact_manager,
+        'open_url',
+        mock_open)
 
     expected = "Mismatch artifact hash with downloaded file"
     with pytest.raises(AnsibleError, match=expected):
-        collection._download_file('http://google.com/file', temp_dir, 'bad', True)
+        collection._download_file(
+            'http://google.com/file', temp_dir, 'bad', True)
 
 
 def test_extract_tar_file_invalid_hash(tmp_tarfile):
     temp_dir, tfile, filename, dummy = tmp_tarfile
 
-    expected = "Checksum mismatch for '%s' inside collection at '%s'" % (to_native(filename), to_native(tfile.name))
+    expected = "Checksum mismatch for '%s' inside collection at '%s'" % (
+        to_native(filename), to_native(tfile.name))
     with pytest.raises(AnsibleError, match=expected):
-        collection._extract_tar_file(tfile, filename, temp_dir, temp_dir, "fakehash")
+        collection._extract_tar_file(
+            tfile, filename, temp_dir, temp_dir, "fakehash")
 
 
 def test_extract_tar_file_missing_member(tmp_tarfile):
     temp_dir, tfile, dummy, dummy = tmp_tarfile
 
-    expected = "Collection tar at '%s' does not contain the expected file 'missing'." % to_native(tfile.name)
+    expected = "Collection tar at '%s' does not contain the expected file 'missing'." % to_native(
+        tfile.name)
     with pytest.raises(AnsibleError, match=expected):
         collection._extract_tar_file(tfile, 'missing', temp_dir, temp_dir)
 
@@ -1113,13 +1305,17 @@ def test_extract_tar_file_missing_parent_dir(tmp_tarfile):
     output_dir = os.path.join(temp_dir, b'output')
     output_file = os.path.join(output_dir, to_bytes(filename))
 
-    collection._extract_tar_file(tfile, filename, output_dir, temp_dir, checksum)
+    collection._extract_tar_file(
+        tfile, filename, output_dir, temp_dir, checksum)
     os.path.isfile(output_file)
 
 
 def test_extract_tar_file_outside_dir(tmp_path_factory):
     filename = u'ÅÑŚÌβŁÈ'
-    temp_dir = to_bytes(tmp_path_factory.mktemp('test-%s Collections' % to_native(filename)))
+    temp_dir = to_bytes(
+        tmp_path_factory.mktemp(
+            'test-%s Collections' %
+            to_native(filename)))
     tar_file = os.path.join(temp_dir, to_bytes('%s.tar.gz' % filename))
     data = os.urandom(8)
 
@@ -1131,18 +1327,29 @@ def test_extract_tar_file_outside_dir(tmp_path_factory):
         tar_info.mode = S_IRWU_RG_RO
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
-    expected = re.escape("Cannot extract tar entry '%s' as it will be placed outside the collection directory"
-                         % to_native(tar_filename))
+    expected = re.escape(
+        "Cannot extract tar entry '%s' as it will be placed outside the collection directory" %
+        to_native(tar_filename))
     with tarfile.open(tar_file, 'r') as tfile:
         with pytest.raises(AnsibleError, match=expected):
-            collection._extract_tar_file(tfile, tar_filename, os.path.join(temp_dir, to_bytes(filename)), temp_dir)
+            collection._extract_tar_file(
+                tfile, tar_filename, os.path.join(
+                    temp_dir, to_bytes(filename)), temp_dir)
 
 
 def test_require_one_of_collections_requirements_with_both():
-    cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'verify', 'namespace.collection', '-r', 'requirements.yml'])
+    cli = GalaxyCLI(
+        args=[
+            'ansible-galaxy',
+            'collection',
+            'verify',
+            'namespace.collection',
+            '-r',
+            'requirements.yml'])
 
     with pytest.raises(AnsibleError) as req_err:
-        cli._require_one_of_collections_requirements(('namespace.collection',), 'requirements.yml')
+        cli._require_one_of_collections_requirements(
+            ('namespace.collection',), 'requirements.yml')
 
     with pytest.raises(AnsibleError) as cli_err:
         cli.run()
@@ -1163,20 +1370,52 @@ def test_require_one_of_collections_requirements_with_neither():
 
 
 def test_require_one_of_collections_requirements_with_collections():
-    cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'verify', 'namespace1.collection1', 'namespace2.collection1:1.0.0'])
+    cli = GalaxyCLI(
+        args=[
+            'ansible-galaxy',
+            'collection',
+            'verify',
+            'namespace1.collection1',
+            'namespace2.collection1:1.0.0'])
     collections = ('namespace1.collection1', 'namespace2.collection1:1.0.0',)
 
-    requirements = cli._require_one_of_collections_requirements(collections, '')['collections']
+    requirements = cli._require_one_of_collections_requirements(collections, '')[
+        'collections']
 
-    req_tuples = [('%s.%s' % (req.namespace, req.name), req.ver, req.src, req.type,) for req in requirements]
-    assert req_tuples == [('namespace1.collection1', '*', None, 'galaxy'), ('namespace2.collection1', '1.0.0', None, 'galaxy')]
+    req_tuples = [
+        ('%s.%s' %
+         (req.namespace,
+          req.name),
+            req.ver,
+            req.src,
+            req.type,
+         ) for req in requirements]
+    assert req_tuples == [
+        ('namespace1.collection1',
+         '*',
+         None,
+         'galaxy'),
+        ('namespace2.collection1',
+         '1.0.0',
+         None,
+         'galaxy')]
 
 
 @patch('ansible.cli.galaxy.GalaxyCLI._parse_requirements_file')
-def test_require_one_of_collections_requirements_with_requirements(mock_parse_requirements_file, galaxy_server):
-    cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'verify', '-r', 'requirements.yml', 'namespace.collection'])
-    mock_parse_requirements_file.return_value = {'collections': [('namespace.collection', '1.0.5', galaxy_server)]}
-    requirements = cli._require_one_of_collections_requirements((), 'requirements.yml')['collections']
+def test_require_one_of_collections_requirements_with_requirements(
+        mock_parse_requirements_file, galaxy_server):
+    cli = GalaxyCLI(
+        args=[
+            'ansible-galaxy',
+            'collection',
+            'verify',
+            '-r',
+            'requirements.yml',
+            'namespace.collection'])
+    mock_parse_requirements_file.return_value = {
+        'collections': [('namespace.collection', '1.0.5', galaxy_server)]}
+    requirements = cli._require_one_of_collections_requirements(
+        (), 'requirements.yml')['collections']
 
     assert mock_parse_requirements_file.call_count == 1
     assert requirements == [('namespace.collection', '1.0.5', galaxy_server)]
@@ -1184,7 +1423,11 @@ def test_require_one_of_collections_requirements_with_requirements(mock_parse_re
 
 @patch('ansible.cli.galaxy.GalaxyCLI.execute_verify', spec=True)
 def test_call_GalaxyCLI(execute_verify):
-    galaxy_args = ['ansible-galaxy', 'collection', 'verify', 'namespace.collection']
+    galaxy_args = [
+        'ansible-galaxy',
+        'collection',
+        'verify',
+        'namespace.collection']
 
     GalaxyCLI(args=galaxy_args).run()
 
@@ -1213,15 +1456,21 @@ def test_call_GalaxyCLI_with_role(execute_verify):
 
 @patch('ansible.cli.galaxy.verify_collections', spec=True)
 def test_execute_verify_with_defaults(mock_verify_collections):
-    galaxy_args = ['ansible-galaxy', 'collection', 'verify', 'namespace.collection:1.0.4']
+    galaxy_args = [
+        'ansible-galaxy',
+        'collection',
+        'verify',
+        'namespace.collection:1.0.4']
     GalaxyCLI(args=galaxy_args).run()
 
     assert mock_verify_collections.call_count == 1
 
     print("Call args {0}".format(mock_verify_collections.call_args[0]))
-    requirements, search_paths, galaxy_apis, ignore_errors = mock_verify_collections.call_args[0]
+    requirements, search_paths, galaxy_apis, ignore_errors = mock_verify_collections.call_args[
+        0]
 
-    assert [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type) for r in requirements] == [('namespace.collection', '1.0.4', None, 'galaxy')]
+    assert [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type)
+            for r in requirements] == [('namespace.collection', '1.0.4', None, 'galaxy')]
     for install_path in search_paths:
         assert install_path.endswith('ansible_collections')
     assert galaxy_apis[0].api_server == 'https://galaxy.ansible.com'
@@ -1230,16 +1479,27 @@ def test_execute_verify_with_defaults(mock_verify_collections):
 
 @patch('ansible.cli.galaxy.verify_collections', spec=True)
 def test_execute_verify(mock_verify_collections):
-    GalaxyCLI(args=[
-        'ansible-galaxy', 'collection', 'verify', 'namespace.collection:1.0.4', '--ignore-certs',
-        '-p', '~/.ansible', '--ignore-errors', '--server', 'http://galaxy-dev.com',
-    ]).run()
+    GalaxyCLI(
+        args=[
+            'ansible-galaxy',
+            'collection',
+            'verify',
+            'namespace.collection:1.0.4',
+            '--ignore-certs',
+            '-p',
+            '~/.ansible',
+            '--ignore-errors',
+            '--server',
+            'http://galaxy-dev.com',
+        ]).run()
 
     assert mock_verify_collections.call_count == 1
 
-    requirements, search_paths, galaxy_apis, ignore_errors = mock_verify_collections.call_args[0]
+    requirements, search_paths, galaxy_apis, ignore_errors = mock_verify_collections.call_args[
+        0]
 
-    assert [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type) for r in requirements] == [('namespace.collection', '1.0.4', None, 'galaxy')]
+    assert [('%s.%s' % (r.namespace, r.name), r.ver, r.src, r.type)
+            for r in requirements] == [('namespace.collection', '1.0.4', None, 'galaxy')]
     for install_path in search_paths:
         assert install_path.endswith('ansible_collections')
     assert galaxy_apis[0].api_server == 'http://galaxy-dev.com'
@@ -1304,7 +1564,8 @@ def test_verify_file_hash_mismatching_hash(manifest_info):
 
     with patch.object(builtins, 'open', mock_open(read_data=data)) as m:
         with patch.object(collection.os.path, 'isfile', MagicMock(return_value=True)) as mock_isfile:
-            collection._verify_file_hash(b'path/', 'file', different_digest, error_queue)
+            collection._verify_file_hash(
+                b'path/', 'file', different_digest, error_queue)
 
             mock_isfile.assert_called_once()
 
@@ -1348,7 +1609,10 @@ def test_get_nonexistent_tar_file_member(tmp_tarfile):
     with pytest.raises(AnsibleError) as err:
         collection._get_tar_file_member(tfile, file_does_not_exist)
 
-    assert to_text(err.value.message) == "Collection tar at '%s' does not contain the expected file '%s'." % (to_text(tfile.name), file_does_not_exist)
+    assert to_text(
+        err.value.message) == "Collection tar at '%s' does not contain the expected file '%s'." % (to_text(
+            tfile.name),
+        file_does_not_exist)
 
 
 def test_get_tar_file_hash(tmp_tarfile):
