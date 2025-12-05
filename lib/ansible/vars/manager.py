@@ -297,7 +297,7 @@ class VariableManager:
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    deprecated_facts_vars = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(facts).items()}
+                    deprecated_facts_vars = {k: (_deprecate_top_level_fact(v) if k != 'ansible_local' else v) for k, v in clean_facts(facts).items()}
                     all_vars = _combine_and_track(all_vars, deprecated_facts_vars, "facts")
                 else:
                     # always 'promote' ansible_local
