@@ -700,10 +700,14 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     elif is_remote_tag(git_path, module, dest, remote, version):
         tag = True
         cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
-    else:
+    elif is_sha1_string(version):
         # appears to be a sha1.  return as-is since it appears
         # cannot check for a specific sha1 on remote
+        if module.check_mode:
+            module.warn("Using a sha1 version in check_mode may not behave as `ls-remote` cannot check for a specific sha1.")
         return version
+    else:
+        module.fail_json(f"Could not determine what version: {version} was, or {version} does not exist on remote.")
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
@@ -785,6 +789,12 @@ def is_not_a_branch(git_path, module, dest):
             return True
     return False
 
+def is_sha1_string(version: str) -> bool:
+    matches = re.match(r"^[a-fA-F0-9]{40}$", version)
+    if matches:
+        return True
+    else:
+        return False
 
 def get_repo_path(dest, bare):
     if bare:
@@ -1308,7 +1318,7 @@ def main():
     result.update(before=None)
 
     local_mods = False
-    if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
+    if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone) or module.check_mode:
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
         # * we're doing a check mode test
