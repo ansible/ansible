@@ -158,12 +158,12 @@ def get_text_width(text: str) -> int:
     return width if width >= 0 else 0
 
 
-class FilterBlackList(logging.Filter):
-    def __init__(self, blacklist):
-        self.blacklist = [logging.Filter(name) for name in blacklist]
+class FilterDenyList(logging.Filter):
+    def __init__(self, denylist):
+        self.denylist = [logging.Filter(name) for name in denylist]
 
     def filter(self, record):
-        return not any(f.filter(record) for f in self.blacklist)
+        return not any(f.filter(record) for f in self.denylist)
 
 
 class FilterUserInjector(logging.Filter):
@@ -196,7 +196,7 @@ if getattr(C, 'DEFAULT_LOG_PATH'):
 
             logger = logging.getLogger('ansible')
             for handler in logging.root.handlers:
-                handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+                handler.addFilter(FilterDenyList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
                 handler.addFilter(FilterUserInjector())
         else:
             print(f"[WARNING]: DEFAULT_LOG_PATH can not be a directory '{path}', aborting", file=sys.stderr)
