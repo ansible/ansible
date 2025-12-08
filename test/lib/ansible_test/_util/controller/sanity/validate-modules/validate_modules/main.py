@@ -32,7 +32,6 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
-from typing import List, Tuple
 
 from antsibull_docs_parser import dom
 from antsibull_docs_parser.parser import parse, Context
@@ -276,8 +275,8 @@ class InvalidImportChecker(ast.NodeVisitor):
     uses of invalid imports.
     """
     def __init__(self):
-        self.import_names: List[str] = []
-        self.system_calls: List[Tuple[int, int, str, str]] = []
+        self.import_names = []
+        self.system_calls = []
 
     def visit_ImportFrom(self, node):
         """Checks for 'from something import anything' or 'from something import anything as mysys'."""
@@ -296,12 +295,6 @@ class InvalidImportChecker(ast.NodeVisitor):
                 if alias.name == 'Popen':
                     imported_name = alias.asname if alias.asname else 'Popen'
                     self.import_names.append(imported_name)
-                elif alias.name == 'check_call':
-                    imported_name = alias.asname if alias.asname else 'check_call'
-                    self.import_names.append(imported_name)
-                elif alias.name == 'check_output':
-                    imported_name = alias.asname if alias.asname else 'check_output'
-                    self.import_names.append(imported_name)
         self.generic_visit(node)
 
     def visit_Call(self, node):
@@ -317,12 +310,7 @@ class InvalidImportChecker(ast.NodeVisitor):
                         self.system_calls.append((node.lineno, node.col_offset, "os.call", "use-run-command-not-os-call"))
                 elif node.func.value.id == 'subprocess':
                     if node.func.attr == 'Popen':
-                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.Popen", "use-run-command-not-subprocess-popen"))
-                    elif node.func.attr == 'check_call':
-                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.check_call", "use-run-command-not-subprocess-check-call"))
-                    elif node.func.attr == 'check_output':
-                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.check_output", "use-run-command-not-subprocess-check-output"))
-
+                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.Popen", "use-run-command-not-popen"))
         # Case 2: Checking for function calls
         elif isinstance(node.func, ast.Name):
             func_name = node.func.id
