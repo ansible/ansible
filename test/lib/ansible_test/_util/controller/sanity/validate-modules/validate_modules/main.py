@@ -32,6 +32,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
+from typing import List, Tuple
 
 from antsibull_docs_parser import dom
 from antsibull_docs_parser.parser import parse, Context
@@ -91,9 +92,6 @@ from .constants import (
     NO_LOG_REGEX,
     FORBIDDEN_DICTIONARY_KEYS,
     REJECTLIST_IMPORTS,
-    SUBPROCESS_REGEX,
-    OS_CALL_REGEX,
-    OS_SYSTEM_REGEX,
     PLUGINS_WITH_RETURN_VALUES,
     PLUGINS_WITH_EXAMPLES,
     PLUGINS_WITH_YAML_EXAMPLES,
@@ -270,6 +268,68 @@ class Validator(metaclass=abc.ABCMeta):
     def validate(self):
         """Run this method to generate the test results"""
         pass
+
+
+class InvalidImportChecker(ast.NodeVisitor):
+    """
+    Analyzes a Python script's Abstract Syntax Tree (AST) to detect
+    uses of invalid imports.
+    """
+    def __init__(self):
+        self.import_names: List[str] = []
+        self.system_calls: List[Tuple[int, int, str, str]] = []
+
+    def visit_ImportFrom(self, node):
+        """Checks for 'from something import anything' or 'from something import anything as mysys'."""
+        if node.module == 'os':
+            for alias in node.names:
+                # If aliased, store the alias name; otherwise, store particular name from import
+                if alias.name == 'system':
+                    imported_name = alias.asname if alias.asname else 'system'
+                    self.import_names.append(imported_name)
+                elif alias.name == 'call':
+                    imported_name = alias.asname if alias.asname else 'call'
+                    self.import_names.append(imported_name)
+        elif node.module == 'subprocess':
+            for alias in node.names:
+                # If aliased, store the alias name; otherwise, store particular name from import
+                if alias.name == 'Popen':
+                    imported_name = alias.asname if alias.asname else 'Popen'
+                    self.import_names.append(imported_name)
+                elif alias.name == 'check_call':
+                    imported_name = alias.asname if alias.asname else 'check_call'
+                    self.import_names.append(imported_name)
+                elif alias.name == 'check_output':
+                    imported_name = alias.asname if alias.asname else 'check_output'
+                    self.import_names.append(imported_name)
+        self.generic_visit(node)
+
+    def visit_Call(self, node):
+        """Checks for function calls: os.system(...) or system(...) (if imported)."""
+
+        # Case 1: Checking imports
+        if isinstance(node.func, ast.Attribute):
+            if isinstance(node.func.value, ast.Name):
+                if node.func.value.id == 'os':
+                    if node.func.attr == 'system':
+                        self.system_calls.append((node.lineno, node.col_offset, "os.system", "use-run-command-not-os-system"))
+                    elif node.func.attr == 'call':
+                        self.system_calls.append((node.lineno, node.col_offset, "os.call", "use-run-command-not-os-call"))
+                elif node.func.value.id == 'subprocess':
+                    if node.func.attr == 'Popen':
+                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.Popen", "use-run-command-not-subprocess-popen"))
+                    elif node.func.attr == 'check_call':
+                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.check_call", "use-run-command-not-subprocess-check-call"))
+                    elif node.func.attr == 'check_output':
+                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.check_output", "use-run-command-not-subprocess-check-output"))
+
+        # Case 2: Checking for function calls
+        elif isinstance(node.func, ast.Name):
+            func_name = node.func.id
+            if func_name in self.import_names:
+                self.system_calls.append((node.lineno, node.col_offset, func_name, f"use-run-command-not-{func_name}"))
+
+        self.generic_visit(node)
 
 
 class ModuleValidator(Validator):
@@ -456,46 +516,18 @@ class ModuleValidator(Validator):
                         'https://docs.ansible.com/ansible-core/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
 
-    def _check_for_subprocess(self):
-        for child in self.ast.body:
-            if isinstance(child, ast.Import):
-                if child.names[0].name == 'subprocess':
-                    for line_no, line in enumerate(self.text.splitlines()):
-                        sp_match = SUBPROCESS_REGEX.search(line)
-                        if sp_match:
-                            self.reporter.error(
-                                path=self.object_path,
-                                code='use-run-command-not-popen',
-                                msg=('subprocess.Popen call found. Should be module.run_command'),
-                                line=(line_no + 1),
-                                column=(sp_match.span()[0] + 1)
-                            )
-
-    def _check_for_os_call(self):
-        if 'os.call' in self.text:
-            for line_no, line in enumerate(self.text.splitlines()):
-                os_call_match = OS_CALL_REGEX.search(line)
-                if os_call_match:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='use-run-command-not-os-call',
-                        msg=('os.call() call found. Should be module.run_command'),
-                        line=(line_no + 1),
-                        column=(os_call_match.span()[0] + 1)
-                    )
-
-    def _check_for_os_system(self):
-        if 'os.system' in self.text:
-            for line_no, line in enumerate(self.text.splitlines()):
-                os_system_match = OS_SYSTEM_REGEX.search(line)
-                if os_system_match:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='use-run-command-not-os-system',
-                        msg=('os.system() call found. Should be module.run_command'),
-                        line=(line_no + 1),
-                        column=(os_system_match.span()[0] + 1)
-                    )
+    def _check_for_invalid_imports(self):
+        checker = InvalidImportChecker()
+        checker.visit(self.ast)
+        if checker.system_calls:
+            for line_no, col_no, caller_name, code in checker.system_calls:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=code,
+                    msg=f'{caller_name}() call found. Should be module.run_command',
+                    line=line_no,
+                    column=col_no
+                )
 
     def _find_rejectlist_imports(self):
         for child in self.ast.body:
@@ -2460,9 +2492,7 @@ class ModuleValidator(Validator):
                 self._ensure_imports_below_docs(doc_info, first_callable)
 
             if self.plugin_type == 'module':
-                self._check_for_subprocess()
-                self._check_for_os_call()
-                self._check_for_os_system()
+                self._check_for_invalid_imports()
 
         if self._powershell_module():
             self._validate_ps_replacers()
