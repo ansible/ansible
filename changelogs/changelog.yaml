@@ -1408,6 +1408,17 @@ releases:
     - option_deprecation_help.yml
     - package_facts.yml
     release_date: '2025-10-29'
+  2.19.5:
+    changes:
+      release_summary: '| Release Date: 2025-12-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.5_summary.yaml
+    release_date: '2025-12-09'
   2.19.5rc1:
     changes:
       bugfixes:
