@@ -1885,6 +1885,7 @@ def _resolve_depenency_map(
             conflict_causes,
         ))
         if any(req_inf.requirement.type == "requires_ansible" for req_inf in dep_exc.causes):
+            dep_exc = None
             error_msg_lines.append(requires_ansible_hint)
         error_msg_lines.append(pre_release_hint)
         raise AnsibleError('\n'.join(error_msg_lines)) from dep_exc
