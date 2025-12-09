@@ -1858,7 +1858,7 @@ def _resolve_depenency_map(
         conflict_causes = []
         for req_inf in dep_exc.causes:
             if req_inf.requirement.type == "requires_ansible":
-                if req_inf.requirement.supports_ansible:
+                if req_inf.requirement.has_candidate:
                     continue
                 collection = str(req_inf.parent)
                 parents = [str(r._parent) for r in req_inf.parent._requirements if r._parent is not None]

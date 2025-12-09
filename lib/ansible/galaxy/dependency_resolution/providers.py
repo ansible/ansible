@@ -28,7 +28,6 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.release import __version__
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 try:
@@ -199,7 +198,6 @@ class CollectionDependencyProvider(AbstractProvider):
             if any(match.ver == incompat.ver for incompat in incompatibilities[identifier]):
                 continue
 
-            # hack for backward compatible error handling
             match._requirements = list(requirements[identifier])
             results.append(match)
         return results
@@ -216,10 +214,9 @@ class CollectionDependencyProvider(AbstractProvider):
         version_req += "This is an issue with the collection."
 
         if first_req.type == "requires_ansible":
-            candidate = Candidate("ansible-core", __version__, None, "requires_ansible", None)
-            if any(not self.is_satisfied_by(r, candidate) for r in requirements):
-                return []
-            return [candidate]
+            if all([r.has_candidate for r in requirements]):
+                return [first_req.has_candidate]
+            return []
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.

@@ -365,6 +365,7 @@ class ConcreteArtifactsManager:
                 f"The collection {collection} (type {collection.type}) from {collection.src}) "
                 "has invalid meta/runtime.yml metadata. The value for requires_ansible must be a string."
             )
+        # NOTE: Using None as a sentinel since it's not a valid value otherwise.
         return runtime.get("requires_ansible")
 
     def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):

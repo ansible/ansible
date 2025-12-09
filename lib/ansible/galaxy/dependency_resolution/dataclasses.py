@@ -193,11 +193,6 @@ class _ComputedReqKindsMixin:
                 self.name,
                 self.ver
             )
-        # This is used by requires_ansible requirement error handling.
-        # ResolutionImpossible causes have access to the parent,
-        # i.e. the incompatible collection containing the metadata,
-        # but not its origin.
-        self._parent: Candidate | None = None
 
     def __hash__(self) -> int:
         return hash(tuple(getattr(self, attr) for attr in _ComputedReqKindsMixin.UNIQUE_ATTRS))
@@ -641,6 +636,13 @@ class Requirement(
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super(Requirement, self).__init__()
+        # NOTE: Hack to display the origin of impossible collection requirements when requires_ansible is incompatible
+        # e.g. Requirement ns.col -> ns.col:$ver -> Requirement ns.dep -> ns.dep:$ver -> Requirement ansible-core<2.19
+        #   - ResolutionImpossible.causes[0].requirement is Requirement ansible-core<2.19
+        #   - ResolutionImpossible.causes[0].parent is Candidate ns.dep:$ver
+        #   - ResolutionImpossible.causes[0].parent._requirements[0] is Requirement ns.dep
+        #   - ResolutionImpossible.causes[0].parent._requirements[0]._parent is Candidate ns.col:$ver
+        self._parent: Candidate | None = None
 
 
 class Candidate(
@@ -655,6 +657,8 @@ class Candidate(
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super(Candidate, self).__init__()
+        # NOTE: Hack to display the origin of impossible collection requirements when requires_ansible is incompatible
+        self._requirements: list[Requirement] = []
 
     def with_signatures_repopulated(self) -> Candidate:
         """Populate a new Candidate instance with Galaxy signatures.
@@ -668,17 +672,24 @@ class Candidate(
 
 
 class AnsibleRequirement(Requirement):
-    @property
-    def supports_ansible(self):
-        """Whether the requires_ansible metadata is compatible with the ansible-core version."""
-        return _does_collection_support_ansible_version(self.ver, __version__)
+    def __init__(self, *args, **kwargs):
+        super(AnsibleRequirement, self).__init__(*args, **kwargs)
+
+        if _does_collection_support_ansible_version(self.ver, __version__):
+            self.has_candidate = Candidate("ansible-core", __version__, None, "requires_ansible", None)
+        else:
+            self.has_candidate = None
 
     @classmethod
     def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate):
         """
-        Create a Requirement from a collection's requires_ansible metadata.
+        Create a Requirement from a collection Candidate's requires_ansible metadata.
         """
-        if candidate.is_virtual or C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == 'ignore':
+        if (
+            C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == "ignore"
+            or candidate.is_virtual
+            or candidate.type == "requires_ansible"
+        ):
             return None
 
         if candidate.type == 'galaxy':
@@ -696,4 +707,4 @@ class AnsibleRequirement(Requirement):
         return res
 
     def is_satisfied_by(self, candidate: Candidate):
-        return candidate.type == "requires_ansible" and _does_collection_support_ansible_version(self.ver, candidate.ver)
+        return self.has_candidate == candidate
