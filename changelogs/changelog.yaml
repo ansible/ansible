@@ -982,6 +982,17 @@ releases:
     - ansible-test-fix-command-traceback.yml
     - unsafe_hostvars_fix.yml
     release_date: '2024-11-25'
+  2.16.15:
+    changes:
+      release_summary: '| Release Date: 2025-12-09
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.15_summary.yaml
+    release_date: '2025-12-09'
   2.16.15rc1:
     changes:
       bugfixes:
