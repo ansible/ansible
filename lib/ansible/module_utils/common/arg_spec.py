@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import typing as t
 from copy import deepcopy
 
 from ansible.module_utils.datatag import deprecator_from_collection_name
@@ -39,6 +40,60 @@ from ansible.module_utils.errors import (
     RequiredError,
     UnsupportedError,
 )
+
+if t.TYPE_CHECKING:
+    import datetime
+    import sys
+    from collections.abc import Callable, Mapping, Sequence
+
+    ArgSpecType = t.Literal['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str']
+    MutuallyExclusive = t.Union[Sequence[str], Sequence[Sequence[str]]]
+    RequiredTogether = Sequence[Sequence[str]]
+    RequiredOneOf = Sequence[Sequence[str]]
+    RequiredIf = Sequence[t.Union[list[object], tuple[str, object, Sequence[str]], tuple[str, object, Sequence[str], bool]]]
+    RequiredBy = Mapping[str, Sequence[str]]
+
+    if sys.version_info >= (3, 11):
+        class DeprecatedAlias(t.TypedDict):
+            name: str
+            date: t.NotRequired[datetime.date | str]
+            version: t.NotRequired[str]
+            collection_name: str
+
+        class OneArgumentSpec(t.TypedDict):
+            type: t.NotRequired[ArgSpecType | Callable[[object], object]]
+            elements: t.NotRequired[ArgSpecType]
+            default: t.NotRequired[object]
+            # For fallback elements, the first element of the sequence has to be a callable, the others sequences or dicts.
+            # Unfortunately there is no way to specify this in a generic way...
+            fallback: t.NotRequired[Sequence[Callable[[object], object] | Sequence[object] | dict[str, object]]]
+            choices: t.NotRequired[Sequence[object]]
+            context: t.NotRequired[dict[object, object]]
+            required: t.NotRequired[bool]
+            no_log: t.NotRequired[bool]
+            aliases: t.NotRequired[Sequence[str]]
+            apply_defaults: t.NotRequired[bool]
+            removed_in_version: t.NotRequired[str]
+            removed_at_date: t.NotRequired[datetime.date | str]
+            removed_from_collection: t.NotRequired[str]
+            options: t.NotRequired[dict[str, OneArgumentSpec]]  # recursive!
+            deprecated_aliases: t.NotRequired[Sequence[DeprecatedAlias]]
+
+            mutually_exclusive: t.NotRequired[MutuallyExclusive]
+            required_together: t.NotRequired[RequiredTogether]
+            required_one_of: t.NotRequired[RequiredOneOf]
+            required_if: t.NotRequired[RequiredIf]
+            required_by: t.NotRequired[RequiredBy]
+
+    else:
+        # Python < 3.11 does not have typing.NotRequired
+
+        # We cannot use object here instead of t.Any, since things like sorted()
+        # do not accept parameters of type object.
+        DeprecatedAlias = dict[str, t.Any]
+        OneArgumentSpec = dict[str, t.Any]
+
+    ArgumentSpec = dict[str, OneArgumentSpec]
 
 
 class ValidationResult:
@@ -95,12 +150,12 @@ class ArgumentSpecValidator:
     validate a number of parameters using the :meth:`validate` method.
     """
 
-    def __init__(self, argument_spec,
-                 mutually_exclusive=None,
-                 required_together=None,
-                 required_one_of=None,
-                 required_if=None,
-                 required_by=None,
+    def __init__(self, argument_spec: ArgumentSpec,
+                 mutually_exclusive: MutuallyExclusive | None = None,
+                 required_together: RequiredTogether | None = None,
+                 required_one_of: RequiredOneOf | None = None,
+                 required_if: RequiredIf | None = None,
+                 required_by: RequiredBy | None = None,
                  ):
 
         """
