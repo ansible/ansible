@@ -672,16 +672,17 @@ class Candidate(
 
 
 class AnsibleRequirement(Requirement):
-    def __init__(self, *args, **kwargs):
-        super(AnsibleRequirement, self).__init__(*args, **kwargs)
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super(AnsibleRequirement, self).__init__()
 
+        self.has_candidate: None | Candidate
         if _does_collection_support_ansible_version(self.ver, __version__):
             self.has_candidate = Candidate("ansible-core", __version__, None, "requires_ansible", None)
         else:
             self.has_candidate = None
 
     @classmethod
-    def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate):
+    def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate) -> None | t.Self:
         """
         Create a Requirement from a collection Candidate's requires_ansible metadata.
         """
@@ -706,5 +707,5 @@ class AnsibleRequirement(Requirement):
         res._parent = candidate
         return res
 
-    def is_satisfied_by(self, candidate: Candidate):
+    def is_satisfied_by(self, candidate: Candidate) -> bool:
         return self.has_candidate == candidate

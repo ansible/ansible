@@ -214,9 +214,10 @@ class CollectionDependencyProvider(AbstractProvider):
         version_req += "This is an issue with the collection."
 
         if first_req.type == "requires_ansible":
-            if all([r.has_candidate for r in requirements]):
-                return [first_req.has_candidate]
-            return []
+            for r in requirements:
+                if r.has_candidate is None:
+                    return []
+            return [first_req.has_candidate]
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
