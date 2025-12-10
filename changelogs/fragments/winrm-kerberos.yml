@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    winrm - Provide a better error message if a domain user is specified using a User Principal Name (``UPN``) but
+    the ``pykerberos`` library is not installed so Kerberos is unavailable.
