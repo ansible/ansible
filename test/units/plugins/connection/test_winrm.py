@@ -63,7 +63,7 @@ class TestConnectionWinRM(object):
                 '_winrm_kwargs': {'username': 'user@domain.com',
                                   'password': None},
                 '_winrm_pass': None,
-                '_winrm_transport': ['kerberos', 'ssl'],
+                '_winrm_transport': ['kerberos'],
                 '_winrm_user': 'user@domain.com'
             },
             True
@@ -78,7 +78,7 @@ class TestConnectionWinRM(object):
                 '_winrm_kwargs': {'username': 'user@domain.com',
                                   'password': None},
                 '_winrm_pass': None,
-                '_winrm_transport': ['ssl'],
+                '_winrm_transport': ['kerberos'],
                 '_winrm_user': 'user@domain.com'
             },
             False
@@ -93,7 +93,7 @@ class TestConnectionWinRM(object):
                 '_winrm_kwargs': {'username': 'user@domain.com',
                                   'password': 'pass'},
                 '_winrm_pass': 'pass',
-                '_winrm_transport': ['kerberos', 'ssl'],
+                '_winrm_transport': ['kerberos'],
                 '_winrm_user': 'user@domain.com'
             },
             True

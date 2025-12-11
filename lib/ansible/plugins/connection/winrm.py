@@ -31,6 +31,8 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to log in as to the Windows machine
+            - If O(transport) is not defined, the authentication used will be V(kerberos) if the user is in the UPN format V(user@domain),
+              otherwise it will be V(basic)
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
@@ -75,7 +77,8 @@ DOCUMENTATION = """
       transport:
         description:
            - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
-           - If None (the default) the plugin will try to automatically guess the correct list
+           - If None (the default) the plugin will try to automatically guess the correct list. It will use
+             V(kerberos) if the username looks like a UPN V(user@domain), otherwise it will use V(basic).
            - The choices available depend on your version of pywinrm
         type: list
         elements: string
@@ -288,12 +291,11 @@ class Connection(ConnectionBase):
         # calculate transport if needed
         if self._winrm_transport is None or self._winrm_transport[0] is None:
             # TODO: figure out what we want to do with auto-transport selection in the face of NTLM/Kerb/CredSSP/Cert/Basic
-            transport_selector = ['ssl'] if self._winrm_scheme == 'https' else ['plaintext']
-
-            if HAVE_KERBEROS and ((self._winrm_user and '@' in self._winrm_user)):
-                self._winrm_transport = ['kerberos'] + transport_selector
+            if self._winrm_user and '@' in self._winrm_user:
+                # A UPN must be a domain account and we always default to Kerberos for this.
+                self._winrm_transport = ['kerberos']
             else:
-                self._winrm_transport = transport_selector
+                self._winrm_transport = ['ssl'] if self._winrm_scheme == 'https' else ['plaintext']
 
         unsupported_transports = set(self._winrm_transport).difference(self._winrm_supported_authtypes)
 
@@ -418,7 +420,12 @@ class Connection(ConnectionBase):
         for transport in self._winrm_transport:
             if transport == 'kerberos':
                 if not HAVE_KERBEROS:
-                    errors.append('kerberos: the python kerberos library is not installed')
+                    kerb_msg = (
+                        'WinRM Kerberos authentication requested but the python kerberos library is not installed. '
+                        'Please install the pykerberos library, set a different authentication method with ansible_winrm_transport, '
+                        'or use a local user account to connect using basic authentication.'
+                    )
+                    errors.append(kerb_msg)
                     continue
                 if self._kerb_managed:
                     self._kerb_auth(self._winrm_user, self._winrm_pass)
