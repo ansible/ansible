@@ -93,3 +93,61 @@
     that:
         - "not dnf_result.failed"
         - "not dnf_result.changed"
+
+- name: install "{{ astream_name }}" module with state=latest
+  dnf:
+    name: "{{ astream_name }}"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name }}" module with state=latest
+  assert:
+    that:
+        - dnf_result is not failed
+        - dnf_result is changed
+
+- name: install "{{ astream_name }}" module with state=latest again (idempotency)
+  dnf:
+    name: "{{ astream_name }}"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name }}" module with state=latest again (idempotency)
+  assert:
+    that:
+        - dnf_result is not failed
+        - dnf_result is not changed
+
+- name: uninstall "{{ astream_name }}" module
+  dnf:
+    name: "{{ astream_name }}"
+    state: absent
+
+- name: install "{{ astream_name_no_stream }}" module with state=latest without providing stream
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name_no_stream }}" module with state=latest without providing stream
+  assert:
+    that:
+        - dnf_result is not failed
+        - dnf_result is changed
+
+- name: install "{{ astream_name_no_stream }}" module with state=latest again without providing stream (idempotency)
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of "{{ astream_name_no_stream }}" module with state=latest again without providing stream (idempotency)
+  assert:
+    that:
+        - dnf_result is not failed
+        - dnf_result is not changed
+
+- name: uninstall "{{ astream_name_no_stream }}" module
+  dnf:
+    name: "{{ astream_name_no_stream }}"
+    state: absent
