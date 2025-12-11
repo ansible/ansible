@@ -651,7 +651,7 @@ def main():
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if do_install:
-        if cron_file and not user:
+        if cron_file and not user and not env:
             module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
 
         if job is None:

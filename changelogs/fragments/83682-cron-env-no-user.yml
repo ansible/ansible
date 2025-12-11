@@ -1,0 +1,2 @@
+bugfixes:
+  - "cron module - Fix incorrect validation that required ``user`` when using ``cron_file`` with ``env: true``. Environment variables in cron files no longer require specifying a user. (https://github.com/ansible/ansible/issues/83682)"
