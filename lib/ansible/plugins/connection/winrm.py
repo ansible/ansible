@@ -31,7 +31,7 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to log in as to the Windows machine
-            - If O(transport) is not defined, the authentication used will be V(kerberos) If the user is in the UPN format V(user@domain)
+            - If O(transport) is not defined, the authentication used will be V(kerberos) if the user is in the UPN format V(user@domain),
               otherwise it will be V(basic)
         vars:
             - name: ansible_user
@@ -78,7 +78,7 @@ DOCUMENTATION = """
         description:
            - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
            - If None (the default) the plugin will try to automatically guess the correct list. It will use
-             V(kerberos) if the username looks like a UPN V(user@domain) otherwise it will use V(basic).
+             V(kerberos) if the username looks like a UPN V(user@domain), otherwise it will use V(basic).
            - The choices available depend on your version of pywinrm
         type: list
         elements: string
