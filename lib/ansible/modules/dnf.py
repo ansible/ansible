@@ -1185,7 +1185,7 @@ class DnfModule(YumDnf):
                     if tid is not None:
                         transaction = self.base.history.old([tid])[0]
                         if transaction.return_code:
-                            failure_response['failures'].append(transaction.output())
+                            failure_response['failures'].extend(transaction.output())
 
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
