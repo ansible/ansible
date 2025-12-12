@@ -1,0 +1,100 @@
+- block:
+    # https://github.com/ansible/ansible/issues/57618
+    # https://github.com/ansible/ansible/issues/79749
+    - name: Test diff contents
+      copy:
+        content: 'Ansible managed\n'
+        dest: "{{ local_temp_dir }}/file.txt"
+      diff: yes
+      register: diff_output
+
+    - assert:
+        that:
+          - 'diff_output.diff[0].before == ""'
+          - '"Ansible managed" in diff_output.diff[0].after'
+          - '"file.txt" in diff_output.diff[0].after_header'
+
+    - name: create directory for multi diff test
+      file:
+        path: "{{ role_path }}/files/multi-diff-test"
+        state: directory
+      delegate_to: localhost
+
+    - name: create subdirectory for multi diff test
+      file:
+        path: "{{ role_path }}/files/multi-diff-test/dir"
+        state: directory
+      delegate_to: localhost
+
+    - name: create file for multi diff test
+      copy:
+        dest: "{{ role_path }}/files/multi-diff-test/file"
+        content: "hello, world!\n"
+      delegate_to: localhost
+
+    - name: create symlink for multi diff test
+      file:
+        path: "{{ role_path }}/files/multi-diff-test/link2file"
+        state: link
+        src: file
+      delegate_to: localhost
+
+    - name: multi diff test
+      copy:
+        src: "{{ role_path }}/files/multi-diff-test"
+        dest: "{{ local_temp_dir }}/multi-diff-test"
+        local_follow: false
+      register: multi_diff_test
+      diff: true
+
+    # right now it returns exactly 3, but if/when the copy module is updated to produce attribute
+    # diffs, there will be more.
+    - name: assert that multi_diff_test.diff is a list of minimum length 3
+      assert:
+        that:
+          - multi_diff_test.diff is not string and multi_diff_test.diff is not mapping and multi_diff_test.diff is iterable
+          - multi_diff_test.diff | length >= 3
+
+    - name: Check each diff for state=absent -> state=directory
+      set_fact:
+        found_absent_to_directory: true
+      when:
+        - item.before.state is defined and item.before.state == "absent"
+        - item.after.state is defined and item.after.state == "directory"
+      loop: "{{ multi_diff_test.diff }}"
+
+    - name: assert that at least one diff reported state=absent -> state=directory
+      assert:
+        that:
+          - found_absent_to_directory
+
+    - name: Check each diff for state=absent -> state=link
+      set_fact:
+        found_absent_to_link: true
+      when:
+        - item.before.state is defined and item.before.state == "absent"
+        - item.after.state is defined and item.after.state == "link"
+      loop: "{{ multi_diff_test.diff }}"
+
+    - name: assert that at least one diff reported state=absent -> state=link
+      assert:
+        that:
+          - found_absent_to_link
+
+    - name: Check each diff for new file content "hello, world!\n"
+      set_fact:
+        found_new_file_content: true
+      when:
+        - item.after is defined and item.after == "hello, world!\n"
+      loop: "{{ multi_diff_test.diff }}"
+
+    - name: assert that at least one diff reported new file content "hello, world!\n"
+      assert:
+        that:
+          - found_new_file_content
+  always:
+    - name: Cleaning
+      file:
+        path: '{{ local_temp_dir }}/multi-diff-test'
+        state: absent
+      delegate_to: localhost

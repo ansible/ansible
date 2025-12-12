@@ -423,6 +423,7 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
+        result['diff'] = []
         result['failed'] = True
         if not source and content is None:
             result['msg'] = 'src (or content) is required'
@@ -526,6 +527,8 @@ class ActionModule(ActionBase):
                 continue
 
             if module_return.get('failed'):
+                # FIXME all the files successfully created before this point
+                # have their diffs deleted here
                 result.update(module_return)
                 return self._ensure_invocation(result)
 
@@ -534,10 +537,11 @@ class ActionModule(ActionBase):
             for dir_component in paths:
                 os.path.join(dir_path, dir_component)
                 implicit_directories.add(dir_path)
-            if 'diff' in result and not result['diff']:
-                del result['diff']
+
             module_executed = True
             changed = changed or module_return.get('changed', False)
+            if "diff" in module_return:
+                result['diff'] += module_return['diff']
 
         for src, dest_path in source_files['directories']:
             # Find directories that are leaves as they might not have been
@@ -556,11 +560,15 @@ class ActionModule(ActionBase):
             module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)
 
             if module_return.get('failed'):
+                # FIXME all the files,directories successfully created before this point
+                # have their diffs deleted here
                 result.update(module_return)
                 return self._ensure_invocation(result)
 
             module_executed = True
             changed = changed or module_return.get('changed', False)
+            if "diff" in module_return:
+                result['diff'].append(module_return['diff'])
 
         for target_path, dest_path in source_files['symlinks']:
             # Copy symlinks over
@@ -583,12 +591,16 @@ class ActionModule(ActionBase):
             module_executed = True
 
             if module_return.get('failed'):
+                # FIXME all the files,directories,symlinks successfully created before this point
+                # have their diffs deleted here
                 result.update(module_return)
                 return self._ensure_invocation(result)
 
             changed = changed or module_return.get('changed', False)
+            if "diff" in module_return:
+                result['diff'].append(module_return['diff'])
 
-        if module_executed and len(source_files['files']) == 1:
+        if module_executed and len(source_files['files']) == 1 and len(source_files['directories']) == 0 and len(source_files['symlinks']) == 0:
             result.update(module_return)
 
             # the file module returns the file path as 'path', but
@@ -597,6 +609,9 @@ class ActionModule(ActionBase):
                 result['dest'] = result['path']
         else:
             result.update(dict(dest=dest, src=source, changed=changed))
+
+        if 'diff' in result and not result['diff']:
+            del result['diff']
 
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)

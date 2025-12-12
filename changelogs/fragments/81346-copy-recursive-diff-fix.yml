@@ -1,0 +1,2 @@
+bugfixes:
+- copy now returns the diff for all content when copying recursively with remote_src=false. This does not yet include the creation of blank files, multiple parent directories, or simultaneous changes to attributes and content (in this case, just content is returned).
