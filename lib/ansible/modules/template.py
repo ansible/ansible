@@ -16,14 +16,15 @@ short_description: Template a file out to a target host
 options:
   follow:
     description:
-    - Determine whether symbolic links should be followed.
-    - When set to V(true) symbolic links will be followed, if they exist.
-    - When set to V(false) symbolic links will not be followed.
-    - Previous to Ansible 2.4, this was hardcoded as V(true).
+      - Determine whether symbolic links should be followed.
+      - When set to V(true) symbolic links will be followed, if they exist.
+      - When set to V(false) symbolic links will not be followed.
+      - Previous to Ansible 2.4, this was hardcoded as V(true).
     type: bool
     default: no
     version_added: '2.4'
-create_parent:
+
+  create_parent:
     description:
       - Create the parent directory of O(dest) if it does not exist.
       - This option only applies when O(dest) is a file path.
