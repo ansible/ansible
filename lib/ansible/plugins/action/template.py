@@ -57,6 +57,7 @@ class ActionModule(ActionBase):
             follow = boolean(self._task.args.get('follow', False), strict=False)
             trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
             lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+            create_parent = boolean(self._task.args.get('create_parent', False), strict=False)
         except TypeError as e:
             raise AnsibleActionFail(to_native(e))
 
@@ -162,6 +163,7 @@ class ActionModule(ActionBase):
                         src=result_file,
                         dest=dest,
                         follow=follow,
+                        create_parent=create_parent,
                     ),
                 )
                 # call with ansible.legacy prefix to eliminate collisions with collections while still allowing local override

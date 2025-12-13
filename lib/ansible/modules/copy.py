@@ -49,6 +49,14 @@ options:
     - If O(src) and O(dest) are files, the parent directory of O(dest) is not created and the task fails if it does not already exist.
     type: path
     required: yes
+  create_parent:
+    description:
+    - Create the parent directory of O(dest) if it does not exist.
+    - This option only applies when O(dest) is a file path.
+    - Behavior is unchanged when O(dest) ends with a trailing C(/).
+    type: bool
+    default: no
+    version_added: 'X.Y'
   backup:
     description:
     - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
@@ -478,6 +486,7 @@ def main():
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
+            create_parent=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -492,6 +501,7 @@ def main():
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backup = module.params['backup']
     force = module.params['force']
+    create_parent = module.params['create_parent']
     _original_basename = module.params.get('_original_basename', None)
     validate = module.params.get('validate', None)
     follow = module.params['follow']
@@ -581,6 +591,7 @@ def main():
         if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
             checksum_dest = module.sha1(dest)
     else:
+        parent_dir = os.path.dirname(b_dest)
         if not os.path.exists(os.path.dirname(b_dest)):
             try:
                 # os.path.exists() can return false in some
@@ -591,10 +602,23 @@ def main():
             except OSError as e:
                 if "permission denied" in to_native(e).lower():
                     module.fail_json(msg="Destination directory %s is not accessible" % (os.path.dirname(dest)))
-            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
 
-    if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
-        module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
+            if create_parent:
+                if not module.check_mode:
+                    try:
+                        os.makedirs(parent_dir, exist_ok=True)
+                    except OSError as e:
+                        module.fail_json(
+                            msg="Failed to create destination directory %s: %s" % (to_native(parent_dir), to_native(e))
+                        )
+                changed = True
+            else:
+                module.fail_json(
+                    msg="Destination directory %s does not exist" % (os.path.dirname(dest))
+                )
+
+        if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
+            module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
     backup_file = None
     if checksum_src != checksum_dest or os.path.islink(b_dest):

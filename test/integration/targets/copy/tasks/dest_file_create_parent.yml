@@ -1,0 +1,34 @@
+# Test create_parent option for file destinations
+
+- name: Copy file to non-existent directory with create_parent
+  ansible.builtin.copy:
+    src: foo.txt
+    dest: "{{ remote_tmp_dir }}/create_parent_test/foo.txt"
+    create_parent: true
+  register: copy_with_create_parent
+
+- name: Stat created file
+  ansible.builtin.stat:
+    path: "{{ remote_tmp_dir }}/create_parent_test/foo.txt"
+  register: created_file
+
+- name: Verify copy succeeded and file exists
+  assert:
+    that:
+      - copy_with_create_parent is changed
+      - created_file.stat.exists
+
+# ---- old behavior ----
+
+- name: Copy file to non-existent directory without create_parent (should fail)
+  ansible.builtin.copy:
+    src: foo.txt
+    dest: "{{ remote_tmp_dir }}/no_create_parent_test/foo.txt"
+  register: copy_without_create_parent
+  ignore_errors: true
+
+- name: Verify copy failed due to missing destination directory
+  assert:
+    that:
+      - copy_without_create_parent is failed
+      - "'does not exist' in copy_without_create_parent.msg"

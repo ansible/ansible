@@ -23,6 +23,14 @@ options:
     type: bool
     default: no
     version_added: '2.4'
+create_parent:
+    description:
+      - Create the parent directory of O(dest) if it does not exist.
+      - This option only applies when O(dest) is a file path.
+      - Behavior is unchanged when O(dest) ends with a trailing C(/).
+    type: bool
+    default: no
+    version_added: '2.21'
 notes:
 - For Windows you can use M(ansible.windows.win_template) which uses V(\\r\\n) as O(newline_sequence) by default.
 - The C(jinja2_native) setting has no effect. Native types are never used in the M(ansible.builtin.template) module

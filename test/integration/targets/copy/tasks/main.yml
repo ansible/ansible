@@ -1,13 +1,12 @@
 - block:
-
     - name: Create a local temporary directory
       shell: mktemp -d /tmp/ansible_test.XXXXXXXXX
       register: tempfile_result
       delegate_to: localhost
 
     - set_fact:
-        local_temp_dir: '{{ tempfile_result.stdout }}'
-        remote_dir: '{{ remote_tmp_dir }}/copy'
+        local_temp_dir: "{{ tempfile_result.stdout }}"
+        remote_dir: "{{ remote_tmp_dir }}/copy"
         symlinks:
           ansible-test-abs-link: /tmp/ansible-test-abs-link
           ansible-test-abs-link-dir: /tmp/ansible-test-abs-link-dir
@@ -25,19 +24,19 @@
     - name: Create symbolic link
       command: "ln -s '{{ item.value }}' '{{ item.key }}'"
       args:
-        chdir: '{{role_path}}/files/subdir/subdir1'
+        chdir: "{{role_path}}/files/subdir/subdir1"
       with_dict: "{{ symlinks }}"
       delegate_to: localhost
 
     - name: Create group for remote unprivileged user
       group:
-        name: '{{ remote_unprivileged_user_group }}'
+        name: "{{ remote_unprivileged_user_group }}"
       register: group
 
     - name: Create remote unprivileged remote user
       user:
-        name: '{{ remote_unprivileged_user }}'
-        group: '{{ remote_unprivileged_user_group }}'
+        name: "{{ remote_unprivileged_user }}"
+        group: "{{ remote_unprivileged_user_group }}"
       register: user
 
     - name: Check sudoers dir
@@ -56,27 +55,27 @@
 
     - file:
         path: "{{ user.home }}/.ssh"
-        owner: '{{ remote_unprivileged_user }}'
+        owner: "{{ remote_unprivileged_user }}"
         state: directory
         mode: 0700
 
     - name: Duplicate authorized_keys
       copy:
         src: $HOME/.ssh/authorized_keys
-        dest: '{{ user.home }}/.ssh/authorized_keys'
-        owner: '{{ remote_unprivileged_user }}'
+        dest: "{{ user.home }}/.ssh/authorized_keys"
+        owner: "{{ remote_unprivileged_user }}"
         mode: 0600
         remote_src: yes
 
     - file:
         path: "{{ remote_dir }}"
         state: directory
-      remote_user: '{{ remote_unprivileged_user }}'
+      remote_user: "{{ remote_unprivileged_user }}"
 
     # execute tests tasks using an unprivileged user, this is useful to avoid
     # local/remote ambiguity when controller and managed hosts are identical.
     - import_tasks: tests.yml
-      remote_user: '{{ remote_unprivileged_user }}'
+      remote_user: "{{ remote_unprivileged_user }}"
 
     - import_tasks: acls.yml
       when: ansible_system == 'Linux'
@@ -90,6 +89,8 @@
       delegate_to: localhost
 
     - import_tasks: check_mode.yml
+
+    - import_tasks: dest_file_create_parent.yml
 
     # https://github.com/ansible/ansible/issues/57618
     # https://github.com/ansible/ansible/issues/79749
@@ -111,8 +112,8 @@
 
     - name: Test internal options
       copy:
-        content: 'irrelevant'
-        dest: '{{ local_temp_dir}}/file.txt'
+        content: "irrelevant"
+        dest: "{{ local_temp_dir}}/file.txt"
         _diff_peek: true
       register: peek
       ignore_errors: true
@@ -126,27 +127,27 @@
   always:
     - name: Cleaning
       file:
-        path: '{{ local_temp_dir }}'
+        path: "{{ local_temp_dir }}"
         state: absent
       delegate_to: localhost
 
     - name: Remove symbolic link
       file:
-        path: '{{ role_path }}/files/subdir/subdir1/{{ item.key }}'
+        path: "{{ role_path }}/files/subdir/subdir1/{{ item.key }}"
         state: absent
       delegate_to: localhost
       with_dict: "{{ symlinks }}"
 
     - name: Remote unprivileged remote user
       user:
-        name: '{{ remote_unprivileged_user }}'
+        name: "{{ remote_unprivileged_user }}"
         state: absent
         remove: yes
         force: yes
 
     - name: Remove group for remote unprivileged user
       group:
-        name: '{{ remote_unprivileged_user_group }}'
+        name: "{{ remote_unprivileged_user_group }}"
         state: absent
 
     - name: Remove sudoers.d file

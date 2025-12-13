@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible.builtin.copy - add ``create_parent`` option to create the parent directory of ``dest`` when copying a file.
