@@ -56,7 +56,7 @@ options:
     - Behavior is unchanged when O(dest) ends with a trailing C(/).
     type: bool
     default: no
-    version_added: 'X.Y'
+    version_added: '2.21'
   backup:
     description:
     - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
