@@ -1013,8 +1013,12 @@ class DnfModule(YumDnf):
                     for module in module_specs:
                         try:
                             if self._is_module_installed(module):
+                                self.module_base.upgrade([module])
                                 response['results'].append("Module {0} upgraded.".format(module))
-                            self.module_base.upgrade([module])
+                            else:
+                                self.module_base.install([module])
+                                self.module_base.enable([module])
+                                response['results'].append("Module {0} installed.".format(module))
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(' '.join((module, to_native(e))))
 

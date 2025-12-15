@@ -1,0 +1,2 @@
+bugfixes:
+- dnf - When installing a dnf module, install and enable when missing, upgrade when present (https://github.com/ansible/ansible/issues/73457)
