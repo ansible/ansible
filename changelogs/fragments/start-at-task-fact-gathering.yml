@@ -1,0 +1,4 @@
+bugfixes:
+- >-
+  ``--start-at-task`` - fix gathering facts and validating play arguments.
+  (https://github.com/ansible/ansible/issues/86268)
