@@ -14,7 +14,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
-from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
@@ -198,6 +198,8 @@ class AdHocCLI(CLI):
             result = self._tqm.run(play)
 
             self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
+        except AnsibleEndPlay as e:
+            result = e.result
         finally:
             if self._tqm:
                 self._tqm.cleanup()

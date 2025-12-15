@@ -20,7 +20,7 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
@@ -230,6 +230,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
                 result = self._tqm.run(play)
                 display.debug(result)
+            except AnsibleEndPlay as e:
+                result = e.result
             finally:
                 if self._tqm:
                     self._tqm.cleanup()
