@@ -254,7 +254,6 @@ key_filename:
 """
 
 import os
-import re
 import sys
 import tempfile
 import textwrap
@@ -571,15 +570,7 @@ def main():
     state = params.pop('state')
 
     name = params['name']
-    slug = re.sub(
-        r'[^a-z0-9-]+',
-        '',
-        re.sub(
-            r'[_\s]+',
-            '-',
-            name.lower(),
-        ),
-    )
+    slug = name.replace(' ', '-')
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':
