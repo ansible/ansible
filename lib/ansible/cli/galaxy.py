@@ -1610,8 +1610,8 @@ class GalaxyCLI(CLI):
             display.warning(w)
 
         if not path_found:
-            raise AnsibleOptionsError(
-                "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            display.warning(
+                "None of the provided paths were usable. Please specify a valid path with --{0}s-path.".format(context.CLIARGS['type'])
             )
 
         return 0
@@ -1695,8 +1695,8 @@ class GalaxyCLI(CLI):
             display.warning(w)
 
         if not collections and not path_found:
-            raise AnsibleOptionsError(
-                "- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type'])
+            display.warning(
+                "None of the provided paths were usable. Please specify a valid path with --{0}s-path.".format(context.CLIARGS['type'])
             )
 
         if output_format == 'json':

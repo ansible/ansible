@@ -152,14 +152,13 @@
 - name: test that no json is emitted when no collection paths are usable
   command: "ansible-galaxy collection list --format json"
   register: list_result_error
-  ignore_errors: True
   environment:
     ANSIBLE_COLLECTIONS_PATH: "i_dont_exist"
 
-- name: Ensure we get the expected error
+- name: Ensure we get the expected warning
   assert:
     that:
-      - "'{}' not in list_result_error.stdout"
+      - "'{}' in list_result_error.stdout"
       - "'None of the provided paths were usable' in list_result_error.stderr"
 
 - name: install an artifact to the second collections path
