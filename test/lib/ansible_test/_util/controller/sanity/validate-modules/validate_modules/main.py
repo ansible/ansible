@@ -325,10 +325,20 @@ class InvalidImportChecker(ast.NodeVisitor):
             if isinstance(node.func.value, ast.Name):
                 if node.func.value.id == 'os':
                     if node.func.attr in self.os_methods:
-                        self.system_calls.append((node.lineno, node.col_offset, self.os_methods.get(node.func.attr), f"use-run-command-not-os-{node.func.attr}"))
+                        self.system_calls.append(
+                            (
+                                node.lineno, node.col_offset, self.os_methods.get(node.func.attr),
+                                f"use-run-command-not-os-{node.func.attr}"
+                            )
+                        )
                 elif node.func.value.id == 'subprocess':
                     if node.func.attr in self.subprocess_methods:
-                        self.system_calls.append((node.lineno, node.col_offset, self.subprocess_methods.get(node.func.attr), f"use-run-command-not-subprocess-{node.func.attr}"))
+                        self.system_calls.append(
+                            (
+                                node.lineno, node.col_offset, self.subprocess_methods.get(node.func.attr),
+                                f"use-run-command-not-{node.func.attr.lower()}"
+                            )
+                        )
 
         # Case 2: Checking for function calls
         elif isinstance(node.func, ast.Name):
