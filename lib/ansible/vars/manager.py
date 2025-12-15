@@ -371,7 +371,7 @@ class VariableManager:
                                 raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'"
                                                                % vars_file_item, obj=vars_file_item) from ex
 
-                    display.warning("skipping vars_file item due to an undefined variable", obj=vars_file_item)
+                    display.warning("skipping vars_files item due to an undefined variable", obj=vars_file_item)
                     continue
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
