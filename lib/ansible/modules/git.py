@@ -700,11 +700,10 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     elif is_remote_tag(git_path, module, dest, remote, version):
         tag = True
         cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
-    elif is_sha1_string(version):
-        # appears to be a sha1.  return as-is since it appears
-        # cannot check for a specific sha1 on remote
+    elif looks_like_sha1_string(version):
+        # appears to be a sha1 (it might not be, but it wasn't found to be a version, branch, or tag)
         if module.check_mode:
-            module.warn("Using a sha1 version in check_mode may not behave as `ls-remote` cannot check for a specific sha1.")
+            module.warn(f"version: {version} appears to be a sha1 hash. Check mode may not behave as expected as git ls-remote` cannot check for a specific sha1.")
         return version
     else:
         module.fail_json(f"Could not determine what version: {version} was, or {version} does not exist on remote.")
@@ -789,9 +788,10 @@ def is_not_a_branch(git_path, module, dest):
             return True
     return False
 
-def is_sha1_string(version: str) -> bool:
-    matches = re.match(r"^[a-fA-F0-9]{40}$", version)
-    if matches:
+def looks_like_sha1_string(version: str) -> bool:
+    matches_long = re.match(r"^[a-fA-F0-9]{40}$", version)
+    matches_short = re.match(r"^[a-fA-F0-9]{7}$", version)
+    if matches_long or matches_short:
         return True
     else:
         return False
