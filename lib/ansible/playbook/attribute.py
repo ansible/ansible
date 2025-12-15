@@ -185,7 +185,10 @@ class FieldAttribute(Attribute):
 
 class ConnectionFieldAttribute(FieldAttribute):
     def __get__(self, obj, obj_type=None):
-        from ansible.module_utils.compat.paramiko import _paramiko as paramiko
+        try:
+            import paramiko
+        except Exception:
+            paramiko = None
         from ansible.utils.ssh_functions import check_for_controlpersist
         value = super().__get__(obj, obj_type)
 
