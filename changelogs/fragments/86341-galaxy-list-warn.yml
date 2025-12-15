@@ -1,0 +1,2 @@
+bugfixes:
+   - ansible-galaxy - warn instead of raising an error when no valid role or collections paths exist (https://github.com/ansible/ansible/pull/86341)
