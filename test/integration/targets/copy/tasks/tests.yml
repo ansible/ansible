@@ -2535,3 +2535,5 @@
         state: absent
       loop:
         - '{{ remote_file }}'
+
+- include_tasks: src_directory_contaning_one_single_file.yml
