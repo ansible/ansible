@@ -277,23 +277,43 @@ class InvalidImportChecker(ast.NodeVisitor):
     def __init__(self):
         self.import_names = []
         self.system_calls = []
+        self.os_methods = {
+            'popen': 'os.popen',
+            'posix_spawn': 'os.posix_spawn',
+            'posix_spawnp': 'os.posix_spawnp',
+            'spawnl': 'os.spawnl',
+            'spawnle': 'os.spawnle',
+            'spawnlp': 'os.spawnlp',
+            'spawnlpe': 'os.spawnlpe',
+            'spawnv': 'os.spawnv',
+            'spawnve': 'os.spawnve',
+            'spawnvp': 'os.spawnvp',
+            'spawnvpe': 'os.spawnvpe',
+            'system': 'os.system',
+        }
+        self.subprocess_methods = {
+            'Popen': 'subprocess.Popen',
+            'call': 'subprocess.call',
+            'run': 'subprocess.run',
+            'getstatusoutput': 'subprocess.getstatusoutput',
+            'getoutput': 'subprocess.getoutput',
+            'check_output': 'subprocess.check_output',
+            'check_call': 'subprocess.check_call',
+        }
 
     def visit_ImportFrom(self, node):
         """Checks for 'from something import anything' or 'from something import anything as mysys'."""
         if node.module == 'os':
             for alias in node.names:
                 # If aliased, store the alias name; otherwise, store particular name from import
-                if alias.name == 'system':
-                    imported_name = alias.asname if alias.asname else 'system'
-                    self.import_names.append(imported_name)
-                elif alias.name == 'call':
-                    imported_name = alias.asname if alias.asname else 'call'
+                if alias.name in self.os_methods:
+                    imported_name = alias.asname if alias.asname else alias.name
                     self.import_names.append(imported_name)
         elif node.module == 'subprocess':
             for alias in node.names:
                 # If aliased, store the alias name; otherwise, store particular name from import
-                if alias.name == 'Popen':
-                    imported_name = alias.asname if alias.asname else 'Popen'
+                if alias.name in self.subprocess_methods:
+                    imported_name = alias.asname if alias.asname else alias.name
                     self.import_names.append(imported_name)
         self.generic_visit(node)
 
@@ -304,13 +324,12 @@ class InvalidImportChecker(ast.NodeVisitor):
         if isinstance(node.func, ast.Attribute):
             if isinstance(node.func.value, ast.Name):
                 if node.func.value.id == 'os':
-                    if node.func.attr == 'system':
-                        self.system_calls.append((node.lineno, node.col_offset, "os.system", "use-run-command-not-os-system"))
-                    elif node.func.attr == 'call':
-                        self.system_calls.append((node.lineno, node.col_offset, "os.call", "use-run-command-not-os-call"))
+                    if node.func.attr in self.os_methods:
+                        self.system_calls.append((node.lineno, node.col_offset, self.os_methods.get(node.func.attr), f"use-run-command-not-os-{node.func.attr}"))
                 elif node.func.value.id == 'subprocess':
-                    if node.func.attr == 'Popen':
-                        self.system_calls.append((node.lineno, node.col_offset, "subprocess.Popen", "use-run-command-not-popen"))
+                    if node.func.attr in self.subprocess_methods:
+                        self.system_calls.append((node.lineno, node.col_offset, self.subprocess_methods.get(node.func.attr), f"use-run-command-not-subprocess-{node.func.attr}"))
+
         # Case 2: Checking for function calls
         elif isinstance(node.func, ast.Name):
             func_name = node.func.id
