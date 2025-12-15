@@ -30,7 +30,7 @@ except Exception as err:
 def __getattr__(name: str) -> object:
     """Dynamic lookup to issue deprecation warnings for external import of deprecated items."""
     if (res := globals().get(f'_{name}', ...)) is not ...:
-        _deprecate(f'The {name!r} compat import is deprecated.', version='2.21')
+        _deprecate(f'The {name!r} compat import is deprecated.', version='2.22')
 
         return res
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils/compat/paramiko - Fix invalid deprecation version for paramiko compat import.
