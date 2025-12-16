@@ -36,16 +36,13 @@ from itertools import chain
 try:
     from packaging.requirements import Requirement as PkgReq
 except ImportError:
-    class PkgReq:  # type: ignore[no-redef]
-        pass
-
     HAS_PACKAGING = False
 else:
     HAS_PACKAGING = True
 
 try:
-    from distlib.manifest import Manifest  # type: ignore[import]
-    from distlib import DistlibException  # type: ignore[import]
+    from distlib.manifest import Manifest
+    from distlib import DistlibException
 except ImportError:
     HAS_DISTLIB = False
 else:

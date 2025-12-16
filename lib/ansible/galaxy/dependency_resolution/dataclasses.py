@@ -28,11 +28,12 @@ if t.TYPE_CHECKING:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import HAS_PACKAGING, PkgReq
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+
+from .. import collection as _glx_coll_mod
 
 
 _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
@@ -306,10 +307,10 @@ class _ComputedReqKindsMixin:
             if not req['version']:
                 del req['version']
         else:
-            if not HAS_PACKAGING:
+            if not _glx_coll_mod.HAS_PACKAGING:
                 raise AnsibleError("Failed to import packaging, check that a supported version is installed")
             try:
-                pkg_req = PkgReq(collection_input)
+                pkg_req = _glx_coll_mod.PkgReq(collection_input)
             except Exception as e:
                 # packaging doesn't know what this is, let it fly, better errors happen in from_requirement_dict
                 req['name'] = collection_input

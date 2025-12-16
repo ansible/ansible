@@ -21,7 +21,10 @@ if t.TYPE_CHECKING:
     from ansible.utils.display import Display
 
 
-def get_signature_from_source(source, display=None):  # type: (str, t.Optional[Display]) -> str
+def get_signature_from_source(
+    source: str,
+    display: Display | None = None,
+) -> str:
     if display is not None:
         display.vvvv(f"Using signature at {source}")
     try:
@@ -41,11 +44,11 @@ def get_signature_from_source(source, display=None):  # type: (str, t.Optional[D
 
 
 def run_gpg_verify(
-    manifest_file,  # type: str
-    signature,  # type: str
-    keyring,  # type: str
-    display,  # type: Display
-):  # type: (...) -> tuple[str, int]
+    manifest_file: str,
+    signature: str,
+    keyring: str,
+    display: Display,
+) -> tuple[str, int]:
     status_fd_read, status_fd_write = os.pipe()
 
     # running the gpg command will create the keyring if it does not exist
@@ -95,7 +98,7 @@ def run_gpg_verify(
         return stdout, p.returncode
 
 
-def parse_gpg_errors(status_out):  # type: (str) -> t.Iterator[GpgBaseError]
+def parse_gpg_errors(status_out: str) -> t.Iterator[GpgBaseError]:
     for line in status_out.splitlines():
         if not line:
             continue
@@ -129,9 +132,14 @@ class GpgBaseError(Exception):
     @classmethod
     def get_gpg_error_description(cls) -> str:
         """Return the current class description."""
+        if cls.__doc__ is None:
+            raise RuntimeError(
+                f'{cls!r} was expected to have a docstring but it does not.',
+            )
+
         return ' '.join(cls.__doc__.split())
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         for field_name, field_type in inspect.get_annotations(type(self), eval_str=True).items():
             super(GpgBaseError, self).__setattr__(field_name, field_type(getattr(self, field_name)))
 

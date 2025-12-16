@@ -717,9 +717,16 @@ class DnfModule(YumDnf):
             else:
                 solution = dnf.subject.Subject(pkg_spec).get_best_solution(self.base.sack)
                 q = solution["query"]
-                if not q or not solution['nevra'] or solution['nevra'].has_just_name():
+                nevra = solution['nevra']
+                if not q or not nevra or nevra.has_just_name() or not nevra.version:
                     return False
-                installed = self.base.sack.query().installed().filter(name=solution['nevra'].name)
+
+                # Filter by name and arch (if specified), but NOT by version
+                # since we need to find installed packages to compare versions against
+                filter_kwargs = {'name': nevra.name}
+                if nevra.arch:
+                    filter_kwargs['arch'] = nevra.arch
+                installed = self.base.sack.query().installed().filter(**filter_kwargs)
                 if not installed:
                     return False
                 return installed[0].evr_gt(q[0])
@@ -1006,8 +1013,12 @@ class DnfModule(YumDnf):
                     for module in module_specs:
                         try:
                             if self._is_module_installed(module):
+                                self.module_base.upgrade([module])
                                 response['results'].append("Module {0} upgraded.".format(module))
-                            self.module_base.upgrade([module])
+                            else:
+                                self.module_base.install([module])
+                                self.module_base.enable([module])
+                                response['results'].append("Module {0} installed.".format(module))
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(' '.join((module, to_native(e))))
 
@@ -1178,7 +1189,7 @@ class DnfModule(YumDnf):
                     if tid is not None:
                         transaction = self.base.history.old([tid])[0]
                         if transaction.return_code:
-                            failure_response['failures'].append(transaction.output())
+                            failure_response['failures'].extend(transaction.output())
 
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'

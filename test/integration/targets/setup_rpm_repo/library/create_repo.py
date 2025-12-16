@@ -34,6 +34,7 @@ class RPM:
     file: str | None = None
     binary: str | None = None
     provides: list[str] | None = None
+    pre: str | None = None
 
 
 SPECS = [
@@ -66,6 +67,7 @@ SPECS = [
     RPM(name='package-name', version='1.0'),
     RPM(name='provides-package', version='1.0', provides=['provided-package']),
     RPM(name='provided-package', version='1.0'),
+    RPM(name='broken-scriptlet', version='1.0', pre='/bin/false\n'),
 ]
 
 
@@ -91,6 +93,9 @@ def create_repo():
                     spec.file, make_gif()
                 )
             )
+
+        if spec.pre:
+            pkg.add_pre(spec.pre)
 
         if spec.binary:
             pkg.add_simple_compilation(installPath=spec.binary)

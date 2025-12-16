@@ -803,9 +803,19 @@ class Dnf5Module(YumDnf):
                         rc=1,
                     )
                 elif result != libdnf5.base.Transaction.TransactionRunResult_SUCCESS:
+                    failures = []
+                    if result == libdnf5.base.Transaction.TransactionRunResult_ERROR_RPM_RUN:
+                        try:
+                            failures = list(transaction.get_rpm_messages())
+                        except AttributeError:
+                            # get_rpm_messages is not available in dnf5 < 5.2.7.0
+                            pass
+                    # Add the transaction problems to the failures
+                    failures.extend(["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()])
+
                     self.module.fail_json(
                         msg="Failed to install some of the specified packages",
-                        failures=["{}: {}".format(transaction.transaction_result_to_string(result), log) for log in transaction.get_transaction_problems()],
+                        failures=failures,
                         rc=1,
                     )
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin - fix resource leaks when using sshpass

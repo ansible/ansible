@@ -618,6 +618,22 @@
         - "not dnf_result is changed"
         - "dnf_result is failed"
 
+- name: try to install an RPM with error in scriptlet
+  dnf:
+    name: broken-scriptlet
+    state: present
+    disable_gpg_check: true
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify that dnf failed
+  assert:
+    that:
+        - "not dnf_result is changed"
+        - "dnf_result is failed"
+        - dnf_result.failures | length > 0
+        - '"scriptlet failed, exit status 1" in dnf_result.failures[0]'
+
 # setup for testing installing an RPM from local file
 
 - set_fact:
