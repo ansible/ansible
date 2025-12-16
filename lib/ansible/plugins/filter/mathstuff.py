@@ -71,10 +71,7 @@ def unique(environment, a, case_sensitive=None, attribute=None):
             raise AnsibleError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
                                "you need a newer version of Jinja2 that provides their version of the filter.")
 
-        c = []
-        for x in a:
-            if x not in c:
-                c.append(x)
+        c = list(dict.fromkeys(a))
 
     return c
 
