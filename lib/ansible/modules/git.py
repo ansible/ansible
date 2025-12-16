@@ -329,6 +329,7 @@ git_dir_before:
 
 import filecmp
 import os
+import pathlib
 import re
 import shlex
 import stat
@@ -678,6 +679,19 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
     return {}
 
 
+def get_sha_hash(module, git_path, remote, version) -> str:
+    temporary_repository = pathlib.Path(module.tmpdir) / "tmp_repo/"
+    temporary_repository.mkdir()
+
+    module.run_command([git_path, 'init'], cwd=temporary_repository) #  Create a bare repo
+
+    module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=temporary_repository)
+
+    module.run_command([git_path, 'fetch', '--dry-run', 'origin', version], cwd=temporary_repository, check_rc=True)
+
+    # Should only succeed when 'version' is a valid revision
+    return version
+
 def get_remote_head(git_path, module, dest, version, remote, bare):
     cloning = False
     cwd = None
@@ -700,13 +714,12 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     elif is_remote_tag(git_path, module, dest, remote, version):
         tag = True
         cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
-    elif looks_like_hexadecimal_string(version):
-        # appears to be a sha1 (it might not be, but it wasn't found to be a version, branch, or tag)
-        if module.check_mode:
-            module.warn(f"version: {version} appears to be a sha hash. Check mode may not behave as expected.")
-        return version  # return as-is because we can't check for a specific sha1 on remote
     else:
-        module.fail_json(f"Could not determine what version: {version} was, or {version} does not exist on remote.")
+        # Appears to be a sha hash. Checking requires special action
+        rev = get_sha_hash(module, git_path, remote, version)
+
+        return rev
+
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
