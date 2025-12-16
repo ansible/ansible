@@ -1318,7 +1318,7 @@ def main():
     result.update(before=None)
 
     local_mods = False
-    if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone) or module.check_mode:
+    if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
         # if there is no git configuration, do a clone operation unless:
         # * the user requested no clone (they just want info)
         # * we're doing a check mode test
