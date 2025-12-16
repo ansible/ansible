@@ -704,7 +704,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         # appears to be a sha1 (it might not be, but it wasn't found to be a version, branch, or tag)
         if module.check_mode:
             module.warn(f"version: {version} appears to be a sha1 hash. Check mode may not behave as expected as git ls-remote` cannot check for a specific sha1.")
-        return version
+        return version  # return as-is because we can't check for a specific sha1 on remote
     else:
         module.fail_json(f"Could not determine what version: {version} was, or {version} does not exist on remote.")
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
