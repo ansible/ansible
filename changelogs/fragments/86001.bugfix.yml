@@ -1,2 +1,2 @@
-bugfixes:
+removed_features:
   - Removed deprecated paramiko compat import and updated callers accordingly.
