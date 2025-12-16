@@ -683,14 +683,16 @@ def get_sha_hash(module, git_path, remote, version) -> str:
     temporary_repository = pathlib.Path(module.tmpdir) / "tmp_repo/"
     temporary_repository.mkdir()
 
-    module.run_command([git_path, 'init'], cwd=temporary_repository) #  Create a bare repo
+    module.run_command([git_path, 'init'], cwd=temporary_repository)  # Create a bare repo
 
     module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=temporary_repository)
 
+    # This command's error message is descriptive enough for our purposes, so we set check_rc to True and let it bail
     module.run_command([git_path, 'fetch', '--dry-run', 'origin', version], cwd=temporary_repository, check_rc=True)
 
     # Should only succeed when 'version' is a valid revision
     return version
+
 
 def get_remote_head(git_path, module, dest, version, remote, bare):
     cloning = False
