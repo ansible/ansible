@@ -13,10 +13,12 @@
     dest: "{{ remote_tmp_dir }}/minimalrepo_nonexistent_tag"
     version: nonexistent-tag
   ignore_errors: true
-  register: real_fake_tag
+  register: fake_tag
 
 - name: Assert correct behavior
   assert:
     that:
+      - checked_fake_tag is failed
+      - fake_tag is failed
       - checked_fake_tag is not changed
-      - checked_fake_tag.changed == real_fake_tag.changed
+      - checked_fake_tag.changed == fake_tag.changed
