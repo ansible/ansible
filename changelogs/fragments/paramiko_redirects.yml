@@ -1,0 +1,2 @@
+minor_changes:
+  - Redirect connection plugin ansible.builtin.paramiko_ssh to community.general.paramiko_ssh.

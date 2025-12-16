@@ -5,6 +5,10 @@ plugin_routing:
     # test entries
     redirected_local:
       redirect: ansible.builtin.local
+    paramiko:
+      redirect: community.general.paramiko_ssh
+    paramiko_ssh:
+      redirect: community.general.paramiko_ssh
     buildah:
       redirect: containers.podman.buildah
     podman:
