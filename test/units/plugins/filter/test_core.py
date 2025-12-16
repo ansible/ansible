@@ -87,3 +87,47 @@ def test_from_yaml_origin() -> None:
         assert origin.description == "a unit test"
         assert origin.line_num == 44  # source string origin plus two blank lines
         assert origin.col_num == 6
+
+
+@pytest.mark.parametrize("yaml_string", (
+    "foo: bar",
+    "- item1\n- item2",
+    "key: value",
+))
+def test_from_yaml_pure_python_no_path_error(yaml_string: str, monkeypatch) -> None:
+    """
+    Test that from_yaml/from_yaml_all filters handle pure Python PyYAML's
+    '<unicode string>' self.name without raising RuntimeError about non-absolute paths.
+
+    When pure Python PyYAML's Reader processes a string (not a file), it sets
+    self.name = '<unicode string>', which should be handled gracefully by
+    Origin.get_or_create_tag() rather than raising a path validation error.
+    """
+    # Force pure Python implementation by mocking HAS_LIBYAML
+    monkeypatch.setattr("ansible.module_utils.common.yaml.HAS_LIBYAML", False)
+
+    # Reload the loader module to pick up the mocked HAS_LIBYAML value
+    import importlib
+    from ansible._internal._yaml import _loader
+    importlib.reload(_loader)
+
+    # Test from_yaml filter
+    templar = Templar(variables=dict(yaml_data=yaml_string))
+    result = templar.template(trust_as_template("{{ yaml_data | from_yaml }}"))
+
+    # Verify no RuntimeError was raised and data was parsed
+    assert result is not None
+
+    # Test from_yaml_all filter
+    result_all = templar.template(trust_as_template("{{ yaml_data | from_yaml_all }}"))
+    assert isinstance(result_all, list)
+    assert len(result_all) >= 1
+
+    # Verify Origin tag handling - should not have a path that causes validation error
+    if isinstance(result, dict) and result:
+        first_value = next(iter(result.values()))
+        origin = Origin.get_tag(first_value)
+        # Origin should either be None/UNKNOWN or have a valid path/description
+        if origin and origin.path:
+            # If path exists, verify it doesn't cause validation errors
+            assert origin.path.startswith('/') or origin.path.startswith('<')
