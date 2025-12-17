@@ -269,16 +269,17 @@ class CallbackBase(AnsiblePlugin):
             # Callback does not declare result_yaml_line_width nor extend result_format_callback
             return None
 
-        if yaml_line_width == 'default':
-            return None
-        if yaml_line_width == 'no-break':
-            # Some very large value that effectively disables line breaks
-            return 0x7FFFFFFF
-        if yaml_line_width == 'terminal-width':
-            return self._display.columns
-
-        self._display.warn(f"Invalid value {yaml_line_width!r} for result_yaml_line_width")
-        return None
+        match yaml_line_width:
+            case 'default':
+                return None
+            case 'no-break':
+                # Some very large value that effectively disables line breaks
+                return 0x7FFFFFFF
+            case 'terminal-width':
+                return self._display.columns
+            case _:
+                self._display.warn(f"Invalid value {yaml_line_width!r} for result_yaml_line_width")
+                return None
 
     def _dump_results(
         self,
