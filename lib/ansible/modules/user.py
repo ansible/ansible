@@ -3132,17 +3132,34 @@ class BusyBox(User):
         - modify_user()
     """
     def _build_password_string(self, current_password=None):
+        """
+        Build the appropriate password string based on the current password and
+        module parameters.
+
+        This method will return '*' at a minimum to avoid creating an enabled
+        account with no password.
+        """
         lock = '!' if self.password_lock else ''
-        password = ''
+
+        # Order of precedence when choosing the password:
+        #   1. password from module parameters
+        #   2. current password
+        #   3. string to enable the account but without a password
+        password = '*'
         if self.password is not None:
             password = self.password
         elif current_password:
-            password = current_password.lstrip('!')
+            if current_password == '!':
+                # Special handling when the password is only a '!' to avoid
+                # unnecessary changes to the password to values like '!!' or '!*'.
+                lock = ''
+                password = current_password
+            elif current_password.startswith('!'):
+                # Preserve the existing password but unlock the account even if
+                # no password hash was provided in the module parameters.
+                password = current_password.lstrip('!')
 
-        # Ensure the account is locked at a minimum
-        result = f'{lock}{password or "!"}'
-
-        return result
+        return f'{lock}{password}'
 
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
@@ -3201,14 +3218,13 @@ class BusyBox(User):
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        if self.password is not None:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
-            cmd.append('--encrypted')
-            data = f'{self.name}:{self._build_password_string()}'
-            rc, out, err = self.execute_command(cmd, data=data)
+        cmd = [self.module.get_bin_path('chpasswd', True)]
+        cmd.append('--encrypted')
+        data = f'{self.name}:{self._build_password_string()}'
+        rc, out, err = self.execute_command(cmd, data=data)
 
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Add to additional groups
         if self.groups:
@@ -3285,8 +3301,7 @@ class BusyBox(User):
                 (self.password_lock and not current_password.startswith('!'))
                 or (new_password != current_password)
             ):
-                cmd = [self.module.get_bin_path('chpasswd', True)]
-                cmd.append('--encrypted')
+                cmd = [self.module.get_bin_path('chpasswd', True), '--encrypted']
                 data = f'{self.name}:{new_password}'
                 rc, out, err = self.execute_command(cmd, data=data)
 
