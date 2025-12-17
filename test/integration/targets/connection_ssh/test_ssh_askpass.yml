@@ -90,3 +90,31 @@
           - '"EXEC ssh " in askpass_out.stdout'
           - '"sshpass" not in askpass_out.stdout'
           - askpass_out.stdout is search('uid=\d+\(' ~ test_user_name ~ '\)')
+
+    - name: Test handle_prompt logic directly
+      shell: |
+        {{ ansible_playbook_python }} -c "
+        import os, sys;
+        sys.path.insert(0, '/root/ansible/lib');
+        os.environ['SSH_ASKPASS_PROMPT'] = 'confirm';
+        from ansible.cli._ssh_askpass import handle_prompt;
+        handle_prompt('Any Message');
+        "
+      register: test_confirm
+
+    - name: Test handle_prompt logic with none
+      shell: |
+        {{ ansible_playbook_python }} -c "
+        import os, sys;
+        sys.path.insert(0, '/root/ansible/lib');
+        os.environ['SSH_ASKPASS_PROMPT'] = 'none';
+        from ansible.cli._ssh_askpass import handle_prompt;
+        handle_prompt('Any Message');
+        "
+      register: test_none
+
+    - name: Verify responses
+      assert:
+        that:
+          - test_confirm.stdout | trim == "yes"
+          - test_none.stdout | trim == ""

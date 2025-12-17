@@ -1,0 +1,2 @@
+minor_changes:
+  - "ssh_askpass - Use SSH_ASKPASS_PROMPT environment variable for more reliable prompt type detection (https://github.com/ansible/ansible/issues/86319)"
