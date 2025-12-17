@@ -45,15 +45,12 @@ class ModuleDocFragment(object):
         name: Line width of YAML output
         description:
           - Configure the line width used for YAML. The YAML serializer will try to break longer lines.
-          - Set to V(default) for the PyYAML's default value, which is around 80 characters.
-          - Set to V(no-break) to disable line breaks.
-          - Set to V(terminal-width) to use the detected terminal width that is also used for other output of this callback.
         type: str
         default: default
         choices:
-          - default
-          - no-break
-          - terminal-width
+          default: Use PyYAML's default value, which is around 80 characters.
+          no-break: Disable line breaks.
+          terminal-width: Use the detected terminal width that is also used for other output of this callback.
         env:
           - name: ANSIBLE_CALLBACK_YAML_LINE_WIDTH
         ini:
