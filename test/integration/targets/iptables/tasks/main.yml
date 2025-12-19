@@ -35,15 +35,26 @@
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
 
-- name: install xt_comment for iptables `-m comment` tests on RHEL
-  dnf:
-    name:
-    - kernel-modules-extra
-    state: latest
-    exclude:
-    # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
-    - kernel-core
+- name: Get the latest version of kernel-modules-extra
   when: ansible_distribution == 'RedHat'
+  block:
+    - ansible.builtin.dnf:
+        list: kernel-modules-extra
+      register: package_info
+
+    - name: Filter the latest available version
+      ansible.builtin.set_fact:
+        latest_kernel_extra: "{{ package_info.results | selectattr('repo', 'ne', 'installed') | last }}"
+      when: package_info.results | length > 0
+
+    - name: install xt_comment for iptables `-m comment` tests on RHEL
+      dnf:
+          name: "{{ latest_kernel_extra.nevra }}"
+          state: latest
+          exclude:
+          # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
+          - kernel-core
+      when: latest_kernel_extra is defined
 
 - name: Use iptables with unnecessary extension match
   iptables:
