@@ -39,7 +39,7 @@
   dnf:
     name:
     - kernel-modules-extra
-    state: present
+    state: latest
     exclude:
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     - kernel-core
