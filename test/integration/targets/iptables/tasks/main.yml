@@ -43,7 +43,7 @@
     exclude:
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     - kernel-core
-  when: ansible_distribution == 'RedHat'
+  when: ansible_distribution == 'RedHat' and ansible_facts['distribution_version'] is version('10.0', '>=')
 
 - name: Use iptables with unnecessary extension match
   iptables:

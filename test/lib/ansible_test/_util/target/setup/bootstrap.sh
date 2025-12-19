@@ -298,12 +298,27 @@ bootstrap_remote_rhel_9()
 
 bootstrap_remote_rhel_10()
 {
+    # the iptables integration test relies on kernel-modules-extra
+    kernel_list="$(dnf list --showduplicates kernel | awk '/kernel.x86_64/ {print $2}')"
+    modules_list="$(dnf list --showduplicates kernel-modules-extra | awk '/kernel-modules-extra.x86_64/ {print $2}')"
+
+    kernel_tmp=$(mktemp)
+    modules_tmp=$(mktemp)
+
+    printf "%s\n" "$kernel_list" | sort -u > "$kernel_tmp"
+    printf "%s\n" "$modules_list" | sort -u > "$modules_tmp"
+
+    kernel_version="$(comm -12 $kernel_tmp $modules_tmp | head -n1)"
+
+    rm -f "$kernel_tmp" "$modules_tmp"
+
     py_pkg_prefix="python3"
 
     packages="
         gcc
         ${py_pkg_prefix}-devel
         ${py_pkg_prefix}-pip
+        kernel-${kernel_version}
         "
 
     if [ "${controller}" ]; then
@@ -314,6 +329,7 @@ bootstrap_remote_rhel_10()
             ${py_pkg_prefix}-packaging
             ${py_pkg_prefix}-pyyaml
             ${py_pkg_prefix}-resolvelib
+            kernel-${kernel_version}
             "
     fi
 

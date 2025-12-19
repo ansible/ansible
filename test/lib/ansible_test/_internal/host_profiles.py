@@ -63,6 +63,7 @@ from .util import (
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
+    OutputStream,
 )
 
 from .util_common import (
@@ -1462,6 +1463,8 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
         ssh = self.get_origin_controller_connection()
         ssh.run([shell], data=setup_sh, capture=False)
+        if self.config.platform == 'rhel' and self.config.version == '10.0':
+            ssh.run(["reboot"], capture=False, interactive=False, output_stream=OutputStream.ORIGINAL)
 
     def get_ssh_connection(self) -> SshConnection:
         """Return an SSH connection for accessing the host."""
