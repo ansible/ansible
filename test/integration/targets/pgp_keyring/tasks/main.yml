@@ -1,0 +1,21 @@
+# test code for the pgp_keyring action
+# (c) 2025, Eero Aaltonen
+
+- name: Install Microsoft Package signing key
+  pgp_keyring:
+    src: microsoft.asc
+    dest: microsoft.pgp
+
+- name: stat output file
+  stat:
+      path: microsoft.pgp
+  register: binary_keyring
+
+- assert:
+    that:
+      binary_keyring.stat.exists
+
+- name: Remove binary keyring
+  file:
+    path: binary_keyring.path
+    state: absent
