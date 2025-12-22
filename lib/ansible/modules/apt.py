@@ -128,7 +128,7 @@ options:
       - Using this option can potentially destroy your system.
     type: bool
     default: 'no'
-    version_added: '2.20'
+    version_added: '2.21'
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
