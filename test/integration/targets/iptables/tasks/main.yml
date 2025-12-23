@@ -36,7 +36,6 @@
     exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
 
 - name: Get the latest version of kernel-modules-extra
-  when: ansible_distribution == 'RedHat'
   block:
     - ansible.builtin.dnf:
         list: kernel-modules-extra
@@ -55,6 +54,13 @@
           # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
           - kernel-core
       when: latest_kernel_extra is defined
+
+  when: ansible_distribution == 'RedHat' and ansible_facts['distribution_version'] is version('10.0', '>=')
+  register: has_kernel_modules_extra
+  ignore_errors: True
+
+- meta: end_role
+  when: has_kernel_modules_extra is failed
 
 - name: Use iptables with unnecessary extension match
   iptables:
