@@ -1,0 +1,2 @@
+bugfixes:
+- handlers - Do not apply import/include task conditionals to imported handlers (https://github.com/ansible/ansible/issues/86349)

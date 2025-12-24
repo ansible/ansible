@@ -256,7 +256,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             if _parent and (value is Sentinel or extend):
                 try:
                     if getattr(_parent, 'statically_loaded', True):
-                        if hasattr(_parent, '_get_parent_attribute'):
+                        if attr == 'when' and self._use_handlers and not isinstance(_parent, Block):
+                            parent_value = Sentinel
+                        elif hasattr(_parent, '_get_parent_attribute'):
                             parent_value = _parent._get_parent_attribute(attr)
                         else:
                             parent_value = getattr(_parent, f'_{attr}', Sentinel)
@@ -266,7 +268,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                             value = parent_value
                 except AttributeError:
                     pass
-            if self._role and (value is Sentinel or extend):
+            if self._role and (value is Sentinel or extend) and not (attr == 'when' and self._use_handlers):
                 try:
                     parent_value = getattr(self._role, f'_{attr}', Sentinel)
                     if extend:
@@ -288,7 +290,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                                 break
                 except AttributeError:
                     pass
-            if self._play and (value is Sentinel or extend):
+            if self._play and (value is Sentinel or extend) and not (attr == 'when' and self._use_handlers):
                 try:
                     play_value = getattr(self._play, f'_{attr}', Sentinel)
                     if play_value is not Sentinel:

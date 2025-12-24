@@ -22,6 +22,7 @@ import unittest
 
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.playbook.task_include import TaskInclude
 
 
 @pytest.mark.usefixtures('collection_loader')
@@ -70,3 +71,19 @@ class TestBlock(unittest.TestCase):
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
+
+    def test_handler_blocks_do_not_inherit_when_from_task_include(self):
+        parent = TaskInclude()
+        parent.when = ['inventory_hostname != "localhost"']
+
+        handler_block = Block(play=None, task_include=parent, use_handlers=True)
+
+        self.assertEqual(handler_block.when, [])
+
+    def test_handler_blocks_still_inherit_when_from_parent_block(self):
+        parent_block = Block(play=None, use_handlers=True)
+        parent_block.when = ['inventory_hostname != "localhost"']
+
+        handler_block = Block(play=None, parent_block=parent_block, use_handlers=True)
+
+        self.assertEqual(handler_block.when, ['inventory_hostname != "localhost"'])
