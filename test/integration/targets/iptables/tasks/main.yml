@@ -48,7 +48,7 @@
 
     - name: install xt_comment for iptables `-m comment` tests on RHEL
       dnf:
-          name: "{{ latest_kernel_extra.nevra }}"
+          name: "{{ latest_kernel_extra.name }}-{{ latest_kernel_extra.version }}-{{ latest_kernel_extra.release }}.{{ latest_kernel_extra.arch }}"
           state: latest
           exclude:
           # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
