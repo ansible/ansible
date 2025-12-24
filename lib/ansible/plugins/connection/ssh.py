@@ -1588,6 +1588,9 @@ class Connection(ConnectionBase):
 
     def _is_tty_requested(self):
 
+        if self.get_option('use_tty'):
+            return True
+
         # check if we require tty (only from our args, cannot see options in configuration files)
         opts = []
         for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):

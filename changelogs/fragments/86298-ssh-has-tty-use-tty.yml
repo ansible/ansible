@@ -1,0 +1,2 @@
+bugfixes:
+- ssh connection - Ensure has_tty respects the use_tty option when determining if a TTY is available (https://github.com/ansible/ansible/issues/86298)
