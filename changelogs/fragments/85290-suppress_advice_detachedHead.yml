@@ -1,0 +1,2 @@
+minor_changes:
+  - galaxy - use advice.detachedHead=false for git_switch_cmd (https://github.com/ansible/ansible/pull/85290).
