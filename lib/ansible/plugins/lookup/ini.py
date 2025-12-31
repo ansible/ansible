@@ -58,6 +58,12 @@ DOCUMENTATION = """
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative files.
+      - ref: community_general_ini_file_module_tweak_settings_in_ini_files
+        description: Tweak settings in INI files
+      - ref: community_general_from_ini_filter_converts_ini_text_input_into_a_dictionary
+        description: Converts INI text input into a dictionary
+      - ref: community_general_to_ini_filter_converts_a_dictionary_to_the_ini_file_format
+        description: Converts a dictionary to the INI file format
 """
 
 EXAMPLES = """
