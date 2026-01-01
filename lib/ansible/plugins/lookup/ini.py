@@ -61,10 +61,8 @@ DOCUMENTATION = """
       - module: community.general.ini_file
       - plugin: community.general.from_ini
         plugin_type: filter
-        description: Converts INI text input into a dictionary
       - plugin: community.general.to_ini
         plugin_type: filter
-        description: Converts a dictionary to the INI file format
 """
 
 EXAMPLES = """
