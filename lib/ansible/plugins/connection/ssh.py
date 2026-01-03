@@ -1588,7 +1588,7 @@ class Connection(ConnectionBase):
 
     def _is_tty_requested(self):
 
-        if self.get_option('use_tty'):
+        if self.become and getattr(self.become, 'require_tty', False):
             return True
 
         # check if we require tty (only from our args, cannot see options in configuration files)
