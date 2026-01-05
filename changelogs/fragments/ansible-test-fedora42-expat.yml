@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Upgrade ``expat`` during provisioning of Fedora 42 remote instances.
