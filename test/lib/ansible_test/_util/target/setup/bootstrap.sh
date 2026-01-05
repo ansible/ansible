@@ -163,6 +163,18 @@ bootstrap_remote_fedora()
         && break
         retry_or_fail
     done
+
+    packages="
+        expat
+        "
+
+    retry_init
+    while true; do
+        # shellcheck disable=SC2086
+        dnf update -q -y ${packages} \
+        && break
+        retry_or_fail
+    done
 }
 
 bootstrap_remote_freebsd()
