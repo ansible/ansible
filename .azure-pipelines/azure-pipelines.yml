@@ -85,8 +85,8 @@ stages:
               test: rhel/8.10@3.6
             - name: RHEL 8.10 py39
               test: rhel/8.10@3.9
-            - name: RHEL 9.6
-              test: rhel/9.6
+            - name: RHEL 9.7
+              test: rhel/9.7
           groups:
             - 1
             - 2
@@ -95,8 +95,8 @@ stages:
           targets:
             - name: RHEL 8.10
               test: rhel/8.10
-            - name: RHEL 9.6
-              test: rhel/9.6
+            - name: RHEL 9.7
+              test: rhel/9.7
           groups:
             - 3
             - 4
@@ -106,8 +106,8 @@ stages:
           targets:
             - name: RHEL 8.10
               test: rhel/8.10
-            - name: RHEL 9.6
-              test: rhel/9.6
+            - name: RHEL 9.7
+              test: rhel/9.7
             - name: Ubuntu 20.04
               test: ubuntu/20.04
             - name: Ubuntu 22.04
