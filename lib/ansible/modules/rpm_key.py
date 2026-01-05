@@ -91,7 +91,7 @@ import hashlib
 import re
 import os.path
 import tempfile
-import typing as t
+import typing as _t
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
@@ -100,7 +100,7 @@ from ansible.module_utils.common.text.converters import to_native
 
 # Type alias for ctypes pointer to uint8 array (packet data)
 # Using Any here because ctypes._Pointer is private, but documenting the actual type
-PktPointer = t.Any  # Actually: ctypes.POINTER(ctypes.c_uint8)
+PktPointer = _t.Any  # Actually: ctypes.POINTER(ctypes.c_uint8)
 
 
 class LibRPM:
@@ -138,7 +138,7 @@ class LibRPM:
         self.libc.free.argtypes = [ctypes.c_void_p]
         self.libc.free.restype = None
 
-    def _parse_armor(self, armor: str) -> tuple[t.Optional[PktPointer], int]:
+    def _parse_armor(self, armor: str) -> tuple[PktPointer | None, int]:
         """
         Parse ASCII armored PGP data using pgpParsePkts().
         Returns (pkt, pktlen) tuple or (None, 0) on error.
@@ -154,7 +154,7 @@ class LibRPM:
 
         return pkt, pktlen.value
 
-    def _parse_packet_header(self, pkt: PktPointer, offset: int, pktlen: int) -> tuple[t.Optional[int], int, int]:
+    def _parse_packet_header(self, pkt: PktPointer, offset: int, pktlen: int) -> tuple[int | None, int, int]:
         """
         Parse a PGP packet header to get tag and packet length.
         Returns (tag, body_length, header_length) or (None, 0, 0) on error.
@@ -248,7 +248,7 @@ class LibRPM:
 
         return key_packets
 
-    def _get_key_version(self, pkt: PktPointer, offset: int, pktlen: int) -> t.Optional[int]:
+    def _get_key_version(self, pkt: PktPointer, offset: int, pktlen: int) -> int | None:
         """
         Get the version byte from a key packet.
         Returns version number (4 or 6) or None on error.
@@ -265,7 +265,7 @@ class LibRPM:
         # First byte of body is the version
         return pkt[body_offset]
 
-    def _compute_v4_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> t.Optional[str]:
+    def _compute_v4_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> str | None:
         """
         Compute V4 fingerprint from packet data.
         For V4 keys, fingerprint = SHA-1(0x99 || 2-byte-length || packet_body)
@@ -299,7 +299,7 @@ class LibRPM:
         fingerprint = hashlib.sha1(fp_data).digest()
         return fingerprint.hex().upper()
 
-    def _compute_v6_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> t.Optional[str]:
+    def _compute_v6_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> str | None:
         """
         Compute V6 fingerprint from packet data.
         For V6 keys, fingerprint = SHA-256(0x9B || 4-byte-length || packet_body)
