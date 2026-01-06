@@ -1356,7 +1356,7 @@ def modify_module(
     )
 
 
-def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -> dict[str, t.Any]:
+def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, template_fully: bool = False) -> dict[str, t.Any]:
     action_groups = task._parent._play._action_groups
     defaults = task.module_defaults
 
@@ -1387,14 +1387,16 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -
                 tmp_args.update(templar.resolve_to_container(module_defaults.get(f'group/{group_name}', {})))
 
     # handle specific action defaults
-    tmp_args.update(templar.resolve_to_container(module_defaults.get(action, {})))
+    if not template_fully:
+        tmp_args.update(templar.resolve_to_container(module_defaults.get(action, {})))
+    else:
+        tmp_args.update(templar.template(module_defaults.get(action, {})))
 
     return tmp_args
 
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
-    # Perform templating for action plugins.
-    args = templar.template(_get_action_arg_defaults(action, task, templar._engine))
+    args = _get_action_arg_defaults(action, task, templar._engine, template_fully=True)
     args.update(action_args)
 
     return args
