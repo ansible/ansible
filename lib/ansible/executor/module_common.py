@@ -1405,7 +1405,7 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, f
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
     """
-    Finalized arguments from module_defaults and update with action_args.
+    Finalize arguments from module_defaults and update with action_args.
 
     This is used by action plugins like gather_facts, package, and service,
     which select modules to execute after normal task argument finalization.
