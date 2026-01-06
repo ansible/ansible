@@ -132,5 +132,5 @@ ok: [testhost] =>
   item: 1
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=20   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2
+testhost                   : ok=20   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
 
