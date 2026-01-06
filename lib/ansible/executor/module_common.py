@@ -1387,10 +1387,10 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, t
                 tmp_args.update(templar.resolve_to_container(module_defaults.get(f'group/{group_name}', {})))
 
     # handle specific action defaults
-    if not template_fully:
-        tmp_args.update(templar.resolve_to_container(module_defaults.get(action, {})))
-    else:
+    if template_fully:
         tmp_args.update(templar.template(module_defaults.get(action, {})))
+    else:
+        tmp_args.update(templar.resolve_to_container(module_defaults.get(action, {})))
 
     return tmp_args
 
