@@ -104,7 +104,7 @@ skipping: [testhost] => (item=2)
 skipping: [testhost]
 
 TASK [debug] *******************************************************************
-ok: [testhost] => (item=a) =>
+ok: [testhost] => (item=a) => 
   msg: a
 
 RUNNING HANDLER [Test handler 1] ***********************************************
