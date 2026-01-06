@@ -1356,7 +1356,11 @@ def modify_module(
     )
 
 
-def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, template_fully: bool = False) -> dict[str, t.Any]:
+def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, finalize: bool = False) -> dict[str, t.Any]:
+    """Get module_defaults that match or contain a fully qualified action/module name.
+
+    The return value is not finalized by default because it occurs in TaskArgsFinalizer.
+    """
     action_groups = task._parent._play._action_groups
     defaults = task.module_defaults
 
@@ -1384,13 +1388,13 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, t
         if default.startswith('group/'):
             group_name = default.split('group/')[-1]
             if group_name in group_names:
-                if template_fully:
+                if finalize:
                     tmp_args.update(templar.template(module_defaults.get(f'group/{group_name}', {})))
                 else:
                     tmp_args.update(templar.resolve_to_container(module_defaults.get(f'group/{group_name}', {})))
 
     # handle specific action defaults
-    if template_fully:
+    if finalize:
         tmp_args.update(templar.template(module_defaults.get(action, {})))
     else:
         tmp_args.update(templar.resolve_to_container(module_defaults.get(action, {})))
@@ -1399,7 +1403,12 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, t
 
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
-    args = _get_action_arg_defaults(action, task, templar._engine, template_fully=True)
+    """Finalized arguments from module_defaults and update with action_args.
+
+    This is used by action plugins like gather_facts, package, and service,
+    which select modules to execute after normal task argument finalization.
+    """
+    args = _get_action_arg_defaults(action, task, templar._engine, finalize=True)
     args.update(action_args)
 
     return args
