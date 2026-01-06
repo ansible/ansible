@@ -1384,7 +1384,10 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, t
         if default.startswith('group/'):
             group_name = default.split('group/')[-1]
             if group_name in group_names:
-                tmp_args.update(templar.resolve_to_container(module_defaults.get(f'group/{group_name}', {})))
+                if template_fully:
+                    tmp_args.update(templar.template(module_defaults.get(f'group/{group_name}', {})))
+                else:
+                    tmp_args.update(templar.resolve_to_container(module_defaults.get(f'group/{group_name}', {})))
 
     # handle specific action defaults
     if template_fully:
