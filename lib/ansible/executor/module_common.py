@@ -1357,7 +1357,8 @@ def modify_module(
 
 
 def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, finalize: bool = False) -> dict[str, t.Any]:
-    """Get module_defaults that match or contain a fully qualified action/module name.
+    """
+    Get module_defaults that match or contain a fully qualified action/module name.
 
     The return value is not finalized by default because it occurs in TaskArgsFinalizer.
     """
@@ -1403,7 +1404,8 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine, f
 
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
-    """Finalized arguments from module_defaults and update with action_args.
+    """
+    Finalized arguments from module_defaults and update with action_args.
 
     This is used by action plugins like gather_facts, package, and service,
     which select modules to execute after normal task argument finalization.
