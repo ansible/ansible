@@ -4,5 +4,3 @@
   strategy: "{{ test_strategy | default('linear') }}"
   roles:
     - end_role_sample
-
-
