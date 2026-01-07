@@ -2,6 +2,10 @@
    meta: end_play
    when: ansible_distribution == "RedHat" and ansible_distribution_version == "10.1"
 
+ - name: Skip Fedora 43 until rpm_key has been updated
+   meta: end_play
+   when: ansible_distribution == "Fedora" and ansible_distribution_version == "43"
+
  - when: ansible_os_family == "RedHat"
    block:
 
