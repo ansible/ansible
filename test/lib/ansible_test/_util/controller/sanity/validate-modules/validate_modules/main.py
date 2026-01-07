@@ -328,7 +328,7 @@ class InvalidImportChecker(ast.NodeVisitor):
                         self.system_calls.append(
                             (
                                 node.lineno, node.col_offset, self.os_methods.get(node.func.attr),
-                                f"use-run-command-not-os-{node.func.attr}"
+                                "use-run-command-instead"
                             )
                         )
                 elif node.func.value.id == 'subprocess':
@@ -336,7 +336,7 @@ class InvalidImportChecker(ast.NodeVisitor):
                         self.system_calls.append(
                             (
                                 node.lineno, node.col_offset, self.subprocess_methods.get(node.func.attr),
-                                f"use-run-command-not-{node.func.attr.lower().replace('_', '-')}"
+                                "use-run-command-instead"
                             )
                         )
 
@@ -344,7 +344,7 @@ class InvalidImportChecker(ast.NodeVisitor):
         elif isinstance(node.func, ast.Name):
             func_name = node.func.id
             if func_name in self.import_names:
-                self.system_calls.append((node.lineno, node.col_offset, func_name, "use-run-command-not-native-function"))
+                self.system_calls.append((node.lineno, node.col_offset, func_name, "use-run-command-instead"))
 
         self.generic_visit(node)
 
