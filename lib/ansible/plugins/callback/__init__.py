@@ -262,6 +262,25 @@ class CallbackBase(AnsiblePlugin):
         return ((self._display.verbosity > verbosity or result.result.get('_ansible_verbose_always', False) is True)
                 and result.result.get('_ansible_verbose_override', False) is False)
 
+    def _get_yaml_width(self) -> t.Optional[int]:
+        try:
+            yaml_line_width = self.get_option('result_yaml_line_width')
+        except KeyError:
+            # Callback does not declare result_yaml_line_width nor extend result_format_callback
+            return None
+
+        match yaml_line_width:
+            case 'default':
+                return None
+            case 'no-break':
+                # Some very large value that effectively disables line breaks
+                return 0x7FFFFFFF
+            case 'terminal-width':
+                return self._display.columns
+            case _:
+                self._display.warn(f"Invalid value {yaml_line_width!r} for result_yaml_line_width")
+                return None
+
     def _dump_results(
         self,
         result: _c.Mapping[str, t.Any],
@@ -346,6 +365,7 @@ class CallbackBase(AnsiblePlugin):
                     Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
                     indent=indent,
+                    width=self._get_yaml_width(),
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
                 ' ' * (indent or 4)
@@ -415,6 +435,7 @@ class CallbackBase(AnsiblePlugin):
                     Dumper=functools.partial(_AnsibleCallbackDumper, lossy=lossy),
                     default_flow_style=False,
                     indent=indent,
+                    width=self._get_yaml_width(),
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
                 '    '
