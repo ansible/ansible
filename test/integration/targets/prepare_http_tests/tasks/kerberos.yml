@@ -8,7 +8,7 @@
     # https://github.com/heimdal/heimdal/issues/1224
     krb5_openssl_conf: >-
       {{
-        (ansible_facts.os_family == "FreeBSD" and ansible_facts.distribution_major_version == "14") | ternary(
+        (ansible_facts.os_family == "FreeBSD" and ansible_facts.distribution_major_version in ["14", "15"]) | ternary(
           remote_tmp_dir ~ "/openssl_legacy.cnf",
           ""
         )
