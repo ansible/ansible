@@ -803,14 +803,6 @@ def is_not_a_branch(git_path, module, dest):
     return False
 
 
-def looks_like_hexadecimal_string(version: str) -> bool:
-    matches_hexadecimal_characters = re.match(r"^[a-fA-F0-9]*$", version)
-    if matches_hexadecimal_characters:
-        return True
-    else:
-        return False
-
-
 def get_repo_path(dest, bare):
     if bare:
         repo_path = dest
