@@ -318,7 +318,7 @@ class InvalidImportChecker(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node):
-        """Checks for function calls: os.system(...) or system(...) (if imported)."""
+        """Checks for function calls: os.system(...) or system(...) or subprocess.Popen(...) (if imported)."""
 
         # Case 1: Checking imports
         if isinstance(node.func, ast.Attribute):
@@ -336,7 +336,7 @@ class InvalidImportChecker(ast.NodeVisitor):
                         self.system_calls.append(
                             (
                                 node.lineno, node.col_offset, self.subprocess_methods.get(node.func.attr),
-                                f"use-run-command-not-{node.func.attr.lower()}"
+                                f"use-run-command-not-{node.func.attr.lower().replace('_', '-')}"
                             )
                         )
 
@@ -344,7 +344,7 @@ class InvalidImportChecker(ast.NodeVisitor):
         elif isinstance(node.func, ast.Name):
             func_name = node.func.id
             if func_name in self.import_names:
-                self.system_calls.append((node.lineno, node.col_offset, func_name, f"use-run-command-not-{func_name}"))
+                self.system_calls.append((node.lineno, node.col_offset, func_name, "use-run-command-not-native-function"))
 
         self.generic_visit(node)
 
