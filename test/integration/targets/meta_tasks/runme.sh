@@ -79,3 +79,10 @@ ansible-playbook -i inventory_refresh.yml refresh_preserve_dynamic.yml "$@"
 
 # test rc when end_host in the rescue section
 ANSIBLE_FORCE_HANDLERS=0 ansible-playbook test_end_host_rescue_rc.yml
+
+# test end_role meta task
+for test_strategy in linear free; do
+  out="$(ansible-playbook test_end_role.yml -i inventory.yml -e test_strategy=$test_strategy -e end_role_cond=1 -vv "$@")"
+
+  grep -q "META: end_role conditional evaluated to False," <<< "$out"
+done
