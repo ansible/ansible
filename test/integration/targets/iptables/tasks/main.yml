@@ -35,6 +35,5 @@
     # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
     exclude: "{{ 'kernel-core' if ansible_distribution == 'RedHat' else omit }}"
 
-# FIXME: Disabling this test for now as it is not working on RHEL 10
-# - import_tasks: xt_comment.yml
+- import_tasks: xt_comment.yml
 - import_tasks: chain_management.yml

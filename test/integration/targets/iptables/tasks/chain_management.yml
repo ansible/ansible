@@ -52,8 +52,7 @@
     source: 0.0.0.0
     destination: 0.0.0.0
     jump: DROP
-    # FIXME: Enable when xt_comment is working on RHEL 10
-    #comment: "FOOBAR-CHAIN RULE"
+    comment: "FOOBAR-CHAIN RULE"
 
 - name: get the state of the iptable rules after rule is added to foobar chain
   become: true
@@ -64,8 +63,7 @@
   assert:
     that:
       - result is not failed
-      # FIXME: Enable when xt_comment is working on RHEL 10
-      # - '"FOOBAR-CHAIN RULE" in result.stdout'
+      - '"FOOBAR-CHAIN RULE" in result.stdout'
 
 - name: flush the foobar chain
   become: true
