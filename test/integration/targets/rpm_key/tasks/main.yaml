@@ -1,3 +1,7 @@
+ - name: Skip RHEL 10.1 until rpm_key has been updated
+   meta: end_play
+   when: ansible_distribution == "RedHat" and ansible_distribution_version == "10.1"
+
  - when: ansible_os_family == "RedHat"
    block:
 
