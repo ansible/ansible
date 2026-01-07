@@ -119,8 +119,8 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.22
-              test: alpine/3.22
+            - name: Alpine 3.23
+              test: alpine/3.23
             - name: Fedora 42
               test: fedora/42
             - name: RHEL 9.7
@@ -138,8 +138,8 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.22
-              test: alpine322
+            - name: Alpine 3.23
+              test: alpine323
             - name: Fedora 42
               test: fedora42
             - name: Ubuntu 22.04
@@ -153,8 +153,8 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.22
-              test: alpine322
+            - name: Alpine 3.23
+              test: alpine323
             - name: Fedora 42
               test: fedora42
             - name: Ubuntu 24.04
