@@ -1511,10 +1511,8 @@ class Connection(ConnectionBase):
 
         # -tt can cause various issues in some environments so allow the user
         # to disable it as a troubleshooting method.
-        use_tty = self.get_option('use_tty')
-
         args: tuple[str, ...]
-        if not in_data and sudoable and use_tty:
+        if self._is_tty_requested(in_data=in_data is not None, sudoable=sudoable):
             args = ('-tt', self.host, cmd)
         else:
             args = (self.host, cmd)
@@ -1586,10 +1584,7 @@ class Connection(ConnectionBase):
     def has_tty(self):
         return self._is_tty_requested()
 
-    def _is_tty_requested(self):
-
-        if self.become and self.become.require_tty:
-            return True
+    def _is_tty_requested(self, in_data: bool = False, sudoable: bool = True) -> bool:
 
         # check if we require tty (only from our args, cannot see options in configuration files)
         opts = []
@@ -1613,12 +1608,17 @@ class Connection(ConnectionBase):
                 if val[1].lower().strip() in ('yes', 'force'):
                     return True
 
+        # -tt can cause various issues in some environments so allow the user
+        # to disable it as a troubleshooting method.
+        if self.get_option('use_tty') and sudoable and not in_data:
+            return True
+
         return False
 
     def is_pipelining_enabled(self, wrap_async=False):
         """ override parent method and ensure we don't request a tty """
 
-        if self._is_tty_requested():
+        if self._is_tty_requested(in_data=True, sudoable=True):
             return False
         else:
             return super(Connection, self).is_pipelining_enabled(wrap_async)
