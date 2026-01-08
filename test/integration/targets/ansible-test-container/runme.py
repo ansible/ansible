@@ -192,8 +192,9 @@ def get_test_scenarios() -> list[TestScenario]:
             ]
 
             if engine == 'podman':
-                if os_release.id not in ('ubuntu',):
+                if os_release.id not in ('ubuntu', 'fedora'):
                     # rootfull podman is not supported by all systems
+                    # rootfull podman networking stopped working on Fedora 43 hosts when docker is installed
                     user_scenarios.append(UserScenario(ssh=ROOT_USER))
 
                 # TODO: test podman remote on Alpine and Ubuntu hosts
@@ -201,8 +202,9 @@ def get_test_scenarios() -> list[TestScenario]:
                 if os_release.id not in ('alpine', 'ubuntu'):
                     user_scenarios.append(UserScenario(remote=unprivileged_user))
 
-                if LOGINUID_MISMATCH and os_release.id not in ('ubuntu',):
+                if LOGINUID_MISMATCH and os_release.id not in ('ubuntu', 'fedora'):
                     # rootfull podman is not supported by all systems
+                    # rootfull podman networking stopped working on Fedora 43 hosts when docker is installed
                     user_scenarios.append(UserScenario())
 
             for user_scenario in user_scenarios:
