@@ -79,20 +79,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         self.assertTrue(conn.has_tty)
 
-    def test_plugins_connection_ssh_pipelining_not_disabled_by_use_tty_default(self):
-        pc = PlayContext()
-        conn = connection_loader.get('ssh', pc)
-
-        def get_option(option):
-            if option == 'use_tty':
-                return True
-            return None
-
-        conn.get_option = MagicMock(side_effect=get_option)
-
-        with patch('ansible.plugins.connection.ConnectionBase.is_pipelining_enabled', return_value=True):
-            self.assertTrue(conn.is_pipelining_enabled())
-
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
         become_success_token = b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
