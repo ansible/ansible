@@ -58,6 +58,11 @@ DOCUMENTATION = """
     seealso:
       - ref: playbook_task_paths
         description: Search paths used for relative files.
+      - module: community.general.ini_file
+      - plugin: community.general.from_ini
+        plugin_type: filter
+      - plugin: community.general.to_ini
+        plugin_type: filter
 """
 
 EXAMPLES = """
