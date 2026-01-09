@@ -1359,8 +1359,6 @@ def modify_module(
 def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -> dict[str, t.Any]:
     """
     Get module_defaults that match or contain a fully qualified action/module name.
-
-    The return value is not finalized by default because it occurs in TaskArgsFinalizer.
     """
     action_groups = task._parent._play._action_groups
     defaults = task.module_defaults
