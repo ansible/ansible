@@ -1357,6 +1357,9 @@ def modify_module(
 
 
 def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -> dict[str, t.Any]:
+    """
+    Get module_defaults that match or contain a fully qualified action/module name.
+    """
     action_groups = task._parent._play._action_groups
     defaults = task.module_defaults
 
@@ -1393,7 +1396,14 @@ def _get_action_arg_defaults(action: str, task: Task, templar: TemplateEngine) -
 
 
 def _apply_action_arg_defaults(action: str, task: Task, action_args: dict[str, t.Any], templar: Templar) -> dict[str, t.Any]:
+    """
+    Finalize arguments from module_defaults and update with action_args.
+
+    This is used by action plugins like gather_facts, package, and service,
+    which select modules to execute after normal task argument finalization.
+    """
     args = _get_action_arg_defaults(action, task, templar._engine)
+    args = templar.template({k: v for k, v in args.items() if k not in action_args})
     args.update(action_args)
 
     return args
