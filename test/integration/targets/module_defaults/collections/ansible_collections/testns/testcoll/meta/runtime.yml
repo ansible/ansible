@@ -69,6 +69,8 @@ action_groups:
     - metadata:
         extend_group:
           - testgroup
+  contains_setup:
+    - ansible.builtin.setup
   empty_metadata:
     - metadata: {}
   bad_metadata_format:

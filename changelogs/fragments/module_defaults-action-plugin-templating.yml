@@ -1,0 +1,2 @@
+bugfixes:
+  - package, service, gather_facts - fix templating module_defaults for modules executed by these action plugins. (https://github.com/ansible/ansible/issues/85848)

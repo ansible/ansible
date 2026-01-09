@@ -128,3 +128,21 @@
     - assert:
         that:
           - "ansible_facts.gather_subset == 'min'"
+
+- name: Test module_defaults templating when the action and module differ
+  hosts: localhost
+  gather_facts: True
+  tags:
+    - templating
+  vars:
+    subset_facts:
+      - "!all"
+      - "!min"
+      - env
+  module_defaults:
+    setup:
+      gather_subset: "{{ subset_facts }}"
+  tasks:
+    - assert:
+        that:
+          - ansible_facts.gather_subset == subset_facts

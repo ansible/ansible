@@ -69,28 +69,53 @@
 # Verify module_defaults for package and the underlying module are utilized
 # Validates: https://github.com/ansible/ansible/issues/72918
 - block:
-    # 'name' is required
+    # note: dnf module unexpectedly succeeds when no arguments are provided.
+    # Until the requires_one_of (?) bug is fixed, this test asserts changes are made to avoid false positives.
     - name: install apt with package defaults
       package:
       module_defaults:
         package:
           name: apt
           state: present
+      register: result
 
+    - assert:
+        that: result is changed
+
+    - name: uninstall apt between tests
+      dnf5:
+        name: apt
+        state: absent
+
+    # Validate package handles applying templated defaults for dnf
+    # https://github.com/ansible/ansible/issues/85848
     - name: install apt with dnf defaults (auto)
       package:
       module_defaults:
-        dnf:
-          name: apt
+        dnf5:
+          name: "{{ 'apt' }}"
           state: present
+      register: result
 
-    - name: install apt with dnf defaults (use dnf)
+    - assert:
+        that: result is changed
+
+    - name: uninstall apt between tests
+      dnf5:
+        name: apt
+        state: absent
+
+    - name: install apt with dnf defaults (use dnf5)
       package:
-        use: dnf
+        use: dnf5
       module_defaults:
-        dnf:
+        dnf5:
           name: apt
           state: present
+      register: result
+
+    - assert:
+        that: result is changed
   always:
     - name: remove apt
       dnf:

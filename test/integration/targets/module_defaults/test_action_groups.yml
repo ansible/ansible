@@ -130,3 +130,18 @@
         - metadata:
           collections:
             - testns.testcoll
+
+    - name: Test action plugin templates group defaults
+      vars:
+        setup_subset:
+          - "!all"
+          - "!min"
+          - local
+      module_defaults:
+        group/testns.testcoll.contains_setup:
+          gather_subset: "{{ setup_subset }}"
+      block:
+        - gather_facts:
+        - assert:
+            that:
+              - ansible_facts.gather_subset == setup_subset
