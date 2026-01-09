@@ -569,6 +569,7 @@ def main():
     # popped non-deb822 args
     mode = params.pop('mode')
     state = params.pop('state')
+    _install_python_debian_param = params.pop('install_python_debian')
 
     name = params['name']
     slug = re.sub(
