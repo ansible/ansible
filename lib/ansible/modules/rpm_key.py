@@ -106,25 +106,18 @@ PktPointer = _t.Any  # Actually: ctypes.POINTER(ctypes.c_uint8)
 class LibRPM:
     """Wrapper for librpm PGP key functions"""
 
+    # Constants
+    PGPTAG_PUBLIC_KEY = 6
+    PGPTAG_PUBLIC_SUBKEY = 14
+
     def __init__(self) -> None:
         # Load the librpm library
         lib_path = ctypes.util.find_library('rpm')
         if not lib_path:
             raise ImportError("Error: Could not find librpm library")
 
-        try:
-            self.lib = ctypes.CDLL(lib_path)
-        except OSError:
-            raise ImportError(f"Error: Could not load librpm library from {lib_path}")
-
-        try:
-            self.libc = ctypes.CDLL(None)
-        except OSError:
-            raise ImportError("Error: Could not load libC library")
-
-        # Constants
-        self.PGPTAG_PUBLIC_KEY = 6
-        self.PGPTAG_PUBLIC_SUBKEY = 14
+        self.lib = ctypes.CDLL(lib_path)
+        self.libc = ctypes.CDLL(None)
 
         # pgpArmor pgpParsePkts(const char *armor, uint8_t **pkt, size_t *pktlen)
         self.lib.pgpParsePkts.argtypes = [
@@ -146,7 +139,7 @@ class LibRPM:
         pkt = ctypes.POINTER(ctypes.c_uint8)()
         pktlen = ctypes.c_size_t()
 
-        armor_bytes = armor.encode('utf-8')
+        armor_bytes = armor.encode()
         result = self.lib.pgpParsePkts(armor_bytes, ctypes.byref(pkt), ctypes.byref(pktlen))
 
         if result < 0 or not pkt:
