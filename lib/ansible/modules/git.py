@@ -682,6 +682,8 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
 def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str) -> str:
     temporary_repository = pathlib.Path(module.tmpdir) / "tmp_repo"
 
+    temporary_repository.mkdir(exist_ok=True)
+
     module.run_command([git_path, 'init'], cwd=temporary_repository)  # Create a bare repo
 
     module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=temporary_repository)
