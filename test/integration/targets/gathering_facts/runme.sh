@@ -26,6 +26,9 @@ ANSIBLE_FACTS_MODULES='ansible.legacy.setup' ansible-playbook test_module_defaul
 
 ansible-playbook test_module_defaults.yml "$@" --tags networking
 
+# test gather_facts action templates module_defaults for different module name
+ansible-playbook test_module_defaults.yml "$@" --tags templating
+
 # test it works by default
 ANSIBLE_FACTS_MODULES='ansible.legacy.slow' ansible -m gather_facts localhost --playbook-dir ./ "$@"
 
