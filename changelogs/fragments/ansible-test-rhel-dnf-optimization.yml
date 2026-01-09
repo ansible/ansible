@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Optimize DNF configuration for managed remote RHEL instances.

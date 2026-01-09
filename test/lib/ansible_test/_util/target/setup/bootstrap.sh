@@ -93,6 +93,21 @@ install_pip() {
     fi
 }
 
+optimize_dnf()
+{
+    if ! grep ansible-test /etc/dnf/dnf.conf > /dev/null; then
+        cat >> /etc/dnf/dnf.conf <<EOF
+# ansible-test
+minrate=1M
+timeout=15
+retries=5
+max_parallel_downloads=10
+zchunk=0
+deltarpm=0
+EOF
+    fi
+}
+
 bootstrap_remote_alpine()
 {
     py_pkg_prefix="py3"
@@ -275,6 +290,8 @@ bootstrap_remote_macos()
 
 bootstrap_remote_rhel_9()
 {
+    optimize_dnf
+
     if [ "${python_version}" = "3.9" ]; then
         py_pkg_prefix="python3"
     else
@@ -310,6 +327,8 @@ bootstrap_remote_rhel_9()
 
 bootstrap_remote_rhel_10()
 {
+    optimize_dnf
+
     py_pkg_prefix="python3"
 
     packages="
