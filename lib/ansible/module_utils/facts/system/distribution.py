@@ -438,10 +438,10 @@ class DistributionFiles:
         for line in data.splitlines():
             distribution = re.search("^NAME=(.*)", line)
             if distribution and name == 'NA':
-                na_facts['distribution'] = distribution.group(1).strip('"').strip("'")
+                na_facts['distribution'] = distribution.group(1).strip(DistributionFiles.STRIP_QUOTES)
             version = re.search("^VERSION=(.*)", line)
             if version and collected_facts['distribution_version'] == 'NA':
-                na_facts['distribution_version'] = version.group(1).strip('"').strip("'")
+                na_facts['distribution_version'] = version.group(1).strip(DistributionFiles.STRIP_QUOTES)
         return True, na_facts
 
     def parse_distribution_file_Coreos(self, name, data, path, collected_facts):
