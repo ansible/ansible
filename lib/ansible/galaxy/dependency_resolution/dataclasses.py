@@ -90,8 +90,9 @@ def _validate_v1_source_info_schema(
         version_url=dict(),
         server=dict(),
         signatures=dict(
-            type=list,
-            suboptions=dict(
+            type="list",
+            elements="dict",
+            options=dict(
                 signature=dict(),
                 pubkey_fingerprint=dict(),
                 signing_service=dict(),

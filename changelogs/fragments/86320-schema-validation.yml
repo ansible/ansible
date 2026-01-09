@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix source metadata validation (https://github.com/ansible/ansible/pull/86320)."
