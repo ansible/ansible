@@ -76,7 +76,7 @@ ANSIBLE_SSH_TRANSFER_METHOD=piped ./posix.sh "$@"
 ansible-playbook check_ssh_defaults.yml "$@" -i test_connection.inventory
 
 # Ensure pipelining remains enabled by default.
-ansible-playbook test_pipelining.yml "$@" -i test_connection.inventory -vvv | grep 'Pipelining is enabled.'
+ansible -m ping ssh-pipelining "$@" -i test_connection.inventory -vvvv | grep 'Pipelining is enabled.'
 
 # ensure we can load from ini cfg
 ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
