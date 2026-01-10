@@ -1240,7 +1240,7 @@ class User(object):
                 self.module.warn(f'Overwriting existing ssh key private file "{ssh_key_file}"')
                 overwrite = 'y'
             else:
-                self.module.warn(f'Found existing ssh key private file "{ssh_key_file}", no force, so skipping ssh-keygen generation')
+                self.module.debug(f'Found existing ssh key private file "{ssh_key_file}", no force, so skipping ssh-keygen generation')
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
 
         if os.path.exists(pub_file):
