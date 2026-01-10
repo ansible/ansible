@@ -103,7 +103,7 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
-        common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+        common.add_argument("-t", "--type", action="store", default='all', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
                             help="Filter down to a specific plugin type.")
         common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
 

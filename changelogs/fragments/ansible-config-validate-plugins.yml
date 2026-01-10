@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible-config validate - accept plugin configuration sections (for example [ssh_connection]) by validating against all configurable plugin definitions by default. (https://github.com/ansible/ansible/issues/86398)
