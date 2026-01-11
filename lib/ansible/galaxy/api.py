@@ -850,7 +850,8 @@ class GalaxyAPI:
         elif 'results' in data:
             results_key = 'results'
         else:
-            return []
+            raise AnsibleError("Expected 'data' or 'results' in response from %s when getting "
+                               "versions for %s.%s" % (self.api_server, namespace, name))
 
         versions = []
         while True:
