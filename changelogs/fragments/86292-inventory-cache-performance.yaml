@@ -1,0 +1,2 @@
+bugfixes:
+  - inventory cache - Fixed performance regression when using cache plugins with large inventories.
