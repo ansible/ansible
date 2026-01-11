@@ -847,8 +847,10 @@ class GalaxyAPI:
             # since v3 pulp_ansible does not, we cannot rely on version
             # to indicate which key to use
             results_key = 'data'
-        else:
+        elif 'results' in data:
             results_key = 'results'
+        else:
+            return []
 
         versions = []
         while True:

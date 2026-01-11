@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - fix KeyError when installing a collection if the server response is missing expected keys.
