@@ -1,0 +1,2 @@
+minor_changes:
+  - "Mention the actual fact's name in the ``INJECT_FACTS_AS_VARS`` deprecation message (https://github.com/ansible/ansible/pull/86411)."
