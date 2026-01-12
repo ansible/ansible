@@ -464,8 +464,12 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+        if self._is_pipelining_enabled("new"):
+            cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+            result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+        else:
+            cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+            result = self._low_level_execute_command(cmd, in_data=None, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:

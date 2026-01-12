@@ -235,8 +235,6 @@ class ShellModule(ShellBase):
         mode: int = 0o700,
         tmpdir: str | None = None,
     ) -> str:
-        # This is not called in Ansible anymore but it is kept for backwards
-        # compatibility in case other action plugins outside Ansible calls this.
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
         basetmpdir = self._escape(tmpdir if tmpdir else self.get_option('remote_tmp'))
