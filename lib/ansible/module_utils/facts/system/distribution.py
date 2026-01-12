@@ -438,10 +438,10 @@ class DistributionFiles:
         for line in data.splitlines():
             distribution = re.search("^NAME=(.*)", line)
             if distribution and name == 'NA':
-                na_facts['distribution'] = distribution.group(1).strip('"')
+                na_facts['distribution'] = distribution.group(1).strip(DistributionFiles.STRIP_QUOTES)
             version = re.search("^VERSION=(.*)", line)
             if version and collected_facts['distribution_version'] == 'NA':
-                na_facts['distribution_version'] = version.group(1).strip('"')
+                na_facts['distribution_version'] = version.group(1).strip(DistributionFiles.STRIP_QUOTES)
         return True, na_facts
 
     def parse_distribution_file_Coreos(self, name, data, path, collected_facts):
@@ -489,6 +489,8 @@ class DistributionFiles:
             if 'Clear Linux' not in pname.groups()[0]:
                 return False, clear_facts
             clear_facts['distribution'] = pname.groups()[0]
+        else:
+            return False, clear_facts
         version = re.search('VERSION_ID=(.*)', data)
         if version:
             clear_facts['distribution_major_version'] = version.groups()[0]
