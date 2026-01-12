@@ -47,10 +47,22 @@ def should_retry_error(exception):
     # Note: cloud.redhat.com masks rate limit errors with 403 (Forbidden) error codes.
     # Since 403 could reflect the actual problem (such as an expired token), we should
     # not retry by default.
-    try:
-        retryable_http_codes = [int(code) for code in C.GALAXY_RETRY_HTTP_ERROR_CODES]
-    except ValueError as e:
-        raise AnsibleError("Invalid value for HTTP retryable error code. Only integer values are supported.") from e
+    bad_error_codes = []
+    retryable_http_codes = []
+    for code in C.GALAXY_RETRY_HTTP_ERROR_CODES:
+        try:
+            code_t = int(code)
+            if code_t < 100 or code_t > 999:
+                bad_error_codes.append(code)
+                continue
+            retryable_http_codes.append(code_t)
+        except ValueError:
+            bad_error_codes.append(code)
+            continue
+
+    if bad_error_codes:
+        raise AnsibleError("Invalid value for HTTP retryable error code. "
+                           f"Only integer between 100 to 999 are supported. Found: {', '.join(bad_error_codes)}")
 
     if isinstance(exception, GalaxyError) and exception.http_code in retryable_http_codes:
         return True
