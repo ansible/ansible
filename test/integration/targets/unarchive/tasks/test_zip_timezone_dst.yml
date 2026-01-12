@@ -43,9 +43,6 @@
       assert:
         that:
           - not unarchive_timezone.changed
-      # FreeBSD fails because of permissions issues
-      # MacOSX fails because of group owner issues
-      when: not ansible_facts['distribution'] in ['FreeBSD', 'MacOSX']
 
   always:
     - name: Remove zip destination
