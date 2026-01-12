@@ -18,7 +18,7 @@
     notify: remove repos
 
   - name: Create RPMs and put them into a repo
-    create_repo:
+    ansible_test.setup_rpm_repo.create_repo:
       tempdir: "{{ remote_tmp_dir }}"
     register: repo
 

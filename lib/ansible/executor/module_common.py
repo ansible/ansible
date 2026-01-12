@@ -33,7 +33,8 @@ import pkgutil
 import types
 import typing as t
 
-from ast import AST, Import, ImportFrom
+from ast import Assign, Constant, Import, ImportFrom, List, Name, Tuple
+from importlib.resources import path as ir_path, files as ir_files
 from io import BytesIO
 
 from ansible._internal import _locking
@@ -196,16 +197,12 @@ class ModuleDepFinder(ast.NodeVisitor):
         .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
-        self._tree = tree  # squirrel this away so we can compare node parents to it
         self.submodules = set()
         self.optional_imports = set()
+        self.embeds = set()
         self.module_fqn = module_fqn
         self.is_pkg_init = is_pkg_init
-
-        self._visit_map = {
-            Import: self.visit_Import,
-            ImportFrom: self.visit_ImportFrom,
-        }
+        self._depth = -1
 
         self.visit(tree)
 
@@ -214,16 +211,26 @@ class ModuleDepFinder(ast.NodeVisitor):
         use case, and improves performance by calling visitors directly instead
         of calling ``visit`` to offload calling visitors.
         """
+        self._depth += 1
+        depth = self._depth
         generic_visit = self.generic_visit
-        visit_map = self._visit_map
+        visit_Assign = self.visit_Assign
+        visit_Import = self.visit_Import
+        visit_ImportFrom = self.visit_ImportFrom
         for field, value in ast.iter_fields(node):
-            if isinstance(value, list):
+            if value.__class__ is list:
                 for item in value:
-                    if isinstance(item, (Import, ImportFrom)):
-                        item.parent = node
-                        visit_map[item.__class__](item)
-                    elif isinstance(item, AST):
+                    item_class = item.__class__
+                    if item_class is Import:
+                        visit_Import(item)
+                    elif item_class is ImportFrom:
+                        visit_ImportFrom(item)
+                    elif not depth and item_class is Assign:
+                        visit_Assign(item)
+                    elif hasattr(item, 'end_col_offset'):
+                        # ASTish without the hit of isinstance
                         generic_visit(item)
+        self._depth -= 1
 
     visit = generic_visit
 
@@ -234,15 +241,17 @@ class ModuleDepFinder(ast.NodeVisitor):
         We save these as interesting submodules when the imported library is in ansible.module_utils
         or ansible.collections
         """
+        depth = self._depth
+        submodules_add = self.submodules.add
+        optional_imports_add = self.optional_imports.add
         for alias in node.names:
-            if (alias.name.startswith('ansible.module_utils.') or
-                    alias.name.startswith('ansible_collections.')):
-                py_mod = tuple(alias.name.split('.'))
-                self.submodules.add(py_mod)
+            aname = alias.name
+            if aname.startswith(('ansible.module_utils.', 'ansible_collections.')):
+                py_mod = tuple(aname.split('.'))
+                submodules_add(py_mod)
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
-                if node.parent != self._tree:
-                    self.optional_imports.add(py_mod)
-        self.generic_visit(node)
+                if depth:
+                    optional_imports_add(py_mod)
 
     def visit_ImportFrom(self, node):
         """
@@ -253,34 +262,42 @@ class ModuleDepFinder(ast.NodeVisitor):
         We save these as interesting submodules when the imported library is in ansible.module_utils
         or ansible.collections
         """
-
         # FIXME: These should all get skipped:
         # from ansible.executor import module_common
         # from ...executor import module_common
         # from ... import executor (Currently it gives a non-helpful error)
-        if node.level > 0:
+
+        depth = self._depth
+        module_fqn = self.module_fqn
+        submodules_add = self.submodules.add
+        optional_imports_add = self.optional_imports.add
+
+        node_level = node.level
+        module = node.module
+
+        if node_level > 0:
             # if we're in a package init, we have to add one to the node level (and make it none if 0 to preserve the right slicing behavior)
-            level_slice_offset = -node.level + 1 or None if self.is_pkg_init else -node.level
-            if self.module_fqn:
-                parts = tuple(self.module_fqn.split('.'))
-                if node.module:
+            level_slice_offset = -node_level + 1 or None if self.is_pkg_init else -node_level
+            if module_fqn:
+                parts = tuple(module_fqn.split('.'))
+                if module:
                     # relative import: from .module import x
-                    node_module = '.'.join(parts[:level_slice_offset] + (node.module,))
+                    node_module = '.'.join(parts[:level_slice_offset] + (module,))
                 else:
                     # relative import: from . import x
                     node_module = '.'.join(parts[:level_slice_offset])
             else:
                 # fall back to an absolute import
-                node_module = node.module
+                node_module = module
         else:
             # absolute import: from module import x
-            node_module = node.module
+            node_module = module
 
         # Specialcase: six is a special case because of its
         # import logic
         py_mod = None
         if node.names[0].name == '_six':
-            self.submodules.add(('_six',))
+            submodules_add(('_six',))
         elif node_module.startswith('ansible.module_utils'):
             # from ansible.module_utils.MODULE1[.MODULEn] import IDENTIFIER [as asname]
             # from ansible.module_utils.MODULE1[.MODULEn] import MODULEn+1 [as asname]
@@ -302,12 +319,44 @@ class ModuleDepFinder(ast.NodeVisitor):
 
         if py_mod:
             for alias in node.names:
-                self.submodules.add(py_mod + (alias.name,))
+                aname = alias.name
+                a_py_mod = py_mod + (aname,)
+                submodules_add(a_py_mod)
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
-                if node.parent != self._tree:
-                    self.optional_imports.add(py_mod + (alias.name,))
+                if depth:
+                    optional_imports_add(a_py_mod)
 
-        self.generic_visit(node)
+    def visit_Assign(self, node):
+        embeds_add = self.embeds.add
+        value = node.value
+        for target in node.targets:
+            if not isinstance(target, Name):
+                return
+
+            if target.id != 'ANSIBLE_EMBED':
+                return
+
+            if not isinstance(value, (Tuple, List)):
+                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
+                return
+
+        for embed in value.elts:
+            if not isinstance(embed, (Tuple, List)) or len(embed.elts) != 2:
+                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
+                return
+
+            anchor, path_name = embed.elts
+            if not isinstance(anchor, Constant) or not isinstance(path_name, Constant):
+                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
+                return
+
+            anchor_value = anchor.value
+            path_name_value = path_name.value
+            if not isinstance(anchor_value, str) or not isinstance(path_name_value, str):
+                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
+                return
+
+            embeds_add((anchor_value, path_name_value))
 
 
 def _slurp(path):
@@ -772,6 +821,8 @@ def recursive_finder(
     module_metadata = _get_module_metadata(tree)
     finder = ModuleDepFinder(module_fqn, tree)
 
+    embeds = finder.embeds.copy()
+
     if not isinstance(module_metadata, ModuleMetadataV1):
         raise NotImplementedError()
 
@@ -830,6 +881,7 @@ def recursive_finder(
 
         tree = _compile_module_ast('.'.join(module_info.fq_name_parts), module_info.source_code)
         finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
+        embeds.update(finder.embeds)
         modules_to_process.extend(_ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
                                   for m in finder.submodules if m not in py_module_cache)
 
@@ -844,16 +896,54 @@ def recursive_finder(
             if normalized_name not in py_module_cache:
                 modules_to_process.append(_ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=entry.is_optional))
 
+    written_files = set()
     for py_module_name in py_module_cache:
         source_code, py_module_file_name = py_module_cache[py_module_name]
 
+        mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
+        display.vvvvv("Including module_utils file %s" % mu_file)
+
         zf.writestr(_make_zinfo(py_module_file_name, date_time, zf=zf), source_code)
+        written_files.add(py_module_file_name)
 
         if extension_manager.debugger_enabled and (origin := Origin.get_tag(source_code)) and origin.path:
             extension_manager.source_mapping[origin.path] = py_module_file_name
 
-        mu_file = to_text(py_module_file_name, errors='surrogate_or_strict')
-        display.vvvvv("Including module_utils file %s" % mu_file)
+    anchor_cache: dict[str, pathlib.Path] = {}
+    for anchor, path_name in embeds:
+        try:
+            with ir_path(anchor, path_name) as path:
+                if not path.is_file():
+                    raise AnsibleError(f'embed for {module_fqn!r} identified by ({anchor!r}, {path_name!r}) not found')
+                anchor_parts = anchor.split('.')
+                if anchor_parts[0] == 'ansible':
+                    try:
+                        root = anchor_cache['ansible']
+                    except KeyError:
+                        root = anchor_cache['ansible'] = ir_files('ansible').parent
+                    rel_path = path.relative_to(root)
+                elif anchor_parts[0] == 'ansible_collections':
+                    pkg = '.'.join(anchor_parts[:3])
+                    try:
+                        root = anchor_cache[pkg]
+                    except KeyError:
+                        root = anchor_cache[pkg] = ir_files(pkg).parents[2]
+                    rel_path = path.relative_to(root)
+                else:
+                    raise AnsibleError(f'embed for {module_fqn!r} identified by ({anchor!r}, {path_name!r}) not an ansible/ansible_collections resource')
+
+                display.vvvvv(f"Including embed file {rel_path}")
+                zf.writestr(_make_zinfo(str(rel_path), date_time, zf=zf), path.read_bytes())
+                for parent in rel_path.parents:
+                    if not parent.name:
+                        continue
+                    p_init = str(parent / '__init__.py')
+                    if p_init not in written_files:
+                        display.vvvvv(f"Including parent init file {p_init}")
+                        zf.writestr(_make_zinfo(p_init, date_time, zf=zf), b'')
+                        written_files.add(p_init)
+        except ModuleNotFoundError as e:
+            raise AnsibleError(f'embed anchor {anchor!r} not found') from e
 
     return module_metadata
 

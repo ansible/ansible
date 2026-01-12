@@ -48,7 +48,27 @@ def respawn_module(interpreter_path) -> t.NoReturn:
     sys.exit(rc)  # pylint: disable=ansible-bad-function
 
 
-def probe_interpreters_for_module(interpreter_paths, module_name):
+def get_env_with_pythonpath():
+    """
+    Get an environment dict with PYTHONPATH set for Ansible library imports.
+
+    Sets PYTHONPATH to include the Ansible library root so modules can be
+    imported via 'python -m ansible.module_utils.X' even when running from
+    a zipfile (ansiballz).
+
+    :returns: dict suitable for passing to subprocess as env parameter
+    """
+    pythonpath = os.getenv('PYTHONPATH', '')
+
+    env = os.environ.copy()
+    env.update({
+        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{pythonpath}'.rstrip(': ')
+    })
+
+    return env
+
+
+def probe_interpreters_for_module(interpreter_paths, module_name, include_basic=True):
     """
     Probes a supplied list of Python interpreters, returning the first one capable of
     importing the named module. This is useful when attempting to locate a "system
@@ -59,13 +79,13 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
     be returned (or ``None`` if probing fails for all supplied paths).
     :arg module_name: fully-qualified Python module name to probe for (for example, ``selinux``)
     """
-    PYTHONPATH = os.getenv('PYTHONPATH', '')
+    env = get_env_with_pythonpath()
 
-    env = os.environ.copy()
-    env.update({
-        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{PYTHONPATH}'.rstrip(': ')
-    })
+    modules = [module_name]
+    if include_basic:
+        modules.append('ansible.module_utils.basic')
 
+    modules_string = ", ".join(modules)
     for interpreter_path in interpreter_paths:
         if not os.path.exists(interpreter_path):
             continue
@@ -74,7 +94,7 @@ def probe_interpreters_for_module(interpreter_paths, module_name):
                 [
                     interpreter_path,
                     '-c',
-                    f'import {module_name}, ansible.module_utils.basic',
+                    f'import {modules_string}',
                 ],
                 env=env,
             )

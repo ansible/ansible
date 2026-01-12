@@ -66,3 +66,5 @@
 # https://github.com/ansible/ansible/issues/64479
 - name: Run module that tries to access itself via sys.modules
   sys_check:
+
+- ansible_test.ansiballz_python.embed:
