@@ -705,6 +705,17 @@ class ConfigManager:
         else:
             raise AnsibleUndefinedConfigEntry(f'No config definition exists for {_get_config_label(plugin_type, plugin_name, config)}.')
 
+        if config == "GALAXY_RETRY_HTTP_ERROR_CODES":
+            try:
+                for i in range(0, len(value)):
+                    http_error_code = int(value[i])
+                    if http_error_code < 100 or http_error_code > 999:
+                        raise ValueError(f"{http_error_code} must be between 100-999")
+                    value[i] = http_error_code
+            except ValueError:
+                raise AnsibleOptionsError(f'Invalid value {value!r} for config {_get_config_label(plugin_type, plugin_name, config)}.',
+                                          help_text='Valid values are 3-digit numbers.')
+
         if not _tags.Origin.is_tagged_on(value):
             value = _tags.Origin(description=f'<Config {origin}>').tag(value)
 

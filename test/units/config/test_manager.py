@@ -300,3 +300,20 @@ def test_config_trust_from_file(tmp_path: pathlib.Path) -> None:
     assert origin
     assert origin.path == str(cfg_path)
     assert origin.description == "section 'testing' option 'valid'"
+
+
+def test_galaxy_retry_http_error_codes(tmp_path: pathlib.Path) -> None:
+    cfg_path = tmp_path / 'test.cfg'
+    cfg_path.write_text("[galaxy]\nretry_http_error_codes=429,502,520")
+    manager = ConfigManager(str(cfg_path))
+    result = manager.get_config_value("GALAXY_RETRY_HTTP_ERROR_CODES")
+    assert result == [429, 502, 520]
+
+
+def test_galaxy_retry_http_error_codes_invalid(tmp_path: pathlib.Path) -> None:
+    cfg_path = tmp_path / 'test.cfg'
+    cfg_path.write_text("[galaxy]\nretry_http_error_codes=429,502,520,invalid")
+    manager = ConfigManager(str(cfg_path))
+    with pytest.raises(AnsibleOptionsError) as exec_info:
+        manager.get_config_value("GALAXY_RETRY_HTTP_ERROR_CODES")
+    assert "Invalid value [429, 502, 520, 'invalid'] for config" in str(exec_info.value)
