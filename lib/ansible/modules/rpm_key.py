@@ -367,7 +367,8 @@ class LibRPM:
         Get the key IDs from the primary PGP key, and all subkeys of that key, from the ASCII armored key.
 
         'armor' is expected to be a single ASCII armored PGP key (v4 or v6). The primary key should be the
-        first item in the results, followed by its subkeys.
+        first item in the results, followed by its subkeys. Returned key IDs are 8-byte (16 hex characters)
+        in length. This must be accounted for if comparing against the short key ID (4-bytes).
         """
         return [key['keyid'] for key in self._identify_keys(armor)]
 
@@ -485,7 +486,12 @@ class RpmKey(object):
         return frozenset(fingerprints)
 
     def is_keyid(self, keystr):
-        """Verifies if a key, as provided by the user is a keyid"""
+        """
+        Verifies if a key, as provided by the user, is a key ID.
+
+        Note that this allows the short form of the key ID (4-bytes, or 8 hex characters), used in older
+        versions of RPM, while a full key ID is 8-bytes, or 16 hex characters.
+        """
         return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
 
     def execute_command(self, cmd):
@@ -524,7 +530,9 @@ class RpmKey(object):
                 current_block.append(line)
 
         for armor_string in key_blocks:
-            key_ids = self.librpm.get_key_ids_from_armor(armor_string)
+            # Account for either normal key ID (8-byte) or short key ID (4-byte)
+            keyid_len = len(keyid)
+            key_ids = [k[-keyid_len:] for k in self.librpm.get_key_ids_from_armor(armor_string)]
             if keyid in key_ids:
                 return True
 

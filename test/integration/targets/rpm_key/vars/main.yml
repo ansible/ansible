@@ -1,5 +1,4 @@
 test_key_url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-10
-test_key_keyid: 33D98517E37ED158
 test_key_path: "{{ remote_tmp_dir + '/RPM-GPG-KEY-EPEL-10' }}"
 test_rpm_url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/scitokens-cpp-devel-1.1.3-2.el10_1.x86_64.rpm
 test_rpm_path: "{{ remote_tmp_dir + '/test.rpm' }}"

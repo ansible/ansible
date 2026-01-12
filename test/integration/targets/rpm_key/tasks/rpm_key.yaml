@@ -102,17 +102,21 @@
   assert:
     that: checksig.stdout is contains 'digests signatures OK'
 
+- name: Get keyid
+  shell: rpm -q gpg-pubkey | head -n 1 | xargs rpm -q --qf %{version}
+  register: key_id
+
 - name: Remove test key using keyid
   rpm_key:
     state: absent
-    key: "{{ test_key_keyid }}"
+    key: "{{ key_id.stdout }}"
   register: remove_keyid
   failed_when: not remove_keyid.changed
 
 - name: Remove test key using keyid (idempotent)
   rpm_key:
     state: absent
-    key: "{{ test_key_keyid }}"
+    key: "{{ key_id.stdout }}"
   register: key_id_idempotence
 
 - name: Verify idempotent (key_id)
