@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Expand functions covered by the ``unwanted`` rule for the ``pylint`` sanity test.
+    It now includes various ``os.*`` and ``subprocess.*`` subprocess functions in Ansible modules and module_utils.
+  - ansible-test - Remove ``use-run-command-not-popen`` and ``use-run-command-not-os-call`` error codes from the
+    ``validate-modules`` sanity test. These scenarios are now covered by the ``pylint`` sanity test.
