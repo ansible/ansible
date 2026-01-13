@@ -279,5 +279,4 @@
         state: absent
         key: "{{ test_v6_key_keyid }}"
 
-  when: (ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_version'] is version('10.1', '>='))
-        or (ansible_facts['distribution'] == "Fedora" and ansible_facts['distribution_version'] is version('43', '>='))
+  when: ansible_facts['distribution'] == "Fedora" and ansible_facts['distribution_version'] is version('43', '>=')

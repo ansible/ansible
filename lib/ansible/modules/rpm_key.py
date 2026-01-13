@@ -22,8 +22,7 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
-        - Starting with version 2.21, this can also be the fingerprint when attempting to delete an
-          already installed key.
+        - This can also be the fingerprint when attempting to delete an already installed key.
       type: str
       required: true
     state:
