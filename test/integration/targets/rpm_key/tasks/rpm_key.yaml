@@ -123,6 +123,16 @@
   assert:
     that: key_id_idempotence is not changed
 
+- name: Add key to test deleting by fingerprint
+  rpm_key:
+    state: present
+    key: "{{ test_key_url }}"
+
+- name: Remove key by using fingerprint
+  rpm_key:
+    state: absent
+    key: "{{ primary_fingerprint }}"
+
 - name: Add very first key on system again
   rpm_key:
     state: present
@@ -279,4 +289,16 @@
         state: absent
         key: "{{ test_v6_key_keyid }}"
 
-  when: ansible_facts['distribution'] == "Fedora" and ansible_facts['distribution_version'] is version('43', '>=')
+    - name: Import v6 key again
+      rpm_key:
+        state: present
+        key: "{{ remote_tmp_dir }}/{{ test_v6_key_file }}"
+        fingerprint: "{{ test_v6_key_fingerprint }}"
+
+    - name: Delete v6 key by fingerprint
+      rpm_key:
+        state: absent
+        key: "{{ test_v6_key_fingerprint }}"
+
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_facts['distribution_version'] is version('10.1', '>='))
+        or (ansible_facts['distribution'] == "Fedora" and ansible_facts['distribution_version'] is version('43', '>='))
