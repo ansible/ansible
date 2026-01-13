@@ -1,0 +1,5 @@
+{
+    "text": true,
+    "error_code": "ansible-test",
+    "output": "path-line-column-code-message"
+}

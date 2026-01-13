@@ -1,0 +1,2 @@
+# edit "codespell.requirements.in" and generate with: hacking/update-sanity-requirements.py --test codespell
+codespell==2.4.1
