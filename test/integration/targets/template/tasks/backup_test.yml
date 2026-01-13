@@ -26,7 +26,7 @@
     owner: "{{ t_username }}"
     group: "{{ t_groupname }}"
 
-- name: failsafe attr change incase underlying system does not support it
+- name: failsafe attr change in case underlying system does not support it
   shell: chattr =j "{{ t_dest }}"
   ignore_errors: True
 

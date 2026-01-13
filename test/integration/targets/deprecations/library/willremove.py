@@ -8,7 +8,7 @@ from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: willremove
-version_added: histerical
+version_added: hysterical
 short_description: does nothing
 description: does nothing, this is deprecation test
 deprecated:

@@ -38,7 +38,7 @@ def inventory_module():
 
 
 def _trust(value):
-    """Recursively apply TrustedAsTemplate to input (simulating what wuold come out of a trusted input source like the dataloader YAML/JSON/ini parser)"""
+    """Recursively apply TrustedAsTemplate to input (simulating what would come out of a trusted input source like the dataloader YAML/JSON/ini parser)"""
     if isinstance(value, dict):
         return {_trust(k): _trust(v) for k, v in value.items()}
 

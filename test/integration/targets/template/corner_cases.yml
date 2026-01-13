@@ -1,4 +1,4 @@
-- name: test tempating corner cases
+- name: test templating corner cases
   hosts: localhost
   gather_facts: false
   vars:

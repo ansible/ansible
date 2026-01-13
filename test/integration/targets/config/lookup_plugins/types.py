@@ -7,7 +7,7 @@ from __future__ import annotations
 DOCUMENTATION = """
     name: types
     author: Ansible Core Team
-    version_added: histerical
+    version_added: hysterical
     short_description: returns what you gave it
     description:
       - this is mostly a noop
@@ -15,7 +15,7 @@ DOCUMENTATION = """
         _terms:
             description: stuff to pass through
         valid:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             ini:
                 - section: list_values
@@ -25,7 +25,7 @@ DOCUMENTATION = """
             vars:
                 - name: ansible_types_valid
         mustunquote:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             ini:
                 - section: list_values
@@ -35,7 +35,7 @@ DOCUMENTATION = """
             vars:
                 - name: ansible_types_mustunquote
         notvalid:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             ini:
                 - section: list_values
@@ -45,7 +45,7 @@ DOCUMENTATION = """
             vars:
                 - name: ansible_types_notvalid
         totallynotvalid:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             ini:
                 - section: list_values
@@ -55,7 +55,7 @@ DOCUMENTATION = """
             vars:
                 - name: ansible_types_totallynotvalid
         str_mustunquote:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: string
             ini:
                 - section: string_values

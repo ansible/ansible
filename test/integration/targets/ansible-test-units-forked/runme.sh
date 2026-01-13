@@ -19,7 +19,7 @@ for python in "${pythons[@]}"; do
   cat output.log
   echo "Unit tests on Python ${python} failed as expected. See output above. Checking for expected output ..."
 
-  # Verify that the appropriate tests pased, failed or xfailed.
+  # Verify that the appropriate tests passed, failed or xfailed.
   grep 'PASSED tests/unit/plugins/modules/test_ansible_forked.py::test_passed' output.log
   grep 'PASSED tests/unit/plugins/modules/test_ansible_forked.py::test_warning' output.log
   grep 'XFAIL tests/unit/plugins/modules/test_ansible_forked.py::test_kill_xfail' output.log

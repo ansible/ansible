@@ -32,7 +32,7 @@ plugin_routing:
     module_uses_action_defaults:
       redirect: testns.testcoll.module
 
-    # Not "eos_facts" to ensure TE is not finding handler via prefix
+    # Not "eos_facts" to ensure TaskExecutor is not finding handler via prefix
     # eosfacts tasks should not get eos module_defaults (or defaults for other modules that use eos action plugin)
     eosfacts:
       action_plugin: testns.testcoll.eos
