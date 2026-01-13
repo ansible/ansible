@@ -1,4 +1,4 @@
-# Test that diff is displayed togather with check mode in a shallow clone
+# Test that diff is displayed together with check mode in a shallow clone
 # when checking out a specific revision
 
 - name: SPECIFIC-REV-DIFF-CHECK | clear checkout_dir
