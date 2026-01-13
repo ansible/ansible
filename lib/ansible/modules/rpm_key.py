@@ -22,6 +22,8 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
+        - Starting with version 2.21, this can also be the fingerprint when attempting to delete an
+          already installed key.
       type: str
       required: true
     state:
@@ -96,6 +98,7 @@ import typing as _t
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.common.text.converters import to_native
 
 # Type alias for ctypes pointer to uint8 array (packet data)
@@ -116,20 +119,81 @@ class LibRPM:
         if not lib_path:
             raise ImportError("Error: Could not find librpm library")
 
-        self.lib = ctypes.CDLL(lib_path)
-        self.libc = ctypes.CDLL(None)
+        self._lib = ctypes.CDLL(lib_path)
+        self._libc = ctypes.CDLL(None)
+
+        # void free(void *ptr)
+        self._libc.free.argtypes = [ctypes.c_void_p]
+        self._libc.free.restype = None
 
         # pgpArmor pgpParsePkts(const char *armor, uint8_t **pkt, size_t *pktlen)
-        self.lib.pgpParsePkts.argtypes = [
+        self._lib.pgpParsePkts.argtypes = [
             ctypes.c_char_p,
             ctypes.POINTER(ctypes.POINTER(ctypes.c_uint8)),
             ctypes.POINTER(ctypes.c_size_t)
         ]
-        self.lib.pgpParsePkts.restype = ctypes.c_int
+        self._lib.pgpParsePkts.restype = ctypes.c_int
 
-        # void free(void *ptr)
-        self.libc.free.argtypes = [ctypes.c_void_p]
-        self.libc.free.restype = None
+        # Identify the version of the RPM library
+        _lib_rpmversion = ctypes.c_char_p.in_dll(self._lib, "RPMVERSION")
+        self._rpmversion = _lib_rpmversion.value.decode()
+
+        ###########################################################
+        # API functions below are RPM version 6.0.x and above only
+        ###########################################################
+
+        if self.using_librpm6:
+            # int rpmReadConfigFiles(const char *file, const char *target)
+            self._lib.rpmReadConfigFiles.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+            self._lib.rpmReadConfigFiles.restype = ctypes.c_int
+
+            # rpmts rpmtsCreate(void)
+            self._lib.rpmtsCreate.argtypes = []
+            self._lib.rpmtsCreate.restype = ctypes.c_void_p
+
+            # rpmts rpmtsFree(rpmts ts)
+            self._lib.rpmtsFree.argtypes = [ctypes.c_void_p]
+            self._lib.rpmtsFree.restype = ctypes.c_void_p
+
+            # rpmKeyring rpmtsGetKeyring(rpmts ts, int autoload)
+            self._lib.rpmtsGetKeyring.argtypes = [ctypes.c_void_p, ctypes.c_int]
+            self._lib.rpmtsGetKeyring.restype = ctypes.c_void_p
+
+            # rpmKeyringIterator rpmKeyringInitIterator(rpmKeyring keyring, int unused)
+            self._lib.rpmKeyringInitIterator.argtypes = [ctypes.c_void_p]
+            self._lib.rpmKeyringInitIterator.restype = ctypes.c_void_p
+
+            # rpmPubkey rpmKeyringIteratorNext(rpmKeyringIterator iterator)
+            self._lib.rpmKeyringIteratorNext.argtypes = [ctypes.c_void_p]
+            self._lib.rpmKeyringIteratorNext.restype = ctypes.c_void_p
+
+            # rpmKeyringIterator rpmKeyringIteratorFree(rpmKeyringIterator iterator)
+            self._lib.rpmKeyringIteratorFree.argtypes = [ctypes.c_void_p]
+            self._lib.rpmKeyringIteratorFree.restype = ctypes.c_void_p
+
+            # const char *rpmPubkeyFingerprintAsHex(rpmPubkey key)
+            self._lib.rpmPubkeyFingerprintAsHex.argtypes = [ctypes.c_void_p]
+            self._lib.rpmPubkeyFingerprintAsHex.restype = ctypes.c_char_p
+
+            # const char *rpmPubkeyKeyIDAsHex(rpmPubkey key)
+            self._lib.rpmPubkeyKeyIDAsHex.argtypes = [ctypes.c_void_p]
+            self._lib.rpmPubkeyKeyIDAsHex.restype = ctypes.c_char_p
+
+            # rpmKeyring rpmKeyringFree(rpmKeyring keyring)
+            self._lib.rpmKeyringFree.argtypes = [ctypes.c_void_p]
+            self._lib.rpmKeyringFree.restype = ctypes.c_void_p
+
+    @property
+    def using_librpm6(self) -> bool:
+        """
+        Check if the librpm version in use is at least version 6.0.0.
+
+        RPM version 6.0.0 and higher uses fingerprints instead of short key ID everywhere. This changes
+        how we must approach certain operations, such as key deletion from the rpmdb.
+        """
+        if LooseVersion(self._rpmversion) >= LooseVersion('6.0.0'):
+            return True
+        return False
 
     def _parse_armor(self, armor: str) -> tuple[PktPointer | None, int]:
         """
@@ -140,7 +204,7 @@ class LibRPM:
         pktlen = ctypes.c_size_t()
 
         armor_bytes = armor.encode()
-        result = self.lib.pgpParsePkts(armor_bytes, ctypes.byref(pkt), ctypes.byref(pktlen))
+        result = self._lib.pgpParsePkts(armor_bytes, ctypes.byref(pkt), ctypes.byref(pktlen))
 
         if result < 0 or not pkt:
             return None, 0
@@ -329,7 +393,7 @@ class LibRPM:
         return fingerprint.hex().upper()
 
     def _identify_keys(self, armor: str) -> list[dict[str, str]]:
-        """Return a list of dicts with key ID and fingerprint for the primary key and each subkey"""
+        """Return a list of dicts with key ID (8-byte) and fingerprint for the primary key and each subkey"""
         key_info: list[dict[str, str]] = []
 
         pkt, pktlen = self._parse_armor(armor)
@@ -357,8 +421,10 @@ class LibRPM:
                     # V6: Key ID is the first 8 bytes (16 hex chars) of the fingerprint
                     keyid_from_fp = computed_fp[:16]
                     key_info.append({'keyid': keyid_from_fp, 'fingerprint': computed_fp})
+            else:
+                raise Exception(f"Unhandled key version {version:#04x}")
 
-        self.libc.free(pkt)
+        self._libc.free(pkt)
 
         return key_info
 
@@ -381,6 +447,64 @@ class LibRPM:
         """
         return [key['fingerprint'] for key in self._identify_keys(armor)]
 
+    def get_installed_keys(self) -> list[dict[str, str]]:
+        """
+        Get the fingerprint and key ID for all installed keys in the rpmdb.
+
+        This will return a list of the key ID and fingerprint of all installed primary keys
+        (subkeys not included).
+        """
+        if not self.using_librpm6:
+            raise Exception("get_installed_keys() not supported with installed RPM version")
+
+        results: list[dict[str, str]] = []
+
+        # Initialize RPM configuration
+        if self._lib.rpmReadConfigFiles(None, None) != 0:
+            raise Exception("Failed to read RPM configuration files")
+
+        # Create transaction set
+        ts = self._lib.rpmtsCreate()
+        if not ts:
+            raise Exception("Failed to create RPM transaction set")
+
+        try:
+            # Get keyring (autoload=1)
+            keyring = self._lib.rpmtsGetKeyring(ts, 1)
+            if not keyring:
+                return results
+
+            try:
+                # Initialize keyring iterator
+                keyiter = self._lib.rpmKeyringInitIterator(keyring)
+                if not keyiter:
+                    raise Exception("Failed to initialize keyring iterator")
+
+                try:
+                    # Iterate through keys
+                    while True:
+                        pubkey = self._lib.rpmKeyringIteratorNext(keyiter)
+                        if not pubkey:
+                            break
+
+                        # Get key ID as hex string
+                        key_id = self._lib.rpmPubkeyKeyIDAsHex(pubkey)
+                        key_id_str = key_id.decode().upper()
+
+                        # Get fingerprint as hex string
+                        fingerprint = self._lib.rpmPubkeyFingerprintAsHex(pubkey)
+                        fingerprint_str = fingerprint.decode().upper()
+
+                        results.append({'keyid': key_id_str, 'fingerprint': fingerprint_str})
+                finally:
+                    self._lib.rpmKeyringIteratorFree(keyiter)
+            finally:
+                self._lib.rpmKeyringFree(keyring)
+        finally:
+            self._lib.rpmtsFree(ts)
+
+        return results
+
 
 def is_pubkey(string):
     """Verifies if string is a pubkey"""
@@ -397,6 +521,7 @@ class RpmKey(object):
         should_cleanup_keyfile = False
         self.module = module
         self.rpm = self.module.get_bin_path('rpm', True)
+        self.rpmkeys = self.module.get_bin_path('rpmkeys', True)
         state = module.params['state']
         key = module.params['key']
         fingerprint = module.params['fingerprint']
@@ -536,6 +661,11 @@ class RpmKey(object):
             if keyid in key_ids:
                 return True
 
+            # Allow the user supplied key to also be a fingerprint
+            fingerprints = self.librpm.get_fingerprints_from_armor(armor_string)
+            if keyid in fingerprints:
+                return True
+
         return False
 
     def import_key(self, keyfile):
@@ -543,8 +673,35 @@ class RpmKey(object):
             self.execute_command([self.rpm, '--import', keyfile])
 
     def drop_key(self, keyid):
+        """
+        Remove the key with the given key ID from the keyring.
+
+        Older versions of the RPM library use the short key ID (4-bytes, or 8 hex characters)
+        on the system. Beginning with version 6 of the RPM library, the fingerprint is used instead
+        and deleting using "rpm --erase" is deprecated in favor of "rpmkeys --delete".
+        """
         if not self.module.check_mode:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
+            if self.librpm.using_librpm6:
+                fingerprints = []
+                keyid_len = len(keyid)
+
+                for installed in self.librpm.get_installed_keys():
+                    if keyid == installed['keyid'][-keyid_len:]:
+                        fingerprints.append(installed['fingerprint'])
+                    # We allow the user supplied 'key' to also be the full fingerprint.
+                    elif keyid == installed['fingerprint']:
+                        fingerprints.append(installed['fingerprint'])
+
+                if not fingerprints:
+                    self.module.fail_json(msg=f"Supplied key ID {keyid} is not installed.")
+                elif len(fingerprints) == 1:
+                    # Newer librpm uses fingerprint.
+                    self.execute_command([self.rpmkeys, '--delete', fingerprints[0]])
+                else:
+                    self.module.fail_json(msg=f"Supplied key ID {keyid} matches more than one fingerprint. Try using the fingerprint instead.")
+            else:
+                # Older librpm uses short form key ID (4-bytes) and "rpmkeys" CLI may not support deleting.
+                self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
 
 
 def main():
