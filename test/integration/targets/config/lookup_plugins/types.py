@@ -25,7 +25,7 @@ DOCUMENTATION = """
             vars:
                 - name: ansible_types_valid
         mustunquote:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             ini:
                 - section: list_values
@@ -45,7 +45,7 @@ DOCUMENTATION = """
             vars:
                 - name: ansible_types_notvalid
         totallynotvalid:
-            description: does nothihng, just for testing values
+            description: does nothing, just for testing values
             type: list
             ini:
                 - section: list_values
