@@ -657,14 +657,14 @@ def reset(git_path, module, dest):
     return module.run_command(cmd, check_rc=True, cwd=dest)
 
 
-def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
+def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after, refspec, force):
     """ Return the difference between 2 versions """
     if before is None:
         return {'prepared': '>> Newly checked out %s' % after}
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
         git_version_used = git_version(git_path, module)
-        fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
+        fetch(git_path, module, repo, dest, after, remote, depth, bare, refspec, git_version_used, force)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
         if rc == 0 and out:
@@ -1317,7 +1317,7 @@ def main():
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             result.update(changed=True, after=remote_head)
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
@@ -1366,7 +1366,7 @@ def main():
             result.update(changed=(result['before'] != remote_head or remote_url_changed), after=remote_head)
             # FIXME: This diff should fail since the new remote_head is not fetched yet?!
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
@@ -1400,7 +1400,7 @@ def main():
     if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:
-            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'], refspec, force)
             if diff:
                 result['diff'] = diff
 
