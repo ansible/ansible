@@ -115,8 +115,7 @@ class LibRPM:
 
     def __init__(self) -> None:
         # Load the librpm library
-        lib_path = ctypes.util.find_library('rpm')
-        if not lib_path:
+        if not (lib_path := ctypes.util.find_library('rpm')):
             raise ImportError("Error: Could not find librpm library")
 
         self._lib = ctypes.CDLL(lib_path)
