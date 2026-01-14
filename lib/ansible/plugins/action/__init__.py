@@ -101,6 +101,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._used_interpreter = None
+        self._executable = None
+
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
@@ -126,6 +129,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                             ' plugins should set self._connection._shell.tmpdir to share'
                             ' the tmpdir.')
         del tmp
+
+        # default to when running commands
+        self._executable = C.config.get_config_value('DEFAULT_EXECUTABLE', variables=self._task.task_vars)
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('This action (%s) does not support async.' % self._task.action)
@@ -320,8 +326,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
+                    **become_kwargs,
                 )
-
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = discover_interpreter(action=self, interpreter_name=idre.interpreter_name,
@@ -983,7 +989,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
         # make sure all commands use the designated shell executable
-        module_args['_ansible_shell_executable'] = self._play_context.executable
+        module_args['_ansible_shell_executable'] = self._executable
 
         # make sure modules are aware if they need to keep the remote files
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
@@ -1306,7 +1312,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         if self._connection.allow_executable:
             if executable is None:
-                executable = self._play_context.executable
+                executable = self._executable
                 # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, 'sleep 0')
