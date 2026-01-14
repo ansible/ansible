@@ -113,9 +113,7 @@ class AnsibleUnwantedChecker(BaseChecker):
         # see https://docs.python.org/3/library/tempfile.html#tempfile.mktemp
         'tempfile.mktemp': UnwantedEntry('tempfile.mkstemp'),
 
-        # os.chmod resolves as posix.chmod
-        'posix.chmod': UnwantedEntry('verified_chmod',
-                                     ansible_test_only=True),
+        'os.chmod': UnwantedEntry('verified_chmod', ansible_test_only=True),
 
         'sys.exit': UnwantedEntry('exit_json or fail_json',
                                   ignore_paths=(
@@ -130,6 +128,33 @@ class AnsibleUnwantedChecker(BaseChecker):
                                         ),
                                         modules_only=True),
     }
+
+    for method in (
+        'popen',
+        'posix_spawn',
+        'posix_spawnp',
+        'spawnl',
+        'spawnle',
+        'spawnlp',
+        'spawnlpe',
+        'spawnv',
+        'spawnve',
+        'spawnvp',
+        'spawnvpe',
+        'system',
+    ):
+        unwanted_functions[f'os.{method}'] = UnwantedEntry('run_command', modules_only=True)
+
+    for method in (
+        'Popen',
+        'call',
+        'check_call',
+        'check_output',
+        'getoutput',
+        'getstatusoutput',
+        'run',
+    ):
+        unwanted_functions[f'subprocess.{method}'] = UnwantedEntry('run_command', modules_only=True)
 
     @functools.cached_property
     def is_ansible_core(self) -> bool:
@@ -167,8 +192,18 @@ class AnsibleUnwantedChecker(BaseChecker):
             for i in node.func.inferred():
                 func = None
 
-                if isinstance(i, astroid.nodes.FunctionDef) and isinstance(i.parent, astroid.nodes.Module):
-                    func = '%s.%s' % (i.parent.name, i.name)
+                if isinstance(i.parent, astroid.nodes.Module):
+                    parent_module = i.parent.name
+                elif isinstance(i.parent, astroid.nodes.If) and isinstance(i.parent.parent, astroid.nodes.Module):
+                    parent_module = i.parent.parent.name
+                else:
+                    parent_module = None
+
+                if parent_module == 'posix':
+                    parent_module = 'os'  # some os.* functions we're looking for show up as posix.* imports
+
+                if parent_module and isinstance(i, (astroid.nodes.FunctionDef, astroid.nodes.ClassDef)):
+                    func = f'{parent_module}.{i.name}'
 
                 if not func:
                     continue

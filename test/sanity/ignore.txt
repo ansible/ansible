@@ -23,11 +23,17 @@ lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
 lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
+lib/ansible/module_utils/basic.py pylint:ansible-bad-function
+lib/ansible/module_utils/common/respawn.py pylint:ansible-bad-function
+lib/ansible/module_utils/distro/_distro.py pylint:ansible-bad-function
+lib/ansible/module_utils/facts/system/pkg_mgr.py pylint:ansible-bad-function
+lib/ansible/module_utils/service.py pylint:ansible-bad-function
+lib/ansible/modules/mount_facts.py pylint:ansible-bad-function
+lib/ansible/modules/service.py pylint:ansible-bad-function
+lib/ansible/modules/user.py pylint:ansible-bad-function
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so

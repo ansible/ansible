@@ -39,3 +39,24 @@ plugins/module_utils/deprecated_utils.py:28:4: ansible-invalid-deprecated-date: 
 plugins/module_utils/deprecated_utils.py:29:4: ansible-deprecated-both-version-and-date: Both version and date found in call to 'ansible.module_utils.common.warnings.deprecate'
 plugins/module_utils/deprecated_utils.py:30:4: removal-version-must-be-major: Removal version '3.1.0' must be a major release, not a minor or patch release, see https://semver.org/
 plugins/module_utils/deprecated_utils.py:34:4: ansible-deprecated-both-collection-name-and-deprecator: Both collection_name and deprecator found in call to 'ansible.module_utils.common.warnings.deprecate'
+plugins/module_utils/unwanted.py:9:4: ansible-bad-function: Call run_command instead of os.popen
+plugins/module_utils/unwanted.py:10:4: ansible-bad-function: Call run_command instead of os.posix_spawn
+plugins/module_utils/unwanted.py:11:4: ansible-bad-function: Call run_command instead of os.posix_spawnp
+plugins/module_utils/unwanted.py:12:4: ansible-bad-function: Call run_command instead of os.spawnl
+plugins/module_utils/unwanted.py:13:4: ansible-bad-function: Call run_command instead of os.spawnle
+plugins/module_utils/unwanted.py:14:4: ansible-bad-function: Call run_command instead of os.spawnlp
+plugins/module_utils/unwanted.py:15:4: ansible-bad-function: Call run_command instead of os.spawnlpe
+plugins/module_utils/unwanted.py:16:4: ansible-bad-function: Call run_command instead of os.spawnv
+plugins/module_utils/unwanted.py:17:4: ansible-bad-function: Call run_command instead of os.spawnve
+plugins/module_utils/unwanted.py:18:4: ansible-bad-function: Call run_command instead of os.spawnvp
+plugins/module_utils/unwanted.py:19:4: ansible-bad-function: Call run_command instead of os.spawnvpe
+plugins/module_utils/unwanted.py:20:4: ansible-bad-function: Call run_command instead of os.system
+plugins/module_utils/unwanted.py:22:4: ansible-bad-function: Call run_command instead of subprocess.Popen
+plugins/module_utils/unwanted.py:23:4: ansible-bad-function: Call run_command instead of subprocess.call
+plugins/module_utils/unwanted.py:24:4: ansible-bad-function: Call run_command instead of subprocess.check_call
+plugins/module_utils/unwanted.py:25:4: ansible-bad-function: Call run_command instead of subprocess.check_output
+plugins/module_utils/unwanted.py:26:4: ansible-bad-function: Call run_command instead of subprocess.getoutput
+plugins/module_utils/unwanted.py:27:4: ansible-bad-function: Call run_command instead of subprocess.getstatusoutput
+plugins/module_utils/unwanted.py:28:4: ansible-bad-function: Call run_command instead of subprocess.run
+plugins/module_utils/unwanted.py:30:4: ansible-bad-function: Call module.log or module.debug instead of builtins.print
+plugins/module_utils/unwanted.py:31:4: ansible-bad-function: Call exit_json or fail_json instead of sys.exit
