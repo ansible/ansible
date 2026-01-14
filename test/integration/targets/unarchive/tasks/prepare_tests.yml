@@ -72,7 +72,6 @@
     - created/include
     - created/exclude
     - created/other
-    - datetime-dst
 
 - name: Prepare - Create test files
   file:
@@ -92,18 +91,8 @@
     - other/other-1.ext
     - other/other-2.ext
 
-- name: Setup custom DST (date saving time) for zip test
-  # datetime must match a DST period for Europe/Paris
-  file:
-    path: "{{ remote_tmp_dir }}/datetime-dst/datetime-dst.txt"
-    state: touch
-    modification_time: 202507241203.34
-
 - name: Prepare - zip file
   shell: zip -r {{remote_tmp_dir}}/unarchive-00.zip * chdir={{remote_tmp_dir}}/created/
-
-- name: Prepare - zip file (timezone DST)
-  shell: zip -r {{remote_tmp_dir}}/test-datetime-dst.zip * chdir={{remote_tmp_dir}}/datetime-dst/
 
 - name: Prepare - tar file
   shell: tar czvf {{remote_tmp_dir}}/unarchive-00.tar * chdir={{remote_tmp_dir}}/created/
