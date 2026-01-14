@@ -299,7 +299,7 @@ class VariableManager:
                 # push facts to main namespace
                 if inject:
                     if origin == 'default':
-                        clean_top = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(facts).items()}
+                        clean_top = {k: (_deprecate_top_level_fact(v) if k != 'ansible_local' else v) for k, v in clean_facts(facts).items()}
                     else:
                         clean_top = clean_facts(facts)
                     all_vars = _combine_and_track(all_vars, clean_top, "facts")
