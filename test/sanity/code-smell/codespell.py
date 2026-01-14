@@ -84,7 +84,8 @@ def main() -> None:
 
         results.append(f"{path}:{line_num}:{col_num}: {code}: {left} ==> {right}")
 
-    print('\n'.join(results))
+    if results:
+        print('\n'.join(results))
 
 
 def parse_to_list_of_dict(pattern: re.Pattern, value: str) -> list[dict[str, t.Any]]:
