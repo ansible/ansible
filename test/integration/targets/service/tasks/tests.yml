@@ -32,10 +32,12 @@
   when: "ansible_service_mgr in ['sysvinit', 'systemd']"
   module_defaults:
     sysvinit:
-      name: ansible_test
+      # Test the action plugin templates sysvinit defaults
+      # https://github.com/ansible/ansible/issues/85848
+      name: "{{ 'ansible_test' }}"
       enabled: yes
     systemd:
-      name: ansible_test
+      name: "{{ 'ansible_test' }}"
       enabled: yes
 
 - name: assert that changes reported for check mode run
