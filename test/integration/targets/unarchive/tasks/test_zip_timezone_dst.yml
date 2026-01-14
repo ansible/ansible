@@ -2,10 +2,8 @@
 # Setup
 - name: Prepare - Create test dirs
   file:
-    path: "{{remote_tmp_dir}}/{{item}}"
+    path: "{{remote_tmp_dir}}/datetime-dst"
     state: directory
-  with_items:
-    - datetime-dst
 
 - name: Setup custom DST (date saving time) for zip test
   # datetime must match a DST period for Europe/Paris
@@ -15,7 +13,9 @@
     modification_time: 202507241203.34
 
 - name: Prepare - zip file (timezone DST)
-  shell: zip -r {{remote_tmp_dir}}/test-datetime-dst.zip * chdir={{remote_tmp_dir}}/datetime-dst/
+  shell:
+    cmd: zip -r {{remote_tmp_dir}}/test-datetime-dst.zip *
+    chdir: "{{remote_tmp_dir}}/datetime-dst/"
 
 # Test timezone DST
 - environment:
