@@ -1,0 +1,6 @@
+---
+bugfixes:
+  - ansible-inventory - fix data corruption of `EncryptedString` (Vault) and `bytes` objects when loading from JSON cache (https://github.com/ansible/ansible/issues/86369).
+  - ansible-inventory - fix `--toml` output failure when encountering internal Ansible types.
+performance:
+  - ansible-inventory - restore linear complexity for variable serialization by implementing memoization in `AnsibleVariableVisitor`, addressing a performance regression on large inventories with shared references (https://github.com/ansible/ansible/issues/86292).

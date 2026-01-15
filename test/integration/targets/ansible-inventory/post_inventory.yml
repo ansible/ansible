@@ -7,3 +7,17 @@
           - hostvars.something.roundtrip_undecryptable | type_debug == "VaultExceptionMarker"
           - hostvars.something.groups is contains 'somegroup'
           - hostvars.something.groups is contains 'all'
+          - hostvars.something.inventory_hostname == 'something'
+          - hostvars.something.inventory_hostname_short == 'something'
+          - hostvars.something.group_names | length > 0
+
+    - name: Add host to a new group dynamically to test cache invalidation
+      add_host:
+        name: something
+        groups: new_dynamic_group
+
+    - name: Verify group_names updated
+      assert:
+        that:
+          - "'new_dynamic_group' in hostvars['something']['group_names']"
+          - "'new_dynamic_group' in hostvars['something']['groups']"

@@ -165,6 +165,13 @@ class InventoryCLI(CLI):
 
             results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
+            visitor = _inventory_legacy._InventoryVariableVisitor(
+                convert_mapping_to_dict=True,
+                convert_sequence_to_list=True,
+                convert_custom_scalars=True,
+                convert_bytes_to_str=True,
+            )
+            stuff = visitor.visit(stuff)
             results = toml_dumps(stuff)
         else:
             results = json.dumps(stuff, cls=_inventory_legacy.Encoder, sort_keys=True, indent=4)

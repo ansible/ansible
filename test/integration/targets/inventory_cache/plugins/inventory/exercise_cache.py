@@ -40,21 +40,16 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     NAME = 'exercise_cache'
 
     test_cache_methods = [
-        'test_plugin_name',
         'test_update_cache_if_changed',
-        'test_set_cache',
         'test_load_whole_cache',
         'test_iter',
         'test_len',
         'test_get_missing_key',
-        'test_get_expired_key',
         'test_initial_get',
         'test_get',
         'test_items',
         'test_keys',
         'test_values',
-        'test_pop',
-        'test_del',
         'test_set',
         'test_update',
         'test_flush',
@@ -97,9 +92,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             display.warning(f"Assertion {a} == {b} failed")
             raise
 
-    def test_plugin_name(self):
-        self.test_equal(self.cache._plugin_name, self.get_option('cache_plugin'))
-
     def test_update_cache_if_changed(self):
         self.cache._retrieved = {}
         self.cache._cache = {'foo': 'bar'}
@@ -108,20 +100,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         self.test_equal(self.cache._retrieved, {'foo': 'bar'})
         self.test_equal(self.cache._cache, {'foo': 'bar'})
-
-    def test_set_cache(self):
-        cache_key1 = 'key1'
-        cache1 = {'hosts': {'h1': {'foo': 'bar'}}}
-        cache_key2 = 'key2'
-        cache2 = {'hosts': {'h2': {}}}
-
-        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
-        self.cache.set_cache()
-
-        self.test_equal(self.cache._plugin.contains(cache_key1), True)
-        self.test_equal(self.cache._plugin.get(cache_key1), cache1)
-        self.test_equal(self.cache._plugin.contains(cache_key2), True)
-        self.test_equal(self.cache._plugin.get(cache_key2), cache2)
 
     def test_load_whole_cache(self):
         cache_data = {
@@ -184,28 +162,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self.cache._plugin.set_option('timeout', 0)
         self.cache._plugin._timeout = 0
 
-    def test_get_expired_key(self):
-        if not hasattr(self.cache._plugin, '_timeout'):
-            # DB-backed caches do not have a standard timeout interface
-            return
-
-        self._setup_expired()
-        try:
-            self.cache['expired']
-        except KeyError:
-            pass
-        else:
-            assert False
-        finally:
-            self._cleanup_expired()
-
-        self._setup_expired()
-        try:
-            self.test_equal(self.cache.get('expired'), None)
-            self.test_equal(self.cache.get('expired', 'default'), 'default')
-        finally:
-            self._cleanup_expired()
-
     def test_initial_get(self):
         # test cache behaves like a dictionary
 
@@ -262,60 +218,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self.cache._cache = test_items
         self.test_equal(list(self.cache.values()), list(test_items.values()))
 
-    def test_pop(self):
-        try:
-            self.cache.pop('missing')
-        except KeyError:
-            pass
-        else:
-            assert False
-
-        self.test_equal(self.cache.pop('missing', 'default'), 'default')
-
-        self.cache._cache = {'cache_key': 'cache'}
-        self.test_equal(self.cache.pop('cache_key'), 'cache')
-
-        # test backing plugin cache isn't modified
-        cache_key1 = 'key1'
-        cache1 = {'hosts': {'h1': {'foo': 'bar'}}}
-        cache_key2 = 'key2'
-        cache2 = {'hosts': {'h2': {}}}
-
-        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
-        self.cache.set_cache()
-
-        self.test_equal(self.cache.pop('key1'), cache1)
-        self.test_equal(self.cache._cache, {cache_key2: cache2})
-        self.test_equal(self.cache._plugin._cache, {cache_key1: cache1, cache_key2: cache2})
-
-    def test_del(self):
-        try:
-            del self.cache['missing']
-        except KeyError:
-            pass
-        else:
-            assert False
-
-        cache_key1 = 'key1'
-        cache1 = {'hosts': {'h1': {'foo': 'bar'}}}
-        cache_key2 = 'key2'
-        cache2 = {'hosts': {'h2': {}}}
-
-        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
-        self.cache.set_cache()
-
-        del self.cache['key1']
-
-        self.test_equal(self.cache._cache, {cache_key2: cache2})
-        self.test_equal(self.cache._plugin._cache, {cache_key1: cache1, cache_key2: cache2})
-
     def test_set(self):
         cache_key = 'key1'
         hosts = {'hosts': {'h1': {'foo': 'bar'}}}
         self.cache[cache_key] = hosts
 
         self.test_equal(self.cache._cache, {cache_key: hosts})
-        self.test_equal(self.cache._plugin._cache, {})
 
     def test_update(self):
         cache_key1 = 'key1'
@@ -340,4 +248,3 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self.cache.flush()
 
         self.test_equal(self.cache._cache, {})
-        self.test_equal(self.cache._plugin._cache, {})

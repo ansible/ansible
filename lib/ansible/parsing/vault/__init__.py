@@ -1314,6 +1314,9 @@ class EncryptedString(AnsibleTaggedObject):
 
     __slots__ = ('_ciphertext', '_plaintext', '_ansible_tags_mapping')
 
+    # Renamed to avoid collision with AnsibleJSONEncoder's internal check
+    _is_ansible_vault_wrapper: t.ClassVar[bool] = True
+
     _subclasses_native_type: t.ClassVar[bool] = False
     _empty_tags_as_native: t.ClassVar[bool] = False
 
@@ -1439,6 +1442,14 @@ class EncryptedString(AnsibleTaggedObject):
 
         for method_name in method_names:
             setattr(cls, method_name, functools.partialmethod(cls._proxy_str_method, getattr(str, method_name)))
+
+    def __json__(self) -> str:
+        """
+        Hook for AnsibleJSONEncoder to serialize this object correctly.
+        Returns the decrypted plaintext string, ensuring compatibility with
+        cache plugins (like jsonfile) that expect values to be serializable strings.
+        """
+        return self._decrypt()
 
     def _decrypt(self) -> str:
         """

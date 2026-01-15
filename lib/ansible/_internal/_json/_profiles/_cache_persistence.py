@@ -8,6 +8,10 @@ from ansible.parsing import vault as _vault
 from ansible._internal._datatag import _tags
 
 
+def _decode_bytes(value: bytes) -> str:
+    return value.decode('utf-8', 'surrogateescape')
+
+
 class _Profile(_profiles._JSONSerializationProfile):
     """Profile for external cache persistence of inventory/fact data that preserves most tags."""
 
@@ -16,26 +20,16 @@ class _Profile(_profiles._JSONSerializationProfile):
 
     @classmethod
     def post_init(cls, **kwargs):
+        # Collect all registered AnsibleSerializable types (tags, vault, date wrappers)
+        # These possess a _type_key required for reconstruction
+        allowed_types = set(_datatag.AnsibleSerializable._known_type_map.values())
+
+        # Native types (bytes, datetime) are excluded here as they are transformed
+        # via serialize_map into allowed types or primitives
         cls.allowed_ansible_serializable_types = (
             _profiles._common_module_types
             | _profiles._common_module_response_types
-            | {
-                _datatag._AnsibleTaggedDate,
-                _datatag._AnsibleTaggedTime,
-                _datatag._AnsibleTaggedDateTime,
-                _datatag._AnsibleTaggedStr,
-                _datatag._AnsibleTaggedInt,
-                _datatag._AnsibleTaggedFloat,
-                _datatag._AnsibleTaggedList,
-                _datatag._AnsibleTaggedSet,
-                _datatag._AnsibleTaggedTuple,
-                _datatag._AnsibleTaggedDict,
-                _tags.SourceWasEncrypted,
-                _tags.Origin,
-                _tags.TrustedAsTemplate,
-                _vault.EncryptedString,
-                _vault.VaultedValue,
-            }
+            | allowed_types
         )
 
         cls.serialize_map = {
@@ -44,6 +38,8 @@ class _Profile(_profiles._JSONSerializationProfile):
             _datetime.date: _datatag.AnsibleSerializableDate,
             _datetime.time: _datatag.AnsibleSerializableTime,
             _datetime.datetime: _datatag.AnsibleSerializableDateTime,
+            bytes: _decode_bytes,
+            _datatag._AnsibleTaggedBytes: _decode_bytes,
         }
 
         cls.handle_key = cls._handle_key_str_fallback  # legacy stdlib-compatible key behavior

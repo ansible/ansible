@@ -40,6 +40,8 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
         convert_mapping_to_dict: bool = False,
         convert_sequence_to_list: bool = False,
         convert_custom_scalars: bool = False,
+        convert_bytes_to_str: bool = False,
+        encrypted_string_behavior: _json.EncryptedStringBehavior = _json.EncryptedStringBehavior.PRESERVE,
     ):
         super().__init__(
             trusted_as_template=trusted_as_template,
@@ -47,13 +49,17 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
             convert_mapping_to_dict=convert_mapping_to_dict,
             convert_sequence_to_list=convert_sequence_to_list,
             convert_custom_scalars=convert_custom_scalars,
-            encrypted_string_behavior=_json.EncryptedStringBehavior.PRESERVE,
+            convert_bytes_to_str=convert_bytes_to_str,
+            encrypted_string_behavior=encrypted_string_behavior,
         )
 
         self.invert_trust = invert_trust
 
         if trusted_as_template and invert_trust:
             raise ValueError('trusted_as_template is mutually exclusive with invert_trust')
+
+        # Register handler for trust inversion wrapper
+        self._dispatch[_Untrusted] = self._visit_untrusted
 
     @property
     def _allow_trust(self) -> bool:
@@ -63,22 +69,16 @@ class _LegacyVariableVisitor(_json.AnsibleVariableVisitor):
         """
         return True
 
-    def _early_visit(self, value, value_type) -> _t.Any:
-        """Similar to base implementation, but supports an intermediate wrapper for trust inversion."""
-        if value_type in (str, _datatag._AnsibleTaggedStr):
-            # apply compatibility behavior
-            if self.trusted_as_template and self._allow_trust:
-                result = _tags.TrustedAsTemplate().tag(value)
-            elif self.invert_trust and not _tags.TrustedAsTemplate.is_tagged_on(value) and self._allow_trust:
-                result = _Untrusted(value)
-            else:
-                result = value
-        elif value_type is _Untrusted:
-            result = value.value
-        else:
-            result = _json._sentinel
+    def _visit_untrusted(self, value: _Untrusted, value_type: type) -> _t.Any:
+        return value.value
 
-        return result
+    def _visit_string(self, value: _t.Any, value_type: type) -> _t.Any:
+        if self.trusted_as_template and self._allow_trust:
+            return _tags.TrustedAsTemplate().tag(value)
+        elif self.invert_trust and not _tags.TrustedAsTemplate.is_tagged_on(value) and self._allow_trust:
+            return _Untrusted(value)
+
+        return value
 
 
 class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
@@ -130,9 +130,9 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
         cls.serialize_map = {
             set: cls.serialize_as_list,
             tuple: cls.serialize_as_list,
-            _datetime.date: cls.serialize_as_isoformat,  # existing devel behavior
-            _datetime.time: cls.serialize_as_isoformat,  # always failed pre-2.18, so okay to include for consistency
-            _datetime.datetime: cls.serialize_as_isoformat,  # existing devel behavior
+            _datetime.date: cls.serialize_as_isoformat,
+            _datetime.time: cls.serialize_as_isoformat,
+            _datetime.datetime: cls.serialize_as_isoformat,
             _datatag._AnsibleTaggedDate: cls.discard_tags,
             _datatag._AnsibleTaggedTime: cls.discard_tags,
             _datatag._AnsibleTaggedDateTime: cls.discard_tags,
@@ -156,8 +156,13 @@ class _Profile(_profiles._JSONSerializationProfile["Encoder", "Decoder"]):
 
     @classmethod
     def pre_serialize(cls, encoder: Encoder, o: _t.Any) -> _t.Any:
-        # DTFIX7: these conversion args probably aren't needed
-        avv = cls.visitor_type(invert_trust=True, convert_mapping_to_dict=True, convert_sequence_to_list=True, convert_custom_scalars=True)
+        avv = cls.visitor_type(
+            invert_trust=True,
+            convert_mapping_to_dict=True,
+            convert_sequence_to_list=True,
+            convert_custom_scalars=True,
+            convert_bytes_to_str=True,
+        )
 
         return avv.visit(o)
 
