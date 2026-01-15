@@ -1,4 +1,4 @@
-- name: Check git with tag that doesnt exist
+- name: Check git with tag that doesn't exist
   git:
     repo: "{{ repo_dir }}/minimal"
     dest: "{{ remote_tmp_dir }}/minimalrepo_nonexistent_tag"
