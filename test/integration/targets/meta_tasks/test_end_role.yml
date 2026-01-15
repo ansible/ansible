@@ -1,0 +1,6 @@
+- name: Testing end_role with strategy {{ test_strategy | default('linear') }}
+  hosts: testhost:testhost2
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  roles:
+    - end_role_sample

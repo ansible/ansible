@@ -999,7 +999,7 @@ class StrategyBase:
                 msg = 'ending role %s for %s' % (task._role.get_name(), target_host.name)
             else:
                 skipped = True
-                skip_reason += 'continuing role %s for %s' % (task._role.get_name(), target_host.name)
+                skip_reason += ', continuing role %s for %s' % (task._role.get_name(), target_host.name)
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
                                                        _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
