@@ -106,7 +106,12 @@ PktPointer = _t.Any  # Actually: ctypes.POINTER(ctypes.c_uint8)
 
 
 class LibRPM:
-    """Wrapper for librpm PGP key functions"""
+    """
+    Wrapper for librpm PGP key functions.
+
+    The APIs in librpm vary across different versions. Since this module must work on a variety of
+    systems, we are extremely limited in the API calls that we can guarantee will be available.
+    """
 
     # Constants
     PGPTAG_PUBLIC_KEY = 6
@@ -401,7 +406,7 @@ class LibRPM:
         return [key['fingerprint'] for key in self.identify_keys(armor)]
 
 
-def is_pubkey(string):
+def is_pubkey(string: str) -> bool:
     """Verifies if string is a pubkey"""
     pgp_regex = ".*?(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----).*"
     return bool(re.match(pgp_regex, to_native(string, errors='surrogate_or_strict'), re.DOTALL))
@@ -409,7 +414,7 @@ def is_pubkey(string):
 
 class RpmKey(object):
 
-    def __init__(self, module):
+    def __init__(self, module: AnsibleModule) -> None:
         # If the key is a url, we need to check if it's present to be idempotent,
         # to do that, we need to check the keyid, which we can get from the armor.
         keyfile = None
@@ -468,7 +473,7 @@ class RpmKey(object):
             else:
                 module.exit_json(changed=False)
 
-    def fetch_key(self, url):
+    def fetch_key(self, url: str) -> str:
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
         if info['status'] != 200:
@@ -483,7 +488,7 @@ class RpmKey(object):
             tmpfile.write(key)
         return tmpname
 
-    def normalize_keyid(self, keyid):
+    def normalize_keyid(self, keyid: str) -> str:
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
         ret = keyid.strip().upper()
         if ret.startswith('0x'):
@@ -493,21 +498,21 @@ class RpmKey(object):
         else:
             return ret
 
-    def getkeyid(self, keyfile):
+    def getkeyid(self, keyfile: str) -> str:
         with open(keyfile, "r") as key_fd:
             key_ids = self.librpm.get_key_ids_from_armor(key_fd.read())
         if not key_ids:
             self.module.fail_json(msg="Failed to get keyid")
         return key_ids[0]
 
-    def getfingerprints(self, keyfile):
+    def getfingerprints(self, keyfile: str) -> frozenset[str]:
         with open(keyfile, "r") as key_fd:
             fingerprints = self.librpm.get_fingerprints_from_armor(key_fd.read())
         if not fingerprints:
             self.module.fail_json(msg="Failed to get fingerprint")
         return frozenset(fingerprints)
 
-    def is_keyid(self, keystr):
+    def is_keyid(self, keystr: str) -> re.Match[str] | None:
         """
         Verifies if a key, as provided by the user, is a key ID.
 
@@ -517,7 +522,7 @@ class RpmKey(object):
         keystr = keystr.replace(' ', '')
         return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
 
-    def execute_command(self, cmd):
+    def execute_command(self, cmd: str | list[str]) -> tuple[str, str]:
         rc, stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg=stderr)
@@ -573,46 +578,54 @@ class RpmKey(object):
 
         return False
 
-    def import_key(self, keyfile):
+    def import_key(self, keyfile: str) -> None:
         if not self.module.check_mode:
             self.execute_command([self.rpm, '--import', keyfile])
 
-    def drop_key(self, keyid):
+    def _drop_key_rpm6(self, keyid: str) -> None:
         """
-        Remove the key with the given key ID from the keyring.
+        Remove the key with the given key ID from the keyring using RPM 6+ method.
 
-        Older versions of the RPM library use the short key ID (4-bytes, or 8 hex characters)
-        on the system. Beginning with version 6 of the RPM library, the fingerprint is used instead
-        and deleting using "rpm --erase" is deprecated in favor of "rpmkeys --delete".
+        RPM version 6+ uses fingerprints and the 'rpmkeys --delete' command.
         """
+        fingerprints = []
+        keyid_len = len(keyid)
+
+        for installed in self.installed_keys:
+            if keyid == installed['keyid'][-keyid_len:]:
+                fingerprints.append(installed['fingerprint'])
+            # We allow the user supplied 'key' to also be the full fingerprint.
+            elif keyid == installed['fingerprint']:
+                fingerprints.append(installed['fingerprint'])
+
+        if not fingerprints:
+            self.module.fail_json(msg=f"Supplied key ID {keyid} is not installed.")
+        elif len(fingerprints) == 1:
+            self.execute_command([self.rpmkeys, '--delete', fingerprints[0]])
+        else:
+            self.module.fail_json(msg=f"Supplied key ID {keyid} matches more than one fingerprint. Try using the fingerprint instead.")
+
+    def _drop_key_rpm4(self, keyid: str) -> None:
+        """
+        Remove the key with the given key ID from the keyring using RPM 4 method.
+
+        Older RPM versions use short form key ID (4-bytes) and 'rpm --erase' command.
+        """
+        # If keyid is actually a fingerprint, we need to get the associated key ID and use it.
+        for installed in self.installed_keys:
+            if keyid == installed['fingerprint']:
+                keyid = installed['keyid']
+                break
+
+        self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
+
+    def drop_key(self, keyid: str) -> None:
+        """Remove the key with the given key ID from the keyring."""
         if not self.module.check_mode:
             if self.librpm.using_librpm6:
-                fingerprints = []
-                keyid_len = len(keyid)
-
-                for installed in self.installed_keys:
-                    if keyid == installed['keyid'][-keyid_len:]:
-                        fingerprints.append(installed['fingerprint'])
-                    # We allow the user supplied 'key' to also be the full fingerprint.
-                    elif keyid == installed['fingerprint']:
-                        fingerprints.append(installed['fingerprint'])
-
-                if not fingerprints:
-                    self.module.fail_json(msg=f"Supplied key ID {keyid} is not installed.")
-                elif len(fingerprints) == 1:
-                    # Newer librpm uses fingerprint.
-                    self.execute_command([self.rpmkeys, '--delete', fingerprints[0]])
-                else:
-                    self.module.fail_json(msg=f"Supplied key ID {keyid} matches more than one fingerprint. Try using the fingerprint instead.")
+                self._drop_key_rpm6(keyid)
             else:
-                # If keyid is actually a fingerprint, we need to get the associated key ID and use it.
-                for installed in self.installed_keys:
-                    if keyid == installed['fingerprint']:
-                        keyid = installed['keyid']
-                        break
-
-                # Older librpm uses short form key ID (4-bytes) and "rpmkeys" CLI may not support deleting.
-                self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
+                self._drop_key_rpm4(keyid)
 
 
 def main():
