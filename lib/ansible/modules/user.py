@@ -512,6 +512,15 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 
 
+# Placeholder home directories that should never be physically created on disk
+# These are conventions for system accounts that should not have real home directories
+PLACEHOLDER_HOME_DIRS = frozenset([
+    '/nonexistent',  # FreeBSD convention for system accounts (www, nobody, etc.)
+    '/dev/null',     # Used on some Linux systems for system accounts
+    '/var/empty',    # OpenBSD convention for privilege-separated processes
+])
+
+
 class StructSpwdType(ctypes.Structure):
     _fields_ = [
         ('sp_namp', ctypes.c_char_p),
@@ -1586,7 +1595,9 @@ class FreeBsdUser(User):
             cmd.append(self.comment)
 
         if self.home is not None:
-            if (info[5] != self.home and self.move_home) or (not os.path.exists(self.home) and self.create_home):
+            # Skip home creation for placeholder directories (e.g., /nonexistent, /dev/null)
+            # These are conventions for system accounts and should not be created on disk
+            if (info[5] != self.home and self.move_home) or (info[5] not in PLACEHOLDER_HOME_DIRS and not os.path.exists(self.home) and self.create_home):
                 cmd.append('-m')
             if info[5] != self.home:
                 cmd.append('-d')
@@ -3405,7 +3416,7 @@ def main():
         info = user.user_info()
         if user.home is None:
             user.home = info[5]
-        if not os.path.exists(user.home) and user.create_home:
+        if not os.path.exists(user.home) and user.home not in PLACEHOLDER_HOME_DIRS and user.create_home:
             if not module.check_mode:
                 user.create_homedir(user.home)
                 user.chown_homedir(info[2], info[3], user.home)
