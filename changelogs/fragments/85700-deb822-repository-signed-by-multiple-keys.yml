@@ -1,0 +1,2 @@
+minor_changes:
+- deb822_repository - The signed_by parameter now supports multiple keys. Input changed from string to list of strings. (https://github.com/ansible/ansible/issues/85700)
