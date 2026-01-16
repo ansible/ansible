@@ -24,11 +24,11 @@
   check_mode: true
   diff: true
   register: git_result
+  ignore_errors: true
 
 - assert:
     that:
-      - "'>> Failed to get proper diff between' in git_result.diff.prepared"
-      - "'>> fatal: bad object' in git_result.diff.prepared"
+      - git_result is failed
 
 - name: SPECIFIC-REVISION-DIFF-CHECK | check and diff mode with refspec force checkout old commit sha
   git:
@@ -45,5 +45,7 @@
 
 - assert:
     that:
-      - "'diff --git a' in git_result.diff.prepared"
-      - 'git_result.after == "{{ test_branch_ref_head_id }}"'
+      - prepared_string in git_result.diff.prepared
+      - git_result.after == test_branch_ref_head_id
+  vars:
+    prepared_string: diff --git a
