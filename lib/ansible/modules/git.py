@@ -679,17 +679,16 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after, r
     return {}
 
 
-def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str) -> str:
-    temporary_repository = pathlib.Path(module.tmpdir) / "tmp_repo"
-
-    temporary_repository.mkdir(exist_ok=True)
-
-    module.run_command([git_path, 'init'], cwd=temporary_repository)  # Create a bare repo
-
-    module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=temporary_repository)
+def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str, cwd: str) -> str:
+    if cwd is None:
+        temporary_repository = pathlib.Path(module.tmpdir) / "tmp_repo"
+        temporary_repository.mkdir(exist_ok=True)
+        module.run_command([git_path, 'init'], cwd=temporary_repository)  # Create a bare repo
+        module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=temporary_repository)
+        cwd = str(temporary_repository)
 
     # This command's error message is descriptive enough for our purposes, so we set check_rc to True and let it bail
-    module.run_command([git_path, 'fetch', '--dry-run', 'origin', version], cwd=temporary_repository, check_rc=True)
+    module.run_command([git_path, 'fetch', '--dry-run', remote, version], cwd=cwd, check_rc=True)
 
     # Should only succeed when 'version' is a valid revision
     return version
@@ -719,7 +718,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
     else:
         # Appears to be a sha hash. Checking requires special action
-        rev = get_sha_hash(module, git_path, remote, version)
+        rev = get_sha_hash(module, git_path, remote, version, cwd)
 
         return rev
 
