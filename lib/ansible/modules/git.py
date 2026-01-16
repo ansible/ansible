@@ -680,15 +680,14 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after, r
 
 
 def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str, cwd: str) -> str:
-    if cwd is None:
-        temporary_repository = pathlib.Path(module.tmpdir) / "tmp_repo"
-        temporary_repository.mkdir(exist_ok=True)
-        module.run_command([git_path, 'init'], cwd=temporary_repository)  # Create a bare repo
-        module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=temporary_repository)
-        cwd = str(temporary_repository)
+    if cwd is None or not (working_dir := pathlib.Path(cwd)).exists():
+        working_dir = pathlib.Path(module.tmpdir) / "tmp_repo"
+        working_dir.mkdir(exist_ok=True)
+        module.run_command([git_path, 'init'], cwd=working_dir)  # Create a bare repo
+        module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=working_dir)
 
     # This command's error message is descriptive enough for our purposes, so we set check_rc to True and let it bail
-    module.run_command([git_path, 'fetch', '--dry-run', remote, version], cwd=cwd, check_rc=True)
+    module.run_command([git_path, 'fetch', '--dry-run', remote, version], cwd=working_dir, check_rc=True)
 
     # Should only succeed when 'version' is a valid revision
     return version
