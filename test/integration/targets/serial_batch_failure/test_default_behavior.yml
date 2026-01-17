@@ -1,0 +1,26 @@
+---
+# Test that default behavior (serial_continue_on_batch_failure=False) stops execution
+# when an entire batch fails
+
+- name: Test default serial batch failure behavior
+  hosts: test_hosts
+  gather_facts: false
+  serial: 1
+  # serial_continue_on_batch_failure defaults to False
+  tasks:
+    - name: Task that fails on host2
+      ansible.builtin.command: /bin/false
+      when: inventory_hostname == 'host2'
+
+    - name: Task that should not run on host3 and host4
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} should not execute this in default mode"
+      failed_when: inventory_hostname in ['host3', 'host4']
+
+- name: Verify execution stopped
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Check results
+      ansible.builtin.debug:
+        msg: "If default behavior works, host3 and host4 never executed"

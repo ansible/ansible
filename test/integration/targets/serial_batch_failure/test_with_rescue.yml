@@ -1,0 +1,37 @@
+---
+# Test that rescue blocks work correctly with serial_continue_on_batch_failure
+
+- name: Test serial continue with rescue blocks
+  hosts: test_hosts
+  gather_facts: false
+  serial: 1
+  serial_continue_on_batch_failure: true
+  tasks:
+    - name: Block with potential failure
+      block:
+        - name: Task that fails on host2
+          ansible.builtin.command: /bin/false
+          when: inventory_hostname == 'host2'
+
+        - name: This should run on non-failing hosts
+          ansible.builtin.debug:
+            msg: "{{ inventory_hostname }} - main task executed"
+
+      rescue:
+        - name: Rescue task
+          ansible.builtin.debug:
+            msg: "{{ inventory_hostname }} - rescue executed"
+          when: inventory_hostname == 'host2'
+
+      always:
+        - name: Always runs
+          ansible.builtin.debug:
+            msg: "{{ inventory_hostname }} - always executed"
+
+- name: Verify test completed
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Test passed
+      ansible.builtin.debug:
+        msg: "Rescue block test completed successfully"

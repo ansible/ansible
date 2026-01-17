@@ -1,0 +1,2 @@
+minor_changes:
+  - "playbook - Add ``serial_continue_on_batch_failure`` play keyword to allow continuing serial execution even when entire batch fails. This enables independent processing of hosts when using serial execution (https://github.com/ansible/ansible/issues/86148)."

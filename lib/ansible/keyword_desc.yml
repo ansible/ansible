@@ -55,6 +55,7 @@ retries: "Number of retries before giving up in a :term:`until` loop. This setti
 roles: List of roles to be imported into the play
 run_once: Boolean that will bypass the host loop, forcing the task to attempt to execute on the first host available and afterward apply any results and facts to all active hosts in the same batch.
 serial: Explicitly define how Ansible batches the execution of the current play on the play's target. See :ref:`rolling_update_batch_size`.
+serial_continue_on_batch_failure: When set to True and using serial execution, continue to the next batch even if all hosts in the current batch failed. This allows independent processing of hosts when using serial execution. By default (False), if all hosts in a batch fail, the play stops immediately.
 strategy: Allows you to choose the strategy plugin to use for the play. See :ref:`strategy_plugins`.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
 tasks: Main list of tasks to execute in the play, they run after :term:`roles` and before :term:`post_tasks`.

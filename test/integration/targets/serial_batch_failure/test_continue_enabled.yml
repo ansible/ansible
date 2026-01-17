@@ -1,0 +1,31 @@
+---
+# Test that serial_continue_on_batch_failure=True allows execution to continue
+# even when an entire batch fails
+
+- name: Test serial continue on batch failure enabled
+  hosts: test_hosts
+  gather_facts: false
+  serial: 1
+  serial_continue_on_batch_failure: true
+  tasks:
+    - name: Task that fails on host2
+      ansible.builtin.command: /bin/false
+      when: inventory_hostname == 'host2'
+
+    - name: Task that should run on all hosts including host3
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} executed successfully"
+      register: execution_result
+
+    - name: Mark host3 execution for verification
+      ansible.builtin.set_fact:
+        host3_executed: true
+      when: inventory_hostname == 'host3'
+
+- name: Verify all hosts executed
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Check that host3 executed
+      ansible.builtin.debug:
+        msg: "host3 executed"  # This will be grepped in runme.sh

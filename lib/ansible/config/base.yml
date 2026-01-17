@@ -1950,6 +1950,20 @@ RETRY_FILES_SAVE_PATH:
   ini:
   - {key: retry_files_save_path, section: defaults}
   type: path
+SERIAL_CONTINUE_ON_BATCH_FAILURE:
+  name: Default serial continue on batch failure
+  default: False
+  description:
+    - Sets the default value for the serial_continue_on_batch_failure play keyword.
+    - When True, serial execution will continue to the next batch even if all hosts in the current batch failed.
+    - This allows independent processing of hosts when using serial execution.
+    - Can be overridden at the play level.
+  env:
+    - name: ANSIBLE_SERIAL_CONTINUE_ON_BATCH_FAILURE
+  ini:
+    - section: defaults
+      key: serial_continue_on_batch_failure
+  type: boolean
 RUN_VARS_PLUGINS:
   name: When should vars plugins run relative to inventory
   default: demand

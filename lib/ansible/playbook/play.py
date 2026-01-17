@@ -85,6 +85,7 @@ class Play(Base, Taggable, CollectionSearch):
     force_handlers = NonInheritableFieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
     max_fail_percentage = NonInheritableFieldAttribute(isa='percent', always_post_validate=True)
     serial = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
+    serial_continue_on_batch_failure = NonInheritableFieldAttribute(isa='bool', default=C.SERIAL_CONTINUE_ON_BATCH_FAILURE, always_post_validate=True)
     strategy = NonInheritableFieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     order = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
 

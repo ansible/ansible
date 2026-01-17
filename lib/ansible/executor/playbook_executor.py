@@ -191,8 +191,14 @@ class PlaybookExecutor:
                                 (previously_failed + previously_unreachable)
 
                             if len(batch) == failed_hosts_count:
-                                break_play = True
-                                break
+                                if play.serial_continue_on_batch_failure and not break_play:
+                                    display.debug(
+                                        "All hosts in batch failed, but continuing to next batch due to "
+                                        "serial_continue_on_batch_failure setting"
+                                    )
+                                else:
+                                    break_play = True
+                                    break
 
                             # update the previous counts so they don't accumulate incorrectly
                             # over multiple serial batches

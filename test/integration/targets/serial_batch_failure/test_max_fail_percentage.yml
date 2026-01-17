@@ -1,0 +1,25 @@
+---
+# Test that max_fail_percentage still works correctly with serial_continue_on_batch_failure
+
+- name: Test serial continue with max_fail_percentage
+  hosts: test_hosts
+  gather_facts: false
+  serial: 1
+  serial_continue_on_batch_failure: true
+  max_fail_percentage: 50
+  tasks:
+    - name: Task that fails on host2 and host3
+      ansible.builtin.command: /bin/false
+      when: inventory_hostname in ['host2', 'host3']
+
+    - name: This should run but play should stop when threshold reached
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} executed"
+
+- name: This play should not execute if max_fail_percentage stopped previous play
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Verification task
+      ansible.builtin.debug:
+        msg: "max_fail_percentage test completed"
