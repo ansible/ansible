@@ -34,6 +34,15 @@ if sys.version_info < _PY_MIN:
 
 def check_blocking_io():
     """Check stdin/stdout/stderr to make sure they are using blocking IO."""
+    # Skip blocking IO check on Windows as os.get_blocking() is not supported
+    # Ansible requires a POSIX OS; on Windows, use WSL (Windows Subsystem for Linux)
+    if sys.platform == 'win32':
+        raise SystemExit(
+            'ERROR: Ansible requires a POSIX operating system (Linux, macOS, BSD, etc.). '
+            'On Windows, please use WSL (Windows Subsystem for Linux) to run Ansible. '
+            'See: https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html'
+        )
+
     handles = []
 
     for handle in (sys.stdin, sys.stdout, sys.stderr):
