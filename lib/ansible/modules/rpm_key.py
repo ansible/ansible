@@ -123,6 +123,7 @@ class RpmKey(object):
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
             self.gpg = self.module.get_bin_path('gpg2', required=True)
+        self.sq = self.module.get_bin_path('sq')
 
         if '://' in key:
             keyfile = self.fetch_key(key)
@@ -237,11 +238,22 @@ class RpmKey(object):
         rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:  # No key is installed on system
             return False
-        cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
-        stdout, stderr = self.execute_command(cmd)
-        for line in stdout.splitlines():
-            if keyid in line.split(':')[4]:
-                return True
+
+        cmd = self.rpm + ' -q  gpg-pubkey --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
+        rc, stdout, stderr = self.module.run_command(cmd)
+        if rc == 0:
+            for line in stdout.splitlines():
+                if keyid in line.split(':')[4]:
+                    return True
+
+        if self.sq:
+            cmd = self.rpm + ' -q  gpg-pubkey --qf "%{description}" | ' + self.sq + ' keyring list'
+            rc, stdout, stderr = self.module.run_command(cmd)
+            if rc == 0:
+                for line in stdout.splitlines():
+                    if keyid in line.split(' ')[2]:
+                        return True
+
         return False
 
     def import_key(self, keyfile):
