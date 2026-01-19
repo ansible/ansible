@@ -1,0 +1,2 @@
+bugfixes:
+  - cli - fixed ``OSError`` on Windows by adding platform check before calling ``os.get_blocking()``, now shows helpful error message directing users to WSL instead of cryptic error
