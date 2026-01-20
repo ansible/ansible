@@ -1,19 +1,42 @@
-- hosts: testhost,testhost2
+- name: Test rescuing hosts failed via any_errors_fatal/run_once
+  hosts: testhost,testhost2
   gather_facts: false
-  any_errors_fatal: "{{ any_errors_fatal | default(omit) }}"
   tasks:
-    - block:
-        - debug:
-            msg: Some task running for all hosts
+    - name: Test failed hosts with any_errors_fatal
+      any_errors_fatal: true
+      block:
         - fail:
-          run_once: "{{ run_once | default(omit) }}"
-        - name: any_errors_fatal fails all hosts when any of them fails
-          debug:
+        - debug:
             msg: SHOULD NOT HAPPEN
       rescue:
-        - name: Rescues both hosts
-          debug:
-            msg: rescuedd
-    - name: You can recover from fatal errors by adding a rescue section to the block.
-      debug:
-        msg: recovered
+        - debug:
+            msg: EXPECTED
+
+    - name: Test failed hosts with run_once
+      block:
+        - fail:
+          run_once: True
+        - debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - debug:
+            msg: EXPECTED
+
+    - name: Test failed hosts with implicit run_once
+      block:
+        - add_host:  # missing host args, this fails
+        - debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - debug:
+            msg: EXPECTED
+
+    - name: Test failed hosts with any_errors_fatal and run_once
+      any_errors_fatal: True
+      block:
+        - fail:
+        - debug:
+            msg: SHOULD NOT HAPPEN
+      rescue:
+        - debug:
+            msg: EXPECTED

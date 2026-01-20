@@ -1,0 +1,11 @@
+- hosts: testhost,testhost2
+  gather_facts: no
+  run_once: true
+  strategy: free
+  tasks:
+    - fail:
+      when: inventory_hostname == 'testhost'
+      register: expected
+
+    - debug:
+        msg: EXPECTED

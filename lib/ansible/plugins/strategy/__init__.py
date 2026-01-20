@@ -562,7 +562,12 @@ class StrategyBase:
                     # save the current state before failing it for later inspection
                     state_when_failed = iterator.get_state_for_host(original_host.name)
                     display.debug("marking %s as failed" % original_host.name)
-                    if original_task.run_once and not original_task.any_errors_fatal:
+                    if (
+                        original_task.run_once
+                        and not original_task.any_errors_fatal
+                        and not iterator._play.strategy in add_internal_fqcns(('linear', 'free', 'host_pinned', 'debug'))
+                    ):
+                        # TODO: delete once 3rd party strategy plugins are disallowed
                         # if we're using run_once, we have to fail every host here
                         for h in self._inventory.get_hosts(iterator._play.hosts):
                             if h.name not in self._tqm._unreachable_hosts:
