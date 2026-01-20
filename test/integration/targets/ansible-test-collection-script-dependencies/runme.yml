@@ -1,0 +1,11 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Use dependency defined by alias
+      ansible_test.ansible_test_collection_indirect_by_needs_target.hello:
+      register: by_needs_target
+
+    - name: Verify the results
+      assert:
+        that:
+          - by_needs_target.source == 'needs/target'

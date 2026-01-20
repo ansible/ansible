@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections.abc as c
 import contextlib
+import dataclasses
 import datetime
 import json
 import os
@@ -175,6 +176,51 @@ def get_files_needed(target_dependencies: list[IntegrationTarget]) -> list[str]:
     return files_needed
 
 
+def get_collection_roots_needed(target_dependencies: list[IntegrationTarget]) -> list[str]:
+    """
+    Return a list of collection roots needed by the given list of target dependencies.
+    This feature is only supported for ansible-core, not collections.
+    To be recognized, a collection must reside in the following directory:
+    test/integration/targets/{target_name}/ansible_collections/ansible_test/{target_name}
+    If the target name has dashes, they will be replaced with underscores for the collection name.
+    It is an error if the collection root contains additional namespaces or collections.
+    This is enforced to ensure there are no naming conflicts between collection roots.
+    """
+    if not data_context().content.is_ansible:
+        return []
+
+    collection_roots: list[str] = []
+    namespace_name = 'ansible_test'
+
+    for target_dependency in target_dependencies:
+        collection_root = os.path.join(data_context().content.integration_targets_path, target_dependency.name)
+        collection_name = target_dependency.name.replace('-', '_')
+        namespaces_path = os.path.join(collection_root, 'ansible_collections')
+        namespace_path = os.path.join(namespaces_path, namespace_name)
+        collection_path = os.path.join(namespace_path, collection_name)
+
+        if not os.path.isdir(collection_path):
+            continue
+
+        namespaces = set(os.listdir(namespaces_path))
+        namespaces.remove(namespace_name)
+
+        if namespaces:
+            raise ApplicationError(f"Additional test collection namespaces not supported: {', '.join(sorted(namespaces))}")
+
+        collections = set(os.listdir(namespace_path))
+        collections.remove(collection_name)
+
+        if collections:
+            raise ApplicationError(f"Additional test collections not supported: {', '.join(sorted(collections))}")
+
+        collection_roots.append(collection_root)
+
+    collection_roots = sorted(set(collection_roots))
+
+    return collection_roots
+
+
 def check_inventory(args: IntegrationConfig, inventory_path: str) -> None:
     """Check the given inventory for issues."""
     if not isinstance(args.controller, OriginConfig):
@@ -289,6 +335,7 @@ def integration_test_environment(
         target_dependencies = sorted([target] + list(cache.dependency_map.get(target.name, set())))
 
         files_needed = get_files_needed(target_dependencies)
+        collection_roots = get_collection_roots_needed(target_dependencies)
 
         integration_dir = os.path.join(temp_dir, data_context().content.integration_path)
         targets_dir = os.path.join(temp_dir, data_context().content.integration_targets_path)
@@ -336,7 +383,7 @@ def integration_test_environment(
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file, collection_roots)
     finally:
         if not args.explain:
             remove_tree(temp_dir)
@@ -628,6 +675,7 @@ def command_integration_script(
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
+            test_env.update_environment(env)
             env.update(coverage_manager.get_environment(target.name, target.aliases))
             cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
@@ -747,6 +795,7 @@ def command_integration_role(
 
             env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
+            test_env.update_environment(env)
             env.update(coverage_manager.get_environment(target.name, target.aliases))
             cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
@@ -826,16 +875,25 @@ def integration_environment(
     return env
 
 
+@dataclasses.dataclass(frozen=True)
 class IntegrationEnvironment:
     """Details about the integration environment."""
 
-    def __init__(self, test_dir: str, integration_dir: str, targets_dir: str, inventory_path: str, ansible_config: str, vars_file: str) -> None:
-        self.test_dir = test_dir
-        self.integration_dir = integration_dir
-        self.targets_dir = targets_dir
-        self.inventory_path = inventory_path
-        self.ansible_config = ansible_config
-        self.vars_file = vars_file
+    test_dir: str
+    integration_dir: str
+    targets_dir: str
+    inventory_path: str
+    ansible_config: str
+    vars_file: str
+    collection_roots: list[str] = dataclasses.field(default_factory=list)
+
+    def update_environment(self, env: dict[str, str]) -> None:
+        """Update the given environment dictionary with the variables necessary for this integration environment."""
+        collections_path = value.split(':') if (value := env.get('ANSIBLE_COLLECTIONS_PATH')) else []
+        collections_path.extend([os.path.join(self.test_dir, root) for root in self.collection_roots])
+
+        if collections_path:
+            env['ANSIBLE_COLLECTIONS_PATH'] = ':'.join(collections_path)
 
 
 class IntegrationCache(CommonCache):
