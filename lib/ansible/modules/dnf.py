@@ -525,7 +525,7 @@ class DnfModule(YumDnf):
             conf.read()
         except dnf.exceptions.ConfigError as e:
             self.module.fail_json(
-                msg=f"Failed to parse configuration file '{conf.config_file_path}'",
+                msg=f"Error in configuration file '{conf.config_file_path}'",
                 exception=e,
                 results=[],
                 rc=1

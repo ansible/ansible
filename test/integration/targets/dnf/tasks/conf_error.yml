@@ -1,0 +1,19 @@
+- name: create conf file that excludes lsof
+  copy:
+    content: '[broken_section\nname=value'
+    dest: '{{ remote_tmp_dir }}/broken.conf'
+  register: broken_conf
+
+- name: Use broken conf file
+  dnf:
+    name: bash
+    state: present
+    conf_file: '{{ broken_conf.dest }}'
+  register: dnf_bash_result
+  ignore_errors: True
+
+- name: verify that broken conf raises an error
+  assert:
+    that:
+      - "dnf_bash_result is failed"
+      - "'Error in configuration file' in dnf_bash_result.msg"
