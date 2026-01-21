@@ -1,6 +1,32 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
+_DISABLE_BACKPORTED_INSPECTIONS:
+  name: Disable inspections backported from future Ansible Core releases
+  default: false
+  description:
+    - When true, bypasses backported content inspections from future Ansible Core releases.
+    - Unsupported, for internal use only.
+  env: [ { name: _ANSIBLE_DISABLE_BACKPORTED_INSPECTIONS } ]
+  ini:
+    - { key: _disable_backported_inspections, section: defaults }
+  type: boolean
+  version_added: '2.14'
+ALLOW_BROKEN_CONDITIONALS:
+  name: Allow broken conditionals
+  default: true
+  description:
+    - When true (default), this option allows conditionals with non-boolean results to be used.
+    - A deprecation warning will be emitted in these cases.
+    - When false, non-boolean conditionals result in an error.
+    - Such results often indicate unintentional use of templates where they are not supported, resulting in a conditional that is always true.
+    - When this option is enabled, conditional expressions which are a literal ``None`` or empty string will evaluate as true for backwards compatibility.
+    - This configuration was backported from Ansible Core 2.19 to enable detection and correction of problematic conditional expressions that default to an error in Ansible Core 2.19+.
+  env: [{name: ANSIBLE_ALLOW_BROKEN_CONDITIONALS}]
+  ini:
+  - {key: allow_broken_conditionals, section: defaults}
+  type: boolean
+  version_added: '2.14'
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
