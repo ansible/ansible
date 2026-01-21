@@ -1,0 +1,2 @@
+bugfixes:
+- "Fix Windows LIB env var corruption (https://github.com/ansible-collections/ansible.windows/issues/297)."
