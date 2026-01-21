@@ -15,6 +15,9 @@
 #
 # 4) Windows tests need access to the ansible.windows vendored collection.
 #    This script copies any of the existing collections in ANSIBLE_COLLECTIONS_PATH to the temporary directory.
+#
+# NOTE: This script is *NOT* compatible ansible-test's built-in collection injection feature,
+#       since it assumes that ANSIBLE_COLLECTIONS_PATH contains only a single path.
 
 set -eu -o pipefail
 
