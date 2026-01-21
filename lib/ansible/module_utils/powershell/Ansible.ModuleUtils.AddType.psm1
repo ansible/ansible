@@ -378,7 +378,7 @@ Function Add-CSharpType {
         $originalEnv = @{}
         try {
             'LIB' | ForEach-Object -Process {
-                $value = Get-Item -LiteralPath "Env:\$_" -ErrorAction SilentlyContinue
+                $value = (Get-Item -LiteralPath "Env:\$_" -ErrorAction SilentlyContinue).Value
                 if ($value) {
                     $originalEnv[$_] = $value
                     Remove-Item -LiteralPath "Env:\$_"

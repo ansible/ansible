@@ -322,6 +322,7 @@ namespace Namespace12
 $env:LIB = "C:\fake\folder\path"
 try {
     Add-CSharpType -Reference $lib_set
+    Assert-Equal -actual $env:LIB -expected "C:\fake\folder\path"
 }
 finally {
     Remove-Item -LiteralPath env:\LIB
