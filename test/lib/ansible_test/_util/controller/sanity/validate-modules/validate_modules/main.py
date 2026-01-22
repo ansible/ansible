@@ -105,6 +105,22 @@ REPLACER_WINDOWS = _REPLACER_WINDOWS.decode('utf-8')
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
+# Golang struct regexes
+GO_PACKAGE_RE = re.compile(r'^\s*package\s+main\b', re.MULTILINE)
+GO_MAIN_RE = re.compile(r'^\s*func\s+main\s*\(', re.MULTILINE)
+GO_MODULE_ARGS_RE = re.compile(
+    r'type\s+ModuleArgs\s+struct\s*{',
+    re.MULTILINE,
+)
+# Golang arguments field and structure regexes
+GO_FIELD_RE = re.compile(
+    r'^\s*(?P<name>[A-Z]\w*)\s+[^`\n]+\s+`json:"(?P<json>[^"]+)"`',
+    re.MULTILINE,
+)
+GO_STRUCT_RE = re.compile(
+    r"type\s+(?P<name>\w+)\s+struct\s*{(?P<body>[^}]*)}",
+    re.DOTALL | re.MULTILINE,
+)
 
 def is_potential_secret_option(option_name):
     if not NO_LOG_REGEX.search(option_name):
@@ -364,6 +380,11 @@ class ModuleValidator(Validator):
             return True
         return False
 
+    def _golang_module(self):
+        if self.path.endswith('.go'):
+            return True
+        return False
+
     def _sidecar_doc(self):
         if self.path.endswith('.yml') or self.path.endswith('.yaml'):
             return True
@@ -387,6 +408,164 @@ class ModuleValidator(Validator):
             return True
         except AttributeError:
             return False
+
+    def _extract_go_struct(self, struct_name):
+        """
+        Return the body of a named Go struct or None.
+        """
+        for match in GO_STRUCT_RE.finditer(self.text):
+            if match.group("name") == struct_name:
+                return match.group("body")
+        return None
+
+    def _find_python_doc_for_golang(self):
+        """
+        Find the corresponding python doc module for a golang module
+        """
+        # We need to find the path of the <module>.py documentation file
+        parts = self.path.split(os.sep)
+        try:
+            idx = parts.index("plugins")
+        except ValueError:
+            return None
+
+        root = os.sep.join(parts[:idx + 1])
+        py_path = os.path.join(root, "modules", f"{self.name}.py")
+        if os.path.exists(py_path):
+            return py_path
+
+        self.reporter.error(
+            path=self.object_path,
+            code='missing-golang-documentation-module',
+            msg='Missing Python module documentation'
+        )
+
+    def _validate_go_structure(self):
+        """ Validate that the Go module has the expected structure:
+            - package main
+            - func main()
+        """
+        if not GO_PACKAGE_RE.search(self.text):
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-package-main',
+                msg='Go module must declare "package main"'
+            )
+
+        if not GO_MAIN_RE.search(self.text):
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-main-func',
+                msg="Go module must define func main()"
+            )
+
+        structs = GO_MODULE_ARGS_RE.findall(self.text)
+        if not structs:
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-moduleargs-struct',
+                msg='Go module must define a ModuleArgs struct'
+            )
+        elif len(structs) > 1:
+            self.reporter.warning(
+                path=self.object_path,
+                code='multiple-golang-moduleargs-structs',
+                msg='Multiple ModuleArgs structs found; only one is expected'
+            )
+
+    def _extract_go_args(self):
+        """ Extract golang module args from ModuleArgs struct """
+        body = self._extract_go_struct("ModuleArgs")
+        if not body:
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-arguments-struct',
+                msg='Argument structure not found'
+            )
+            return
+        args = {}
+        for match in GO_FIELD_RE.finditer(body):
+            json_name = match.group("json")
+            field = match.group("name")
+            if json_name in args:
+                raise ValueError(f"Duplicate json tag '{json_name}'")
+            args[json_name] = field
+        return args
+
+    def _extract_go_response_fields(self):
+        """ Extract json fields from the Response struct """
+        body = self._extract_go_struct("Response")
+        if not body:
+            self.reporter.warning(
+                path=self.object_path,
+                code='missing-golang-response-struct',
+                msg='Response structure not found'
+            )
+            return
+        fields = {}
+        for match in GO_FIELD_RE.finditer(body):
+            json_name = match.group("json")
+            field = match.group("name")
+            if json_name in fields:
+                raise ValueError(f"Duplicate json tag '{json_name}'")
+            fields[json_name] = field
+        return fields
+
+    def _extract_python_options(self):
+        """ Extract python module options from DOCUMENTATION string """
+        pyDoc = self._find_python_doc_for_golang()
+        if pyDoc:
+            with open(pyDoc) as f:
+                tree = ast.parse(f.read(), filename=pyDoc)
+            doc_node = None
+            for node in tree.body:
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and target.id == "DOCUMENTATION":
+                            doc_node = node.value
+                            break
+
+        if not doc_node or not isinstance(doc_node, ast.Constant):
+            return set()
+
+        text = doc_node.value
+        match = re.search(r"options:\s*(.+?)\n\w", text, re.DOTALL)
+        if not match:
+            return set()
+
+        return set(
+            re.findall(r"^\s{2}(\w+):", match.group(1), re.MULTILINE)
+        )
+
+    def _validate_go_args(self):
+        try:
+            go_args = set(self._extract_go_args())
+        except ValueError as exc:
+            raise ValueError(self.path, str(exc))
+
+        py_args = self._extract_python_options()
+
+        for opt in sorted(py_args - go_args):
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-documented-golang-option',
+                msg='Option "{opt}" documented but not implemented in Go ModuleArgs'
+            )
+        for arg in sorted(go_args - py_args):
+            self.reporter.warning(
+                path=self.object_path,
+                code='missing-documented-golang-argument',
+                msg='Argument "{arg}" implemented in Go but undocumented'
+            )
+
+    def _validate_go_response(self):
+        response = self._extract_go_response_fields()
+        if response is None:
+            self.reporter.warning(
+                path=self.object_path,
+                code='missing-json-response-struct',
+                msg='Module does not return JSON response structure'
+            )
 
     def _is_new_module(self) -> bool | None:
         """Return True if the content is new, False if it is not and None if the information is not available."""
@@ -2314,7 +2493,8 @@ class ModuleValidator(Validator):
 
     def validate(self):
         super(ModuleValidator, self).validate()
-        if not self._python_module() and not self._powershell_module() and not self._sidecar_doc():
+        if not self._python_module() and not self._powershell_module() \
+            and not self._sidecar_doc() and not self._golang_module():
             self.reporter.error(
                 path=self.object_path,
                 code='invalid-extension',
@@ -2426,8 +2606,14 @@ class ModuleValidator(Validator):
                     docs = docs_mv._validate_docs()[1]
                     self._validate_ansible_module_call(docs)
 
+        if self._golang_module():
+            self._validate_go_structure()
+            self._validate_go_args()
+            self._validate_go_response()
+
         self._check_gpl3_header()
-        if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only:
+        if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only \
+            and not self._golang_module():
             if self.plugin_type == 'module':
                 self._check_interpreter()
 
