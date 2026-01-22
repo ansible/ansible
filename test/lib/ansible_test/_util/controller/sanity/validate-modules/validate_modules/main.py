@@ -105,14 +105,14 @@ REPLACER_WINDOWS = _REPLACER_WINDOWS.decode('utf-8')
 
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
-# Golang struct regexes
+# Golang struct regex
 GO_PACKAGE_RE = re.compile(r'^\s*package\s+main\b', re.MULTILINE)
 GO_MAIN_RE = re.compile(r'^\s*func\s+main\s*\(', re.MULTILINE)
 GO_MODULE_ARGS_RE = re.compile(
     r'type\s+ModuleArgs\s+struct\s*{',
     re.MULTILINE,
 )
-# Golang arguments field and structure regexes
+# Golang arguments field and structure regex
 GO_FIELD_RE = re.compile(
     r'^\s*(?P<name>[A-Z]\w*)\s+[^`\n]+\s+`json:"(?P<json>[^"]+)"`',
     re.MULTILINE,
@@ -416,7 +416,6 @@ class ModuleValidator(Validator):
         for match in GO_STRUCT_RE.finditer(self.text):
             if match.group("name") == struct_name:
                 return match.group("body")
-        return None
 
     def _find_python_doc_for_golang(self):
         """
@@ -427,7 +426,7 @@ class ModuleValidator(Validator):
         try:
             idx = parts.index("plugins")
         except ValueError:
-            return None
+            return
 
         root = os.sep.join(parts[:idx + 1])
         py_path = os.path.join(root, "modules", f"{self.name}.py")
@@ -439,39 +438,6 @@ class ModuleValidator(Validator):
             code='missing-golang-documentation-module',
             msg='Missing Python module documentation'
         )
-
-    def _validate_go_structure(self):
-        """ Validate that the Go module has the expected structure:
-            - package main
-            - func main()
-        """
-        if not GO_PACKAGE_RE.search(self.text):
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-golang-package-main',
-                msg='Go module must declare "package main"'
-            )
-
-        if not GO_MAIN_RE.search(self.text):
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-golang-main-func',
-                msg="Go module must define func main()"
-            )
-
-        structs = GO_MODULE_ARGS_RE.findall(self.text)
-        if not structs:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-golang-moduleargs-struct',
-                msg='Go module must define a ModuleArgs struct'
-            )
-        elif len(structs) > 1:
-            self.reporter.warning(
-                path=self.object_path,
-                code='multiple-golang-moduleargs-structs',
-                msg='Multiple ModuleArgs structs found; only one is expected'
-            )
 
     def _extract_go_args(self):
         """ Extract golang module args from ModuleArgs struct """
@@ -537,7 +503,45 @@ class ModuleValidator(Validator):
             re.findall(r"^\s{2}(\w+):", match.group(1), re.MULTILINE)
         )
 
+    # Golang Validation functions
+    def _validate_go_structure(self):
+        """ Validate that the Go module has the expected structure:
+            - package main
+            - func main()
+            - ModuleArgs struct
+        """
+        if not GO_PACKAGE_RE.search(self.text):
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-package-main',
+                msg='Go module must declare "package main"'
+            )
+
+        if not GO_MAIN_RE.search(self.text):
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-main-func',
+                msg="Go module must define func main()"
+            )
+
+        structs = GO_MODULE_ARGS_RE.findall(self.text)
+        if not structs:
+            self.reporter.error(
+                path=self.object_path,
+                code='missing-golang-moduleargs-struct',
+                msg='Go module must define a ModuleArgs struct'
+            )
+        elif len(structs) > 1:
+            self.reporter.warning(
+                path=self.object_path,
+                code='multiple-golang-moduleargs-structs',
+                msg='Multiple ModuleArgs structs found; only one is expected'
+            )
+
     def _validate_go_args(self):
+        """ Validate Go module arguments against documented python options.
+            Expected Golang a `ModuleArgs` structure with json fields.
+        """
         try:
             go_args = set(self._extract_go_args())
         except ValueError as exc:
@@ -559,6 +563,10 @@ class ModuleValidator(Validator):
             )
 
     def _validate_go_response(self):
+        """ Validate Go module response structure.
+            Expected Golang a `Response` structure with json fields.
+            Only warn if missing.
+        """
         response = self._extract_go_response_fields()
         if response is None:
             self.reporter.warning(
