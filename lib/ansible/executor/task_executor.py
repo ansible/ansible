@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import contextlib
 import os
 import pty
 import time
@@ -693,12 +694,16 @@ class TaskExecutor:
                 if self._task.changed_when is not None and self._task.changed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.changed_when
+                    with contextlib.suppress(AttributeError):
+                        cond._ds = self._task._ds  # propagate task context for errors
                     result['changed'] = cond.evaluate_conditional(templar, vars_copy)
 
             def _evaluate_failed_when_result(result):
                 if self._task.failed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.failed_when
+                    with contextlib.suppress(AttributeError):
+                        cond._ds = self._task._ds  # propagate task context for errors
                     failed_when_result = cond.evaluate_conditional(templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
                 else:
@@ -763,6 +768,8 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until or [not result['failed']]
+                with contextlib.suppress(AttributeError):
+                    cond._ds = self._task._ds
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
