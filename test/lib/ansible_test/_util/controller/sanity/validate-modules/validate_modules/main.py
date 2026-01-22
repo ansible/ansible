@@ -122,6 +122,7 @@ GO_STRUCT_RE = re.compile(
     re.DOTALL | re.MULTILINE,
 )
 
+
 def is_potential_secret_option(option_name):
     if not NO_LOG_REGEX.search(option_name):
         return False
@@ -2502,7 +2503,7 @@ class ModuleValidator(Validator):
     def validate(self):
         super(ModuleValidator, self).validate()
         if not self._python_module() and not self._powershell_module() \
-            and not self._sidecar_doc() and not self._golang_module():
+                and not self._sidecar_doc() and not self._golang_module():
             self.reporter.error(
                 path=self.object_path,
                 code='invalid-extension',
@@ -2621,7 +2622,7 @@ class ModuleValidator(Validator):
 
         self._check_gpl3_header()
         if not self._just_docs() and not self._sidecar_doc() and not end_of_deprecation_should_be_removed_only \
-            and not self._golang_module():
+                and not self._golang_module():
             if self.plugin_type == 'module':
                 self._check_interpreter()
 
