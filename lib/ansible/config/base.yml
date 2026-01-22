@@ -11,7 +11,7 @@ _DISABLE_BACKPORTED_INSPECTIONS:
   ini:
     - { key: _disable_backported_inspections, section: defaults }
   type: boolean
-  version_added: '2.14'
+  version_added: '2.16'
 ALLOW_BROKEN_CONDITIONALS:
   name: Allow broken conditionals
   default: true
@@ -26,7 +26,7 @@ ALLOW_BROKEN_CONDITIONALS:
   ini:
   - {key: allow_broken_conditionals, section: defaults}
   type: boolean
-  version_added: '2.14'
+  version_added: '2.16'
 ANSIBLE_HOME:
   name: The Ansible home path
   description:
