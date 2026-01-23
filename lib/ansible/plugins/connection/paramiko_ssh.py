@@ -250,7 +250,12 @@ from ansible.errors import (
 )
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
-from ansible.module_utils.compat.paramiko import _PARAMIKO_IMPORT_ERR as PARAMIKO_IMPORT_ERR, _paramiko as paramiko
+try:
+    import paramiko
+    PARAMIKO_IMPORT_ERR = None
+except Exception as err:
+    paramiko = None
+    PARAMIKO_IMPORT_ERR = err
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
