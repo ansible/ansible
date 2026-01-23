@@ -27,6 +27,19 @@ def handle_prompt(prompt: str) -> bool:
         sys.stdout.flush()
         return True
 
+    ssh_askpass_prompt = os.environ.get('SSH_ASKPASS_PROMPT')
+
+    prompt_response_map = {
+        'none': '',
+        'confirm': 'yes',
+    }
+
+    if ssh_askpass_prompt in prompt_response_map:
+        # We write the mapped value and immediately flush it
+        sys.stdout.write(prompt_response_map[ssh_askpass_prompt])
+        sys.stdout.flush()
+        return True
+
     # deprecated: description='Python 3.13 and later support track' python_version='3.12'
     can_track = sys.version_info[:2] >= (3, 13)
     kwargs = dict(track=False) if can_track else {}
