@@ -709,6 +709,32 @@ releases:
     - 85193-runtime-metadata.yml
     - varloaderror.yml
     release_date: '2025-12-02'
+  2.18.13rc1:
+    changes:
+      bugfixes:
+      - Fix Windows LIB env var corruption (https://github.com/ansible-collections/ansible.windows/issues/297).
+      minor_changes:
+      - ansible-test - Replace RHEL 10.0 remote with 10.1.
+      - ansible-test - Replace RHEL 9.4 remote with 9.7.
+      - conditionals - Conditional expressions (such as ``when`` in playbook tasks
+        or ``that`` in the ``assert`` action) with results other than True or False
+        will issue a deprecation warning. Such expressions mask subtle errors and
+        will fail by default in Ansible Core >= 2.19. They should be corrected to
+        always ensure a strictly boolean (True or False) result. The stricter Ansible
+        Core >= 2.19 failure behavior can be enabled by configuring ``ALLOW_BROKEN_CONDITIONALS``
+        to False.
+      release_summary: '| Release Date: 2026-01-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.13rc1_summary.yaml
+    - ansible-test-rhel-10.1.yml
+    - broken_conditional_backport.yml
+    - fix-windows-lib-env-corruption.yml
+    release_date: '2026-01-22'
   2.18.1rc1:
     changes:
       bugfixes:
