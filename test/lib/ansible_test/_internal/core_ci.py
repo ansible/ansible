@@ -137,7 +137,7 @@ class CloudResource(Resource):
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
 
-    DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
+    DEFAULT_ENDPOINT = 'https://api.ci.core.ansible.com'
 
     def __init__(
         self,
