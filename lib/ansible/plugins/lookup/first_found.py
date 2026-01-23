@@ -232,8 +232,11 @@ class LookupModule(LookupBase):
         else:
             terms = _recurse_terms(terms, omit_undefined=False)  # undefined values are only omitted when invoked using `with`
 
-        # invoked_as_with shouldn't be possible outside a TaskContext
-        te_action = _task.TaskContext.current().task.action  # FIXME: this value has not been templated, it should be (historical problem)...
+        try:
+            # invoked_as_with shouldn't be possible outside a TaskContext
+            te_action = _task.TaskContext.current().task.action  # FIXME: this value has not been templated, it should be (historical problem)...
+        except ReferenceError:
+            te_action = 'file'
 
         # based on the presence of `var`/`template`/`file` in the enclosing task action name, choose a subdir to search
         for subdir in ['template', 'var', 'file']:

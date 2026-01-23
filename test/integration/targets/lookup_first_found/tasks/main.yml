@@ -39,17 +39,22 @@
       - result.results[0].item.endswith('/foo1')
 
 - name: roles search for files in the files subdir
-  debug:
-    msg: "{{ lookup('first_found', 'findme.txt') }}"
-  register: find_under_files
+  set_fact:
+    find_under_files: "{{ lookup('first_found', 'findme.txt') }}"
 
-- name: ensure that files subdir is used when searching for files
+- name: verify the content of the found file
   assert:
     that:
-      - find_under_files.msg.endswith('/findme.txt')
+      - lookup('file', find_under_files) == 'under files subdir'
+      - find_under_files.endswith('/findme.txt')
 
 - name: ensure that files subdir is used when searching for files using include_vars
   include_vars: "{{ lookup('first_found', 'findme.txt') }}"
+
+- name: verify the content of the found file
+  assert:
+    that:
+      - "hello == 'world'"
 
 - name: ensure that files subdir is used when searching for files using template
   template:
@@ -61,6 +66,15 @@
   assert:
     that:
       - template_result is succeeded
+      - lookup('file', '/tmp/sample.txt') == 'world'
+
+- name: ensure that files subdir is used when searching for files using include_tasks
+  include_tasks: "{{ lookup('first_found', 'findme.yml') }}"
+
+- name: verify the content of the found file
+  assert:
+    that:
+      - "sample_var == 'Hello World'"
 
 - name: ensure template errors are properly handled when using with_first_found
   debug:
