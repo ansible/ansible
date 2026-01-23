@@ -4,6 +4,35 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-01-23
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Replace RHEL 10.0 remote with 10.1.
+- ansible-test - Replace RHEL 9.6 remote with 9.7.
+
+Bugfixes
+--------
+
+- Fix Windows LIB env var corruption (https://github.com/ansible-collections/ansible.windows/issues/297).
+- ``ansible``, ``ansible-console`` - fix executing ``- meta: end_play`` tasks.
+- ansible-test - Upgrade ``expat`` during provisioning of Fedora 42 remote instances.
+- ansible_local will no longer trigger variable injection default value deprecation.
+- copy - when a single-file local directory was specified as the source, ``changed`` used to be ``false`` even when the source was actually copied. It now makes sure ``changed`` is ``true`` in this case. (https://github.com/ansible/ansible/issues/85833)
+- deb822_repository - Remove ``Install-Python-Debian`` from files outputed by the ``deb822_repository`` module (https://github.com/ansible/ansible/issues/86395)
+- dnf - When installing a dnf module, install and enable when missing, upgrade when present (https://github.com/ansible/ansible/issues/73457)
+- dnf - fix package installation when specifying architecture without version (e.g., ``libgcc.i686``) where a different architecture of the same package is already installed (https://github.com/ansible/ansible/issues/86156).
+- package, service, gather_facts - fix templating module_defaults for modules executed by these action plugins. (https://github.com/ansible/ansible/issues/85848)
+- winrm - Provide a better error message if a domain user is specified using a User Principal Name (``UPN``) but the ``pykerberos`` library is not installed so Kerberos is unavailable.
+
 v2.20.1
 =======
 
