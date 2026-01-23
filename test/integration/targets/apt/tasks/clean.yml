@@ -1,0 +1,26 @@
+---
+- name: Manually create a dummy file in the apt archive dir
+  copy:
+    content: "dummy data"
+    dest: /var/cache/apt/archives/test_idempotency.deb
+    mode: '0644'
+
+- name: Run apt clean (First time - should be changed)
+  apt:
+    clean: yes
+  register: first_clean
+
+- name: Verify first clean reported a change
+  assert:
+    that:
+      - first_clean is changed
+
+- name: Run apt clean (Second time - should NOT be changed)
+  apt:
+    clean: yes
+  register: second_clean
+
+- name: Verify second clean reported NO change (Idempotency)
+  assert:
+    that:
+      - second_clean is not changed
