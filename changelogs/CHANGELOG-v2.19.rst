@@ -4,6 +4,29 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-01-23
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Replace RHEL 10.0 remote with 10.1.
+- ansible-test - Replace RHEL 9.5 remote with 9.7.
+
+Bugfixes
+--------
+
+- Fix Windows LIB env var corruption (https://github.com/ansible-collections/ansible.windows/issues/297).
+- ansible_local will no longer trigger variable injection default value deprecation.
+- package, service, gather_facts - fix templating module_defaults for modules executed by these action plugins. (https://github.com/ansible/ansible/issues/85848)
+- winrm - Provide a better error message if a domain user is specified using a User Principal Name (``UPN``) but the ``pykerberos`` library is not installed so Kerberos is unavailable.
+
 v2.19.5
 =======
 
