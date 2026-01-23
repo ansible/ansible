@@ -188,6 +188,15 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
     def test_path_endswith_role_source_main_yml_source_in_dirname(self):
         self.assertRaises(AnsibleFileNotFound, self._loader.path_dwim_relative_stack, 'foo/bar/tasks/', 'tasks', 'tasks/main.yml')
 
+    def test_source_none_valid_paths(self):
+        self.assertRaisesRegex(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, ['/tmp'], 'files', None)
+
+    def test_dirname_none_valid_source(self):
+        self.assertRaises(AnsibleFileNotFound, self._loader.path_dwim_relative_stack, ['/tmp'], None, 'foo.yml')
+
+    def test_dirname_and_source_none(self):
+        self.assertRaisesRegex(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, ['/tmp'], None, None)
+
 
 class TestDataLoaderWithVault(unittest.TestCase):
 
