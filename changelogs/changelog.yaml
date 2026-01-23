@@ -438,3 +438,48 @@ releases:
     - getuser-exception-handling.yml
     - varloaderror.yml
     release_date: '2025-12-02'
+  2.20.2rc1:
+    changes:
+      bugfixes:
+      - Fix Windows LIB env var corruption (https://github.com/ansible-collections/ansible.windows/issues/297).
+      - '``ansible``, ``ansible-console`` - fix executing ``- meta: end_play`` tasks.'
+      - ansible-test - Upgrade ``expat`` during provisioning of Fedora 42 remote instances.
+      - ansible_local will no longer trigger variable injection default value deprecation.
+      - copy - when a single-file local directory was specified as the source, ``changed``
+        used to be ``false`` even when the source was actually copied. It now makes
+        sure ``changed`` is ``true`` in this case. (https://github.com/ansible/ansible/issues/85833)
+      - deb822_repository - Remove ``Install-Python-Debian`` from files outputed by
+        the ``deb822_repository`` module (https://github.com/ansible/ansible/issues/86395)
+      - dnf - When installing a dnf module, install and enable when missing, upgrade
+        when present (https://github.com/ansible/ansible/issues/73457)
+      - dnf - fix package installation when specifying architecture without version
+        (e.g., ``libgcc.i686``) where a different architecture of the same package
+        is already installed (https://github.com/ansible/ansible/issues/86156).
+      - package, service, gather_facts - fix templating module_defaults for modules
+        executed by these action plugins. (https://github.com/ansible/ansible/issues/85848)
+      - winrm - Provide a better error message if a domain user is specified using
+        a User Principal Name (``UPN``) but the ``pykerberos`` library is not installed
+        so Kerberos is unavailable.
+      minor_changes:
+      - ansible-test - Replace RHEL 10.0 remote with 10.1.
+      - ansible-test - Replace RHEL 9.6 remote with 9.7.
+      release_summary: '| Release Date: 2026-01-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.2rc1_summary.yaml
+    - 73457-dnf-install-modules-latest.yml
+    - 85834-fix-copy-in-single-file-directory.yml
+    - 86156-dnf-multilib-arch.yml
+    - 86403-fix-deb822-repository-output.yml
+    - ansible-test-fedora42-expat.yml
+    - ansible-test-rhel-10.1.yml
+    - ansible_local_nodepr.yml
+    - fix-adhoc-meta-end_play.yml
+    - fix-windows-lib-env-corruption.yml
+    - module_defaults-action-plugin-templating.yml
+    - winrm-kerberos.yml
+    release_date: '2026-01-22'
