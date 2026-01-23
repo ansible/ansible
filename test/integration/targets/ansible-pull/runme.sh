@@ -183,7 +183,7 @@ pass_tests_file_exist
 
 unreadable_file="${PWD}/unreadable.txt"
 cp "${script_location}/pull-integration-test/local.yml" "${unreadable_file}"
-chmod a-r "${unreadable_file}"
+chmod 000 "${unreadable_file}"
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" "${unreadable_file}" 2>&1 | tee "${temp_log}"
 pass_tests_file_not_accessible
 
