@@ -652,19 +652,20 @@
             - top is skipped
             - sub is skipped
 
-      - name: test that 'comparison expression' item works with_items
-        assert:
-          that:
-            - item
-        with_items:
-          - 1 == 1
-
-      - name: test that 'comparison expression' item works in loop
-        assert:
-          that:
-            - item
-        loop:
-          - 1 == 1
+# these tests have never actually worked; they were only asserting a truthy string, not executing an indirected expression
+#      - name: test that 'comparison expression' item works with_items
+#        assert:
+#          that:
+#            - item
+#        with_items:
+#          - 1 == 1
+#
+#      - name: test that 'comparison expression' item works in loop
+#        assert:
+#          that:
+#            - item
+#        loop:
+#          - 1 == 1
 
       - set_fact:
           sentinel_file: '{{ lookup("env", "OUTPUT_DIR")}}/LOOKUP_SIDE_EFFECT.txt'

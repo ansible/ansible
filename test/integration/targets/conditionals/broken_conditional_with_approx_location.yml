@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: conditional expression with non-boolean input (inherits task location)
+      debug:
+      when: 1

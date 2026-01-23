@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
 
+import contextlib
 import os
 import time
 import json
@@ -410,6 +411,8 @@ class TaskExecutor:
                 cond.when = self._task.loop_control.get_validated_value(
                     'break_when', self._task.loop_control.fattributes.get('break_when'), self._task.loop_control.break_when, templar
                 )
+                with contextlib.suppress(AttributeError):
+                    cond._ds = self._task._ds  # propagate task context for errors
                 if cond.evaluate_conditional(templar, task_vars):
                     # delete loop vars before exiting loop
                     del task_vars[loop_var]
@@ -722,12 +725,16 @@ class TaskExecutor:
                 if self._task.changed_when is not None and self._task.changed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.changed_when
+                    with contextlib.suppress(AttributeError):
+                        cond._ds = self._task._ds  # propagate task context for errors
                     result['changed'] = cond.evaluate_conditional(templar, vars_copy)
 
             def _evaluate_failed_when_result(result):
                 if self._task.failed_when:
                     cond = Conditional(loader=self._loader)
                     cond.when = self._task.failed_when
+                    with contextlib.suppress(AttributeError):
+                        cond._ds = self._task._ds  # propagate task context for errors
                     failed_when_result = cond.evaluate_conditional(templar, vars_copy)
                     result['failed_when_result'] = result['failed'] = failed_when_result
                 else:
@@ -792,6 +799,8 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until or [not result['failed']]
+                with contextlib.suppress(AttributeError):
+                    cond._ds = self._task._ds
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:

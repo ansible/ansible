@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: non-task conditional expression with non-boolean input (no location)
+      assert:
+        that: 1

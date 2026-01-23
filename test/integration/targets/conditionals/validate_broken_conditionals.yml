@@ -1,0 +1,54 @@
+- hosts: localhost
+  gather_facts: no
+  environment:
+    ANSIBLE_NOCOLOR: 1
+    ANSIBLE_FORCE_COLOR: 0
+    ANSIBLE_DEPRECATION_WARNINGS: 1
+  tasks:
+    - name: broken conditional warning with exact location and bypass
+      command: ansible-playbook broken_conditional_with_location.yml
+      environment:
+      - '{{ item.extra_env }}'
+      loop:
+        - scenario: default
+          extra_env: {}
+        - scenario: explicit
+          extra_env:
+            ANSIBLE_ALLOW_BROKEN_CONDITIONALS: 1
+        - scenario: bypass
+          extra_env:
+            _ANSIBLE_DISABLE_BACKPORTED_INSPECTIONS: 1
+      register: result
+
+    - assert:
+        that:
+          - result.results[0].stderr | replace('\n', '') is search("result at location.+was of type 'int'")
+          - result.results[1].stderr | replace('\n', '') is search("result at location.+was of type 'int'")
+          - result.results[2].stderr | replace('\n', '') is not search("result at location.+was of type 'int'")
+
+    - name: validate broken conditional default warning with approximate location
+      command: ansible-playbook broken_conditional_with_approx_location.yml
+      register: result
+
+    - assert:
+        that:
+          - result.stderr | replace('\n', '') is search("result at approximate location.+was of type 'int'")
+
+    - name: validate broken conditional without location
+      command: ansible-playbook broken_conditional_without_location.yml
+      register: result
+
+    - assert:
+        that:
+          - result.stderr | replace('\n', '') is search("result at unknown location.+was of type 'int'")
+
+    - name: validate broken conditional error
+      command: ansible-playbook broken_conditional_with_location.yml
+      environment:
+        ANSIBLE_ALLOW_BROKEN_CONDITIONALS: 0
+      register: result
+      failed_when: result.rc == 0
+
+    - assert:
+        that:
+          - result.stdout | replace('\n', '') is search("conditional check.+failed.+was of type 'int'")
