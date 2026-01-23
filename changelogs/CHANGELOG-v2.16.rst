@@ -5,6 +5,23 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.16rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-01-23
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Replace RHEL 10.0 remote with 10.1.
+- ansible-test - Replace RHEL 9.6 remote with 9.7.
+- conditionals - Conditional expressions (such as ``when`` in playbook tasks or ``that`` in the ``assert`` action) with results other than True or False will issue a deprecation warning. Such expressions mask subtle errors and will fail by default in Ansible Core >= 2.19. They should be corrected to always ensure a strictly boolean (True or False) result. The stricter Ansible Core >= 2.19 failure behavior can be enabled by configuring ``ALLOW_BROKEN_CONDITIONALS`` to False.
+
 v2.16.15
 ========
 
