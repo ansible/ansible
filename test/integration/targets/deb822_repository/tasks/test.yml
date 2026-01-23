@@ -241,3 +241,85 @@
 - assert:
     that:
       - ansible_test_http_agent is changed
+
+- name: Create the 'fake' downloaded key on the local filesystem
+  copy:
+    dest: "{{ remote_tmp_dir }}/mock_downloaded_key.asc"
+    content: |
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+      mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDbhRml9ORg1WV5CvzKY
+      CuMfoIS0BmFiY2RlZoiQBBMWCgA4FiEErCIG1VhKWMWo2yfAREZd5NfO31cFAmAk
+      IyMCGyMFCwkIBwMFFQoJCAsFFgIDAQACHgECF4AACgkQREZd5NfO31fbOwD6ArzS
+      dM0Dkd5h2Ujy1b6KcAaVW9FOa5UNfJ9FFBtjLQEBAJ7UyWD3dZzhvlaAwunsk7DG
+      3bHcln8DMpIJVXht78sL
+      =IE0r
+      -----END PGP PUBLIC KEY BLOCK-----
+
+- name: Add repo with embedded key (using fake URL to test download logic)
+  deb822_repository:
+    name: ansible-test-embed-mock
+    types: deb
+    uris: http://example.com/debian
+    suites: stable
+    signed_by: "file://{{ remote_tmp_dir }}/mock_downloaded_key.asc"
+    signed_by_target: embed
+    components:
+      - main
+      - contrib
+      - non-free
+  register: embed_mock_test
+
+- name: Stat for potential leftover key file
+  stat:
+    path: /etc/apt/keyrings/ansible-test-embed-mock.asc
+  register: embed_key_stat
+
+- assert:
+    that:
+      - embed_mock_test is changed
+      - embed_mock_test.key_filename is none
+      - "'BEGIN PGP PUBLIC KEY BLOCK' in embed_mock_test.repo"
+      - not embed_key_stat.stat.exists
+
+- name: Add repo with embedded key from URL (idempotency)
+  deb822_repository:
+    name: ansible-test-embed-mock
+    types: deb
+    uris: http://example.com/debian
+    suites: stable
+    signed_by: "file://{{ remote_tmp_dir }}/mock_downloaded_key.asc"
+    signed_by_target: embed
+    components:
+      - main
+      - contrib
+      - non-free
+  register: embed_url_idem
+
+- assert:
+    that:
+      - embed_url_idem is not changed
+
+- name: Attempt to embed binary key from URL (should fail)
+  deb822_repository:
+    name: ansible-test-embed-fail
+    types: deb
+    uris: https://deb.debian.org
+    suites: stable
+    signed_by: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+    signed_by_target: embed
+    components:
+      - main
+      - contrib
+      - non-free
+  ignore_errors: true
+  register: embed_binary_fail
+
+- assert:
+    that:
+      - embed_binary_fail is failed
+      - "'not ASCII armored' in embed_binary_fail.msg"
+
+- name: Remove embed test repo
+  deb822_repository:
+    name: ansible-test-embed-mock
+    state: absent

@@ -118,6 +118,17 @@ options:
           the keyrings in the C(trusted.gpg.d/) directory, or an ASCII armored
           GPG public key block.
         type: str
+    signed_by_target:
+        description:
+        - Controls whether the GPG key provided in O(signed_by) should be written as a file or embedded directly.
+        - When set to V(file) and O(signed_by) is a URL, the key is downloaded to a file in C(/etc/apt/keyrings/).
+        - When set to V(embed) and O(signed_by) is a URL, the key content is fetched and placed directly into the C(Signed-By) field of the C(.sources) file.
+        type: str
+        choices:
+        - file
+        - embed
+        default: file
+        version_added: '2.21'
     suites:
         description:
         - >-
@@ -342,7 +353,7 @@ def is_armored(b_data):
     return b'-----BEGIN PGP PUBLIC KEY BLOCK-----' in b_data
 
 
-def write_signed_by_key(module, v, slug):
+def write_signed_by_key(module, v, slug, signed_by_target='file'):
     changed = False
     if os.path.isfile(v):
         return changed, v, None
@@ -357,6 +368,11 @@ def write_signed_by_key(module, v, slug):
             raise RuntimeError('Could not fetch signed_by key.') from exc
         else:
             b_data = r.read()
+
+            if signed_by_target == 'embed':
+                if not is_armored(b_data):
+                    module.fail_json(msg="The key fetched from the URL is not ASCII armored. Binary keys cannot be embedded.")
+                return False, None, to_native(b_data)
     else:
         # Not a file, nor a URL, just pass it through
         return changed, None, v
@@ -463,6 +479,11 @@ def main():
             },
             'signed_by': {
                 'type': 'str',
+            },
+            'signed_by_target': {
+                'type': 'str',
+                'choices': ['file', 'embed'],
+                'default': 'file',
             },
             'suites': {
                 'elements': 'str',
@@ -581,6 +602,7 @@ def main():
             name.lower(),
         ),
     )
+    signed_by_target = params.pop('signed_by_target', 'file')
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':
@@ -614,7 +636,7 @@ def main():
         elif is_sequence(value):
             value = format_list(value)
         elif key == 'signed_by':
-            key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug)
+            key_changed, signed_by_filename, signed_by_data = write_signed_by_key(module, value, slug, signed_by_target)
             value = signed_by_filename or signed_by_data
             changed |= key_changed
 
