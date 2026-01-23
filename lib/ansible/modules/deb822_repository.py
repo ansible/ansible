@@ -572,15 +572,22 @@ def main():
     params.pop('install_python_debian')
 
     name = params['name']
-    slug = re.sub(
+
+    legacy_slug = re.sub(
         r'[^a-z0-9-]+',
         '',
-        re.sub(
-            r'[_\s]+',
-            '-',
-            name.lower(),
-        ),
+        re.sub(r'[_\s]+', '-', name.lower()),
     )
+
+    new_slug = name.replace(' ', '-')
+
+    legacy_sources = make_sources_filename(legacy_slug)
+
+    if os.path.exists(legacy_sources):
+        slug = legacy_slug
+    else:
+        slug = new_slug
+
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':

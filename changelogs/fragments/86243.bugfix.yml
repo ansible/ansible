@@ -1,0 +1,4 @@
+bugfixes:
+  - deb822_repository no longer over-normalizes repository names when generating
+    sources list filenames, preventing collisions for names that differ by case,
+    underscores, or dots (https://github.com/ansible/ansible/issues/86243)
