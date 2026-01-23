@@ -45,3 +45,41 @@
     that:
     - "file.stat.mode == '0644'"
     - "link.stat.lnk_target == 'somefile'"
+
+- name: create temporary build directory for relative link rewrite
+  tempfile:
+    state: directory
+    suffix: ansible_test_relative_link_rewrite
+  register: rewrite_tempdir
+
+- name: create target directories
+  file:
+    path: "{{ rewrite_tempdir.path }}/{{ item }}"
+    state: directory
+  loop:
+    - src_a
+    - src_b
+
+- name: create initial symlink with relative destination path
+  file:
+    state: link
+    src: src_a
+    dest: "{{ rewrite_tempdir.path }}/somelink"
+
+- name: rewrite symlink target using relative destination path
+  file:
+    state: link
+    src: src_b
+    dest: "{{ rewrite_tempdir.path }}/somelink"
+    force: yes
+
+- name: stat rewritten symlink
+  stat:
+    path: "{{ rewrite_tempdir.path }}/somelink"
+    follow: false
+  register: rewritten_link
+
+- assert:
+    that:
+      - rewritten_link.stat.islnk
+      - rewritten_link.stat.lnk_target == 'src_b'

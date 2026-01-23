@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible.builtin.file: Fix atomic replacement of symlinks when using relative destination paths, which could previously fail with a permission error (https://github.com/ansible/ansible/issues/86146)."
