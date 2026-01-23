@@ -104,6 +104,19 @@ function pass_tests_file_not_accessible {
 	fi
 }
 
+function pass_tests_file_not_in_repo {
+	if ! grep 'File is not in the source repository' "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Tried to run playbook not in source repository"
+		exit 1
+	fi
+	if grep MAGICKEYWORD "${temp_log}"; then
+		cat "${temp_log}"
+		echo "Managed to run playbook not in source repository"
+		exit 1
+	fi
+}
+
 export ANSIBLE_INVENTORY
 export ANSIBLE_HOST_PATTERN_MISMATCH
 
@@ -173,6 +186,10 @@ cp "${script_location}/pull-integration-test/local.yml" "${unreadable_file}"
 chmod a-r "${unreadable_file}"
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" "${unreadable_file}" 2>&1 | tee "${temp_log}"
 pass_tests_file_not_accessible
+
+pathtrav="$(echo "${PWD}" | sed -E 's|^|..|;s|[^/]+|..|g')"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" "${pathtrav}${script_location}/pull-integration-test/local.yml" 2>&1 | tee "${temp_log}"
+pass_tests_file_not_in_repo
 
 set -o pipefail
 
