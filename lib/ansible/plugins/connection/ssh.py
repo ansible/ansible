@@ -360,8 +360,10 @@ DOCUMENTATION = """
               version_added: '2.12'
       use_tty:
         version_added: '2.5'
-        default: true
-        description: add -tt to ssh commands to force tty allocation.
+        description:
+          - When set to C(True), add -tt to ssh commands to force tty allocation.  This disables pipelining.
+          - When set to C(False), -tt will not be added to ssh commands.
+          - Default is C(False) unless the become plugin requires a tty.
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
         - {key: usetty, section: ssh_connection}
@@ -786,6 +788,12 @@ class Connection(ConnectionBase):
 
         return self._populated_agent
 
+    def _use_tty(self) -> bool:
+        use_tty = self.get_option('use_tty')
+        if use_tty is None:
+            use_tty = self.become and self.become.require_tty
+        return use_tty
+
     def _build_command(self, binary: str, subsystem: str, *other_args: bytes | str) -> list[bytes]:
         """
         Takes an executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
@@ -884,6 +892,11 @@ class Connection(ConnectionBase):
             (b"-o", b"ConnectTimeout=" + to_bytes(timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
             u"ANSIBLE_TIMEOUT/timeout set"
         )
+
+        # -tt can cause various issues in some environments so allow the user
+        # to disable it as a troubleshooting method.
+        if self._use_tty():
+            self._add_args(b_command, (b'-tt',), u'opt use_tty')
 
         # Add in any common or binary-specific arguments from the PlayContext
         # (i.e. inventory or task settings or overrides on the command line).
@@ -1502,17 +1515,7 @@ class Connection(ConnectionBase):
 
         ssh_executable = self.get_option('ssh_executable')
 
-        # -tt can cause various issues in some environments so allow the user
-        # to disable it as a troubleshooting method.
-        use_tty = self.get_option('use_tty')
-
-        args: tuple[str, ...]
-        if not in_data and sudoable and use_tty:
-            args = ('-tt', self.host, cmd)
-        else:
-            args = (self.host, cmd)
-
-        cmd = self._build_command(ssh_executable, 'ssh', *args)
+        cmd = self._build_command(ssh_executable, 'ssh', self.host, cmd)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         # When running on Windows, stderr may contain CLIXML encoded output
@@ -1580,15 +1583,8 @@ class Connection(ConnectionBase):
         return self._is_tty_requested()
 
     def _is_tty_requested(self):
-
-        # check if we require tty (only from our args, cannot see options in configuration files)
-        opts = []
-        for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):
-            attr = self.get_option(opt)
-            if attr is not None:
-                opts.extend(self._split_ssh_args(attr))
-
-        args, dummy = self._tty_parser.parse_known_args(opts)
+        cmd = self._build_command(self.get_option('ssh_executable'), 'ssh')
+        args, dummy = self._tty_parser.parse_known_args(list(map(bytes.decode, cmd)))
 
         if args.t:
             return True
