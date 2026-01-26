@@ -82,7 +82,7 @@
 - name: install OpenAuthenticode
   shell: |
     if (-not (Get-Module -Name OpenAuthenticode -ListAvailable | Where-Object Version -ge '0.5.0')) {
-        $url = 'https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/win_app_control/openauthenticode.0.6.1.nupkg'
+        $url = 'https://ci-files.testing.ansible.com/test/integration/targets/win_app_control/openauthenticode.0.6.1.nupkg'
         Invoke-WebRequest -Uri $url -OutFile '{{ local_tmp_dir }}/openauthenticode.0.6.1.nupkg'
 
         Register-PSResourceRepository -Name AnsibleTemp -Trusted -Uri '{{ local_tmp_dir }}'
