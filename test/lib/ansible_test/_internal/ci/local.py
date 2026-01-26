@@ -260,22 +260,9 @@ class PasswordAuthenticator(Authenticator):
 
     def prepare_auth_request(self, config: dict[str, object], context: AuthContext) -> dict[str, object]:
         parts = self.config_file().read_text().strip().split(maxsplit=1)
-
-        if len(parts) == 1:  # temporary backward compatibility for legacy API keys
-            request = dict(
-                config=config,
-                auth=dict(
-                    remote=dict(
-                        key=parts[0],
-                    ),
-                ),
-            )
-
-            return request
-
         username, password = parts
 
-        request = dict(
+        request: dict[str, object] = dict(
             type="remote:password",
             config=config,
             username=username,
