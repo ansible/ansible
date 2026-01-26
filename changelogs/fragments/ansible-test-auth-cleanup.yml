@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Remove support for an obsolete remote authentication method.
