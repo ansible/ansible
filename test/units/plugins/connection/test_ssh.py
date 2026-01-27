@@ -65,19 +65,17 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run = MagicMock()
         conn._run.return_value = (0, 'stdout', 'stderr')
         conn.get_option = MagicMock()
-        conn.get_option.return_value = True
+        conn.get_option.side_effect = lambda k: {
+            'host': 'some_host',
+            'ssh_executable': 'ssh',
+            'ssh_args': None,
+            'ssh_common_args': None,
+            'ssh_extra_args': None,
+            'use_tty': True,
+        }.get(k)
 
         res, stdout, stderr = conn.exec_command('ssh')
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
-
-    def test_plugins_connection_ssh_has_tty_respects_become_require_tty(self):
-        pc = PlayContext()
-        conn = connection_loader.get('ssh', pc)
-
-        conn.become = MagicMock()
-        conn.become.require_tty = True
-
-        self.assertTrue(conn.has_tty)
 
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()

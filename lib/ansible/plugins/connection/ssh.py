@@ -1512,7 +1512,7 @@ class Connection(ConnectionBase):
         # -tt can cause various issues in some environments so allow the user
         # to disable it as a troubleshooting method.
         args: tuple[str, ...]
-        if self._is_tty_requested(in_data=in_data is not None, sudoable=sudoable):
+        if self._is_tty_requested(in_data=bool(in_data), sudoable=sudoable):
             args = ('-tt', self.host, cmd)
         else:
             args = (self.host, cmd)
@@ -1618,7 +1618,10 @@ class Connection(ConnectionBase):
     def is_pipelining_enabled(self, wrap_async=False):
         """ override parent method and ensure we don't request a tty """
 
-        if self._is_tty_requested(in_data=True, sudoable=True):
+        if self.become and getattr(self.become, 'require_tty', False):
+            return False
+
+        if self._is_tty_requested(in_data=True):
             return False
         else:
             return super(Connection, self).is_pipelining_enabled(wrap_async)

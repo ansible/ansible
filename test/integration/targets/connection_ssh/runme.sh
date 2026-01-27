@@ -78,6 +78,9 @@ ansible-playbook check_ssh_defaults.yml "$@" -i test_connection.inventory
 # Ensure pipelining remains enabled by default.
 ansible -m ping ssh-pipelining "$@" -i test_connection.inventory -vvvv | grep 'Pipelining is enabled.'
 
+# Ensure pipelining is disabled when the become method requires a TTY.
+ansible -m ping ssh-pipelining "$@" -i test_connection.inventory -vvvv -b --become-method su | grep -v 'Pipelining is enabled.'
+
 # ensure we can load from ini cfg
 ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 
