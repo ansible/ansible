@@ -142,7 +142,7 @@ notes:
   or access C(Tmpdir).
 - C($Ansible.Result) is a value that is returned back to the controller as is.
 - C($Ansible.Diff) was added in the C(1.12.0) release of C(ansible.windows) and is a dictionary that is set to the diff
-  result that can be interepreted by Ansible.
+  result that can be interpreted by Ansible.
 - C($Ansible.Changed) can be set to C(true) or C(false) to reflect whether the module made a change or not. By default
   this is set to C(true).
 - C($Ansible.Failed) can be set to C(true) if the script wants to return the failure back to the controller.
@@ -416,7 +416,7 @@ error:
           type: dict
     target_object:
       description:
-      - The object which the error occured.
+      - The object which the error occurred.
       - May be null if no object was specified when the record was created.
       - Type type of this object depends on the error record itself.
       - If the value is a complex type, it will follow the C(depth) limit specified.
@@ -485,7 +485,7 @@ error:
       - The values are 0 index based.
       - Each element entry represents the command index in a pipeline statement.
       - The value of each element represents the pipeline input idx in that command.
-      - For Example C('C:\Windows', 'C:\temp' | Get-ChildItem | Get-Item), C([1, 2, 9]) represents an error occured
+      - For Example C('C:\Windows', 'C:\temp' | Get-ChildItem | Get-Item), C([1, 2, 9]) represents an error occurred
         with the 2nd output, 3rd, and 9th output of the 1st, 2nd, and 3rd command in that pipeline respectively.
       type: list
       elements: int
