@@ -1245,7 +1245,7 @@ class Connection(ConnectionBase):
 
                 for key, event in events:
                     if key.fileobj == p.stdout:
-                        b_chunk = p.stdout.read() if hasattr(p.stdout, 'read') else b''
+                        b_chunk = p.stdout.read()
                         if b_chunk == b'':
                             # stdout has been closed, stop watching it
                             selector.unregister(p.stdout)
@@ -1260,7 +1260,7 @@ class Connection(ConnectionBase):
                         b_tmp_stdout += b_chunk
                         display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
                     elif key.fileobj == p.stderr:
-                        b_chunk = p.stderr.read() if hasattr(p.stderr, 'read') else b''
+                        b_chunk = p.stderr.read()
                         if b_chunk == b'':
                             # stderr has been closed, stop watching it
                             selector.unregister(p.stderr)
@@ -1590,7 +1590,7 @@ class Connection(ConnectionBase):
         opts = []
         for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):
             attr = self.get_option(opt)
-            if isinstance(attr, str):
+            if attr is not None:
                 opts.extend(self._split_ssh_args(attr))
 
         args, dummy = self._tty_parser.parse_known_args(opts)
