@@ -4,7 +4,7 @@
 [![Build Status](https://dev.azure.com/ansible/ansible/_apis/build/status/CI?branchName=devel)](https://dev.azure.com/ansible/ansible/_build/latest?definitionId=20&branchName=devel)
 [![Ansible Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-Ansible-silver.svg)](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html)
 [![Ansible mailing lists](https://img.shields.io/badge/mailing%20lists-Ansible-orange.svg)](https://docs.ansible.com/ansible/devel/community/communication.html#mailing-list-information)
-[![Repository License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](COPYING)
+[![Repository License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)][copying]
 [![Ansible CII Best Practices certification](https://bestpractices.coreinfrastructure.org/projects/2372/badge)](https://bestpractices.coreinfrastructure.org/projects/2372)
 
 # Ansible
@@ -58,7 +58,7 @@ For more ways to get in touch, see [Communicating with the Ansible community](ht
 
 ## Contribute to Ansible
 
-* Check out the [Contributor's Guide](./.github/CONTRIBUTING.md).
+* Check out the [Contributor's Guide](https://github.com/ansible/ansible/blob/devel/.github/CONTRIBUTING.md).
 * Read [Community Information](https://docs.ansible.com/ansible/devel/community) for all
   kinds of ways to contribute to and interact with the project,
   including how to submit bug reports and code to Ansible.
@@ -98,4 +98,6 @@ and has contributions from over 5000 users (and growing). Thanks everyone!
 
 GNU General Public License v3.0 or later
 
-See [COPYING](COPYING) to see the full text.
+See [COPYING] to see the full text.
+
+[copying]: https://github.com/ansible/ansible/blob/devel/COPYING
