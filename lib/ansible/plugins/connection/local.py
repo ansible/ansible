@@ -201,8 +201,8 @@ class Connection(ConnectionBase):
                     raise AnsibleError(become_error_msg('Premature end of stream'))
 
                 if expect_password_prompt and (
-                    self.become.check_password_prompt(become_stdout[last_stdout_prompt_offset:]) or
-                    self.become.check_password_prompt(become_stderr[last_stderr_prompt_offset:])
+                    self.become.check_password_prompt(bytes(become_stdout[last_stdout_prompt_offset:])) or
+                    self.become.check_password_prompt(bytes(become_stderr[last_stderr_prompt_offset:]))
                 ):
                     if sent_password:
                         raise AnsibleError(become_error_msg('Duplicate become password prompt encountered'))
