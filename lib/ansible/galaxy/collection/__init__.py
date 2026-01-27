@@ -1472,7 +1472,7 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
             display.warning(f'{val_err}')
             continue
 
-        if req.fqcn != '.'.join(pathlib.Path(to_text(req.src)).parts[-2:]): # Metadata is incorrect. ignoring it.
+        if req.fqcn != '.'.join(pathlib.Path(to_text(req.src)).parts[-2:]):
             display.warning(f"Collection at {to_text(req.src)} documents incorrect FQCN '{req.fqcn}' Ignoring metadata")
             req = Candidate.from_dir_path_implicit(b_collection_path)
 
