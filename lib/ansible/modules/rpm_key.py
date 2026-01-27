@@ -20,7 +20,7 @@ version_added: "1.3"
 options:
     key:
       description:
-        - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
+        - Key that will be modified. Can be an HTTP, HTTPS or FTP URL, a file on the managed node, or a keyid if the key
           already exists in the database.
       type: str
       required: true
@@ -164,7 +164,7 @@ class RpmKey(object):
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
         rsp, info = fetch_url(self.module, url)
-        if info['status'] != 200:
+        if info['status'] != 200 and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
             self.module.fail_json(msg="failed to fetch key at %s , error was: %s" % (url, info['msg']))
 
         key = rsp.read()
