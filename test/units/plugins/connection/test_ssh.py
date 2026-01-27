@@ -65,14 +65,20 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run = MagicMock()
         conn._run.return_value = (0, 'stdout', 'stderr')
         conn.get_option = MagicMock()
-        conn.get_option.side_effect = lambda k: {
+        option_values = {
             'host': 'some_host',
             'ssh_executable': 'ssh',
             'ssh_args': None,
             'ssh_common_args': None,
             'ssh_extra_args': None,
             'use_tty': True,
-        }.get(k)
+
+        }
+
+        def get_option(option):
+            return option_values.get(option)
+
+        conn.get_option.side_effect = get_option
 
         res, stdout, stderr = conn.exec_command('ssh')
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
