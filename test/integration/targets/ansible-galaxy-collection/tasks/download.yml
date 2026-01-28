@@ -48,9 +48,15 @@
 - name: assert download collection with multiple dependencies
   assert:
     that:
-    - '"Downloading collection ''parent_dep.parent_collection:1.0.0'' to" in download_collection.stdout'
-    - '"Downloading collection ''child_dep.child_collection:0.9.9'' to" in download_collection.stdout'
-    - '"Downloading collection ''child_dep.child_dep2:1.2.2'' to" in download_collection.stdout'
+    - >-
+      "Downloading collection 'parent_dep.parent_collection:1.0.0' to" in download_collection.stdout
+      or 'parent_dep-parent_collection-1.0.0.tar.gz' in download_collection.stdout
+    - >-
+      "Downloading collection 'child_dep.child_collection:0.9.9' to" in download_collection.stdout
+      or 'child_dep-child_collection-0.9.9.tar.gz' in download_collection.stdout
+    - >-
+      "Downloading collection 'child_dep.child_dep2:1.2.2' to" in download_collection.stdout
+      or 'child_dep-child_dep2-1.2.2.tar.gz' in download_collection.stdout
     - download_collection_actual.examined == 4
     - download_collection_actual.matched == 4
     - (download_collection_actual.files[0].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
