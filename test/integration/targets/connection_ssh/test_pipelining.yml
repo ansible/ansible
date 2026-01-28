@@ -1,0 +1,70 @@
+- hosts: localhost
+  gather_facts: no
+  timeout: 4
+  vars:
+    run_test: ansible ssh-pipelining -i test_connection.inventory -m ping -vvvv
+    pipelining_msg: Pipelining is enabled
+    become_msg: Escalation succeeded
+  tasks:
+    - name: Test pipelining
+      command: "{{ run_test }}"
+      register: pipelining_enabled
+    - assert: &test_pipelining
+        that:
+          - "{{ pipelining_enabled.stdout | regex_findall(pipelining_msg) | length == 1 }}"
+          - "{{ pipelining_enabled.stdout | regex_findall('PUT') | length == 0 }}"
+
+    - name: Test pipelining in conjunction with become
+      command: "{{ run_test }} -b"
+      register: pipelining_enabled
+      failed_when:
+        - pipelining_enabled is failed or (pipelining_enabled.stdout | regex_findall(become_msg) | length != 1)
+    - assert: *test_pipelining
+
+    - name: Test pipelining is not used is ssh_extra_args requests TTY
+      command: >-
+        {{ run_test }} -e "ansible_ssh_extra_args='-o RequestTTY=force'"
+      register: no_pipelining
+    - assert: &test_no_pipelining
+        that:
+          - "{{ no_pipelining.stdout | regex_findall(pipelining_msg) | length == 0 }}"
+          - "{{ no_pipelining.stdout | regex_findall('PUT') | length == 1 }}"
+
+    - name: Test pipelining is not used if ssh_common_args requests TTY
+      command: >-
+        {{ run_test }} -e "ansible_ssh_common_args='-o RequestTTY=yes'"
+      register: no_pipelining
+    - assert: *test_no_pipelining
+
+    - name: Test pipelining is not used if ssh_args requests TTY
+      command: >-
+        {{ run_test }} -e "ansible_ssh_args='-o RequestTTY=yes'"
+      register: no_pipelining
+    - assert: *test_no_pipelining
+
+    - name: Test become plugin implicitly requires a TTY
+      command: "{{ run_test }} -b --become-method su"
+      register: no_pipelining
+      failed_when: &validate_become
+        - no_pipelining is failed or (no_pipelining.stdout | regex_findall(become_msg) | length != 1)
+    - assert: *test_no_pipelining
+
+    - name: Test become plugin can disallow pipelining
+      command: "{{ run_test }} -b --become-method noop"
+      environment:
+        ANSIBLE_BECOME_PLUGINS: ./become_plugins
+        ANSIBLE_TEST_BECOME_PIPELINING: False
+      register: no_pipelining
+      failed_when: *validate_become
+    - assert: *test_no_pipelining
+
+    # FIXME
+    # https://github.com/ansible/ansible/issues/86298
+    # - name: Test become plugin requiring TTY
+    #   command: "{{ run_test }} -b --become-method noop"
+    #   environment:
+    #     ANSIBLE_BECOME_PLUGINS: ./become_plugins
+    #     ANSIBLE_TEST_BECOME_REQUIRE_TTY: True
+    #   register: no_pipelining
+    #   failed_when: *validate_become
+    # - assert: *test_no_pipelining
