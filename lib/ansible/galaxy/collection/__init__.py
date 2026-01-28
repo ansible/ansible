@@ -556,6 +556,7 @@ def download_collections(
                 )
                 continue
 
+            b_dest_path = None
             b_expected_basename = artifacts_manager.get_expected_artifact_basename(concrete_coll_pin)
             if b_expected_basename is not None:
                 b_dest_path = os.path.join(b_output_path, b_expected_basename)
