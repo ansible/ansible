@@ -1087,6 +1087,7 @@ def test_download_collections_redownloads_on_manifest_mismatch(tmp_path_factory,
 
     assert mock_get_artifact.call_count == 1
 
+
 def test_extract_tar_file_invalid_hash(tmp_tarfile):
     temp_dir, tfile, filename, dummy = tmp_tarfile
 
