@@ -9,7 +9,7 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
 
-ANSIBLE_EMBED = [('ansible_collections.ansible_test.setup_rpm_repo.plugins.module_utils._embed', 'create_repo.py')]
+ANSIBLE_EMBED = (('ansible_collections.ansible_test.setup_rpm_repo.plugins.module_utils._embed', 'create_repo.py'),)
 
 
 def main():

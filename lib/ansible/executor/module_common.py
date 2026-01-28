@@ -33,7 +33,7 @@ import pkgutil
 import types
 import typing as t
 
-from ast import Assign, Constant, Import, ImportFrom, List, Name, Tuple
+from ast import Assign, Constant, Import, ImportFrom, Name, Tuple
 from importlib.resources import path as ir_path, files as ir_files
 from io import BytesIO
 
@@ -329,19 +329,25 @@ class ModuleDepFinder(ast.NodeVisitor):
     def visit_Assign(self, node):
         embeds_add = self.embeds.add
         value = node.value
-        for target in node.targets:
-            if not isinstance(target, Name):
-                return
+        if len(node.targets) != 1:
+            return
 
-            if target.id != 'ANSIBLE_EMBED':
-                return
+        target = node.targets[0]
+        if not isinstance(target, Name):
+            return
 
-            if not isinstance(value, (Tuple, List)):
-                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
-                return
+        # Supported form:
+        # ANSIBLE_EMBED = (('ansible.module_utils._embed', 'foo.txt'), ('ansible_collections.foo.bar.plugins.module_utils._embed', 'bar.txt'), ...)
+
+        if target.id != 'ANSIBLE_EMBED':
+            return
+
+        if not isinstance(value, Tuple):
+            display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
+            return
 
         for embed in value.elts:
-            if not isinstance(embed, (Tuple, List)) or len(embed.elts) != 2:
+            if not isinstance(embed, Tuple) or len(embed.elts) != 2:
                 display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
                 return
 

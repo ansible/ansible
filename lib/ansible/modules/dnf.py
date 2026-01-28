@@ -391,7 +391,7 @@ EXAMPLES = """
     state: present
 """
 
-ANSIBLE_EMBED = [('ansible.module_utils._embed', 'dnf.py')]
+ANSIBLE_EMBED = (('ansible.module_utils._embed', 'dnf.py'),)
 
 import json
 import sys
