@@ -29,7 +29,7 @@ from ansible.module_utils.common.file import S_IRWU_RG_RO
 import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
-from ansible.utils.hashing import secure_hash_s
+from ansible.utils.hashing import secure_hash, secure_hash_s
 
 
 @pytest.fixture(autouse=True)
@@ -928,7 +928,7 @@ def test_download_file_hash_mismatch(tmp_path_factory, monkeypatch):
         collection._download_file('http://google.com/file', temp_dir, 'bad', True)
 
 
-def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypatch):
+def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypatch, manifest_template):
     output_dir = tmp_path_factory.mktemp('download-output')
     temp_dir = tmp_path_factory.mktemp('download-temp')
     b_output_dir = to_bytes(output_dir)
@@ -938,20 +938,26 @@ def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypa
         validate_certs=False,
     )
 
+    manifest_info = manifest_template(namespace='ansible_namespace', name='collection', version='1.2.3')
     url = 'https://galaxy.example.com/downloads/ansible_namespace-collection-1.2.3.tar.gz'
     candidate = Candidate('ansible_namespace.collection', '1.2.3', 'https://galaxy.example.com', 'galaxy', None)
+
+    b_existing_path = os.path.join(b_output_dir, to_bytes('ansible_namespace-collection-1.2.3.tar.gz'))
+    with tarfile.open(b_existing_path, 'w:gz') as tfile:
+        b_data = to_bytes(json.dumps(manifest_info))
+        tar_info = tarfile.TarInfo('MANIFEST.json')
+        tar_info.size = len(b_data)
+        tar_info.mode = S_IRWU_RG_RO
+        tfile.addfile(tarinfo=tar_info, fileobj=BytesIO(b_data))
+
     artifacts_manager.save_collection_source(
         candidate,
         url,
-        '',
+        secure_hash(to_text(b_existing_path), hash_func=sha256),
         token.NoTokenSentinel,
         'https://galaxy.example.com/api/v3/collections/ansible_namespace/collection/versions/1.2.3',
         [],
     )
-
-    b_existing_path = os.path.join(b_output_dir, to_bytes('ansible_namespace-collection-1.2.3.tar.gz'))
-    with open(b_existing_path, 'wb') as existing_file:
-        existing_file.write(b'\x00\x01')
 
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
@@ -963,7 +969,11 @@ def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypa
     mock_get_artifact = MagicMock()
     monkeypatch.setattr(artifacts_manager, 'get_artifact_path_from_unknown', mock_get_artifact)
 
-    collection.download_collections([], to_text(output_dir), [], False, False, artifacts_manager)
+    collection.download_collections(
+        [], to_text(output_dir), [], False, False,
+        artifacts_manager=artifacts_manager,
+        force=False,
+    )
 
     skip_messages = [
         call[1][0] for call in mock_display.mock_calls
@@ -972,6 +982,110 @@ def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypa
     assert len(skip_messages) == 1
     assert skip_messages[0].endswith(to_text(b_existing_path))
     assert mock_get_artifact.call_count == 0
+
+
+def test_download_collections_redownloads_on_checksum_mismatch(tmp_path_factory, monkeypatch, manifest_template):
+    output_dir = tmp_path_factory.mktemp('download-output')
+    temp_dir = tmp_path_factory.mktemp('download-temp')
+    b_output_dir = to_bytes(output_dir)
+
+    artifacts_manager = collection.concrete_artifact_manager.ConcreteArtifactsManager(
+        to_bytes(temp_dir),
+        validate_certs=False,
+    )
+
+    manifest_info = manifest_template(namespace='ansible_namespace', name='collection', version='1.2.3')
+    url = 'https://galaxy.example.com/downloads/ansible_namespace-collection-1.2.3.tar.gz'
+    candidate = Candidate('ansible_namespace.collection', '1.2.3', 'https://galaxy.example.com', 'galaxy', None)
+
+    b_existing_path = os.path.join(b_output_dir, to_bytes('ansible_namespace-collection-1.2.3.tar.gz'))
+    with tarfile.open(b_existing_path, 'w:gz') as tfile:
+        b_data = to_bytes(json.dumps(manifest_info))
+        tar_info = tarfile.TarInfo('MANIFEST.json')
+        tar_info.size = len(b_data)
+        tar_info.mode = S_IRWU_RG_RO
+        tfile.addfile(tarinfo=tar_info, fileobj=BytesIO(b_data))
+
+    artifacts_manager.save_collection_source(
+        candidate,
+        url,
+        'bad',
+        token.NoTokenSentinel,
+        'https://galaxy.example.com/api/v3/collections/ansible_namespace/collection/versions/1.2.3',
+        [],
+    )
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_resolve = MagicMock()
+    mock_resolve.return_value = {candidate.fqcn: candidate}
+    monkeypatch.setattr(collection, '_resolve_depenency_map', mock_resolve)
+
+    mock_get_artifact = MagicMock()
+    mock_get_artifact.return_value = b_existing_path
+    monkeypatch.setattr(artifacts_manager, 'get_artifact_path_from_unknown', mock_get_artifact)
+    monkeypatch.setattr(collection.shutil, 'copy', MagicMock())
+
+    collection.download_collections(
+        [], to_text(output_dir), [], False, False,
+        artifacts_manager=artifacts_manager,
+        force=False,
+    )
+
+    assert mock_get_artifact.call_count == 1
+
+
+def test_download_collections_redownloads_on_manifest_mismatch(tmp_path_factory, monkeypatch, manifest_template):
+    output_dir = tmp_path_factory.mktemp('download-output')
+    temp_dir = tmp_path_factory.mktemp('download-temp')
+    b_output_dir = to_bytes(output_dir)
+
+    artifacts_manager = collection.concrete_artifact_manager.ConcreteArtifactsManager(
+        to_bytes(temp_dir),
+        validate_certs=False,
+    )
+
+    manifest_info = manifest_template(namespace='ansible_namespace', name='collection', version='9.9.9')
+    url = 'https://galaxy.example.com/downloads/ansible_namespace-collection-1.2.3.tar.gz'
+    candidate = Candidate('ansible_namespace.collection', '1.2.3', 'https://galaxy.example.com', 'galaxy', None)
+
+    b_existing_path = os.path.join(b_output_dir, to_bytes('ansible_namespace-collection-1.2.3.tar.gz'))
+    with tarfile.open(b_existing_path, 'w:gz') as tfile:
+        b_data = to_bytes(json.dumps(manifest_info))
+        tar_info = tarfile.TarInfo('MANIFEST.json')
+        tar_info.size = len(b_data)
+        tar_info.mode = S_IRWU_RG_RO
+        tfile.addfile(tarinfo=tar_info, fileobj=BytesIO(b_data))
+
+    artifacts_manager.save_collection_source(
+        candidate,
+        url,
+        secure_hash(to_text(b_existing_path), hash_func=sha256),
+        token.NoTokenSentinel,
+        'https://galaxy.example.com/api/v3/collections/ansible_namespace/collection/versions/1.2.3',
+        [],
+    )
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_resolve = MagicMock()
+    mock_resolve.return_value = {candidate.fqcn: candidate}
+    monkeypatch.setattr(collection, '_resolve_depenency_map', mock_resolve)
+
+    mock_get_artifact = MagicMock()
+    mock_get_artifact.return_value = b_existing_path
+    monkeypatch.setattr(artifacts_manager, 'get_artifact_path_from_unknown', mock_get_artifact)
+    monkeypatch.setattr(collection.shutil, 'copy', MagicMock())
+
+    collection.download_collections(
+        [], to_text(output_dir), [], False, False,
+        artifacts_manager=artifacts_manager,
+        force=False,
+    )
+
+    assert mock_get_artifact.call_count == 1
 
 def test_extract_tar_file_invalid_hash(tmp_tarfile):
     temp_dir, tfile, filename, dummy = tmp_tarfile

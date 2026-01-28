@@ -514,6 +514,7 @@ def download_collections(
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
+        force=False,  # type: bool
 ):  # type: (...) -> None
     """Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
     file of the downloaded requirements to be used for an install.
@@ -524,6 +525,7 @@ def download_collections(
     :param validate_certs: Whether to validate the certificate if downloading a tarball from a non-Galaxy host.
     :param no_deps: Ignore any collection dependencies and only download the base requirements.
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
+    :param force: Force re-download of existing artifacts.
     """
     with _display_progress("Process download dependency map"):
         dep_map = _resolve_depenency_map(
@@ -554,19 +556,22 @@ def download_collections(
                 )
                 continue
 
-            b_dest_path = None
             b_expected_basename = artifacts_manager.get_expected_artifact_basename(concrete_coll_pin)
             if b_expected_basename is not None:
                 b_dest_path = os.path.join(b_output_path, b_expected_basename)
-                if artifacts_manager._artifact_exists(b_dest_path):
+                if not force and artifacts_manager._artifact_exists(b_dest_path):
+                    if artifacts_manager.validate_existing_artifact(concrete_coll_pin, b_dest_path):
+                        display.display(
+                            "Skipping download; file already exists: %s" % to_text(b_dest_path)
+                        )
+                        requirements.append({
+                            'name': to_native(os.path.basename(b_dest_path)),
+                            'version': concrete_coll_pin.ver,
+                        })
+                        continue
                     display.display(
-                        "Skipping download; file already exists: %s" % to_text(b_dest_path)
+                        "Existing artifact did not match requested collection; re-downloading: %s" % to_text(b_dest_path)
                     )
-                    requirements.append({
-                        'name': to_native(os.path.basename(b_dest_path)),
-                        'version': concrete_coll_pin.ver,
-                    })
-                    continue
 
             display.display(
                 u"Downloading collection '{coll!s}' to '{path!s}'".

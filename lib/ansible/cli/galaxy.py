@@ -288,7 +288,7 @@ class GalaxyCLI(CLI):
         collection.set_defaults(func=self.execute_collection)  # to satisfy doc build
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
-        self.add_download_options(collection_parser, parents=[common, cache_options])
+        self.add_download_options(collection_parser, parents=[common, cache_options, force])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
@@ -1033,6 +1033,7 @@ class GalaxyCLI(CLI):
         collections = context.CLIARGS['args']
         no_deps = context.CLIARGS['no_deps']
         download_path = context.CLIARGS['download_path']
+        force = context.CLIARGS['force']
 
         requirements_file = context.CLIARGS['requirements']
         if requirements_file:
@@ -1051,6 +1052,7 @@ class GalaxyCLI(CLI):
         download_collections(
             requirements, download_path, self.api_servers, no_deps,
             context.CLIARGS['allow_pre_release'],
+            force=force,
             artifacts_manager=artifacts_manager,
         )
 

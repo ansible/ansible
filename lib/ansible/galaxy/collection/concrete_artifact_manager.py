@@ -39,6 +39,7 @@ from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
+from ansible.utils.hashing import secure_hash
 
 import ansible.constants as C
 
@@ -154,6 +155,35 @@ class ConcreteArtifactsManager:
         except KeyError:
             return None
         return self._get_url_basename(url)
+
+    def get_expected_artifact_hash(self, collection):
+        # type: (t.Union[Candidate, Requirement]) -> t.Optional[str]
+        try:
+            _url, sha256_hash, _token = self._galaxy_collection_cache[collection]
+        except KeyError:
+            return None
+        return sha256_hash or None
+
+    def validate_existing_artifact(self, collection, b_artifact_path):
+        # type: (t.Union[Candidate, Requirement], bytes) -> bool
+        try:
+            collection_meta = _get_meta_from_tar(b_artifact_path)
+        except AnsibleError:
+            return False
+
+        if (
+            collection_meta.get('namespace') != collection.namespace or
+            collection_meta.get('name') != collection.name or
+            collection_meta.get('version') != collection.ver
+        ):
+            return False
+
+        expected_hash = self.get_expected_artifact_hash(collection)
+        if expected_hash:
+            actual_hash = secure_hash(to_native(b_artifact_path), hash_func=sha256)
+            return actual_hash == expected_hash
+
+        return True
 
     def get_galaxy_artifact_path(self, collection):
         # type: (t.Union[Candidate, Requirement]) -> bytes
