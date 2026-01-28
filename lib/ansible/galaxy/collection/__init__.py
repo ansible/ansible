@@ -554,6 +554,20 @@ def download_collections(
                 )
                 continue
 
+            b_dest_path = None
+            b_expected_basename = artifacts_manager.get_expected_artifact_basename(concrete_coll_pin)
+            if b_expected_basename is not None:
+                b_dest_path = os.path.join(b_output_path, b_expected_basename)
+                if artifacts_manager._artifact_exists(b_dest_path):
+                    display.display(
+                        "Skipping download; file already exists: %s" % to_text(b_dest_path)
+                    )
+                    requirements.append({
+                        'name': to_native(os.path.basename(b_dest_path)),
+                        'version': concrete_coll_pin.ver,
+                    })
+                    continue
+
             display.display(
                 u"Downloading collection '{coll!s}' to '{path!s}'".
                 format(coll=to_text(concrete_coll_pin), path=to_text(b_output_path)),
@@ -561,10 +575,11 @@ def download_collections(
 
             b_src_path = artifacts_manager.get_artifact_path_from_unknown(concrete_coll_pin)
 
-            b_dest_path = os.path.join(
-                b_output_path,
-                os.path.basename(b_src_path),
-            )
+            if b_dest_path is None:
+                b_dest_path = os.path.join(
+                    b_output_path,
+                    os.path.basename(b_src_path),
+                )
 
             if concrete_coll_pin.is_dir:
                 b_dest_path = to_bytes(

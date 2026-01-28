@@ -15,7 +15,7 @@ import yaml
 from contextlib import contextmanager
 from hashlib import sha256
 from urllib.error import URLError
-from urllib.parse import urldefrag
+from urllib.parse import urldefrag, urlsplit
 from shutil import rmtree
 from tempfile import mkdtemp
 
@@ -125,6 +125,35 @@ class ConcreteArtifactsManager:
             "download_url": download_url,
             "signatures": signatures,
         }
+
+    @staticmethod
+    def _artifact_exists(b_artifact_path):
+        # type: (bytes) -> bool
+        return os.path.isfile(b_artifact_path)
+
+    @staticmethod
+    def _get_url_basename(url):
+        # type: (str) -> t.Optional[bytes]
+        url_path = urlsplit(url).path
+        basename = os.path.basename(url_path)
+        if not basename:
+            return None
+        return to_bytes(basename, errors='surrogate_or_strict')
+
+    def get_expected_artifact_basename(self, collection):
+        # type: (t.Union[Candidate, Requirement]) -> t.Optional[bytes]
+        if collection.is_dir or collection.is_scm or collection.is_subdirs:
+            return None
+        if collection.is_url:
+            return self._get_url_basename(collection.src)
+        if collection.is_file:
+            return os.path.basename(to_bytes(collection.src, errors='surrogate_or_strict'))
+
+        try:
+            url = self._galaxy_collection_cache[collection][0]
+        except KeyError:
+            return None
+        return self._get_url_basename(url)
 
     def get_galaxy_artifact_path(self, collection):
         # type: (t.Union[Candidate, Requirement]) -> bytes

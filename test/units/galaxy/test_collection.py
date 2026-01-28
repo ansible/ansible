@@ -22,6 +22,7 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.config import manager
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
+from ansible.galaxy.dependency_resolution.dataclasses import Candidate
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.file import S_IRWU_RG_RO
@@ -926,6 +927,51 @@ def test_download_file_hash_mismatch(tmp_path_factory, monkeypatch):
     with pytest.raises(AnsibleError, match=expected):
         collection._download_file('http://google.com/file', temp_dir, 'bad', True)
 
+
+def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypatch):
+    output_dir = tmp_path_factory.mktemp('download-output')
+    temp_dir = tmp_path_factory.mktemp('download-temp')
+    b_output_dir = to_bytes(output_dir)
+
+    artifacts_manager = collection.concrete_artifact_manager.ConcreteArtifactsManager(
+        to_bytes(temp_dir),
+        validate_certs=False,
+    )
+
+    url = 'https://galaxy.example.com/downloads/ansible_namespace-collection-1.2.3.tar.gz'
+    candidate = Candidate('ansible_namespace.collection', '1.2.3', 'https://galaxy.example.com', 'galaxy', None)
+    artifacts_manager.save_collection_source(
+        candidate,
+        url,
+        '',
+        token.NoTokenSentinel,
+        'https://galaxy.example.com/api/v3/collections/ansible_namespace/collection/versions/1.2.3',
+        [],
+    )
+
+    b_existing_path = os.path.join(b_output_dir, to_bytes('ansible_namespace-collection-1.2.3.tar.gz'))
+    with open(b_existing_path, 'wb') as existing_file:
+        existing_file.write(b'\x00\x01')
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_resolve = MagicMock()
+    mock_resolve.return_value = {candidate.fqcn: candidate}
+    monkeypatch.setattr(collection, '_resolve_depenency_map', mock_resolve)
+
+    mock_get_artifact = MagicMock()
+    monkeypatch.setattr(artifacts_manager, 'get_artifact_path_from_unknown', mock_get_artifact)
+
+    collection.download_collections([], to_text(output_dir), [], False, False, artifacts_manager)
+
+    skip_messages = [
+        call[1][0] for call in mock_display.mock_calls
+        if call[1] and isinstance(call[1][0], str) and 'Skipping download; file already exists:' in call[1][0]
+    ]
+    assert len(skip_messages) == 1
+    assert skip_messages[0].endswith(to_text(b_existing_path))
+    assert mock_get_artifact.call_count == 0
 
 def test_extract_tar_file_invalid_hash(tmp_tarfile):
     temp_dir, tfile, filename, dummy = tmp_tarfile
