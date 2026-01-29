@@ -1448,6 +1448,17 @@ releases:
     - get_url_regex.yml
     - varloaderror.yml
     release_date: '2025-12-02'
+  2.19.6:
+    changes:
+      release_summary: '| Release Date: 2026-01-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.6_summary.yaml
+    release_date: '2026-01-29'
   2.19.6rc1:
     changes:
       bugfixes:
