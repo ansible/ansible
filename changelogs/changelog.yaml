@@ -438,6 +438,17 @@ releases:
     - getuser-exception-handling.yml
     - varloaderror.yml
     release_date: '2025-12-02'
+  2.20.2:
+    changes:
+      release_summary: '| Release Date: 2026-01-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.2_summary.yaml
+    release_date: '2026-01-29'
   2.20.2rc1:
     changes:
       bugfixes:
