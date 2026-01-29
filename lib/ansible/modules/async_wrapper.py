@@ -163,12 +163,11 @@ def _run_module(wrapped_cmd, jid):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=False,
-            text=True,
-            encoding="utf-8",
-            errors="surrogateescape",
         )
 
         (outdata, stderr) = script.communicate()
+        outdata = to_text(outdata, errors='surrogateescape')
+        stderr = to_text(stderr, errors='surrogateescape')
 
         (filtered_outdata, json_warnings) = _filter_non_json_lines(outdata)
 
