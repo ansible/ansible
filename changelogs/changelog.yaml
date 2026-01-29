@@ -709,6 +709,17 @@ releases:
     - 85193-runtime-metadata.yml
     - varloaderror.yml
     release_date: '2025-12-02'
+  2.18.13:
+    changes:
+      release_summary: '| Release Date: 2026-01-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.13_summary.yaml
+    release_date: '2026-01-29'
   2.18.13rc1:
     changes:
       bugfixes:
