@@ -1529,12 +1529,6 @@ class FreeBsdUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
-            # Only use -K with useradd (Linux). FreeBSD's pw(8) does not support -K.
-            if self.module.get_bin_path('useradd', required=False):
-                if self.umask is not None:
-                    cmd.append('-K')
-                    cmd.append('UMASK=' + self.umask)
-
         if self.shell is not None:
             cmd.append('-s')
             cmd.append(self.shell)
