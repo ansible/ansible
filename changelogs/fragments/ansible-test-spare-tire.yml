@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update URL used to download FreeBSD wheels for managed remotes.
