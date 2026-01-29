@@ -1550,16 +1550,6 @@ class FreeBsdUser(User):
             else:
                 cmd.append(str(calendar.timegm(self.expires)))
 
-        # Only use -K with useradd (Linux). FreeBSD's pw(8) does not support -K.
-        if self.module.get_bin_path('useradd', required=False):
-            if self.uid_min is not None:
-                cmd.append('-K')
-                cmd.append('UID_MIN=' + str(self.uid_min))
-
-            if self.uid_max is not None:
-                cmd.append('-K')
-                cmd.append('UID_MAX=' + str(self.uid_max))
-
         # system cannot be handled currently - should we error if its requested?
         # create the user
         (rc, out, err) = self.execute_command(cmd)
