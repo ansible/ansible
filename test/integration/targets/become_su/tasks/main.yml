@@ -71,6 +71,7 @@
       dnf:
         name:
           - langpacks-uk
+          - glibc-langpack-uk
           - python3-pexpect
         state: present
 
@@ -97,5 +98,7 @@
   always:
     - name: remove language pack
       dnf:
-        name: langpacks-uk
+        name:
+          - langpacks-uk
+          - glibc-langpack-uk
         state: absent
