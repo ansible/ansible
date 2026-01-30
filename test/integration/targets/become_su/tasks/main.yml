@@ -67,12 +67,14 @@
 - name: Test different locale
   when: ansible_os_family == 'RedHat' and ansible_connection == 'local'
   block:
+    - import_role:
+        name: setup_pexpect
+
     - name: install language pack and pexpect
       dnf:
         name:
           - langpacks-uk
           - glibc-langpack-uk
-          - python3-pexpect
         state: present
 
     - name: verify language pack is enabled
