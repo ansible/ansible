@@ -5,11 +5,20 @@
     state: absent
     path: '{{ checkout_dir }}'
 
+- name: SPECIFIC-REVISION | check clone to specific revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
+  check_mode: true
+  register: specific_revision_check
+
 - name: SPECIFIC-REVISION | clone to specific revision
   git:
     repo: "{{ repo_dir }}/format1"
     dest: "{{ checkout_dir }}"
     version: df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
+  register: specific_revision_clone
 
 - name: SPECIFIC-REVISION | check HEAD after clone to revision
   command: git rev-parse HEAD
@@ -20,6 +29,11 @@
 - assert:
     that:
       - 'git_result.stdout == "df4612ba925fbc1b3c51cbb006f51a0443bd2ce9"'
+
+- assert:
+    that:
+      - specific_revision_check is changed
+      - specific_revision_check.changed == specific_revision_clone.changed
 
 - name: SPECIFIC-REVISION | update to specific revision
   git:
