@@ -1178,19 +1178,13 @@
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
       register: second_install
 
-    - name: List collections to check for warning
-      command: ansible-galaxy collection list
-      environment:
-        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-      register: list_collections
-
     - name: Assert second install succeeded and warning was displayed
       assert:
         that:
           - second_install is success
-          - expected_warning in list_collections.stderr
-          - correct_name in list_collections.stdout
-          - incorrect_name in list_collections.stdout
+          - expected_warning in second_install.stderr
+          - correct_name in second_install.stdout
+          - incorrect_name not in second_install.stdout
       vars:
         mismatched_path: "{{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname"
         expected_warning: "Collection at {{ mismatched_path }} documents incorrect FQCN 'namespace1.name1'"
