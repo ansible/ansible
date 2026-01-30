@@ -572,15 +572,15 @@ def main():
     params.pop('install_python_debian')
 
     name = params['name']
-    slug = re.sub(
-        r'[^a-z0-9-]+',
-        '',
-        re.sub(
-            r'[_\s]+',
-            '-',
-            name.lower(),
-        ),
-    )
+    # Per APT sources.list(5), valid filename characters are: a-zA-Z0-9_-.
+    # Validate that name contains only these characters, fail otherwise.
+    invalid_chars = re.sub(r'[a-zA-Z0-9_.-]', '', name)
+    if invalid_chars:
+        module.fail_json(
+            msg=f"name parameter contains invalid characters: {set(invalid_chars)!r}. "
+            f"Only letters (a-z, A-Z), digits (0-9), underscore (_), hyphen (-), and period (.) are allowed."
+        )
+    slug = name
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':

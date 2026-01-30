@@ -1,0 +1,2 @@
+bugfixes:
+  - deb822_repository - Stop over-normalizing the ``name`` parameter. The module now preserves valid characters (uppercase letters, underscores, periods) and raises an error for invalid characters instead of silently mangling names (https://github.com/ansible/ansible/issues/86243).
