@@ -329,6 +329,7 @@ git_dir_before:
 
 import filecmp
 import os
+import pathlib
 import re
 import shlex
 import stat
@@ -678,6 +679,20 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after, r
     return {}
 
 
+def get_sha_hash(module: AnsibleModule, git_path: str, remote: str, version: str, cwd: str) -> str:
+    if cwd is None or not (working_dir := pathlib.Path(cwd)).exists():
+        working_dir = pathlib.Path(module.tmpdir) / "tmp_repo"
+        working_dir.mkdir(exist_ok=True)
+        module.run_command([git_path, 'init'], cwd=working_dir)  # Create a bare repo
+        module.run_command([git_path, 'remote', 'add', 'origin', remote], cwd=working_dir)
+
+    # This command's error message is descriptive enough for our purposes, so we set check_rc to True and let it bail
+    module.run_command([git_path, 'fetch', '--dry-run', remote, version], cwd=working_dir, check_rc=True)
+
+    # Should only succeed when 'version' is a valid revision
+    return version
+
+
 def get_remote_head(git_path, module, dest, version, remote, bare):
     cloning = False
     cwd = None
@@ -701,9 +716,11 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         tag = True
         cmd = '%s ls-remote %s -t refs/tags/%s*' % (git_path, remote, version)
     else:
-        # appears to be a sha1.  return as-is since it appears
-        # cannot check for a specific sha1 on remote
-        return version
+        # Appears to be a sha hash. Checking requires special action
+        rev = get_sha_hash(module, git_path, remote, version, cwd)
+
+        return rev
+
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
