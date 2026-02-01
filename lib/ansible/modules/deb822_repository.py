@@ -580,7 +580,19 @@ def main():
             msg=f"name parameter contains invalid characters: {set(invalid_chars)!r}. "
             f"Only letters (a-z, A-Z), digits (0-9), underscore (_), hyphen (-), and period (.) are allowed."
         )
-    slug = name
+
+    # For backward compatibility, check if a file with the old normalized naming
+    # convention already exists. If so, reuse that slug to avoid creating duplicate files.
+    # The old normalization: lowercase, replace underscores/spaces with hyphens, remove other chars.
+    legacy_slug = re.sub(r'[^a-z0-9-]', '', name.lower().replace('_', '-').replace(' ', '-'))
+    legacy_sources_filename = make_sources_filename(legacy_slug)
+
+    if os.path.exists(legacy_sources_filename):
+        # Legacy file exists, reuse the old naming to maintain consistency
+        slug = legacy_slug
+    else:
+        # No legacy file, use the new naming convention (preserve name as-is)
+        slug = name
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':
