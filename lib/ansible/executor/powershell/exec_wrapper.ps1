@@ -109,6 +109,8 @@ begin {
 
                 $targetPath = $target.Target
                 if ($targetPath -notmatch '([a-z]:[\\/])|([\\/]{2})') {
+                    # If the target isn't rooted in a drive or UNC path then
+                    # they are relative to the link location.
                     $targetPath = [Path]::Combine(
                         [Path]::GetDirectoryName($targetPwsh),
                         $targetPath)
