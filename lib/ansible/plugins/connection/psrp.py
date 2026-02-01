@@ -360,7 +360,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
         if self._shell.SHELL_FAMILY != 'powershell':
             # This shouldn't happen but someone might have ansible_shell_type=cmd
-            # set from testing with winrm/ssh. This plugin will probably still
+            # set from testing with winrm/ssh. This plugin will probably still work
             # but there are edge cases that could fail unless powershell was
             # used.
             display.warning(
