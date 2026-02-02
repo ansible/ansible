@@ -1,2 +1,2 @@
 bugfixes:
-  - deb822_repository - Stop over-normalizing the ``name`` parameter. The module now preserves valid characters (uppercase letters, underscores, periods) and raises an error for invalid characters instead of silently mangling names (https://github.com/ansible/ansible/issues/86243).
+  - deb822_repository - Stop over-normalizing the ``name`` parameter. The module now preserves case, underscores, and periods while converting spaces to hyphens. This prevents filename collisions for names that differ by case, underscores, or dots (https://github.com/ansible/ansible/issues/86243).

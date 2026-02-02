@@ -572,27 +572,22 @@ def main():
     params.pop('install_python_debian')
 
     name = params['name']
-    # Per APT sources.list(5), valid filename characters are: a-zA-Z0-9_-.
-    # Validate that name contains only these characters, fail otherwise.
-    invalid_chars = re.sub(r'[a-zA-Z0-9_.-]', '', name)
-    if invalid_chars:
-        module.fail_json(
-            msg=f"name parameter contains invalid characters: {set(invalid_chars)!r}. "
-            f"Only letters (a-z, A-Z), digits (0-9), underscore (_), hyphen (-), and period (.) are allowed."
-        )
-
-    # For backward compatibility, check if a file with the old normalized naming
-    # convention already exists. If so, reuse that slug to avoid creating duplicate files.
-    # The old normalization: lowercase, replace underscores/spaces with hyphens, remove other chars.
-    legacy_slug = re.sub(r'[^a-z0-9-]', '', name.lower().replace('_', '-').replace(' ', '-'))
-    legacy_sources_filename = make_sources_filename(legacy_slug)
-
-    if os.path.exists(legacy_sources_filename):
+    # Generate legacy-normalized slug for backward compatibility check
+    legacy_slug = re.sub(
+        r'[^a-z0-9-]+',
+        '',
+        re.sub(r'[_\s]+', '-', name.lower()),
+    )
+    # New naming: just replace spaces with hyphens, preserve everything else
+    new_slug = name.replace(' ', '-')
+    legacy_sources = make_sources_filename(legacy_slug)
+    
+    if os.path.exists(legacy_sources):
         # Legacy file exists, reuse the old naming to maintain consistency
         slug = legacy_slug
     else:
-        # No legacy file, use the new naming convention (preserve name as-is)
-        slug = name
+        # No legacy file, use the new naming convention
+        slug = new_slug
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':
