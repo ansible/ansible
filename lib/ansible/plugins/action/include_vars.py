@@ -104,7 +104,7 @@ class ActionModule(ActionBase):
         failed = False
         if self.source_dir:
             self._set_dir_defaults()
-            self._set_root_dir()
+            self.source_dir = self._with_root_dir(self.source_dir)
             if not path.exists(self.source_dir):
                 failed = True
                 err_msg = f"{self.source_dir} directory does not exist"
@@ -119,6 +119,7 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
         else:
             try:
+                self.source_file = self._with_root_dir(self.source_file)
                 self.source_file = self._find_needle('vars', self.source_file)
                 failed, err_msg, updated_results = (
                     self._load_files(self.source_file)
@@ -151,27 +152,27 @@ class ActionModule(ActionBase):
 
         return result
 
-    def _set_root_dir(self):
+    def _with_root_dir(self, inputted_path):
         if self._task._role:
-            if self.source_dir.split('/')[0] == 'vars':
+            if inputted_path.split('/')[0] == 'vars':
                 path_to_use = (
-                    path.join(self._task._role._role_path, self.source_dir)
+                    path.join(self._task._role._role_path, inputted_path)
                 )
                 if path.exists(path_to_use):
-                    self.source_dir = path_to_use
+                    return path_to_use
             else:
                 path_to_use = (
                     path.join(
-                        self._task._role._role_path, 'vars', self.source_dir
+                        self._task._role._role_path, 'vars', inputted_path
                     )
                 )
-                self.source_dir = path_to_use
+                return path_to_use
         else:
             if (origin := self._task._origin) and origin.path:  # origin.path is not present for ad-hoc tasks
                 current_dir = (
                     "/".join(origin.path.split('/')[:-1])
                 )
-                self.source_dir = path.join(current_dir, self.source_dir)
+                return path.join(current_dir, inputted_path)
 
     def _log_walk(self, error):
         self._display.vvv(f"Issue with walking through {error.filename}: {error}")
