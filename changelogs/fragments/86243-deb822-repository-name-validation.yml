@@ -1,2 +1,4 @@
 bugfixes:
-  - deb822_repository - Stop over-normalizing the ``name`` parameter. The module now preserves case, underscores, and periods while converting spaces to hyphens. This prevents filename collisions for names that differ by case, underscores, or dots (https://github.com/ansible/ansible/issues/86243).
+  - deb822_repository no longer over-normalizes repository names when generating
+    sources list filenames, preventing collisions for names that differ by case,
+    underscores, or dots (https://github.com/ansible/ansible/issues/86243)
