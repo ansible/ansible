@@ -578,8 +578,6 @@ def main():
         '',
         re.sub(r'[_\s]+', '-', name.lower()),
     )
-    # New naming: just replace spaces with hyphens, preserve everything else
-    new_slug = name.replace(' ', '-')
     legacy_sources = make_sources_filename(legacy_slug)
 
     if os.path.exists(legacy_sources):
@@ -587,7 +585,7 @@ def main():
         slug = legacy_slug
     else:
         # No legacy file, use the new naming convention
-        slug = new_slug
+        slug = name.replace(' ', '-')
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':
