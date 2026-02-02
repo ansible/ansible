@@ -1,0 +1,10 @@
+bugfixes:
+  - >-
+    ``ansible-galaxy collection list`` - issue a warning when a collection's namespace and name do not match its
+    filepath. (https://github.com/ansible/ansible/issues/69813)
+  - >-
+    ``ansible-galaxy collection list|install`` - list collections based on reference (the fqcn used to refer to them in a
+    playbook), not based on their documented name. (https://github.com/ansible/ansible/issues/69813)
+  - >-
+    ``ansible-galaxy collection verify`` - fail collection verification when a collection's namespace and name 
+    do not match its filepath. (https://github.com/ansible/ansible/issues/69813)

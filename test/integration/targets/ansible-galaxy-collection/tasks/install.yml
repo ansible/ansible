@@ -1152,6 +1152,60 @@
       path: '{{ galaxy_dir }}/scratch/trailing_dir'
       state: absent
 
+- name: test collection FQCN mismatch warning
+  block:
+    - name: create test collection install directory for FQCN mismatch test
+      file:
+        path: '{{ galaxy_dir }}/ansible_collections'
+        state: directory
+
+    - name: Install a collection for FQCN mismatch test
+      command: ansible-galaxy collection install namespace1.name1
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+    - name: Create wrong namespace directory
+      file:
+        path: '{{ galaxy_dir }}/ansible_collections/wrongnamespace'
+        state: directory
+
+    - name: Move the installed collection to a mismatched path
+      command: mv {{ galaxy_dir }}/ansible_collections/namespace1/name1 {{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname
+
+    - name: Re-install the same collection to trigger path scanning
+      command: ansible-galaxy collection install namespace1.name1
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+      register: second_install
+
+    - name: Assert second install succeeded and warning was displayed
+      assert:
+        that:
+          - second_install is success
+          - expected_warning in second_install.stderr
+          - correct_name in second_install.stdout
+          - incorrect_name not in second_install.stdout
+      vars:
+        mismatched_path: "{{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname"
+        expected_warning: "Collection at {{ mismatched_path }} documents incorrect FQCN 'namespace1.name1'"
+        correct_name: 'namespace1.name1'
+        incorrect_name: 'wrongnamespace.wrongname'
+
+    - name: Stat for collection paths
+      stat:
+        path: "{{ item }}"
+      loop:
+        - '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+        - '{{ galaxy_dir }}/ansible_collections/wrongnamespace/wrongname'
+      register: collection_paths
+
+    - name: Assert both correct and incorrect collection directories exist
+      assert:
+        that:
+          - collection_paths.results[0].stat.exists and collection_paths.results[0].stat.isdir
+          - collection_paths.results[1].stat.exists and collection_paths.results[1].stat.isdir
+
+
 - name: remove collection dir after round of testing - {{ test_id }}
   file:
     path: '{{ galaxy_dir }}/ansible_collections'

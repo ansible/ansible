@@ -863,6 +863,11 @@ def verify_collections(
                     local_collection = Candidate.from_dir_path(
                         b_search_path, artifacts_manager,
                     )
+
+                    if local_collection.fqcn != collection.fqcn:
+                        default_err = f"Collection at '{to_text(local_collection.src)}' documents incorrect FQCN '{local_collection.fqcn}'"
+                        continue
+
                     supplemental_signatures = [
                         get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
@@ -1466,6 +1471,10 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         except ValueError as val_err:
             display.warning(f'{val_err}')
             continue
+
+        if req.fqcn != '.'.join(pathlib.Path(to_text(req.src)).parts[-2:]):
+            display.warning(f"Collection at {to_text(req.src)} documents incorrect FQCN '{req.fqcn}'. Ignoring metadata.")
+            req = Candidate.from_dir_path_implicit(b_collection_path)
 
         display.vvv(
             u"Found installed collection {coll!s} at '{path!s}'".
