@@ -61,3 +61,46 @@
           - wrong_su_prompt is unreachable
           - ansible_connection != "local" or wrong_su_prompt.msg is contains "Timed out waiting for become success or become password prompt"
           - ansible_connection != "ssh" or wrong_su_prompt.msg is contains "waiting for privilege escalation prompt"
+
+# The bug from issue https://github.com/ansible/ansible/issues/86458 presents itself only on local connections
+# and only when the password is entered interactively using -K/--ask-become-pass.
+- name: Test different locale
+  when: ansible_os_family == 'RedHat' and ansible_connection == 'local'
+  block:
+    - import_role:
+        name: setup_pexpect
+
+    - name: install language pack and pexpect
+      dnf:
+        name:
+          - langpacks-uk
+          - glibc-langpack-uk
+        state: present
+
+    - name: verify language pack is enabled
+      command: locale -a
+      register: installed_languages
+
+    - assert:
+        that: "'uk_UA.utf8' in installed_languages.stdout"
+
+    - name: test su prompt basic success with alternate language on local connection
+      expect:
+        command: "ansible -m command -a whoami localhost -b --become-method su -K"
+        responses:
+          BECOME password:
+            - "{{ target_user_password }}"
+      environment:
+        LC_ALL: uk_UA.utf8
+        ANSIBLE_BECOME_USER: "{{ target_user_name }}"
+        ANSIBLE_BECOME_EXE: /tmp/sushim.sh
+        ANSIBLE_BECOME_FLAGS: --intermediate-user {{ intermediate_user_name | quote }}
+      # protect our target user password
+      no_log: true
+  always:
+    - name: remove language pack
+      dnf:
+        name:
+          - langpacks-uk
+          - glibc-langpack-uk
+        state: absent
