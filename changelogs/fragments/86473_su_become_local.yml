@@ -1,0 +1,2 @@
+bugfixes:
+  - local connection - Pass correct type to become plugins when checking password (https://github.com/ansible/ansible/issues/86458)
