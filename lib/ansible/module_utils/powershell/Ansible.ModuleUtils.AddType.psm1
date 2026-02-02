@@ -219,7 +219,7 @@ Function Add-CSharpType {
 
         $emit_options = [Microsoft.CodeAnalysis.Emit.EmitOptions]::new()
         if ($PSCmdlet.ParameterSetName -eq "Module") {
-            $include_debug = $AnsibleModule.Verbosity -ge 3
+            $include_debug = $AnsibleModule.TracebacksFor -contains "error" -or $AnsibleModule.TracebacksFor -contains "always"
         }
         else {
             $include_debug = $IncludeDebugInfo.IsPresent
