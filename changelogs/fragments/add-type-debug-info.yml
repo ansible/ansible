@@ -1,0 +1,5 @@
+minor_changes:
+  - >-
+    PowerShell AddType Util - Will only include the debug information when ``DISPLAY_TRACEBACK`` contains ``error`` or
+    ``always``. In the past the debug information would have been included if ``-vvv`` or higher was used but this new
+    behavior aligns the logic with the new option added in Ansible 2.19.

@@ -277,7 +277,7 @@ Function Add-CSharpType {
         # configure compile options based on input
         if ($PSCmdlet.ParameterSetName -eq "Module") {
             $temp_path = $AnsibleModule.Tmpdir
-            $include_debug = $AnsibleModule.Verbosity -ge 3
+            $include_debug = $AnsibleModule.TracebacksFor -contains "error" -or $AnsibleModule.TracebacksFor -contains "always"
 
             # AnsibleModule will handle the cleanup after module execution
             # which should be enough time for AVs or other processes to release

@@ -61,6 +61,7 @@ namespace Ansible.Basic
         private List<string> warnings = new List<string>();
         private List<Dictionary<string, string>> deprecations = new List<Dictionary<string, string>>();
         private List<string> cleanupFiles = new List<string>();
+        private string[] _tracebacksFor = new string[0];
 
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
@@ -78,14 +79,15 @@ namespace Ansible.Basic
             { "shell_executable", null },
             { "socket", null },
             { "syslog_facility", null },
-            { "target_log_info", "TargetLogInfo"},
-            { "tracebacks_for", null},
+            { "target_log_info", "TargetLogInfo" },
+            { "tracebacks_for", "_tracebacksFor" },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
         private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
+        private string[] passStringArrays = new string[] { "tracebacks_for" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
         {
             // key - (default, type) - null is freeform
@@ -136,6 +138,7 @@ namespace Ansible.Basic
         public string TargetLogInfo { get; private set; }
         public int Verbosity { get; private set; }
         public string AnsibleVersion { get; private set; }
+        public string[] TracebacksFor { get { return _tracebacksFor; } }
 
         public string Tmpdir
         {
@@ -1049,6 +1052,10 @@ namespace Ansible.Basic
                         value = ParseBool(value);
                     else if (passInts.Contains(key))
                         value = ParseInt(value);
+                    else if (passStringArrays.Contains(key))
+                    {
+                        value = Array.ConvertAll((object[])value, ParseStr);
+                    }
 
                     string propertyName = passVars[key];
                     PropertyInfo property = typeof(AnsibleModule).GetProperty(propertyName);
