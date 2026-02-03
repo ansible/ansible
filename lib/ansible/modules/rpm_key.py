@@ -311,8 +311,7 @@ class LibRPM:
             fp_data.append(pkt[body_offset + i])
 
         # Compute SHA-1 hash
-        fingerprint = hashlib.sha1(fp_data).digest()
-        return fingerprint.hex().upper()
+        return hashlib.sha1(fp_data).hexdigest().upper()
 
     def _compute_v6_fingerprint(self, pkt: PktPointer, offset: int, pktlen: int) -> str | None:
         """
@@ -347,8 +346,7 @@ class LibRPM:
             fp_data.append(pkt[body_offset + i])
 
         # Compute SHA-256 hash
-        fingerprint = hashlib.sha256(fp_data).digest()
-        return fingerprint.hex().upper()
+        return hashlib.sha256(fp_data).hexdigest().upper()
 
     def identify_keys(self, armor: str) -> list[dict[str, str]]:
         """Return a list of dicts with key ID (8-byte) and fingerprint for the primary key and each subkey"""
