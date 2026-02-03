@@ -4,8 +4,8 @@
 
 set -eux
 
-# The third PATH entry is the injected bin directory created by ansible-test.
-bin_dir="$(python -c 'import os; print(os.environ["PATH"].split(":")[2])')"
+# The PATH entry ending in "-bin" is the injected bin directory created by ansible-test.
+bin_dir="$(python -c 'import os; print([path for path in os.environ["PATH"].split(":") if path.endswith("-bin")][0])')"
 
 while IFS= read -r name
 do
