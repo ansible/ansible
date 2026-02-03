@@ -1,6 +1,6 @@
 - name: Create deb822 repo - check_mode
   deb822_repository:
-    name: ansible-test focal archive
+    name: ansible-test-focal-archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -13,7 +13,7 @@
 
 - name: Create deb822 repo
   deb822_repository:
-    name: ansible-test focal archive
+    name: ansible-test-focal-archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -31,7 +31,7 @@
 
 - name: Create another deb822 repo
   deb822_repository:
-    name: ansible-test focal security
+    name: ansible-test-focal-security
     uris: http://security.ubuntu.com/ubuntu
     suites:
       - focal-security
@@ -42,7 +42,7 @@
 
 - name: Create deb822 repo idempotency
   deb822_repository:
-    name: ansible-test focal archive
+    name: ansible-test-focal-archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -56,7 +56,7 @@
 - name: Create deb822 repo (changed order of parameters) idempotency
   deb822_repository:
     uris: http://us.archive.ubuntu.com/ubuntu
-    name: ansible-test focal archive
+    name: ansible-test-focal-archive
     date_max_future: 10
     components:
       - main
@@ -68,7 +68,7 @@
 
 - name: Create deb822 repo - check_mode
   deb822_repository:
-    name: ansible-test focal archive
+    name: ansible-test-focal-archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -82,7 +82,7 @@
 
 - name: Change deb822 repo mode
   deb822_repository:
-    name: ansible-test focal archive
+    name: ansible-test-focal-archive
     uris: http://us.archive.ubuntu.com/ubuntu
     suites:
       - focal
@@ -119,7 +119,7 @@
     focal_archive_expected: |-
       Components: main restricted
       Date-Max-Future: 10
-      X-Repolib-Name: ansible-test focal archive
+      X-Repolib-Name: ansible-test-focal-archive
       Suites: focal focal-updates
       Types: deb
       URIs: http://us.archive.ubuntu.com/ubuntu
@@ -130,8 +130,8 @@
     state: absent
   register: remove_repos_1
   loop:
-    - ansible-test focal archive
-    - ansible-test focal security
+    - ansible-test-focal-archive
+    - ansible-test-focal-security
 
 - name: Check for repo files
   stat:

@@ -1,6 +1,6 @@
 - name: Create repo to install from
   deb822_repository:
-    name: ansible-test local
+    name: ansible-test-local
     uris: file:{{ repodir }}
     suites:
       - stable
@@ -31,7 +31,7 @@
 
     - name: remove repo
       deb822_repository:
-        name: ansible-test local
+        name: ansible-test-local
         state: absent
 
 - block:
