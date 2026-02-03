@@ -94,11 +94,11 @@ options:
       - The Python C(hashlib) module is responsible for providing the available algorithms.
         The choices vary based on Python version and OpenSSL version.
       - On systems running in FIPS compliant mode, the C(md5) algorithm may be unavailable.
-      - Additionally, if a checksum is passed to this parameter, and the file exist under
-        the O(dest) location, the C(destination_checksum) would be calculated, and if
+      - Additionally, if a checksum is supplied to this parameter, and the file exists under
+        the O(dest) location, the C(destination_checksum) would be calculated; and if
         checksum equals C(destination_checksum), the file download would be skipped
         (unless O(force=true)). If the checksum does not equal C(destination_checksum),
-        the destination file is deleted.
+        the destination file is replaced with the newly downloaded file.
       - If the checksum URL requires username and password, O(url_username) and O(url_password) are used
         to download the checksum file.
     type: str
