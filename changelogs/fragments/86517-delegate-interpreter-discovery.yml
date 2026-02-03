@@ -1,0 +1,2 @@
+bugfixes:
+  - Delegate ``discovered_interpreter_*`` facts regardless of ``delegate_facts`` so ``delegate_to`` hosts perform interpreter discovery once. (https://github.com/ansible/ansible/issues/86517)

@@ -1,0 +1,23 @@
+- hosts: intra_task
+  gather_facts: no
+  connection: local
+  vars:
+    ansible_python_interpreter: auto
+  tasks:
+    - ping:
+      loop:
+        - 1
+        - 2
+    - assert:
+        that: ansible_facts['discovered_interpreter_python'] is defined
+
+- hosts: inter_task
+  gather_facts: no
+  connection: local
+  vars:
+    ansible_python_interpreter: auto
+  tasks:
+    - ping:
+    - ping:
+    - assert:
+        that: ansible_facts['discovered_interpreter_python'] is defined
