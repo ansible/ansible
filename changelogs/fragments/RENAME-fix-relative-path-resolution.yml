@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - include_vars - Relative path inputs to the ``file`` parameter now resolve to the correct paths.
