@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - include_vars - Resolve relative path ``file`` inputs to the correct paths (https://github.com/ansible/ansible/issues/84406)
