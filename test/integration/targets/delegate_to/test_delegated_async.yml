@@ -1,0 +1,11 @@
+- name: test delegated async
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - command: ansible-playbook test_delegated_async_inner.yml -i inventory_interpreters -vvv
+      register: r
+
+    - assert:
+        that:
+          - r.stdout | regex_findall('firstpython') | length == 0
+          - r.stdout | regex_findall('secondpython') | length >= 3  # tasks: wrapper, cleanup and at least one status
