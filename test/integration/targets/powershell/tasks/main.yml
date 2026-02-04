@@ -1,0 +1,8 @@
+- name: Get PowerShell version
+  command: pwsh --version
+  register: powershell_version
+  failed_when: false
+
+- name: Show PowerShell Version
+  debug:
+    msg: "{{ powershell_version.stdout }}"
