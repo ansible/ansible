@@ -3327,7 +3327,7 @@ class BusyBox(User):
         change = False
         with open(self.PASSWORDFILE, 'r') as password_file:
             for line in password_file:
-                if line.startswith(self.name):
+                if line.startswith('%s:' % self.name):
                     fields = line.strip().split(':')
                     if fields != passwd_entry:
                         change = True
