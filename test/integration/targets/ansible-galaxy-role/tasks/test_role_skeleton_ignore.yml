@@ -1,0 +1,53 @@
+---
+- name: Test role_skeleton_ignore with custom role skeleton
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    home_dir: "{{ lookup('env', 'HOME') }}"
+    skeleton_dir: "{{ home_dir }}/.ansible/role-skeleton"
+    role_name: testrole_ignore
+
+  tasks:
+    - name: Ensure clean skeleton directory
+      ansible.builtin.file:
+        path: "{{ skeleton_dir }}"
+        state: absent
+
+    - name: Create custom role skeleton directory
+      ansible.builtin.file:
+        path: "{{ skeleton_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Add file to custom skeleton that should be ignored
+      ansible.builtin.copy:
+        dest: "{{ skeleton_dir }}/CLAUDE.md"
+        content: "This file should be ignored"
+
+    - name: Write ansible.cfg with role_skeleton_ignore
+      ansible.builtin.copy:
+        dest: "{{ home_dir }}/.ansible.cfg"
+        content: |
+          [galaxy]
+          role_skeleton = {{ skeleton_dir }}
+          role_skeleton_ignore = ^\./CLAUDE\.md$
+
+    - name: Remove role directory if it exists
+      ansible.builtin.file:
+        path: "{{ role_name }}"
+        state: absent
+
+    - name: Initialize role using ansible-galaxy
+      ansible.builtin.command:
+        cmd: ansible-galaxy role init {{ role_name }}
+
+    - name: Check that ignored file was not copied
+      ansible.builtin.stat:
+        path: "{{ role_name }}/CLAUDE.md"
+      register: ignored_file
+
+    - name: Assert ignored file is absent
+      ansible.builtin.assert:
+        that:
+          - not ignored_file.stat.exists
