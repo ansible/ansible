@@ -879,6 +879,7 @@ class TaskExecutor:
             args={'jid': async_jid},
             check_mode=self._task.check_mode,
             environment=self._task.environment,
+            delegate_to=self._task.delegate_to,
         ))
 
         # ensure that the synthetic async task has the resolved connection recorded on it
@@ -956,6 +957,7 @@ class TaskExecutor:
                     },
                     'check_mode': self._task.check_mode,
                     'environment': self._task.environment,
+                    'delegate_to': self._task.delegate_to,
                 }
             )
             cleanup_handler = self._shared_loader_obj.action_loader.get(
