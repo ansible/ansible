@@ -61,7 +61,7 @@ class ActionModule(ActionBase):
             if self.source_file:
                 self.source_file = self.source_file.rstrip('\n')
             else:
-                raise AnsibleError(f"Unable to determine file, dir, or other source")
+                raise AnsibleError("Unable to determine file, dir, or other source")
 
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
