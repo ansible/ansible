@@ -149,11 +149,12 @@ class ActionModule(ActionBase):
 
         return result
 
-    def _with_resolved_root(self, inputted_path):
+    def _with_resolved_root(self, inputted_path: str) -> str:
+        """Resolve a relative path against the vars directory, the role directory, and playbook directory."""
         input_path = pathlib.Path(inputted_path)
 
         if input_path.is_absolute():
-            return input_path
+            return inputted_path
 
         candidates: list[pathlib.Path] = []
         if self._task._role:
