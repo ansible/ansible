@@ -3339,7 +3339,7 @@ class BusyBox(User):
             rc = 0
             if not self.module.check_mode:
                 tmpfd, tmpfile = tempfile.mkstemp(dir=self.module.tmpdir)
-                with open(tmpfile, 'w') as f:
+                with os.fdopen(tmpfd, 'w') as f:
                     f.writelines(contents)
 
                 self.module.backup_local(self.PASSWORDFILE)
