@@ -164,6 +164,9 @@ class ActionModule(ActionBase):
         if (origin := self._task._origin) and origin.path:
             candidates.append(pathlib.Path(origin.path).parent / input_path)
 
+        if (basedir := self._loader.get_basedir()):  # Cover ad-hoc invocation
+            candidates.append(pathlib.Path(basedir) / input_path)
+
         for candidate in candidates:
             if candidate.exists():
                 return str(candidate)
