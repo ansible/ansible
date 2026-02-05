@@ -19,9 +19,7 @@
 - import_tasks: test_expires_warn.yml
 - import_tasks: test_ssh_key_passphrase.yml
 - include_tasks: test_password_lock.yml
-  when: ansible_distribution != 'Alpine'
 - include_tasks: test_password_lock_new_user.yml
-  when: ansible_distribution != 'Alpine'
 - include_tasks: test_local.yml
   when: ansible_distribution != 'Alpine'
 - include_tasks: test_umask.yml
