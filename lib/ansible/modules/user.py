@@ -38,6 +38,7 @@ options:
     non_unique:
         description:
             - Optionally when used with the C(-u) option, this option allows to change the user ID to a non-unique value.
+            - Not supported on distributions using BusyBox.
         type: bool
         default: no
         version_added: "1.1"
@@ -148,6 +149,7 @@ options:
         description:
             - Whether to generate a SSH key for the user in question.
             - This will B(not) overwrite an existing SSH key unless used with O(force=yes).
+            - Requires C(ssh-keygen) from OpenSSH.
         type: bool
         default: no
         version_added: "0.9"
@@ -217,6 +219,7 @@ options:
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
+            - Not supported on distributions using BusyBox.
         type: bool
         default: no
         version_added: "2.4"
@@ -311,6 +314,8 @@ notes:
     C(/Library/Preferences/com.apple.loginwindow.plist).
   - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On distributions using BusyBox, this module uses C(adduser), C(chpasswd), C(deluser), and C(delgroup).
+    The C(/etc/passwd) file is modified directly by this module and is backed up before modification.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
@@ -501,6 +506,7 @@ import select
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 import math
 import typing as t
@@ -550,6 +556,7 @@ except AttributeError:
 
 
 _HASH_RE = re.compile(r'[^a-zA-Z0-9./=]')
+LOCK_INDICATOR = '!'
 
 
 def getspnam(b_name):
@@ -3125,6 +3132,35 @@ class BusyBox(User):
         - remove_user()
         - modify_user()
     """
+    def _build_password_string(self, current_password=None):
+        """
+        Build the appropriate password string based on the current password and
+        module parameters.
+
+        This method will return '*' at a minimum to avoid creating an enabled
+        account with no password.
+        """
+        lock = LOCK_INDICATOR if self.password_lock else ''
+
+        # Order of precedence when choosing the password:
+        #   1. password from module parameters
+        #   2. current password
+        #   3. string to enable the account but without a password
+        password = '*'
+        if self.password is not None:
+            password = self.password
+        elif current_password:
+            if current_password == LOCK_INDICATOR:
+                # Special handling when the password is only a '!' to avoid
+                # unnecessary changes to the password to values like '!!' or '!*'.
+                lock = ''
+                password = current_password
+            elif current_password.startswith(LOCK_INDICATOR):
+                # Preserve the existing password but unlock the account even if
+                # no password hash was provided in the module parameters.
+                password = current_password.lstrip(LOCK_INDICATOR)
+
+        return f'{lock}{password}'
 
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
@@ -3137,7 +3173,8 @@ class BusyBox(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+                self.module.fail_json(msg=f'Group {self.group} does not exist')
+
             cmd.append('-G')
             cmd.append(self.group)
 
@@ -3182,18 +3219,17 @@ class BusyBox(User):
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        if self.password is not None:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
-            cmd.append('--encrypted')
-            data = '{name}:{password}'.format(name=self.name, password=self.password)
-            rc, out, err = self.execute_command(cmd, data=data)
+        cmd = [self.module.get_bin_path('chpasswd', True)]
+        cmd.append('--encrypted')
+        data = f'{self.name}:{self._build_password_string()}'
+        rc, out, err = self.execute_command(cmd, data=data)
 
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Add to additional groups
-        if self.groups is not None and len(self.groups):
-            groups = self.get_groups_set()
+        if self.groups:
+            groups = self.get_groups_set() or set()
             add_cmd_bin = self.module.get_bin_path('adduser', True)
             for group in groups:
                 cmd = [add_cmd_bin, self.name, group]
@@ -3221,13 +3257,26 @@ class BusyBox(User):
         rc = None
         out = ''
         err = ''
-        info = self.user_info()
+        user_info = self.user_info()
+
+        if not user_info:
+            return rc, out, err
+
+        gid = user_info[3]
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg=f'Group {self.group} does not exist')
+
+            group_info = self.group_info(self.group)
+            if group_info:
+                gid = group_info[2]
+
         add_cmd_bin = self.module.get_bin_path('adduser', True)
         remove_cmd_bin = self.module.get_bin_path('delgroup', True)
 
         # Manage group membership
-        if self.groups is not None and len(self.groups):
-            groups = self.get_groups_set()
+        if self.groups:
+            groups = self.get_groups_set() or set()
             group_diff = set(current_groups).symmetric_difference(groups)
 
             if group_diff:
@@ -3246,14 +3295,55 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage password
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
-            cmd.append('--encrypted')
-            data = '{name}:{password}'.format(name=self.name, password=self.password)
-            rc, out, err = self.execute_command(cmd, data=data)
+        current_password = to_native(user_info[1])
+        new_password = self._build_password_string(current_password)
+        if self.update_password == 'always':
+            lock_status_mismatch = self.password_lock and not current_password.startswith('!')
+            password_changed = new_password != current_password
+            if lock_status_mismatch or password_changed:
+                cmd = [self.module.get_bin_path('chpasswd', True), '--encrypted']
+                data = f'{self.name}:{new_password}'
+                rc, out, err = self.execute_command(cmd, data=data)
 
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Manage user settings
+        uid = user_info[2]
+        if self.uid is not None:
+            uid = self.uid
+
+        passwd_entry = [
+            self.name,
+            'x',
+            to_native(uid),
+            to_native(gid),
+            self.comment or user_info[4],
+            self.home or user_info[5],
+            self.shell or user_info[6],
+        ]
+
+        contents = []
+        change = False
+        with open(self.PASSWORDFILE, 'r') as password_file:
+            for line in password_file:
+                if line.startswith('%s:' % self.name):
+                    fields = line.strip().split(':')
+                    if fields != passwd_entry:
+                        change = True
+                        line = ':'.join(passwd_entry) + '\n'
+
+                contents.append(line)
+
+        if change:
+            rc = 0
+            if not self.module.check_mode:
+                tmpfd, tmpfile = tempfile.mkstemp(dir=self.module.tmpdir)
+                with os.fdopen(tmpfd, 'w') as f:
+                    f.writelines(contents)
+
+                self.module.backup_local(self.PASSWORDFILE)
+                self.module.atomic_move(tmpfile, self.PASSWORDFILE)
 
         return rc, out, err
 
