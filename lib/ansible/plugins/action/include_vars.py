@@ -117,7 +117,6 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
             else:
                 self.source_file = self._with_resolved_root(self.source_file)
-                self.source_file = self._find_needle('vars', self.source_file)
                 failed, err_msg, updated_results = (
                     self._load_files(self.source_file)
                 )
@@ -165,6 +164,7 @@ class ActionModule(ActionBase):
             candidates.append(pathlib.Path(origin.path).parent / input_path)
 
         if (basedir := self._loader.get_basedir()):  # Cover ad-hoc invocation
+            candidates.append(pathlib.Path(basedir) / 'vars' / input_path)
             candidates.append(pathlib.Path(basedir) / input_path)
 
         for candidate in candidates:
