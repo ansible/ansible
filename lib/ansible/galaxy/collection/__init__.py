@@ -202,8 +202,11 @@ class CollectionVerifyResult:
         self.success = True
 
 
-def verify_local_collection(local_collection, remote_collection, artifacts_manager):
-    # type: (Candidate, t.Optional[Candidate], ConcreteArtifactsManager) -> CollectionVerifyResult
+def verify_local_collection(
+        local_collection: Candidate,
+        remote_collection: t.Optional[Candidate],
+        artifacts_manager: ConcreteArtifactsManager,
+) -> CollectionVerifyResult:
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
@@ -221,7 +224,7 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
         format(path=to_text(local_collection.src)),
     )
 
-    modified_content = []  # type: list[ModifiedContent]
+    modified_content: list[ModifiedContent] = []
 
     verify_local_only = remote_collection is None
 
@@ -377,8 +380,14 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
     return result
 
 
-def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, required_successful_count, ignore_signature_errors):
-    # type: (str, str, list[str], str, str, list[str]) -> bool
+def verify_file_signatures(
+        fqcn: str,
+        manifest_file: str,
+        detached_signatures: list[str],
+        keyring: str,
+        required_successful_count: str,
+        ignore_signature_errors: list[str],
+) -> bool:
     successful = 0
     error_messages = []
 
@@ -427,8 +436,12 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
     return verified
 
 
-def verify_file_signature(manifest_file, detached_signature, keyring, ignore_signature_errors):
-    # type: (str, str, str, list[str]) -> None
+def verify_file_signature(
+        manifest_file: str,
+        detached_signature: str,
+        keyring: str,
+        ignore_signature_errors: list[str],
+) -> None:
     """Run the gpg command and parse any errors. Raises CollectionSignatureError on failure."""
     gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
@@ -459,8 +472,7 @@ def verify_file_signature(manifest_file, detached_signature, keyring, ignore_sig
     return None
 
 
-def build_collection(u_collection_path, u_output_path, force):
-    # type: (str, str, bool) -> str
+def build_collection(u_collection_path: str, u_output_path: str, force: bool) -> str:
     """Creates the Ansible collection artifact in a .tar.gz file.
 
     :param u_collection_path: The path to the collection to build. This should be the directory that contains the
@@ -508,14 +520,14 @@ def build_collection(u_collection_path, u_output_path, force):
 
 
 def download_collections(
-        collections,  # type: t.Iterable[Requirement]
-        output_path,  # type: str
-        apis,  # type: t.Iterable[GalaxyAPI]
-        no_deps,  # type: bool
-        allow_pre_release,  # type: bool
-        artifacts_manager,  # type: ConcreteArtifactsManager
-        force=False,  # type: bool
-):  # type: (...) -> None
+        collections: t.Iterable[Requirement],
+        output_path: str,
+        apis: t.Iterable[GalaxyAPI],
+        no_deps: bool,
+        allow_pre_release: bool,
+        artifacts_manager: ConcreteArtifactsManager,
+        force: bool = False,
+) -> None:
     """Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
     file of the downloaded requirements to be used for an install.
 
@@ -563,7 +575,7 @@ def download_collections(
                 if not force and artifacts_manager._artifact_exists(b_dest_path):
                     if artifacts_manager.validate_existing_artifact(concrete_coll_pin, b_dest_path):
                         display.display(
-                            "Skipping download; file already exists: %s" % to_text(b_dest_path)
+                            f"Skipping download; file {to_text(b_dest_path)} already exists"
                         )
                         requirements.append({
                             'name': to_native(os.path.basename(b_dest_path)),
@@ -571,7 +583,7 @@ def download_collections(
                         })
                         continue
                     display.display(
-                        "Existing artifact did not match requested collection; re-downloading: %s" % to_text(b_dest_path)
+                        f"Existing artifact did not match requested collection; re-downloading: {to_text(b_dest_path)}"
                     )
 
             display.display(
@@ -655,20 +667,20 @@ def publish_collection(collection_path, api, wait, timeout):
 
 
 def install_collections(
-        collections,  # type: t.Iterable[Requirement]
-        output_path,  # type: str
-        apis,  # type: t.Iterable[GalaxyAPI]
-        ignore_errors,  # type: bool
-        no_deps,  # type: bool
-        force,  # type: bool
-        force_deps,  # type: bool
-        upgrade,  # type: bool
-        allow_pre_release,  # type: bool
-        artifacts_manager,  # type: ConcreteArtifactsManager
-        disable_gpg_verify,  # type: bool
-        offline,  # type: bool
-        read_requirement_paths,  # type: set[str]
-):  # type: (...) -> None
+        collections: t.Iterable[Requirement],
+        output_path: str,
+        apis: t.Iterable[GalaxyAPI],
+        ignore_errors: bool,
+        no_deps: bool,
+        force: bool,
+        force_deps: bool,
+        upgrade: bool,
+        allow_pre_release: bool,
+        artifacts_manager: ConcreteArtifactsManager,
+        disable_gpg_verify: bool,
+        offline: bool,
+        read_requirement_paths: set[str],
+) -> None:
     """Install Ansible collections to the path specified.
 
     :param collections: The collections to install.
@@ -797,7 +809,7 @@ def install_collections(
 
 
 # NOTE: imported in ansible.cli.galaxy
-def validate_collection_name(name):  # type: (str) -> str
+def validate_collection_name(name: str) -> str:
     """Validates the collection name as an input from the user or a requirements file fit the requirements.
 
     :param name: The input name with optional range specifier split by ':'.
@@ -814,7 +826,7 @@ def validate_collection_name(name):  # type: (str) -> str
 
 
 # NOTE: imported in ansible.cli.galaxy
-def validate_collection_path(collection_path):  # type: (str) -> str
+def validate_collection_path(collection_path: str) -> str:
     """Ensure a given path ends with 'ansible_collections'
 
     :param collection_path: The path that should end in 'ansible_collections'
@@ -828,13 +840,13 @@ def validate_collection_path(collection_path):  # type: (str) -> str
 
 
 def verify_collections(
-        collections,  # type: t.Iterable[Requirement]
-        search_paths,  # type: t.Iterable[str]
-        apis,  # type: t.Iterable[GalaxyAPI]
-        ignore_errors,  # type: bool
-        local_verify_only,  # type: bool
-        artifacts_manager,  # type: ConcreteArtifactsManager
-):  # type: (...) -> list[CollectionVerifyResult]
+        collections: t.Iterable[Requirement],
+        search_paths: t.Iterable[str],
+        apis: t.Iterable[GalaxyAPI],
+        ignore_errors: bool,
+        local_verify_only: bool,
+        artifacts_manager: ConcreteArtifactsManager,
+) -> list[CollectionVerifyResult]:
     r"""Verify the integrity of locally installed collections.
 
     :param collections: The collections to check.
@@ -845,7 +857,7 @@ def verify_collections(
     :param artifacts_manager: Artifacts manager.
     :return: list of CollectionVerifyResult objects describing the results of each collection verification
     """
-    results = []  # type: list[CollectionVerifyResult]
+    results: list[CollectionVerifyResult] = []
 
     api_proxy = MultiGalaxyAPIProxy(apis, artifacts_manager)
 
@@ -1080,9 +1092,14 @@ def _make_entry(name, ftype, chksum_type='sha256', chksum=None):
     }
 
 
-def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns,
-                          manifest_control, license_file):
-    # type: (bytes, str, str, list[str], dict[str, t.Any], t.Optional[str]) -> FilesManifestType
+def _build_files_manifest(
+        b_collection_path: bytes,
+        namespace: str,
+        name: str,
+        ignore_patterns: list[str],
+        manifest_control: dict[str, t.Any],
+        license_file: t.Optional[str],
+) -> FilesManifestType:
     if ignore_patterns and manifest_control is not Sentinel:
         raise AnsibleError('"build_ignore" and "manifest" are mutually exclusive')
 
@@ -1098,9 +1115,13 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns,
     return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
 
-def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_control,
-                                  license_file):
-    # type: (bytes, str, str, dict[str, t.Any], t.Optional[str]) -> FilesManifestType
+def _build_files_manifest_distlib(
+        b_collection_path: bytes,
+        namespace: str,
+        name: str,
+        manifest_control: dict[str, t.Any],
+        license_file: t.Optional[str],
+) -> FilesManifestType:
     if not HAS_DISTLIB:
         raise AnsibleError('Use of "manifest" requires the python "distlib" library')
 
@@ -1201,8 +1222,12 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
     return manifest
 
 
-def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns):
-    # type: (bytes, str, str, list[str]) -> FilesManifestType
+def _build_files_manifest_walk(
+        b_collection_path: bytes,
+        namespace: str,
+        name: str,
+        ignore_patterns: list[str],
+) -> FilesManifestType:
     # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
     # patterns can be extended by the build_ignore key in galaxy.yml
     b_ignore_patterns = [
@@ -1308,11 +1333,11 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
 
 
 def _build_collection_tar(
-        b_collection_path,  # type: bytes
-        b_tar_path,  # type: bytes
-        collection_manifest,  # type: CollectionManifestType
-        file_manifest,  # type: FilesManifestType
-):  # type: (...) -> str
+        b_collection_path: bytes,
+        b_tar_path: bytes,
+        collection_manifest: CollectionManifestType,
+        file_manifest: FilesManifestType,
+) -> str:
     """Build a tar.gz collection artifact from the manifest data."""
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
@@ -1504,8 +1529,11 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         yield req
 
 
-def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
-    # type: (Candidate, str, ConcreteArtifactsManager) -> None
+def install(  # FIXME: mv to dataclasses?
+        collection: Candidate,
+        path: str,
+        artifacts_manager: ConcreteArtifactsManager,
+) -> None:
     """Install a collection under a given path.
 
     :param collection: Collection to be installed.
@@ -1550,8 +1578,11 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     )
 
 
-def write_source_metadata(collection, b_collection_path, artifacts_manager):
-    # type: (Candidate, bytes, ConcreteArtifactsManager) -> None
+def write_source_metadata(
+        collection: Candidate,
+        b_collection_path: bytes,
+        artifacts_manager: ConcreteArtifactsManager,
+) -> None:
     source_data = artifacts_manager.get_galaxy_artifact_source_info(collection)
 
     b_yaml_source_data = to_bytes(yaml_dump(source_data), errors='surrogate_or_strict')
@@ -1589,8 +1620,13 @@ def remove_source_metadata(collection, b_collection_path):
             pass
 
 
-def verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors):
-    # type: (str, list[str], str, str, list[str]) -> None
+def verify_artifact_manifest(
+        manifest_file: str,
+        signatures: list[str],
+        keyring: str,
+        required_signature_count: str,
+        ignore_signature_errors: list[str],
+) -> None:
     failed_verify = False
     coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
     collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
@@ -1794,7 +1830,7 @@ def _get_tar_file_hash(b_path, filename):
             return _consume_file(tar_obj)
 
 
-def _get_file_hash(b_path, filename):  # type: (bytes, str) -> str
+def _get_file_hash(b_path: bytes, filename: str) -> str:
     filepath = os.path.join(b_path, to_bytes(filename, errors='surrogate_or_strict'))
     with open(filepath, 'rb') as fp:
         return _consume_file(fp)
@@ -1814,16 +1850,16 @@ def _is_child_path(path, parent_path, link_name=None):
 
 
 def _resolve_depenency_map(
-        requested_requirements,  # type: t.Iterable[Requirement]
-        galaxy_apis,  # type: t.Iterable[GalaxyAPI]
-        concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        preferred_candidates,  # type: t.Iterable[Candidate] | None
-        no_deps,  # type: bool
-        allow_pre_release,  # type: bool
-        upgrade,  # type: bool
-        include_signatures,  # type: bool
-        offline,  # type: bool
-):  # type: (...) -> dict[str, Candidate]
+        requested_requirements: t.Iterable[Requirement],
+        galaxy_apis: t.Iterable[GalaxyAPI],
+        concrete_artifacts_manager: ConcreteArtifactsManager,
+        preferred_candidates: t.Iterable[Candidate] | None,
+        no_deps: bool,
+        allow_pre_release: bool,
+        upgrade: bool,
+        include_signatures: bool,
+        offline: bool,
+) -> dict[str, Candidate]:
     """Return the resolved dependency map."""
     if not HAS_RESOLVELIB:
         raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")

@@ -977,10 +977,10 @@ def test_download_collections_skips_existing_artifact(tmp_path_factory, monkeypa
 
     skip_messages = [
         call[1][0] for call in mock_display.mock_calls
-        if call[1] and isinstance(call[1][0], str) and 'Skipping download; file already exists:' in call[1][0]
+        if call[1] and isinstance(call[1][0], str) and 'Skipping download; file' in call[1][0]
     ]
     assert len(skip_messages) == 1
-    assert skip_messages[0].endswith(to_text(b_existing_path))
+    assert to_text(b_existing_path) in skip_messages[0]
     assert mock_get_artifact.call_count == 0
 
 

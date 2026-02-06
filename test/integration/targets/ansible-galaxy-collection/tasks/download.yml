@@ -176,6 +176,24 @@
         - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection.stdout'
         - download_collection_actual.stat.exists
 
+    - name: download existing tar.gz again
+      command: ansible-galaxy collection download '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+      args:
+        chdir: '{{ galaxy_dir }}/download'
+      register: download_collection_repeat
+
+    - name: get result of downloaded tar.gz after repeat
+      stat:
+        path: '{{ galaxy_dir }}/download/collections/ansible_test-my_collection-1.0.0.tar.gz'
+      register: download_collection_repeat_actual
+
+    - assert:
+        that:
+        - '"Skipping download; file" in download_collection_repeat.stdout'
+        - "'ansible_test-my_collection-1.0.0.tar.gz' in download_collection_repeat.stdout"
+        - download_collection_actual.stat.mtime == download_collection_repeat_actual.stat.mtime
+        - download_collection_actual.stat.size == download_collection_repeat_actual.stat.size
+
 - block:
   - name: create skeleton collection for trailing slash test
     command: ansible-galaxy collection init trailing_dir.name --init-path "{{ galaxy_dir }}"

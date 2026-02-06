@@ -128,21 +128,18 @@ class ConcreteArtifactsManager:
         }
 
     @staticmethod
-    def _artifact_exists(b_artifact_path):
-        # type: (bytes) -> bool
+    def _artifact_exists(b_artifact_path: bytes) -> bool:
         return os.path.isfile(b_artifact_path)
 
     @staticmethod
-    def _get_url_basename(url):
-        # type: (str) -> t.Optional[bytes]
+    def _get_url_basename(url: str) -> t.Optional[bytes]:
         url_path = urlsplit(url).path
         basename = os.path.basename(url_path)
         if not basename:
             return None
         return to_bytes(basename, errors='surrogate_or_strict')
 
-    def get_expected_artifact_basename(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> t.Optional[bytes]
+    def get_expected_artifact_basename(self, collection: Candidate | Requirement) -> t.Optional[bytes]:
         if collection.is_dir or collection.is_scm or collection.is_subdirs:
             return None
         if collection.is_url:
@@ -156,16 +153,14 @@ class ConcreteArtifactsManager:
             return None
         return self._get_url_basename(url)
 
-    def get_expected_artifact_hash(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> t.Optional[str]
+    def get_expected_artifact_hash(self, collection: Candidate | Requirement) -> t.Optional[str]:
         try:
             _url, sha256_hash, _token = self._galaxy_collection_cache[collection]
         except KeyError:
             return None
         return sha256_hash or None
 
-    def validate_existing_artifact(self, collection, b_artifact_path):
-        # type: (t.Union[Candidate, Requirement], bytes) -> bool
+    def validate_existing_artifact(self, collection: Candidate | Requirement, b_artifact_path: bytes) -> bool:
         try:
             collection_meta = _get_meta_from_tar(b_artifact_path)
         except AnsibleError:
