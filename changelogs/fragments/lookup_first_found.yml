@@ -1,0 +1,4 @@
+---
+bugfixes:
+    - first_found - ensure file lookup under ``files`` directory when the task action cannot be resolved (https://github.com/ansible/ansible/issues/85655).
+    - first_found - use the task action to determine the directory (templates/vars/files) containing the file when the lookup is not used as task loop.
