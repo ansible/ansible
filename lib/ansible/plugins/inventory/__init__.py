@@ -333,7 +333,7 @@ class Cacheable(_plugin_info.HasPluginInfo, _ConfigurablePlugin):
 
     def _get_cache_prefix(self, path: str) -> str:
         """Return a predictable unique key based on the given path."""
-        return 'k' + hashlib.sha256(f'{self.ansible_name}{path}'.encode(), usedforsecurity=False).hexdigest()[:6]
+        return 'k' + hashlib.sha256(f'{self.ansible_name}{path}'.encode(), usedforsecurity=False).hexdigest()[:12]
 
     def clear_cache(self) -> None:
         self._cache.clear()
