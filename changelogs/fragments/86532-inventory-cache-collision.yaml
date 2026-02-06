@@ -1,0 +1,3 @@
+bugfixes:
+
+inventory - increase cache prefix length from 6 to 12 characters to prevent hash collisions in large environments (#86504).
