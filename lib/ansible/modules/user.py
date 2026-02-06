@@ -3150,11 +3150,11 @@ class BusyBox(User):
         if self.password is not None:
             password = self.password
         elif current_password:
+            password = current_password
             if current_password == LOCK_INDICATOR:
                 # Special handling when the password is only a '!' to avoid
                 # unnecessary changes to the password to values like '!!' or '!*'.
                 lock = ''
-                password = current_password
             elif current_password.startswith(LOCK_INDICATOR):
                 # Preserve the existing password but unlock the account even if
                 # no password hash was provided in the module parameters.
