@@ -226,11 +226,9 @@ class LookupModule(LookupBase):
         if (first_marker := _template.get_first_marker_arg((), kwargs)) is not None:
             first_marker.trip()
 
-        if _jinja_plugins._LookupContext.current().invoked_as_with:
-            # we're being invoked by TaskExecutor.get_loop_items(), special backwards compatibility behavior
-            terms = _recurse_terms(terms, omit_undefined=True)  # recursively drop undefined values from terms for backwards compatibility
-        else:
-            terms = _recurse_terms(terms, omit_undefined=False)  # undefined values are only omitted when invoked using `with`
+        # if we're being invoked by TaskExecutor.get_loop_items(),
+        # recursively drop undefined values from terms for backwards compatibility
+        terms = _recurse_terms(terms, omit_undefined=_jinja_plugins._LookupContext.current().invoked_as_with)
 
         try:
             # invoked_as_with shouldn't be possible outside a TaskContext
