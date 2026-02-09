@@ -77,7 +77,7 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
     run_scm_cmd(clone_cmd, tempdir)
 
     if scm == 'git' and version:
-        checkout_cmd = [scm_path, 'checkout', to_text(version)]
+        checkout_cmd = [scm_path, '-c', 'advice.detachedHead=false', 'checkout', to_text(version)]
         run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
 
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar', dir=C.DEFAULT_LOCAL_TMP)
