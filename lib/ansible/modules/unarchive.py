@@ -250,9 +250,9 @@ import pwd
 import re
 import stat
 import time
-from collections.abc import KeysView
 from functools import partial
 from pathlib import Path
+from typing import Iterator
 from zipfile import ZipFile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -878,28 +878,26 @@ class TgzArchive(object):
         return self._files_in_archive
 
     @property
-    def files_created_by_archive(self) -> KeysView[str]:
-        """Return a list of files created implicitly or explicitly by the archive.
+    def files_created_by_archive(self) -> Iterator[str]:
+        """Return an iterator of files created implicitly or explicitly by the archive.
 
         When listing the files in an archive, archives can include files in directories
         while excluding the containing directory. This property includes those implicitly
         created directories so that their metadata can be properly set.
         """
 
-        if self._files_created_by_archive:
-            return self._files_created_by_archive.keys()
+        if not self._files_created_by_archive:
+            self._files_created_by_archive = dict()  # Use dict as ordered set
+            for file in self.files_in_archive:
+                filepath = Path(file)
+                self._files_created_by_archive[str(filepath)] = None
+                for parent in filepath.parents:
+                    self._files_created_by_archive[str(parent)] = None
 
-        self._files_created_by_archive = dict()  # Use dict as ordered set
-        for file in self.files_in_archive:
-            filepath = Path(file)
-            self._files_created_by_archive[str(filepath)] = None
-            for parent in filepath.parents:
-                self._files_created_by_archive[str(parent)] = None
+            self._files_created_by_archive.pop('.', None)
+            self._files_created_by_archive.pop('..', None)
 
-        self._files_created_by_archive.pop('.', None)
-        self._files_created_by_archive.pop('..', None)
-
-        return self._files_created_by_archive.keys()
+        yield from self._files_created_by_archive.keys()
 
     def is_unarchived(self):
         cmd = [self.cmd_path, '--diff', '-C', self.b_dest]
