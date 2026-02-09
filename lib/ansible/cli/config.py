@@ -144,9 +144,9 @@ class ConfigCLI(CLI):
                                                 parents=[common])
         validate_parser.set_defaults(func=self.execute_validate)
         validate_parser.add_argument("-t", "--type", action="store", default='all', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                            help="Filter down to a specific plugin type.")
-        validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'] , default='ini',
-                                     help='Output format for init')
+                                     help="Filter down to a specific plugin type.")
+        validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'], default='ini',
+                                     help='Output format for validate')
 
     def post_process_args(self, options):
         options = super(ConfigCLI, self).post_process_args(options)
