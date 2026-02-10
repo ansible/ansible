@@ -279,3 +279,11 @@
       tags:
         - user_test_local_mode
   when: ansible_facts.os_family in ['RedHat', 'Debian']
+
+- name: Clean up local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    force: yes
+    remove: yes
+    local: yes
