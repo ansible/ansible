@@ -21,7 +21,7 @@ options:
     description:
       - Automatically install dependencies required to run this module.
     type: bool
-    default: yes
+    default: true
     version_added: 2.19
   name:
     description:
@@ -59,12 +59,12 @@ options:
   cache_valid_time:
     description:
       - Update the apt cache if it is older than the O(cache_valid_time). This option is set in seconds.
-      - As of Ansible 2.4, if explicitly set, this sets O(update_cache=yes).
+      - As of Ansible 2.4, if explicitly set, this sets O(update_cache=true).
     type: int
     default: 0
   purge:
     description:
-     - Will force purging of configuration files if O(state=absent) or O(autoremove=yes).
+     - Will force purging of configuration files if O(state=absent) or O(autoremove=true).
     type: bool
     default: 'no'
   default_release:
@@ -80,7 +80,7 @@ options:
     type: bool
   force:
     description:
-      - 'Corresponds to the C(--force-yes) to C(apt-get) and implies O(allow_unauthenticated=yes) and O(allow_downgrade=yes).'
+      - 'Corresponds to the C(--force-yes) to C(apt-get) and implies O(allow_unauthenticated=true) and O(allow_downgrade=true).'
       - "This option will disable checking both the packages' signatures and the certificates of the web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to C(apt-get) on the command line.'
       - '**This is a destructive operation with the potential to destroy your system, and it should almost never be used.**
@@ -233,7 +233,7 @@ EXAMPLES = """
 - name: Update repositories cache and install "foo" package
   ansible.builtin.apt:
     name: foo
-    update_cache: yes
+    update_cache: true
 
 - name: Remove "foo" package
   ansible.builtin.apt:
@@ -259,19 +259,19 @@ EXAMPLES = """
     name: nginx
     state: latest
     default_release: squeeze-backports
-    update_cache: yes
+    update_cache: true
 
 - name: Install the version '1.18.0' of package "nginx" and allow potential downgrades
   ansible.builtin.apt:
     name: nginx=1.18.0
     state: present
-    allow_downgrade: yes
+    allow_downgrade: true
 
 - name: Install zfsutils-linux with ensuring conflicted packages (e.g. zfs-fuse) will not be removed.
   ansible.builtin.apt:
     name: zfsutils-linux
     state: latest
-    fail_on_autoremove: yes
+    fail_on_autoremove: true
 
 - name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
   ansible.builtin.apt:
@@ -290,17 +290,17 @@ EXAMPLES = """
 
 - name: Run the equivalent of "apt-get update" as a separate step
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
 
-- name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+- name: Only run "update_cache=true" if the last one is more than 3600 seconds ago
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
     cache_valid_time: 3600
 
 - name: Pass options to dpkg on run
   ansible.builtin.apt:
     upgrade: dist
-    update_cache: yes
+    update_cache: true
     dpkg_options: 'force-confold,force-confdef'
 
 - name: Install a .deb package
@@ -318,20 +318,20 @@ EXAMPLES = """
 
 - name: Remove useless packages from the cache
   ansible.builtin.apt:
-    autoclean: yes
+    autoclean: true
 
 - name: Remove dependencies that are no longer required
   ansible.builtin.apt:
-    autoremove: yes
+    autoremove: true
 
 - name: Remove dependencies that are no longer required and purge their configuration files
   ansible.builtin.apt:
-    autoremove: yes
+    autoremove: true
     purge: true
 
 - name: Run the equivalent of "apt-get clean" as a separate step
   ansible.builtin.apt:
-    clean: yes
+    clean: true
 """
 
 RETURN = """
