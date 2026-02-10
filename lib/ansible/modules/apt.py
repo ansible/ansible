@@ -13,6 +13,8 @@ DOCUMENTATION = """
 ---
 module: apt
 short_description: Manages apt-packages
+seealso:
+  - module: ansible.builtin.deb822_repository
 description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
