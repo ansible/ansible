@@ -61,7 +61,7 @@
           - user_create_home_fallback_dir.stat.pw_name == 'ansibulluser'
           - user_create_home_fallback_dir.stat.mode == user_login_defs_umask.stdout
 
-    - name: cleanup
+    - name: Clean up ansibulluser
       user:
         name: ansibulluser
         state: absent
