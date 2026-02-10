@@ -49,7 +49,6 @@ if t.TYPE_CHECKING:
 display = Display()
 
 
-RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]
 _INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
 
 __all__ = ['TaskExecutor']
