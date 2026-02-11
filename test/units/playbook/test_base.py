@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import unittest
 
-from ansible.errors import AnsibleParserError, AnsibleFieldAttributeError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleFieldAttributeError
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible._internal._templating._engine import TemplateEngine
@@ -532,3 +532,18 @@ class TestBaseSubClass(TestBase):
         result = bsc.get_validated_value('foo', attribute, value, templar)
         assert TrustedAsTemplate.is_tagged_on(result)
         assert result == 'bar'
+
+    def test_get_validated_value_int_rejects_fractional_float(self):
+        attribute = FieldAttribute(isa='int')
+        templar = TemplateEngine(None)
+        bsc = self.ClassUnderTest()
+
+        self.assertRaisesRegex(
+            AnsibleError,
+            r"The value 0\.9999 could not be converted to 'int'\.",
+            bsc.get_validated_value,
+            'foo',
+            attribute,
+            0.9999,
+            templar,
+        )
