@@ -12,11 +12,18 @@ class Singleton(type):
     otherwise a single instance is instantiated and returned.
     """
 
-    # FIXME: object identity/singleton-ness does not appear to survive pickle roundtrip (eg, copy.copy, copy.deepcopy), implement __reduce_ex__ and __copy__?
     def __init__(cls, name, bases, dct):
         super(Singleton, cls).__init__(name, bases, dct)
         cls.__instance = None
         cls.__rlock = RLock()
+        
+        cls.__copy__ = lambda self: self
+        cls.__deepcopy__ = lambda self, memo: self
+        
+        def __reduce_ex__(self, protocol):
+            # Reconstruct by calling the class
+            return (cls, ())
+        cls.__reduce_ex__ = __reduce_ex__
 
     def __call__(cls, *args, **kw):
         if cls.__instance is not None:
@@ -27,3 +34,5 @@ class Singleton(type):
                 cls.__instance = super(Singleton, cls).__call__(*args, **kw)
 
         return cls.__instance
+    
+
