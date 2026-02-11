@@ -70,4 +70,4 @@ def test_check_password_prompt_escaping(mocker) -> None:
 
     mocker.patch.object(become, 'get_option', return_value=['(invalid regex'])
 
-    assert become.check_password_prompt('(invalid regex:') is True
+    assert become.check_password_prompt(b'(invalid regex:') is True
