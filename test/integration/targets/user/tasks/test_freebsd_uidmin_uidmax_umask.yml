@@ -1,38 +1,61 @@
 - name: Test that uid_min, uid_max, and umask are ignored on FreeBSD
   become: true
   block:
-  - name: Create user with uid_min and uid_max set to impossible constraints
-    user:
-      name: uidtest
-      uid_min: 99999 # Set to impossible high value
-      uid_max: 99999 # Same impossible value
-      umask: "077"
-      create_home: yes
-    register: user_create_result
+    - name: Create user with uid_min and uid_max set to impossible constraints
+      user:
+        name: uidtest
+        uid_min: 99999 # Set to impossible high value
+        uid_max: 99999 # Same impossible value
+        umask: "077"
+        create_home: yes
+      register: user_create_result
 
-  - name: Get uid of created user
-    command: id -u uidtest
-    register: user_uid
-    become: true
+    - name: Get uid of created user
+      command: id -u uidtest
+      register: user_uid
+      become: true
 
-  - name: Verify user was created despite impossible uid_min/uid_max constraints
-    assert:
-      that:
-        - user_create_result is not failed
-        - user_uid.stdout|int < 99999 # UID should be normal (not the impossible constraint)
+    - name: Verify user was created despite impossible uid_min/uid_max constraints
+      assert:
+        that:
+          - user_create_result is not failed
+          - user_uid.stdout|int < 99999 # UID should be normal (not the impossible constraint)
 
-  - name: Stat home directory
-    stat:
-      path: /home/uidtest
-    register: homestat
+    - name: Stat home directory
+      stat:
+        path: /home/uidtest
+      register: homestat
 
-  - name: Verify umask was ignored (home dir has default permissions)
-    assert:
-      that:
-        - homestat.stat.mode != "0700" # If umask=077 was applied, dir would be 0700
+    - name: Verify umask was ignored (home dir has default permissions)
+      assert:
+        that:
+          - homestat.stat.mode != "0700" # If umask=077 was applied, dir would be 0700
 
-  - name: Cleanup test user
-    user:
-      name: uidtest
-      state: absent
-      remove: yes
+    - name: Attempt to change uidtest's uid and umask
+      user:
+        name: uidtest
+        uid_min: "{{ new_uid_min }}"
+        uid_max: "{{ new_uid_max }}"
+        umask: "077"
+      vars:
+        new_uid_min: "{{user_uid.stdout | int + 1}}"
+        new_uid_max: "{{user_uid.stdout | int + 1}}"
+      register: change_with_uidminmax
+
+    - name: Stat home directory again
+      stat:
+        path: /home/uidtest
+      register: homestat_again
+
+    - name: Validate that user modification ignores uid_min, uid_max, and umask
+      assert:
+        that:
+          - change_with_uidminmax is not changed
+          - change_with_uidminmax.uid == user_create_result.uid
+          - homestat.stat.mode == homestat_again.stat.mode
+  always:
+    - name: Cleanup test user
+      user:
+        name: uidtest
+        state: absent
+        remove: yes
