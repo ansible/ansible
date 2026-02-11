@@ -1138,7 +1138,19 @@ class GalaxyCLI(CLI):
             skeleton_ignore_expressions = ['^.*/.git_keep$']
 
         obj_skeleton = os.path.expanduser(obj_skeleton)
-        skeleton_ignore_re = [re.compile(x) for x in skeleton_ignore_expressions]
+        failed_re_expressions = {}
+        skeleton_ignore_re = []
+        for x in skeleton_ignore_expressions:
+            try:
+                skeleton_ignore_re.append(re.compile(x))
+            except re.error as e:
+                failed_re_expressions[x] = str(e)
+                continue
+        if failed_re_expressions:
+            raise AnsibleError(
+                "Failed to compile regular expressions for "
+                f"skeleton ignore: {', '.join([f'{k}: {v}' for k, v in failed_re_expressions.items()])}"
+            )
 
         if not os.path.exists(obj_skeleton):
             raise AnsibleError("- the skeleton path '{0}' does not exist, cannot init {1}".format(
