@@ -147,7 +147,7 @@ def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeyp
     clone_cmd = [git_executable, 'clone', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
-    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'commitish')
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, '-c', 'advice.detachedHead=false', 'checkout', 'commitish')
 
 
 @pytest.mark.parametrize(
