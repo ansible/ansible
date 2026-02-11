@@ -1608,10 +1608,6 @@ class FreeBsdUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
-            if self.umask is not None:
-                cmd.append('-K')
-                cmd.append('UMASK=' + self.umask)
-
         if self.group is not None:
             if not self.group_exists(self.group):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
