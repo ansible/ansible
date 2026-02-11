@@ -447,7 +447,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         become_user = self.get_become_option('become_user')
         return bool(become_user and become_user not in admin_users + [remote_user])
 
-    def _make_tmp_path(self, remote_user=None):
+    def _make_tmp_path(self, remote_user: str | None = None) -> str:
         """
         Create and return a temporary path on a remote box.
         """
@@ -485,7 +485,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 output = ('Failed to create temporary directory. '
                           'In some cases, you may have been able to authenticate and did not have permissions on the target directory. '
                           'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp", for more error information use -vvv. '
-                          'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
+                          'Failed command was: %s, exited with result %d' % (cmd.command, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
             if display.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':

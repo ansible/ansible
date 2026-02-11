@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    Fix up the Action plugin ``_make_tmp_path`` error to only include the command run rather than the shell's dataclass
+    repr from ``mkdtemp``.
