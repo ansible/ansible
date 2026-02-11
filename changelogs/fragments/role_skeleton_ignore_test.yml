@@ -1,0 +1,2 @@
+trivial:
+  - Add integration coverage for role_skeleton_ignore with custom role skeleton.
