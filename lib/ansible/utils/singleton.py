@@ -17,6 +17,7 @@ class Singleton(type):
         cls.__rlock = RLock()
         cls.__copy__ = lambda self: self
         cls.__deepcopy__ = lambda self, memo: self
+
         def __reduce_ex__(self, protocol):
             # Reconstruct by calling the class
             return (cls, ())
