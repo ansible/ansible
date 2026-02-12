@@ -11,15 +11,12 @@ class Singleton(type):
     functionality.  If an instance of the class exists, it's returned,
     otherwise a single instance is instantiated and returned.
     """
-
     def __init__(cls, name, bases, dct):
         super(Singleton, cls).__init__(name, bases, dct)
         cls.__instance = None
         cls.__rlock = RLock()
-        
         cls.__copy__ = lambda self: self
         cls.__deepcopy__ = lambda self, memo: self
-        
         def __reduce_ex__(self, protocol):
             # Reconstruct by calling the class
             return (cls, ())
@@ -34,5 +31,3 @@ class Singleton(type):
                 cls.__instance = super(Singleton, cls).__call__(*args, **kw)
 
         return cls.__instance
-    
-
