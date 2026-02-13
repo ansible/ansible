@@ -13,6 +13,10 @@ import tempfile
 import types
 import typing as t
 
+from weakref import WeakKeyDictionary
+
+_cls_type_hints_cache: WeakKeyDictionary[type, dict[str, t.Any]] = WeakKeyDictionary()
+
 _write_generated_code_to_disk = False
 
 # deprecated: description='types.UnionType is available in Python 3.10' python_version='3.9'
@@ -24,6 +28,15 @@ except AttributeError:
     _union_types = (t.Union,)  # type: ignore[assignment]
 
 
+def get_type_hints(cls: type) -> dict[str, t.Any]:
+    try:
+        type_hints = _cls_type_hints_cache[cls]
+    except KeyError:
+        type_hints = t.get_type_hints(cls)
+        _cls_type_hints_cache[cls] = type_hints
+    return type_hints
+
+
 def inject_post_init_validation(cls: type, allow_subclasses=False) -> None:
     """Inject a __post_init__ field validation method on the given dataclass. An existing __post_init__ attribute must already exist."""
     # DTFIX-FUTURE: when cls must have a __post_init__, enforcing it as a no-op would be nice, but is tricky on slotted dataclasses due to double-creation
@@ -32,7 +45,7 @@ def inject_post_init_validation(cls: type, allow_subclasses=False) -> None:
     exec_globals: dict[str, t.Any] = {}
     known_types: dict[type, str] = {}
     lines: list[str] = []
-    field_type_hints = t.get_type_hints(cls)
+    field_type_hints = get_type_hints(cls)
     indent = 1
 
     def append_line(line: str) -> None:
