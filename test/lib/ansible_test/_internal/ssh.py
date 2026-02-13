@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dataclasses
-import io
 import itertools
 import json
 import os
@@ -339,6 +338,7 @@ def create_ansible_ssh_port_forwards(
     inventory: str | None = None,
     host_limit: str | None = None,
 ) -> AnsibleSshForwarder:
+    """Create SSH port forwards using an Ansible playbook. This allows Ansible to handle the SSH connection and host selection."""
     if isinstance(args, EnvironmentConfig):
         python = args.controller_python
     else:
@@ -394,7 +394,7 @@ def create_ansible_ssh_port_forwards(
             proc = None
         else:
             with open(ansible_stdout, 'w') as stdout:
-                proc = subprocess.Popen(
+                proc = subprocess.Popen(  # pylint: disable=consider-using-with  # AnsibleSshForwarder manages lifetime.
                     playbook_cmd,
                     stdout=stdout,
                     stderr=subprocess.STDOUT,
@@ -410,7 +410,7 @@ def create_ansible_ssh_port_forwards(
             log=ssh_log_path,
         )
 
-    except:
+    except Exception:
         shutil.rmtree(temp_dir, ignore_errors=True)
         raise
 
@@ -443,7 +443,7 @@ def generate_ssh_inventory(ssh_connections: list[SshConnectionDetail]) -> str:
 
 
 def _collect_port_forwards(
-    reader: io.BufferedReader | None,
+    reader: t.IO | None,
     pending_forwards: list[tuple[str, int]],
     ignore_unexpected_output: bool = False,
     alive_check: t.Callable[[], bool] | None = None,

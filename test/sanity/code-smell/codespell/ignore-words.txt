@@ -1,2 +1,3 @@
 afile  # commonly used variable name for "a file"
 astroid  # pylint's astroid
+InOut  # Enum value sometimes used in .NET/PowerShell

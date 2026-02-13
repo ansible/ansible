@@ -6,6 +6,7 @@ import dataclasses
 import json
 import os
 import socket
+import typing as t
 
 from ...util import (
     ApplicationError,
@@ -25,13 +26,15 @@ from ...ssh import (
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class PwshDebugConfigV1:
+    """Ansible.Debugger PowerShell module debug configuration version 1."""
     version: int
     host: str
     port: int
     token: str
 
     @classmethod
-    def from_dict(cls, data: dict[str, object]) -> PwshDebugConfigV1:
+    def from_dict(cls, data: dict[str, t.Any]) -> PwshDebugConfigV1:
+        """Builds the config from the raw JSON dictionary value."""
         version = data.get('version', None)
         if version != 1:
             raise ApplicationError(
@@ -41,11 +44,11 @@ class PwshDebugConfigV1:
         host = data.get('host', 'localhost')
         port = int(data.get('port', 0))
         if not port:
-            raise ApplicationError(f"Invalid PowerShell listener configuration, no 'port' specified.")
+            raise ApplicationError("Invalid PowerShell listener configuration, no 'port' specified.")
 
         token = str(data.get('token', None))
         if not token:
-            raise ApplicationError(f"Invalid PowerShell listener configuration, no 'token' specified.")
+            raise ApplicationError("Invalid PowerShell listener configuration, no 'token' specified.")
 
         return cls(
             version=version,

@@ -56,13 +56,15 @@ Function Wait-TaskWithTimeout {
         $Timeout = 10
     )
 
-    $start = Get-Date
-    while (-not $Task.AsyncWaitHandle.WaitOne(300)) {
-        if (((Get-Date) - $start).TotalSeconds -gt $Timeout) {
-            throw "Timeout waiting for $Name"
+    process {
+        $start = Get-Date
+        while (-not $Task.AsyncWaitHandle.WaitOne(300)) {
+            if (((Get-Date) - $start).TotalSeconds -gt $Timeout) {
+                throw "Timeout waiting for $Name"
+            }
         }
+        $Task.GetAwaiter().GetResult()
     }
-    $Task.GetAwaiter().GetResult()
 }
 
 # There is no public API to wait for Debug-Runspace to have been run so we use
@@ -168,65 +170,65 @@ try {
     }
     $wrapper.PSObject.Methods.Add(
         [PSScriptMethod]::new('WaitForExit', {
-            # The only way to stop the active Debug-Runspace command launched
-            # by the VSCode client is to stop the pipeline that it is running
-            # on. Unfortunately there is no public API to get the running
-            # pipeline on a runspace so we use reflection.
-            # https://github.com/PowerShell/PowerShell/issues/25779
-            $getCurrentlyRunningPipelineMeth = [Runspace].GetMethod(
-                'GetCurrentlyRunningPipeline',
-                [BindingFlags]'NonPublic, Instance')
+                # The only way to stop the active Debug-Runspace command launched
+                # by the VSCode client is to stop the pipeline that it is running
+                # on. Unfortunately there is no public API to get the running
+                # pipeline on a runspace so we use reflection.
+                # https://github.com/PowerShell/PowerShell/issues/25779
+                $getCurrentlyRunningPipelineMeth = [Runspace].GetMethod(
+                    'GetCurrentlyRunningPipeline',
+                    [BindingFlags]'NonPublic, Instance')
 
-            if (-not $getCurrentlyRunningPipelineMeth) {
-                # If for the API changed in the future we can't safely shutdown
-                # the debug session. The Dispose later on will close things
-                # down just in an ungraceful manner.
-                return
-            }
-
-            foreach ($runspace in Get-Runspace) {
-                $pipeline = $getCurrentlyRunningPipelineMeth.Invoke($runspace, @())
-                if (
-                    $pipeline -and
-                    $pipeline.Commands.Count -gt 0 -and
-                    $pipeline.Commands[0].CommandText -eq 'Debug-Runspace'
-                ) {
-                    $pipeline.Stop()
-                    break
-                }
-            }
-
-            $taskList = [List[Task]]@($this.ReadTask, $this.WriteTask)
-            while ($taskList.Count) {
-                $task = [Task]::WhenAny($taskList)
-                while (-not $task.AsyncWaitHandle.WaitOne(300)) {}
-                $finishedTask = $task.GetAwaiter().GetResult()
-
-                if ($finishedTask -eq $this.ReadTask) {
-                    # The socket was closed by the debug client, close the pipe
-                    # to ensure the write task can finish.
-                    $this.Pipe.Close()
-                }
-                else {
-                    # The pipe was closed for unknown reasons, close the socket
-                    # so the debug client and read task can finish.
-                    $this.Socket.Close()
+                if (-not $getCurrentlyRunningPipelineMeth) {
+                    # If for the API changed in the future we can't safely shutdown
+                    # the debug session. The Dispose later on will close things
+                    # down just in an ungraceful manner.
+                    return
                 }
 
-                $null = $taskList.Remove($finishedTask)
-                $null = $finishedTask.GetAwaiter().GetResult()
-            }
-        })
+                foreach ($runspace in Get-Runspace) {
+                    $pipeline = $getCurrentlyRunningPipelineMeth.Invoke($runspace, @())
+                    if (
+                        $pipeline -and
+                        $pipeline.Commands.Count -gt 0 -and
+                        $pipeline.Commands[0].CommandText -eq 'Debug-Runspace'
+                    ) {
+                        $pipeline.Stop()
+                        break
+                    }
+                }
+
+                $taskList = [List[Task]]@($this.ReadTask, $this.WriteTask)
+                while ($taskList.Count) {
+                    $task = [Task]::WhenAny($taskList)
+                    while (-not $task.AsyncWaitHandle.WaitOne(300)) {}
+                    $finishedTask = $task.GetAwaiter().GetResult()
+
+                    if ($finishedTask -eq $this.ReadTask) {
+                        # The socket was closed by the debug client, close the pipe
+                        # to ensure the write task can finish.
+                        $this.Pipe.Close()
+                    }
+                    else {
+                        # The pipe was closed for unknown reasons, close the socket
+                        # so the debug client and read task can finish.
+                        $this.Socket.Close()
+                    }
+
+                    $null = $taskList.Remove($finishedTask)
+                    $null = $finishedTask.GetAwaiter().GetResult()
+                }
+            })
     )
     $wrapper.PSObject.Methods.Add(
         [PSScriptMethod]::new('Dispose', {
-            $this.CancelTokenSource.Cancel()
+                $this.CancelTokenSource.Cancel()
 
-            $this.Pipe.Dispose()
-            $this.SocketStream.Dispose()
-            $this.Socket.Dispose()
-            $this.CancelTokenSource.Dispose()
-        })
+                $this.Pipe.Dispose()
+                $this.SocketStream.Dispose()
+                $this.Socket.Dispose()
+                $this.CancelTokenSource.Dispose()
+            })
     )
 
     $wrapper
