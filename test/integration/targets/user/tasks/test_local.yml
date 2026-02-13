@@ -222,4 +222,13 @@
     - user_test_local_mode
 
 - name: Test expires for local users
-  import_tasks: test_local_expires.yml
+  block:
+    - import_tasks: test_local_expires.yml
+  always:
+    - name: Clean up local_ansibulluser
+      user:
+        name: local_ansibulluser
+        state: absent
+        force: yes
+        remove: yes
+        local: yes
