@@ -2248,3 +2248,11 @@ _Z_TEST_ENTRY_2:
   ini:
     - section: testing
       key: valid2
+STRICT_VAULT_BEHAVIOR:
+  name: something
+  description: This enables strict handling of vaulted values when serializing
+  type: bool
+  default: False
+  version_added: '2.21'
+  env:
+    - name: ANSIBLE_STRICT_VAULT_BEHAVIOR

@@ -4,13 +4,22 @@ import abc
 import collections.abc as c
 import typing as t
 
+from enum import StrEnum, auto
 from yaml.nodes import ScalarNode, Node
 
+from ansible._internal._datatag._tags import VaultedValue
 from ansible._internal._templating import _jinja_common
+from ansible.config.manager import ConfigManager
+from ansible.errors import AnsibleVariableTypeError
 from ansible.module_utils import _internal
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
-from ansible.parsing.vault import VaultHelper
+from ansible.module_utils._internal._ambient_context import AmbientContextBase
+from ansible.parsing.vault import VaultHelper, EncryptedString
 from ansible.module_utils.common.yaml import HAS_LIBYAML
+from ansible.utils.display import Display
+
+display = Display()
+cfg_mgr = ConfigManager()
 
 if HAS_LIBYAML:
     from yaml.cyaml import CSafeDumper as SafeDumper
@@ -29,6 +38,20 @@ class _BaseDumper(SafeDumper, metaclass=abc.ABCMeta):
     def __init_subclass__(cls, **kwargs) -> None:
         """Initialization for derived types."""
         cls._register_representers()
+
+
+class VaultBehaviors(StrEnum):
+    decrypt = auto()
+    preserve = auto()
+    redact = auto()
+    fail = auto()
+    default = auto()
+
+
+class VaultDecryptionContext(AmbientContextBase):
+
+    def __init__(self, vault_behavior: VaultBehaviors):
+        self.vault_behavior = vault_behavior
 
 
 class AnsibleDumper(_BaseDumper):
@@ -54,6 +77,26 @@ class AnsibleDumper(_BaseDumper):
 
         data.trip()
 
+    def represent_vaulted_value(self, data: AnsibleTaggedObject) -> Node:
+        vault_decryption_context = VaultDecryptionContext.current(optional=True)
+        if vault_decryption_context:
+            match vault_decryption_context.vault_behavior:
+                case VaultBehaviors.default:
+                    should_be_strict = cfg_mgr.get_config_value('STRICT_VAULT_BEHAVIOR')
+                    if should_be_strict:
+                        raise AnsibleVariableTypeError.from_value(obj=data)  # FIXME: get obj value for callsite bc right now it's wrong
+                    else:
+                        display.deprecated(msg="TODO writeme. Something something", version="2.25")
+                        return self.represent_data(AnsibleTagHelper.as_native_type(data))
+                case VaultBehaviors.decrypt:
+                    return self.represent_data(AnsibleTagHelper.as_native_type(data))
+                case VaultBehaviors.preserve:
+                    return self.get_node_from_ciphertext(data)
+                case VaultBehaviors.redact:
+                    return self.represent_data('<redacted>')
+                case VaultBehaviors.fail:
+                    raise AnsibleVariableTypeError.from_value(obj=data)
+
     def represent_ansible_tagged_object(self, data: AnsibleTaggedObject) -> Node:
         if _internal.is_intermediate_mapping(data):
             return self.represent_dict(data)
@@ -61,8 +104,8 @@ class AnsibleDumper(_BaseDumper):
         if _internal.is_intermediate_iterable(data):
             return self.represent_list(data)
 
-        if node := self.get_node_from_ciphertext(data):
-            return node
+        if VaultedValue.is_tagged_on(data):
+            return self.represent_vaulted_value(data)
 
         return self.represent_data(AnsibleTagHelper.as_native_type(data))  # automatically decrypts encrypted strings
 
