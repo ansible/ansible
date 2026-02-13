@@ -5,12 +5,14 @@
     ansible.builtin.assert:
       that:
         - ansible_play_hosts_all | length == 1
+      msg: Expected to be run with a single host, got {{ ansible_play_hosts_all | length }}
     run_once: true
 
   - name: Verify the connection plugin is SSH
     ansible.builtin.assert:
       that:
         - ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
+      msg: Expected to be connected via SSH, got {{ ansible_connection | default('unknown') }}
 
   - name: Run long running command to keep connection alive
     ansible.builtin.raw: >-

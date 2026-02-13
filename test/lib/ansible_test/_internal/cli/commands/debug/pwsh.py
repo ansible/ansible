@@ -26,12 +26,12 @@ def do_pwsh_debug(
     completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `pwsh-debug` command."""
-    help = 'open an interactive shell for debugging PowerShell modules'
+    help_msg = 'open an interactive shell for debugging PowerShell modules'
     parser: argparse.ArgumentParser = subparsers.add_parser(
         'pwsh-debug',
         parents=[parent],
-        description=help,
-        help=help,
+        description=help_msg,
+        help=help_msg,
     )
 
     parser.add_argument(
