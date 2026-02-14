@@ -419,10 +419,10 @@ group:
   type: int
   sample: 1001
 groups:
-  description: List of groups of which the user is a member.
-  returned: When O(groups) is not empty and O(state) is V(present)
+  description: Comma-separated list of groups of which the user is a member, sorted alphabetically.
+  returned: When user exists and O(state) is V(present)
   type: str
-  sample: 'chrony,apache'
+  sample: 'apache,chrony'
 home:
   description: "Path to user's home directory."
   returned: When O(state) is V(present)
@@ -3499,8 +3499,7 @@ def main():
         result['comment'] = info[4]
         result['home'] = info[5]
         result['shell'] = info[6]
-        if user.groups is not None:
-            result['groups'] = user.groups
+        result['groups'] = ','.join(sorted(user.user_group_membership()))
 
         # handle missing homedirs
         info = user.user_info()

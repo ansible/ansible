@@ -18,6 +18,7 @@
 - import_tasks: test_expires_min_max.yml
 - import_tasks: test_expires_warn.yml
 - import_tasks: test_ssh_key_passphrase.yml
+- import_tasks: test_returned_groups.yml
 - include_tasks: test_password_lock.yml
 - include_tasks: test_password_lock_new_user.yml
 - include_tasks: test_local.yml
