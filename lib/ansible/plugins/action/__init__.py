@@ -40,7 +40,8 @@ from ansible._internal._templating import _engine
 
 from .. import _AnsiblePluginInfoMixin
 
-display = Display()
+# Use _display to avoid being shadowed by the action plugin submodule 'display' (ansible.plugins.action.display)
+_display = Display()
 
 if t.TYPE_CHECKING:
     from ansible.parsing.dataloader import DataLoader
@@ -99,7 +100,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         self._used_interpreter: str | None = None
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display = display
+        self._display = _display
 
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
@@ -122,7 +123,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         result: dict[str, t.Any] = {}
 
         if tmp is not None:
-            display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
+            _display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
                             ' plugins should set self._connection._shell.tmpdir to share'
                             ' the tmpdir.')
         del tmp
@@ -473,7 +474,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 output = 'Authentication failure.'
             elif result['rc'] == 255 and self._connection.transport in ('ssh',):
 
-                if display.verbosity > 3:
+                if _display.verbosity > 3:
                     output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
                     output = (u'SSH encountered an unknown error during the connection. '
@@ -488,7 +489,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                           'Failed command was: %s, exited with result %d' % (cmd.command, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
-            if display.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+            if _display.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
                 output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
@@ -527,7 +528,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
 
             if tmp_rm_res.get('rc', 0) != 0:
-                display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
+                _display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
             else:
                 self._connection._shell.tmpdir = None
@@ -761,7 +762,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             if res['rc'] == 0:
                 # warn user that something might go weirdly here.
                 if self.get_shell_option('world_readable_temp'):
-                    display.warning(
+                    _display.warning(
                         'Both common_remote_group and '
                         'allow_world_readable_tmpfiles are set. chgrp was '
                         'successful, but there is no guarantee that Ansible '
@@ -784,7 +785,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if self.get_shell_option('world_readable_temp'):
             # chown and fs acls failed -- do things this insecure way only if
             # the user opted in in the config file
-            display.warning(
+            _display.warning(
                 'Using world-readable permissions for temporary files Ansible '
                 'needs to create when becoming an unprivileged user. This may '
                 'be insecure. For information on securing this, see %s'
@@ -843,7 +844,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Get information from remote file.
         """
         if tmp is not None:
-            display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
+            _display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
                             ' plugins should set self._connection._shell.tmpdir to share'
                             ' the tmpdir')
         del tmp  # No longer used
@@ -963,7 +964,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         module_args['_ansible_diff'] = self._task.diff
 
         # let module know our verbosity
-        module_args['_ansible_verbosity'] = display.verbosity
+        module_args['_ansible_verbosity'] = _display.verbosity
 
         # give the module information about the ansible version
         module_args['_ansible_version'] = __version__
@@ -1011,11 +1012,11 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Transfer and run a module along with its arguments.
         """
         if tmp is not None:
-            display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
+            _display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
                             ' should set self._connection._shell.tmpdir to share the tmpdir')
         del tmp  # No longer used
         if delete_remote_tmp is not None:
-            display.warning('_execute_module no longer honors the delete_remote_tmp parameter.'
+            _display.warning('_execute_module no longer honors the delete_remote_tmp parameter.'
                             ' Action plugins should check self._connection._shell.tmpdir to'
                             ' see if a tmpdir existed before they were called to determine'
                             ' if they are responsible for removing it.')
@@ -1053,7 +1054,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         module_bits, module_path = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         (module_style, shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
-        display.vvv("Using module file %s" % module_path)
+        _display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
@@ -1075,7 +1076,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             args_file_path = self._connection._shell.join_path(tmpdir, 'args')
 
         if remote_module_path or module_style != 'new':
-            display.debug("transferring module to remote %s" % remote_module_path)
+            _display.debug("transferring module to remote %s" % remote_module_path)
             if module_style == 'binary':
                 self._transfer_file(module_path, remote_module_path)
             else:
@@ -1090,7 +1091,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             elif module_style in ('non_native_want_json', 'binary'):
                 profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
                 self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
-            display.debug("done transferring module to remote")
+            _display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
 
@@ -1145,7 +1146,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             if self._is_pipelining_enabled(module_style):
                 in_data = module_data
-                display.vvv("Pipelining is enabled.")
+                _display.vvv("Pipelining is enabled.")
             else:
                 cmd = remote_module_path
 
@@ -1173,7 +1174,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], str)):
             data['ansible_module_results'] = data['results']
             del data['results']
-            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
+            _display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
 
         # remove internal keys
         remove_internal_keys(data)
@@ -1203,7 +1204,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             data['ansible_facts'][self._discovered_interpreter_key] = self._discovered_interpreter
 
-        display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
+        _display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
     def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
@@ -1211,7 +1212,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
 
             for w in warnings:
-                display.warning(w)
+                _display.warning(w)
 
             decoder = get_module_decoder(profile, Direction.MODULE_TO_CONTROLLER)
 
@@ -1282,14 +1283,14 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         :kwarg chdir: cd into this directory before executing the command.
         """
 
-        display.debug("_low_level_execute_command(): starting")
+        _display.debug("_low_level_execute_command(): starting")
         # if not cmd:
         #     # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-        #     display.debug("_low_level_execute_command(): no command, exiting")
+        #     _display.debug("_low_level_execute_command(): no command, exiting")
         #     return dict(stdout='', stderr='', rc=254)
 
         if chdir:
-            display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
+            _display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
         # https://github.com/ansible/ansible/issues/68054
@@ -1301,7 +1302,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if (sudoable and self._connection.become and  # if sudoable and have become
                 resource_from_fqcr(self._connection.transport) != 'network_cli' and  # if not using network_cli
                 (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
-            display.debug("_low_level_execute_command(): using become for this command")
+            _display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
         if self._connection.allow_executable:
@@ -1310,7 +1311,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             if executable:
                 cmd = executable + ' -c ' + shlex.quote(cmd)
 
-        display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
+        _display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
@@ -1340,7 +1341,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # be sure to remove the BECOME-SUCCESS message now
         out = self._strip_success_message(out)
 
-        display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
+        _display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())
 
     def _get_diff_data(self, destination, source, task_vars, content=None, source_file=True):
@@ -1355,13 +1356,13 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # diffs before and after it shows an empty diff.
 
         diff = {}
-        display.debug("Going to peek to see if file has changed permissions")
+        _display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(
             module_name='ansible.legacy.file', module_args=dict(path=destination, _diff_peek=True),
             task_vars=task_vars, persist_files=True)
 
         if peek_result.get('failed', False):
-            display.warning(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
+            _display.warning(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
             return diff
 
         if peek_result.get('rc', 0) == 0:
@@ -1373,7 +1374,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             elif peek_result.get('size') and C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
-                display.debug(u"Slurping the file %s" % destination)
+                _display.debug(u"Slurping the file %s" % destination)
                 dest_result = self._execute_module(
                     module_name='ansible.legacy.slurp', module_args=dict(path=destination),
                     task_vars=task_vars, persist_files=True)
@@ -1391,7 +1392,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 if C.MAX_FILE_SIZE_FOR_DIFF > 0 and st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
                     diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
                 else:
-                    display.debug("Reading local copy of the file %s" % source)
+                    _display.debug("Reading local copy of the file %s" % source)
                     try:
                         with open(source, 'rb') as src:
                             src_contents = src.read()
@@ -1407,7 +1408,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                             diff['after_header'] = source
                         diff['after'] = to_text(src_contents)
             else:
-                display.debug(u"source of file passed in")
+                _display.debug(u"source of file passed in")
                 diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
