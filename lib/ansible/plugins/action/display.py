@@ -81,3 +81,4 @@ class ActionModule(ActionBase):
         # This action never changes state; always report changed: False
         result['changed'] = False
         return result
+

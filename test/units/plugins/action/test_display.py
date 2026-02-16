@@ -3,6 +3,8 @@
 """Tests for the display action plugin."""
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from ansible.errors import AnsibleActionFail
@@ -23,7 +25,6 @@ def _make_plugin(mocker, task_args):
     play_context = mocker.MagicMock()
     play_context.check_mode = False
     play_context.shell = 'sh'
-    import os
     connection = connection_loader.get('local', play_context, os.devnull)
     templar = mocker.MagicMock()
     templar.template = lambda x: x
@@ -69,3 +70,4 @@ def test_display_action_missing_msg_fails(mocker):
     plugin = _make_plugin(mocker, {'level': 'warning'})
     with pytest.raises(AnsibleActionFail):
         plugin.run(task_vars={})
+
