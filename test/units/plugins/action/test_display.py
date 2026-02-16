@@ -70,4 +70,3 @@ def test_display_action_missing_msg_fails(mocker):
     plugin = _make_plugin(mocker, {'level': 'warning'})
     with pytest.raises(AnsibleActionFail):
         plugin.run(task_vars={})
-

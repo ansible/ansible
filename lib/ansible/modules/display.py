@@ -101,4 +101,3 @@ changed:
   type: bool
   sample: false
 """
-
