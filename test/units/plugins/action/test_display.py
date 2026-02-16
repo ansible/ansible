@@ -3,8 +3,6 @@
 """Tests for the display action plugin."""
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from ansible.errors import AnsibleActionFail
