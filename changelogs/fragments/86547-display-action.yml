@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible.builtin.display - Add generic ``display`` action for playbook/role authors to emit messages at configurable levels (display, v/vv/vvv/vvvv/vvvvv/vvvvvv, warning, deprecated) (https://github.com/ansible/ansible/issues/86547)

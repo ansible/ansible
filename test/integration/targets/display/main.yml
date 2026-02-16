@@ -1,0 +1,25 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Display a normal message
+      display:
+        msg: "This is a normal display message."
+
+    - name: Display a warning (for playbook/role authors)
+      display:
+        msg: "This role variable is changing its name!"
+        level: warning
+
+    - name: Display a deprecation notice
+      display:
+        msg: "Option 'old_param' is deprecated and will be removed in 2.25."
+        level: deprecated
+
+    - name: Display with default level (display)
+      display:
+        msg: "Message with default level."
+
+    - name: Display verbose message (visible at -v and above)
+      display:
+        msg: "Verbose message for debugging."
+        level: vvv
