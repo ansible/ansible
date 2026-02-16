@@ -149,7 +149,11 @@ class ActionModule(ActionBase):
                     name=f"ansible.builtin.script.{pathlib.Path(source).stem}",
                     module_data=to_bytes(f"& {script_cmd}; exit $LASTEXITCODE"),
                     module_path=source,
-                    module_args={},
+                    module_args={
+                        # Used for debugging to set the path mapping. Otherwise
+                        # this is ignored.
+                        'script_path': tmp_src,
+                    },
                     environment=env_dict,
                     async_timeout=self._task.async_val,
                     become_plugin=self._connection.become,

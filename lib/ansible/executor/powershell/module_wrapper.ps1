@@ -107,16 +107,16 @@ $ps = [PowerShell]::Create([InitialSessionState]::CreateDefault2())
 
 if ($ForModule) {
     $ps.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
+
+    foreach ($variable in $Variables) {
+        $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
+    }
 }
 else {
     # For script files we want to ensure we load it as UTF-8. We don't set this
     # for modules as they are loaded from memory whereas a script is loaded
     # from disk as part of the script being run than by us.
     Set-WinPSDefaultFileEncoding
-}
-
-foreach ($variable in $Variables) {
-    $null = $ps.AddCommand("Set-Variable").AddParameters($variable).AddStatement()
 }
 
 # env vars are process side so we can just set them here.
@@ -175,8 +175,19 @@ if ($DebugParam.Count) {
 
     # Get a more friendly name for debug session but fallback to the original
     # name if using an unexpected format.
+    $extraMappings = @()
     $DebugParam.Name = if ($scriptInfo.Name.StartsWith('ansible.builtin.script.')) {
         "script: $($scriptInfo.Name.Substring(23))"
+
+        # We want to set the local root to the actual script path rather than
+        # the stub invoker script. The script action plugin sets this variable
+        # for us so we can use it here to get the correct path.
+        $extraMappings = @(
+            @{
+                localRoot = $scriptInfo.Path
+                remoteRoot = $Variables[0].Value.script_path
+            }
+        )
     }
     elseif ($scriptInfo.Name -match 'ansible_collections\.(.+?)\.plugins\.modules\.(.+)') {
         "$($matches[1]).$($matches[2])"
@@ -187,6 +198,10 @@ if ($DebugParam.Count) {
 
     $DebugParam.Pipeline = $ps
     $DebugParam.PathMapping = @(
+        # It is important the path mappings are set before to ensure
+        # script paths take priority over the stub name.
+        $extraMappings
+
         @{
             localRoot = $scriptInfo.Path
             remoteRoot = $scriptInfo.Name

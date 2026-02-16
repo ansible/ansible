@@ -423,7 +423,14 @@ def _create_powershell_wrapper(
         'Script': name_with_ext,
         'Environment': environment,
     }
-    if substyle != 'script':
+    if substyle == 'script':
+        module_params['Variables'] = [
+            {
+                'Name': 'script_args',
+                'Value': module_args,
+            }
+        ]
+    else:
         module_deps = finder.scan_module(
             module_data,
             fqn=name,
