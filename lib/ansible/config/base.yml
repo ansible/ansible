@@ -2248,3 +2248,14 @@ _Z_TEST_ENTRY_2:
   ini:
     - section: testing
       key: valid2
+_Z_TEST_ENTRY_3:
+  version_added: '2.21'
+  name: testentry
+  description: for tests
+  type: path
+  default: '{{ANSIBLE_HOME}}'
+  env:
+    - name: ANSIBLE_TEST_ENTRY3
+  ini:
+    - section: testing
+      key: valid3

@@ -129,3 +129,8 @@
       - config_origin1[1] == "default"
       - config_origin2[0] == 'yolo'
       - 'config_origin2[1] == "var: _z_test_entry"'
+
+- name: verify interdependent templating
+  assert:
+    that:
+      - lookup('config', 'ANSIBLE_HOME') == lookup('config', '_Z_TEST_ENTRY_3')

@@ -1,0 +1,2 @@
+bugfixes:
+  - config lookup now uses preexisting constants for templating when needed.
