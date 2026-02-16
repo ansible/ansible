@@ -124,8 +124,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         if tmp is not None:
             _display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
-                            ' plugins should set self._connection._shell.tmpdir to share'
-                            ' the tmpdir.')
+                             ' plugins should set self._connection._shell.tmpdir to share'
+                             ' the tmpdir.')
         del tmp
 
         if self._task.async_val and not self._supports_async:
@@ -529,7 +529,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             if tmp_rm_res.get('rc', 0) != 0:
                 _display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
-                                % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
+                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
             else:
                 self._connection._shell.tmpdir = None
 
@@ -845,8 +845,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         if tmp is not None:
             _display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
-                            ' plugins should set self._connection._shell.tmpdir to share'
-                            ' the tmpdir')
+                             ' plugins should set self._connection._shell.tmpdir to share'
+                             ' the tmpdir')
         del tmp  # No longer used
 
         module_args = dict(
@@ -1013,13 +1013,13 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         if tmp is not None:
             _display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
-                            ' should set self._connection._shell.tmpdir to share the tmpdir')
+                             ' should set self._connection._shell.tmpdir to share the tmpdir')
         del tmp  # No longer used
         if delete_remote_tmp is not None:
             _display.warning('_execute_module no longer honors the delete_remote_tmp parameter.'
-                            ' Action plugins should check self._connection._shell.tmpdir to'
-                            ' see if a tmpdir existed before they were called to determine'
-                            ' if they are responsible for removing it.')
+                             ' Action plugins should check self._connection._shell.tmpdir to'
+                             ' see if a tmpdir existed before they were called to determine'
+                             ' if they are responsible for removing it.')
         del delete_remote_tmp  # No longer used
 
         tmpdir = self._connection._shell.tmpdir
