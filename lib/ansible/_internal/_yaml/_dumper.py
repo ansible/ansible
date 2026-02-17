@@ -96,6 +96,8 @@ class AnsibleDumper(_BaseDumper):
                     return self.represent_data('<redacted>')
                 case VaultBehaviors.fail:
                     raise AnsibleVariableTypeError.from_value(obj=data)
+        else:
+            return self.get_node_from_ciphertext(data)
 
     def represent_ansible_tagged_object(self, data: AnsibleTaggedObject) -> Node:
         if _internal.is_intermediate_mapping(data):
