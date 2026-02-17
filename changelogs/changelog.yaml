@@ -1486,3 +1486,26 @@ releases:
     - module_defaults-action-plugin-templating.yml
     - winrm-kerberos.yml
     release_date: '2026-01-22'
+  2.19.7rc1:
+    changes:
+      bugfixes:
+      - Fix up the Action plugin ``_make_tmp_path`` error to only include the command
+        run rather than the shell's dataclass repr from ``mkdtemp``.
+      - local connection - Pass correct type to become plugins when checking password
+        (https://github.com/ansible/ansible/issues/86458)
+      minor_changes:
+      - ansible-test - Update URL used to download FreeBSD wheels for managed remotes.
+      - ansible-test - Use the new API endpoint for the Ansible Core CI service.
+      release_summary: '| Release Date: 2026-02-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.7rc1_summary.yaml
+    - 86473_su_become_local.yml
+    - ansible-test-api-endpoint.yml
+    - ansible-test-spare-tire.yml
+    - make-tmp-path-msg.yml
+    release_date: '2026-02-17'
