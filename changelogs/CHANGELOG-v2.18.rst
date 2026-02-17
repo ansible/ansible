@@ -4,6 +4,21 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.14rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-02-17
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Update URL used to download FreeBSD wheels for managed remotes.
+- ansible-test - Use the new API endpoint for the Ansible Core CI service.
+
 v2.18.13
 ========
 

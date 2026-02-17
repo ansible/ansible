@@ -746,6 +746,22 @@ releases:
     - broken_conditional_backport.yml
     - fix-windows-lib-env-corruption.yml
     release_date: '2026-01-22'
+  2.18.14rc1:
+    changes:
+      minor_changes:
+      - ansible-test - Update URL used to download FreeBSD wheels for managed remotes.
+      - ansible-test - Use the new API endpoint for the Ansible Core CI service.
+      release_summary: '| Release Date: 2026-02-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.14rc1_summary.yaml
+    - ansible-test-api-endpoint.yml
+    - ansible-test-spare-tire.yml
+    release_date: '2026-02-17'
   2.18.1rc1:
     changes:
       bugfixes:
