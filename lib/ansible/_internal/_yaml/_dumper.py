@@ -14,7 +14,7 @@ from ansible.errors import AnsibleVariableTypeError
 from ansible.module_utils import _internal
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
-from ansible.parsing.vault import VaultHelper
+from ansible.parsing.vault import VaultHelper, EncryptedString
 from ansible.module_utils.common.yaml import HAS_LIBYAML
 from ansible.utils.display import Display
 
@@ -106,7 +106,7 @@ class AnsibleDumper(_BaseDumper):
         if _internal.is_intermediate_iterable(data):
             return self.represent_list(data)
 
-        if VaultedValue.is_tagged_on(data):
+        if VaultedValue.is_tagged_on(data) or isinstance(data, EncryptedString):
             return self.represent_vaulted_value(data)
 
         return self.represent_data(AnsibleTagHelper.as_native_type(data))  # automatically decrypts encrypted strings
