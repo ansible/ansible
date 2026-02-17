@@ -14,7 +14,7 @@ from ansible.errors import AnsibleVariableTypeError
 from ansible.module_utils import _internal
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
-from ansible.parsing.vault import VaultHelper, EncryptedString
+from ansible.parsing.vault import VaultHelper
 from ansible.module_utils.common.yaml import HAS_LIBYAML
 from ansible.utils.display import Display
 
