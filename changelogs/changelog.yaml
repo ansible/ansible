@@ -1078,6 +1078,20 @@ releases:
     - ansible-test-rhel-10.1.yml
     - broken_conditional_backport.yml
     release_date: '2026-01-22'
+  2.16.17rc1:
+    changes:
+      minor_changes:
+      - ansible-test - Use the new API endpoint for the Ansible Core CI service.
+      release_summary: '| Release Date: 2026-02-17
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.17rc1_summary.yaml
+    - ansible-test-api-endpoint.yml
+    release_date: '2026-02-17'
   2.16.1rc1:
     changes:
       breaking_changes:
