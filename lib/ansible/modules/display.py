@@ -19,7 +19,7 @@ options:
     required: yes
   channel:
     description:
-    - How to display the message, it llows you to use existing display channels in Ansible core.
+    - How to display the message, it allows you to use existing display channels in Ansible core.
       This will format and color and prefix the messages as Ansible itself would.
     choices:
         display: normal text
