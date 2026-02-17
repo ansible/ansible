@@ -4,6 +4,27 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-02-17
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Update URL used to download FreeBSD wheels for managed remotes.
+- ansible-test - Use the new API endpoint for the Ansible Core CI service.
+
+Bugfixes
+--------
+
+- Fix up the Action plugin ``_make_tmp_path`` error to only include the command run rather than the shell's dataclass repr from ``mkdtemp``.
+- local connection - Pass correct type to become plugins when checking password (https://github.com/ansible/ansible/issues/86458)
+
 v2.19.6
 =======
 
