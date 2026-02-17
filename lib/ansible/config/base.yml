@@ -1292,6 +1292,14 @@ DEFAULT_VAULT_PASSWORD_FILE:
   - {key: vault_password_file, section: defaults}
   type: path
   yaml: {key: defaults.vault_password_file}
+VAULTED_VALUE_DUMP_IS_ERROR:
+  name: something
+  description: This enables strict handling of vaulted values when serializing
+  type: bool
+  default: False
+  version_added: '2.21'
+  env:
+    - name: ANSIBLE_VAULTED_VALUE_DUMP_IS_ERROR
 DEFAULT_VERBOSITY:
   name: Verbosity
   default: 0
@@ -2248,11 +2256,3 @@ _Z_TEST_ENTRY_2:
   ini:
     - section: testing
       key: valid2
-STRICT_VAULT_BEHAVIOR:
-  name: something
-  description: This enables strict handling of vaulted values when serializing
-  type: bool
-  default: False
-  version_added: '2.21'
-  env:
-    - name: ANSIBLE_STRICT_VAULT_BEHAVIOR

@@ -82,7 +82,7 @@ class AnsibleDumper(_BaseDumper):
         if vault_decryption_context:
             match vault_decryption_context.vault_behavior:
                 case VaultBehaviors.default:
-                    should_be_strict = cfg_mgr.get_config_value('STRICT_VAULT_BEHAVIOR')
+                    should_be_strict = cfg_mgr.get_config_value('VAULTED_VALUE_DUMP_IS_ERROR')
                     if should_be_strict:
                         raise AnsibleVariableTypeError.from_value(obj=data)  # FIXME: get obj value for callsite bc right now it's wrong
                     else:

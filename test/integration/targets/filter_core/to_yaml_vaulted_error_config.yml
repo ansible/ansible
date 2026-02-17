@@ -3,7 +3,7 @@
   gather_facts: false
   hosts: localhost
   tasks:
-  - name: Render inline with strict config set  # Registers a deprecation but doesn't display it?
+  - name: Render inline with strict config set  # FIXME: Registers a deprecation but doesn't display it?
     debug:
       msg: "{{ inline_vaulted | to_yaml }}"
     ignore_errors: true
@@ -15,7 +15,7 @@
     ignore_errors: true
     register: strict_datastructure
 
-  - name: Assert failure for strict mode
+  - name: Assert failure for strict mode  # TODO: Add better asserts
     assert:
       that:
         - strict_inline is failed
