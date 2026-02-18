@@ -87,8 +87,8 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
 
 
 @pytest.mark.parametrize("filter_impl, expected_output", [
-    (to_yaml, "!vault |-\n  ciphertext\n"),
-    (to_nice_yaml, "!vault |-\n    ciphertext\n"),
+    (lambda x: to_yaml(x, vault_behavior="preserve"), "!vault |-\n  ciphertext\n"),
+    (lambda x: to_nice_yaml(x, vault_behavior="preserve"), "!vault |-\n    ciphertext\n"),
 ])
 def test_vaulted_value_dump(
     filter_impl: t.Callable,
