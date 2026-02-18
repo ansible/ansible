@@ -703,7 +703,9 @@ class Connection(ConnectionBase):
                 # unable to save keys, including scenario when key was invalid
                 # and caught earlier
                 traceback.print_exc()
-            fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
+            finally:
+                fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
+                KEY_LOCK.close()
 
         self.ssh.close()
         self._connected = False
