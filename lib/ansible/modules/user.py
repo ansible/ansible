@@ -66,6 +66,7 @@ options:
             - If V(true), add the user to the groups specified in O(groups).
             - If V(false), user will only be added to the groups specified in O(groups),
               removing them from all other groups.
+            - From Ansible 2.21, this option is required when O(groups) is specified.
         type: bool
         default: no
     shell:
@@ -656,12 +657,6 @@ class User(object):
             self.ssh_file = module.params['ssh_key_file']
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
-
-        if self.groups is None and self.append:
-            # Change the argument_spec in 2.14 and remove this warning
-            # required_by={'append': ['groups']}
-            module.warn("'append' is set, but no 'groups' are specified. Use 'groups' for appending new groups."
-                        "This will change to an error in Ansible 2.14.")
 
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
@@ -3422,6 +3417,9 @@ def main():
             uid_max=dict(type='int'),
         ),
         supports_check_mode=True,
+        required_if=[
+            ['append', True, ['groups']],
+        ],
     )
 
     user = User(module)
