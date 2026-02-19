@@ -84,9 +84,11 @@ class AnsibleDumper(_BaseDumper):
                 case VaultBehaviors.default:
                     should_be_strict = cfg_mgr.get_config_value('VAULTED_VALUE_DUMP_IS_ERROR')
                     if should_be_strict:
-                        raise AnsibleVariableTypeError.from_value(obj=data)  # FIXME: get obj value for callsite bc right now it's wrong
+                        raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value.", obj=data)
                     else:
-                        display.deprecated(msg="TODO writeme. Something something", version="2.25")
+                        display.deprecated(msg="In future releases of ansible the default value behavior of `to_yaml` and `to_nice_yaml` "
+                                               "will raise an error when attempting to decrypt vaulted values unless explicitly enabled with `vault=decrypt",
+                                           version="2.999")
                         return self.represent_data(AnsibleTagHelper.as_native_type(data))
                 case VaultBehaviors.decrypt:
                     return self.represent_data(AnsibleTagHelper.as_native_type(data))
@@ -95,7 +97,7 @@ class AnsibleDumper(_BaseDumper):
                 case VaultBehaviors.redact:
                     return self.represent_data('<redacted>')
                 case VaultBehaviors.fail:
-                    raise AnsibleVariableTypeError.from_value(obj=data)
+                    raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value", obj=data)
         else:
             return self.get_node_from_ciphertext(data)
 
