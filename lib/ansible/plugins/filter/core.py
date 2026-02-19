@@ -48,13 +48,13 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
 @accept_lazy_markers
-def to_yaml(a, *_args, default_flow_style: bool | None = None, vault_behavior: str | None = None, **kwargs) -> str:
+def to_yaml(a, *_args, default_flow_style: bool | None = None, vault: str | None = None, **kwargs) -> str:
     """Serialize input as terse flow-style YAML."""
 
-    if vault_behavior and vault_behavior not in VaultBehaviors:
+    if vault and vault not in VaultBehaviors:
         raise AnsibleFilterError(f"The vault_behavior parameter must be one of {", ".join(VaultBehaviors)}")
 
-    behavior = VaultBehaviors(vault_behavior) if vault_behavior else VaultBehaviors.default
+    behavior = VaultBehaviors(vault) if vault else VaultBehaviors.default
 
     with VaultDecryptionContext(behavior):
         return yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)

@@ -10,11 +10,11 @@
 
     - name: "Render inline with to_yaml"
       debug:
-        msg: "{{ inline_vaulted | to_yaml(vault_behavior=item) }}"
+        msg: "{{ inline_vaulted | to_yaml(vault=item) }}"
       ignore_errors: true
       loop:
         - decrypt
-        - preserve
+        - keep_encrypted
         - redact
         - fail
         - other
@@ -32,16 +32,16 @@
           - inline_vaulted_with_to_yaml.results[2].msg is contains "<redacted>"
           - inline_vaulted_with_to_yaml.results[3] is failed  # TODO: Fix this when we fix obj
           - inline_vaulted_with_to_yaml.results[4] is failed
-          - inline_vaulted_with_to_yaml.results[4].msg is contains "The vault_behavior parameter must be one of" # TODO: add better validation
+          - inline_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of" # TODO: add better validation
           - inline_vaulted_with_to_yaml.results[5] is success
           - inline_vaulted_with_to_yaml.deprecations | length > 0
 
     - name: Render datastructure with to_yaml
       debug:
-        msg: "{{ housing_datastructure | to_yaml(vault_behavior=item) }}"
+        msg: "{{ housing_datastructure | to_yaml(vault=item) }}"
       loop:
         - decrypt
-        - preserve
+        - keep_encrypted
         - redact
         - fail
         - other
@@ -64,9 +64,10 @@
           - nested_vaulted_with_to_yaml.results[2].msg is contains "<redacted>"
           - nested_vaulted_with_to_yaml.results[2].msg is not contains expected_value_decrypted
           - nested_vaulted_with_to_yaml.results[2].msg is not contains vault_ciphertext
-          - nested_vaulted_with_to_yaml.results[3] is failed  # TODO: Fix this when we fix obj
+          - nested_vaulted_with_to_yaml.results[3] is failed
+          - nested_vaulted_with_to_yaml.results[3] is contains "Attempted to dump a vaulted value"
           - nested_vaulted_with_to_yaml.results[4] is failed
-          - nested_vaulted_with_to_yaml.results[4].msg is contains "The vault_behavior parameter must be one of" # TODO: add better validation
+          - nested_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of"
           - nested_vaulted_with_to_yaml.results[5] is success
           - nested_vaulted_with_to_yaml.results[5].msg is contains expected_value_decrypted
           - nested_vaulted_with_to_yaml.results[5].msg is not contains vault_ciphertext

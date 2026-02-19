@@ -42,7 +42,7 @@ class _BaseDumper(SafeDumper, metaclass=abc.ABCMeta):
 
 class VaultBehaviors(StrEnum):
     decrypt = auto()
-    preserve = auto()
+    keep_encrypted = auto()
     redact = auto()
     fail = auto()
     default = auto()
@@ -91,7 +91,7 @@ class AnsibleDumper(_BaseDumper):
                         return self.represent_data(AnsibleTagHelper.as_native_type(data))
                 case VaultBehaviors.decrypt:
                     return self.represent_data(AnsibleTagHelper.as_native_type(data))
-                case VaultBehaviors.preserve:
+                case VaultBehaviors.keep_encrypted:
                     return self.get_node_from_ciphertext(data)
                 case VaultBehaviors.redact:
                     return self.represent_data('<redacted>')
