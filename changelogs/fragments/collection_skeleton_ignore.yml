@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - ansible-galaxy - raise an error when wrong regex value specified in collection_skeleton_ignore.
