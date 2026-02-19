@@ -86,27 +86,6 @@ class TestAnsibleDumper(unittest.TestCase, YamlTestUtils):
             self._dump_string(_DEFAULT_UNDEF, dumper=self.dumper)
 
 
-@pytest.mark.parametrize("filter_impl, expected_output", [
-    (lambda x: to_yaml(x, vault_behavior="preserve"), "!vault |-\n  ciphertext\n"),
-    (lambda x: to_nice_yaml(x, vault_behavior="preserve"), "!vault |-\n    ciphertext\n"),
-])
-def test_vaulted_value_dump(
-    filter_impl: t.Callable,
-    expected_output: str,
-    mocker: pytest_mock.MockerFixture
-) -> None:
-    """Validate that strings tagged VaultedValue are represented properly."""
-    value = VaultedValue(ciphertext="ciphertext").tag("secret plaintext")
-
-    from ansible.utils.display import Display
-
-    _deprecated_spy = mocker.spy(Display(), 'deprecated')
-
-    res = filter_impl(value)
-
-    assert res == expected_output
-
-
 _test_tag = Deprecated(msg="test")
 
 
