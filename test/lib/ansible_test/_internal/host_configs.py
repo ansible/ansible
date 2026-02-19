@@ -197,16 +197,6 @@ class PowerShellConfig:
     version: str | None = None
     path: str | None = None
 
-    @property
-    def tuple(self) -> tuple[int, ...]:
-        """Return the PowerShell version as a tuple."""
-        return str_to_version(self.version)
-
-    @property
-    def major_version(self) -> int:
-        """Return the PowerShell major version."""
-        return self.tuple[0]
-
     def apply_defaults(self, defaults: PosixCompletionConfig) -> None:
         """Apply default settings."""
         if self.version in (None, 'default'):
