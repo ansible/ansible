@@ -60,11 +60,11 @@
 
     # FIXME
     # https://github.com/ansible/ansible/issues/86298
-    # - name: Test become plugin requiring TTY
-    #   command: "{{ run_test }} -b --become-method noop"
-    #   environment:
-    #     ANSIBLE_BECOME_PLUGINS: ./become_plugins
-    #     ANSIBLE_TEST_BECOME_REQUIRE_TTY: True
-    #   register: no_pipelining
-    #   failed_when: *validate_become
-    # - assert: *test_no_pipelining
+    - name: Test become plugin requiring TTY
+      command: "{{ run_test }} -b --become-method noop"
+      environment:
+        ANSIBLE_BECOME_PLUGINS: ./become_plugins
+        ANSIBLE_TEST_BECOME_REQUIRE_TTY: True
+      register: no_pipelining
+      failed_when: *validate_become
+    - assert: *test_no_pipelining
