@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - user - ``user`` module integration tests can now run multiple times on the same freebsd host (https://github.com/ansible/ansible/issues/86541).
