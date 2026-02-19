@@ -93,6 +93,9 @@ options:
             - B(Linux/Unix/POSIX:) Enter the hashed password as the value.
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate the hash of a password.
+            - The module writes the value directly to C(/etc/shadow) without any validation. Because the module cannot verify the user input,
+              providing an invalid value will likely result in authentication failure.
+              However, this behaviour can be utilized intentionally to lock a user account.
             - To create an account with a locked/disabled password on Linux systems, set this to V('!') or V('*').
             - To create an account with a locked/disabled password on OpenBSD, set this to V('*************').
             - B(OS X/macOS:) Enter the cleartext password as the value. Be sure to take relevant security precautions.
