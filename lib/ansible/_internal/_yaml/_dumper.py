@@ -82,8 +82,7 @@ class AnsibleDumper(_BaseDumper):
         if vault_decryption_context:
             match vault_decryption_context.vault_behavior:
                 case VaultBehaviors.default:
-                    should_be_strict = cfg_mgr.get_config_value('VAULTED_VALUE_DUMP_IS_ERROR')
-                    if should_be_strict:
+                    if cfg_mgr.get_config_value('VAULTED_VALUE_DUMP_IS_ERROR'):
                         raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value.", obj=data)
                     else:
                         display.deprecated(msg="In future releases of ansible the default value behavior of `to_yaml` and `to_nice_yaml` "

@@ -3,7 +3,7 @@
 set -eux
 
 ANSIBLE_ROLES_PATH=../ ansible-playbook --vault-password-file files/vault-password.txt runme.yml "$@"
-ANSIBLE_ROLES_PATH=../ ANSIBLE_VAULTED_VALUE_IS_ERROR=True ansible-playbook --vault-password-file files/vault-password.txt to_yaml_vaulted_error_config.yml "$@"
+ANSIBLE_ROLES_PATH=../ ANSIBLE_VAULTED_VALUE_DUMP_IS_ERROR=True ansible-playbook --vault-password-file files/vault-password.txt to_yaml_vaulted_error_config.yml "$@"
 ANSIBLE_ROLES_PATH=../ ansible-playbook handle_undefined_type_errors.yml "$@"
 
 # Remove passlib installed by setup_passlib_controller
