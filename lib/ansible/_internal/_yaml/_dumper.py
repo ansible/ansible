@@ -85,9 +85,11 @@ class AnsibleDumper(_BaseDumper):
                     if cfg_mgr.get_config_value('VAULTED_VALUE_DUMP_IS_ERROR'):
                         raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value.", obj=data)
                     else:
-                        display.deprecated(msg="In future releases of ansible the default value behavior of `to_yaml` and `to_nice_yaml` "
-                                               "will raise an error when attempting to decrypt vaulted values unless explicitly enabled with `vault=decrypt",
-                                           version="2.999")
+                        display.deprecated(
+                            msg="In future releases of ansible the default value behavior of `to_yaml` and `to_nice_yaml` "
+                            "will raise an error when attempting to decrypt vaulted values unless explicitly enabled with `vault=decrypt",
+                            version="2.999",
+                        )
                         return self.represent_data(AnsibleTagHelper.as_native_type(data))
                 case VaultBehaviors.decrypt:
                     return self.represent_data(AnsibleTagHelper.as_native_type(data))
