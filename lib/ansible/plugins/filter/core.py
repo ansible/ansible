@@ -52,7 +52,7 @@ def to_yaml(a, *_args, default_flow_style: bool | None = None, vault: str | None
     """Serialize input as terse flow-style YAML."""
 
     if vault and vault not in VaultBehaviors:
-        raise AnsibleFilterError(f"The vault_behavior parameter must be one of {", ".join(VaultBehaviors)}")
+        raise AnsibleFilterError(f"The vault parameter must be one of {", ".join(VaultBehaviors)}")
 
     behavior = VaultBehaviors(vault) if vault else VaultBehaviors.default
 

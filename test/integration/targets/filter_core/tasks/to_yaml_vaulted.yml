@@ -30,9 +30,10 @@
           - inline_vaulted_with_to_yaml.results[1].msg is contains vault_ciphertext
           - inline_vaulted_with_to_yaml.results[2] is success
           - inline_vaulted_with_to_yaml.results[2].msg is contains "<redacted>"
-          - inline_vaulted_with_to_yaml.results[3] is failed  # TODO: Fix this when we fix obj
+          - inline_vaulted_with_to_yaml.results[3] is failed
+          - inline_vaulted_with_to_yaml.results[3].msg is contains "Attempted to dump a vaulted value"
           - inline_vaulted_with_to_yaml.results[4] is failed
-          - inline_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of" # TODO: add better validation
+          - inline_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of"
           - inline_vaulted_with_to_yaml.results[5] is success
           - inline_vaulted_with_to_yaml.deprecations | length > 0
 
@@ -49,8 +50,6 @@
       ignore_errors: true
       register: nested_vaulted_with_to_yaml
 
-    - debug: var=nested_vaulted_with_to_yaml
-
     - name: Validate nested_vaulted_with_to_yaml output
       assert:
         that:
@@ -65,7 +64,7 @@
           - nested_vaulted_with_to_yaml.results[2].msg is not contains expected_value_decrypted
           - nested_vaulted_with_to_yaml.results[2].msg is not contains vault_ciphertext
           - nested_vaulted_with_to_yaml.results[3] is failed
-          - nested_vaulted_with_to_yaml.results[3] is contains "Attempted to dump a vaulted value"
+          - nested_vaulted_with_to_yaml.results[3].msg is contains "Attempted to dump a vaulted value"
           - nested_vaulted_with_to_yaml.results[4] is failed
           - nested_vaulted_with_to_yaml.results[4].msg is contains "The vault parameter must be one of"
           - nested_vaulted_with_to_yaml.results[5] is success
