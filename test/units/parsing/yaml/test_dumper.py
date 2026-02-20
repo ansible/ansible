@@ -21,16 +21,14 @@ import pytest
 import typing as t
 import unittest
 
-import pytest_mock
 import yaml
 
 from ansible.module_utils._internal._datatag import Tripwire
 from ansible.module_utils._internal._datatag._tags import Deprecated
 from ansible.parsing import vault
-from ansible._internal._datatag._tags import VaultedValue, TrustedAsTemplate
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.filter.core import to_yaml, to_nice_yaml
 from ansible._internal._templating._jinja_bits import _DEFAULT_UNDEF
 from ansible._internal._templating._jinja_common import MarkerError
 
