@@ -1,0 +1,3 @@
+bugfixes:
+  - user - return the actual system groups the user belongs to instead of only the
+    groups specified in the module input (https://github.com/ansible/ansible/issues/80669).

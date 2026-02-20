@@ -1,0 +1,57 @@
+# Test that the user module returns the actual groups a user belongs to
+# See: https://github.com/ansible/ansible/issues/80669
+
+- name: remove test user for groups return test
+  user:
+    name: ansibulluser_groups
+    state: absent
+
+- name: create test user with initial groups
+  user:
+    name: ansibulluser_groups
+    groups:
+      - daemon
+      - bin
+    state: present
+  register: user_groups_create
+
+- name: validate groups on initial creation
+  assert:
+    that:
+      - "'bin' in user_groups_create.groups"
+      - "'daemon' in user_groups_create.groups"
+
+- name: append a group to the test user
+  user:
+    name: ansibulluser_groups
+    groups:
+      - sys
+    append: true
+    state: present
+  register: user_groups_append
+
+- name: validate groups after append includes all groups
+  assert:
+    that:
+      - "'bin' in user_groups_append.groups"
+      - "'daemon' in user_groups_append.groups"
+      - "'sys' in user_groups_append.groups"
+
+- name: run user module with no groups param
+  user:
+    name: ansibulluser_groups
+    state: present
+  register: user_groups_noarg
+
+- name: validate groups returned even when groups param is not set
+  assert:
+    that:
+      - user_groups_noarg.groups is defined
+      - "'bin' in user_groups_noarg.groups"
+      - "'daemon' in user_groups_noarg.groups"
+      - "'sys' in user_groups_noarg.groups"
+
+- name: clean up test user
+  user:
+    name: ansibulluser_groups
+    state: absent
