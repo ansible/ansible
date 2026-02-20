@@ -13,14 +13,12 @@ from ._constructor import AnsibleConstructor, AnsibleInstrumentedConstructor
 if HAS_LIBYAML:
     from yaml.cyaml import CParser
 
-    class _YamlParser(CParser):
+    class _Parser(CParser):
         def __init__(self, stream: str | bytes | _io.IOBase) -> None:
             if isinstance(stream, (str, bytes)):
                 stream = AnsibleTagHelper.untag(stream)  # PyYAML + libyaml barfs on str/bytes subclasses
 
             CParser.__init__(self, stream)
-
-            self.name = getattr(stream, 'name', None)  # provide feature parity with the Python implementation (yaml.reader.Reader provides name)
 
 else:
     from yaml.composer import Composer
@@ -28,12 +26,23 @@ else:
     from yaml.scanner import Scanner
     from yaml.parser import Parser
 
-    class _YamlParser(Reader, Scanner, Parser, Composer):  # type: ignore[no-redef]
+    class _Parser(Reader, Scanner, Parser, Composer):  # type: ignore[no-redef]
         def __init__(self, stream: str | bytes | _io.IOBase) -> None:
             Reader.__init__(self, stream)
             Scanner.__init__(self)
             Parser.__init__(self)
             Composer.__init__(self)
+
+
+class _YamlParser(_Parser):
+    def __init__(self, stream: str | bytes | _io.IOBase) -> None:
+        super().__init__(stream)
+
+        # The Python implementation of PyYAML (yaml.reader.Reader) provides self.name.
+        # However, it will fall back to "<...>" in various cases.
+        # The C implementation of PyYAML does not provide self.name.
+        # To provide consistency, name retrieval is re-implemented here.
+        self.name = getattr(stream, 'name', None)
 
 
 class AnsibleInstrumentedLoader(_YamlParser, AnsibleInstrumentedConstructor, Resolver):
