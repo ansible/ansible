@@ -530,7 +530,10 @@ def raw_command(
         try:
             process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
         except FileNotFoundError as ex:
-            raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
+            missing = getattr(ex, 'filename', None)
+            if missing is not None and os.path.normpath(missing) == os.path.normpath(cmd[0]):
+                raise ApplicationError('Required program "%s" not found.' % cmd[0]) from ex
+            raise ApplicationError('File not found: "%s".' % (missing or 'unknown')) from ex
 
         if communicate:
             data_bytes = to_optional_bytes(data)

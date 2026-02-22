@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-test - fix misleading ``Required program not found`` error when the working directory does not exist. (https://github.com/ansible/ansible/pull/86571)"

@@ -36,6 +36,24 @@ def test_failed_interactive_command() -> None:
     assert error.value.stderr is None
 
 
+def test_missing_program() -> None:
+    """Verify that a missing program raises an ``ApplicationError`` with an appropriate message."""
+    from ansible_test._internal.util import raw_command, ApplicationError
+
+    with pytest.raises(ApplicationError, match='Required program ".+" not found\\.'):
+        raw_command(['/does/not/exist/program'], True)
+
+
+def test_missing_cwd() -> None:
+    """Verify that a missing cwd raises an ``ApplicationError`` with an appropriate message, not a misleading program-not-found error."""
+    from ansible_test._internal.util import raw_command, ApplicationError
+
+    with pytest.raises(ApplicationError, match='File not found: ".+"\\.') as error:
+        raw_command(['ls'], True, cwd='/does/not/exist/cwd')
+
+    assert 'Required program' not in str(error.value)
+
+
 @pytest.mark.parametrize("args,filters,expected", (
     (
         # args after a known option must be separated from existing args
