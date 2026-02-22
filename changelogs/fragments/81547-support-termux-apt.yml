@@ -1,0 +1,2 @@
+minor_changes:
+  - modules_utils - Support Termux in ansible.builtin.package
