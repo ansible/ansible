@@ -1,0 +1,23 @@
+- name: Find powershell location
+  win_shell: (Get-Command powershell).source
+  register: powershell_location
+
+- name: Get powershell version
+  win_command: |
+    "{{ powershell_location.stdout | trim }}" -Command "$PSVersionTable.PSVersion.ToString()"
+  register: powershell_version
+
+- name: Show powershell location and version
+  debug:
+    msg: "{{ powershell_location.stdout | trim }} is {{ powershell_version.stdout | trim }}"
+
+- when: ansible_pwsh_interpreter is defined
+  block:
+    - name: Get ansible_pwsh_interpreter version
+      win_command: |
+        "{{ ansible_pwsh_interpreter }}" -Command "$PSVersionTable.PSVersion.ToString()"
+      register: ansible_pwsh_interpreter_version
+
+    - name: Show ansible_pwsh_interpreter location and version
+      debug:
+        msg: "{{ ansible_pwsh_interpreter }} is {{ ansible_pwsh_interpreter_version.stdout | trim }}"

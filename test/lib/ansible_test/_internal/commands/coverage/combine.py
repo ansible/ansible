@@ -21,12 +21,14 @@ from ...util import (
     display,
     ApplicationError,
     raw_command,
+    common_environment,
 )
 
 from ...util_common import (
     ResultType,
     write_json_file,
     write_json_test_results,
+    get_powershell_injector_env,
 )
 
 from ...executor import (
@@ -197,10 +199,13 @@ def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> list[st
     coverage_files = get_powershell_coverage_files()
 
     def _default_stub_value(source_paths: list[str]) -> dict[str, dict[int, int]]:
+        env = common_environment()
+        env.update(get_powershell_injector_env(args.controller_powershell, env))
+
         cmd = ['pwsh', os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'coverage_stub.ps1')]
         cmd.extend(source_paths)
 
-        stubs = json.loads(raw_command(cmd, capture=True)[0])
+        stubs = json.loads(raw_command(cmd, env=env, capture=True)[0])
 
         return dict((d['Path'], dict((line, 0) for line in d['Lines'])) for d in stubs)
 

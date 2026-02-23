@@ -29,10 +29,12 @@ from ...util import (
     SubprocessError,
     find_executable,
     ANSIBLE_TEST_DATA_ROOT,
+    common_environment,
 )
 
 from ...util_common import (
     run_command,
+    get_powershell_injector_env,
 )
 
 from ...config import (
@@ -57,6 +59,9 @@ class PslintTest(SanityVersionNeutral):
         return [target for target in targets if os.path.splitext(target.path)[1] in ('.ps1', '.psm1', '.psd1')]
 
     def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
+        env = common_environment()
+        env.update(get_powershell_injector_env(args.controller_powershell, env))
+
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
@@ -75,7 +80,7 @@ class PslintTest(SanityVersionNeutral):
 
         for cmd in cmds:
             try:
-                stdout, stderr = run_command(args, cmd, capture=True)
+                stdout, stderr = run_command(args, cmd, env=env, capture=True)
                 status = 0
             except SubprocessError as ex:
                 stdout = ex.stdout

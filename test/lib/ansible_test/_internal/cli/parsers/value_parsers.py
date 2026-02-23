@@ -9,6 +9,11 @@ from ...host_configs import (
     NativePythonConfig,
     PythonConfig,
     VirtualPythonConfig,
+    PowerShellConfig,
+)
+
+from ...util import (
+    get_supported_powershell_versions,
 )
 
 from ..argparsing.parsers import (
@@ -133,6 +138,40 @@ class PythonParser(Parser):
         docs += '[@{path|dir/}]'
 
         return docs
+
+
+class PowerShellParser(ChoicesParser):
+    """Argument parser for a PowerShell version."""
+
+    def __init__(
+        self,
+        *,
+        windows: bool = False,
+    ) -> None:
+        versions = get_supported_powershell_versions()
+
+        if windows:
+            versions.insert(0, '5.1')  # pre-installed version on Windows
+
+        super().__init__(versions)
+
+    def parse(self, state: ParserState) -> t.Any:
+        return PowerShellConfig(
+            version=super().parse(state),
+        )
+
+
+class PowerShellPathParser(AbsolutePathParser):
+    """Argument parser for a PowerShell path."""
+
+    def parse(self, state: ParserState) -> t.Any:
+        return PowerShellConfig(
+            path=super().parse(state),
+        )
+
+    def document(self, state: DocumentationState) -> t.Optional[str]:
+        """Generate and return documentation for this parser."""
+        return '/path/to/pwsh'
 
 
 class PlatformParser(ChoicesParser):

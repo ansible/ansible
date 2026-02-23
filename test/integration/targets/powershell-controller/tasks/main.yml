@@ -1,0 +1,24 @@
+- name: Find pwsh on PATH
+  command: which pwsh
+  register: pwsh_location
+  ignore_errors: yes
+
+- when: pwsh_location is success
+  block:
+    - name: Get pwsh version
+      command: "{{ pwsh_location.stdout | trim | quote }} --version"
+      register: pwsh_version
+
+    - name: Show pwsh location and version
+      debug:
+        msg: "{{ pwsh_location.stdout | trim }} is {{ pwsh_version.stdout | trim }}"
+
+- when: ansible_pwsh_interpreter is defined
+  block:
+    - name: Get ansible_pwsh_interpreter version
+      command: "{{ ansible_pwsh_interpreter | quote }} --version"
+      register: ansible_pwsh_interpreter_version
+
+    - name: Show ansible_pwsh_interpreter location and version
+      debug:
+        msg: "{{ ansible_pwsh_interpreter }} is {{ ansible_pwsh_interpreter_version.stdout | trim }}"
