@@ -299,7 +299,7 @@ def write_text_test_results(category: ResultType, name: str, content: str) -> No
 @cache
 def get_injector_path() -> str:
     """Return the path to a directory which contains a `python.py` executable and associated injector scripts."""
-    injector_path = tempfile.mkdtemp(prefix='ansible-test-', suffix='-injector', dir='/tmp')
+    injector_path = tempfile.mkdtemp(prefix='ansible-test-', suffix='-injector')
 
     display.info(f'Initializing "{injector_path}" as the temporary injector directory.', verbosity=1)
 
@@ -373,9 +373,7 @@ def get_python_path(interpreter: str) -> str:
     prefix = 'python-'
     suffix = '-ansible'
 
-    root_temp_dir = '/tmp'
-
-    python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
+    python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix)
     injected_interpreter = os.path.join(python_path, 'python')
 
     # A symlink is faster than the execv wrapper, but isn't guaranteed to provide the correct result.
