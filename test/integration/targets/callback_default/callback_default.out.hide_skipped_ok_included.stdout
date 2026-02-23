@@ -16,9 +16,6 @@ Origin: TEST_PATH/test.yml:16:7
 fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}
 ...ignoring
 
-TASK [Skipped task] ************************************************************
-skipping: [testhost]
-
 TASK [Task with var in name (foo bar)] *****************************************
 changed: [testhost]
 
@@ -74,17 +71,6 @@ TASK [replace] *****************************************************************
 \ No newline at end of file
 
 changed: [testhost]
-
-TASK [debug] *******************************************************************
-skipping: [testhost]
-
-TASK [debug] *******************************************************************
-skipping: [testhost]
-
-TASK [debug] *******************************************************************
-skipping: [testhost] => (item=1) 
-skipping: [testhost] => (item=2) 
-skipping: [testhost]
 
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
