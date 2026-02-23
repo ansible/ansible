@@ -494,6 +494,17 @@ releases:
     - module_defaults-action-plugin-templating.yml
     - winrm-kerberos.yml
     release_date: '2026-01-22'
+  2.20.3:
+    changes:
+      release_summary: '| Release Date: 2026-02-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.3_summary.yaml
+    release_date: '2026-02-23'
   2.20.3rc1:
     changes:
       bugfixes:
