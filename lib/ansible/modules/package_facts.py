@@ -423,8 +423,8 @@ class APK(CLIMgr):
         return json.loads(out)
 
     def get_package_details(self, package):
-      version, release = package.get('version', '').rsplit("-", 1)
-      return {'name': package.get('name', ''), 'version': version, 'release': release}
+        version, release = package.get('version', '').rsplit("-", 1)
+        return {'name': package.get('name', ''), 'version': version, 'release': release}
 
 
 class PKG_INFO(CLIMgr):
