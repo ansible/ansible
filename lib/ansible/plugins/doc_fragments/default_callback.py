@@ -54,7 +54,7 @@ class ModuleDocFragment(object):
         ini:
           - key: display_included_hosts
             section: defaults
-        version_added: '2.20'
+        version_added: '2.21'
       show_custom_stats:
         name: Show custom stats
         description: 'This adds the custom stats set via the set_stats plugin to the play recap.'
