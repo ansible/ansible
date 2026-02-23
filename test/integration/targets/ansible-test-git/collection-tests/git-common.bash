@@ -37,6 +37,9 @@ git config user.email 'ansible-test@ansible.com'
 git add "README.md"
 git commit -m "Initial commit."
 
+# copy sub project
+cp -a "${WORK_DIR}/sub" "${WORK_DIR}/sub-copy"
+
 # init super project
 rm -rf "${WORK_DIR}/super" # needed when re-creating in place
 mkdir "${WORK_DIR}/super"
@@ -47,9 +50,15 @@ git init
 # add submodule
 git -c protocol.file.allow=always submodule add "${WORK_DIR}/sub" "${SUBMODULE_DST}"
 
+# add a second submodule and then remove the directory to verify the error is handled gracefully
+git -c protocol.file.allow=always submodule add "${WORK_DIR}/sub-copy" "${SUBMODULE_DST}-copy"
+rm -rf "${SUBMODULE_DST}-copy"
+
 # prepare for tests
 expected="${WORK_DIR}/expected.txt"
 actual="${WORK_DIR}/actual.txt"
+expected_warnings="${TEST_DIR}/expected-warnings.txt"
+actual_warnings="${WORK_DIR}/actual-warnings.txt"
 cd "${WORK_DIR}/super/ansible_collections/ns/col"
 mkdir tests/.git
 touch tests/.git/keep.txt  # make sure ansible-test correctly ignores version control within collection subdirectories
@@ -57,9 +66,11 @@ find . -type f ! -path '*/.git/*' ! -name .git | sed 's|^\./||' | sort >"${expec
 set -x
 
 # test at the collection base
-ansible-test env --list-files | sort >"${actual}"
+ansible-test env --list-files 2>"${actual_warnings}" | sort >"${actual}"
 diff --unified "${expected}" "${actual}"
+diff --unified "${expected_warnings}" "${actual_warnings}"
 
 # test at the submodule base
-(cd sub && ansible-test env --list-files | sort >"${actual}")
+(cd sub && ansible-test env --list-files 2>"${actual_warnings}" | sort >"${actual}")
 diff --unified "${expected}" "${actual}"
+diff --unified "${expected_warnings}" "${actual_warnings}"

@@ -63,6 +63,9 @@ class EnvConfig(CommonConfig):
             # default to --show if no options were given
             self.show = True
 
+        if self.list_files:
+            self.display_stderr = True
+
 
 def command_env(args: EnvConfig) -> None:
     """Entry point for the `env` command."""
@@ -122,7 +125,7 @@ def list_files_env(args: EnvConfig) -> None:
         return
 
     for path in data_context().content.all_files():
-        display.info(path)
+        print(path)  # display goes to stderr, this should be on stdout
 
 
 def set_timeout(args: EnvConfig) -> None:
