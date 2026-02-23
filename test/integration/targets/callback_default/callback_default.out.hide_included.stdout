@@ -4,9 +4,6 @@ PLAY [testhost] ****************************************************************
 TASK [Changed task] ************************************************************
 changed: [testhost]
 
-TASK [Ok task] *****************************************************************
-ok: [testhost]
-
 TASK [Failed task] *************************************************************
 [ERROR]: Task failed: Action failed: no reason
 Origin: TEST_PATH/test.yml:16:7
@@ -45,9 +42,6 @@ Origin: TEST_PATH/test.yml:38:7
 failed: [testhost] (item=debug-2) => {
     "msg": "debug-2"
 }
-ok: [testhost] => (item=debug-3) => {
-    "msg": "debug-3"
-}
 skipping: [testhost] => (item=debug-4) 
 fatal: [testhost]: FAILED! => {"msg": "One or more items failed"}
 ...ignoring
@@ -68,11 +62,6 @@ changed: [testhost]
 
 TASK [include_tasks] ***********************************************************
 
-TASK [debug] *******************************************************************
-ok: [testhost] => {
-    "item": 1
-}
-
 TASK [copy] ********************************************************************
 changed: [testhost]
 
@@ -86,9 +75,6 @@ TASK [replace] *****************************************************************
 \ No newline at end of file
 
 changed: [testhost]
-
-TASK [replace] *****************************************************************
-ok: [testhost]
 
 TASK [debug] *******************************************************************
 skipping: [testhost]
@@ -104,9 +90,6 @@ skipping: [testhost]
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
 
-RUNNING HANDLER [Test handler 2] ***********************************************
-ok: [testhost]
-
 RUNNING HANDLER [Test handler 3] ***********************************************
 changed: [testhost]
 
@@ -120,11 +103,6 @@ changed: [testhost]
 
 TASK [Include some tasks] ******************************************************
 
-TASK [debug] *******************************************************************
-ok: [testhost] => {
-    "item": 1
-}
-
 PLAY RECAP *********************************************************************
-testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
+testhost                   : ok=20   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
 
