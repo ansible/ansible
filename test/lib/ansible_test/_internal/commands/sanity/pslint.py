@@ -66,7 +66,7 @@ class PslintTest(SanityVersionNeutral):
 
         paths = [target.path for target in targets.include]
 
-        if not find_executable('pwsh', required='warning'):
+        if not find_executable('pwsh', required='warning', path=env.get('PATH')):
             return SanitySkipped(self.name)
 
         cmds = []
