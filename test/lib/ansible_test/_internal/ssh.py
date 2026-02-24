@@ -36,7 +36,7 @@ from .util import (
 )
 
 from .util_common import (
-    get_injector_env,
+    get_python_injector_env,
 )
 
 from .config import (
@@ -399,7 +399,7 @@ def create_ansible_ssh_port_forwards(
                     stdout=stdout,
                     stderr=subprocess.STDOUT,
                     stdin=subprocess.DEVNULL,
-                    env=get_injector_env(python, ansible_env),
+                    env=get_python_injector_env(python, ansible_env),
                 )
 
         return AnsibleSshForwarder(
