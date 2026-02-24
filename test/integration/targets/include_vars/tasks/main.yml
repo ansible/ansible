@@ -327,29 +327,55 @@
 - name: Setup relative dir resolution test
   vars:
     var_file: ~/test_vars.yml
+    var_content: hello
   block:
     - name: Create vars
       copy:
         dest: "{{ var_file }}"
-        content: "a_var: hello"
+        content: "a_var: {{ var_content }}"
         mode: '0644'
       delegate_to: localhost
 
     - include_vars:
         file: "{{ var_file }}"
-      register: include_tildehomedir_file
-
-    - name: Use included var
-      debug: var=a_var
-      register: use_included_var
 
     - assert:
         that:
-          - include_tildehomedir_file is success
-          - use_included_var.a_var == a_var
-
+          - a_var == var_content
   always:
     - name: Clean up vars file
       file:
         path: "{{ var_file }}"
+        state: absent
+
+- name: Setup relative dir resolution test for a directory
+  vars:
+    var_dir: ~/test_vars_dir
+    var_file: "{{ var_dir }}/test_vars.yml"
+    dirvar_content: hello_dir
+  block:
+    - name: Create vars dir
+      file:
+        path: "{{ var_dir }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Create vars file in dir
+      copy:
+        dest: "{{ var_file }}"
+        content: "a_dir_var: {{ dirvar_content }}"
+        mode: '0644'
+      delegate_to: localhost
+
+    - include_vars:
+        dir: "{{ var_dir }}"
+
+    - assert:
+        that:
+          - a_dir_var == dirvar_content
+  always:
+    - name: Clean up vars dir
+      file:
+        path: "{{ var_dir }}"
         state: absent
