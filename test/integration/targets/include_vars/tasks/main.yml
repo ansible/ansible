@@ -333,6 +333,7 @@
         dest: "{{ var_file }}"
         content: "a_var: hello"
         mode: '0644'
+      delegate_to: localhost
 
     - include_vars:
         file: "{{ var_file }}"
