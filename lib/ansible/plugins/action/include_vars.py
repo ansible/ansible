@@ -60,8 +60,6 @@ class ActionModule(ActionBase):
             self.source_file = self._task.args.get('_raw_params')
             if self.source_file:
                 self.source_file = self.source_file.rstrip('\n')
-            else:
-                raise AnsibleError("Unable to determine file, dir, or other source.")
 
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
@@ -99,32 +97,39 @@ class ActionModule(ActionBase):
         if dirs and files:
             raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible", obj=self._task.args)
 
+        # set internal vars from args
+        self._set_args()
+
         results = dict()
         failed = False
-        try:
-            # set internal vars from args
-            self._set_args()
-
-            if self.source_dir:
-                self._set_dir_defaults()
-                self.source_dir = self._with_resolved_root(self.source_dir)
-                if not path.isdir(self.source_dir):
-                    raise AnsibleError(f"{self.source_dir} is not a directory")
+        if self.source_dir:
+            self._set_dir_defaults()
+            try:
+                self.source_dir = self._find_needle('vars', self.source_dir)
+            except AnsibleError as e:
+                failed = True
+                err_msg = to_native(e)
+            if not path.isdir(self.source_dir):
+                failed = True
+                err_msg = f"{self.source_dir} is not a directory"
+            else:
                 for root_dir, filenames in self._traverse_dir_depth():
                     failed, err_msg, updated_results = self._load_files_in_dir(root_dir, filenames)
                     if failed:
                         break
                     results.update(updated_results)
-            else:
-                self.source_file = self._with_resolved_root(self.source_file)
+        else:
+            try:
+                self.source_file = self._find_needle('vars', self.source_file)
                 failed, err_msg, updated_results = (
                     self._load_files(self.source_file)
                 )
                 if not failed:
                     results.update(updated_results)
-        except AnsibleError as e:
-            failed = True
-            err_msg = to_native(e)
+
+            except AnsibleError as e:
+                failed = True
+                err_msg = to_native(e)
 
         if self.return_results_as_name:
             scope = dict()
@@ -135,8 +140,7 @@ class ActionModule(ActionBase):
 
         if failed:
             result['failed'] = failed
-            result['msg'] = err_msg
-            result['message'] = err_msg  # This should really be deprecated, imo
+            result['message'] = err_msg
         elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
             merge_hashes = self.hash_behaviour == 'merge'
             existing_variables = {k: v for k, v in task_vars.items() if k in results}
@@ -148,30 +152,27 @@ class ActionModule(ActionBase):
 
         return result
 
-    def _with_resolved_root(self, inputted_path: str) -> str:
-        """Resolve a relative path against the vars directory, the role directory, and playbook directory."""
-        input_path = pathlib.Path(inputted_path)
-
-        if input_path.is_absolute():
-            return inputted_path
-
-        candidates: list[pathlib.Path] = []
+    def _set_root_dir(self):
         if self._task._role:
-            candidates.append(pathlib.Path(self._task._role._role_path) / 'vars' / inputted_path)
-            candidates.append(pathlib.Path(self._task._role._role_path) / input_path)
-
-        if (origin := self._task._origin) and origin.path:
-            candidates.append(pathlib.Path(origin.path).parent / input_path)
-
-        if (basedir := self._loader.get_basedir()):  # Cover ad-hoc invocation
-            candidates.append(pathlib.Path(basedir) / 'vars' / input_path)
-            candidates.append(pathlib.Path(basedir) / input_path)
-
-        for candidate in candidates:
-            if candidate.exists():
-                return str(candidate)
-
-        raise AnsibleError(f'Could not resolve file or dir {inputted_path}')
+            if self.source_dir.split('/')[0] == 'vars':
+                path_to_use = (
+                    path.join(self._task._role._role_path, self.source_dir)
+                )
+                if path.exists(path_to_use):
+                    self.source_dir = path_to_use
+            else:
+                path_to_use = (
+                    path.join(
+                        self._task._role._role_path, 'vars', self.source_dir
+                    )
+                )
+                self.source_dir = path_to_use
+        else:
+            if (origin := self._task._origin) and origin.path:  # origin.path is not present for ad-hoc tasks
+                current_dir = (
+                    "/".join(origin.path.split('/')[:-1])
+                )
+                self.source_dir = path.join(current_dir, self.source_dir)
 
     def _log_walk(self, error):
         self._display.vvv(f"Issue with walking through {error.filename}: {error}")

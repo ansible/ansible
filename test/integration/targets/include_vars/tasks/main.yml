@@ -100,19 +100,20 @@
   register: invalid_extensions_results
   ignore_errors: True
 
+- debug: var=non_existent_dir_results
 - name: verify all parameters are validated
   assert:
     that:
       - "invalid_ignore_files is failed"
       - "'option must be a list' in invalid_ignore_files.msg"
       - "non_existent_dir_results is failed"
-      - "'Could not resolve file or dir' in non_existent_dir_results.msg"
+      - "'is not a directory' in non_existent_dir_results.message"
       - "invalid_option_results is failed"
       - "'is not a valid option' in invalid_option_results.msg"
       - "invalid_files_dir_results is failed"
       - "'these are incompatible' in invalid_files_dir_results.msg"
       - "non_file_dir_results is failed"
-      - "'is not a directory' in non_file_dir_results.msg"
+      - "'is not a directory' in non_file_dir_results.message"
       - "invalid_extensions_results is failed"
       - "'option must be a list' in invalid_extensions_results.msg"
 
@@ -186,7 +187,7 @@
 - name: verify that files without valid extensions are loaded
   assert:
     that:
-      - "'a valid extension' in include_with_unknown_file_extension.msg"
+      - "'a valid extension' in include_with_unknown_file_extension.message"
 
 - name: include var with raw params
   include_vars: >
@@ -209,7 +210,7 @@
 - name: Verify that file and raw_params provide correct error message to user
   assert:
     that:
-      - "'Unable to determine file, dir, or other source' in include_with_non_existent_file.msg"
+      - "'Could not find file' in include_with_non_existent_file.message"
 
 - name: include var (FQCN) with raw params
   ansible.builtin.include_vars: >
@@ -335,15 +336,17 @@
 
     - include_vars:
         file: "{{ var_file }}"
-      ignore_errors: true
-      register: include_homedir_file
+      register: include_tildehomedir_file
+
+    - name: Use included var
+      debug: var=a_var
+      register: use_included_var
 
     - assert:
         that:
-          - include_homedir_file is failed
-          - err_msg in include_homedir_file.msg
-      vars:
-        err_msg: Could not resolve file or dir {{ var_file }}
+          - include_tildehomedir_file is success
+          - use_included_var.a_var == a_var
+
   always:
     - name: Clean up vars file
       file:
