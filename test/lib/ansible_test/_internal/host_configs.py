@@ -450,7 +450,6 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
         super().apply_defaults(context, defaults)
 
         self.connection = self.connection or defaults.connection
-        self.pwsh = self.pwsh or defaults.pwsh
 
 
 @dataclasses.dataclass

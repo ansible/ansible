@@ -13,10 +13,6 @@ import tempfile
 import time
 import typing as t
 
-from .http import (
-    HttpClient,
-)
-
 from .io import (
     read_text_file,
     write_text_file,
@@ -1764,42 +1760,6 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         )
 
         return [SshConnection(self.args, settings)]
-
-    def _get_pwsh_release_tag(self, args: CommonConfig, version: str):
-        """Bootstrap PowerShell 7 on Windows targets.
-
-        Use the internal HttpClient so requests go through the project's HTTP layer.
-        Returns the parsed JSON data on success or raises ApplicationError on failure.
-        """
-        # The version specific build URL is only valid for released versions so we
-        # fallback to the preview URL if needed.
-        build_url = f"https://aka.ms/pwsh-buildinfo-{version.replace('.', '-')}"
-        preview_url = "https://aka.ms/pwsh-buildinfo-preview"
-
-        client = HttpClient(args)
-        release_tag: str | None = None
-        for url in [build_url, preview_url]:
-            response = client.get(url)
-
-            # aka.ms links will redirect to bing on an invalid link. We check if
-            # the response is valid JSON and contains the expected ReleaseTag
-            # value.
-            try:
-                build_info = json.loads(response.response)
-            except ValueError:
-                continue
-
-            release_tag = build_info.get('ReleaseTag', None)
-            if release_tag:
-                break
-
-        if not release_tag:
-            raise ApplicationError(f'Failed to find valid pwsh build info for {version}')
-
-        if not release_tag.startswith(f'v{version}.'):
-            raise ApplicationError(f'Invalid build info received from {url}, ReleaseTag {release_tag} does not match requested version {version}')
-
-        return release_tag
 
 
 @cache

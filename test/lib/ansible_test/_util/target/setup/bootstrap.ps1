@@ -28,6 +28,7 @@ $zipPath = [Path]::Combine([Path]::GetTempPath(), $zipFilename)
 
 if (-not (Test-Path -LiteralPath $zipPath)) {
     $attempts = 0
+
     while ($true) {
         try {
             Invoke-WebRequest -Uri $PowerShellDownloadUri -OutFile $zipPath -UseBasicParsing
