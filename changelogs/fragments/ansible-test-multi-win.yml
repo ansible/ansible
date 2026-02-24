@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Fix traceback when requesting windows integration tests for multiple managed hosts.

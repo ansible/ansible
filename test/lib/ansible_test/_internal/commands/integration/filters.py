@@ -56,6 +56,11 @@ class TargetFilter[THostConfig: HostConfig](metaclass=abc.ABCMeta):
         self.allow_destructive = args.allow_destructive
 
     @property
+    def is_managed(self) -> bool:
+        """True if all configs are managed, otherwise False."""
+        return all(config.is_managed for config in self.configs)
+
+    @property
     def config(self) -> THostConfig:
         """The configuration to filter. Only valid when there is a single config."""
         if len(self.configs) != 1:
@@ -104,7 +109,7 @@ class TargetFilter[THostConfig: HostConfig](metaclass=abc.ABCMeta):
             elif reason == FallbackReason.PYTHON:
                 display.warning(f'Some {self.host_type} tests may be redundant since a fallback python is in use: {", ".join(affected_targets)}')
 
-        if not self.allow_destructive and not self.config.is_managed:
+        if not self.allow_destructive and not self.is_managed:
             override_destructive = set(target for target in self.include_targets if target.startswith('destructive/'))
             override = [target.name for target in targets if override_destructive & set(target.aliases)]
 
