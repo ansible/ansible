@@ -21,16 +21,16 @@ options:
   file:
     description:
       - The file name from which variables should be loaded.
-      - If the path is relative, it will first look in the current role's C(vars) directory, then recursively in parent roles, 
-        then in the task directory, and finally in the playbook directory. 
+      - If the path is relative, it will first look in the current role's C(vars) directory, then recursively in parent roles,
+        then in the task directory, and finally in the playbook directory.
         U(https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbook_pathing.html#resolving-local-relative-paths)
     type: path
     version_added: "2.2"
   dir:
     description:
       - The directory name from which the variables should be loaded.
-      - If the path is relative, it will first look in the current role's C(vars) directory, then recursively in parent roles, 
-        then in the task directory, and finally in the playbook directory. 
+      - If the path is relative, it will first look in the current role's C(vars) directory, then recursively in parent roles,
+        then in the task directory, and finally in the playbook directory.
         U(https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbook_pathing.html#resolving-local-relative-paths)
     type: path
     version_added: "2.2"
