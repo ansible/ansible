@@ -215,7 +215,7 @@
 - name: Ensure warnings were displayed properly
   assert:
     that:
-      - local_user_test_5['warnings'] is search("'append' is set, but no 'groups' are specified. Use 'groups'")
+      - local_user_test_5.failed
       - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']
   tags:

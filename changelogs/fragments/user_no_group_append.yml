@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - user - make option group required_by option append.
