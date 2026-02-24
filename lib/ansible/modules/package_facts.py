@@ -251,6 +251,7 @@ ansible_facts:
 """
 
 import re
+import json
 
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -415,22 +416,15 @@ class APK(CLIMgr):
     CLI = 'apk'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'info', '-v'])
+        cmd = [self._cli, 'query', '--installed', '--fields', 'name,version', '--format', 'json', '*']
+        rc, out, err = module.run_command(cmd)
         if rc != 0:
-            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
-        return out.splitlines()
+            raise Exception(f"Unable to list packages rc={rc} : {err}")
+        return json.loads(out)
 
     def get_package_details(self, package):
-        raw_pkg_details = {'name': package, 'version': '', 'release': ''}
-        nvr = package.rsplit('-', 2)
-        try:
-            return {
-                'name': nvr[0],
-                'version': nvr[1],
-                'release': nvr[2],
-            }
-        except IndexError:
-            return raw_pkg_details
+        version, release = package.get('version', '').rsplit("-", 1)
+        return {'name': package.get('name', ''), 'version': version, 'release': release}
 
 
 class PKG_INFO(CLIMgr):
