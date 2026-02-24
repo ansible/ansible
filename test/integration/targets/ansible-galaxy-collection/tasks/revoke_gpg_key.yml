@@ -1,14 +1,10 @@
-- name: generate revocation certificate
-  expect:
-    command: "gpg --homedir {{ gpg_homedir }} --pinentry-mode loopback --output {{ gpg_homedir }}/revoke.asc --gen-revoke {{ fingerprint }}"
-    responses:
-      "Create a revocation certificate for this key": "y"
-      "Please select the reason for the revocation": "0"
-      "Enter an optional description": ""
-      "Is this okay": "y"
+- name: list keys for debugging
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys"
 
 - name: revoke key
-  command: "gpg --no-tty --homedir {{ gpg_homedir }} --import {{ gpg_homedir }}/revoke.asc"
+  command:
+    cmd: "gpg --no-tty --homedir {{ gpg_homedir }} --import"
+    stdin: '{{ pulp_rejected_repo.gpgkey }}'
 
 - name: list keys for debugging
-  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys {{ gpg_user }}"
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys"

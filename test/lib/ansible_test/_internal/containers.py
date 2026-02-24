@@ -451,6 +451,9 @@ def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     managed: dict[str, dict[str, ContainerAccess]] = {}
 
     for name, container in support_containers.items():
+        if container.details is None:
+            # data containers will not be started, and will be missing details
+            continue
         if container.details.published_ports:
             if require_docker().command == 'podman':
                 host_ip_func = get_podman_host_ip

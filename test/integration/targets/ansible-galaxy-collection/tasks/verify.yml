@@ -293,8 +293,9 @@
 
 # TODO: add a test for offline Galaxy signature metadata
 
+# These steps use secondary (amanda) as it has no signatures provided
 - name: install a collection that was signed by setup_collections
-  command: ansible-galaxy collection install namespace1.name1:1.0.0
+  command: ansible-galaxy collection install -s secondary namespace1.name1:1.0.0
 
 - name: verify the installed collection with a detached signature
   command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ galaxy_verbosity }} {{ signature_options }}
@@ -320,6 +321,7 @@
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - assert:
     that:
@@ -346,6 +348,7 @@
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - assert:
     that:
@@ -450,7 +453,7 @@
     verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 - name: use lenient signature verification (default) without providing signatures
-  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -s secondary -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "1"
   register: verify
