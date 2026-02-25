@@ -469,5 +469,5 @@ def detect_debugpy_options() -> DebugpyOptions | None:
     return DebugpyOptions(
         port=port,
         adapter_access_token=opts.adapter_access_token,
-        debugpy_package_path=str(pathlib.Path(debugpy.__file__).resolve().parent.parent.absolute()),
+        debugpy_package_path=str(pathlib.Path(debugpy.__file__).resolve().parent.parent),
     )
