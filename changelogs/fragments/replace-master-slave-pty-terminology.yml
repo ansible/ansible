@@ -1,0 +1,2 @@
+minor_changes:
+- ssh connection plugin - Replace ``master``/``slave`` PTY terminology with ``parent``/``child`` to align with CPython 3.12+ naming conventions.

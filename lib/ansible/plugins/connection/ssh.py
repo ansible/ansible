@@ -1132,10 +1132,10 @@ class Connection(ConnectionBase):
         if not in_data:
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
-                master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_kwargs)
-                stdin = os.fdopen(master, 'wb', 0)
-                os.close(slave)
+                parent_fd, child_fd = pty.openpty()
+                p = subprocess.Popen(cmd, stdin=child_fd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_kwargs)
+                stdin = os.fdopen(parent_fd, 'wb', 0)
+                os.close(child_fd)
             except OSError:
                 p = None
 

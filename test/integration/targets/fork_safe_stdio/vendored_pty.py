@@ -2,7 +2,7 @@
 # PSF License (see licenses/PSF-license.txt or https://opensource.org/licenses/Python-2.0)
 """Pseudo terminal utilities."""
 
-# Bugs: No signal handling.  Doesn't set slave termios and window size.
+# Bugs: No signal handling.  Doesn't set child termios and window size.
 #       Only tested on Linux, FreeBSD, and macOS.
 # See:  W. Richard Stevens. 1992.  Advanced Programming in the
 #       UNIX Environment.  Chapter 19.
@@ -27,35 +27,35 @@ STDERR_FILENO = 2
 CHILD = 0
 
 def openpty():
-    """openpty() -> (master_fd, slave_fd)
-    Open a pty master/slave pair, using os.openpty() if possible."""
+    """openpty() -> (parent_fd, child_fd)
+    Open a pty parent/child pair, using os.openpty() if possible."""
 
     try:
         return os.openpty()
     except (AttributeError, OSError):
         pass
-    master_fd, slave_name = _open_terminal()
-    slave_fd = slave_open(slave_name)
-    return master_fd, slave_fd
+    parent_fd, child_name = _open_terminal()
+    child_fd = child_open(child_name)
+    return parent_fd, child_fd
 
 def master_open():
-    """master_open() -> (master_fd, slave_name)
-    Open a pty master and return the fd, and the filename of the slave end.
+    """master_open() -> (parent_fd, child_name)
+    Open a pty parent and return the fd, and the filename of the child end.
     Deprecated, use openpty() instead."""
 
     try:
-        master_fd, slave_fd = os.openpty()
+        parent_fd, child_fd = os.openpty()
     except (AttributeError, OSError):
         pass
     else:
-        slave_name = os.ttyname(slave_fd)
-        os.close(slave_fd)
-        return master_fd, slave_name
+        child_name = os.ttyname(child_fd)
+        os.close(child_fd)
+        return parent_fd, child_name
 
     return _open_terminal()
 
 def _open_terminal():
-    """Open pty master and return (master_fd, tty_name)."""
+    """Open pty parent and return (parent_fd, tty_name)."""
     for x in 'pqrstuvwxyzPQRST':
         for y in '0123456789abcdef':
             pty_name = '/dev/pty' + x + y
@@ -66,9 +66,9 @@ def _open_terminal():
             return (fd, '/dev/tty' + x + y)
     raise OSError('out of pty devices')
 
-def slave_open(tty_name):
-    """slave_open(tty_name) -> slave_fd
-    Open the pty slave and acquire the controlling terminal, returning
+def child_open(tty_name):
+    """child_open(tty_name) -> child_fd
+    Open the pty child and acquire the controlling terminal, returning
     opened filedescriptor.
     Deprecated, use openpty() instead."""
 
@@ -85,7 +85,7 @@ def slave_open(tty_name):
     return result
 
 def fork():
-    """fork() -> (pid, master_fd)
+    """fork() -> (pid, parent_fd)
     Fork and make the child a session leader with a controlling terminal."""
 
     try:
@@ -101,28 +101,28 @@ def fork():
                 pass
         return pid, fd
 
-    master_fd, slave_fd = openpty()
+    parent_fd, child_fd = openpty()
     pid = os.fork()
     if pid == CHILD:
         # Establish a new session.
         os.setsid()
-        os.close(master_fd)
+        os.close(parent_fd)
 
-        # Slave becomes stdin/stdout/stderr of child.
-        os.dup2(slave_fd, STDIN_FILENO)
-        os.dup2(slave_fd, STDOUT_FILENO)
-        os.dup2(slave_fd, STDERR_FILENO)
-        if slave_fd > STDERR_FILENO:
-            os.close(slave_fd)
+        # Child fd becomes stdin/stdout/stderr of child.
+        os.dup2(child_fd, STDIN_FILENO)
+        os.dup2(child_fd, STDOUT_FILENO)
+        os.dup2(child_fd, STDERR_FILENO)
+        if child_fd > STDERR_FILENO:
+            os.close(child_fd)
 
         # Explicitly open the tty to make it become a controlling tty.
         tmp_fd = os.open(os.ttyname(STDOUT_FILENO), os.O_RDWR)
         os.close(tmp_fd)
     else:
-        os.close(slave_fd)
+        os.close(child_fd)
 
     # Parent and child process.
-    return pid, master_fd
+    return pid, parent_fd
 
 def _writen(fd, data):
     """Write all the data to a descriptor."""
@@ -134,20 +134,20 @@ def _read(fd):
     """Default read function."""
     return os.read(fd, 1024)
 
-def _copy(master_fd, master_read=_read, stdin_read=_read):
+def _copy(parent_fd, parent_read=_read, stdin_read=_read):
     """Parent copy loop.
     Copies
-            pty master -> standard output   (master_read)
-            standard input -> pty master    (stdin_read)"""
-    fds = [master_fd, STDIN_FILENO]
+            pty parent -> standard output   (parent_read)
+            standard input -> pty parent    (stdin_read)"""
+    fds = [parent_fd, STDIN_FILENO]
     while fds:
         rfds, _wfds, _xfds = select(fds, [], [])
 
-        if master_fd in rfds:
+        if parent_fd in rfds:
             # Some OSes signal EOF by returning an empty byte string,
             # some throw OSErrors.
             try:
-                data = master_read(master_fd)
+                data = parent_read(parent_fd)
             except OSError:
                 data = b""
             if not data:  # Reached EOF.
@@ -161,15 +161,15 @@ def _copy(master_fd, master_read=_read, stdin_read=_read):
             if not data:
                 fds.remove(STDIN_FILENO)
             else:
-                _writen(master_fd, data)
+                _writen(parent_fd, data)
 
-def spawn(argv, master_read=_read, stdin_read=_read):
+def spawn(argv, parent_read=_read, stdin_read=_read):
     """Create a spawned process."""
     if isinstance(argv, str):
         argv = (argv,)
     sys.audit('pty.spawn', argv)
 
-    pid, master_fd = fork()
+    pid, parent_fd = fork()
     if pid == CHILD:
         os.execlp(argv[0], *argv)
 
@@ -181,10 +181,10 @@ def spawn(argv, master_read=_read, stdin_read=_read):
         restore = False
 
     try:
-        _copy(master_fd, master_read, stdin_read)
+        _copy(parent_fd, parent_read, stdin_read)
     finally:
         if restore:
             tcsetattr(STDIN_FILENO, tty.TCSAFLUSH, mode)
 
-    close(master_fd)
+    close(parent_fd)
     return waitpid(pid, 0)[1]
