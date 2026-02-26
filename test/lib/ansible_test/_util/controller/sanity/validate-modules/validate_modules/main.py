@@ -1307,7 +1307,7 @@ class ModuleValidator(Validator):
         except ValueError as e:
             version_added = version_added_raw or '0.0'
             if self._is_new_module() or version_added != 'historical':
-                # already reported during schema validation, except:
+                # already reported during schema validation, except Exception:
                 if version_added == 'historical':
                     self.reporter.error(
                         path=self.object_path,
