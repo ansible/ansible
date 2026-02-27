@@ -175,9 +175,7 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
-    # DTFIX-FUTURE: these do nothing but augment the exception message; DRY and nuke
-
-    def _load_tasks(self, attr, ds):
+    def _load_tasks(self, attr, ds, stage="tasks"):
         """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
@@ -185,27 +183,13 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks.", obj=self._ds) from ex
+            raise AnsibleParserError(f"A malformed block was encountered while loading {stage}.", obj=self._ds) from ex
 
     def _load_pre_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks.", obj=self._ds) from ex
+        return self._load_tasks(attr, ds, stage='pre_tasks')
 
     def _load_post_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks.", obj=self._ds) from ex
+        return self._load_tasks(attr, ds, stage='post_tasks')
 
     def _load_handlers(self, attr, ds):
         """
