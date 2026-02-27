@@ -111,9 +111,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
         return super(Block, self).preprocess_data(ds)
 
-    # FIXME: these do nothing but augment the exception message; DRY and nuke
-
-    def _load_block(self, attr, ds):
+    def _load(self, attr, ds, type):
         try:
             return load_list_of_tasks(
                 ds,
@@ -126,37 +124,16 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 use_handlers=self._use_handlers,
             )
         except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds) from ex
+            raise AnsibleParserError(f"A malformed block was encountered while loading {type}", obj=self._ds) from ex
+        
+    def _load_block(self, attr, ds):
+        return self._load(attr, ds, 'block')
 
     def _load_rescue(self, attr, ds):
-        try:
-            return load_list_of_tasks(
-                ds,
-                play=self._play,
-                block=self,
-                role=self._role,
-                task_include=None,
-                variable_manager=self._variable_manager,
-                loader=self._loader,
-                use_handlers=self._use_handlers,
-            )
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds) from ex
+        return self._load(attr, ds, 'rescue')
 
     def _load_always(self, attr, ds):
-        try:
-            return load_list_of_tasks(
-                ds,
-                play=self._play,
-                block=self,
-                role=self._role,
-                task_include=None,
-                variable_manager=self._variable_manager,
-                loader=self._loader,
-                use_handlers=self._use_handlers,
-            )
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds) from ex
+        return self._load(attr, ds, 'always')
 
     def _validate_always(self, attr, name, value):
         if value and not self.block:
