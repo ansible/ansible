@@ -40,11 +40,15 @@ class ActionModule(ActionBase):
             return result
 
         group_name = self._task.args.get('key')
+
+        # RPFIX-3: should this be the default in the API?
         parent_groups = self._task.args.get('parents', ['all'])
         if isinstance(parent_groups, str):
             parent_groups = [parent_groups]
 
         result['changed'] = False
+        # RPFIX-3: stop doing inline normalization, or at least use a shared utility method
         result['add_group'] = group_name.replace(' ', '-')
         result['parent_groups'] = [name.replace(' ', '-') for name in parent_groups]
+        self.add_group(group_name, parent_group_names=result['parent_groups'])
         return result

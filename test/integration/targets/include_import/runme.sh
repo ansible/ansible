@@ -160,4 +160,4 @@ test "$(grep -c '\- name: invalid include_task definition' test_null_include_fil
 set +e
 ansible-playbook test_nested_non_existent_tasks.yml 2>&1 | tee test_nested_non_existent_tasks.out
 set -e
-test "$(grep -c 'Could not find or access' test_nested_non_existent_tasks.out)" = 3
+test "$(grep -c 'Could not find or access' test_nested_non_existent_tasks.out)" = 2

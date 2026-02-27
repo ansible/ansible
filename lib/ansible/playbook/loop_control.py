@@ -23,6 +23,8 @@ from ansible.playbook.base import FieldAttributeBase
 
 class LoopControl(FieldAttributeBase):
 
+    # RPFIX-7: validation errors on these always seem to point at the first element of the loop_control dict instead
+    #  of the actual problem case (pre-existing issue)
     loop_var = NonInheritableFieldAttribute(isa='string', default='item', always_post_validate=True)
     index_var = NonInheritableFieldAttribute(isa='string', always_post_validate=True)
     label = NonInheritableFieldAttribute(isa='string')

@@ -108,7 +108,7 @@ def _filter_non_json_lines(data):
         trailing_junk = lines[len(lines) - reverse_end_offset:]
         for line in trailing_junk:
             if line.strip():
-                warnings.append('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
+                warnings.append('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))  # RPFIX-5: include obj here?
                 break
 
     lines = lines[:(len(lines) - reverse_end_offset)]

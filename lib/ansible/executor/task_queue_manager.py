@@ -34,8 +34,8 @@ from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
 from ansible._internal._errors._handler import ErrorHandler
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
-from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
-from ansible.inventory.data import InventoryData
+from ansible.executor.task_result import CallbackTaskResult
+from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play_context import PlayContext
@@ -44,6 +44,7 @@ from ansible.plugins.callback import CallbackBase
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult
 from ansible.vars.hostvars import HostVars
 from ansible.vars.manager import VariableManager
 from ansible.utils.display import Display
@@ -52,6 +53,7 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 
 if t.TYPE_CHECKING:
     from ansible.executor.process.worker import WorkerProcess
+    from ansible.inventory.host import Host
 
 __all__ = ['TaskQueueManager']
 
@@ -65,7 +67,7 @@ display = Display()
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CallbackSend:
     method_name: str
-    wire_task_result: _WireTaskResult
+    wire_task_result: WireTaskResult
 
 
 class DisplaySend:
@@ -90,11 +92,11 @@ class FinalQueue(multiprocessing.queues.SimpleQueue):
         kwargs['ctx'] = multiprocessing_context
         super().__init__(*args, **kwargs)
 
-    def send_callback(self, method_name: str, task_result: _RawTaskResult) -> None:
-        self.put(CallbackSend(method_name=method_name, wire_task_result=task_result.as_wire_task_result()))
+    def send_callback(self, method_name: str, host: Host, task: Task, utr: UnifiedTaskResult) -> None:
+        self.put(CallbackSend(method_name=method_name, wire_task_result=WireTaskResult.create(host=host, task=task, utr=utr)))
 
-    def send_task_result(self, task_result: _RawTaskResult) -> None:
-        self.put(task_result.as_wire_task_result())
+    def send_task_result(self, host: Host, task: Task, utr: UnifiedTaskResult) -> None:
+        self.put(WireTaskResult.create(host=host, task=task, utr=utr))
 
     def send_display(self, method, *args, **kwargs):
         self.put(
@@ -145,7 +147,7 @@ class TaskQueueManager:
 
     def __init__(
         self,
-        inventory: InventoryData,
+        inventory: InventoryManager,
         variable_manager: VariableManager,
         loader: DataLoader,
         passwords: dict[str, str | None],
@@ -439,7 +441,7 @@ class TaskQueueManager:
     def clear_failed_hosts(self) -> None:
         self._failed_hosts = dict()
 
-    def get_inventory(self) -> InventoryData:
+    def get_inventory(self) -> InventoryManager:
         return self._inventory
 
     def get_variable_manager(self) -> VariableManager:
@@ -497,8 +499,8 @@ class TaskQueueManager:
 
                 for arg in args:
                     # FIXME: add play/task cleaners
-                    if isinstance(arg, _RawTaskResult):
-                        copied_tr = arg.as_callback_task_result()
+                    if isinstance(arg, HostTaskResult):
+                        copied_tr = CallbackTaskResult(host=arg.host, task=arg.task, utr=arg.utr)
                         new_args.append(copied_tr)
                         # this state hack requires that no callback ever accepts > 1 TaskResult object
                         callback_plugin._current_task_result = copied_tr

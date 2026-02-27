@@ -120,10 +120,11 @@ class TemplateEngine:
 
         return new_engine
 
-    def extend(self, marker_behavior: MarkerBehavior | None = None) -> t.Self:
+    def extend(self, marker_behavior: MarkerBehavior | None = None, variables: dict[str, t.Any] | ChainMap[str, t.Any] | None = None) -> t.Self:
         new_templar = type(self)(
             loader=self._loader,
-            variables=self._variables,
+            # FUTURE: this should probably be a chainmap layer that proxies the base values to prevent aliased mutations of inner values being visible
+            variables=variables or self._variables,
             variables_factory=self._variables_factory,
             marker_behavior=marker_behavior or self._marker_behavior,
         )

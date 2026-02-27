@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import typing as t
 
+from collections import ChainMap
+
 from ansible import constants as C
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
@@ -86,7 +88,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     loop = NonInheritableFieldAttribute(isa='list')
     loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl, default=LoopControl)
     poll = NonInheritableFieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
-    register = NonInheritableFieldAttribute(isa='string', static=True)
+    register = NonInheritableFieldAttribute(static=True)  # can be str or dict, manual validation required
     retries = NonInheritableFieldAttribute(isa='int')  # default is set in TaskExecutor
     until = NonInheritableFieldAttribute(isa='list', default=list)
 
@@ -369,11 +371,17 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
             setattr(self, name, [value])
 
     def _validate_register(self, attr, name, value):
-        if value is not None:
-            try:
+        if value is None:
+            return
+
+        try:
+            if isinstance(value, dict):
+                any(validate_variable_name(k) for k in value.keys())
+                # RPFIX-3: we've validated the keys, but need validation to ensure that dict values are non-template strings
+            else:
                 validate_variable_name(value)
-            except Exception as ex:
-                raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
+        except Exception as ex:
+            raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
 
     def post_validate(self, templar):
         """
@@ -594,17 +602,29 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         self,
         conditional: list[str | bool],
         variables: dict[str, t.Any],
-        *,
-        result_context: dict[str, t.Any] | None = None,
     ) -> bool:
+        """Loops through the conditionals set on this object, returning False if any of them evaluate as such."""
+
+        # RPFIX-1: internal error handling here, or at all call-sites resolve_conditional failures can take down the process
+        return self._resolve_conditional_with_item(conditional, variables)[0]
+
+    def _resolve_conditional_with_item(
+        self,
+        conditional: list[str | bool],
+        variables: dict[str, t.Any],
+    ) -> tuple[bool, object]:
         """Loops through the conditionals set on this object, returning False if any of them evaluate as such, as well as the condition that was False."""
-        engine = TemplateEngine(self._loader, variables=variables)
+
+        # early bailout, True seems weird though...
+        if not conditional:
+            return True, None
+
+        # bolt current_task into _task (or whatever) into an extended templar available variables
+        augmented_vars = ChainMap({}, _task.create_current_task_variable_layer(), variables)
+        engine = TemplateEngine(self._loader, variables=augmented_vars)
 
         for item in conditional:
             if not engine.evaluate_conditional(item):
-                if result_context is not None:
-                    result_context.update(false_condition=item)
+                return False, item
 
-                return False
-
-        return True
+        return True, None

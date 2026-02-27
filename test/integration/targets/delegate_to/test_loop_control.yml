@@ -13,4 +13,4 @@
     - name: Check if delegated_host was templated properly
       assert:
         that:
-          - out.results[0]['_ansible_delegated_vars']['ansible_delegated_host'] == 'localhost'
+          - out.results[0]['_ansible_delegated_vars']['ansible_host'] == 'localhost'

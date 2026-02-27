@@ -1,0 +1,29 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - add_host:
+        name: flakyhost
+        ansible_connection: local
+        should_ignore_errors: 5
+- hosts: localhost, flakyhost
+  gather_facts: no
+  tasks:
+    - name: fails on flakyhost
+      raw: exit {{ should_ignore_errors | default(0) }}
+      ignore_errors: '{{ should_ignore_errors | default(false) }}'
+      register: fails_on_flakyhost
+    - assert:
+        that:
+          - hostvars.flakyhost.fails_on_flakyhost is failed
+      when: inventory_hostname == "localhost"
+
+# RPFIX-3: discuss if this should be fatal
+#- hosts: localhost
+#  gather_facts: no
+#  tasks:
+#    - raw: exit {{ item }}
+#      ignore_errors: '{{ item }}'
+#      loop: [ 0,2,1 ]  # this doesn't really fail safe because any "true" means we ignore all errors - should an invalid ignore_errors in a loop be fully fatal to that host+task (or at least treated as ignore_errors: false for that host+task?)
+#
+#    - fail:
+#        msg: oops, should have exited?

@@ -1,0 +1,23 @@
+major_changes:
+  # RPFIX-9: finish this and draft docs/porting guide together; links to docs/porting guide?
+  # multiple register values, allows stacking
+  # register projections
+  # * _task implicit variable available to task conditionals and register expressions
+  # * _task.result is ~= register: varname, for loops it's the previous loop value
+  # * _task.loop_result is a preview of the accumulated final task result with all loop item results that have executed
+  # * register: varname --> register: {varname: _task.result}
+  # * register projection values are evaluated in order and can reference previously defined names
+  # *   register: {my_result: _task.result, just_stdout: my_result.stdout, stdout_length: just_stdout | length}
+  # conditionals can use _task to access current task results without the use of ``register``
+  - register projections - The ``register`` keyword now supports registration of multiple variables with Jinja expressions to transform task results and other variables.
+    This feature can replace many usages of ``set_fact``.
+  - task implicit object - A new ``_task`` implicit object is available for use in ``register`` and task conditional expressions (e.g., ``failed_when``).
+    The pending results of the current task can be accessed via its ``result`` and ``loop_result`` properties.
+bugfixes:
+  - ignore_errors - Templated values for the ``ignore_errors`` keyword behave more consistently in looped tasks.
+    If ``ignore_errors`` resolves ``True`` for any loop item, errors will be ignored for the entire task.
+  - ignore_unreachable - Templated values for the ``ignore_unreachable`` keyword behave more consistently in looped tasks.
+    If ``ignore_unreachable`` resolves ``True`` for any loop item, unreachable hosts will be ignored for the entire task.
+  - ignore_errors - Invalid values for ``ignore_errors`` will always be treated as ``False``
+breaking_changes:
+  - ...

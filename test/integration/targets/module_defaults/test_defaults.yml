@@ -42,8 +42,6 @@
       task_arg: from task
     register: other_echo1_unq
 
-  - debug: var=echo1_fq
-
   - legacy_ping:
     register: legacy_ping_1
     module_defaults:

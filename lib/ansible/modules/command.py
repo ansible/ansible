@@ -357,7 +357,7 @@ def main():
         r['stderr'] = to_text(r['stderr']).rstrip("\r\n")
 
     if r['rc'] != 0:
-        r['msg'] = 'non-zero return code'
+        r['msg'] = 'The command exited with a non-zero return code.'
         module.fail_json(**r)
 
     module.exit_json(**r)

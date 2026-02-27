@@ -297,6 +297,8 @@ class VariableManager:
 
                 inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
                 # push facts to main namespace
+                # RPFIX-1: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts;
+                #  also, deprecation can probably be done once on the way in instead of on every vars stack.
                 if inject:
                     if origin == 'default':
                         clean_top = {k: (_deprecate_top_level_fact(v) if k != 'ansible_local' else v) for k, v in clean_facts(facts).items()}
@@ -393,7 +395,7 @@ class VariableManager:
         if host:
             # include_vars non-persistent cache
             all_vars = _combine_and_track(all_vars, self._vars_cache.get(host.get_name(), dict()), "include_vars")
-            # fact non-persistent cache
+            # fact non-persistent cache (this also includes registered variables and host variables set at runtime)
             all_vars = _combine_and_track(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), "set_fact")
 
         # next, we merge in role params and task include params
@@ -570,6 +572,7 @@ class VariableManager:
         warn_if_reserved(facts)
 
         try:
+            # RPFIX-1: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
             host_cache = self._fact_cache.get(host)
         except KeyError:
             # We get to set this as new
@@ -588,6 +591,8 @@ class VariableManager:
         """
         Sets or updates the given facts for a host in the fact cache.
         """
+
+        # RPFIX-1: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
 
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))

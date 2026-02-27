@@ -46,12 +46,15 @@
   ignore_errors: true
   register: result
 
+- debug:
+    var: result
+
 - assert:
     that:
-      - "'failed' in result and result.failed"
-      - "'failed_when_result' in result and result.failed_when_result"
+      - result.failed
+      - result.failed_when_result
       - result.exception is defined
-      - result.failed_when_suppressed_exception is undefined
+      - result.failed_when_suppressed_exception is defined
 
 - name: command rc 1 failed_when_result undef
   shell: exit 1
@@ -69,6 +72,9 @@
   failed_when: false
   ignore_errors: true
   register: result
+
+- debug:
+    var: result
 
 - assert:
     that:
