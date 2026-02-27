@@ -235,7 +235,7 @@ class FieldAttributeBase:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
                                 "The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds()
+                                " however the incoming data structure is a %s" % (name, type(value)), obj=value
                             )
 
         self._validated = True
