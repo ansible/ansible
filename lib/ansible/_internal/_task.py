@@ -111,6 +111,7 @@ class CurrentTask:
         except (NotALoopError, NoRecordedResultError) as ex:
             raise _attribute_unavailable.AttributeUnavailableError("The _task.loop_result property is unavailable.") from ex
 
+
 # RPFIX-3: there isn't currently a way to emulate the classic polymorphic register behavior with a loop. If we added another property to CurrentTask that
 # could emulate that behavior, we could also potentially rewrite all tasks to use RP internally instead of keeping both sets of evaluation code around.
 #     - shell: echo {{ item }}
