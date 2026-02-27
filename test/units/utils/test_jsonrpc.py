@@ -7,11 +7,11 @@ from ansible._internal._datatag._tags import Origin
 from ansible.utils.jsonrpc import JsonRpcServer
 
 
-def test_response_type_cleansing():
+def test_response_type_cleansing() -> None:
     """Avoid unpickling errors in module contexts by ensuring that non-scalar JsonRpc responses are not pickled with tags."""
 
     class RPCTest:
-        def returns_list_with_tagged_str(self):
+        def returns_list_with_tagged_str(self) -> list:
             return [Origin(description="blar").tag("taggedstr")]
 
     s = JsonRpcServer()

@@ -85,7 +85,7 @@ class JsonRpcServer(object):
         if not isinstance(result, str):
             response["result_type"] = "pickle"
             # typically consumed in a module context; transform custom types (e.g. tagged/vaulted values) to native to prevent unpickling failures
-            result = to_text(pickle.dumps(transform_to_native_types(result, redact=False)), errors='surrogateescape')
+            result = to_text(pickle.dumps(transform_to_native_types(result, redact=False)))
         response['result'] = result
         return response
 
