@@ -125,7 +125,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
             )
         except AssertionError as ex:
             raise AnsibleParserError(f"A malformed block was encountered while loading {type}", obj=self._ds) from ex
-        
+
     def _load_block(self, attr, ds):
         return self._load(attr, ds, 'block')
 
