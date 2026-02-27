@@ -525,7 +525,7 @@ class FieldAttributeBase:
         setattr(self, name, value)
         return value
 
-    def post_validate(self, templar):
+    def post_validate(self, templar: TemplateEngine) -> None:
         """
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
