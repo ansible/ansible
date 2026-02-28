@@ -82,7 +82,6 @@
       - third_echo is not changed
       - fourth_echo is not changed
 
-# RPFIX-5: am I doing this wrong, it fails and stops in spite of my ignore_errors
 - name: Check failed_when in loop
   shell: echo {{ item }}; exit 1
   loop: [ 1, 2, 3 ]
