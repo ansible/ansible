@@ -227,7 +227,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         host_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
     ) -> None:
-        # RPFIX-5: docstring
+        """
+        Add the given host to inventory if the current action completes successfully.
+        Can be called more than once to add multiple hosts.
+        """
         self._pending_add_hosts.append(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
@@ -241,7 +244,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         group_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
     ) -> None:
-        # RPFIX-5: docstring
+        """
+        Add the given group to inventory if the current action completes successfully.
+        Can be called more than once to add multiple groups.
+        """
         self._pending_add_groups.append(_task.AddGroup(
             group_name=group_name,
             group_vars=group_vars,
