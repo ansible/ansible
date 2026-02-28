@@ -129,6 +129,16 @@ def create_current_task_variable_layer() -> dict[str, object]:
     return dict(_task=CurrentTask())
 
 
+@dataclasses.dataclass(kw_only=True, slots=True)
+class PendingChanges:
+    """Changes which will be applied only if the task succeeds."""
+
+    add_hosts: list[AddHost] = dataclasses.field(default_factory=list)
+    add_groups: list[AddGroup] = dataclasses.field(default_factory=list)
+    # RPFIX-1: now that set_fact uses this, we need to make sure it's OK that it only works on success
+    register_host_variables: dict[VariableLayer, dict[str, object]] = dataclasses.field(default_factory=dict)
+
+
 @dataclasses.dataclass
 class TaskContext(AmbientContextBase):
     """Ambient context that wraps task execution on workers. It provides access to the currently executing task."""
@@ -162,6 +172,7 @@ class TaskContext(AmbientContextBase):
     _loop_extended: dict[str, object] | None = None
     _templar: _engine.TemplateEngine | None = None
     _break_when_triggered: bool = False
+    _pending_changes: PendingChanges | None = None
 
     @contextlib.contextmanager
     def loop_item_context(self, te: TaskExecutor) -> t.Generator[None]:
@@ -812,9 +823,7 @@ class UnifiedTaskResult:
     # RPFIX-3: rename delegated_vars to something like `callback_delegated_var_subset_of_crap`
     delegated_vars: dict[str, object] | None = dataclasses.field(default=None, metadata=export_only("_ansible_delegated_vars"))
     diff: object | None = dataclasses.field(default=None, metadata=import_export())  # RPFIX-5: validation with custom conversion func?
-    pending_add_hosts: list[AddHost] = dataclasses.field(default_factory=list)  # RPFIX-5: rename to something less confusing?
-    pending_add_groups: list[AddGroup] = dataclasses.field(default_factory=list)  # RPFIX-5: rename to something less confusing?
-    pending_register_host_variables: dict[VariableLayer, dict[str, object]] = dataclasses.field(default_factory=dict)
+    pending_changes: PendingChanges = dataclasses.field(default_factory=PendingChanges)
     stats: StatsDict | None = dataclasses.field(default=None, metadata=import_export('ansible_stats', conversion_func=_convert_stats))
     async_job_id: str | None = dataclasses.field(default=None, metadata=import_export('ansible_job_id'))
     include_file: str | None = None

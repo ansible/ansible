@@ -646,7 +646,7 @@ class StrategyBase:
 
                                 display.warning(msg)
 
-                    for add_host in result_utr.pending_add_hosts:
+                    for add_host in result_utr.pending_changes.add_hosts:
                         if self._inventory.add_dynamic_host(add_host):
                             result_utr.changed = True
 
@@ -654,11 +654,11 @@ class StrategyBase:
                         if result_utr.changed and add_host.host_name not in self._hosts_cache_all:
                             self._hosts_cache_all.append(add_host.host_name)
 
-                    for add_group in result_utr.pending_add_groups:
+                    for add_group in result_utr.pending_changes.add_groups:
                         if self._inventory.add_dynamic_group(original_host.name, add_group):
                             result_utr.changed = True
 
-                    if result_utr.pending_add_hosts or result_utr.pending_add_groups:
+                    if result_utr.pending_changes.add_hosts or result_utr.pending_changes.add_groups:
                         item_vars = _get_item_vars(result_utr, original_task)
                         found_task_vars = self._queued_task_cache.get((original_host.name, task_result.task._uuid))['task_vars']
 
@@ -690,7 +690,7 @@ class StrategyBase:
                             if result_utr.failed:
                                 task_result.utr.failed = True
 
-                    if result_utr.pending_register_host_variables:
+                    if result_utr.pending_changes.register_host_variables:
                         original_host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                         if original_task.delegate_to and original_task.delegate_facts:
@@ -698,7 +698,7 @@ class StrategyBase:
                         else:
                             potentially_delegated_host_list = original_host_list
 
-                        for variable_layer, variables in result_utr.pending_register_host_variables.items():
+                        for variable_layer, variables in result_utr.pending_changes.register_host_variables.items():
                             match variable_layer:
                                 case _task.VariableLayer.REGISTER_VARS:
                                     for target_host in original_host_list:

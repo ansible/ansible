@@ -542,13 +542,14 @@ class TaskExecutor:
                     # TaskContext.current().task = self._task  # HACK: all the mutation/copy jazz for the item-
                     #   specific values should be handled internally to TaskContext
 
-                    with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=post_connection_vars), allow_replace=True) as utr:
-                        if not utr.failed:
-                            # RPFIX-3: single container for all the pending things?
-                            utr.pending_add_hosts = self._handler._pending_add_hosts
-                            utr.pending_add_groups = self._handler._pending_add_groups
-                            # RPFIX-1: now that set_fact uses this, we need to make sure it's OK that it only works on success
-                            utr.pending_register_host_variables = self._handler._pending_register_host_variables
+                    try:
+                        task_ctx._pending_changes = _task.PendingChanges()
+
+                        with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=post_connection_vars), allow_replace=True) as utr:
+                            if not utr.failed:
+                                utr.pending_changes = task_ctx._pending_changes
+                    finally:
+                        task_ctx._pending_changes = None
 
             finally:
                 self._handler.cleanup()
@@ -665,8 +666,8 @@ class TaskExecutor:
             utr.registered_values = TaskContext._project(self._task, post_connection_templar, utr)
             task_vars.update(utr.registered_values)
 
-        if _task.VariableLayer.CACHEABLE_FACT not in utr.pending_register_host_variables and utr.ansible_facts:
-            utr.pending_register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
+        if _task.VariableLayer.CACHEABLE_FACT not in utr.pending_changes.register_host_variables and utr.ansible_facts:
+            utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
 
         if utr.ansible_facts and self._task.action not in C._ACTION_DEBUG:
             if self._task.action in C._ACTION_WITH_CLEAN_FACTS:

@@ -109,12 +109,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
-        # RPFIX-3: comment/document these deferred operations
-        # RPFIX-3: can we hide these so they're not visible to subclasses?
-        self._pending_add_hosts: list[_task.AddHost] = []
-        self._pending_add_groups: list[_task.AddGroup] = []
-        self._pending_register_host_variables: dict[VariableLayer, dict[str, object]] = {}
-
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
@@ -231,7 +225,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Add the given host to inventory if the current action completes successfully.
         Can be called more than once to add multiple hosts.
         """
-        self._pending_add_hosts.append(_task.AddHost(
+        _task.TaskContext.current()._pending_changes.add_hosts.append(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
             parent_group_names=parent_group_names,
@@ -248,7 +242,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Add the given group to inventory if the current action completes successfully.
         Can be called more than once to add multiple groups.
         """
-        self._pending_add_groups.append(_task.AddGroup(
+        _task.TaskContext.current()._pending_changes.add_groups.append(_task.AddGroup(
             group_name=group_name,
             group_vars=group_vars,
             parent_group_names=parent_group_names,
@@ -259,7 +253,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Register the given variables for the current host at the specified variable precedence layer.
         Calling this method more than once for the same layer will override any previous value for the currently executing action.
         """
-        self._pending_register_host_variables[layer] = variables
+        _task.TaskContext.current()._pending_changes.register_host_variables[layer] = variables
 
     @classmethod
     @contextlib.contextmanager
