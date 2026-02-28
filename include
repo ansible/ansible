@@ -1,0 +1,9 @@
+include COPYRIGHT
+ include changelogs/CHANGELOG*.rst
+ include changelogs/changelog.yaml
+ include licenses/*.txt
+include COPYLEFT
+ 
+ include changelogs/CHANGELOG*.rst
+ include changelogs/changelog.yaml
+ include licenses/*.txt
