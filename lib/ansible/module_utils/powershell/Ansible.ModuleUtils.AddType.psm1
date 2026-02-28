@@ -217,12 +217,22 @@ Function Add-CSharpType {
             $compiler_options
         )
 
+        $emit_options = [Microsoft.CodeAnalysis.Emit.EmitOptions]::new()
+        if ($PSCmdlet.ParameterSetName -eq "Module") {
+            $include_debug = $AnsibleModule.TracebacksFor -contains "error" -or $AnsibleModule.TracebacksFor -contains "always"
+        }
+        else {
+            $include_debug = $IncludeDebugInfo.IsPresent
+        }
+        if ($include_debug) {
+            $emit_options = $emit_options.WithDebugInformationFormat([Microsoft.CodeAnalysis.Emit.DebugInformationFormat]::Embedded)
+        }
+
         # Load the compiled code and pdb info, we do this so we can
         # include line number in a stracktrace
         $code_ms = New-Object -TypeName System.IO.MemoryStream
-        $pdb_ms = New-Object -TypeName System.IO.MemoryStream
         try {
-            $emit_result = $compilation.Emit($code_ms, $pdb_ms)
+            $emit_result = $compilation.Emit($code_ms, $null, $null, $null, $null, $emit_options)
             if (-not $emit_result.Success) {
                 $errors = [System.Collections.ArrayList]@()
 
@@ -263,12 +273,10 @@ Function Add-CSharpType {
             }
 
             $code_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
-            $pdb_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
-            $compiled_assembly = [System.Runtime.Loader.AssemblyLoadContext]::Default.LoadFromStream($code_ms, $pdb_ms)
+            $compiled_assembly = [System.Runtime.Loader.AssemblyLoadContext]::Default.LoadFromStream($code_ms)
         }
         finally {
             $code_ms.Close()
-            $pdb_ms.Close()
         }
     }
     else {

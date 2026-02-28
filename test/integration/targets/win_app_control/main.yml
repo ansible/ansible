@@ -21,24 +21,39 @@
       - local_tmp_dir is defined
 
   - name: get OS version
-    win_shell: (Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion.ToString()
+    ansible.windows.win_powershell:
+      script: (Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion.ToString()
     register: os_version
 
   - name: setup and test block for 2019 and later
     when:
-    - os_version.stdout | trim is version('10.0.17763', '>=')  # 2019+
+    - os_version.output[0] is version('10.0.17763', '>=')  # 2019+
     block:
     - name: get test remote tmp dir
       import_role:
         name: ../setup_remote_tmp_dir
 
     - name: get current user
-      win_shell: '[Environment]::UserName'
+      ansible.windows.win_powershell:
+        script: '[Environment]::UserName'
       register: current_user_raw
 
     - name: set current user fact
       set_fact:
-        current_user: '{{ current_user_raw.stdout | trim }}'
+        current_user: '{{ current_user_raw.output[0] }}'
+
+    # Environment.UserName is SYSTEM on .NET Framework and the computer name on .NET 5+
+    - name: get SYSTEM username
+      ansible.windows.win_powershell:
+        script: '[Environment]::UserName'
+      register: system_user_raw
+      become: true
+      become_method: runas
+      become_user: SYSTEM
+
+    - name: set system user fact
+      set_fact:
+        system_user: '{{ system_user_raw.output[0] }}'
 
     - name: setup App Control
       import_tasks: setup.yml
@@ -47,61 +62,9 @@
       import_tasks: test_not_enabled.yml
 
     - name: enable App Control
-      win_shell: |
-        $ErrorActionPreference = 'Stop'
-
-        $tmpPath = '{{ remote_tmp_dir }}'
-
-        $policyPath = Join-Path $tmpPath policy.xml
-        $certPath = Join-Path $tmpPath signing.cer
-        $policyName = 'Ansible_AppControl_Test'
-
-        Copy-Item "$env:windir\schemas\CodeIntegrity\ExamplePolicies\DefaultWindows_Enforced.xml" $policyPath
-        Set-CIPolicyIdInfo -FilePath $policyPath -PolicyName $policyName -PolicyId (New-Guid)
-        Set-CIPolicyVersion -FilePath $policyPath -Version "1.0.0.0"
-
-        Add-SignerRule -FilePath $policyPath -CertificatePath $certPath -User
-        Set-RuleOption -FilePath $policyPath -Option 0          # Enabled:UMCI
-        Set-RuleOption -FilePath $policyPath -Option 3 -Delete  # Enabled:Audit Mode
-        Set-RuleOption -FilePath $policyPath -Option 11 -Delete # Disabled:Script Enforcement
-        Set-RuleOption -FilePath $policyPath -Option 19         # Enabled:Dynamic Code Security
-
-        # Using $tmpPath has this step fail
-        $policyBinPath = "$env:windir\System32\CodeIntegrity\SiPolicy.p7b"
-        $null = ConvertFrom-CIPolicy -XmlFilePath $policyPath -BinaryFilePath $policyBinPath
-
-        $ciTool = Get-Command -Name CiTool.exe -ErrorAction SilentlyContinue
-        $policyId = $null
-        if ($ciTool) {
-            $setInfo = & $ciTool --update-policy $policyBinPath *>&1
-            if ($LASTEXITCODE) {
-                throw "citool.exe --update-policy failed ${LASTEXITCODE}: $setInfo"
-            }
-
-            $policyId = & $ciTool --list-policies --json |
-                ConvertFrom-Json |
-                Select-Object -ExpandProperty Policies |
-                Where-Object FriendlyName -eq $policyName |
-                Select-Object -ExpandProperty PolicyID
-        }
-        else {
-            $rc = Invoke-CimMethod -Namespace root\Microsoft\Windows\CI -ClassName PS_UpdateAndCompareCIPolicy -MethodName Update -Arguments @{
-                FilePath = $policyBinPath
-            }
-            if ($rc.ReturnValue) {
-                throw "PS_UpdateAndCompareCIPolicy Update failed $($rc.ReturnValue)"
-            }
-        }
-
-        @{
-            policy_id = $policyId
-            path = $policyBinPath
-        } | ConvertTo-Json
-      register: policy_info_raw
-
-    - name: set policy info fact
-      set_fact:
-        policy_info: '{{ policy_info_raw.stdout | from_json }}'
+      wdac_enable:
+        remote_tmp_dir: '{{ remote_tmp_dir }}'
+      register: policy_info
 
     - name: run content after enabling App Control
       import_tasks: test_enabled.yml
@@ -129,11 +92,17 @@
       when: policy_removal is changed
 
     - name: remove certificates
-      win_shell: |
-        $ErrorActionPreference = 'Stop'
+      ansible.windows.win_powershell:
+        script: |
+          param($CAThumbprint, $Thumbprint)
 
-        Remove-Item -LiteralPath 'Cert:\LocalMachine\Root\{{ cert_info.ca_thumbprint }}' -Force
-        Remove-Item -LiteralPath 'Cert:\LocalMachine\TrustedPublisher\{{ cert_info.thumbprint }}' -Force
+          $ErrorActionPreference = 'Stop'
+
+          Remove-Item -LiteralPath "Cert:\LocalMachine\Root\$CAThumbprint" -Force
+          Remove-Item -LiteralPath "Cert:\LocalMachine\TrustedPublisher\$Thumbprint" -Force
+        parameters:
+          CAThumbprint: '{{ cert_info.ca_thumbprint }}'
+          Thumbprint: '{{ cert_info.thumbprint }}'
       when: cert_info is defined
 
     - name: remove signed Ansible content

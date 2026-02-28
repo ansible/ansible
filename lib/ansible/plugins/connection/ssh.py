@@ -435,6 +435,7 @@ from functools import wraps
 from multiprocessing.shared_memory import SharedMemory
 
 from ansible import constants as C
+from ansible._internal._powershell import _clixml
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -443,7 +444,6 @@ from ansible.errors import (
 )
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
-from ansible.plugins.shell.powershell import _replace_stderr_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible._internal._ssh import _ssh_agent
@@ -1524,7 +1524,7 @@ class Connection(ConnectionBase):
 
         # When running on Windows, stderr may contain CLIXML encoded output
         if getattr(self._shell, "_IS_WINDOWS", False):
-            stderr = _replace_stderr_clixml(stderr)
+            stderr = _clixml.replace_stderr_clixml(stderr)
 
         return (returncode, stdout, stderr)
 

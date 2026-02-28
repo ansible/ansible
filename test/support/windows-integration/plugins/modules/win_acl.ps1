@@ -179,7 +179,15 @@ Try {
             If ($path_item.PSProvider.Name -eq "Registry") {
                 Set-ACL -LiteralPath $path -AclObject $objACL
             } else {
-                (Get-Item -LiteralPath $path).SetAccessControl($objACL)
+                $fileObj = Get-Item -LiteralPath $path
+
+                # Newer .NET versions use an extension method instead of an instance method.
+                if ('System.IO.FileSystemAclExtensions' -as [Type]) {
+                    [System.IO.FileSystemAclExtensions]::SetAccessControl($fileObj, $objACL)
+                }
+                else {
+                    $fileObj.SetAccessControl($objACL)
+                }
             }
             $result.changed = $true
         }
@@ -193,7 +201,15 @@ Try {
             If ($path_item.PSProvider.Name -eq "Registry") {
                 Set-ACL -LiteralPath $path -AclObject $objACL
             } else {
-                (Get-Item -LiteralPath $path).SetAccessControl($objACL)
+                $fileObj = Get-Item -LiteralPath $path
+
+                # Newer .NET versions use an extension method instead of an instance method.
+                if ('System.IO.FileSystemAclExtensions' -as [Type]) {
+                    [System.IO.FileSystemAclExtensions]::SetAccessControl($fileObj, $objACL)
+                }
+                else {
+                    $fileObj.SetAccessControl($objACL)
+                }
             }
             $result.changed = $true
         }

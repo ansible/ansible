@@ -3,72 +3,17 @@
     cert_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
 
 - name: setup WDAC certificates
-  win_shell: |
-    $ErrorActionPreference = 'Stop'
-
-    $testPrefix = 'Ansible-WDAC'
-    $certPassword = ConvertTo-SecureString -String '{{ cert_pw }}' -Force -AsPlainText
-    $remoteTmpDir = '{{ remote_tmp_dir }}'
-
-    $enhancedKeyUsage = [Security.Cryptography.OidCollection]::new()
-    $null = $enhancedKeyUsage.Add('1.3.6.1.5.5.7.3.3')  # Code Signing
-    $caParams = @{
-        Extension = @(
-            [Security.Cryptography.X509Certificates.X509BasicConstraintsExtension]::new($true, $false, 0, $true),
-            [Security.Cryptography.X509Certificates.X509KeyUsageExtension]::new('KeyCertSign', $false),
-            [Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension ]::new($enhancedKeyUsage, $false)
-        )
-        CertStoreLocation = 'Cert:\CurrentUser\My'
-        NotAfter = (Get-Date).AddDays(1)
-        Type = 'Custom'
-    }
-    $ca = New-SelfSignedCertificate @caParams -Subject "CN=$testPrefix-Root"
-
-    $certParams = @{
-        CertStoreLocation = 'Cert:\CurrentUser\My'
-        KeyUsage = 'DigitalSignature'
-        TextExtension = @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
-        Type = 'Custom'
-    }
-    $cert = New-SelfSignedCertificate @certParams -Subject "CN=$testPrefix-Signed" -Signer $ca
-    $null = $cert | Export-PfxCertificate -Password $certPassword -FilePath "$remoteTmpDir\signing.pfx"
-    $cert.Export('Cert') | Set-Content -LiteralPath "$remoteTmpDir\signing.cer" -Encoding Byte
-
-    $certUntrusted = New-SelfSignedCertificate @certParams -Subject "CN=$testPrefix-Untrusted"
-    $null = $certUntrusted | Export-PfxCertificate -Password $certPassword -FilePath "$remoteTmpDir\untrusted.pfx"
-
-    $caWithoutKey = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($ca.Export('Cert'))
-    $certWithoutKey = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($cert.Export('Cert'))
-
-    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($ca.Thumbprint)" -DeleteKey -Force
-    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($cert.Thumbprint)" -DeleteKey -Force
-    Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($certUntrusted.Thumbprint)" -DeleteKey -Force
-
-    $root = Get-Item Cert:\LocalMachine\Root
-    $root.Open('ReadWrite')
-    $root.Add($caWithoutKey)
-    $root.Dispose()
-
-    $trustedPublisher = Get-Item Cert:\LocalMachine\TrustedPublisher
-    $trustedPublisher.Open('ReadWrite')
-    $trustedPublisher.Add($certWithoutKey)
-    $trustedPublisher.Dispose()
-
-    @{
-        ca_thumbprint = $caWithoutKey.Thumbprint
-        thumbprint = $certWithoutKey.Thumbprint
-        untrusted_thumbprint = $certUntrusted.Thumbprint
-    } | ConvertTo-Json
-  register: cert_info_raw
+  wdac_setup:
+    cert_pw: '{{ cert_pw }}'
+    remote_tmp_dir: '{{ remote_tmp_dir }}'
+  register: cert_info
   become: true
   become_method: runas
   vars:
     ansible_become_user: '{{ ansible_user }}'
     ansible_become_pass: '{{ ansible_password | default(ansible_test_connection_password) }}'
-
-- name: parse raw cert_info
-  set_fact:
-    cert_info: "{{ cert_info_raw.stdout | from_json }}"
+    # WDAC cmdlets only work on WinPS.
+    ansible_pwsh_interpreter: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
 
 - name: fetch signing certificates
   fetch:

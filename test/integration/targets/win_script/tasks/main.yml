@@ -347,3 +347,36 @@
   assert:
     that:
     - script_unicode.stdout | trim == 'ünicode'
+
+- name: run PowerShell script with specific executable
+  script: test_psversion.ps1
+  args:
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+  register: script_with_exe
+
+- name: check that script with executable ran
+  assert:
+    that:
+      - script_with_exe.rc == 0
+      - "'5.1' in script_with_exe.stdout"
+      - (ansible_connection == 'ssh') | ternary(script_with_exe.stderr is defined, not script_with_exe.stderr)
+      - script_with_exe is not failed
+      - script_with_exe is changed
+
+- name: run PowerShell script that is quoted
+  script: >-
+    "test_script_with_args.ps1" 123 abc 'def ghi' "jkl mno"
+  register: script_with_quotes
+
+- name: check that script with quotes ran
+  assert:
+    that:
+      - script_with_quotes.rc == 0
+      - script_with_quotes.stdout_lines | count == 4
+      - script_with_quotes.stdout_lines[0] == '123'
+      - script_with_quotes.stdout_lines[1] == 'abc'
+      - script_with_quotes.stdout_lines[2] == 'def ghi'
+      - script_with_quotes.stdout_lines[3] == 'jkl mno'
+      - (ansible_connection == 'ssh') | ternary(script_with_quotes.stderr is defined, not script_with_quotes.stderr)
+      - script_with_quotes is not failed
+      - script_with_quotes is changed

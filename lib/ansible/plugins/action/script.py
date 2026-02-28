@@ -22,6 +22,7 @@ import re
 import shlex
 import typing as _t
 
+from ansible._internal._powershell import _script as _ps_script
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -144,7 +145,6 @@ class ActionModule(ActionBase):
             # like become and environment args
             if getattr(self._connection._shell, "_IS_WINDOWS", False):
                 # FUTURE: use a more public method to get the exec payload
-                pc = self._task
                 exec_data = ps_manifest._create_powershell_wrapper(
                     name=f"ansible.builtin.script.{pathlib.Path(source).stem}",
                     module_data=to_bytes(f"& {script_cmd}; exit $LASTEXITCODE"),
@@ -157,10 +157,9 @@ class ActionModule(ActionBase):
                     task_vars=task_vars,
                     profile='legacy',  # the profile doesn't really matter since the module args dict is empty
                 )
-                # build the necessary exec wrapper command
-                # FUTURE: this still doesn't let script work on Windows with non-pipelined connections or
-                # full manual exec of KEEP_REMOTE_FILES
-                script_cmd = self._connection._shell.build_module_command(env_string='', shebang='#!powershell', cmd='')
+                bootstrap_wrapper = ps_manifest._get_powershell_script("bootstrap_wrapper.ps1").decode('utf-8')
+                pwsh_args = _ps_script.get_pwsh_encoded_cmdline(bootstrap_wrapper, override_execution_policy=True)
+                script_cmd = self._connection._shell.join(pwsh_args)
 
             # now we execute script, always assume changed.
             result: dict[str, object] = dict(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir), changed=True)

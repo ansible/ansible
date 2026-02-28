@@ -254,6 +254,7 @@ $tests = @{
                 list_type = @{type = "list" }
                 list_type_str = @{type = "list" }
                 list_with_int = @{type = "list"; elements = "int" }
+                list_with_single_long = @{type = "list"; elements = "int" }
                 list_type_single = @{type = "list" }
                 list_with_dict = @{
                     type = "list"
@@ -300,6 +301,7 @@ $tests = @{
             list_type = @("a", "b", 1, 2)
             list_type_str = "a, b,1,2 "
             list_with_int = @("1", 2)
+            list_with_single_long = ([long]-1)
             list_type_single = "single"
             list_with_dict = @(
                 @{
@@ -400,6 +402,10 @@ $tests = @{
         $m.Params.list_with_int[0].GetType().FullName | Assert-Equal -Expected "System.Int32"
         $m.Params.list_with_int[1] | Assert-Equal -Expected 2
         $m.Params.list_with_int[1].GetType().FullName | Assert-Equal -Expected "System.Int32"
+        $m.Params.list_with_single_long.GetType().ToString() | Assert-Equal -Expected "System.Collections.Generic.List``1[System.Object]"
+        $m.Params.list_with_single_long.Count | Assert-Equal -Expected 1
+        $m.Params.list_with_single_long[0] | Assert-Equal -Expected -1
+        $m.Params.list_with_single_long[0].GetType().ToString() | Assert-Equal -Expected "System.Int32"
         $m.Params.list_type_single.GetType().ToString() | Assert-Equal -Expected "System.Collections.Generic.List``1[System.Object]"
         $m.Params.list_type_single.Count | Assert-Equal -Expected 1
         $m.Params.list_type_single[0] | Assert-Equal -Expected "single"
@@ -487,6 +493,7 @@ $tests = @{
             list_type = @("a", "b", 1, 2)
             list_type_str = @("a", "b", "1", "2")
             list_with_int = @(1, 2)
+            list_with_single_long = @(-1)
             list_type_single = @("single")
             list_with_dict = @(
                 @{
@@ -794,29 +801,30 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{
-                    removed1 = "value"
-                    removed2 = $null
-                    removed3 = "value"
-                }
+        $actual.Keys.Count | Assert-Equal -Expected 3
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
+        $actual.changed | Assert-Equal -Expected $false
+        $actual.invocation | Assert-DictionaryEqual -Expected @{
+            module_args = @{
+                removed1 = "value"
+                removed2 = $null
+                removed3 = "value"
             }
-            deprecations = @(
-                @{
-                    msg = "Param 'removed3' is deprecated. See the module docs for more information"
-                    version = "2.3"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
-                    version = "2.1"
-                    collection_name = $null
-                }
-            )
         }
-        $actual | Assert-DictionaryEqual -Expected $expected
+
+        $actual.deprecations.Count | Assert-Equal -Expected 2
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed1' is deprecated. See the module docs for more information"
+            version = "2.1"
+            collection_name = $null
+        }
+
+        $deps[1] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed3' is deprecated. See the module docs for more information"
+            version = "2.3"
+            collection_name = "ansible.builtin"
+        }
     }
 
     "Removed at date" = {
@@ -845,29 +853,30 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{
-                    removed1 = "value"
-                    removed2 = $null
-                    removed3 = "value"
-                }
+        $actual.Keys.Count | Assert-Equal -Expected 3
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
+        $actual.changed | Assert-Equal -Expected $false
+        $actual.invocation | Assert-DictionaryEqual -Expected @{
+            module_args = @{
+                removed1 = "value"
+                removed2 = $null
+                removed3 = "value"
             }
-            deprecations = @(
-                @{
-                    msg = "Param 'removed3' is deprecated. See the module docs for more information"
-                    date = "2020-06-07"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
-                    date = "2020-03-10"
-                    collection_name = $null
-                }
-            )
         }
-        $actual | Assert-DictionaryEqual -Expected $expected
+
+        $actual.deprecations.Count | Assert-Equal -Expected 2
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed1' is deprecated. See the module docs for more information"
+            date = "2020-03-10"
+            collection_name = $null
+        }
+
+        $deps[1] | Assert-DictionaryEqual -Expected @{
+            msg = "Param 'removed3' is deprecated. See the module docs for more information"
+            date = "2020-06-07"
+            collection_name = "ansible.builtin"
+        }
     }
 
     "Deprecated aliases" = {
@@ -946,78 +955,86 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equal -Expected $true
 
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{
-                    alias1 = "alias1"
-                    option1 = "alias1"
-                    option2 = "option2"
-                    option3 = @{
-                        option1 = "option1"
-                        option2 = "alias2"
-                        alias2 = "alias2"
-                        option3 = "alias3"
-                        alias3 = "alias3"
-                        option4 = "option4"
-                        option5 = "alias5"
-                        alias5 = "alias5"
-                        option6 = "alias6"
-                        alias6 = "alias6"
-                    }
+        $actual.Keys.Count | Assert-Equal -Expected 3
+        , @($actual.Keys | Sort-Object) | Assert-Equal -Expected @("changed", "deprecations", "invocation")
+        $actual.changed | Assert-Equal -Expected $false
+        $actual.invocation | Assert-DictionaryEqual -Expected @{
+            module_args = @{
+                alias1 = "alias1"
+                option1 = "alias1"
+                option2 = "option2"
+                option3 = @{
+                    option1 = "option1"
+                    option2 = "alias2"
+                    alias2 = "alias2"
+                    option3 = "alias3"
+                    alias3 = "alias3"
                     option4 = "option4"
                     option5 = "alias5"
                     alias5 = "alias5"
                     option6 = "alias6"
                     alias6 = "alias6"
-                    option7 = "alias7"
-                    alias7 = "alias7"
                 }
+                option4 = "option4"
+                option5 = "alias5"
+                alias5 = "alias5"
+                option6 = "alias6"
+                alias6 = "alias6"
+                option7 = "alias7"
+                alias7 = "alias7"
             }
-            deprecations = @(
-                @{
-                    msg = "Alias 'alias7' is deprecated. See the module docs for more information"
-                    date = "2020-06-07"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Alias 'alias1' is deprecated. See the module docs for more information"
-                    version = "2.10"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias5' is deprecated. See the module docs for more information"
-                    date = "2020-03-12"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias6' is deprecated. See the module docs for more information"
-                    version = "2.12"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
-                    version = "2.11"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias5' is deprecated. See the module docs for more information - found in option3"
-                    date = "2020-03-09"
-                    collection_name = $null
-                },
-                @{
-                    msg = "Alias 'alias3' is deprecated. See the module docs for more information - found in option3"
-                    version = "2.12"
-                    collection_name = "ansible.builtin"
-                },
-                @{
-                    msg = "Alias 'alias6' is deprecated. See the module docs for more information - found in option3"
-                    date = "2020-06-01"
-                    collection_name = "ansible.builtin"
-                }
-            )
         }
-        $actual | Assert-DictionaryEqual -Expected $expected
+
+        $actual.deprecations.Count | Assert-Equal -Expected 8
+
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias1' is deprecated. See the module docs for more information"
+            version = "2.10"
+            collection_name = $null
+        }
+
+        $deps[1] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
+            version = "2.11"
+            collection_name = $null
+        }
+
+        $deps[2] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias3' is deprecated. See the module docs for more information - found in option3"
+            version = "2.12"
+            collection_name = "ansible.builtin"
+        }
+
+        $deps[3] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias5' is deprecated. See the module docs for more information"
+            date = "2020-03-12"
+            collection_name = $null
+        }
+
+        $deps[4] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias5' is deprecated. See the module docs for more information - found in option3"
+            date = "2020-03-09"
+            collection_name = $null
+        }
+
+        $deps[5] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias6' is deprecated. See the module docs for more information"
+            version = "2.12"
+            collection_name = "ansible.builtin"
+        }
+
+        $deps[6] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias6' is deprecated. See the module docs for more information - found in option3"
+            date = "2020-06-01"
+            collection_name = "ansible.builtin"
+        }
+
+        $deps[7] | Assert-DictionaryEqual -Expected @{
+            msg = "Alias 'alias7' is deprecated. See the module docs for more information"
+            date = "2020-06-07"
+            collection_name = "ansible.builtin"
+        }
     }
 
     "Required by - single value" = {
@@ -2392,7 +2409,12 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $expected_msg = "argument for option_key is of type System.String and we were unable to convert to int: "
-        $expected_msg += "Input string was not in a correct format."
+        if ($PSVersionTable.PSVersion -lt '6.0') {
+            $expected_msg += "Input string was not in a correct format."
+        }
+        else {
+            $expected_msg += "The input string 'a' was not in a correct format."
+        }
 
         $actual.Keys.Count | Assert-Equal -Expected 4
         $actual.changed | Assert-Equal -Expected $false
@@ -2432,8 +2454,14 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $expected_msg = "argument for sub_option_key is of type System.String and we were unable to convert to delegate: "
-        $expected_msg += "Exception calling `"Parse`" with `"1`" argument(s): `"Input string was not in a correct format.`" "
-        $expected_msg += "found in option_key"
+        $expected_msg += "Exception calling `"Parse`" with `"1`" argument(s): `""
+        if ($PSVersionTable.PSVersion -lt '6.0') {
+            $expected_msg += "Input string was not in a correct format."
+        }
+        else {
+            $expected_msg += "The input string 'a' was not in a correct format."
+        }
+        $expected_msg += "`" found in option_key"
 
         $actual.Keys.Count | Assert-Equal -Expected 4
         $actual.changed | Assert-Equal -Expected $false
@@ -3108,8 +3136,8 @@ test_no_log - Invoked with:
     "String json array to object" = {
         $input_json = '["abc", "def"]'
         $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
-        $actual -is [Array] | Assert-Equal -Expected $true
-        $actual.Length | Assert-Equal -Expected 2
+        $actual -is [System.Collections.IList] | Assert-Equal -Expected $true
+        $actual.Count | Assert-Equal -Expected 2
         $actual[0] | Assert-Equal -Expected "abc"
         $actual[1] | Assert-Equal -Expected "def"
     }
@@ -3117,9 +3145,21 @@ test_no_log - Invoked with:
     "String json array of dictionaries to object" = {
         $input_json = '[{"abc":"def"}]'
         $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
-        $actual -is [Array] | Assert-Equal -Expected $true
-        $actual.Length | Assert-Equal -Expected 1
+        $actual -is [System.Collections.IList] | Assert-Equal -Expected $true
+        $actual.Count | Assert-Equal -Expected 1
         $actual[0] | Assert-DictionaryEqual -Expected @{"abc" = "def" }
+    }
+
+    "Invalid json is ArgumentException" = {
+        $input_json = '<invalid>'
+        $thrown = $false
+        try {
+            $null = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
+        }
+        catch [System.ArgumentException] {
+            $thrown = $true
+        }
+        $thrown | Assert-Equal -Expected $true
     }
 
     "Spec with fragments" = {
@@ -3207,10 +3247,12 @@ test_no_log - Invoked with:
         $failed | Assert-Equal -Expected $true
 
         $actual.deprecations.Count | Assert-Equal -Expected 2
-        $actual.deprecations[0] | Assert-DictionaryEqual -Expected @{
+
+        $deps = $actual.deprecations | Sort-Object -Property @{ Expression = { $_.msg } }
+        $deps[0] | Assert-DictionaryEqual -Expected @{
             msg = "Alias 'alias1_spec' is deprecated. See the module docs for more information"; version = "2.0"; collection_name = $null
         }
-        $actual.deprecations[1] | Assert-DictionaryEqual -Expected @{
+        $deps[1] | Assert-DictionaryEqual -Expected @{
             msg = "Alias 'alias2' is deprecated. See the module docs for more information"; version = "2.0"; collection_name = "foo.bar"
         }
         $actual.changed | Assert-Equal -Expected $false

@@ -582,8 +582,9 @@ $tests = @{
         catch {
             $failed = $true
             $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "Ansible.Process.Win32Exception"
+            $expected_msg = [System.ComponentModel.Win32Exception]::new(2).Message
             $expected = 'Exception calling "CreateProcessAsUser" with "3" argument(s): "CreateProcessWithTokenW() failed '
-            $expected += '(The system cannot find the file specified, Win32ErrorCode 2)"'
+            $expected += "($expected_msg, Win32ErrorCode 2)`""
             $_.Exception.Message | Assert-Equal -Expected $expected
         }
         $failed | Assert-Equal -Expected $true

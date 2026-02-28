@@ -312,7 +312,12 @@ $tests = [Ordered]@{
         }
         catch {
             $_.Exception.GetType().Name | Assert-Equal -Expected 'WebException'
-            $_.Exception.Message | Assert-Equal -Expected 'Too many automatic redirections were attempted.'
+            if ($PSVersionTable.PSVersion -lt '6.0') {
+                $_.Exception.Message | Assert-Equal -Expected 'Too many automatic redirections were attempted.'
+            }
+            else {
+                $_.Exception.Message | Assert-Equal -Expected 'The remote server returned an error: (302) FOUND.'
+            }
             $failed = $true
         }
         $failed | Assert-Equal -Expected $true
@@ -387,7 +392,7 @@ $tests = [Ordered]@{
         catch {
             $failed = $true
             $_.Exception.GetType().Name | Assert-Equal -Expected WebException
-            $_.Exception.Message | Assert-Equal -Expected 'The operation has timed out'
+            $_.Exception.Message.TrimEnd('.') | Assert-Equal -Expected 'The operation has timed out'
         }
         $failed | Assert-Equal -Expected $true
     }

@@ -84,7 +84,7 @@
   assert:
     that:
     - dotnet_exception is failed
-    - 'dotnet_exception.msg == "Unhandled exception while executing module: Exception calling \"GetFullPath\" with \"1\" argument(s): \"The path is not of a legal form.\""'
+    - 'dotnet_exception.msg is contains("Unhandled exception while executing module: Exception calling \"GetFullPath\" with \"1\" argument(s): ")'
     - not traceback_on_error or "[System.IO.Path]::GetFullPath($null)" in dotnet_exception.exception
 
 - name: test module with function exception
@@ -331,3 +331,42 @@
     that:
     - no_utils_res is not changed
     - "no_utils_res.complex_args == {'foo': 'bar'}"
+
+- name: test builtin modules are imported correctly with ETS definitions
+  test_builtin_module_ets:
+  register: builtin_module_ets
+
+- name: assert builtin modules are imported correctly with ETS definitions
+  assert:
+    that:
+    - builtin_module_ets is successful
+    - builtin_module_ets.count > 0
+
+- name: pass through ISO 8601 date strings correctly
+  test_datetime_string:
+    value: '2040-10-27T14:30:00'
+  register: iso8601_date
+  failed_when: >-
+    iso8601_date.value != '2040-10-27T14:30:00' or
+    iso8601_date.value_type != 'System.String'
+
+- name: pass through ISO 8601 date strings correctly with become
+  test_datetime_string:
+    value: '2040-10-27T14:30:00'
+  become: true
+  become_method: runas
+  become_user: SYSTEM
+  register: iso8601_date
+  failed_when: >-
+    iso8601_date.value != '2040-10-27T14:30:00' or
+    iso8601_date.value_type != 'System.String'
+
+- name: pass through ISO 8601 date strings correctly with async
+  test_datetime_string:
+    value: '2040-10-27T14:30:00'
+  register: iso8601_date
+  async: 60
+  poll: 3
+  failed_when: >-
+    iso8601_date.value != '2040-10-27T14:30:00' or
+    iso8601_date.value_type != 'System.String'

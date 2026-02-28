@@ -8,7 +8,8 @@ IFS='/:' read -ra args <<< "$1"
 version="${args[1]}"
 connection="${args[2]}"
 connection_setting="${args[3]}"
-group="${args[4]}"
+powershell="${args[4]}"
+group="${args[5]}"
 
 target="shippable/windows/group${group}/"
 
@@ -84,6 +85,6 @@ for py_version in "${python_versions[@]}"; do
     ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
         --controller "docker:default,python=${py_version}" \
-        --target "remote:windows/${version},connection=${connection}+${connection_setting},provider=${provider}" \
+        --target "remote:windows/${version},connection=${connection}+${connection_setting},provider=${provider},powershell=${powershell}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}"
 done
