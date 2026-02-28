@@ -31,7 +31,7 @@ class ContributesToTaskResult(metaclass=abc.ABCMeta):
 
     @property
     def omit_failed_key(self) -> bool:
-        """Exceptions representing non-failure scenarios (e.g., `skipped`, `unreachable`) must return `True` to ensure omisson of the `failed` key."""
+        """Exceptions representing non-failure scenarios (e.g., `skipped`, `unreachable`) must return `True` to ensure omission of the `failed` key."""
         # RPFIX-7: this should've been marked internal
         return False
 
