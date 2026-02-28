@@ -987,7 +987,8 @@ def _find_module_utils(
         async_timeout: int,
         become_plugin: BecomeBase | None,
         environment: dict[str, str],
-        remote_is_local: bool = False
+        remote_is_local: bool = False,
+        module_env: dict[str, str] | None = None,
 ) -> _BuiltModule:
     """
     Given the source of the module, convert it to a Jinja2 template to insert
@@ -996,6 +997,8 @@ def _find_module_utils(
     module_substyle: t.Literal['binary', 'jsonargs', 'non_native_want_json', 'old', 'powershell', 'python']
     module_style: t.Literal['binary', 'new', 'non_native_want_json', 'old']
     module_substyle = module_style = 'old'
+    if module_env is None:
+        module_env = {}
 
     # module_style is something important to calling code (ActionBase).  It
     # determines how arguments are formatted (json vs k=v) and whether
@@ -1010,7 +1013,8 @@ def _find_module_utils(
         # we substitute "from ansible.module_utils basic" for REPLACER
         module_style = 'new'
         module_substyle = 'python'
-        b_module_data = b_module_data.replace(REPLACER, b'from ansible.module_utils.basic import *')
+        replacer_header = ['from ansible.module_utils.basic import *', '', 'import os, json', '', f'os.environ.update({json.dumps(module_env)}))']
+        b_module_data = b_module_data.replace(REPLACER, to_bytes('\n'.join(replacer_header)))
     elif NEW_STYLE_PYTHON_MODULE_RE.search(b_module_data):
         module_style = 'new'
         module_substyle = 'python'
@@ -1197,7 +1201,7 @@ if __name__ == "__main__":
             module_data=b_module_data,
             module_path=module_path,
             module_args=module_args,
-            environment=environment,
+            environment=environment.update(module_env),
             async_timeout=async_timeout,
             become_plugin=become_plugin,
             substyle=module_substyle,
@@ -1280,6 +1284,7 @@ def modify_module(
         become_plugin=None,
         environment=None,
         remote_is_local=False,
+        moduile_env=None,
 ) -> _BuiltModule:
     """
     Used to insert chunks of code into modules before transfer rather than
@@ -1321,6 +1326,7 @@ def modify_module(
         become_plugin=become_plugin,
         environment=environment,
         remote_is_local=remote_is_local,
+        module_env=module_env,
     )
 
     b_module_data = module_bits.b_module_data

@@ -84,6 +84,7 @@ namespace Ansible.Basic
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
+            { "module_env", null },
         };
         private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
