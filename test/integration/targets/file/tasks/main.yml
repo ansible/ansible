@@ -994,7 +994,7 @@
         that:
           - >
             removal_result.warnings
-            | select('match', '^Cannot access .+ Treating path as absent')
+            | select('match', '^Insufficient permissions to access .+ Treating as absent')
             | list
             | length >= 1
   always:
