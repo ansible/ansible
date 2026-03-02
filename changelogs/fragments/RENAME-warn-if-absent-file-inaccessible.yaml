@@ -1,0 +1,2 @@
+minor_changes:
+  - file - Warn if path being accessed is inaccessible due to permission errors (https://github.com/ansible/ansible/issues/57573)
