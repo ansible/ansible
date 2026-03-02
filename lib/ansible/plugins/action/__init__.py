@@ -225,7 +225,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Add the given host to inventory if the current action completes successfully.
         Can be called more than once to add multiple hosts.
         """
-        _task.TaskContext.current()._pending_changes.add_hosts.append(_task.AddHost(
+        _task.TaskContext.current().pending_changes.add_hosts.append(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
             parent_group_names=parent_group_names,
@@ -242,7 +242,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Add the given group to inventory if the current action completes successfully.
         Can be called more than once to add multiple groups.
         """
-        _task.TaskContext.current()._pending_changes.add_groups.append(_task.AddGroup(
+        _task.TaskContext.current().pending_changes.add_groups.append(_task.AddGroup(
             group_name=group_name,
             group_vars=group_vars,
             parent_group_names=parent_group_names,
@@ -253,7 +253,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Register the given variables for the current host at the specified variable precedence layer.
         Calling this method more than once for the same layer will override any previous value for the currently executing action.
         """
-        _task.TaskContext.current()._pending_changes.register_host_variables[layer] = variables
+        _task.TaskContext.current().pending_changes.register_host_variables[layer] = variables
 
     @classmethod
     @contextlib.contextmanager

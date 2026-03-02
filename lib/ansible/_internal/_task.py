@@ -172,7 +172,9 @@ class TaskContext(AmbientContextBase):
     _loop_extended: dict[str, object] | None = None
     _templar: _engine.TemplateEngine | None = None
     _break_when_triggered: bool = False
-    _pending_changes: PendingChanges | None = None
+
+    pending_changes: PendingChanges | None = None
+    """Pending changes which will be applied only if the current task succeeds."""
 
     @contextlib.contextmanager
     def loop_item_context(self, te: TaskExecutor) -> t.Generator[None]:
