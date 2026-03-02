@@ -1293,8 +1293,8 @@ DEFAULT_VAULT_PASSWORD_FILE:
   type: path
   yaml: {key: defaults.vault_password_file}
 VAULTED_VALUE_DUMP_IS_ERROR:
-  name: something
-  description: This enables strict handling of vaulted values when serializing
+  name: Vault Value Error Handling
+  description: Enables strict handling of vaulted values when serializing.
   type: bool
   default: False
   version_added: '2.21'
