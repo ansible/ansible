@@ -178,20 +178,20 @@ class TaskContext(AmbientContextBase):
 
     @contextlib.contextmanager
     def loop_item_context(self, te: TaskExecutor) -> t.Generator[None]:
-        original_task = te._task
+        original_task = self.task
         original_play_context = te._play_context
 
-        loop_item_task = te._task.copy(exclude_parent=True, exclude_tasks=True)
-        loop_item_task._parent = te._task._parent
+        loop_item_task = self.task.copy(exclude_parent=True, exclude_tasks=True)
+        loop_item_task._parent = self.task._parent
         loop_item_play_context = te._play_context.copy()
 
-        self.task = te._task = loop_item_task
+        self.task = loop_item_task
         te._play_context = loop_item_play_context
 
         try:
             yield
         finally:
-            self.task = te._task = original_task
+            self.task = original_task
             te._play_context = original_play_context
 
     def start_loop(self) -> t.Generator[tuple[int, object]]:

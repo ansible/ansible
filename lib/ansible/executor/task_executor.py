@@ -74,7 +74,6 @@ class TaskExecutor:
     def __init__(
         self,
         host,
-        task: Task,
         play_context: PlayContext,
         loader,
         shared_loader_obj,
@@ -82,7 +81,6 @@ class TaskExecutor:
         variable_manager,
     ) -> None:
         self._host = host
-        self._task = task  # RPFIX-7: trash this in favor of TaskContext.task
         self._play_context = play_context
         self._loader = loader
         self._shared_loader_obj = shared_loader_obj
@@ -91,7 +89,9 @@ class TaskExecutor:
         self._variable_manager = variable_manager
         self._loop_eval_error: Exception | None = None
 
-        self._task.squash()
+    @property
+    def _task(self) -> Task:
+        return TaskContext.current().task
 
     def run(self) -> UnifiedTaskResult:
         """
