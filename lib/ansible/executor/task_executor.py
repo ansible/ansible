@@ -38,7 +38,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars, validate_variable_name
+from ansible.utils.vars import combine_vars
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.manager import _deprecate_top_level_fact
 from ansible._internal._errors import _task_timeout

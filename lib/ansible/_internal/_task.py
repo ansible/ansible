@@ -338,7 +338,7 @@ class TaskContext(AmbientContextBase):
             self.task_vars.update(TaskContext._project(self.task, self.task_templar, utr))
 
         # gets templated here unlike rest of loop_control fields, depends on loop_var above
-        item_label = ...
+        item_label: object = ...
 
         if item_label_template := self.task.loop_control.label:
             try:
