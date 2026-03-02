@@ -206,14 +206,38 @@ collection_list:
     name: name_requires_ansible
     version: 1.0.0
     runtime: |-
-      requires_ansible: "<{{ ansible_version.major }}.{{ ansible_version.minor }}"
+      requires_ansible: "<1.1"
 
   - namespace: ns_requires_ansible
-    name: dependency_requires_ansible
+    name: dependency
     version: 1.0.0
 
   - namespace: ns_requires_ansible
-    name: dependency_requires_ansible
+    name: dependency
     version: 2.0.0
     dependencies:
       ns_requires_ansible.name_requires_ansible: 1.0.0
+
+  - namespace: ns_requires_ansible
+    name: dependency_incompat
+    version: 1.0.0
+    dependencies:
+      ns_requires_ansible.name_requires_ansible: 1.0.0
+
+  - namespace: ns_requires_ansible
+    name: dependency_incompat
+    version: 2.0.0
+    dependencies:
+      ns_requires_ansible.dependency: 2.0.0  # pinned incompatible version
+
+  - namespace: ns_requires_ansible
+    name: dependency_incompat
+    version: 3.0.0
+    dependencies:
+      ns_requires_ansible.name_requires_ansible: 1.0.0
+
+  - namespace: ns_requires_ansible
+    name: backtracking_error
+    version: 1.0.0
+    dependencies:
+      ns_requires_ansible.dependency_incompat: "*"
