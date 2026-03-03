@@ -238,7 +238,6 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         self._task.ignore_unreachable = utr.ignore_unreachable
 
         try:
-            # RPFIX-5: can we consolidate Worker/TE/TaskContext task references to prevent future confusion/copies from breaking things?
             self._final_q.send_task_result(self._host, self._task, utr)
         except Exception as ex:
             try:
