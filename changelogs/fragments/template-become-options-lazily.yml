@@ -1,0 +1,2 @@
+bugfixes:
+  - Tasks that don't use a become plugin can now leave common become variables undefined.
