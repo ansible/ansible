@@ -854,6 +854,33 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
+def install_recommended_packages(cache: apt.Cache, recommended_packages: str) -> list[str]:
+    deps_to_install = []
+    for recommend_one_of in apt_pkg.parse_depends(recommended_packages, False):
+        for name, version, op in recommend_one_of:
+            try:
+                pkg = cache[name]
+            except KeyError:
+                # no package found, continue with next recommended package
+                continue
+
+            if pkg.is_installed and version and op and apt_pkg.check_dep(pkg.installed.version, op, version):
+                # package is installed and the version is the same, continue with next recommended package
+                break
+
+            if not pkg.candidate:
+                # no candidate found, continue with next recommended package
+                continue
+
+            if version and op and not apt_pkg.check_dep(pkg.candidate.version, op, version):
+                # candidate version does not match the version, continue with next recommended package
+                continue
+
+            deps_to_install.append(name)
+            break
+    return deps_to_install
+
+
 def install_deb(
         m, debs, cache, force, fail_on_autoremove, install_recommends,
         allow_unauthenticated,
@@ -901,7 +928,7 @@ def install_deb(
         # Install 'Recommends' of this deb file
         if install_recommends:
             pkg_recommends = get_field_of_deb(m, deb_file, "Recommends")
-            deps_to_install.extend([pkg_name.strip() for pkg_name in pkg_recommends.split()])
+            deps_to_install.extend(install_recommended_packages(cache, pkg_recommends))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)

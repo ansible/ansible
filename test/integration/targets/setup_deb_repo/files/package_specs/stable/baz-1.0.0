@@ -8,4 +8,4 @@ Section: system
 Maintainer: John Doe <john@doe.com>
 Architecture: all
 Description: Dummy package
-Recommends: rolldice
+Recommends: rolldice, uidmap
