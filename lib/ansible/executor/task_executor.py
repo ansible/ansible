@@ -571,13 +571,7 @@ class TaskExecutor:
 
             if utr.ansible_facts and self._task.action not in C._ACTION_DEBUG:
                 if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
-                    if self._task.delegate_to and self._task.delegate_facts:
-                        if '_ansible_delegated_vars' in post_connection_vars:
-                            # RPFIX-7: this is mutating shared values in a shallow copy- intentional? (pre-existing problem)
-                            post_connection_vars['_ansible_delegated_vars'].update(utr.ansible_facts)
-                        else:
-                            post_connection_vars['_ansible_delegated_vars'] = utr.ansible_facts
-                    else:
+                    if not self._task.delegate_to or not self._task.delegate_facts:
                         # RPFIX-1: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
                         post_connection_vars.update(utr.ansible_facts)
 
