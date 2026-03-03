@@ -1,0 +1,24 @@
+- block:
+    - name: Create a backup of the /var/lib/apt/lists/partial
+      command: mv /var/lib/apt/lists/partial /var/lib/apt/lists/partial.backup
+
+    - name: Verify that apt update does not fail if the /var/lib/apt/lists/partial is not present
+      apt:
+        update_cache: yes
+
+    - name: Create a backup of the /var/lib/apt/lists
+      command: mv /var/lib/apt/lists /var/lib/apt/lists.backup
+
+    - name: Verify that apt update does not fail if the /var/lib/apt/lists is not present
+      apt:
+        update_cache: yes
+
+  always:
+    - name: Check if the /var/lib/apt/lists is present
+      stat:
+        path: /var/lib/apt/lists.backup
+      register: apt_lists_backup_stat
+
+    - name: Restore the /var/lib/apt/lists
+      shell: rsync -a --delete /var/lib/apt/lists.backup/ /var/lib/apt/lists/ && rm -rf /var/lib/apt/lists.backup
+      when: apt_lists_backup_stat.stat.exists

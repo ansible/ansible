@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - apt - recreate the APT lists directory (/var/lib/apt/lists by default) if missing (https://github.com/ansible/ansible/issues/61176).
