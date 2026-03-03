@@ -214,11 +214,11 @@ class TaskContext(AmbientContextBase):
                 ansible_loop_var=loop_var,
             )
 
-            loop_vars[loop_var] = item  # RPFIX-5: this can clobber any variable set before it (or be clobbered by any set after)
+            loop_vars[loop_var] = item
 
             if index_var:
                 loop_vars['ansible_index_var'] = index_var
-                loop_vars[index_var] = item_index  # RPFIX-5: this can clobber any variable set before it (or be clobbered by any set after)
+                loop_vars[index_var] = item_index
 
             if extended:
                 ansible_loop: dict[str, object] = {
