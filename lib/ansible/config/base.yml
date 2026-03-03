@@ -1292,14 +1292,6 @@ DEFAULT_VAULT_PASSWORD_FILE:
   - {key: vault_password_file, section: defaults}
   type: path
   yaml: {key: defaults.vault_password_file}
-VAULTED_VALUE_DUMP_IS_ERROR:
-  name: Vault Value Error Handling
-  description: Enables strict handling of vaulted values when serializing.
-  type: bool
-  default: False
-  version_added: '2.21'
-  env:
-    - name: ANSIBLE_VAULTED_VALUE_DUMP_IS_ERROR
 DEFAULT_VERBOSITY:
   name: Verbosity
   default: 0

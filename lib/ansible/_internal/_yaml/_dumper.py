@@ -45,7 +45,6 @@ class VaultBehaviors(StrEnum):
     keep_encrypted = auto()
     redact = auto()
     fail = auto()
-    default = auto()
 
 
 class VaultDecryptionContext(AmbientContextBase):
@@ -78,23 +77,20 @@ class AnsibleDumper(_BaseDumper):
         data.trip()
 
     def represent_vaulted_value(self, data: AnsibleTaggedObject) -> Node:
-        vault_decryption_context = VaultDecryptionContext.current(optional=True)
-        if vault_decryption_context:
-            match vault_decryption_context.vault_behavior:
-                case VaultBehaviors.default:
-                    if cfg_mgr.get_config_value('VAULTED_VALUE_DUMP_IS_ERROR'):
-                        raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value.", obj=data)
-                    return self.represent_data(AnsibleTagHelper.as_native_type(data))
-                case VaultBehaviors.decrypt:
-                    return self.represent_data(AnsibleTagHelper.as_native_type(data))
-                case VaultBehaviors.keep_encrypted:
-                    return self.get_node_from_ciphertext(data)
-                case VaultBehaviors.redact:
-                    return self.represent_data('<redacted>')
-                case VaultBehaviors.fail:
-                    raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value", obj=data)
+        if vdc := VaultDecryptionContext.current(optional=True):
+            vault_behavior = vdc.vault_behavior
         else:
-            return self.get_node_from_ciphertext(data)
+            vault_behavior = VaultBehaviors.keep_encrypted
+
+        match vault_behavior:
+            case VaultBehaviors.decrypt:
+                return self.represent_data(AnsibleTagHelper.as_native_type(data))
+            case VaultBehaviors.keep_encrypted:
+                return self.get_node_from_ciphertext(data)
+            case VaultBehaviors.redact:
+                return self.represent_data('<redacted>')
+            case VaultBehaviors.fail:
+                raise AnsibleVariableTypeError(message="Attempted to dump a vaulted value", obj=data)
 
     def represent_ansible_tagged_object(self, data: AnsibleTaggedObject) -> Node:
         if _internal.is_intermediate_mapping(data):
