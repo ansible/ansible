@@ -732,6 +732,7 @@ class Display(metaclass=Singleton):
         formatted: bool = False,
         *,
         help_text: str | None = None,
+        formatted_traceback: str | None = None,
         obj: t.Any = None
     ) -> None:
         """Display a warning message."""
@@ -747,12 +748,15 @@ class Display(metaclass=Singleton):
         else:
             formatted_source_context = None
 
+        if not formatted_traceback:
+            formatted_traceback = _traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING)
+
         warning = _messages.WarningSummary(
             event=_messages.Event(
                 msg=msg,
                 help_text=help_text,
                 formatted_source_context=formatted_source_context,
-                formatted_traceback=_traceback.maybe_capture_traceback(msg, _traceback.TracebackEvent.WARNING),
+                formatted_traceback=formatted_traceback,
             ),
         )
 

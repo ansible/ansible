@@ -77,6 +77,33 @@ begin {
         }
     }
 
+    Function Write-AnsibleWarning {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)]
+            [string]
+            $Message,
+
+            [Parameter()]
+            [string]
+            $HelpText,
+
+            [Parameter()]
+            [int]
+            $StacktraceSkip = 1  # Skips this function
+        )
+
+        $traceback = Get-PSCallStack | Select-Object -Skip $StacktraceSkip | ForEach-Object ToString
+
+        $data = @{
+            msg = $Message
+            help_text = if ([string]::IsNullOrWhiteSpace($HelpText)) { $null } else { $HelpText }
+            formatted_traceback = $traceback -join "`n"
+        } | ConvertTo-Json -Compress
+
+        "_AnsibleExecWrapperWarning: $data"
+    }
+
     $respawnPipeline = $null
     if ($PwshPath) {
         $null = $PSBoundParameters.Remove('PwshPath')
@@ -144,6 +171,24 @@ begin {
                 script = $MyInvocation.MyCommand.ScriptBlock.ToString()
             } | ConvertTo-Json -Compress -Depth 99
 
+            $warningParams = @{
+                Message = @(
+                    "The initial PowerShell exec entrypoint is running with an interpreter at '$PSHome'"
+                    "but the specified interpreter is at '$targetPSHome'. Attempting to respawn the exec"
+                    "wrapper in the target interpreter '$targetPwsh'."
+                ) -join " "
+            }
+            if ($PSSenderInfo.ApplicationArguments._AnsibleIsPSRP) {
+                # We can provide more helpful information if running under PSRP.
+                $warningParams.HelpText = @(
+                    "To avoid this warning and speed up module execution, ensure that a PSRemoting session has been"
+                    "configured for '$targetPwsh' by running Enable-PSRemoting under that interpreter. Once"
+                    "enabled, set ansible_psrp_configuration_name to the name of the configured session, for example"
+                    "ansible_psrp_configuration_name=PowerShell.7."
+                ) -join " "
+            }
+            Write-AnsibleWarning @warningParams
+
             $respawnPipeline = { & $targetPwsh @targetPwshArgs }.GetSteppablePipeline()
 
             # Need to set back to Continue to stderr ErrorRecords don't stop at
@@ -190,7 +235,6 @@ begin {
     }
     $Script:AnsibleTrustedHashList = [HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $Script:AnsibleUnsupportedHashList = [HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-    $Script:AnsibleWrapperWarnings = [List[string]]::new()
     $Script:AnsibleTempPath = @(
         # Wrapper defined tmpdir
         [Environment]::ExpandEnvironmentVariables($TempPath)
@@ -465,15 +509,11 @@ begin {
 
         Import-PowerShellUtil -Name Ansible.ModuleUtils.AddType.psm1
 
-        $isBasicUtil = $false
         $csharpModules = foreach ($moduleName in $Name) {
             $scriptInfo = Get-AnsibleScript -Name $moduleName
 
             if ($scriptInfo.ShouldConstrain) {
                 throw "C# module util '$Name' is not trusted and cannot be loaded."
-            }
-            if ($moduleName -eq 'Ansible.Basic.cs') {
-                $isBasicUtil = $true
             }
 
             $scriptInfo.Script
@@ -484,16 +524,11 @@ begin {
         }
         $warningFunc = [PSScriptMethod]::new('Warn', {
                 param($message)
-                $Script:AnsibleWrapperWarnings.Add($message)
+                # We don't want to show this stub in the traceback.
+                Write-AnsibleWarning -Message $message -StacktraceSkip 2
             })
         $fakeModule.PSObject.Members.Add($warningFunc)
         Add-CSharpType -References $csharpModules -AnsibleModule $fakeModule
-
-        if ($isBasicUtil) {
-            # Ansible.Basic.cs is a special case where we need to provide it
-            # with the wrapper warnings list so it injects it into the result.
-            [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $Script:AnsibleWrapperWarnings
-        }
     }
 
     Function Import-SignedHashList {
