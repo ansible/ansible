@@ -260,13 +260,8 @@ class TaskExecutor:
                 )
 
                 if self._task._resolve_conditional(break_when, task_vars):
-                    # delete loop vars before exiting loop
                     task_ctx.record_break_when()
-                    del task_vars[loop_var]
                     break
-
-            # done with loop var, remove for next iteration
-            del task_vars[loop_var]
 
             # clear 'connection related' plugin variables for next iteration
             if self._connection:
