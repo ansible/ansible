@@ -1288,7 +1288,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
         if utr.suppress_tmpdir_delete:
-            utr.suppress_tmpdir_delete = False  # RPFIX-5: hack, remove unexpected key from result
             self._cleanup_remote_tmp = False
 
         # remove internal keys
