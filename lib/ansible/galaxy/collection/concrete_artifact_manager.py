@@ -42,6 +42,8 @@ from ansible.utils.display import Display
 
 import ansible.constants as C
 
+from ._types import CollectionInfoType
+
 
 display = Display()
 
@@ -61,29 +63,36 @@ class ConcreteArtifactsManager:
         * caching all of above
         * retrieving the metadata out of the downloaded artifacts
     """
-    def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60, required_signature_count=None, ignore_signature_errors=None):
-        # type: (bytes, bool, str, int, str, list[str]) -> None
+    def __init__(
+        self,
+        b_working_directory: bytes,
+        validate_certs: bool = True,
+        keyring: str | None = None,
+        timeout: int = 60,
+        required_signature_count: str | None = None,
+        ignore_signature_errors: list[str] | None = None,
+    ) -> None:
         """Initialize ConcreteArtifactsManager caches and constraints."""
-        self._validate_certs = validate_certs  # type: bool
-        self._artifact_cache = {}  # type: dict[bytes, bytes]
-        self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]
-        self._artifact_meta_cache = {}  # type: dict[bytes, dict[str, str | list[str] | dict[str, str] | None | t.Type[Sentinel]]]
-        self._galaxy_collection_cache = {}  # type: dict[Candidate | Requirement, tuple[str, str, GalaxyToken]]
-        self._galaxy_collection_origin_cache = {}  # type: dict[Candidate, tuple[str, list[dict[str, str]]]]
-        self._b_working_directory = b_working_directory  # type: bytes
-        self._supplemental_signature_cache = {}  # type: dict[str, str]
-        self._keyring = keyring  # type: str
-        self.timeout = timeout  # type: int
-        self._required_signature_count = required_signature_count  # type: str
-        self._ignore_signature_errors = ignore_signature_errors  # type: list[str]
-        self._require_build_metadata = True  # type: bool
+        self._validate_certs = validate_certs
+        self._artifact_cache: dict[bytes, bytes] = {}
+        self._galaxy_artifact_cache: dict[Candidate | Requirement, bytes] = {}
+        self._artifact_meta_cache: dict[bytes, CollectionInfoType] = {}
+        self._galaxy_collection_cache: dict[Candidate | Requirement, tuple[str, str, GalaxyToken]] = {}
+        self._galaxy_collection_origin_cache: dict[Candidate, tuple[str, list[dict[str, str]]]] = {}
+        self._b_working_directory = b_working_directory
+        self._supplemental_signature_cache: dict[str, str] = {}
+        self._keyring = keyring
+        self.timeout = timeout
+        self._required_signature_count = required_signature_count
+        self._ignore_signature_errors = ignore_signature_errors
+        self._require_build_metadata = True
 
     @property
-    def keyring(self):
+    def keyring(self) -> str | None:
         return self._keyring
 
     @property
-    def required_successful_signature_count(self):
+    def required_successful_signature_count(self) -> str | None:
         return self._required_signature_count
 
     @property
@@ -93,17 +102,17 @@ class ConcreteArtifactsManager:
         return self._ignore_signature_errors
 
     @property
-    def require_build_metadata(self):
-        # type: () -> bool
+    def require_build_metadata(self) -> bool:
         return self._require_build_metadata
 
     @require_build_metadata.setter
-    def require_build_metadata(self, value):
-        # type: (bool) -> None
+    def require_build_metadata(self, value: bool) -> None:
         self._require_build_metadata = value
 
-    def get_galaxy_artifact_source_info(self, collection):
-        # type: (Candidate) -> dict[str, t.Union[str, list[dict[str, str]]]]
+    def get_galaxy_artifact_source_info(
+        self,
+        collection: Candidate,
+    ) -> dict[str, str | list[dict[str, str]]]:
         server = collection.src.api_server
 
         try:
@@ -126,8 +135,10 @@ class ConcreteArtifactsManager:
             "signatures": signatures,
         }
 
-    def get_galaxy_artifact_path(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> bytes
+    def get_galaxy_artifact_path(
+        self,
+        collection: Candidate | Requirement,
+    ) -> bytes:
         """Given a Galaxy-stored collection, return a cached path.
 
         If it's not yet on disk, this method downloads the artifact first.
@@ -157,7 +168,7 @@ class ConcreteArtifactsManager:
                 expected_hash=sha256_hash,
                 validate_certs=self._validate_certs,
                 token=token,
-            )  # type: bytes
+            )
         except URLError as err:
             raise AnsibleError(
                 'Failed to download collection tar '
@@ -190,8 +201,7 @@ class ConcreteArtifactsManager:
         self._galaxy_artifact_cache[collection] = b_artifact_path
         return b_artifact_path
 
-    def get_artifact_path(self, collection):
-        # type: (Collection) -> bytes
+    def get_artifact_path(self, collection: Collection) -> bytes:
         """Given a concrete collection pointer, return a cached path.
 
         If it's not yet on disk, this method downloads the artifact first.
@@ -252,22 +262,27 @@ class ConcreteArtifactsManager:
         self._artifact_cache[collection.src] = b_artifact_path
         return b_artifact_path
 
-    def get_artifact_path_from_unknown(self, collection):
-        # type: (Candidate) -> bytes
+    def get_artifact_path_from_unknown(self, collection: Candidate) -> bytes:
         if collection.is_concrete_artifact:
             return self.get_artifact_path(collection)
         return self.get_galaxy_artifact_path(collection)
 
-    def _get_direct_collection_namespace(self, collection):
-        # type: (Candidate) -> t.Optional[str]
-        return self.get_direct_collection_meta(collection)['namespace']  # type: ignore[return-value]
+    def _get_direct_collection_namespace(
+        self,
+        collection: Collection,
+    ) -> str | None:
+        return self.get_direct_collection_meta(collection)['namespace']
 
-    def _get_direct_collection_name(self, collection):
-        # type: (Collection) -> t.Optional[str]
-        return self.get_direct_collection_meta(collection)['name']  # type: ignore[return-value]
+    def _get_direct_collection_name(
+        self,
+        collection: Collection,
+    ) -> str | None:
+        return self.get_direct_collection_meta(collection)['name']
 
-    def get_direct_collection_fqcn(self, collection):
-        # type: (Collection) -> t.Optional[str]
+    def get_direct_collection_fqcn(
+        self,
+        collection: Collection,
+    ) -> str | None:
         """Extract FQCN from the given on-disk collection artifact.
 
         If the collection is virtual, ``None`` is returned instead
@@ -277,26 +292,29 @@ class ConcreteArtifactsManager:
             # NOTE: should it be something like "<virtual>"?
             return None
 
-        return '.'.join((  # type: ignore[type-var]
-            self._get_direct_collection_namespace(collection),  # type: ignore[arg-type]
+        return '.'.join((
+            self._get_direct_collection_namespace(collection),
             self._get_direct_collection_name(collection),
         ))
 
-    def get_direct_collection_version(self, collection):
-        # type: (Collection) -> str
+    def get_direct_collection_version(self, collection: Collection) -> str:
         """Extract version from the given on-disk collection artifact."""
-        return self.get_direct_collection_meta(collection)['version']  # type: ignore[return-value]
+        return self.get_direct_collection_meta(collection)['version']
 
-    def get_direct_collection_dependencies(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> dict[str, str]
+    def get_direct_collection_dependencies(
+        self,
+        collection: Candidate | Requirement,
+    ) -> dict[str, str]:
         """Extract deps from the given on-disk collection artifact."""
         collection_dependencies = self.get_direct_collection_meta(collection)['dependencies']
         if collection_dependencies is None:
             collection_dependencies = {}
-        return collection_dependencies  # type: ignore[return-value]
+        return collection_dependencies
 
-    def get_direct_collection_meta(self, collection):
-        # type: (Collection) -> dict[str, t.Union[str, dict[str, str], list[str], None, t.Type[Sentinel]]]
+    def get_direct_collection_meta(
+        self,
+        collection: Collection,
+    ) -> CollectionInfoType:
         """Extract meta from the given on-disk collection artifact."""
         try:  # FIXME: use unique collection identifier as a cache key?
             return self._artifact_meta_cache[collection.src]
@@ -320,6 +338,8 @@ class ConcreteArtifactsManager:
                 'namespace': None,
                 'dependencies': {to_native(b_artifact_path): '*'},
                 'version': '*',
+                'authors': [],  # required in `_CollectionInfoTypeBase`
+                'readme': '',  # required in `_CollectionInfoTypeBase`
             }
         elif collection.is_subdirs:
             collection_meta = {
@@ -331,6 +351,8 @@ class ConcreteArtifactsManager:
                     '*',
                 ),
                 'version': '*',
+                'authors': [],  # required in `_CollectionInfoTypeBase`
+                'readme': '',  # required in `_CollectionInfoTypeBase`
             }
         else:
             raise RuntimeError
@@ -338,8 +360,15 @@ class ConcreteArtifactsManager:
         self._artifact_meta_cache[collection.src] = collection_meta
         return collection_meta
 
-    def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):
-        # type: (Candidate, str, str, GalaxyToken, str, list[dict[str, str]]) -> None
+    def save_collection_source(
+        self,
+        collection: Candidate,
+        url: str,
+        sha256_hash: str,
+        token: GalaxyToken,
+        signatures_url: str,
+        signatures: list[dict[str, str]],
+    ) -> None:
         """Store collection URL, SHA256 hash and Galaxy API token.
 
         This is a hook that is supposed to be called before attempting to
@@ -352,13 +381,13 @@ class ConcreteArtifactsManager:
     @contextmanager
     def under_tmpdir(
             cls,
-            temp_dir_base,  # type: str
-            validate_certs=True,  # type: bool
-            keyring=None,  # type: str
-            required_signature_count=None,  # type: str
-            ignore_signature_errors=None,  # type: list[str]
-            require_build_metadata=True,  # type: bool
-    ):  # type: (...) -> t.Iterator[ConcreteArtifactsManager]
+            temp_dir_base: str,
+            validate_certs: bool = True,
+            keyring: str | None = None,
+            required_signature_count: str | None = None,
+            ignore_signature_errors: list[str] | None = None,
+            require_build_metadata: bool = True,
+    ) -> t.Iterator[ConcreteArtifactsManager]:
         """Custom ConcreteArtifactsManager constructor with temp dir.
 
         This method returns a context manager that allocates and cleans
@@ -410,7 +439,7 @@ def parse_scm(collection, version):
     return name, version, path, fragment
 
 
-def _extract_collection_from_git(repo_url, coll_ver, b_path):
+def _extract_collection_from_git(repo_url, coll_ver, b_path: bytes) -> bytes:
     name, version, git_url, fragment = parse_scm(repo_url, coll_ver)
     b_checkout_path = mkdtemp(
         dir=b_path,
@@ -472,8 +501,14 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
     backoff_iterator=generate_jittered_backoff(retries=6, delay_base=2, delay_threshold=40),
     should_retry_error=should_retry_error
 )
-def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
-    # type: (str, bytes, t.Optional[str], bool, GalaxyToken, int) -> bytes
+def _download_file(
+    url: str,
+    b_path: bytes,
+    expected_hash: str | None,
+    validate_certs: bool,
+    token: GalaxyToken | None = None,
+    timeout: int = 60,
+) -> bytes:
     # ^ NOTE: used in download and verify_collections ^
     b_tarball_name = to_bytes(
         url.rsplit('/', 1)[1], errors='surrogate_or_strict',
@@ -483,7 +518,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     b_tarball_dir = mkdtemp(
         dir=b_path,
         prefix=b'-'.join((b_file_name, b'')),
-    )  # type: bytes
+    )
 
     b_file_path = os.path.join(b_tarball_dir, b_tarball_name)
 
@@ -498,7 +533,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
         timeout=timeout
     )
 
-    with open(b_file_path, 'wb') as download_file:  # type: t.BinaryIO
+    with open(b_file_path, 'wb') as download_file:
         actual_hash = _consume_file(resp, write_to=download_file)
 
     if expected_hash:
@@ -513,8 +548,10 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeo
     return b_file_path
 
 
-def _consume_file(read_from, write_to=None):
-    # type: (t.BinaryIO, t.BinaryIO) -> str
+def _consume_file(
+    read_from: t.IO[bytes],
+    write_to: t.IO[bytes] | None = None,
+) -> str:
     bufsize = 65536
     sha256_digest = sha256()
     data = read_from.read(bufsize)
@@ -529,21 +566,20 @@ def _consume_file(read_from, write_to=None):
 
 
 def _normalize_galaxy_yml_manifest(
-        galaxy_yml,  # type: dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
-        b_galaxy_yml_path,  # type: bytes
-        require_build_metadata=True,  # type: bool
-):
-    # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
-    galaxy_yml_schema = (
-        get_collections_galaxy_meta_info()
-    )  # type: list[dict[str, t.Any]]  # FIXME: <--
-    # FIXME: 👆maybe precise type: list[dict[str, t.Union[bool, str, list[str]]]]
+        galaxy_yml: dict[
+            str,
+            str | list[str] | dict[str, str] | None | t.Type[Sentinel],
+        ],
+        b_galaxy_yml_path: bytes,
+        require_build_metadata: bool = True,
+) -> CollectionInfoType:
+    galaxy_yml_schema = get_collections_galaxy_meta_info()
 
-    mandatory_keys = set()
-    string_keys = set()  # type: set[str]
-    list_keys = set()  # type: set[str]
-    dict_keys = set()  # type: set[str]
-    sentinel_keys = set()  # type: set[str]
+    mandatory_keys: set[str] = set()
+    string_keys: set[str] = set()
+    list_keys: set[str] = set()
+    dict_keys: set[str] = set()
+    sentinel_keys: set[str] = set()
 
     for info in galaxy_yml_schema:
         if info.get('required', False):
@@ -604,13 +640,13 @@ def _normalize_galaxy_yml_manifest(
     if not galaxy_yml.get('version'):
         galaxy_yml['version'] = '*'
 
-    return galaxy_yml
+    return t.cast(CollectionInfoType, galaxy_yml)
 
 
 def _get_meta_from_dir(
-        b_path,  # type: bytes
-        require_build_metadata=True,  # type: bool
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
+        b_path: bytes,
+        require_build_metadata: bool = True,
+) -> CollectionInfoType:
     try:
         return _get_meta_from_installed_dir(b_path)
     except LookupError:
@@ -618,9 +654,9 @@ def _get_meta_from_dir(
 
 
 def _get_meta_from_src_dir(
-        b_path,  # type: bytes
-        require_build_metadata=True,  # type: bool
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
+        b_path: bytes,
+        require_build_metadata: bool = True,
+) -> CollectionInfoType:
     galaxy_yml = os.path.join(b_path, _GALAXY_YAML)
     if not os.path.isfile(galaxy_yml):
         raise LookupError(
@@ -652,9 +688,9 @@ def _get_meta_from_src_dir(
 
 
 def _get_json_from_installed_dir(
-        b_path,  # type: bytes
-        filename,  # type: str
-):  # type: (...) -> dict
+        b_path: bytes,
+        filename: str,
+) -> dict:
 
     b_json_filepath = os.path.join(b_path, to_bytes(filename, errors='surrogate_or_strict'))
 
@@ -678,9 +714,7 @@ def _get_json_from_installed_dir(
     return manifest
 
 
-def _get_meta_from_installed_dir(
-        b_path,  # type: bytes
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
+def _get_meta_from_installed_dir(b_path: bytes) -> CollectionInfoType:
     manifest = _get_json_from_installed_dir(b_path, MANIFEST_FILENAME)
     collection_info = manifest['collection_info']
 
@@ -699,9 +733,7 @@ def _get_meta_from_installed_dir(
     return collection_info
 
 
-def _get_meta_from_tar(
-        b_path,  # type: bytes
-):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None, t.Type[Sentinel]]]
+def _get_meta_from_tar(b_path: bytes) -> CollectionInfoType:
     if not os.path.exists(b_path):
         raise AnsibleError(
             f"Unable to find collection artifact file at '{to_native(b_path)}'."
@@ -713,7 +745,7 @@ def _get_meta_from_tar(
             format(path=to_native(b_path)),
         )
 
-    with tarfile.open(b_path, mode='r') as collection_tar:  # type: tarfile.TarFile
+    with tarfile.open(b_path, mode='r') as collection_tar:
         try:
             member = collection_tar.getmember(MANIFEST_FILENAME)
         except KeyError:
@@ -751,10 +783,9 @@ def _get_meta_from_tar(
 
 @contextmanager
 def _tarfile_extract(
-        tar,  # type: tarfile.TarFile
-        member,  # type: tarfile.TarInfo
-):
-    # type: (...) -> t.Iterator[tuple[tarfile.TarInfo, t.Optional[t.IO[bytes]]]]
+        tar: tarfile.TarFile,
+        member: tarfile.TarInfo,
+) -> t.Iterator[tuple[tarfile.TarInfo, t.IO[bytes] | None]]:
     tar_obj = tar.extractfile(member)
     try:
         yield member, tar_obj

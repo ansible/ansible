@@ -19,11 +19,12 @@ from urllib.error import HTTPError, URLError
 
 if t.TYPE_CHECKING:
     from ansible.utils.display import Display
+    from ._types import DisplayQueueType, DisplayThreadProto
 
 
 def get_signature_from_source(
     source: str,
-    display: Display | None = None,
+    display: Display | DisplayThreadProto | None = None,
 ) -> str:
     if display is not None:
         display.vvvv(f"Using signature at {source}")
@@ -47,7 +48,7 @@ def run_gpg_verify(
     manifest_file: str,
     signature: str,
     keyring: str,
-    display: Display,
+    display: Display | DisplayThreadProto,
 ) -> tuple[str, int]:
     status_fd_read, status_fd_write = os.pipe()
 
