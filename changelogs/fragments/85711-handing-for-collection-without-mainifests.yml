@@ -1,0 +1,3 @@
+bugfixes:
+- >-
+  ansible-doc  - fix in the ansible-doc process error output _protomatter related Warning log(https://github.com/ansible/ansible/pull/85711).
