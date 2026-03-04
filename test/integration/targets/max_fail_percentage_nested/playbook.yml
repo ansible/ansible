@@ -1,0 +1,15 @@
+- hosts: all
+  gather_facts: false
+  max_fail_percentage: 24
+  tasks:
+    - name: Block with failure
+      block:
+        - command: /bin/false
+          when: inventory_hostname == 'host1'
+      rescue:
+        - fail:
+            msg: "rescue fail"
+
+    - name: Marker task
+      set_fact:
+        marker_task_run: true
