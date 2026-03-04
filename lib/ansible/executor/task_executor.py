@@ -256,21 +256,6 @@ class TaskExecutor:
                     task_ctx.record_break_when()
                     break
 
-            # clear 'connection related' plugin variables for next iteration
-            if self._connection:
-                clear_plugins = {
-                    'connection': self._connection._load_name,
-                    'shell': self._connection._shell._load_name
-                }
-
-                if self._connection.become:
-                    clear_plugins['become'] = self._connection.become._load_name
-
-                for plugin_type, plugin_name in clear_plugins.items():
-                    for var in C.config.get_plugin_vars(plugin_type, plugin_name):
-                        if var in task_vars and var not in task_ctx.task_vars:
-                            del task_vars[var]
-
         if last_loop_task:
             # FUTURE: hide this in Task/LoopContext once they're fully implemented
             # NOTE: run_once cannot contain loop vars because it's templated earlier also
