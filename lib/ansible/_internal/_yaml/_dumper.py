@@ -9,7 +9,6 @@ from yaml.nodes import ScalarNode, Node
 
 from ansible._internal._datatag._tags import VaultedValue
 from ansible._internal._templating import _jinja_common
-from ansible.config.manager import ConfigManager
 from ansible.errors import AnsibleVariableTypeError
 from ansible.module_utils import _internal
 from ansible.module_utils._internal._datatag import AnsibleTaggedObject, Tripwire, AnsibleTagHelper
@@ -19,7 +18,6 @@ from ansible.module_utils.common.yaml import HAS_LIBYAML
 from ansible.utils.display import Display
 
 display = Display()
-cfg_mgr = ConfigManager()
 
 if HAS_LIBYAML:
     from yaml.cyaml import CSafeDumper as SafeDumper
@@ -48,6 +46,7 @@ class VaultBehaviors(StrEnum):
 
 
 class VaultDecryptionContext(AmbientContextBase):
+    """Ambient context that wraps to_yaml rendering, providing information to AnsibleDumper."""
 
     def __init__(self, vault_behavior: VaultBehaviors):
         self.vault_behavior = vault_behavior
