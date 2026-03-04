@@ -31,7 +31,7 @@ def test_yaml_dump(filter_name: str, _vault_secrets_context: VaultTestHelper) ->
 
     original = dict(a_list=[payload])
     templar = Templar(variables=dict(original=original))
-    result = templar.template(trust_as_template(f"{{{{ original | {filter_name} }}}}"))
+    result = templar.template(trust_as_template(f"{{{{ original | {filter_name}(vault_behavior='keep_encrypted') }}}}"))
     data = from_yaml(trust_as_template(result))
 
     assert len(data) == len(original)

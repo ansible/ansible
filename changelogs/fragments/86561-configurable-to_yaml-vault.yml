@@ -1,0 +1,5 @@
+bugfixes:
+  - to_yaml / to_nice_yaml filters - Restore pre-2.19 decryption behavior for vaulted values (https://github.com/ansible/ansible/issues/85722).
+    A regression in 2.19.0 previously caused vaulted values to be dumped as ``!vault``-tagged ciphertext.
+minor_changes:
+  - to_yaml / to_nice_yaml filters - Add optional ``vault_behavior`` argument to configure how vaulted values are rendered.

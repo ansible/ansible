@@ -25,3 +25,6 @@
       - yaml_test_01.failed
       - yaml_test_02.ansible_facts.msg == "|-\n  thing\n"
       - yaml_test_03.ansible_facts.msg == "---\n!!str \"thing\"\n"
+
+- name: Test to_yaml's handling of vaulted values
+  include_tasks: to_yaml_vaulted.yml

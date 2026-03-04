@@ -49,6 +49,16 @@ DOCUMENTATION:
     explicit_end:
       description: If set to V(True), adds an explicit end using "...".
       type: bool
+    vault_behavior:
+      description: Specify preferred treatment of vaulted values
+      type: string
+      default: "decrypt"
+      choices:
+        - "decrypt"
+        - "redact"
+        - "keep_encrypted"
+        - "fail"
+      version_added: 2.21
   notes:
     - More options may be available, see L(PyYAML documentation, https://pyyaml.org/wiki/PyYAMLDocumentation) for details.
 
