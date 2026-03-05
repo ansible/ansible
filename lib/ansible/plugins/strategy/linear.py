@@ -336,21 +336,15 @@ class StrategyModule(StrategyBase):
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
-                    # Count failed hosts accurately. _tqm._failed_hosts can miss hosts
-                    # whose failure hasn't propagated (e.g. a host that failed in rescue
-                    # and completed its always section, but whose state only transitions
-                    # to COMPLETE on peek). Check the iterator's peeked state as a
-                    # fallback. Scoped to hosts_left (current serial batch only).
-                    failed_hosts_count = 0
-                    for host in hosts_left:
+                    def _host_has_failed(host):
                         if host.name in self._tqm._failed_hosts:
-                            failed_hosts_count += 1
-                        else:
-                            state, _ = iterator.get_next_task_for_host(host, peek=True)
-                            if iterator._check_failed_state(state):
-                                failed_hosts_count += 1
+                            return True
+                        state, _ = iterator.get_next_task_for_host(host, peek=True)
+                        return iterator._check_failed_state(state)
 
-                    if (failed_hosts_count / iterator.batch_size) > percentage:
+                    batch_failed_count = sum(1 for host in hosts_left if _host_has_failed(host))
+
+                    if (batch_failed_count / iterator.batch_size) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
@@ -358,7 +352,7 @@ class StrategyModule(StrategyBase):
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                         result |= self._tqm.RUN_FAILED_BREAK_PLAY
-                    display.debug('(%s failed / %s total )> %s max fail' % (failed_hosts_count, iterator.batch_size, percentage))
+                    display.debug('(%s failed / %s total )> %s max fail' % (batch_failed_count, iterator.batch_size, percentage))
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")
