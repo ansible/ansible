@@ -2,7 +2,6 @@
     "text": true,
     "output": "path-message",
     "excluded_extensions": [
-        ".json",
-        ".txt"
+        ".json"
     ]
 }
