@@ -335,7 +335,20 @@ class StrategyModule(StrategyBase):
                 display.debug("checking for max_fail_percentage")
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
-                    failed_hosts_count = len(iterator.get_failed_hosts())
+
+                    # Count failed hosts accurately. _tqm._failed_hosts can miss hosts
+                    # whose failure hasn't propagated (e.g. a host that failed in rescue
+                    # and completed its always section, but whose state only transitions
+                    # to COMPLETE on peek). Check the iterator's peeked state as a
+                    # fallback. Scoped to hosts_left (current serial batch only).
+                    failed_hosts_count = 0
+                    for host in hosts_left:
+                        if host.name in self._tqm._failed_hosts:
+                            failed_hosts_count += 1
+                        else:
+                            state, _ = iterator.get_next_task_for_host(host, peek=True)
+                            if iterator._check_failed_state(state):
+                                failed_hosts_count += 1
 
                     if (failed_hosts_count / iterator.batch_size) > percentage:
                         for host in hosts_left:

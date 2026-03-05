@@ -4,11 +4,15 @@
   tasks:
     - name: Block with failure
       block:
-        - command: /bin/false
+        - fail:
+            msg: "block failure"
           when: inventory_hostname == 'host1'
       rescue:
         - fail:
             msg: "rescue fail"
+      always:
+        - debug:
+            msg: "always cleanup"
 
     - name: Marker task
       set_fact:
