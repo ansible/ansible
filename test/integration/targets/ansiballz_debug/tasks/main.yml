@@ -4,6 +4,13 @@
     ANSIBLE_KEEP_REMOTE_FILES: 1
   register: wrapper
 
+- name: ensure we are using the correct temp
+  assert:
+    that:
+      - wrapper.stdout | regex_search(expected_tmp ~ '/.*/AnsiballZ_ping.py') is not none
+  vars:
+    expected_tmp: "{{ q('config', 'remote_tmp', plugin_name='sh', plugin_type='shell')[0].replace('~', lookup('pipe', 'whoami')) }}"
+
 - name: Locate the generated AnsiballZ wrapper
   set_fact:
     generated_wrapper: "{{ (wrapper.stdout | regex_search('PUT .*? TO (/.*?/AnsiballZ_ping.py)', '\\1'))[0] }}"
