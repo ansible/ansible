@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.sentinel import Sentinel
-from ansible.playbook.attribute import NonInheritableFieldAttribute
+from ansible.playbook.attribute import Attribute, NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -111,7 +111,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
         return super(Block, self).preprocess_data(ds)
 
-    def _load(self, attr, ds, type):
+    def _load(self, attr: Attribute, ds: list, keyword: str = "tasks"):
         try:
             return load_list_of_tasks(
                 ds,
@@ -124,7 +124,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
                 use_handlers=self._use_handlers,
             )
         except AssertionError as ex:
-            raise AnsibleParserError(f"A malformed block was encountered while loading {type}", obj=self._ds) from ex
+            raise AnsibleParserError(f"A malformed block was encountered while loading {keyword}", obj=self._ds) from ex
 
     def _load_block(self, attr, ds):
         return self._load(attr, ds, 'block')

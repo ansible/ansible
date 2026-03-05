@@ -26,7 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError, AnsibleAssertionError, AnsibleValueOmittedError
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common.yaml import yaml_dump
-from ansible.playbook.attribute import NonInheritableFieldAttribute
+from ansible.playbook.attribute import Attribute, NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -175,7 +175,7 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
-    def _load_tasks(self, attr, ds, stage="tasks"):
+    def _load(self, attr: Attribute, ds: list, keyword: str = "tasks"):
         """
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
@@ -183,13 +183,16 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as ex:
-            raise AnsibleParserError(f"A malformed block was encountered while loading {stage}.", obj=self._ds) from ex
+            raise AnsibleParserError(f"A malformed block was encountered while loading {keyword}.", obj=self._ds) from ex
+
+    def _load_tasks(self, attr, ds):
+        return self._load(attr, ds, 'tasks')
 
     def _load_pre_tasks(self, attr, ds):
-        return self._load_tasks(attr, ds, stage='pre_tasks')
+        return self._load(attr, ds, keyword='pre_tasks')
 
     def _load_post_tasks(self, attr, ds):
-        return self._load_tasks(attr, ds, stage='post_tasks')
+        return self._load(attr, ds, keyword='post_tasks')
 
     def _load_handlers(self, attr, ds):
         """
