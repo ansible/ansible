@@ -1,0 +1,38 @@
+- name: Verify register projections are lazy
+  debug:
+  loop: [1, 2, 3]
+  register:
+    # If this variable is resolved during task execution, it will fail.
+    # It will only resolve without error after the task has been completed, which is the only time it should be evaluated.
+    not_used_during_execution: 1 if _task.loop_result.results | length == 3 else 1 / 0
+
+- name: Verify projection was evaluated after task completion
+  assert:
+    that: not_used_during_execution == 1
+
+- name: Verify register projections are not visible to non-loop tasks
+  debug:
+    msg: "rp_value is {{ rp_value | default('not defined') }}"
+  register:
+    rp_value: "1"
+    result: _task.result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.msg == "rp_value is not defined"
+
+- name: Verify register projections can be defined in any order
+  debug:
+  register:
+    rp_answer: rp_two + rp_three
+    rp_two: rp_one * 2
+    rp_three: rp_one * 3
+    rp_expected: rp_two + rp_three
+    rp_one: 1
+
+- name: Verify the result
+  assert:
+    that:
+      - rp_answer == rp_expected
+      - rp_answer == 5

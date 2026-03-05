@@ -1,0 +1,65 @@
+- name: Use register projections in 'changed_when' without a loop
+  debug:
+  changed_when: changed_when_rp
+  register:
+    changed_when_rp: changed_when_three - changed_when_two == 1
+    changed_when_three: 1 + 2
+    changed_when_two: 1 + 1
+    changed_when_result: _task.result
+
+- name: Verify results
+  assert:
+    that:
+      - changed_when_result is changed
+
+- name: Use register projections in 'changed_when' with a loop
+  debug:
+  loop: [1, 2, 3, 4, 5, 6]
+  changed_when: changed_when_loop_rp in (1, 3)
+  register:
+    changed_when_loop_rp: _task.loop_result.results | length
+    changed_when_loop_rp_results: _task.loop_result.results
+    changed_when_loop_rp_item: item
+
+- name: Verify results
+  assert:
+    that:
+      - changed_when_loop_rp == 6
+      - changed_when_loop_rp_item == 6
+      - changed_when_loop_rp_results[0] is changed
+      - changed_when_loop_rp_results[1] is not changed
+      - changed_when_loop_rp_results[2] is changed
+      - changed_when_loop_rp_results[3] is not changed
+      - changed_when_loop_rp_results[4] is not changed
+      - changed_when_loop_rp_results[5] is not changed
+
+- name: Use '_task.result' in 'changed_when' with a loop on the first item
+  debug:
+    msg: "Hello {{ item }}"
+  loop: [1, 2, 3]
+  changed_when: _task.result.msg == "Hello 1"
+  register: result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.results | length == 3
+      - result.results[0] is changed
+      - result.results[1] is not changed
+      - result.results[2] is not changed
+
+- name: Use '_task.loop_result' in 'changed_when' with a loop to access the previous item
+  debug:
+  loop: [1, 2, 3, 4, 5]
+  changed_when: _task.loop_result.results | length > 1 and _task.loop_result.results[-2] is not changed
+  register: result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.results | length == 5
+      - result.results[0] is not changed
+      - result.results[1] is changed
+      - result.results[2] is not changed
+      - result.results[3] is changed
+      - result.results[4] is not changed
