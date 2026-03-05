@@ -38,6 +38,10 @@
   custom_module:
   register: custom_module_return
 
+- name: Check we explode ansiballz to use the configured remote_temp
+  using_remote_temp:
+  register: remote_temp_used
+
 - assert:
     that:
       # make sure ansible-test was able to set the limit unless it exceeds the hard limit or the value is lower on macOS
@@ -63,6 +67,10 @@
 
       # custom module returned the correct answer
       - custom_module_return.answer == 42
+
+      # ensure we are not using system temp
+      - not remote_temp_used.me.startswith('/tmp')
+
 
 # https://github.com/ansible/ansible/issues/64664
 # https://github.com/ansible/ansible/issues/64479
