@@ -153,6 +153,12 @@ class LibRPM:
         pkt = ctypes.POINTER(ctypes.c_uint8)()
         pktlen = ctypes.c_size_t()
 
+        # NOTE: This seems to fix some cases on systems with very old versions
+        # of RPM (pre 4.15.0) where the PGP key may not have an EOL character:
+        # https://github.com/rpm-software-management/rpm/pull/800
+        if not armor.endswith("\n"):
+            armor += "\n"
+
         armor_bytes = armor.encode()
         result = self._lib.pgpParsePkts(armor_bytes, ctypes.byref(pkt), ctypes.byref(pktlen))
 
