@@ -13,7 +13,7 @@ from ansible.module_utils.facts.hardware import freebsd
 def test_get_device_facts(monkeypatch):
     fixtures = pathlib.Path(__file__).parent / 'fixtures'
     dev_dir = (fixtures / 'devices').read_text().split()
-    expected_dev_dir = json.load(open(fixtures / 'expected_devices', 'r'))
+    expected_dev_dir = json.load(open(fixtures / 'expected_devices.json', 'r'))
 
     monkeypatch.setattr(os.path, 'isdir', lambda x: True)
     monkeypatch.setattr(os, 'listdir', lambda x: dev_dir)
