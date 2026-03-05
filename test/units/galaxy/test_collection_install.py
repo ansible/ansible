@@ -897,10 +897,11 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 4
+    assert len(display_msgs) == 5
     assert display_msgs[0] == "Process install dependency map"
-    assert display_msgs[1] == "Starting collection install process"
-    assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
+    assert display_msgs[1] == "[WARNING]: ansible_namespace.collection:0.1.0 does not have requires_ansible metadata.\n"
+    assert display_msgs[2] == "Starting collection install process"
+    assert display_msgs[3] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
 
 
 # Makes sure we don't get stuck in some recursive loop
@@ -937,11 +938,12 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 4
+    assert len(display_msgs) == 5
     assert display_msgs[0] == "Process install dependency map"
-    assert display_msgs[1] == "Starting collection install process"
-    assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
-    assert display_msgs[3] == "ansible_namespace.collection:0.1.0 was installed successfully"
+    assert display_msgs[1] == "[WARNING]: ansible_namespace.collection:0.1.0 does not have requires_ansible metadata.\n"
+    assert display_msgs[2] == "Starting collection install process"
+    assert display_msgs[3] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
+    assert display_msgs[4] == "ansible_namespace.collection:0.1.0 was installed successfully"
 
 
 @pytest.mark.parametrize('collection_artifact', [
