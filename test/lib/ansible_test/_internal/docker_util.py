@@ -682,6 +682,11 @@ def docker_cp_to(args: CommonConfig, container_id: str, src: str, dst: str) -> N
     docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)], capture=True)
 
 
+def docker_cp_from(args: CommonConfig, container_id: str, src: str, dst: str) -> None:
+    """Copy a file from the specified container."""
+    docker_command(args, ['cp', '%s:%s' % (container_id, src), dst], capture=True)
+
+
 def docker_create(
     args: CommonConfig,
     image: str,
