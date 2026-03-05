@@ -1,4 +1,4 @@
-"""Require Unix line endings."""
+"""Require files to end in \n"""
 
 from __future__ import annotations
 
