@@ -210,9 +210,15 @@
 - name: run ansible-galaxy collection list tests
   include_tasks: list.yml
 
-- include_tasks: upgrade.yml
-  args:
-    apply:
-      environment:
-        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
-        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+- environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+  block:
+  - include_tasks: upgrade.yml
+
+  - include_tasks: check_requires_ansible.yml
+    loop:
+      - install
+      - download
+    loop_control:
+      loop_var: subcommand

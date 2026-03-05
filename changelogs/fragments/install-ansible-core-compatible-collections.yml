@@ -1,0 +1,6 @@
+bugfixes:
+- >-
+  ``ansible-galaxy install`` and ``ansible-galaxy collection install|download`` - now consider
+  the ``COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH`` configuration.
+  Collections which will cause a warning/error at load time are no longer installed/downloaded.
+  (https://github.com/ansible/ansible/issues/78539)
