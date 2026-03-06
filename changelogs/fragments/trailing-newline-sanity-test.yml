@@ -1,5 +1,0 @@
----
-minor_changes:
-  - ansible-test sanity - add a sanity test to ensure that files end in ``\n``.
-  - ansible-test sanity - add a new sanity test configuration option ``excluded_extensions`` to exclude certain file
-    extensions from the sanity test.
