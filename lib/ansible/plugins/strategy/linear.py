@@ -339,7 +339,7 @@ class StrategyModule(StrategyBase):
                     def _host_has_failed(host):
                         if host.name in self._tqm._failed_hosts:
                             return True
-                        state, _ = iterator.get_next_task_for_host(host, peek=True)
+                        state, dummy = iterator.get_next_task_for_host(host, peek=True)
                         return iterator._check_failed_state(state)
 
                     batch_failed_count = sum(1 for host in hosts_left if _host_has_failed(host))
