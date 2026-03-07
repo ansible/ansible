@@ -626,7 +626,7 @@ class TaskExecutor:
                 #  * detail about failed_when is lost; any error details from the task could potentially be grafted in/preserved if error normalization was done
 
                 try:
-                    if self._task.changed_when is not None and self._task.changed_when:
+                    if self._task.changed_when:
                         utr.changed = self._task._resolve_conditional(self._task.changed_when, post_connection_vars)
                         if self._task.register:
                             post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
