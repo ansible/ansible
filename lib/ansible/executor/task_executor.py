@@ -641,26 +641,6 @@ class TaskExecutor:
         if _task.VariableLayer.CACHEABLE_FACT not in utr.pending_changes.register_host_variables and utr.ansible_facts:
             utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
 
-        if utr.ansible_facts and self._task.action not in C._ACTION_DEBUG:
-            if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
-                # RPFIX-3: when delegating facts, it appears that we're incorrectly updating the task host's vars here (pre-existing issue)
-                task_ctx.update_task_vars(utr.ansible_facts)
-            else:
-                # TODO: cleaning of facts should eventually become part of taskresults instead of vars
-                task_ctx.update_task_vars(dict(
-                    ansible_facts=combine_vars(task_ctx.task_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts)),
-                ))
-
-                if _INJECT_FACTS:
-                    if _INJECT_FACTS_ORIGIN == 'default':
-                        # This happens x2 due to loops and being able to use values in subsequent iterations
-                        # these copies are later discarded in favor of 'total/final' one on loop end.
-                        cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(utr.ansible_facts).items()}
-                    else:
-                        cleaned_toplevel = clean_facts(utr.ansible_facts)
-
-                    task_ctx.update_task_vars(cleaned_toplevel)
-
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
         # may be item-specific, ie. "notify: service {{item}}"
