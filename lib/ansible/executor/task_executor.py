@@ -555,9 +555,6 @@ class TaskExecutor:
             try:
                 # FUTURE: exceptions raised anywhere here bypass failed_when, `until` retries, intra-loop register/register-projections
                 with _task_timeout.TaskTimeoutError.alarm_timeout(self._task.timeout):
-                    # TaskContext.current().task = self._task  # HACK: all the mutation/copy jazz for the item-
-                    #   specific values should be handled internally to TaskContext
-
                     try:
                         task_ctx.pending_changes = _task.PendingChanges()
 
