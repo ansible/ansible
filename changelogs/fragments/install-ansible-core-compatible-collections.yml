@@ -1,7 +1,5 @@
 bugfixes:
 - >-
   ``ansible-galaxy install`` and ``ansible-galaxy collection install|download`` -
-  no longer install or download collections which don't support the currently
-  executing version of ansible-core. The previous behavior can be restored by setting the
-  ``COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH`` configuration to ``ignore``.
+  collections that declare a ``requires_ansible`` version that is not compatible with the running ansible-core version are now excluded from installation and download by default. In previous versions, ansible-galaxy would install such collections even if doing so resulted in an error at load time. To restore the previous behavior, set ``COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH`` to ``ignore`` in your configuration.
   (https://github.com/ansible/ansible/issues/78539)
