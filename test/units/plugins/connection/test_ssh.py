@@ -83,6 +83,33 @@ class TestConnectionBaseClass(unittest.TestCase):
         res, stdout, stderr = conn.exec_command('ssh')
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
 
+        build_calls = conn._build_command.call_args_list
+        self.assertEqual(len(build_calls), 2)
+        self.assertIn('-tt', build_calls[0].args)
+        self.assertNotIn('-tt', build_calls[1].args)
+
+    def test_plugins_connection_ssh_has_tty_respects_use_tty(self):
+        pc = PlayContext()
+        conn = connection_loader.get('ssh', pc)
+
+        conn.get_option = MagicMock()
+
+        option_values = {
+            'ssh_args': None,
+            'ssh_common_args': None,
+            'ssh_extra_args': None,
+            'use_tty': True,
+        }
+
+        def get_option(option):
+            return option_values.get(option)
+
+        conn.get_option.side_effect = get_option
+        self.assertTrue(conn.has_tty)
+
+        option_values['use_tty'] = False
+        self.assertFalse(conn.has_tty)
+
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
         become_success_token = b'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
