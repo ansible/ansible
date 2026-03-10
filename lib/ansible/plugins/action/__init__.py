@@ -1151,9 +1151,19 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         else:
             if self._is_pipelining_enabled(module_style):
-                in_data = module_data
+                if module_bits.b_module_args_json is not None:
+                    # Pipelining sends the script via stdin, so we can't also
+                    # pass args via stdin.  Prepend args as a global variable
+                    # that the wrapper reads instead.
+                    in_data = b'_ANSIBALLZ_PARAMS = ' + module_bits.b_module_args_json + b'\n' + module_data
+                else:
+                    in_data = module_data
             else:
                 cmd = remote_module_path
+                # For new-style Python modules (AnsiballZ), pass args via stdin
+                # instead of embedding them in the wrapper script.
+                if module_bits.b_module_args_json is not None:
+                    in_data = module_bits.b_module_args_json
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
 

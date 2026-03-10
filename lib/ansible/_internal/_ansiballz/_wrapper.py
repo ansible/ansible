@@ -40,11 +40,11 @@ def _ansiballz_main(
     zip_data: str,
     ansible_module: str,
     module_fqn: str,
-    params: str,
     profile: str,
     date_time: datetime.datetime,
     extensions: dict[str, dict[str, object]],
     rlimit_nofile: int,
+    params: str | None = None,
 ) -> None:
     import os
     import os.path
@@ -238,7 +238,19 @@ def _ansiballz_main(
     # See comments in the debug() method for information on debugging
     #
 
-    encoded_params = params.encode()
+    if params is not None:
+        # Args were passed as a function argument (legacy / debug mode).
+        encoded_params = params.encode()
+    else:
+        # Check if args were prepended as a module-level global (pipelining
+        # mode, where stdin carries the script itself).
+        import __main__
+        pipelined_params = getattr(__main__, '_ANSIBALLZ_PARAMS', None)
+        if pipelined_params is not None:
+            encoded_params = pipelined_params if isinstance(pipelined_params, bytes) else pipelined_params.encode()
+        else:
+            # Non-pipelining: args are passed via stdin.
+            encoded_params = sys.stdin.buffer.read()
 
     # There's a race condition with the controller removing the
     # remote_tmpdir and this module executing under async.  So we cannot

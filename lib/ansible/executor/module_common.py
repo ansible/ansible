@@ -988,6 +988,8 @@ class _BuiltModule:
     has_environment: bool = False
     command_lookup: _GetCommandArgs | None = None
     process_result: _ProcessResult | None = None
+    b_module_args_json: bytes | None = None
+    """Serialized module args JSON, passed to the module via stdin instead of embedded in the wrapper."""
 
     def get_command_args(
         self,
@@ -1124,6 +1126,7 @@ def _find_module_utils(
     has_environment = False
     command_lookup: _GetCommandArgs | None = None
     process_result: _ProcessResult | None = None
+    b_module_args_json: bytes | None = None
 
     if module_substyle == 'python':
         date_time = datetime.datetime.now(datetime.timezone.utc)
@@ -1225,12 +1228,14 @@ def _find_module_utils(
         encoder = get_module_encoder(cached_module.metadata.serialization_profile, Direction.CONTROLLER_TO_MODULE)
 
         try:
-            encoded_params = json.dumps(params, cls=encoder)
+            b_module_args_json = to_bytes(json.dumps(params, cls=encoder))
         except TypeError as ex:
             raise AnsibleError(f'Failed to serialize arguments for the {module_name!r} module.') from ex
 
         extension_manager.source_mapping = cached_module.source_mapping
 
+        # Build the wrapper without module args — args are passed via stdin at
+        # execution time, making the wrapper host-independent and cacheable.
         code = _get_ansiballz_code(shebang)
         args = dict(
             ansible_module=module_name,
@@ -1238,7 +1243,6 @@ def _find_module_utils(
             profile=cached_module.metadata.serialization_profile,
             date_time=date_time,
             rlimit_nofile=rlimit_nofile,
-            params=encoded_params,
             extensions=extension_manager.get_extensions(),
             zip_data=to_text(cached_module.zip_data),
         )
@@ -1385,6 +1389,7 @@ if __name__ == "__main__":
         has_environment=has_environment,
         command_lookup=command_lookup,
         process_result=process_result,
+        b_module_args_json=b_module_args_json,
     )
 
 
