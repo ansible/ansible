@@ -794,7 +794,7 @@ class VaultEditor:
         if not os.path.isfile(tmp_path):
             # file is already gone
             return
-
+        prev = os.stat(tmp_path)
         try:
             r = subprocess.call(['shred', tmp_path])
         except (OSError, ValueError):
@@ -808,7 +808,15 @@ class VaultEditor:
         if r != 0:
             # we could not successfully execute unix shred; therefore, do custom shred.
             self._shred_file_custom(tmp_path)
+                if os.path.isfile(dest):
+            prev = os.stat(dest)
+            # old file 'dest' was encrypted, no need to _shred_file
+            os.remove(dest)
+        shutil.move(src, dest)
 
+        # reset permissions if needed
+        os.chmod(tmp_path, prev.st_mode)
+        os.chown(tmp_path, prev.st_uid, prev.st_gid)
         os.remove(tmp_path)
 
     def _edit_file_helper(self, filename, secret, existing_data=None, force_save=False, vault_id=None):
