@@ -12,6 +12,23 @@ DOCUMENTATION = """
     author: ansible (@core)
     version_added: historical
     options:
+        pipelining:
+            default: true
+            description:
+                - Pipelining reduces the number of file operations required to execute a module on the controller,
+                  by piping the module data directly to the Python interpreter instead of writing to a temporary file.
+                - For local connections this defaults to C(true) since there is no remote host and no C(requiretty)
+                  concern. This avoids unnecessary temporary file creation and cleanup on the controller.
+            env:
+                - name: ANSIBLE_PIPELINING
+            ini:
+                - section: defaults
+                  key: pipelining
+                - section: connection
+                  key: pipelining
+            type: boolean
+            vars:
+                - name: ansible_pipelining
         become_success_timeout:
             version_added: '2.19'
             type: int
@@ -29,8 +46,6 @@ DOCUMENTATION = """
                 - Strip internal become output preceding command execution. Disable for additional diagnostics.
             vars:
                 - name: ansible_local_become_strip_preamble
-    extends_documentation_fragment:
-        - connection_pipelining
     notes:
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 """
