@@ -7,6 +7,7 @@
 #AnsibleRequires -CSharpUtil Ansible.Basic
 
 #AnsibleRequires -PowerShell ..module_utils.Process
+#AnsibleRequires -PowerShell ..module_utils._PSModulePath
 
 using namespace System.IO
 using namespace System.Management.Automation.Language
@@ -62,9 +63,19 @@ $module.Result.verbose = @()
 $module.Result.debug = @()
 $module.Result.information = @()
 
+# WinPS does not set this var and we use this for a few checks.
+if (-not (Get-Variable -Name IsWindows -ErrorAction Ignore)) {
+    Set-Variable -Name IsWindows -Value $true
+}
+$utf8NoBom = [Text.UTF8Encoding]::new($false)
+
 $stdPinvoke = @'
 using System;
+using System.IO;
+using System.IO.Pipes;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Ansible.Windows.WinPowerShell
 {
@@ -87,6 +98,195 @@ namespace Ansible.Windows.WinPowerShell
         public static extern bool SetStdHandle(
             int nStdHandle,
             IntPtr hHandle);
+
+        [DllImport("libc", SetLastError = true)]
+        public static extern int close(
+            int fd);
+
+        [DllImport("libc", SetLastError = true)]
+        public static extern int dup(
+            int oldfd);
+
+        [DllImport("libc", SetLastError = true)]
+        public static extern int dup2(
+            int oldfd,
+            int newfd);
+    }
+
+    public class StdioManager : IDisposable
+    {
+#if WINDOWS
+        private const int StdoutHandleId = -11;
+        private const int StderrHandleId = -12;
+#else
+        private const int StdoutHandleId = 1;
+        private const int StderrHandleId = 2;
+#endif
+
+        private static Encoding _utf8 = new UTF8Encoding(false);
+
+        private readonly AnonymousPipeClientStream _pipeClient;
+        private readonly AnonymousPipeServerStream _pipeServer;
+        private readonly StreamWriter _pipeWriter;
+        private readonly MemoryStream _readTarget;
+        private readonly Task _readTask;
+
+        private readonly bool _isStderr;
+        private readonly TextWriter _netConsoleWriter;
+        private readonly IntPtr _nativeConsoleHandle;
+
+        private bool _hasBeenRedirected = false;
+        private int _freeNativeDuplicatedFd = -1;
+
+        public StdioManager(bool isStderr)
+        {
+            _pipeServer = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
+            _pipeClient = new AnonymousPipeClientStream(PipeDirection.Out, _pipeServer.ClientSafePipeHandle);
+            _pipeWriter = new StreamWriter(_pipeClient, _utf8);
+            _pipeWriter.AutoFlush = true;
+            _readTarget = new MemoryStream();
+            _readTask = _pipeServer.CopyToAsync(_readTarget);
+
+            _isStderr = isStderr;
+            int handleId;
+            if (_isStderr)
+            {
+                handleId = StderrHandleId;
+                _netConsoleWriter = Console.Error;
+            }
+            else
+            {
+                handleId = StdoutHandleId;
+                _netConsoleWriter = Console.Out;
+            }
+
+#if WINDOWS
+            _nativeConsoleHandle = NativeMethods.GetStdHandle(handleId);
+#else
+            _nativeConsoleHandle = (IntPtr)NativeMethods.dup(handleId);
+#endif
+        }
+
+        public StreamWriter Writer
+        {
+            get
+            {
+                return _pipeWriter;
+            }
+        }
+
+        public string ClientPipeString
+        {
+            get
+            {
+                return _pipeServer.GetClientHandleAsString();
+            }
+        }
+
+        public void RedirectStream()
+        {
+            _freeNativeDuplicatedFd = RedirectConsoleStream(
+                _pipeWriter,
+                _pipeServer.ClientSafePipeHandle.DangerousGetHandle(),
+                _isStderr);
+
+            _hasBeenRedirected = true;
+        }
+
+        public string CloseAndGetOutput()
+        {
+            _pipeWriter.Close();
+
+#if !WINDOWS
+            if (_freeNativeDuplicatedFd != -1)
+            {
+                // We need to close the dup'd client pipe fd as the pipe server
+                // won't finish until all clients are closed. Windows does not
+                // have this problem as the handles themselves are not dup'd
+                // instead the reference to them are updated.
+                NativeMethods.close(_freeNativeDuplicatedFd);
+                _freeNativeDuplicatedFd = -1;
+            }
+#endif
+
+            if (_hasBeenRedirected)
+            {
+                RedirectConsoleStream(_netConsoleWriter, _nativeConsoleHandle, _isStderr);
+                _hasBeenRedirected = false;
+            }
+
+            _pipeWriter.Close();
+            _pipeClient.Close();
+
+            _readTask.GetAwaiter().GetResult();
+            _pipeServer.Close();
+
+            _readTarget.Seek(0, SeekOrigin.Begin);
+            return new StreamReader(_readTarget, _utf8).ReadToEnd();
+        }
+
+        public static int RedirectConsoleStream(
+            TextWriter targetWriter,
+            IntPtr targetHandle,
+            bool isStderr)
+        {
+            int handleId;
+            if (isStderr)
+            {
+                Console.SetError(targetWriter);
+                handleId = StderrHandleId;
+            }
+            else
+            {
+                Console.SetOut(targetWriter);
+                handleId = StdoutHandleId;
+            }
+
+#if WINDOWS
+            NativeMethods.SetStdHandle(handleId, targetHandle);
+
+            return -1;
+#else
+            int res = NativeMethods.dup2(targetHandle.ToInt32(), handleId);
+            if (res == -1)
+            {
+                int errCode = Marshal.GetLastPInvokeError();
+                string errMsg = Marshal.GetLastPInvokeErrorMessage();
+                throw new InvalidOperationException($"dup2 failed with error code 0x{errCode:X8}: {errMsg}");
+            }
+
+            // The return value is the dup'd fd, the caller may need to track
+            // this so they can close it explicitly, e.g. pipe client needs to
+            // be closed before the pipe server can finish.
+            return res;
+#endif
+        }
+
+        public void Dispose()
+        {
+            if (_hasBeenRedirected)
+            {
+                RedirectConsoleStream(_netConsoleWriter, _nativeConsoleHandle, _isStderr);
+                _hasBeenRedirected = false;
+            }
+
+            if (_pipeWriter != null)
+            {
+                _pipeWriter.Dispose();
+            }
+            if (_pipeClient != null)
+            {
+                _pipeClient.Dispose();
+            }
+            if (_pipeServer != null)
+            {
+                _pipeServer.Dispose();
+            }
+            if (_readTarget != null)
+            {
+                _readTarget.Dispose();
+            }
+        }
     }
 }
 '@
@@ -235,53 +435,6 @@ namespace Ansible.Windows.WinPowerShell
     }
 }
 '@
-
-Function Get-StdHandle {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Stdout', 'Stderr')]
-        [string]
-        $Stream
-    )
-
-    $id, $dotnet = switch ($Stream) {
-        Stdout { -11, [Console]::Out }
-        Stderr { -12, [Console]::Error }
-    }
-    $handle = [Ansible.Windows.WinPowerShell.NativeMethods]::GetStdHandle($id)
-
-    [PSCustomObject]@{
-        Stream = $Stream
-        NET = $dotnet
-        Raw = $handle
-    }
-}
-
-Function Set-StdHandle {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('Stdout', 'Stderr')]
-        [string]
-        $Stream,
-
-        [IO.TextWriter]
-        $NET,
-
-        [IntPtr]
-        $Raw
-    )
-
-    $id, $meth = switch ($Stream) {
-        Stdout { -11; [Console]::SetOut($NET) }
-        Stderr { -12; [Console]::SetError($NET) }
-    }
-
-    # .NET does not actually affect the std handle on the process, we need to call SetStdHandle so any child processes
-    # spawned with Start-Process -NoNewWindow will use our custom pipe.
-    [void][Ansible.Windows.WinPowerShell.NativeMethods]::SetStdHandle($id, $Raw)
-}
 
 Function Convert-OutputObject {
     [CmdletBinding()]
@@ -479,62 +632,6 @@ Function Test-AnsiblePath {
     }
 }
 
-Function New-AnonymousPipe {
-    [CmdletBinding()]
-    param ()
-
-    $utf8NoBom = New-Object -TypeName Text.UTF8Encoding -ArgumentList $false
-
-    $server = New-Object -TypeName IO.Pipes.AnonymousPipeServerStream -ArgumentList 'In', 'Inheritable'
-    $client = New-Object -TypeName IO.Pipes.AnonymousPipeClientStream -ArgumentList 'Out', $server.ClientSafePipeHandle
-    $clientWriter = New-Object -TypeName IO.StreamWriter -ArgumentList $client, $utf8NoBom
-    $clientWriter.AutoFlush = $true  # Ensures the data stays in sync when dealing with subprocesses.
-
-    # Create the background task that will constantly read from the pipe and append to our StringBuilder until the pipe
-    # is closed. It also closes the pipe once finished so we don't have to. Without this the pipe buffer can become
-    # full and hang the script.
-    $sb = New-Object -TypeName Text.StringBuilder
-    $ps = [PowerShell]::Create()
-
-    [void]$ps.AddScript(@'
-[CmdletBinding()]
-param (
-    [Text.StringBuilder]
-    $StringBuilder,
-
-    [IO.Pipes.AnonymousPipeServerStream]
-    $Server,
-
-    [Text.Encoding]
-    $Encoding
-)
-
-$sr = New-Object -TypeName IO.StreamReader -ArgumentList $Server, $Encoding
-try {
-    $buffer = New-Object -TypeName char[] -ArgumentList $Server.InBufferSize
-    while ($read = $sr.Read($buffer, 0, $buffer.Length)) {
-        [void]$StringBuilder.Append($buffer, 0, $read)
-    }
-}
-finally {
-    $sr.Dispose()
-}
-'@).AddParameters(@{
-            StringBuilder = $sb
-            Server = $server
-            Encoding = $utf8NoBom
-        })
-    $task = $ps.BeginInvoke()
-
-    [PSCustomObject]@{
-        PowerShell = $ps
-        Task = $task
-        Output = $sb
-        Client = $clientWriter
-        ClientString = $server.GetClientHandleAsString()
-    }
-}
-
 $creates = $module.Params.creates
 if ($creates -and (Test-AnsiblePath -Path $creates)) {
     $module.Result.msg = "skipped, since $creates exists"
@@ -592,19 +689,16 @@ if ($module.CheckMode -and -not $supportsShouldProcess) {
     $module.ExitJson()
 }
 
-$isWDACEnabled = [SystemPolicy]::GetSystemLockdownPolicy() -ne 'None'
+$isWDACEnabled = 'SystemPolicy' -as [type] -and [SystemPolicy]::GetSystemLockdownPolicy() -ne 'None'
 
 $runspace = $null
 $processId = $null
-$newStdout = New-AnonymousPipe
-$newStderr = New-AnonymousPipe
+$newStdout = [Ansible.Windows.WinPowerShell.StdioManager]::new($false)
+$newStderr = [Ansible.Windows.WinPowerShell.StdioManager]::new($true)
 $freeConsole = $false
 $tempScript = $null
 
 try {
-    $oldStdout = Get-StdHandle -Stream Stdout
-    $oldStderr = Get-StdHandle -Stream Stderr
-
     if ($module.Params.executable) {
         if ($PSVersionTable.PSVersion -lt [version]'5.0') {
             $module.FailJson("executable requires PowerShell 5.0 or newer")
@@ -619,6 +713,14 @@ try {
             $commandLine += " $($escapedArguments -join ' ')"
         }
 
+        $processEnv = $null
+        $exeName = [Path]::GetFileNameWithoutExtension($applicationName)
+        if ($exeName -eq "powershell" -and $IsCoreCLR) {
+            # when using pwsh, we need to adjust the PSModulePath to avoid loading incompatible modules
+            $processEnv = [Environment]::GetEnvironmentVariables()
+            $processEnv['PSModulePath'] = Get-WinPSModulePath
+        }
+
         # While we could attach the stdout/stderr pipes here we would capture the startup info and prompt that
         # powershell will output. Instead we set the console as part of the pipeline we run.
         $si = [Ansible.Windows.Process.StartupInfo]@{
@@ -631,7 +733,7 @@ try {
             $null,
             $true, # Required so the child process can inherit our anon pipes.
             'CreateNewConsole', # Ensures we don't mess with the current console output.
-            $null,
+            $processEnv,
             $null,
             $si
         )
@@ -640,7 +742,7 @@ try {
     }
 
     # Using a custom host allows us to capture any host UI calls through our own output.
-    $runspaceHost = New-Object -TypeName Ansible.Windows.WinPowerShell.Host -ArgumentList $Host, $newStdout.Client, $newStderr.Client
+    $runspaceHost = New-Object -TypeName Ansible.Windows.WinPowerShell.Host -ArgumentList $Host, $newStdout.Writer, $newStderr.Writer
     if ($processId) {
         $connInfo = [System.Management.Automation.Runspaces.NamedPipeConnectionInfo]$processId
 
@@ -650,7 +752,7 @@ try {
         $runspace = [RunspaceFactory]::CreateRunspace($runspaceHost, $connInfo)
     }
     else {
-        $runspace = [RunspaceFactory]::CreateRunspace($runspaceHost)
+        $runspace = [RunspaceFactory]::CreateRunspace($runspaceHost, [InitialSessionState]::CreateDefault2())
     }
 
     $runspace.Open()
@@ -700,10 +802,6 @@ param (
 
     [Parameter(Mandatory=$true)]
     [String]
-    $SetScriptBlock,
-
-    [Parameter(Mandatory=$true)]
-    [String]
     $AddTypeCode,
 
     [Parameter(Mandatory=$true)]
@@ -715,25 +813,28 @@ param (
 # temp directory used.
 &([ScriptBlock]::Create($AddTypeCode)) -References $SetStdPInvoke -TempPath $Tmpdir
 
-$setHandle = [ScriptBlock]::Create($SetScriptBlock)
 $utf8NoBom = New-Object -TypeName Text.UTF8Encoding -ArgumentList $false
 
 # Make sure our console encoding values are all set to UTF-8 for a consistent experience.
 $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = $utf8NoBom
 
-# Set the stdout/stderr for both .NET and natively to our anonymous pipe.
-@{Name = 'Stdout'; Handle = $StdoutHandle}, @{Name = 'Stderr'; Handle = $StderrHandle} | ForEach-Object -Process {
+@(
+    @{ Handle = $StdoutHandle; IsStderr = $false }
+    @{ Handle = $StderrHandle; IsStderr = $true }
+) | ForEach-Object -Process {
     $pipe = New-Object -TypeName IO.Pipes.AnonymousPipeClientStream -ArgumentList 'Out', $_.Handle
     $writer = New-Object -TypeName IO.StreamWriter -ArgumentList $pipe, $utf8NoBom
     $writer.AutoFlush = $true  # Ensures we data in the correct order.
 
-    &$setHandle -Stream $_.Name -NET $writer -Raw $pipe.SafePipeHandle.DangerousGetHandle()
+    [void][Ansible.Windows.WinPowerShell.StdioManager]::RedirectConsoleStream(
+        $writer,
+        $pipe.SafePipeHandle.DangerousGetHandle(),
+        $_.IsStderr)
 }
 '@, $true).AddParameters(@{
-                    StdoutHandle = $newStdout.ClientString
-                    StderrHandle = $newStderr.ClientString
+                    StdoutHandle = $newStdout.ClientPipeString
+                    StderrHandle = $newStderr.ClientPipeString
                     SetStdPInvoke = $stdPinvoke
-                    SetScriptBlock = ${function:Set-StdHandle}
                     AddTypeCode = ${function:Add-CSharpType}
                     TmpDir = $module.Tmpdir
                 }).AddStatement()
@@ -741,16 +842,15 @@ $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = $utf8No
     }
     else {
         # The psrp connection plugin doesn't have a console so we need to create one ourselves.
-        if ([Ansible.Windows.WinPowerShell.NativeMethods]::GetConsoleWindow() -eq [IntPtr]::Zero) {
+        if ($IsWindows -and [Ansible.Windows.WinPowerShell.NativeMethods]::GetConsoleWindow() -eq [IntPtr]::Zero) {
             $freeConsole = [Ansible.Windows.WinPowerShell.NativeMethods]::AllocConsole()
         }
 
         # Else we are running in the same process, we need to redirect the console and .NET output pipes to our
         # anonymous pipe. We shouldn't have to set the encoding, the module wrapper already does this.
-        Set-StdHandle -Stream Stdout -NET $newStdout.Client -Raw $newStdout.Client.BaseStream.SafePipeHandle.DangerousGetHandle()
-        Set-StdHandle -Stream Stderr -NET $newStderr.Client -Raw $newStderr.Client.BaseStream.SafePipeHandle.DangerousGetHandle()
+        $newStdout.RedirectStream()
+        $newStderr.RedirectStream()
 
-        $utf8NoBom = New-Object -TypeName Text.UTF8Encoding -ArgumentList $false
         $OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = $utf8NoBom
     }
 
@@ -859,14 +959,11 @@ if ($PSVersionTable.PSVersion -lt '6.0') {
     $resultPipeline = [PowerShell]::Create()
     $resultPipeline.Runspace = $runspace
     $result = $resultPipeline.AddScript('$Ansible').Invoke()[0]
+
+    $hostOut = $newStdout.CloseAndGetOutput()
+    $hostErr = $newStderr.CloseAndGetOutput()
 }
 finally {
-    if (-not $processId) {
-        $oldStdout, $oldStderr | ForEach-Object -Process {
-            Set-StdHandle -Stream $_.Stream -NET $_.NET -Raw $_.Raw
-        }
-    }
-
     if ($runspace) {
         $runspace.Dispose()
     }
@@ -874,10 +971,7 @@ finally {
         Stop-Process -Id $processId -Force
     }
 
-    $newStdout, $newStderr | ForEach-Object -Process {
-        $_.Client.Dispose()
-        [void]$_.PowerShell.EndInvoke($_.Task)
-    }
+    $newStdout, $newStderr | ForEach-Object Dispose
 
     if ($freeConsole) {
         [void][Ansible.Windows.WinPowerShell.NativeMethods]::FreeConsole()
@@ -888,8 +982,8 @@ finally {
     }
 }
 
-$module.Result.host_out = $newStdout.Output.ToString()
-$module.Result.host_err = $newStderr.Output.ToString()
+$module.Result.host_out = $hostOut
+$module.Result.host_err = $hostErr
 $module.Result.result = Convert-OutputObject -InputObject $result.Result -Depth $module.Params.depth
 $module.Result.changed = $result.Changed
 $module.Result.failed = $module.Result.failed -or $result.Failed
@@ -902,7 +996,7 @@ if ($result.Diff -is [System.Collections.IDictionary]) {
     }
 }
 
-# We process the output ourselves to flatten anything beyond the depth and deal with certain problematic types with
+# We process the output outselves to flatten anything beyond the depth and deal with certain problematic types with
 # json serialization.
 $module.Result.output = Convert-OutputObject -InputObject $psOutput -Depth $module.Params.depth
 

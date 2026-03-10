@@ -348,7 +348,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         return module_bits, module_path
 
-    def _compute_environment_string(self, raw_environment_out=None):
+    def _compute_environment_string(self, raw_environment_out=None) -> str:
         """
         Builds the environment string to be used when executing the remote task.
         """
@@ -1139,7 +1139,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
             (async_module_bits, async_module_path) = self._configure_module(module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
-            (shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
+            (async_shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
@@ -1150,25 +1150,38 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
-            interpreter = shebang.replace('#!', '').strip()
-            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
+            interpreter = async_shebang.replace('#!', '').strip()
+
+            preserve_tmp = str(not self._should_remove_tmp_path(tmpdir)).lower()
+            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, preserve_tmp, remote_module_path]
 
             if environment_string:
                 async_cmd.insert(0, environment_string)
 
+            if cmd_args := module_bits.get_command_args(remote_module_path):
+                module_cmd, in_data = cmd_args
+                if in_data:
+                    # This should not happen but our current workflow is
+                    # complex enough a future change might accidentally cause
+                    # this to happen, so we want to be defensive here and raise
+                    # an error if it does. Currently only pwsh modules use the
+                    # get_command_args and it doesn't set in_data if the
+                    # remote_module_path (not pipelined) is set.
+                    raise AnsibleError("unexpected input data set for module running through async")
+
+                async_cmd.extend(module_cmd)
+            else:
+                async_cmd.append(remote_module_path)
+
             if args_file_path:
                 async_cmd.append(args_file_path)
-            else:
-                # maintain a fixed number of positional parameters for async_wrapper
-                async_cmd.append('_')
-
-            if not self._should_remove_tmp_path(tmpdir):
-                async_cmd.append("-preserve_tmp")
 
             cmd = " ".join(to_text(x) for x in async_cmd)
 
-        elif cmd_args := module_bits.get_command_args(remote_module_path, args_file_path, self._connection._shell):
-            cmd, in_data = cmd_args
+        elif cmd_args := module_bits.get_command_args(remote_module_path):
+            module_cmd, in_data = cmd_args
+
+            cmd = self._connection._shell.join(module_cmd)
             if environment_string:
                 cmd = f"{environment_string} {cmd}"
 

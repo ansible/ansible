@@ -4,6 +4,10 @@
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, @{})
 
+if (-not (Get-Variable -Name IsWindows -ErrorAction Ignore)) {
+    Set-Variable -Name IsWindows -Value $true
+}
+
 Function Assert-Equal {
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)][AllowNull()]$Actual,
@@ -107,7 +111,7 @@ $tmpdir = $module.Tmpdir
     Set-Variable -Name _test_out -Scope Global -Value $line
 }
 
-$tests = @{
+$tests = [Ordered]@{
     "Empty spec and no options - args file" = {
         $args_file = Join-Path -Path $tmpdir -ChildPath "args-$(Get-Random).json"
         [System.IO.File]::WriteAllText($args_file, '{ "ANSIBLE_MODULE_ARGS": {} }')
@@ -209,6 +213,14 @@ $tests = @{
     }
 
     "Parse complex module options" = {
+        if ($IsWindows) {
+            $envName = 'SystemRoot'
+            $envValue = $env:SystemRoot
+        }
+        else {
+            $envName = 'HOME'
+            $envValue = $env:HOME
+        }
         $spec = @{
             options = @{
                 option_default = @{}
@@ -269,8 +281,6 @@ $tests = @{
                 path_type_missing = @{type = "path" }
                 raw_type_str = @{type = "raw" }
                 raw_type_int = @{type = "raw" }
-                sid_type = @{type = "sid" }
-                sid_from_name = @{type = "sid" }
                 str_type = @{type = "str" }
                 delegate_type = @{type = [Func[[Object], [UInt64]]] { [System.UInt64]::Parse($args[0]) } }
             }
@@ -311,13 +321,11 @@ $tests = @{
                 @{ int_type = 1 },
                 @{}
             )
-            path_type = "%SystemRoot%\System32"
-            path_type_nt = "\\?\%SystemRoot%\System32"
+            path_type = "%$envName%\System32"
+            path_type_nt = "\\?\%$envName%\System32"
             path_type_missing = "T:\missing\path"
             raw_type_str = "str"
             raw_type_int = 1
-            sid_type = "S-1-5-18"
-            sid_from_name = "SYSTEM"
             str_type = "str"
             delegate_type = "1234"
         }
@@ -423,9 +431,9 @@ $tests = @{
         $m.Params.list_with_dict[2].GetType().FullName.StartsWith("System.Collections.Generic.Dictionary``2[[System.String") | Assert-Equal -Expected $true
         $m.Params.list_with_dict[2] | Assert-DictionaryEqual -Expected @{int_type = $null; str_type = "str_sub_type" }
         $m.Params.list_with_dict[2].str_type.GetType().FullName.ToString() | Assert-Equal -Expected "System.String"
-        $m.Params.path_type | Assert-Equal -Expected "$($env:SystemRoot)\System32"
+        $m.Params.path_type | Assert-Equal -Expected "$envValue\System32"
         $m.Params.path_type.GetType().ToString() | Assert-Equal -Expected "System.String"
-        $m.Params.path_type_nt | Assert-Equal -Expected "\\?\%SystemRoot%\System32"
+        $m.Params.path_type_nt | Assert-Equal -Expected "\\?\%$envName%\System32"
         $m.Params.path_type_nt.GetType().ToString() | Assert-Equal -Expected "System.String"
         $m.Params.path_type_missing | Assert-Equal -Expected "T:\missing\path"
         $m.Params.path_type_missing.GetType().ToString() | Assert-Equal -Expected "System.String"
@@ -433,10 +441,6 @@ $tests = @{
         $m.Params.raw_type_str.GetType().FullName | Assert-Equal -Expected "System.String"
         $m.Params.raw_type_int | Assert-Equal -Expected 1
         $m.Params.raw_type_int.GetType().FullName | Assert-Equal -Expected "System.Int32"
-        $m.Params.sid_type | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
-        $m.Params.sid_type.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
-        $m.Params.sid_from_name | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
-        $m.Params.sid_from_name.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
         $m.Params.str_type | Assert-Equal -Expected "str"
         $m.Params.str_type.GetType().ToString() | Assert-Equal -Expected "System.String"
         $m.Params.delegate_type | Assert-Equal -Expected 1234
@@ -509,15 +513,56 @@ $tests = @{
                     str_type = "str_sub_type"
                 }
             )
-            path_type = "$($env:SystemRoot)\System32"
-            path_type_nt = "\\?\%SystemRoot%\System32"
+            path_type = "$envValue\System32"
+            path_type_nt = "\\?\%$envName%\System32"
             path_type_missing = "T:\missing\path"
             raw_type_str = "str"
             raw_type_int = 1
-            sid_type = "S-1-5-18"
-            sid_from_name = "S-1-5-18"
             str_type = "str"
             delegate_type = 1234
+        }
+        $actual.Keys.Count | Assert-Equal -Expected 2
+        $actual.changed | Assert-Equal -Expected $false
+        $actual.invocation | Assert-DictionaryEqual -Expected @{module_args = $expected_module_args }
+    }
+
+    "Parse sid type module options" = {
+        # sid is only supported on Windows.
+        if (-not $IsWindows) {
+            return
+        }
+
+        $spec = @{
+            options = @{
+                sid_type = @{type = "sid" }
+                sid_from_name = @{type = "sid" }
+            }
+        }
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            sid_type = "S-1-5-18"
+            sid_from_name = "SYSTEM"
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $m.Params.sid_type | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
+        $m.Params.sid_type.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
+        $m.Params.sid_from_name | Assert-Equal -Expected (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList "S-1-5-18")
+        $m.Params.sid_from_name.GetType().ToString() | Assert-Equal -Expected "System.Security.Principal.SecurityIdentifier"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        }
+        catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equal -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equal -Expected $true
+
+        $expected_module_args = @{
+            sid_type = "S-1-5-18"
+            sid_from_name = "S-1-5-18"
         }
         $actual.Keys.Count | Assert-Equal -Expected 2
         $actual.changed | Assert-Equal -Expected $false
@@ -707,7 +752,9 @@ $tests = @{
         }
         $actual | Assert-DictionaryEqual -Expected $expected
 
-        $expected_event = @'
+        if ($IsWindows) {
+
+            $expected_event = @'
 test_no_log - Invoked with:
   username: user - ******** - name
   dict: dict: sub_hide: ****word
@@ -728,8 +775,9 @@ test_no_log - Invoked with:
   password2: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
   password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
 '@
-        $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
-        $actual_event | Assert-DictionaryEqual -Expected $expected_event
+            $actual_event = (Get-EventLog -LogName Application -Source Ansible -Newest 1).Message
+            $actual_event | Assert-DictionaryEqual -Expected $expected_event
+        }
     }
 
     "No log value with an empty string" = {
@@ -1243,6 +1291,10 @@ test_no_log - Invoked with:
     }
 
     "Debug without debug set" = {
+        if (-not $IsWindows) {
+            return
+        }
+
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_debug = $false
         }
@@ -1253,6 +1305,10 @@ test_no_log - Invoked with:
     }
 
     "Debug with debug set" = {
+        if (-not $IsWindows) {
+            return
+        }
+
         Set-Variable -Name complex_args -Scope Global -Value @{
             _ansible_debug = $true
         }
@@ -1264,17 +1320,26 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with version" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", "2.7")
-        $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Deprecate("message w collection", "2.8", "ansible.builtin")
-        $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Warn("warning")
-        $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
 
-        $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2.7"
-        $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2.8"
-        $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
-        $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        $m.Deprecate("message", "2.7")
+        if ($IsWindows) {
+            $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+
+        $m.Deprecate("message w collection", "2.8", "ansible.builtin")
+        if ($IsWindows) {
+            $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+        $m.Warn("warning")
+
+        if ($IsWindows) {
+            $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+
+            $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2.7"
+            $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2.8"
+            $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
+            $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        }
 
         $failed = $false
         try {
@@ -1303,17 +1368,26 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with date" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", [DateTime]"2020-01-01")
-        $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Deprecate("message w collection", [DateTime]"2020-01-02", "ansible.builtin")
-        $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
-        $m.Warn("warning")
-        $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
 
-        $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-01"
-        $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2020-01-02"
-        $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
-        $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        $m.Deprecate("message", [DateTime]"2020-01-01")
+        if ($IsWindows) {
+            $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+
+        $m.Deprecate("message w collection", [DateTime]"2020-01-02", "ansible.builtin")
+        if ($IsWindows) {
+            $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        }
+
+        $m.Warn("warning")
+        if ($IsWindows) {
+            $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+
+            $actual_deprecate_event_1.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-01"
+            $actual_deprecate_event_2.Message | Assert-Equal -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2020-01-02"
+            $actual_warn_event.EntryType | Assert-Equal -Expected "Warning"
+            $actual_warn_event.Message | Assert-Equal -Expected "undefined win module - [WARNING] warning"
+        }
 
         $failed = $false
         try {
@@ -1671,17 +1745,22 @@ test_no_log - Invoked with:
     }
 
     "Module tmpdir with present remote tmp" = {
-        $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-        $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
-        $dir_security.SetOwner($current_user)
-        $dir_security.SetAccessRuleProtection($true, $false)
-        $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
-            $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
-            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
-            [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
-        )
-        $dir_security.AddAccessRule($ace)
-        $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        if ($IsWindows) {
+            $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
+            $dir_security.SetOwner($current_user)
+            $dir_security.SetAccessRuleProtection($true, $false)
+            $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+                $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+                [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
+            )
+            $dir_security.AddAccessRule($ace)
+            $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        }
+        else {
+            $expected_mode = [IO.UnixFileMode]'UserExecute, UserWrite, UserRead'
+        }
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $remote_tmp -ItemType Directory > $null
@@ -1701,8 +1780,15 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equal -Expected 1
-        $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+
+        if ($IsWindows) {
+            $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
+            $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+        }
+        else {
+            $actual_tmpdir_mode = [IO.File]::GetUnixFileMode($actual_tmpdir)
+            $actual_tmpdir_mode | Assert-Equal -Expected $expected_mode
+        }
 
         try {
             $m.ExitJson()
@@ -1716,17 +1802,22 @@ test_no_log - Invoked with:
     }
 
     "Module tmpdir with missing remote_tmp" = {
-        $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-        $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
-        $dir_security.SetOwner($current_user)
-        $dir_security.SetAccessRuleProtection($true, $false)
-        $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
-            $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
-            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
-            [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
-        )
-        $dir_security.AddAccessRule($ace)
-        $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        if ($IsWindows) {
+            $current_user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $dir_security = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
+            $dir_security.SetOwner($current_user)
+            $dir_security.SetAccessRuleProtection($true, $false)
+            $ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+                $current_user, [System.Security.AccessControl.FileSystemRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+                [System.Security.AccessControl.PropagationFlags]::None, [System.Security.AccessControl.AccessControlType]::Allow
+            )
+            $dir_security.AddAccessRule($ace)
+            $expected_sd = $dir_security.GetSecurityDescriptorSddlForm("Access, Owner")
+        }
+        else {
+            $expected_mode = [IO.UnixFileMode]'UserExecute, UserWrite, UserRead'
+        }
 
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         Set-Variable -Name complex_args -Scope Global -Value @{
@@ -1745,10 +1836,19 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $children = [System.IO.Directory]::EnumerateDirectories($remote_tmp)
         $children.Count | Assert-Equal -Expected 1
-        $actual_remote_sd = (Get-Acl -Path $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
-        $actual_remote_sd | Assert-Equal -Expected $expected_sd
-        $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+
+        if ($IsWindows) {
+            $actual_remote_sd = (Get-Acl -Path $remote_tmp).GetSecurityDescriptorSddlForm("Access, Owner")
+            $actual_tmpdir_sd = (Get-Acl -Path $actual_tmpdir).GetSecurityDescriptorSddlForm("Access, Owner")
+            $actual_remote_sd | Assert-Equal -Expected $expected_sd
+            $actual_tmpdir_sd | Assert-Equal -Expected $expected_sd
+        }
+        else {
+            $actual_remote_mode = [IO.File]::GetUnixFileMode($remote_tmp)
+            $actual_tmpdir_mode = [IO.File]::GetUnixFileMode($actual_tmpdir)
+            $actual_remote_mode | Assert-Equal -Expected $expected_mode
+            $actual_tmpdir_mode | Assert-Equal -Expected $expected_mode
+        }
 
         try {
             $m.ExitJson()
@@ -1759,8 +1859,8 @@ test_no_log - Invoked with:
         (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
         (Test-Path -LiteralPath $remote_tmp -PathType Container) | Assert-Equal -Expected $true
         $output.warnings.Count | Assert-Equal -Expected 1
-        $nt_account = $current_user.Translate([System.Security.Principal.NTAccount])
-        $actual_warning = "Module remote_tmp $remote_tmp did not exist and was created with FullControl to $nt_account, "
+        $current_user = [Environment]::UserName
+        $actual_warning = "Module remote_tmp $remote_tmp did not exist and was created with FullControl to $current_user, "
         $actual_warning += "this may cause issues when running as another user. To avoid this, "
         $actual_warning += "create the remote_tmp dir with the correct permissions manually"
         $actual_warning | Assert-Equal -Expected $output.warnings[0]
@@ -1822,13 +1922,21 @@ test_no_log - Invoked with:
         New-Item -Path $outside_target -ItemType Directory > $null
         Set-Content -LiteralPath $outside_file ''
 
-        cmd.exe /c mklink /d "$dir1\missing-dir-link" "$actual_tmpdir\fake"
-        cmd.exe /c mklink /d "$dir1\good-dir-link" "$dir2"
-        cmd.exe /c mklink /d "$dir1\recursive-target-link" "$dir1"
-        cmd.exe /c mklink "$dir1\missing-file-link" "$actual_tmpdir\fake"
-        cmd.exe /c mklink "$dir1\good-file-link" "$dir2\test.txt"
-        cmd.exe /c mklink /d "$actual_tmpdir\outside-dir" $outside_target
-        cmd.exe /c mklink "$actual_tmpdir\outside-file" $outside_file
+        # Missing targets need their initial target so that pwsh can derive the
+        # link type. They are deleted after creating the link.
+        New-Item -Path "$actual_tmpdir\fake" -ItemType Directory
+        New-Item -Path "$dir1\missing-dir-link" -ItemType SymbolicLink -Target "$actual_tmpdir\fake"
+        Remove-Item -LiteralPath "$actual_tmpdir\fake" -Recurse -Force
+
+        New-Item -Path "$actual_tmpdir\fake" -ItemType File -Value ""
+        New-Item -Path "$dir1\missing-file-link" -ItemType SymbolicLink -Target "$actual_tmpdir\fake"
+        Remove-Item -LiteralPath "$actual_tmpdir\fake" -Force
+
+        New-Item -Path "$dir1\good-dir-link" -ItemType SymbolicLink -Target "$dir2"
+        New-Item -Path "$dir1\recursive-target-link" -ItemType SymbolicLink -Target "$dir1"
+        New-Item -Path "$dir1\good-file-link" -ItemType SymbolicLink -Target "$dir2\test.txt"
+        New-Item -Path "$actual_tmpdir\outside-dir" -ItemType SymbolicLink -Target $outside_target
+        New-Item -Path "$actual_tmpdir\outside-file" -ItemType SymbolicLink -Target $outside_file
 
         try {
             $m.ExitJson()
@@ -1846,6 +1954,11 @@ test_no_log - Invoked with:
     }
 
     "Module tmpdir with undeletable file" = {
+        # POSIX doesn't have the same Windows concept as a lock file through FileShare.
+        if (-not $IsWindows) {
+            return
+        }
+
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $remote_tmp -ItemType Directory > $null
         Set-Variable -Name complex_args -Scope Global -Value @{
@@ -1896,6 +2009,11 @@ test_no_log - Invoked with:
     }
 
     "Module tmpdir delete with locked handle" = {
+        # POSIX doesn't have the same Windows concept as a lock file through FileShare.
+        if (-not $IsWindows) {
+            return
+        }
+
         $remote_tmp = Join-Path -Path $tmpdir -ChildPath "moduletmpdir-$(Get-Random)"
         New-Item -Path $remote_tmp -ItemType Directory > $null
         Set-Variable -Name complex_args -Scope Global -Value @{

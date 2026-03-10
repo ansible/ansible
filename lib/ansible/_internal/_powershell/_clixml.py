@@ -19,6 +19,8 @@ _STRING_SERIAL_ESCAPE_ESCAPE = re.compile("(?i)_(x)")
 # according to the PSRP rules.
 _STRING_SERIAL_ESCAPE = re.compile("[\u0000-\u001f\u007f-\u009f\ud800-\ud8ff\udc00-\udfff\U00010000-\U0010ffff]")
 
+_VT_COLOR_PATTERN = re.compile(rb"\x1b\[[0-9;]*m")
+
 
 def replace_stderr_clixml(stderr: bytes) -> bytes:
     """Replace CLIXML with stderr data.
@@ -93,7 +95,10 @@ def replace_stderr_clixml(stderr: bytes) -> bytes:
     if is_clixml:
         lines.append(clixml_header)
 
-    return b"".join(lines)
+    # PowerShell 7 is not consistent at all with disabling VT color codes,
+    # especially in the CLIXML stderr. Instead of trying to hack it in through
+    # env vars that may or may not work we just strip it from the output.
+    return _VT_COLOR_PATTERN.sub(b"", b"".join(lines))
 
 
 def extract_clixml_strings(

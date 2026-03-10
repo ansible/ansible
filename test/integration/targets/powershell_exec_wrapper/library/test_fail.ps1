@@ -9,6 +9,14 @@ $result = @{
     changed = $false
 }
 
+$executable = if ($PSVersionTable.PSVersion -lt '6.0') {
+    'powershell.exe'
+}
+else {
+    "pwsh$(if ($IsWindows) { ".exe" })"
+}
+$executablePath = Join-Path -Path $PSHome -ChildPath $executable
+
 <#
 This module tests various error events in PowerShell to verify our hidden trap
 catches them all and outputs a pretty error message with a traceback to help
@@ -53,11 +61,12 @@ elseif ($data -eq "function_throw") {
 elseif ($data -eq "proc_exit_fine") {
     # verifies that if no error was actually fired and we have an output, we
     # don't use the RC to validate if the module failed
-    &cmd.exe /c exit 2
+
+    & $executablePath -Command 'exit 2'
     Exit-Json -obj $result
 }
 elseif ($data -eq "proc_exit_fail") {
-    &cmd.exe /c exit 2
+    & $executablePath -Command 'exit 2'
     Fail-Json -obj $result -message "proc_exit_fail"
 }
 

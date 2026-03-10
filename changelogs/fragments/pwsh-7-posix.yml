@@ -1,0 +1,6 @@
+minor_changes:
+  - >-
+    PowerShell 7 - Add support for running PowerShell written modules on POSIX hosts. PowerShell modules run with the
+    ``pwsh`` interpreter and can access the same module utils that Windows PowerShell modules can use. Some PowerShell
+    based module utils may not be compatible due to their reliance on Windows APIs but ``Ansible.Basic.cs`` for module
+    input and output handling works.
