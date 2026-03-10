@@ -22,7 +22,7 @@ from collections.abc import Callable, Sequence
 from ansible import constants as C
 from ansible._internal._errors import _captured, _error_utils
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
-from ansible.executor.module_common import modify_module, _BuiltModule
+from ansible.executor.module_common import modify_module, _BuiltModule, _get_ansible_module_fqn, NEW_STYLE_PYTHON_MODULE_RE
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils._internal import _traceback
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
@@ -1006,6 +1006,116 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
+    def _try_direct_local_execution(self, module_name, module_args, task_vars):
+        """
+        Attempt to execute a module directly on the controller without AnsiballZ
+        packaging.  Returns the parsed result dict on success, or None if the
+        module is not eligible for direct execution (falls back to AnsiballZ).
+        """
+        # Find the module file
+        for mod_type in self._connection.module_implementation_preferences:
+            result = self._shared_loader_obj.module_loader.find_plugin_with_context(
+                module_name, mod_type, collection_list=self._task.collections)
+            module_path = result.plugin_resolved_path
+            if module_path:
+                break
+        else:
+            return None  # module not found, let AnsiballZ path handle the error
+
+        # Only handle new-style Python modules
+        if not module_path.endswith('.py'):
+            return None
+
+        try:
+            with open(module_path, 'rb') as f:
+                b_module_data = f.read()
+        except OSError:
+            return None
+
+        if not NEW_STYLE_PYTHON_MODULE_RE.search(b_module_data):
+            return None
+
+        # Resolve the module FQN for runpy
+        try:
+            module_fqn = _get_ansible_module_fqn(module_path)
+        except ValueError:
+            module_fqn = 'ansible.legacy.%s' % resource_from_fqcr(module_name)
+
+        # Serialize module args
+        profile = 'legacy'
+        encoder = get_module_encoder(profile, Direction.CONTROLLER_TO_MODULE)
+        params = dict(ANSIBLE_MODULE_ARGS=module_args)
+        try:
+            args_json = json.dumps(params, cls=encoder)
+        except TypeError:
+            return None  # fall back to AnsiballZ if serialization fails
+
+        # Use the controller's Python interpreter
+        interpreter = task_vars.get('ansible_playbook_python', 'python3')
+        shebang = '#!' + interpreter
+        self._used_interpreter = shebang
+
+        # Build a minimal loader script that runs the module directly.
+        # Args are embedded as a variable in the script since the script is
+        # small (no 300KB zip payload like AnsiballZ).
+        loader_script = (
+            'import sys\n'
+            'from ansible.module_utils import basic\n'
+            'from ansible.module_utils._internal._ansiballz._loader import _run_module, _handle_exception\n'
+            f'basic._ANSIBLE_ARGS = {to_bytes(args_json)!r}\n'
+            f'basic._ANSIBLE_PROFILE = {profile!r}\n'
+            'try:\n'
+            '    _run_module(\n'
+            '        json_params=basic._ANSIBLE_ARGS,\n'
+            f'        profile={profile!r},\n'
+            f'        module_fqn={module_fqn!r},\n'
+            "        modlib_path='',\n"
+            '    )\n'
+            'except Exception as ex:\n'
+            f'    _handle_exception(ex, {profile!r})\n'
+        )
+
+        display.vvv("Direct local execution: %s" % module_name)
+
+        # Build command and execute through the connection plugin
+        # (handles become, environment, etc.)
+        environment_string = self._compute_environment_string()
+        cmd = self._connection._shell.build_module_command(
+            environment_string, shebang, '', arg_path=None
+        ).strip()
+        in_data = to_bytes(loader_script)
+
+        sudoable = True
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+
+        # Post-process the result identically to the AnsiballZ path
+        data = self._parse_returned_data(res, profile)
+
+        if data.pop("_ansible_suppress_tmpdir_delete", False):
+            self._cleanup_remote_tmp = False
+
+        if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], str)):
+            data['ansible_module_results'] = data['results']
+            del data['results']
+            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
+
+        remove_internal_keys(data)
+
+        if 'stdout' in data and 'stdout_lines' not in data:
+            txt = data.get('stdout', None) or u''
+            data['stdout_lines'] = txt.splitlines()
+        if 'stderr' in data and 'stderr_lines' not in data:
+            txt = data.get('stderr', None) or u''
+            data['stderr_lines'] = txt.splitlines()
+
+        if self._discovered_interpreter_key:
+            if data.get('ansible_facts') is None:
+                data['ansible_facts'] = {}
+            data['ansible_facts'][self._discovered_interpreter_key] = self._discovered_interpreter
+
+        display.debug("done with direct local _execute_module (%s, %s)" % (module_name, module_args))
+        return data
+
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
                         ignore_unknown_opts: bool = False):
         """
@@ -1044,6 +1154,16 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             module_args = self._task.args
 
         self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts)
+
+        # Direct local execution: skip AnsiballZ entirely for local connections
+        # running new-style Python modules without async or debug requirements.
+        if (getattr(self._connection, 'transport', None) == 'local'
+                and not wrap_async
+                and not self._task.async_val
+                and not C.DEFAULT_KEEP_REMOTE_FILES):
+            direct_result = self._try_direct_local_execution(module_name, module_args, task_vars)
+            if direct_result is not None:
+                return direct_result
 
         remove_async_dir = None
         if wrap_async or self._task.async_val:
