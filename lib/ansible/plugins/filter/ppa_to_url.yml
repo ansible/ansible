@@ -1,0 +1,38 @@
+DOCUMENTATION:
+  name: ppa_to_url
+  author: ansible core team
+  version_added: "2.21"
+  short_description: convert a PPA URI to a URL
+  description:
+    - Converts a PPA URI to a URL.
+    - This can be used with conjunction with the M(ansible.builtin.deb822_repository) module
+      to add a PPA repository to the system.
+  positional: _input
+  options:
+    _input:
+      description:
+        - A PPA URI to convert to a URL.
+        - The input can be in the format of ppa:user/ppa-name, user/ppa-name, or user.
+      type: string
+      required: true
+  seealso:
+    - plugin_type: module
+      plugin: ansible.builtin.deb822_repository
+EXAMPLES: |
+
+  # => https://ppa.launchpad.net/user/ppa-name/ubuntu
+  {{ 'ppa:user/ppa-name' | ppa_to_url }}
+
+  # => https://ppa.launchpad.net/user/ppa-name/ubuntu
+  {{ 'user/ppa-name' | ppa_to_url }}
+
+  # => https://ppa.launchpad.net/user/ppa/ubuntu
+  {{ 'user' | ppa_to_url }}
+
+  # => https://ppa.launchpad.net/~user/ppa-name/ubuntu
+  {{ 'ppa:~user/ppa-name' | ppa_to_url }}
+
+RETURN:
+  _value:
+    description: The URL of the PPA URI.
+    type: string
