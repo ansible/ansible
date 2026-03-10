@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 ANSIBLE_EMBED = (('ansible_collections.ansible_test.ansiballz_python.plugins.module_utils', 'embed_this.py'),)
+ANSIBLE_EMBED = (('ansible_collections.ansible_test.ansiballz_python.plugins.module_utils', 'embed_oops_reassigned.py'),)
 
 from importlib.resources import files
 from ansible.module_utils.basic import AnsibleModule

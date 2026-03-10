@@ -33,7 +33,7 @@ import pkgutil
 import types
 import typing as t
 
-from ast import Assign, Constant, Import, ImportFrom, Name, Tuple
+from ast import Assign, Constant, Import, ImportFrom, Name, Tuple, Subscript
 from importlib.resources import path as ir_path, files as ir_files
 from io import BytesIO
 
@@ -173,7 +173,7 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 class ModuleDepFinder(ast.NodeVisitor):
     # DTFIX-FUTURE: add support for ignoring imports with a "controller only" comment, this will allow replacing import_controller_module with standard imports
-    def __init__(self, module_fqn, tree, is_pkg_init=False, *args, **kwargs):
+    def __init__(self, module_fqn: str, module_data: bytes, is_pkg_init=False, *args, **kwargs):
         """
         Walk the ast tree for the python module.
         :arg module_fqn: The fully qualified name to reach this module in dotted notation.
@@ -197,14 +197,18 @@ class ModuleDepFinder(ast.NodeVisitor):
         .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
-        self.submodules = set()
-        self.optional_imports = set()
-        self.embeds = set()
+        self.submodules: set = set()
+        self.optional_imports: set = set()
+        self.embeds: set[tuple[str, str]] = set()
         self.module_fqn = module_fqn
         self.is_pkg_init = is_pkg_init
         self._depth = -1
+        self._origin = Origin.get_tag(module_data) or Origin.UNKNOWN
+        self.tree = _compile_module_ast(module_fqn, module_data)
 
-        self.visit(tree)
+        self._maybe_has_interesting_assignment = b"ANSIBLE_EMBED" in module_data
+
+        self.visit(self.tree)
 
     def generic_visit(self, node):
         """Overridden ``generic_visit`` that makes some assumptions about our
@@ -214,7 +218,7 @@ class ModuleDepFinder(ast.NodeVisitor):
         self._depth += 1
         depth = self._depth
         generic_visit = self.generic_visit
-        visit_Assign = self.visit_Assign
+        visit_Assign = self.visit_Assign if self._maybe_has_interesting_assignment else lambda n: None
         visit_Import = self.visit_Import
         visit_ImportFrom = self.visit_ImportFrom
         for field, value in ast.iter_fields(node):
@@ -226,7 +230,11 @@ class ModuleDepFinder(ast.NodeVisitor):
                     elif item_class is ImportFrom:
                         visit_ImportFrom(item)
                     elif not depth and item_class is Assign:
-                        visit_Assign(item)
+                        try:
+                            visit_Assign(item)
+                        except ModuleDepFinder._InvalidEmbedError as ex:
+                            display.error_as_warning(msg=None, exception=ex)
+
                     elif hasattr(item, 'end_col_offset'):
                         # ASTish without the hit of isinstance
                         generic_visit(item)
@@ -319,50 +327,69 @@ class ModuleDepFinder(ast.NodeVisitor):
 
         if py_mod:
             for alias in node.names:
-                aname = alias.name
-                a_py_mod = py_mod + (aname,)
-                submodules_add(a_py_mod)
+                submodules_add(a_py_mod := py_mod + (alias.name,))
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
                 if depth:
                     optional_imports_add(a_py_mod)
 
-    def visit_Assign(self, node):
-        embeds_add = self.embeds.add
-        value = node.value
-        if len(node.targets) != 1:
-            return
+    class _InvalidEmbedError(AnsibleError): ...
 
-        target = node.targets[0]
-        if not isinstance(target, Name):
-            return
+    def _assert_embed(self, assertion: bool, message: str, node: ast.stmt | ast.expr) -> None:
+        if not assertion:
+            raise ModuleDepFinder._InvalidEmbedError(
+                message=f"Invalid ANSIBLE_EMBED statement: {message}.",
+                obj=self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
+            )
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        """If `ANSIBLE_EMBED` appears in the module source, validate assignments involving it and set ``embeds`` accordingly."""
 
         # Supported form:
         # ANSIBLE_EMBED = (('ansible.module_utils._embed', 'foo.txt'), ('ansible_collections.foo.bar.plugins.module_utils._embed', 'bar.txt'), ...)
 
-        if target.id != 'ANSIBLE_EMBED':
-            return
+        # warn on unsupported assignments
+        for target in node.targets:
+            match target:
+                case Name():
+                    if len(node.targets) == 1 and target.id == 'ANSIBLE_EMBED':
+                        break
 
-        if not isinstance(value, Tuple):
-            display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
-            return
+                    # multiple assignment: ANSIBLE_EMBED = blah = ...
+                    self._assert_embed(target.id != 'ANSIBLE_EMBED', message="multiple assignments are not allowed", node=node)
+                case Tuple():
+                    # tuple unpacking assignment ANSIBLE_EMBED, blah = ...
+                    self._assert_embed(
+                        all(d.id != 'ANSIBLE_EMBED' for d in target.dims if isinstance(d, Name)),
+                        message="tuple unpacking is not allowed",
+                        node=node
+                    )
+                case Subscript():
+                    # slice assignment ANSIBLE_EMBED[:] = ...
+                    self._assert_embed(
+                        target.value.id != 'ANSIBLE_EMBED' if isinstance(target.value, Name) else True,
+                        message="slice assignments are not allowed",
+                        node=node,
+                    )
+        else:
+            return  # no failures, but nothing more interesting to look for
+
+        value = t.cast(Tuple, node.value)
+        self._assert_embed(isinstance(value, Tuple), "value must be a tuple", node=value)
+
+        self._assert_embed(not self.embeds, "reassignment is not allowed", node=node)
 
         for embed in value.elts:
-            if not isinstance(embed, Tuple) or len(embed.elts) != 2:
-                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
-                return
+            self._assert_embed(isinstance(embed, Tuple) and len(embed.elts) == 2, "inner values must be 2-tuples", node=embed)
 
-            anchor, path_name = embed.elts
-            if not isinstance(anchor, Constant) or not isinstance(path_name, Constant):
-                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
-                return
+            for el in embed.elts:
+                self._assert_embed(isinstance(el, Constant) and isinstance(el.value, str), "embed values must be constant strings", node=el)
 
-            anchor_value = anchor.value
-            path_name_value = path_name.value
-            if not isinstance(anchor_value, str) or not isinstance(path_name_value, str):
-                display.warning(f'invalid ANSIBLE_EMBED found {ast.unparse(target)!r}')
-                return
+            anchor, path_name = t.cast(tuple, embed.elts)
 
-            embeds_add((anchor_value, path_name_value))
+            embed_origin = self._origin.replace(line_num=embed.lineno, col_num=embed.col_offset + 1)
+
+            # origin-tag the contents since the callsite always unpacks it
+            self.embeds.add((embed_origin.tag(anchor.value), embed_origin.tag(path_name.value)))
 
 
 def _slurp(path):
@@ -456,7 +483,7 @@ class ModuleUtilLocatorBase:
         self.found = False
         self.redirected = False
         self.fq_name_parts = fq_name_parts
-        self.source_code = ''
+        self.source_code = b''
         self.output_path = ''
         self.is_package = False
         self._collection_name = None
@@ -561,7 +588,7 @@ class ModuleUtilLocatorBase:
         else:  # didn't find what we were looking for- last chance for packages whose parents were redirected
             if self._child_is_redirected:  # make fake packages
                 self.is_package = True
-                self.source_code = ''
+                self.source_code = b''
             else:  # nope, just bail
                 return
 
@@ -573,13 +600,13 @@ class ModuleUtilLocatorBase:
         self.output_path = os.path.join(*path_parts) + '.py'
         self.fq_name_parts = candidate_name_parts
 
-    def _generate_redirect_shim_source(self, fq_source_module, fq_target_module):
+    def _generate_redirect_shim_source(self, fq_source_module, fq_target_module) -> bytes:
         return """
 import sys
 import {1} as mod
 
 sys.modules['{0}'] = mod
-""".format(fq_source_module, fq_target_module)
+""".format(fq_source_module, fq_target_module).encode()
 
         # FIXME: add __repr__ impl
 
@@ -644,7 +671,7 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         # synthesize empty inits for packages down through module_utils- we don't want to allow those to be shipped over, but the
         # package hierarchy needs to exist
         if len(name_parts) < 6:
-            self.source_code = ''
+            self.source_code = b''
             self.is_package = True
             return True
 
@@ -823,9 +850,10 @@ def recursive_finder(
     module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
     module_utils_paths.append(_MODULE_UTILS_PATH)
 
-    tree = _compile_module_ast(name, module_data)
-    module_metadata = _get_module_metadata(tree)
-    finder = ModuleDepFinder(module_fqn, tree)
+    finder = ModuleDepFinder(module_fqn, module_data)
+    module_metadata = _get_module_metadata(finder.tree)
+
+    embeds = finder.embeds.copy()
 
     embeds = finder.embeds.copy()
 
@@ -885,8 +913,7 @@ def recursive_finder(
         if module_info.fq_name_parts in py_module_cache:
             continue
 
-        tree = _compile_module_ast('.'.join(module_info.fq_name_parts), module_info.source_code)
-        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
+        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), module_info.source_code, is_pkg_init=module_info.is_package)
         embeds.update(finder.embeds)
         modules_to_process.extend(_ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
                                   for m in finder.submodules if m not in py_module_cache)
@@ -920,7 +947,7 @@ def recursive_finder(
         try:
             with ir_path(anchor, path_name) as path:
                 if not path.is_file():
-                    raise AnsibleError(f'embed for {module_fqn!r} identified by ({anchor!r}, {path_name!r}) not found')
+                    raise AnsibleError(f'embed for {module_fqn!r} not found', obj=path_name)
                 anchor_parts = anchor.split('.')
                 if anchor_parts[0] == 'ansible':
                     try:
@@ -936,7 +963,7 @@ def recursive_finder(
                         root = anchor_cache[pkg] = ir_files(pkg).parents[2]
                     rel_path = path.relative_to(root)
                 else:
-                    raise AnsibleError(f'embed for {module_fqn!r} identified by ({anchor!r}, {path_name!r}) not an ansible/ansible_collections resource')
+                    raise AnsibleError(f'embed for {module_fqn!r} not an ansible/ansible_collections resource', obj=path_name)
 
                 display.vvvvv(f"Including embed file {rel_path}")
                 zf.writestr(_make_zinfo(str(rel_path), date_time, zf=zf), path.read_bytes())
@@ -949,7 +976,7 @@ def recursive_finder(
                         zf.writestr(_make_zinfo(p_init, date_time, zf=zf), b'')
                         written_files.add(p_init)
         except ModuleNotFoundError as e:
-            raise AnsibleError(f'embed anchor {anchor!r} not found') from e
+            raise AnsibleError(f'embed for {module_fqn!r} not found', obj=anchor) from e
 
     return module_metadata
 

@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-ANSIBLE_EMBED = (('ansible_collections.ansible_test.ansiballz_python.plugins.module_utils', 'embed_this.py'),)
-
 from importlib.resources import files
 from ansible.module_utils.basic import AnsibleModule
+from ..module_utils.mu_with_embed import some_value  #pylint: disable=relative-beyond-top-level
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict()
     )
+
+    assert some_value == 42
 
     ac = files('ansible_collections.ansible_test.ansiballz_python.plugins.module_utils')
     embed_test = ac.joinpath('embed_this.py')

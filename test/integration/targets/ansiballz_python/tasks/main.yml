@@ -68,3 +68,62 @@
   sys_check:
 
 - ansible_test.ansiballz_python.embed:
+  register: happy_embed
+
+- ansible_test.ansiballz_python.embed_multiple:
+  register: happy_embed_multiple
+
+- ansible_test.ansiballz_python.embed_from_mu:
+  register: happy_mu_embed
+
+- ansible_test.ansiballz_python.embed_from_core:
+  register: happy_core_embed
+
+- ansible_test.ansiballz_python.broken_embed_reassigned:
+  register: broken_embed_reassigned
+
+- ansible_test.ansiballz_python.broken_embed_type:
+  register: broken_embed_type
+
+- ansible_test.ansiballz_python.broken_embed_inner_type:
+  register: broken_embed_inner_type
+
+- ansible_test.ansiballz_python.broken_embed_nonstring:
+  register: broken_embed_nonstring
+
+- ansible_test.ansiballz_python.broken_embed_slice:
+  register: broken_embed_slice
+
+- ansible_test.ansiballz_python.broken_embed_unpacking:
+  register: broken_embed_unpacking
+
+- ansible_test.ansiballz_python.broken_embed_nonexistent:
+  ignore_errors: true
+  register: broken_embed_nonexistent
+
+- ansible_test.ansiballz_python.broken_embed_nonexistent_anchor:
+  ignore_errors: true
+  register: broken_embed_nonexistent_anchor
+
+- ansible_test.ansiballz_python.broken_embed_non_ansible:
+  ignore_errors: true
+  register: broken_embed_non_ansible
+
+- assert:
+    that:
+    - happy_embed.warnings is undefined
+    - happy_embed_multiple.warnings is undefined
+    - happy_mu_embed.warnings is undefined
+    - happy_core_embed.warnings is undefined
+    - broken_embed_reassigned.warnings[0] is search "Invalid ANSIBLE_EMBED statement. reassignment is not allowed"
+    - broken_embed_type.warnings[0] is search "Invalid ANSIBLE_EMBED statement. value must be a tuple"
+    - broken_embed_inner_type.warnings[0] is search "Invalid ANSIBLE_EMBED statement. inner values must be 2-tuples"
+    - broken_embed_nonstring.warnings[0] is search "Invalid ANSIBLE_EMBED statement. embed values must be constant strings"
+    - broken_embed_slice.warnings[0] is search "Invalid ANSIBLE_EMBED statement. slice assignments are not allowed"
+    - broken_embed_unpacking.warnings[0] is search "Invalid ANSIBLE_EMBED statement. tuple unpacking is not allowed"
+    - broken_embed_nonexistent is failed
+    - broken_embed_nonexistent.msg is search "embed .* not found"
+    - broken_embed_nonexistent_anchor is failed
+    - broken_embed_nonexistent_anchor.msg is search "embed .* not found"
+    - broken_embed_non_ansible is failed
+    - broken_embed_non_ansible.msg is search "embed .* not an ansible/ansible_collections resource"
