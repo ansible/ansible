@@ -6,7 +6,6 @@ declare -a args
 IFS='/:' read -ra args <<< "$1"
 
 powershell="${args[0]}"
-group="${args[1]}"
 pyver=default
 
 if [ "${#args[@]}" -gt 1 ]; then
