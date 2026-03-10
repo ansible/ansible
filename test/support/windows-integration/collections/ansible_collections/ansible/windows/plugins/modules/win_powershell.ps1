@@ -996,7 +996,7 @@ if ($result.Diff -is [System.Collections.IDictionary]) {
     }
 }
 
-# We process the output outselves to flatten anything beyond the depth and deal with certain problematic types with
+# We process the output ourselves to flatten anything beyond the depth and deal with certain problematic types with
 # json serialization.
 $module.Result.output = Convert-OutputObject -InputObject $psOutput -Depth $module.Params.depth
 
