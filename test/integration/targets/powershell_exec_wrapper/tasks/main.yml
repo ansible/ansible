@@ -5,15 +5,7 @@
       {{ lookup('ansible._protomatter.config', 'DISPLAY_TRACEBACK') is contains 'error' }}
 
 - name: fetch host information
-  ansible.windows.win_powershell:
-    script: |
-      if (-not (Get-Variable -Name IsWindows -ErrorAction Ignore)) {
-        $IsWindows = $true
-      }
-      @{
-        CurrentTime = [DateTime]::Now.ToFileTime()
-        IsWindows = $IsWindows
-      }
+  get_info:
   register: test_host_info
 
 - name: test normal module execution
@@ -32,7 +24,7 @@
 
 - name: test out Windows specific exec wrapper tests
   include_tasks: windows.yml
-  when: test_host_info.output[0].IsWindows
+  when: test_host_info.is_windows
 
 - name: test fail module execution
   test_fail:
@@ -183,17 +175,13 @@
 # These env vars don't work with the shell inline commands so we only test
 # them with Windows.
 - name: test out environment block for task
-  ansible.windows.win_powershell:
-    script: |
-      Get-ChildItem Env: | ForEach-Object { "$($_.Name)=$($_.Value)" }
-  environment: '{{ common_env_ars | combine(windows_env_ars if test_host_info.output[0].IsWindows else {}) }}'
+  get_env:
+  environment: '{{ common_env_ars | combine(windows_env_ars if test_host_info.is_windows else {}) }}'
   register: environment_block
 
 - name: test out environment block for task with async
-  ansible.windows.win_powershell:
-    script: |
-      Get-ChildItem Env: | ForEach-Object { "$($_.Name)=$($_.Value)" }
-  environment: '{{ common_env_ars | combine(windows_env_ars if test_host_info.output[0].IsWindows else {}) }}'
+  get_env:
+  environment: '{{ common_env_ars | combine(windows_env_ars if test_host_info.is_windows else {}) }}'
   register: environment_block_async
   async: 60
   poll: 5
@@ -201,28 +189,28 @@
 - name: assert environment block for task
   assert:
     that:
-    - '"String=string value" in environment_block.output'
-    - '"String=string value" in environment_block_async.output'
-    - '"Int=1234" in environment_block.output'
-    - '"Int=1234" in environment_block_async.output'
-    - '"Bool=True" in environment_block.output'
-    - '"Bool=True" in environment_block_async.output'
-    - '"double_quote=double \" quote" in environment_block.output'
-    - '"double_quote=double \" quote" in environment_block_async.output'
-    - '"single_quote=single '' quote" in environment_block.output'
-    - '"single_quote=single '' quote" in environment_block_async.output'
+    - '"String=string value" in environment_block.env_vars'
+    - '"String=string value" in environment_block_async.env_vars'
+    - '"Int=1234" in environment_block.env_vars'
+    - '"Int=1234" in environment_block_async.env_vars'
+    - '"Bool=True" in environment_block.env_vars'
+    - '"Bool=True" in environment_block_async.env_vars'
+    - '"double_quote=double \" quote" in environment_block.env_vars'
+    - '"double_quote=double \" quote" in environment_block_async.env_vars'
+    - '"single_quote=single '' quote" in environment_block.env_vars'
+    - '"single_quote=single '' quote" in environment_block_async.env_vars'
 
 - name: assert environment block for task on Windows
   assert:
     that:
-    - '"hyphen-var=abc@123" in environment_block.output'
-    - '"hyphen-var=abc@123" in environment_block_async.output'
+    - '"hyphen-var=abc@123" in environment_block.env_vars'
+    - '"hyphen-var=abc@123" in environment_block_async.env_vars'
     # yaml escaping rules - (\\ == \), (\" == "), ('' == ')
-    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block.output'
-    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block_async.output'
-    - '"‘key=value‚" in environment_block.output'
-    - '"‘key=value‚" in environment_block_async.output'
-  when: test_host_info.output[0].IsWindows
+    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block.env_vars'
+    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block_async.env_vars'
+    - '"‘key=value‚" in environment_block.env_vars'
+    - '"‘key=value‚" in environment_block_async.env_vars'
+  when: test_host_info.is_windows
 
 - name: test module that sets HadErrors with no error records
   test_rc_1:

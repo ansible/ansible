@@ -111,7 +111,7 @@
 
 - name: get PS events containing module args or envvars created since test start
   raw: |
-    $dt=[datetime]::FromFileTime({{ test_host_info.output[0].CurrentTime }})
+    $dt=[datetime]::FromFileTime({{ test_host_info.current_time }})
     (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
     ? { $_.TimeCreated -ge $dt -and $_.Message -match "fail_module|hyphen-var" }).Count
   register: ps_log_count
