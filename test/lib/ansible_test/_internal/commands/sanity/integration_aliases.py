@@ -259,13 +259,16 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         messages += self.check_ci_group(
             targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, errors=False)),
-            find=self.format_test_group_alias('linux').replace('linux', 'posix'),
+            find=[
+                self.format_test_group_alias('linux').replace('linux', 'posix'),
+                self.format_test_group_alias('powershell'),
+            ],
             find_incidental=['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
         messages += self.check_ci_group(
             targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], errors=False)),
-            find=self.format_test_group_alias('generic'),
+            find=[self.format_test_group_alias('generic')],
         )
 
         for cloud in clouds:
@@ -278,7 +281,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], errors=False)),
-                find=find,
+                find=[find],
                 find_incidental=find_incidental,
             )
 
@@ -322,7 +325,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         messages += self.check_ci_group(
             targets=windows_targets,
-            find=self.format_test_group_alias('windows'),
+            find=[self.format_test_group_alias('windows')],
             find_incidental=['%s/windows/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
@@ -331,12 +334,12 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def check_ci_group(
         self,
         targets: tuple[CompletionTarget, ...],
-        find: str,
+        find: list[str],
         find_incidental: t.Optional[list[str]] = None,
     ) -> list[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
-        supported_paths = set(target.path for target in filter_targets(targets, [find], errors=False))
+        supported_paths = set(target.path for target in filter_targets(targets, find, errors=False))
         unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], errors=False))
 
         if find_incidental:
@@ -347,8 +350,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
         unassigned_paths = all_paths - supported_paths - unsupported_paths - incidental_paths
         conflicting_paths = supported_paths & unsupported_paths
 
-        unassigned_message = 'missing alias `%s` or `%s`' % (find.strip('/'), self.UNSUPPORTED.strip('/'))
-        conflicting_message = 'conflicting alias `%s` and `%s`' % (find.strip('/'), self.UNSUPPORTED.strip('/'))
+        valid_aliases = '`, `'.join([f.strip('/') for f in find])
+        unassigned_message = 'missing alias `%s` or `%s`' % (valid_aliases, self.UNSUPPORTED.strip('/'))
+        conflicting_message = 'conflicting alias `%s` and `%s`' % (valid_aliases, self.UNSUPPORTED.strip('/'))
 
         messages = []
 
