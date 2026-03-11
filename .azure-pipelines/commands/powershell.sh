@@ -15,8 +15,9 @@ fi
 
 # Add this once I've figured out how to get the support/integration/collections
 # into the controller
-# --controller "docker:default,python=default"
+
 
 # shellcheck disable=SC2086
 ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    --controller "docker:default,python=default" \
     --target "docker:ubuntu2404,powershell=${powershell}"
