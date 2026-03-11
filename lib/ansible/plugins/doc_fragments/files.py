@@ -37,7 +37,7 @@ options:
     - When left unspecified, it uses the current user unless you are root, in which
       case it can preserve the previous ownership.
     - Specifying a numeric username (for example, "1000") will be assumed to be a user ID (UID) and not a username.
-      To avoid confusion, avoid using purely numeric usernames.
+      To prevent confusion, avoid using purely numeric usernames.
 
     type: str
   group:
@@ -46,7 +46,7 @@ options:
     - When left unspecified, it uses the current group of the current user unless you are root,
       in which case it can preserve the previous ownership.
     - Specifying a numeric group name (for example, "1000") will be assumed to be a group ID (GID) and not a group name.
-      To avoid confusion, avoid using purely numeric group names.
+      To prevent confusion, avoid using purely numeric group names.
     type: str
   seuser:
     description:
