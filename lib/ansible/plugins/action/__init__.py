@@ -1076,12 +1076,12 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         module_bits, module_path = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        (module_style, shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
+        (module_style, module_shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
         display.vvv("Using module file %s" % module_path)
-        if not shebang and module_style != 'binary':
+        if not module_shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        self._used_interpreter = shebang
+        self._used_interpreter = module_shebang
         remote_module_path = None
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
@@ -1171,6 +1171,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
                 async_cmd.extend(module_cmd)
             else:
+                if module_shebang:
+                    async_cmd.append(module_shebang.replace('#!', '').strip())
+
                 async_cmd.append(remote_module_path)
 
             if args_file_path:
@@ -1191,7 +1194,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             else:
                 cmd = remote_module_path
 
-            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
+            cmd = self._connection._shell.build_module_command(environment_string, module_shebang, cmd, arg_path=args_file_path).strip()
 
         # Fix permissions of the tmpdir path and tmpdir files. This should be called after all
         # files have been transferred.
