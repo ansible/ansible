@@ -1231,7 +1231,7 @@ def _find_module_utils(
     # except for the shebang line (Done by modify_module)
     if module_style in ('old', 'non_native_want_json', 'binary'):
         return _BuiltModule(
-            b_module_data=b_module_data,
+            b_module_data=b"",  # Marker to indicate the original file should be used without modification.
             module_style=module_style,
             shebang=shebang,
             serialization_profile='legacy',
@@ -1610,7 +1610,8 @@ def modify_module(
         default_interpreters=default_interpreters,
     )
 
-    b_module_data = module_bits.b_module_data
+    if module_bits.b_module_data:
+        b_module_data = module_bits.b_module_data
     shebang = module_bits.shebang
 
     if shebang is None and module_bits.module_style != 'binary':
