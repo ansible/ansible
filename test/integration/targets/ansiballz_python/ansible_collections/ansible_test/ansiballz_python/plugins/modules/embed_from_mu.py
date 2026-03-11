@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from importlib.resources import files
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.mu_with_embed import some_value  #pylint: disable=relative-beyond-top-level
+from ..module_utils.mu_with_embed import some_value  # pylint: disable=relative-beyond-top-level
 
 
 def main():

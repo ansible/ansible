@@ -815,7 +815,7 @@ def _get_module_metadata(module: ast.Module) -> ModuleMetadata:
 def recursive_finder(
     name: str,
     module_fqn: str,
-    module_data: str | bytes,
+    module_data: bytes,
     zf: zipfile.ZipFile,
     date_time: datetime.datetime,
     extension_manager: _builder.ExtensionManager,

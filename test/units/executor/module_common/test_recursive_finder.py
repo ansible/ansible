@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import datetime
 import os
+import re
+
 import pytest
 import zipfile
 
@@ -109,7 +111,7 @@ def test_module_utils_with_syntax_error(zip_file: zipfile.ZipFile) -> None:
     data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
     with pytest.raises(ansible.errors.AnsibleError) as exec_info:
         recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, zip_file, NOW, ExtensionManager())
-    assert "Unable to compile 'fake_module': invalid syntax" in str(exec_info.value)
+    assert re.search("Unable to compile '.*fake_module.*': invalid syntax", str(exec_info.value))
 
 
 def test_module_utils_with_identation_error(zip_file: zipfile.ZipFile) -> None:
@@ -117,7 +119,7 @@ def test_module_utils_with_identation_error(zip_file: zipfile.ZipFile) -> None:
     data = b'#!/usr/bin/python\n    def something():\n    pass\n'
     with pytest.raises(ansible.errors.AnsibleError) as exec_info:
         recursive_finder(name, os.path.join(ANSIBLE_LIB, 'modules', 'system', 'fake_module.py'), data, zip_file, NOW, ExtensionManager())
-    assert "Unable to compile 'fake_module': unexpected indent" in str(exec_info.value)
+    assert re.search("Unable to compile '.*fake_module.*': unexpected indent", str(exec_info.value))
 
 
 def test_from_import_six(zip_file: zipfile.ZipFile) -> None:
