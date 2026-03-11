@@ -1,0 +1,3 @@
+bugfixes:
+  - file module - issue warning when attempting to access files/directories the user lacks permissions on instead of 
+    silently treating them as absent (https://github.com/ansible/ansible/issues/57573)

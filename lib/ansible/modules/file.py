@@ -230,6 +230,7 @@ path:
 
 import errno
 import os
+import stat
 import shutil
 import time
 
@@ -311,20 +312,22 @@ def get_state(path):
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     try:
-        if os.path.lexists(b_path):
-            if os.path.islink(b_path):
-                return 'link'
-            elif os.path.isdir(b_path):
-                return 'directory'
-            elif os.stat(b_path).st_nlink > 1:
-                return 'hard'
-
-            # could be many other things, but defaulting to file
-            return 'file'
-
-        return 'absent'
+        st = os.lstat(b_path)
     except FileNotFoundError:
         return 'absent'
+    except PermissionError:
+        module.warn(f"Insufficient permissions to access {to_native(b_path)}. Treating as absent")
+        return 'absent'
+
+    if stat.S_ISLNK(st.st_mode):
+        return 'link'
+    elif stat.S_ISDIR(st.st_mode):
+        return 'directory'
+    elif st.st_nlink > 1:
+        return 'hard'
+
+    # could be many other things, but defaulting to file
+    return 'file'
 
 
 # This should be moved into the common file utilities
