@@ -2,18 +2,13 @@
 
 set -eux
 
-# Setup environment to use current workspace
-export ANSIBLE_HOME=$(realpath ../../../..)
-export PYTHONPATH="$ANSIBLE_HOME/lib:$ANSIBLE_HOME/test/lib"
-export PATH="$ANSIBLE_HOME/bin:$PATH"
-
 # Test 1: Nested blocks with max_fail_percentage
 # The playbook should NOT fail immediately due to max_fail_percentage 
 # but should allow rescue/always tasks to run.
 # However, it SHOULD stop before the Marker task.
 
 set +e
-python3 "$ANSIBLE_HOME/bin/ansible-playbook" test_nested.yml -i inventory "$@" > output.log 2>&1
+ansible-playbook test_nested.yml -i inventory "$@" > output.log 2>&1
 result=$?
 set -e
 
@@ -74,7 +69,7 @@ cat <<EOF > test_serial.yml
 EOF
 
 set +e
-python3 "$ANSIBLE_HOME/bin/ansible-playbook" test_serial.yml -i inventory_serial "$@" > output_serial.log 2>&1
+ansible-playbook test_serial.yml -i inventory_serial "$@" > output_serial.log 2>&1
 result=$?
 set -e
 
