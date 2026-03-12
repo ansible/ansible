@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from importlib.resources import files
 from ansible.module_utils.basic import AnsibleModule
-from ..module_utils.mu_with_embed import some_value  # pylint: disable=relative-beyond-top-level
+from ..module_utils.mu_with_embed import e1, e2  # pylint: disable=relative-beyond-top-level
 
 
 def main():
@@ -12,15 +11,13 @@ def main():
         argument_spec=dict()
     )
 
-    assert some_value == 42
+    with e1.path_context_manager as path:
+        assert "embedded content for embed_this.py" in path.read_text(), "e1 resource content mismatch"
 
-    ac = files('ansible_collections.ansible_test.ansiballz_python.plugins.module_utils')
-    embed_test = ac.joinpath('embed_this.py')
+    with e2.path_context_manager as path:
+        assert "embedded content for embed_that.py" in path.read_text(), "e2 resource content mismatch"
 
-    if embed_test.is_file():
-        module.exit_json(exists=True)
-
-    module.fail_json(msg='missing embed file')
+    module.exit_json(passed=True)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,8 @@ from __future__ import annotations
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.embed import EmbedManager
 
-e1 = EmbedManager.embed(1234, 'embed_this.py')
+x = "abc.def"
 
+e1 = EmbedManager.embed(x, 'embed_this.py')
 
 AnsibleModule(dict()).exit_json()  # no-op for sanity

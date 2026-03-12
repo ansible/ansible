@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-ANSIBLE_EMBED = (('ansible.module_utils._embed', '__init__.py'),)
+from ansible.module_utils.embed import EmbedManager
 
-from importlib.resources import files
+embed_test = EmbedManager.embed('ansible.module_utils._embed', 'dnf.py')
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -13,13 +14,12 @@ def main():
         argument_spec=dict()
     )
 
-    ac = files('ansible.module_utils._embed')
-    embed_test = ac.joinpath('__init__.py')
+    with embed_test.path_context_manager as path:
+        assert path.is_file(), "resource was missing"
 
-    if embed_test.is_file():
-        module.exit_json(exists=True)
+    assert embed_test.python_module_ref == "ansible.module_utils._embed.dnf", "python_module_ref mismatched"
 
-    module.fail_json(msg='missing embed file')
+    module.exit_json(passed=True)
 
 
 if __name__ == '__main__':

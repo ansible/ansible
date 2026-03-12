@@ -34,6 +34,7 @@ lib/ansible/module_utils/service.py pylint:ansible-bad-function
 lib/ansible/modules/mount_facts.py pylint:ansible-bad-function
 lib/ansible/modules/service.py pylint:ansible-bad-function
 lib/ansible/modules/user.py pylint:ansible-bad-function
+lib/ansible/module_utils/_embed/dnf.py boilerplate  # annotations future bombs on Python 3.6
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
@@ -51,7 +52,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSP
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
-lib/ansible/module_utils/_embed/dnf.py boilerplate  # not an actual module_util, a script that supports lower python versions
 lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py pylint:trailing-comma-tuple
 lib/ansible/module_utils/six/__init__.py pylint:unidiomatic-typecheck

@@ -391,15 +391,17 @@ EXAMPLES = """
     state: present
 """
 
-ANSIBLE_EMBED = (('ansible.module_utils._embed', 'dnf.py'),)
-
 import json
 import sys
 
 from ansible.module_utils.urls import fetch_file
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
+from ansible.module_utils.embed import EmbedManager
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
+
+
+dnfscript = EmbedManager.embed('..module_utils._embed', 'dnf.py')
 
 
 class DnfModule(YumDnf):
@@ -450,7 +452,7 @@ class DnfModule(YumDnf):
         ]
 
         # probe well-known system Python locations for accessible bindings, favoring py3
-        interpreter = probe_interpreters_for_module(interpreters, 'dnf', include_basic=False)
+        interpreter = probe_interpreters_for_module(interpreters, module_names=['dnf'])
 
         if not interpreter:
             # done all we can do, something is just broken (auto-install isn't useful anymore with respawn, so it was removed)
@@ -474,7 +476,7 @@ class DnfModule(YumDnf):
 
         try:
             rc, stdout, stderr = self.module.run_command(
-                [python_executable, '-m', 'ansible.module_utils._embed.dnf'],
+                [python_executable, '-m', dnfscript.python_module_ref],
                 data=request_json,
                 check_rc=False,
                 handle_exceptions=False,

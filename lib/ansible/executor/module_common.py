@@ -22,6 +22,7 @@ import ast
 import base64
 import dataclasses
 import datetime
+import importlib.util as _importlib_util
 import json
 import os
 import pathlib
@@ -33,8 +34,8 @@ import pkgutil
 import types
 import typing as t
 
-from ast import Assign, Constant, Import, ImportFrom, Name, Tuple, Subscript
-from importlib.resources import path as ir_path, files as ir_files
+from ast import Assign, Constant, Import, ImportFrom, Name, Call, Attribute
+from importlib.resources import files as ir_files
 from io import BytesIO
 
 from ansible._internal import _locking
@@ -47,6 +48,7 @@ from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible._internal._datatag._tags import Origin
 from ansible.module_utils.common.json import Direction, get_module_encoder
+from ansible.module_utils.embed import EmbeddedResource
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -197,18 +199,22 @@ class ModuleDepFinder(ast.NodeVisitor):
         .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
-        self.submodules: set = set()
-        self.optional_imports: set = set()
-        self.embeds: set[tuple[str, str]] = set()
+        self.submodules: set[tuple[str, ...]] = set()
+        self.optional_imports: set[tuple[str, ...]] = set()
+        self.embeds: set[EmbeddedResource] = set()
         self.module_fqn = module_fqn
         self.is_pkg_init = is_pkg_init
         self._depth = -1
         self._origin = Origin.get_tag(module_data) or Origin.UNKNOWN
         self.tree = _compile_module_ast(module_fqn, module_data)
 
-        self._maybe_has_interesting_assignment = b"ANSIBLE_EMBED" in module_data
+        self._embed_sniffing = False
+        self._embed_import_origin: Origin | None = None
 
         self.visit(self.tree)
+
+        if self._embed_sniffing and not self.embeds:
+            raise AnsibleError("Module embedding support was imported, but no EmbedManager.embed calls were found.", obj=self._embed_import_origin)
 
     def generic_visit(self, node):
         """Overridden ``generic_visit`` that makes some assumptions about our
@@ -218,7 +224,7 @@ class ModuleDepFinder(ast.NodeVisitor):
         self._depth += 1
         depth = self._depth
         generic_visit = self.generic_visit
-        visit_Assign = self.visit_Assign if self._maybe_has_interesting_assignment else lambda n: None
+        visit_Assign = self.visit_Assign
         visit_Import = self.visit_Import
         visit_ImportFrom = self.visit_ImportFrom
         for field, value in ast.iter_fields(node):
@@ -230,11 +236,10 @@ class ModuleDepFinder(ast.NodeVisitor):
                     elif item_class is ImportFrom:
                         visit_ImportFrom(item)
                     elif not depth and item_class is Assign:
-                        try:
-                            visit_Assign(item)
-                        except ModuleDepFinder._InvalidEmbedError as ex:
-                            display.error_as_warning(msg=None, exception=ex)
+                        if not self._embed_sniffing:
+                            continue  # if the module hasn't imported the `embed` module_utils module, skip assignment analysis
 
+                        visit_Assign(item)
                     elif hasattr(item, 'end_col_offset'):
                         # ASTish without the hit of isinstance
                         generic_visit(item)
@@ -265,10 +270,12 @@ class ModuleDepFinder(ast.NodeVisitor):
         """
         Handle from ansible.module_utils.MODLIB import [.MODLIBn] [as asname]
 
-        Also has to handle relative imports
+        Also has to handle relative imports.
 
         We save these as interesting submodules when the imported library is in ansible.module_utils
-        or ansible.collections
+        or ansible.collections.
+
+        If the module imports `ansible.module_utils.embed`, assignment analysis is enabled for static resource embedding via EmbedManager.embed().
         """
         # FIXME: These should all get skipped:
         # from ansible.executor import module_common
@@ -325,6 +332,11 @@ class ModuleDepFinder(ast.NodeVisitor):
                 # from ansible_collections.ns.coll.plugins.lookup import IDENTIFIER
                 pass
 
+        # FIXME: handle different forms for both import and callsite analysis, e.g.: aliased module, aliased import, relative, no-assign?
+        if node_module.startswith('ansible.module_utils.embed'):
+            self._embed_sniffing = True
+            self._embed_import_origin = self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
+
         if py_mod:
             for alias in node.names:
                 submodules_add(a_py_mod := py_mod + (alias.name,))
@@ -332,64 +344,46 @@ class ModuleDepFinder(ast.NodeVisitor):
                 if depth:
                     optional_imports_add(a_py_mod)
 
-    class _InvalidEmbedError(AnsibleError): ...
-
     def _assert_embed(self, assertion: bool, message: str, node: ast.stmt | ast.expr) -> None:
+        """
+        If the required `EmbedManager` pre-condition `assertion` is False, raise an `AnsibleError` that includes the specified `message`
+        and the most-specific `obj` context available from `node`.
+        """
         if not assertion:
-            raise ModuleDepFinder._InvalidEmbedError(
-                message=f"Invalid ANSIBLE_EMBED statement: {message}.",
+            raise AnsibleError(
+                message=f"Invalid EmbedManager request: {message}.",
                 obj=self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
             )
 
     def visit_Assign(self, node: ast.Assign) -> None:
-        """If `ANSIBLE_EMBED` appears in the module source, validate assignments involving it and set ``embeds`` accordingly."""
+        """
+        Validate top-level calls to `EmbedManager.embed` to include the requested resources and collect them in `embeds`.
 
-        # Supported form:
-        # ANSIBLE_EMBED = (('ansible.module_utils._embed', 'foo.txt'), ('ansible_collections.foo.bar.plugins.module_utils._embed', 'bar.txt'), ...)
+        This inspection is only enabled when an import of the form `from ansible.module_utils.embed import EmbedManager` is present.
+        The `embed` callsite requires exactly two inline literal string posargs; any other form will fail the module build.
+        If the `package` argument starts with `.`, it is assumed to be a relative import path from the calling Python module.
+        """
+        # ignore assignments whose RHS is not an Attribute.Name function call to EmbedManager.embed()
+        if (not isinstance(call := node.value, Call) or
+                not isinstance(func := call.func, Attribute) or
+                not isinstance(funcvalue := func.value, Name) or
+                # FUTURE: any additional validation to ensure this is the right EmbedManager?
+                funcvalue.id != 'EmbedManager' or func.attr != 'embed'):
+            return
 
-        # warn on unsupported assignments
-        for target in node.targets:
-            match target:
-                case Name():
-                    if len(node.targets) == 1 and target.id == 'ANSIBLE_EMBED':
-                        break
+        # tag the code origin to this `embed` callsite in case there's a failure later
+        embed_origin = self._origin.replace(line_num=call.lineno, col_num=call.col_offset + 1)
 
-                    # multiple assignment: ANSIBLE_EMBED = blah = ...
-                    self._assert_embed(target.id != 'ANSIBLE_EMBED', message="multiple assignments are not allowed", node=node)
-                case Tuple():
-                    # tuple unpacking assignment ANSIBLE_EMBED, blah = ...
-                    self._assert_embed(
-                        all(d.id != 'ANSIBLE_EMBED' for d in target.dims if isinstance(d, Name)),
-                        message="tuple unpacking is not allowed",
-                        node=node
-                    )
-                case Subscript():
-                    # slice assignment ANSIBLE_EMBED[:] = ...
-                    self._assert_embed(
-                        target.value.id != 'ANSIBLE_EMBED' if isinstance(target.value, Name) else True,
-                        message="slice assignments are not allowed",
-                        node=node,
-                    )
-        else:
-            return  # no failures, but nothing more interesting to look for
+        call_posargs: list[str] = [embed_origin.tag(a.value) for a in call.args if isinstance(a, Constant) and isinstance(a.value, str)]
 
-        value = t.cast(Tuple, node.value)
-        self._assert_embed(isinstance(value, Tuple), "value must be a tuple", node=value)
+        self._assert_embed(len(call_posargs) == len(call.args) == 2, message="Embed requires exactly two inline literal strings", node=call)
+        self._assert_embed(not call.keywords, message="Embed does not support keyword args", node=call)
 
-        self._assert_embed(not self.embeds, "reassignment is not allowed", node=node)
+        if call_posargs[0].startswith('.'):
+            call_posargs[0] = embed_origin.tag(_importlib_util.resolve_name(call_posargs[0], self.module_fqn.rpartition('.')[0]))
 
-        for embed in value.elts:
-            self._assert_embed(isinstance(embed, Tuple) and len(embed.elts) == 2, "inner values must be 2-tuples", node=embed)
-
-            for el in embed.elts:
-                self._assert_embed(isinstance(el, Constant) and isinstance(el.value, str), "embed values must be constant strings", node=el)
-
-            anchor, path_name = t.cast(tuple, embed.elts)
-
-            embed_origin = self._origin.replace(line_num=embed.lineno, col_num=embed.col_offset + 1)
-
-            # origin-tag the contents since the callsite always unpacks it
-            self.embeds.add((embed_origin.tag(anchor.value), embed_origin.tag(path_name.value)))
+        # store the requested Em
+        self.embeds.add(EmbeddedResource(*call_posargs))
 
 
 def _slurp(path):
@@ -855,8 +849,6 @@ def recursive_finder(
 
     embeds = finder.embeds.copy()
 
-    embeds = finder.embeds.copy()
-
     if not isinstance(module_metadata, ModuleMetadataV1):
         raise NotImplementedError()
 
@@ -943,40 +935,44 @@ def recursive_finder(
             extension_manager.source_mapping[origin.path] = py_module_file_name
 
     anchor_cache: dict[str, pathlib.Path] = {}
-    for anchor, path_name in embeds:
+    for embed in embeds:
         try:
-            with ir_path(anchor, path_name) as path:
-                if not path.is_file():
-                    raise AnsibleError(f'embed for {module_fqn!r} not found', obj=path_name)
-                anchor_parts = anchor.split('.')
-                if anchor_parts[0] == 'ansible':
-                    try:
-                        root = anchor_cache['ansible']
-                    except KeyError:
-                        root = anchor_cache['ansible'] = ir_files('ansible').parent
-                    rel_path = path.relative_to(root)
-                elif anchor_parts[0] == 'ansible_collections':
-                    pkg = '.'.join(anchor_parts[:3])
-                    try:
-                        root = anchor_cache[pkg]
-                    except KeyError:
-                        root = anchor_cache[pkg] = ir_files(pkg).parents[2]
-                    rel_path = path.relative_to(root)
-                else:
-                    raise AnsibleError(f'embed for {module_fqn!r} not an ansible/ansible_collections resource', obj=path_name)
-
-                display.vvvvv(f"Including embed file {rel_path}")
-                zf.writestr(_make_zinfo(str(rel_path), date_time, zf=zf), path.read_bytes())
-                for parent in rel_path.parents:
-                    if not parent.name:
-                        continue
-                    p_init = str(parent / '__init__.py')
-                    if p_init not in written_files:
-                        display.vvvvv(f"Including parent init file {p_init}")
-                        zf.writestr(_make_zinfo(p_init, date_time, zf=zf), b'')
-                        written_files.add(p_init)
+            embed_path_cm = embed.path_context_manager
         except ModuleNotFoundError as e:
-            raise AnsibleError(f'embed for {module_fqn!r} not found', obj=anchor) from e
+            # the source exception message includes the package name, no need to repeat
+            raise AnsibleError('Embed package not found while packaging module.', obj=embed.package) from e
+
+        with embed_path_cm as path:
+            if not path.is_file():
+                raise AnsibleError(f'Embed resource {embed.resource!r} not found while packaging module.', obj=embed.resource)
+            anchor_parts = embed.package.split('.')
+            if anchor_parts[0] == 'ansible':
+                try:
+                    root = anchor_cache['ansible']
+                except KeyError:
+                    root = anchor_cache['ansible'] = ir_files('ansible').parent
+                rel_path = path.relative_to(root)
+            elif anchor_parts[0] == 'ansible_collections':
+                pkg = '.'.join(anchor_parts[:3])
+                try:
+                    root = anchor_cache[pkg]
+                except KeyError:
+                    root = anchor_cache[pkg] = ir_files(pkg).parents[2]
+                rel_path = path.relative_to(root)
+            else:
+                raise AnsibleError('Embed must be an ansible/ansible_collections resource.', obj=embed.resource)
+
+            display.vvvvv(f"Including embed file {rel_path}")
+            zf.writestr(_make_zinfo(str_path := str(rel_path), date_time, zf=zf), path.read_bytes())
+            written_files.add(str_path)
+            for parent in rel_path.parents:
+                if not parent.name:
+                    continue
+                p_init = str(parent / '__init__.py')
+                if p_init not in written_files:
+                    display.vvvvv(f"Including parent init file {p_init}")
+                    zf.writestr(_make_zinfo(p_init, date_time, zf=zf), b'')
+                    written_files.add(p_init)
 
     return module_metadata
 

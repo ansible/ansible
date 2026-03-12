@@ -7,9 +7,10 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.embed import EmbedManager
 from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
 
-ANSIBLE_EMBED = (('ansible_collections.ansible_test.setup_rpm_repo.plugins.module_utils._embed', 'create_repo.py'),)
+embed = EmbedManager.embed('ansible_collections.ansible_test.setup_rpm_repo.plugins.module_utils._embed', 'create_repo.py')
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
 
     interpreters = [sys.executable, '/usr/libexec/platform-python', '/usr/bin/python3', '/usr/bin/python']
 
-    interpreter = probe_interpreters_for_module(interpreters, 'rpmfluff', include_basic=False)
+    interpreter = probe_interpreters_for_module(interpreters, module_names=['rpmfluff'])
     if not interpreter:
         module.fail_json('unable to find rpmfluff; tried {0}'.format(interpreters))
 
@@ -36,7 +37,7 @@ def main():
             [
                 interpreter,
                 '-m',
-                'ansible_collections.ansible_test.setup_rpm_repo.plugins.module_utils._embed.create_repo',
+                embed.python_module_ref,
                 tempdir,
             ],
             env=get_env_with_pythonpath(),
