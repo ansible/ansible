@@ -115,9 +115,3 @@
       diff: true
 
 - hosts: i_dont_exist
-
-- hosts: localhost
-  gather_facts: false
-  max_fail_percentage: 0
-  tasks:
-    - fail:

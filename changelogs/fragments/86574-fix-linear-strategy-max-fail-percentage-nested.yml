@@ -1,3 +1,0 @@
----
-bugfixes:
-  - linear strategy - Ensure ``max_fail_percentage`` is correctly calculated when failures occur within nested blocks and tasks (https://github.com/ansible/ansible/issues/86574).

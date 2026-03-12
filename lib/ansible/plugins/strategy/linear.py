@@ -342,17 +342,30 @@ class StrategyModule(StrategyBase):
                         state, dummy = iterator.get_next_task_for_host(host, peek=True)
                         return iterator._check_failed_state(state)
 
-                    batch_failed_count = sum(1 for host in hosts_left if _host_has_failed(host))
+                    # we use the total number of hosts in the play (respecting subset/limit)
+                    # to calculate the percentage, and we include all failed/unreachable
+                    # hosts from previous batches and the current one.
+                    play_total_count = len(self._hosts_cache_all)
+                    
+                    # we count all unreachable hosts and all hosts that have a failed state in the iterator
+                    play_failed_count = len(self._tqm._unreachable_hosts)
+                    for host_name in self._hosts_cache_all:
+                        if host_name in self._tqm._unreachable_hosts:
+                            continue
+                        host = self._inventory.get_host(host_name)
+                        if iterator.get_host_state(host).fail_state != 0:  # FailedStates.NONE is 0
+                            play_failed_count += 1
 
-                    if (batch_failed_count / iterator.batch_size) > percentage:
+                    if (play_failed_count / play_total_count) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
-                            if host.name not in failed_hosts:
+                            if host.name not in failed_hosts and iterator.get_host_state(host).fail_state == 0:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                        result |= self._tqm.RUN_FAILED_BREAK_PLAY
-                    display.debug('(%s failed / %s total )> %s max fail' % (batch_failed_count, iterator.batch_size, percentage))
+                        # We used to set RUN_FAILED_BREAK_PLAY here, but doing so bypasses rescue/always blocks.
+                        # Instead, we rely on the iterator and StrategyBase to handle the failure state.
+                    display.debug('(%s failed / %s total )> %s max fail' % (play_failed_count, play_total_count, percentage))
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")

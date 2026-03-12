@@ -4,14 +4,20 @@
   tasks:
     - name: Block with failure
       block:
-        - fail:
+        - name: "Task in block"
+          fail:
             msg: "block failure"
           when: inventory_hostname == 'host1'
       rescue:
-        - fail:
+        - name: "Task in rescue"
+          debug:
+            msg: "rescue cleanup"
+        - name: "Fail in rescue to ensure host is marked failed"
+          fail:
             msg: "rescue fail"
       always:
-        - debug:
+        - name: "Task in always"
+          debug:
             msg: "always cleanup"
 
     - name: Marker task
