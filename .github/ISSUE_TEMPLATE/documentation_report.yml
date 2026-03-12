@@ -31,7 +31,7 @@ body:
       [communication]:
       https://docs.ansible.com/ansible/devel/community/communication.html
 
-      [issue search]: ../search?q=is%3Aissue&type=issues
+      [issue search]: https://github.com/ansible/ansible/search?q=is%3Aissue&type=issues
 
       [submit a pull request]:
       https://docs.ansible.com/ansible-core/devel/community/documentation_contributions.html
