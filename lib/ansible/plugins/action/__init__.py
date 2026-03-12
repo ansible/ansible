@@ -392,7 +392,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         Determines if we are required and can do pipelining, only 'new' style modules can support pipelining
         """
-        return bool(module_style == 'new' and self._connection.is_pipelining_enabled(wrap_async))
+        # FUTURE: Move async checks from connection.is_pipelining_enabled here
+        # as async and pipelining is a property on the execution layer and not
+        # the capabilities of the connection itself.
+        conditions = [
+            module_style == 'new',
+            not C.DEFAULT_KEEP_REMOTE_FILES,                     # user doesn't want to keep remote files
+            self._connection.is_pipelining_enabled(wrap_async),  # connection/become supports pipelining and is enabled
+        ]
+        return all(conditions)
 
     def _get_admin_users(self):
         """
@@ -465,8 +473,16 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+
+        cmd = None
+        in_data = None
+        if self._connection.is_pipelining_enabled(wrap_async=False):
+            cmd_details = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+            cmd = cmd_details.command
+            in_data = cmd_details.input_data
+        else:
+            cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+        result = self._low_level_execute_command(cmd, in_data=in_data, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -486,7 +502,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 output = ('Failed to create temporary directory. '
                           'In some cases, you may have been able to authenticate and did not have permissions on the target directory. '
                           'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp", for more error information use -vvv. '
-                          'Failed command was: %s, exited with result %d' % (cmd.command, result['rc']))
+                          'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
             if display.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
@@ -907,8 +923,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
-        cmd = self._connection._shell._expand_user2(expand_path)
-        data = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+        cmd = None
+        in_data = None
+        if self._connection.is_pipelining_enabled(wrap_async=False):
+            cmd_details = self._connection._shell._expand_user2(expand_path)
+            cmd = cmd_details.command
+            in_data = cmd_details.input_data
+        else:
+            cmd = self._connection._shell.expand_user(expand_path)
+        data = self._low_level_execute_command(cmd, in_data=in_data, sudoable=False)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]

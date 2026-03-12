@@ -100,12 +100,11 @@ class ShellModule(ShellBase):
         mode: int = 0o700,
         tmpdir: str | None = None,
     ) -> str:
-        # This is not called in Ansible anymore but it is kept for backwards
-        # compatibility in case other action plugins outside Ansible calls this.
+        # This is used when connection plugins do not support pipelining.
         if not basefile:
             basefile = self.__class__._generate_temp_dir_name()
-        basefile = _script.quote_pwsh_argument(basefile)
-        basetmpdir = _script.quote_pwsh_argument(tmpdir if tmpdir else self.get_option('remote_tmp'))
+        basefile = _script.quote_pwsh_argument(basefile, force_quote=True)
+        basetmpdir = _script.quote_pwsh_argument(tmpdir if tmpdir else self.get_option('remote_tmp'), force_quote=True)
 
         script = f"""
         {self._CONSOLE_ENCODING}
@@ -145,16 +144,16 @@ class ShellModule(ShellBase):
         user_home_path: str,
         username: str = '',
     ) -> str:
-        # This is not called in Ansible anymore but it is kept for backwards
-        # compatibility in case other actions plugins outside Ansible called this.
+        # This is used when connection plugins do not support pipelining.
 
         script = self._CONSOLE_ENCODING
         if user_home_path == '~':
             script += "; (Get-Location).Path"
         elif user_home_path.startswith('~\\'):
-            script += f"; ((Get-Location).Path + {_script.quote_pwsh_argument(user_home_path[1:])})"
+            quoted_home = _script.quote_pwsh_argument(user_home_path[1:], force_quote=True)
+            script += f"; ((Get-Location).Path + {quoted_home})"
         else:
-            script += f"; {_script.quote_pwsh_argument(user_home_path)}"
+            script += f"; {_script.quote_pwsh_argument(user_home_path, force_quote=True)}"
 
         return self._encode_pwsh_script_as_command(script)
 

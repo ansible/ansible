@@ -1,0 +1,24 @@
+---
+- name: test out Windows No Pipelining specific tests
+  hosts: windows
+  force_handlers: yes
+  serial: 1
+  gather_facts: no
+
+  tasks:
+  - name: get remote information for shell method tests
+    ansible.windows.win_powershell:
+      script: |
+        (Resolve-Path ~\).Path + "\test"
+        (Get-Item $env:TEMP).FullName + "\ansible-tmp-"
+    register: remote_info
+
+  - name: test shell methods with pipelining disabled
+    shell_test:
+    register: shell_res
+
+  - name: assert shell test results
+    assert:
+      that:
+        - shell_res.remote_expand_user == remote_info.output[0]
+        - shell_res.tmpdir.startswith(remote_info.output[1])

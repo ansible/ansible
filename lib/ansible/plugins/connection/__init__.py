@@ -311,7 +311,6 @@ class ConnectionBase(AnsiblePlugin):
         # TODO: deprecate always_pipeline_modules and has_native_async in favor for each plugin overriding this function
         conditions = [
             is_enabled or self.always_pipeline_modules,       # enabled via config or forced via connection (eg winrm)
-            not C.DEFAULT_KEEP_REMOTE_FILES,                  # user wants remote files
             not wrap_async or self.has_native_async,          # async does not normally support pipelining unless it does (eg winrm)
         ]
         return all(conditions)
