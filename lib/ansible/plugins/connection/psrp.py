@@ -280,8 +280,8 @@ options:
     - Only valid when Kerberos was the negotiated auth or was explicitly set as
       the authentication.
     - Ignored when NTLM was the negotiated auth.
-    - Before Ansible 2.21 this had a default value of V(WSMAN) which failed to
-      work on some hosts. Since Ansible 2.21 the default value is V(host).
+    - Before ansible-core 2.21, this had a default value of V(WSMAN) which failed to
+      work on some hosts. Since ansible-core 2.21 the default value is V(host).
     default: host
     type: str
     vars:
