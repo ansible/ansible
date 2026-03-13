@@ -353,10 +353,13 @@ class StrategyModule(StrategyBase):
                         if host_name in self._tqm._unreachable_hosts:
                             continue
                         host = self._inventory.get_host(host_name)
+                        # don't count if host is not in the play (might happen with limits)
+                        if not host:
+                            continue
                         if iterator.get_host_state(host).fail_state != 0:  # FailedStates.NONE is 0
                             play_failed_count += 1
 
-                    if (play_failed_count / play_total_count) > percentage:
+                    if play_total_count > 0 and (play_failed_count / play_total_count) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
@@ -370,7 +373,7 @@ class StrategyModule(StrategyBase):
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")
-                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
+                if result != self._tqm.RUN_OK and result != self._tqm.RUN_FAILED_BREAK_PLAY and len(self._tqm._failed_hosts) >= len(hosts_left):
                     display.debug("^ not ok, so returning result now")
                     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                     return result
