@@ -6,6 +6,8 @@ import abc
 import dataclasses
 import enum
 import os
+import re
+import sys
 import typing as t
 
 from .constants import (
@@ -18,6 +20,8 @@ from .util import (
     cache,
     read_lines_without_comments,
     get_powershell_version_map,
+    str_to_version,
+    InternalError,
 )
 
 from .data import (
@@ -61,6 +65,11 @@ class CompletionConfig(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
+
+    @property
+    def sort_key(self) -> tuple[str, tuple[int, ...]]:
+        """Key used for sorting completion entries."""
+        return '', (0,)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -150,6 +159,16 @@ class RemoteCompletionConfig(CompletionConfig):
     arch: t.Optional[str] = None
 
     @property
+    def sort_key(self) -> tuple[str, tuple[int, ...]]:
+        """Key used for sorting completion entries."""
+        try:
+            version = str_to_version(self.version)
+        except ValueError:
+            version = (sys.maxsize,)
+
+        return self.platform, version
+
+    @property
     def platform(self) -> str:
         """The name of the platform."""
         return self.name.partition('/')[0]
@@ -210,6 +229,19 @@ class DockerCompletionConfig(PythonCompletionConfig, PowerShellCompletionConfig)
     cgroup: str = CGroupVersion.V1_V2.value
     audit: str = AuditMode.REQUIRED.value  # most containers need this, so the default is required, leaving it to be opt-out for containers which don't need it
     placeholder: bool = False
+
+    @property
+    def sort_key(self) -> tuple[str, tuple[int, ...]]:
+        """Key used for sorting completion entries."""
+        match = re.match('^(?P<platform>[a-z]+)(?P<version>[0-9]*)$', self.name)
+        platform = match.group('platform')
+
+        try:
+            version = str_to_version(match.group('version'))
+        except ValueError:
+            version = (sys.maxsize,)
+
+        return platform, version
 
     @property
     def is_default(self) -> bool:
@@ -304,12 +336,24 @@ def load_completion[TCompletionConfig: CompletionConfig](name: str, completion_t
         context = 'ansible-core'
 
     items = {name: data for name, data in [parse_completion_entry(line) for line in lines] if data.get('context', context) == context}
+    aliases: dict[tuple[str, str], dict[str, str]] = {}
+    aliases_seen: set[str] = set()
 
-    for item in items.values():
+    for item_name, item in items.items():
         item.pop('context', None)
         item.pop('placeholder', None)
 
+        if alias := item.pop('alias', None):
+            for aliased_name in alias.split(','):
+                if aliased_name in aliases_seen:
+                    raise InternalError(f"Duplicate alias {aliased_name!r} found for {name!r} completion.")
+
+                aliases_seen.add(aliased_name)
+                aliases[(aliased_name, item_name)] = item
+
     completion = {name: completion_type(name=name, **data) for name, data in items.items()}
+    completion |= {an[0]: completion_type(name=an[1], **data) for an, data in aliases.items()}
+    completion = dict(sorted(completion.items(), key=lambda entry: entry[1].sort_key))
 
     return completion
 

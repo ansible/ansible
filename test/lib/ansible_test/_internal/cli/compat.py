@@ -20,7 +20,6 @@ from ..util import (
     display,
     filter_args,
     sorted_versions,
-    str_to_version,
 )
 
 from ..docker_util import (
@@ -31,6 +30,7 @@ from ..completion import (
     docker_completion,
     remote_completion,
     filter_completion,
+    windows_completion,
 )
 
 from ..host_configs import (
@@ -69,9 +69,7 @@ def controller_python(version: t.Optional[str]) -> t.Optional[str]:
 
 def get_fallback_remote_controller() -> str:
     """Return the remote fallback platform for the controller."""
-    platform = 'fedora'  # Fedora is lower cost than other remotes and always supports a recent Python version
-    candidates = [item for item in filter_completion(remote_completion()).values() if item.controller_supported and item.platform == platform]
-    fallback = sorted(candidates, key=lambda value: str_to_version(value.version), reverse=True)[0]
+    fallback = [item for name, item in filter_completion(remote_completion()).items() if item.controller_supported and name == "fedora/latest"][0]
     return fallback.name
 
 
@@ -351,17 +349,17 @@ def get_legacy_host_config(
 
             if docker_config.controller_supported:
                 if controller_python(options.python) or not options.python:
-                    controller = DockerConfig(name=options.docker, python=native_python(options),
+                    controller = DockerConfig(name=docker_config.name, python=native_python(options),
                                               privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)
                     targets = controller_targets(mode, options, controller)
                 else:
                     controller_fallback = f'docker:{options.docker}', f'--docker {options.docker} --python {options.python}', FallbackReason.PYTHON
-                    controller = DockerConfig(name=options.docker)
+                    controller = DockerConfig(name=docker_config.name)
                     targets = controller_targets(mode, options, controller)
             else:
                 controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker}', FallbackReason.ENVIRONMENT
                 controller = DockerConfig(name=docker_fallback)
-                targets = [DockerConfig(name=options.docker, python=native_python(options),
+                targets = [DockerConfig(name=docker_config.name, python=native_python(options),
                                         privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)]
         else:
             if not options.python:
@@ -386,23 +384,25 @@ def get_legacy_host_config(
 
             if remote_config.controller_supported:
                 if controller_python(options.python) or not options.python:
-                    controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider,
+                    controller = PosixRemoteConfig(name=remote_config.name, python=native_python(options), provider=options.remote_provider,
                                                    arch=options.remote_arch)
                     targets = controller_targets(mode, options, controller)
                 else:
                     controller_fallback = f'remote:{options.remote}', f'--remote {options.remote} --python {options.python}', FallbackReason.PYTHON
-                    controller = PosixRemoteConfig(name=options.remote, provider=options.remote_provider, arch=options.remote_arch)
+                    controller = PosixRemoteConfig(name=remote_config.name, provider=options.remote_provider, arch=options.remote_arch)
                     targets = controller_targets(mode, options, controller)
             else:
                 context, reason = f'--remote {options.remote}', FallbackReason.ENVIRONMENT
                 controller = None
-                targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider, arch=options.remote_arch)]
+                targets = [PosixRemoteConfig(name=remote_config.name, python=native_python(options), provider=options.remote_provider,
+                                             arch=options.remote_arch)]
         elif mode == TargetMode.SHELL and options.remote.startswith('windows/'):
             if options.python and options.python not in CONTROLLER_PYTHON_VERSIONS:
                 raise ControllerNotSupportedError(f'--python {options.python}')
 
+            name = resolve_windows_names([options.remote.removeprefix("windows/")])[0]
             controller = OriginConfig(python=native_python(options))
-            targets = [WindowsRemoteConfig(name=options.remote, provider=options.remote_provider, arch=options.remote_arch)]
+            targets = [WindowsRemoteConfig(name=name, provider=options.remote_provider, arch=options.remote_arch)]
         else:
             if not options.python:
                 raise PythonVersionUnspecifiedError(f'--remote {options.remote}')
@@ -471,8 +471,8 @@ def handle_non_posix_targets(
     """Return a list of non-POSIX targets if the target mode is non-POSIX."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
         if options.windows:
-            targets = [WindowsRemoteConfig(name=f'windows/{version}', provider=options.remote_provider, arch=options.remote_arch)
-                       for version in options.windows]
+            names = resolve_windows_names(options.windows)
+            targets = [WindowsRemoteConfig(name=name, provider=options.remote_provider, arch=options.remote_arch) for name in names]
         else:
             targets = [WindowsInventoryConfig(path=options.inventory)]
     elif mode == TargetMode.NETWORK_INTEGRATION:
@@ -494,6 +494,16 @@ def handle_non_posix_targets(
             targets = [NetworkInventoryConfig(path=options.inventory)]
 
     return targets
+
+
+def resolve_windows_names(versions: list[str]) -> list[str]:
+    """Resolve a list of Windows versions into version names, resolving any aliases."""
+    windows_completions = filter_completion(windows_completion())
+
+    names = [f'windows/{version}' for version in versions]  # map versions to names
+    names = [windows_completions[name].name if name in windows_completions else name for name in names]  # resolve aliases
+
+    return names
 
 
 def default_targets(
