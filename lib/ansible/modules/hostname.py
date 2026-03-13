@@ -694,6 +694,12 @@ class OracleLinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class RockyLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Rocky'
+    strategy_class = RedHatStrategy
+
+
 class VirtuozzoLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Virtuozzo'
