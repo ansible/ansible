@@ -104,6 +104,7 @@ class StrategyModule(StrategyBase):
         # iterate over each task, while there is one left to run
         result = int(self._tqm.RUN_OK)
         work_to_do = True
+        max_fail_percentage_reached = False
 
         self._set_hosts_cache(iterator._play)
 
@@ -368,18 +369,19 @@ class StrategyModule(StrategyBase):
                             if host.name not in failed_hosts and iterator.get_host_state(host).fail_state == 0:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+
+                        if not max_fail_percentage_reached:
+                            max_fail_percentage_reached = True
+                            self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                            # Maintain backwards compatibility with tests and external tools that expect
+                            # a second callback when max_fail_percentage is breached (previously caused by
+                            # falling through to the general abort condition).
+                            self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+
                         # We used to set RUN_FAILED_BREAK_PLAY here, but doing so bypasses rescue/always blocks.
                         # Instead, we rely on the iterator and StrategyBase to handle the failure state.
                     display.debug('(%s failed / %s total )> %s max fail' % (play_failed_count, play_total_count, percentage))
                 display.debug("done checking for max_fail_percentage")
-
-                display.debug("checking to see if all hosts have failed and the running result is not ok")
-                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
-                    display.debug("^ not ok, so returning result now")
-                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                    return result
-                display.debug("done checking to see if all hosts have failed")
 
             finally:
                 # removed unnecessary exception handler, don't want to mis-attribute the entire code block by changing indentation
