@@ -152,6 +152,7 @@ options:
     encoding:
         description:
             - When doing a O(contains) search, determine the encoding of the files to be searched.
+            - When no value is provided, the Python default encoding is used.
         type: str
         version_added: "2.17"
     limit:
@@ -283,6 +284,7 @@ skipped_paths:
 import errno
 import fnmatch
 import grp
+import locale
 import os
 import pwd
 import re
@@ -388,8 +390,13 @@ def contentfilter(fsname, pattern, encoding, read_whole_file=False):
         raise e
     except UnicodeDecodeError as e:
         if encoding is None:
-            encoding = 'None (default determined by the Python built-in function "open")'
-        msg = f'Failed to read the file {fsname} due to an encoding error. current encoding: {encoding}'
+            # Get the default encoding for the current locale
+            # This is the same encoding that the open() function uses by default
+            # when no encoding is specified. This value is platform dependent.
+            #
+            # https://docs.python.org/3/library/functions.html#open
+            encoding = f"{locale.getpreferredencoding(False).lower()} (Python default)"
+        msg = f'Failed to decode the file {fsname!r} with encoding: {encoding}'
         raise Exception(msg) from e
     except Exception:
         pass
