@@ -339,14 +339,14 @@ class StrategyModule(StrategyBase):
                     def _host_has_failed(host):
                         if host.name in self._tqm._failed_hosts:
                             return True
-                        state, dummy = iterator.get_next_task_for_host(host, peek=True)
+                        state, _ignored = iterator.get_next_task_for_host(host, peek=True)
                         return iterator._check_failed_state(state)
 
                     # we use the total number of hosts in the play (respecting subset/limit)
                     # to calculate the percentage, and we include all failed/unreachable
                     # hosts from previous batches and the current one.
                     play_total_count = len(self._hosts_cache_all)
-                    
+
                     # we count all unreachable hosts and all hosts that have a failed state in the iterator
                     play_failed_count = len(self._tqm._unreachable_hosts)
                     for host_name in self._hosts_cache_all:
@@ -363,6 +363,7 @@ class StrategyModule(StrategyBase):
                             if host.name not in failed_hosts and iterator.get_host_state(host).fail_state == 0:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
+                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                         # We used to set RUN_FAILED_BREAK_PLAY here, but doing so bypasses rescue/always blocks.
                         # Instead, we rely on the iterator and StrategyBase to handle the failure state.
                     display.debug('(%s failed / %s total )> %s max fail' % (play_failed_count, play_total_count, percentage))

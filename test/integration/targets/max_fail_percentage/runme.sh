@@ -6,14 +6,12 @@ set -eux
 # The playbook should NOT fail immediately due to max_fail_percentage 
 # but should allow rescue/always tasks to run.
 # However, it SHOULD stop before the Marker task.
-
-set +e
 ansible-playbook test_nested.yml -i inventory "$@" > output.log 2>&1
 result=$?
 set -e
 
 # Playbook should exit with non-zero
-if [ $result -eq 0 ]; then
+if [ "$result" -eq 0 ]; then
     echo "Test 1: Playbook should have failed but succeeded"
     exit 1
 fi
@@ -30,18 +28,21 @@ fi
 # host1 fails in block, so it goes to rescue.
 # max_fail_percentage: 24 (1/4 = 25% > 24%) should trigger.
 # This should mark host2, host3, host4 as failed, but they should run rescue/always.
-if [ $(grep -c '"msg": "rescue cleanup"' output.log) -ne 4 ]; then
+if [ "$(grep -c '"msg": "rescue cleanup"' output.log)" -ne 4 ]; then
     echo "Test 1: Rescue tasks did not run for all 4 hosts"
     exit 1
 fi
 
-if [ $(grep -c '"msg": "always cleanup"' output.log) -ne 4 ]; then
+if [ "$(grep -c '"msg": "always cleanup"' output.log)" -ne 4 ]; then
     echo "Test 1: Always tasks did not run for all 4 hosts"
     exit 1
 fi
+...
+set +e
+ansible-playbook test_serial.yml -i inventory_serial "$@" > output_serial.log 2>&1
+result=$?
+set -e
 
-# Test 2: Serial batches and cumulative max_fail_percentage
-# 10 hosts, serial: 2, max_fail_percentage: 25.
 # Batch 1: 1 failure. Total failed = 1. Total hosts = 10. 1/10 = 10% <= 25%.
 # So Batch 1 should NOT stop early.
 # Batch 2: 1 failure. Total failed = 2. Total hosts = 10. 2/10 = 20% <= 25%.
