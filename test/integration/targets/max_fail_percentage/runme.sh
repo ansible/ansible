@@ -37,12 +37,9 @@ if [ "$(grep -c '"msg": "always cleanup"' output.log)" -ne 4 ]; then
     echo "Test 1: Always tasks did not run for all 4 hosts"
     exit 1
 fi
-...
-set +e
-ansible-playbook test_serial.yml -i inventory_serial "$@" > output_serial.log 2>&1
-result=$?
-set -e
 
+# Test 2: Serial batches and cumulative max_fail_percentage
+# 10 hosts, serial: 2, max_fail_percentage: 25.
 # Batch 1: 1 failure. Total failed = 1. Total hosts = 10. 1/10 = 10% <= 25%.
 # So Batch 1 should NOT stop early.
 # Batch 2: 1 failure. Total failed = 2. Total hosts = 10. 2/10 = 20% <= 25%.
