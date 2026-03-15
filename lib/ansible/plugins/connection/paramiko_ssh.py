@@ -484,11 +484,26 @@ class Connection(ConnectionBase):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
-            text_e = to_text(e)
-            msg = u"Failed to open session"
-            if text_e:
-                msg += u": %s" % text_e
-            raise AnsibleConnectionFailure(to_native(msg))
+            display.vvv(
+                "Failed to open session (%s), reconnecting..." % to_text(e),
+                host=self.get_option('remote_addr'),
+            )
+            # Transport is dead (e.g. due to MAC mismatch or server
+            # disconnect under high parallelism).  Drop the cached
+            # connection and create a fresh one before retrying once.
+            cache_key = self._cache_key()
+            SSH_CONNECTION_CACHE.pop(cache_key, None)
+            SFTP_CONNECTION_CACHE.pop(cache_key, None)
+            try:
+                self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+                self.ssh.get_transport().set_keepalive(5)
+                chan = self.ssh.get_transport().open_session()
+            except Exception as retry_e:
+                text_e = to_text(retry_e)
+                msg = u"Failed to open session"
+                if text_e:
+                    msg += u": %s" % text_e
+                raise AnsibleConnectionFailure(to_native(msg))
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansible.cfg), and we try
