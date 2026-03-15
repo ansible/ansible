@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import os.path
+import ntpath
 import stat
 import tempfile
 
@@ -294,7 +295,11 @@ class ActionModule(ActionBase):
             tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, '.source')
 
             # ensure we keep suffix for validate
-            suffix = os.path.splitext(dest_file)[1]
+            if getattr(self._connection._shell, "_IS_WINDOWS", False):
+                suffix = ntpath.splitext(dest_file)[1]
+            else:
+                suffix = os.path.splitext(dest_file)[1]
+
             if suffix:
                 tmp_src += suffix
 
