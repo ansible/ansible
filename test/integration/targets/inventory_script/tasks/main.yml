@@ -1,0 +1,103 @@
+- name: Restrict tests to 'script'
+  environment:
+    INVENTORY_TEST_MODE: '{{ item.mode | default(omit) }}'
+  block:
+  - name: run valid script output test cases
+    include_tasks: test_valid_inventory.yml
+    loop:
+      - mode: no_profile
+        show_stderr: '1'
+        emit_stderr: '1'
+        assertions: &standard_assertions
+          - inventory_data | length == 5
+  
+          - inventory_data._meta | length == 2
+          - inventory_data._meta.hostvars.host1.a_host1_hostvar == "avalue"
+          - inventory_data._meta.hostvars.host1.a_host1_hostvar is ansible._protomatter.tagged_with "TrustedAsTemplate"
+          - inventory_data._meta.hostvars.localhost.a_localhost_hostvar == "avalue"
+          - inventory_data._meta.hostvars.localhost.a_localhost_hostvar is ansible._protomatter.tagged_with "TrustedAsTemplate"
+  
+          - inventory_data.all | length == 1
+          - inventory_data.all.children | symmetric_difference(["ungrouped", "group1", "empty_group", "list_as_group", "rewrite_as_host"]) | length == 0
+  
+          - inventory_data.group1 | length == 2
+          - inventory_data.group1.hosts == ["host1"]
+  
+          - inventory_data.group1.vars | length == 2
+          - inventory_data.group1.vars.a_group1_groupvar == "avalue"
+          - inventory_data.group1.vars.a_group1_groupvar is ansible._protomatter.tagged_with "TrustedAsTemplate"
+          - inventory_data.group1.vars.group1_untrusted_var == "untrusted value"
+          - inventory_data.group1.vars.group1_untrusted_var is not ansible._protomatter.tagged_with "TrustedAsTemplate"
+  
+          - inventory_data.rewrite_as_host | length == 2
+          - inventory_data.rewrite_as_host.hosts == ["rewrite_as_host"]
+          - inventory_data.rewrite_as_host.vars.avar == "value"
+          - inventory_data.rewrite_as_host.vars.avar is not ansible._protomatter.tagged_with "TrustedAsTemplate"  # rewritten groups are too hard to trust and are deprecated
+          - inv_out.stderr is contains "Treating malformed group 'rewrite_as_host'"
+          - inventory_data.rewrite_as_host.vars.untrusted_var == "untrusted value"
+          - inventory_data.rewrite_as_host.vars.untrusted_var is not ansible._protomatter.tagged_with "TrustedAsTemplate"
+  
+          - inventory_data.ungrouped | length == 1
+          - inventory_data.ungrouped.hosts == ["localhost"]
+  
+      - mode: with_profile
+        show_stderr: '1'
+        assertions: *standard_assertions
+  
+      - mode: no_hosts
+        assertions:
+          - inventory_data | length == 2
+          - inventory_data._meta.hostvars == {}
+  
+          - inventory_data.all | length == 1
+          - inventory_data.all.children == ["ungrouped"]
+  
+      - mode: no_meta_hostvars
+        assertions:
+          - inventory_data | length == 3
+          - inventory_data._meta.hostvars | length == 1
+          - inventory_data._meta.hostvars.myhost.avar == "avalue"
+          - inventory_data._meta.hostvars.myhost.avar is ansible._protomatter.tagged_with "TrustedAsTemplate"
+          - inventory_data._meta.hostvars.myhost.untrusted == "untrusted value"
+          - inventory_data._meta.hostvars.myhost.untrusted is not ansible._protomatter.tagged_with "TrustedAsTemplate"
+  
+          - inventory_data.all | length == 1
+          - inventory_data.all.children | symmetric_difference(["ungrouped", "mygroup"]) | length == 0
+  
+          - inventory_data.mygroup | length == 1
+          - inventory_data.mygroup.hosts == ["myhost"]
+  
+      - mode: no_meta_hostvars_empty_host_result
+        assertions:
+          - inventory_data | length == 3
+          - inventory_data._meta.hostvars == {}
+  
+          - inventory_data.all | length == 1
+          - inventory_data.all.children | symmetric_difference(["ungrouped", "mygroup"]) | length == 0
+  
+          - inventory_data.mygroup | length == 1
+          - inventory_data.mygroup.hosts == ["myhost"]
+  
+  - name: run invalid script output test cases
+    include_tasks: test_broken_inventory.yml
+    loop:
+      - {mode: bad_shebang, script_name: bad_shebang, expected_error: Failed to execute inventory script command}
+      - {mode: non_zero_exit, expected_error: Inventory script returned non-zero exit code 1}
+      - {mode: invalid_utf8, expected_error: Inventory script result contained characters that cannot be interpreted as UTF-8}
+      - {mode: invalid_json, expected_error: Unable to get JSON decoder for inventory script result. Value could not be parsed as JSON}
+      - {mode: invalid_type, expected_error: Unable to get JSON decoder for inventory script result. Value is 'str' instead of 'dict'}
+      - {mode: invalid_meta_type, expected_error: Unable to get JSON decoder for inventory script result. Value contains '_meta' which is 'str' instead of 'dict'}
+      - {mode: invalid_profile_type, expected_error: Unable to get JSON decoder for inventory script result. Value contains '_meta.profile' which is 'int' instead of 'str'}
+      - {mode: invalid_profile_name, expected_error: Non-inventory profile 'invalid_profile' is not allowed.}
+      - {mode: invalid_inventory_profile_name, expected_error: Unable to get JSON decoder for inventory script result. Unknown profile name 'inventory_invalid_profile'}
+      - {mode: invalid_json_for_profile, expected_error: Inventory script result could not be parsed as JSON}
+      - {mode: invalid_meta_hostvars_type, expected_error: Value contains '_meta.hostvars' which is 'list' instead of 'dict'}
+      - {mode: invalid_meta_hostvars_type_for_host, expected_error: Invalid data from file, expected dictionary and got}
+      - {mode: invalid_group_type, expected_error: Value contains 'mygroup.hosts' which is 'NoneType' instead of 'list'}
+      - {mode: invalid_group_vars_type, expected_error: Value contains 'mygroup.vars' which is 'list' instead of 'dict'}
+      - {mode: no_meta_hostvars_host_nonzero_rc, expected_error: Inventory script returned non-zero exit code 1}
+      - {mode: no_meta_hostvars_host_invalid_json, expected_error: Inventory script result for host 'myhost' could not be parsed as JSON}
+      - mode: bad_types
+        script_name: bad_types
+        deprecation: "Group 'bad_group' was converted to 'dict' from 'str'"  # this deprecation is removed in 2.23
+        expected_error: "Value contains 'bad_group.hosts' which is 'str' instead of 'list'"

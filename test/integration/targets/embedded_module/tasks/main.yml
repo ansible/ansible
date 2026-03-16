@@ -1,0 +1,9 @@
+- name: run the embedded dummy module
+  test_integration_module:
+  register: result
+
+- name: assert the embedded module ran
+  assert:
+    that:
+    - "'msg' in result"
+    - result.msg == "this is the embedded module"

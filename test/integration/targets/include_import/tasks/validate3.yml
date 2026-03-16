@@ -1,0 +1,4 @@
+- name: Assert than variable set in previously included task is defined
+  assert:
+    that:
+      - set_in_tasks3

@@ -1,0 +1,16 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - block:
+      - block:
+        - block:
+          - name: EXPECTED FAILURE
+            fail:
+            when: ansible_host == "host1"
+
+          - debug:
+              msg: "I am successful!"
+            run_once: true
+        rescue:
+          - debug:
+              msg: "Attempt 1 failed!"

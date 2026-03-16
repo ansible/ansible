@@ -1,0 +1,36 @@
+# This playbook needs to be run as a non-root user without become. Under
+# those circumstances, the fetch module uses stat and not slurp.
+
+- name: Test unreadable file using stat
+  hosts: testhost
+  gather_facts: no
+
+  tasks:
+    - name: Check connectivity
+      command: whoami
+      register: whoami
+
+    - name: Verify user
+      assert:
+        that:
+          - whoami.stdout == 'fetcher'
+
+    - name: Try to fetch a file inside an inaccessible directory
+      fetch:
+        src: "{{ remote_tmp_dir }}/noaccess/file1"
+        dest: "{{ output_dir }}"
+      register: failed_fetch_no_access
+      ignore_errors: yes
+
+    - name: Try to fetch a file inside an inaccessible directory without fail_on_missing
+      fetch:
+        src: "{{ remote_tmp_dir }}/noaccess/file1"
+        dest: "{{ output_dir }}"
+        fail_on_missing: no
+      register: failed_fetch_no_access_fail_on_missing
+
+    - assert:
+        that:
+          - failed_fetch_no_access is failed
+          - failed_fetch_no_access.msg is search('Permission denied')
+          - failed_fetch_no_access_fail_on_missing.msg is search(', ignored')

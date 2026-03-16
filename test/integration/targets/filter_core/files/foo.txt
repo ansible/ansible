@@ -1,0 +1,70 @@
+This is a test of various filter plugins found in Ansible (ex: core.py), and 
+not so much a test of the core filters in Jinja2.
+
+Dumping the same structure to YAML
+
+- this is a list element
+-   templated: 1
+    this: is a hash element in a list
+    warp: 9
+    where: endor
+
+
+Dumping the same structure to JSON, but don't pretty print
+
+["this is a list element", {"templated": 1, "this": "is a hash element in a list", "warp": 9, "where": "endor"}]
+
+Dumping the same structure to YAML, but don't pretty print
+
+- this is a list element
+- {templated: 1, this: is a hash element in a list, warp: 9, where: endor}
+
+
+From a recorded task, the changed, failed, success, and skipped
+tests are shortcuts to ask if those tasks produced changes, failed,
+succeeded, or skipped (as one might guess).
+
+Changed = True
+Failed  = False
+Success = True
+Skipped = False
+
+The mandatory filter fails if a variable is not defined and returns the value.
+To avoid breaking this test, this variable is already defined.
+
+a = 1
+
+There are various casts available
+
+int = 1
+bool = True
+
+String quoting
+
+quoted = quoted
+
+The fileglob module returns the list of things matching a pattern.
+
+fileglob = one.txt, two.txt
+
+There are also various string operations that work on paths.  These do not require
+files to exist and are passthrus to the python os.path functions
+
+/etc/motd with basename = motd
+/etc/motd with dirname  = /etc
+
+path_join_simple = /etc/subdir/test
+path_join_with_slash = /test
+path_join_relative = etc/subdir/test
+
+TODO: realpath follows symlinks.  There isn't a test for this just now.
+
+TODO: add tests for set theory operations like union
+
+regex_replace = bar
+# Check regex_replace with multiline
+#bar
+#bart
+regex_search = 0001
+regex_findall = ["car", "tar", "bar"]
+regex_escape = \^f\.\*o\(\.\*\)\$

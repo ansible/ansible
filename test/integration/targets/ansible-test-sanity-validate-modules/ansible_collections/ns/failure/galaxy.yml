@@ -1,0 +1,6 @@
+namespace: ns
+name: failure
+version: 1.0.0
+readme: README.md
+authors:
+    - Ansible

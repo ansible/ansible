@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Support automatic loading of test collections in core integration tests.

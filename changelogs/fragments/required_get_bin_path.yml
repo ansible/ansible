@@ -1,0 +1,3 @@
+---
+removed_features:
+    - Removed 'required' option from get_bin_path API (https://github.com/ansible/ansible/issues/85998).

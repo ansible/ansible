@@ -1,0 +1,20 @@
+templated_var: templated_var_loaded
+
+number_var: 5
+string_num: "5"
+bool_var: true
+part_1: 1
+part_2: "Foo"
+null_type: !!null
+
+templated_dict:
+  number: "{{ number_var }}"
+  string_num: "{{ string_num }}"
+  null_type: "{{ null_type }}"
+  bool: "{{ bool_var }}"
+  multi_part: "{{ part_1 }}{{ part_2 }}"
+
+parent_vars:
+- foo
+- bar
+- bam

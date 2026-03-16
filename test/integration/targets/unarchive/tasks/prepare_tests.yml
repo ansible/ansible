@@ -1,0 +1,115 @@
+- name: Include system specific variables
+  include_vars: "{{ ansible_facts.system }}.yml"
+
+# Need unzip for unarchive module, and zip for archive creation.
+- name: Ensure required binaries are present
+  package:
+    name: "{{ unarchive_packages }}"
+  when: ansible_pkg_mgr in ('dnf', 'apt', 'pkgng')
+
+- name: prep our file
+  copy:
+    src: foo.txt
+    dest: "{{remote_tmp_dir}}/foo-unarchive.txt"
+    mode: preserve
+
+- name: prep a tar file
+  shell: tar cvf test-unarchive.tar foo-unarchive.txt chdir={{remote_tmp_dir}}
+
+- name: prep a tar.gz file
+  shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{remote_tmp_dir}}
+
+- name: see if we have the zstd executable
+  ignore_errors: true
+  shell: zstd --version
+  register: zstd_available
+
+- when: zstd_available.rc == 0
+  block:
+    - name: find gnu tar
+      shell: |
+        #!/bin/sh
+        which gtar 2>/dev/null
+        if test $? -ne 0; then
+            if test -z "`tar --version | grep bsdtar`"; then
+               which tar
+            fi
+        fi
+      register: gnu_tar
+
+    - name: prep a tar.zst file
+      shell: "{{ gnu_tar.stdout }} --use-compress-program=zstd -cvf test-unarchive.tar.zst foo-unarchive.txt chdir={{remote_tmp_dir}}"
+      when: gnu_tar.stdout != ""
+
+- name: prep a chmodded file for zip
+  copy:
+    src: foo.txt
+    dest: '{{remote_tmp_dir}}/foo-unarchive-777.txt'
+    mode: '0777'
+
+- name: prep a windows permission file for our zip
+  copy:
+    src: foo.txt
+    dest: '{{remote_tmp_dir}}/FOO-UNAR.TXT'
+    mode: preserve
+
+# This gets around an unzip timestamp bug in some distributions
+# Recent unzip on Ubuntu and BSD will randomly round some timestamps up.
+# But that doesn't seem to happen when the timestamp has an even second.
+- name: Bug work around
+  command: touch -t "201705111530.00" {{remote_tmp_dir}}/foo-unarchive.txt {{remote_tmp_dir}}/foo-unarchive-777.txt {{remote_tmp_dir}}/FOO-UNAR.TXT
+# See Ubuntu bug 1691636: https://bugs.launchpad.net/ubuntu/+source/unzip/+bug/1691636
+# When these are fixed, this code should be removed.
+
+- name: prep a zip file
+  shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{remote_tmp_dir}}
+
+- name: Prepare - Create test dirs
+  file:
+    path: "{{remote_tmp_dir}}/{{item}}"
+    state: directory
+  with_items:
+    - created/include
+    - created/exclude
+    - created/other
+
+- name: Prepare - Create test files
+  file:
+    path: "{{remote_tmp_dir}}/created/{{item}}"
+    state: touch
+  with_items:
+    - include/include-1.txt
+    - include/include-2.txt
+    - include/include-3.txt
+    - exclude/exclude-1.txt
+    - exclude/exclude-2.txt
+    - exclude/exclude-3.txt
+    - other/include-1.ext
+    - other/include-2.ext
+    - other/exclude-1.ext
+    - other/exclude-2.ext
+    - other/other-1.ext
+    - other/other-2.ext
+
+- name: Prepare - zip file
+  shell: zip -r {{remote_tmp_dir}}/unarchive-00.zip * chdir={{remote_tmp_dir}}/created/
+
+- name: Prepare - tar file
+  shell: tar czvf {{remote_tmp_dir}}/unarchive-00.tar * chdir={{remote_tmp_dir}}/created/
+
+- name: add a file with Windows permissions to zip file
+  shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{remote_tmp_dir}}
+
+- name: prep a subdirectory
+  file:
+    path: '{{remote_tmp_dir}}/unarchive-dir'
+    state: directory
+
+- name: prep our file
+  copy:
+    src: foo.txt
+    dest: '{{remote_tmp_dir}}/unarchive-dir/foo-unarchive.txt'
+    mode: preserve
+
+- name: prep a tar.gz file with directory
+  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir chdir={{remote_tmp_dir}}

@@ -1,0 +1,38 @@
+DOCUMENTATION:
+  name: subelements
+  version_added: "2.7"
+  short_description: returns a product of a list and its elements
+  positional: _input, _subelement, skip_missing
+  description:
+    - This produces a product of an object and the subelement values of that object, similar to the subelements lookup. This lets you specify individual subelements to use in a template O(_input).
+  options:
+    _input:
+      description: Original list.
+      type: list
+      elements: any
+      required: yes
+    _subelement:
+      description: Label of property to extract from original list items.
+      type: str
+      required: yes
+    skip_missing:
+      description: If V(True), ignore missing subelements, otherwise missing subelements generate an error.
+      type: bool
+      default: no
+
+EXAMPLES: |
+  # data
+  users:
+    - groups: [1,2,3]
+      name: lola
+    - name: fernando
+      groups: [2,3,4]
+
+  # user_w_groups =>[ { "groups": [ 1, 2, 3 ], "name": "lola" }, 1 ], [ { "groups": [ 1, 2, 3 ], "name": "lola" }, 2 ], [ { "groups": [ 1, 2, 3 ], "name": "lola" }, 3 ], [ { "groups": [ 2, 3, 4 ], "name": "fernando" }, 2 ], [ { "groups": [ 2, 3, 4 ], "name": "fernando" }, 3 ], [ { "groups": [ 2, 3, 4 ], "name": "fernando" }, 4 ] ]
+  users_w_groups: {{ users | subelements('groups', skip_missing=True) }}
+
+RETURN:
+  _value:
+    description: List made of original list and product of the subelement list.
+    type: list
+    elements: any

@@ -1,0 +1,2 @@
+afile  # commonly used variable name for "a file"
+astroid  # pylint's astroid

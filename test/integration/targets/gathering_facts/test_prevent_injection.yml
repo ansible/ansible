@@ -1,0 +1,14 @@
+- name: Ensure clean_facts is working properly
+  hosts: facthost1
+  gather_facts: false
+  tasks:
+    - name: gather 'bad' facts
+      action: bogus_facts
+
+    - name: ensure that the 'bad' facts didn't pollute what they are not supposed to
+      assert:
+        that:
+            - "'touch' not in discovered_interpreter_python|default('')"
+            - "'touch' not in ansible_facts.get('discovered_interpreter_python', '')"
+            - "'touch' not in ansible_facts.get('ansible_facts', {}).get('discovered_interpreter_python', '')"
+            - bogus_overwrite is undefined

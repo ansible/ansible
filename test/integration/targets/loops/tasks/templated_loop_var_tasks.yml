@@ -1,0 +1,4 @@
+- name: Validate that the correct value was used
+  assert:
+    that:
+      - templated_loop_var_name == 'value'

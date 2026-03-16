@@ -1,0 +1,56 @@
+---
+- hosts: testhost
+  gather_facts: false
+  roles:
+    - regular
+  tasks:
+    - debug:
+        msg: start tasks
+
+    - name: Static imports should expose vars at parse time, not at execution time
+      assert:
+        that:
+          - static_defaults_var == 'static_defaults'
+          - static_vars_var == 'static_vars'
+    - import_role:
+        name: static
+    - assert:
+        that:
+          - static_tasks_var == 'static_tasks'
+          - static_defaults_var == 'static_defaults'
+          - static_vars_var == 'static_vars'
+
+    - include_role:
+        name: dynamic_private
+    - assert:
+        that:
+          - private_tasks_var == 'private_tasks'
+          - private_defaults_var is undefined
+          - private_vars_var is undefined
+
+    - name: Dynamic include should not expose vars until execution time
+      assert:
+        that:
+          - dynamic_tasks_var is undefined
+          - dynamic_defaults_var is undefined
+          - dynamic_vars_var is undefined
+    - include_role:
+        name: dynamic
+        public: true
+    - assert:
+        that:
+          - dynamic_tasks_var == 'dynamic_tasks'
+          - dynamic_defaults_var == 'dynamic_defaults'
+          - dynamic_vars_var == 'dynamic_vars'
+
+    - include_role:
+        name: from
+        public: true
+        tasks_from: from.yml
+        vars_from: from.yml
+        defaults_from: from.yml
+    - assert:
+        that:
+          - from_tasks_var == 'from_tasks'
+          - from_defaults_var == 'from_defaults'
+          - from_vars_var == 'from_vars'

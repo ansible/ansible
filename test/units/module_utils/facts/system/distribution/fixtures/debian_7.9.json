@@ -1,0 +1,39 @@
+{
+    "name": "Debian 7.9",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Debian GNU/Linux 7 (wheezy)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"7\"\nVERSION=\"7 (wheezy)\"\nID=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"http://www.debian.org/\"\nSUPPORT_URL=\"http://www.debian.org/support/\"\nBUG_REPORT_URL=\"http://bugs.debian.org/\""
+    },
+    "platform.dist": ["debian", "7.9", ""],
+    "distro": {
+        "codename": "wheezy",
+        "id": "debian",
+        "name": "Debian GNU/Linux",
+        "version": "7",
+        "version_best": "7.9",
+        "os_release_info": {
+            "name": "Debian GNU/Linux",
+            "ansi_color": "1;31",
+            "support_url": "http://www.debian.org/support/",
+            "version_id": "7",
+            "bug_report_url": "http://bugs.debian.org/",
+            "pretty_name": "Debian GNU/Linux 7 (wheezy)",
+            "version": "7 (wheezy)",
+            "codename": "wheezy",
+            "home_url": "http://www.debian.org/",
+            "id": "debian"
+        },
+        "lsb_release_info": {
+            "release": "7.9",
+            "codename": "wheezy",
+            "distributor_id": "Debian",
+            "description": "Debian GNU/Linux 7.9 (wheezy)"
+        }
+    },
+    "result": {
+        "distribution": "Debian",
+        "distribution_major_version": "7",
+        "distribution_release": "wheezy",
+        "os_family": "Debian",
+        "distribution_version": "7.9"
+    }
+}

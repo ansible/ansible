@@ -1,0 +1,2 @@
+bugfixes:
+  - deb822_repository - Remove ``Install-Python-Debian`` from files outputted by the ``deb822_repository`` module (https://github.com/ansible/ansible/issues/86395)

@@ -1,0 +1,4 @@
+dependencies:
+  - prepare_tests
+  - setup_rpm_repo
+  - setup_remote_tmp_dir

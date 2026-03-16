@@ -1,0 +1,60 @@
+- name: get the default arch
+  command: dpkg --print-architecture
+  register: default_arch
+
+- name: select a foreign arch for {{ default_arch.stdout }}
+  # When adding a new arch, pick a foreign arch hosted on the same repository mirror as the default arch. For example:
+  # - archive.ubuntu.com hosts both amd64 and i386
+  # - ports.ubuntu.com hosts both arm64 and armhf
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "arch/{{ default_arch.stdout }}.yml"
+
+- name: show the arch selected for multi-arch testing
+  debug:
+    msg: Using {{ apt_foreign_arch }} as the foreign arch for {{ default_arch.stdout }}
+
+# verify that apt is handling multi-arch systems properly
+
+- name: load version specific vars
+  include_vars: '{{ item }}'
+  with_first_found:
+  - files:
+    - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
+    - 'default.yml'
+    paths: '../vars'
+
+- name: add architecture {{ apt_foreign_arch }}
+  command: dpkg --add-architecture {{ apt_foreign_arch }}
+
+- name: install {{ multiarch_test_pkg }}:{{ apt_foreign_arch }} with apt
+  apt: pkg={{ multiarch_test_pkg }}:{{ apt_foreign_arch }} state=present update_cache=yes
+  register: apt_result
+  until: apt_result is success
+
+- name: check {{ multiarch_test_pkg }} version
+  shell: dpkg -s {{ multiarch_test_pkg }} | grep Version | awk '{print $2}'
+  register: pkg_version
+
+- name: uninstall {{ multiarch_test_pkg }}:{{ apt_foreign_arch }} with apt
+  apt: pkg={{ multiarch_test_pkg }}:{{ apt_foreign_arch }} state=absent purge=yes
+
+- name: install deb file
+  apt: deb="/var/cache/apt/archives/{{ multiarch_test_pkg }}_{{ pkg_version.stdout }}_{{ apt_foreign_arch }}.deb"
+  register: apt_multi_initial
+
+- name: install deb file again
+  apt: deb="/var/cache/apt/archives/{{ multiarch_test_pkg }}_{{ pkg_version.stdout }}_{{ apt_foreign_arch }}.deb"
+  register: apt_multi_secondary
+
+- name: verify installation of {{ multiarch_test_pkg }}:{{ apt_foreign_arch }}
+  assert:
+    that:
+        - "apt_multi_initial.changed"
+        - "not apt_multi_secondary.changed"
+
+- name: remove all {{ apt_foreign_arch }} packages
+  shell: "apt-get remove -y --allow-remove-essential '*:{{ apt_foreign_arch }}'"
+
+- name: remove {{ apt_foreign_arch }} architecture
+  command: dpkg --remove-architecture {{ apt_foreign_arch }}

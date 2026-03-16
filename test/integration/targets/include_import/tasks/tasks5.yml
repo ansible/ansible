@@ -1,0 +1,6 @@
+- name: Set variable inside tasks5.yml
+  set_fact:
+    set_in_tasks5: yes
+  tags:
+    - tasks5
+    - canary1

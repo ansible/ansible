@@ -1,0 +1,37 @@
+# Test code for the user module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_tasks: test_create_user.yml
+- import_tasks: test_create_system_user.yml
+- import_tasks: test_create_user_uid.yml
+- import_tasks: test_create_user_password.yml
+- include_tasks: test_create_user_home.yml
+  when: ansible_distribution != 'Alpine'
+- import_tasks: test_remove_user.yml
+- import_tasks: test_no_home_fallback.yml
+- include_tasks: test_expires.yml
+  when: ansible_distribution != 'Alpine'
+- import_tasks: test_expires_new_account.yml
+- import_tasks: test_expires_new_account_epoch_negative.yml
+- import_tasks: test_expires_no_shadow.yml
+- import_tasks: test_expires_min_max.yml
+- import_tasks: test_expires_warn.yml
+- import_tasks: test_ssh_key_passphrase.yml
+- import_tasks: test_returned_groups.yml
+- include_tasks: test_password_lock.yml
+- include_tasks: test_password_lock_new_user.yml
+- include_tasks: test_local.yml
+  when: ansible_distribution != 'Alpine'
+- include_tasks: test_umask.yml
+  when:
+    - ansible_facts.system == 'Linux'
+    - ansible_distribution != 'Alpine'
+- import_tasks: test_inactive_new_account.yml
+- include_tasks: test_create_user_min_max.yml
+  when:
+    - ansible_facts.system == 'Linux'
+    - ansible_distribution != 'Alpine'
+- include_tasks: test_freebsd_nonexistent.yml
+  when: ansible_facts.system == 'FreeBSD'
+- import_tasks: ssh_keygen.yml

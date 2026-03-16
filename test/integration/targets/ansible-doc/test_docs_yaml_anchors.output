@@ -1,0 +1,35 @@
+  Test module
+
+OPTIONS (= indicates it is required):
+
+- at_the_top  Short desc
+        default: some string
+        type: str
+
+- egress  Egress firewall rules
+        default: null
+        elements: dict
+        type: list
+        suboptions:
+
+        = port  Rule port
+          type: int
+
+- ingress  Ingress firewall rules
+        default: null
+        elements: dict
+        type: list
+        suboptions:
+
+        = port  Rule port
+          type: int
+
+- last_one  Short desc
+        default: some string
+        type: str
+
+AUTHOR: Ansible Core Team
+
+EXAMPLES:
+
+

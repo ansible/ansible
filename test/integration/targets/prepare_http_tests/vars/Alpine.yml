@@ -1,0 +1,3 @@
+krb5_packages:
+- krb5
+- krb5-dev

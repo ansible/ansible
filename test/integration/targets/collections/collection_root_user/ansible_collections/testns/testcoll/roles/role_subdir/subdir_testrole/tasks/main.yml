@@ -1,0 +1,10 @@
+- debug:
+    msg: '{{ test_role_input | default("(undefined)") }}'
+  register: test_role_output
+
+- set_fact:
+    testrole_source: collection
+
+- assert:
+    that:
+    - test_role_input is not defined or test_role_input == test_role_output.msg

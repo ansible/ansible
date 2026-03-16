@@ -1,0 +1,51 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: Use a specially crafted module to see if things were imported correctly
+    test:
+    register: result
+
+  - name: Check that these are all loaded from playbook dir's module_utils
+    assert:
+      that:
+        - 'result["abcdefgh"] == "abcdefgh"'
+        - 'result["bar0"] == "bar0"'
+        - 'result["bar1"] == "bar1"'
+        - 'result["bar2"] == "bar2"'
+        - 'result["baz1"] == "baz1"'
+        - 'result["baz2"] == "baz2"'
+        - 'result["foo0"] == "foo0"'
+        - 'result["foo1"] == "foo1"'
+        - 'result["foo2"] == "foo2"'
+        - 'result["qux1"] == "qux1"'
+        - 'result["qux2"] == ["qux2:quux", "qux2:quuz"]'
+        - 'result["spam1"] == "spam1"'
+        - 'result["spam2"] == "spam2"'
+        - 'result["spam3"] == "spam3"'
+        - 'result["spam4"] == "spam4"'
+        - 'result["spam5"] == ["spam5:bacon", "spam5:eggs"]'
+        - 'result["spam6"] == ["spam6:bacon", "spam6:eggs"]'
+        - 'result["spam7"] == ["spam7:bacon", "spam7:eggs"]'
+        - 'result["spam8"] == ["spam8:bacon", "spam8:eggs"]'
+
+  # Test that overriding something in module_utils with something in the local library works
+  - name: Test that playbook dir's module_utils overrides facts.py
+    test_override:
+    register: result
+
+  - name: Make sure the we used the local ansible_release.py, not the one shipped with ansible
+    assert:
+      that:
+        - 'result["data"] == "overridden ansible_release.py"'
+
+  - name: Test that importing something from the module_utils in the env_vars works
+    test_env_override:
+    register: result
+
+  - name: Make sure we used the module_utils from the env_var for these
+    assert:
+      that:
+        # Override of shipped module_utils
+        - 'result["json_utils"] == "overridden json_utils"'
+        # Only i nthe env vars directory
+        - 'result["mork"] == "mork"'

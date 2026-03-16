@@ -1,0 +1,111 @@
+# test code for the changed_when parameter
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: ensure shell is always changed
+  shell: ls -al /tmp
+  register: shell_result
+
+- debug: var=shell_result
+
+- name: changed should always be true for shell
+  assert:
+    that:
+       - "shell_result.changed"
+
+- name: test changed_when override for shell
+  shell: ls -al /tmp
+  changed_when: False
+  register: shell_result
+
+- debug: var=shell_result
+
+- name: changed should be false
+  assert:
+    that:
+       - "not shell_result.changed"
+
+- name: Add hosts to test group and ensure it appears as changed
+  group_by:
+      key: "cw_test1_{{ inventory_hostname }}"
+  register: groupby
+
+- name: verify its changed
+  assert:
+    that:
+      - groupby is changed
+
+- name: Add hosts to test group and ensure it does NOT appear as changed
+  group_by:
+      key: "cw_test2_{{ inventory_hostname }}"
+  changed_when: False
+  register: groupby
+
+- name: verify its not changed
+  assert:
+    that:
+      - groupby is not changed
+
+- name: invalid conditional
+  command: echo foo
+  changed_when: boomboomboom
+  register: invalid_conditional
+  ignore_errors: true
+
+- assert:
+    that:
+      - invalid_conditional is failed
+      - invalid_conditional.stdout is defined
+      - invalid_conditional.changed_when_result is contains('boomboomboom')
+
+- add_host:
+    name: 'host_{{item}}'
+  loop:
+    - 1
+    - 2
+  changed_when: item == 2
+  register: add_host_loop_res
+
+- assert:
+    that:
+      - add_host_loop_res.results[0] is not changed
+      - add_host_loop_res.results[1] is changed
+      - add_host_loop_res is changed
+
+- group_by:
+    key: "test_{{ item }}"
+  loop:
+    - 1
+    - 2
+  changed_when: item == 2
+  register: group_by_loop_res
+
+- assert:
+    that:
+      - group_by_loop_res.results[0] is not changed
+      - group_by_loop_res.results[1] is changed
+      - group_by_loop_res is changed
+
+- name: use changed in changed_when
+  add_host:
+    name: 'host_3'
+  changed_when: add_host_loop_res is changed
+  register: add_host_loop_res
+
+- assert:
+    that:
+      - add_host_loop_res is changed

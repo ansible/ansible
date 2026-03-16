@@ -1,0 +1,3 @@
+bugfixes:
+- >-
+  ``ansible``, ``ansible-console`` - fix executing ``- meta: end_play`` tasks.

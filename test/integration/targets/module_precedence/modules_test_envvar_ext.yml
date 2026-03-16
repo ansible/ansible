@@ -1,0 +1,16 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: Use ping from library path
+    ping:
+    register: result
+
+  - name: Use a from library path
+    a:
+    register: a_res
+
+  - assert:
+      that:
+        - '"location" in result'
+        - 'result["location"] == "library"'
+        - 'a_res["location"] == "a.py"'

@@ -1,0 +1,9 @@
+- name: assert ansible_loop variables in include_tasks
+  assert:
+    that:
+      - ansible_loop.index == ansible_loop.index0 + 1
+      - ansible_loop.revindex == ansible_loop.revindex0 + 1
+      - ansible_loop.first == (ansible_loop.index == 1)
+      - ansible_loop.last == (ansible_loop.index == ansible_loop.length)
+      - ansible_loop.length == 3
+      - ansible_loop.allitems|join(',') == 'first,second,third'

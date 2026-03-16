@@ -1,0 +1,110 @@
+- name: Test LVM facts
+  block:
+    - name: Install lvm2
+      package:
+        name: lvm2
+        state: present
+      register: lvm_pkg
+
+    - name: Create files to use as a disk devices
+      command: "dd if=/dev/zero of={{ remote_tmp_dir }}/img{{ item }} bs=1M count=10"
+      with_sequence: 'count=2'
+
+    - name: Create loop device for file
+      command: "losetup --show -f {{ remote_tmp_dir }}/img{{ item }}"
+      with_sequence: 'count=2'
+      register: loop_devices
+
+    - name: Get loop names
+      set_fact:
+        loop_device1: "{{ loop_devices.results[0].stdout }}"
+        loop_device2: "{{ loop_devices.results[1].stdout }}"
+
+    - name: Create pvs
+      command: pvcreate {{ item }}
+      with_items:
+        - "{{ loop_device1 }}"
+        - "{{ loop_device2 }}"
+
+    - name: Create vg
+      command: vgcreate first {{ loop_device1 }}
+
+    - name: Create another vg
+      command: vgcreate second {{ loop_device2 }}
+
+    - name: Create lv
+      command: lvcreate -L 4M first --name one
+
+    - name: Create another lv
+      command: lvcreate -L 4M first --name two
+
+    - name: Create yet another lv
+      command: lvcreate -L 4M second --name uno
+
+    - name: Gather facts
+      setup:
+
+    - assert:
+        that:
+          - ansible_lvm.pvs[loop_device1].vg == 'first'
+          - ansible_lvm.pvs[loop_device2].vg == 'second'
+          - ansible_lvm.lvs.one.vg == 'first'
+          - ansible_lvm.lvs.two.vg == 'first'
+          - ansible_lvm.lvs.uno.vg == 'second'
+          - ansible_lvm.vgs.first.num_lvs == "2"
+          - ansible_facts['lvm']['vgs']['first']['lvs'] | sort == ['one', 'two']
+          - ansible_lvm.vgs.second.num_lvs == "1"
+          - ansible_facts['lvm']['vgs']['second']['lvs'] | sort == ['uno']
+
+    - name: Create another lv using duplicate name
+      command: lvcreate -L 4M second --name two
+
+    - name: Gather facts
+      setup:
+
+    - assert:
+        that:
+          - ansible_facts['lvm']['vgs']['first']['lvs'] | sort == ['one', 'two']
+          - ansible_facts['lvm']['vgs']['second']['lvs'] | sort == ['two', 'uno']
+          # only one lv named 'two' is represented in the top level lvs fact
+          - ansible_facts['lvm']['lvs']['two']['vg'] == 'second'
+          - (vgs_lvs | unique | sort) == (ansible_facts['lvm']['lvs'] | sort)
+      vars:
+        vgs_lvs: "{{ ansible_facts['lvm']['vgs'].values() | map(attribute='lvs') | map('list') | flatten }}"
+
+  always:
+    - name: remove lvs
+      shell: "lvremove /dev/{{ item }}/* -f"
+      with_items:
+        - first
+        - second
+
+    - name: remove vgs
+      command: "vgremove {{ item }}"
+      with_items:
+        - first
+        - second
+
+    - name: remove pvs
+      command: "pvremove {{ item }}"
+      with_items:
+        - "{{ loop_device1 }}"
+        - "{{ loop_device2 }}"
+
+    - name: Detach loop device
+      command: "losetup -d {{ item }}"
+      with_items:
+        - "{{ loop_device1 }}"
+        - "{{ loop_device2 }}"
+
+    - name: Remove device files
+      file:
+        path: "{{ remote_tmp_dir }}/img{{ item }}"
+        state: absent
+      with_sequence: 'count={{ loop_devices.results|length }}'
+
+    - name: Remove lvm-tools
+      package:
+        name: lvm2
+        state: absent
+      when: lvm_pkg is changed

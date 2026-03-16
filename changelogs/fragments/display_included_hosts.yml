@@ -1,0 +1,2 @@
+minor_changes:
+  - default callback - add ``display_included_hosts`` option to control the ``included:`` banner lines for ``include_tasks``/``include_role`` (https://github.com/ansible/ansible/issues/84499).

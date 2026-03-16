@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: url
+  author: Ansible Core
+  version_added: "2.14"
+  short_description: is the string a valid URL
+  description:
+    - Validates a string to conform to the URL standard.
+  options:
+    _input:
+      description: Possible URL.
+      type: string
+      required: True
+    schemes:
+      description: Subset of URI schemas to validate against, otherwise B(any) scheme is considered valid.
+      type: list
+      elements: string
+EXAMPLES: |
+  # simple URL
+  {{ 'http://example.com' is url }}
+  # looking only for file transfers URIs
+  {{ 'mailto://nowone@example.com' is not uri(schemes=['ftp', 'ftps', 'sftp', 'file']) }}
+  #  but it is according to standard
+  {{ 'mailto://nowone@example.com' is not uri }}
+  # more complex URL
+  {{ 'ftp://admin:secret@example.com/path/to/myfile.yml' is url }}
+RETURN:
+  _value:
+    description: Returns V(false) if the string is not a URL, V(true) otherwise.
+    type: boolean

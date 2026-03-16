@@ -1,0 +1,5 @@
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: `something_old` is deprecated, don't use it! This feature will be removed from module 'tagging_sample' in collection 'ansible.legacy' version 9.9999.
+[DEPRECATION WARNING]: `something_old` is deprecated, don't use it! This feature will be removed from module 'tagging_sample' in collection 'ansible.legacy' version 9.9999.
+[WARNING]: Encountered untrusted template or expression.
+[DEPRECATION WARNING]: `something_old` is deprecated, don't use it! This feature will be removed from module 'tagging_sample' in collection 'ansible.legacy' version 9.9999.

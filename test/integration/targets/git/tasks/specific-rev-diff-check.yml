@@ -1,0 +1,51 @@
+# Test that diff is displayed together with check mode in a shallow clone
+# when checking out a specific revision
+
+- name: SPECIFIC-REV-DIFF-CHECK | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: SPECIFIC-REVISION-DIFF-CHECK | shallow clone
+  git:
+    repo: "{{ repo_dir }}/shallow_branches/.git"
+    dest: "{{ checkout_dir }}/ansible-repo"
+    update: true
+    version: "main"
+    depth: 1
+
+- name: SPECIFIC-REVISION-DIFF-CHECK | check mode with diff mode specific sha bad object
+  git:
+    repo: "{{ repo_dir }}/shallow_branches/.git"
+    dest: "{{ checkout_dir }}/ansible-repo"
+    depth: 1
+    update: true
+    version: '"{{ test_branch_ref_head_id }}"'
+  check_mode: true
+  diff: true
+  register: git_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - git_result is failed
+
+- name: SPECIFIC-REVISION-DIFF-CHECK | check and diff mode with refspec force checkout old commit sha
+  git:
+    repo: "{{ repo_dir }}/shallow_branches/.git"
+    dest: "{{ checkout_dir }}/ansible-repo"
+    depth: 1
+    update: true
+    force: true
+    version: "{{ test_branch_ref_head_id }}"
+    refspec: "{{ test_branch_ref_head_id }}:refs/remotes/origin/devel"
+  check_mode: true
+  diff: true
+  register: git_result
+
+- assert:
+    that:
+      - prepared_string in git_result.diff.prepared
+      - git_result.after == test_branch_ref_head_id
+  vars:
+    prepared_string: diff --git a

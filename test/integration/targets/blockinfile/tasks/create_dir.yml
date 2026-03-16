@@ -1,0 +1,29 @@
+- name: Set up a directory to test module error handling
+  file:
+    path: "{{ remote_tmp_dir_test }}/unreadable"
+    state: directory
+    mode: "000"
+
+- name: Create a directory and file with blockinfile
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/unreadable/createme/file.txt"
+    block: |
+      line 1
+      line 2
+    state: present
+    create: yes
+  register: permissions_error
+  ignore_errors: yes
+
+- name: assert the error looks right
+  assert:
+    that:
+      - permissions_error.msg.startswith('Error creating')
+  when: "ansible_user_id != 'root'"
+
+- name: otherwise (root) assert the directory and file exists
+  stat:
+    path: "{{ remote_tmp_dir_test }}/unreadable/createme/file.txt"
+  register: path_created
+  failed_when: path_created.stat.exists is false
+  when: "ansible_user_id == 'root'"

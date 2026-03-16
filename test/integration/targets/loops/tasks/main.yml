@@ -1,0 +1,394 @@
+#
+# loop_control/pause
+#
+
+- name: Measure time before
+  shell: date +%s
+  register: before
+
+- debug:
+    var: i
+  with_sequence: count=3
+  loop_control:
+    loop_var: i
+    pause: 2
+
+- name: Measure time after
+  shell: date +%s
+  register: after
+
+# since there is 3 rounds, and 2 seconds between, it should last 4 seconds
+# we do not test the upper bound, since CI can lag significantly
+- assert:
+    that:
+    - '(after.stdout |int) - (before.stdout|int) >= 4'
+
+- name: test subsecond pause
+  block:
+    - name: Measure time before loop with .5s pause
+      set_fact:
+        times: "{{times|default([]) + [ now(fmt='%s.%f') ]}}"
+      with_sequence: count=3
+      loop_control:
+        pause: 0.6
+
+    - name: Debug times var
+      debug:
+        var: times
+
+    - vars:
+        tdiff: '{{ times[2]|float - times[0]|float }}'
+      block:
+        - name: Debug tdiff used in next task
+          debug:
+            msg: 'tdiff={{ tdiff }}'
+
+        - name: ensure lag, since there is 3 rounds, and 0.5 seconds between, it should last 1.2 seconds, but allowing leeway due to CI lag
+          assert:
+            that:
+                - tdiff|float >= 1.2
+                - tdiff|int < 3
+
+#
+# Tests of loop syntax with args
+#
+
+- name: Test that with_list works with a list
+  ping:
+    data: '{{ item }}'
+  with_list:
+    - 'Hello World'
+    - 'Olá Mundo'
+  register: results
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results["results"][0]["ping"] == "Hello World"'
+      - 'results["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that with_list works with a list inside a variable
+  ping:
+    data: '{{ item }}'
+  with_list: '{{ phrases }}'
+  register: results2
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results2["results"][0]["ping"] == "Hello World"'
+      - 'results2["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a manual list
+  ping:
+    data: '{{ item }}'
+  loop:
+    - 'Hello World'
+    - 'Olá Mundo'
+  register: results3
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results3["results"][0]["ping"] == "Hello World"'
+      - 'results3["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in a variable
+  ping:
+    data: '{{ item }}'
+  loop: '{{ phrases }}'
+  register: results4
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results4["results"][0]["ping"] == "Hello World"'
+      - 'results4["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list via the list lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ lookup("list", "Hello World", "Olá Mundo", wantlist=True) }}'
+  register: results5
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results5["results"][0]["ping"] == "Hello World"'
+      - 'results5["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in a variable via the list lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ lookup("list", wantlist=True, *phrases) }}'
+  register: results6
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results6["results"][0]["ping"] == "Hello World"'
+      - 'results6["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list via the query lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ query("list", "Hello World", "Olá Mundo") }}'
+  register: results7
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results7["results"][0]["ping"] == "Hello World"'
+      - 'results7["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in a variable via the query lookup
+  ping:
+    data: '{{ item }}'
+  loop: '{{ q("list", *phrases) }}'
+  register: results8
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results8["results"][0]["ping"] == "Hello World"'
+      - 'results8["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list and keyword args
+  ping:
+    data: '{{ item }}'
+  loop: '{{ q("file", "data1.txt", "data2.txt", lstrip=True) }}'
+  register: results9
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results9["results"][0]["ping"] == "Hello World"'
+      - 'results9["results"][1]["ping"] == "Olá Mundo"'
+
+- name: Test that loop works with a list in variable and keyword args
+  ping:
+    data: '{{ item }}'
+  loop: '{{ q("file", lstrip=True, *filenames) }}'
+  register: results10
+
+- name: Assert that we ran the module twice with the correct strings
+  assert:
+    that:
+      - 'results10["results"][0]["ping"] == "Hello World"'
+      - 'results10["results"][1]["ping"] == "Olá Mundo"'
+
+#
+# loop_control/index_var
+#
+
+- name: check that the index var is created and increments as expected
+  assert:
+    that: my_idx == item|int
+  with_sequence: start=0 count=3
+  loop_control:
+    index_var: my_idx
+
+- name: check that value of index var matches position of current item in source list
+  assert:
+    that: 'test_var.index(item) == my_idx'
+  vars:
+    test_var: ['a', 'b', 'c']
+  with_items: "{{ test_var }}"
+  loop_control:
+    index_var: my_idx
+
+- name: check index var with included tasks file
+  include_tasks: index_var_tasks.yml
+  with_sequence: start=0 count=3
+  loop_control:
+    index_var: my_idx
+
+
+# The following test cases are to ensure that we don't have a regression on
+# GitHub Issue https://github.com/ansible/ansible/issues/35481
+#
+# This should execute and not cause a RuntimeError
+- debug:
+    msg: "with_dict passed a list: {{item}}"
+  with_dict: "{{ a_list }}"
+  register: with_dict_passed_a_list
+  ignore_errors: True
+  vars:
+    a_list:
+      - 1
+      - 2
+- assert:
+    that:
+      - with_dict_passed_a_list is failed
+      - '"lookup plugin expects a dictionary" in with_dict_passed_a_list.msg'
+
+- vars:
+    a_dict:
+      key: value
+  block:
+  - debug:
+      var: item
+    with_list: "{{ a_dict }}"
+    register: with_list_passed_a_dict
+
+  - assert:
+      that: with_list_passed_a_dict.results[0].item == a_dict
+
+- debug:
+    var: "item"
+  loop:
+    - "{{ ansible_search_path }}"
+  register: loop_search_path
+
+- assert:
+    that:
+      - ansible_search_path == loop_search_path.results.0.item
+
+# https://github.com/ansible/ansible/issues/45189
+- name: with_X conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  with_list: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: loop conditional delegate_to shortcircuit on templating error
+  debug:
+      msg: "loop"
+  when: false
+  delegate_to: localhost
+  loop: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: Loop on literal empty list
+  debug:
+  loop: []
+  register: literal_empty_list
+  failed_when: literal_empty_list is not skipped
+
+# https://github.com/ansible/ansible/issues/47372
+- name: Loop unsafe list
+  debug:
+    var: item
+  with_items: "{{ things|list|unique }}"
+  vars:
+    things:
+      - !unsafe foo
+      - !unsafe bar
+
+- name: extended loop info
+  assert:
+    that:
+      - ansible_loop.nextitem == 'orange'
+      - ansible_loop.index == 1
+      - ansible_loop.index0 == 0
+      - ansible_loop.first
+      - not ansible_loop.last
+      - ansible_loop.previtem is undefined
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 3
+      - ansible_loop.revindex0 == 2
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'apple'
+
+- name: extended loop info 2
+  assert:
+    that:
+      - ansible_loop.nextitem == 'banana'
+      - ansible_loop.index == 2
+      - ansible_loop.index0 == 1
+      - not ansible_loop.first
+      - not ansible_loop.last
+      - ansible_loop.previtem == 'apple'
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 2
+      - ansible_loop.revindex0 == 1
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'orange'
+
+- name: extended loop info 3
+  assert:
+    that:
+      - ansible_loop.nextitem is undefined
+      - ansible_loop.index == 3
+      - ansible_loop.index0 == 2
+      - not ansible_loop.first
+      - ansible_loop.last
+      - ansible_loop.previtem == 'orange'
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 1
+      - ansible_loop.revindex0 == 0
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'banana'
+
+- name: Validate the loop_var name
+  assert:
+    that:
+      - ansible_loop_var == 'alvin'
+  loop:
+    - 1
+  loop_control:
+    loop_var: alvin
+
+# https://github.com/ansible/ansible/issues/58820
+- name: Test using templated loop_var inside include_tasks
+  include_tasks: templated_loop_var_tasks.yml
+  loop:
+    - value
+  loop_control:
+    loop_var: "{{ loop_var_name }}"
+  vars:
+    loop_var_name: templated_loop_var_name
+
+# https://github.com/ansible/ansible/issues/59414
+- name: Test preserving original connection related vars
+  debug:
+    var: ansible_remote_tmp
+  vars:
+    ansible_remote_tmp: /tmp/test1
+  with_items:
+  - 1
+  - 2
+  register: loop_out
+
+- assert:
+    that:
+      - loop_out['results'][1]['ansible_remote_tmp'] == '/tmp/test1'
+
+# https://github.com/ansible/ansible/issues/83619
+- command: "echo {{ item }}"
+  register: r
+  loop:
+    - changed
+    - skipped
+  loop_control:
+    label: "{{ r.stdout }}"
+  when:
+    - item == "changed"
+  ignore_errors: true
+
+- name: test that the second iteration result was stored, since it was skipped no stdout should be present there
+  assert:
+    that:
+      - "r['results'][1]['msg'] is contains(\"no attribute 'stdout'\")"

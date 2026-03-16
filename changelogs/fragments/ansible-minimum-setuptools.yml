@@ -1,0 +1,2 @@
+minor_changes:
+  - The minimum required ``setuptools`` version is now ``77.0.3``, as it is needed for the new PEP 639 license format

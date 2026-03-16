@@ -1,0 +1,5 @@
+# edit "sanity.ansible-doc.in" and generate with: hacking/update-sanity-requirements.py --test ansible-doc
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+packaging==25.0
+PyYAML==6.0.3

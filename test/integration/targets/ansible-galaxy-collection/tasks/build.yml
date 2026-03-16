@@ -1,0 +1,99 @@
+---
+- name: create a dangling symbolic link inside collection directory
+  ansible.builtin.file:
+    src: '/non-existent-path/README.md'
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/docs/README.md'
+    state: link
+    force: yes
+
+- name: build basic collection based on current directory with dangling symlink
+  command: ansible-galaxy collection build {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
+  register: fail_symlink_build
+  ignore_errors: yes
+
+- name: assert that build fails due to dangling symlink
+  assert:
+    that:
+      - fail_symlink_build.failed
+      - '"Failed to find the target path" in fail_symlink_build.stderr'
+
+- name: remove dangling symbolic link
+  ansible.builtin.file:
+    path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/docs/README.md'
+    state: absent
+
+- name: build basic collection based on current directory
+  command: ansible-galaxy collection build {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
+  register: build_current_dir
+
+- name: get result of build basic collection on current directory
+  stat:
+    path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+  register: build_current_dir_actual
+
+- name: assert build basic collection based on current directory
+  assert:
+    that:
+    - '"Created collection for ansible_test.my_collection" in build_current_dir.stdout'
+    - build_current_dir_actual.stat.exists
+
+- name: build basic collection based on relative dir
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: build_relative_dir
+
+- name: get result of build basic collection based on relative dir
+  stat:
+    path: '{{ galaxy_dir }}/ansible_test-my_collection-1.0.0.tar.gz'
+  register: build_relative_dir_actual
+
+- name: assert build basic collection based on relative dir
+  assert:
+    that:
+    - '"Created collection for ansible_test.my_collection" in build_relative_dir.stdout'
+    - build_relative_dir_actual.stat.exists
+
+- name: fail to build existing collection without force
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  ignore_errors: yes
+  register: build_existing_no_force
+
+- name: build existing collection with force
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection --force {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: build_existing_force
+
+- name: assert build existing collection
+  assert:
+    that:
+    - '"use --force to re-create the collection artifact" in build_existing_no_force.stderr'
+    - '"Created collection for ansible_test.my_collection" in build_existing_force.stdout'
+
+- name: build collection containing ignored files
+  command: ansible-galaxy collection build
+  args:
+    chdir: '{{ galaxy_dir }}/scratch/ansible_test/ignore'
+
+- name: list the created tar contents
+  command: tar -tf {{ galaxy_dir }}/scratch/ansible_test/ignore/ansible_test-ignore-1.0.0.tar.gz
+  register: tar_output
+
+- name: assert ignored files are not present in the archive
+  assert:
+    that:
+    - item not in tar_output.stdout_lines
+  loop: '{{ collection_ignored_files }}'
+
+- name: assert ignored directories are not present in the archive
+  assert:
+    that:
+    - item not in tar_output.stdout_lines
+  loop: '{{ collection_ignored_directories }}'

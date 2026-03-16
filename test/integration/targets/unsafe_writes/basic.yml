@@ -1,0 +1,83 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - import_role:
+        name: ../setup_remote_tmp_dir
+    - name: define test directory
+      set_fact:
+        testudir: '{{remote_tmp_dir}}/unsafe_writes_test'
+    - name: define test file
+      set_fact:
+        testufile: '{{testudir}}/unreplacablefile.txt'
+    - name: define test environment with unsafe writes set
+      set_fact:
+        test_env:
+          ANSIBLE_UNSAFE_WRITES: "{{ lookup('env', 'ANSIBLE_UNSAFE_WRITES') }}"
+      when: lookup('env', 'ANSIBLE_UNSAFE_WRITES', default=undef()) is defined
+    - name: define test environment without unsafe writes set
+      set_fact:
+        test_env: {}
+      when: lookup('env', 'ANSIBLE_UNSAFE_WRITES', default=undef()) is not defined
+    - name: test unsafe_writes on immutable dir (file cannot be atomically replaced)
+      block:
+      - name: create target dir
+        file: path={{testudir}} state=directory
+      - name: setup test file
+        copy: content=ORIGINAL dest={{testufile}}
+      - name: make target dir immutable (cannot write to file w/o unsafe_writes)
+        file: path={{testudir}} state=directory attributes="+i"
+        become: yes
+        ignore_errors: true
+        register: madeimmutable
+
+      - name: only run if immutable dir command worked, some of our test systems don't allow for it
+        when: madeimmutable is success
+        block:
+        - name: test this is actually immmutable working as we expect
+          file: path={{testufile}} state=absent
+          register: breakimmutable
+          ignore_errors: True
+
+        - name: only run if reallyh immutable dir
+          when: breakimmutable is failed
+          block:
+          - name: test overwriting file w/o unsafe
+            copy: content=NEW dest={{testufile}} unsafe_writes=False
+            ignore_errors: true
+            register: copy_without
+
+          - name: ensure we properly failed
+            assert:
+              that:
+                - copy_without is failed
+
+          - name: test overwriting file with unsafe
+            copy: content=NEWNOREALLY dest={{testufile}} unsafe_writes=True
+            register: copy_with
+
+          - name: ensure we properly changed
+            assert:
+              that:
+                - copy_with is changed
+
+          - name: test fallback env var
+            when: lookup('env', 'ANSIBLE_UNSAFE_WRITES') not in ('', None)
+            vars:
+              env_enabled: "{{lookup('env', 'ANSIBLE_UNSAFE_WRITES')|bool}}"
+            block:
+            - name: test overwriting file with unsafe depending on fallback environment setting
+              copy: content=NEWBUTNOTDIFFERENT dest={{testufile}}
+              register: copy_with_env
+              ignore_errors: True
+
+            - name: ensure we properly follow env var
+              assert:
+                msg: "Failed with envvar: {{env_enabled}}, due AUW: to {{q('env', 'ANSIBLE_UNSAFE_WRITES')}}"
+                that:
+                  - env_enabled and copy_with_env is changed or not env_enabled and copy_with_env is failed
+      environment: "{{ test_env }}"
+      always:
+      - name: remove immutable flag from dir to prevent issues with cleanup
+        file: path={{testudir}} state=directory attributes="-i"
+        ignore_errors: true
+        become: yes

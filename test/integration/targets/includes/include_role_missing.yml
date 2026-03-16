@@ -1,0 +1,24 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - file:
+      path: roles/rolename
+      state: "{{ item }}"
+    loop:
+      - absent
+      - directory
+
+  - name: ensure we fail when missing both file and tasks/ subdir
+    block:
+    - include_role:
+        name: rolename
+        tasks_from: missing.yml
+    rescue:
+      - set_fact:
+          wefailed: True
+    always:
+      - name: check we actually failed
+        assert:
+          that: 
+            - wefailed is defined
+            - wefailed

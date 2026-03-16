@@ -1,0 +1,776 @@
+# test code for the uri module
+# (c) 2014, Leonid Evdokimov <leon@darkk.net.ru>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+
+- name: set role facts
+  set_fact:
+    http_port: 15260
+    files_dir: '{{ remote_tmp_dir|expanduser }}/files'
+    checkout_dir: '{{ remote_tmp_dir }}/git'
+
+- name: create a directory to serve files from
+  file:
+    dest: "{{ files_dir }}"
+    state: directory
+
+- copy:
+    src: "{{ item }}"
+    dest: "{{files_dir}}/{{ item }}"
+  with_sequence: start=0 end=4 format=pass%d.json
+
+- copy:
+    src: "{{ item }}"
+    dest: "{{files_dir}}/{{ item }}"
+  with_sequence: start=0 end=30 format=fail%d.json
+
+- copy:
+    src: "testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
+
+- name: start SimpleHTTPServer
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
+  async: 180 # this test is slower on remotes like FreeBSD, and running split slows it down further
+  poll: 0
+
+- wait_for: port={{ http_port }}
+
+
+- name: checksum pass_json
+  stat: path={{ files_dir }}/{{ item }}.json get_checksum=yes
+  register: pass_checksum
+  with_sequence: start=0 end=4 format=pass%d
+
+
+- name: test basic auth with urlencoded
+  register: result
+  uri:
+    url: 'https://foo%40example.com:test%40@{{ httpbin_host }}/basic-auth/foo%40example.com/test%40'
+
+- name: Ensure basic auth credentials where URL-decoded
+  assert:
+    that:
+      - result.json.authenticated
+      - result.json.user == 'foo@example.com'
+
+- name: fetch pass_json
+  uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
+  register: fetch_pass_json
+  with_sequence: start=0 end=4 format=pass%d
+
+- name: check pass_json
+  assert:
+    that:
+      - '"json" in item.1'
+      - item.0.stat.checksum == item.1.content | checksum
+  with_together:
+    - "{{pass_checksum.results}}"
+    - "{{fetch_pass_json.results}}"
+
+
+- name: checksum fail_json
+  stat: path={{ files_dir }}/{{ item }}.json get_checksum=yes
+  register: fail_checksum
+  with_sequence: start=0 end=30 format=fail%d
+
+- name: fetch fail_json
+  uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
+  register: fail
+  with_sequence: start=0 end=30 format=fail%d
+
+- name: check fail_json
+  assert:
+    that:
+      - item.0.stat.checksum == item.1.content | checksum
+      - '"json" not in item.1'
+  with_together:
+    - "{{fail_checksum.results}}"
+    - "{{fail.results}}"
+
+- name: Request IncompleteRead from localhost
+  uri:
+    return_content: yes
+    url: http://localhost:{{ http_port }}/chunked
+  register: r
+  ignore_errors: true
+
+- name: Check if IncompleteRead raises error
+  assert:
+    that:
+      - r.failed
+      - "'HTTP Error while fetching' in r.msg"
+
+- name: test https fetch to a site with mismatched hostname and certificate
+  uri:
+    url: "https://{{ badssl_host }}/"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
+  ignore_errors: True
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/shouldnotexist.html"
+  register: stat_result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - result.failed == true
+      - "'Failed to validate the SSL certificate' in result.msg or 'Hostname mismatch' in result.msg or (result.msg is match('hostname .* doesn.t match .*'))"
+      - stat_result.stat.exists == false
+      - result.status is defined
+      - result.status == -1
+      - result.url == 'https://' ~ badssl_host ~ '/'
+
+- name: Clean up any cruft from the results directory
+  file:
+    name: "{{ remote_tmp_dir }}/kreitz.html"
+    state: absent
+
+- name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
+  uri:
+    url: "https://{{ badssl_host }}/"
+    dest: "{{ remote_tmp_dir }}/kreitz.html"
+    validate_certs: no
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/kreitz.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - "stat_result.stat.exists == true"
+      - "result.changed == true"
+
+- name: "get ca certificate {{ self_signed_host }}"
+  uri:
+    url: "http://{{ httpbin_host }}/ca2cert.pem"
+    dest: "{{ remote_tmp_dir }}/ca2cert.pem"
+
+- name: test https fetch to a site with self signed certificate using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
+    validate_certs: yes
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - "stat_result.stat.exists == true"
+      - "result.changed == true"
+
+- name: test https fetch to a site with self signed certificate without using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
+    validate_certs: yes
+  register: result
+  ignore_errors: true
+
+- stat:
+    path: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
+  register: stat_result
+
+- name: Assure that https access to a host with self-signed certificate without providing ca_path fails
+  assert:
+    that:
+      - "stat_result.stat.exists == false"
+      - result is failed
+      - "'certificate verify failed' in result.msg"
+
+- name: Locate ca-bundle
+  stat:
+    path: '{{ item }}'
+  loop:
+    - '{{ cafile_path.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
+    - /etc/ssl/certs/ca-bundle.crt
+    - /etc/ssl/certs/ca-certificates.crt
+    - /var/lib/ca-certificates/ca-bundle.pem
+    - /usr/local/share/certs/ca-root-nss.crt
+    - /etc/ssl/cert.pem
+  register: ca_bundle_candidates
+
+- name: Test that ca_path can be a full bundle
+  uri:
+    url: "https://{{ httpbin_host }}/get"
+    ca_path: '{{ ca_bundle }}'
+  vars:
+    ca_bundle: '{{ ca_bundle_candidates.results|selectattr("stat.exists")|map(attribute="item")|first }}'
+
+- name: test redirect without follow_redirects
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect/2'
+    follow_redirects: 'none'
+    status_code: 302
+  register: result
+
+- name: Assert location header
+  assert:
+    that:
+      - 'result.location|default("") == "https://" + httpbin_host + "/relative-redirect/1"'
+
+- name: Check SSL with redirect
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect/2'
+  register: result
+
+- name: Assert SSL with redirect
+  assert:
+    that:
+      - 'result.url|default("") == "https://" + httpbin_host + "/get"'
+
+- name: redirect to bad SSL site
+  uri:
+    url: 'http://{{ badssl_host }}'
+  register: result
+  ignore_errors: true
+
+- name: Ensure bad SSL site redirect fails
+  assert:
+    that:
+      - result is failed
+      - 'badssl_host in result.msg'
+
+- name: test basic auth
+  uri:
+    url: 'https://{{ httpbin_host }}/basic-auth/user/passwd'
+    user: user
+    password: passwd
+
+- name: test basic forced auth
+  uri:
+    url: 'https://{{ httpbin_host }}/hidden-basic-auth/user/passwd'
+    force_basic_auth: true
+    user: user
+    password: passwd
+
+- name: test digest auth
+  uri:
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: passwd
+    headers:
+      Cookie: "fake=fake_value"
+
+- name: test digest auth failure
+  uri:
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: wrong
+    headers:
+      Cookie: "fake=fake_value"
+  register: result
+  failed_when: result.status != 401
+
+- name: test unredirected_headers
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    user: user
+    password: passwd
+    force_basic_auth: true
+    unredirected_headers:
+      - authorization
+  ignore_errors: true
+  register: unredirected_headers
+
+- name: test omitting unredirected headers
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    user: user
+    password: passwd
+    force_basic_auth: true
+  register: redirected_headers
+
+- name: ensure unredirected_headers caused auth to fail
+  assert:
+    that:
+      - unredirected_headers is failed
+      - unredirected_headers.status == 401
+      - redirected_headers is successful
+      - redirected_headers.status == 200
+
+- name: test PUT
+  uri:
+    url: 'https://{{ httpbin_host }}/put'
+    method: PUT
+    body: 'foo=bar'
+
+- name: test OPTIONS
+  uri:
+    url: 'https://{{ httpbin_host }}/'
+    method: OPTIONS
+  register: result
+
+- name: Assert we got an allow header
+  assert:
+    that:
+      - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
+
+- name: Testing support of https_proxy (with failure expected)
+  environment:
+    https_proxy: 'https://localhost:3456'
+  uri:
+    url: 'https://{{ httpbin_host }}/get'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is failed
+      - result.status == -1
+
+- name: Testing use_proxy=no is honored
+  environment:
+    https_proxy: 'https://localhost:3456'
+  uri:
+    url: 'https://{{ httpbin_host }}/get'
+    use_proxy: no
+
+- name: Test that SNI succeeds on python versions that have SNI
+  uri:
+    url: 'https://{{ sni_host }}/'
+    return_content: true
+  when: ansible_python.has_sslcontext
+  register: result
+
+- name: Assert SNI verification succeeds on new python
+  assert:
+    that:
+      - result is successful
+      - 'sni_host in result.content'
+  when: ansible_python.has_sslcontext
+
+- name: validate the status_codes are correct
+  uri:
+    url: "https://{{ httpbin_host }}/status/202"
+    status_code: 202
+    method: POST
+    body: foo
+
+- name: Validate body_format json does not override content-type in 2.3 or newer
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'
+
+- name: Validate body_format form-urlencoded using dicts works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      user: foo
+      password: bar!#@ |&82$M
+      submit: Sign in
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded dict input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded using lists works
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+      - [ user, foo ]
+      - [ password, bar!#@ |&82$M ]
+      - [ submit, Sign in ]
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+
+- name: Assert form-urlencoded list input
+  assert:
+    that:
+    - result is successful
+    - result.json.headers['Content-Type'] == 'application/x-www-form-urlencoded'
+    - result.json.form.password == 'bar!#@ |&82$M'
+
+- name: Validate body_format form-urlencoded of invalid input fails
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body:
+    - foo
+    - bar: baz
+    body_format: form-urlencoded
+    return_content: yes
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid input fails
+  assert:
+    that:
+    - result is failure
+    - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
+
+- name: multipart/form-data
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      file1:
+        filename: formdata.txt
+      file2:
+        content: text based file content
+        filename: fake.txt
+        mime_type: text/plain
+      file3:
+        filename: formdata.txt
+        multipart_encoding: '7or8bit'
+      text_form_field1: value1
+      text_form_field2:
+        content: value2
+        mime_type: text/plain
+  register: multipart
+
+- name: Assert multipart/form-data
+  assert:
+    that:
+      - multipart.json.files.file1 | b64decode == '_multipart/form-data_\n'
+      - multipart.json.files.file2 == 'text based file content'
+      - multipart.json.files.file3 == '_multipart/form-data_\r\n'
+      - multipart.json.form.text_form_field1 == 'value1'
+      - multipart.json.form.text_form_field2 == 'value2'
+
+# https://github.com/ansible/ansible/issues/74276 - verifies we don't have a traceback
+- name: multipart/form-data with invalid value
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      integer_value: 1
+  register: multipart_invalid
+  failed_when: '"failed to parse body as form-multipart: value must be a string, or mapping, cannot be type" not in multipart_invalid.msg'
+
+- name: multipart/form-data with file and retry
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      file:
+        filename: formdata.txt
+  retries: 1
+  delay: 0.01
+  register: result
+  failed_when: result is failed or result.attempts == 1
+
+- name: Assert multipart/form-data with file and retry
+  assert:
+    that:
+      - result.json.files.file | b64decode == '_multipart/form-data_\n'
+      - result.attempts == 2
+
+- name: Validate invalid method
+  uri:
+    url: https://{{ httpbin_host }}/anything
+    method: UNKNOWN
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid method fails
+  assert:
+    that:
+    - result is failure
+    - result.status == 405
+    - "'METHOD NOT ALLOWED' in result.msg"
+
+- name: Test client cert auth, no certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    status_code: 200
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:NONE"
+  when: has_httptester
+
+- name: Test client cert auth, with certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with no validation
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
+    return_content: true
+    validate_certs: no
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with validation and ssl mismatch
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
+    return_content: true
+    validate_certs: yes
+  register: result
+  failed_when: result is not failed
+  when: has_httptester
+
+- uri:
+    url: https://{{ httpbin_host }}/response-headers?Set-Cookie=Foo%3Dbar&Set-Cookie=Baz%3Dqux
+  register: result
+
+- assert:
+    that:
+      - result['set_cookie'] == 'Foo=bar, Baz=qux'
+      # Python 3.10 and earlier sorts cookies in order of most specific (ie. longest) path first
+      # items with the same path are reversed from response order
+      - result['cookies_string'] == 'Baz=qux; Foo=bar'
+  when: ansible_python_version is version('3.11', '<')
+
+- assert:
+    that:
+      - result['set_cookie'] == 'Foo=bar, Baz=qux'
+      # Python 3.11 no longer sorts cookies.
+      # See: https://github.com/python/cpython/issues/86232
+      - result['cookies_string'] == 'Foo=bar; Baz=qux'
+  when: ansible_python_version is version('3.11', '>=')
+
+- name: Write out netrc template
+  template:
+    src: netrc.j2
+    dest: "{{ remote_tmp_dir }}/netrc"
+
+- name: Test netrc with port
+  uri:
+    url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+
+- name: Test JSON POST with src
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: pass0.json
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Copy file pass0.json to remote
+  copy:
+    src: "{{ role_path }}/files/pass0.json"
+    dest: "{{ remote_tmp_dir }}/pass0.json"
+
+- name: Test JSON POST with src and remote_src=True
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: "{{ remote_tmp_dir }}/pass0.json"
+    remote_src: true
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src  and remote_src=True works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Test find JSON as subtype
+  uri:
+    url: "https://{{ httpbin_host }}/response-headers?content-type=application/ld%2Bjson"
+    method: POST
+    return_content: true
+  register: result
+
+- name: Validate JSON as subtype
+  assert:
+    that:
+      - result.json is defined
+
+- name: Make request that includes password in JSON keys
+  uri:
+    url: "https://{{ httpbin_host}}/get?key-password=value-password"
+    user: admin
+    password: password
+  register: sanitize_keys
+
+- name: assert that keys were sanitized
+  assert:
+    that:
+    - sanitize_keys.json.args['key-********'] == 'value-********'
+
+- name: Test gzip encoding
+  uri:
+    url: "https://{{ httpbin_host }}/gzip"
+  register: result
+
+- name: Validate gzip decoding
+  assert:
+    that:
+      - result.json.gzipped
+
+- name: test gzip encoding no auto decompress
+  uri:
+    url: "https://{{ httpbin_host }}/gzip"
+    decompress: false
+  register: result
+
+- name: Assert gzip wasn't decompressed
+  assert:
+    that:
+      - result.json is undefined
+
+- name: Create a testing file
+  copy:
+    content: "content"
+    dest: "{{ remote_tmp_dir }}/output"
+
+- name: Download a file from non existing location
+  uri:
+    url: http://does/not/exist
+    dest: "{{ remote_tmp_dir }}/output"
+  ignore_errors: yes
+
+- name: Save testing file's output
+  command: "cat {{ remote_tmp_dir }}/output"
+  register: file_out
+
+- name: Test the testing file was not overwritten
+  assert:
+    that:
+      - "'content' in file_out.stdout"
+
+- name: Test downloading cached file
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+
+- name: Test downloading cached file to existing file results in "304 Not Modified"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    status_code: [304]
+
+- name: Test downloading cached file to existing file with "force"
+  uri:
+    url: "https://{{ httpbin_host }}/cache"
+    dest: "{{ remote_tmp_dir }}/output"
+    force: true
+
+- name: Clean up
+  file:
+    dest: "{{ remote_tmp_dir }}/output"
+    state: absent
+
+- name: Test download root to dir without content-disposition
+  uri:
+    url: "https://{{ httpbin_host }}/"
+    dest: "{{ remote_tmp_dir }}"
+  register: get_root_no_filename
+
+- name: Test downloading to dir without content-disposition
+  uri:
+    url: "https://{{ httpbin_host }}/response-headers"
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_no_filename
+
+- name: Test downloading to dir with content-disposition
+  uri:
+    url: 'https://{{ httpbin_host }}/response-headers?Content-Disposition=attachment%3B%20filename%3D%22filename.json%22'
+    dest: "{{ remote_tmp_dir }}"
+  register: get_dir_filename
+
+- assert:
+    that:
+      - get_root_no_filename.path == remote_tmp_dir ~ "/index.html"
+      - get_dir_no_filename.path == remote_tmp_dir ~ "/response-headers"
+      - get_dir_filename.path == remote_tmp_dir ~ "/filename.json"
+
+- name: Test follow_redirects=none
+  import_tasks: redirect-none.yml
+
+- name: Test follow_redirects=safe
+  import_tasks: redirect-safe.yml
+
+- name: Test follow_redirects=urllib2
+  import_tasks: redirect-urllib2.yml
+
+- name: Test follow_redirects=all
+  import_tasks: redirect-all.yml
+
+- name: Check unexpected failures
+  import_tasks: unexpected-failures.yml
+
+- name: Check return-content
+  import_tasks: return-content.yml
+
+- name: Test use_gssapi=True
+  include_tasks:
+    file: use_gssapi.yml
+    apply:
+      environment:
+        KRB5_CONFIG: '{{ krb5_config }}'
+        KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+        OPENSSL_CONF: '{{ krb5_openssl_conf }}'
+  when: krb5_config is defined
+
+- name: Test ciphers
+  import_tasks: ciphers.yml
+  when: false  # skipped until we have a way to disable TLS 1.3 on the client or server, since cipher suite selection won't break TLS 1.3
+
+- name: Test use_netrc.yml
+  import_tasks: use_netrc.yml
+
+- name: Test unix socket
+  import_tasks: install-socat-and-test-unix-socket.yml
+
+- name: ensure skip action
+  uri:
+    url: http://example.com
+  check_mode: True
+  register: uri_check
+
+- name: check that we skipped at action
+  assert:
+    that:
+      - uri_check.msg == "This action (uri) does not support check mode."

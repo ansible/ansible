@@ -1,0 +1,401 @@
+- set_fact:
+    test_ppa_name: 'ppa:git-core/ppa'
+    test_ppa_filename: 'git-core'
+    test_ppa_spec: 'deb https://ppa.launchpadcontent.net/git-core/ppa/ubuntu {{ansible_distribution_release}} main'
+    test_ppa_key: 'E1DF1F24' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
+    python_apt: python3-apt
+
+- name: verify that comments are preserved unmodified when writing their source file
+  vars:
+    test_source_filename: ansible_test_comment
+    test_source_path: "/etc/apt/sources.list.d/{{ test_source_filename }}.list"
+  block:
+    - name: ensure the test source is absent
+      file:
+        path: "{{ test_source_path }}"
+        state: absent
+
+    - name: add the test PPA to the test source
+      apt_repository:
+        repo: "{{ test_ppa_name }}"
+        filename: "{{ test_source_filename }}"
+        update_cache: false
+      register: add_ppa
+
+    - name: verify the expected test source was added
+      assert:
+        that:
+          - add_ppa.sources_added | length == 1
+          - add_ppa.sources_added[0] == test_source_path
+
+    - name: overwrite the test source with a comment
+      copy:
+        content: "## comment"
+        dest: "{{ test_source_path }}"
+
+    - name: add the test PPA to the test source again
+      apt_repository:
+        repo: "{{ test_ppa_name }}"
+        filename: "{{ test_source_filename }}"
+        update_cache: false
+      register: add_ppa
+
+    - name: verify no sources were added
+      assert:
+        that:
+          - add_ppa.sources_added | length == 0
+
+    - name: read the test source
+      slurp:
+        src: "{{ test_source_path }}"
+      register: test_source
+
+    - name: decode the contents of the test source
+      set_fact:
+        test_source_content: "{{ test_source.content | b64decode }}"
+
+    - name: verify the comment in the test source was preserved
+      assert:
+        that:
+          - '"# # comment\n" in test_source_content'  # bug, see: https://github.com/ansible/ansible/issues/54403
+          # - '"## comment\n" in test_source_content'  # correct behavior
+  always:
+    - name: ensure the test source is absent
+      file:
+        path: "{{ test_source_path }}"
+        state: absent
+
+# UNINSTALL 'python-apt'
+#  The `apt_repository` module has the smarts to auto-install `python-apt`.  To
+# test, we will first uninstall `python-apt`.
+- name: check {{ python_apt }} with dpkg
+  shell: dpkg -s {{ python_apt }}
+  register: dpkg_result
+  ignore_errors: true
+
+- name: uninstall {{ python_apt }} with apt
+  apt: pkg={{ python_apt }} state=absent purge=yes
+  register: apt_result
+  when: dpkg_result is successful
+
+#
+# TEST: apt_repository: repo=<name>
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<name> (expect: pass)'
+  apt_repository: repo='{{test_ppa_name}}' state=present
+  register: result
+
+- name: 'assert the apt cache did *NOT* change'
+  assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == test_ppa_name'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+- name: 'ensure ppa key is installed (expect: pass)'
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
+
+#
+# TEST: apt_repository: repo=<name> update_cache=no
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<name> update_cache=no (expect: pass)'
+  apt_repository: repo='{{test_ppa_name}}' state=present update_cache=no
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == test_ppa_name'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did *NOT* change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime == cache_after.stat.mtime'
+
+- name: 'ensure ppa key is installed (expect: pass)'
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
+
+#
+# TEST: apt_repository: repo=<name> update_cache=yes
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<name> update_cache=yes (expect: pass)'
+  apt_repository: repo='{{test_ppa_name}}' state=present update_cache=yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == test_ppa_name'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+- name: 'ensure ppa key is installed (expect: pass)'
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
+
+#
+# TEST: apt_repository: repo=<spec>
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
+
+- name: 'name=<spec> (expect: pass)'
+  apt_repository: repo='{{test_ppa_spec}}' state=present
+  register: result
+
+- name: update the cache
+  apt:
+    update_cache: true
+  register: result_cache
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == test_ppa_spec'
+      - '"sources_added" in result'
+      - 'result.sources_added | length == 1'
+      - '"git" in result.sources_added[0]'
+      - '"sources_removed" in result'
+      - 'result.sources_removed | length == 0'
+      - result_cache is not changed
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+- name: remove repo by spec
+  apt_repository: repo='{{test_ppa_spec}}' state=absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "absent"'
+      - 'result.repo == test_ppa_spec'
+      - '"sources_added" in result'
+      - 'result.sources_added | length == 0'
+      - '"sources_removed" in result'
+      - 'result.sources_removed | length == 1'
+      - '"git" in result.sources_removed[0]'
+
+# When installing a repo with the spec, the key is *NOT* added
+- name: 'ensure ppa key is absent (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=absent
+
+#
+# TEST: apt_repository: repo=<spec> filename=<filename>
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key:
+    id: '{{test_ppa_key}}'
+    state: present
+    keyserver: keyserver.ubuntu.com
+
+- name: 'name=<spec> filename=<filename> (expect: pass)'
+  apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == test_ppa_spec'
+
+- name: 'examine source file'
+  stat: path='/etc/apt/sources.list.d/{{test_ppa_filename}}.list'
+  register: source_file
+
+- name: 'assert source file exists'
+  assert:
+    that:
+      - 'source_file.stat.exists == True'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+# When installing a repo with the spec, the key is *NOT* added
+- name: 'ensure ppa key is absent (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=absent
+
+- name: Test apt_repository with a null value for repo
+  apt_repository:
+    repo:
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+
+- name: Test apt_repository with an empty value for repo
+  apt_repository:
+    repo: ""
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+
+#
+# TEST: keep symlink
+#
+- import_tasks: 'cleanup.yml'
+
+- name: install local-apt-repository with apt
+  apt: pkg=local-apt-repository state=present
+
+- name: Check if local apt repo file is a symlink
+  stat:
+    path: /etc/apt/sources.list.d/local-apt-repository.list
+  register: stat_result
+
+- name: Assert if local apt repo file is a symlink
+  assert:
+    that:
+      - stat_result.stat.islnk is defined and stat_result.stat.islnk
+      - stat_result.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"
+
+- name: Try installing an invalid repo
+  apt_repository:
+    repo: deb http://dl.google.com/linux/chrome/deb2/ stable main
+    state: present
+    filename: google-chrome
+  ignore_errors: true
+
+- name: Check the stat for the given symlink
+  stat:
+    path: /etc/apt/sources.list.d/local-apt-repository.list
+  register: stat_result2
+
+- name: Assert that the symlink is intact after apt_repository operation
+  assert:
+    that:
+      - stat_result2.stat.islnk is defined and stat_result2.stat.islnk
+      - stat_result2.stat.lnk_source == "/usr/lib/local-apt-repository/local-apt-repository.list"
+
+- name: uninstall local-apt-repository with apt
+  apt: pkg=local-apt-repository state=absent purge=yes
+
+#
+# TEST: PPA HTTPS URL
+#
+- name: Add PPA using HTTPS URL
+  apt_repository:
+    repo: 'ppa:deadsnakes'
+    filename: 'deadsnakes'
+    state: present
+  register: result
+
+- name: Check if PPA using HTTPS URL is added
+  assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "ppa:deadsnakes"'
+
+- name: 'examine source file'
+  stat:
+    path: '/etc/apt/sources.list.d/deadsnakes.list'
+  register: source_file
+
+- name: 'assert source file exists'
+  assert:
+    that:
+      - 'source_file.stat.exists == True'
+
+- name: Check if the PPA URL
+  shell: "grep 'https://ppa.launchpadcontent.net' /etc/apt/sources.list.d/deadsnakes.list"
+  register: r
+
+- name: Test if PPA URL points to https URL
+  assert:
+    that:
+      - r.changed
+      - "'https://ppa.launchpadcontent.net' in r.stdout"
+
+- name: Remove PPA file
+  file:
+    path: '/etc/apt/sources.list.d/deadsnakes.list'
+    state: absent
+#
+# TEARDOWN
+#
+- import_tasks: 'cleanup.yml'

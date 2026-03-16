@@ -1,0 +1,13 @@
+---
+- name: Assert that a embedded vault of a string with no newline works
+  assert:
+    that:
+      - 'vault_encrypted_one_line_var == "Setec Astronomy"'
+
+- name: Assert that a multi line embedded vault works, including new line
+  assert:
+    that:
+      - vault_encrypted_var == "Setec Astronomy\n"
+
+# TODO: add a expected fail here
+# - debug: var=vault_encrypted_one_line_var_with_embedded_template

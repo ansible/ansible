@@ -1,0 +1,9 @@
+# Test code for the group module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_tasks: tests.yml
+- import_tasks: test_create_group_min_max.yml
+  when:
+    - ansible_facts.system == 'Linux'
+    - ansible_distribution != 'Alpine'

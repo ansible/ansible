@@ -1,0 +1,238 @@
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: test with_sequence
+  set_fact: "{{ 'x' + item }}={{ item }}"
+  with_sequence: start=0 end=3
+
+- name: test with_sequence backwards
+  set_fact: "{{ 'y' + item }}={{ item }}"
+  with_sequence: start=3 end=0 stride=-1
+
+- name: verify with_sequence
+  assert:
+    that:
+        - "x0 == '0'"
+        - "x1 == '1'"
+        - "x2 == '2'"
+        - "x3 == '3'"
+        - "y3 == '3'"
+        - "y2 == '2'"
+        - "y1 == '1'"
+        - "y0 == '0'"
+
+- name: test with_sequence not failing on count == 0
+  debug: msg='previously failed with backward counting error'
+  with_sequence: count=0
+  register: count_of_zero
+
+- name: test with_sequence does 1 when start == end
+  debug: msg='should run once'
+  with_sequence: start=1 end=1
+  register: start_equal_end
+
+- name: test with_sequence count 1
+  set_fact: "{{ 'x' + item }}={{ item }}"
+  with_sequence: count=1
+  register: count_of_one
+
+- assert:
+    that:
+        - start_equal_end is not skipped
+        - count_of_zero is skipped
+        - count_of_one is not skipped
+
+- name: test with_sequence shortcut syntax (end)
+  set_fact: "{{ 'ws_z_' + item }}={{ item }}"
+  with_sequence: '4'
+
+- name: test with_sequence shortcut syntax (start-end/stride)
+  set_fact: "{{ 'ws_z_' + item }}=stride_{{ item }}"
+  with_sequence: '2-6/2'
+
+- name: test with_sequence shortcut syntax (start-end:format)
+  set_fact: "{{ 'ws_z_' + item }}={{ item }}"
+  with_sequence: '7-8:host%02d'
+
+- name: verify with_sequence shortcut syntax
+  assert:
+    that:
+        - "ws_z_1 == '1'"
+        - "ws_z_2 == 'stride_2'"
+        - "ws_z_3 == '3'"
+        - "ws_z_4 == 'stride_4'"
+        - "ws_z_6 == 'stride_6'"
+        - "ws_z_host07 == 'host07'"
+        - "ws_z_host08 == 'host08'"
+
+- block:
+    - name: EXPECTED FAILURE - test invalid arg
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=0 junk=3
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test invalid arg"
+          - '"unrecognized arguments to with_sequence: " in ansible_failed_result.msg'
+          - '"junk" in ansible_failed_result.msg'
+
+- block:
+    - name: EXPECTED FAILURE - test bad kv value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=A end=3
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad kv value"
+          - ansible_failed_result.msg is contains "has an invalid value"
+
+- block:
+    - name: EXPECTED FAILURE - test bad simple form start value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: A-4/2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form start value"
+          - ansible_failed_result.msg is contains "has an invalid value"
+
+- block:
+    - name: EXPECTED FAILURE - test bad simple form end value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: 1-B/2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form end value"
+          - ansible_failed_result.msg is contains "has an invalid value"
+
+- block:
+    - name: EXPECTED FAILURE - test bad simple form stride value
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: 1-4/C
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad simple form stride value"
+          - ansible_failed_result.msg is contains "has an invalid value"
+
+- block:
+    - name: EXPECTED FAILURE - test no count or end
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=1
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test no count or end"
+          - ansible_failed_result.msg is contains "must specify count or end in with_sequence"
+
+- block:
+    - name: EXPECTED FAILURE - test both count and end
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=1 end=4 count=2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test both count and end"
+          - ansible_failed_result.msg is contains "can't specify both count and end in with_sequence"
+
+- block:
+    - name: EXPECTED FAILURE - test count backwards message
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=4 end=1 stride=2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test count backwards message"
+          - ansible_failed_result.msg is contains "to count backwards make stride negative"
+
+- block:
+    - name: EXPECTED FAILURE - test count forward message
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=1 end=4 stride=-2
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test count forward message"
+          - ansible_failed_result.msg is contains "to count forward don't make stride negative"
+
+- block:
+    - name: EXPECTED FAILURE - test bad format string message
+      set_fact: "{{ 'x' + item }}={{ item }}"
+      with_sequence: start=1 end=4 format=d
+
+    - fail:
+        msg: "should not get here"
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test bad format string message"
+          - ansible_failed_result.msg is contains expected
+      vars:
+        expected: "bad formatting string: d"
+
+# Tests for lookup()/plugin() jinja invocation:
+# Many of these tests check edge case behaviors that are only possible when invoking query/lookup sequence through jinja.
+# While they aren't particularly intuitive, these tests ensure playbooks that could be relying on these behaviors don't
+# break in future
+- name: Test lookup with keyword args only
+  assert:
+    that:
+      - query("ansible.builtin.sequence", count=5, start=10) == ["10", "11", "12", "13", "14"]
+
+- name: Test that multiple positional args produces concatenated sequence
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=1", "count=3 start=10 stride=2") == ["1", "2", "3", "4", "5", "10", "12", "14"]
+
+- name: Test that keyword arguments are applied to all positional expressions
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", "count=5 start=20", stride=2) == ["0", "2", "4", "6", "8", "20", "22", "24", "26", "28"]
+
+- name: Test stride=0 produces an empty list
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", stride=0) == []
+
+- name: Test stride=-1 produces an list of negative numbers
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", stride=-1) == ["0", "-1", "-2", "-3", "-4", "-5", "-6"]
+
+- name: Test that keyword arguments do not overwrite parameters present in positional expressions
+  assert:
+    that:
+      - query("ansible.builtin.sequence", "count=5 start=0", "count=5", start=20) == ["0", "1", "2", "3", "4", "20", "21", "22", "23", "24"]
+
+- name: Test that call with no arguments produces an empty list
+  assert:
+    that:
+      - query("ansible.builtin.sequence") == []

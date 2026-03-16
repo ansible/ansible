@@ -1,0 +1,171 @@
+# DTFIX-FUTURE: finish the full precedence description in DT docs and include it here
+
+- name: validate templated raw params from the action statement and the args keyword are merged
+  echo: '{{ vp }}'
+  args: '{{ rp }}'
+  vars:
+    vp:
+      a: a from vp
+      b: b from vp
+    rp:
+      a: a from rp
+      c: c from rp
+  register: res
+
+- assert:
+    that:
+      - res.action_args.a == 'a from vp'
+      - res.action_args.b == 'b from vp'
+      - res.action_args.c == 'c from rp'
+
+- name: validate non-raw task arg precedence
+  echo: '{{ vp }} a={{ "templated a from k=v" }} chdir={{"from_kv"}} warn={{omit}} bogus={{omit}}'
+  args:
+    a: masked
+    b: '{{ "templated b from args" }}'
+    chdir: masked by kv
+    warn: masked by omit
+  vars:
+    vp:
+      a: masked
+      c: '{{ "templated c from vp" }}'
+      chdir: masked by kv/args
+      warn: masked by omit/args
+  register: res
+
+- assert:
+    that:
+      - res.action_args.a == "templated a from k=v"
+      - res.action_args.b == "templated b from args"
+      - res.action_args.c == "templated c from vp"
+      - res.action_args.chdir == "from_kv"
+      - res.action_args is not contains "warn"
+
+
+- name: validate raw task arg precedence
+  echo_raw: '{{ "vp_scalar" }} chdir={{"from_kv"}} warn={{omit}}' # devel omit is `obliterate`- does not support fallback
+  args:
+    a: '{{ "templated a from args" }}'
+    chdir: masked
+    warn: masked by omit
+  register: res
+
+- assert:
+    that:
+      - res.action_args._raw_params == "vp_scalar"
+      - res.action_args.a == "templated a from args"
+      - res.action_args.chdir == "from_kv"
+      - res.action_args is not contains "warn"
+
+## Error cases
+
+- name: non-raw vp args must be dict
+  echo: '{{ ["vp_list"] }}'
+  ignore_errors: true
+  register: res
+
+- assert:
+    that: res is failed and res.msg is contains "must resolve to a 'dict'"
+
+- name: non-raw vp args must be dict
+  echo: '{{ "foo" }} arg1=blah'
+  ignore_errors: true
+  register: res
+
+- assert:
+    that: res is failed and res.msg is contains "must resolve to a 'dict'"
+
+- name: presence of (templated, hence deferred) non-k=v tokens in _raw_params fails for non-raw actions
+  echo: a=aval {{ "non_kv_thing" }} b=bval
+  ignore_errors: true
+  register: res
+
+- assert:
+    that: res is failed and res.msg is contains "must resolve to a 'dict'"
+
+- name: leftover non k=v tokens for non-raw actions is an error
+  echo: a=aval non_kv_junk b=bval
+  ignore_errors: true
+  register: res
+
+- assert:
+    that:
+      res.msg is contains "does not support raw params"
+
+# normal precedence: action.kv, task args, variable_params
+# special-case buggy precedence with action dict + `module`: action.args, action.module.kv, action.(discrete args), task args, variable_params
+- name: assert (deprecated) buggy action.module arg precedence
+  action:
+    args: # precedence 0
+      a: from_action_args
+
+    module: echo {{ vp }} a=from_action_module_kv_masked b=from_action_module_kv  # precedence 1
+
+    # precedence 2
+    a: from_discrete_args_masked
+    b: from_discrete_args_masked
+    c: from_discrete_args
+
+  args:  # precedence 3
+    a: from_task_args_masked
+    b: from_task_args_masked
+    c: from_task_args_masked
+    d: from_task_args
+
+  vars:  # precedence 4
+    vp:
+      a: from_vp_masked
+      b: from_vp_masked
+      c: from_vp_masked
+      d: from_vp_masked
+      e: from_vp
+  register: res
+
+- assert:
+    that: |
+      res.action_args == {"a": "from_action_args", "b": "from_action_module_kv", "c": "from_discrete_args", "d": "from_task_args", "e": "from_vp"}
+
+# DTFIX-FUTURE: ensure that we're testing the new behavior we want before nuking some/all of these "asserting broken/weird behavior" test cases
+# Nonsensical cases, asserting existing weird-ish behavior
+
+- name: (nonsensical, validating existing behavior) raw vp args template result gets stringified in _raw_params after shell k=v arg removal if k=v args remain
+  echo_raw: '{{ {"a":"stringified"} }} chdir=chdirvalue other=causes_vp_stringification'
+  register: res
+
+- assert:
+    that:
+      #- res.action_args._raw_params is string
+      #- res.action_args._raw_params is not contains "chdir"
+      - res.action_args.chdir == "chdirvalue"
+
+- name: (nonsensical, validating existing behavior) raw vp args template result preserves type in _raw_params after shell k=v arg removal if no k=v args remain
+  echo_raw: '{{ ["listval"] }} chdir=chdirvalue'
+  register: res
+
+- assert:
+    that:
+      - res.action_args._raw_params[0] == "listval"
+      - res.action_args.chdir == "chdirvalue"
+
+- name: (nonsensical, validating existing behavior) crazy busted inline kv parsing for non-raw actions
+  echo: a=aval {{ "k=v" }} {{ wtf=oopsquotes }} b=bval
+  vars:
+    kvstring: k=v
+  ignore_errors: true
+  register: res
+
+- assert:
+    that:
+      - res.action_args.a == "aval"
+      - res.action_args.b == "bval"
+      - res.action_args['{'~'{ "k'] == 'v" }}'
+      - res.action_args['{'~'{ wtf'] == 'oopsquotes }}'
+
+- name: (nonsensical, validating existing behavior) use legacy module arg with null value
+  action: echo
+  args:
+    module: ~
+  register: res
+
+- assert:
+    that: res.action_args.module == none

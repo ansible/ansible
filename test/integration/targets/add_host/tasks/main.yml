@@ -1,0 +1,186 @@
+# test code for the add_host action
+# (c) 2015, Matt Davis <mdavis@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# See https://github.com/ansible/ansible/issues/36045
+- set_fact:
+    inventory_data:
+      ansible_ssh_common_args: "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+      # ansible_ssh_host: "127.0.0.3"
+      ansible_host: "127.0.0.3"
+      ansible_ssh_pass: "foobar"
+      # ansible_ssh_port: "2222"
+      ansible_port: "2222"
+      ansible_ssh_private_key_file: "/tmp/inventory-cloudj9cGz5/identity"
+      ansible_ssh_user: "root"
+      hostname: "newdynamichost2"
+
+- name: Show inventory_data for 36045
+  debug:
+    msg: "{{ inventory_data }}"
+
+- name: Add host from dict 36045
+  add_host: "{{ inventory_data }}"
+
+- name: show newly added host
+  debug:
+    msg: "{{hostvars['newdynamichost2'].group_names}}"
+
+- name: ensure that dynamically-added newdynamichost2 is visible via hostvars, groups 36045
+  assert:
+    that:
+    - hostvars['newdynamichost2'] is defined
+    - hostvars['newdynamichost2'].group_names is defined
+
+#  end of https://github.com/ansible/ansible/issues/36045 related tests
+
+- name: add a host to the runtime inventory
+  add_host:
+    name: newdynamichost
+    groups: newdynamicgroup
+    a_var: from add_host
+
+- debug: msg={{hostvars['newdynamichost'].group_names}}
+
+- name: ensure that dynamically-added host is visible via hostvars, groups, etc (there are several caches that could break this)
+  assert:
+    that:
+    - hostvars['bogushost'] is not defined # there was a bug where an undefined host was a "type" instead of an instance- ensure this works before we rely on it
+    - hostvars['newdynamichost'] is defined
+    - hostvars['newdynamichost'].group_names is defined
+    - "'newdynamicgroup' in hostvars['newdynamichost'].group_names"
+    - hostvars['newdynamichost']['bogusvar'] is not defined
+    - hostvars['newdynamichost']['a_var'] is defined
+    - hostvars['newdynamichost']['a_var'] == 'from add_host'
+    - groups['bogusgroup'] is not defined # same check as above to ensure that bogus groups are undefined...
+    - groups['newdynamicgroup'] is defined
+    - "'newdynamichost' in groups['newdynamicgroup']"
+
+# Tests for idempotency
+- name: Add testhost01 dynamic host
+  add_host:
+    name: testhost01
+  register: add_testhost01
+
+- name: Try adding testhost01 again, with no changes
+  add_host:
+    name: testhost01
+  register: add_testhost01_idem
+
+- name: Add a host variable to testhost01
+  add_host:
+    name: testhost01
+    foo: bar
+  register: hostvar_testhost01
+
+- name: Add the same host variable to testhost01, with no changes
+  add_host:
+    name: testhost01
+    foo: bar
+  register: hostvar_testhost01_idem
+
+- name: Add another host, testhost02
+  add_host:
+    name: testhost02
+  register: add_testhost02
+
+- name: Add it again for good measure
+  add_host:
+    name: testhost02
+  register: add_testhost02_idem
+
+- name: Add testhost02 to a group
+  add_host:
+    name: testhost02
+    groups:
+      - testhostgroup
+  register: add_group_testhost02
+
+- name: Add testhost01 to the same group
+  add_host:
+    name: testhost01
+    groups:
+      - testhostgroup
+  register: add_group_testhost01
+
+- name: Add testhost02 to the group again
+  add_host:
+    name: testhost02
+    groups:
+      - testhostgroup
+  register: add_group_testhost02_idem
+
+- name: Add testhost01 to the group again
+  add_host:
+    name: testhost01
+    groups:
+      - testhostgroup
+  register: add_group_testhost01_idem
+
+- assert:
+    that:
+      - add_testhost01 is changed
+      - add_testhost01_idem is not changed
+      - hostvar_testhost01 is changed
+      - hostvar_testhost01_idem is not changed
+      - add_testhost02 is changed
+      - add_testhost02_idem is not changed
+      - add_group_testhost02 is changed
+      - add_group_testhost01 is changed
+      - add_group_testhost02_idem is not changed
+      - add_group_testhost01_idem is not changed
+      - groups['testhostgroup']|length == 2
+      - "'testhost01' in groups['testhostgroup']"
+      - "'testhost02' in groups['testhostgroup']"
+      - hostvars['testhost01']['foo'] == 'bar'
+
+- name: Give invalid input
+  add_host: namenewdynamichost groupsnewdynamicgroup a_varfromadd_host
+  ignore_errors: true
+  register: badinput
+
+- name: verify we detected bad input
+  assert:
+    that:
+      - badinput is failed
+
+- name: Add hosts in a loop
+  add_host:
+    name: 'host_{{item}}'
+  loop:
+    - 1
+    - 2
+    - 2
+  register: add_host_loop_res
+
+- name: verify correct changed results
+  assert:
+    that:
+      - add_host_loop_res.results[0] is changed
+      - add_host_loop_res.results[1] is changed
+      - add_host_loop_res.results[2] is not changed
+      - add_host_loop_res is changed
+
+- name: Add host with host:port in name
+  add_host:
+    name: '127.0.1.1:2222'
+  register: hostport
+
+- assert:
+    that:
+      - hostport.add_host.host_name == '127.0.1.1'
+      - hostport.add_host.host_vars.ansible_ssh_port == 2222

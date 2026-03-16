@@ -1,0 +1,4 @@
+---
+http_port: 15261
+files_dir: '{{ remote_tmp_dir|expanduser }}/files'
+checkout_dir: '{{ remote_tmp_dir }}/git'

@@ -1,0 +1,77 @@
+- name: SETUP | clean out the remote_tmp_dir
+  file:
+    path: "{{ remote_tmp_dir }}"
+    state: absent
+
+- name: SETUP | create clean remote_tmp_dir
+  file:
+    path: "{{ remote_tmp_dir }}"
+    state: directory
+
+- name: SETUP | install git
+  package:
+    name: '{{ item }}'
+  when: ansible_distribution not in ["MacOSX", "Alpine"]
+  notify:
+    - cleanup
+  with_items: "{{ git_required_packages[ansible_os_family | default('default') ] | default(git_required_packages.default) }}"
+
+- name: SETUP | verify that git is installed so this test can continue
+  shell: which git
+
+- name: SETUP | get git version, only newer than {{git_version_supporting_depth}} has fixed git depth
+  shell: git --version | grep 'git version' | sed 's/git version //'
+  register: git_version
+
+- name: SETUP | get gpg version
+  shell: gpg --version 2>1 | head -1 | sed -e 's/gpg (GnuPG) //'
+  register: gpg_version
+
+- name: SETUP | set git global user.email if not already set
+  shell: git config --global user.email 'noreply@example.com'
+
+- name: SETUP | set git global user.name if not already set
+  shell: git config --global user.name  'Ansible Test Runner'
+
+- name: SETUP | set git global init.defaultBranch
+  shell: >-
+    git config --global init.defaultBranch '{{ git_default_branch }}'
+
+- name: SETUP | set git global init.templateDir
+  # NOTE: This custom Git repository template emulates the `init.defaultBranch`
+  # NOTE: setting on Git versions below 2.28.
+  # NOTE: Ref: https://superuser.com/a/1559582.
+  # NOTE: Other workarounds mentioned there, like invoking
+  # NOTE: `git symbolic-ref HEAD refs/heads/main` after each `git init` turned
+  # NOTE: out to have mysterious side effects that break the tests in surprising
+  # NOTE: ways.
+  shell: |
+    set -eEu
+
+    git config --global \
+      init.templateDir '{{ remote_tmp_dir }}/git-templates/git.git'
+
+    mkdir -pv '{{ remote_tmp_dir }}/git-templates'
+    set +e
+    GIT_TEMPLATES_DIR=$(\
+      2>/dev/null \
+        ls -1d \
+          '/Library/Developer/CommandLineTools/usr/share/git-core/templates' \
+          '/usr/local/share/git-core/templates' \
+          '/usr/share/git-core/templates' \
+    )
+    set -e
+    >&2 echo "Found Git's default templates directory: ${GIT_TEMPLATES_DIR}"
+    cp -r "${GIT_TEMPLATES_DIR}" '{{ remote_tmp_dir }}/git-templates/git.git'
+
+    echo 'ref: refs/heads/{{ git_default_branch }}' \
+      > '{{ remote_tmp_dir }}/git-templates/git.git/HEAD'
+
+- name: SETUP | create repo_dir
+  file:
+    path: "{{ repo_dir }}"
+    state: directory
+
+- name: SETUP | show git version
+  debug:
+    msg: "Running test with git {{ git_version.stdout }}"

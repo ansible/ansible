@@ -1,0 +1,25 @@
+- name: Ensure key is not there to start with.
+  apt_key:
+    id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+    state: absent
+
+- name: run first docs example
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+  register: apt_key_test0
+
+- debug: var=apt_key_test0
+
+- name: re-run first docs example
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 36A1D7869245C8950F966E92D8576A8BA88D21E9
+  register: apt_key_test1
+
+- name: validate results
+  assert:
+      that:
+          - 'apt_key_test0.changed is defined'
+          - 'apt_key_test0.changed'
+          - 'not apt_key_test1.changed'

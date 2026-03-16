@@ -1,0 +1,117 @@
+- name: debug should fail
+  debug:
+    var: data1_vaulted
+  ignore_errors: true
+  register: debugres
+
+- assert:
+    that: debugres is failed
+
+- vars:
+    dict_with_undecryptable:
+      fine: hi mom
+      bang: '{{ data1_vaulted }}'
+  debug:
+    var: dict_with_undecryptable
+  ignore_errors: true
+  register: dictres
+
+- assert:
+    that: dictres is failed
+
+- vars:
+    dict_with_undecryptable:
+      fine: hi mom
+      data1_vaulted: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          33323332333033383335333533383338333333303339333733323339333833303334333133313339
+          33373339333133323331333833373335333933323338333633343338333133343334333733383334
+          33333335333433383337333133303339333433353332333333363339333733363335333233303330
+          3337333733353331333633313335333733373334333733320a373938666533366165653830313163
+          62386564343438653437333564383664646538653364343138303831613039313232636437336530
+          3438376662373764650a633366646563386335623161646262366137393635633464333265613938
+          6661
+  debug:
+    var: dict_with_undecryptable
+  ignore_errors: true
+  register: inline_undecryptable
+
+- assert:
+    that: inline_undecryptable is failed
+
+
+- name: check vaulting
+  assert:
+    that:
+      - data1_plaintext|vault(data1_password, salt=data1_salt) == data1_vaulted_string_with_id
+      - data1_plaintext|vault(data1_password, salt=data1_salt) is not ansible._protomatter.tagged_with('VaultedValue')
+      - data1_plaintext|vault(data1_password, salt=data1_salt, wrap_object=True) is ansible._protomatter.tagged_with('VaultedValue')
+
+- name: check round-trip without salt
+  assert:
+    that:
+      - data2_plaintext|vault(data2_password, vault_id=data2_vault_id)|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+
+- name: check unvaulting
+  assert:
+    that:
+      - data1_vaulted_string_with_id|unvault(data1_password) == data1_plaintext
+      - data1_vaulted|unvault(data1_password) == data1_plaintext
+      - data2_vaulted_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+      - data2_vaulted_string_with_id|unvault(data2_password, vault_id=data2_vault_id) == data2_plaintext
+
+- vars:
+    dict_with_undecryptable:
+      fine: hi mom
+      data1_vaulted: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          33323332333033383335333533383338333333303339333733323339333833303334333133313339
+          33373339333133323331333833373335333933323338333633343338333133343334333733383334
+          33333335333433383337333133303339333433353332333333363339333733363335333233303330
+          3337333733353331333633313335333733373334333733320a373938666533366165653830313163
+          62386564343438653437333564383664646538653364343138303831613039313232636437336530
+          3438376662373764650a633366646563386335623161646262366137393635633464333265613938
+          6661
+  debug:
+    var: dict_with_undecryptable | string
+  ignore_errors: true
+  register: inline_undecryptable
+
+- assert:
+    that: inline_undecryptable is failed
+
+- vars:
+    list_with_undecryptable:
+      - fine
+      - !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        33323332333033383335333533383338333333303339333733323339333833303334333133313339
+        33373339333133323331333833373335333933323338333633343338333133343334333733383334
+        33333335333433383337333133303339333433353332333333363339333733363335333233303330
+        3337333733353331333633313335333733373334333733320a373938666533366165653830313163
+        62386564343438653437333564383664646538653364343138303831613039313232636437336530
+        3438376662373764650a633366646563386335623161646262366137393635633464333265613938
+        6661
+  debug:
+    var: list_with_undecryptable | string
+  ignore_errors: true
+  register: inline_undecryptable_list
+
+- assert:
+    that: inline_undecryptable_list is failed
+
+- debug:
+    var: data1_vaulted | select
+  ignore_errors: true
+  register: debugout
+
+- assert:
+      that: debugout is failed
+
+- debug:
+    var: data1_vaulted | comment
+  ignore_errors: true
+  register: debugout
+
+- assert:
+    that: debugout is failed

@@ -1,0 +1,149 @@
+---
+- name: 'A play with unicode: ¢ £ ¤ ¥'
+  hosts: localhost
+  vars:
+    test_var: 'Ī ī Ĭ ĭ Į į İ ı Ĳ ĳ Ĵ ĵ Ķ ķ ĸ Ĺ ĺ Ļ ļ Ľ ľ Ŀ ŀ Ł ł Ń ń Ņ ņ Ň ň ŉ Ŋ ŋ Ō ō Ŏ ŏ Ő ő Œ'
+    hostnames:
+        - 'host-ϬϭϮϯϰ'
+        - 'host-fóöbär'
+        - 'host-ΙΚΛΜΝΞ'
+        - 'host-στυφχψ'
+        - 'host-ϬϭϮϯϰϱ'
+
+  tasks:
+    - name: 'A task name with unicode: è é ê ë'
+      debug: msg='hi there'
+
+    - name: 'A task with unicode parameters'
+      debug: var=test_var
+
+      # € ‚ ƒ „ … † ‡ ˆ ‰ Š ‹ Œ Ž ‘ ’ “ ” • – — ˜ ™ š › œ ž Ÿ ¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ®'
+
+    - name: 'A task using with_items containing unicode'
+      debug: msg='{{item}}'
+      with_items:
+        - '¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿ À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ð Ñ Ò Ó Ô Õ Ö ×'
+        - 'Ø Ù Ú Û Ü Ý Þ ß à á â ã ä å æ ç è é ê ë ì í î ï ð ñ ò ó ô õ ö ÷ ø ù ú û ü ý þ ÿ Ā'
+        - 'ā Ă ă Ą ą Ć ć Ĉ ĉ Ċ ċ Č č Ď ď Đ đ Ē ē Ĕ ĕ Ė ė Ę ę Ě ě Ĝ ĝ Ğ ğ Ġ ġ Ģ ģ Ĥ ĥ Ħ ħ Ĩ ĩ'
+
+    - add_host:
+        name: '{{item}}'
+        groups: 'ĪīĬĭ'
+        ansible_ssh_host: 127.0.0.1
+        ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      with_items: "{{ hostnames }}"
+
+    - name: 'A task with unicode extra vars'
+      debug: var=extra_var
+
+    - name: 'A task with unicode host vars'
+      debug: var=unicode_host_var
+
+    - name: 'A task with unicode shell parameters'
+      shell: echo '¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿ À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ð Ñ Ò Ó Ô Õ Ö ×'
+      register: output
+
+    - name: 'Assert that the unicode was echoed'
+      assert:
+        that:
+          - "'¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿ À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ð Ñ Ò Ó Ô Õ Ö ×' in output.stdout_lines"
+
+    - name: Run raw with non-ascii options
+      raw: "/bin/echo Zażółć gęślą jaźń"
+      register: results
+
+    - name: Check that raw output the right thing
+      assert:
+        that:
+          - "'Zażółć gęślą jaźń' in results.stdout_lines"
+
+    - name: Run a script with non-ascii options and environment
+      script: unicode-test-script --option "Zażółć gęślą jaźń"
+      environment:
+        option: Zażółć
+      register: results
+
+    - name: Check that script output includes the nonascii arguments and environment values
+      assert:
+        that:
+          - "'--option Zażółć gęślą jaźń' in results.stdout_lines"
+          - "'Zażółć' in results.stdout_lines"
+
+    - name: Ping with non-ascii environment variable and option
+      ping:
+        data: "Zażółć gęślą jaźń"
+      environment:
+        option: Zażółć
+      register: results
+
+    - name: Check that ping with non-ascii data was correct
+      assert:
+        that:
+          - "'Zażółć gęślą jaźń' == results.ping"
+
+    - name: Command that echoes a non-ascii env var
+      command: "echo $option"
+      environment:
+        option: Zażółć
+      register: results
+
+    - name: Check that a non-ascii env var was passed to the command module
+      assert:
+        that:
+          - "'Zażółć' in results.stdout_lines"
+
+    - name: Clean a temp directory
+      file:
+        path: /var/tmp/ansible_test_unicode_get_put
+        state: absent
+
+    - name: Create a temp directory
+      file:
+        path: /var/tmp/ansible_test_unicode_get_put
+        state: directory
+
+    - name: Create a file with a non-ascii filename
+      file:
+        path: /var/tmp/ansible_test_unicode_get_put/Zażółć
+        state: touch
+      delegate_to: localhost
+
+    - name: Put with unicode filename
+      copy:
+        src: /var/tmp/ansible_test_unicode_get_put/Zażółć
+        dest: /var/tmp/ansible_test_unicode_get_put/Zażółć2
+
+    - name: Fetch with unicode filename
+      fetch:
+        src: /var/tmp/ansible_test_unicode_get_put/Zażółć2
+        dest: /var/tmp/ansible_test_unicode_get_put/
+
+    - name: Clean a temp directory
+      file:
+        path: /var/tmp/ansible_test_unicode_get_put
+        state: absent
+
+- name: 'A play for hosts in group: ĪīĬĭ'
+  hosts: 'ĪīĬĭ'
+  gather_facts: true
+  tasks:
+    - debug: msg='Unicode is a good thing ™'
+    - debug: msg=АБВГД
+
+# Run this test by adding to the CLI: -e start_at_task=True --start-at-task '*¶'
+- name: 'Show that we can skip to unicode named tasks'
+  hosts: localhost
+  gather_facts: false
+  vars:
+    flag: 'original'
+    start_at_task: False
+  tasks:
+    - name: 'Override flag var'
+      set_fact: flag='new'
+
+    - name: 'A unicode task at the end of the playbook: ¶'
+      assert:
+        that:
+          - 'flag == "original"'
+      when: start_at_task|bool

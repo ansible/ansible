@@ -1,0 +1,51 @@
+- name: Install tomli-w package
+  pip:
+    name: tomli-w
+
+- name: test toml parsing
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.toml
+  register: toml_in
+
+- assert:
+    that:
+      - >
+        'foo = "bar"' in toml_in.stdout
+      - '"[somegroup.hosts.something.some_dict]" in toml_in.stdout'
+      - '"some_int = 1" in toml_in.stdout'
+      - '"some_float = 1.1" in toml_in.stdout'
+      - '"some_bool = true" in toml_in.stdout'
+      - '"some_list = [" in toml_in.stdout'
+
+# DTFIX3: plug in variable visitor on TOML output and re-enable this test
+#- name: "test option: --toml with valid group name"
+#  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
+#  register: result
+#
+#- assert:
+#    that:
+#        - result is succeeded
+
+- block:
+  - name: "test toml output with unicode characters"
+    command: ansible-inventory --list --toml -i {{ role_path }}/files/unicode.yml
+    register: result
+
+  - assert:
+      that:
+          - result is succeeded
+          - result.stdout is contains('příbor')
+
+  - block:
+    - name: "test toml output file with unicode characters"
+      command: ansible-inventory --list --toml --output unicode_inventory.toml -i {{ role_path }}/files/unicode.yml
+
+    - set_fact:
+        toml_inventory_file: "{{ lookup('file', 'unicode_inventory.toml') | string }}"
+
+    - assert:
+        that:
+            - toml_inventory_file is contains('příbor')
+    always:
+      - file:
+          name: unicode_inventory.toml
+          state: absent

@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug:
+  handlers:
+    - name: handler
+      block:
+        - name: due to how handlers are implemented, this is correct as it is equivalent to an implicit block
+          debug:
+        - name: this is a parser error, blocks as handlers are not supported
+          block:
+            - name: handler in a nested block
+              debug:

@@ -1,0 +1,11 @@
+---
+apache_port: 11386  # cannot use 80 as httptester overrides this
+subversion_test_dir: /tmp/ansible-svn-test-dir
+subversion_server_dir: /tmp/ansible-svn  # cannot use a path in the home dir without userdir or granting exec permission to the apache user
+subversion_repo_name: ansible-test-repo
+# default to explicit IPv4; svn doesn't handle IPv4 fallback if eg "localhost" -> [::1, 127.0.0.1] and ::1 doesn't answer
+subversion_repo_ip: 127.0.0.1
+subversion_repo_url: https://{{ subversion_repo_ip }}:{{ apache_port }}/svn/{{ subversion_repo_name }}
+subversion_repo_auth_url: https://{{ subversion_repo_ip }}:{{ apache_port }}/svnauth/{{ subversion_repo_name }}
+subversion_username: subsvn_user'''
+subversion_password: Password123!

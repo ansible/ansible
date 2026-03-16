@@ -1,0 +1,70 @@
+- hosts: "{{ target_hosts }}"
+  gather_facts: no
+  serial: 1
+  tasks:
+
+  # SSH with scp has troubles with using complex filenames that require quoting
+  # or escaping. The more complex filename scenario is skipped in this mode.
+  # The default of sftp has no problems with these filenames.
+  - name: check if ssh with the scp file transfer is being tested
+    set_fact:
+      skip_complex_filename: >-
+        {{
+            ansible_connection == "ssh" and
+            lookup("ansible.builtin.config",
+                "ssh_transfer_method",
+                plugin_name=ansible_connection,
+                plugin_type="connection",
+            ) == "scp"
+        }}
+      echo_string: 汉语
+
+  - name: set test filename
+    set_fact:
+      test_filename: 汉语-{{ skip_complex_filename | ternary("file", "['foo bar']") }}.txt
+
+  ### raw with unicode arg and output
+
+  - name: raw with unicode arg and output
+    raw: "{{ echo_commands[action_prefix ~ ansible_connection ~ '_' ~ (ansible_shell_type|default(''))] | default(echo_commands['default']) }}"
+    vars:
+      # Windows over SSH does not have a way to set the console codepage to allow UTF-8. We need to
+      # wrap the commands we send to the remote host to get it working.
+      echo_commands:
+        win_ssh_powershell: '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; echo {{ echo_string }}'
+        win_ssh_cmd: 'powershell.exe -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; echo {{ echo_string }}"'
+        default: echo {{ echo_string }}
+    register: command
+  - name: check output of raw with unicode arg and output
+    assert:
+      that:
+      - echo_string in command.stdout
+      - command is changed # as of 2.2, raw should default to changed: true for consistency w/ shell/command/script modules
+
+  ### copy local file with unicode filename and content
+
+  - name: create local file with unicode filename and content
+    local_action: lineinfile dest={{ local_tmp }}-汉语/{{ test_filename }} create=true line=汉语
+  - name: remove remote file with unicode filename and content
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语/{{ test_filename }} state=absent"
+  - name: create remote directory with unicode name
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=directory"
+  - name: copy local file with unicode filename and content
+    action: "{{ action_prefix }}copy src={{ local_tmp }}-汉语/{{ test_filename }} dest={{ remote_tmp }}-汉语/{{ test_filename }}"
+
+  ### fetch remote file with unicode filename and content
+
+  - name: remove local file with unicode filename and content
+    local_action: file path={{ local_tmp }}-汉语/{{ test_filename }} state=absent
+  - name: fetch remote file with unicode filename and content
+    fetch: src={{ remote_tmp }}-汉语/{{ test_filename }} dest={{ local_tmp }}-汉语/{{ test_filename }} fail_on_missing=true validate_checksum=true flat=true
+
+  ### remove local and remote temp files
+
+  - name: remove local temp file
+    local_action: file path={{ local_tmp }}-汉语 state=absent
+  - name: remove remote temp file
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=absent"
+
+  ### test wait_for_connection plugin
+  - wait_for_connection:

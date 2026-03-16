@@ -1,0 +1,9 @@
+[windows]
+{% for host in vars.groups.windows %}
+{{ host }}  ansible_host={{ hostvars[host]['ansible_host'] }}{% if hostvars[host]['ansible_connection'] != 'ssh' %} ansible_port={{ hostvars[host]['ansible_port'] }}{% endif %} ansible_user={{ hostvars[host]['ansible_user'] }} ansible_password={{ hostvars[host]['ansible_password'] | default(hostvars[host]['ansible_test_connection_password']) }}
+{% endfor %}
+
+[windows:vars]
+ansible_connection=psrp
+ansible_psrp_auth=negotiate
+ansible_psrp_cert_validation=ignore

@@ -1,0 +1,2 @@
+bugfixes:
+  - option argument deprecations now have a proper alternative help text.

@@ -1,0 +1,4 @@
+---
+minor_changes:
+    - file - return disk_usage_bytes fact (https://github.com/ansible/ansible/issues/70834).
+    - stat - return disk_usage_bytes fact (https://github.com/ansible/ansible/issues/70834).

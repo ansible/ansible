@@ -1,0 +1,23 @@
+DOCUMENTATION:
+  name: failed
+  author: Ansible Core
+  version_added: "1.9"
+  short_description: did the task fail
+  aliases: [failure]
+  description:
+    - Tests if task finished in failure, opposite of C(succeeded).
+    - This test checks for the existence of a C(failed) key in the input dictionary and that it is V(True) if present.
+    - Tasks that get skipped or not executed due to other failures (syntax, templating, unreachable host, etc) do not return a 'failed' status.
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ taskresults is failed }}
+
+RETURN:
+  _value:
+    description: Returns V(True) if the task was failed, V(False) otherwise.
+    type: boolean

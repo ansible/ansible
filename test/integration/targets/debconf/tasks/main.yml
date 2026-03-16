@@ -1,0 +1,225 @@
+# Test code for the debconf module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+##
+## debconf query
+##
+
+- block:
+    - name: query the tzdata package
+      debconf:
+        name: tzdata
+      register: debconf_test0
+
+    - name: validate results for test 0
+      assert:
+        that:
+          - 'debconf_test0.changed is defined'
+          - 'debconf_test0.current is defined'
+          - '"tzdata/Zones/Etc" in debconf_test0.current'
+          - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
+
+    - name: install debconf-utils
+      apt:
+        name: debconf-utils
+        state: present
+      register: debconf_utils_deb_install
+
+    - name: Check if password is set
+      debconf:
+        name: ddclient
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      no_log: false
+      register: debconf_test1
+
+    - name: validate results for test 1
+      assert:
+        that:
+          - debconf_test1.changed
+
+    - name: Change password again
+      debconf:
+        name: ddclient
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      no_log: false
+      register: debconf_test2
+
+    - name: validate results for test 1
+      assert:
+        that:
+          - not debconf_test2.changed
+
+    - name: Check if empty password is set
+      debconf:
+        name: ddclient2
+        question: ddclient/password
+        value: ""
+        vtype: password
+      no_log: false
+      register: debconf_test1
+
+    - name: validate if password is set to empty value
+      assert:
+        that:
+          - debconf_test1.changed
+
+    - name: Change empty password again (idempotency)
+      debconf:
+        name: ddclient2
+        question: ddclient/password
+        value: "MySecretValue"
+        vtype: password
+      no_log: false
+      register: debconf_test2
+
+    - name: validate if the empty password is changed to the given value
+      assert:
+        that:
+          - debconf_test2.changed
+
+    - name: Set different question for same package name
+      debconf:
+        name: ddclient2
+        question: ddclient/password1
+        value: "Sample"
+        vtype: password
+      no_log: false
+      register: debconf_test1
+
+    - name: validate if different question for same package name is set
+      assert:
+        that:
+          - debconf_test1.changed
+
+    - name: Set different question for same package name again (idempotency)
+      debconf:
+        name: ddclient2
+        question: ddclient/password1
+        value: "Sample"
+        vtype: password
+      no_log: false
+      register: debconf_test2
+
+    - name: validate if different question for same package name is set (idempotency)
+      assert:
+        that:
+          - not debconf_test2.changed
+
+    - name: Multiselect value
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - passwd
+          - group
+          - shadow
+      register: debconf_multiselect_test
+
+    - name: validate results for multiselect test
+      assert:
+        that:
+          - debconf_multiselect_test.changed
+
+    - name: Multiselect value again (idempotency)
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - passwd
+          - group
+          - shadow
+      register: debconf_multiselect_test_idem
+
+    - name: validate results for multiselect test (idempotency)
+      assert:
+        that:
+          - not debconf_multiselect_test_idem.changed
+
+    - name: Multiselect value to check if ordered value
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - group
+          - shadow
+          - passwd
+      register: debconf_multiselect_test_idem_2
+
+    - name: validate results for multiselect test for ordered value
+      assert:
+        that:
+          - not debconf_multiselect_test_idem_2.changed
+
+    - name: Multiselect value to check backward compatibility
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value: group, shadow, passwd
+      register: debconf_multiselect_test_idem_3
+
+    - name: validate results for multiselect test for backward compatibility
+      assert:
+        that:
+          - debconf_multiselect_test_idem_3.changed
+
+    - name: Multiselect value to check if value contains invalid user input
+      debconf:
+        name: libnss-ldapd
+        question: libnss-ldapd/nsswitch
+        vtype: multiselect
+        value:
+          - group
+          - 1
+          - passwd
+      register: debconf_multiselect_test_idem_4
+      ignore_errors: yes
+
+    - name: validate results for multiselect test for invalid value
+      assert:
+        that:
+          - not debconf_multiselect_test_idem_4.changed
+          - '"Invalid value provided" in debconf_multiselect_test_idem_4.msg'
+
+    - name: Boolean vtype from boolean value
+      debconf:
+        name: libnns-ldap
+        question: libnss-ldapd/clean_nsswitch
+        vtype: boolean
+        value: true
+      register: debconf_bool_test_bool_1
+
+    - name: validate results for boolean vtype from boolean value
+      assert:
+        that:
+          - debconf_bool_test_bool_1.changed
+
+    - name: Boolean vtype from string value
+      debconf:
+        name: libnns-ldap
+        question: libnss-ldapd/clean_nsswitch
+        vtype: boolean
+        value: "FALSE"
+      register: debconf_bool_test_bool_2
+
+    - name: validate results for boolean vtype from string value
+      assert:
+        that:
+          - debconf_bool_test_bool_2.changed
+
+  always:
+    - name: uninstall debconf-utils
+      apt:
+        name: debconf-utils
+        state: absent
+      when: debconf_utils_deb_install is changed
+
+  when: ansible_distribution in ('Ubuntu', 'Debian')

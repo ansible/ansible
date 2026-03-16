@@ -1,0 +1,2 @@
+bugfixes:
+  - "dnf - fix package installation when specifying architecture without version (e.g., ``libgcc.i686``) where a different architecture of the same package is already installed (https://github.com/ansible/ansible/issues/86156)."

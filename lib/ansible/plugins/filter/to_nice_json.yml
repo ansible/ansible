@@ -1,0 +1,63 @@
+DOCUMENTATION:
+  name: to_nice_json
+  author: core team
+  version_added: 'historical'
+  short_description: Convert variable to 'nicely formatted' JSON string
+  description:
+    - Converts an Ansible variable into a 'nicely formatted' JSON string representation
+    - This filter functions as a wrapper to the Python C(json.dumps) function.
+    - Ansible automatically converts JSON strings into variable structures so this plugin is used to forcibly retain a JSON string.
+  options:
+    _input:
+      description: A variable or expression that returns a data structure.
+      type: raw
+      required: true
+    vault_to_text:
+      description: Toggle to either unvault a vault or create the JSON version of a vaulted object.
+      type: bool
+      default: True
+      version_added: '2.9'
+    preprocess_unsafe:
+      description: Toggle to represent unsafe values directly in JSON or create a unsafe object in JSON.
+      type: bool
+      default: True
+      version_added: '2.9'
+    allow_nan:
+      description:
+        - When V(False), out-of-range float values C(nan), C(inf) and C(-inf) will result in an error.
+        - When V(True), out-of-range float values will be represented using their JavaScript equivalents, C(NaN), C(Infinity) and C(-Infinity).
+      default: True
+      type: bool
+    check_circular:
+      description: Controls the usage of the internal circular reference detection, if off can result in overflow errors.
+      default: True
+      type: bool
+    ensure_ascii:
+      description: Escapes all non ASCII characters.
+      default: True
+      type: bool
+    skipkeys:
+      description: If V(True), keys that are not basic Python types will be skipped.
+      default: False
+      type: bool
+    sort_keys:
+      description: Affects sorting of dictionary keys. Passed to an underlying C(json.dumps) call.
+      default: True
+      type: bool
+    indent:
+      description: Specifies an indentation level. Passed to an underlying C(json.dumps) call.
+      default: 4
+      type: int
+  notes:
+    - Both O(vault_to_text) and O(preprocess_unsafe) defaulted to V(False) between Ansible 2.9 and 2.12.
+    - 'These parameters to C(json.dumps) will be ignored, they are overridden for internal use: I(cls), I(default), I(separators).'
+
+EXAMPLES: |
+  # dump variable in a template to create a nicely formatted JSON document
+  {{ docker_config | to_nice_json }}
+
+
+RETURN:
+  _value:
+    description: The 'nicely formatted' JSON serialized string representing the variable structure inputted.
+    type: string

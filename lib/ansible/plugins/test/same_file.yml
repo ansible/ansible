@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: same_file
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: compares two paths to see if they resolve to the same filesystem object
+  description: Check if the provided paths map to the same location on the controller's filesystem (localhost).
+  aliases: [is_file]
+  options:
+    _input:
+      description: A path.
+      type: path
+      required: true
+    _path2:
+      description: Another path.
+      type: path
+      required: true
+
+EXAMPLES: |
+  amionelevelfromroot: "{{ '/etc/hosts' is same_file('../etc/hosts') }}"
+
+RETURN:
+  _value:
+    description: Returns V(True) if the paths correspond to the same location on the filesystem on the controller, V(False) if otherwise.
+    type: boolean

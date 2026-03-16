@@ -1,0 +1,17 @@
+- vars:
+    upstart_files:
+      - /etc/init/ansible_test.conf
+      - /etc/init/ansible_test.override
+      - /etc/init/ansible_test_broken.conf
+  block:
+    - name: remove upstart init files
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop: '{{ upstart_files }}'
+
+    - name: assert that upstart init files were removed
+      raw: 'test -e {{ item }}'
+      loop: '{{ upstart_files }}'
+      register: file_exists
+      failed_when: file_exists is not failed

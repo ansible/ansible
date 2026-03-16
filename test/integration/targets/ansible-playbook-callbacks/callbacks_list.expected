@@ -1,0 +1,25 @@
+ 1 __init__
+98 v2_on_any
+ 1 v2_on_file_diff
+ 5 v2_playbook_on_handler_task_start
+ 3 v2_playbook_on_include
+ 1 v2_playbook_on_no_hosts_matched
+ 2 v2_playbook_on_no_hosts_remaining
+ 3 v2_playbook_on_notify
+ 3 v2_playbook_on_play_start
+ 1 v2_playbook_on_start
+ 1 v2_playbook_on_stats
+19 v2_playbook_on_task_start
+ 1 v2_playbook_on_vars_prompt
+ 1 v2_runner_item_on_failed
+ 2 v2_runner_item_on_ok
+ 1 v2_runner_item_on_skipped
+ 1 v2_runner_on_async_failed
+ 1 v2_runner_on_async_ok
+ 2 v2_runner_on_async_poll
+ 5 v2_runner_on_failed
+17 v2_runner_on_ok
+ 1 v2_runner_on_skipped
+24 v2_runner_on_start
+ 1 v2_runner_on_unreachable
+ 2 v2_runner_retry

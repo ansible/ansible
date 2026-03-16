@@ -1,0 +1,7 @@
+minor_changes:
+  - >
+    core - The ``ActionBase._low_level_execute_command`` method no longer adds ``&& sleep 0`` to commands.
+    This was a work-around for a 10+ year old Linux kernel bug affecting OpenSSH.
+    By August of 2016 the fix had been included in kernel versions 4.1.26, 4.4.12, 4.5.6, 4.6.1 and 4.7.
+    Linux kernel bug report: https://lore.kernel.org/lkml/alpine.LNX.2.00.1512091358290.9574@fanir.tuyoix.net/
+    OpenSSH bug report: https://bugzilla.mindrot.org/show_bug.cgi?id=2492

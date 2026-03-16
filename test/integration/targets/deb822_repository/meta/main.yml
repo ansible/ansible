@@ -1,0 +1,4 @@
+dependencies:
+  - prepare_tests
+  - role: setup_deb_repo
+    install_repo: false

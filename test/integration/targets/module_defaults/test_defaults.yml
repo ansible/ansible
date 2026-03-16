@@ -1,0 +1,249 @@
+- hosts: localhost
+  gather_facts: no
+  collections:
+  - testns.testcoll
+  - testns.othercoll
+  module_defaults:
+    testns.testcoll.echoaction:
+      explicit_module_default: from playbook
+    testns.testcoll.echo1:
+      explicit_module_default: from playbook
+    group/testgroup:
+      group_module_default: from playbook
+  tasks:
+  - testns.testcoll.echoaction:
+      task_arg: from task
+    register: echoaction_fq
+  - echoaction:
+      task_arg: from task
+    register: echoaction_unq
+  - testns.testcoll.echo1:
+      task_arg: from task
+    register: echo1_fq
+  - echo1:
+      task_arg: from task
+    register: echo1_unq
+  - testns.testcoll.echo2:
+      task_arg: from task
+    register: echo2_fq
+  - echo2:
+      task_arg: from task
+    register: echo2_unq
+  - testns.othercoll.other_echoaction:
+      task_arg: from task
+    register: other_echoaction_fq
+  - other_echoaction:
+      task_arg: from task
+    register: other_echoaction_unq
+  - testns.othercoll.other_echo1:
+      task_arg: from task
+    register: other_echo1_fq
+  - other_echo1:
+      task_arg: from task
+    register: other_echo1_unq
+
+  - debug: var=echo1_fq
+
+  - legacy_ping:
+    register: legacy_ping_1
+    module_defaults:
+      legacy_ping:
+        data: from task
+
+  - legacy_ping:
+    register: legacy_ping_2
+    module_defaults:
+      ansible.legacy.legacy_ping:
+        data: from task
+
+  - ansible.legacy.legacy_ping:
+    register: legacy_ping_3
+    module_defaults:
+      legacy_ping:
+        data: from task
+
+  - ansible.legacy.legacy_ping:
+    register: legacy_ping_4
+    module_defaults:
+      ansible.legacy.legacy_ping:
+        data: from task
+
+  - name: builtin uses legacy defaults
+    ansible.builtin.debug:
+    module_defaults:
+      debug:
+        msg: legacy default
+    register: builtin_legacy_defaults_1
+
+  - name: builtin uses legacy defaults
+    ansible.builtin.debug:
+    module_defaults:
+      ansible.legacy.debug:
+        msg: legacy default
+    register: builtin_legacy_defaults_2
+
+  - name: legacy does not use builtin defaults
+    ansible.legacy.debug:
+    register: legacy_builtin_defaults
+    module_defaults:
+      ansible.builtin.debug:
+        msg: legacy default
+
+  - assert:
+      that:
+        - "echoaction_fq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echoaction_unq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echo1_fq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echo1_unq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echo2_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "echo2_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echoaction_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echoaction_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echo1_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echo1_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "legacy_ping_1.ping == 'from task'"
+        - "legacy_ping_2.ping == 'from task'"
+        - "legacy_ping_3.ping == 'from task'"
+        - "legacy_ping_4.ping == 'from task'"
+        - "legacy_builtin_defaults.msg == 'Hello overridden world!'"
+        - "builtin_legacy_defaults_1.msg == 'legacy default'"
+        - "builtin_legacy_defaults_2.msg == 'legacy default'"
+
+  - include_tasks: tasks/main.yml
+
+- name: test preferring module name defaults for platform-specific actions
+  hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: ensure eosfacts does not use action plugin default
+    testns.testcoll.eosfacts:
+    module_defaults:
+      testns.testcoll.eos:
+        fail: true
+
+  - name: eosfacts does use module name defaults
+    testns.testcoll.eosfacts:
+    module_defaults:
+      testns.testcoll.eosfacts:
+        eosfacts: true
+    register: result
+
+  - assert:
+      that:
+        - result.eosfacts
+        - result.action_plugin == 'eos'
+
+  - name: ensure vyosfacts does not use action plugin default
+    testns.testcoll.vyosfacts:
+    module_defaults:
+      testns.testcoll.vyos:
+        fail: true
+
+  - name: vyosfacts does use vyosfacts defaults
+    testns.testcoll.vyosfacts:
+    module_defaults:
+      testns.testcoll.vyosfacts:
+        vyosfacts: true
+    register: result
+
+  - assert:
+      that:
+        - result.vyosfacts
+        - result.action_plugin == 'vyos'
+
+  - name: iosfacts/ios_facts does not use action plugin default (module action_plugin field has precedence over module-as-action-redirect)
+    collections:
+      - testns.testcoll
+    module_defaults:
+      testns.testcoll.ios:
+        fail: true
+    block:
+      - ios_facts:
+        register: result
+      - assert:
+          that:
+            - result.action_plugin == 'ios'
+
+      - iosfacts:
+        register: result
+      - assert:
+          that:
+            - result.action_plugin == 'ios'
+
+  - name: ensure iosfacts/ios_facts uses ios_facts defaults
+    collections:
+      - testns.testcoll
+    module_defaults:
+      testns.testcoll.ios_facts:
+        ios_facts: true
+    block:
+      - ios_facts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
+
+      - iosfacts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
+
+  - name: ensure iosfacts/ios_facts uses iosfacts defaults
+    collections:
+      - testns.testcoll
+    module_defaults:
+      testns.testcoll.iosfacts:
+        ios_facts: true
+    block:
+      - ios_facts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
+
+      - iosfacts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
+
+  - name: ensure redirected action gets redirected action defaults
+    testns.testcoll.module_uses_action_defaults:
+    module_defaults:
+      testns.testcoll.module_uses_action_defaults:
+        action_option: true
+    register: result
+
+  - assert:
+      that:
+        - result.action_option
+        - result.action_plugin == 'eos'
+
+  - name: ensure redirected action gets resolved action defaults
+    testns.testcoll.module_uses_action_defaults:
+    module_defaults:
+      testns.testcoll.eos:
+        action_option: true
+    register: result
+
+  - assert:
+      that:
+        - result.action_option
+        - result.action_plugin == 'eos'
+
+  - name: ensure redirected action does not use module-specific defaults
+    testns.testcoll.module_uses_action_defaults:
+    module_defaults:
+      testns.testcoll.module:
+        fail: true
+    register: result
+
+  - assert:
+      that:
+        - not result.action_option
+        - result.action_plugin == 'eos'

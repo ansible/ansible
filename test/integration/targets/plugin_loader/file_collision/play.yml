@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - r1
+    - r2
+  tasks:
+    - debug: msg={{'a'|filter1|filter2|filter3}}

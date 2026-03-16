@@ -1,0 +1,83 @@
+---
+- name: test out Windows WinRM specific tests
+  hosts: windows
+  force_handlers: yes
+  serial: 1
+  gather_facts: no
+
+  tasks:
+  - name: reboot the host
+    ansible.windows.win_reboot:
+
+  - name: setup remote tmp dir
+    import_role:
+      name: ../../setup_remote_tmp_dir
+
+  - name: copy across empty file
+    win_copy:
+      content: ''
+      dest: '{{ remote_tmp_dir }}\empty.txt'
+    register: winrm_copy_empty
+
+  - name: get result of copy across empty file
+    win_stat:
+      path: '{{ remote_tmp_dir }}\empty.txt'
+    register: winrm_copy_empty_actual
+
+  - name: assert copy across empty file
+    assert:
+      that:
+      - winrm_copy_empty is changed
+      - winrm_copy_empty_actual.stat.size == 0
+
+  # Ensures the connection plugin can handle a timeout
+  # without raising another error.
+  - name: run command with timeout
+    win_shell: Start-Sleep -Seconds 10
+    timeout: 5
+    register: timeout_cmd
+    ignore_errors: true
+
+  - assert:
+      that:
+      - timeout_cmd.msg is contains 'Timed out after'
+
+  - name: Test WinRM HTTP connection
+    win_ping:
+    vars:
+      ansible_port: 5985
+      ansible_winrm_scheme: http
+      ansible_winrm_transport: ntlm  # Verifies message encryption over HTTP
+
+  - name: Test WinRM HTTPS connection
+    win_ping:
+    vars:
+      ansible_port: 5986
+      ansible_winrm_scheme: https
+      ansible_winrm_server_cert_validation: ignore
+
+  - name: get WinRM quota value
+    win_shell: (Get-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser).Value
+    changed_when: false
+    register: winrm_quota
+
+  - block:
+    - name: set WinRM quota to lower value
+      win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser 3
+
+    - name: run ping with loop to exceed quota
+      win_ping:
+      loop: '{{ range(0, 4) | list }}'
+
+    always:
+    - name: reset WinRM quota value
+      win_shell: Set-Item WSMan:\localhost\Service\MaxConcurrentOperationsPerUser {{ winrm_quota.stdout | trim }}
+
+  - name: emit raw CLIXML on stderr with special chars
+    raw: $host.UI.WriteErrorLine("Test 🎵 _x005F_ _x005Z_.")
+    register: stderr_clixml
+
+  - name: assert emit raw CLIXML on stderr with special chars
+    assert:
+      that:
+      - stderr_clixml.stderr_lines == ['Test 🎵 _x005F_ _x005Z_.']

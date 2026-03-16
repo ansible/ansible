@@ -1,0 +1,47 @@
+---
+- hosts: testhost
+  vars:
+    ansible_hostname: "BAD!"
+    vars_var: "vars_var"
+    param_var: "BAD!"
+    vars_files_var: "BAD!"
+    extra_var_override_once_removed: "{{ extra_var_override }}"
+    from_inventory_once_removed: "{{ inven_var | default('BAD!') }}"
+  vars_files:
+    - vars/test_var_precedence.yml
+  pre_tasks:
+    - name: param vars should also override set_fact
+      set_fact:
+        param_var: "BAD!"
+  roles:
+    - { role: test_var_precedence, param_var: "param_var" }
+  tasks:
+    - name: register a result
+      command: echo 'BAD!'
+      register: registered_var
+    - name: use set_fact to override the registered_var
+      set_fact: registered_var="this is from set_fact"
+    - debug: var=extra_var
+    - debug: var=extra_var_override_once_removed
+    - debug: var=vars_var
+    - debug: var=vars_files_var
+    - debug: var=vars_files_var_role
+    - debug: var=registered_var
+    - debug: var=from_inventory_once_removed
+    - assert:
+        that:
+          - 'extra_var == "extra_var"'
+          - 'extra_var_override == "extra_var_override"'
+          - 'extra_var_override_once_removed == "extra_var_override"'
+          - 'vars_var == "vars_var"'
+          - 'vars_files_var == "vars_files_var"'
+          - 'vars_files_var_role == "vars_files_var_role3"'
+          - 'registered_var == "this is from set_fact"'
+          - 'from_inventory_once_removed == "inventory_var"'
+
+- hosts: inven_overridehosts
+  vars_files:
+    - "test_var_precedence.yml"
+  roles:
+    - role: test_var_precedence_inven_override
+      foo: bar

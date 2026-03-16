@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - unarchive - make timezone aware timestamp for comparison (https://github.com/ansible/ansible/issues/85779).

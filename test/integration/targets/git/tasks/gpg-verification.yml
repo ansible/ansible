@@ -1,0 +1,214 @@
+# Test for verification of GnuPG signatures
+
+- name: GPG-VERIFICATION | Create GnuPG verification workdir
+  tempfile:
+    state: directory
+  register: git_gpg_workdir
+
+- name: GPG-VERIFICATION | Define variables based on workdir
+  set_fact:
+    git_gpg_keyfile: "{{ git_gpg_workdir.path }}/testkey.asc"
+    git_gpg_source: "{{ git_gpg_workdir.path }}/source"
+    git_gpg_dest: "{{ git_gpg_workdir.path }}/dest"
+    git_gpg_gpghome: "{{ git_gpg_workdir.path }}/gpg"
+
+- name: GPG-VERIFICATION | Temporary store GnuPG test key
+  copy:
+    content: "{{ git_gpg_testkey }}"
+    dest: "{{ git_gpg_keyfile }}"
+
+- name: GPG-VERIFICATION | Create temporary GNUPGHOME directory
+  file:
+    path: "{{ git_gpg_gpghome }}"
+    state: directory
+    mode: 0700
+
+- name: GPG-VERIFICATION | Import GnuPG test key
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  command: gpg --import {{ git_gpg_keyfile }}
+
+- name: GPG-VERIFICATION | Create local GnuPG signed repository directory
+  file:
+    path: "{{ git_gpg_source }}"
+    state: directory
+
+- name: GPG-VERIFICATION | Generate local GnuPG signed repository
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  shell: |
+    set -eEu
+
+    git init
+
+    touch an_empty_file
+    git add an_empty_file
+    git commit --no-gpg-sign --message "Commit, and don't sign"
+    git tag lightweight_tag/unsigned_commit HEAD
+    git commit --allow-empty --gpg-sign --message "Commit, and sign"
+    git tag lightweight_tag/signed_commit HEAD
+    git tag --annotate --message "This is not a signed tag" unsigned_annotated_tag HEAD
+    git commit --allow-empty --gpg-sign --message "Commit, and sign"
+    git tag --sign --message "This is a signed tag" signed_annotated_tag HEAD
+    git checkout -b some_branch/signed_tip '{{ git_default_branch }}'
+    git commit --allow-empty --gpg-sign --message "Commit, and sign"
+    git checkout -b another_branch/unsigned_tip '{{ git_default_branch }}'
+    git commit --allow-empty --no-gpg-sign --message "Commit, and don't sign"
+    git checkout '{{ git_default_branch }}'
+  args:
+    chdir: "{{ git_gpg_source }}"
+
+- name: GPG-VERIFICATION | Get hash of an unsigned commit
+  command: git show-ref --hash --verify refs/tags/lightweight_tag/unsigned_commit
+  args:
+    chdir: "{{ git_gpg_source }}"
+  register: git_gpg_unsigned_commit
+
+- name: GPG-VERIFICATION | Get hash of a signed commit
+  command: git show-ref --hash --verify refs/tags/lightweight_tag/signed_commit
+  args:
+    chdir: "{{ git_gpg_source }}"
+  register: git_gpg_signed_commit
+
+- name: GPG-VERIFICATION | Clone repo and verify signed HEAD
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Clone repo and verify a signed lightweight tag
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: lightweight_tag/signed_commit
+    verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned lightweight tag (should fail)
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: lightweight_tag/unsigned_commit
+    verify_commit: yes
+  register: git_verify
+  ignore_errors: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Check that unsigned lightweight tag verification failed
+  assert:
+    that:
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Clone repo and verify a signed commit
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: "{{ git_gpg_signed_commit.stdout }}"
+    verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned commit
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: "{{ git_gpg_unsigned_commit.stdout }}"
+    verify_commit: yes
+  register: git_verify
+  ignore_errors: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Check that unsigned commit verification failed
+  assert:
+    that:
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Clone repo and verify a signed annotated tag
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: signed_annotated_tag
+    verify_commit: yes
+
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned annotated tag (should fail)
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: unsigned_annotated_tag
+    verify_commit: yes
+  register: git_verify
+  ignore_errors: yes
+
+- name: GPG-VERIFICATION | Check that unsigned annotated tag verification failed
+  assert:
+    that:
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+
+- name: GPG-VERIFICATION | Clone repo and verify a signed branch
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: some_branch/signed_tip
+    verify_commit: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned branch (should fail)
+  environment:
+    - GNUPGHOME: "{{ git_gpg_gpghome }}"
+  git:
+    repo: "{{ git_gpg_source }}"
+    dest: "{{ git_gpg_dest }}"
+    version: another_branch/unsigned_tip
+    verify_commit: yes
+  register: git_verify
+  ignore_errors: yes
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Check that unsigned branch verification failed
+  assert:
+    that:
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
+  when:
+    - git_version.stdout is version("2.1.0", '>=')
+
+- name: GPG-VERIFICATION | Stop gpg-agent so we can remove any locks on the GnuPG dir
+  command: gpgconf --kill gpg-agent
+  environment:
+    GNUPGHOME: "{{ git_gpg_gpghome }}"
+  ignore_errors: yes
+
+- name: GPG-VERIFICATION | Remove GnuPG verification workdir
+  file:
+    path: "{{ git_gpg_workdir.path }}"
+    state: absent

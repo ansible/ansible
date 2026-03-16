@@ -1,0 +1,53 @@
+- name: test bool True
+  set_fact:
+      bool_var_true: "{{ b_true }}"
+
+- assert:
+    that:
+        - 'bool_var_true is sameas true'
+        - 'bool_var_true|type_debug == "bool"'
+
+- name: test bool False
+  set_fact:
+      bool_var_false: "{{ b_false }}"
+
+- assert:
+    that:
+        - 'bool_var_false is sameas false'
+        - 'bool_var_false|type_debug == "bool"'
+
+- name: test bool expr True
+  set_fact:
+      bool_var_expr_true: "{{ 1 == 1 }}"
+
+- assert:
+    that:
+        - 'bool_var_expr_true is sameas true'
+        - 'bool_var_expr_true|type_debug == "bool"'
+
+- name: test bool expr False
+  set_fact:
+      bool_var_expr_false: "{{ 2 + 2 == 5 }}"
+
+- assert:
+    that:
+        - 'bool_var_expr_false is sameas false'
+        - 'bool_var_expr_false|type_debug == "bool"'
+
+- name: test bool expr with None, True
+  set_fact:
+      bool_var_none_expr_true: "{{ None == None }}"
+
+- assert:
+    that:
+        - 'bool_var_none_expr_true is sameas true'
+        - 'bool_var_none_expr_true|type_debug == "bool"'
+
+- name: test bool expr with None, False
+  set_fact:
+      bool_var_none_expr_false: "{{ '' == None }}"
+
+- assert:
+    that:
+        - 'bool_var_none_expr_false is sameas false'
+        - 'bool_var_none_expr_false|type_debug == "bool"'

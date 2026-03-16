@@ -1,0 +1,6 @@
+- name: >-
+    verify that multiple level of nested statements and
+    include+meta doesn't mess included files mechanisms
+  hosts: testhost
+  tasks:
+    - ansible.builtin.include_tasks: ./tasks/nested/nested.yml

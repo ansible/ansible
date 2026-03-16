@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Hi
+      ping:
+- hosts: [localhost, nonexistent]
+  ignore_unreachable: true
+  gather_facts: false
+  tasks:
+    - name: Hi
+      ping:
+- hosts: nonexistent
+  ignore_unreachable: true
+  gather_facts: false
+  tasks:
+    - name: Hi
+      ping:
+    - name: This should print anyway
+      debug:
+        msg: This should print worked even though host was unreachable
+    - name: Hi
+      ping:
+      register: should_fail
+    - assert:
+        that:
+          - 'should_fail is unreachable'
+          - 'not (should_fail is skipped)'
+          - 'not (should_fail is failed)'

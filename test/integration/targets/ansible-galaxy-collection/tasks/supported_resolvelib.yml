@@ -1,0 +1,44 @@
+- vars:
+    venv_cmd: "{{ ansible_python_interpreter ~ ' -m venv' }}"
+    venv_dest: "{{ galaxy_dir }}/test_venv_{{ resolvelib_version }}"
+    test_name: galaxy_ng
+  block:
+    - name: install another version of resolvelib that is supported by ansible-galaxy
+      pip:
+        name: resolvelib
+        version: "{{ resolvelib_version }}"
+        state: present
+        virtualenv_command: "{{ venv_cmd }}"
+        virtualenv: "{{ venv_dest }}"
+        virtualenv_site_packages: True
+
+    - include_tasks: fail_fast_resolvelib.yml
+      args:
+        apply:
+          environment:
+            PATH: "{{ venv_dest }}/bin:{{ ansible_env.PATH }}"
+            ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+    - include_tasks: install.yml
+      vars:
+        test_id: '{{ test_name }} (resolvelib {{ resolvelib_version }})'
+        test_server: '{{ galaxy_ng_server }}'
+        test_api_server: '{{ galaxy_ng_server }}'
+        requires_auth: true
+      args:
+        apply:
+          environment:
+            PATH: "{{ venv_dest }}/bin:{{ ansible_env.PATH }}"
+            ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+    - include_tasks: download.yml
+      args:
+        apply:
+          environment:
+            PATH: "{{ venv_dest }}/bin:{{ ansible_env.PATH }}"
+            ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  always:
+    - name: remove test venv
+      file:
+        path: "{{ venv_dest }}"
+        state: absent

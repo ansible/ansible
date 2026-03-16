@@ -1,0 +1,11 @@
+argument_specs:
+  Test play spec:
+    options:
+      required_str:
+        required: True
+        type: str
+      optional:
+        type: str
+        choices:
+          - option1
+          - option2

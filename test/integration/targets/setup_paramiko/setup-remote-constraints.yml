@@ -1,0 +1,12 @@
+- name: Setup remote temporary directory
+  include_role:
+    name: setup_remote_tmp_dir
+
+- name: Record constraints.txt path on remote host
+  set_fact:
+    remote_constraints: "{{ remote_tmp_dir }}/constraints.txt"
+
+- name: Copy constraints.txt to remote host
+  copy:
+    src: "constraints.txt"
+    dest: "{{ remote_constraints }}"

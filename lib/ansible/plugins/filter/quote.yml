@@ -1,0 +1,23 @@
+DOCUMENTATION:
+  name: quote
+  version_added: "2.10"
+  short_description: shell quoting
+  description:
+    - Quote a string to safely use as in a POSIX shell.
+  notes:
+    - This is a passthrough to Python's C(shlex.quote).
+  positional: _input
+  options:
+    _input:
+      description: String to quote.
+      type: str
+      required: true
+
+EXAMPLES: |
+  - name: Run a shell command
+    shell: echo {{ string_value | quote }}
+
+RETURN:
+  _value:
+    description: Quoted string.
+    type: str

@@ -1,0 +1,2 @@
+plugins/lookup/stderr.py:0:0: stderr: unwanted stderr
+plugins/lookup/stdout.py:0:0: stdout: unwanted stdout

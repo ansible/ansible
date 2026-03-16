@@ -1,0 +1,10 @@
+---
+subversion_packages:
+- subversion
+- mod_dav_svn
+- apache2-webdav
+- apache2-utils
+- apache2-ctl
+- apache2-ssl
+apache_user: apache
+apache_group: apache

@@ -1,0 +1,7 @@
+- name: Call role2
+  include_role:
+    name: role2
+
+- name: Call role2 again
+  include_role:
+    name: role2

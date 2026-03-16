@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Replace RHEL 9.6 remote with 9.7.
+  - ansible-test - Replace RHEL 10.0 remote with 10.1.

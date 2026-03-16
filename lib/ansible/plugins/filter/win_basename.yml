@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: win_basename
+  author: ansible core team
+  version_added: "2.0"
+  short_description: Get a Windows path's base name
+  description:
+    - Returns the last name component of a Windows path, what is left in the string that is not 'win_dirname'.
+    - While specifying an UNC (Universal Naming Convention) path, please make sure the path conforms to the UNC path syntax.
+  options:
+    _input:
+      description: A Windows path.
+      type: str
+      required: true
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.win_dirname
+EXAMPLES: |
+
+  # To get the last name of a file Windows path, like 'foo.txt' out of 'C:\Users\asdf\foo.txt'
+  filename: "{{ mypath | win_basename }}"
+
+  # Get basename from the UNC path in the form of '\\<SERVER_NAME>\<SHARE_NAME>\<FILENAME.FILE_EXTENSION>'
+  # like '\\server1\test\foo.txt' returns 'foo.txt'
+  filename: "{{ mypath | win_basename }}"
+
+RETURN:
+  _value:
+    description: The base name from the Windows path provided.
+    type: str

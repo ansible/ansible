@@ -1,0 +1,103 @@
+- name: make a requirements directory
+  file:
+    state: directory
+    path: '{{ galaxy_dir }}/requirements'
+
+- name: populate requirement templates
+  template:
+    src: "{{ item }}"
+    dest: "{{ galaxy_dir }}/requirements/{{ item }}"
+  loop:
+    - source_only.yml
+    - source_and_name.yml
+    - source_and_name_and_type.yml
+    - name_without_type.yml
+    - git_prefix_name.yml
+    - name_and_type.yml
+
+- name: test source is not a git repo
+  command: 'ansible-galaxy collection install -r source_only.yml'
+  register: result
+  ignore_errors: true
+  args:
+    chdir: '{{ galaxy_dir }}/requirements'
+
+- assert:
+    that:
+      - result.failed
+      - >-
+        "Neither the collection requirement entry key 'name',
+        nor 'source' point to a concrete resolvable collection artifact.
+        Also 'name' is not an FQCN. A valid collection name must be in
+        the format <namespace>.<collection>. Please make sure that the
+        namespace and the collection name contain characters from
+        [a-zA-Z0-9_] only." in result.stderr
+
+- name: test source is not a git repo even if name is provided
+  command: 'ansible-galaxy collection install -r source_and_name.yml'
+  register: result
+  ignore_errors: true
+  args:
+    chdir: '{{ galaxy_dir }}/requirements'
+
+- assert:
+    that:
+      - result.failed
+      - >-
+        result.stderr is search("Collections requirement 'source'
+        entry should contain a valid Galaxy API URL but it does not:
+        git\+file:///.*/amazon.aws/.git is not an HTTP URL.")
+
+- name: test source is not a git repo even if name and type is provided
+  command: 'ansible-galaxy collection install -r source_and_name_and_type.yml'
+  register: result
+  ignore_errors: true
+  args:
+    chdir: '{{ galaxy_dir }}/requirements'
+
+- assert:
+    that:
+      - result.failed
+      - >-
+        result.stderr is search("Failed to clone a Git repository
+        from `file:///.*/.git`.")
+      - >-
+        result.stderr is search("fatal: '/.*/amazon.aws/.git' does not
+        appear to be a git repository")
+
+- name: test using name as a git repo without git+ prefix
+  command: 'ansible-galaxy collection install -r name_without_type.yml --no-deps'
+  register: result
+  ignore_errors: true
+  args:
+    chdir: '{{ galaxy_dir }}/requirements'
+
+- assert:
+    that:
+      - result.failed
+      - '"name must be in the format <namespace>.<collection>" in result.stderr'
+
+- name: Clone a git repository
+  git:
+    repo: https://github.com/ansible-collections/amazon.aws.git
+    dest: '{{ scm_path }}/amazon.aws/'
+
+- name: test using name as a git repo
+  command: 'ansible-galaxy collection install -r git_prefix_name.yml --no-deps'
+  register: result
+  args:
+    chdir: '{{ galaxy_dir }}/requirements'
+
+- name: test using name plus type as a git repo
+  command: 'ansible-galaxy collection install -r name_and_type.yml --force --no-deps'
+  register: result
+  args:
+    chdir: '{{ galaxy_dir }}/requirements'
+
+- name: remove the test repo and requirements dir
+  file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+    - '{{ scm_path }}/amazon.aws/'
+    - '{{ galaxy_dir }}/requirements'

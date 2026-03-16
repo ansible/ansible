@@ -1,0 +1,19 @@
+> ROLE: *testns.testcol.testrole* (test/integration/targets/ansible-doc/collections/ansible_collections/testns/testcol)
+
+ENTRY POINT: *alternate* - testns.testcol.testrole short description for alternate entry point
+
+ADDED IN: version 2.1.0
+
+          Longer description for testns.testcol.testrole alternate
+          entry point.
+
+Options (= indicates it is required):
+
+= altopt1   altopt1 description
+          type: int
+
+AUTHOR: Ansible Core (@ansible)
+
+EXAMPLES:
+This is an example.
+It has two lines.

@@ -1,0 +1,115 @@
+- name: run App Control tests on Windows
+  hosts: windows
+  gather_facts: false
+  collections:
+  # This is important so that the temp ansible.windows is chosen over the ansible-test path
+  # which will not be signed
+  - ansible.windows
+
+  handlers:
+  - name: remove openauthenticode
+    shell: Uninstall-PSResource -Name OpenAuthenticode -Version 0.6.1
+    args:
+      executable: pwsh
+    delegate_to: localhost
+
+  tasks:
+  - name: make sure expected facts are set
+    assert:
+      that:
+      - ansible_install_dir is defined
+      - local_tmp_dir is defined
+
+  - name: get OS version
+    ansible.windows.win_powershell:
+      script: (Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion.ToString()
+    register: os_version
+
+  - name: setup and test block for 2019 and later
+    when:
+    - os_version.output[0] is version('10.0.17763', '>=')  # 2019+
+    block:
+    - name: get test remote tmp dir
+      import_role:
+        name: ../setup_remote_tmp_dir
+
+    - name: get current user
+      ansible.windows.win_powershell:
+        script: '[Environment]::UserName'
+      register: current_user_raw
+
+    - name: set current user fact
+      set_fact:
+        current_user: '{{ current_user_raw.output[0] }}'
+
+    # Environment.UserName is SYSTEM on .NET Framework and the computer name on .NET 5+
+    - name: get SYSTEM username
+      ansible.windows.win_powershell:
+        script: '[Environment]::UserName'
+      register: system_user_raw
+      become: true
+      become_method: runas
+      become_user: SYSTEM
+
+    - name: set system user fact
+      set_fact:
+        system_user: '{{ system_user_raw.output[0] }}'
+
+    - name: setup App Control
+      import_tasks: setup.yml
+
+    - name: run content before enabling App Control
+      import_tasks: test_not_enabled.yml
+
+    - name: enable App Control
+      wdac_enable:
+        remote_tmp_dir: '{{ remote_tmp_dir }}'
+      register: policy_info
+
+    - name: run content after enabling App Control
+      import_tasks: test_enabled.yml
+
+    - name: run invalid manifest tests
+      import_tasks: test_manifest.yml
+
+    always:
+    - name: disable policy through CiTool if present
+      win_shell: CiTool.exe --remove-policy {{ policy_info.policy_id }}
+      when:
+      - policy_info is defined
+      - policy_info.policy_id is truthy
+
+    - name: remove App Control policy
+      win_file:
+        path: '{{ policy_info.path }}'
+        state: absent
+      register: policy_removal
+      when:
+      - policy_info is defined
+
+    - name: reboot after removing policy file
+      win_reboot:
+      when: policy_removal is changed
+
+    - name: remove certificates
+      ansible.windows.win_powershell:
+        script: |
+          param($CAThumbprint, $Thumbprint)
+
+          $ErrorActionPreference = 'Stop'
+
+          Remove-Item -LiteralPath "Cert:\LocalMachine\Root\$CAThumbprint" -Force
+          Remove-Item -LiteralPath "Cert:\LocalMachine\TrustedPublisher\$Thumbprint" -Force
+        parameters:
+          CAThumbprint: '{{ cert_info.ca_thumbprint }}'
+          Thumbprint: '{{ cert_info.thumbprint }}'
+      when: cert_info is defined
+
+    - name: remove signed Ansible content
+      file:
+        path: '{{ ansible_install_dir }}/{{ item }}'
+        state: absent
+      loop:
+      - config/powershell_signatures.psd1
+      - executor/powershell/exec_wrapper.ps1.authenticode
+      delegate_to: localhost

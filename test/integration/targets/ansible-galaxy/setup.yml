@@ -1,0 +1,57 @@
+- hosts: localhost
+  vars:
+    ws_dir: '{{ lookup("env", "OUTPUT_DIR") }}/ansible-galaxy-webserver'
+  tasks:
+    - name: install git & OpenSSL
+      package:
+        name: git
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
+      register: git_install
+
+    - name: install OpenSSL
+      package:
+        name: openssl
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
+      register: openssl_install
+
+    - name: install OpenSSL
+      command: apk add openssl
+      when: ansible_distribution == "Alpine"
+      register: openssl_install
+
+    - name: setup webserver dir
+      file:
+        state: directory
+        path: "{{ ws_dir }}"
+
+    - name: copy webserver
+      copy:
+        src: testserver.py
+        dest: "{{ ws_dir }}"
+
+    - name: Create rand file
+      command: dd if=/dev/urandom of="{{ ws_dir }}/.rnd" bs=256 count=1
+
+    - name: Create self-signed cert
+      shell: RANDFILE={{ ws_dir }}/.rnd openssl req -x509 -newkey rsa:2048 \
+        -nodes -days 365 -keyout "{{ ws_dir }}/key.pem" -out "{{ ws_dir }}/cert.pem" \
+        -subj "/C=GB/O=Red Hat/OU=Ansible/CN=ansible-test-cert"
+
+    - name: start SimpleHTTPServer
+      shell: cd {{ ws_dir }} && {{ ansible_python.executable }} {{ ws_dir }}/testserver.py
+      async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+      poll: 0
+
+    - wait_for: port=4443
+
+    - name: save results
+      copy:
+        content: "{{ item.content }}"
+        dest: '{{ lookup("env", "OUTPUT_DIR") }}/{{ item.key }}.json'
+      loop:
+        - key: git_install
+          content: "{{ git_install }}"
+        - key: openssl_install
+          content: "{{ openssl_install }}"
+        - key: ws_dir
+          content: "{{ ws_dir | to_json }}"

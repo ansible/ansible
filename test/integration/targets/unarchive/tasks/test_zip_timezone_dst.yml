@@ -1,0 +1,60 @@
+# Ensure timestamp verification for zip unarchive is correctly done
+# Setup
+- name: Prepare - Create test dirs
+  file:
+    path: "{{remote_tmp_dir}}/datetime-dst"
+    state: directory
+
+- name: Setup custom DST (date saving time) for zip test
+  # datetime must match a DST period for Europe/Paris
+  file:
+    path: "{{ remote_tmp_dir }}/datetime-dst/datetime-dst.txt"
+    state: touch
+    modification_time: 202507241203.34
+
+- name: Prepare - zip file (timezone DST)
+  shell:
+    cmd: zip -r {{remote_tmp_dir}}/test-datetime-dst.zip *
+    chdir: "{{remote_tmp_dir}}/datetime-dst/"
+
+# Test timezone DST
+- environment:
+    TZ: Europe/Paris
+  block:
+
+    - name: Create zip unarchive destination
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst'
+        state: directory
+
+    - name: Unarchive a zip file
+      unarchive:
+        src: '{{ remote_tmp_dir }}/test-datetime-dst.zip'
+        dest: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst'
+        list_files: True
+        remote_src: yes
+      register: unarchive_timezone
+
+    - name: Check if file is created
+      stat:
+        path: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst/datetime-dst.txt'
+      register: file_created
+
+    - name: Verify that the file was marked as changed
+      assert:
+        that:
+          - unarchive_timezone.changed
+          - file_created.stat.exists
+
+    - name: Unarchive a zip file again
+      unarchive:
+        src: '{{ remote_tmp_dir }}/test-datetime-dst.zip'
+        dest: '{{ remote_tmp_dir }}/test-unarchive-zip-timezone-dst'
+        list_files: True
+        remote_src: yes
+      register: unarchive_timezone
+
+    - name: Verify that the task was not marked as changed
+      assert:
+        that:
+          - not unarchive_timezone.changed

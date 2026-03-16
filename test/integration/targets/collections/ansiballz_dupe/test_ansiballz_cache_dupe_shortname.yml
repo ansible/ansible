@@ -1,0 +1,15 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - ping:
+      register: result1
+
+    - ping:
+      collections:
+        - duplicate.name
+      register: result2
+
+    - assert:
+        that:
+          - result1.ping == 'pong'
+          - result2.ping == 'duplicate.name.pong'

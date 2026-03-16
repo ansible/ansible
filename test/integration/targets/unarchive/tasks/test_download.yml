@@ -1,0 +1,24 @@
+# Test downloading a file before unarchiving it
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: Test TLS download
+  block:
+  - name: unarchive a tar from an URL
+    unarchive:
+      src: "https://ci-files.testing.ansible.com/test/integration/targets/apt/echo-hello-source.tar.gz"
+      dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+      mode: "0700"
+      remote_src: yes
+    register: unarchive13
+  - name: Test that unarchive succeeded
+    assert:
+      that:
+        - "unarchive13.changed == true"
+  always:
+    - name: remove our tar.gz unarchive destination
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+        state: absent

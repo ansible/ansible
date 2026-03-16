@@ -1,0 +1,46 @@
+# This template uses the provided list of jobs to create test one or more test jobs.
+# It can be used directly if needed, or through the matrix template.
+
+parameters:
+  # A required list of dictionaries, one per test job.
+  # Each item in the list must contain a "job" and "name" key.
+  - name: jobs
+    type: object
+
+jobs:
+  - ${{ each job in parameters.jobs }}:
+    - job: test_${{ replace(replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_'), '@', '_') }}
+      displayName: ${{ job.name }}
+      container: $[ variables.defaultContainer ]
+      timeoutInMinutes: 65
+      workspace:
+        clean: all
+      steps:
+        - checkout: self
+          fetchDepth: $(fetchDepth)
+          path: $(checkoutPath)
+        - bash: .azure-pipelines/scripts/run-tests.sh "$(entryPoint)" "${{ job.test }}" "$(coverageBranches)"
+          displayName: Run Tests
+        - bash: .azure-pipelines/scripts/process-results.sh
+          condition: succeededOrFailed()
+          displayName: Process Results
+        - bash: .azure-pipelines/scripts/aggregate-coverage.sh "$(Agent.TempDirectory)"
+          condition: eq(variables.haveCoverageData, 'true')
+          displayName: Aggregate Coverage Data
+        - task: PublishTestResults@2
+          condition: eq(variables.haveTestResults, 'true')
+          inputs:
+            testResultsFiles: "$(outputPath)/junit/*.xml"
+          displayName: Publish Test Results
+        - task: PublishPipelineArtifact@1
+          condition: eq(variables.haveBotResults, 'true')
+          displayName: Publish Bot Results
+          inputs:
+            targetPath: "$(outputPath)/bot/"
+            artifactName: "Bot $(System.JobAttempt) $(System.StageDisplayName) $(System.JobDisplayName)"
+        - task: PublishPipelineArtifact@1
+          condition: eq(variables.haveCoverageData, 'true')
+          displayName: Publish Coverage Data
+          inputs:
+            targetPath: "$(Agent.TempDirectory)/coverage/"
+            artifactName: "Coverage $(System.JobAttempt) $(System.StageDisplayName) $(System.JobDisplayName)"

@@ -1,0 +1,335 @@
+# test code for the ping module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- name: Install test requirements
+  import_role:
+    name: setup_pexpect
+
+- name: record the test command files
+  set_fact:
+    test_command_file: "{{ remote_tmp_dir | expanduser }}/test_command.py"
+    test_non_utf8_command_file: "{{ remote_tmp_dir | expanduser }}/test_non_utf8_command.py"
+
+- name: copy script into output directory
+  copy:
+    src: test_command.py
+    dest: "{{ test_command_file }}"
+    mode: "0444"
+
+- name: copy non-UTF8 script into output directory
+  copy:
+    src: test_non_utf8_command.py
+    dest: "{{ test_non_utf8_command_file }}"
+    mode: "0444"
+
+- name: record the output file
+  set_fact: output_file={{remote_tmp_dir}}/foo.txt
+
+- name: use expect with non-UTF8 output which should fail
+  expect:
+    command: "{{ ansible_python_interpreter }} {{ test_non_utf8_command_file }}"
+    responses:
+      foo: bar
+  register: expect_result
+  ignore_errors: yes
+
+- name: verify expect with non-UTF8 output failed as expected
+  assert:
+    that:
+      - expect_result is failed
+      - expect_result.msg is contains 'Refusing to deserialize an invalid UTF8 string value'  # controller-side failure, not module-side
+
+- copy:
+   content: "foo"
+   dest: "{{output_file}}"
+
+- name: test expect
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+  register: expect_result
+
+- name: assert expect worked
+  assert:
+    that:
+    - "expect_result.changed == true"
+    - "expect_result.stdout_lines|last == 'foobar'"
+
+- name: test creates option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    creates: "{{output_file}}"
+  register: creates_result
+
+- name: assert when creates is provided command is not run
+  assert:
+    that:
+    - "creates_result.changed == false"
+    - "'skipped' in creates_result.stdout"
+
+- name: test creates option (missing)
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    creates: "{{output_file}}.does.not.exist"
+  register: creates_result
+
+- name: assert when missing creates is provided command is run
+  assert:
+    that:
+    - "creates_result.changed == true"
+    - "creates_result.stdout_lines|last == 'foobar'"
+
+- name: test removes option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    removes: "{{output_file}}"
+  register: removes_result
+
+- name: assert when removes is provided command is run
+  assert:
+    that:
+    - "removes_result.changed == true"
+    - "removes_result.stdout_lines|last == 'foobar'"
+
+- name: test removes option (missing)
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    removes: "{{output_file}}.does.not.exist"
+  register: removes_result
+
+- name: assert when missing removes is provided command is not run
+  assert:
+    that:
+    - "removes_result.changed == false"
+    - "'skipped' in removes_result.stdout"
+
+- name: test chdir
+  expect:
+    command: "/bin/sh -c 'pwd && sleep 1'"
+    chdir: "{{remote_tmp_dir}}"
+    responses:
+      foo: bar
+  register: chdir_result
+
+- name: get remote_tmp_dir real path
+  raw: >
+    {{ ansible_python_interpreter }} -c 'import os; os.chdir("{{remote_tmp_dir}}"); print(os.getcwd())'
+  register: remote_tmp_dir_real_path
+
+- name: assert chdir works
+  assert:
+    that:
+    - chdir_result.stdout | trim == remote_tmp_dir_real_path.stdout | trim
+
+- name: test timeout option
+  expect:
+    command: "sleep 10"
+    responses:
+      foo: bar
+    timeout: 1
+  ignore_errors: true
+  register: timeout_result
+
+- name: assert failure message when timeout
+  assert:
+    that:
+    - "timeout_result.msg == 'command exceeded timeout'"
+
+- name: test echo option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    echo: true
+  register: echo_result
+
+- name: assert echo works
+  assert:
+    that:
+    - "echo_result.stdout_lines|length == 7"
+    - "echo_result.stdout_lines[-2] == 'foobar'"
+    - "echo_result.stdout_lines[-1] == 'bar'"
+
+- name: test timeout is valid as null
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    echo: true
+    timeout: null  # wait indefinitely
+  timeout: 2  # but shouldn't be waiting long
+
+- name: test response list
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
+    responses:
+      foo:
+      - bar
+      - baz
+  register: list_result
+
+- name: assert list response works
+  assert:
+    that:
+    - "list_result.stdout_lines|length == 7"
+    - "list_result.stdout_lines[-2] == 'foobar'"
+    - "list_result.stdout_lines[-1] == 'foobaz'"
+
+- name: test no remaining responses
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
+    responses:
+      foo:
+      - bar
+  register: list_result
+  ignore_errors: yes
+
+- name: assert no remaining responses
+  assert:
+    that:
+    - "list_result.failed"
+    - "'No remaining responses' in list_result.msg"
+
+- name: test no command
+  expect:
+    command: ""
+    responses:
+      foo: bar
+  register: no_command_result
+  ignore_errors: yes
+
+- name: assert no command
+  assert:
+    that:
+    - "no_command_result.failed"
+    - "no_command_result.msg == 'no command given'"
+    - "no_command_result.rc == 256"
+
+- name: test non-zero return code
+  expect:
+    command: "ls /does-not-exist"
+    responses:
+      foo: bar
+  register: non_zero_result
+  ignore_errors: yes
+
+- name: assert non-zero return code
+  assert:
+    that:
+    - "non_zero_result.failed"
+    - "non_zero_result.msg == 'non-zero return code'"
+
+- name: run tests in venv
+  vars:
+    venv_dir:  "{{ output_dir }}/pexpected_venv"
+    venv_python: "{{ venv_dir }}/bin/python"
+  block:
+    - name: ensure venv exists
+      pip:
+        name: coverage
+        virtualenv: "{{ venv_dir }}"
+        virtualenv_command: "{{ ansible_python_interpreter }} -m venv"
+
+    - name: trigger pexpect dependency absence
+      expect:
+        command: "echo expectThePexpected"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_dependency_absence
+      ignore_errors: true
+
+    - name: assert pexpect dependency absence
+      assert:
+        that:
+          - pexpect_dependency_absence is failed
+          - pexpect_dependency_absence.msg is contains 'pexpect'
+
+    - name: Install pexpect3.3
+      pip:
+        name: pexpect
+        version: 3.3
+        virtualenv: "{{ venv_dir }}"
+
+    - name: trigger fallback to pexpect3.3 methods
+      expect:
+        command: "echo pexpectIsABitOutOfDate"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_version_three_dot_three
+
+    - name: install pexpect3.0
+      pip:
+        name: pexpect
+        version: 3.0
+        virtualenv: "{{ venv_dir }}"
+
+    - name: trigger failure with out of date pexpect version
+      expect:
+        command: "echo pexpectIsTooOutOfDate"
+        responses:
+          foo: bar
+      vars:
+        ansible_python_interpreter: "{{ venv_python }}"
+      register: pexpect_version_out_of_date
+      ignore_errors: true
+
+    - name: assert failure with out of date pexpect
+      assert:
+        that:
+        - pexpect_version_out_of_date is failed
+        - pexpect_version_out_of_date.msg is contains 'Insufficient version of pexpect installed'
+
+- name: trigger TypeError on timeout value
+  expect:
+    command: "echo piIsNotAnInt"
+    responses:
+      foo: bar
+    timeout: pi
+  register: pexpect_timeout_typeerror
+  ignore_errors: true
+
+- name: assert timeout triggers TypeError when not an int
+  assert:
+    that:
+    - pexpect_timeout_typeerror is failed
+    - pexpect_timeout_typeerror.msg is contains 'cannot be converted to an int'
+
+- name: trigger pexpect.ExceptionPexpect
+  expect:
+    command: commandthatdoesntexist
+    responses:
+      foo: bar
+  register: pexpect_exception_pexpect
+  ignore_errors: true
+
+- name: assert failure for a nonexistent command
+  assert:
+    that:
+      - pexpect_exception_pexpect is failed

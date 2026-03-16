@@ -1,0 +1,204 @@
+# test code for the stat module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: make a new file
+  copy: dest={{remote_tmp_dir}}/foo.txt mode=0644 content="hello world"
+
+- name: check stat of file
+  stat: path={{remote_tmp_dir}}/foo.txt
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "'stat' in stat_result"
+        - "'atime' in stat_result.stat"
+        - "'ctime' in stat_result.stat"
+        - "'dev' in stat_result.stat"
+        - "'exists' in stat_result.stat"
+        - "'gid' in stat_result.stat"
+        - "'inode' in stat_result.stat"
+        - "'isblk' in stat_result.stat"
+        - "'ischr' in stat_result.stat"
+        - "'isdir' in stat_result.stat"
+        - "'isfifo' in stat_result.stat"
+        - "'isgid' in stat_result.stat"
+        - "'isreg' in stat_result.stat"
+        - "'issock' in stat_result.stat"
+        - "'isuid' in stat_result.stat"
+        - "'checksum' in stat_result.stat"
+        - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
+        - "'mode' in stat_result.stat"
+        - "'mtime' in stat_result.stat"
+        - "'nlink' in stat_result.stat"
+        - "'pw_name' in stat_result.stat"
+        - "'rgrp' in stat_result.stat"
+        - "'roth' in stat_result.stat"
+        - "'rusr' in stat_result.stat"
+        - "'size' in stat_result.stat"
+        - "'uid' in stat_result.stat"
+        - "'wgrp' in stat_result.stat"
+        - "'woth' in stat_result.stat"
+        - "'wusr' in stat_result.stat"
+        - "'xgrp' in stat_result.stat"
+        - "'xoth' in stat_result.stat"
+        - "'xusr' in stat_result.stat"
+        - "'disk_usage_bytes' in stat_result.stat"
+
+- name: make a symlink
+  file:
+    src: "{{ remote_tmp_dir }}/foo.txt"
+    path: "{{ remote_tmp_dir }}/foo-link"
+    state: link
+
+- name: check stat of a symlink with follow off
+  stat:
+    path: "{{ remote_tmp_dir }}/foo-link"
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "'stat' in stat_result"
+        - "'atime' in stat_result.stat"
+        - "'ctime' in stat_result.stat"
+        - "'dev' in stat_result.stat"
+        - "'exists' in stat_result.stat"
+        - "'gid' in stat_result.stat"
+        - "'inode' in stat_result.stat"
+        - "'isblk' in stat_result.stat"
+        - "'ischr' in stat_result.stat"
+        - "'isdir' in stat_result.stat"
+        - "'isfifo' in stat_result.stat"
+        - "'isgid' in stat_result.stat"
+        - "'isreg' in stat_result.stat"
+        - "'issock' in stat_result.stat"
+        - "'isuid' in stat_result.stat"
+        - "'islnk' in stat_result.stat"
+        - "'mode' in stat_result.stat"
+        - "'mtime' in stat_result.stat"
+        - "'nlink' in stat_result.stat"
+        - "'pw_name' in stat_result.stat"
+        - "'rgrp' in stat_result.stat"
+        - "'roth' in stat_result.stat"
+        - "'rusr' in stat_result.stat"
+        - "'size' in stat_result.stat"
+        - "'uid' in stat_result.stat"
+        - "'wgrp' in stat_result.stat"
+        - "'woth' in stat_result.stat"
+        - "'wusr' in stat_result.stat"
+        - "'xgrp' in stat_result.stat"
+        - "'xoth' in stat_result.stat"
+        - "'xusr' in stat_result.stat"
+
+- name: check stat of a symlink with follow on
+  stat:
+    path: "{{ remote_tmp_dir }}/foo-link"
+    follow: True
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "'stat' in stat_result"
+        - "'atime' in stat_result.stat"
+        - "'ctime' in stat_result.stat"
+        - "'dev' in stat_result.stat"
+        - "'exists' in stat_result.stat"
+        - "'gid' in stat_result.stat"
+        - "'inode' in stat_result.stat"
+        - "'isblk' in stat_result.stat"
+        - "'ischr' in stat_result.stat"
+        - "'isdir' in stat_result.stat"
+        - "'isfifo' in stat_result.stat"
+        - "'isgid' in stat_result.stat"
+        - "'isreg' in stat_result.stat"
+        - "'issock' in stat_result.stat"
+        - "'isuid' in stat_result.stat"
+        - "'checksum' in stat_result.stat"
+        - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
+        - "'mode' in stat_result.stat"
+        - "'mtime' in stat_result.stat"
+        - "'nlink' in stat_result.stat"
+        - "'pw_name' in stat_result.stat"
+        - "'rgrp' in stat_result.stat"
+        - "'roth' in stat_result.stat"
+        - "'rusr' in stat_result.stat"
+        - "'size' in stat_result.stat"
+        - "'uid' in stat_result.stat"
+        - "'wgrp' in stat_result.stat"
+        - "'woth' in stat_result.stat"
+        - "'wusr' in stat_result.stat"
+        - "'xgrp' in stat_result.stat"
+        - "'xoth' in stat_result.stat"
+        - "'xusr' in stat_result.stat"
+
+- name: make a new file with colon in filename
+  copy:
+    dest: "{{ remote_tmp_dir }}/foo:bar.txt"
+    mode: '0644'
+    content: "hello world"
+
+- name: check stat of a file with colon in name
+  stat:
+    path: "{{ remote_tmp_dir }}/foo:bar.txt"
+    follow: True
+  register: stat_result
+
+- debug:
+    var: stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "stat_result.stat.mimetype == 'text/plain'"
+        - "stat_result.stat.charset == 'us-ascii'"
+
+- name: check stat a file with get_selinux_context on
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: True
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' in stat_result.stat"
+
+- name: check stat a file with get_selinux_context off
+  stat:
+    path: "{{ remote_tmp_dir }}/foo.txt"
+    get_selinux_context: False
+  register: stat_result
+
+- debug: var=stat_result
+
+- assert:
+    that:
+        - "'selinux_context' not in stat_result.stat"

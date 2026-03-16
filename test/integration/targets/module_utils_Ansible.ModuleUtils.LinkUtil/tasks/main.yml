@@ -1,0 +1,8 @@
+---
+- name: call module with symbolic link tests
+  symbolic_link_test:
+  register: symbolic_link
+
+- assert:
+    that:
+    - symbolic_link.data == 'success'

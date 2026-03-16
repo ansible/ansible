@@ -1,0 +1,2 @@
+- name: Uninstall Paramiko using dnf history undo
+  command: dnf history undo last --assumeyes

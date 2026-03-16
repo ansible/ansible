@@ -1,0 +1,22 @@
+---
+title: ansible-core
+release_tag_re: '(v(?:[\d.ab\-]|rc)+)'
+pre_release_tag_re: '(?P<pre_release>(?:[ab]|rc)+\d*)$'
+changes_file: changelog.yaml
+changes_format: combined
+keep_fragments: true
+always_refresh: true
+ignore_other_fragment_extensions: true
+mention_ancestor: false
+notesdir: fragments
+prelude_section_name: release_summary
+new_plugins_after_name: removed_features
+sections:
+- ['major_changes', 'Major Changes']
+- ['minor_changes', 'Minor Changes']
+- ['breaking_changes', 'Breaking Changes / Porting Guide']
+- ['deprecated_features', 'Deprecated Features']
+- ['removed_features', 'Removed Features (previously deprecated)']
+- ['security_fixes', 'Security Fixes']
+- ['bugfixes', 'Bugfixes']
+- ['known_issues', 'Known Issues']

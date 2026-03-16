@@ -1,0 +1,11 @@
+- name: install the sysV init file
+  copy: src=ansible.sysv dest=/etc/init.d/ansible_test mode=0755
+  register: install_sysv_result
+
+- name: assert that the sysV init file was installed
+  assert:
+    that:
+    - "install_sysv_result.dest == '/etc/init.d/ansible_test'"
+    - "install_sysv_result.state == 'file'"
+    - "install_sysv_result.mode == '0755'"
+    - "install_sysv_result.checksum == '362899814c47d9aad6e93b2f64e39edd24e38797'"

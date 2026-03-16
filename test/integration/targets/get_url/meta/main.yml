@@ -1,0 +1,4 @@
+dependencies:
+  - prepare_tests
+  - prepare_http_tests
+  - setup_remote_tmp_dir

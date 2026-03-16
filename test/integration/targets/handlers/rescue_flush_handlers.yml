@@ -1,0 +1,16 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+        - debug:
+          changed_when: true
+          notify: h1
+
+        - meta: flush_handlers
+      rescue:
+        - assert:
+            that:
+              - ansible_failed_task is defined
+  handlers:
+    - name: h1
+      fail:

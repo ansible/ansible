@@ -1,0 +1,2 @@
+minor_changes:
+  - slurp module gets new C(armor) option to allow user to disable base64 encoding.

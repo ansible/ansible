@@ -1,0 +1,2 @@
+bugfixes:
+  - rpm_key - Use librpm library API instead of gpg utility to support version 6 PGP keys (https://github.com/ansible/ansible/issues/86157).

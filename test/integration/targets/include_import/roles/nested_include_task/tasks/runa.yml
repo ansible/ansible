@@ -1,0 +1,3 @@
+---
+- debug:
+    msg: from nested_include_task

@@ -1,0 +1,38 @@
+- name: Initialize git repositories
+  command: 'git init {{ scm_path }}/{{ item }}'
+  loop:
+    - namespace_1
+    - namespace_2
+
+- name: Add a couple collections to the repository
+  command: 'ansible-galaxy collection init {{ item }}'
+  args:
+    chdir: '{{ scm_path }}'
+  loop:
+    - 'namespace_1.collection_1'
+    - 'namespace_2.collection_2'
+
+- name: Add collection_2 as a dependency of collection_1
+  lineinfile:
+    path: '{{ scm_path }}/namespace_1/collection_1/galaxy.yml'
+    regexp: '^dependencies'
+    line: "dependencies: {'git+file://{{ scm_path }}/namespace_2/.git#collection_2/': '*'}"
+
+- name: Add collection_1 as a dependency on collection_2
+  lineinfile:
+    path: '{{ scm_path }}/namespace_2/collection_2/galaxy.yml'
+    regexp: '^dependencies'
+    # NOTE: The committish is set to `HEAD` here because Git's default has
+    # NOTE: changed to `main` and it behaves differently in
+    # NOTE: different envs with different Git versions.
+    line: >-
+      dependencies:
+      {'git+file://{{ scm_path }}/namespace_1/.git#collection_1/': 'HEAD'}
+
+- name: Commit the changes
+  shell: git add ./; git commit -m 'add collection'
+  args:
+    chdir: '{{ scm_path }}/{{ item }}'
+  loop:
+    - namespace_1
+    - namespace_2

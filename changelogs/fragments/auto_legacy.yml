@@ -1,0 +1,3 @@
+---
+removed_features:
+    - interpreter_discovery - removed auto_legacy and auto_legacy_slient options (https://github.com/ansible/ansible/issues/85995).

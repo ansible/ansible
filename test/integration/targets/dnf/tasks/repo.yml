@@ -1,0 +1,752 @@
+- block:
+    - name: Install dinginessentail-1.0-1
+      dnf:
+        name: dinginessentail-1.0-1
+        state: installed
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_before
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 again
+      dnf:
+        name: dinginessentail-1.0-1
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+
+    - shell: dnf history list | wc -l
+      register: dnf_history_lines_after
+
+    - assert:
+        that:
+          - dnf_history_lines_before.stdout == dnf_history_lines_after.stdout
+    # ============================================================================
+    - name: Install dinginessentail again (noop, module is idempotent)
+      dnf:
+        name: dinginessentail
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            # No upgrade happened to 1.1.1
+            - "not dnf_result.changed"
+            # Old version still installed
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+    # ============================================================================
+    - name: Install dinginessentail-1:1.0-2
+      dnf:
+        name: "dinginessentail-1:1.0-2.noarch"
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Update to the latest dinginessentail
+      dnf:
+        name: dinginessentail
+        state: latest
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file (higher version is already installed)
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+            - "'rc' in dnf_result"
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file (downgrade)
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
+        state: present
+        allow_downgrade: True
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+
+    - name: Remove dinginessentail
+      dnf:
+        name: dinginessentail
+        state: absent
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file again
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.noarch.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2 from a file
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-2.noarch.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2 from a file again
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-2.noarch.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+    # ============================================================================
+    # Should install dinginessentail-with-weak-dep and dinginessentail-weak-dep
+    - name: Install package with defaults
+      dnf:
+        name: dinginessentail-with-weak-dep
+        state: present
+
+    - name: Check if dinginessentail-with-weak-dep is installed
+      shell: rpm -q dinginessentail-with-weak-dep
+      register: rpm_main_result
+
+    - name: Check if dinginessentail-weak-dep is installed
+      shell: rpm -q dinginessentail-weak-dep
+      register: rpm_weak_result
+
+    - name: Verify install with weak deps
+      assert:
+        that:
+        - rpm_main_result.rc == 0
+        - rpm_weak_result.rc == 0
+
+    - name: Uninstall dinginessentail weak dep packages
+      dnf:
+        name:
+        - dinginessentail-with-weak-dep
+        - dinginessentail-weak-dep
+        state: absent
+
+    - name: Install package with weak deps but skip weak deps
+      dnf:
+        name: dinginessentail-with-weak-dep
+        install_weak_deps: False
+        state: present
+
+    - name: Check if dinginessentail-with-weak-dep is installed
+      shell: rpm -q dinginessentail-with-weak-dep
+      register: rpm_main_result
+
+    - name: Check if dinginessentail-weak-dep is installed
+      shell: rpm -q dinginessentail-weak-dep
+      register: rpm_weak_result
+      ignore_errors: yes
+
+    - name: Verify install without weak deps
+      assert:
+        that:
+        - rpm_main_result.rc == 0
+        - rpm_weak_result.rc == 1  # the weak dependency shouldn't be installed
+
+    # https://github.com/ansible/ansible/issues/55938
+    - name: Install dinginessentail-*
+      dnf:
+        name: dinginessentail-*
+        state: present
+
+    - name: Uninstall dinginessentail-*
+      dnf:
+        name: dinginessentail-*
+        state: absent
+
+    - name: Check if all dinginessentail packages are removed
+      shell: rpm -qa dinginessentail-* | wc -l
+      register: rpm_result
+
+    - name: Verify rpm result
+      assert:
+        that:
+          - rpm_result.stdout == '0'
+  always:
+    - name: Clean up
+      dnf:
+        name:
+        - dinginessentail
+        - dinginessentail-with-weak-dep
+        - dinginessentail-weak-dep
+        state: absent
+
+- block:
+    - dnf:
+        name: dinginessentail
+        state: present
+
+    - dnf:
+        list: dinginessentail*
+      register: list_out
+
+    - name: check that dnf returns nevra for backwards compat
+      assert:
+        that:
+          - '"envra" in list_out["results"][0]'
+          - '"nevra" in list_out["results"][0]'
+
+    - set_fact:
+        passed: true
+      loop: "{{ list_out.results }}"
+      when: item.yumstate == 'installed'
+
+    - name: Test that there is yumstate=installed in the result
+      assert:
+        that:
+          - passed is defined
+  always:
+    - name: Clean up
+      dnf:
+        name: dinginessentail
+        state: absent
+
+- block:
+    - name: Install dinginessentail-1.0-2
+      dnf:
+        name: "dinginessentail-1.0-2"
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+            - "'rc' in dnf_result"
+            - "'results' in dnf_result"
+  always:
+    - name: Clean up
+      dnf:
+        name: dinginessentail
+        state: absent
+
+- block:
+    - name: Install dinginessentail < 1.1
+      dnf:
+        name: "dinginessentail < 1.1"
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0')"
+
+    - name: Install dinginessentail >= 1.1
+      dnf:
+        name: "dinginessentail >= 1.1"
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+            - "'rc' in dnf_result"
+            - "'results' in dnf_result"
+  always:
+    - name: Clean up
+      dnf:
+        name: dinginessentail
+        state: absent
+
+- name: >
+    test that when a package providing a file is installed then installing by specifying the file doesn't result in
+    installing a different package providing the same file
+  block:
+    - dnf:
+        name: provides_foo_b
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: /foo.gif
+        state: present
+      register: dnf_result
+
+    - command: rpm -q package_foo_a
+      ignore_errors: true
+      register: rpm_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+          - rpm_result.rc == 1
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides_foo_b
+
+- name: ensure that a package named "$str-$number-$str" is parsed correctly
+  block:
+    - dnf:
+        name: number-11-name-11.0
+        state: "{{ item }}"
+      loop:
+        - absent
+        - present
+
+    - dnf:
+        name: number-11-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+
+    - dnf:
+        name: number-11-name
+        state: latest
+        update_only: true
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: number-11-name
+        state: absent
+
+- name: test that epochs are handled the same way as via DNF on the command line
+  block:
+    - dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "epochone-1.0-1.noarch"
+        - "epochone-1.1-1.noarch"
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results["results"][0] is changed
+          - dnf_results["results"][1] is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: epochone
+        state: absent
+
+# https://github.com/ansible/ansible/issues/83373
+- name: test installing a set of packages by specifying them using a wildcard character
+  block:
+    - dnf:
+        name: provides_foo_a
+        state: present
+
+    - dnf:
+        name: provides_foo*
+        state: present
+      register: dnf_results
+
+    - assert:
+        that:
+          - dnf_results is changed
+          - "'Installed: provides_foo_b' in dnf_results['results'][0]"
+  always:
+    - name: Clean up
+      dnf:
+        name: provides_foo*
+        state: absent
+
+# https://github.com/ansible/ansible/issues/84259
+- name: test installing a package named `package-name` while a package providing `/usr/sbin/package-name` is installed
+  block:
+    - dnf:
+        name: package-name
+        state: absent
+
+    - dnf:
+        name: provides-binary
+        state: present
+
+    - dnf:
+        name: package-name
+        state: latest
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name:
+          - provides-binary
+          - package-name
+        state: absent
+
+- name: test installing a package that provides a binary by specifying the binary name
+  block:
+    - dnf:
+        name: provides-binary
+        state: absent
+
+    - dnf:
+        name: /usr/sbin/package-name
+        state: present
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: provides-binary
+        state: absent
+
+# https://github.com/ansible/ansible/issues/84334
+- name: test that a binary is not matched by its base name
+  block:
+    - dnf:
+        name: provides-binary
+        state: present
+
+    - dnf:
+        name: package-name
+        state: absent
+      register: dnf_result
+
+    - assert:
+        that:
+          - dnf_result is not changed
+  always:
+    - name: Clean up
+      dnf:
+        name:
+          - provides-binary
+          - package-name
+        state: absent
+
+# https://github.com/ansible/ansible/issues/84578
+- name: Test installing a package that is listed in `provides` in different package
+  block:
+    - dnf:
+        name: provides-package
+        state: present
+
+    - command: rpm -q provided-package
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+
+    - dnf:
+        name: provided-package
+        state: present
+      register: r
+
+    - assert:
+        that:
+          - r is changed
+  always:
+    - name: Clean up
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - provides-package
+        - provided-package
+
+# https://github.com/ansible/ansible/issues/45250
+- block:
+    - name: Install dinginessentail-1.0, dinginessentail-olive-1.0, landsidescalping-1.0
+      dnf:
+        name: "dinginessentail-1.0,dinginessentail-olive-1.0,landsidescalping-1.0"
+        state: present
+
+    - name: Upgrade dinginessentail*
+      dnf:
+        name: dinginessentail*
+        state: latest
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify update of dinginessentail
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Check dinginessentail-olive with rpm
+      shell: rpm -q dinginessentail-olive
+      register: rpm_result
+
+    - name: Verify update of dinginessentail-olive
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('dinginessentail-olive-1.1-1')"
+
+    - name: Check landsidescalping with rpm
+      shell: rpm -q landsidescalping
+      register: rpm_result
+
+    - name: Verify landsidescalping did NOT get updated
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('landsidescalping-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "dnf_result is changed"
+            - "'msg' in dnf_result"
+            - "'rc' in dnf_result"
+            - "'results' in dnf_result"
+  always:
+    - name: Clean up
+      dnf:
+        name: dinginessentail,dinginessentail-olive,landsidescalping
+        state: absent
+
+- name: test allow_downgrade
+  block:
+    - dnf:
+        name: dinginessentail-1.1
+        state: present
+
+    - dnf:
+        name: dinginessentail-1.0
+        state: present
+        allow_downgrade: true
+    - dnf:
+        name: dinginessentail-1.1
+        state: present
+
+    - dnf:
+        name: dinginessentail-1.0
+        state: present
+        allow_downgrade: false
+      register: r
+
+    - assert:
+        that:
+          - r is not changed
+  always:
+    - dnf:
+        name: dinginessentail
+        state: absent
+
+- name: Test failures occurred during loading repositories are properly handled
+  vars:
+    repo_name: test-non-existing-gpgkey-file
+  block:
+    - yum_repository:
+        name: "{{ repo_name }}"
+        baseurl: "file://{{ repodir }}"
+        description: "{{ repo_name }}"
+        repo_gpgcheck: true
+        skip_if_unavailable: false
+
+    - dnf:
+        name: dinginessentail
+        enablerepo: "{{ repo_name }}"
+        disablerepo: "*"
+      ignore_errors: true
+      register: r
+
+    - assert:
+        that:
+          - r is failed
+          # account for two different messages depending on the libdnf version
+          - r.msg is contains("Couldn't open file") or r.msg is contains("Failed to download metadata")
+  always:
+    - file:
+        name: /etc/yum.repos.d/{{ repo_name }}.repo
+        state: absent
+
+
+- name: Attempt to install a package with invalid name
+  dnf:
+    name: invalid[package_name]
+  register: r
+  ignore_errors: true
+
+- assert:
+    that:
+      - r is failed
+      - r.msg is contains("Failed to install some of the specified packages")

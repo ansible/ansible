@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_tasks:
+        file: include_tasks.yml
+        apply:
+          tags: always
+
+    - assert:
+        that:
+          - include_tasks_result is defined

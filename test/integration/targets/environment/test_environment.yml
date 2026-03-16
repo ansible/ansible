@@ -1,0 +1,189 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+   - name: verify omit is handled properly by the environment keyword
+     shell: echo "IAMHERE = $IAMHERE; NOTHERE = $NOTHERE; ANOTHER = $ANOTHER"
+     environment:
+       - NOTHERE: '{{ omit }}'
+         IAMHERE: hello
+       - '{{ omit }}'
+       - ANOTHER: stillhere
+     register: result
+
+   - assert:
+       that:
+         - result.stdout == "IAMHERE = hello; NOTHERE = ; ANOTHER = stillhere"
+
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: get PATH from target
+      command: echo $PATH
+      register: target_path
+
+- hosts: testhost
+  vars:
+    test1:
+      key1: val1
+  environment:
+    PATH: '{{ansible_env.PATH + ":/lola"}}'
+    lola: 'ido'
+  tasks:
+    - name: ensure special case with ansible_env is skipped but others still work
+      assert:
+        that:
+            - target_path.stdout == ansible_env.PATH
+            - "'/lola' not in ansible_env.PATH"
+            - ansible_env.lola == 'ido'
+
+    - name: check that envvar does not exist
+      shell: echo $key1
+      register: test_env
+
+    - name: assert no val in stdout
+      assert:
+        that:
+            - '"val1" not in test_env.stdout_lines'
+
+    - name: check that envvar does exist
+      shell: echo $key1
+      environment: "{{test1}}"
+      register: test_env2
+
+    - name: assert val1 in stdout
+      assert:
+        that:
+            - '"val1" in test_env2.stdout_lines'
+
+- hosts: testhost
+  vars:
+    test1:
+      key1: val1
+    test2:
+        key1: not1
+        other1: val2
+  environment: "{{test1}}"
+  tasks:
+    - name: check that play envvar does exist
+      shell: echo $key1
+      register: test_env3
+
+    - name: assert val1 in stdout
+      assert:
+        that:
+            - '"val1" in test_env3.stdout_lines'
+
+    - name: check that task envvar does exist
+      shell: echo $key1; echo $other1
+      register: test_env4
+      environment: "{{test2}}"
+
+    - name: assert all vars appear as expected
+      assert:
+        that:
+            - '"val1" not in test_env4.stdout_lines'
+            - '"not1" in test_env4.stdout_lines'
+            - '"val2" in test_env4.stdout_lines'
+
+    - block:
+        - name: check that task envvar does exist in block
+          shell: echo $key1; echo $other1
+          register: test_env5
+
+        - name: assert all vars appear as expected in block
+          assert:
+            that:
+                - '"val1" not in test_env5.stdout_lines'
+                - '"not1" in test_env5.stdout_lines'
+                - '"val2" in test_env5.stdout_lines'
+      environment: "{{test2}}"
+
+- name: test setting environment while using loops
+  hosts: testhost
+  environment:
+    foo: outer
+  tasks:
+    - name: verify foo==outer
+      command: /bin/echo $foo
+      loop:
+        - 1
+      register: test_foo
+
+    - name: assert foo==outer
+      assert:
+        that:
+          - test_foo.results[0].stdout == 'outer'
+
+    - name: set environment on a task
+      environment:
+        foo: in_task
+      command: /bin/echo $foo
+      loop:
+        - 1
+      register: test_foo
+
+    - name: assert foo==in_task
+      assert:
+        that:
+          - "test_foo.results[0].stdout == 'in_task'"
+
+    - name: test that the outer env var is set appropriately still
+      command: /bin/echo $foo
+      loop:
+        - 1
+      register: test_foo
+
+    - name: assert foo==outer
+      assert:
+        that:
+          - test_foo.results[0].stdout == 'outer'
+
+    - name: set environment on a block
+      environment:
+        foo: in_block
+      block:
+        - name: test the environment is set in the block
+          command: /bin/echo $foo
+          loop:
+            - 1
+          register: test_foo
+
+        - name: assert foo==in_block
+          assert:
+            that:
+              - "test_foo.results[0].stdout == 'in_block'"
+
+        - name: test setting environment in a task inside a block
+          environment:
+            foo: in_block_in_task
+          command: /bin/echo $foo
+          loop:
+            - 1
+          register: test_foo
+
+        - name: assert foo==in_block_in_task
+          assert:
+            that:
+              - "test_foo.results[0].stdout == 'in_block_in_task'"
+
+        - name: test the environment var is set to the parent value
+          command: /bin/echo $foo
+          loop:
+            - 1
+          register: test_foo
+
+        - name: assert foo==in_block
+          assert:
+            that:
+              - "test_foo.results[0].stdout == 'in_block'"
+
+    - name: test the env var foo has the initial value
+      command: /bin/echo $foo
+      loop:
+        - 1
+      register: test_foo
+
+    - name: assert foo==outer
+      assert:
+        that:
+          - test_foo.results[0].stdout == 'outer'

@@ -1,0 +1,199 @@
+- name: Run tests
+  when: ansible_facts.distribution == 'Fedora'
+  block:
+    - name: ensure {{ yum_repository_test_package }} is uninstalled to begin with
+      action: "{{ ansible_facts.pkg_mgr }}"
+      args:
+        name: "{{ yum_repository_test_package }}"
+        state: absent
+
+    - name: disable {{ yum_repository_test_repo.name }}
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        state: absent
+
+    - name: disable {{ yum_repository_test_repo.name }} (Idempotant)
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        state: absent
+      register: test_repo_remove
+
+    - name: check return values
+      assert:
+        that:
+          - "test_repo_remove.repo == yum_repository_test_repo.name"
+          - "test_repo_remove.state == 'absent'"
+
+    - name: check Idempotant
+      assert:
+        that: not test_repo_remove.changed
+
+    - name: install {{ yum_repository_test_package }}, which should fail
+      action: "{{ ansible_facts.pkg_mgr }}"
+      args:
+        name: "{{ yum_repository_test_package }}"
+        state: present
+      ignore_errors: yes
+      register: test_package_result
+
+    - name: check that install failed
+      assert:
+        that:
+          - test_package_result.failed
+          - test_package_result.msg in expected_messages
+      vars:
+        expected_messages:
+          - No package matching '{{ yum_repository_test_package }}' found available, installed or updated
+          - Failed to install some of the specified packages
+
+    - name: re-add {{ yum_repository_test_repo.name }}
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        description: "{{ yum_repository_test_repo.description }}"
+        baseurl: "{{ yum_repository_test_repo.baseurl }}"
+        gpgcheck: no
+        state: present
+      register: test_repo_add
+
+    - name: check return values
+      assert:
+        that:
+          - test_repo_add.repo == yum_repository_test_repo.name
+          - test_repo_add.state == 'present'
+
+    - name: get repolist
+      shell: yum repolist
+      register: repolist
+      until: repolist.rc == 0
+      retries: 5
+
+    - name: ensure {{ yum_repository_test_repo.name }} was added
+      assert:
+        that:
+          - yum_repository_test_repo.name in repolist.stdout
+          - test_repo_add.changed
+
+    - name: install {{ yum_repository_test_package }}
+      action: "{{ ansible_facts.pkg_mgr }}"
+      args:
+        name: "{{ yum_repository_test_package }}"
+        state: present
+      register: test_package_result
+
+    - name: check that {{ yum_repository_test_package }} was successfully installed
+      assert:
+        that:
+          - test_package_result.changed
+
+    - name: remove {{ yum_repository_test_package }}
+      action: "{{ ansible_facts.pkg_mgr }}"
+      args:
+        name: "{{ yum_repository_test_package }}"
+        state: absent
+
+    - name: change configuration of {{ yum_repository_test_repo.name }} repo
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        baseurl: "{{ yum_repository_test_repo.baseurl }}"
+        description: New description
+        async: no
+        countme: yes
+        enablegroups: no
+        file: "{{ yum_repository_test_repo.name ~ 2 }}"
+        ip_resolve: 4
+        keepalive: no
+        module_hotfixes: no
+      register: test_repo_add1
+
+    - name: Get repo file contents
+      slurp:
+        path: "{{ '/etc/yum.repos.d/' ~ yum_repository_test_repo.name ~ '2.repo' }}"
+      register: slurp
+
+    - name: check that options are correctly getting written to the repo file
+      assert:
+        that:
+          - "'async = 0' in repo_file_contents"
+          - "'name = New description' in repo_file_contents"
+          - "'countme = 1' in repo_file_contents"
+          - "'enablegroups = 0' in repo_file_contents"
+          - "'ip_resolve = 4' in repo_file_contents"
+          - "'keepalive = 0' in repo_file_contents"
+          - "'module_hotfixes = 0' in repo_file_contents"
+      vars:
+        repo_file_contents: "{{ slurp.content | b64decode }}"
+
+    - name: check new config doesn't change (Idempotant)
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        baseurl: "{{ yum_repository_test_repo.baseurl }}"
+        description: New description
+        async: no
+        countme: yes
+        enablegroups: no
+        file: "{{ yum_repository_test_repo.name ~ 2 }}"
+        ip_resolve: 4
+        keepalive: no
+        module_hotfixes: no
+      register: test_repo_add2
+
+    - name: check Idempotant
+      assert:
+        that:
+          - test_repo_add1 is changed
+          - test_repo_add2 is not changed
+
+    - name: re-enable the {{ yum_repository_test_repo.name }} repo
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        description: "{{ yum_repository_test_repo.description }}"
+        baseurl: "{{ yum_repository_test_repo.baseurl }}"
+        state: present
+
+    - name: re-enable the {{ yum_repository_test_repo.name }} repo (Idempotant)
+      yum_repository:
+        name: "{{ yum_repository_test_repo.name }}"
+        description: "{{ yum_repository_test_repo.description }}"
+        baseurl: "{{ yum_repository_test_repo.baseurl }}"
+        state: present
+      register: test_repo_add
+
+    - name: check Idempotant
+      assert:
+        that: test_repo_add is not changed
+
+    - name: Test list options
+      yum_repository:
+        name: listtest
+        description: Testing list feature
+        baseurl:
+          - "{{ yum_repository_test_repo.baseurl }}"
+          - "{{ yum_repository_test_repo.baseurl ~ 'another_baseurl' }}"
+        gpgkey:
+          - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
+          - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG2-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
+        exclude:
+          - aaa
+          - bbb
+        includepkgs:
+          - ccc
+          - ddd
+      notify: remove listtest repo
+
+    - name: Get repo file
+      slurp:
+        path: /etc/yum.repos.d/listtest.repo
+      register: slurp
+
+    - name: Assert that lists were properly inserted
+      assert:
+        that:
+          - yum_repository_test_repo.baseurl in repofile
+          - another_baseurl in repofile
+          - "'RPM-GPG-KEY-EPEL' in repofile"
+          - "'RPM-GPG2-KEY-EPEL' in repofile"
+          - "'aaa bbb' in repofile"
+          - "'ccc ddd' in repofile"
+      vars:
+        repofile: "{{ slurp.content | b64decode }}"
+        another_baseurl: "{{ yum_repository_test_repo.baseurl ~ 'another_baseurl' }}"

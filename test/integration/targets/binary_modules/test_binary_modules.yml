@@ -1,0 +1,5 @@
+- hosts: testhost
+  roles:
+    - role: test_binary_modules
+      tags:
+        - test_binary_modules

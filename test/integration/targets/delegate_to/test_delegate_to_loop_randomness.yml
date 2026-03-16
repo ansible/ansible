@@ -1,0 +1,73 @@
+---
+- name: Integration tests for #28231
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Add some test hosts
+      add_host:
+        name: "foo{{item}}"
+        groups: foo
+        ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      loop: "{{ range(10)|list }}"
+
+    # We expect all of the next 3 runs to succeed
+    # this is done multiple times to increase randomness
+    - assert:
+        that:
+          - item in ansible_delegated_vars
+      delegate_to: "{{ item }}"
+      loop:
+        - "{{ groups.foo|random }}"
+      ignore_errors: true
+      register: result1
+
+    - assert:
+        that:
+          - item in ansible_delegated_vars
+      delegate_to: "{{ item }}"
+      loop:
+        - "{{ groups.foo|random }}"
+      ignore_errors: true
+      register: result2
+
+    - assert:
+        that:
+          - item in ansible_delegated_vars
+      delegate_to: "{{ item }}"
+      loop:
+        - "{{ groups.foo|random }}"
+      ignore_errors: true
+      register: result3
+
+    - debug:
+        var: result1
+
+    - debug:
+        var: result2
+
+    - debug:
+        var: result3
+
+    - name: Ensure all of the 3 asserts were successful
+      assert:
+        that:
+          - results is all
+      vars:
+        results:
+          - "{{ (result1.results|first) is successful }}"
+          - "{{ (result2.results|first) is successful }}"
+          - "{{ (result3.results|first) is successful }}"
+
+    - name: Set delegate
+      set_fact:
+        _delegate: '{{ groups.foo[0] }}'
+
+    - command: "true"
+      delegate_to: "{{ _delegate }}"
+      register: result
+
+    - assert:
+        that:
+          - result.stdout is defined
+          - result.results is undefined

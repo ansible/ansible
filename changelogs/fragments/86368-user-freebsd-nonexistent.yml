@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix ``FreeBsdUser`` to not create ``/nonexistent`` directory when modifying user to add them to a group on FreeBSD (https://github.com/ansible/ansible/issues/86368)

@@ -1,0 +1,30 @@
+---
+# test code for the iptables module
+# Copyright: (c) Contributors to the Ansible project
+# Copyright: (c) 2021, Éloi Rivard <eloi@yaal.coop>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: install xt_comment for iptables `-m comment` tests on RHEL 10
+  dnf:
+    name:
+    - kernel-modules-extra-{{ ansible_facts.kernel }}
+    state: present
+    exclude:
+    # prevent attempts to upgrade the kernel and install kernel modules for a non-running kernel version
+    - kernel-core
+  when: ansible_distribution == 'RedHat'
+
+- name: Use iptables with unnecessary extension match
+  iptables:
+    chain: INPUT
+    source: 8.8.8.8
+    jump: DROP
+    match: comment
+    comment: Here to include an extension
+  register: unnecessary_extension
+
+- name: Assert success
+  assert:
+    that:
+      - unnecessary_extension is success
+      - unnecessary_extension.rule.count('-m comment') == 1

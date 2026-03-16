@@ -1,0 +1,7 @@
+# use inventory and cache plugins defined in a content-adjacent collection
+plugin: testns.content_adj.statichost
+hostname: cache_host_a
+cache_plugin: testns.content_adj.custom_jsonfile
+cache: yes
+cache_connection: inventory_cache
+cache_prefix: 'prefix_'

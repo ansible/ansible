@@ -1,0 +1,20 @@
+- name: determine connection user
+  command: whoami
+  register: connection_user
+  vars:
+    ansible_become: no
+
+- name: include become tests
+  include_tasks: become.yml
+  vars:
+    ansible_become: yes
+    ansible_become_user: "{{ become_test_config.user }}"
+    ansible_become_method: "{{ become_test_config.method }}"
+    ansible_become_password: "{{ become_test_config.password | default(None) }}"
+  loop: "{{
+    (become_methods | selectattr('skip', 'undefined') | list)+
+    (become_methods | selectattr('skip', 'defined') | rejectattr('skip') | list)
+    }}"
+  loop_control:
+    loop_var: become_test_config
+    label: "{{ become_test }}"

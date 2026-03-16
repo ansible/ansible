@@ -1,0 +1,45 @@
+# Test code for the blockinfile module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact:
+    remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_blockinfile"
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: directory
+
+- import_tasks: add_block_to_existing_file.yml
+- import_tasks: create_file.yml
+- import_tasks: create_dir.yml
+- import_tasks: preserve_line_endings.yml
+- import_tasks: block_without_trailing_newline.yml
+- import_tasks: file_without_trailing_newline.yml
+- import_tasks: diff.yml
+- import_tasks: validate.yml
+- import_tasks: insertafter.yml
+- import_tasks: insertbefore.yml
+- import_tasks: multiline_search.yml
+- import_tasks: append_newline.yml
+- import_tasks: prepend_newline.yml
+- import_tasks: encoding.yml

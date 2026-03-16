@@ -1,0 +1,317 @@
+- name: Test HTTP 301 using HEAD
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: HEAD
+  ignore_errors: yes
+  register: http_301_head
+
+- assert:
+    that:
+    - http_301_head is failure
+    - http_301_head.json is not defined
+    - http_301_head.location == 'https://' + httpbin_host + '/anything'
+    - "http_301_head.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
+    - http_301_head.redirected == false
+    - http_301_head.status == 301
+    - http_301_head.url == 'https://' + httpbin_host + '/redirect-to?status_code=301&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 301 using GET
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: GET
+  ignore_errors: yes
+  register: http_301_get
+
+- assert:
+    that:
+    - http_301_get is failure
+    - http_301_get.json is not defined
+    - http_301_get.location == 'https://' + httpbin_host + '/anything'
+    - "http_301_get.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
+    - http_301_get.redirected == false
+    - http_301_get.status == 301
+    - http_301_get.url == 'https://' + httpbin_host + '/redirect-to?status_code=301&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 301 using POST
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: POST
+    body: '{ "foo": "bar" }'
+    body_format: json
+  ignore_errors: yes
+  register: http_301_post
+
+- assert:
+    that:
+    - http_301_post is failure
+    - http_301_post.json is not defined
+    - http_301_post.location == 'https://' + httpbin_host + '/anything'
+    - "http_301_post.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
+    - http_301_post.redirected == false
+    - http_301_post.status == 301
+    - http_301_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=301&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 302 using HEAD
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: HEAD
+  ignore_errors: yes
+  register: http_302_head
+
+- assert:
+    that:
+    - http_302_head is failure
+    - http_302_head.json is not defined
+    - http_302_head.location == 'https://' + httpbin_host + '/anything'
+    - "http_302_head.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
+    - http_302_head.redirected == false
+    - http_302_head.status == 302
+    - http_302_head.url == 'https://' + httpbin_host + '/redirect-to?status_code=302&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 302 using GET
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: GET
+  ignore_errors: yes
+  register: http_302_get
+
+- assert:
+    that:
+    - http_302_get is failure
+    - http_302_get.json is not defined
+    - http_302_get.location == 'https://' + httpbin_host + '/anything'
+    - "http_302_get.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
+    - http_302_get.redirected == false
+    - http_302_get.status == 302
+    - http_302_get.url == 'https://' + httpbin_host + '/redirect-to?status_code=302&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 302 using POST
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: POST
+    body: '{ "foo": "bar" }'
+    body_format: json
+  ignore_errors: yes
+  register: http_302_post
+
+- assert:
+    that:
+    - http_302_post is failure
+    - http_302_post.json is not defined
+    - http_302_post.location == 'https://' + httpbin_host + '/anything'
+    - "http_302_post.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
+    - http_302_post.redirected == false
+    - http_302_post.status == 302
+    - http_302_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=302&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 303 using HEAD
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: HEAD
+  ignore_errors: yes
+  register: http_303_head
+
+- assert:
+    that:
+    - http_303_head is failure
+    - http_303_head.json is not defined
+    - http_303_head.location == 'https://' + httpbin_host + '/anything'
+    - "http_303_head.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
+    - http_303_head.redirected == false
+    - http_303_head.status == 303
+    - http_303_head.url == 'https://' + httpbin_host + '/redirect-to?status_code=303&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 303 using GET
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: GET
+  ignore_errors: yes
+  register: http_303_get
+
+- assert:
+    that:
+    - http_303_get is failure
+    - http_303_get.json is not defined
+    - http_303_get.location == 'https://' + httpbin_host + '/anything'
+    - "http_303_get.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
+    - http_303_get.redirected == false
+    - http_303_get.status == 303
+    - http_303_get.url == 'https://' + httpbin_host + '/redirect-to?status_code=303&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 303 using POST
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: POST
+    body: '{ "foo": "bar" }'
+    body_format: json
+  ignore_errors: yes
+  register: http_303_post
+
+- assert:
+    that:
+    - http_303_post is failure
+    - http_303_post.json is not defined
+    - http_303_post.location == 'https://' + httpbin_host + '/anything'
+    - "http_303_post.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
+    - http_303_post.redirected == false
+    - http_303_post.status == 303
+    - http_303_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=303&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 307 using HEAD
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: HEAD
+  ignore_errors: yes
+  register: http_307_head
+
+- assert:
+    that:
+    - http_307_head is failure
+    - http_307_head.json is not defined
+    - http_307_head.location == 'https://' + httpbin_host + '/anything'
+    - "http_307_head.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
+    - http_307_head.redirected == false
+    - http_307_head.status == 307
+    - http_307_head.url == 'https://' + httpbin_host + '/redirect-to?status_code=307&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 307 using GET
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: GET
+  ignore_errors: yes
+  register: http_307_get
+
+- assert:
+    that:
+    - http_307_get is failure
+    - http_307_get.json is not defined
+    - http_307_get.location == 'https://' + httpbin_host + '/anything'
+    - "http_307_get.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
+    - http_307_get.redirected == false
+    - http_307_get.status == 307
+    - http_307_get.url == 'https://' + httpbin_host + '/redirect-to?status_code=307&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 307 using POST
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: POST
+    body: '{ "foo": "bar" }'
+    body_format: json
+  ignore_errors: yes
+  register: http_307_post
+
+- assert:
+    that:
+    - http_307_post is failure
+    - http_307_post.json is not defined
+    - http_307_post.location == 'https://' + httpbin_host + '/anything'
+    - "http_307_post.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
+    - http_307_post.redirected == false
+    - http_307_post.status == 307
+    - http_307_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=307&url=https://' + httpbin_host + '/anything'
+
+# NOTE: This is a bug, fixed in https://github.com/ansible/ansible/pull/36809
+- name: Test HTTP 308 using HEAD
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: HEAD
+  ignore_errors: yes
+  register: http_308_head
+
+- assert:
+    that:
+    - http_308_head is failure
+    - http_308_head.json is not defined
+    - http_308_head.location == 'https://' + httpbin_host + '/anything'
+    - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_head.msg"
+    - http_308_head.redirected == false
+    - http_308_head.status == 308
+    - http_308_head.url == 'https://' + httpbin_host + '/redirect-to?status_code=308&url=https://' + httpbin_host + '/anything'
+
+# NOTE: This is a bug, fixed in https://github.com/ansible/ansible/pull/36809
+- name: Test HTTP 308 using GET
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: GET
+  ignore_errors: yes
+  register: http_308_get
+
+- assert:
+    that:
+    - http_308_get is failure
+    - http_308_get.json is not defined
+    - http_308_get.location == 'https://' + httpbin_host + '/anything'
+    - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_get.msg"
+    - http_308_get.redirected == false
+    - http_308_get.status == 308
+    - http_308_get.url == 'https://' + httpbin_host + '/redirect-to?status_code=308&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP 308 using POST
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
+    follow_redirects: none
+    return_content: yes
+    method: POST
+    body: '{ "foo": "bar" }'
+    body_format: json
+  ignore_errors: yes
+  register: http_308_post
+
+- assert:
+    that:
+    - http_308_post is failure
+    - http_308_post.json is not defined
+    - http_308_post.location == 'https://' + httpbin_host + '/anything'
+    - "'Status code was 308 and not [200]: HTTP Error 308: ' in http_308_post.msg"
+    - http_308_post.redirected == false
+    - http_308_post.status == 308
+    - http_308_post.url == 'https://' + httpbin_host + '/redirect-to?status_code=308&url=https://' + httpbin_host + '/anything'
+
+- name: Test HTTP return value for location using relative redirects
+  uri:
+    url: https://{{ httpbin_host }}/redirect-to?url={{ item }}
+    status_code: 302
+    follow_redirects: none
+  register: http_302
+  loop:
+    - "/anything?foo=bar"
+    - "status/302"
+    - "./status/302"
+    - "/status/302"
+    - "//{{ httpbin_host }}/status/302"
+    - "https:status/302"
+
+- assert:
+    that:
+      - item.location == ('https://' + httpbin_host + ((idx == 0) | ternary('/anything?foo=bar', '/status/302')))
+  loop: "{{ http_302.results }}"
+  loop_control:
+    index_var: idx

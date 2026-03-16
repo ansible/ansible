@@ -1,0 +1,9 @@
+The files were taken from http://www.json.org/JSON_checker/
+> If the JSON_checker is working correctly, it must accept all of the pass*.json files and reject all of the fail*.json files.
+
+Difference with JSON_checker dataset:
+  - *${n}.json  renamed to *${n-1}.json to be 0-based
+  - fail0.json  renamed to pass3.json   as python json module allows JSON payload to be string
+  - fail17.json renamed to pass4.json   as python json module has no problems with deep structures
+  - fail32.json renamed to fail0.json   to fill gap
+  - fail31.json renamed to fail17.json  to fill gap

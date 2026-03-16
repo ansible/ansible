@@ -1,0 +1,12 @@
+# create system user
+
+- name: remove user
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: create system user
+  user:
+    name: ansibulluser
+    state: present
+    system: yes

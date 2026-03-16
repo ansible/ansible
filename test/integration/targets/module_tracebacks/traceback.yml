@@ -1,0 +1,51 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: intentionally fail module execution with a handled exception
+      ansibull:
+        errors:
+          - one
+          - two
+      ignore_errors: yes
+      register: handled_error
+    - name: intentionally fail module execution with an unhandled handled exception
+      ansibull:
+        trigger_unhandled_exception: boom
+      ignore_errors: yes
+      register: unhandled_error
+    - name: intentionally return from module main instead of exiting
+      ansibull:
+        return_from_main: true
+      ignore_errors: yes
+      register: return_from_main
+
+    - name: check if error tracebacks are enabled
+      set_fact:
+        error_tracebacks: "{{ lookup('env', 'ANSIBLE_DISPLAY_TRACEBACK') == 'error' }}"
+
+    - name: verify exceptions were properly handled
+      assert:
+        that:
+          # NB: these are regexes- using . to avoid YAML colon escaping
+          - handled_error is failed
+          - handled_error.msg is match 'Task failed. Module failed. one. two'
+
+          - unhandled_error is failed
+          - (unhandled_error.module_stderr ~ unhandled_error.module_stdout) is search 'Die.*boom'
+
+          - return_from_main is failed
+          - return_from_main.msg is match 'Task failed. Module failed. New-style module did not handle its own exit.'
+
+    - name: verify tracebacks were captured
+      assert:
+        that:
+          - handled_error.exception is contains 'Traceback'
+          - unhandled_error.exception is contains 'Traceback'
+      when: error_tracebacks
+
+    - name: verify tracebacks were not captured
+      assert:
+        that:
+          - handled_error.exception == '(traceback unavailable)'
+          - unhandled_error.exception == '(traceback unavailable)'
+      when: not error_tracebacks

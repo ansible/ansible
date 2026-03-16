@@ -1,0 +1,14 @@
+# This is the configuration template for ansible-test Scaleway integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+#
+# If you want to test against the Vultr public API,
+# fill in the values below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
+# This will cause ansible-test to use the given configuration.
+
+[default]
+key = @KEY
+org = @ORG

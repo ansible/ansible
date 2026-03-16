@@ -1,0 +1,90 @@
+# UNICODE
+
+# https://github.com/ansible/ansible/issues/65297
+- name: get UNICODE_VAR environment var value
+  shell: "echo $UNICODE_VAR"
+  register: unicode_var_value
+
+- name: verify the UNICODE_VAR is defined
+  assert:
+    that:
+      - "unicode_var_value.stdout is truthy"
+
+- name: use env lookup to get UNICODE_VAR value
+  set_fact:
+    test_unicode_val: "{{ lookup('env', 'UNICODE_VAR') }}"
+
+- debug: var=unicode_var_value
+- debug: var=test_unicode_val
+
+- name: compare unicode values
+  assert:
+    that:
+      - "test_unicode_val == unicode_var_value.stdout"
+
+# LOOKUP TEMPLATING
+
+- name: use bare interpolation
+  debug: msg="got {{item}}"
+  with_items: "{{things1}}"
+  register: bare_var
+
+- name: verify that list was interpolated
+  assert:
+    that:
+        - "bare_var.results[0].item == 1"
+        - "bare_var.results[1].item == 2"
+
+- name: use list with bare strings in it
+  debug: msg={{item}}
+  with_items:
+    - things2
+    - things1
+
+- name: use list with undefined var in it
+  debug: msg={{item}}
+  with_items: "{{things2}}"
+  ignore_errors: True
+
+# BUG #10073 nested template handling
+
+- name: set variable that clashes
+  set_fact:
+      PATH: foobar
+
+- name: get PATH environment var value
+  set_fact:
+    known_var_value: "{{ lookup('pipe', 'echo $PATH') }}"
+
+- name: do the lookup for env PATH
+  set_fact:
+    test_val: "{{ lookup('env', 'PATH') }}"
+
+- debug: var=test_val
+
+- name: compare values
+  assert:
+    that:
+        - "test_val != ''"
+        - "test_val == known_var_value"
+
+- name: set with_dict
+  shell: echo "{{ item.key + '=' + item.value  }}"
+  with_dict: "{{ mydict }}"
+
+# BUG #34144 bad template caching
+
+- name: generate two random passwords
+  set_fact:
+    password1: "{{ lookup('password', '/dev/null length=20') }}"
+    password2: "{{ lookup('password', '/dev/null length=20') }}"
+    # If the passwords are generated randomly, the chance that they
+    # coincide is neglectable (< 1e-18 assuming 120 bits of randomness
+    # per password).
+
+- name: make sure passwords are not the same
+  assert:
+    that:
+      - password1 != password2
+
+- include_tasks: ./errors.yml

@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: fileglob
+  short_description: explode a path glob to matching files
+  description:
+    - Return a list of files that matches the supplied path glob pattern.
+    - Filters run on the controller, so the files are matched from the controller's file system.
+  positional: _input
+  options:
+    _input:
+      description: Path glob pattern.
+      type: string
+      required: true
+
+EXAMPLES: |
+  # found = ['/etc/hosts', '/etc/hasts']
+  found: "{{ '/etc/h?sts' | fileglob }}"
+
+RETURN:
+  _value:
+    description: List of files matched.
+    type: list
+    elements: string

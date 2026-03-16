@@ -1,0 +1,3 @@
+shippable/posix/group3
+non_local  # this test requires interpreter discovery, which means code coverage must be disabled
+context/controller

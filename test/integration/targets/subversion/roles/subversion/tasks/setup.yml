@@ -1,0 +1,116 @@
+---
+- name: clean out the checkout dir
+  file:
+    path: '{{ subversion_test_dir }}'
+    state: '{{ item }}'
+  loop:
+  - absent
+  - directory
+
+- name: install SVN pre-reqs
+  package:
+    name: '{{ subversion_packages }}'
+    state: present
+  when: ansible_distribution != 'Alpine'
+
+- name: install SVN pre-reqs - Alpine
+  command: 'apk add -U -u {{ subversion_packages|join(" ") }}'
+  when: ansible_distribution == 'Alpine'
+
+- name: upgrade SVN pre-reqs
+  package:
+    name: '{{ upgrade_packages }}'
+    state: latest
+  when:
+    - upgrade_packages | default([]) is truthy
+
+- name: create SVN home folder
+  file:
+    path: '{{ subversion_server_dir }}'
+    state: directory
+
+- name: Generate CA and TLS certificates via trustme
+  vars:
+    venv_path: >-
+      {{ subversion_server_dir }}/.venv
+    venv_python: >-
+      {{ subversion_server_dir }}/.venv/bin/python
+  block:
+  - name: trustme -- provision a venv
+    command: >-
+      {{ ansible_python_interpreter }} -Im venv
+      {{ venv_path }}
+  - name: trustme -- install tool
+    pip:
+      name: trustme
+      virtualenv: >-
+        {{ venv_path }}
+  - name: trustme -- generate CA and TLS certs
+    command:
+      argv:
+      - >-
+        {{ venv_python }}
+      - -Im
+      - trustme
+      - --dir={{ subversion_server_dir }}
+      - --identities={{ subversion_repo_ip }}
+      - --common-name={{ subversion_repo_ip }}
+
+- name: symlink trustme certificates into apache config dir - Red Hat
+  when: ansible_os_family in ['RedHat']
+  file:
+    src: /tmp/ansible-svn/server.{{ item.trustme_filetype }}
+    dest: /etc/pki/tls/{{ item.apache_target_path }}
+    state: link
+  loop:
+  - apache_target_path: certs/localhost.crt
+    trustme_filetype: pem
+  - apache_target_path: certs/server-chain.crt
+    trustme_filetype: pem
+  - apache_target_path: private/localhost.key
+    trustme_filetype: key
+
+- name: template out configuration file
+  template:
+    src: subversion.conf.j2
+    dest: '{{ subversion_server_dir }}/subversion.conf'
+
+- name: create a test repository
+  script: create_repo.sh {{ subversion_repo_name }}
+  args:
+    chdir: '{{ subversion_server_dir }}'
+    creates: '{{ subversion_server_dir }}/{{ subversion_repo_name }}'
+
+- name: add test user to htpasswd for Subversion site
+  command: htpasswd -bc {{ subversion_server_dir + '/svn-auth-users' | quote }} {{ subversion_username | quote }} {{ subversion_password | quote }}
+
+- name: apply ownership for all SVN directories
+  file:
+    path: '{{ subversion_server_dir }}'
+    owner: '{{ apache_user }}'
+    group: '{{ apache_group }}'
+    recurse: True
+
+- name: start test Apache SVN site - non Red Hat
+  command: apachectl -k start -f {{ subversion_server_dir }}/subversion.conf
+  async: 3600  # We kill apache manually in the clean up phase
+  poll: 0
+  when: ansible_os_family not in ['RedHat']
+
+# On Red Hat based OS', we can't use apachectl to start up own instance, just use the raw httpd
+- name: start test Apache SVN site - Red Hat
+  command: httpd -k start -f {{ subversion_server_dir }}/subversion.conf
+  async: 3600  # We kill apache manually in the clean up phase
+  poll: 0
+  when: ansible_os_family in ['RedHat']
+
+- lineinfile:
+    dest: >-
+      {{ ansible_env.HOME }}/.subversion/servers
+    regexp: >-
+      ^#\s*ssl-authority-files\s*=\s*
+    line: >-
+      ssl-authority-files = {{ subversion_server_dir }}/client.pem
+    insertafter: >-
+      ^\[global\]
+    state: present

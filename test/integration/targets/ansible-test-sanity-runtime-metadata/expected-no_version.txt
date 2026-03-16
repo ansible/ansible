@@ -1,0 +1,8 @@
+meta/runtime.yml:0:0: List must contain at most one dictionary for dictionary value @ data['action_groups']['foo']. Got [{'metadata': {}}, {'metadata': {}}]
+meta/runtime.yml:0:0: Must be a FQCR or a short name @ data['action_groups']['bam'][1]. Got 'foo.bar'
+meta/runtime.yml:0:0: Must be a FQCR or a short name @ data['action_groups']['foobar'][0]['metadata']['extend_group'][1]. Got 'bar.baz'
+meta/runtime.yml:0:0: expected a list for dictionary value @ data['action_groups']['bar']. Got 'foo'
+meta/runtime.yml:0:0: expected a list for dictionary value @ data['action_groups']['baz']. Got {'bam': 'bar'}
+meta/runtime.yml:0:0: expected a list for dictionary value @ data['action_groups']['foobarbam'][0]['metadata']['extend_group']. Got 23
+meta/runtime.yml:0:0: extra keys not allowed @ data['action_groups']['foobar'][0]['metadata']['extra']. Got 'indeed'
+meta/runtime.yml:0:0: extra keys not allowed @ data['extra_key']. Got True

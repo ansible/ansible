@@ -1,0 +1,14 @@
+all:
+  hosts:
+    host0:
+      tags:
+        name: "host0"
+        environment: "test"
+        status: ""
+        type: ~
+      os: ""
+      roles:
+        - db
+        - web
+        - ""
+        - ~

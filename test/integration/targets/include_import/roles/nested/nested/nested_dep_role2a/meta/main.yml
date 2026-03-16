@@ -1,0 +1,2 @@
+dependencies:
+- role: nested/nested/nested_dep_role2b

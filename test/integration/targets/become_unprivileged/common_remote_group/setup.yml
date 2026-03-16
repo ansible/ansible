@@ -1,0 +1,43 @@
+- name: Prep (as root)
+  hosts: ssh
+  gather_facts: yes
+  remote_user: root
+  tasks:
+    - name: Create group for unprivileged users
+      group:
+        name: commongroup
+
+    - name: Add them to the group
+      user:
+        name: "{{ item }}"
+        groups: commongroup
+        append: yes
+      with_items:
+        - unpriv1
+        - unpriv2
+
+    - name: Check if /usr/bin/setfacl exists
+      stat:
+        path: /usr/bin/setfacl
+      register: usr_bin_setfacl
+
+    - name: Check if /bin/setfacl exists
+      stat:
+        path: /bin/setfacl
+      register: bin_setfacl
+
+    - name: Set path to setfacl
+      set_fact:
+        setfacl_path: /usr/bin/setfacl
+      when: usr_bin_setfacl.stat.exists
+
+    - name: Set path to setfacl
+      set_fact:
+        setfacl_path: /bin/setfacl
+      when: bin_setfacl.stat.exists
+
+    - name: chmod -x setfacl to disable it
+      file:
+        path: "{{ setfacl_path }}"
+        mode: a-x
+      when: setfacl_path is defined

@@ -1,0 +1,2 @@
+bugfixes:
+  - 'ansible_facts[os_*] - Contained wrong information, if ClearLinux parsing was tried before falling back to general os-release parsing'

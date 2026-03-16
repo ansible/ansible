@@ -1,0 +1,11 @@
+destructive
+shippable/posix/group3
+needs/httptester
+skip/macos  # This test crashes Python due to https://wefearchange.org/2018/11/forkmacos.rst.html
+# Example failure:
+#
+# TASK [lookup_url : Test that retrieving a url works] ***************************
+# objc[15394]: +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called.
+# objc[15394]: +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called. We cannot safely call it or ignore it in t
+# he fork() child process. Crashing instead. Set a breakpoint on objc_initializeAfterForkError to debug.
+# ERROR! A worker was found in a dead state

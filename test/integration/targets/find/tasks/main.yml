@@ -1,0 +1,532 @@
+# Test code for the find module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: remote_tmp_dir_test={{remote_tmp_dir}}/test_find
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: directory
+
+##
+## find
+##
+
+- name: make some directories
+  file:
+      path: "{{ remote_tmp_dir_test }}/{{ item }}"
+      state: directory
+  with_items:
+      - a/b/c/d
+      - e/f/g/h
+
+- name: make some files
+  copy:
+      dest: "{{ remote_tmp_dir_test }}/{{ item }}"
+      content: 'data'
+  with_items:
+      - a/1.txt
+      - a/b/2.jpg
+      - a/b/c/3
+      - a/b/c/d/4.xml
+      - e/5.json
+      - e/f/6.swp
+      - e/f/g/7.img
+      - e/f/g/h/8.ogg
+
+- name: find the directories
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      file_type: directory
+      recurse: yes
+  register: find_test0
+- debug: var=find_test0
+- name: validate directory results
+  assert:
+      that:
+          - 'find_test0.changed is defined'
+          - 'find_test0.examined is defined'
+          - 'find_test0.files is defined'
+          - 'find_test0.matched is defined'
+          - 'find_test0.msg is defined'
+          - 'find_test0.matched == 8'
+          - 'find_test0.files | length == 8'
+          - 'find_test0.examined == 16'
+
+- name: find the xml and img files
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      file_type: file
+      patterns: "*.xml,*.img"
+      recurse: yes
+  register: find_test1
+- debug: var=find_test1
+- name: validate directory results
+  assert:
+      that:
+          - 'find_test1.matched == 2'
+          - 'find_test1.files | length == 2'
+
+- name: find the xml file
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+  register: find_test2
+- debug: var=find_test2
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test2.matched == 1'
+          - 'find_test2.files[0].pw_name is defined'
+          - 'find_test2.files[0].gr_name is defined'
+
+- name: find the xml file with empty excludes
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+      excludes: []
+  register: find_test3
+- debug: var=find_test3
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test3.matched == 1'
+          - 'find_test3.files[0].pw_name is defined'
+          - 'find_test3.files[0].gr_name is defined'
+
+- name: Copy some files into the test dir
+  copy:
+      src: "{{ item }}"
+      dest: "{{ remote_tmp_dir_test }}/{{ item }}"
+      mode: 0644
+  with_items:
+      - a.txt
+      - log.txt
+      - hello_world.gbk
+
+- name: Ensure '$' only matches the true end of the file with read_whole_file, not a line
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.txt"
+      contains: "KO$"
+      read_whole_file: true
+  register: whole_no_match
+
+- debug: var=whole_no_match
+
+- assert:
+      that:
+          - whole_no_match.matched == 0
+
+- name: Match the end of the file successfully
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.txt"
+      contains: "OK$"
+      read_whole_file: true
+  register: whole_match
+
+- debug: var=whole_match
+
+- assert:
+      that:
+          - whole_match.matched == 1
+
+- name: When read_whole_file=False, $ should match an individual line
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.txt"
+      contains: ".*KO$"
+      read_whole_file: false
+  register: match_end_of_line
+
+- debug: var=match_end_of_line
+
+- assert:
+      that:
+          - match_end_of_line.matched == 1
+
+- name: When read_whole_file=True, match across line boundaries
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.txt"
+      contains: "has\na few"
+      read_whole_file: true
+  register: match_line_boundaries
+
+- debug: var=match_line_boundaries
+
+- assert:
+      that:
+          - match_line_boundaries.matched == 1
+
+- name: When read_whole_file=False, do not match across line boundaries
+  find:
+      paths: "{{ remote_tmp_dir_test }}"
+      patterns: "*.txt"
+      contains: "has\na few"
+      read_whole_file: false
+  register: no_match_line_boundaries
+
+- debug: var=no_match_line_boundaries
+
+- assert:
+      that:
+          - no_match_line_boundaries.matched == 0
+
+- name: read a gbk file by utf-8
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    patterns: "*.gbk"
+    contains: "你好世界"
+    encoding: "utf-8"
+  register: fail_to_read_wrong_encoding_file
+
+- debug: var=fail_to_read_wrong_encoding_file
+
+- assert:
+      that:
+          - fail_to_read_wrong_encoding_file.msg == 'Not all paths examined, check warnings for details'
+          - >-
+              fail_to_read_wrong_encoding_file.skipped_paths[remote_tmp_dir_test] ==
+              ("Failed to read the file %s/hello_world.gbk due to an encoding error. current encoding: utf-8" % (remote_tmp_dir_test))
+
+- name: read a gbk file by gbk
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    encoding: "gbk"
+    patterns: "*.gbk"
+    contains: "你好世界"
+  register: success_to_read_right_encoding_file
+
+- debug: var=success_to_read_right_encoding_file
+
+- assert:
+      that:
+          - success_to_read_right_encoding_file.matched == 1
+
+- name: specify the checksum_algo
+  register: find_by_specific_algo_res
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    get_checksum: true
+    checksum_algorithm: md5
+
+- debug: var=find_by_specific_algo_res
+
+- name: get the md5 checksum by stat
+  register: all_files_st
+  stat:
+    get_checksum: true
+    checksum_algorithm: md5
+    path: "{{ item.path }}"
+  loop: "{{ find_by_specific_algo_res.files }}"
+
+- assert:
+      that: "all_files_st.results[index].stat.checksum == item.checksum"
+  loop: "{{ find_by_specific_algo_res.files }}"
+  loop_control:
+    index_var: index
+
+- name: read a gbk file by non-exists encoding
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    encoding: "idontexist"
+    patterns: "*.gbk"
+    contains: "你好世界"
+  register: fail_to_search_file_by_non_exists_encoding
+
+- debug: var=fail_to_search_file_by_non_exists_encoding
+
+- assert:
+      that:
+          - 'fail_to_search_file_by_non_exists_encoding.skipped_paths[remote_tmp_dir_test] == "unknown encoding: idontexist"'
+
+- block:
+    - set_fact:
+        mypath: /idontexist{{lookup('pipe', 'mktemp')}}
+
+    - find:
+        paths: '{{mypath}}'
+        patterns: '*'
+      register: failed_path
+
+    - assert:
+        that:
+            - failed_path.files == []
+            - 'failed_path.msg == "Not all paths examined, check warnings for details"'
+            - mypath in failed_path.skipped_paths
+
+- name: test number of examined directories/files
+  block:
+    - name: Get all files/directories in the path
+      find:
+        paths: "{{ remote_tmp_dir_test }}"
+        recurse: yes
+        file_type: any
+      register: total_contents
+
+    - assert:
+        that:
+          - total_contents.matched == 19
+          - total_contents.examined == 19
+
+    - name: Get files and directories with depth
+      find:
+        paths: "{{ remote_tmp_dir_test }}"
+        recurse: yes
+        file_type: any
+        depth: 2
+      register: contents_with_depth
+
+    - assert:
+        that:
+          - contents_with_depth.matched == 9
+          # dir contents are considered until the depth exceeds the requested depth
+          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
+          - contents_with_depth.examined == 13
+
+    - name: Find files with depth
+      find:
+        paths: "{{ remote_tmp_dir_test }}"
+        depth: 2
+        recurse: yes
+      register: files_with_depth
+
+    - assert:
+        that:
+          - files_with_depth.matched == 5
+          # dir contents are considered until the depth exceeds the requested depth
+          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
+          - files_with_depth.examined == 13
+
+- name: exclude with regex
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    recurse: yes
+    use_regex: true
+    exclude: .*\.ogg
+  register: find_test3
+
+- set_fact:
+    find_test3_list: "{{ find_test3.files|map(attribute='path') }}"
+
+- name: assert we skipped the ogg file
+  assert:
+    that:
+      - remote_tmp_dir_test + "/e/f/g/h/8.ogg" not in find_test3_list
+
+- name: patterns with regex
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    recurse: yes
+    use_regex: true
+    patterns: .*\.ogg
+  register: find_test4
+
+- name: assert we matched the ogg file
+  assert:
+    that:
+      - remote_tmp_dir_test ~ "/e/f/g/h/8.ogg" in find_test4.files|map(attribute="path")
+
+- name: create our age/size testing sub-directory
+  file:
+    path: "{{ remote_tmp_dir_test }}/astest"
+    state: directory
+
+- name: create test file with old timestamps
+  file:
+    path: "{{ remote_tmp_dir_test }}/astest/old.txt"
+    state: touch
+    modification_time: "202001011200.0"
+
+- name: create test file with current timestamps
+  file:
+    path: "{{ remote_tmp_dir_test }}/astest/new.txt"
+    state: touch
+
+- name: create hidden test file with current timestamps
+  file:
+    path: "{{ remote_tmp_dir_test }}/astest/.hidden.txt"
+    state: touch
+
+- name: find files older than 1 week
+  find:
+    path: "{{ remote_tmp_dir_test }}/astest"
+    age: 1w
+    hidden: true
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we only find the old file
+  assert:
+    that:
+      - result.matched == 1
+      - remote_tmp_dir_test + "/astest/old.txt" in astest_list
+
+- name: find files newer than 1 week
+  find:
+    path: "{{ remote_tmp_dir_test }}/astest"
+    age: -1w
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we only find the current file
+  assert:
+    that:
+      - result.matched == 1
+      - remote_tmp_dir_test + "/astest/new.txt" in astest_list
+
+- name: add some content to the new file
+  shell: "echo hello world > {{ remote_tmp_dir_test }}/astest/new.txt"
+
+- name: find files with MORE than 5 bytes, also get checksums
+  find:
+    path: "{{ remote_tmp_dir_test }}/astest"
+    size: 5
+    hidden: true
+    get_checksum: true
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we only find the hello world file
+  assert:
+    that:
+      - result.matched == 1
+      - remote_tmp_dir_test + "/astest/new.txt" in astest_list
+      - '"checksum" in result.files[0]'
+
+- name: find ANY item with LESS than 5 bytes, also get checksums
+  find:
+    path: "{{ remote_tmp_dir_test }}/astest"
+    size: -5
+    hidden: true
+    get_checksum: true
+    file_type: any
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we do not find the hello world file and a checksum is present
+  assert:
+    that:
+      - result.matched == 2
+      - remote_tmp_dir_test + "/astest/old.txt" in astest_list
+      - remote_tmp_dir_test + "/astest/.hidden.txt" in astest_list
+      - '"checksum" in result.files[0]'
+
+# Test permission error is correctly handled by find module
+- vars:
+    test_dir: /tmp/permission_test
+  block:
+    - name: Set up content
+      file:
+        path: "{{ test_dir }}/{{ item.name }}"
+        state: "{{ item.state }}"
+        mode: "{{ item.mode }}"
+        owner: "{{ item.owner | default(omit) }}"
+        group: "{{ item.group | default(omit) }}"
+      loop:
+        - name: readable
+          state: directory
+          owner: "{{ test_user_name }}"
+          mode: "1711"
+        - name: readable/1-unreadable
+          state: directory
+          mode: "0700"
+        - name: readable/2-readable
+          state: touch
+          owner: "{{ test_user_name }}"
+          mode: "0777"
+
+    - name: Find a file in readable directory
+      find:
+        paths: "{{ test_dir }}/readable/"
+        patterns: "*"
+        recurse: true
+      register: permission_issue
+      become_user: "{{ test_user_name }}"
+
+    - name: Find a file in readable directory
+      find:
+        paths: "{{ test_dir }}/readable/"
+        patterns: "*"
+        recurse: true
+      register: permission_issue
+      become_user: "{{ test_user_name }}"
+      become: yes
+
+    - name: Check if the skipped_paths are populated correctly with permission error
+      assert:
+        that:
+          - permission_issue is success
+          - not permission_issue.changed
+          - permission_issue.skipped_paths|length == 1
+          - "'{{ test_dir }}/readable/1-unreadable' in permission_issue.skipped_paths"
+          - "'Permission denied' in permission_issue.skipped_paths['{{ test_dir }}/readable/1-unreadable']"
+          - permission_issue.matched == 1
+  always:
+    - name: cleanup test directory
+      file:
+        dest: "{{ test_dir }}"
+        state: absent
+
+- name: Run mode tests
+  import_tasks: mode.yml
+
+- name: User block
+  become: true
+  become_user: "{{ test_user_name }}"
+  block:
+    - name: Create file in home dir
+      copy:
+        content: ""
+        dest: ~/wharevs.txt
+        mode: '0644'
+
+    - name: Find file in home dir with ~/
+      find:
+        paths: ~/
+        patterns: 'whar*'
+      register: homedir_search
+
+    - set_fact:
+        astest_list: "{{ homedir_search.files | map(attribute='path') }}"
+
+    - name: Check if found
+      assert:
+        that:
+          - homedir_search is success
+          - homedir_search.matched == 1
+          - '"{{ homedir }}/wharevs.txt" in astest_list'
+      vars:
+        homedir: "{{ test_user.home }}"

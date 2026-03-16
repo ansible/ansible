@@ -1,0 +1,5 @@
+---
+config:
+  key0: 0
+  key1: 0
+  key2: { a: 21 }

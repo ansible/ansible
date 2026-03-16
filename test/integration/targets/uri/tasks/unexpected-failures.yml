@@ -1,0 +1,25 @@
+---
+# same as expanduser & expandvars called on managed host
+- command: 'echo {{ remote_tmp_dir }}'
+  register: echo
+
+- set_fact:
+    remote_dir_expanded: '{{ echo.stdout }}'
+
+- name: ensure test directory doesn't exist
+  file:
+    path: '{{ remote_tmp_dir }}/non/existent/path'
+    state: absent
+
+- name: destination doesn't exist
+  uri:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ remote_tmp_dir }}/non/existent/path'
+  ignore_errors: true
+  register: ret
+
+- name: check that unexpected failure didn't happen
+  assert:
+    that:
+      - ret is failed
+      - ret.msg is search "Could not replace"

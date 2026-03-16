@@ -1,0 +1,73 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+# Copyright: Contributors to the Ansible project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- set_fact:
+    dnf5: "{{ (ansible_distribution == 'RedHat' and ansible_distribution_major_version | int > 10) or ansible_distribution == 'Fedora' }}"
+
+- when:
+    - dnf5
+    - test_auto_install | default(false)  # NOTE ensure one of dnf, dnf-oldest or dnf-latest sets test_auto_install
+  block:
+    - name: Ensure module deps are not installed
+      command: dnf remove -y python3-libdnf5
+
+    - name: Test the auto_install_module_deps option
+      dnf5:
+        name: sos
+        auto_install_module_deps: false
+      register: r
+      ignore_errors: true
+
+    - assert:
+        that:
+          - r is failed
+          - r.msg is contains("Could not import the libdnf5 python module")
+
+    # Now the first dnf5 task in the integration tests should auto install python3-libdnf5 as
+    # auto_install_module_deps is true by default.
+
+- when: ansible_distribution in ['RedHat', 'Fedora']
+  block:
+    - include_tasks: dnf.yml
+    - include_tasks: skip_broken_and_nobest.yml
+    - block:
+        - include_tasks: filters.yml
+        - include_tasks: filters_check_mode.yml
+      tags:
+        - filters
+    - include_tasks: gpg.yml
+    - include_tasks: repo.yml
+    - include_tasks: dnf_group_remove.yml
+    - include_tasks: dnfinstallroot.yml
+    - include_tasks: logging.yml
+    - include_tasks: cacheonly.yml
+    - include_tasks: multilib.yml
+
+# Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
+- include_tasks: dnfreleasever.yml
+  when: ansible_distribution == 'Fedora'
+
+- when:
+    - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version | int == 9
+  block:
+    # FUTURE - look at including AppStream support in our local repo
+    - name: list modules
+      command: dnf module list -q
+      register: module_list
+
+    # A module that only has a single version
+    - name: Find a module that meets our testing needs
+      set_fact:
+        astream_name: '@{{ module.name }}:{{ module.version }}/{{ module.profile }}'
+        astream_name_no_stream: '@{{ module.name }}/{{ module.profile }}'
+      vars:
+        module: '{{ module_list.stdout|get_first_single_version_module }}'
+
+    - include_tasks: modularity.yml
+      tags:
+        - dnf_modularity
+  rescue:
+    # Just in case something crazy happens when listing or parsing modules
+    - meta: noop

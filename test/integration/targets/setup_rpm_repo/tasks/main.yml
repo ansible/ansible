@@ -1,0 +1,45 @@
+- block:
+  - name: Install deps
+    dnf:
+       name:
+         - python3-pip
+         - createrepo_c
+         - rpm-build
+
+  - name: Install rpmfluff via pip, ensure it is installed with default python as python3-rpm may not exist for other versions
+    pip:
+      name: rpmfluff
+      executable: pip3
+
+  - set_fact:
+      repos:
+        - "dummy-repo"
+    changed_when: yes
+    notify: remove repos
+
+  - name: Create RPMs and put them into a repo
+    create_repo:
+      tempdir: "{{ remote_tmp_dir }}"
+    register: repo
+
+  - set_fact:
+      repodir: "{{ repo.repo_dir }}"
+
+  - name: Install the repo
+    yum_repository:
+      name: "dummy-repo"
+      description: "dummy-repo"
+      baseurl: "file://{{ repodir }}"
+      gpgcheck: no
+    when: install_repos | bool
+
+  - name: Copy comps.xml file
+    copy:
+      src: comps.xml
+      dest: "{{ repodir }}"
+    register: repodir_comps
+
+  - name: Register comps.xml on repo
+    command: createrepo -g {{ repodir_comps.dest | quote }} {{ repodir | quote }}
+
+  when: ansible_distribution in ['RedHat', 'Fedora']

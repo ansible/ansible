@@ -1,0 +1,5 @@
+- debug:
+    msg: "Testing end_role on host {{ inventory_hostname }}"
+
+- meta: end_role
+  when: end_role_cond == '2'

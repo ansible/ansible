@@ -1,0 +1,27 @@
+# Test playbook for the service_facts module
+# Copyright: (c) 2017, Adam Miller <admiller@redhat.com>
+# Copyright: (c) 2020, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Gather service facts
+  service_facts:
+
+- name: check for ansible_facts.services exists
+  assert:
+    that: ansible_facts.services is defined
+
+- name: Test disabled service facts (https://github.com/ansible/ansible/issues/69144)
+  block:
+  - name: display value of ansible_service_mgr
+    debug:
+      msg: 'ansible_service_mgr: {{ ansible_service_mgr }}'
+
+  - name: setup test service script
+    include_tasks: 'systemd_setup.yml'
+
+  - name: execute tests
+    import_tasks: tests.yml
+
+  when:
+    - ansible_service_mgr == "systemd"
+    - ansible_distribution != 'Alpine'

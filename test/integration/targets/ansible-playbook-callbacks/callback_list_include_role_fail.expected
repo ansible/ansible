@@ -1,0 +1,9 @@
+1 __init__
+7 v2_on_any
+1 v2_playbook_on_play_start
+1 v2_playbook_on_start
+1 v2_playbook_on_stats
+1 v2_playbook_on_task_start
+1 v2_runner_on_failed
+1 v2_runner_on_ok
+1 v2_runner_on_start

@@ -1,0 +1,20 @@
+- name: Test molly-guard
+  when: ansible_facts.distribution in ['Debian', 'Ubuntu']
+  tags:
+    - molly-guard
+  block:
+    - import_tasks: get_boot_time.yml
+
+    - name: Install molly-guard
+      apt:
+        update_cache: yes
+        name: molly-guard
+        state: present
+      notify: remove molly-guard
+
+    - name: Reboot when molly-guard is installed
+      reboot:
+        search_paths: /lib/molly-guard
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml

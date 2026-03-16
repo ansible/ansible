@@ -1,0 +1,21 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: debug externally overridden undefined template var
+      debug: var=override_value
+      vars:
+        override_value: '{{ not_defined }}'
+      register: var_undefined_overridden
+
+    # DTFIX5: ensure that debug issues the undefined warning
+    # DTFIX5: should some warnings (like this one) skip dedupe?
+    - name: debug a templated var that is actually undefined
+      debug: var=undefined_template
+      vars:
+        undefined_template: '{{ not_defined }}'
+      register: var_undefined
+
+    - assert:
+        that:
+          - var_undefined_overridden.override_value == "overridden by -e"
+          - var_undefined.undefined_template == "<< error 1 - 'not_defined' is undefined >>"

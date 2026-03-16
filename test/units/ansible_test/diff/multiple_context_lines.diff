@@ -1,0 +1,10 @@
+diff --git a/test.txt b/test.txt
+index 949a655cb3..08c59a7cf1 100644
+--- a/test.txt
++++ b/test.txt
+@@ -1,5 +1,3 @@
+ One
+-Two
+ Three
+-Four
+ Five

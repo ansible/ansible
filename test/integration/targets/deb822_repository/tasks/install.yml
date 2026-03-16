@@ -1,0 +1,114 @@
+- name: Create repo to install from
+  deb822_repository:
+    name: ansible-test-local
+    uris: file:{{ repodir }}
+    suites:
+      - stable
+      - testing
+    components:
+      - main
+    architectures:
+      - all
+    trusted: yes
+  register: deb822_install_repo
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: deb822_install_repo is changed
+
+- block:
+    - name: Install package from local repo
+      apt:
+        name: foo=1.0.0
+      register: deb822_install_pkg
+  always:
+    - name: Uninstall foo
+      apt:
+        name: foo
+        state: absent
+      when: deb822_install_pkg is changed
+
+    - name: remove repo
+      deb822_repository:
+        name: ansible-test-local
+        state: absent
+
+- block:
+  - name: Remove repo
+    deb822_repository:
+      name: debian
+      state: absent
+
+  - deb822_repository:
+      name: debian
+      types: deb
+      uris: file:{{ repodir }}
+      suites: stable
+      components:
+        - main
+      architectures: all
+      exclude:
+          - foo
+      trusted: yes
+    register: deb822_add_repo
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+    when: deb822_add_repo is changed
+
+  - name: Install package from local repo
+    apt:
+      name: foo=1.0.0
+    register: deb822_install_pkg_exclude
+    ignore_errors: true
+
+  - name: Check if package was not installed
+    shell: dpkg-query -l foo
+    register: deb822_install_pkg_exclude_result
+    ignore_errors: true
+  - assert:
+      that:
+        - deb822_install_pkg_exclude is failed
+        - "'no packages found matching foo' in deb822_install_pkg_exclude_result.stderr"
+
+  - deb822_repository:
+      name: debian
+      types: deb
+      uris: file:{{ repodir }}
+      suites: stable
+      components:
+        - main
+      architectures: all
+      include:
+          - foobar
+      trusted: yes
+    register: deb822_add_repo
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+    when: deb822_add_repo is changed
+
+  - name: Install package from local repo
+    apt:
+      name: foobar=1.0.1
+    register: deb822_install_pkg_include
+
+  - name: Check if package was installed
+    shell: dpkg-query -l foobar
+    register: deb822_install_pkg_include_result
+
+  when: (ansible_facts["distribution"] == 'Ubuntu' and ansible_facts["distribution_version"] is version('25.10', '>=')) or (ansible_lsb["id"] == 'Debian' and 'sid' in ansible_lsb["description"] )
+  always:
+    - name: Remove repo
+      deb822_repository:
+        name: debian
+        state: absent
+
+
+- assert:
+    that:
+      - deb822_install_repo is changed
+      - deb822_install_pkg is changed

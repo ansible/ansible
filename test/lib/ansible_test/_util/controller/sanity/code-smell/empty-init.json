@@ -1,0 +1,12 @@
+{
+    "prefixes": [
+        "lib/ansible/modules/",
+        "plugins/modules/",
+        "test/units/",
+        "tests/unit/"
+    ],
+    "files": [
+        "__init__.py"
+    ],
+    "output": "path-message"
+}

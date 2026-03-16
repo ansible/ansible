@@ -1,0 +1,39 @@
+# ref #18526
+- name: Test that we have a proper jinja search path in template lookup
+  set_fact:
+    hello_world: "{{ lookup('template', 'hello.txt') }}"
+
+- assert:
+    that:
+      - "hello_world|trim == 'Hello world!'"
+
+
+- name: Test that we have a proper jinja search path in template lookup with different variable start and end string
+  vars:
+    my_var: world
+  set_fact:
+    hello_world_string: "{{ lookup('template', 'hello_string.txt', variable_start_string='[%', variable_end_string='%]') }}"
+
+- assert:
+    that:
+      - "hello_world_string|trim == 'Hello world!'"
+
+- name: Test that we have a proper jinja search path in template lookup with different comment start and end string
+  set_fact:
+    hello_world_comment: "{{ lookup('template', 'hello_comment.txt', comment_start_string='[#', comment_end_string='#]') }}"
+
+- assert:
+    that:
+      - "hello_world_comment|trim == 'Hello world!'"
+
+# 77004
+- assert:
+    that:
+      - lookup('template', 'dict.j2') is not mapping
+
+- include_tasks: trim_blocks.yml
+- include_tasks: ansible_managed.yml
+
+- name: Verify templates with no rendered content return `None`
+  assert:
+    that: "{{ lookup('template', 'none.j2') is none }}"

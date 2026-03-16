@@ -1,0 +1,34 @@
+- hosts: localhost
+  gather_facts: False
+  vars:
+    od: "{{output_dir|default('/tmp')}}/test_vault_assemble"
+  tasks:
+    - name: create target directory
+      file:
+        path: "{{od}}"
+        state: directory
+
+    - name: assemble_file file with secret
+      assemble:
+        src: files/test_assemble
+        dest: "{{od}}/dest_file"
+        remote_src: no
+        mode: 0600
+
+    - name: remove assembled file with secret (so nothing should have unencrypted secret)
+      file: path="{{od}}/dest_file" state=absent
+
+    - name: find temp files with secrets
+      find:
+        paths: '{{temp_paths}}'
+        contains: 'VAULT TEST IN WHICH BAD THING HAPPENED'
+        recurse: yes
+      register: badthings
+      vars:
+        temp_paths: "{{[lookup('env', 'TMP'), lookup('env', 'TEMP'), hardcoded]|flatten(1)|unique|list}}"
+        hardcoded: ['/tmp', '/var/tmp']
+
+    - name: ensure we failed to find any
+      assert:
+        that:
+            - badthings['matched'] == 0

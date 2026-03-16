@@ -1,0 +1,26 @@
+DOCUMENTATION:
+  name: dirname
+  author: ansible core team
+  version_added: "historical"
+  short_description: get a path's directory name
+  description:
+    - Returns the 'head' component of a path, basically everything that is not the 'basename'.
+  notes:
+    - The result of this filter is different from the Unix dirname program; where dirname for C(/foo/bar/) returns C(/foo), the dirname filter returns the full path (C(/foo/bar/)).
+  options:
+    _input:
+      description: A path.
+      type: path
+      required: true
+  seealso:
+    - plugin: ansible.builtin.basename
+      plugin_type: filter
+EXAMPLES: |
+
+  # To get the dir name of a file path, like '/etc/asdf' out of '/etc/asdf/foo.txt'.
+  {{ mypath | dirname }}
+
+RETURN:
+  _value:
+    description: The directory portion of the original path.
+    type: path

@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: urldecode
+  version_added: "2.4"
+  short_description: Decode percent-encoded sequences
+  description:
+    - Replace %xx escapes with their single-character equivalent in the given string.
+    - Also replace plus signs with spaces, as required for unquoting HTML form values.
+  positional: _input
+  options:
+    _input:
+      description: URL encoded string to decode.
+      type: str
+      required: true
+
+RETURN:
+  _value:
+    description:
+      - URL decoded value for the given string
+    type: any
+
+EXAMPLES: |
+
+    # Decode urlencoded string
+    {{ '%7e/abc+def' | urldecode }}
+    # => "~/abc def"
+
+    # Decode plus sign as well
+    {{ 'El+Ni%C3%B1o' | urldecode }}
+    # => "El Niño"

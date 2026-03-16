@@ -1,0 +1,73 @@
+DOCUMENTATION:
+  name: to_json
+  author: core team
+  version_added: 'historical'
+  short_description: Convert variable to JSON string
+  description:
+    - Converts an Ansible variable into a JSON string representation.
+    - This filter functions as a wrapper to the Python C(json.dumps) function.
+    - Ansible internally auto-converts JSON strings into variable structures so this plugin is used to force it into a JSON string.
+  options:
+    _input:
+      description: A variable or expression that returns a data structure.
+      type: raw
+      required: true
+    vault_to_text:
+      description: Toggle to either unvault a vault or create the JSON version of a vaulted object.
+      type: bool
+      default: True
+      version_added: '2.9'
+    preprocess_unsafe:
+      description: Toggle to represent unsafe values directly in JSON or create a unsafe object in JSON.
+      type: bool
+      default: True
+      version_added: '2.9'
+    allow_nan:
+      description:
+        - When V(False), out-of-range float values C(nan), C(inf) and C(-inf) will result in an error.
+        - When V(True), out-of-range float values will be represented using their JavaScript equivalents, C(NaN), C(Infinity) and C(-Infinity).
+      default: True
+      type: bool
+    check_circular:
+      description: Controls the usage of the internal circular reference detection, if off can result in overflow errors.
+      default: True
+      type: bool
+    ensure_ascii:
+      description: Escapes all non ASCII characters.
+      default: True
+      type: bool
+    indent:
+      description: Number of spaces to indent Python structures, mainly used for display to humans.
+      default: 0
+      type: integer
+    separators:
+      description: The C(item) and C(key) separator to be used in the serialized output,
+                   default may change depending on O(indent) and Python version.
+      default:
+        - ', '
+        - ': '
+      type: list
+      elements: str
+    skipkeys:
+      description: If V(True), keys that are not basic Python types will be skipped.
+      default: False
+      type: bool
+    sort_keys:
+      description: Affects sorting of dictionary keys.
+      default: False
+      type: bool
+  notes:
+    - Both O(vault_to_text) and O(preprocess_unsafe) defaulted to V(False) between Ansible 2.9 and 2.12.
+    - 'These parameters to C(json.dumps) will be ignored, as they are overridden internally: I(cls), I(default)'
+
+EXAMPLES: |
+  # dump variable in a template to create a JSON document
+  {{ docker_config | to_json }}
+
+  # same as above but 'prettier' (equivalent to to_nice_json filter)
+  {{ docker_config | to_json(indent=4, sort_keys=True) }}
+
+RETURN:
+  _value:
+    description: The JSON serialized string representing the variable structure inputted.
+    type: string

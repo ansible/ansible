@@ -1,0 +1,16 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - block:
+        - fail:
+          when: inventory_hostname == 'host1'
+      rescue:
+        - block:
+          - fail:
+            when: inventory_hostname == 'host1'
+
+    - assert:
+        that:
+          - "'host1' not in ansible_play_hosts"
+          - "'host1' not in ansible_play_batch"
+        success_msg: PASSED

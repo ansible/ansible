@@ -1,0 +1,6 @@
+- hosts: testhost
+  tasks:
+    - include_tasks: test_includes4.yml
+      with_items: ["a"]
+      loop_control:
+        loop_var: r

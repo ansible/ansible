@@ -1,0 +1,5 @@
+argument_specs:
+  Test validate_argspec and module_defaults interaction:
+    options:
+      valid_argument:
+        type: str

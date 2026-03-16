@@ -1,0 +1,71 @@
+- name: call old WANTS_JSON module
+  legacy_only_old_way:
+  register: old_way
+
+- assert:
+    that:
+    - old_way.data == 'success'
+
+- name: call module with only legacy requires
+  legacy_only_new_way:
+  register: new_way
+
+- assert:
+    that:
+    - new_way.data == 'success'
+
+- name: call old WANTS_JSON module with windows line endings
+  legacy_only_old_way_win_line_ending:
+  register: old_way_win
+
+- assert:
+    that:
+    - old_way_win.data == 'success'
+
+- name: call module with only legacy requires and windows line endings
+  legacy_only_new_way_win_line_ending:
+  register: new_way_win
+
+- assert:
+    that:
+    - new_way_win.data == 'success'
+
+- name: call module with local module_utils
+  uses_local_utils:
+  register: local_utils
+
+- assert:
+    that:
+    - local_utils.data == "ValueFromCustomFunction"
+
+- name: call module that imports bogus Ansible-named module_utils
+  uses_bogus_utils:
+  ignore_errors: true
+  register: bogus_utils
+
+- assert:
+    that:
+    - bogus_utils is failed
+    - bogus_utils.msg is search("Could not find")
+
+- name: call module that imports module_utils with further imports
+  recursive_requires:
+  register: recursive_requires
+  vars:
+    # Our coverage runner does not work with recursive required. This is a limitation on PowerShell so we need to
+    # disable coverage for this task
+    _ansible_coverage_remote_output: ''
+
+- assert:
+    that:
+    - 'recursive_requires.value == "Get-Test3: 2: Get-Test2, 1: Get-Test1, 3: Get-NewTest3"'
+
+- name: call module with C# reference
+  csharp_util:
+  register: csharp_res
+
+- name: assert call module with C# reference
+  assert:
+    that:
+    - not csharp_res is failed
+    - csharp_res.res == '{"a":"a","b":1}'

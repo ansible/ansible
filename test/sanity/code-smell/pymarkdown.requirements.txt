@@ -1,0 +1,10 @@
+# edit "pymarkdown.requirements.in" and generate with: hacking/update-sanity-requirements.py --test pymarkdown
+application_properties==0.9.0
+Columnar==1.4.1
+pyjson5==2.0.0
+pymarkdownlnt==0.9.33
+PyYAML==6.0.3
+tomli==2.3.0
+toolz==1.1.0
+typing_extensions==4.15.0
+wcwidth==0.2.14

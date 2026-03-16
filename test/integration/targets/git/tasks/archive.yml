@@ -1,0 +1,118 @@
+- name: ARCHIVE | Clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: ARCHIVE | Archive repo using various archival format
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    archive: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: git_archive
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that archives were downloaded
+  assert:
+    that: (git_archive.results | map(attribute='changed') | unique | list)[0]
+
+- name: ARCHIVE | Check if archive file is created or not
+  stat:
+    path: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: archive_check
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that archive files exist
+  assert:
+    that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
+  when: ansible_os_family == 'RedHat'
+
+- name: ARCHIVE | Clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: ARCHIVE | Clone clean repo
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+
+# Check git archive functionality without update
+- name: ARCHIVE | Archive repo using various archival format and without update
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    update: no
+    archive: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: git_archive
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that archives were downloaded
+  assert:
+    that: (git_archive.results | map(attribute='changed') | unique | list)[0]
+
+- name: ARCHIVE | Check if archive file is created or not
+  stat:
+    path: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: archive_check
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that archive files exist
+  assert:
+    that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
+  when: ansible_os_family == 'RedHat'
+
+- name: ARCHIVE | Inspect archive file
+  command:
+    cmd: "{{ git_list_commands[item] }} {{ checkout_dir }}/test_role.{{ item }}"
+  register: archive_content
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Ensure archive content is correct
+  assert:
+    that:
+      - item.stdout_lines | sort | first == 'defaults/'
+  with_items: "{{ archive_content.results }}"
+
+- name: ARCHIVE | Clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: ARCHIVE | Generate an archive prefix
+  set_fact:
+    git_archive_prefix: "{{ lookup('ansible.builtin.password', '/dev/null', length=10, chars=['digits']) }}" # Generate some random archive prefix
+
+- name: ARCHIVE | Archive repo using various archival format and with an archive prefix
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    archive: '{{ checkout_dir }}/test_role.{{ item }}'
+    archive_prefix: '{{ git_archive_prefix }}/'
+  register: git_archive
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Prepare the target for archive(s) extraction
+  file:
+    state: directory
+    path: '{{ checkout_dir }}/{{ git_archive_prefix }}.{{ item }}'
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Extract the archive(s) into that target
+  unarchive:
+    src: '{{ checkout_dir }}/test_role.{{ item }}'
+    dest: '{{ checkout_dir }}/{{ git_archive_prefix }}.{{ item }}'
+    remote_src: yes
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Check if prefix directory exists in what's extracted
+  find:
+    path: '{{ checkout_dir }}/{{ git_archive_prefix }}.{{ item }}'
+    patterns: '{{ git_archive_prefix }}'
+    file_type: directory
+  register: archive_check
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that prefix directory is found
+  assert:
+    that: item.matched == 1
+  with_items: "{{ archive_check.results }}"

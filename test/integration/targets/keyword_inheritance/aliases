@@ -1,0 +1,5 @@
+shippable/posix/group4
+context/controller
+needs/root
+needs/target/setup_test_user
+setup/always/setup_passlib_controller  # required for setup_test_user

@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: task fails due to overriding q, but we should also see warning
+    debug:
+      msg:  "{{q('pipe', 'pwd')}}"
+    vars:
+      q: jinja2 uses me internally

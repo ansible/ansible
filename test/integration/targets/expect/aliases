@@ -1,0 +1,4 @@
+shippable/posix/group2
+destructive
+needs/target/setup_pexpect
+gather_facts/no

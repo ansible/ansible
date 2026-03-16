@@ -1,0 +1,2261 @@
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+_ANSIBALLZ_COVERAGE_CONFIG:
+  name: Configure the AnsiballZ code coverage extension
+  description:
+    - Enables and configures the AnsiballZ code coverage extension.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_COVERAGE_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_coverage_config}
+  version_added: '2.19'
+_ANSIBALLZ_DEBUGPY_CONFIG:
+  name: Configure the AnsiballZ remote debugging extension for debugpy
+  description:
+    - Enables and configures the AnsiballZ remote debugging extension for debugpy.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_DEBUGPY_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_debugpy_config}
+  version_added: '2.20'
+_ANSIBALLZ_PYDEVD_CONFIG:
+  name: Configure the AnsiballZ remote debugging extension for pydevd
+  description:
+    - Enables and configures the AnsiballZ remote debugging extension for pydevd.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_ANSIBALLZ_PYDEVD_CONFIG}
+  vars:
+  - {name: _ansible_ansiballz_pydevd_config}
+  version_added: '2.20'
+_ANSIBLE_CONNECTION_PATH:
+  env:
+  - name: _ANSIBLE_CONNECTION_PATH
+  name: Overrides the location of the Ansible persistent connection helper script.
+  description:
+    - For internal use only.
+  type: path
+  version_added: "2.18"
+_CALLBACK_DISPATCH_ERROR_BEHAVIOR:
+  name: Callback dispatch error behavior
+  default: warning
+  description:
+    - Action to take when a callback dispatch results in an error.
+  type: choices
+  choices: &basic_error
+    error: issue a 'fatal' error and stop the play
+    warning: issue a warning but continue
+    ignore: just continue silently
+  env: [ { name: _ANSIBLE_CALLBACK_DISPATCH_ERROR_BEHAVIOR } ]
+  version_added: '2.19'
+_MODULE_METADATA:
+  name: Enable experimental module metadata
+  description:
+    - Enables experimental module-level metadata controls for serialization profile selection.
+    - This is for internal use only.
+  type: boolean
+  default: false
+  env: [ { name: _ANSIBLE_MODULE_METADATA } ]
+  version_added: '2.19'
+ALLOW_BROKEN_CONDITIONALS:
+  # This config option will be deprecated once it no longer has any effect (2.23).
+  name: Allow broken conditionals
+  default: false
+  description:
+    - When enabled, this option allows conditionals with non-boolean results to be used.
+    - A deprecation warning will be emitted in these cases.
+    - By default, non-boolean conditionals result in an error.
+    - Such results often indicate unintentional use of templates where they are not supported, resulting in a conditional that is always true.
+    - When this option is enabled, conditional expressions which are a literal ``None`` or empty string will evaluate as true for backwards compatibility.
+  env: [{name: ANSIBLE_ALLOW_BROKEN_CONDITIONALS}]
+  ini:
+  - {key: allow_broken_conditionals, section: defaults}
+  type: boolean
+  version_added: "2.19"
+ALLOW_EMBEDDED_TEMPLATES:
+  name: Allow embedded templates
+  default: true
+  description:
+    - When enabled, this option allows embedded templates to be used for specific backward compatibility scenarios.
+    - A deprecation warning will be emitted in these cases.
+    - First, conditionals (for example, ``failed_when``, ``until``, ``assert.that``) fully enclosed in template delimiters.
+    - "Second, string constants in conditionals (for example, ``when: some_var == '{{ some_other_var }}'``)."
+    - Finally, positional arguments to lookups (for example, ``lookup('pipe', 'echo {{ some_var }}')``).
+    - This feature is deprecated, since embedded templates are unnecessary in these cases.
+    - When disabled, use of embedded templates will result in an error.
+    - A future release will disable this feature by default.
+  env: [{name: ANSIBLE_ALLOW_EMBEDDED_TEMPLATES}]
+  ini:
+  - {key: allow_embedded_templates, section: defaults}
+  type: boolean
+  version_added: "2.19"
+ANSIBLE_HOME:
+  name: The Ansible home path
+  description:
+  - The default root path for Ansible config files on the controller.
+  default: ~/.ansible
+  env:
+  - name: ANSIBLE_HOME
+  ini:
+  - key: home
+    section: defaults
+  type: path
+  version_added: '2.14'
+ANSIBLE_CONNECTION_PATH:
+  name: Path of ansible-connection script
+  default: null
+  description:
+    - Specify where to look for the ansible-connection script. This location will be checked before searching $PATH.
+    - If null, ansible will start with the same directory as the ansible script.
+  type: path
+  env: [{name: ANSIBLE_CONNECTION_PATH}]
+  ini:
+  - {key: ansible_connection_path, section: persistent_connection}
+  yaml: {key: persistent_connection.ansible_connection_path}
+  version_added: "2.8"
+  deprecated:
+    why: This setting has no effect.
+    version: "2.22"
+ANSIBLE_COW_SELECTION:
+  name: Cowsay filter selection
+  default: default
+  description: This allows you to choose a specific cowsay stencil for the banners or use 'random' to cycle through them.
+  env: [{name: ANSIBLE_COW_SELECTION}]
+  ini:
+  - {key: cow_selection, section: defaults}
+ANSIBLE_COW_ACCEPTLIST:
+  name: Cowsay filter acceptance list
+  default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
+  description: Accept a list of cowsay templates that are 'safe' to use, set to an empty list if you want to enable all installed templates.
+  env:
+  - name: ANSIBLE_COW_ACCEPTLIST
+    version_added: '2.11'
+  ini:
+  - key: cowsay_enabled_stencils
+    section: defaults
+    version_added: '2.11'
+  type: list
+ANSIBLE_FORCE_COLOR:
+  name: Force color output
+  default: False
+  description: This option forces color mode even when running without a TTY or the "nocolor" setting is True.
+  env: [{name: ANSIBLE_FORCE_COLOR}]
+  ini:
+  - {key: force_color, section: defaults}
+  type: boolean
+  yaml: {key: display.force_color}
+ANSIBLE_NOCOLOR:
+  name: Suppress color output
+  default: False
+  description: This setting allows suppressing colorizing output, which is used to give a better indication of failure and status information.
+  env:
+    - name: ANSIBLE_NOCOLOR
+      # this is generic convention for CLI programs
+    - name: NO_COLOR
+      version_added: '2.11'
+  ini:
+  - {key: nocolor, section: defaults}
+  type: boolean
+  yaml: {key: display.nocolor}
+ANSIBLE_NOCOWS:
+  name: Suppress cowsay output
+  default: False
+  description: If you have cowsay installed but want to avoid the 'cows' (why????), use this.
+  env: [{name: ANSIBLE_NOCOWS}]
+  ini:
+  - {key: nocows, section: defaults}
+  type: boolean
+  yaml: {key: display.i_am_no_fun}
+ANSIBLE_COW_PATH:
+  name: Set path to cowsay command
+  default: null
+  description: Specify a custom cowsay path or swap in your cowsay implementation of choice.
+  env: [{name: ANSIBLE_COW_PATH}]
+  ini:
+  - {key: cowpath, section: defaults}
+  type: string
+  yaml: {key: display.cowpath}
+ANSIBLE_PIPELINING:
+  name: Connection pipelining
+  default: False
+  description:
+    - This is a global option, each connection plugin can override either by having more specific options or not supporting pipelining at all.
+    - Pipelining, if supported by the connection plugin, reduces the number of network operations required to execute a module on the remote server,
+      by executing many Ansible modules without actual file transfer.
+    - It can result in a very significant performance improvement when enabled.
+    - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
+      disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
+    - This setting will be disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
+  env:
+    - name: ANSIBLE_PIPELINING
+  ini:
+  - section: defaults
+    key: pipelining
+  - section: connection
+    key: pipelining
+  type: boolean
+ANY_ERRORS_FATAL:
+  name: Make Task failures fatal
+  default: False
+  description: Sets the default value for the any_errors_fatal keyword, if True, Task failures will be considered fatal errors.
+  env:
+    - name: ANSIBLE_ANY_ERRORS_FATAL
+  ini:
+    - section:  defaults
+      key: any_errors_fatal
+  type: boolean
+  yaml: {key: errors.any_task_errors_fatal}
+  version_added: "2.4"
+BECOME_ALLOW_SAME_USER:
+  name: Allow becoming the same user
+  default: False
+  description:
+    - When ``False``(default), Ansible will skip using become if the remote user is the same as the become user, as this is normally a redundant operation.
+      In other words root sudo to root.
+    - If ``True``, this forces Ansible to use the become plugin anyways as there are cases in which this is needed.
+  env: [{name: ANSIBLE_BECOME_ALLOW_SAME_USER}]
+  ini:
+  - {key: become_allow_same_user, section: privilege_escalation}
+  type: boolean
+  yaml: {key: privilege_escalation.become_allow_same_user}
+BECOME_PASSWORD_FILE:
+  name: Become password file
+  default: ~
+  description:
+    - 'The password file to use for the become plugin. ``--become-password-file``.'
+    - If executable, it will be run and the resulting stdout will be used as the password.
+  env: [{name: ANSIBLE_BECOME_PASSWORD_FILE}]
+  ini:
+  - {key: become_password_file, section: defaults}
+  type: path
+  version_added: '2.12'
+AGNOSTIC_BECOME_PROMPT:
+  name: Display an agnostic become prompt
+  default: True
+  type: boolean
+  description: Display an agnostic become prompt instead of displaying a prompt containing the command line supplied become method.
+  env: [{name: ANSIBLE_AGNOSTIC_BECOME_PROMPT}]
+  ini:
+    - {key: agnostic_become_prompt, section: privilege_escalation}
+  yaml: {key: privilege_escalation.agnostic_become_prompt}
+  version_added: "2.5"
+CACHE_PLUGIN:
+  name: Persistent Fact Cache plugin
+  default: memory
+  description: Chooses which fact cache plugin to use. By default, no cache is used and facts do not persist between runs.
+  env: [{name: ANSIBLE_CACHE_PLUGIN}]
+  ini:
+  - {key: fact_caching, section: defaults}
+  yaml: {key: facts.cache.plugin}
+CACHE_PLUGIN_CONNECTION:
+  name: Fact Cache Plugin URI
+  default: ~
+  description: Defines connection or path information for the fact cache plugin.
+  env: [{name: ANSIBLE_CACHE_PLUGIN_CONNECTION}]
+  ini:
+  - {key: fact_caching_connection, section: defaults}
+  yaml: {key: facts.cache.uri}
+CACHE_PLUGIN_PREFIX:
+  name: Fact Cache Plugin table prefix
+  default: ansible_facts
+  description: Prefix to use for fact cache plugin files/tables.
+  env: [{name: ANSIBLE_CACHE_PLUGIN_PREFIX}]
+  ini:
+  - {key: fact_caching_prefix, section: defaults}
+  yaml: {key: facts.cache.prefix}
+CACHE_PLUGIN_TIMEOUT:
+  name: Fact Cache Plugin expiration timeout
+  default: 86400
+  description: Expiration timeout for the fact cache plugin data.
+  env: [{name: ANSIBLE_CACHE_PLUGIN_TIMEOUT}]
+  ini:
+  - {key: fact_caching_timeout, section: defaults}
+  type: integer
+  yaml: {key: facts.cache.timeout}
+COLLECTIONS_SCAN_SYS_PATH:
+  name: Scan PYTHONPATH for installed collections
+  description: A boolean to enable or disable scanning the sys.path for installed collections.
+  default: true
+  type: boolean
+  env:
+  - {name: ANSIBLE_COLLECTIONS_SCAN_SYS_PATH}
+  ini:
+  - {key: collections_scan_sys_path, section: defaults}
+COLLECTIONS_PATHS:
+  name: An ordered list of root paths for loading installed Ansible collections content.
+  description: >
+    Colon-separated paths in which Ansible will search for collections content.
+    Collections must be in nested *subdirectories*, not directly in these directories.
+    For example, if ``COLLECTIONS_PATHS`` includes ``'{{ ANSIBLE_HOME ~ "/collections" }}'``,
+    and you want to add ``my.collection`` to that directory, it must be saved as
+    ``'{{ ANSIBLE_HOME ~ "/collections/ansible_collections/my/collection" }}'``.
+  default: '{{ ANSIBLE_HOME ~ "/collections:/usr/share/ansible/collections" }}'
+  type: pathspec
+  env:
+  - name: ANSIBLE_COLLECTIONS_PATH
+    version_added: '2.10'
+  ini:
+  - key: collections_path
+    section: defaults
+    version_added: '2.10'
+COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
+  name: Defines behavior when loading a collection that does not support the current Ansible version
+  description:
+  - When a collection is loaded that does not support the running Ansible version (with the collection metadata key `requires_ansible`).
+  env: [{name: ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH}]
+  ini: [{key: collections_on_ansible_version_mismatch, section: defaults}]
+  choices: *basic_error
+  default: warning
+COLOR_CHANGED:
+  name: Color for 'changed' task status
+  default: yellow
+  description: Defines the color to use on 'Changed' task status.
+  env: [{name: ANSIBLE_COLOR_CHANGED}]
+  ini:
+  - {key: changed, section: colors}
+COLOR_CONSOLE_PROMPT:
+  name: "Color for ansible-console's prompt task status"
+  default: white
+  description: Defines the default color to use for ansible-console.
+  env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
+  ini:
+  - {key: console_prompt, section: colors}
+  version_added: "2.7"
+COLOR_DEBUG:
+  name: Color for debug statements
+  default: dark gray
+  description: Defines the color to use when emitting debug messages.
+  env: [{name: ANSIBLE_COLOR_DEBUG}]
+  ini:
+  - {key: debug, section: colors}
+COLOR_DEPRECATE:
+  name: Color for deprecation messages
+  default: purple
+  description: Defines the color to use when emitting deprecation messages.
+  env: [{name: ANSIBLE_COLOR_DEPRECATE}]
+  ini:
+  - {key: deprecate, section: colors}
+COLOR_DIFF_ADD:
+  name: Color for diff added display
+  default: green
+  description: Defines the color to use when showing added lines in diffs.
+  env: [{name: ANSIBLE_COLOR_DIFF_ADD}]
+  ini:
+  - {key: diff_add, section: colors}
+  yaml: {key: display.colors.diff.add}
+COLOR_DIFF_LINES:
+  name: Color for diff lines display
+  default: cyan
+  description: Defines the color to use when showing diffs.
+  env: [{name: ANSIBLE_COLOR_DIFF_LINES}]
+  ini:
+  - {key: diff_lines, section: colors}
+COLOR_DIFF_REMOVE:
+  name: Color for diff removed display
+  default: red
+  description: Defines the color to use when showing removed lines in diffs.
+  env: [{name: ANSIBLE_COLOR_DIFF_REMOVE}]
+  ini:
+  - {key: diff_remove, section: colors}
+COLOR_ERROR:
+  name: Color for error messages
+  default: red
+  description: Defines the color to use when emitting error messages.
+  env: [{name: ANSIBLE_COLOR_ERROR}]
+  ini:
+  - {key: error, section: colors}
+  yaml: {key: colors.error}
+COLOR_HIGHLIGHT:
+  name: Color for highlighting
+  default: white
+  description: Defines the color to use for highlighting.
+  env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
+  ini:
+  - {key: highlight, section: colors}
+COLOR_INCLUDED:
+  name: Color for 'included' task status
+  default: cyan
+  description: Defines the color to use when showing 'Included' task status.
+  env: [{name: ANSIBLE_COLOR_INCLUDED}]
+  ini:
+  - {key: included, section: colors}
+  version_added: '2.18'
+COLOR_OK:
+  name: Color for 'ok' task status
+  default: green
+  description: Defines the color to use when showing 'OK' task status.
+  env: [{name: ANSIBLE_COLOR_OK}]
+  ini:
+  - {key: ok, section: colors}
+COLOR_SKIP:
+  name: Color for 'skip' task status
+  default: cyan
+  description: Defines the color to use when showing 'Skipped' task status.
+  env: [{name: ANSIBLE_COLOR_SKIP}]
+  ini:
+  - {key: skip, section: colors}
+COLOR_UNREACHABLE:
+  name: Color for 'unreachable' host state
+  default: bright red
+  description: Defines the color to use on 'Unreachable' status.
+  env: [{name: ANSIBLE_COLOR_UNREACHABLE}]
+  ini:
+  - {key: unreachable, section: colors}
+COLOR_VERBOSE:
+  name: Color for verbose messages
+  default: blue
+  description: Defines the color to use when emitting verbose messages. In other words, those that show with '-v's.
+  env: [{name: ANSIBLE_COLOR_VERBOSE}]
+  ini:
+  - {key: verbose, section: colors}
+COLOR_WARN:
+  name: Color for warning messages
+  default: bright purple
+  description: Defines the color to use when emitting warning messages.
+  env: [{name: ANSIBLE_COLOR_WARN}]
+  ini:
+  - {key: warn, section: colors}
+COLOR_DOC_MODULE:
+  name: Color for module name in the ansible-doc output
+  default: yellow
+  description: Defines the color to use when emitting a module name in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_MODULE}]
+  ini:
+  - {key: doc_module, section: colors}
+  version_added: '2.18'
+COLOR_DOC_REFERENCE:
+  name: Color for cross-reference in the ansible-doc output
+  default: magenta
+  description: Defines the color to use when emitting cross-reference in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_REFERENCE}]
+  ini:
+  - {key: doc_reference, section: colors}
+  version_added: '2.18'
+COLOR_DOC_LINK:
+  name: Color for Link in ansible-doc output
+  default: cyan
+  description: Defines the color to use when emitting a link in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_LINK}]
+  ini:
+  - {key: doc_link, section: colors}
+  version_added: '2.18'
+COLOR_DOC_DEPRECATED:
+  name: Color for deprecated value in ansible-doc output
+  default: magenta
+  description: Defines the color to use when emitting a deprecated value in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_DEPRECATED}]
+  ini:
+  - {key: doc_deprecated, section: colors}
+  version_added: '2.18'
+COLOR_DOC_CONSTANT:
+  name: Color for constant in ansible-doc output
+  default: dark gray
+  description: Defines the color to use when emitting a constant in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_CONSTANT}]
+  ini:
+  - {key: doc_constant, section: colors}
+  version_added: '2.18'
+COLOR_DOC_PLUGIN:
+  name: Color for the plugin in ansible-doc output
+  default: yellow
+  description: Defines the color to use when emitting a plugin name in the ansible-doc output.
+  env: [{name: ANSIBLE_COLOR_DOC_PLUGIN}]
+  ini:
+  - {key: doc_plugin, section: colors}
+  version_added: '2.18'
+CONNECTION_PASSWORD_FILE:
+  name: Connection password file
+  default: ~
+  description: 'The password file to use for the connection plugin. ``--connection-password-file``.'
+  env: [{name: ANSIBLE_CONNECTION_PASSWORD_FILE}]
+  ini:
+  - {key: connection_password_file, section: defaults}
+  type: path
+  version_added: '2.12'
+COVERAGE_REMOTE_OUTPUT:
+  name: Sets the output directory and filename prefix to generate coverage run info.
+  description:
+    - Sets the output directory on the remote host to generate coverage reports into.
+    - Currently only used for remote coverage on PowerShell modules.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_OUTPUT}
+  vars:
+  - {name: _ansible_coverage_remote_output}
+  type: str
+  version_added: '2.9'
+COVERAGE_REMOTE_PATHS:
+  name: Sets the list of paths to run coverage for.
+  description:
+  - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
+  - Only files that match the path glob will have their coverage collected.
+  - Multiple path globs can be specified and are separated by ``:``.
+  - Currently only used for remote coverage on PowerShell modules.
+  - This is for internal use only.
+  default: '*'
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER}
+  type: str
+  version_added: '2.9'
+ACTION_WARNINGS:
+  name: Toggle action warnings
+  default: True
+  description:
+    - By default, Ansible will issue a warning when received from a task action (module or action plugin).
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_ACTION_WARNINGS}]
+  ini:
+  - {key: action_warnings, section: defaults}
+  type: boolean
+  version_added: "2.5"
+LOCALHOST_WARNING:
+  name: Warning when using implicit inventory with only localhost
+  default: True
+  description:
+    - By default, Ansible will issue a warning when there are no hosts in the
+      inventory.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_LOCALHOST_WARNING}]
+  ini:
+  - {key: localhost_warning, section: defaults}
+  type: boolean
+  version_added: "2.6"
+LOG_VERBOSITY:
+  name: Default log verbosity
+  description:
+    - This will set log verbosity if higher than the normal display verbosity, otherwise it will match that.
+  env: [{name: ANSIBLE_LOG_VERBOSITY}]
+  ini:
+  - {key: log_verbosity, section: defaults}
+  type: int
+  version_added: "2.17"
+INVENTORY_UNPARSED_WARNING:
+  name: Warning when no inventory files can be parsed, resulting in an implicit inventory with only localhost
+  default: True
+  description:
+    - By default, Ansible will issue a warning when no inventory was loaded and notes that
+      it will use an implicit localhost-only inventory.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_INVENTORY_UNPARSED_WARNING}]
+  ini:
+  - {key: inventory_unparsed_warning, section: inventory}
+  type: boolean
+  version_added: "2.14"
+DOC_FRAGMENT_PLUGIN_PATH:
+  name: documentation fragment plugins path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments" }}'
+  description: Colon-separated paths in which Ansible will search for Documentation Fragments Plugins.
+  env: [{name: ANSIBLE_DOC_FRAGMENT_PLUGINS}]
+  ini:
+  - {key: doc_fragment_plugins, section: defaults}
+  type: pathspec
+DEFAULT_ACTION_PLUGIN_PATH:
+  name: Action plugins path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/action:/usr/share/ansible/plugins/action" }}'
+  description: Colon-separated paths in which Ansible will search for Action Plugins.
+  env: [{name: ANSIBLE_ACTION_PLUGINS}]
+  ini:
+  - {key: action_plugins, section: defaults}
+  type: pathspec
+  yaml: {key: plugins.action.path}
+DEFAULT_ALLOW_UNSAFE_LOOKUPS:
+  name: Allow unsafe lookups
+  default: False
+  description:
+    - "When enabled, this option allows lookup plugins (whether used in variables as ``{{lookup('foo')}}`` or as a loop as with_foo)
+      to return data that is not marked 'unsafe'."
+    - By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language,
+      as this could represent a security risk. This option is provided to allow for backward compatibility,
+      however, users should first consider adding allow_unsafe=True to any lookups that may be expected to contain data that may be run
+      through the templating engine late.
+  env: []
+  ini:
+  - {key: allow_unsafe_lookups, section: defaults}
+  type: boolean
+  version_added: "2.2.3"
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: Lookup plugins are responsible for tagging strings containing templates to allow evaluation as a template.
+DEFAULT_ASK_PASS:
+  name: Ask for the login password
+  default: False
+  description:
+    - This controls whether an Ansible playbook should prompt for a login password.
+      If using SSH keys for authentication, you probably do not need to change this setting.
+  env: [{name: ANSIBLE_ASK_PASS}]
+  ini:
+  - {key: ask_pass, section: defaults}
+  type: boolean
+  yaml: {key: defaults.ask_pass}
+DEFAULT_ASK_VAULT_PASS:
+  name: Ask for the vault password(s)
+  default: False
+  description:
+    - This controls whether an Ansible playbook should prompt for a vault password.
+  env: [{name: ANSIBLE_ASK_VAULT_PASS}]
+  ini:
+  - {key: ask_vault_pass, section: defaults}
+  type: boolean
+DEFAULT_BECOME:
+  name: Enable privilege escalation (become)
+  default: False
+  description: Toggles the use of privilege escalation, allowing you to 'become' another user after login.
+  env: [{name: ANSIBLE_BECOME}]
+  ini:
+  - {key: become, section: privilege_escalation}
+  type: boolean
+DEFAULT_BECOME_ASK_PASS:
+  name: Ask for the privilege escalation (become) password
+  default: False
+  description: Toggle to prompt for privilege escalation password.
+  env: [{name: ANSIBLE_BECOME_ASK_PASS}]
+  ini:
+  - {key: become_ask_pass, section: privilege_escalation}
+  type: boolean
+DEFAULT_BECOME_METHOD:
+  name: Choose privilege escalation method
+  default: 'sudo'
+  description: Privilege escalation method to use when `become` is enabled.
+  env: [{name: ANSIBLE_BECOME_METHOD}]
+  ini:
+    - {section: privilege_escalation, key: become_method}
+DEFAULT_BECOME_EXE:
+  name: Choose 'become' executable
+  default: ~
+  description: 'executable to use for privilege escalation, otherwise Ansible will depend on PATH.'
+  env: [{name: ANSIBLE_BECOME_EXE}]
+  ini:
+  - {key: become_exe, section: privilege_escalation}
+DEFAULT_BECOME_FLAGS:
+  name: Set 'become' executable options
+  default: ''
+  description: Flags to pass to the privilege escalation executable.
+  env: [{name: ANSIBLE_BECOME_FLAGS}]
+  ini:
+  - {key: become_flags, section: privilege_escalation}
+BECOME_PLUGIN_PATH:
+  name: Become plugins path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/become:/usr/share/ansible/plugins/become" }}'
+  description: Colon-separated paths in which Ansible will search for Become Plugins.
+  env: [{name: ANSIBLE_BECOME_PLUGINS}]
+  ini:
+  - {key: become_plugins, section: defaults}
+  type: pathspec
+  version_added: "2.8"
+DEFAULT_BECOME_USER:
+  # FIXME: should really be blank and make -u passing optional depending on it
+  name: Set the user you 'become' via privilege escalation
+  default: root
+  description: The user your login/remote user 'becomes' when using privilege escalation, most systems will use 'root' when no user is specified.
+  env: [{name: ANSIBLE_BECOME_USER}]
+  ini:
+  - {key: become_user, section: privilege_escalation}
+  yaml: {key: become.user}
+DEFAULT_CACHE_PLUGIN_PATH:
+  name: Cache Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/cache:/usr/share/ansible/plugins/cache" }}'
+  description: Colon-separated paths in which Ansible will search for Cache Plugins.
+  env: [{name: ANSIBLE_CACHE_PLUGINS}]
+  ini:
+  - {key: cache_plugins, section: defaults}
+  type: pathspec
+DEFAULT_CALLBACK_PLUGIN_PATH:
+  name: Callback Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/callback:/usr/share/ansible/plugins/callback" }}'
+  description: Colon-separated paths in which Ansible will search for Callback Plugins.
+  env: [{name: ANSIBLE_CALLBACK_PLUGINS}]
+  ini:
+  - {key: callback_plugins, section: defaults}
+  type: pathspec
+  yaml: {key: plugins.callback.path}
+CALLBACKS_ENABLED:
+  name: Enable callback plugins that require it.
+  default: []
+  description:
+    - "List of enabled callbacks, not all callbacks need enabling,
+      but many of those shipped with Ansible do as we don't want them activated by default."
+  env:
+  - name: ANSIBLE_CALLBACKS_ENABLED
+    version_added: '2.11'
+  ini:
+  - key: callbacks_enabled
+    section: defaults
+    version_added: '2.11'
+  type: list
+DEFAULT_CLICONF_PLUGIN_PATH:
+  name: Cliconf Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/cliconf:/usr/share/ansible/plugins/cliconf" }}'
+  description: Colon-separated paths in which Ansible will search for Cliconf Plugins.
+  env: [{name: ANSIBLE_CLICONF_PLUGINS}]
+  ini:
+  - {key: cliconf_plugins, section: defaults}
+  type: pathspec
+DEFAULT_CONNECTION_PLUGIN_PATH:
+  name: Connection Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/connection:/usr/share/ansible/plugins/connection" }}'
+  description: Colon-separated paths in which Ansible will search for Connection Plugins.
+  env: [{name: ANSIBLE_CONNECTION_PLUGINS}]
+  ini:
+  - {key: connection_plugins, section: defaults}
+  type: pathspec
+  yaml: {key: plugins.connection.path}
+DEFAULT_DEBUG:
+  name: Debug mode
+  default: False
+  description:
+    - "Toggles debug output in Ansible. This is *very* verbose and can hinder
+      multiprocessing. Debug output can also include secret information
+      despite no_log settings being enabled, which means debug mode should not be used in
+      production."
+  env: [{name: ANSIBLE_DEBUG}]
+  ini:
+  - {key: debug, section: defaults}
+  type: boolean
+DEFAULT_EXECUTABLE:
+  name: Target shell executable
+  default: /bin/sh
+  description:
+    - "This indicates the command to use to spawn a shell under, which is required for Ansible's execution needs on a target.
+      Users may need to change this in rare instances when shell usage is constrained, but in most cases, it may be left as is."
+  env: [{name: ANSIBLE_EXECUTABLE}]
+  ini:
+  - {key: executable, section: defaults}
+DEFAULT_FILTER_PLUGIN_PATH:
+  name: Jinja2 Filter Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/filter:/usr/share/ansible/plugins/filter" }}'
+  description: Colon-separated paths in which Ansible will search for Jinja2 Filter Plugins.
+  env: [{name: ANSIBLE_FILTER_PLUGINS}]
+  ini:
+  - {key: filter_plugins, section: defaults}
+  type: pathspec
+DEFAULT_FORCE_HANDLERS:
+  name: Force handlers to run after failure
+  default: False
+  description:
+    - This option controls if notified handlers run on a host even if a failure occurs on that host.
+    - When false, the handlers will not run if a failure has occurred on a host.
+    - This can also be set per play or on the command line. See Handlers and Failure for more details.
+  env: [{name: ANSIBLE_FORCE_HANDLERS}]
+  ini:
+  - {key: force_handlers, section: defaults}
+  type: boolean
+  version_added: "1.9.1"
+DEFAULT_FORKS:
+  name: Number of task forks
+  default: 5
+  description: Maximum number of forks Ansible will use to execute tasks on target hosts.
+  env: [{name: ANSIBLE_FORKS}]
+  ini:
+  - {key: forks, section: defaults}
+  type: integer
+DEFAULT_GATHERING:
+  name: Gathering behaviour
+  default: 'implicit'
+  description:
+    - This setting controls the default policy of fact gathering (facts discovered about remote systems).
+    - "This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the cache plugin."
+  env: [{name: ANSIBLE_GATHERING}]
+  ini:
+    - key: gathering
+      section: defaults
+  version_added: "1.6"
+  choices:
+    implicit: "the cache plugin will be ignored and facts will be gathered per play unless 'gather_facts: False' is set."
+    explicit: facts will not be gathered unless directly requested in the play.
+    smart: each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the run.
+DEFAULT_HASH_BEHAVIOUR:
+  name: Hash merge behaviour
+  default: replace
+  type: string
+  choices:
+    replace: Any variable that is defined more than once is overwritten using the order from variable precedence rules (highest wins).
+    merge: Any dictionary variable will be recursively merged with new definitions across the different variable definition sources.
+  description:
+    - This setting controls how duplicate definitions of dictionary variables (aka hash, map, associative array) are handled in Ansible.
+    - This does not affect variables whose values are scalars (integers, strings) or arrays.
+    - "**WARNING**, changing this setting is not recommended as this is fragile and makes your content (plays, roles, collections) nonportable,
+      leading to continual confusion and misuse. Don't change this setting unless you think you have an absolute need for it."
+    - We recommend avoiding reusing variable names and relying on the ``combine`` filter and ``vars`` and ``varnames`` lookups
+      to create merged versions of the individual variables. In our experience, this is rarely needed and is a sign that too much
+      complexity has been introduced into the data structures and plays.
+    - For some uses you can also look into custom vars_plugins to merge on input, even substituting the default ``host_group_vars``
+      that is in charge of parsing the ``host_vars/`` and ``group_vars/`` directories. Most users of this setting are only interested in inventory scope,
+      but the setting itself affects all sources and makes debugging even harder.
+    - All playbooks and roles in the official examples repos assume the default for this setting.
+    - Changing the setting to ``merge`` applies across variable sources, but many sources will internally still overwrite the variables.
+      For example ``include_vars`` will dedupe variables internally before updating Ansible, with 'last defined' overwriting previous definitions in same file.
+    - The Ansible project recommends you **avoid ``merge`` for new projects.**
+    - It is the intention of the Ansible developers to eventually deprecate and remove this setting, but it is being kept as some users do heavily rely on it.
+      New projects should **avoid 'merge'**.
+  env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
+  ini:
+  - {key: hash_behaviour, section: defaults}
+DEFAULT_HOST_LIST:
+  name: Inventory Source
+  default: [/etc/ansible/hosts]
+  description: Comma-separated list of Ansible inventory sources
+  env:
+    - name: ANSIBLE_INVENTORY
+  expand_relative_paths: True
+  ini:
+    - key: inventory
+      section: defaults
+  type: pathlist
+  yaml: {key: defaults.inventory}
+DEFAULT_HTTPAPI_PLUGIN_PATH:
+  name: HttpApi Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/httpapi:/usr/share/ansible/plugins/httpapi" }}'
+  description: Colon-separated paths in which Ansible will search for HttpApi Plugins.
+  env: [{name: ANSIBLE_HTTPAPI_PLUGINS}]
+  ini:
+  - {key: httpapi_plugins, section: defaults}
+  type: pathspec
+DEFAULT_INTERNAL_POLL_INTERVAL:
+  name: Internal poll interval
+  default: 0.001
+  env: []
+  ini:
+  - {key: internal_poll_interval, section: defaults}
+  type: float
+  version_added: "2.2"
+  description:
+    - This sets the interval (in seconds) of Ansible internal processes polling each other.
+      Lower values improve performance with large playbooks at the expense of extra CPU load.
+      Higher values are more suitable for Ansible usage in automation scenarios
+      when UI responsiveness is not required but CPU usage might be a concern.
+    - "The default corresponds to the value hardcoded in Ansible <= 2.1"
+DEFAULT_INVENTORY_PLUGIN_PATH:
+  name: Inventory Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/inventory:/usr/share/ansible/plugins/inventory" }}'
+  description: Colon-separated paths in which Ansible will search for Inventory Plugins.
+  env: [{name: ANSIBLE_INVENTORY_PLUGINS}]
+  ini:
+  - {key: inventory_plugins, section: defaults}
+  type: pathspec
+DEFAULT_JINJA2_EXTENSIONS:
+  name: Enabled Jinja2 extensions
+  default: []
+  type: list
+  description:
+    - This is a developer-specific feature that allows enabling additional Jinja2 extensions.
+    - "See the Jinja2 documentation for details. If you do not know what these do, you probably don't need to change this setting :)"
+  env: [{name: ANSIBLE_JINJA2_EXTENSIONS}]
+  ini:
+  - {key: jinja2_extensions, section: defaults}
+  deprecated:
+    why: Jinja2 extensions have been deprecated
+    version: "2.23"
+    alternatives: Ansible-supported Jinja plugins (tests, filters, lookups)
+DEFAULT_JINJA2_NATIVE:
+  name: Use Jinja2's NativeEnvironment for templating
+  default: True
+  description: This option preserves variable types during template operations.
+  env: [{name: ANSIBLE_JINJA2_NATIVE}]
+  ini:
+  - {key: jinja2_native, section: defaults}
+  type: boolean
+  yaml: {key: jinja2_native}
+  version_added: 2.7
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: Jinja2 native mode is now the default and only option.
+DEFAULT_KEEP_REMOTE_FILES:
+  name: Keep remote files
+  default: False
+  description:
+    - Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
+    - If this option is enabled it will disable ``ANSIBLE_PIPELINING``.
+  env: [{name: ANSIBLE_KEEP_REMOTE_FILES}]
+  ini:
+  - {key: keep_remote_files, section: defaults}
+  type: boolean
+DEFAULT_LIBVIRT_LXC_NOSECLABEL:
+  name: No security label on Lxc
+  default: False
+  description:
+    - "This setting causes libvirt to connect to LXC containers by passing ``--noseclabel`` parameter to ``virsh`` command.
+      This is necessary when running on systems which do not have SELinux."
+  env:
+  - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
+  ini:
+  - {key: libvirt_lxc_noseclabel, section: selinux}
+  type: boolean
+  version_added: "2.1"
+  deprecated:
+    why: This option was moved to the plugin itself
+    version: "2.22"
+    alternatives: Use the option from the plugin itself.
+DEFAULT_LOAD_CALLBACK_PLUGINS:
+  name: Load callbacks for adhoc
+  default: False
+  description:
+    - Controls whether callback plugins are loaded when running /usr/bin/ansible.
+      This may be used to log activity from the command line, send notifications, and so on.
+      Callback plugins are always loaded for ``ansible-playbook``.
+  env: [{name: ANSIBLE_LOAD_CALLBACK_PLUGINS}]
+  ini:
+  - {key: bin_ansible_callbacks, section: defaults}
+  type: boolean
+  version_added: "1.8"
+DEFAULT_LOCAL_TMP:
+  name: Controller temporary directory
+  default: '{{ ANSIBLE_HOME ~ "/tmp" }}'
+  description: Temporary directory for Ansible to use on the controller.
+  env: [{name: ANSIBLE_LOCAL_TEMP}]
+  ini:
+  - {key: local_tmp, section: defaults}
+  type: tmppath
+DEFAULT_LOG_PATH:
+  name: Ansible log file path
+  default: ~
+  description:
+  - File to which Ansible will log on the controller.
+  - When not set the logging is disabled.
+  env: [{name: ANSIBLE_LOG_PATH}]
+  ini:
+  - {key: log_path, section: defaults}
+  type: path
+DEFAULT_LOG_FILTER:
+  name: Name filters for python logger
+  default: []
+  description: List of logger names to filter out of the log file.
+  env: [{name: ANSIBLE_LOG_FILTER}]
+  ini:
+    - {key: log_filter, section: defaults}
+  type: list
+DEFAULT_LOOKUP_PLUGIN_PATH:
+  name: Lookup Plugins Path
+  description: Colon-separated paths in which Ansible will search for Lookup Plugins.
+  default: '{{ ANSIBLE_HOME ~ "/plugins/lookup:/usr/share/ansible/plugins/lookup" }}'
+  env: [{name: ANSIBLE_LOOKUP_PLUGINS}]
+  ini:
+  - {key: lookup_plugins, section: defaults}
+  type: pathspec
+  yaml: {key: defaults.lookup_plugins}
+DEFAULT_MANAGED_STR:
+  name: Ansible managed
+  default: 'Ansible managed'
+  description: Sets the macro for the 'ansible_managed' variable available for :ref:`ansible_collections.ansible.builtin.template_module` and :ref:`ansible_collections.ansible.windows.win_template_module`.  This is only relevant to those two modules.
+  env: []
+  ini:
+  - {key: ansible_managed, section: defaults}
+  yaml: {key: defaults.ansible_managed}
+  deprecated:
+    why: The `ansible_managed` variable can be set just like any other variable, or a different variable can be used.
+    version: "2.23"
+    alternatives: Set the `ansible_managed` variable, or use any custom variable in templates.
+DEFAULT_MODULE_ARGS:
+  name: Adhoc default arguments
+  default: ~
+  description:
+    - This sets the default arguments to pass to the ``ansible`` adhoc binary if no ``-a`` is specified.
+  env: [{name: ANSIBLE_MODULE_ARGS}]
+  ini:
+  - {key: module_args, section: defaults}
+DEFAULT_MODULE_COMPRESSION:
+  name: Python module compression
+  default: ZIP_DEFLATED
+  description: Compression scheme to use when transferring Python modules to the target.
+  env: []
+  ini:
+  - {key: module_compression, section: defaults}
+  vars:
+    - name: ansible_module_compression
+DEFAULT_MODULE_NAME:
+  name: Default adhoc module
+  default: command
+  description: "Module to use with the ``ansible`` AdHoc command, if none is specified via ``-m``."
+  env: []
+  ini:
+  - {key: module_name, section: defaults}
+DEFAULT_MODULE_PATH:
+  name: Modules Path
+  description: Colon-separated paths in which Ansible will search for Modules.
+  default: '{{ ANSIBLE_HOME ~ "/plugins/modules:/usr/share/ansible/plugins/modules" }}'
+  env: [{name: ANSIBLE_LIBRARY}]
+  ini:
+  - {key: library, section: defaults}
+  type: pathspec
+DEFAULT_MODULE_UTILS_PATH:
+  name: Module Utils Path
+  description: Colon-separated paths in which Ansible will search for Module utils files, which are shared by modules.
+  default: '{{ ANSIBLE_HOME ~ "/plugins/module_utils:/usr/share/ansible/plugins/module_utils" }}'
+  env: [{name: ANSIBLE_MODULE_UTILS}]
+  ini:
+  - {key: module_utils, section: defaults}
+  type: pathspec
+DEFAULT_NETCONF_PLUGIN_PATH:
+  name: Netconf Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/netconf:/usr/share/ansible/plugins/netconf" }}'
+  description: Colon-separated paths in which Ansible will search for Netconf Plugins.
+  env: [{name: ANSIBLE_NETCONF_PLUGINS}]
+  ini:
+  - {key: netconf_plugins, section: defaults}
+  type: pathspec
+DEFAULT_NO_LOG:
+  name: No log
+  default: False
+  description: "Toggle Ansible's display and logging of task details, mainly used to avoid security disclosures."
+  env: [{name: ANSIBLE_NO_LOG}]
+  ini:
+  - {key: no_log, section: defaults}
+  type: boolean
+DEFAULT_NO_TARGET_SYSLOG:
+  name: No syslog on target
+  default: False
+  description:
+  - Toggle Ansible logging to syslog on the target when it executes tasks. On Windows hosts, this will disable a newer
+    style PowerShell modules from writing to the event log.
+  env: [{name: ANSIBLE_NO_TARGET_SYSLOG}]
+  ini:
+  - {key: no_target_syslog, section: defaults}
+  vars:
+  - name: ansible_no_target_syslog
+    version_added: '2.10'
+  type: boolean
+  yaml: {key: defaults.no_target_syslog}
+DEFAULT_NULL_REPRESENTATION:
+  name: Represent a null
+  default: ~
+  description: What templating should return as a 'null' value. When not set it will let Jinja2 decide.
+  env: [{name: ANSIBLE_NULL_REPRESENTATION}]
+  ini:
+  - {key: null_representation, section: defaults}
+  type: raw
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
+DEFAULT_POLL_INTERVAL:
+  name: Async poll interval
+  default: 15
+  description:
+    - For asynchronous tasks in Ansible (covered in Asynchronous Actions and Polling),
+      this is how often to check back on the status of those tasks when an explicit poll interval is not supplied.
+      The default is a reasonably moderate 15 seconds which is a tradeoff between checking in frequently and
+      providing a quick turnaround when something may have completed.
+  env: [{name: ANSIBLE_POLL_INTERVAL}]
+  ini:
+  - {key: poll_interval, section: defaults}
+  type: integer
+DEFAULT_PRIVATE_KEY_FILE:
+  name: Private key file
+  default: ~
+  description:
+    - Option for connections using a certificate or key file to authenticate, rather than an agent or passwords,
+      you can set the default value here to avoid re-specifying ``--private-key`` with every invocation.
+  env: [{name: ANSIBLE_PRIVATE_KEY_FILE}]
+  ini:
+  - {key: private_key_file, section: defaults}
+  type: path
+DEFAULT_PRIVATE_ROLE_VARS:
+  name: Private role variables
+  default: False
+  description:
+    - By default, imported roles publish their variables to the play and other roles, this setting can avoid that.
+    - This was introduced as a way to reset role variables to default values if a role is used more than once
+      in a playbook.
+    - Starting in version '2.17' M(ansible.builtin.include_roles) and M(ansible.builtin.import_roles) can
+      individually override this via the C(public) parameter.
+    - Included roles only make their variables public at execution, unlike imported roles which happen at playbook compile time.
+  env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
+  ini:
+  - {key: private_role_vars, section: defaults}
+  type: boolean
+  yaml: {key: defaults.private_role_vars}
+DEFAULT_REMOTE_PORT:
+  name: Remote port
+  default: ~
+  description: Port to use in remote connections, when blank it will use the connection plugin default.
+  env: [{name: ANSIBLE_REMOTE_PORT}]
+  ini:
+  - {key: remote_port, section: defaults}
+  type: integer
+  yaml: {key: defaults.remote_port}
+DEFAULT_REMOTE_USER:
+  name: Login/Remote User
+  description:
+    - Sets the login user for the target machines
+    - "When blank it uses the connection plugin's default, normally the user currently executing Ansible."
+  env: [{name: ANSIBLE_REMOTE_USER}]
+  ini:
+  - {key: remote_user, section: defaults}
+DEFAULT_ROLES_PATH:
+  name: Roles path
+  default: '{{ ANSIBLE_HOME ~ "/roles:/usr/share/ansible/roles:/etc/ansible/roles" }}'
+  description: Colon-separated paths in which Ansible will search for Roles.
+  env: [{name: ANSIBLE_ROLES_PATH}]
+  expand_relative_paths: True
+  ini:
+  - {key: roles_path, section: defaults}
+  type: pathspec
+  yaml: {key: defaults.roles_path}
+DEFAULT_SELINUX_SPECIAL_FS:
+  name: Problematic file systems
+  default: [fuse, nfs, vboxsf, ramfs, 9p, vfat]
+  description:
+    - "Some filesystems do not support safe operations and/or return inconsistent errors,
+       this setting makes Ansible 'tolerate' those in the list without causing fatal errors."
+    - Data corruption may occur and writes are not always verified when a filesystem is in the list.
+  env:
+  - name: ANSIBLE_SELINUX_SPECIAL_FS
+    version_added: "2.9"
+  ini:
+  - {key: special_context_filesystems, section: selinux}
+  type: list
+DEFAULT_STDOUT_CALLBACK:
+  name: Main display callback plugin
+  default: default
+  description:
+    - "Set the main callback used to display Ansible output. You can only have one at a time."
+    - You can have many other callbacks, but just one can be in charge of stdout.
+    - See :ref:`callback_plugins` for a list of available options.
+  env: [{name: ANSIBLE_STDOUT_CALLBACK}]
+  ini:
+  - {key: stdout_callback, section: defaults}
+EDITOR:
+  name: editor application to use
+  default: vi
+  description:
+    - for the cases in which Ansible needs to return a file within an editor, this chooses the application to use.
+  ini:
+    - section: defaults
+      key: editor
+      version_added: '2.15'
+  env:
+    - name: ANSIBLE_EDITOR
+      version_added: '2.15'
+    - name: EDITOR
+ENABLE_TASK_DEBUGGER:
+  name: Whether to enable the task debugger
+  default: False
+  description:
+    - Whether or not to enable the task debugger, this previously was done as a strategy plugin.
+    - Now all strategy plugins can inherit this behavior. The debugger defaults to activating when
+    - a task is failed on unreachable. Use the debugger keyword for more flexibility.
+  type: boolean
+  env: [{name: ANSIBLE_ENABLE_TASK_DEBUGGER}]
+  ini:
+    - {key: enable_task_debugger, section: defaults}
+  version_added: "2.5"
+TASK_DEBUGGER_IGNORE_ERRORS:
+  name: Whether a failed task with ignore_errors=True will still invoke the debugger
+  default: True
+  description:
+    - This option defines whether the task debugger will be invoked on a failed task when ignore_errors=True
+      is specified.
+    - True specifies that the debugger will honor ignore_errors, and False will not honor ignore_errors.
+  type: boolean
+  env: [{name: ANSIBLE_TASK_DEBUGGER_IGNORE_ERRORS}]
+  ini:
+    - {key: task_debugger_ignore_errors, section: defaults}
+  version_added: "2.7"
+DEFAULT_STRATEGY:
+  name: Implied strategy
+  default: 'linear'
+  description: Set the default strategy used for plays.
+  env: [{name: ANSIBLE_STRATEGY}]
+  ini:
+  - {key: strategy, section: defaults}
+  version_added: "2.3"
+DEFAULT_STRATEGY_PLUGIN_PATH:
+  name: Strategy Plugins Path
+  description: Colon-separated paths in which Ansible will search for Strategy Plugins.
+  default: '{{ ANSIBLE_HOME ~ "/plugins/strategy:/usr/share/ansible/plugins/strategy" }}'
+  env: [{name: ANSIBLE_STRATEGY_PLUGINS}]
+  ini:
+  - {key: strategy_plugins, section: defaults}
+  type: pathspec
+DEFAULT_SU:
+  default: False
+  description: 'Toggle the use of "su" for tasks.'
+  env: [{name: ANSIBLE_SU}]
+  ini:
+  - {key: su, section: defaults}
+  type: boolean
+  yaml: {key: defaults.su}
+DEFAULT_SYSLOG_FACILITY:
+  name: syslog facility
+  default: LOG_USER
+  description: Syslog facility to use when Ansible logs to the remote target.
+  env: [{name: ANSIBLE_SYSLOG_FACILITY}]
+  ini:
+  - {key: syslog_facility, section: defaults}
+DEFAULT_TERMINAL_PLUGIN_PATH:
+  name: Terminal Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/terminal:/usr/share/ansible/plugins/terminal" }}'
+  description: Colon-separated paths in which Ansible will search for Terminal Plugins.
+  env: [{name: ANSIBLE_TERMINAL_PLUGINS}]
+  ini:
+  - {key: terminal_plugins, section: defaults}
+  type: pathspec
+DEFAULT_TEST_PLUGIN_PATH:
+  name: Jinja2 Test Plugins Path
+  description: Colon-separated paths in which Ansible will search for Jinja2 Test Plugins.
+  default: '{{ ANSIBLE_HOME ~ "/plugins/test:/usr/share/ansible/plugins/test" }}'
+  env: [{name: ANSIBLE_TEST_PLUGINS}]
+  ini:
+  - {key: test_plugins, section: defaults}
+  type: pathspec
+DEFAULT_TIMEOUT:
+  name: Connection timeout
+  default: 10
+  description: This is the default timeout for connection plugins to use.
+  env: [{name: ANSIBLE_TIMEOUT}]
+  ini:
+  - {key: timeout, section: defaults}
+  type: integer
+DEFAULT_TRANSPORT:
+  name: Connection plugin
+  default: ssh
+  description:
+    - Can be any connection plugin available to your ansible installation.
+  env: [{name: ANSIBLE_TRANSPORT}]
+  ini:
+  - {key: transport, section: defaults}
+DEFAULT_UNDEFINED_VAR_BEHAVIOR:
+  name: Jinja2 fail on undefined
+  default: True
+  version_added: "1.3"
+  description:
+    - When True, this causes ansible templating to fail steps that reference variable names that are likely typoed.
+    - "Otherwise, any '{{ template_expression }}' that contains undefined variables will be rendered in a template or ansible action line exactly as written."
+  env: [{name: ANSIBLE_ERROR_ON_UNDEFINED_VARS}]
+  ini:
+  - {key: error_on_undefined_vars, section: defaults}
+  type: boolean
+  deprecated:
+    why: This option is no longer used in the Ansible Core code base.
+    version: "2.23"
+    alternatives: There is no alternative at the moment. A different mechanism would have to be implemented in the current code base.
+DEFAULT_VARS_PLUGIN_PATH:
+  name: Vars Plugins Path
+  default: '{{ ANSIBLE_HOME ~ "/plugins/vars:/usr/share/ansible/plugins/vars" }}'
+  description: Colon-separated paths in which Ansible will search for Vars Plugins.
+  env: [{name: ANSIBLE_VARS_PLUGINS}]
+  ini:
+  - {key: vars_plugins, section: defaults}
+  type: pathspec
+DEFAULT_VAULT_ID_MATCH:
+  name: Force vault id match
+  default: False
+  description: 'If true, decrypting vaults with a vault id will only try the password from the matching vault-id.'
+  env: [{name: ANSIBLE_VAULT_ID_MATCH}]
+  ini:
+  - {key: vault_id_match, section: defaults}
+  yaml: {key: defaults.vault_id_match}
+DEFAULT_VAULT_IDENTITY:
+  name: Vault id label
+  default: default
+  description: 'The label to use for the default vault id label in cases where a vault id label is not provided.'
+  env: [{name: ANSIBLE_VAULT_IDENTITY}]
+  ini:
+  - {key: vault_identity, section: defaults}
+  yaml: {key: defaults.vault_identity}
+VAULT_ENCRYPT_SALT:
+  name: Vault salt to use for encryption
+  default: ~
+  description: 'The salt to use for the vault encryption. If it is not provided, a random salt will be used.'
+  env: [{name: ANSIBLE_VAULT_ENCRYPT_SALT}]
+  ini:
+  - {key: vault_encrypt_salt, section: defaults}
+  version_added: '2.15'
+DEFAULT_VAULT_ENCRYPT_IDENTITY:
+  name: Vault id to use for encryption
+  description: 'The vault_id to use for encrypting by default. If multiple vault_ids are provided, this specifies which to use for encryption. The ``--encrypt-vault-id`` CLI option overrides the configured value.'
+  env: [{name: ANSIBLE_VAULT_ENCRYPT_IDENTITY}]
+  ini:
+  - {key: vault_encrypt_identity, section: defaults}
+  yaml: {key: defaults.vault_encrypt_identity}
+DEFAULT_VAULT_IDENTITY_LIST:
+  name: Default vault ids
+  default: []
+  description: 'A list of vault-ids to use by default. Equivalent to multiple ``--vault-id`` args. Vault-ids are tried in order.'
+  env: [{name: ANSIBLE_VAULT_IDENTITY_LIST}]
+  ini:
+  - {key: vault_identity_list, section: defaults}
+  type: list
+  yaml: {key: defaults.vault_identity_list}
+DEFAULT_VAULT_PASSWORD_FILE:
+  name: Vault password file
+  default: ~
+  description:
+    - 'The vault password file to use. Equivalent to ``--vault-password-file`` or ``--vault-id``.'
+    - If executable, it will be run and the resulting stdout will be used as the password.
+  env: [{name: ANSIBLE_VAULT_PASSWORD_FILE}]
+  ini:
+  - {key: vault_password_file, section: defaults}
+  type: path
+  yaml: {key: defaults.vault_password_file}
+DEFAULT_VERBOSITY:
+  name: Verbosity
+  default: 0
+  description: Sets the default verbosity, equivalent to the number of ``-v`` passed in the command line.
+  env: [{name: ANSIBLE_VERBOSITY}]
+  ini:
+  - {key: verbosity, section: defaults}
+  type: integer
+DEPRECATION_WARNINGS:
+  name: Deprecation messages
+  default: True
+  description: "Toggle to control the showing of deprecation warnings"
+  env: [{name: ANSIBLE_DEPRECATION_WARNINGS}]
+  ini:
+  - {key: deprecation_warnings, section: defaults}
+  type: boolean
+  vars:
+    - name: ansible_deprecation_warnings
+      version_added: '2.19'
+DEVEL_WARNING:
+  name: Running devel warning
+  default: True
+  description: Toggle to control showing warnings related to running devel.
+  env: [{name: ANSIBLE_DEVEL_WARNING}]
+  ini:
+  - {key: devel_warning, section: defaults}
+  type: boolean
+DIFF_ALWAYS:
+  name: Show differences
+  default: False
+  description: Configuration toggle to tell modules to show differences when in 'changed' status, equivalent to ``--diff``.
+  env: [{name: ANSIBLE_DIFF_ALWAYS}]
+  ini:
+  - {key: always, section: diff}
+  type: bool
+DIFF_CONTEXT:
+  name: Difference context
+  default: 3
+  description: Number of lines of context to show when displaying the differences between files.
+  env: [{name: ANSIBLE_DIFF_CONTEXT}]
+  ini:
+  - {key: context, section: diff}
+  type: integer
+DISPLAY_ARGS_TO_STDOUT:
+  name: Show task arguments
+  default: False
+  description:
+    - "Normally ``ansible-playbook`` will print a header for each task that is run.
+      These headers will contain the name: field from the task if you specified one.
+      If you didn't then ``ansible-playbook`` uses the task's action to help you tell which task is presently running.
+      Sometimes you run many of the same action and so you want more information about the task to differentiate it from others of the same action.
+      If you set this variable to True in the config then ``ansible-playbook`` will also include the task's arguments in the header."
+    - "This setting defaults to False because there is a chance that you have sensitive values in your parameters and
+      you do not want those to be printed."
+    - "If you set this to True you should be sure that you have secured your environment's stdout
+      (no one can shoulder surf your screen and you aren't saving stdout to an insecure file) or
+      made sure that all of your playbooks explicitly added the ``no_log: True`` parameter to tasks that have sensitive values
+      :ref:`keep_secret_data` for more information."
+  env: [{name: ANSIBLE_DISPLAY_ARGS_TO_STDOUT}]
+  ini:
+  - {key: display_args_to_stdout, section: defaults}
+  type: boolean
+  version_added: "2.1"
+DISPLAY_SKIPPED_HOSTS:
+  name: Show skipped results
+  default: True
+  description: "Toggle to control displaying skipped task/host entries in a task in the default callback."
+  env:
+  - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
+  ini:
+  - {key: display_skipped_hosts, section: defaults}
+  type: boolean
+DISPLAY_TRACEBACK:
+  name: Control traceback display
+  default: [never]
+  description: When to include tracebacks in extended error messages
+  env:
+    - name: ANSIBLE_DISPLAY_TRACEBACK
+  ini:
+    - {key: display_traceback, section: defaults}
+  type: list
+  choices:
+    - error
+    - warning
+    - deprecated
+    - deprecated_value
+    - always
+    - never
+  version_added: "2.19"
+DOCSITE_ROOT_URL:
+  name: Root docsite URL
+  default: https://docs.ansible.com/ansible-core/
+  description: Root docsite URL used to generate docs URLs in warning/error text;
+               must be an absolute URL with a valid scheme and trailing slash.
+  ini:
+  - {key: docsite_root_url, section: defaults}
+  version_added: "2.8"
+DUPLICATE_YAML_DICT_KEY:
+  name: Controls ansible behaviour when finding duplicate keys in YAML.
+  default: warn
+  description:
+    - By default, Ansible will issue a warning when a duplicate dict key is encountered in YAML.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_DUPLICATE_YAML_DICT_KEY}]
+  ini:
+  - {key: duplicate_dict_key, section: defaults}
+  type: string
+  choices: &basic_error2
+    error: issue a 'fatal' error and stop the play
+    warn: issue a warning but continue
+    ignore: just continue silently
+  version_added: "2.9"
+ERROR_ON_MISSING_HANDLER:
+  name: Missing handler error
+  default: True
+  description: "Toggle to allow missing handlers to become a warning instead of an error when notifying."
+  env: [{name: ANSIBLE_ERROR_ON_MISSING_HANDLER}]
+  ini:
+  - {key: error_on_missing_handler, section: defaults}
+  type: boolean
+CONNECTION_FACTS_MODULES:
+  name: Map of connections to fact modules
+  default:
+    # use ansible.legacy names on unqualified facts modules to allow library/ overrides
+    asa: ansible.legacy.asa_facts
+    cisco.asa.asa: cisco.asa.asa_facts
+    eos: ansible.legacy.eos_facts
+    arista.eos.eos: arista.eos.eos_facts
+    frr: ansible.legacy.frr_facts
+    frr.frr.frr: frr.frr.frr_facts
+    ios: ansible.legacy.ios_facts
+    cisco.ios.ios: cisco.ios.ios_facts
+    iosxr: ansible.legacy.iosxr_facts
+    cisco.iosxr.iosxr: cisco.iosxr.iosxr_facts
+    junos: ansible.legacy.junos_facts
+    junipernetworks.junos.junos: junipernetworks.junos.junos_facts
+    nxos: ansible.legacy.nxos_facts
+    cisco.nxos.nxos: cisco.nxos.nxos_facts
+    vyos: ansible.legacy.vyos_facts
+    vyos.vyos.vyos: vyos.vyos.vyos_facts
+    exos: ansible.legacy.exos_facts
+    extreme.exos.exos: extreme.exos.exos_facts
+    slxos: ansible.legacy.slxos_facts
+    extreme.slxos.slxos: extreme.slxos.slxos_facts
+    voss: ansible.legacy.voss_facts
+    extreme.voss.voss: extreme.voss.voss_facts
+    ironware: ansible.legacy.ironware_facts
+    community.network.ironware: community.network.ironware_facts
+  description: "Which modules to run during a play's fact gathering stage based on connection"
+  type: dict
+FACTS_MODULES:
+  name: Gather Facts Modules
+  default:
+    - smart
+  description:
+    - "Which modules to run during a play's fact gathering stage, using the default of 'smart' will try to figure it out based on connection type."
+    - "If adding your own modules but you still want to use the default Ansible facts, you will want to include 'setup'
+      or corresponding network module to the list (if you add 'smart', Ansible will also figure it out)."
+    - "This does not affect explicit calls to the 'setup' module, but does always affect the 'gather_facts' action (implicit or explicit)."
+  env: [{name: ANSIBLE_FACTS_MODULES}]
+  ini:
+    - {key: facts_modules, section: defaults}
+  type: list
+  vars:
+    - name: ansible_facts_modules
+GALAXY_IGNORE_CERTS:
+  name: Galaxy validate certs
+  description:
+    - If set to yes, ansible-galaxy will not validate TLS certificates.
+      This can be useful for testing against a server with a self-signed certificate.
+  env: [{name: ANSIBLE_GALAXY_IGNORE}]
+  ini:
+  - {key: ignore_certs, section: galaxy}
+  type: boolean
+GALAXY_SERVER_TIMEOUT:
+  name: Default timeout to use for API calls
+  description:
+    - The default timeout for Galaxy API calls. Galaxy servers that don't configure a specific timeout will fall back to this value.
+  env: [{name: ANSIBLE_GALAXY_SERVER_TIMEOUT}]
+  default: 60
+  ini:
+  - {key: server_timeout, section: galaxy}
+  type: int
+GALAXY_ROLE_SKELETON:
+  name: Galaxy role skeleton directory
+  description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``/``ansible-galaxy role``, same as ``--role-skeleton``.
+  env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
+  ini:
+  - {key: role_skeleton, section: galaxy}
+  type: path
+GALAXY_ROLE_SKELETON_IGNORE:
+  name: Galaxy role skeleton ignore
+  default: ["^.git$", "^.*/.git_keep$"]
+  description: patterns of files to ignore inside a Galaxy role or collection skeleton directory.
+  env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
+  ini:
+  - {key: role_skeleton_ignore, section: galaxy}
+  type: list
+GALAXY_COLLECTION_SKELETON:
+  name: Galaxy collection skeleton directory
+  description: Collection skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy collection``, same as ``--collection-skeleton``.
+  env: [{name: ANSIBLE_GALAXY_COLLECTION_SKELETON}]
+  ini:
+  - {key: collection_skeleton, section: galaxy}
+  type: path
+GALAXY_COLLECTION_SKELETON_IGNORE:
+  name: Galaxy collection skeleton ignore
+  default: ["^.git$", "^.*/.git_keep$"]
+  description: patterns of files to ignore inside a Galaxy collection skeleton directory.
+  env: [{name: ANSIBLE_GALAXY_COLLECTION_SKELETON_IGNORE}]
+  ini:
+  - {key: collection_skeleton_ignore, section: galaxy}
+  type: list
+GALAXY_COLLECTIONS_PATH_WARNING:
+  name: "ansible-galaxy collection install collections path warnings"
+  description: "whether ``ansible-galaxy collection install`` should warn about ``--collections-path`` missing from configured :ref:`collections_paths`."
+  default: true
+  type: bool
+  env: [{name: ANSIBLE_GALAXY_COLLECTIONS_PATH_WARNING}]
+  ini:
+    - {key: collections_path_warning, section: galaxy}
+  version_added: "2.16"
+GALAXY_SERVER:
+  default: https://galaxy.ansible.com
+  description: "URL to prepend when roles don't specify the full URI, assume they are referencing this server as the source."
+  env: [{name: ANSIBLE_GALAXY_SERVER}]
+  ini:
+  - {key: server, section: galaxy}
+  yaml: {key: galaxy.server}
+GALAXY_SERVER_LIST:
+  description:
+  - A list of Galaxy servers to use when installing a collection.
+  - The value corresponds to the config ini header ``[galaxy_server.{{item}}]`` which defines the server details.
+  - 'See :ref:`galaxy_server_config` for more details on how to define a Galaxy server.'
+  - The order of servers in this list is used as the order in which a collection is resolved.
+  - Setting this config option will ignore the :ref:`galaxy_server` config option.
+  env: [{name: ANSIBLE_GALAXY_SERVER_LIST}]
+  ini:
+  - {key: server_list, section: galaxy}
+  type: list
+  version_added: "2.9"
+GALAXY_TOKEN_PATH:
+  default: '{{ ANSIBLE_HOME ~ "/galaxy_token" }}'
+  description: "Local path to galaxy access token file"
+  env: [{name: ANSIBLE_GALAXY_TOKEN_PATH}]
+  ini:
+  - {key: token_path, section: galaxy}
+  type: path
+  version_added: "2.9"
+GALAXY_DISPLAY_PROGRESS:
+  default: ~
+  description:
+  - Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when
+    outputting the stdout to a file.
+  - This config option controls whether the display wheel is shown or not.
+  - The default is to show the display wheel if stdout has a tty.
+  env: [{name: ANSIBLE_GALAXY_DISPLAY_PROGRESS}]
+  ini:
+  - {key: display_progress, section: galaxy}
+  type: bool
+  version_added: "2.10"
+GALAXY_CACHE_DIR:
+  default: '{{ ANSIBLE_HOME ~ "/galaxy_cache" }}'
+  description:
+  - The directory that stores cached responses from a Galaxy server.
+  - This is only used by the ``ansible-galaxy collection install`` and ``download`` commands.
+  - Cache files inside this dir will be ignored if they are world writable.
+  env:
+  - name: ANSIBLE_GALAXY_CACHE_DIR
+  ini:
+  - section: galaxy
+    key: cache_dir
+  type: path
+  version_added: '2.11'
+GALAXY_DISABLE_GPG_VERIFY:
+  default: false
+  type: bool
+  env:
+  - name: ANSIBLE_GALAXY_DISABLE_GPG_VERIFY
+  ini:
+  - section: galaxy
+    key: disable_gpg_verify
+  description:
+  - Disable GPG signature verification during collection installation.
+  version_added: '2.13'
+GALAXY_GPG_KEYRING:
+  type: path
+  env:
+  - name: ANSIBLE_GALAXY_GPG_KEYRING
+  ini:
+  - section: galaxy
+    key: gpg_keyring
+  description:
+  - Configure the keyring used for GPG signature verification during collection installation and verification.
+  version_added: '2.13'
+GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
+  type: list
+  env:
+  - name: ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES
+  ini:
+  - section: galaxy
+    key: ignore_signature_status_codes
+  description:
+  - A list of GPG status codes to ignore during GPG signature verification.
+    See L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes) for status code descriptions.
+  - If fewer signatures successfully verify the collection than `GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`,
+    signature verification will fail even if all error codes are ignored.
+  choices:
+  - EXPSIG
+  - EXPKEYSIG
+  - REVKEYSIG
+  - BADSIG
+  - ERRSIG
+  - NO_PUBKEY
+  - MISSING_PASSPHRASE
+  - BAD_PASSPHRASE
+  - NODATA
+  - UNEXPECTED
+  - ERROR
+  - FAILURE
+  - BADARMOR
+  - KEYEXPIRED
+  - KEYREVOKED
+  - NO_SECKEY
+GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
+  type: str
+  default: 1
+  env:
+  - name: ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT
+  ini:
+  - section: galaxy
+    key: required_valid_signature_count
+  description:
+  - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
+  - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
+  - Prepend + to the value to fail if no valid signatures are found for the collection.
+GALAXY_COLLECTION_IMPORT_POLL_INTERVAL:
+  description:
+    - The initial interval in seconds for polling the import status of a collection.
+    - This interval increases exponentially based on the :ref:`galaxy_collection_import_poll_factor`, with a maximum delay of 30 seconds.
+  type: float
+  default: 2.0
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_INTERVAL
+  version_added: '2.18'
+GALAXY_COLLECTION_IMPORT_POLL_FACTOR:
+  description:
+    - The multiplier used to increase the :ref:`galaxy_collection_import_poll_interval` when checking the collection import status.
+  type: float
+  default: 1.5
+  env:
+    - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_FACTOR
+  version_added: "2.18"
+HOST_KEY_CHECKING:
+  # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
+  # TODO: check non ssh connection plugins for use/migration
+  name: Toggle host/key check
+  default: True
+  description:
+    - Set this to "False" if you want to avoid host key checking by the underlying connection plugin Ansible uses to connect to the host.
+    - Please read the documentation of the specific connection plugin used for details.
+  env: [{name: ANSIBLE_HOST_KEY_CHECKING}]
+  ini:
+  - {key: host_key_checking, section: defaults}
+  type: boolean
+HOST_PATTERN_MISMATCH:
+  name: Control host pattern mismatch behaviour
+  default: 'warning'
+  description: This setting changes the behaviour of mismatched host patterns, it allows you to force a fatal error, a warning or just ignore it.
+  env: [{name: ANSIBLE_HOST_PATTERN_MISMATCH}]
+  ini:
+  - {key: host_pattern_mismatch, section: inventory}
+  choices:
+    <<: *basic_error
+  version_added: "2.8"
+INTERPRETER_PYTHON:
+  name: Python interpreter path (or automatic discovery behavior) used for module execution
+  default: auto
+  env: [{name: ANSIBLE_PYTHON_INTERPRETER}]
+  ini:
+  - {key: interpreter_python, section: defaults}
+  vars:
+  - {name: ansible_python_interpreter}
+  version_added: "2.8"
+  description:
+  - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
+    Supported discovery modes are ``auto`` (the default), and ``auto_silent``.
+    All discovery modes match against an ordered list of well-known Python interpreter locations. 
+    The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters
+    installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``.
+    The ``auto_legacy*`` modes are removed.
+    They exist for backward-compatibility with older Ansible releases that always defaulted to ``/usr/bin/python3``,
+    which will use that interpreter if present.
+INTERPRETER_PYTHON_FALLBACK:
+  name: Ordered list of Python interpreters to check for in discovery
+  default:
+  - python3.14
+  - python3.13
+  - python3.12
+  - python3.11
+  - python3.10
+  - python3.9
+  - /usr/bin/python3
+  - python3
+  vars:
+    - name: ansible_interpreter_python_fallback
+  type: list
+  version_added: "2.8"
+TRANSFORM_INVALID_GROUP_CHARS:
+  name: Transform invalid characters in group names
+  default: 'never'
+  description:
+    - Make ansible transform invalid characters in group names supplied by inventory sources.
+  env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
+  ini:
+  - {key: force_valid_group_names, section: defaults}
+  type: string
+  choices:
+    always: it will replace any invalid characters with '_' (underscore) and warn the user
+    never: it will allow for the group name but warn about the issue
+    ignore: it does the same as 'never', without issuing a warning
+    silently: it does the same as 'always', without issuing a warning
+  version_added: '2.8'
+INVALID_TASK_ATTRIBUTE_FAILED:
+  name: Controls whether invalid attributes for a task result in errors instead of warnings
+  default: True
+  description: If 'false', invalid attributes for a task will result in warnings instead of errors.
+  type: boolean
+  env:
+    - name: ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED
+  ini:
+    - key: invalid_task_attribute_failed
+      section: defaults
+  version_added: "2.7"
+INVENTORY_ANY_UNPARSED_IS_FAILED:
+  name: Controls whether any unparsable inventory source is a fatal error
+  default: False
+  description: >
+    If 'true', it is a fatal error when any given inventory source
+    cannot be successfully parsed by any available inventory plugin;
+    otherwise, this situation only attracts a warning.
+  type: boolean
+  env: [{name: ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED}]
+  ini:
+    - {key: any_unparsed_is_failed, section: inventory}
+  version_added: "2.7"
+INVENTORY_ENABLED:
+  name: Active Inventory plugins
+  default: ['host_list', 'script', 'auto', 'yaml', 'ini', 'toml']
+  description: List of enabled inventory plugins, it also determines the order in which they are used.
+  env: [{name: ANSIBLE_INVENTORY_ENABLED}]
+  ini:
+  - {key: enable_plugins, section: inventory}
+  type: list
+INVENTORY_EXPORT:
+  name: Set ansible-inventory into export mode
+  default: False
+  description: Controls if ansible-inventory will accurately reflect Ansible's view into inventory or its optimized for exporting.
+  env: [{name: ANSIBLE_INVENTORY_EXPORT}]
+  ini:
+  - {key: export, section: inventory}
+  type: bool
+INVENTORY_IGNORE_EXTS:
+  name: Inventory ignore extensions
+  default: "{{ REJECT_EXTS + ['.orig', '.cfg', '.retry'] }}"
+  description: List of extensions to ignore when using a directory as an inventory source.
+  env: [{name: ANSIBLE_INVENTORY_IGNORE}]
+  ini:
+  - {key: inventory_ignore_extensions, section: defaults}
+  - {key: ignore_extensions, section: inventory}
+  type: list
+INVENTORY_IGNORE_PATTERNS:
+  name: Inventory ignore patterns
+  default: []
+  description: List of patterns to ignore when using a directory as an inventory source.
+  env: [{name: ANSIBLE_INVENTORY_IGNORE_REGEX}]
+  ini:
+  - {key: inventory_ignore_patterns, section: defaults}
+  - {key: ignore_patterns, section: inventory}
+  type: list
+INVENTORY_UNPARSED_IS_FAILED:
+  name: Unparsed Inventory failure
+  default: False
+  description: >
+    If 'true' it is a fatal error if every single potential inventory
+    source fails to parse, otherwise, this situation will only attract a
+    warning.
+  env: [{name: ANSIBLE_INVENTORY_UNPARSED_FAILED}]
+  ini:
+  - {key: unparsed_is_failed, section: inventory}
+  type: bool
+MAX_FILE_SIZE_FOR_DIFF:
+  name: Diff maximum file size
+  default: 104448
+  description: Maximum size of files to be considered for diff display.
+  env: [{name: ANSIBLE_MAX_DIFF_SIZE}]
+  ini:
+  - {key: max_diff_size, section: defaults}
+  type: int
+NETWORK_GROUP_MODULES:
+  name: Network module families
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf, exos, voss, slxos]
+  description: 'TODO: write it'
+  env:
+  - name: ANSIBLE_NETWORK_GROUP_MODULES
+  ini:
+  - {key: network_group_modules, section: defaults}
+  type: list
+  yaml: {key: defaults.network_group_modules}
+INJECT_FACTS_AS_VARS:
+  default: True
+  description:
+    - Facts are available inside the `ansible_facts` variable, this setting also pushes them as their own vars in the main namespace.
+    - Unlike inside the `ansible_facts` dictionary where the prefix `ansible_` is removed from fact names, these will have the exact names that are returned by the module.
+  env: [{name: ANSIBLE_INJECT_FACT_VARS}]
+  ini:
+  - {key: inject_facts_as_vars, section: defaults}
+  type: boolean
+  version_added: "2.5"
+MODULE_IGNORE_EXTS:
+  name: Module ignore extensions
+  default: "{{ REJECT_EXTS + ['.yaml', '.yml', '.ini'] }}"
+  description:
+    - List of extensions to ignore when looking for modules to load.
+    - This is for rejecting script and binary module fallback extensions.
+  env: [{name: ANSIBLE_MODULE_IGNORE_EXTS}]
+  ini:
+  - {key: module_ignore_exts, section: defaults}
+  type: list
+MODULE_STRICT_UTF8_RESPONSE:
+  name: Module strict UTF-8 response
+  description:
+    - Enables whether module responses are evaluated for containing non-UTF-8 data.
+    - Disabling this may result in unexpected behavior.
+    - Only ansible-core should evaluate this configuration.
+  env: [{name: ANSIBLE_MODULE_STRICT_UTF8_RESPONSE}]
+  ini:
+    - {key: module_strict_utf8_response, section: defaults}
+  type: bool
+  default: True
+OLD_PLUGIN_CACHE_CLEARING:
+  description: Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviors in which a plugin loaded in previous plays would be unexpectedly 'sticky'. This setting allows the user to return to that behavior.
+  env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
+  ini:
+  - {key: old_plugin_cache_clear, section: defaults}
+  type: boolean
+  default: False
+  version_added: "2.8"
+PAGER:
+  name: pager application to use
+  default: less
+  description:
+    - for the cases in which Ansible needs to return output in a pageable fashion, this chooses the application to use.
+  ini:
+    - section: defaults
+      key: pager
+      version_added: '2.15'
+  env:
+    - name: ANSIBLE_PAGER
+      version_added: '2.15'
+    - name: PAGER
+PERSISTENT_CONTROL_PATH_DIR:
+  name: Persistence socket path
+  default: '{{ ANSIBLE_HOME ~ "/pc" }}'
+  description: Path to the socket to be used by the connection persistence system.
+  env: [{name: ANSIBLE_PERSISTENT_CONTROL_PATH_DIR}]
+  ini:
+  - {key: control_path_dir, section: persistent_connection}
+  type: path
+PERSISTENT_CONNECT_TIMEOUT:
+  name: Persistence timeout
+  default: 30
+  description: This controls how long the persistent connection will remain idle before it is destroyed.
+  env: [{name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT}]
+  ini:
+  - {key: connect_timeout, section: persistent_connection}
+  type: integer
+PERSISTENT_CONNECT_RETRY_TIMEOUT:
+  name: Persistence connection retry timeout
+  default: 15
+  description: This controls the retry timeout for persistent connection to connect to the local domain socket.
+  env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
+  ini:
+  - {key: connect_retry_timeout, section: persistent_connection}
+  type: integer
+PERSISTENT_COMMAND_TIMEOUT:
+  name: Persistence command timeout
+  default: 30
+  description: This controls the amount of time to wait for a response from a remote device before timing out a persistent connection.
+  env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
+  ini:
+  - {key: command_timeout, section: persistent_connection}
+  type: int
+PLAYBOOK_DIR:
+  name: playbook dir override for non-playbook CLIs (ala --playbook-dir)
+  version_added: "2.9"
+  description:
+    - A number of non-playbook CLIs have a ``--playbook-dir`` argument; this sets the default value for it.
+  env: [{name: ANSIBLE_PLAYBOOK_DIR}]
+  ini: [{key: playbook_dir, section: defaults}]
+  type: path
+PLAYBOOK_VARS_ROOT:
+  name: playbook vars files root
+  default: top
+  version_added: "2.4.1"
+  description:
+    - This sets which playbook dirs will be used as a root to process vars plugins, which includes finding host_vars/group_vars.
+  env: [{name: ANSIBLE_PLAYBOOK_VARS_ROOT}]
+  ini:
+  - {key: playbook_vars_root, section: defaults}
+  choices:
+    top: follows the traditional behavior of using the top playbook in the chain to find the root directory.
+    bottom: follows the 2.4.0 behavior of using the current playbook to find the root directory.
+    all: examines from the first parent to the current playbook.
+PLUGIN_FILTERS_CFG:
+  name: Config file for limiting valid plugins
+  default: null
+  version_added: "2.5.0"
+  description:
+    - "A path to configuration for filtering which plugins installed on the system are allowed to be used."
+    - "See :ref:`plugin_filtering_config` for details of the filter file's format."
+    - " The default is /etc/ansible/plugin_filters.yml"
+  ini:
+  - key: plugin_filters_cfg
+    section: defaults
+  type: path
+PYTHON_MODULE_RLIMIT_NOFILE:
+  name: Adjust maximum file descriptor soft limit during Python module execution
+  description:
+  - Attempts to set RLIMIT_NOFILE soft limit to the specified value when executing Python modules (can speed up subprocess usage on
+    Python 2.x. See https://bugs.python.org/issue11284). The value will be limited by the existing hard limit. Default
+    value of 0 does not attempt to adjust existing system-defined limits.
+  default: 0
+  env:
+  - {name: ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE}
+  ini:
+  - {key: python_module_rlimit_nofile, section: defaults}
+  vars:
+  - {name: ansible_python_module_rlimit_nofile}
+  version_added: '2.8'
+RETRY_FILES_ENABLED:
+  name: Retry files
+  default: False
+  description: This controls whether a failed Ansible playbook should create a .retry file.
+  env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
+  ini:
+  - {key: retry_files_enabled, section: defaults}
+  type: bool
+RETRY_FILES_SAVE_PATH:
+  name: Retry files path
+  default: ~
+  description:
+    - This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
+    - This file will be overwritten after each run with the list of failed hosts from all plays.
+  env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
+  ini:
+  - {key: retry_files_save_path, section: defaults}
+  type: path
+RUN_VARS_PLUGINS:
+  name: When should vars plugins run relative to inventory
+  default: demand
+  description:
+    - This setting can be used to optimize vars_plugin usage depending on the user's inventory size and play selection.
+  env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
+  ini:
+  - {key: run_vars_plugins, section: defaults}
+  type: str
+  choices:
+    demand: will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    start: will run vars_plugins relative to inventory sources after importing that inventory source.
+  version_added: "2.10"
+SHOW_CUSTOM_STATS:
+  name: Display custom stats
+  default: False
+  description: 'This adds the custom stats set via the set_stats plugin to the default output.'
+  env: [{name: ANSIBLE_SHOW_CUSTOM_STATS}]
+  ini:
+  - {key: show_custom_stats, section: defaults}
+  type: bool
+SSH_AGENT:
+  name: Manage an SSH Agent
+  description: Manage an SSH Agent via Ansible. A configuration of ``none`` will not interact with an agent,
+               ``auto`` will start and destroy an agent via ``ssh-agent`` binary during the run, and a path
+               to an SSH_AUTH_SOCK will allow interaction with a pre-existing agent.
+  default: none
+  type: string
+  env: [{name: ANSIBLE_SSH_AGENT}]
+  ini: [{key: ssh_agent, section: connection}]
+  version_added: '2.19'
+SSH_AGENT_EXECUTABLE:
+  name: Executable to start for the ansible-managed SSH agent
+  description: When ``SSH_AGENT`` is ``auto``, the path or name of the ssh agent executable to start.
+  default: ssh-agent
+  type: str
+  env: [ { name: ANSIBLE_SSH_AGENT_EXECUTABLE } ]
+  ini: [ { key: ssh_agent_executable, section: connection } ]
+  version_added: '2.19'
+SSH_AGENT_KEY_LIFETIME:
+  name: Set a maximum lifetime when adding identities to an agent
+  description: For keys inserted into an agent defined by ``SSH_AGENT``, define a lifetime, in seconds, that the key may remain
+               in the agent.
+  type: int
+  env: [{name: ANSIBLE_SSH_AGENT_KEY_LIFETIME}]
+  ini: [{key: ssh_agent_key_lifetime, section: connection}]
+  version_added: '2.19'
+STRING_TYPE_FILTERS:
+  name: Filters to preserve strings
+  default: [string, to_json, to_nice_json, to_yaml, to_nice_yaml, ppretty, json]
+  description:
+    - "This list of filters avoids 'type conversion' when templating variables."
+    - Useful when you want to avoid conversion into lists or dictionaries for JSON strings, for example.
+  env: [{name: ANSIBLE_STRING_TYPE_FILTERS}]
+  ini:
+  - {key: dont_type_filters, section: jinja2}
+  type: list
+  deprecated:
+    why: This option has no effect.
+    version: "2.23"
+    alternatives: None; native types returned from filters are always preserved.
+SYSTEM_WARNINGS:
+  name: System warnings
+  default: True
+  description:
+    - Allows disabling of warnings related to potential issues on the system running Ansible itself (not on the managed hosts).
+    - These may include warnings about third-party packages or other conditions that should be resolved if possible.
+  env: [{name: ANSIBLE_SYSTEM_WARNINGS}]
+  ini:
+  - {key: system_warnings, section: defaults}
+  type: boolean
+TAGS_RUN:
+  name: Run Tags
+  default: []
+  type: list
+  description: default list of tags to run in your plays, Skip Tags has precedence.
+  env: [{name: ANSIBLE_RUN_TAGS}]
+  ini:
+  - {key: run, section: tags}
+  version_added: "2.5"
+TAGS_SKIP:
+  name: Skip Tags
+  default: []
+  type: list
+  description: default list of tags to skip in your plays, has precedence over Run Tags
+  env: [{name: ANSIBLE_SKIP_TAGS}]
+  ini:
+  - {key: skip, section: tags}
+  version_added: "2.5"
+TARGET_LOG_INFO:
+  name: Target log info
+  description: A string to insert into target logging for tracking purposes
+  env: [{name: ANSIBLE_TARGET_LOG_INFO}]
+  ini:
+  - {key: target_log_info, section: defaults}
+  vars:
+  - name: ansible_target_log_info
+  version_added: "2.17"
+TASK_TIMEOUT:
+  name: Task Timeout
+  default: 0
+  description:
+    - Set the maximum time (in seconds) for a task action to execute in.
+    - Timeout runs independently from templating or looping.
+      It applies per each attempt of executing the task's action and remains unchanged by the total time spent on a task.
+    - When the action execution exceeds the timeout, Ansible interrupts the process.
+      This is registered as a failure due to outside circumstances, not a task failure, to receive appropriate response and recovery process.
+    - If set to 0 (the default) there is no timeout.
+  env: [{name: ANSIBLE_TASK_TIMEOUT}]
+  ini:
+  - {key: task_timeout, section: defaults}
+  type: integer
+  version_added: '2.10'
+_TEMPLAR_SANDBOX_MODE:
+  name: Control Jinja template sandbox behavior
+  default: default
+  description:
+    - The default Jinja sandbox behavior blocks template access to all `_` prefixed object attributes and known collection mutation methods (e.g., `dict.clear()`, `list.append()`).
+  type: choices
+  choices:
+    - default
+    - allow_unsafe_attributes
+  env: [{name: _ANSIBLE_TEMPLAR_SANDBOX_MODE}]
+  deprecated:
+    why: controlling sandbox behavior is a temporary workaround
+    version: '2.23'
+_TEMPLAR_UNKNOWN_TYPE_CONVERSION:
+  name: Templar unknown type conversion behavior
+  default: warning
+  description:
+    - Action to take when an unknown type is converted for variable storage during template finalization.
+    - This setting has no effect on the inability to store unsupported variable types as the result of templating.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *basic_error
+  env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_CONVERSION}]
+  version_added: '2.19'
+_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED:
+  name: Templar unknown type encountered behavior
+  default: ignore
+  description:
+    - Action to take when an unknown type is encountered inside a template pipeline.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *basic_error
+  env: [{name: _ANSIBLE_TEMPLAR_UNKNOWN_TYPE_ENCOUNTERED}]
+  version_added: '2.19'
+_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
+  name: Templar untrusted template behavior
+  default: ignore
+  description:
+    - Action to take when processing of an untrusted template is skipped.
+    - For `ignore` or `warn`, the input template string is returned as-is.
+    - This setting has no effect on expressions.
+    - Experimental diagnostic feature, subject to change.
+  type: choices
+  choices: *basic_error
+  env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
+  version_added: '2.19'
+WORKER_SHUTDOWN_POLL_COUNT:
+  name: Worker Shutdown Poll Count
+  default: 0
+  description:
+    - The maximum number of times to check Task Queue Manager worker processes to verify they have exited cleanly.
+    - After this limit is reached any worker processes still running will be terminated.
+    - This is for internal use only.
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT}]
+  type: integer
+  version_added: '2.10'
+WORKER_SHUTDOWN_POLL_DELAY:
+  name: Worker Shutdown Poll Delay
+  default: 0.1
+  description:
+    - The number of seconds to sleep between polling loops when checking Task Queue Manager worker processes to verify they have exited cleanly.
+    - This is for internal use only.
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY}]
+  type: float
+  version_added: '2.10'
+USE_PERSISTENT_CONNECTIONS:
+  name: Persistence
+  default: False
+  description: Toggles the use of persistence for connections.
+  env: [{name: ANSIBLE_USE_PERSISTENT_CONNECTIONS}]
+  ini:
+  - {key: use_persistent_connections, section: defaults}
+  type: boolean
+VARIABLE_PLUGINS_ENABLED:
+  name: Vars plugin enabled list
+  default: ['host_group_vars']
+  description: Accept list for variable plugins that require it.
+  env: [{name: ANSIBLE_VARS_ENABLED}]
+  ini:
+  - {key: vars_plugins_enabled, section: defaults}
+  type: list
+  version_added: "2.10"
+VARIABLE_PRECEDENCE:
+  name: Group variable precedence
+  default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']
+  description: Allows to change the group variable precedence merge order.
+  env: [{name: ANSIBLE_PRECEDENCE}]
+  ini:
+  - {key: precedence, section: defaults}
+  type: list
+  version_added: "2.4"
+WIN_ASYNC_STARTUP_TIMEOUT:
+  name: Windows Async Startup Timeout
+  default: 5
+  description:
+    - For asynchronous tasks in Ansible (covered in Asynchronous Actions and Polling),
+      this is how long, in seconds, to wait for the task spawned by Ansible to connect back to the named pipe used
+      on Windows systems. The default is 5 seconds. This can be too low on slower systems, or systems under heavy load.
+    - This is not the total time an async command can run for, but is a separate timeout to wait for an async command to
+      start. The task will only start to be timed against its async_timeout once it has connected to the pipe, so the
+      overall maximum duration the task can take will be extended by the amount specified here.
+  env: [{name: ANSIBLE_WIN_ASYNC_STARTUP_TIMEOUT}]
+  ini:
+    - {key: win_async_startup_timeout, section: defaults}
+  type: integer
+  vars:
+    - {name: ansible_win_async_startup_timeout}
+  version_added: '2.10'
+YAML_FILENAME_EXTENSIONS:
+  name: Valid YAML extensions
+  default: [".yml", ".yaml", ".json"]
+  description:
+    - "Check all of these extensions when looking for 'variable' files which should be YAML or JSON or vaulted versions of these."
+    - 'This affects vars_files, include_vars, inventory and vars plugins among others.'
+  env:
+    - name: ANSIBLE_YAML_FILENAME_EXT
+  ini:
+    - section: defaults
+      key: yaml_valid_extensions
+  type: list
+NETCONF_SSH_CONFIG:
+  description: This variable is used to enable bastion/jump host with netconf connection. If set to True the bastion/jump
+               host ssh settings should be present in ~/.ssh/config file, alternatively it can be set
+               to custom ssh configuration file path to read the bastion/jump host settings.
+  env: [{name: ANSIBLE_NETCONF_SSH_CONFIG}]
+  ini:
+  - {key: ssh_config, section: netconf_connection}
+  yaml: {key: netconf_connection.ssh_config}
+  default: null
+VALIDATE_ACTION_GROUP_METADATA:
+  version_added: '2.12'
+  description:
+    - A toggle to disable validating a collection's 'metadata' entry for a module_defaults action group.
+      Metadata containing unexpected fields or value types will produce a warning when this is True.
+  default: True
+  env: [{name: ANSIBLE_VALIDATE_ACTION_GROUP_METADATA}]
+  ini:
+    - section: defaults
+      key: validate_action_group_metadata
+  type: bool
+VERBOSE_TO_STDERR:
+  version_added: '2.8'
+  description:
+    - Force 'verbose' option to use stderr instead of stdout
+  default: False
+  env:
+    - name: ANSIBLE_VERBOSE_TO_STDERR
+  ini:
+    - section: defaults
+      key: verbose_to_stderr
+  type: bool
+_Z_TEST_ENTRY:
+  name: testentry
+  description: for tests
+  env:
+    - name: ANSIBLE_TEST_ENTRY
+    - name: ANSIBLE_TEST_ENTRY_D
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+  ini:
+    - section: testing
+      key: valid
+    - section: testing
+      key: deprecated
+      deprecated:
+        why: for testing
+        version: '3.30'
+        alternatives: nothing
+  vars:
+    - name: _z_test_entry
+_Z_TEST_ENTRY_2:
+  version_added: '2.18'
+  name: testentry
+  description: for tests
+  deprecated:
+    why: for testing
+    version: '3.30'
+    alternatives: nothing
+  env:
+    - name: ANSIBLE_TEST_ENTRY2
+  ini:
+    - section: testing
+      key: valid2
+_Z_TEST_ENTRY_3:
+  version_added: '2.21'
+  name: testentry
+  description: for tests
+  type: path
+  default: '{{ANSIBLE_HOME}}'
+  env:
+    - name: ANSIBLE_TEST_ENTRY3
+  ini:
+    - section: testing
+      key: valid3

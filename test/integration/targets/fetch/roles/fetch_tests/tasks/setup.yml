@@ -1,0 +1,46 @@
+- name: Include system specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.system }}.yml"
+        - default.yml
+      paths:
+        - "{{ role_path }}/vars"
+
+- name: Work-around for locked users on Alpine
+  # see https://github.com/ansible/ansible/issues/68676
+  set_fact:
+    password: '*'
+  when: ansible_distribution == 'Alpine'
+
+- name: Create test user
+  user:
+    name: fetcher
+    create_home: yes
+    group: "{{ _fetch_group | default(omit) }}"
+    groups: "{{ _fetch_additional_groups | default(omit) }}"
+    append: "{{ True if _fetch_additional_groups else False }}"
+    password: "{{ password | default(omit) }}"
+  become: yes
+  notify:
+    - remove test user
+
+- name: Create a file that we can use to fetch
+  copy:
+    content: "test"
+    dest: "{{ remote_tmp_dir }}/orig"
+
+- name: Create symlink to a file that we can fetch
+  file:
+    path: "{{ remote_tmp_dir }}/link"
+    src: "{{ remote_tmp_dir }}/orig"
+    state: "link"
+
+- name: Create an inaccessible directory
+  file:
+    path: "{{ remote_tmp_dir }}/noaccess"
+    state: directory
+    mode: '0600'
+    owner: root
+  become: yes

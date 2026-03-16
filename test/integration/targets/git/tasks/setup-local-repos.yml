@@ -1,0 +1,78 @@
+- name: SETUP-LOCAL-REPOS | create dirs
+  file:
+    name: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ repo_dir }}/minimal"
+    - "{{ repo_dir }}/shallow"
+    - "{{ repo_dir }}/shallow_branches"
+    - "{{ repo_dir }}/tag_force_push"
+
+- name: SETUP-LOCAL-REPOS | prepare minimal git repo
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
+  args:
+    chdir: "{{ repo_dir }}/minimal"
+
+- name: SETUP-LOCAL-REPOS | prepare git repo for shallow clone
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "1" > a
+    git add a
+    git commit -m "1"
+    git tag earlytag
+    git branch earlybranch
+
+    echo "2" > a
+    git add a
+    git commit -m "2"
+  args:
+    chdir: "{{ repo_dir }}/shallow"
+
+- name: SETUP-LOCAL-REPOS | set old hash var for shallow test
+  command: 'git rev-parse HEAD~1'
+  register: git_shallow_head_1
+  args:
+    chdir: "{{ repo_dir }}/shallow"
+
+- name: SETUP-LOCAL-REPOS | prepare tmp git repo with two branches
+  shell: |
+    set -eEu
+
+    git init
+
+    echo "1" > a; git add a; git commit -m "1"
+    git checkout -b test_branch; echo "2" > a; git commit -m "2 on branch" a
+    git checkout -b new_branch; echo "3" > a; git commit -m "3 on new branch" a
+  args:
+    chdir: "{{ repo_dir }}/shallow_branches"
+
+- name: SETUP-LOCAL-REPOS | get ref head for test_branch
+  shell: git checkout test_branch && git rev-parse HEAD
+  args:
+    chdir: "{{ repo_dir }}/shallow_branches"
+  register: ref_head_id
+
+- name: SETUP-LOCAL-REPOS | store ref head for test_branch
+  set_fact:
+    test_branch_ref_head_id: "{{ ref_head_id.stdout }}"
+
+# Make this a bare one, we need to be able to push to it from clones
+# We make the repo here for consistency with the other repos,
+# but we finish setting it up in forcefully-fetch-tag.yml.
+- name: SETUP-LOCAL-REPOS | prepare tag_force_push git repo
+  shell: |
+    set -eEu
+
+    git init --bare
+  args:
+    chdir: "{{ repo_dir }}/tag_force_push"

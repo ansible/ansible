@@ -1,0 +1,53 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Collections must specify a minimum required ansible version to upload
+# to galaxy
+# requires_ansible: '>=2.9.10'
+
+# Content that Ansible needs to load from another location or that has
+# been deprecated/removed
+# plugin_routing:
+#   action:
+#     redirected_plugin_name:
+#       redirect: ns.col.new_location
+#     deprecated_plugin_name:
+#       deprecation:
+#         removal_version: "4.0.0"
+#         warning_text: |
+#           See the porting guide on how to update your playbook to
+#           use ns.col.another_plugin instead.
+#     removed_plugin_name:
+#       tombstone:
+#         removal_version: "2.0.0"
+#         warning_text: |
+#           See the porting guide on how to update your playbook to
+#           use ns.col.another_plugin instead.
+#   become:
+#   cache:
+#   callback:
+#   cliconf:
+#   connection:
+#   doc_fragments:
+#   filter:
+#   httpapi:
+#   inventory:
+#   lookup:
+#   module_utils:
+#   modules:
+#   netconf:
+#   shell:
+#   strategy:
+#   terminal:
+#   test:
+#   vars:
+
+# Python import statements that Ansible needs to load from another location
+# import_redirection:
+#   ansible_collections.ns.col.plugins.module_utils.old_location:
+#     redirect: ansible_collections.ns.col.plugins.module_utils.new_location
+
+# Groups of actions/modules that take a common set of options
+# action_groups:
+#   group_name:
+#     - module1
+#     - module2

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - basic - fail in controlled manner when ``run_command()`` attempts to parse a command with broken syntax passed in as a string (https://github.com/ansible/ansible/issues/85719).

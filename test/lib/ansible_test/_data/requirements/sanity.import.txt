@@ -1,0 +1,2 @@
+# edit "sanity.import.in" and generate with: hacking/update-sanity-requirements.py --test import
+PyYAML==6.0.3

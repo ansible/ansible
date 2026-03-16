@@ -1,0 +1,69 @@
+- slurp:
+    path: ~/.ssh/authorized_keys
+  register: akeys
+
+- debug:
+    msg: '{{ akeys.content|b64decode }}'
+
+- command: ansible-playbook -i {{ ansible_inventory_sources|first|quote }} -vvv {{ role_path }}/auto.yml
+  environment:
+    ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
+    ANSIBLE_SSH_AGENT: auto
+  register: auto
+
+- command: ps {{ ps_flags }} -opid
+  register: pids
+  # Some distros will exit with rc=1 if no processes were returned
+  vars:
+    ps_flags: '{{ "" if ansible_distribution == "Alpine" else "-x" }}'
+
+- assert:
+    that:
+      - >-
+        'started and bound to' in auto.stdout
+      - >-
+        'SSH: SSH_AGENT adding' in auto.stdout
+      - >-
+        'exists in agent' in auto.stdout
+      - pids|map('trim')|select('eq', pid) == []
+  vars:
+    pid: '{{ auto.stdout|regex_findall("ssh-agent\[(\d+)\]")|first }}'
+
+- shell: ssh-agent -D -s -a '{{ output_dir }}/agent.sock' &
+  register: ssh_agent_result
+
+- block:
+  - command: ansible-playbook -i {{ ansible_inventory_sources|first|quote }} -vvv {{ role_path }}/auto.yml
+    environment:
+      ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
+      ANSIBLE_SSH_AGENT: '{{ output_dir }}/agent.sock'
+    register: existing
+  always:
+    - command: "kill {{ ssh_agent_result.stdout | regex_search('Agent pid ([0-9]+)', '\\1') | first }}"
+
+- assert:
+    that:
+      - >-
+        'started and bound to' not in existing.stdout
+      - >-
+        'SSH: SSH_AGENT adding' in existing.stdout
+      - >-
+        'exists in agent' in existing.stdout
+
+- name: test various agent failure modes
+  shell: ansible localhost -m ping
+  environment:
+    ANSIBLE_SSH_AGENT: auto
+    ANSIBLE_SSH_AGENT_EXECUTABLE: "{{ role_path }}/fake_agents/ssh-agent-{{ item }}"
+  ignore_errors: true
+  register: failures
+  loop: [not-found, hangs, incompatible, truncated-early-exit, bad-shebang]
+
+- assert:
+    that:
+      - failures.results | select('success') | length == 0
+      - failures.results[0].stderr is search 'SSH_AGENT set to auto, but cannot find ssh-agent binary'
+      - failures.results[1].stderr is search 'Timed out waiting for expected stdout .* from ssh-agent'
+      - failures.results[2].stderr is search 'The ssh-agent output .* did not match expected'
+      - failures.results[3].stderr is search 'The ssh-agent terminated prematurely'
+      - failures.results[4].stderr is search 'Could not start ssh-agent'

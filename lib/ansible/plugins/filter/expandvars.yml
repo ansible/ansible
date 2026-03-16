@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: expandvars
+  author: ansible core team
+  version_added: "1.5"
+  short_description: expand environment variables
+  description:
+    - Will do a shell-like substitution of environment variables on the provided input.
+  options:
+    _input:
+      description: A string that contains environment variables.
+      type: str
+      required: true
+EXAMPLES: |
+
+  # To get '/home/myuser/stuff.txt' from '$HOME/stuff.txt'
+  {{ mypath | expandvars }}
+
+RETURN:
+  _value:
+    description: The string with translated environment variable values.
+    type: str

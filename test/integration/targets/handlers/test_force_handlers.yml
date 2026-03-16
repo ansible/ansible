@@ -1,0 +1,27 @@
+---
+
+- name: test force handlers (default)
+  tags: normal
+  hosts: testgroup
+  gather_facts: False
+  roles:
+  - { role: test_force_handlers }
+  tasks:
+  - debug: msg="you should see this with --tags=normal"
+
+- name: test force handlers (set to true)
+  tags: force_true_in_play
+  hosts: testgroup
+  gather_facts: False
+  force_handlers: True
+  roles:
+  - { role: test_force_handlers, tags: force_true_in_play }
+
+
+- name: test force handlers (set to false)
+  tags: force_false_in_play
+  hosts: testgroup
+  gather_facts: False
+  force_handlers: False
+  roles:
+  - { role: test_force_handlers, tags: force_false_in_play }

@@ -1,0 +1,12 @@
+---
+- name: Setting the fact for 'test' to 'test value'
+  set_fact:
+    test: "test value"
+  when: inventory_hostname == 'testhost2'
+
+- name: EXPECTED FAILURE ejinja eval of a var that should not exist
+  ping: data="{{ test }}"
+
+- name: testhost should never reach here as testhost2 failure above should end play
+  debug:
+    msg: "any_errors_fatal_this_should_never_be_reached"

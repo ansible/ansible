@@ -1,0 +1,16 @@
+# This is the configuration template for ansible-test Hetzner Cloud integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+# 2) Using the automatically provisioned Hetzner Cloud credentials in ansible-test.
+#
+# If you do not want to use the automatically provisioned temporary Hetzner Cloud credentials,
+# fill in the @VAR placeholders below and save this file without the .template extension,
+# into the tests/integration directory of the collection you're testing.
+# This will cause ansible-test to use the given configuration instead of temporary credentials.
+#
+# NOTE: Automatic provisioning of Hetzner Cloud credentials requires an ansible-core-ci API key.
+
+[default]
+hcloud_api_token= @TOKEN

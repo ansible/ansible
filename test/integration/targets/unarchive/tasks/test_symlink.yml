@@ -1,0 +1,126 @@
+- name: Create a destination dir
+  file:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    state: directory
+
+- name: Create a symlink to the destination dir
+  file:
+    path: "{{ remote_tmp_dir }}/link-to-unarchive-dir"
+    src: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    state: "link"
+
+- name: test that unarchive works when dest is a symlink to a dir
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/link-to-unarchive-dir"
+    mode: "u+rwX,go+rX"
+    remote_src: yes
+  register: unarchive_11
+
+- name: Check that file is really there
+  stat:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive11_stat0
+
+- name: Assert that unarchive when dest is a symlink to a dir worked
+  assert:
+    that:
+      - "unarchive_11.changed == true"
+      - "unarchive11_stat0.stat.exists == true"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+    state: absent
+
+- name: Create a file
+  file:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    state: touch
+
+- name: Create a symlink to the file
+  file:
+    src: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    path: "{{ remote_tmp_dir }}/link-to-unarchive-file"
+    state: "link"
+
+- name: test that unarchive fails when dest is a link to a file
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/link-to-unarchive-file"
+    mode: "u+rwX,go+rX"
+    remote_src: yes
+  ignore_errors: True
+  register: unarchive_12
+
+- name: Assert that unarchive when dest is a file failed
+  assert:
+    that:
+      - "unarchive_12.failed == true"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+    state: absent
+
+- name: Create a destination dir
+  file:
+    path: "{{ remote_tmp_dir }}/test-symlink"
+    state: directory
+
+- name: Create files
+  file:
+    path: "{{ remote_tmp_dir }}/test-symlink/{{ item }}"
+    state: touch
+  loop:
+    - file1
+    - file2
+
+- name: Create a symlink to the file
+  file:
+    path: "{{ remote_tmp_dir }}/test-symlink/link1"
+    src: "{{ remote_tmp_dir }}/test-symlink/file1"
+    state: link
+
+- name: Create archive of symlink
+  shell: tar czvf {{ remote_tmp_dir }}/link1.tar.gz link1 chdir={{ remote_tmp_dir }}/test-symlink
+
+- name: Change target of symlink
+  file:
+    path: "{{ remote_tmp_dir }}/test-symlink/link1"
+    src: "{{ remote_tmp_dir }}/test-symlink/file2"
+    state: link
+
+- name: Unarchive when symlink differs
+  unarchive:
+    src: "{{ remote_tmp_dir }}/link1.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-symlink"
+    remote_src: yes
+  register: unarchive_13
+
+- name: Assert that unarchive was performed
+  assert:
+    that:
+      - unarchive_13.changed == true
+
+- name: Unarchive when symlink is the same
+  unarchive:
+    src: "{{ remote_tmp_dir }}/link1.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-symlink"
+    remote_src: yes
+  register: unarchive_13
+
+- name: Assert that unarchive was not performed
+  assert:
+    that:
+      - "unarchive_13.changed == false"
+
+- name: Remove files
+  file:
+    path: "{{ remote_tmp_dir }}/test-symlink/{{ item }}"
+    state: absent
+  with_items:
+    - file1
+    - file2
+    - link1
+    - link1.tar.gz

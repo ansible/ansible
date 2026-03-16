@@ -1,0 +1,114 @@
+[build-system]
+requires = ["setuptools >= 77.0.3, <= 80.3.1"]  # lower bound to support license/license-files (PEP 639), upper bound for latest version tested at release
+build-backend = "setuptools.build_meta"
+
+[project]
+requires-python = ">=3.12"
+name = "ansible-core"
+authors = [
+    {name = "Ansible Project"},
+]
+description = "Radically simple IT automation"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = [
+    "COPYING",
+    "licenses/*.txt",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+dynamic = ["version", "dependencies"]
+
+[project.urls]
+"Homepage" = "https://ansible.com/"
+"Source Code" = "https://github.com/ansible/ansible/"
+"Bug Tracker" = "https://github.com/ansible/ansible/issues/"
+"CI: Azure Pipelines" = "https://dev.azure.com/ansible/ansible/"
+"Documentation" = "https://docs.ansible.com/ansible-core/"
+"Code of Conduct" = "https://docs.ansible.com/ansible/latest/community/code_of_conduct.html"
+
+[tool.setuptools.dynamic]
+version = {attr = "ansible.release.__version__"}
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["lib", "test/lib"]
+
+[tool.setuptools.package-data]
+ansible = [
+    "_internal/ansible_collections/*/*/plugins/*/*.yml",
+    "_internal/ansible_collections/*/*/*.md",
+    "config/*.yml",
+    "executor/powershell/*.ps1",
+    "galaxy/data/COPYING",
+    "galaxy/data/*.yml",
+    "galaxy/data/*/*.j2",
+    "galaxy/data/*/*.md",
+    "galaxy/data/*/*/*.cfg",
+    "galaxy/data/*/*/*.j2",
+    "galaxy/data/*/*/*.md",
+    "galaxy/data/*/*/*/*.j2",
+    "galaxy/data/*/*/*/*.yml",
+    "galaxy/data/*/*/*/.git_keep",
+    "galaxy/data/*/*/*/inventory",
+    "galaxy/data/*/*/.git_keep",
+    "galaxy/data/*/*/inventory",
+    "keyword_desc.yml",
+    "module_utils/csharp/*.cs",
+    "module_utils/powershell/*.psm1",
+    "plugins/*/*.yml",
+]
+ansible_test = [
+    "_data/*/*.in",
+    "_data/*/*.ps1",
+    "_data/*/*.txt",
+    "_data/*/*.yml",
+    "_data/*/*/*.ini",
+    "_data/ansible.cfg",
+    "_data/coveragerc",
+    "_util/*/*/*.ps1",
+    "_util/*/*/*.py",
+    "_util/*/*/*.sh",
+    "_util/*/*/*/*.ini",
+    "_util/*/*/*/*.json",
+    "_util/*/*/*/*.ps1",
+    "_util/*/*/*/*.psd1",
+    "_util/*/*/*/*.py",
+    "_util/*/*/*/*.txt",
+    "_util/*/*/*/*/*.cfg",
+    "_util/*/*/*/*/*.ps1",
+    "_util/*/*/*/*/*.py",
+    "_util/*/*/*/*/*.yml",
+    "config/*.template",
+    "config/*.yml",
+]
+
+[project.scripts]
+ansible = "ansible.cli.adhoc:main"
+ansible-config = "ansible.cli.config:main"
+ansible-console = "ansible.cli.console:main"
+ansible-doc = "ansible.cli.doc:main"
+ansible-galaxy = "ansible.cli.galaxy:main"
+ansible-inventory = "ansible.cli.inventory:main"
+ansible-playbook = "ansible.cli.playbook:main"
+ansible-pull = "ansible.cli.pull:main"
+ansible-vault = "ansible.cli.vault:main"
+ansible-test = "ansible_test._util.target.cli.ansible_test_cli_stub:main"

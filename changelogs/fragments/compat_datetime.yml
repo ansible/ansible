@@ -1,0 +1,3 @@
+---
+removed_features:
+    - compat.datetime - removed deprecated datetime compat APIs (https://github.com/ansible/ansible/issues/86000).

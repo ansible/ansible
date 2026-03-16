@@ -1,0 +1,11 @@
+{
+    "all_targets": true,
+    "prefixes": [
+        "test/lib/ansible_test/_data/requirements/",
+        "test/sanity/code-smell/"
+    ],
+    "extensions": [
+        ".txt"
+    ],
+    "output": "path-line-column-message"
+}

@@ -1,0 +1,2 @@
+bugfixes:
+  - getent - handle non-empty string for split parameter value (https://github.com/ansible/ansible/issues/85720).

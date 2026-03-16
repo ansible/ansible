@@ -1,0 +1,5 @@
+context/target
+gather_facts/no
+shippable/windows/group1
+shippable/windows/smoketest
+windows

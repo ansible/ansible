@@ -1,0 +1,36 @@
+- name: Bind socat to socket
+  command: socat UNIX-LISTEN:{{ remote_tmp_dir }}/{{ item.name }}.sock,fork,reuseaddr TCP4:{{ httpbin_host }}:{{ item.port }}
+  loop:
+    - port: 80
+      name: http
+    - port: 443
+      name: https
+  async: 10
+  poll: 0
+
+- name: Test http connection to unix socket
+  uri:
+    url: http://localhost/get
+    unix_socket: '{{ remote_tmp_dir }}/http.sock'
+  register: unix_socket_http
+
+- name: Test https connection to unix socket with validate_certs=false
+  uri:
+    url: https://localhost/get
+    unix_socket: '{{ remote_tmp_dir }}/https.sock'
+    # Ignore ssl verification since we list the host as localhost
+    # to ensure we really are connecting over the socket
+    validate_certs: false
+  register: unix_socket_https_no_validate
+
+- name: Test https connection to unix socket
+  uri:
+    url: https://{{ httpbin_host }}/get
+    unix_socket: '{{ remote_tmp_dir }}/https.sock'
+  register: unix_socket_https
+
+- assert:
+    that:
+      - unix_socket_http.json is defined
+      - unix_socket_https_no_validate.json is defined
+      - unix_socket_https.json is defined

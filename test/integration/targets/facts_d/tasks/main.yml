@@ -1,0 +1,55 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: prep for local facts tests
+  block:
+    - name: set factdir var
+      set_fact: fact_dir={{remote_tmp_dir}}/facts.d
+
+    - name: create fact dir
+      file: path={{ fact_dir }} state=directory
+
+    - name: copy local facts test files
+      copy: src={{ item['name'] }}.fact dest={{ fact_dir }}/ mode={{ item['mode']|default(omit) }}
+      loop:
+        - name: preferences
+        - name: basdscript
+          mode: '0775'
+        - name: goodscript
+          mode: '0775'
+        - name: unreadable
+          mode: '0000'
+        - name: bad
+
+    - name: Create dangling symlink
+      file:
+        path: "{{ fact_dir }}/dead_symlink.fact"
+        src: /tmp/dead_symlink
+        force: yes
+        state: link
+
+- name: force fact gather to get ansible_local
+  setup:
+    fact_path: "{{ fact_dir | expanduser }}"
+    filter: "*local*"
+  register: setup_result
+
+- name: show gathering results if rerun with -vvv
+  debug: var=setup_result verbosity=3
+
+- name: check for expected results from local facts
+  assert:
+    that:
+      - "'ansible_facts' in setup_result"
+      - "'ansible_local' in setup_result.ansible_facts"
+      - "'ansible_env' not in setup_result.ansible_facts"
+      - "'ansible_user_id' not in setup_result.ansible_facts"
+      - "'preferences' in setup_result.ansible_facts['ansible_local']"
+      - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
+      - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
+      - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
+      - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
+      - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
+      - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
+      - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
+      - setup_result['ansible_facts']['ansible_local']['bad'].startswith('error loading facts as ini')

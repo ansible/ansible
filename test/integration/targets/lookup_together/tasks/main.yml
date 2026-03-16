@@ -1,0 +1,29 @@
+- name: test with_together
+  #shell: echo {{ item }}
+  set_fact: "{{ item.0 }}={{ item.1 }}"
+  with_together:
+    - [ 'a', 'b', 'c', 'd' ]
+    - [ '1', '2', '3', '4' ]
+
+- name: verify with_together results
+  assert:
+    that:
+        - "a == '1'"
+        - "b == '2'"
+        - "c == '3'"
+        - "d == '4'"
+
+- block:
+    - name: "EXPECTED FAILURE - test empty list"
+      debug:
+        msg: "{{ item.0 }} and {{ item.1 }}"
+      with_together: []
+
+    - fail:
+        msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test empty list"
+          - ansible_failed_result.msg is contains "with_together requires at least one element in each list"

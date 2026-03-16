@@ -1,0 +1,206 @@
+---
+- name: test wait_for with delegate_to
+  wait_for:
+    timeout: 2
+  delegate_to: localhost
+  register: waitfor
+
+- assert:
+    that:
+      - waitfor is successful
+      - waitfor.elapsed >= 2
+
+- name: setup create a directory to serve files from
+  file:
+    dest: "{{ files_dir }}"
+    state: directory
+
+- name: setup webserver
+  copy:
+    src: "testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
+
+- name: setup a path
+  file:
+    path: "{{ remote_tmp_dir }}/wait_for_file"
+    state: touch
+
+- name: setup remove a file after 3s
+  shell: sleep 3 && rm {{ remote_tmp_dir }}/wait_for_file
+  async: 20
+  poll: 0
+
+- name: test for absent path
+  wait_for:
+    path: "{{ remote_tmp_dir }}/wait_for_file"
+    state: absent
+    timeout: 20
+  register: waitfor
+- name: verify test for absent path
+  assert:
+    that:
+      - waitfor is successful
+      - waitfor.path == (remote_tmp_dir | expanduser + "/wait_for_file")
+      - waitfor.elapsed >= 2
+      - waitfor.elapsed <= 15
+
+- name: setup create a file after 3s
+  shell: sleep 3 && touch {{ remote_tmp_dir }}/wait_for_file
+  async: 20
+  poll: 0
+
+- name: test for present path
+  wait_for:
+    path:  "{{ remote_tmp_dir }}/wait_for_file"
+    timeout: 5
+  register: waitfor
+- name: verify test for absent path
+  assert:
+    that:
+      - waitfor is successful
+      - waitfor.path == (remote_tmp_dir | expanduser + "/wait_for_file")
+      - waitfor.elapsed >= 2
+      - waitfor.elapsed <= 15
+
+- name: setup write keyword to file after 3s
+  shell: sleep 3 && echo completed > {{remote_tmp_dir}}/wait_for_keyword
+  async: 20
+  poll: 0
+
+- name: test wait for keyword in file
+  wait_for:
+    path: "{{remote_tmp_dir}}/wait_for_keyword"
+    search_regex: completed
+    timeout: 5
+  register: waitfor
+
+- name: verify test wait for keyword in file
+  assert:
+    that:
+      - waitfor is successful
+      - "waitfor.search_regex == 'completed'"
+      - waitfor.elapsed >= 2
+      - waitfor.elapsed <= 15
+
+- name: setup write keyword to file after 3s
+  shell: sleep 3 && echo "completed data 123" > {{remote_tmp_dir}}/wait_for_keyword
+  async: 20
+  poll: 0
+
+- name: test wait for keyword in file with match groups
+  wait_for:
+    path: "{{remote_tmp_dir}}/wait_for_keyword"
+    search_regex: completed (?P<foo>\w+) ([0-9]+)
+    timeout: 25
+  register: waitfor
+
+- name: verify test wait for keyword in file with match groups
+  assert:
+    that:
+    - waitfor is successful
+    - waitfor.elapsed >= 2
+    - waitfor.elapsed <= 15
+    - waitfor['match_groupdict'] | length == 1
+    - waitfor['match_groupdict']['foo'] == 'data'
+    - waitfor['match_groups'] == ['data', '123']
+
+- name: write non-ascii file
+  script: write_utf16.py "{{remote_tmp_dir}}/utf16.txt"
+  args:
+    executable: '{{ ansible_facts.python.executable }}'
+
+- name: test non-ascii file
+  wait_for:
+    path: "{{remote_tmp_dir}}/utf16.txt"
+    search_regex: completed
+
+- name: test non mmapable file, skip OSs w/o /sys
+  wait_for:
+    path: "/sys/class/net/lo/carrier"
+    search_regex: "1"
+    timeout: 30
+  when: ansible_os_family not in ['FreeBSD', 'Darwin']
+
+- name: test wait for port timeout
+  wait_for:
+    port: 12121
+    timeout: 3
+  register: waitfor
+  ignore_errors: true
+- name: verify test wait for port timeout
+  assert:
+    that:
+      - waitfor is failed
+      - waitfor.elapsed == 3
+      - "waitfor.msg == 'Timeout when waiting for 127.0.0.1:12121'"
+
+- name: test fail with custom msg
+  wait_for:
+    port: 12121
+    msg: fail with custom message
+    timeout: 3
+  register: waitfor
+  ignore_errors: true
+- name: verify test fail with custom msg
+  assert:
+    that:
+      - waitfor is failed
+      - waitfor.elapsed == 3
+      - "waitfor.msg == 'fail with custom message'"
+
+- name: setup start SimpleHTTPServer
+  shell: sleep 3 && cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
+  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+  poll: 0
+
+- name: test wait for port with sleep
+  wait_for:
+    port: "{{ http_port }}"
+    sleep: 3
+  register: waitfor
+- name: verify test wait for port sleep
+  assert:
+    that:
+      - waitfor is successful
+      - waitfor is not changed
+      - waitfor.port == http_port
+
+- name: install psutil using pip (non-Linux)
+  pip:
+    name: psutil==5.9.8
+  when: ansible_system != 'Linux'
+
+- name: Copy zombie.py
+  copy:
+    src: zombie.py
+    dest: "{{ remote_tmp_dir }}"
+
+- name: Create zombie process
+  shell: "{{ ansible_python.executable }} {{ remote_tmp_dir }}/zombie"
+  async: 90
+  poll: 0
+
+- name: test wait for port drained
+  wait_for:
+    port: "{{ http_port }}"
+    state: drained
+  register: waitfor
+
+- name: verify test wait for port
+  assert:
+    that:
+      - waitfor is successful
+      - waitfor is not changed
+      - waitfor.port == http_port
+
+- name: test wait_for with delay
+  wait_for:
+    timeout: 2
+    delay: 2
+  register: waitfor
+
+- name: verify test wait_for with delay
+  assert:
+    that:
+      - waitfor is successful
+      - waitfor.elapsed >= 4
