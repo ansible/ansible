@@ -530,3 +530,37 @@ releases:
     - ansible-test-spare-tire.yml
     - make-tmp-path-msg.yml
     release_date: '2026-02-17'
+  2.20.4rc1:
+    changes:
+      bugfixes:
+      - Fix up ``powershell`` shell commands when using a connection plugin that does
+        not support stdin/pipeline input - https://github.com/ansible/ansible/issues/86397
+      - ansible-connection - Prevent unpickling failures in module contexts by ensuring
+        that AnsibleTaggedObjects in pickled responses are converted to plain types
+        in ``JsonRpcServer``.
+      - config lookup now uses preexisting constants for templating when needed.
+      - rpm_key - Use librpm library API instead of gpg utility to support version
+        6 PGP keys (https://github.com/ansible/ansible/issues/86157).
+      - yaml loading - Fix traceback when parsing YAML strings (not files) when using
+        the pure Python implementation of PyYAML.
+      minor_changes:
+      - ansible-test - Add container/remote aliases for more loosely specifying managed
+        test environments.
+      - ansible-test - Add support for using the Ansible Core CI service from GitHub
+        Actions.
+      release_summary: '| Release Date: 2026-03-16
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.4rc1_summary.yaml
+    - 86237-rpm-key-librpm.yml
+    - 86397-windows-no-pipelining.yml
+    - 86601-untag-jsonrpc-responses.yml
+    - ansible-test-completion-aliases.yml
+    - ansible-test-github-actions.yml
+    - configlookupfix.yml
+    - pyyaml-name.yml
+    release_date: '2026-03-16'
