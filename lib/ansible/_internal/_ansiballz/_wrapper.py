@@ -240,13 +240,14 @@ def _ansiballz_main(
 
     encoded_params = params.encode()
 
-    # Uses scriptdir to ensure we stay on the common remote_tmp if possible, fallback to system temp
+    # Uses scriptdir to ensure we stay on the common remote_tmp
     # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
     # (this helps ansible-test produce coverage stats)
     # IMPORTANT: The real path must be used here to ensure a remote debugger such as PyCharm (using pydevd) can resolve paths correctly.
     try:
         temp_path = os.path.realpath(tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_', dir=scriptdir))
     except OSError:
+        # fallback to system temp on permission error, normally due to becoming unprivileged user
         temp_path = os.path.realpath(tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_'))
 
     try:

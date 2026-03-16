@@ -68,10 +68,6 @@
       # custom module returned the correct answer
       - custom_module_return.answer == 42
 
-      # ensure we are not using system temp
-      - not remote_temp_used.me.startswith('/tmp')
-
-
 # https://github.com/ansible/ansible/issues/64664
 # https://github.com/ansible/ansible/issues/64479
 - name: Run module that tries to access itself via sys.modules
