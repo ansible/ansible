@@ -640,10 +640,10 @@ def get_remote_platform_choices(controller: bool = False) -> list[str]:
 
 
 def get_windows_platform_choices() -> list[str]:
-    """Return a list of supported Windows versions matching the given prefix."""
-    return sorted(f'windows/{windows.version}' for windows in filter_completion(windows_completion()).values())
+    """Return a list of supported Windows version names."""
+    return sorted(filter_completion(windows_completion()))
 
 
 def get_windows_version_choices() -> list[str]:
     """Return a list of supported Windows versions."""
-    return sorted(windows.version for windows in filter_completion(windows_completion()).values())
+    return sorted(name.removeprefix("windows/") for name in get_windows_platform_choices())
