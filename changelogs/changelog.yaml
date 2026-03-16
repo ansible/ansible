@@ -1103,6 +1103,25 @@ releases:
     - 2.16.17rc1_summary.yaml
     - ansible-test-api-endpoint.yml
     release_date: '2026-02-17'
+  2.16.18rc1:
+    changes:
+      bugfixes:
+      - rpm_key - Use librpm library API instead of gpg utility to support version
+        6 PGP keys (https://github.com/ansible/ansible/issues/86157).
+      minor_changes:
+      - ansible-test - Add support for using the Ansible Core CI service from GitHub
+        Actions.
+      release_summary: '| Release Date: 2026-03-16
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+    codename: All My Love
+    fragments:
+    - 2.16.18rc1_summary.yaml
+    - 86237-rpm-key-librpm.yml
+    - ansible-test-github-actions.yml
+    release_date: '2026-03-16'
   2.16.1rc1:
     changes:
       breaking_changes:
