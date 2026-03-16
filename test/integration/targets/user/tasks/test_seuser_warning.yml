@@ -1,0 +1,24 @@
+- name: test seuser parameter emits warning when SELinux is not enabled
+  when: not ansible_facts.selinux.status is defined or ansible_facts.selinux.status != 'enabled'
+  block:
+    - name: create user with seuser on non-SELinux system
+      user:
+        name: ansibulluser_seuser
+        state: present
+        seuser: user_u
+      register: user_seuser_result
+
+    - name: validate warning is emitted for seuser on non-SELinux system
+      assert:
+        that:
+          - user_seuser_result.warnings is defined
+          - user_seuser_result.warnings | length > 0
+          - "'seuser' in user_seuser_result.warnings[0]"
+          - "'SELinux' in user_seuser_result.warnings[0]"
+          - "'ignored' in user_seuser_result.warnings[0]"
+
+  always:
+    - name: remove test user
+      user:
+        name: ansibulluser_seuser
+        state: absent
