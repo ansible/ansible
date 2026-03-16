@@ -4,6 +4,16 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: directory
 
+- name: install simple collection from specific server
+  command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng_token -vvvv
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: remove collection
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    state: absent
+
 - name: install simple collection from first accessible server
   command: ansible-galaxy collection install namespace1.name1 -vvvv
   environment:

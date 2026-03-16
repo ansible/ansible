@@ -26,6 +26,19 @@
     pulp_published_repo: '{{ pulp_repo_list.json.results|selectattr("name", "eq", "published")|first }}'
     pulp_rejected_repo: '{{ pulp_repo_list.json.results|selectattr("name", "eq", "rejected")|first }}'
 
+- name: Get galaxy_ng token
+  uri:
+    url: '{{ galaxy_ng_server }}/v3/auth/token/'
+    method: POST
+    body_format: json
+    body: {}
+    status_code:
+      - 200
+    user: '{{ galaxy_user }}'
+    password: '{{ galaxy_password }}'
+    force_basic_auth: true
+  register: galaxy_ng_token
+
 - name: create test ansible.cfg that contains the Galaxy server list
   template:
     src: ansible.cfg.j2

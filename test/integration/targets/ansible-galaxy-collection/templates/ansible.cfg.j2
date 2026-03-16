@@ -1,7 +1,7 @@
 [galaxy]
 # Ensures subsequent unstable reruns don't use the cached information causing another failure
 cache_dir={{ remote_tmp_dir }}/galaxy_cache
-server_list=offline,galaxy_ng,secondary
+server_list=offline,galaxy_ng,secondary,galaxy_ng_token
 
 [galaxy_server.offline]
 url={{ offline_server }}
@@ -13,3 +13,8 @@ password={{ galaxy_password }}
 
 [galaxy_server.secondary]
 url={{ amanda }}
+
+[galaxy_server.galaxy_ng_token]
+# This server is last to prevent it from being used by tests that don't ask for it
+url={{ galaxy_ng_server }}
+token={{ galaxy_ng_token.json.token }}
