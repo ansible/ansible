@@ -1,0 +1,6 @@
+bugfixes:
+  - >-
+    apt_repository - Preserve original whitespace in source lines instead of
+    collapsing multiple spaces to one, which broke cdrom entries with significant
+    spaces inside brackets
+    (https://github.com/ansible/ansible/issues/86024).

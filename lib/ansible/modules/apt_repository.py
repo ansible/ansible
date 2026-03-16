@@ -299,14 +299,14 @@ class SourcesList(object):
             comment = line[i + 1:].strip()
             line = line[:i]
 
-        # Split a source into substring to make sure that it is source spec.
-        # Duplicated whitespaces in a valid source spec will be removed.
+        # Validate that the line starts with a known source type keyword.
+        # Preserve original whitespace so entries like cdrom lines with
+        # significant spaces inside brackets are not mangled.
         source = line.strip()
         if source:
-            chunks = source.split()
-            if chunks[0] in VALID_SOURCE_TYPES:
+            first_word = source.split(None, 1)[0]
+            if first_word in VALID_SOURCE_TYPES:
                 valid = True
-                source = ' '.join(chunks)
 
         if raise_if_invalid_or_disabled and (not valid or not enabled):
             raise InvalidSource(line)
