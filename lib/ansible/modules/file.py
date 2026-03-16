@@ -775,8 +775,9 @@ def ensure_symlink(path, src, follow, force, timestamps):
     if changed and not module.check_mode:
         if prev_state != 'absent':
             # try to replace atomically
+            b_dir = os.path.dirname(b_path) or b'.'
             b_tmppath = to_bytes(os.path.sep).join(
-                [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
+                [b_dir, to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
             )
             try:
                 if prev_state == 'directory':
@@ -894,8 +895,9 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     if changed and not module.check_mode:
         if prev_state != 'absent':
             # try to replace atomically
+            b_dir = os.path.dirname(b_path) or b'.'
             b_tmppath = to_bytes(os.path.sep).join(
-                [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
+                [b_dir, to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
             )
             try:
                 if prev_state == 'directory':

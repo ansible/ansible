@@ -1,0 +1,7 @@
+bugfixes:
+  - >-
+    file - Fix atomic replacement of symlinks and hard links when using a
+    relative destination path. ``os.path.dirname`` returns an empty string for
+    bare filenames, causing the temporary file to be created under the
+    filesystem root instead of the working directory
+    (https://github.com/ansible/ansible/issues/86146).
