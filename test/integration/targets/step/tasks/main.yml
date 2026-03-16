@@ -1,0 +1,5 @@
+- pip:
+    name: pexpect
+    state: present
+
+- command: "{{ ansible_playbook_python }} {{ role_path }}/files/test_step_free_strategy.py {{ role_path }}/tasks/test_step_free_strategy.yml"

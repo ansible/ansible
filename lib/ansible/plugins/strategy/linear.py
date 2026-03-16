@@ -134,8 +134,6 @@ class StrategyModule(StrategyBase):
 
                     work_to_do = True
 
-                    host_name = host.get_name()
-
                     display.debug("getting variables")
                     task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
                                                                 _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
@@ -190,7 +188,6 @@ class StrategyModule(StrategyBase):
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                             callback_sent = True
 
-                        self._blocked_hosts[host_name] = True
                         self._queue_task(host, task, task_vars, play_context)
                         del task_vars
 

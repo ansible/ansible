@@ -385,6 +385,8 @@ class StrategyBase:
                 if worker_prc is None or not worker_prc.is_alive():
                     if worker_prc:
                         worker_prc.close()
+
+                    self._blocked_hosts[host.name] = True
                     self._queued_task_cache[(host.name, task._uuid)] = {
                         'host': host,
                         'task': task,

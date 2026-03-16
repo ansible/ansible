@@ -149,8 +149,6 @@ class StrategyModule(StrategyBase):
                             if same_tasks >= throttle:
                                 break
 
-                        # advance the host, mark the host blocked, and queue it
-                        self._blocked_hosts[host_name] = True
                         iterator.set_state_for_host(host.name, state)
                         if isinstance(task, Handler):
                             task.remove_host(host)
@@ -178,7 +176,6 @@ class StrategyModule(StrategyBase):
                                 meta_task_dummy_results_count += 1
                                 workers_free -= 1
                             self._execute_meta(task, play_context, iterator, target_host=host)
-                            self._blocked_hosts[host_name] = False
                         else:
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
