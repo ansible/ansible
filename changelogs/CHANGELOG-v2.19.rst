@@ -4,6 +4,28 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-03-16
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Add container/remote aliases for more loosely specifying managed test environments.
+- ansible-test - Add support for using the Ansible Core CI service from GitHub Actions.
+
+Bugfixes
+--------
+
+- ansible-connection - Prevent unpickling failures in module contexts by ensuring that AnsibleTaggedObjects in pickled responses are converted to plain types in ``JsonRpcServer``.
+- config lookup now uses preexisting constants for templating when needed.
+- yaml loading - Fix traceback when parsing YAML strings (not files) when using the pure Python implementation of PyYAML.
+
 v2.19.7
 =======
 
