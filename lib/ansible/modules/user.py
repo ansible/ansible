@@ -745,7 +745,7 @@ class User(object):
             if self.non_unique:
                 cmd.append('-o')
 
-        if self.seuser is not None:
+        if self.seuser is not None and self.module.selinux_enabled():
             cmd.append('-Z')
             cmd.append(self.seuser)
         if self.group is not None:
