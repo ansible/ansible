@@ -1,2 +1,2 @@
 minor_changes:
-  - Added Rocky Linux in hostname.py module
+  - hostname - Added Rocky Linux support (https://github.com/ansible/ansible/pull/86644).
