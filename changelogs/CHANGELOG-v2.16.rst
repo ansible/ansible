@@ -5,6 +5,26 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.18rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-03-16
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add support for using the Ansible Core CI service from GitHub Actions.
+
+Bugfixes
+--------
+
+- rpm_key - Use librpm library API instead of gpg utility to support version 6 PGP keys (https://github.com/ansible/ansible/issues/86157).
+
 v2.16.17
 ========
 
