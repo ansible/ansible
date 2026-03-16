@@ -783,10 +783,9 @@ def deprecation_schema(for_collection):
         Required('why'): doc_string,
         'alternative': doc_string,
         'alternatives': doc_string,
+        Required('removed_from_collection'): collection_name,
+        'removed': Any(True),
     }
-
-    if for_collection:
-        main_fields.update({Required('removed_from_collection'): collection_name, 'removed': Any(True)})
 
     date_schema = {
         Required('removed_at_date'): date(),

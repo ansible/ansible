@@ -16,6 +16,10 @@ short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 extends_documentation_fragment: action_common_attributes
+deprecated:
+    alternative: ansible.builtin.deb822_repository
+    why: The M(ansible.builtin.apt_repository) module is deprecated in favor of the M(ansible.builtin.deb822_repository) module.
+    removed_in: "2.25"
 attributes:
     check_mode:
         support: full

@@ -1,0 +1,4 @@
+---
+deprecated_features:
+    - apt_repository - deprecate in favor of deb822_repository.
+    - apt_key - deprecate in favor of deb822_repository.
