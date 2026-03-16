@@ -445,9 +445,27 @@ class UbuntuSourcesList(SourcesList):
     LP_API = 'https://api.launchpad.net/1.0/~%s/+archive/%s'
     PPA_URI = 'https://ppa.launchpadcontent.net'
 
+    _OS_RELEASE_PATHS = ('/etc/os-release', '/usr/lib/os-release')
+
+    @classmethod
+    def _ubuntu_codename(cls):
+        """Read UBUNTU_CODENAME from os-release for derivative distros (Mint, Pop!_OS, etc.)."""
+        for path in cls._OS_RELEASE_PATHS:
+            try:
+                with open(path) as f:
+                    for line in f:
+                        k, _sep, v = line.partition('=')
+                        if k.strip() == 'UBUNTU_CODENAME':
+                            v = v.strip().strip('"')
+                            if v:
+                                return v
+            except FileNotFoundError:
+                continue
+        return None
+
     def __init__(self, module):
         self.module = module
-        self.codename = module.params['codename'] or distro.codename
+        self.codename = module.params['codename'] or self._ubuntu_codename() or distro.codename
         super(UbuntuSourcesList, self).__init__(module)
 
         self.apt_key_bin = self.module.get_bin_path('apt-key', required=False)

@@ -1,0 +1,6 @@
+bugfixes:
+  - >-
+    apt_repository - Use ``UBUNTU_CODENAME`` from ``os-release`` when available so that
+    PPA URLs on Ubuntu derivatives (Linux Mint, Pop!_OS, etc.) resolve to the correct
+    Ubuntu codename instead of the derivative's own codename
+    (https://github.com/ansible/ansible/issues/86610).
