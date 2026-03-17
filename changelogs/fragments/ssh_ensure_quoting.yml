@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection plugin, properly shell quote the files on all transfer methods, avoids issues with 'fun' file names on POSIX.
