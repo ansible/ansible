@@ -221,11 +221,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         host_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
     ) -> None:
-        """
-        Add the given host to inventory if the current action completes successfully.
-        Can be called more than once to add multiple hosts.
-        """
-        _task.TaskContext.current().pending_changes.add_hosts.append(_task.AddHost(
+        """Add the given host to inventory."""
+        # RPFIX-0: switch this to RPC so the host can be created immediately and return changed as appropriate
+
+        self.__get_pending_changes().add_hosts.append(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
             parent_group_names=parent_group_names,
@@ -238,11 +237,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         group_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
     ) -> None:
-        """
-        Add the given group to inventory if the current action completes successfully.
-        Can be called more than once to add multiple groups.
-        """
-        _task.TaskContext.current().pending_changes.add_groups.append(_task.AddGroup(
+        """Add the given group to inventory."""
+        # RPFIX-0: switch this to RPC so the host can be created immediately and return changed as appropriate
+
+        self.__get_pending_changes().add_groups.append(_task.AddGroup(
             group_name=group_name,
             group_vars=group_vars,
             parent_group_names=parent_group_names,
@@ -253,7 +251,13 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         Register the given variables for the current host at the specified variable precedence layer.
         Calling this method more than once for the same layer will override any previous value for the currently executing action.
         """
-        _task.TaskContext.current().pending_changes.register_host_variables[layer] = variables
+        self.__get_pending_changes().register_host_variables[layer] = variables
+
+    def __get_pending_changes(self) -> _task.PendingChanges:
+        if self._supports_async:
+            raise RuntimeError('Actions that support async cannot record pending changes.')
+
+        return _task.TaskContext.current().pending_changes
 
     @classmethod
     @contextlib.contextmanager

@@ -549,8 +549,7 @@ class TaskExecutor:
                         task_ctx.pending_changes = _task.PendingChanges()
 
                         with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=task_ctx.task_vars)) as utr:
-                            if not utr.failed:
-                                utr.pending_changes = task_ctx.pending_changes
+                            utr.pending_changes = task_ctx.pending_changes
                     finally:
                         task_ctx.pending_changes = None
 

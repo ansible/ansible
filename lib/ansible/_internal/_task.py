@@ -151,11 +151,10 @@ class CurrentTask:
 
 @dataclasses.dataclass(kw_only=True, slots=True)
 class PendingChanges:
-    """Changes which will be applied only if the task succeeds."""
+    """Changes which will be applied when the action completes, including on failure."""
 
     add_hosts: list[AddHost] = dataclasses.field(default_factory=list)
     add_groups: list[AddGroup] = dataclasses.field(default_factory=list)
-    # RPFIX-1: now that set_fact uses this, we need to make sure it's OK that it only works on success
     register_host_variables: dict[VariableLayer, dict[str, object]] = dataclasses.field(default_factory=dict)
 
 
@@ -853,7 +852,7 @@ class UnifiedTaskResult:
     delegated_vars: dict[str, object] | None = dataclasses.field(default=None, metadata=export_only("_ansible_delegated_vars"))
     diff: object | None = dataclasses.field(default=None, metadata=import_export())  # RPFIX-5: validation with custom conversion func?
     pending_changes: PendingChanges = dataclasses.field(default_factory=PendingChanges)
-    """Changes which will be applied only on success."""
+    """Changes which will be applied when the action completes, including on failure."""
     stats: StatsDict | None = dataclasses.field(default=None, metadata=import_export('ansible_stats', conversion_func=_convert_stats))
     async_job_id: str | None = dataclasses.field(default=None, metadata=import_export('ansible_job_id'))
     include_file: str | None = None
