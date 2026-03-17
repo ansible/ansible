@@ -297,7 +297,7 @@ class VariableManager:
 
                 inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
                 # push facts to main namespace
-                # RPFIX-1: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts;
+                # RPFIX-1: ???: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts;
                 #  also, deprecation can probably be done once on the way in instead of on every vars stack.
                 if inject:
                     if origin == 'default':
@@ -572,7 +572,7 @@ class VariableManager:
         warn_if_reserved(facts)
 
         try:
-            # RPFIX-1: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
+            # RPFIX-1: ???: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
             host_cache = self._fact_cache.get(host)
         except KeyError:
             # We get to set this as new
@@ -592,7 +592,7 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         """
 
-        # RPFIX-1: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
+        # RPFIX-1: ???: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
 
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))

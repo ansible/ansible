@@ -345,7 +345,7 @@ class TaskExecutor:
         # The captured warnings/deprecations are a superset of the ones from the result, and may have been converted from a dict to a dataclass.
         # These are then used to supersede the entries in the result.
 
-        # RPFIX-0: warnings populated here won't be visible during any of the on-demand RP queries, only after the final registration, is that a problem?
+        # RPFIX-1: ???: warnings populated here won't be visible during any of the on-demand RP queries, only after the final registration, is that a problem?
         utr.finalize_warnings(warning_ctx)
 
         return utr
@@ -569,7 +569,7 @@ class TaskExecutor:
             if utr.ansible_facts and self._task.action not in C._ACTION_DEBUG:
                 if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                     if not self._task.delegate_to or not self._task.delegate_facts:
-                        # RPFIX-1: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
+                        # RPFIX-1: ???: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
                         task_ctx.update_task_vars(utr.ansible_facts)
 
                 else:
@@ -578,7 +578,7 @@ class TaskExecutor:
                         ansible_facts=combine_vars(task_ctx.task_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts)),
                     ))
 
-                    # RPFIX-1: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
+                    # RPFIX-1: ???: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
                     if _INJECT_FACTS:
                         if _INJECT_FACTS_ORIGIN == 'default':
                             cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(utr.ansible_facts).items()}

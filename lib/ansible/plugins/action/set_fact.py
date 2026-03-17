@@ -58,7 +58,7 @@ class ActionModule(ActionBase):
 
             self.register_host_variables(facts, VariableLayer.EPHEMERAL_FACT)
 
-            result['ansible_facts'] = facts  # RPFIX-1: how do we avoid importing this (backward-compat result only value) in UTRs? (likely done, handled above)
+            result['ansible_facts'] = facts
         else:
             # this should not happen, but JIC we get here
             raise AnsibleActionFail('Unable to create any variables with provided arguments')

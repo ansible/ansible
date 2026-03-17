@@ -44,7 +44,7 @@
       key: "cw_test1_{{ inventory_hostname }}"
   register: groupby
 
-# RPFIX-0: restore changed tests once add_host/add_group has been fixed
+# RPFIX-1: RPC: restore changed tests once add_host/add_group has been fixed
 #- name: verify its changed
 #  assert:
 #    that:
@@ -107,7 +107,7 @@
   changed_when: add_host_loop_res is changed
   register: add_host_loop_res
 
-# RPFIX-0: restore changed tests once add_host/add_group has been fixed
+# RPFIX-1: RPC: restore changed tests once add_host/add_group has been fixed
 #- assert:
 #    that:
 #      - add_host_loop_res is changed

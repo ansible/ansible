@@ -61,7 +61,7 @@ CLEAN_EXCEPTIONS = frozenset(
     }
 )
 
-# RPFIX-0: bikeshed the name for _task.polymorphic_result
+# RPFIX-1: API: bikeshed the name for _task.polymorphic_result
 POLYMORPHIC_RESULT_EXPRESSION = trust_as_template("_task.polymorphic_result")
 
 
@@ -730,7 +730,7 @@ DROP_AND_WARN = ResolvedField(name='__drop__', type=str, optional=True, field=No
 class VariableLayer(enum.Enum):
     """Variable layer at which variables are registered."""
 
-    # RPFIX-1: this needs to be part of the public API, unless we're not allowing collections to register at non-default layers initially
+    # RPFIX-1: API: this needs to be part of the public API, unless we're not allowing collections to register at non-default layers initially
     CACHEABLE_FACT = enum.auto()
     EPHEMERAL_FACT = enum.auto()
     INCLUDE_VARS = enum.auto()
@@ -828,7 +828,6 @@ class UnifiedTaskResult:
 
     failed_when_result: object | None = dataclasses.field(default=None, metadata=export_only())
 
-    # RPFIX-1: this one is still borked for post-result additions- need an explicit setter method or ? (may not be an issue, but verify that)
     ansible_facts: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export())
     async_result: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=export_only())
     ansible_parsed: bool | None = None  # formerly _ansible_parsed

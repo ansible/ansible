@@ -24,7 +24,7 @@
 
 - debug: var=grouped_by_genus
 
-# RPFIX-0: restore changed tests once add_host/add_group has been fixed
+# RPFIX-1: RPC: restore changed tests once add_host/add_group has been fixed
 #- name: ensure we reflect 'changed' on change
 #  assert:
 #    that:

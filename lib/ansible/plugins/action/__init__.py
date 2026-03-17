@@ -222,7 +222,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         parent_group_names: list[str] | None = None,
     ) -> None:
         """Add the given host to inventory."""
-        # RPFIX-0: switch this to RPC so the host can be created immediately and return changed as appropriate
+        # RPFIX-1: RPC: switch this to RPC so the host can be created immediately and return changed as appropriate
 
         self.__get_pending_changes().add_hosts.append(_task.AddHost(
             host_name=host_name,
@@ -238,7 +238,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         parent_group_names: list[str] | None = None,
     ) -> None:
         """Add the given group to inventory."""
-        # RPFIX-0: switch this to RPC so the host can be created immediately and return changed as appropriate
+        # RPFIX-1: RPC: switch this to RPC so the host can be created immediately and return changed as appropriate
 
         self.__get_pending_changes().add_groups.append(_task.AddGroup(
             group_name=group_name,

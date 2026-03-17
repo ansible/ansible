@@ -668,11 +668,11 @@ class StrategyBase:
                             all_task_vars = found_task_vars
 
                         if original_task.changed_when:
-                            # RPFIX-1: resolve_conditional failures can take down the process
+                            # RPFIX-1: CRASH: resolve_conditional failures can take down the process
                             result_utr.changed = original_task._resolve_conditional(original_task.changed_when, all_task_vars)
 
                         if original_task.failed_when:
-                            # RPFIX-1: resolve_conditional failures can take down the process
+                            # RPFIX-1: CRASH: resolve_conditional failures can take down the process
                             result_utr.set_failed_when_result(original_task._resolve_conditional(original_task.failed_when, all_task_vars))
 
                         if original_task.loop or original_task.loop_with:

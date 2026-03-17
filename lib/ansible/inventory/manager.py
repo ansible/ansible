@@ -720,7 +720,7 @@ class InventoryManager:
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
         """
-        # RPFIX-1: implement group_vars support when changing to AddGroup
+        # RPFIX-1: ???: implement group_vars support when changing to AddGroup
 
         changed = False
 
