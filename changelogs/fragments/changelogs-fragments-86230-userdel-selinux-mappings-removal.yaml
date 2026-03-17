@@ -1,0 +1,2 @@
+bugfixes:
+  - user module - add selinux_user option to allow removal of SELinux mappings when a user is deleted (https://github.com/ansible/ansible/issues/86218)
