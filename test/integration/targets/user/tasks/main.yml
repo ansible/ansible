@@ -1,6 +1,4 @@
 # Test code for the user module.
-# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 - name: determine if selinux is installed
   shell: which getenforce || exit 0
   register: selinux_installed
