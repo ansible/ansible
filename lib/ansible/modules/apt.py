@@ -1227,8 +1227,7 @@ def get_cache(module):
             module.fail_json(msg=to_native(e))
 
     # Check if the cache is valid
-    partial_path = os.path.join(apt_pkg.config.find_dir("Dir::State::Lists"), "partial")
-    if not os.path.isdir(partial_path):
+    if not os.path.isdir(apt_pkg.config.find_dir("Dir::State::Lists")):
         rc, stdout, stderr = recreate_cache(module)
         if rc != 0:
             module.fail_json(msg=f'Failed to recreate the cache: {stdout + stderr}', rc=rc)
