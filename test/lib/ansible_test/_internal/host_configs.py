@@ -43,6 +43,8 @@ from .util import (
     str_to_version,
     version_to_str,
     Architecture,
+    find_executable,
+    get_supported_powershell_versions,
 )
 
 
@@ -65,6 +67,15 @@ class OriginCompletionConfig(PosixCompletionConfig):
         """Return the path of the requested Python version."""
         version = find_python(version)
         return version
+
+    @property
+    def supported_powershells(self) -> list[str]:
+        """Return a list of the supported PowerShell versions."""
+        return get_supported_powershell_versions()
+
+    def get_powershell_path(self, version: str | None) -> str | None:
+        """Return the path of the requested PowerShell version, or None if PowerShell is not available."""
+        return find_executable(f'pwsh{version or ""}', required=bool(version))
 
     @property
     def is_default(self) -> bool:
@@ -180,10 +191,32 @@ class VirtualPythonConfig(PythonConfig):
 
 
 @dataclasses.dataclass
+class PowerShellConfig:
+    """Configuration for PowerShell."""
+
+    version: str | None = None
+    path: str | None = None
+
+    def apply_defaults(self, defaults: PosixCompletionConfig) -> None:
+        """Apply default settings."""
+        if self.version in (None, 'default'):
+            self.version = defaults.get_default_powershell()
+
+        if self.path:
+            if self.path.endswith('/'):
+                self.path = os.path.join(self.path, f'pwsh{self.version or ""}')
+
+            # FUTURE: If the host is origin, the pwsh path could be validated here.
+        else:
+            self.path = defaults.get_powershell_path(self.version)
+
+
+@dataclasses.dataclass
 class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
     """Base class for POSIX host configuration."""
 
     python: t.Optional[PythonConfig] = None
+    powershell: PowerShellConfig | None = None
 
     @property
     @abc.abstractmethod
@@ -202,6 +235,9 @@ class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
 
         self.python = self.python or NativePythonConfig()
         self.python.apply_defaults(context, defaults)
+
+        self.powershell = self.powershell or PowerShellConfig()
+        self.powershell.apply_defaults(defaults)
 
 
 @dataclasses.dataclass
@@ -401,6 +437,7 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remote Windows host."""
 
     connection: t.Optional[str] = None
+    powershell: PowerShellConfig | None = None
 
     def get_defaults(self, context: HostContext) -> WindowsRemoteCompletionConfig:
         """Return the default settings."""
@@ -491,6 +528,10 @@ class ControllerConfig(PosixConfig):
         if not self.python and not defaults.supported_pythons:
             # The user did not specify a target Python and supported Pythons are unknown, so use the controller Python specified by the user instead.
             self.python = context.controller_config.python
+
+        if not self.powershell and not defaults.supported_powershells:
+            # The user did not specify a target PowerShell and supported versions are unknown, so use the controller version specified by the user instead.
+            self.powershell = context.controller_config.powershell
 
         super().apply_defaults(context, defaults)
 

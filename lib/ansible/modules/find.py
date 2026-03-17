@@ -27,7 +27,7 @@ options:
             - Select files whose age is equal to or greater than the specified time.
             - Use a negative age to find files equal to or less than the specified time.
             - You can choose seconds, minutes, hours, days, or weeks by specifying the
-              first letter of any of those words (e.g., "1w").
+              first letter of any of those words (for example V(1w)).
         type: str
     get_checksum:
         default: false
@@ -37,23 +37,23 @@ options:
         default: []
         description:
             - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
-            - The patterns restrict the list of files to be returned to those whose basenames match at
+            - The patterns restrict the list of files to be returned to those whose base names match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
             - The pattern is matched against the file base name, excluding the directory.
-            - When using regexen, the pattern MUST match the ENTIRE file name, not just parts of it. So
-              if you are looking to match all files ending in .default, you'd need to use C(.*\.default)
-              as a regexp and not just C(\.default).
+            - When using regular expressions, the pattern B(MUST) match the B(ENTIRE) file name, not just parts of it.
+              So if you are looking to match all files ending in C(.default), you need to use V(.*\\.default)
+              as a regexp and not just V(\\.default).
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
-            - Defaults to V(*) when O(use_regex=False), or V(.*) when O(use_regex=True).
+            - Defaults to V(*) when O(use_regex=false), or V(.*) when O(use_regex=true).
         type: list
         aliases: [ pattern ]
         elements: str
     excludes:
         description:
             - One or more (shell or regex) patterns, which type is controlled by O(use_regex) option.
-            - Items whose basenames match an O(excludes) pattern are culled from O(patterns) matches.
+            - Items whose base names match an O(excludes) pattern are culled from O(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
         aliases: [ exclude ]
@@ -63,16 +63,16 @@ options:
         description:
             - A regular expression or pattern which should be matched against the file content.
             - If O(read_whole_file=false) it matches against the beginning of the line (uses
-              V(re.match(\))). If O(read_whole_file=true), it searches anywhere for that pattern
-              (uses V(re.search(\))).
+              C(re.match(\))). If O(read_whole_file=true), it searches anywhere for that pattern
+              (uses C(re.search(\))).
             - Works only when O(file_type) is V(file).
         type: str
     read_whole_file:
         description:
-            - When doing a C(contains) search, determines whether the whole file should be read into
+            - When doing a O(contains) search, determines whether the whole file should be read into
               memory or if the regex should be applied to the file line-by-line.
-            - Setting this to C(true) can have performance and memory implications for large files.
-            - This uses V(re.search(\)) instead of V(re.match(\)).
+            - Setting this to V(true) can have performance and memory implications for large files.
+            - This uses C(re.search(\)) instead of C(re.match(\)).
         type: bool
         default: false
         version_added: "2.11"
@@ -100,7 +100,7 @@ options:
         description:
             - Select files whose size is equal to or greater than the specified size.
             - Use a negative size to find files equal to or less than the specified size.
-            - Unqualified values are in bytes but b, k, m, g, and t can be appended to specify
+            - Unqualified values are in bytes but V(b), V(k), V(m), V(g), and V(t) can be appended to specify
               bytes, kilobytes, megabytes, gigabytes, and terabytes, respectively.
             - Size is not evaluated for directories.
         type: str
@@ -112,14 +112,14 @@ options:
         default: mtime
     hidden:
         description:
-            - Set this to V(true) to include hidden files, otherwise they will be ignored.
+            - Set this to V(true) to include hidden files, otherwise they are ignored.
         type: bool
         default: no
     mode:
         description:
             - Choose objects matching a specified permission. This value is
               restricted to modes that can be applied using the python
-              C(os.chmod) function.
+              C(os.chmod(\)) function.
             - The mode can be provided as an octal such as V("0644") or
               as symbolic such as V(u=rw,g=r,o=r).
         type: raw
@@ -139,13 +139,13 @@ options:
     use_regex:
         description:
             - If V(false), the patterns are file globs (shell).
-            - If V(true), they are python regexes.
+            - If V(true), they are Python regular expressions.
         type: bool
         default: no
     depth:
         description:
             - Set the maximum number of levels to descend into.
-            - Setting O(recurse=false) will override this value, which is effectively depth 1.
+            - Setting O(recurse=false) is effectively O(depth=1) and overrides this value.
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
@@ -156,9 +156,9 @@ options:
         version_added: "2.17"
     limit:
         description:
-            - Limit the maximum number of matching paths returned. After finding this many, the find action will stop looking.
-            - Matches are made from the top, down (i.e. shallowest directory first).
-            - If not set, or set to v(null), it will do unlimited matches.
+            - Limit the maximum number of matching paths returned. After finding this many, the find action stops looking.
+            - Matches are made from the top, down (meaning the shallowest directory first).
+            - If not set, or set to V(null), it performs unlimited matches.
             - Default is unlimited matches.
         type: int
         version_added: "2.18"

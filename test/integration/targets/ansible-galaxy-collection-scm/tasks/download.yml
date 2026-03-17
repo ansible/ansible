@@ -12,11 +12,16 @@
   args:
     chdir: '{{ galaxy_dir }}/download'
   register: download_collection
+  # TODO: remove external dependencies and define requires_ansible based on the current version
+  environment:
+    ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH: ignore
 
 - name: check that the amazon.aws collection was downloaded
   stat:
     path: '{{ galaxy_dir }}/download/collections/amazon-aws-1.0.0.tar.gz'
   register: download_collection_amazon_actual
+  environment:
+    ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH: ignore
 
 - name: check that the awx.awx collection was downloaded
   stat:
@@ -34,6 +39,8 @@
   command: 'ansible-galaxy collection install -r requirements.yml --no-deps'
   args:
     chdir: '{{ galaxy_dir }}/download/collections/'
+  environment:
+    ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH: ignore
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'

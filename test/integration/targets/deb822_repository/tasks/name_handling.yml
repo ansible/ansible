@@ -1,0 +1,55 @@
+---
+- name: Add repositories with distinct valid names
+  ansible.builtin.deb822_repository:
+    state: present
+    name: "{{ item }}"
+    types: [deb]
+    uris: ["http://example.invalid/repo"]
+    suites: ["stable"]
+    components: [main]
+  loop:
+    - foo-1.2.3
+    - foo_123
+    - FOO_1.23
+- name: Verify each sources file exists
+  stat:
+    path: "/etc/apt/sources.list.d/{{ item }}.sources"
+  loop:
+    - foo-1.2.3
+    - foo_123
+    - FOO_1.23
+  register: repo_files
+- name: Assert all sources files exist
+  assert:
+    that:
+      - repo_files.results | map(attribute='stat.exists') | min
+- name: Add repository with space in name
+  ansible.builtin.deb822_repository:
+    state: present
+    name: "foo 12.3"
+    types: [deb]
+    uris: ["http://example.invalid/repo"]
+    suites: ["stable"]
+    components: [main]
+  register: spaced_name_result
+- name: Assert repo creation succeeded
+  assert:
+    that:
+      - spaced_name_result is changed
+- name: Verify sources file normalized with dash
+  stat:
+    path: /etc/apt/sources.list.d/foo-12.3.sources
+  register: spaced_name_stat
+- name: Assert normalized sources file exists
+  assert:
+    that:
+      - spaced_name_stat.stat.exists
+- name: Clean up test repositories
+  ansible.builtin.deb822_repository:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - foo-1.2.3
+    - foo_123
+    - FOO_1.23
+    - foo 12.3

@@ -35,6 +35,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import accept_args_markers, accept_lazy_markers
 from ansible._internal._templating._jinja_common import MarkerError, UndefinedMarker, validate_arg_type
 from ansible._internal._yaml import _loader as _yaml_loader
+from ansible._internal._yaml._dumper import VaultDecryptionContext, VaultBehaviors
 from ansible.utils.display import Display
 from ansible.utils.encrypt import do_encrypt, PASSLIB_AVAILABLE
 from ansible.utils.hashing import md5s, checksum_s
@@ -47,9 +48,16 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 
 @accept_lazy_markers
-def to_yaml(a, *_args, default_flow_style: bool | None = None, **kwargs) -> str:
+def to_yaml(a, *_args, default_flow_style: bool | None = None, vault_behavior: str | None = None, **kwargs) -> str:
     """Serialize input as terse flow-style YAML."""
-    return yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
+
+    if vault_behavior and vault_behavior not in VaultBehaviors:
+        raise AnsibleFilterError(f"The vault parameter must be one of {", ".join(VaultBehaviors)}")
+
+    behavior = VaultBehaviors(vault_behavior) if vault_behavior else VaultBehaviors.decrypt
+
+    with VaultDecryptionContext(behavior):
+        return yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kwargs)
 
 
 @accept_lazy_markers

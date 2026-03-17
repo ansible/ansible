@@ -572,15 +572,20 @@ def main():
     params.pop('install_python_debian')
 
     name = params['name']
-    slug = re.sub(
+    # Generate legacy-normalized slug for backward compatibility check
+    legacy_slug = re.sub(
         r'[^a-z0-9-]+',
         '',
-        re.sub(
-            r'[_\s]+',
-            '-',
-            name.lower(),
-        ),
+        re.sub(r'[_\s]+', '-', name.lower()),
     )
+    legacy_sources = make_sources_filename(legacy_slug)
+
+    if os.path.exists(legacy_sources):
+        # Legacy file exists, reuse the old naming to maintain consistency
+        slug = legacy_slug
+    else:
+        # No legacy file, use the new naming convention
+        slug = name.replace(' ', '-')
     sources_filename = make_sources_filename(slug)
 
     if state == 'absent':

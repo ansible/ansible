@@ -36,6 +36,7 @@ from .host_configs import (
     OriginConfig,
     PythonConfig,
     VirtualPythonConfig,
+    PowerShellConfig,
 )
 
 
@@ -88,6 +89,14 @@ class EnvironmentConfig(CommonConfig):
         self.controller_python: t.Optional[PythonConfig] = None
         """
         The Python interpreter used by the controller.
+        Only available after delegation has been performed or skipped (if delegation is not required).
+        """
+
+        # Set by check_controller_powershell once HostState has been created by prepare_profiles.
+        # This is here for convenience, to avoid needing to pass HostState to some functions which already have access to EnvironmentConfig.
+        self.controller_powershell: PowerShellConfig | None = None
+        """
+        The PowerShell interpreter used by the controller.
         Only available after delegation has been performed or skipped (if delegation is not required).
         """
 

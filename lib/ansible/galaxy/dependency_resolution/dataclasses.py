@@ -26,10 +26,13 @@ if t.TYPE_CHECKING:
         '_ComputedReqKindsMixin',
     )
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.plugins.loader import _does_collection_support_ansible_version
+from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -545,7 +548,7 @@ class _ComputedReqKindsMixin:
 
     @property
     def canonical_package_id(self) -> str:
-        if not self.is_virtual:
+        if not self.is_virtual or self.type == "requires_ansible":
             return to_native(self.fqcn)
 
         return (
@@ -635,6 +638,13 @@ class Requirement(
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super(Requirement, self).__init__()
+        # NOTE: Hack to display the origin of impossible collection requirements when requires_ansible is incompatible
+        # e.g. Requirement ns.col -> ns.col:$ver -> Requirement ns.dep -> ns.dep:$ver -> Requirement ansible-core<2.19
+        #   - ResolutionImpossible.causes[0].requirement is Requirement ansible-core<2.19
+        #   - ResolutionImpossible.causes[0].parent is Candidate ns.dep:$ver
+        #   - ResolutionImpossible.causes[0].parent._requirements[0] is Requirement ns.dep
+        #   - ResolutionImpossible.causes[0].parent._requirements[0]._parent is Candidate ns.col:$ver
+        self._parent: Candidate | None = None
 
 
 class Candidate(
@@ -649,6 +659,8 @@ class Candidate(
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super(Candidate, self).__init__()
+        # NOTE: Hack to display the origin of impossible collection requirements when requires_ansible is incompatible
+        self._requirements: list[Requirement] = []
 
     def with_signatures_repopulated(self) -> Candidate:
         """Populate a new Candidate instance with Galaxy signatures.
@@ -659,3 +671,43 @@ class Candidate(
 
         signatures = self.src.get_collection_signatures(self.namespace, self.name, self.ver)
         return self.__class__(self.fqcn, self.ver, self.src, self.type, frozenset([*self.signatures, *signatures]))
+
+
+class AnsibleRequirement(Requirement):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super(AnsibleRequirement, self).__init__()
+
+        self.has_candidate: None | Candidate
+        if _does_collection_support_ansible_version(self.ver, __version__):
+            self.has_candidate = Candidate("ansible-core", __version__, None, "requires_ansible", None)
+        else:
+            self.has_candidate = None
+
+    @classmethod
+    def from_collection(cls, concrete_art_mgr: ConcreteArtifactsManager, candidate: Candidate) -> None | t.Self:
+        """
+        Create a Requirement from a collection Candidate's requires_ansible metadata.
+        """
+        if (
+            C.COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH == "ignore"
+            or candidate.is_virtual
+            or candidate.type == "requires_ansible"
+        ):
+            return None
+
+        if candidate.type == 'galaxy':
+            requires_ansible = (candidate.src.requires_ansible.get(candidate.fqcn) or {}).get(candidate.ver)
+        else:
+            requires_ansible = concrete_art_mgr.get_direct_requires_ansible(candidate)
+
+        if requires_ansible is None:
+            display.warning(f"{candidate!s} does not have requires_ansible metadata.")
+            return None
+
+        # Passing the "fqcn" attribute so __unicode__ doesn't need to be overridden.
+        res = cls("ansible-core", requires_ansible, None, "requires_ansible", None)
+        res._parent = candidate
+        return res
+
+    def is_satisfied_by(self, candidate: Candidate) -> bool:
+        return self.has_candidate == candidate

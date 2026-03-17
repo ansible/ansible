@@ -105,7 +105,7 @@ class BecomeBase(AnsiblePlugin):
         b_success = to_bytes(self.success)
         return any(b_success in l.rstrip() for l in b_output.splitlines(True))
 
-    def check_password_prompt(self, b_output):
+    def check_password_prompt(self, b_output: bytes) -> bool:
         """ checks if the expected password prompt exists in b_output """
         if self.prompt:
             b_prompt = to_bytes(self.prompt).strip()

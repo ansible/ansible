@@ -215,11 +215,20 @@
 - name: Ensure warnings were displayed properly
   assert:
     that:
-      - local_user_test_5['warnings'] is search("'append' is set, but no 'groups' are specified. Use 'groups'")
+      - local_user_test_5.failed
       - local_existing['warnings'] is not defined
   when: ansible_facts.system in ['Linux']
   tags:
     - user_test_local_mode
 
 - name: Test expires for local users
-  import_tasks: test_local_expires.yml
+  block:
+    - import_tasks: test_local_expires.yml
+  always:
+    - name: Clean up local_ansibulluser
+      user:
+        name: local_ansibulluser
+        state: absent
+        force: yes
+        remove: yes
+        local: yes

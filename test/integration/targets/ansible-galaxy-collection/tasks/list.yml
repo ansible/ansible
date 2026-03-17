@@ -15,6 +15,64 @@
     - 'prod.collection2'
     - 'prod.collection3'
 
+- name: Check that list warns on improperly named directories
+  vars:
+    wrong_name: nottherightname
+    doc_fqcn: dev.collection1
+    dir_fqcn: dev.{{ wrong_name }}
+    srcdir: "{{ galaxy_dir }}/dev/ansible_collections/dev/collection1"
+    destdir: "{{ galaxy_dir }}/dev/ansible_collections/dev/{{ wrong_name }}"
+  block:
+    - name: move dev.collection1 somewhere
+      command: mv {{ srcdir }} {{ destdir }}
+
+    - name: List dev collections
+      command: ansible-galaxy collection list
+      register: errant_directory_list
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev"
+
+    - debug: var=errant_directory_list
+    - assert:
+        that:
+          - errant_directory_list is success
+          - errant_directory_list.rc == 0
+          - warning_text in errant_directory_list.stderr
+          - dir_fqcn in errant_directory_list.stdout
+      vars:
+        warning_text: Collection at {{ destdir }} documents incorrect FQCN '{{ doc_fqcn }}'
+
+    - name: List incorrect collection by metadataname
+      command: ansible-galaxy collection list {{ doc_fqcn }}
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev"
+      register: list_metadata_name
+
+    - assert:
+        that:
+          - list_metadata_name is success
+          - list_metadata_name.rc == 0
+          - doc_fqcn not in list_metadata_name.stdout
+
+    - name: List incorrect collection by dirname
+      command: ansible-galaxy collection list {{ dir_fqcn }}
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: "{{ galaxy_dir }}/dev"
+      register: list_dir_name
+
+    - assert:
+        that:
+          - list_dir_name is success
+          - list_dir_name.rc == 0
+          - doc_fqcn not in list_dir_name.stdout
+          - dir_fqcn in list_dir_name.stdout
+          - warning_text in list_dir_name.stderr
+      vars:
+        warning_text: Collection at {{ destdir }} documents incorrect FQCN '{{ doc_fqcn }}'
+
+    - name: move {{ doc_fqcn }} back
+      command: mv {{ destdir }} {{ srcdir }}
+
 - name: replace the default version of the collections
   lineinfile:
     path: "{{ galaxy_dir }}/dev/ansible_collections/dev/{{ item.name }}/galaxy.yml"

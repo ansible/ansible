@@ -17,7 +17,7 @@ import tempfile
 import typing as t
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from ansible import constants as C
 from ansible._internal._errors import _captured, _error_utils
@@ -320,6 +320,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     environment=final_environment,
                     remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
                     become_plugin=self._connection.become,
+                    shell_plugin=self._connection._shell,
                 )
 
                 break
@@ -391,7 +392,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         Determines if we are required and can do pipelining, only 'new' style modules can support pipelining
         """
-        return bool(module_style == 'new' and self._connection.is_pipelining_enabled(wrap_async))
+        # FUTURE: Move async checks from connection.is_pipelining_enabled here
+        # as async and pipelining is a property on the execution layer and not
+        # the capabilities of the connection itself.
+        conditions = [
+            module_style == 'new',
+            not C.DEFAULT_KEEP_REMOTE_FILES,                     # user doesn't want to keep remote files
+            self._connection.is_pipelining_enabled(wrap_async),  # connection/become supports pipelining and is enabled
+        ]
+        return all(conditions)
 
     def _get_admin_users(self):
         """
@@ -447,7 +456,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         become_user = self.get_become_option('become_user')
         return bool(become_user and become_user not in admin_users + [remote_user])
 
-    def _make_tmp_path(self, remote_user=None):
+    def _make_tmp_path(self, remote_user: str | None = None) -> str:
         """
         Create and return a temporary path on a remote box.
         """
@@ -464,8 +473,16 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
-        cmd = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+
+        cmd = None
+        in_data = None
+        if self._connection.is_pipelining_enabled(wrap_async=False):
+            cmd_details = self._connection._shell._mkdtemp2(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+            cmd = cmd_details.command
+            in_data = cmd_details.input_data
+        else:
+            cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
+        result = self._low_level_execute_command(cmd, in_data=in_data, sudoable=False)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -906,8 +923,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
-        cmd = self._connection._shell._expand_user2(expand_path)
-        data = self._low_level_execute_command(cmd.command, in_data=cmd.input_data, sudoable=False)
+        cmd = None
+        in_data = None
+        if self._connection.is_pipelining_enabled(wrap_async=False):
+            cmd_details = self._connection._shell._expand_user2(expand_path)
+            cmd = cmd_details.command
+            in_data = cmd_details.input_data
+        else:
+            cmd = self._connection._shell.expand_user(expand_path)
+        data = self._low_level_execute_command(cmd, in_data=in_data, sudoable=False)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -1092,7 +1116,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
             display.debug("done transferring module to remote")
 
-        environment_string = self._compute_environment_string()
+        environment_string = ''
+        if not module_bits.has_environment:
+            environment_string = self._compute_environment_string()
 
         # remove the ANSIBLE_ASYNC_DIR env entry if we added a temporary one for
         # the async_wrapper task.
@@ -1106,7 +1132,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if args_file_path:
             remote_files.append(args_file_path)
 
-        sudoable = True
+        sudoable = not module_bits.has_become
         in_data = None
         cmd = ""
 
@@ -1141,11 +1167,14 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             cmd = " ".join(to_text(x) for x in async_cmd)
 
-        else:
+        elif cmd_args := module_bits.get_command_args(remote_module_path, args_file_path, self._connection._shell):
+            cmd, in_data = cmd_args
+            if environment_string:
+                cmd = f"{environment_string} {cmd}"
 
+        else:
             if self._is_pipelining_enabled(module_style):
                 in_data = module_data
-                display.vvv("Pipelining is enabled.")
             else:
                 cmd = remote_module_path
 
@@ -1159,7 +1188,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, process_result=module_bits.process_result)
 
         # parse the main result
         data = self._parse_returned_data(res, module_bits.serialization_profile)
@@ -1266,7 +1295,16 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         return data
 
     # FIXME: move to connection base
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(
+        self,
+        cmd: str,
+        sudoable: bool = True,
+        in_data: bytes | None = None,
+        executable: str | None = None,
+        encoding_errors: str = 'surrogate_then_replace',
+        chdir: str | None = None,
+        process_result: Callable[[int, bytes, bytes], tuple[int, bytes, bytes]] | None = None,
+    ):
         """
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -1317,6 +1355,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._connection.cwd = self._loader.get_basedir()
 
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+
+        if process_result:
+            rc, stdout, stderr = process_result(rc, stdout, stderr)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type

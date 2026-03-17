@@ -1,8 +1,12 @@
-//AssemblyReference -Name System.Web.Extensions.dll
+//AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
 
 using System;
 using System.Collections.Generic;
+#if CORECLR
+using System.Text.Json;
+#else
 using System.Web.Script.Serialization;
+#endif
 
 namespace Ansible.Test
 {
@@ -18,8 +22,12 @@ namespace Ansible.Test
 
         private static string ToJson(object obj)
         {
+#if CORECLR
+            return JsonSerializer.Serialize(obj);
+#else
             JavaScriptSerializer jss = new JavaScriptSerializer();
             return jss.Serialize(obj);
+#endif
         }
     }
 }

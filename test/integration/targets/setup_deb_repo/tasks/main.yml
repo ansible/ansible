@@ -6,6 +6,7 @@
       - dpkg-dev
       - equivs
       - libfile-fcntllock-perl  # to silence warning by equivs-build
+      - python3-debian
 
   - set_fact:
       repodir: /tmp/repo/
@@ -52,10 +53,15 @@
       - [stable, {}]
       - [testing, {NotAutomatic: "yes", ButAutomaticUpgrades: "yes"}]
 
-  - name: Install the repo
-    apt_repository:
-      repo: deb [trusted=yes arch=all] file:{{ repodir }} {{ item }} main
-      update_cache: false # interferes with task 'Test update_cache 1'
+  - name: Add local filesystem repository using deb822 format
+    deb822_repository:
+      name: "local_repo_{{ item }}"
+      uris: "file://{{ repodir }}"
+      suites: "{{ item }}"
+      components: "main"
+      state: present
+      architectures: all
+      trusted: true
     loop:
       - stable
       - testing

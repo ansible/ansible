@@ -358,6 +358,12 @@ def _get_powershell_script(
     if code is None:
         raise AnsibleFileNotFound(f"Could not find powershell script '{package_name}.{name}'")
 
+    if name == 'bootstrap_wrapper.ps1':
+        # bootstrap_wrapper is special in that it is never signed and we want
+        # it as small as possible for command line length limits.
+        code = _strip_comments_and_whitespace(code)
+        return code
+
     try:
         sig_data = pkgutil.get_data(package_name, f"{name}.authenticode")
     except FileNotFoundError:
@@ -381,6 +387,7 @@ def _create_powershell_wrapper(
     substyle: t.Literal["powershell", "script"],
     task_vars: dict[str, t.Any],
     profile: str,
+    pwsh_interpreter: str | None = None,
 ) -> bytes:
     """Creates module or script wrapper for PowerShell.
 
@@ -396,6 +403,7 @@ def _create_powershell_wrapper(
     :param become_plugin: The become plugin to use for privilege escalation or None for no become.
     :param substyle: The substyle of the module or script to run [powershell or script].
     :param task_vars: The task variables used on the task.
+    :param pwsh_interpreter: The pwsh interpreter to use.
 
     :return: The input data for bootstrap_wrapper.ps1 as a byte string.
     """
@@ -536,6 +544,7 @@ def _create_powershell_wrapper(
         min_os_version=finder.os_version,
         min_ps_version=finder.ps_version,
         temp_path=temp_path,
+        pwsh_interpreter=pwsh_interpreter,
     )
 
 
@@ -544,6 +553,7 @@ def _get_bootstrap_input(
     min_os_version: str | None = None,
     min_ps_version: str | None = None,
     temp_path: str | None = None,
+    pwsh_interpreter: str | None = None,
 ) -> bytes:
     """Gets the input for bootstrap_wrapper.ps1
 
@@ -563,6 +573,7 @@ def _get_bootstrap_input(
             'MinOSVersion': min_os_version,
             'MinPSVersion': min_ps_version,
             'TempPath': temp_path,
+            'PwshPath': pwsh_interpreter,
         },
     }
 
@@ -603,3 +614,15 @@ def _get_powershell_signed_hashlist(
         return _ScriptInfo(content=sig_data, path=resource_path)
 
     return None
+
+
+def _strip_comments_and_whitespace(source: bytes) -> bytes:
+    """Removes comments and whitespace from the source string to save space."""
+    buf = []
+    for line in source.splitlines():
+        l = line.strip()
+        if l.startswith(b'#'):
+            line = b''
+        buf.append(line)
+
+    return b'\n'.join(buf)

@@ -6,6 +6,8 @@ import abc
 import dataclasses
 import enum
 import os
+import re
+import sys
 import typing as t
 
 from .constants import (
@@ -17,6 +19,9 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
     cache,
     read_lines_without_comments,
+    get_powershell_version_map,
+    str_to_version,
+    InternalError,
 )
 
 from .data import (
@@ -61,6 +66,11 @@ class CompletionConfig(metaclass=abc.ABCMeta):
     def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
 
+    @property
+    def sort_key(self) -> tuple[str, tuple[int, ...]]:
+        """Key used for sorting completion entries."""
+        return '', (0,)
+
 
 @dataclasses.dataclass(frozen=True)
 class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
@@ -71,15 +81,28 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
     def supported_pythons(self) -> list[str]:
         """Return a list of the supported Python versions."""
 
+    @property
+    @abc.abstractmethod
+    def supported_powershells(self) -> list[str]:
+        """Return a list of the supported PowerShell versions."""
+
     @abc.abstractmethod
     def get_python_path(self, version: str) -> str:
         """Return the path of the requested Python version."""
+
+    @abc.abstractmethod
+    def get_powershell_path(self, version: str | None) -> str | None:
+        """Return the path of the requested PowerShell version, or None if PowerShell is not available."""
 
     def get_default_python(self, controller: bool) -> str:
         """Return the default Python version for a controller or target as specified."""
         context_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
         version = [python for python in self.supported_pythons if python in context_pythons][0]
         return version
+
+    def get_default_powershell(self) -> str | None:
+        """Return the default PowerShell version, or None if there is no default."""
+        return None
 
     @property
     def controller_supported(self) -> bool:
@@ -107,11 +130,43 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
 
 
 @dataclasses.dataclass(frozen=True)
+class PowerShellCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
+    """Base class for completion configuration of PowerShell environments."""
+
+    powershell: str = ''
+    powershell_dir: str = '/usr/local/bin'
+
+    @property
+    def supported_powershells(self) -> list[str]:
+        """Return a list of the supported PowerShell versions."""
+        versions = self.powershell.split(',') if self.powershell else []
+        versions = [version for version in versions if version in get_powershell_version_map()]
+        return versions
+
+    def get_powershell_path(self, version: str | None) -> str | None:
+        """Return the path of the requested PowerShell version, or None if PowerShell is not available."""
+        if not version:
+            return None
+
+        return os.path.join(self.powershell_dir, f'pwsh{version}')
+
+
+@dataclasses.dataclass(frozen=True)
 class RemoteCompletionConfig(CompletionConfig):
     """Base class for completion configuration of remote environments provisioned through Ansible Core CI."""
 
     provider: t.Optional[str] = None
     arch: t.Optional[str] = None
+
+    @property
+    def sort_key(self) -> tuple[str, tuple[int, ...]]:
+        """Key used for sorting completion entries."""
+        try:
+            version = str_to_version(self.version)
+        except ValueError:
+            version = (sys.maxsize,)
+
+        return self.platform, version
 
     @property
     def platform(self) -> str:
@@ -150,7 +205,7 @@ class InventoryCompletionConfig(CompletionConfig):
 
 
 @dataclasses.dataclass(frozen=True)
-class PosixSshCompletionConfig(PythonCompletionConfig):
+class PosixSshCompletionConfig(PythonCompletionConfig, PowerShellCompletionConfig):
     """Configuration for a POSIX host reachable over SSH."""
 
     def __init__(self, user: str, host: str) -> None:
@@ -166,7 +221,7 @@ class PosixSshCompletionConfig(PythonCompletionConfig):
 
 
 @dataclasses.dataclass(frozen=True)
-class DockerCompletionConfig(PythonCompletionConfig):
+class DockerCompletionConfig(PythonCompletionConfig, PowerShellCompletionConfig):
     """Configuration for Docker containers."""
 
     image: str = ''
@@ -174,6 +229,19 @@ class DockerCompletionConfig(PythonCompletionConfig):
     cgroup: str = CGroupVersion.V1_V2.value
     audit: str = AuditMode.REQUIRED.value  # most containers need this, so the default is required, leaving it to be opt-out for containers which don't need it
     placeholder: bool = False
+
+    @property
+    def sort_key(self) -> tuple[str, tuple[int, ...]]:
+        """Key used for sorting completion entries."""
+        match = re.match('^(?P<platform>[a-z]+)(?P<version>[0-9]*)$', self.name)
+        platform = match.group('platform')
+
+        try:
+            version = str_to_version(match.group('version'))
+        except ValueError:
+            version = (sys.maxsize,)
+
+        return platform, version
 
     @property
     def is_default(self) -> bool:
@@ -195,6 +263,10 @@ class DockerCompletionConfig(PythonCompletionConfig):
             return CGroupVersion(self.cgroup)
         except ValueError:
             raise ValueError(f'Docker completion entry "{self.name}" has an invalid value "{self.cgroup}" for the "cgroup" setting.') from None
+
+    def get_default_powershell(self) -> str | None:
+        """Return the default PowerShell version, or None if there is no default."""
+        return next(iter(self.supported_powershells), None)
 
     def __post_init__(self):
         if not self.image:
@@ -222,11 +294,15 @@ class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
 
 
 @dataclasses.dataclass(frozen=True)
-class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig):
+class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig, PowerShellCompletionConfig):
     """Configuration for remote POSIX platforms."""
 
     become: t.Optional[str] = None
     placeholder: bool = False
+
+    def get_default_powershell(self) -> str | None:
+        """Return the default PowerShell version, or None if there is no default."""
+        return next(iter(self.supported_powershells), None)
 
     def __post_init__(self):
         if not self.placeholder:
@@ -260,12 +336,24 @@ def load_completion[TCompletionConfig: CompletionConfig](name: str, completion_t
         context = 'ansible-core'
 
     items = {name: data for name, data in [parse_completion_entry(line) for line in lines] if data.get('context', context) == context}
+    aliases: dict[tuple[str, str], dict[str, str]] = {}
+    aliases_seen: set[str] = set()
 
-    for item in items.values():
+    for item_name, item in items.items():
         item.pop('context', None)
         item.pop('placeholder', None)
 
+        if alias := item.pop('alias', None):
+            for aliased_name in alias.split(','):
+                if aliased_name in aliases_seen:
+                    raise InternalError(f"Duplicate alias {aliased_name!r} found for {name!r} completion.")
+
+                aliases_seen.add(aliased_name)
+                aliases[(aliased_name, item_name)] = item
+
     completion = {name: completion_type(name=name, **data) for name, data in items.items()}
+    completion |= {an[0]: completion_type(name=an[1], **data) for an, data in aliases.items()}
+    completion = dict(sorted(completion.items(), key=lambda entry: entry[1].sort_key))
 
     return completion
 

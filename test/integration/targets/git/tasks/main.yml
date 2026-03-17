@@ -47,6 +47,7 @@
   - import_tasks: archive.yml
   - import_tasks: separate-git-dir.yml
   - import_tasks: forcefully-fetch-tag.yml
+  - import_tasks: invalid-ref.yml
   environment:
     HOME: >-
       {{ remote_tmp_dir }}

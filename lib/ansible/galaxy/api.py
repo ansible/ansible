@@ -288,6 +288,8 @@ class GalaxyAPI:
         if not no_cache:
             self._cache = _load_cache(self._b_cache_path)
 
+        self.requires_ansible = collections.defaultdict(dict)
+
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
     def __str__(self):
@@ -780,6 +782,11 @@ class GalaxyAPI:
 
         signatures = data.get('signatures') or []
 
+        # NOTE: Galaxy and Hub already populated the cache when listing versions.
+        # NOTE: Allow 3rd party servers to provide version-specific metadata lazily.
+        if (requires_ansible := data.get('requires_ansible')):
+            self.requires_ansible[f"{namespace}.{name}"][version] = requires_ansible
+
         download_url_info = urlparse(data['download_url'])
         if not download_url_info.scheme and not download_url_info.path.startswith('/'):
             # galaxy does a lot of redirects, with much more complex pathing than we use
@@ -852,7 +859,10 @@ class GalaxyAPI:
 
         versions = []
         while True:
-            versions += [v['version'] for v in data[results_key]]
+            for v in data[results_key]:
+                versions.append(v["version"])
+                # requires_ansible is new in galaxy_ng 4.3.0
+                self.requires_ansible[f"{namespace}.{name}"][v["version"]] = v.get("requires_ansible")
 
             next_link = data
             for path in pagination_path:

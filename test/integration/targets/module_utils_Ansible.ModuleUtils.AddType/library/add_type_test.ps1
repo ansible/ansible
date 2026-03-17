@@ -75,9 +75,8 @@ try {
     [Namespace2.Class2]::GetString($true)
 }
 catch {
-    $tmp_path = [System.IO.Path]::GetFullPath($env:TMP).ToLower()
-    Assert-Equal ($_.Exception.ToString().ToLower().Contains("at namespace2.class2.getstring(boolean error) in $tmp_path")) -expected $true
-    Assert-Equal ($_.Exception.ToString().Contains(".cs:line 10")) -expected $true
+    Assert-Equal ($_.Exception.ToString().ToLower().Contains("at namespace2.class2.getstring(boolean error) in ")) -expected $true
+    Assert-Equal ($_.Exception.ToString().Contains(":line 10")) -expected $true
 }
 
 $code_tmp = @'
@@ -110,9 +109,9 @@ try {
     [Namespace3.Class3]::GetString($true)
 }
 catch {
-    $actual = $_.Exception.ToString().ToLower().Contains("at namespace3.class3.getstring(boolean error) in $($tmp_path.ToLower())")
+    $actual = $_.Exception.ToString().ToLower().Contains("at namespace3.class3.getstring(boolean error) in ")
     Assert-Equal $actual -expected $true
-    Assert-Equal ($_.Exception.ToString().Contains(".cs:line 10")) -expected $true
+    Assert-Equal ($_.Exception.ToString().Contains(":line 10")) -expected $true
 }
 
 $warning_code = @'
@@ -140,8 +139,8 @@ try {
 }
 catch {
     $failed = $true
-    $actual = $_.Exception.Message.Contains("error CS0219: Warning as Error: The variable 'a' is assigned but its value is never used")
-    Assert-Equal -actual $actual -expected $true
+    Assert-Equal -actual $_.Exception.Message.Contains("error CS0219") -expected $true
+    Assert-Equal -actual $_.Exception.Message.Contains("The variable 'a' is assigned but its value is never used") -expected $true
 }
 Assert-Equal -actual $failed -expected $true
 
@@ -151,9 +150,16 @@ Assert-Equal -actual $actual -expected "Hello World"
 
 $reference_1 = @'
 using System;
-using System.Web.Script.Serialization;
+#if CORECLR
+//NoWarn -Name CS1701 -CLR Core
+//AssemblyReference -Type Newtonsoft.Json.JsonConvert -CLR Core
 
-//AssemblyReference -Name System.Web.Extensions.dll
+using Newtonsoft.Json;
+#else
+//AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
+
+using System.Web.Script.Serialization;
+#endif
 
 namespace Namespace5
 {

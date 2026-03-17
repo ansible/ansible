@@ -1,0 +1,24 @@
+- name: Check git with tag that doesn't exist
+  git:
+    repo: "{{ repo_dir }}/minimal"
+    dest: "{{ remote_tmp_dir }}/minimalrepo_nonexistent_tag"
+    version: nonexistent-tag
+  check_mode: true
+  ignore_errors: true
+  register: checked_fake_tag
+
+- name: Run git with tag that doesn't exist
+  git:
+    repo: "{{ repo_dir }}/minimal"
+    dest: "{{ remote_tmp_dir }}/minimalrepo_nonexistent_tag"
+    version: nonexistent-tag
+  ignore_errors: true
+  register: fake_tag
+
+- name: Assert correct behavior
+  assert:
+    that:
+      - checked_fake_tag is failed
+      - fake_tag is failed
+      - checked_fake_tag is not changed
+      - checked_fake_tag.changed == fake_tag.changed

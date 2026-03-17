@@ -63,7 +63,8 @@ from ...python_requirements import (
 )
 
 from ...util_common import (
-    get_injector_env,
+    get_python_injector_env,
+    get_powershell_injector_env,
 )
 
 from ...delegation import (
@@ -206,7 +207,8 @@ def get_environment_variables(
 
     if isinstance(con, LocalConnection):  # configure the controller environment
         env.update(ansible_environment(args))
-        env.update(get_injector_env(target_profile.python, env))
+        env.update(get_python_injector_env(target_profile.python, env))
+        env.update(get_powershell_injector_env(target_profile.powershell, env))
         env.update(ANSIBLE_TEST_METADATA_PATH=os.path.abspath(args.metadata_path))
 
         if isinstance(target_profile, DebuggableProfile):

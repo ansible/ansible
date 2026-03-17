@@ -14,24 +14,32 @@ Function Test-AnsiblePath {
     Param(
         [Parameter(Mandatory = $true)][string]$Path
     )
-    # Replacement for Test-Path
+
+    # First check what the provider is based on the drive or PSPath provided.
+    $provider = $drive = $null
     try {
-        $file_attributes = [System.IO.File]::GetAttributes($Path)
+        $null = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path, [ref]$provider, [ref]$drive)
     }
-    catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
+    catch [System.Management.Automation.DriveNotFoundException] {
+        # If the drive doesn't exist, the path cannot exist in any context to PowerShell.
         return $false
-    }
-    catch [NotSupportedException] {
-        # When testing a path like Cert:\LocalMachine\My, System.IO.File will
-        # not work, we just revert back to using Test-Path for this
-        return Test-Path -Path $Path
     }
 
-    if ([Int32]$file_attributes -eq -1) {
-        return $false
+    # A UNC path is always seen as the current provider location so check if it
+    # starts with \\ and treat it as a FileSystem path.
+    if ($provider.Name -eq "FileSystem" -or $Path.StartsWith("\\")) {
+        try {
+            $file_attributes = [System.IO.File]::GetAttributes($Path)
+        }
+        catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
+            return $false
+        }
+
+        return [int]$file_attributes -ne -1
     }
     else {
-        return $true
+        # Otherwise just fallback to Test-Path for the other providers.
+        return Test-Path -Path $Path
     }
 }
 

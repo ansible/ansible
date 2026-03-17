@@ -12,8 +12,11 @@ import subprocess
 import typing as t
 import yaml
 
-from contextlib import contextmanager
+from collections.abc import Mapping
+from contextlib import contextmanager, suppress
+from functools import cache
 from hashlib import sha256
+from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urldefrag
 from shutil import rmtree
@@ -338,6 +341,33 @@ class ConcreteArtifactsManager:
         self._artifact_meta_cache[collection.src] = collection_meta
         return collection_meta
 
+    def get_direct_requires_ansible(self, collection: Candidate) -> str | None:
+        """Extract requires_ansible from the on-disk collection artifact."""
+        if collection.is_concrete_artifact:
+            b_artifact_path = self.get_artifact_path(collection)
+        else:
+            b_artifact_path = self.get_galaxy_artifact_path(collection)
+
+        if collection.is_url or collection.is_file or collection.is_online_index_pointer:
+            runtime = _get_runtime_from_tar(b_artifact_path) or {}
+        elif collection.is_dir:
+            runtime = _get_runtime_from_dir(b_artifact_path) or {}
+        elif collection.is_virtual:
+            runtime = {}
+
+        if not isinstance(runtime, Mapping):
+            raise AnsibleError(
+                f"The collection {collection} (type {collection.type}) (from {collection.src}) "
+                "has an invalid meta/runtime.yml metadata. This file must contain a YAML dictionary."
+            )
+        if "requires_ansible" in runtime and not isinstance(runtime["requires_ansible"], str):
+            raise AnsibleError(
+                f"The collection {collection} (type {collection.type}) from {collection.src}) "
+                "has invalid meta/runtime.yml metadata. The value for requires_ansible must be a string."
+            )
+        # NOTE: Using None as a sentinel since it's not a valid value otherwise.
+        return runtime.get("requires_ansible")
+
     def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):
         # type: (Candidate, str, str, GalaxyToken, str, list[dict[str, str]]) -> None
         """Store collection URL, SHA256 hash and Galaxy API token.
@@ -443,7 +473,12 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             format(repo_url=to_native(git_url)),
         ) from proc_err
 
-    git_switch_cmd = git_executable, 'checkout', to_text(version)
+    if version == 'HEAD':
+        git_args = ()
+    else:
+        git_args = '-c', 'advice.detachedHead=false'
+
+    git_switch_cmd = git_executable, *git_args, 'checkout', to_text(version)
     try:
         subprocess.check_call(git_switch_cmd, cwd=b_checkout_path)
     except subprocess.CalledProcessError as proc_err:
@@ -756,3 +791,21 @@ def _tarfile_extract(
     finally:
         if tar_obj is not None:
             tar_obj.close()
+
+
+@cache
+def _get_runtime_from_dir(b_path: bytes) -> object:
+    """Load the meta/runtime.yml from a collection directory."""
+    runtime_path = Path(b_path.decode()) / "meta" / "runtime.yml"
+    with suppress(OSError):
+        return yaml_load(runtime_path.read_text())
+
+
+@cache
+def _get_runtime_from_tar(b_path: bytes) -> object:
+    """Load the meta/runtime.yml from a collection artifact."""
+    with suppress(tarfile.TarError, KeyError):
+        with tarfile.open(b_path, mode='r') as collection_tar:
+            runtime = collection_tar.getmember("meta/runtime.yml")
+            with _tarfile_extract(collection_tar, runtime) as (_member, member_obj):
+                return yaml_load(member_obj)

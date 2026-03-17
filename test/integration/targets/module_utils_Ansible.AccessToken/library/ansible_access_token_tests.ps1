@@ -108,7 +108,8 @@ $tests = [Ordered]@{
         }
         catch [Ansible.AccessToken.Win32Exception] {
             $failed = $true
-            $msg = "Failed to open process 4 with access QueryInformation (Access is denied, Win32ErrorCode 5 - 0x00000005)"
+            $error_msg = [System.ComponentModel.Win32Exception]::new(5).Message
+            $msg = "Failed to open process 4 with access QueryInformation ($error_msg, Win32ErrorCode 5 - 0x00000005)"
             $_.Exception.Message | Assert-Equal -Expected $msg
         }
         $failed | Assert-Equal -Expected $true
@@ -344,7 +345,8 @@ $tests = [Ordered]@{
         }
         catch [Ansible.AccessToken.Win32Exception] {
             $failed = $true
-            $msg = "GetTokenInformation(TokenUser) failed to get buffer length (Access is denied, Win32ErrorCode 5 - 0x00000005)"
+            $error_msg = [System.ComponentModel.Win32Exception]::new(5).Message
+            $msg = "GetTokenInformation(TokenUser) failed to get buffer length ($error_msg, Win32ErrorCode 5 - 0x00000005)"
             $_.Exception.Message | Assert-Equal -Expected $msg
         }
         finally {

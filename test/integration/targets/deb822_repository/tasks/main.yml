@@ -183,7 +183,7 @@
             state: absent
 
     - import_tasks: test.yml
-
+    - import_tasks: name_handling.yml
     - import_tasks: install.yml
   always:
     - name: uninstall python3-debian
