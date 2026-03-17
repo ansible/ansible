@@ -313,7 +313,7 @@ class TaskContext(AmbientContextBase):
 
         return self._raw_loop_results[-1].as_result_dict()
 
-    def _record_result(self, utr: UnifiedTaskResult, allow_replace: bool = False) -> None:
+    def _record_result(self, utr: UnifiedTaskResult) -> None:
         # CAUTION: This method can be called *before* start_loop when validation errors occur.
         #          That results in various instance attributes not being set.
         #          It also means that `self.task.loop_control` may have invalid values.
@@ -335,10 +335,6 @@ class TaskContext(AmbientContextBase):
             if self._raw_loop_results:
                 self._raw_loop_results.clear()
                 # RPFIX-5: we should be able to show the existing task exception (if present) here, before discarding it
-
-                if not allow_replace:
-                    # RPFIX-3: this should probably be an error
-                    display.warning('Replacing existing task result.', obj=self.task.get_ds())
 
             self._raw_loop_results.append(utr)
 
@@ -363,10 +359,6 @@ class TaskContext(AmbientContextBase):
         if item_index == result_count:
             self._raw_loop_results.append(utr)  # add new result
         elif item_index + 1 == result_count:
-            if not allow_replace:
-                # RPFIX-3: this should probably be an error
-                display.warning('Replacing existing task result.', obj=self.task)
-
             self._raw_loop_results[item_index] = utr  # replace existing result
         else:
             raise RuntimeError(f'Item index {item_index} does not match {result_count}.')
@@ -1235,16 +1227,16 @@ class UnifiedTaskResult:
         """Return a failed task result dict from the given exception."""
         utr = UnifiedTaskResult._create_from_exception(exception, accept_result_contribution=accept_result_contribution, source_is_module=False)
 
-        TaskContext.current()._record_result(utr, allow_replace=True)
+        TaskContext.current()._record_result(utr)
 
         return utr
 
     @classmethod
     @contextlib.contextmanager
-    def create_and_record(cls, result: dict[str, t.Any] | None = None, allow_replace: bool = False) -> t.Generator[t.Self]:
+    def create_and_record(cls, result: dict[str, t.Any] | None = None) -> t.Generator[t.Self]:
         utr = cls.from_action_result_dict(result or {})
         yield utr
-        TaskContext.current()._record_result(utr, allow_replace)
+        TaskContext.current()._record_result(utr)
 
     def maybe_raise_on_result(self) -> None:
         """Raise an exception if the result indicated failure."""

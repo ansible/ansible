@@ -548,7 +548,7 @@ class TaskExecutor:
                     try:
                         task_ctx.pending_changes = _task.PendingChanges()
 
-                        with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=task_ctx.task_vars), allow_replace=True) as utr:
+                        with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=task_ctx.task_vars)) as utr:
                             if not utr.failed:
                                 utr.pending_changes = task_ctx.pending_changes
                     finally:
@@ -718,7 +718,7 @@ class TaskExecutor:
             time.sleep(self._task.poll)
 
             try:
-                with UnifiedTaskResult.create_and_record(async_handler.run(task_vars=task_vars), allow_replace=True) as async_utr:
+                with UnifiedTaskResult.create_and_record(async_handler.run(task_vars=task_vars)) as async_utr:
                     pass
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
@@ -748,7 +748,7 @@ class TaskExecutor:
 
         if not async_utr.finished:
             # RPFIX-3: why not raise?
-            with UnifiedTaskResult.create_and_record(allow_replace=True) as async_failed_utr:
+            with UnifiedTaskResult.create_and_record() as async_failed_utr:
                 async_failed_utr.failed = True
                 async_failed_utr.async_result = async_utr.as_result_dict()
 
