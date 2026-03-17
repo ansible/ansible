@@ -19,12 +19,15 @@ from __future__ import annotations
 
 import fcntl
 import functools
+import errno
+import fcntl
 import os
 import random
 import shlex
 import shutil
 import subprocess
 import sys
+import time
 import tempfile
 import warnings
 import typing as t
@@ -736,9 +739,11 @@ class VaultLib:
 
 class VaultEditor:
 
-    def __init__(self, vault=None):
-        # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
-        self.vault = vault or VaultLib()
+    def __init__(self, vault=None, exclusive=False):
+    # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
+    self.vault = vault or VaultLib()
+    self.exclusive = exclusive
+    display.vvvv('exclusive=%s' % exclusive)
 
     # TODO: mv shred file stuff to it's own class
     def _shred_file_custom(self, tmp_path):
@@ -778,7 +783,7 @@ class VaultEditor:
 
                     os.fsync(fh)
 
-    def _shred_file(self, tmp_path):
+    def _shred_file(self, tmp_path, remove=True):
         """Securely destroy a decrypted file
 
         Note standard limitations of GNU shred apply (For flash, overwriting would have no effect
@@ -808,9 +813,20 @@ class VaultEditor:
         if r != 0:
             # we could not successfully execute unix shred; therefore, do custom shred.
             self._shred_file_custom(tmp_path)
+            
+        if remove:
+            os.remove(tmp_path)
 
-        os.remove(tmp_path)
-
+    def _use_direct_write(self, filename):
+        # By default concurrent writes are protected by atomic rename():
+        # shuffle_files() -> shutil.move() -> os.rename()
+        # But rename() requires write access to the target directory,
+        # otherwise shutil.move() resorts to non-atomic copy/delete.
+        return (self.exclusive
+                or not os.access(os.path.dirname(filename), os.W_OK)
+                or (os.path.exists(filename)
+                    and os.geteuid() != os.stat(filename).st_uid))
+        
     def _edit_file_helper(self, filename, secret, existing_data=None, force_save=False, vault_id=None):
 
         # Create a tempfile
@@ -845,10 +861,13 @@ class VaultEditor:
             # An existing vaultfile will always be UTF-8,
             # so decode to unicode here
             b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
-            self.write_data(b_ciphertext, tmp_path)
+            if self._use_direct_write(filename):
+                self.write_data(b_ciphertext, filename)
+            else:
+                self.write_data(b_ciphertext, tmp_path)
 
             # shuffle tmp file into place
-            self.shuffle_files(tmp_path, filename)
+                self.shuffle_files(tmp_path, filename)
             display.vvvvv(u'Saved edited file "%s" encrypted using %s and  vault id "%s"' % (to_text(filename), to_text(secret), to_text(vault_id)))
 
         # always shred temp, jic
@@ -957,7 +976,6 @@ class VaultEditor:
         # follow the symlink
         filename = self._real_path(filename)
 
-        prev = os.stat(filename)
         b_vaulttext = self.read_data(filename)
         vaulttext = to_text(b_vaulttext)
 
@@ -985,9 +1003,7 @@ class VaultEditor:
 
         self.write_data(b_new_vaulttext, filename)
 
-        # preserve permissions
-        os.chmod(filename, prev.st_mode)
-        os.chown(filename, prev.st_uid, prev.st_gid)
+
 
         display.vvvvv(u'Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
                       (to_text(filename), to_text(vault_id_used), to_text(new_vault_id), to_text(new_vault_secret)))
@@ -1059,10 +1075,10 @@ class VaultEditor:
             # file names are insecure and prone to race conditions, so remove and create securely
             if os.path.isfile(thefile):
                 if shred:
-                    self._shred_file(thefile)
-                else:
-                    os.remove(thefile)
-
+                    self._shred_file(filename, remove=False)
+            with VaultEditorLock(filename, readonly=False):
+                with open(filename, "wb") as fh:
+                    fh.write(b_file_data)
             # when setting new umask, we get previous as return
             current_umask = os.umask(0o077)
             try:
@@ -1099,7 +1115,6 @@ class VaultEditor:
         if prev is not None:
             # TODO: selinux, ACLs, xattr?
             os.chmod(dest, prev.st_mode)
-            os.chown(dest, prev.st_uid, prev.st_gid)
 
     def _editor_shell_command(self, filename):
         env_editor = C.config.get_config_value('EDITOR')
@@ -1108,6 +1123,52 @@ class VaultEditor:
 
         return editor
 
+class VaultEditorLock:
+
+    def __init__(self, path, readonly=True):
+        self.path = path
+        self.readonly = readonly
+        self.is_locked = False
+        self.fd = None
+
+    def __enter__(self):
+        for attempt in range(3):
+            self.acquire()
+            if self.is_locked:
+                return self
+            time.sleep(random.uniform(1.0, 2.0))
+        raise AnsibleVaultError('Cannot access the vault file {0} '
+                                'that is being concurrently modified. '
+                                'Please try again.'.format(self.path))
+
+# Ansible requires at least Python 2.6, which has been released in October
+# 2008. At the same time the Linux 2.6.27 has been released. NFS supports
+# atomic fcntl() and open(O_EXCL) since the kernel version 2.6.5.
+
+    def acquire(self):
+        try:
+            self.fd = open(self.path, 'r' if self.readonly else 'a+')
+        except Exception as exc:
+            raise AnsibleError(str(exc))
+        # two readers can share a lock; a first writer makes an exclusive lock
+        # which cannot be shared even with a reader
+        op = fcntl.LOCK_SH if self.readonly else fcntl.LOCK_EX
+        try:
+            fcntl.lockf(self.fd.fileno(), op | fcntl.LOCK_NB)
+            self.is_locked = True
+        except IOError as exc:
+            if exc.errno not in (errno.EACCES, errno.EAGAIN):
+                raise AnsibleError(str(exc))
+        finally:
+            if not self.is_locked:
+                self.fd.close()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.is_locked = False
+        if self.fd is not None and not self.fd.closed:
+            fcntl.lockf(self.fd.fileno(), fcntl.LOCK_UN)
+            self.fd.close()
+        return False
 
 ########################################
 #               CIPHERS                #
