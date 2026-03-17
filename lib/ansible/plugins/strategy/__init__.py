@@ -675,10 +675,6 @@ class StrategyBase:
                             # RPFIX-1: resolve_conditional failures can take down the process
                             result_utr.set_failed_when_result(original_task._resolve_conditional(original_task.failed_when, all_task_vars))
 
-                        all_task_vars[original_task.register] = result_utr.as_result_dict()  # RPFIX-1: need to account for projections here?
-
-                        # RPFIX-3: break_when never got implemented here?
-
                         if original_task.loop or original_task.loop_with:
                             # FUTURE: this value for `task` hasn't been seeing the templated values from the worker  # RPFIX-3: fixed?
                             htr = HostTaskResult(host=task_result.host, task=task_result.task, utr=result_utr)
@@ -748,7 +744,7 @@ class StrategyBase:
                 self._tqm.send_callback('v2_runner_on_ok', task_result)
 
             # register final results
-            if original_task.register:
+            if task_result.utr.registered_values:
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                 # RPFIX-3: (maybe?) hook up result cleansing again, at least for stock result dicts-
@@ -757,24 +753,9 @@ class StrategyBase:
                 # if 'invocation' in clean_copy:
                 #     del clean_copy['invocation']
 
-                # register: some_var
-                # ^ ->
-                # register:
-                #   some_var: _task.result
-                # HACK: do better - legacy syntax should be normalized on DS load as a projection instead of dealt with here
-                registered_values: _c.Mapping[str, object] | None
-
-                # RPFIX-3: hide this behind a UTR property?
-                if isinstance(original_task.register, str):
-                    registered_values = {original_task.register: task_result.utr.as_result_dict()}
-                elif isinstance(original_task.register, _c.Mapping):
-                    registered_values = task_result.utr.registered_values
-                else:
-                    registered_values = None
-
                 for target_host in host_list:
                     # RPFIX-5: ensure the right shape on RawTaskResult, not here
-                    self._variable_manager.set_nonpersistent_facts(target_host, registered_values or {})
+                    self._variable_manager.set_nonpersistent_facts(target_host, task_result.utr.registered_values)
 
             self._pending_results -= 1
 

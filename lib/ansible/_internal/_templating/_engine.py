@@ -86,6 +86,14 @@ class TemplateEncountered(Exception):
     pass
 
 
+@t.final
+@dataclasses.dataclass(kw_only=True, slots=True, frozen=True)
+class TemplateExpressionWrapper:
+    """Wrapper around a template expression which can be evaluated by the template engine."""
+
+    expression: str
+
+
 class TemplateEngine:
     """
     The main class for templating, with the main entry-point of template().
@@ -247,6 +255,9 @@ class TemplateEngine:
             if variable is None or (value_type := type(variable)) in IGNORE_SCALAR_VAR_TYPES:
                 return variable  # quickly ignore supported scalar types which are not be templated
 
+            if is_expression := type(variable) is TemplateExpressionWrapper:  # pylint: disable=unidiomatic-typecheck
+                variable = variable.expression
+
             value_is_str = isinstance(variable, str)
 
             if template_ctx := TemplateContext.current(optional=True):
@@ -272,21 +283,21 @@ class TemplateEngine:
                         template_result = _AnsibleLazyTemplateMixin._try_create(variable, lazy_options)
                     elif not lazy_options.template:
                         template_result = variable
-                    elif not is_possibly_template(variable, options.overrides):
+                    elif not is_expression and not is_possibly_template(variable, options.overrides):
                         template_result = variable
                     elif not self._trust_check(variable, skip_handler=stop_on_template):
                         template_result = variable
                     elif stop_on_template:
                         raise TemplateEncountered()
                     else:
-                        compiled_template = self._compile_template(variable, options)
+                        compiled_template = self._compile_expression(variable, options) if is_expression else self._compile_template(variable, options)
 
                         template_result = compiled_template(self.available_variables)
                         template_result = self._post_render_mutation(variable, template_result, options)
                 except TemplateEncountered:
                     raise
                 except Exception as ex:
-                    template_result = defer_template_error(ex, variable, is_expression=False)
+                    template_result = defer_template_error(ex, variable, is_expression=is_expression)
 
                 if ctx.is_top_level or mode is TemplateMode.ALWAYS_FINALIZE:
                     template_result = self._finalize_top_level_template_result(

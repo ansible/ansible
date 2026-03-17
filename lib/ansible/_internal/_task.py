@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import collections
 import contextlib
 import dataclasses
 import enum
@@ -14,11 +13,13 @@ from ansible._internal import _display_utils
 from ansible._internal._errors import _attribute_unavailable, _captured, _error_factory, _error_utils
 from ansible._internal._templating import _engine
 from ansible._internal._templating._chain_templar import ChainTemplar
+from ansible._internal._datatag import _tags
 from ansible.errors import AnsibleError, AnsibleTemplateError
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
 from ansible.module_utils._internal import _dataclass_validation, _event_utils, _messages, _traceback
 from ansible.module_utils.datatag import native_type_name, deprecator_from_collection_name, deprecate_value
 from ansible.parsing import vault as _vault
+from ansible.template import trust_as_template
 from ansible.utils.display import Display
 from ansible.utils import vars as _vars
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
@@ -60,6 +61,9 @@ CLEAN_EXCEPTIONS = frozenset(
     }
 )
 
+# RPFIX-0: bikeshed the name for _task.polymorphic_result
+POLYMORPHIC_RESULT_EXPRESSION = trust_as_template("_task.polymorphic_result")
+
 
 class NoRecordedResultError(AnsibleError):
     """Error raised when requesting recorded results prior to any being recorded."""
@@ -81,10 +85,16 @@ class CurrentTask:
     CAUTION: The shape and behavior of this type is effectively public API.
     """
 
+    def _lazy_transform(self, value: t.Any) -> t.Any:
+        """Lazily transform the given value."""
+        return TaskContext.current().task_templar.template(value, lazy_options=_engine.LazyOptions.SKIP_TEMPLATES_AND_ACCESS)
+
     @property
     def result(self) -> c.Mapping[str, object]:
+        task_ctx = TaskContext.current()
+
         try:
-            return TaskContext.current().latest_result
+            return self._lazy_transform(task_ctx.latest_result)
         except NoRecordedResultError as ex:
             # RPFIX-3: this causes multiple warnings/errors that need to be investigated, some likely stemming from late addition of pre-task `when` projections
             # [WARNING]: An error occurred in a register expression: The _task.result property is unavailable: No task result has been recorded.
@@ -102,14 +112,28 @@ class CurrentTask:
 
     @property
     def loop_result(self) -> c.Mapping[str, object]:
+        task_ctx = TaskContext.current()
+
         try:
             # in-flight projections bypass the skipped conversions by setting finalize to False
             # RPFIX-3: may need to fix Jinja's getattr/item AttributeError handling- if any code invoked beneath one of those raises AttributeError, Jinja
             #  blindly creates a new UndefinedMarker with "CurrentTask has no attr loop_result" and loses the original AttributeError detail. Repro this by
             #  tacking any bogus attr off the end of as_result_dict() here.
-            return TaskContext.current().build_loop_result(preview=True).as_result_dict()
-        except (NotALoopError, NoRecordedResultError) as ex:
+            return self._lazy_transform(task_ctx.build_loop_result(preview=True).as_result_dict())
+        except NotALoopError as ex:
             raise _attribute_unavailable.AttributeUnavailableError("The _task.loop_result property is unavailable.") from ex
+
+    @property
+    def polymorphic_result(self) -> c.Mapping[str, object]:
+        task_ctx = TaskContext.current()
+
+        if task_ctx.has_loop_exited:
+            return self._lazy_transform(task_ctx.build_loop_result().as_result_dict())
+
+        try:
+            return self._lazy_transform(task_ctx.latest_result)
+        except NoRecordedResultError as ex:
+            raise _attribute_unavailable.AttributeUnavailableError("The _task.polymorphic_result property is unavailable.") from ex
 
 
 # RPFIX-3: there isn't currently a way to emulate the classic polymorphic register behavior with a loop. If we added another property to CurrentTask that
@@ -123,10 +147,6 @@ class CurrentTask:
 #
 #     - debug:
 #         var: blar
-
-
-def create_current_task_variable_layer() -> dict[str, object]:
-    return dict(_task=CurrentTask())
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -143,8 +163,29 @@ class PendingChanges:
 class TaskContext(AmbientContextBase):
     """Ambient context that wraps task execution on workers. It provides access to the currently executing task."""
 
-    task: Task
-    task_vars: dict[str, t.Any]
+    @classmethod
+    def create(cls, task: Task, task_vars: dict[str, t.Any]) -> t.Self:
+        task_vars.update(_task=CurrentTask())
+
+        return cls(
+            _task=task,
+            _base_task_vars=task_vars,
+            _active_task_vars=task_vars,  # starts out as a reference, but becomes a copy of _base_task_vars when starting a loop item
+        )
+
+    def get_register_projections(self) -> dict[str, _engine.TemplateExpressionWrapper] | None:
+        if not self._task.register:
+            return None
+
+        return {var_name: _engine.TemplateExpressionWrapper(expression=expression) for var_name, expression in self._task.register.items()}
+
+    @property
+    def task(self) -> Task:
+        return self._task
+
+    @property
+    def task_vars(self) -> dict[str, t.Any]:
+        return self._active_task_vars
 
     @property
     def is_loop(self) -> bool:
@@ -162,6 +203,10 @@ class TaskContext(AmbientContextBase):
     def current_item_label(self) -> object:
         return self.task.loop_control.label or self.task_templar.variable_name_as_template(self._loop_var)
 
+    _task: Task
+    _base_task_vars: dict[str, t.Any]
+    _active_task_vars: dict[str, t.Any]
+    _registered_vars_enabled = False
     _raw_loop_results: list[UnifiedTaskResult] = dataclasses.field(default_factory=list)
     _loop_items: list[object] | None = None
     _has_loop_exited: bool = False
@@ -185,13 +230,13 @@ class TaskContext(AmbientContextBase):
         loop_item_task._parent = self.task._parent
         loop_item_play_context = te._play_context.copy()
 
-        self.task = loop_item_task
+        self._task = loop_item_task
         te._play_context = loop_item_play_context
 
         try:
             yield
         finally:
-            self.task = original_task
+            self._task = original_task
             te._play_context = original_play_context
 
     def start_loop(self) -> t.Generator[tuple[int, object]]:
@@ -205,6 +250,7 @@ class TaskContext(AmbientContextBase):
         items_len = len(items)
 
         for item_index, item in enumerate(self._loop_items):
+            self._active_task_vars = self._base_task_vars.copy()  # isolate changes to task vars between loop items
             self._templar = None  # we're changing the values used to calculate the templar, null it out so the next requester re-creates it
 
             self._item = item
@@ -267,42 +313,14 @@ class TaskContext(AmbientContextBase):
 
         return self._raw_loop_results[-1].as_result_dict()
 
-    @classmethod
-    def _project(cls, task: Task, templar: _engine.TemplateEngine, utr: UnifiedTaskResult) -> c.Mapping[str, t.Any]:
-        if isinstance(task.register, str):
-            return {task.register: utr.as_result_dict()}
-
-        return cls._project_items(task.register, templar)
-
-    @staticmethod
-    def _project_items(register: dict[str, str], templar: _engine.TemplateEngine) -> c.Mapping[str, t.Any]:
-        # bolt current_task into _task (or whatever) into an extended templar available variables
-        results_layer: dict[str, object] = {}
-        register_projection_results = collections.ChainMap(results_layer, create_current_task_variable_layer(), templar.available_variables)
-        register_templar = templar.extend(variables=register_projection_results)
-
-        for var_name, expression in register.items():
-            # have augmented templar with _task injected evaluate the expression and store its value under var_name
-            # register:
-            #   foo: _task.result
-            #   bar: foo.stdout
-            try:
-                register_projection_results[var_name] = register_templar.evaluate_expression(expression)
-            except Exception as ex:
-                # RPFIX-3: file a separate issue: this warning shows up twice- getting captured by the deferredwarningcontext and sent to callbacks -
-                #          any warning raised this way under a DWC will likely show up multiple times.
-                display.error_as_warning(msg="An error occurred in a register expression.", exception=ex, obj=expression)
-                # RPFIX-3: make this an unrecoverable error. If none of the above occur, there could be a stale projection value in vars from a previous
-                # successful projection or loop.
-
-        return results_layer
-
     def _record_result(self, utr: UnifiedTaskResult, allow_replace: bool = False) -> None:
         # CAUTION: This method can be called *before* start_loop when validation errors occur.
         #          That results in various instance attributes not being set.
         #          It also means that `self.task.loop_control` may have invalid values.
 
-        # can we get away with only returning ignore_errors on task_fields, then? I think so...
+        self._enable_registered_vars()
+
+        # RPFIX-9: can we get away with only returning ignore_errors on task_fields, then? I think so...
 
         if isinstance(self.task.ignore_errors, bool):
             # HACK: avoid setting to True due to template failures -- this should go away once field attribute templating is fixed
@@ -312,7 +330,8 @@ class TaskContext(AmbientContextBase):
             # HACK: avoid setting to True due to template failures -- this should go away once field attribute templating is fixed
             utr.ignore_unreachable = self.task.ignore_unreachable
 
-        if not TaskContext.current().is_loop:
+        # _item_index will be None if start_loop was not called due to a field attribute error
+        if not TaskContext.current().is_loop or self._item_index is None:
             if self._raw_loop_results:
                 self._raw_loop_results.clear()
                 # RPFIX-5: we should be able to show the existing task exception (if present) here, before discarding it
@@ -322,9 +341,6 @@ class TaskContext(AmbientContextBase):
                     display.warning('Replacing existing task result.', obj=self.task.get_ds())
 
             self._raw_loop_results.append(utr)
-
-            if self.task.register:
-                utr.registered_values = TaskContext._project(self.task, self.task_templar, utr)
 
             return
 
@@ -344,9 +360,7 @@ class TaskContext(AmbientContextBase):
         item_index = self._item_index
         result_count = len(self._raw_loop_results)
 
-        if item_index is None:
-            pass  # _item_index will be None if start_loop was not called due to a field attribute error
-        elif item_index == result_count:
+        if item_index == result_count:
             self._raw_loop_results.append(utr)  # add new result
         elif item_index + 1 == result_count:
             if not allow_replace:
@@ -356,12 +370,6 @@ class TaskContext(AmbientContextBase):
             self._raw_loop_results[item_index] = utr  # replace existing result
         else:
             raise RuntimeError(f'Item index {item_index} does not match {result_count}.')
-
-        # update the local copy of vars with the registered value, if specified,
-        # or any facts which may have been generated by the module execution
-        if self.task.register:
-            utr.registered_values = TaskContext._project(self.task, self.task_templar, utr)
-            self.task_vars.update(utr.registered_values)
 
         self._populate_item_label(utr)
 
@@ -403,9 +411,6 @@ class TaskContext(AmbientContextBase):
 
         # RPFIX-3: all the fields set in this loop could be converted to properties
         for item in self._raw_loop_results:
-            if item.registered_values is not None:
-                utr.registered_values = item.registered_values
-
             if item.no_log:
                 utr.no_log = True  # ensure no_log processing recognizes at least one item needs to be censored
 
@@ -421,6 +426,25 @@ class TaskContext(AmbientContextBase):
             utr.msg = 'All items completed'
 
         return utr
+
+    def update_task_vars(self, variables: dict[str, t.Any]) -> None:
+        """Update task variables for both the active task and, in the case of loops, subsequent tasks."""
+        for key, value in variables.items():
+            self._base_task_vars[key] = self._active_task_vars[key] = value
+
+    def _enable_registered_vars(self) -> None:
+        """
+        Inject registered variable expressions into task vars.
+        This needs to be done one time after the action handler runs, or if a task results in no action running.
+        Unlike other modifications to task vars, these changes will be persisted between loop items.
+        """
+        if self._registered_vars_enabled:
+            return
+
+        if register_projections := self.get_register_projections():
+            self.update_task_vars(register_projections)
+
+        self._registered_vars_enabled = True
 
 
 TaskArgsFinalizerCallback = t.Callable[[str, t.Any, _engine.TemplateEngine, t.Any], t.Any]
@@ -979,6 +1003,63 @@ class UnifiedTaskResult:
             result = _vars.transform_to_native_types(result)
 
         return result
+
+    def finalize_registered_values(self) -> None:
+        task_ctx = TaskContext.current()
+
+        if not (register_projections := task_ctx.get_register_projections()):
+            return
+
+        registered_values = {}
+        registered_errors = []
+
+        for var_name, expression in register_projections.items():
+            try:
+                registered_values[var_name] = task_ctx.task_templar.template(expression)
+            except Exception as ex:
+                event = _error_factory.ControllerEventFactory.from_exception(ex, False)
+                event_message = _event_utils.format_event_brief_message(event)
+                undef_message = f"The variable {var_name!r} is undefined because its register expression failed: {event_message}"
+                undef_value = trust_as_template(f"{{{{ undef({undef_message!r}) }}}}")
+
+                if expression_origin := _tags.Origin.get_tag(expression.expression):
+                    undef_value = expression_origin.tag(undef_value)
+
+                registered_values[var_name] = undef_value
+
+                try:
+                    raise Exception(f"Register projection {var_name!r} failed.") from ex
+                except Exception as ex:
+                    registered_errors.append(ex)
+
+        self.registered_values = registered_values
+
+        if not registered_errors:
+            return
+
+        chain = (
+            _messages.EventChain(
+                msg_reason="The original task error before register failed was:",
+                traceback_reason="The above exception occurred before the following exception:",
+                event=self.exception.event,
+            )
+            if self.exception
+            else None
+        )
+
+        try:
+            raise ExceptionGroup(
+                f"Task failed due to errors in {len(registered_errors)} out of {len(register_projections)} register projections.",
+                registered_errors,
+            )
+        except ExceptionGroup as ex:
+            event = _error_factory.ControllerEventFactory.from_exception(ex, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR))
+            event = dataclasses.replace(event, chain=chain)
+
+            self.failed = True
+            self.exception = _messages.ErrorSummary(
+                event=event,
+            )
 
     def _extend_warnings(self, warnings: c.Iterable[_messages.WarningSummary] | None) -> None:
         if not warnings:

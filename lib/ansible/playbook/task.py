@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import typing as t
 
-from collections import ChainMap
-
 from ansible import constants as C
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError, AnsibleValueOmittedError
@@ -380,6 +378,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
                 # RPFIX-3: we've validated the keys, but need validation to ensure that dict values are non-template strings
             else:
                 validate_variable_name(value)
+                setattr(self, name, {value: _task.POLYMORPHIC_RESULT_EXPRESSION})  # translate to a register projection
         except Exception as ex:
             raise AnsibleParserError("Invalid 'register' specified.", obj=value) from ex
 
@@ -619,9 +618,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         if not conditional:
             return True, None
 
-        # bolt current_task into _task (or whatever) into an extended templar available variables
-        augmented_vars = ChainMap({}, _task.create_current_task_variable_layer(), variables)
-        engine = TemplateEngine(self._loader, variables=augmented_vars)
+        engine = TemplateEngine(self._loader, variables=variables)
 
         for item in conditional:
             if not engine.evaluate_conditional(item):

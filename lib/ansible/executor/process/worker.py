@@ -191,7 +191,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         signal.signal(signal.SIGINT, self._term)
         signal.signal(signal.SIGTERM, self._term)
         try:
-            with _task.TaskContext(task=self._task, task_vars=self._task_vars):
+            with _task.TaskContext.create(task=self._task, task_vars=self._task_vars):
                 return self._run()
         except BaseException:
             self._hard_exit(traceback.format_exc())
@@ -219,6 +219,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         )
 
         utr = te.run()
+        utr.finalize_registered_values()
 
         self._host.vars = dict()
         self._host.groups = []
@@ -244,6 +245,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
                 raise AnsibleError("Task result omitted due to queue send failure.") from ex
             except Exception as ex_wrapper:
                 utr = _task.UnifiedTaskResult.create_from_action_exception(ex_wrapper)
+                utr.finalize_registered_values()
 
                 # ignore the real task result and don't allow result object contribution from the exception (in case the pickling error was related)
                 # RPFIX-3: we need to come up with a way to skip sampling task fields on this call since they could be the source of the problem

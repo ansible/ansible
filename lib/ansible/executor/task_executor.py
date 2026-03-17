@@ -104,6 +104,8 @@ class TaskExecutor:
 
         display.debug("in run() - task %s" % self._task._uuid)
 
+        task_ctx = TaskContext.current()
+
         try:
             try:
                 items = self._get_loop_items()
@@ -125,7 +127,7 @@ class TaskExecutor:
         except Exception as ex:
             utr = UnifiedTaskResult.create_from_action_exception(ex)
 
-            self._task.update_result_no_log(TaskContext.current().task_templar, utr)
+            self._task.update_result_no_log(task_ctx.task_templar, utr)
 
             if not isinstance(ex, AnsibleError):
                 utr.msg = f'Unexpected failure during task execution: {utr.msg}'
@@ -201,7 +203,6 @@ class TaskExecutor:
         task_ctx = TaskContext.current()
 
         task_ctx._loop_items = items
-        task_vars = task_ctx.task_vars
 
         self._task.loop_control.post_validate(templar=task_ctx.task_templar)
         self._check_loop_control()
@@ -222,9 +223,6 @@ class TaskExecutor:
                 last_loop_task = self._task
 
                 utr = self._execute()
-
-                if self._task.register:
-                    task_vars.update(TaskContext._project(self._task, task_ctx.task_templar, utr))
 
                 self._update_task_connection()
 
@@ -252,7 +250,7 @@ class TaskExecutor:
                     task_ctx.task_templar,
                 )
 
-                if self._task._resolve_conditional(break_when, task_vars):
+                if self._task._resolve_conditional(break_when, task_ctx.task_vars):
                     task_ctx.record_break_when()
                     break
 
@@ -347,6 +345,7 @@ class TaskExecutor:
         # The captured warnings/deprecations are a superset of the ones from the result, and may have been converted from a dict to a dataclass.
         # These are then used to supersede the entries in the result.
 
+        # RPFIX-0: warnings populated here won't be visible during any of the on-demand RP queries, only after the final registration, is that a problem?
         utr.finalize_warnings(warning_ctx)
 
         return utr
@@ -370,15 +369,11 @@ class TaskExecutor:
         """
         task_ctx = TaskContext.current()
 
-        # RPFIX-1: make sure we don't call anything using task context's templar, since it won't be post_connection_templar
-        task_templar = task_ctx.task_templar
-        task_vars = task_ctx.task_vars
-
         self._calculate_delegate_to()
 
         context_validation_error = None
 
-        task_vars_with_magic_vars = task_vars.copy()  # copy of task vars with connection vars erased/augmented for delegate_to
+        task_vars_with_magic_vars = task_ctx.task_vars.copy()  # copy of task vars with connection vars erased/augmented for delegate_to
 
         try:
             # TODO: remove play_context as this does not take delegation nor loops correctly into account,
@@ -388,11 +383,11 @@ class TaskExecutor:
             # apply the given task's information to the connection info,
             # which may override some fields already set by the play or
             # the options specified on the command line
-            self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=task_vars, templar=task_templar)
+            self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=task_ctx.task_vars, templar=task_ctx.task_templar)
 
             # fields set from the play/task may be based on task vars, so we have to
             # do the same kind of post validation step on it here before we use it.
-            self._play_context.post_validate(templar=task_templar)
+            self._play_context.post_validate(templar=task_ctx.task_templar)
 
             # now that the play context is finalized, if the remote_addr is not set
             # default to using the host's address field as the remote address
@@ -450,7 +445,7 @@ class TaskExecutor:
                 raise context_validation_error  # pylint: disable=raising-bad-type
 
         # Now we do final validation on the task, which sets all fields to their final values.
-        self._task.post_validate(templar=task_templar.extend(variables=task_vars_with_magic_vars))  # should be handled by a context!
+        self._task.post_validate(templar=task_ctx.task_templar.extend(variables=task_vars_with_magic_vars))  # should be handled by a context!
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
@@ -482,12 +477,12 @@ class TaskExecutor:
         # setup cvars copy, used for all connection related templating
         if self._task.delegate_to:
             # use vars from delegated host (which already include task vars) instead of original host
-            cvars = task_vars.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            cvars = task_ctx.task_vars.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
         else:
             # just use normal host vars
-            cvars = task_vars
+            cvars = task_ctx.task_vars
 
-        connection_templar = task_templar.extend(variables=cvars)  # should be managed by a context!
+        connection_templar = task_ctx.task_templar.extend(variables=cvars)  # should be managed by a context!
 
         # use magic var if it exists, if not, let task inheritance do it's thing.
         if cvars.get('ansible_connection') is not None:
@@ -511,20 +506,15 @@ class TaskExecutor:
 
         plugin_vars = self._set_connection_options(cvars, connection_templar)
 
-        # make a copy of the job vars here, as we update them here and later,
-        # but don't want to pollute original
-        post_connection_vars = task_vars.copy()
         # update with connection info (i.e ansible_host/ansible_user)
-        self._connection.update_vars(post_connection_vars)
-
-        post_connection_templar = task_templar.extend(variables=post_connection_vars)
+        self._connection.update_vars(task_ctx.task_vars)
 
         # TODO: eventually remove as pc is taken out of the resolution path
         # feed back into pc to ensure plugins not using get_option can get correct value
         self._connection._play_context = self._play_context.set_task_and_variable_override(
             task=self._task,
-            variables=post_connection_vars,
-            templar=post_connection_templar,
+            variables=task_ctx.task_vars,
+            templar=task_ctx.task_templar,
         )
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules, right now rely on remote_is_local connection
@@ -534,7 +524,7 @@ class TaskExecutor:
             cvars['ansible_python_interpreter'] = sys.executable
 
         # get handler
-        self._handler, _module_context = self._get_action_handler_with_module_context(templar=post_connection_templar)
+        self._handler, _module_context = self._get_action_handler_with_module_context(templar=task_ctx.task_templar)
 
         # self._connection should have its final value for this task/loop-item by this point; record on the task object
         self._update_task_connection()
@@ -558,7 +548,7 @@ class TaskExecutor:
                     try:
                         task_ctx.pending_changes = _task.PendingChanges()
 
-                        with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=post_connection_vars), allow_replace=True) as utr:
+                        with UnifiedTaskResult.create_and_record(self._handler.run(task_vars=task_ctx.task_vars), allow_replace=True) as utr:
                             if not utr.failed:
                                 utr.pending_changes = task_ctx.pending_changes
                     finally:
@@ -568,14 +558,9 @@ class TaskExecutor:
                 self._handler.cleanup()
             display.debug("handler run complete")
 
-            # update the local copy of vars with the registered value, if specified,
-            # or any facts which may have been generated by the module execution
-            if self._task.register:
-                post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
-
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not utr.skipped and not utr.failed:
-                    utr = self._poll_async_result(utr=utr, templar=post_connection_templar, task_vars=post_connection_vars)
+                    utr = self._poll_async_result(utr=utr, templar=task_ctx.task_templar, task_vars=task_ctx.task_vars)
 
                     if utr.failed:
                         self._final_q.send_callback('v2_runner_on_async_failed', self._host, self._task, utr)
@@ -586,29 +571,26 @@ class TaskExecutor:
                 if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                     if not self._task.delegate_to or not self._task.delegate_facts:
                         # RPFIX-1: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
-                        post_connection_vars.update(utr.ansible_facts)
+                        task_ctx.update_task_vars(utr.ansible_facts)
 
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
-                    post_connection_vars['ansible_facts'] = combine_vars(post_connection_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts))
+                    task_ctx.update_task_vars(dict(
+                        ansible_facts=combine_vars(task_ctx.task_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts)),
+                    ))
+
                     # RPFIX-1: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
                     if _INJECT_FACTS:
                         if _INJECT_FACTS_ORIGIN == 'default':
                             cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(utr.ansible_facts).items()}
                         else:
                             cleaned_toplevel = clean_facts(utr.ansible_facts)
-                        post_connection_vars.update(cleaned_toplevel)
+
+                        task_ctx.update_task_vars(cleaned_toplevel)
 
             # Make attempts and retries available early to allow their use in changed/failed_when
             if retries > 1:
                 utr.attempts = attempt
-
-            # re-update the local copy of vars with the registered value, if specified,
-            # or any facts which may have been generated by the module execution
-            # This gives changed/failed_when access to additional recently modified
-            # attributes of result
-            if self._task.register:
-                post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
 
             # RPFIX-3: ideally add_host/add_group cases would skip all this logic- it's at-best redundant because we can't answer the questions until
             #  `changed` has been computed on the controller; failures here could obscure/confuse the real problem.
@@ -627,51 +609,34 @@ class TaskExecutor:
 
                 try:
                     if self._task.changed_when:
-                        utr.changed = self._task._resolve_conditional(self._task.changed_when, post_connection_vars)
-                        if self._task.register:
-                            post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
+                        utr.changed = self._task._resolve_conditional(self._task.changed_when, task_ctx.task_vars)
                 except AnsibleError as e:
                     # RPFIX-3: shouldn't an exception here be handled the same way as for failed_when? (and same for break_when, when, until?)
                     utr.set_changed_when_result_on_failure(e)
                 else:
                     try:
                         if self._task.failed_when:
-                            if self._task.register:  # RPFIX-3: this is way too frequent, optimize away
-                                post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
-
-                            utr.set_failed_when_result(self._task._resolve_conditional(self._task.failed_when, post_connection_vars))
+                            utr.set_failed_when_result(self._task._resolve_conditional(self._task.failed_when, task_ctx.task_vars))
                     except AnsibleError as e:
                         utr.set_failed_when_result(e)
 
             if retries > 1:
-                if self._task.register:  # RPFIX-3: this is way too frequent, optimize away
-                    post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
-
-                if self._task._resolve_conditional(self._task.until or [not utr.failed], post_connection_vars):
+                if self._task._resolve_conditional(self._task.until or [not utr.failed], task_ctx.task_vars):
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
                     if attempt < retries:
                         utr.retries = retries
                         utr.attempts = attempt + 1
-                        # projection results are potentially invalidated when `attempts` changes; rerun them
-                        if self._task.register:
-                            post_connection_vars.update(TaskContext._project(self._task, post_connection_templar, utr))
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
                         self._final_q.send_callback('v2_runner_retry', self._host, self._task, utr)
                         time.sleep(delay)
-                        self._handler = self._get_action_handler(templar=post_connection_templar)
+                        self._handler = self._get_action_handler(templar=task_ctx.task_templar)
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
                 utr.attempts = retries - 1
                 utr.failed = True
-
-        # do the final update of the local variables here, for both registered
-        # values and any facts which may have been created
-        if self._task.register:
-            utr.registered_values = TaskContext._project(self._task, post_connection_templar, utr)
-            task_vars.update(utr.registered_values)
 
         if _task.VariableLayer.CACHEABLE_FACT not in utr.pending_changes.register_host_variables and utr.ansible_facts:
             utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
@@ -679,10 +644,13 @@ class TaskExecutor:
         if utr.ansible_facts and self._task.action not in C._ACTION_DEBUG:
             if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
                 # RPFIX-3: when delegating facts, it appears that we're incorrectly updating the task host's vars here (pre-existing issue)
-                task_vars.update(utr.ansible_facts)
+                task_ctx.update_task_vars(utr.ansible_facts)
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars
-                task_vars['ansible_facts'] = combine_vars(task_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts))
+                task_ctx.update_task_vars(dict(
+                    ansible_facts=combine_vars(task_ctx.task_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts)),
+                ))
+
                 if _INJECT_FACTS:
                     if _INJECT_FACTS_ORIGIN == 'default':
                         # This happens x2 due to loops and being able to use values in subsequent iterations
@@ -690,7 +658,8 @@ class TaskExecutor:
                         cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(utr.ansible_facts).items()}
                     else:
                         cleaned_toplevel = clean_facts(utr.ansible_facts)
-                    task_vars.update(cleaned_toplevel)
+
+                    task_ctx.update_task_vars(cleaned_toplevel)
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
