@@ -594,9 +594,6 @@ class TaskExecutor:
             if retries > 1:
                 utr.attempts = attempt
 
-            # RPFIX-3: ideally add_host/add_group cases would skip all this logic- it's at-best redundant because we can't answer the questions until
-            #  `changed` has been computed on the controller; failures here could obscure/confuse the real problem.
-
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
             if not utr.skipped:
