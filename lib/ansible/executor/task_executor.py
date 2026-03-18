@@ -575,7 +575,10 @@ class TaskExecutor:
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     task_ctx.update_task_vars(dict(
-                        ansible_facts=combine_vars(task_ctx.task_vars.get('ansible_facts', {}), namespace_facts(utr.ansible_facts)['ansible_facts']),
+                        ansible_facts=combine_vars(
+                            task_ctx.task_vars.get('ansible_facts', {}),
+                            namespace_facts(utr.ansible_facts)['ansible_facts'],
+                        ),
                     ))
 
                     # RPFIX-1: ???: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
