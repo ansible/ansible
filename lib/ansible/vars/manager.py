@@ -71,6 +71,18 @@ def _deprecate_top_level_fact(value: t.Any) -> t.Any:
     return _DEPRECATE_TOP_LEVEL_FACT_TAG.tag(value)
 
 
+_INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
+
+
+def _clean_and_deprecate_top_level_facts(facts: Mapping[str, object]) -> dict[str, object]:
+    if _INJECT_FACTS_ORIGIN == 'default':
+        cleaned_facts = {k: _deprecate_top_level_fact(v) if k != 'ansible_local' else v for k, v in clean_facts(facts).items()}
+    else:
+        cleaned_facts = clean_facts(facts)
+
+    return cleaned_facts
+
+
 def preprocess_vars(a):
     """
     Ensures that vars contained in the parameter passed in are
@@ -295,15 +307,11 @@ class VariableManager:
 
                 all_vars |= namespace_facts(facts)
 
-                inject, origin = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
                 # push facts to main namespace
                 # RPFIX-1: ???: ensure that deprecated values from inject facts as vars are not mixed with the non-deprecated ones remaining under ansible_facts
                 #  also, deprecation can probably be done once on the way in instead of on every vars stack.
-                if inject:
-                    if origin == 'default':
-                        clean_top = {k: (_deprecate_top_level_fact(v) if k != 'ansible_local' else v) for k, v in clean_facts(facts).items()}
-                    else:
-                        clean_top = clean_facts(facts)
+                if _INJECT_FACTS:
+                    clean_top = _clean_and_deprecate_top_level_facts(facts)
                     all_vars = _combine_and_track(all_vars, clean_top, "facts")
                 else:
                     # always 'promote' ansible_local, even if empty

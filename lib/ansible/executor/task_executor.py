@@ -40,8 +40,8 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
-from ansible.vars.clean import namespace_facts, clean_facts
-from ansible.vars.manager import _deprecate_top_level_fact
+from ansible.vars.clean import namespace_facts
+from ansible.vars.manager import _clean_and_deprecate_top_level_facts, _INJECT_FACTS
 from ansible._internal._errors import _task_timeout
 from ansible._internal import _task
 from ansible.playbook.task import Task
@@ -50,8 +50,6 @@ from ansible.executor.task_queue_manager import FinalQueue
 
 display = Display()
 
-
-_INJECT_FACTS, _INJECT_FACTS_ORIGIN = C.config.get_config_value_and_origin('INJECT_FACTS_AS_VARS')
 
 _DELEGATED_CONNECTION_PLUGIN_VAR_NAMES = frozenset({  # RPFIX-5: bikeshed name
     'ansible_host',
@@ -566,29 +564,34 @@ class TaskExecutor:
                     else:
                         self._final_q.send_callback('v2_runner_on_async_ok', self._host, self._task, utr)
 
-            if utr.ansible_facts and self._task.action not in C._ACTION_DEBUG:
-                if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
-                    if not self._task.delegate_to or not self._task.delegate_facts:
-                        # RPFIX-1: ???: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
-                        task_ctx.update_task_vars(utr.ansible_facts)
+            if utr.ansible_facts and _task.VariableLayer.CACHEABLE_FACT not in utr.pending_changes.register_host_variables:
+                # For backward compatibility, if the action provided ansible_facts, use that as the CACHEABLE_FACT layer if the action did not provide one.
+                utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
 
-                else:
-                    # TODO: cleaning of facts should eventually become part of taskresults instead of vars
+            # Variable layers should be reflected on task vars in the same way they will be handled by variable manager.
+            # What occurs below is a partial re-implementation of variable manager, and thus does not fully reflect its behavior.
+            # These updates are only done for the current host.
+
+            if not self._task.delegate_to or not self._task.delegate_facts:
+                if cacheable_fact_layer := utr.pending_changes.register_host_variables.get(_task.VariableLayer.CACHEABLE_FACT):
                     task_ctx.update_task_vars(dict(
                         ansible_facts=combine_vars(
                             task_ctx.task_vars.get('ansible_facts', {}),
-                            namespace_facts(utr.ansible_facts)['ansible_facts'],
+                            namespace_facts(cacheable_fact_layer)['ansible_facts'],
                         ),
                     ))
 
-                    # RPFIX-1: ???: does this correctly handle `ansible_` prefix addition/removal consistent with INJECT_FACTS_AS_VARS
                     if _INJECT_FACTS:
-                        if _INJECT_FACTS_ORIGIN == 'default':
-                            cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(utr.ansible_facts).items()}
-                        else:
-                            cleaned_toplevel = clean_facts(utr.ansible_facts)
+                        task_ctx.update_task_vars(_clean_and_deprecate_top_level_facts(cacheable_fact_layer))
 
-                        task_ctx.update_task_vars(cleaned_toplevel)
+                if include_vars_layer := utr.pending_changes.register_host_variables.get(_task.VariableLayer.INCLUDE_VARS):
+                    task_ctx.update_task_vars(include_vars_layer)
+
+                if ephemeral_fact_layer := utr.pending_changes.register_host_variables.get(_task.VariableLayer.EPHEMERAL_FACT):
+                    task_ctx.update_task_vars(ephemeral_fact_layer)
+
+            if register_vars_layer := utr.pending_changes.register_host_variables.get(_task.VariableLayer.REGISTER_VARS):
+                task_ctx.update_task_vars(register_vars_layer)
 
             # Make attempts and retries available early to allow their use in changed/failed_when
             if retries > 1:
@@ -636,9 +639,6 @@ class TaskExecutor:
                 # we ran out of attempts, so mark the result as failed
                 utr.attempts = retries - 1
                 utr.failed = True
-
-        if _task.VariableLayer.CACHEABLE_FACT not in utr.pending_changes.register_host_variables and utr.ansible_facts:
-            utr.pending_changes.register_host_variables[_task.VariableLayer.CACHEABLE_FACT] = utr.ansible_facts
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification

@@ -694,7 +694,9 @@ class StrategyBase:
                         else:
                             potentially_delegated_host_list = original_host_list
 
-                        for variable_layer, variables in result_utr.pending_changes.register_host_variables.items():
+                        # Apply changes from register_host_variables to variable manager in sorted order,
+                        # to ensure consistent variable precedence based on layer.
+                        for variable_layer, variables in sorted(result_utr.pending_changes.register_host_variables.items()):
                             match variable_layer:
                                 case _task.VariableLayer.REGISTER_VARS:
                                     for target_host in original_host_list:

@@ -727,13 +727,17 @@ def _convert_deprecations(value: object) -> list[_messages.DeprecationSummary] |
 DROP_AND_WARN = ResolvedField(name='__drop__', type=str, optional=True, field=None, metadata=FieldSettings())
 
 
-class VariableLayer(enum.Enum):
+class VariableLayer(enum.IntEnum):
     """Variable layer at which variables are registered."""
 
     # RPFIX-1: API: this needs to be part of the public API, unless we're not allowing collections to register at non-default layers initially
+
+    # IMPORTANT: The order of these enum values determines the order in which they will be applied to variable manager.
+    #            This matters for precedence of layers for which variable manager does not independently track.
+
     CACHEABLE_FACT = enum.auto()
-    EPHEMERAL_FACT = enum.auto()
     INCLUDE_VARS = enum.auto()
+    EPHEMERAL_FACT = enum.auto()
     REGISTER_VARS = enum.auto()  # RPFIX-3: this will be used when UnifiedTaskResult.registered_values is killed off
 
 
