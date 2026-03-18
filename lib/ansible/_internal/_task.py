@@ -830,6 +830,30 @@ class UnifiedTaskResult:
     def ignore_unreachable(self, value: bool) -> None:
         self._ignore_unreachable = value
 
+    _warnings: list[_messages.WarningSummary] | None = dataclasses.field(
+        default=None,
+        metadata=import_export("warnings", conversion_func=_convert_warnings),
+    )
+
+    @property
+    def warnings(self) -> list[_messages.WarningSummary] | None:
+        if (current_warnings := self._warnings) is None and (warning_ctx := _display_utils.DeferredWarningContext.current(optional=True)):
+            current_warnings = warning_ctx.get_warnings()
+
+        return current_warnings
+
+    _deprecations: list[_messages.DeprecationSummary] | None = dataclasses.field(
+        default=None,
+        metadata=import_export("deprecations", conversion_func=_convert_deprecations),
+    )
+
+    @property
+    def deprecations(self) -> list[_messages.DeprecationSummary] | None:
+        if (current_deprecations := self._deprecations) is None and (warning_ctx := _display_utils.DeferredWarningContext.current(optional=True)):
+            current_deprecations = warning_ctx.get_deprecation_warnings()
+
+        return current_deprecations
+
     failed_when_result: object | None = dataclasses.field(default=None, metadata=export_only())
 
     ansible_facts: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export())
@@ -843,8 +867,6 @@ class UnifiedTaskResult:
     suppress_tmpdir_delete: bool | None = dataclasses.field(default=None, metadata=field("_ansible_suppress_tmpdir_delete", source=Source.ANY))
     module_stderr: str | None = dataclasses.field(default=None, metadata=export_only())
     module_stdout: str | None = dataclasses.field(default=None, metadata=export_only())
-    warnings: list[_messages.WarningSummary] | None = dataclasses.field(default=None, metadata=import_export(conversion_func=_convert_warnings))
-    deprecations: list[_messages.DeprecationSummary] | None = dataclasses.field(default=None, metadata=import_export(conversion_func=_convert_deprecations))
     result_data: dict[str, object] = dataclasses.field(default_factory=dict)
     is_module: bool
     attempts: int | None = dataclasses.field(default=None, metadata=export_only())
@@ -1059,19 +1081,19 @@ class UnifiedTaskResult:
         if not warnings:
             return
 
-        if not self.warnings:
-            self.warnings = []
+        if self._warnings is None:
+            self._warnings = []
 
-        self.warnings.extend(warnings)
+        self._warnings.extend(warnings)
 
     def _extend_deprecations(self, deprecations: c.Iterable[_messages.DeprecationSummary]) -> None:
         if not deprecations:
             return
 
-        if not self.deprecations:
-            self.deprecations = []
+        if self._deprecations is None:
+            self._deprecations = []
 
-        self.deprecations.extend(deprecations)
+        self._deprecations.extend(deprecations)
 
     @classmethod
     def convert_field(cls, resolved_field: ResolvedField, value: object) -> object:
@@ -1197,10 +1219,10 @@ class UnifiedTaskResult:
 
     def finalize_warnings(self, warning_ctx: _display_utils.DeferredWarningContext) -> None:
         if warnings := warning_ctx.get_warnings():
-            self.warnings = warnings
+            self._warnings = warnings
 
         if deprecation_warnings := warning_ctx.get_deprecation_warnings():
-            self.deprecations = deprecation_warnings
+            self._deprecations = deprecation_warnings
 
     @property
     def _captured_error_message(self) -> str:

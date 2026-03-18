@@ -343,7 +343,6 @@ class TaskExecutor:
         # The captured warnings/deprecations are a superset of the ones from the result, and may have been converted from a dict to a dataclass.
         # These are then used to supersede the entries in the result.
 
-        # RPFIX-1: ???: warnings populated here won't be visible during any of the on-demand RP queries, only after the final registration, is that a problem?
         utr.finalize_warnings(warning_ctx)
 
         return utr
