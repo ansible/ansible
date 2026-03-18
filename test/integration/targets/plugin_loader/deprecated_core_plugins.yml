@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: run a deprecated core module
+      deprecated_core_module:
+      register: deprecated_module
+
+    - name: run a task under a deprecated core connection
+      ping:
+      vars:
+        ansible_connection: deprecated_core_connection
+      register: deprecated_connection
+
+    - assert:
+        that:
+          - deprecated_module.deprecations | selectattr('msg', 'search', 'test module deprecation warning text') | length == 1
+          - deprecated_connection.deprecations | selectattr('msg', 'search', 'test connection deprecation warning text') | length == 1

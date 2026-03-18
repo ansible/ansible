@@ -5,6 +5,10 @@ plugin_routing:
     # test entries
     redirected_local:
       redirect: ansible.builtin.local
+    deprecated_core_connection:
+      deprecation:
+        removal_version: "2.999"
+        warning_text: test connection deprecation warning text
     buildah:
       redirect: containers.podman.buildah
     podman:
@@ -56,6 +60,11 @@ plugin_routing:
     # test entry
     uses_redirected_action:
       redirect: ansible.builtin.ping
+    # test entry
+    deprecated_core_module:
+      deprecation:
+        removal_version: '2.999'
+        warning_text: test module deprecation warning text
     podman_container_info:
       redirect: containers.podman.podman_container_info
     podman_image_info:
