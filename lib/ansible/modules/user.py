@@ -45,6 +45,8 @@ options:
     seuser:
         description:
             - Optionally sets the C(seuser) type C(user_u) on SELinux enabled systems.
+            - This parameter is silently ignored on systems where SELinux is not enabled.
+              A warning will be emitted in this case.
         type: str
         version_added: "2.1"
     group:
@@ -743,7 +745,7 @@ class User(object):
             if self.non_unique:
                 cmd.append('-o')
 
-        if self.seuser is not None:
+        if self.seuser is not None and self.module.selinux_enabled():
             cmd.append('-Z')
             cmd.append(self.seuser)
         if self.group is not None:
@@ -3424,6 +3426,12 @@ def main():
 
     user = User(module)
     user.check_password_encrypted()
+
+    if user.seuser is not None and not module.selinux_enabled():
+        module.warn(
+            f"'seuser' is set to '{user.seuser}' but SELinux is not enabled on "
+            f"this system. The 'seuser' parameter will be ignored."
+        )
 
     module.debug('User instantiated - platform %s' % user.platform)
     if user.distribution:

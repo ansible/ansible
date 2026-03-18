@@ -34,4 +34,5 @@
     - ansible_distribution != 'Alpine'
 - include_tasks: test_freebsd_nonexistent.yml
   when: ansible_facts.system == 'FreeBSD'
+- import_tasks: test_seuser_warning.yml
 - import_tasks: ssh_keygen.yml
