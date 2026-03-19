@@ -547,7 +547,6 @@ class PluginLoader:
         except ImportError:
             return None
 
-
         # FIXME: shouldn't need this...
         try:
             # force any type-specific metadata postprocessing to occur
