@@ -565,6 +565,28 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 
+def get_submodule_branch(git_path, module, dest, submodule):
+    """Get the configured branch for a submodule from .gitmodules.
+
+    Falls back to the remote HEAD if no branch is configured.
+    """
+    cmd = [git_path, 'config', '-f', '.gitmodules',
+           f'submodule.{submodule}.branch']
+    rc, out, _err = module.run_command(cmd, cwd=dest)
+    if rc == 0 and out.strip():
+        return out.strip()
+
+    # No branch configured in .gitmodules, use remote HEAD
+    submodule_path = os.path.join(dest, submodule)
+    cmd = [git_path, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD']
+    rc, out, _err = module.run_command(cmd, cwd=submodule_path)
+    if rc == 0 and out.strip():
+        # Returns e.g. "origin/main", strip the remote prefix
+        return out.strip().split('/', 1)[-1]
+
+    return 'HEAD'
+
+
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
           reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_allowlist, single_branch):
     """ makes a new git repo if it does not already exist """
@@ -974,10 +996,13 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             module.fail_json(msg="Failed to fetch submodules: %s" % out + err)
 
         if track_submodules:
-            # Compare against submodule HEAD
-            # FIXME: determine this from .gitmodules
-            version = 'master'
-            after = get_submodule_versions(git_path, module, dest, '%s/%s' % (remote, version))
+            # Compare each submodule against its configured remote branch
+            after = {}
+            for submodule in begin:
+                branch = get_submodule_branch(git_path, module, dest, submodule)
+                version_ref = f'{remote}/{branch}' if branch != 'HEAD' else 'HEAD'
+                sub_versions = get_submodule_versions(git_path, module, dest, version_ref)
+                after.update(sub_versions)
             if begin != after:
                 changed = True
         else:
