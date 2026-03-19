@@ -135,7 +135,7 @@ class PluginPathContext(object):
 
 
 class PluginLoadContext(object):
-    def __init__(self, plugin_type: str, legacy_package_name: str) -> None:
+    def __init__(self, plugin_type: str, legacy_package_name: str, *, ignore_deprecated: bool = False) -> None:
         self.original_name: str | None = None
         self.redirect_list: list[str] = []
         self.raw_error_list: list[Exception] = []
@@ -168,6 +168,8 @@ class PluginLoadContext(object):
         The fully qualified Python module name for the plugin (accessible via `sys.modules`).
         For non-collection non-core plugins, this may include a non-existent synthetic package element with a hash of the file path to avoid collisions.
         """
+        self.ignore_deprecated: bool = ignore_deprecated
+        """When true, the load context should not record deprecation warnings."""
 
     @property
     def resolved_fqcn(self) -> str | None:
@@ -185,7 +187,7 @@ class PluginLoadContext(object):
         return self._resolved_fqcn
 
     def record_deprecation(self, name: str, deprecation: dict[str, t.Any] | None, collection_name: str) -> t.Self:
-        if not deprecation:
+        if self.ignore_deprecated or not deprecation:
             return self
 
         # The `or ''` instead of using `.get(..., '')` makes sure that even if the user explicitly
@@ -203,6 +205,7 @@ class PluginLoadContext(object):
             date=removal_date,
             version=removal_version,
             deprecator=deprecator_from_collection_name(collection_name),
+            obj=name,
         )
 
         self.deprecated = True
@@ -538,8 +541,10 @@ class PluginLoader:
                 display.debug('Added %s to loader search path' % (directory))
 
     def _query_collection_routing_meta(self, acr, plugin_type, extension=None):
-        collection_pkg = import_module(acr.n_python_collection_package_name)
-        if not collection_pkg:
+        try:
+            if not (collection_pkg := import_module(acr.n_python_collection_package_name)):
+                return None
+        except ImportError:
             return None
 
         # FIXME: shouldn't need this...
@@ -562,7 +567,7 @@ class PluginLoader:
             subdir_qualified_resource = '.'.join([acr.subdirs, acr.resource])
         else:
             subdir_qualified_resource = acr.resource
-        entry = collection_meta.get('plugin_routing', {}).get(plugin_type, {}).get(subdir_qualified_resource + extension, None)
+        entry = collection_meta.get('plugin_routing', {}).get(plugin_type, {}).get(subdir_qualified_resource + (extension or ''), None)
         if not entry:
             # try for extension-agnostic entry
             entry = collection_meta.get('plugin_routing', {}).get(plugin_type, {}).get(subdir_qualified_resource, None)
@@ -573,7 +578,6 @@ class PluginLoader:
         fq_name: str,
         extension: str | None,
         plugin_load_context: PluginLoadContext,
-        ignore_deprecated: bool = False,
     ) -> PluginLoadContext:
         """Search builtin paths to find a plugin. No external paths are searched,
         meaning plugins inside roles inside collections will be ignored.
@@ -594,8 +598,7 @@ class PluginLoader:
             deprecation = routing_metadata.get('deprecation', None)
 
             # this will no-op if there's no deprecation metadata for this plugin
-            if not ignore_deprecated:
-                plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
+            plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
 
             tombstone = routing_metadata.get('tombstone', None)
 
@@ -705,10 +708,10 @@ class PluginLoader:
         collection_list: list[str] | None = None,
     ) -> PluginLoadContext:
         """ Find a plugin named name, returning contextual info about the load, recursively resolving redirection """
-        plugin_load_context = PluginLoadContext(self.type, self.package)
+        plugin_load_context = PluginLoadContext(self.type, self.package, ignore_deprecated=ignore_deprecated)
         plugin_load_context.original_name = name
         while True:
-            result = self._resolve_plugin_step(name, mod_type, ignore_deprecated, check_aliases, collection_list, plugin_load_context=plugin_load_context)
+            result = self._resolve_plugin_step(name, mod_type, check_aliases, collection_list, plugin_load_context=plugin_load_context)
             if result.pending_redirect:
                 if result.pending_redirect in result.redirect_list:
                     raise AnsiblePluginCircularRedirect('plugin redirect loop resolving {0} (path: {1})'.format(result.original_name, result.redirect_list))
@@ -733,7 +736,6 @@ class PluginLoader:
         self,
         name: str,
         mod_type: str = '',
-        ignore_deprecated: bool = False,
         check_aliases: bool = False,
         collection_list: list[str] | None = None,
         plugin_load_context: PluginLoadContext | None = None,
@@ -773,11 +775,10 @@ class PluginLoader:
                         # 'ansible.legacy' refers to the plugin finding behavior used before collections existed.
                         # They need to search 'library' and the various '*_plugins' directories in order to find the file.
                         plugin_load_context = self._find_plugin_legacy(name.removeprefix('ansible.legacy.'),
-                                                                       plugin_load_context, ignore_deprecated, check_aliases, suffix)
+                                                                       plugin_load_context, check_aliases, suffix)
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
-                        plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context,
-                                                                   ignore_deprecated=ignore_deprecated)
+                        plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
 
                         # Pending redirects are added to the redirect_list at the beginning of _resolve_plugin_step.
                         # Once redirects are resolved, ensure the final FQCN is added here.
@@ -810,9 +811,28 @@ class PluginLoader:
 
         # if we got here, there's no collection list and it's not an FQ name, so do legacy lookup
 
-        return self._find_plugin_legacy(name, plugin_load_context, ignore_deprecated, check_aliases, suffix)
+        return self._find_plugin_legacy(name, plugin_load_context, check_aliases, suffix)
 
-    def _find_plugin_legacy(self, name, plugin_load_context, ignore_deprecated=False, check_aliases=False, suffix=None):
+    @functools.lru_cache(maxsize=100)
+    def _get_builtin_routing_metadata(self, name: str) -> dict[str, t.Any]:
+        """Cached metadata lookups for core plugins."""
+        routing_metadata = self._query_collection_routing_meta(acr := AnsibleCollectionRef.from_fqcr(f'ansible.builtin.{name}', self.type), self.type)
+
+        return routing_metadata or {}
+
+    def _check_core_deprecation(self, name: str, plugin_load_context: PluginLoadContext) -> None:
+        """
+        Inspect core runtime metadata for deprecations on core plugins loaded through a non-collection name.
+
+        This method has no effect for non-core plugins loaded through a short name, and is not needed for collection plugins.
+        """
+        if not plugin_load_context.resolved or plugin_load_context.plugin_resolved_collection != 'ansible.builtin':
+            return
+
+        if (routing_metadata := self._get_builtin_routing_metadata(name)) and (deprecation := routing_metadata.get('deprecation')):
+            plugin_load_context.record_deprecation(name, deprecation, 'ansible.builtin')
+
+    def _find_plugin_legacy(self, name, plugin_load_context, check_aliases=False, suffix=None):
         """Search library and various *_plugins paths in order to find the file.
         This was behavior prior to the existence of collections.
         """
@@ -825,7 +845,10 @@ class PluginLoader:
         # requested mod_type
         pull_cache = self._plugin_path_cache[suffix]
         try:
-            return plugin_load_context.resolve_legacy(name=name, pull_cache=pull_cache)
+            resolved = plugin_load_context.resolve_legacy(name=name, pull_cache=pull_cache)
+            self._check_core_deprecation(name, plugin_load_context)
+
+            return resolved
         except KeyError:
             # Cache miss.  Now let's find the plugin
             pass
@@ -878,7 +901,10 @@ class PluginLoader:
 
             self._searched_paths.add(path)
             try:
-                return plugin_load_context.resolve_legacy(name=name, pull_cache=pull_cache)
+                resolved = plugin_load_context.resolve_legacy(name=name, pull_cache=pull_cache)
+                self._check_core_deprecation(name, plugin_load_context)
+
+                return resolved
             except KeyError:
                 # Didn't find the plugin in this directory. Load modules from the next one
                 pass
@@ -903,7 +929,7 @@ class PluginLoader:
         # last ditch, if it's something that can be redirected, look for a builtin redirect before giving up
         candidate_fqcr = 'ansible.builtin.{0}'.format(name)
         if '.' not in name and AnsibleCollectionRef.is_valid_fqcr(candidate_fqcr):
-            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context, ignore_deprecated=ignore_deprecated)
+            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context)
 
         return plugin_load_context.nope('{0} is not eligible for last-chance resolution'.format(name))
 

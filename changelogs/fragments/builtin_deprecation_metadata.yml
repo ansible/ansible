@@ -1,0 +1,2 @@
+bugfixes:
+  - pluginloader - Fixed non-collection load path for builtin non-Jinja plugins to consult deprecation metadata.
