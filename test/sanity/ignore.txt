@@ -99,7 +99,6 @@ test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
-test/integration/targets/plugin_loader/deprecated_core_plugins/deprecated_core_module.py shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-unwanted-characters
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
