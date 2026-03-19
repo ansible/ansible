@@ -881,13 +881,9 @@ class ModuleValidator(Validator):
         doc = None
         # We have three ways of marking deprecated/removed files.  Have to check each one
         # individually and then make sure they all agree
-        filename_deprecated_or_removed = False
         deprecated = False
         doc_deprecated = None  # doc legally might not exist
         routing_says_deprecated = False
-
-        if self.object_name.startswith('_') and not os.path.islink(self.object_path):
-            filename_deprecated_or_removed = True
 
         # We are testing a collection
         if self.routing:
@@ -1048,7 +1044,7 @@ class ModuleValidator(Validator):
                     doc_schema(
                         self.object_name.split('.')[0],
                         for_collection=bool(self.collection),
-                        deprecated_module=deprecated,
+                        deprecated_module=deprecated or doc_deprecated,
                         plugin_type=self.plugin_type,
                     ),
                     'DOCUMENTATION',
@@ -1136,20 +1132,18 @@ class ModuleValidator(Validator):
         # Check for mismatched deprecation
         if not self.collection:
             mismatched_deprecation = True
-            if not (filename_deprecated_or_removed or deprecated or doc_deprecated):
+            if not (deprecated or doc_deprecated):
                 mismatched_deprecation = False
             else:
-                if (filename_deprecated_or_removed and doc_deprecated):
-                    mismatched_deprecation = False
-                if (filename_deprecated_or_removed and not doc):
+                if doc_deprecated or not doc:
                     mismatched_deprecation = False
 
             if mismatched_deprecation:
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='Module deprecation/removed must agree in documentation, by prepending filename with'
-                        ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
+                    msg='Module deprecation/removed must agree in documentation, by adding an entry in ansible_builtin_runtime.yml'
+                        ' and setting DOCUMENTATION.deprecated for deprecation or by removing all'
                         ' documentation for removed'
                 )
         else:

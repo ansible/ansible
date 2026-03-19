@@ -2717,6 +2717,14 @@ plugin_routing:
       redirect: community.general.apk
     apt_rpm:
       redirect: community.general.apt_rpm
+    apt_repository:
+      deprecation:
+        removal_version: "2.25"
+        warning_text: Use deb822_repository instead.
+    apt_key:
+      deprecation:
+        removal_version: "2.25"
+        warning_text: Use deb822_repository instead.
     flatpak:
       redirect: community.general.flatpak
     flatpak_remote:
