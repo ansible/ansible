@@ -1031,7 +1031,7 @@ class ModuleValidator(Validator):
                     doc_schema(
                         os.readlink(self.object_path).split('.')[0],
                         for_collection=bool(self.collection),
-                        deprecated_module=deprecated,
+                        deprecated_module=deprecated or doc_deprecated,
                         plugin_type=self.plugin_type,
                     ),
                     'DOCUMENTATION',
@@ -1292,7 +1292,12 @@ class ModuleValidator(Validator):
         self._validate_semantic_markup_return_values(return_docs)
 
     def _check_version_added(self, doc, existing_doc):
+        deprecated = doc.get('deprecated', False)
+        if deprecated:
+            return
+
         version_added_raw = doc.get('version_added')
+
         try:
             collection_name = doc.get('version_added_collection')
             version_added = self._create_strict_version(
