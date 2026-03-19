@@ -1,4 +1,2 @@
 host1 ansible_connection=local
 host2 ansible_connection=local
-host3 ansible_connection=local
-host4 ansible_connection=local

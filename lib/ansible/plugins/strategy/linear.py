@@ -104,7 +104,6 @@ class StrategyModule(StrategyBase):
         # iterate over each task, while there is one left to run
         result = int(self._tqm.RUN_OK)
         work_to_do = True
-        max_fail_percentage_reached = False
 
         self._set_hosts_cache(iterator._play)
 
@@ -337,51 +336,28 @@ class StrategyModule(StrategyBase):
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
-                    def _host_has_failed(host):
-                        if host.name in self._tqm._failed_hosts:
-                            return True
-                        state, _ignored = iterator.get_next_task_for_host(host, peek=True)
-                        return iterator._check_failed_state(state)
-
-                    # we use the total number of hosts in the play (respecting subset/limit)
-                    # to calculate the percentage, and we include all failed/unreachable
-                    # hosts from previous batches and the current one.
-                    play_total_count = len(self._hosts_cache_all)
-
-                    # we count all unreachable hosts and all hosts that have a failed state in the iterator
-                    # plus the ones that just failed in this batch
-                    play_failed_count = len(self._tqm._unreachable_hosts)
-                    for host_name in self._hosts_cache_all:
-                        if host_name in self._tqm._unreachable_hosts or host_name in failed_hosts:
-                            continue
-                        host = self._inventory.get_host(host_name)
-                        # don't count if host is not in the play (might happen with limits)
-                        if not host:
-                            continue
-                        if iterator.get_host_state(host).fail_state != 0:  # FailedStates.NONE is 0
-                            play_failed_count += 1
-                    play_failed_count += len(failed_hosts)
-
-                    if play_total_count > 0 and (play_failed_count / play_total_count) > percentage:
+                    # Include both hosts that just failed in this task round and
+                    # hosts already marked as failed (from previous tasks/batches).
+                    # This ensures failures inside blocks (which aren't yet in
+                    # _tqm._failed_hosts) are counted toward the percentage.
+                    batch_failed = set(failed_hosts) | set(self._tqm._failed_hosts)
+                    if (len(batch_failed) / iterator.batch_size) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
-                            if host.name not in failed_hosts and iterator.get_host_state(host).fail_state == 0:
+                            if host.name not in failed_hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-
-                        if not max_fail_percentage_reached:
-                            max_fail_percentage_reached = True
-                            self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                            # Maintain backwards compatibility with tests and external tools that expect
-                            # a second callback when max_fail_percentage is breached (previously caused by
-                            # falling through to the general abort condition).
-                            self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-
-                        # We used to set RUN_FAILED_BREAK_PLAY here, but doing so bypasses rescue/always blocks.
-                        # Instead, we rely on the iterator and StrategyBase to handle the failure state.
-                    display.debug('(%s failed / %s total )> %s max fail' % (play_failed_count, play_total_count, percentage))
+                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    display.debug('(%s failed / %s total )> %s max fail' % (len(batch_failed), iterator.batch_size, percentage))
                 display.debug("done checking for max_fail_percentage")
+
+                display.debug("checking to see if all hosts have failed and the running result is not ok")
+                if result != self._tqm.RUN_OK and len(self._tqm._failed_hosts) >= len(hosts_left):
+                    display.debug("^ not ok, so returning result now")
+                    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    return result
+                display.debug("done checking to see if all hosts have failed")
 
             finally:
                 # removed unnecessary exception handler, don't want to mis-attribute the entire code block by changing indentation
