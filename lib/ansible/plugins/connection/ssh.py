@@ -1426,37 +1426,40 @@ class Connection(ConnectionBase):
         else:
             methods = [ssh_transfer_method]
 
+        # NOTE: if passing a list to build_command, no need to quote those paths,
+        # for strings use shlex.quote for local/controller and self._shell.quote for target
         for method in methods:
             returncode = stdout = stderr = None
-            if method == 'sftp':
-                cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', to_bytes(host))
-                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex.quote(in_path), shlex.quote(out_path))
-                in_data = to_bytes(in_data, nonstring='passthru')
-                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
-            elif method == 'scp':
-                scp = self.get_option('scp_executable')
-
-                if sftp_action == 'get':
-                    cmd = self._build_command(scp, 'scp', u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
-                else:
-                    cmd = self._build_command(scp, 'scp', in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
-                in_data = None
-                (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
-            elif method == 'piped':
-                if sftp_action == 'get':
-                    # we pass sudoable=False to disable pty allocation, which
-                    # would end up mixing stdout/stderr and screwing with newlines
-                    (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (self._shell.quote(in_path), BUFSIZE), sudoable=False)
-                    with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
-                        out_file.write(stdout)
-                else:
-                    with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as f:
-                        in_data = to_bytes(f.read(), nonstring='passthru')
-                    if not in_data:
-                        count = ' count=0'
+            match method:
+                case 'sftp':
+                    cmd = self._build_command(self.get_option('sftp_executable'), method, to_bytes(host))
+                    in_data = f"{sftp_action} {shlex.quote(in_path)} {shlex.quote(out_path)}\n"
+                    in_data = to_bytes(in_data, nonstring='passthru')
+                    (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
+                case 'scp':
+                    scp = self.get_option('scp_executable')
+                    if sftp_action == 'get':
+                        cmd = self._build_command(scp, method, f'{host}:{self._shell.quote(in_path)}', out_path)
                     else:
-                        count = ''
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), in_data=in_data, sudoable=False)
+                        cmd = self._build_command(scp, method, in_path, f'{host}:{self._shell.quote(out_path)}')
+                    in_data = None
+                    (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
+                case 'piped':
+                    if sftp_action == 'get':
+                        # we pass sudoable=False to disable pty allocation, which
+                        # would end up mixing stdout/stderr and screwing with newlines
+                        (returncode, stdout, stderr) = self.exec_command(f'dd if={self._shell.quote(in_path)} bs={BUFSIZE}', sudoable=False)
+                        with open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+') as out_file:
+                            out_file.write(stdout)
+                    else:
+                        with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as f:
+                            in_data = to_bytes(f.read(), nonstring='passthru')
+                        if not in_data:
+                            count = ' count=0'
+                        else:
+                            count = ''
+                        (returncode, stdout, stderr) = self.exec_command(f'dd of={self._shell.quote(out_path)} bs={BUFSIZE}{count}',
+                                                                         in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
