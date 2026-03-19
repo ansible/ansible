@@ -466,6 +466,8 @@ class ActionModule(ActionBase):
             # a directory so we need to determine that now (we use it just
             # like rsync does to figure out whether to include the directory
             # or only the files inside the directory
+            if not isinstance(source, str):
+                raise AnsibleActionFail("'src' must be a string, got %s" % type(source).__name__)
             trailing_slash = source.endswith(os.path.sep)
             try:
                 # find in expected paths
