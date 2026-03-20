@@ -10,7 +10,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.embed import EmbedManager
 from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
 
-embed = EmbedManager.embed('ansible_collections.ansible_test.setup_rpm_repo.plugins.module_utils._embed', 'create_repo.py')
+embed = EmbedManager.embed('..module_utils._embed', 'create_repo.py')
 
 
 def main():

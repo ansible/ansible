@@ -262,7 +262,6 @@ class ModuleDepFinder(ast.NodeVisitor):
         for alias in node.names:
             aname = alias.name
             if aname.startswith(('ansible.module_utils.', 'ansible_collections.')):
-                # FIXME: add `import` support for embed, not just `from X import`?
                 py_mod = tuple(aname.split('.'))
                 submodules_add(py_mod)
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
