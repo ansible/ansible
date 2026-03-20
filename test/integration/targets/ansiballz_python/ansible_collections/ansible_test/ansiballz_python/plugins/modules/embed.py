@@ -16,12 +16,26 @@ baz = EmbedManager.embed("..module_utils", "embed_this.py")
 # even reassignment to a different embed
 other = EmbedManager.embed("..module_utils", "embed_that.py")
 
-# a bunch of other assignment forms that should be ignored
+
+# an unrelated function we should ignore calls to
+def embed() -> int:
+    return 42
+
+
+# an unrelated class we should ignore calls to
+class NotEmbedManager:
+    def embed(self) -> int:
+        return 42
+
+
+# a bunch of other assignment forms that should be ignored (code coverage)
 a1 = 123
 a2 = type(123)
 a3 = os.path.abspath('/')
 a4 = EmbedManager.mro()
 a5 = EmbedManager.mro
+a6 = embed()
+a7 = NotEmbedManager().embed()
 
 
 def main():
@@ -39,6 +53,10 @@ def main():
         assert "embedded content for embed_that.py" in path.read_text(), "reassigned embedded content mismatch"
 
     module.exit_json(passed=True)
+
+
+def non_top_level():
+    EmbedManager.embed()  # bogus call, but shouldn't trip since it's not top-level
 
 
 if __name__ == '__main__':

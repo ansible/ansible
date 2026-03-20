@@ -209,6 +209,8 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.tree = _compile_module_ast(module_fqn, module_data)
 
         self._embed_sniffing = False
+        self._embed_module_name = None
+        self._embedmanager_type_name = None
         self._embed_import_origin: Origin | None = None
 
         self.visit(self.tree)
@@ -260,6 +262,7 @@ class ModuleDepFinder(ast.NodeVisitor):
         for alias in node.names:
             aname = alias.name
             if aname.startswith(('ansible.module_utils.', 'ansible_collections.')):
+                # FIXME: add `import` support for embed, not just `from X import`?
                 py_mod = tuple(aname.split('.'))
                 submodules_add(py_mod)
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
@@ -332,17 +335,30 @@ class ModuleDepFinder(ast.NodeVisitor):
                 # from ansible_collections.ns.coll.plugins.lookup import IDENTIFIER
                 pass
 
-        # FIXME: handle different forms for both import and callsite analysis, e.g.: aliased module, aliased import, relative, no-assign?
-        if node_module.startswith('ansible.module_utils.embed'):
-            self._embed_sniffing = True
-            self._embed_import_origin = self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
-
         if py_mod:
             for alias in node.names:
                 submodules_add(a_py_mod := py_mod + (alias.name,))
                 # if the import's parent is the root document, it's a required import, otherwise it's optional
                 if depth:
                     optional_imports_add(a_py_mod)
+                elif alias.name == 'embed' and node_module == 'ansible.module_utils':
+                    self._visit_embed_import(node_module, node, alias)
+                elif alias.name == 'EmbedManager' and node_module == 'ansible.module_utils.embed':
+                    self._visit_embed_import(node_module, node, alias)
+
+    def _visit_embed_import(self, node_module_name: str, node: ast.ImportFrom, alias: ast.alias) -> None:
+        self._embed_sniffing = True
+
+        if node_module_name == 'ansible.module_utils':
+            # from ansible.module_utils import embed (as modulealias)
+            self._embed_module_name = alias.asname or alias.name
+            self._embedmanager_type_name = 'EmbedManager'
+        elif node_module_name == 'ansible.module_utils.embed':
+            # from ansible.module_utils.embed import EmbedManager as EmbedManagerAlias
+            self._embed_module_name = None
+            self._embedmanager_type_name = alias.asname or alias.name
+
+        self._embed_import_origin = self._origin.replace(line_num=node.lineno, col_num=node.col_offset + 1)
 
     def _assert_embed(self, assertion: bool, message: str, node: ast.stmt | ast.expr) -> None:
         """
@@ -359,30 +375,34 @@ class ModuleDepFinder(ast.NodeVisitor):
         """
         Validate top-level calls to `EmbedManager.embed` to include the requested resources and collect them in `embeds`.
 
-        This inspection is only enabled when an import of the form `from ansible.module_utils.embed import EmbedManager` is present.
+        All calls must be of the form `var = (embed.)EmbedManager.embed(...)`.
+        Optional import-time aliases for the `embed` module or `EmbedManager` type are supported.
+
         The `embed` callsite requires exactly two inline literal string posargs; any other form will fail the module build.
         If the `package` argument starts with `.`, it is assumed to be a relative import path from the calling Python module.
         """
-        # ignore assignments whose RHS is not an Attribute.Name function call to EmbedManager.embed()
-        if (not isinstance(call := node.value, Call) or
-                not isinstance(func := call.func, Attribute) or
-                not isinstance(funcvalue := func.value, Name) or
-                # FUTURE: any additional validation to ensure this is the right EmbedManager?
-                funcvalue.id != 'EmbedManager' or func.attr != 'embed'):
-            return
+        if not isinstance(call := node.value, Call) or not isinstance(func := call.func, Attribute) or func.attr != 'embed':
+            return  # bail - an assignment whose RHS is not a function call to (something).embed()
 
-        # tag the code origin to this `embed` callsite in case there's a failure later
+        match func.value:
+            case Attribute(attr=self._embedmanager_type_name, value=Name(id=self._embed_module_name)):
+                pass  # keep going - embed_module_or_alias.EmbedManagerOrAlias.embed()
+            case Name(id=self._embedmanager_type_name):
+                pass  # keep going - EmbedManagerOrAlias.embed()
+            case _:
+                return  # bail - an embed() call we're not interested in
+
+        # origin-tag the args with this callsite location so a later failure can point here
         embed_origin = self._origin.replace(line_num=call.lineno, col_num=call.col_offset + 1)
-
         call_posargs: list[str] = [embed_origin.tag(a.value) for a in call.args if isinstance(a, Constant) and isinstance(a.value, str)]
 
         self._assert_embed(len(call_posargs) == len(call.args) == 2, message="Embed requires exactly two inline literal strings", node=call)
         self._assert_embed(not call.keywords, message="Embed does not support keyword args", node=call)
 
         if call_posargs[0].startswith('.'):
+            # resolve relative anchor reference
             call_posargs[0] = embed_origin.tag(_importlib_util.resolve_name(call_posargs[0], self.module_fqn.rpartition('.')[0]))
 
-        # store the requested Em
         self.embeds.add(EmbeddedResource(*call_posargs))
 
 

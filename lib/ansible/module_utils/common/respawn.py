@@ -70,12 +70,12 @@ def get_env_with_pythonpath() -> dict[str, str]:
 
 
 def probe_interpreters_for_module(
-        interpreter_paths: _c.Sequence[str],
-        module_name: str | None = None,
-        *,
-        module_names: list[str] | None = None,
-        env: dict[str, str] | None = None,
-    ) -> str | None:
+    interpreter_paths: _c.Sequence[str],
+    module_name: str | None = None,
+    *,
+    module_names: list[str] | None = None,
+    env: dict[str, str] | None = None,
+) -> str | None:
     """
     Probes a supplied list of Python interpreters, returning the first one capable of
     importing the named modules. This is useful when attempting to locate a "system
