@@ -831,6 +831,30 @@ def test_install_collection(collection_artifact, monkeypatch):
     assert mock_display.mock_calls[1][1][0] == "ansible_namespace.collection:0.1.0 was installed successfully"
 
 
+def test_download_validate_certs(galaxy_server, collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    collections_dir = (os.path.sep).join(to_text(collection_path).split(os.path.sep)[:-2])
+    temp_path = f"{collection_tar}/.."
+
+    # The ConcreteArtifactsManager uses the global value for validate_certs
+    cam = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=True)
+    # The GalaxyAPI overrides the global value or inherits it
+    galaxy_server.validate_certs = False
+
+    galaxy_candidate = Candidate('ansible_namespace.collection', '0.1.0', galaxy_server, 'galaxy', None)
+    url_candidate = Candidate('ansible_namespace.collection', '0.1.0', f'file://{collection_tar}', 'url', None)
+
+    mock_download = MagicMock()
+    monkeypatch.setattr(collection.concrete_artifact_manager, '_download_file', mock_download)
+
+    cam._galaxy_collection_cache[galaxy_candidate] = ("download url", "hash", "token")
+    cam.get_artifact_path_from_unknown(galaxy_candidate)
+    assert mock_download.call_args.kwargs['validate_certs'] is False
+
+    cam.get_artifact_path_from_unknown(url_candidate)
+    assert mock_download.call_args.kwargs['validate_certs'] is True
+
+
 def test_install_collection_with_download(galaxy_server, collection_artifact, monkeypatch):
     collection_path, collection_tar = collection_artifact
     shutil.rmtree(collection_path)

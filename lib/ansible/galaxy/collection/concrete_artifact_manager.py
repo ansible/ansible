@@ -158,7 +158,7 @@ class ConcreteArtifactsManager:
                 url,
                 self._b_working_directory,
                 expected_hash=sha256_hash,
-                validate_certs=self._validate_certs,
+                validate_certs=collection.src.validate_certs,
                 token=token,
             )  # type: bytes
         except URLError as err:
