@@ -102,8 +102,8 @@ stages:
               test: rhel/9.7@3.12
             - name: RHEL 10.1
               test: rhel/10.1
-            - name: FreeBSD 14.3
-              test: freebsd/14.3
+            - name: FreeBSD 14.4
+              test: freebsd/14.4
             - name: FreeBSD 15.0
               test: freebsd/15.0
           groups:
@@ -118,6 +118,8 @@ stages:
               test: rhel/9.7
             - name: RHEL 10.1
               test: rhel/10.1
+            - name: FreeBSD 14.4
+              test: freebsd/14.4
             - name: FreeBSD 15.0
               test: freebsd/15.0
           groups:

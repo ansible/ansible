@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Replace FreeBSD 14.3 remote with 14.4.
