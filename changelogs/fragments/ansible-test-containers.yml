@@ -1,2 +1,5 @@
 minor_changes:
   - ansible-test - Update base and default containers.
+  - ansible-test - Update http-test-container.
+  - ansible-test - Update pypi-test-container.
+  - ansible-test - Update ansible-test-utility-container.
