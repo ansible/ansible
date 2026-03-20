@@ -6,6 +6,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 # alias the EmbedManager type
 from ansible.module_utils.embed import EmbedManager as _EmbedManager
+
 e1 = _EmbedManager.embed('..module_utils', 'embed_this.py')
 
 
