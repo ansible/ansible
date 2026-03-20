@@ -21,7 +21,9 @@ def main() -> None:
     remote_only_python_versions = os.environ['ANSIBLE_TEST_REMOTE_ONLY_PYTHON_VERSIONS'].split(',')
     fix_mode = bool(int(os.environ['ANSIBLE_TEST_FIX_MODE']))
 
-    controller_python_versions.remove('3.14')  # black does not yet support formatting for Python 3.14
+    # Report only the oldest controller Python version, which is the oldest version that may be used to run this test.
+    # Reporting newer Python versions to black can result in failures when running on older versions.
+    controller_python_versions = controller_python_versions[:1]
 
     target_python_versions = remote_only_python_versions + controller_python_versions
 

@@ -20,7 +20,6 @@ This test checks whether the libraries we're bundling are out of date and need t
 a newer upstream release.
 """
 
-
 from __future__ import annotations
 
 import fnmatch
@@ -32,7 +31,6 @@ from ansible.module_utils.compat.version import LooseVersion
 import packaging.specifiers
 
 from ansible.module_utils.urls import open_url
-
 
 BUNDLED_RE = re.compile(b'\\b_BUNDLED_METADATA\\b')
 
