@@ -8,7 +8,6 @@ import shlex
 
 from . import _clixml
 
-
 # There are 5 chars that need to be escaped in a single quote.
 # https://github.com/PowerShell/PowerShell/blob/b7cb335f03fe2992d0cbd61699de9d9aafa1d7c1/src/System.Management.Automation/engine/parser/CharTraits.cs#L265-L272
 _PWSH_SINGLE_QUOTES = re.compile("(['\u2018\u2019\u201a\u201b])")

@@ -6,7 +6,6 @@ import base64
 import re
 import xml.etree.ElementTree as ET
 
-
 # This is weird, we are matching on byte sequences that match the utf-16-be
 # matches for '_x(a-fA-F0-9){4}_'. The \x00 and {4} will match the hex sequence
 # when it is encoded as utf-16-be byte sequence.

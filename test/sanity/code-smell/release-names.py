@@ -19,7 +19,6 @@
 Test that the release name is present in the list of used up release names
 """
 
-
 from __future__ import annotations
 
 import pathlib

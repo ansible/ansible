@@ -4,6 +4,7 @@ Upload code coverage reports to codecov.io.
 Multiple coverage files from multiple languages are accepted and aggregated after upload.
 Python coverage, as well as PowerShell and Python stubs can all be uploaded.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,7 +15,6 @@ import subprocess
 import tempfile
 import typing as t
 import venv
-
 
 SCRIPTS_DIR = pathlib.Path(__file__).parent.resolve()
 DEPS_DIR = SCRIPTS_DIR / 'dependencies'
