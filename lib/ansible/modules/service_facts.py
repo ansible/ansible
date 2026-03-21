@@ -67,10 +67,12 @@ ansible_facts:
   type: complex
   contains:
     services:
-      description: States of the services with service name as key.
+      description:
+       - Dictionary containing service information.
+       - Keys are service names.
+       - Values contain details such as state, status, and source.
       returned: always
-      type: list
-      elements: dict
+      type: dict
       contains:
         source:
           description:
