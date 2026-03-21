@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from fnmatch import fnmatch as py_fnmatch
 import functools
 import re
 import operator as py_operator
@@ -296,6 +297,19 @@ def wrapped_test_undefined(value: object) -> Marker | bool:
     return test_undefined(value)
 
 
+def fnmatch(value="", pattern="") -> bool:
+    """Evaluate if a variable matches the given case-sensitive glob pattern.
+
+    Note that this does *not* search any filesystem:
+    it is a name match only.
+
+    .. versionadded:: TODO
+    """
+    value = to_text(value, errors='surrogate_or_strict')
+    pattern = to_text(pattern, errors='surrogate_or_strict')
+    return py_fnmatch(value, pattern)
+
+
 class TestModule(object):
     """ Ansible core jinja2 tests """
 
@@ -323,10 +337,11 @@ class TestModule(object):
             'finished': finished,
             'started': started,
 
-            # regex
+            # regex and fnmatch
             'match': match,
             'search': search,
             'regex': regex,
+            'fnmatch': fnmatch,
 
             # version comparison
             'version_compare': version_compare,

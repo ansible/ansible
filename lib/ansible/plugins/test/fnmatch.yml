@@ -1,0 +1,29 @@
+DOCUMENTATION:
+  name: fnmatch
+  author: Ansible Core
+  short_description: Does string match glob pattern
+  description:
+    - Compare string against glob pattern using Python's fnmatch function.
+    - See python's [fnmatch](https://docs.python.org/3/library/fnmatch.html) docs for more details.
+  options:
+    _input:
+      description: String to match.
+      type: string
+      required: True
+    pattern:
+      description: Glob to match against.
+      type: string
+      required: True
+
+EXAMPLES: |
+  - name: check if string matches glob
+    assert:
+      that:
+        - 'title is fnmatch("dev*")'
+    vars:
+      title: Developer
+
+RETURN:
+  _value:
+    description: Returns V(True) if it matches, V(False) otherwise.
+    type: boolean
