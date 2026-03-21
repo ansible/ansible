@@ -151,6 +151,7 @@ class MultiGalaxyAPIProxy:
                     api.token,
                     version_metadata.signatures_url,
                     version_metadata.signatures,
+                    api.validate_certs
                 )
                 return version_metadata
 

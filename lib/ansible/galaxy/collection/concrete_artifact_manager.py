@@ -71,7 +71,7 @@ class ConcreteArtifactsManager:
         self._artifact_cache = {}  # type: dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]
         self._artifact_meta_cache = {}  # type: dict[bytes, dict[str, str | list[str] | dict[str, str] | None | t.Type[Sentinel]]]
-        self._galaxy_collection_cache = {}  # type: dict[Candidate | Requirement, tuple[str, str, GalaxyToken]]
+        self._galaxy_collection_cache = {}  # type: dict[Candidate | Requirement, tuple[str, str, GalaxyToken, bool]]
         self._galaxy_collection_origin_cache = {}  # type: dict[Candidate, tuple[str, list[dict[str, str]]]]
         self._b_working_directory = b_working_directory  # type: bytes
         self._supplemental_signature_cache = {}  # type: dict[str, str]
@@ -141,7 +141,7 @@ class ConcreteArtifactsManager:
             pass
 
         try:
-            url, sha256_hash, token = self._galaxy_collection_cache[collection]
+            url, sha256_hash, token, validate_certs = self._galaxy_collection_cache[collection]
         except KeyError as key_err:
             raise RuntimeError(
                 'There is no known source for {coll!s}'.
@@ -158,7 +158,7 @@ class ConcreteArtifactsManager:
                 url,
                 self._b_working_directory,
                 expected_hash=sha256_hash,
-                validate_certs=collection.src.validate_certs,
+                validate_certs=validate_certs,
                 token=token,
             )  # type: bytes
         except URLError as err:
@@ -368,14 +368,14 @@ class ConcreteArtifactsManager:
         # NOTE: Using None as a sentinel since it's not a valid value otherwise.
         return runtime.get("requires_ansible")
 
-    def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):
-        # type: (Candidate, str, str, GalaxyToken, str, list[dict[str, str]]) -> None
+    def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures, validate_certs):
+        # type: (Candidate, str, str, GalaxyToken, str, list[dict[str, str]], bool) -> None
         """Store collection URL, SHA256 hash and Galaxy API token.
 
         This is a hook that is supposed to be called before attempting to
         download Galaxy-based collections with ``get_galaxy_artifact_path()``.
         """
-        self._galaxy_collection_cache[collection] = url, sha256_hash, token
+        self._galaxy_collection_cache[collection] = url, sha256_hash, token, validate_certs
         self._galaxy_collection_origin_cache[collection] = signatures_url, signatures
 
     @classmethod
