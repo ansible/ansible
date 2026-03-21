@@ -53,7 +53,26 @@ if C.ANSIBLE_FORCE_COLOR:
 
 
 def parsecolor(color):
-    """SGR parameter string for the specified color name."""
+    """
+    Return the SGR (Select Graphic Rendition) parameter string for the given color.
+
+    Valid color formats:
+
+    - Named colors:
+      Use predefined color names such as 'red', 'green', 'blue', 'yellow'.
+
+    - 256-color mode:
+      Use "color<number>" where number is between 0 and 255.
+      Example: 'color160'
+
+    - RGB color (6x6x6 cube):
+      Use "rgb<r><g><b>" where each value is between 0 and 5.
+      Example: 'rgb505'
+
+    - Grayscale:
+      Use "gray<number>" where number is between 0 and 23.
+      Example: 'gray10'
+    """
     matches = re.match(r"color(?P<color>[0-9]+)"
                        r"|(?P<rgb>rgb(?P<red>[0-5])(?P<green>[0-5])(?P<blue>[0-5]))"
                        r"|gray(?P<gray>[0-9]+)", color)
