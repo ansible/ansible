@@ -276,7 +276,7 @@ CACHE_PLUGIN_TIMEOUT:
   type: integer
   yaml: {key: facts.cache.timeout}
 COLLECTIONS_SCAN_SYS_PATH:
-  name: Scan Python Path for Installed Collections
+  name: Scan PYTHONPATH for installed collections
   description: A boolean to enable or disable scanning the sys.path for installed collections.
   default: true
   type: boolean
