@@ -71,8 +71,7 @@ class ConcreteArtifactsManager:
         self._artifact_cache = {}  # type: dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]
         self._artifact_meta_cache = {}  # type: dict[bytes, dict[str, str | list[str] | dict[str, str] | None | t.Type[Sentinel]]]
-        self._galaxy_collection_cache: dict[Candidate, tuple[str, str, GalaxyToken, bool] = {}
-        self._galaxy_collection_origin_cache = {}  # type: dict[Candidate, tuple[str, list[dict[str, str]]]]
+        self._galaxy_collection_cache: dict[Candidate, tuple[CollectionVersionMetadata, GalaxyAPI]] = {}
         self._b_working_directory = b_working_directory  # type: bytes
         self._supplemental_signature_cache = {}  # type: dict[str, str]
         self._keyring = keyring  # type: str
@@ -107,15 +106,12 @@ class ConcreteArtifactsManager:
 
     def get_galaxy_artifact_source_info(self, collection):
         # type: (Candidate) -> dict[str, t.Union[str, list[dict[str, str]]]]
-        server = collection.src.api_server
 
         try:
-            download_url = self._galaxy_collection_cache[collection][0]
-            signatures_url, signatures = self._galaxy_collection_origin_cache[collection]
+            metadata, server = self._galaxy_collection_cache[collection]
         except KeyError as key_err:
             raise RuntimeError(
-                'The is no known source for {coll!s}'.
-                format(coll=collection),
+                f"There is no known source for {collection!s}"
             ) from key_err
 
         return {
@@ -123,10 +119,10 @@ class ConcreteArtifactsManager:
             "namespace": collection.namespace,
             "name": collection.name,
             "version": collection.ver,
-            "server": server,
-            "version_url": signatures_url,
-            "download_url": download_url,
-            "signatures": signatures,
+            "server": server.api_server,
+            "version_url": metadata.signatures_url,
+            "download_url": metadata.download_url,
+            "signatures": metadata.signatures,
         }
 
     def get_galaxy_artifact_path(self, collection: Candidate) -> bytes:
@@ -140,11 +136,10 @@ class ConcreteArtifactsManager:
             pass
 
         try:
-            url, sha256_hash, token, validate_certs = self._galaxy_collection_cache[collection]
+            metadata, api = self._galaxy_collection_cache[collection]
         except KeyError as key_err:
             raise RuntimeError(
-                'There is no known source for {coll!s}'.
-                format(coll=collection),
+                f'There is no known source for {collection!s}'
             ) from key_err
 
         display.vvvv(
@@ -154,39 +149,27 @@ class ConcreteArtifactsManager:
 
         try:
             b_artifact_path = _download_file(
-                url,
+                metadata.download_url,
                 self._b_working_directory,
-                expected_hash=sha256_hash,
-                validate_certs=validate_certs,
-                token=token,
+                expected_hash=metadata.artifact_sha256,
+                validate_certs=api.validate_certs,
+                token=api.token,
             )  # type: bytes
         except URLError as err:
             raise AnsibleError(
                 'Failed to download collection tar '
-                "from '{coll_src!s}': {download_err!s}".
-                format(
-                    coll_src=to_native(collection.src),
-                    download_err=to_native(err),
-                ),
+                f"from '{api!s}': {err!s}"
             ) from err
         except Exception as err:
             raise AnsibleError(
                 'Failed to download collection tar '
-                "from '{coll_src!s}' due to the following unforeseen error: "
-                '{download_err!s}'.
-                format(
-                    coll_src=to_native(collection.src),
-                    download_err=to_native(err),
-                ),
+                f"from '{api!s}' due to the following unforeseen error: "
+                f'{err!s}'
             ) from err
         else:
             display.vvv(
-                "Collection '{coll!s}' obtained from "
-                'server {server!s} {url!s}'.format(
-                    coll=collection, server=collection.src or 'Galaxy',
-                    url=collection.src.api_server if collection.src is not None
-                    else '',
-                )
+                f"Collection '{collection!s}' obtained from server {api!s} "
+                f"{api.api_server!s}"
             )
 
         self._galaxy_artifact_cache[collection] = b_artifact_path
@@ -373,8 +356,7 @@ class ConcreteArtifactsManager:
         This is a hook that is supposed to be called before attempting to
         download Galaxy-based collections with ``get_galaxy_artifact_path()``.
         """
-        self._galaxy_collection_cache[collection] = metadata.download_url, metadata.artifact_sha256, api.token, api.validate_certs
-        self._galaxy_collection_origin_cache[collection] = metadata.signatures_url, metadata.signatures
+        self._galaxy_collection_cache[collection] = (metadata, api)
 
     @classmethod
     @contextmanager
