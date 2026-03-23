@@ -773,6 +773,17 @@ releases:
     - ansible-test-api-endpoint.yml
     - ansible-test-spare-tire.yml
     release_date: '2026-02-17'
+  2.18.15:
+    changes:
+      release_summary: '| Release Date: 2026-03-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.15_summary.yaml
+    release_date: '2026-03-23'
   2.18.15rc1:
     changes:
       bugfixes:
