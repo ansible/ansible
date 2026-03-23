@@ -31,7 +31,7 @@ if t.TYPE_CHECKING:
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
-from ansible.galaxy.api import should_retry_error
+from ansible.galaxy.api import should_retry_error, CollectionVersionMetadata, GalaxyAPI
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
@@ -71,7 +71,7 @@ class ConcreteArtifactsManager:
         self._artifact_cache = {}  # type: dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: dict[Candidate | Requirement, bytes]
         self._artifact_meta_cache = {}  # type: dict[bytes, dict[str, str | list[str] | dict[str, str] | None | t.Type[Sentinel]]]
-        self._galaxy_collection_cache = {}  # type: dict[Candidate | Requirement, tuple[str, str, GalaxyToken, bool]]
+        self._galaxy_collection_cache: dict[Candidate, tuple[str, str, GalaxyToken, bool] = {}
         self._galaxy_collection_origin_cache = {}  # type: dict[Candidate, tuple[str, list[dict[str, str]]]]
         self._b_working_directory = b_working_directory  # type: bytes
         self._supplemental_signature_cache = {}  # type: dict[str, str]
@@ -129,8 +129,7 @@ class ConcreteArtifactsManager:
             "signatures": signatures,
         }
 
-    def get_galaxy_artifact_path(self, collection):
-        # type: (t.Union[Candidate, Requirement]) -> bytes
+    def get_galaxy_artifact_path(self, collection: Candidate) -> bytes:
         """Given a Galaxy-stored collection, return a cached path.
 
         If it's not yet on disk, this method downloads the artifact first.
@@ -368,15 +367,14 @@ class ConcreteArtifactsManager:
         # NOTE: Using None as a sentinel since it's not a valid value otherwise.
         return runtime.get("requires_ansible")
 
-    def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures, validate_certs):
-        # type: (Candidate, str, str, GalaxyToken, str, list[dict[str, str]], bool) -> None
-        """Store collection URL, SHA256 hash and Galaxy API token.
+    def save_collection_source(self, collection: Candidate, metadata: CollectionVersionMetadata, api: GalaxyAPI) -> None:
+        """Store collection version metadata and origin.
 
         This is a hook that is supposed to be called before attempting to
         download Galaxy-based collections with ``get_galaxy_artifact_path()``.
         """
-        self._galaxy_collection_cache[collection] = url, sha256_hash, token, validate_certs
-        self._galaxy_collection_origin_cache[collection] = signatures_url, signatures
+        self._galaxy_collection_cache[collection] = metadata.download_url, metadata.artifact_sha256, api.token, api.validate_certs
+        self._galaxy_collection_origin_cache[collection] = metadata.signatures_url, metadata.signatures
 
     @classmethod
     @contextmanager
