@@ -193,6 +193,7 @@ options:
   certificate_key_pem:
     description:
     - The local path to an X509 certificate key to use with certificate auth.
+    - If the certificate key is encrypted then O(certificate_key_password) must also be set.
     type: path
     vars:
     - name: ansible_psrp_certificate_key_pem
@@ -202,6 +203,14 @@ options:
     type: path
     vars:
     - name: ansible_psrp_certificate_pem
+  certificate_key_password:
+    description:
+    - The password for the O(certificate_key_pem) key file if it is encrypted.
+    - This option requires pypsrp >= 0.9.0 to be installed.
+    type: str
+    vars:
+    - name: ansible_psrp_certificate_key_password
+    version_added: '2.21'
   credssp_auth_mechanism:
     description:
     - The sub authentication mechanism to use with CredSSP auth.
@@ -271,7 +280,9 @@ options:
     - Only valid when Kerberos was the negotiated auth or was explicitly set as
       the authentication.
     - Ignored when NTLM was the negotiated auth.
-    default: WSMAN
+    - Before ansible-core 2.21, this had a default value of V(WSMAN) which failed to
+      work on some hosts. Since ansible-core 2.21 the default value is V(host).
+    default: host
     type: str
     vars:
     - name: ansible_psrp_negotiate_service
@@ -302,6 +313,15 @@ options:
     vars:
     - name: ansible_psrp_configuration_name
     default: Microsoft.PowerShell
+  no_profile:
+    description:
+    - Do not load the user's PowerShell profile when connecting.
+    - This option requires pypsrp >= 0.9.0 to be installed.
+    type: bool
+    default: false
+    vars:
+    - name: ansible_psrp_no_profile
+    version_added: '2.21'
 """
 
 import base64
@@ -396,11 +416,11 @@ class Connection(ConnectionBase):
 
             self.runspace = RunspacePool(
                 connection, host=self.host,
-                configuration_name=self._psrp_configuration_name
+                **self._psrp_runspace_kwargs,
             )
             display.vvvvv(
                 "PSRP OPEN RUNSPACE: auth=%s configuration=%s endpoint=%s" %
-                (self._psrp_auth, self._psrp_configuration_name,
+                (self._psrp_auth, self._psrp_runspace_kwargs.get('configuration_name', 'Unknown'),
                  connection.transport.endpoint), host=self._psrp_host
             )
             try:
@@ -601,7 +621,12 @@ class Connection(ConnectionBase):
 
         self._psrp_port = int(port)
         self._psrp_auth = self.get_option('auth')
-        self._psrp_configuration_name = self.get_option('configuration_name')
+
+        self._psrp_runspace_kwargs = dict(
+            configuration_name=self.get_option('configuration_name'),
+        )
+        if no_profile := self.get_option('no_profile'):
+            self._psrp_runspace_kwargs['no_profile'] = no_profile
 
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
@@ -641,6 +666,12 @@ class Connection(ConnectionBase):
             negotiate_hostname_override=self.get_option('negotiate_hostname_override'),
             negotiate_service=self.get_option('negotiate_service'),
         )
+
+        # We don't always set this in case we are working with an older pypsrp
+        # version that doesn't support this option.
+        certificate_key_password = self.get_option('certificate_key_password')
+        if certificate_key_password:
+            self._psrp_conn_kwargs['certificate_key_password'] = certificate_key_password
 
     def _exec_psrp_script(
         self,

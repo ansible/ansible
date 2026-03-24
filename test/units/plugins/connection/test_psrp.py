@@ -52,7 +52,9 @@ class TestConnectionPSRP(object):
             {},
             {
                 '_psrp_auth': 'negotiate',
-                '_psrp_configuration_name': 'Microsoft.PowerShell',
+                '_psrp_runspace_kwargs': {
+                    'configuration_name': 'Microsoft.PowerShell',
+                },
                 '_psrp_host': 'inventory_hostname',
                 '_psrp_conn_kwargs': {
                     'server': 'inventory_hostname',
@@ -77,7 +79,7 @@ class TestConnectionPSRP(object):
                     'negotiate_delegate': None,
                     'negotiate_hostname_override': None,
                     'negotiate_send_cbt': True,
-                    'negotiate_service': 'WSMAN',
+                    'negotiate_service': 'host',
                     'read_timeout': 30,
                     'reconnection_backoff': 2.0,
                     'reconnection_retries': 0,
@@ -145,7 +147,7 @@ class TestConnectionPSRP(object):
                     'negotiate_delegate': None,
                     'negotiate_hostname_override': None,
                     'negotiate_send_cbt': True,
-                    'negotiate_service': 'WSMAN',
+                    'negotiate_service': 'host',
                     'read_timeout': 30,
                     'reconnection_backoff': 2.0,
                     'reconnection_retries': 0,
