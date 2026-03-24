@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - apt - handle comma separated packages from recommends while installing local deb package (https://github.com/ansible/ansible/issues/86609).
