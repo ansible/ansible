@@ -22,7 +22,7 @@ REMOTE_PROVIDERS = [
     'default',
     'aws',
     'azure',
-    'parallels',
+    'mac',
 ]
 
 SECCOMP_CHOICES = [
