@@ -244,9 +244,14 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             try:
                 raise AnsibleError("Task result omitted due to queue send failure.") from ex
             except Exception as ex_wrapper:
+                host = Host(name=self._host.name)
+
+                task = Task()
+                task._uuid = self._task._uuid
+
                 utr = _task.UnifiedTaskResult.create_from_action_exception(ex_wrapper)
                 utr.finalize_registered_values()
 
                 # ignore the real task result and don't allow result object contribution from the exception (in case the pickling error was related)
-                # RPFIX-3: we need to come up with a way to skip sampling task fields on this call since they could be the source of the problem
-                self._final_q.send_task_result(self._host, self._task, utr)
+                # also use a synthesized host and task object to avoid issues with values from them, particularly task_fields
+                self._final_q.send_task_result(host, task, utr)
