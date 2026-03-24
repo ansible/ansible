@@ -45,12 +45,12 @@ class AnsibleResultCapturedError(AnsibleCapturedError, _error_utils.ContributesT
         self._utr = utr
 
     def as_task_result(self, utr: _task.UnifiedTaskResult) -> _task.UnifiedTaskResult:
-        return self._utr  # RPFIX-5: explain this better - Drop the provided UTR on the floor and use the stored one instead.
+        return self._utr  # RPFIX-5: DOC: explain this better - Drop the provided UTR on the floor and use the stored one instead.
 
 
 @dataclasses.dataclass(**_messages._dataclass_kwargs)
 class CapturedErrorSummary(_messages.ErrorSummary):
-    # RPFIX-5: clean this up (naming, docstring, etc.)
+    # RPFIX-5: DOC: clean this up (naming, docstring, etc.)
     error_message: str
     error_context: str
     is_module: bool

@@ -305,7 +305,7 @@ class StrategyModule(StrategyBase):
                             raise
                         except AnsibleError as ex:
                             for r in included_file._results:
-                                # RPFIX-5: do this better, instead of creating a throw-away UTR to merge onto the existing one
+                                # RPFIX-9: FUTURE: do this better, instead of creating a throw-away UTR to merge onto the existing one
                                 utr = _task.UnifiedTaskResult._create_from_exception(ex, source_is_module=False)
 
                                 r.utr.failed = utr.failed

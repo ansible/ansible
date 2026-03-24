@@ -73,7 +73,7 @@ if t.TYPE_CHECKING:
 
 
 def _get_item_vars(utr: _task.UnifiedTaskResult, task: Task) -> dict[str, object]:
-    # RPFIX-5: need a more consistent way to reconstitute/replay loop state controller-side
+    # RPFIX-9: FUTURE: need a more consistent way to reconstitute/replay loop state controller-side (may be resolved when RPC is implemented)
     item_vars = {}
 
     if task.loop or task.loop_with:
@@ -668,19 +668,18 @@ class StrategyBase:
                             all_task_vars = found_task_vars
 
                         if original_task.changed_when:
-                            # RPFIX-1: CRASH: resolve_conditional failures can take down the process
+                            # RPFIX-1: CRASH: resolve_conditional failures can take down the process (may be resolved when RPC is implemented)
                             result_utr.changed = original_task._resolve_conditional(original_task.changed_when, all_task_vars)
 
                         if original_task.failed_when:
-                            # RPFIX-1: CRASH: resolve_conditional failures can take down the process
+                            # RPFIX-1: CRASH: resolve_conditional failures can take down the process (may be resolved when RPC is implemented)
                             result_utr.set_failed_when_result(original_task._resolve_conditional(original_task.failed_when, all_task_vars))
 
                         if original_task.loop or original_task.loop_with:
-                            # FUTURE: this value for `task` hasn't been seeing the templated values from the worker  # RPFIX-3: fixed?
+                            # FUTURE: this value for `task` hasn't been seeing the templated values from the worker
                             htr = HostTaskResult(host=task_result.host, task=task_result.task, utr=result_utr)
                             self._tqm.send_callback('v2_runner_item_on_ok', htr)
 
-                            # RPFIX-3: do this the right way, and verify that it should happen after the callback?
                             if result_utr.changed:
                                 task_result.utr.changed = True
                             if result_utr.failed:
@@ -756,7 +755,6 @@ class StrategyBase:
                 #     del clean_copy['invocation']
 
                 for target_host in host_list:
-                    # RPFIX-5: ensure the right shape on RawTaskResult, not here
                     self._variable_manager.set_nonpersistent_facts(target_host, task_result.utr.registered_values)
 
             self._pending_results -= 1

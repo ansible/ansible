@@ -1088,7 +1088,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         module_args: dict[str, object] | None = None,
         tmp: str | None = None,
         task_vars: dict[str, object] | None = None,
-        persist_files: bool = False,  # RPFIX-3: deprecate/remove
+        persist_files: bool = False,
         delete_remote_tmp: bool | None = None,
         wrap_async: bool = False,
         ignore_unknown_opts: bool = False,
@@ -1302,7 +1302,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             # forget about it now
             self._connection._shell.tmpdir = None
 
-            # RPFIX-5: for backwards compat, figure out if still makes sense
+            # RPFIX-9: FUTURE: for backward compat (pre-RP), figure out if still makes sense
             utr.changed = True
 
         # propagate interpreter discovery results back to the controller

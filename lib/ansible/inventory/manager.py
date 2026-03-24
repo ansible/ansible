@@ -720,7 +720,7 @@ class InventoryManager:
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
         """
-        # RPFIX-1: ???: implement group_vars support when changing to AddGroup
+        # RPFIX-1: API: implement group_vars support when changing to AddGroup
 
         changed = False
 
@@ -735,7 +735,7 @@ class InventoryManager:
         if real_host is None:
             if host_name == self.localhost.name:
                 real_host = self.localhost
-            elif not already_in_cache:  # RPFIX-7: eh? (pre-existing issue)
+            elif not already_in_cache:  # RPFIX-5: BUG: pre-existing issue -- this error check probably needs to happen before mutation has already occurred
                 raise AnsibleError('%s cannot be matched in inventory' % host_name)
             else:
                 # host was removed from inventory during refresh, we should not process

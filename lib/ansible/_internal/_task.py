@@ -319,8 +319,6 @@ class TaskContext(AmbientContextBase):
 
         self._enable_registered_vars()
 
-        # RPFIX-9: can we get away with only returning ignore_errors on task_fields, then? I think so...
-
         if isinstance(self.task.ignore_errors, bool):
             # HACK: avoid setting to True due to template failures -- this should go away once field attribute templating is fixed
             utr.ignore_errors = self.task.ignore_errors
@@ -333,7 +331,7 @@ class TaskContext(AmbientContextBase):
         if not TaskContext.current().is_loop or self._item_index is None:
             if self._raw_loop_results:
                 self._raw_loop_results.clear()
-                # RPFIX-5: we should be able to show the existing task exception (if present) here, before discarding it
+                # RPFIX-1: UX: we should be able to show the existing task exception (if present) here, before discarding it
 
             self._raw_loop_results.append(utr)
 
@@ -392,7 +390,7 @@ class TaskContext(AmbientContextBase):
             raise NotALoopError()
 
         if not preview and (self._item_index is None or len(self._raw_loop_results) not in (self._item_index, self._item_index + 1)):
-            # RPFIX-3: can we ditch preview while retaining this safety check?
+            # RPFIX-9: FUTURE: can we ditch preview while retaining this safety check?
             # Loop results can be queried before or after loop results are recorded, so we need to accept a range of results.
             raise RuntimeError(f"Mismatch between item index {self._item_index} and loop result count {len(self._raw_loop_results)}.")
 
@@ -409,7 +407,7 @@ class TaskContext(AmbientContextBase):
             utr._extend_deprecations(item.deprecations)
 
         if all(item.skipped for item in self._raw_loop_results):
-            utr.set_skipped()  # RPFIX-5: previously skipped=False was included in the result, add a changelog entry to document the change in behavior
+            utr.set_skipped()
             utr.msg = 'All items skipped'
         elif utr.failed:
             utr.msg = 'One or more items failed'
@@ -766,7 +764,6 @@ class UnifiedTaskResult:
         if self.failed_when_result is not None:
             return bool(self.failed_when_result)
 
-        # RPFIX-5: this bothers nitz, scratch that itch
         if self.loop_results and any(loop_result.failed_when_result is not None for loop_result in self.loop_results):
             return any(loop_result.failed_when_result for loop_result in self.loop_results)
 
@@ -873,15 +870,15 @@ class UnifiedTaskResult:
     retries: int | None = dataclasses.field(default=None, metadata=export_only())
     notify: list[str] = dataclasses.field(default_factory=list)
     delegated_host: str | None = None
-    # RPFIX-3: rename delegated_vars to something like `callback_delegated_var_subset_of_crap`
+    # RPFIX-1: API: rename delegated_vars to something like `callback_delegated_var_subset_of_crap`
     delegated_vars: dict[str, object] | None = dataclasses.field(default=None, metadata=export_only("_ansible_delegated_vars"))
-    diff: object | None = dataclasses.field(default=None, metadata=import_export())  # RPFIX-5: validation with custom conversion func?
+    diff: object | None = dataclasses.field(default=None, metadata=import_export())  # RPFIX-9: FUTURE: validation with custom conversion func
     pending_changes: PendingChanges = dataclasses.field(default_factory=PendingChanges)
     """Changes which will be applied when the action completes, including on failure."""
     stats: StatsDict | None = dataclasses.field(default=None, metadata=import_export('ansible_stats', conversion_func=_convert_stats))
     async_job_id: str | None = dataclasses.field(default=None, metadata=import_export('ansible_job_id'))
     include_file: str | None = None
-    include_args: dict[str, object] | None = None  # FUTURE: make this a dataclass
+    include_args: dict[str, object] | None = None  # RPFIX-9: FUTURE: make this a dataclass
     registered_values: c.Mapping[str, object] | None = None
     """Values to register unconditionally, including on failure or when skipped."""
 
@@ -965,7 +962,7 @@ class UnifiedTaskResult:
     def _result_key_magic(self, key: str) -> str:
         match key:
             case "loop_item":
-                return self.loop_var or 'item'  # RPFIX-3: centralize the default logic
+                return self.loop_var or 'item'  # RPFIX-9: FUTURE: centralize the default logic
 
             case "loop_index":
                 return self.loop_index_var
@@ -1291,18 +1288,18 @@ class UnifiedTaskResult:
         return utr
 
     def set_changed_when_result_on_failure(self, value: Exception) -> None:
-        # RPFIX-3: this is probably needed when resolving the error handling below
+        # RPFIX-1: UX: this is probably needed when resolving the error handling below
         # if self.exception:
         #     self.changed_when_suppressed_exception = self.exception
         #     self.exception = None
 
         self.failed = True
         self.changed_when_result = str(value)
-        # RPFIX-3: this needs the same treatment as failed_when to preserve any exception detail from the task itself, add the right error message
-        # and point at the failing conditional expression.
+        # RPFIX-1: UX: this needs the same treatment as failed_when to preserve any exception detail from the task itself, add the right error message
+        #   and point at the failing conditional expression.
 
     def set_failed_when_result(self, value: Exception | bool) -> None:
-        # RPFIX-3: document exception suppression logic in changelog et al; decide which parts should apply to changed_when
+        # RPFIX-5: DOC: document exception suppression logic in changelog et al
         #  The use of any failed_when expression will suppress the existing value of `exception` and store it in `failed_when_suppressed_exception`,
         #  regardless if the expression result is True, False, or an exception. For True and exception, the `exception` value in the task result becomes
         #  one generated (or caused) by failed_when.
@@ -1321,7 +1318,7 @@ class UnifiedTaskResult:
             if value:
                 event = _messages.Event(
                     msg="A 'failed_when' expression evaluated to 'True'.",
-                    # RPFIX-5: We should be able to show more useful information here than just a static message,
+                    # RPFIX-1: UX: We should be able to show more useful information here than just a static message,
                     #  including any shadowed msg we may have had and the (origin-tagged) failed_when expression itself.
                     # chain=None if self.msg is None else _messages.EventChain(
                     #     msg_reason='DO THINGS HERE',

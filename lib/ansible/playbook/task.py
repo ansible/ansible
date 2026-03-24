@@ -375,7 +375,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
         try:
             if isinstance(value, dict):
                 any(validate_variable_name(k) for k in value.keys())
-                # RPFIX-3: we've validated the keys, but need validation to ensure that dict values are non-template strings
+                # RPFIX-5: UX: we've validated the keys, but need validation to ensure that dict values are non-template strings
             else:
                 validate_variable_name(value)
                 setattr(self, name, {value: _task.POLYMORPHIC_RESULT_EXPRESSION})  # translate to a register projection

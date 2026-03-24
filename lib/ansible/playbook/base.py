@@ -725,7 +725,7 @@ class Base(FieldAttributeBase):
 
     def update_result_no_log(self, templar: TemplateEngine, utr: _task.UnifiedTaskResult) -> None:
         """Set the post-validated no_log value for the result, falling back to a default on validation/templating failure with a warning."""
-        # RPFIX-3: consolidate this into UTR?
+        # RPFIX-9: FUTURE: consolidate this into UTR
 
         if self.finalized:
             no_log = self.no_log

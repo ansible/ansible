@@ -51,7 +51,7 @@ from ansible.executor.task_queue_manager import FinalQueue
 display = Display()
 
 
-_DELEGATED_CONNECTION_PLUGIN_VAR_NAMES = frozenset({  # RPFIX-5: bikeshed name
+_DELEGATED_CONNECTION_PLUGIN_VAR_NAMES = frozenset({
     'ansible_host',
     'ansible_port',
     'ansible_user',
@@ -259,7 +259,6 @@ class TaskExecutor:
             self._task.run_once = last_loop_task.run_once
             self._task.action = last_loop_task.action
 
-        # RPFIX-3: we can probably just dump this return entirely?
         return task_ctx.build_loop_result()
 
     def _check_loop_control(self) -> None:
@@ -334,7 +333,6 @@ class TaskExecutor:
                 try:
                     raise AnsibleTaskError(obj=self._task.get_ds()) from ex
                 except AnsibleTaskError as atex:
-                    # RPFIX-3: should we explicitly opt-in to allowing result overwrite, so it's a warning here and an error anywhere else?
                     utr = UnifiedTaskResult.create_from_action_exception(atex, accept_result_contribution=True)
 
             self._task.update_result_no_log(task_ctx.task_templar, utr)
@@ -604,7 +602,7 @@ class TaskExecutor:
                     if self._task.changed_when:
                         utr.changed = self._task._resolve_conditional(self._task.changed_when, task_ctx.task_vars)
                 except AnsibleError as e:
-                    # RPFIX-3: shouldn't an exception here be handled the same way as for failed_when? (and same for break_when, when, until?)
+                    # RPFIX-5: UX: shouldn't an exception here be handled the same way as for failed_when? (and same for break_when, when, until?)
                     utr.set_changed_when_result_on_failure(e)
                 else:
                     try:
@@ -667,7 +665,7 @@ class TaskExecutor:
         async_jid = utr.async_job_id
 
         if async_jid is None:
-            # RPFIX-3: why not raise?
+            # RPFIX-9: FUTURE: why not raise?
             with UnifiedTaskResult.create_and_record() as utr:
                 utr.failed = True
                 utr.msg = "No job id was returned by the async task"
@@ -737,7 +735,7 @@ class TaskExecutor:
                 self._final_q.send_callback('v2_runner_on_async_poll', self._host, async_task, async_utr)
 
         if not async_utr.finished:
-            # RPFIX-3: why not raise?
+            # RPFIX-9: FUTURE: why not raise?
             with UnifiedTaskResult.create_and_record() as async_failed_utr:
                 async_failed_utr.failed = True
                 async_failed_utr.async_result = async_utr.as_result_dict()

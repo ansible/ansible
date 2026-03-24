@@ -32,13 +32,6 @@
       - plain_loop_result.results[1].invocation == registered_var_in_loop.results[1].invocation
       - plain_loop_result.results[1].stdout == registered_var_in_loop.results[1].stdout
 
-# RPFIX-9: SHOULD THIS WORK?? - not right now, we can make it work if we want
-#- name: Check registration of _task to a var
-#  shell: echo hello
-#  register:
-#    my_task_registration: _task
-#  ignore_errors: true
-
 - name: Check registration of loop
   shell: echo {{ item }}
   register:

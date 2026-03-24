@@ -91,6 +91,6 @@ class ActionModule(ActionBase):
 
         result['changed'] = False
         result['add_host'] = dict(host_name=name, groups=new_groups, host_vars=host_vars)
-        # RPFIX-3: validate the default parent groups- group_by explicitly sets to 'all', should this, or the underlying API?
+        # RPFIX-1: API: validate the default parent groups- group_by explicitly sets to 'all', should this, or the underlying API?
         self.add_host(host_name=name, parent_group_names=new_groups, host_vars=host_vars)
         return result

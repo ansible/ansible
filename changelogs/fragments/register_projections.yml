@@ -1,5 +1,5 @@
 major_changes:
-  # RPFIX-9: finish this and draft docs/porting guide together; links to docs/porting guide?
+  # RPFIX-5: DOC: finish this and draft docs/porting guide together; links to docs/porting guide?
   # multiple register values, allows stacking
   # register projections
   # * _task implicit variable available to task conditionals and register expressions
@@ -13,6 +13,8 @@ major_changes:
     This feature can replace many usages of ``set_fact``.
   - task implicit object - A new ``_task`` implicit object is available for use in ``register`` and task conditional expressions (e.g., ``failed_when``).
     The pending results of the current task can be accessed via its ``result`` and ``loop_result`` properties.
+minor_changes:
+  - loops - The registered result of a loop task no longer contains the ``skipped`` key when it would be ``False``.
 bugfixes:
   - ignore_errors - Templated values for the ``ignore_errors`` keyword behave more consistently in looped tasks.
     If ``ignore_errors`` resolves ``True`` for any loop item, errors will be ignored for the entire task.

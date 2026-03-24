@@ -117,7 +117,7 @@ class CallbackTaskResult:
         Returns a cached copy of the task result dictionary for consumption by callbacks.
         Internal custom types are transformed to native Python types to facilitate access and serialization.
         """
-        # RPFIX-5: consolidate the no_log logic earlier so we don't have to check both?
+        # RPFIX-9: FUTURE: consolidate the no_log logic earlier so we don't have to check both the task and UTR here
         return self.__utr.as_result_dict(for_callback=True, censor_callback_result=self.task.no_log or self.__utr.no_log)
 
 

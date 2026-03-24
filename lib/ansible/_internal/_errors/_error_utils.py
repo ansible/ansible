@@ -21,18 +21,15 @@ class ContributesToTaskResult(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def as_task_result(self, utr: _task.UnifiedTaskResult) -> _task.UnifiedTaskResult:
         """Mapping of results to apply to the task result."""
-        # RPFIX-7: this should've been marked internal
 
     @property
     def omit_exception_key(self) -> bool:
         """Non-error exceptions (e.g., `AnsibleActionSkip`) must return `True` to ensure omission of the `exception` key."""
-        # RPFIX-7: this should've been marked internal
         return False
 
     @property
     def omit_failed_key(self) -> bool:
         """Exceptions representing non-failure scenarios (e.g., `skipped`, `unreachable`) must return `True` to ensure omission of the `failed` key."""
-        # RPFIX-7: this should've been marked internal
         return False
 
 
