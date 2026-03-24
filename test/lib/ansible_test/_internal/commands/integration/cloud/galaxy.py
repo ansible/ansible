@@ -67,7 +67,7 @@ class GalaxyProvider(CloudProvider):
         )
         self.postgres_image = os.getenv(
             'ANSIBLE_POSTGRES_CONTAINER',
-            'quay.io/lib/postgres:13'
+            'public.ecr.aws/docker/library/postgres:13'
         )
         self.amanda_image = os.getenv(
             'ANSIBLE_AMANDA_CONTAINER',
