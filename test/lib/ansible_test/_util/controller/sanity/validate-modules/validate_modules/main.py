@@ -879,19 +879,19 @@ class ModuleValidator(Validator):
 
     def _validate_docs(self):
         doc = None
-        # We have three ways of marking deprecated/removed files.  Have to check each one
+        # We have two ways of marking deprecated/removed files. Have to check each one
         # individually and then make sure they all agree
         deprecated = False
         doc_deprecated = None  # doc legally might not exist
         routing_says_deprecated = False
 
-        # We are testing a collection
         if self.routing:
             routing_deprecation = self.routing.get('plugin_routing', {})
             routing_deprecation = routing_deprecation.get('modules' if self.plugin_type == 'module' else self.plugin_type, {})
             routing_deprecation = routing_deprecation.get(self.name, {}).get('deprecation', {})
             if routing_deprecation:
-                # meta/runtime.yml says this is deprecated
+                # consult meta/runtime.yml for collection to see if this is deprecated
+                # consult ansible_builtin_runtime.yml for ansible.builtin to see if this is deprecated
                 routing_says_deprecated = True
                 deprecated = True
 
@@ -1026,30 +1026,22 @@ class ModuleValidator(Validator):
             if os.path.islink(self.object_path):
                 # This module has an alias, which we can tell as it's a symlink
                 # Rather than checking for `module: $filename` we need to check against the true filename
-                self._validate_docs_schema(
-                    doc,
-                    doc_schema(
-                        os.readlink(self.object_path).split('.')[0],
-                        for_collection=bool(self.collection),
-                        deprecated_module=deprecated or doc_deprecated,
-                        plugin_type=self.plugin_type,
-                    ),
-                    'DOCUMENTATION',
-                    'invalid-documentation',
-                )
+                module_name = os.readlink(self.object_path).split('.')[0]
             else:
                 # This is the normal case
-                self._validate_docs_schema(
-                    doc,
-                    doc_schema(
-                        self.object_name.split('.')[0],
-                        for_collection=bool(self.collection),
-                        deprecated_module=deprecated or doc_deprecated,
-                        plugin_type=self.plugin_type,
-                    ),
-                    'DOCUMENTATION',
-                    'invalid-documentation',
-                )
+                module_name = self.object_name.split('.')[0]
+
+            self._validate_docs_schema(
+                doc,
+                doc_schema(
+                    module_name,
+                    for_collection=bool(self.collection),
+                    deprecated_module=deprecated or doc_deprecated,
+                    plugin_type=self.plugin_type,
+                ),
+                'DOCUMENTATION',
+                'invalid-documentation',
+            )
 
             if doc:
                 self._validate_option_docs(doc.get('options'))
@@ -2596,15 +2588,17 @@ def run():
     routing = None
     if args.collection:
         routing_file = 'meta/runtime.yml'
-        # Load meta/runtime.yml if it exists, as it may contain deprecation information
-        if os.path.isfile(routing_file):
-            try:
-                with open(routing_file) as f:
-                    routing = yaml.safe_load(f)
-            except yaml.error.MarkedYAMLError as ex:
-                print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
-            except Exception as ex:  # pylint: disable=broad-except
-                print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
+    else:
+        routing_file = 'lib/ansible/config/ansible_builtin_runtime.yml'
+
+    if os.path.isfile(routing_file):
+        try:
+            with open(routing_file) as f:
+                routing = yaml.safe_load(f)
+        except yaml.error.MarkedYAMLError as ex:
+            print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+        except Exception as ex:  # pylint: disable=broad-except
+            print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
     for plugin in args.plugins:
         if os.path.isfile(plugin):
