@@ -825,10 +825,18 @@ class GalaxyAPI:
             try:
                 modified_date = self.get_collection_metadata(namespace, name).modified_str
             except GalaxyError as err:
-                if err.http_code != 404:
+                if err.http_code == 404:
+                    # No collection found, return an empty list to keep things consistent with the various APIs
+                    return []
+                elif err.http_code != 500 or 'v3' in self.available_api_versions:
                     raise
-                # No collection found, return an empty list to keep things consistent with the various APIs
-                return []
+
+                # v2 appears to have a bug on some versions, where the metadata URL is an HTTP error 500
+                # since this URL is only used to handle the cache, proceed as if the cache needs to be refreshed.
+                modified_date = None
+                if '%s.%s' % (namespace, name) in modified_cache:
+                    del modified_cache['%s.%s' % (namespace, name)]
+                    self._set_cache()
 
             cached_modified_date = modified_cache.get('%s.%s' % (namespace, name), None)
             if cached_modified_date != modified_date:
