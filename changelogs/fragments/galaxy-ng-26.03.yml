@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-test - update galaxy_ng container to current version deployed to galaxy.ansible.com

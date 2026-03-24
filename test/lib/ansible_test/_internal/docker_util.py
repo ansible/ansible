@@ -658,15 +658,15 @@ def __docker_pull(args: CommonConfig, image: str) -> None:
     """Internal implementation for docker_pull. Do not call directly."""
     if '@' not in image and ':' not in image:
         display.info('Skipping pull of image without tag or digest: %s' % image, verbosity=2)
-        inspect = docker_image_inspect(args, image)
-    elif inspect := docker_image_inspect(args, image, always=True):
+        docker_image_inspect(args, image)
+    elif docker_image_inspect(args, image, always=True):
         display.info('Skipping pull of existing image: %s' % image, verbosity=2)
     else:
         for _iteration in range(1, 10):
             try:
                 docker_command(args, ['pull', image], capture=False)
 
-                if (inspect := docker_image_inspect(args, image)) or args.explain:
+                if docker_image_inspect(args, image) or args.explain:
                     break
 
                 display.warning(f'Image "{image}" not found after pull completed. Waiting a few seconds before trying again.')
@@ -676,16 +676,15 @@ def __docker_pull(args: CommonConfig, image: str) -> None:
         else:
             raise ApplicationError(f'Failed to pull container image "{image}".')
 
-    if inspect and inspect.volumes:
-        display.warning(f'Image "{image}" contains {len(inspect.volumes)} volume(s): {", ".join(sorted(inspect.volumes))}\n'
-                        'This may result in leaking anonymous volumes. It may also prevent the image from working on some hosts or container engines.\n'
-                        'The image should be rebuilt without the use of the VOLUME instruction.',
-                        unique=True)
-
 
 def docker_cp_to(args: CommonConfig, container_id: str, src: str, dst: str) -> None:
     """Copy a file to the specified container."""
     docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)], capture=True)
+
+
+def docker_cp_from(args: CommonConfig, container_id: str, src: str, dst: str) -> None:
+    """Copy a file from the specified container."""
+    docker_command(args, ['cp', '%s:%s' % (container_id, src), dst], capture=True)
 
 
 def docker_create(
@@ -726,7 +725,7 @@ def docker_rm(args: CommonConfig, container_id: str) -> None:
         # Podman supports `--time` for stop. The `--timeout` option was deprecated in 1.9.0.
         # Both Docker and Podman support the `-t` option for stop.
         docker_command(args, ['stop', '-t', '0', container_id], capture=True)
-        docker_command(args, ['rm', container_id], capture=True)
+        docker_command(args, ['rm', '-v', container_id], capture=True)
     except SubprocessError as ex:
         # Both Podman and Docker report an error if the container does not exist.
         # The error messages contain the same "no such container" string, differing only in capitalization.

@@ -10,6 +10,7 @@ from ....config import (
 )
 
 from ....docker_util import (
+    docker_cp_from,
     docker_cp_to,
     docker_exec,
 )
@@ -33,43 +34,6 @@ from . import (
 )
 
 
-GALAXY_HOST_NAME = 'galaxy-pulp'
-SETTINGS = {
-    'PULP_CONTENT_ORIGIN': f'http://{GALAXY_HOST_NAME}',
-    'PULP_ANSIBLE_API_HOSTNAME': f'http://{GALAXY_HOST_NAME}',
-    'PULP_GALAXY_API_PATH_PREFIX': '/api/galaxy/',
-    # These paths are unique to the container image which has an nginx location for /pulp/content to route
-    # requests to the content backend
-    'PULP_ANSIBLE_CONTENT_HOSTNAME': f'http://{GALAXY_HOST_NAME}/pulp/content/api/galaxy/v3/artifacts/collections/',
-    'PULP_CONTENT_PATH_PREFIX': '/pulp/content/api/galaxy/v3/artifacts/collections/',
-    'PULP_GALAXY_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'django.contrib.auth.backends.ModelBackend',
-    ],
-    # This should probably be false see https://issues.redhat.com/browse/AAH-2328
-    'PULP_GALAXY_REQUIRE_CONTENT_APPROVAL': 'true',
-    'PULP_GALAXY_DEPLOYMENT_MODE': 'standalone',
-    'PULP_GALAXY_AUTO_SIGN_COLLECTIONS': 'false',
-    'PULP_GALAXY_COLLECTION_SIGNING_SERVICE': 'ansible-default',
-    'PULP_RH_ENTITLEMENT_REQUIRED': 'insights',
-    'PULP_TOKEN_AUTH_DISABLED': 'false',
-    'PULP_TOKEN_SERVER': f'http://{GALAXY_HOST_NAME}/token/',
-    'PULP_TOKEN_SIGNATURE_ALGORITHM': 'ES256',
-    'PULP_PUBLIC_KEY_PATH': '/src/galaxy_ng/dev/common/container_auth_public_key.pem',
-    'PULP_PRIVATE_KEY_PATH': '/src/galaxy_ng/dev/common/container_auth_private_key.pem',
-    'PULP_ANALYTICS': 'false',
-    'PULP_GALAXY_ENABLE_UNAUTHENTICATED_COLLECTION_ACCESS': 'true',
-    'PULP_GALAXY_ENABLE_UNAUTHENTICATED_COLLECTION_DOWNLOAD': 'true',
-    'PULP_GALAXY_ENABLE_LEGACY_ROLES': 'true',
-    'PULP_GALAXY_FEATURE_FLAGS__execution_environments': 'false',
-    'PULP_SOCIAL_AUTH_LOGIN_REDIRECT_URL': '/',
-    'PULP_GALAXY_FEATURE_FLAGS__ai_deny_index': 'true',
-    'PULP_DEFAULT_ADMIN_PASSWORD': 'password'
-}
-
-
 GALAXY_IMPORTER = b"""
 [galaxy-importer]
 ansible_local_tmp=~/.ansible/tmp
@@ -90,49 +54,86 @@ run_flake8=false
 
 class GalaxyProvider(CloudProvider):
     """
-    Galaxy plugin. Sets up pulp (ansible-galaxy) servers for tests.
-    The pulp source itself resides at: https://github.com/pulp/pulp-oci-images
+    Galaxy plugin. Sets up ansible-galaxy servers for tests.
     """
 
     def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
-        self.image = os.environ.get(
-            'ANSIBLE_PULP_CONTAINER',
-            'quay.io/pulp/galaxy:4.7.1'
-        )
-
         self.uses_docker = True
+        self.galaxy_image = os.getenv(
+            'ANSIBLE_GALAXY_CONTAINER',
+            'ghcr.io/ansible/galaxy-ng-test-container:26.03.0'
+        )
+        self.postgres_image = os.getenv(
+            'ANSIBLE_POSTGRES_CONTAINER',
+            'public.ecr.aws/docker/library/postgres:13'
+        )
+        self.amanda_image = os.getenv(
+            'ANSIBLE_AMANDA_CONTAINER',
+            'ghcr.io/sivel/amanda@sha256:f704fe6f062b8ada59ae6553a70d2175295d068d56f544875980581b7df9c16d'
+        )
 
     def setup(self) -> None:
         """Setup cloud resource before delegation and reg cleanup callback."""
         super().setup()
 
-        with tempfile.NamedTemporaryFile(mode='w+') as env_fd:
-            settings = '\n'.join(
-                f'{key}={value}' for key, value in SETTINGS.items()
-            )
-            env_fd.write(settings)
-            env_fd.flush()
-            display.info(f'>>> galaxy_ng Configuration\n{settings}', verbosity=3)
-            descriptor = run_support_container(
+        # This container is created separately from the actual galaxy container due to
+        # needing it created for postgres, but the galaxy container has a dependency on knowing the postgres
+        # container id
+        gdata = run_support_container(self.args, self.platform, self.galaxy_image, 'galaxy-data', [0], start=False)
+        if not gdata:
+            return
+
+        amanda = run_support_container(
+            self.args,
+            self.platform,
+            self.amanda_image,
+            'amanda',
+            [8001],
+            aliases=['amanda'],
+            options=[
+                '--volumes-from', gdata.container_id,
+            ],
+            cmd=['-port', '8001', '-publish'],
+        )
+        if not amanda:
+            return
+
+        postgres = run_support_container(
+            self.args,
+            self.platform,
+            self.postgres_image,
+            'galaxy-postgres',
+            [5432],
+            aliases=['postgres'],
+            options=[
+                '--volumes-from', gdata.container_id,
+            ],
+        )
+        if not postgres:
+            return
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            docker_cp_from(self.args, gdata.container_id, '/galaxy_ng.env', tmpdir)
+            galaxy_ng = run_support_container(
                 self.args,
                 self.platform,
-                self.image,
-                GALAXY_HOST_NAME,
-                [
-                    80,
-                ],
-                aliases=[
-                    GALAXY_HOST_NAME,
-                ],
+                self.galaxy_image,
+                'galaxy_ng',
+                [8000, 24816],
+                aliases=['galaxy'],
                 start=True,
                 options=[
-                    '--env-file', env_fd.name,
+                    '--env-file', os.path.join(tmpdir, 'galaxy_ng.env'),
+                    '--add-host', f'postgres:{postgres.details.container_ip}',
+                ],
+                cmd=[
+                    '/bin/sh', '-c',
+                    '(start-api &); (start-content-app &); start-worker;'
                 ],
             )
-
-        if not descriptor:
+        if not galaxy_ng:
             return
 
         injected_files = [
@@ -143,13 +144,14 @@ class GalaxyProvider(CloudProvider):
                 temp_fd.write(content)
                 temp_fd.flush()
                 display.info(f'>>> {friendly_name} Configuration\n{to_text(content)}', verbosity=3)
-                docker_exec(self.args, descriptor.container_id, ['mkdir', '-p', os.path.dirname(path)], True)
-                docker_cp_to(self.args, descriptor.container_id, temp_fd.name, path)
-                docker_exec(self.args, descriptor.container_id, ['chown', 'pulp:pulp', path], True)
+                docker_exec(self.args, galaxy_ng.container_id, ['mkdir', '-p', os.path.dirname(path)], True, options=['-u', 'root'])
+                docker_cp_to(self.args, galaxy_ng.container_id, temp_fd.name, path)
+                docker_exec(self.args, galaxy_ng.container_id, ['chown', 'galaxy:galaxy', path], True, options=['-u', 'root'])
 
-        self._set_cloud_config('PULP_HOST', GALAXY_HOST_NAME)
-        self._set_cloud_config('PULP_USER', 'admin')
-        self._set_cloud_config('PULP_PASSWORD', 'password')
+        self._set_cloud_config('GALAXY_HOST', 'galaxy')
+        self._set_cloud_config('GALAXY_USER', 'admin')
+        self._set_cloud_config('GALAXY_PASSWORD', 'admin')
+        self._set_cloud_config('AMANDA_HOST', 'amanda')
 
 
 class GalaxyEnvironment(CloudEnvironment):
@@ -157,22 +159,22 @@ class GalaxyEnvironment(CloudEnvironment):
 
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
-        pulp_user = str(self._get_cloud_config('PULP_USER'))
-        pulp_password = str(self._get_cloud_config('PULP_PASSWORD'))
-        pulp_host = self._get_cloud_config('PULP_HOST')
+        galaxy_user = str(self._get_cloud_config('GALAXY_USER'))
+        galaxy_password = str(self._get_cloud_config('GALAXY_PASSWORD'))
+        galaxy_host = self._get_cloud_config('GALAXY_HOST')
+        amanda_host = self._get_cloud_config('AMANDA_HOST')
 
         return CloudEnvironmentConfig(
             ansible_vars=dict(
-                pulp_user=pulp_user,
-                pulp_password=pulp_password,
-                pulp_api=f'http://{pulp_host}',
-                pulp_server=f'http://{pulp_host}/pulp_ansible/galaxy/',
-                galaxy_ng_server=f'http://{pulp_host}/api/galaxy/',
+                galaxy_user=galaxy_user,
+                galaxy_password=galaxy_password,
+                galaxy_ng_server=f'http://{galaxy_host}:8000/api/galaxy',
+                amanda=f'http://{amanda_host}:8001',
             ),
             env_vars=dict(
-                PULP_USER=pulp_user,
-                PULP_PASSWORD=pulp_password,
-                PULP_SERVER=f'http://{pulp_host}/pulp_ansible/galaxy/api/',
-                GALAXY_NG_SERVER=f'http://{pulp_host}/api/galaxy/',
+                GALAXY_USER=galaxy_user,
+                GALAXY_PASSWORD=galaxy_password,
+                GALAXY_NG_SERVER=f'http://{galaxy_host}:8000/api/galaxy',
+                AMANDA=f'http://{amanda_host}:8001',
             ),
         )

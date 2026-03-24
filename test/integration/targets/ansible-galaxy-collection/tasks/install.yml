@@ -4,6 +4,16 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: directory
 
+- name: install simple collection from specific server
+  command: ansible-galaxy collection install namespace1.name1 -s galaxy_ng_token -vvvv
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: remove collection
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    state: absent
+
 - name: install simple collection from first accessible server
   command: ansible-galaxy collection install namespace1.name1 -vvvv
   environment:
@@ -30,7 +40,6 @@
     - install_normal_files.files[1].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
-    - 'from_first_good_server.stdout|regex_findall("has not signed namespace1\.name1")|length == 1'
     - "info_dir is is_dir"
   vars:
     info_dir: "{{ galaxy_dir }}/ansible_collections/namespace1.name1-1.0.9.info"
@@ -178,9 +187,9 @@
 
 - name: Find artifact url for namespace3.name
   uri:
-    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/namespace3/name/versions/1.0.0/'
-    user: '{{ pulp_user }}'
-    password: '{{ pulp_password }}'
+    url: '{{ test_api_server }}/v3/plugin/ansible/content/published/collections/index/namespace3/name/versions/1.0.0/'
+    user: '{{ galaxy_user }}'
+    password: '{{ galaxy_password }}'
     force_basic_auth: true
   register: artifact_url_response
 
@@ -188,6 +197,9 @@
   get_url:
     url: '{{ artifact_url_response.json.download_url }}'
     dest: '{{ galaxy_dir }}/namespace3.tar.gz'
+    url_username: '{{ galaxy_user }}'
+    url_password: '{{ galaxy_password }}'
+    force_basic_auth: true
 
 - name: install a collection from a tarball - {{ test_id }}
   command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz' {{ galaxy_verbosity }}
@@ -305,16 +317,8 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
-- name: Find artifact url for namespace4.name
-  uri:
-    url: '{{ test_api_server }}v3/plugin/ansible/content/primary/collections/index/namespace4/name/versions/1.0.0/'
-    user: '{{ pulp_user }}'
-    password: '{{ pulp_password }}'
-    force_basic_auth: true
-  register: artifact_url_response
-
 - name: install a collection from a URI - {{ test_id }}
-  command: ansible-galaxy collection install {{ artifact_url_response.json.download_url}} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install {{ amanda }}/artifacts/namespace4-name-1.0.0.tar.gz {{ galaxy_verbosity }}
   register: install_uri
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
@@ -437,6 +441,30 @@
     - namespace7
     - namespace8
     - namespace9
+
+- name: store signatures
+  copy:
+    dest: "{{ gpg_homedir }}/{{ item.namespace }}-{{ item.name }}-{{ item.version }}-MANIFEST.json.asc"
+    content: "{{ version_data.signatures.0.signature }}"
+  loop:
+    - namespace: namespace1
+      name: name1
+      version: "1.0.0"
+    - namespace: namespace1
+      name: name1
+      version: "1.0.9"
+    - namespace: namespace2
+      name: name
+      version: "1.0.0"
+    - namespace: namespace7
+      name: name
+      version: "1.0.0"
+    - namespace: namespace9
+      name: name
+      version: "1.0.0"
+  vars:
+    version_url: '{{ galaxy_ng_server }}/v3/collections/{{ item.namespace }}/{{ item.name }}/versions/{{ item.version }}/'
+    version_data: "{{ lookup('url', version_url, username=galaxy_user, password=galaxy_password, force_basic_auth=true)|from_json }}"
 
 - name: rewrite requirements file with collections and signatures
   copy:
@@ -751,13 +779,36 @@
 - set_fact:
     cache_version_build: '{{ (cache_version_build | int) + 1 }}'
 
-- name: publish update for cache.cache test
-  setup_collections:
-    server: galaxy_ng
-    collections:
-    - namespace: cache
-      name: cache
-      version: 1.0.{{ cache_version_build }}
+- name: copy cache collection to tmpdir
+  copy:
+    src: '{{ galaxy_dir }}/ansible_collections/cache/cache/'
+    dest: '{{ galaxy_dir }}/cache-src'
+    remote_src: true
+
+- name: write galaxy.yml file
+  copy:
+    dest: '{{ galaxy_dir }}/cache-src/galaxy.yml'
+    content: |
+      {{ (lookup('file', manifest)|from_json).collection_info|to_nice_yaml }}
+  vars:
+    manifest: '{{ galaxy_dir }}/cache-src/MANIFEST.json'
+
+- name: update cache.cache src version
+  replace:
+    path: '{{ galaxy_dir }}/cache-src/galaxy.yml'
+    regexp: '^version:.*$'
+    replace: 'version: 1.0.{{ cache_version_build }}'
+
+- name: build updated cache.cache
+  command:
+    cmd: ansible-galaxy collection build
+    chdir: '{{ galaxy_dir }}/cache-src'
+  register: cache_cache_build
+
+- name: publish updated cache.cache
+  command:
+    cmd: ansible-galaxy collection publish -s galaxy_ng "{{ cache_cache_build.stdout_lines|last|split|last }}"
+    chdir: '{{ galaxy_dir }}/cache-src'
 
 - name: make sure the cache version list is ignored on a collection version change - {{ test_id }}
   command: ansible-galaxy collection install cache.cache -s '{{ test_name }}' --force -vvv
@@ -1017,6 +1068,7 @@
 - name: install simple collection with invalid detached signature
   command: ansible-galaxy collection install namespace1.name1 -vvvv {{ signature_options }}
   environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "all"
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
@@ -1067,6 +1119,7 @@
 - name: use lenient signature verification (default) without providing signatures
   command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
   environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "all"
   register: missing_signature
 
@@ -1077,8 +1130,9 @@
       - '"namespace1.name1:1.0.0 was installed successfully" in missing_signature.stdout'
       - '"Signature verification failed for ''namespace1.name1'': no successful signatures" not in missing_signature.stdout'
 
+# These steps use secondary (amanda) as it has no signatures provided
 - name: use strict signature verification without providing signatures
-  command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
+  command: ansible-galaxy collection install -s secondary namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
   ignore_errors: yes
