@@ -449,14 +449,6 @@ class TaskExecutor:
         if self._task.action in C._ACTION_INCLUDE_TASKS:
             include_args = self._task.args.copy()
             include_file = include_args.pop('_raw_params', None)
-            if not include_file:
-                # RPFIX-5: raise an exception?
-                with UnifiedTaskResult.create_and_record() as utr:
-                    utr.failed = True
-                    utr.msg = "No include file was specified to the include"
-                    # RPFIX-5: record or raise to something that will?
-
-                return utr
 
             with UnifiedTaskResult.create_and_record() as utr:
                 utr.include_file = include_file
