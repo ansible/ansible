@@ -328,6 +328,11 @@ options:
       - Defines whether yum should verify SSL certificates/hosts at all.
     type: bool
     aliases: [ validate_certs ]
+  sslverifystatus:
+    description:
+      - Defines whether SSL certificate revocation status checking should be done for the repository server.
+    type: bool
+    version_added: '2.19'
   state:
     description:
       - State of the repo file.
@@ -570,6 +575,7 @@ def main():
         sslclientcert=dict(aliases=['client_cert']),
         sslclientkey=dict(aliases=['client_key'], no_log=False),
         sslverify=dict(type='bool', aliases=['validate_certs']),
+        sslverifystatus=dict(type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
         throttle=dict(),
         timeout=dict(),
