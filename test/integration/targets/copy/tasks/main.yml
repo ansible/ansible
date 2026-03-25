@@ -137,7 +137,7 @@
       assert:
         that:
           - non_string_src is failed
-          - "'Invalid type' in non_string_src['msg']"
+          - "'Could not find or access' in non_string_src['msg']"
 
   always:
     - name: Cleaning
