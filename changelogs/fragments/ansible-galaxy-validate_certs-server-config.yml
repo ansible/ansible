@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    ansible-galaxy collection - Fix using the server configuration for ``validate_certs``
+    when downloading collections. (https://github.com/ansible/ansible/issues/86694)
