@@ -332,6 +332,9 @@ class AnsibleTemplate(Template):
     def __call__(self, jinja_vars: c.Mapping[str, t.Any]) -> t.Any:
         return self.render(ArgSmuggler.package_jinja_vars(jinja_vars))
 
+    def __deepcopy__(self, memo):
+        return self  # templates are immutable, so a deep copy is not needed (it would also fail if not implemented here)
+
     # noinspection PyShadowingBuiltins
     def new_context(
         self,

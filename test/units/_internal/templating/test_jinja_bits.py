@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import pathlib
 import sys
 import typing as t
@@ -467,3 +468,11 @@ def test_marker_access_getattr_and_getitem(template: str) -> None:
         TemplateEngine(variables=dict(adict={})).template(TRUST.tag(template))
 
     assert type(tracker._markers[0]) is UndefinedMarker  # pylint: disable=unidiomatic-typecheck
+
+
+def test_ansible_template_deepcopy() -> None:
+    """Ensure that AnsibleTemplate instances return themselves when a deep copy is made."""
+    template = AnsibleEnvironment().from_string("Hello")
+    deep_copy = copy.deepcopy(template)
+
+    assert deep_copy is template
