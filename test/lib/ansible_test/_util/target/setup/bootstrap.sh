@@ -453,6 +453,7 @@ bootstrap_remote_rhel_10()
 bootstrap_remote_rhel()
 {
     case "${platform_version}" in
+        8.*) bootstrap_remote_rhel_9 ;;
         9.*) bootstrap_remote_rhel_9 ;;
         10.*) bootstrap_remote_rhel_10 ;;
     esac

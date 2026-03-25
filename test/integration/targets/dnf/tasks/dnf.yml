@@ -19,9 +19,13 @@
 # NOTE Now that the dnf module executed, libdnf is installed even for the case
 #      when testing 'auto_install_module_deps: false' for dnf5
 #      and we can print libdnf version we test against for debugging purposes.
+- name: get libdnf version being tested
+  command: "rpm -q {{ 'python3-libdnf5' if dnf5 else 'python3-libdnf' }}"
+  register: libdnf_ver
+
 - name: libdnf version being tested
   debug:
-    msg: "{{ lookup('pipe', 'rpm -q ' ~ ('python3-libdnf5' if dnf5 else 'python3-libdnf')) }}"
+    msg: "{{ libdnf_ver.stdout }}"
 
 # UNINSTALL AGAIN
 - name: uninstall sos

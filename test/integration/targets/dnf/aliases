@@ -1,4 +1,5 @@
 destructive
 shippable/posix/group1
+shippable/targeted/rhel8
 skip/freebsd
 skip/macos

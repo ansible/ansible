@@ -1,40 +1,26 @@
-#!/usr/bin/python
-
-from __future__ import annotations
-
+import sys
 import tempfile
+import typing
 
-from dataclasses import dataclass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-
-HAS_RPMFLUFF = True
-
-try:
-    from rpmfluff.make import make_gif
-    from rpmfluff.sourcefile import GeneratedSourceFile
-    from rpmfluff.rpmbuild import SimpleRpmBuild
-    from rpmfluff.utils import expectedArch
-    from rpmfluff.yumrepobuild import YumRepoBuild
-except ImportError:
-    expectedArch = None  # define here to avoid NameError as it is used on top level in SPECS
-    HAS_RPMFLUFF = False
+from rpmfluff.make import make_gif
+from rpmfluff.sourcefile import GeneratedSourceFile
+from rpmfluff.rpmbuild import SimpleRpmBuild
+from rpmfluff.utils import expectedArch
+from rpmfluff.yumrepobuild import YumRepoBuild
 
 
-@dataclass
-class RPM:
+class RPM(typing.NamedTuple):
     name: str
     version: str
     release: str = '1'
     epoch: int = 0
-    arch: list[str] | None = None
-    recommends: list[str] | None = None
-    requires: list[str] | None = None
-    file: str | None = None
-    binary: str | None = None
-    provides: list[str] | None = None
-    pre: str | None = None
+    arch: typing.Optional[typing.List[str]] = None
+    recommends: typing.Optional[typing.List[str]] = None
+    requires: typing.Optional[typing.List[str]] = None
+    file: typing.Optional[str] = None
+    binary: typing.Optional[str] = None
+    provides: typing.Optional[typing.List[str]] = None
+    pre: typing.Optional[str] = None
 
 
 SPECS = [
@@ -60,8 +46,8 @@ SPECS = [
     RPM(name='broken-a', version='1.2.3.4', requires=['dinginessentail-doesnotexist']),
     RPM(name='broken-a', version='1.2.4',),
     RPM(name='broken-a', version='2.0.0', requires=['dinginessentail-doesnotexist']),
-    RPM(name='broken-b', version='1.0', requires=['broken-a = 1.2.3-1']),
-    RPM(name='broken-c', version='1.0', requires=['broken-c = 1.2.4-1']),
+    RPM(name='broken-b', version='1.0', requires=['broken-a = 1.2.3']),
+    RPM(name='broken-c', version='1.0', requires=['broken-a = 1.2.4']),
     RPM(name='broken-d', version='1.0', requires=['broken-a']),
     RPM(name='provides-binary', version='1.0', arch=[expectedArch], binary='/usr/sbin/package-name'),
     RPM(name='package-name', version='1.0'),
@@ -112,34 +98,16 @@ def create_repo():
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec={
-            'tempdir': {'type': 'path'},
-        }
-    )
-
-    if not HAS_RPMFLUFF:
-        system_interpreters = ['/usr/libexec/platform-python', '/usr/bin/python3', '/usr/bin/python']
-
-        interpreter = probe_interpreters_for_module(system_interpreters, 'rpmfluff')
-
-        if not interpreter or has_respawned():
-            module.fail_json('unable to find rpmfluff; tried {0}'.format(system_interpreters))
-
-        respawn_module(interpreter)
-
-    tempdir = module.params['tempdir']
+    tempdir = sys.argv[1]
 
     # Save current temp dir so we can set it back later
     original_tempdir = tempfile.tempdir
     tempfile.tempdir = tempdir
 
     try:
-        repo_dir = create_repo()
+        print(create_repo())
     finally:
         tempfile.tempdir = original_tempdir
-
-    module.exit_json(repo_dir=repo_dir, tmpfile=tempfile.gettempdir())
 
 
 if __name__ == "__main__":

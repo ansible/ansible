@@ -16,8 +16,8 @@
 
     - name: Now try again but installing misleading rpm
       block:
-        - name: install misleading rpm api
-          package: name="python3-rpm" state=present
+        - name: install misleading rpm
+          package: name="rpm" state=present
 
         - name: prep outputdir
           tempfile: path=~ state=directory

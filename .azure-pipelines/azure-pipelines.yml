@@ -141,6 +141,16 @@ stages:
               test: ubuntu/24.04
           groups:
             - 6
+  - stage: Remote_Targeted
+    displayName: Remote Targeted
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml  # targeted tests
+        parameters:
+          testFormat: "{0}/targeted"
+          targets:
+            - name: RHEL 8.10
+              test: rhel/8.10/rhel8
   - stage: Docker
     dependsOn: []
     jobs:
@@ -239,6 +249,7 @@ stages:
       - Units
       - Windows
       - Remote
+      - Remote_Targeted
       - Docker
       - Galaxy
       - Generic

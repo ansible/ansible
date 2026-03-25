@@ -34,6 +34,7 @@ lib/ansible/module_utils/service.py pylint:ansible-bad-function
 lib/ansible/modules/mount_facts.py pylint:ansible-bad-function
 lib/ansible/modules/service.py pylint:ansible-bad-function
 lib/ansible/modules/user.py pylint:ansible-bad-function
+lib/ansible/module_utils/_embed/dnf.py boilerplate  # annotations future bombs on Python 3.6
 lib/ansible/module_utils/basic.py pylint:unused-import  # deferring resolution to allow enabling the rule now
 lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.10!skip # pass/fail depends on presence of libselinux.so
@@ -181,6 +182,7 @@ test/integration/targets/lookup_ini/lookup.ini codespell:indien  # French
 test/integration/targets/lookup_ini/lookup.properties codespell:indien  # French
 test/integration/targets/lookup_ini/test_lookup_properties.yml codespell:indien  # French
 test/integration/targets/module_utils_Ansible.Process/library/ansible_process_tests.ps1 codespell:caf  # expected test output
+test/integration/targets/setup_rpm_repo/ansible_collections/ansible_test/setup_rpm_repo/plugins/module_utils/_embed/create_repo.py boilerplate  # not an actual module_util, a script that supports lower python versions
 test/lib/ansible_test/config/inventory.networking.template codespell:aci  # network collection name
 test/units/errors/fixtures/outputs/short_file_left_marker.txt codespell!skip  # intentionally truncated test data
 test/units/errors/fixtures/outputs/short_file_long_line_truncated_past_target.txt codespell!skip  # intentionally truncated test data
