@@ -47,7 +47,11 @@ _ACTION_ALL_INCLUDE_ROLE_TASKS = _ACTION_INCLUDE_ROLE + _ACTION_INCLUDE_TASKS
 _ACTION_FACT_GATHERING = _ACTION_SETUP + add_internal_fqcns(('gather_facts', ))
 _ACTION_WITH_CLEAN_FACTS = _ACTION_SET_FACT + _ACTION_INCLUDE_VARS
 
-# http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
+# Predefined ANSI color names used by parsecolor() in ansible.utils.color.
+# In addition to these names, color settings also accept:
+#   colorN   - 256-color palette index (0-255)
+#   rgbRGB   - 6x6x6 color cube, each digit 0-5
+#   grayN    - grayscale ramp index (0-23)
 COLOR_CODES = {
     'black': u'0;30', 'bright gray': u'0;37',
     'blue': u'0;34', 'white': u'1;37',

@@ -1,0 +1,5 @@
+minor_changes:
+  - >-
+    color settings - Document valid color values for all ``COLOR_*`` configuration settings,
+    including predefined color names and the 256-color formats ``colorN``, ``rgbRGB``, and ``grayN``
+    (https://github.com/ansible/ansible/issues/83633).

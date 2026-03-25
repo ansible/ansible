@@ -312,14 +312,22 @@ COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
 COLOR_CHANGED:
   name: Color for 'changed' task status
   default: yellow
-  description: Defines the color to use on 'Changed' task status.
+  description:
+    - Defines the color to use on 'Changed' task status.
+    - 'Valid values are a predefined color name: C(black), C(blue), C(bright blue), C(bright cyan), C(bright gray),
+      C(bright green), C(bright magenta), C(bright purple), C(bright red), C(bright yellow), C(cyan), C(dark gray),
+      C(green), C(magenta), C(normal), C(purple), C(red), C(white), C(yellow).
+      Additionally, the 256-color formats C(colorN) (palette index 0-255), C(rgbRGB) (6x6x6 color cube, each digit 0-5),
+      and C(grayN) (grayscale ramp, index 0-23) are supported. Terminal support for 256-color values may vary.'
   env: [{name: ANSIBLE_COLOR_CHANGED}]
   ini:
   - {key: changed, section: colors}
 COLOR_CONSOLE_PROMPT:
   name: "Color for ansible-console's prompt task status"
   default: white
-  description: Defines the default color to use for ansible-console.
+  description:
+    - Defines the default color to use for ansible-console.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_CONSOLE_PROMPT}]
   ini:
   - {key: console_prompt, section: colors}
@@ -327,21 +335,27 @@ COLOR_CONSOLE_PROMPT:
 COLOR_DEBUG:
   name: Color for debug statements
   default: dark gray
-  description: Defines the color to use when emitting debug messages.
+  description:
+    - Defines the color to use when emitting debug messages.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DEBUG}]
   ini:
   - {key: debug, section: colors}
 COLOR_DEPRECATE:
   name: Color for deprecation messages
   default: purple
-  description: Defines the color to use when emitting deprecation messages.
+  description:
+    - Defines the color to use when emitting deprecation messages.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DEPRECATE}]
   ini:
   - {key: deprecate, section: colors}
 COLOR_DIFF_ADD:
   name: Color for diff added display
   default: green
-  description: Defines the color to use when showing added lines in diffs.
+  description:
+    - Defines the color to use when showing added lines in diffs.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DIFF_ADD}]
   ini:
   - {key: diff_add, section: colors}
@@ -349,21 +363,27 @@ COLOR_DIFF_ADD:
 COLOR_DIFF_LINES:
   name: Color for diff lines display
   default: cyan
-  description: Defines the color to use when showing diffs.
+  description:
+    - Defines the color to use when showing diffs.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DIFF_LINES}]
   ini:
   - {key: diff_lines, section: colors}
 COLOR_DIFF_REMOVE:
   name: Color for diff removed display
   default: red
-  description: Defines the color to use when showing removed lines in diffs.
+  description:
+    - Defines the color to use when showing removed lines in diffs.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DIFF_REMOVE}]
   ini:
   - {key: diff_remove, section: colors}
 COLOR_ERROR:
   name: Color for error messages
   default: red
-  description: Defines the color to use when emitting error messages.
+  description:
+    - Defines the color to use when emitting error messages.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_ERROR}]
   ini:
   - {key: error, section: colors}
@@ -371,14 +391,18 @@ COLOR_ERROR:
 COLOR_HIGHLIGHT:
   name: Color for highlighting
   default: white
-  description: Defines the color to use for highlighting.
+  description:
+    - Defines the color to use for highlighting.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
   - {key: highlight, section: colors}
 COLOR_INCLUDED:
   name: Color for 'included' task status
   default: cyan
-  description: Defines the color to use when showing 'Included' task status.
+  description:
+    - Defines the color to use when showing 'Included' task status.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_INCLUDED}]
   ini:
   - {key: included, section: colors}
@@ -386,42 +410,54 @@ COLOR_INCLUDED:
 COLOR_OK:
   name: Color for 'ok' task status
   default: green
-  description: Defines the color to use when showing 'OK' task status.
+  description:
+    - Defines the color to use when showing 'OK' task status.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_OK}]
   ini:
   - {key: ok, section: colors}
 COLOR_SKIP:
   name: Color for 'skip' task status
   default: cyan
-  description: Defines the color to use when showing 'Skipped' task status.
+  description:
+    - Defines the color to use when showing 'Skipped' task status.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_SKIP}]
   ini:
   - {key: skip, section: colors}
 COLOR_UNREACHABLE:
   name: Color for 'unreachable' host state
   default: bright red
-  description: Defines the color to use on 'Unreachable' status.
+  description:
+    - Defines the color to use on 'Unreachable' status.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_UNREACHABLE}]
   ini:
   - {key: unreachable, section: colors}
 COLOR_VERBOSE:
   name: Color for verbose messages
   default: blue
-  description: Defines the color to use when emitting verbose messages. In other words, those that show with '-v's.
+  description:
+    - Defines the color to use when emitting verbose messages. In other words, those that show with '-v's.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_VERBOSE}]
   ini:
   - {key: verbose, section: colors}
 COLOR_WARN:
   name: Color for warning messages
   default: bright purple
-  description: Defines the color to use when emitting warning messages.
+  description:
+    - Defines the color to use when emitting warning messages.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
 COLOR_DOC_MODULE:
   name: Color for module name in the ansible-doc output
   default: yellow
-  description: Defines the color to use when emitting a module name in the ansible-doc output.
+  description:
+    - Defines the color to use when emitting a module name in the ansible-doc output.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DOC_MODULE}]
   ini:
   - {key: doc_module, section: colors}
@@ -429,7 +465,9 @@ COLOR_DOC_MODULE:
 COLOR_DOC_REFERENCE:
   name: Color for cross-reference in the ansible-doc output
   default: magenta
-  description: Defines the color to use when emitting cross-reference in the ansible-doc output.
+  description:
+    - Defines the color to use when emitting cross-reference in the ansible-doc output.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DOC_REFERENCE}]
   ini:
   - {key: doc_reference, section: colors}
@@ -437,7 +475,9 @@ COLOR_DOC_REFERENCE:
 COLOR_DOC_LINK:
   name: Color for Link in ansible-doc output
   default: cyan
-  description: Defines the color to use when emitting a link in the ansible-doc output.
+  description:
+    - Defines the color to use when emitting a link in the ansible-doc output.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DOC_LINK}]
   ini:
   - {key: doc_link, section: colors}
@@ -445,7 +485,9 @@ COLOR_DOC_LINK:
 COLOR_DOC_DEPRECATED:
   name: Color for deprecated value in ansible-doc output
   default: magenta
-  description: Defines the color to use when emitting a deprecated value in the ansible-doc output.
+  description:
+    - Defines the color to use when emitting a deprecated value in the ansible-doc output.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DOC_DEPRECATED}]
   ini:
   - {key: doc_deprecated, section: colors}
@@ -453,7 +495,9 @@ COLOR_DOC_DEPRECATED:
 COLOR_DOC_CONSTANT:
   name: Color for constant in ansible-doc output
   default: dark gray
-  description: Defines the color to use when emitting a constant in the ansible-doc output.
+  description:
+    - Defines the color to use when emitting a constant in the ansible-doc output.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DOC_CONSTANT}]
   ini:
   - {key: doc_constant, section: colors}
@@ -461,7 +505,9 @@ COLOR_DOC_CONSTANT:
 COLOR_DOC_PLUGIN:
   name: Color for the plugin in ansible-doc output
   default: yellow
-  description: Defines the color to use when emitting a plugin name in the ansible-doc output.
+  description:
+    - Defines the color to use when emitting a plugin name in the ansible-doc output.
+    - See C(COLOR_CHANGED) for the list of valid color values.
   env: [{name: ANSIBLE_COLOR_DOC_PLUGIN}]
   ini:
   - {key: doc_plugin, section: colors}

@@ -53,7 +53,29 @@ if C.ANSIBLE_FORCE_COLOR:
 
 
 def parsecolor(color):
-    """SGR parameter string for the specified color name."""
+    """Return an SGR parameter string for the specified color name.
+
+    Valid color values are:
+
+    - A named color from the ``COLOR_CODES`` dictionary defined in
+      :mod:`ansible.constants`. The predefined names are: ``black``,
+      ``blue``, ``bright blue``, ``bright cyan``, ``bright gray``,
+      ``bright green``, ``bright magenta``, ``bright purple``,
+      ``bright red``, ``bright yellow``, ``cyan``, ``dark gray``,
+      ``green``, ``magenta``, ``normal``, ``purple``, ``red``,
+      ``white``, and ``yellow``.
+    - ``colorN`` where *N* is a 256-color palette index (0-255),
+      for example ``color82``.
+    - ``rgbRGB`` where *R*, *G*, and *B* are each a digit from
+      0 to 5, selecting from a 6x6x6 color cube, for example
+      ``rgb305``.
+    - ``grayN`` where *N* is a grayscale index (0-23), for example
+      ``gray10``.
+
+    The ``colorN``, ``rgbRGB``, and ``grayN`` forms use the
+    256-color (8-bit) ANSI escape sequences. Support depends on
+    the terminal emulator in use.
+    """
     matches = re.match(r"color(?P<color>[0-9]+)"
                        r"|(?P<rgb>rgb(?P<red>[0-5])(?P<green>[0-5])(?P<blue>[0-5]))"
                        r"|gray(?P<gray>[0-9]+)", color)
