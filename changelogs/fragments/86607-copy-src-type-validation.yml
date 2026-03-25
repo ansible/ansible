@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - copy - validate that the ``src`` option is a string and provide a clear error message when a non-string type is supplied (https://github.com/ansible/ansible/issues/86607).

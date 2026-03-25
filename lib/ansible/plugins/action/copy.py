@@ -426,6 +426,8 @@ class ActionModule(ActionBase):
         result['failed'] = True
         if not source and content is None:
             result['msg'] = 'src (or content) is required'
+        elif source is not None and not isinstance(source, str):
+            result['msg'] = f"Invalid type supplied for source option, expected a string got {type(source)}"
         elif not dest:
             result['msg'] = 'dest is required'
         elif source and content is not None:
