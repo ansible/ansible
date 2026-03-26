@@ -592,3 +592,93 @@
         - pip_prereleases is successful
         - pip_prereleases is not changed
         - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'
+
+- name: Test editable
+  vars:
+    venv_path: "{{ remote_tmp_dir }}/emptyvenv"
+  block:
+    - name: Ensure fresh venv
+      file:
+        state: absent
+        path: "{{ venv_path }}"
+
+    - name: Create an empty venv
+      pip:
+        name: []
+        virtualenv: "{{ venv_path }}"
+      register: empty_venv
+
+    - name: Create test package directories
+      file:
+        state: directory
+        name: "{{ remote_tmp_dir }}/{{ item }}"
+      loop:
+        - sample-project
+        - another-project
+
+    - name: Copy test packages to remote
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { src: "sample-project/", dest: "{{ remote_tmp_dir }}/sample-project/" }
+        - { src: "sample-project/", dest: "{{ remote_tmp_dir }}/another-project/" } # Reusing same source for simplicity
+
+    - name: Update project name in another-project's pyproject.toml
+      lineinfile:
+        path: "{{ remote_tmp_dir }}/another-project/pyproject.toml"
+        regexp: '^name = "sample-project"$'
+        line: 'name = "another-project"'
+
+    - name: Install a package normally
+      pip:
+        name: "{{ remote_tmp_dir }}/sample-project"
+        virtualenv: "{{ venv_path }}"
+
+    - name: Install a package as editable
+      pip:
+        name: "{{ remote_tmp_dir }}/sample-project"
+        virtualenv: "{{ venv_path }}"
+        editable: True
+      register: editable_install
+
+    - name: Assert changed
+      assert:
+        that:
+          - editable_install is changed
+
+    - name: Check status
+      command: "{{ venv_path }}/bin/pip list"
+      register: pip_list_check
+      changed_when: false
+
+    - name: Assert editable
+      assert:
+        that:
+          - pip_list_check.stdout is search("sample-project\s+1.0.0\s+" ~ remote_tmp_dir ~ "/sample-project")
+
+    - name: Clear packages
+      file:
+        state: absent
+        name: "{{ venv_path }}"
+
+    - name: Install multiple packages as editable
+      pip:
+        name:
+          - "{{ remote_tmp_dir }}/sample-project"
+          - "{{ remote_tmp_dir }}/another-project"
+        virtualenv: "{{ venv_path }}"
+        editable: True
+      register: multi_editable_install
+
+    - name: Check status
+      command: "{{ venv_path }}/bin/pip list"
+      register: multi_pip_list_check
+      changed_when: false
+
+    - name: Assert editable
+      assert:
+        that:
+          - multi_editable_install is changed
+          - multi_pip_list_check.stdout is search('sample-project\s+1.0.0\s+' ~ remote_tmp_dir ~ '/sample-project')
+          - multi_pip_list_check.stdout is search('another-project\s+1.0.0\s+' ~ remote_tmp_dir ~ '/another-project')
