@@ -1157,13 +1157,16 @@ class UnifiedTaskResult:
 
     @classmethod
     def from_module_result_dict(cls, result: dict[str, object]) -> t.Self:
-        # NOTE: dnf returns results ... but that made it 'compatible' with squashing, so we allow mappings, for now
-        # RPFIX-1: IMPL: determine if we need to treat this specially going forward- ideally just adjust the dnf module to inject a deprecated copy of the value
-        # and completely remove this, since `results` is no longer used as a special signaling key on individual task results
-        if (results := result.get('results', ...)) is not ... and not isinstance(results, list) and not isinstance(results, str):
+        if (results := result.get('results', ...)) is not ... and (not isinstance(results, c.Sequence) or isinstance(results, str)):
+            # deprecated: description='deprecate the value of ansible_module_results' ansible_core='2.25'
+            # results = deprecate_value(
+            #     value=results,
+            #     msg="The 'ansible_module_results' result key is deprecated.",
+            #     help_text="Use the 'results' result key instead.",
+            #     version="2.29",
+            # )
+
             result['ansible_module_results'] = results
-            del result['results']
-            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
 
         return cls._from_result_dict(result, source_is_module=True)
 

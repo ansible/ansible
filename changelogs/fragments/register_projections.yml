@@ -19,7 +19,8 @@ minor_changes:
   - break_when - A ``break_when_result`` key is always present in results when a ``break_when`` expression is used.
   - changed_when - A ``changed_when_suppressed_exception`` key is added to a result when a ``changed_when`` expression fails and masks an existing exception in a result.
   - break_when - A ``break_when_suppressed_exception`` key is added to a result when a ``break_when`` expression fails and masks an existing exception in a result.
-bugfixes:
+  - module/action results - The ``results`` key is no longer omitted from individual module or action results.
+    Previously the ``results`` key may have been removed, depending on the type of its value.
   - loops - The ``break_when`` keyword is now validated when the value is falsey.
   - ignore_errors - Templated values for the ``ignore_errors`` keyword behave more consistently in looped tasks.
     If ``ignore_errors`` resolves ``True`` for any loop item, errors will be ignored for the entire task.
