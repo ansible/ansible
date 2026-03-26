@@ -19,7 +19,8 @@
     - debug:
         msg: CHECKS PASSED
 
-# RPFIX-1: IMPL: discuss if this should be fatal
+# RPFIX-5: IMPL: investigate this as part of the RPFIX in runme.sh for test_ignore_errors_loop
+#                it behaves the same in devel and RP, but may be impacted by the investigation of the RPFIX in runme.sh
 #- hosts: localhost
 #  gather_facts: no
 #  tasks:
