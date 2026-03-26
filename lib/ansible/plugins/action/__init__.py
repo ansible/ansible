@@ -47,6 +47,7 @@ if t.TYPE_CHECKING:
     from ansible.playbook.play_context import PlayContext
     from ansible.playbook.task import Task
     from ansible.plugins.connection import ConnectionBase
+    from ansible.plugins.loader import PluginLoadContext
     from ansible.template import Templar
 
 
@@ -101,6 +102,28 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
+        self._found: dict[str, PluginLoadContext] = {}
+
+    def _ensure_invocation(self, result):
+
+        need_invocation = bool(display.verbosity or C.DEFAULT_DEBUG)
+        if need_invocation and 'invocation' not in result:
+            result['invocation'] = {}
+
+        if isinstance(result.get('invocation'), dict):
+            # we have invocation dict, otherwise it would be censored string already
+            # action plugins/modules might have popuilated
+            if self._task.no_log:
+                result['invocation'] = "CENSORED: no_log is set for this task"
+            else:
+                result["invocation"]['module_args'] = self._task.args.copy()
+
+                # TODO: get no_log list from controller side argspec, example for copy
+                if result['invocation']['module_args'].get('content') is not None:
+                    result['invocation']['module_args']['content'] = 'CENSORED: no_log is set for this parameter'
+
+        return result
+
     @abstractmethod
     def run(self, tmp: str | None = None, task_vars: dict[str, t.Any] | None = None) -> dict[str, t.Any]:
         """ Action Plugins should implement this method to perform their
@@ -118,8 +141,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         * Module parameters.  These are stored in self._task.args
         """
-        # does not default to {'changed': False, 'failed': False}, as it used to break async
-        result: dict[str, t.Any] = {}
+        result: dict[str, t.Any] = {'changed': False, 'failed': False}
 
         if tmp is not None:
             display.warning('ActionModule.run() no longer honors the tmp parameter. Action'
@@ -142,7 +164,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
 
-        return result
+        return self._ensure_invocation(result)
 
     def validate_argument_spec(self, argument_spec=None,
                                mutually_exclusive=None,
@@ -253,6 +275,48 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             return True
         return False
 
+    def _get_module(self, module_name: str, module_args: dict | None = None) -> PluginLoadContext:
+
+        if module_name not in self._found:
+            split_module_name = module_name.split('.')
+            collection_name = '.'.join(split_module_name[0:2]) if len(split_module_name) > 2 else ''
+            leaf_module_name = resource_from_fqcr(module_name)
+
+            # Search module path(s) for named module.
+            for mod_type in self._connection.module_implementation_preferences:
+                # Check to determine if PowerShell modules are supported, and apply
+                # some fixes (hacks) to module name + args.
+                if mod_type == '.ps1':
+                    # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
+                    # for each subsystem.
+                    win_collection = 'ansible.windows'
+                    rewrite_collection_names = ['ansible.builtin', 'ansible.legacy', '']
+                    # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
+                    # python counterparts but they are compatible enough for our
+                    # internal usage
+                    # NB: we only rewrite the module if it's not being called by the user (eg, an action calling something else)
+                    # and if it's unqualified or FQ to a builtin
+                    if leaf_module_name in ('stat', 'file', 'copy', 'ping') and \
+                            collection_name in rewrite_collection_names and self._task.action != module_name:
+                        module_name = '%s.win_%s' % (win_collection, leaf_module_name)
+                    elif leaf_module_name == 'async_status' and collection_name in rewrite_collection_names:
+                        module_name = '%s.%s' % (win_collection, leaf_module_name)
+
+                result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=self._task.collections)
+                if result.resolved:
+                    self._found[module_name] = result
+                    break
+                else:
+                    if result.redirect_list and len(result.redirect_list) > 1:
+                        # take the last one in the redirect list, we may have successfully jumped through N other redirects
+                        target_module_name = result.redirect_list[-1]
+                        raise AnsibleError("The module {0} was redirected to {1}, which could not be loaded.".format(module_name, target_module_name))
+
+            else:  # This is a for-else: http://bit.ly/1ElPkyg
+                raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
+
+        return self._found[module_name]
+
     def _configure_module(self, module_name, module_args, task_vars) -> tuple[_BuiltModule, str]:
         """
         Handles the loading and templating of the module code through the
@@ -263,9 +327,9 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         else:
             use_vars = task_vars
 
-        split_module_name = module_name.split('.')
-        collection_name = '.'.join(split_module_name[0:2]) if len(split_module_name) > 2 else ''
-        leaf_module_name = resource_from_fqcr(module_name)
+        # get module path and unquote args if needed
+        result = self._get_module(module_name, module_args)
+        module_path = result.plugin_resolved_path
 
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
@@ -301,6 +365,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
             raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
+
+        # TODO: move this tweak down to the modules, (platform: windows attribute?), not extensible here
+        # Remove extra quotes surrounding path parameters before sending to module.
+        if resource_from_fqcr(module_name) in ['win_stat', 'win_file', 'win_copy', 'slurp'] and \
+                module_args and \
+                hasattr(self._connection._shell, '_unquote'):
+            for key in ('src', 'dest', 'path'):
+                if key in module_args:
+                    module_args[key] = self._connection._shell._unquote(module_args[key])
 
         # insert shared code and arguments into the module
         final_environment: dict[str, t.Any] = {}
@@ -347,6 +420,15 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return module_bits, module_path
+
+    def _get_argspec_from_docs(self, module_name):
+        resolved = self._get_module(module_name)
+        argspec = '' + resolved  # TODO: actuall call build function
+        return argspec
+
+    def _validate_args(self, module_name, module_args):
+        argspec = self._get_argspec_from_docs(module_name)
+        # TODO: validate(argpsec, module_args)
 
     def _compute_environment_string(self, raw_environment_out=None):
         """

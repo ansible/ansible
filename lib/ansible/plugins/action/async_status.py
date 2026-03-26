@@ -20,6 +20,10 @@ class ActionModule(ActionBase):
 
         results = super(ActionModule, self).run(tmp, task_vars)
 
+        # async works diff from other action plugins
+        for nope in ('changed', 'failed'):
+            del results[nope]
+
         validation_result, new_module_args = self.validate_argument_spec(
             argument_spec={
                 'jid': {'type': 'str', 'required': True},
