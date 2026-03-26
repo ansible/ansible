@@ -3,6 +3,9 @@ set -eux
 
 ansible-playbook -i ../../inventory test_ignore_errors.yml "$@"
 
+ansible-playbook -i ../../inventory test_invalid_ignore_errors.yml "$@" | tee out.txt || true
+grep 'CHECKS PASSED' out.txt
+
 # RPFIX-5: BUG: ignore_errors is incorrectly handled on loop items
 # ansible-playbook -i ../../inventory test_ignore_errors_loop.yml "$@" | tee out.txt || true
 # grep 'CHECKS PASSED' out.txt
