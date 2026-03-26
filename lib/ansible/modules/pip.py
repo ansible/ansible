@@ -80,7 +80,7 @@ options:
     version_added: "1.0"
   editable:
     description:
-      - Pass the editable flag.
+      - Pass the editable flag to all packages.
     type: bool
     default: 'no'
     version_added: "2.0"
