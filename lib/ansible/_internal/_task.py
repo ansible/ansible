@@ -711,7 +711,6 @@ def _convert_deprecations(value: object) -> list[_messages.DeprecationSummary] |
     return deprecations
 
 
-# RPFIX-3: this is currently on things that are marked as needing to use a dedicated API (likely obsolete, nothing sets Source.ACTION anymore, kill it all?),
 DROP_AND_WARN = ResolvedField(name='__drop__', type=str, optional=True, field=None, metadata=FieldSettings())
 
 
