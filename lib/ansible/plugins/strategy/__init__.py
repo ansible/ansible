@@ -856,6 +856,7 @@ class StrategyBase:
             if not task.when:
                 return True
 
+            # FUTURE: If this when fails it will take down the process.
             return task._resolve_conditional(task.when, self._variable_manager.get_vars(
                 play=iterator._play, host=conditional_host, task=task, _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all))
 

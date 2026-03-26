@@ -596,7 +596,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch, Notifiable, Delegatabl
     ) -> bool:
         """Loops through the conditionals set on this object, returning False if any of them evaluate as such."""
 
-        # RPFIX-1: CRASH: internal error handling here, or at all call-sites resolve_conditional failures can take down the process
         return self._resolve_conditional_with_item(conditional, variables)[0]
 
     def _resolve_conditional_with_item(
