@@ -220,11 +220,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         *,
         host_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
-    ) -> None:
+    ) -> bool:
         """Add the given host to inventory."""
-        # RPFIX-1: RPC: switch this to RPC so the host can be created immediately and return changed as appropriate
-
-        self.__get_pending_changes().add_hosts.append(_task.AddHost(
+        # RPFIX-1: API: should this live somewhere other than ActionBase, now that it no longer needs self?
+        return _task.TaskContext.current().inventory_rpc_client.add_host(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
             parent_group_names=parent_group_names,
@@ -236,11 +235,13 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         *,
         group_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
-    ) -> None:
+    ) -> bool:
         """Add the given group to inventory."""
-        # RPFIX-1: RPC: switch this to RPC so the host can be created immediately and return changed as appropriate
+        # RPFIX-1: API: should this live somewhere other than ActionBase, now that it no longer needs self?
+        task_ctx = _task.TaskContext.current()
+        host_name = task_ctx.host_name
 
-        self.__get_pending_changes().add_groups.append(_task.AddGroup(
+        return task_ctx.inventory_rpc_client.add_group(host_name, _task.AddGroup(
             group_name=group_name,
             group_vars=group_vars,
             parent_group_names=parent_group_names,

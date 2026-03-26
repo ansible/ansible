@@ -13,6 +13,7 @@ from ansible._internal import _display_utils
 from ansible._internal._errors import _attribute_unavailable, _captured, _error_factory, _error_utils
 from ansible._internal._templating import _engine
 from ansible._internal._templating._chain_templar import ChainTemplar
+from ansible._internal._worker import _inventory_rpc
 from ansible._internal._datatag import _tags
 from ansible.errors import AnsibleError, AnsibleTemplateError
 from ansible.module_utils._internal._ambient_context import AmbientContextBase
@@ -153,23 +154,22 @@ class CurrentTask:
 class PendingChanges:
     """Changes which will be applied when the action completes, including on failure."""
 
-    add_hosts: list[AddHost] = dataclasses.field(default_factory=list)
-    add_groups: list[AddGroup] = dataclasses.field(default_factory=list)
     register_host_variables: dict[VariableLayer, dict[str, object]] = dataclasses.field(default_factory=dict)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class TaskContext(AmbientContextBase):
     """Ambient context that wraps task execution on workers. It provides access to the currently executing task."""
 
     @classmethod
-    def create(cls, task: Task, task_vars: dict[str, t.Any]) -> t.Self:
+    def create(cls, task: Task, task_vars: dict[str, t.Any], host_name: str) -> t.Self:
         task_vars.update(_task=CurrentTask())
 
         return cls(
             _task=task,
             _base_task_vars=task_vars,
             _active_task_vars=task_vars,  # starts out as a reference, but becomes a copy of _base_task_vars when starting a loop item
+            _host_name=host_name,
         )
 
     def get_register_projections(self) -> dict[str, _engine.TemplateExpressionWrapper] | None:
@@ -177,6 +177,14 @@ class TaskContext(AmbientContextBase):
             return None
 
         return {var_name: _engine.TemplateExpressionWrapper(expression=expression) for var_name, expression in self._task.register.items()}
+
+    @functools.cached_property
+    def inventory_rpc_client(self) -> _inventory_rpc.InventoryRPC:
+        return _inventory_rpc.InventoryRPC.get_client()
+
+    @property
+    def host_name(self) -> str:
+        return self._host_name
 
     @property
     def task(self) -> Task:
@@ -205,6 +213,7 @@ class TaskContext(AmbientContextBase):
     _task: Task
     _base_task_vars: dict[str, t.Any]
     _active_task_vars: dict[str, t.Any]
+    _host_name: str
     _registered_vars_enabled = False
     _raw_loop_results: list[UnifiedTaskResult] = dataclasses.field(default_factory=list)
     _loop_items: list[object] | None = None
@@ -216,6 +225,7 @@ class TaskContext(AmbientContextBase):
     _loop_extended: dict[str, object] | None = None
     _templar: _engine.TemplateEngine | None = None
     _break_when_triggered: bool = False
+    _inventory_rpc_client: _inventory_rpc.InventoryRPC | None = None
 
     pending_changes: PendingChanges | None = None
     """Pending changes which will be applied only if the current task succeeds."""

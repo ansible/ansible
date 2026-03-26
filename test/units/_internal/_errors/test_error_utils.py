@@ -60,7 +60,7 @@ def test_exception_result_contribution(exceptions: t.Sequence[BaseException], ex
     with pytest.raises(Exception) as error:
         raise_exceptions(exceptions)
 
-    with _task.TaskContext.create(task=Task(), task_vars={}):
+    with _task.TaskContext.create(task=Task(), task_vars={}, host_name="localhost"):
         utr = _task.UnifiedTaskResult.create_from_action_exception(error.value, accept_result_contribution=True)
 
     result = utr.as_result_dict()

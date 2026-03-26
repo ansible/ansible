@@ -233,8 +233,7 @@ class TaskExecutor:
                         # non-loop diff dispatch is handled controller-side by the strategy
                         self._final_q.send_callback('v2_on_file_diff', self._host, self._task, utr)
 
-                    if self._task.action not in C._ACTION_INVENTORY_TASKS:
-                        self._final_q.send_callback('v2_runner_item_on_ok', self._host, self._task, utr)
+                    self._final_q.send_callback('v2_runner_item_on_ok', self._host, self._task, utr)
 
             # update the connection value on the original task to reflect the resolved value
             self._update_task_connection()

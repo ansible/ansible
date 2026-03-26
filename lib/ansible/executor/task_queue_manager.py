@@ -32,6 +32,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, ExitCode, AnsibleCallbackError
 from ansible._internal._errors._handler import ErrorHandler
+from ansible._internal import _rpc_host
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import CallbackTaskResult
@@ -42,7 +43,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.plugins.callback import CallbackBase
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
-from ansible.plugins.callback import CallbackBase
+from ansible._internal._plugins import _strategy
 from ansible._internal._templating._engine import TemplateEngine
 from ansible._internal._task import UnifiedTaskResult, WireTaskResult, HostTaskResult
 from ansible.vars.hostvars import HostVars
@@ -168,6 +169,8 @@ class TaskQueueManager:
 
         self._callback_plugins: list[CallbackBase] = []
         self._start_at_done = False
+
+        _rpc_host.LocalManager.shared_instance()  # ensure the RPC host is available
 
         # make sure any module paths (if specified) are added to the module_loader
         if context.CLIARGS.get('module_path', False):
@@ -396,7 +399,8 @@ class TaskQueueManager:
 
         # and run the play using the strategy and cleanup on way out
         try:
-            play_return = strategy.run(iterator, play_context)
+            with _strategy.StrategyContext(strategy=strategy, tqm=self).activate():
+                play_return = strategy.run(iterator, play_context)
         finally:
             strategy.cleanup()
             self._cleanup_processes()

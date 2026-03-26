@@ -190,8 +190,9 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # propagate signals
         signal.signal(signal.SIGINT, self._term)
         signal.signal(signal.SIGTERM, self._term)
+
         try:
-            with _task.TaskContext.create(task=self._task, task_vars=self._task_vars):
+            with _task.TaskContext.create(task=self._task, task_vars=self._task_vars, host_name=self._host.name):
                 return self._run()
         except BaseException:
             self._hard_exit(traceback.format_exc())
