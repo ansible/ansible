@@ -245,9 +245,6 @@ class Connection(ConnectionBase):
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
 
-        self.always_pipeline_modules = True
-        self.has_native_async = True
-
         self.protocol: winrm.Protocol | None = None
         self.shell_id: str | None = None
         self.delegate = None
@@ -879,3 +876,6 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self.protocol = None
         self._connected = False
+
+    def is_pipelining_enabled(self, wrap_async: bool = False) -> bool:
+        return True

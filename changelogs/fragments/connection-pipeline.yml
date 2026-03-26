@@ -1,0 +1,6 @@
+deprecated_features:
+  - >-
+    connection plugins - Added a soft deprecation on the connection attributes ``has_native_async`` and
+    ``always_pipeline_modules``. Connection plugins that wish to apply custom behaviour around pipelining should
+    instead override the method ``is_pipelining_enabled(self, wrap_async=False)`` added in Ansible 2.19. For backwards
+    compatibility no runtime deprecation warning is emitted but will be in the future.

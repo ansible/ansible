@@ -369,9 +369,6 @@ class Connection(ConnectionBase):
     _shell: PowerShellPlugin
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
-        self.always_pipeline_modules = True
-        self.has_native_async = True
-
         self.runspace: RunspacePool | None = None
         self.host: PSHost | None = None
         self._last_pipeline: PowerShell | None = None
@@ -790,3 +787,6 @@ class Connection(ConnectionBase):
         self.host.ui.stderr = []
 
         return rc, to_bytes(stdout, encoding='utf-8'), to_bytes(stderr, encoding='utf-8')
+
+    def is_pipelining_enabled(self, wrap_async: bool = False) -> bool:
+        return True
