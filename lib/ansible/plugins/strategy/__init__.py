@@ -722,7 +722,7 @@ class StrategyBase:
             if task_result.utr.registered_values:
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                # RPFIX-3: (maybe?) hook up result cleansing again, at least for stock result dicts-
+                # RPFIX-1: IMPL: (maybe?) hook up result cleansing again, at least for stock result dicts-
                 #  need to mark those somehow to distinguish from user projected data
                 # clean_copy = strip_internal_keys(module_response_deepcopy(task_result._return_data))
                 # if 'invocation' in clean_copy:

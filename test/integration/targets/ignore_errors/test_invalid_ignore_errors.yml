@@ -17,7 +17,7 @@
           - hostvars.flakyhost.fails_on_flakyhost is failed
       when: inventory_hostname == "localhost"
 
-# RPFIX-3: discuss if this should be fatal
+# RPFIX-1: IMPL: discuss if this should be fatal
 #- hosts: localhost
 #  gather_facts: no
 #  tasks:

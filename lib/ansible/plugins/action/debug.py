@@ -88,7 +88,7 @@ class ActionModule(ActionBase):
 
         result['failed'] = False
 
-        # RPFIX-3: add deferred deprecation to remove this when INJECT_FACTS_AS_VARS is gone
+        # RPFIX-5: DEPRECATION: add deferred deprecation to remove this when INJECT_FACTS_AS_VARS is gone
         self.register_host_variables({}, VariableLayer.CACHEABLE_FACT)  # ensure that legacy ansible_facts behavior is not triggered
 
         return result

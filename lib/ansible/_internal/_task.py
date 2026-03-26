@@ -97,7 +97,7 @@ class CurrentTask:
         try:
             return self._lazy_transform(task_ctx.latest_result)
         except NoRecordedResultError as ex:
-            # RPFIX-3: this causes multiple warnings/errors that need to be investigated, some likely stemming from late addition of pre-task `when` projections
+            # RPFIX-5: UX: this causes multiple warnings/errors that need to be investigated, some likely from late addition of pre-task `when` projections
             # [WARNING]: An error occurred in a register expression: The _task.result property is unavailable: No task result has been recorded.
             # [WARNING]: An error occurred in a register expression: Error rendering expression: Type 'WarningSummary' is unsupported for variable storage.
             #     - shell: echo {{ item }}
@@ -117,7 +117,7 @@ class CurrentTask:
 
         try:
             # in-flight projections bypass the skipped conversions by setting finalize to False
-            # RPFIX-3: may need to fix Jinja's getattr/item AttributeError handling- if any code invoked beneath one of those raises AttributeError, Jinja
+            # RPFIX-5: IMPL: may need to fix Jinja's getattr/item AttributeError handling- if any code invoked beneath one of those raises AttributeError, Jinja
             #  blindly creates a new UndefinedMarker with "CurrentTask has no attr loop_result" and loses the original AttributeError detail. Repro this by
             #  tacking any bogus attr off the end of as_result_dict() here.
             return self._lazy_transform(task_ctx.build_loop_result(preview=True).as_result_dict())
@@ -135,19 +135,6 @@ class CurrentTask:
             return self._lazy_transform(task_ctx.latest_result)
         except NoRecordedResultError as ex:
             raise _attribute_unavailable.AttributeUnavailableError("The _task.polymorphic_result property is unavailable.") from ex
-
-
-# RPFIX-3: there isn't currently a way to emulate the classic polymorphic register behavior with a loop. If we added another property to CurrentTask that
-# could emulate that behavior, we could also potentially rewrite all tasks to use RP internally instead of keeping both sets of evaluation code around.
-#     - shell: echo {{ item }}
-#       loop: [1,2,3]
-#       failed_when: blar.rc != 0
-#       #register:
-#       #  blar: _task.legacy_result_thing
-#       # register: blar
-#
-#     - debug:
-#         var: blar
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -408,7 +395,7 @@ class TaskContext(AmbientContextBase):
         utr = UnifiedTaskResult.from_action_result_dict()
         utr.loop_results = self._raw_loop_results
 
-        # RPFIX-3: all the fields set in this loop could be converted to properties
+        # RPFIX-5: IMPL: all the fields set in this loop could be converted to properties
         for item in self._raw_loop_results:
             if item.no_log:
                 utr.no_log = True  # ensure no_log processing recognizes at least one item needs to be censored
@@ -608,7 +595,7 @@ _DEFAULT_FIELD_SETTINGS = FieldSettings()
 
 def _convert_no_log(value: object) -> bool:
     if not isinstance(value, bool):
-        # RPFIX-3: do we want to keep any kind of custom warning regarding this value always being True when not a bool?
+        # RPFIX-5: UX: do we want to keep any kind of custom warning regarding this value always being True when not a bool?
         # display.warning(f'Invalid _ansible_no_log value of type {type(value).__name__!r} in task result, output will be masked.')
         value = True
 
@@ -741,7 +728,7 @@ class VariableLayer(enum.IntEnum):
     CACHEABLE_FACT = enum.auto()
     INCLUDE_VARS = enum.auto()
     EPHEMERAL_FACT = enum.auto()
-    REGISTER_VARS = enum.auto()  # RPFIX-3: this will be used when UnifiedTaskResult.registered_values is killed off
+    REGISTER_VARS = enum.auto()  # RPFIX-1: API: this will be used when UnifiedTaskResult.registered_values is killed off
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -979,7 +966,7 @@ class UnifiedTaskResult:
 
         result.update(self.result_data)
 
-        # RPFIX-3: is this where we want stdout/stderr handling?
+        # RPFIX-5: IMPL: is this where we want stdout/stderr handling?
         # pre-split stdout/stderr into lines if needed
 
         if 'stdout' in result and 'stdout_lines' not in result:
@@ -1098,14 +1085,14 @@ class UnifiedTaskResult:
             return None if resolved_field.optional else resolved_field.field.default
 
         if resolved_field.type is _messages.ErrorSummary:
-            return value  # RPFIX-3: defer conversion to __post_init__
+            return value  # RPFIX-5: VALIDATION: defer conversion to __post_init__
 
-        # RPFIX-3: this doesn't handle special types like exception which require extra conversion
+        # RPFIX-5: VALIDATION: this doesn't handle special types like exception which require extra conversion
 
         if not resolved_field.metadata.conversion_func and isinstance(value, resolved_field.type):
             return value
 
-        # RPFIX-3: this type checking doesn't validate types within containers (mapping, dict, etc.)
+        # RPFIX-5: VALIDATION: this type checking doesn't validate types within containers (mapping, dict, etc.)
 
         help_text = f"Values for result key {resolved_field.result_key!r} must be of type {native_type_name(resolved_field.type)}."
 
@@ -1122,7 +1109,7 @@ class UnifiedTaskResult:
             )
         else:
             if not isinstance(value, resolved_field.type):
-                # RPFIX-3: this will still give duplicate warnings -- probably just need to be explicit and have conversion funcs do warnings
+                # RPFIX-5: UX: this will still give duplicate warnings -- probably just need to be explicit and have conversion funcs do warnings
                 display.warning(
                     msg=f'Value for result key {resolved_field.result_key!r} of type {native_type_name(value)} '
                     f'was converted to {native_type_name(resolved_field.type)}.',
@@ -1147,7 +1134,7 @@ class UnifiedTaskResult:
                 is_module=self.is_module,
             )
         elif self.failed or self.exception:
-            # RPFIX-3: warn/deprecate if exception is present without failed being True (and do what with failed?)
+            # RPFIX-5: UX: warn/deprecate if exception is present without failed being True (and do what with failed?)
 
             # translate non-ErrorSummary errors
             self.exception = _captured.CapturedErrorSummary(
@@ -1165,7 +1152,7 @@ class UnifiedTaskResult:
     @classmethod
     def from_module_result_dict(cls, result: dict[str, object]) -> t.Self:
         # NOTE: dnf returns results ... but that made it 'compatible' with squashing, so we allow mappings, for now
-        # RPFIX-3: evaluate whether we need to treat this specially going forward- ideally just adjust the dnf module to inject a deprecated copy of the value
+        # RPFIX-1: IMPL: determine if we need to treat this specially going forward- ideally just adjust the dnf module to inject a deprecated copy of the value
         # and completely remove this, since `results` is no longer used as a special signaling key on individual task results
         if (results := result.get('results', ...)) is not ... and not isinstance(results, list) and not isinstance(results, str):
             result['ansible_module_results'] = results
@@ -1239,7 +1226,7 @@ class UnifiedTaskResult:
         # cleanse fact values that are allowed from actions but not modules
         if self.ansible_facts:
             for key in list(self.ansible_facts):
-                # RPFIX-3: move this into the control plane and inject into the results as needed
+                # RPFIX-5: IMPL: move this into the control plane and inject into the results as needed
                 if key.startswith('discovered_interpreter_') or key.startswith('ansible_discovered_interpreter_'):
                     self.ansible_facts.pop(key)
 
