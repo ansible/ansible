@@ -399,6 +399,18 @@ head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
 EDITOR=./faux-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT2}"
 head -1 "${TEST_FILE_EDIT2}" | grep "${FORMAT_1_2_HEADER};vault_password"
 
+# verify an aborted edit reports an error and does not corrupt the vault file
+ORIGINAL_FILE_EDIT="${TEST_FILE_EDIT}.original"
+
+cp "${TEST_FILE_EDIT}" "${ORIGINAL_FILE_EDIT}"
+
+if EDITOR=./fail-editor.py ansible-vault edit "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"; then
+    echo "ansible-vault did not fail after an edit was aborted"
+    exit 1
+fi
+
+diff "${TEST_FILE_EDIT}" "${ORIGINAL_FILE_EDIT}" >/dev/null || (echo "vault file corrupted after failed edit"; exit 1)
+
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # should fail because we dont know which vault id to use to encrypt with
 ansible-vault encrypt "$@" --vault-id vault-password --vault-id encrypted-vault-password "${TEST_FILE_ENC_PASSWORD}" && :
