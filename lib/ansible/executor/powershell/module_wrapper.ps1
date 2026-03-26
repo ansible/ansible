@@ -120,6 +120,36 @@ foreach ($env in $Environment.GetEnumerator()) {
 # still use it.
 $null = $ps.AddScript('Function Write-Host($msg) { Write-Output -InputObject $msg }').AddStatement()
 
+# ParseInput doesn't throw on an invalid script, we need to check the errors
+# and throw ourselves. We use ParseInput so we can associate a filename with
+# the script making StackTraces and error messages much easier to understand.
+$parseScriptWithName = {
+    [OutputType([ScriptBlock])]
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory)]
+        [string]
+        $Script
+    )
+
+    $err = @()
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+        $Script,
+        $Name,
+        [ref]$null,
+        [ref]$err)
+    if ($err) {
+        $parseErrors = $err -join "`n"
+        throw "Failed to parse script '$Name'`n$parseErrors"
+    }
+
+    $ast.GetScriptBlock()
+}
+
 $scriptInfo = Get-AnsibleScript -Name $Script
 if ($scriptInfo.ShouldConstrain) {
     # Fail if there are any module utils, in the future we may allow unsigned
@@ -145,25 +175,14 @@ else {
                 throw "PowerShell module util '$utilName' is not trusted and cannot be loaded."
             }
 
-            $null = $ps.AddScript(@'
-param ($Name, $Script)
-
-$moduleName = [System.IO.Path]::GetFileNameWithoutExtension($Name)
-$sbk = [System.Management.Automation.Language.Parser]::ParseInput(
-    $Script,
-    $Name,
-    [ref]$null,
-    [ref]$null).GetScriptBlock()
-
-New-Module -Name $moduleName -ScriptBlock $sbk |
-    Import-Module -WarningAction SilentlyContinue -Scope Global
-'@, $true)
-            $null = $ps.AddParameters(
-                @{
+            $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
                     Name = $utilName
                     Script = $utilInfo.Script
-                }
-            ).AddStatement()
+                })
+            $null = $ps.AddScript(@'
+New-Module -Name $args[0] -ScriptBlock @($input)[0] |
+    Import-Module -WarningAction SilentlyContinue -Scope Global
+'@).AddArgument([Path]::GetFileNameWithoutExtension($utilName)).AddStatement()
         }
     }
 
@@ -176,13 +195,12 @@ New-Module -Name $moduleName -ScriptBlock $sbk |
     # ensure the code runs with it's own $script: scope. It also
     # cleans up the StackTrace on errors by not showing the stub
     # execution line and starts immediately at the module "cmd".
-    $null = $ps.AddScript(@'
-${function:<AnsibleModule>} = [System.Management.Automation.Language.Parser]::ParseInput(
-    $args[0],
-    $args[1],
-    [ref]$null,
-    [ref]$null).GetScriptBlock()
-'@).AddArgument($scriptInfo.Script).AddArgument($Script).AddStatement()
+    $null = $ps.AddScript($parseScriptWithName).AddParameters(@{
+            Name = $Script
+            Script = $scriptInfo.Script
+        }).AddScript(@'
+${function:<AnsibleModule>} = @($input)[0]
+'@).AddStatement()
     $null = $ps.AddCommand('<AnsibleModule>', $false).AddStatement()
 }
 

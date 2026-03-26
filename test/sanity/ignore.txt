@@ -100,6 +100,12 @@ test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
+test/integration/targets/powershell_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
+test/integration/targets/powershell_exec_wrapper/library/test_invalid_syntax.ps1 pslint!skip # tests code with invalid syntax
+test/integration/targets/powershell_exec_wrapper/module_utils/Ansible.ModuleUtils.InvalidSyntax.psm1 pslint!skip # tests code with invalid syntax
+test/integration/targets/powershell_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
+test/integration/targets/powershell_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
+test/integration/targets/powershell_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-unwanted-characters
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
@@ -112,11 +118,7 @@ test/integration/targets/windows-minimal/library/win_ping_syntax_error.ps1 pslin
 test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 pslint:PSCustomUseLiteralPath  # We want to use wildcard matching with -Path
 test/integration/targets/win_app_control/files/New-AnsiblePowerShellSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
 test/integration/targets/win_app_control/files/Set-ManifestSignature.ps1 shebang  # We want to run with pwsh from the environment in the test
-test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
-test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
 test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quotes in the file name to fetch
-test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
-test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep

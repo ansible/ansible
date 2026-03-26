@@ -46,7 +46,7 @@ try {
     [Namespace1.Class1]::GetString($true)
 }
 catch {
-    Assert-Equal ($_.Exception.ToString().Contains("at Namespace1.Class1.GetString(Boolean error)`r`n")) -expected $true
+    Assert-Equal ($_.Exception.ToString().Contains("at Namespace1.Class1.GetString(Boolean error)")) -expected $true
 }
 
 $code_debug = @'

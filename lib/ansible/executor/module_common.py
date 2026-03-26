@@ -57,7 +57,6 @@ from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.become import BecomeBase
 from ansible.plugins.loader import module_utils_loader
-from ansible.plugins.shell import ShellBase
 from ansible._internal._templating._engine import TemplateOptions, TemplateEngine
 from ansible.template import Templar
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
@@ -1098,9 +1097,7 @@ class _GetCommandArgs(t.Protocol):
     def __call__(
         self,
         module_path: str | None,
-        args_path: str | None,
-        shell: ShellBase,
-    ) -> tuple[str, bytes | None] | None:
+    ) -> tuple[list[str], bytes | None] | None:
         ...
 
 
@@ -1130,11 +1127,9 @@ class _BuiltModule:
     def get_command_args(
         self,
         module_path: str | None,
-        args_path: str | None,
-        shell: ShellBase,
-    ) -> tuple[str, bytes | None] | None:
+    ) -> tuple[list[str], bytes | None] | None:
         if self.command_lookup:
-            return self.command_lookup(module_path=module_path, args_path=args_path, shell=shell)
+            return self.command_lookup(module_path=module_path)
         else:
             return None
 
@@ -1236,7 +1231,7 @@ def _find_module_utils(
     # except for the shebang line (Done by modify_module)
     if module_style in ('old', 'non_native_want_json', 'binary'):
         return _BuiltModule(
-            b_module_data=b_module_data,
+            b_module_data=b"",  # Marker to indicate the original file should be used without modification.
             module_style=module_style,
             shebang=shebang,
             serialization_profile='legacy',
@@ -1446,9 +1441,7 @@ if __name__ == "__main__":
 
         def get_module_command_args(
             module_path: str | None,
-            args_path: str | None,  # Not used for pwsh
-            shell: ShellBase,
-        ) -> tuple[str, bytes | None] | None:
+        ) -> tuple[list[str], bytes | None] | None:
             bootstrap_wrapper = ps_manifest._get_powershell_script("bootstrap_wrapper.ps1").decode('utf-8')
 
             module_data = None
@@ -1473,7 +1466,7 @@ if __name__ == "__main__":
                 override_execution_policy=platform == "windows",
             )
 
-            return shell.join(interpreter_args), module_data
+            return interpreter_args, module_data
 
         def parse_clixml_stderr(rc: int, stdout: bytes, stderr: bytes) -> tuple[int, bytes, bytes]:
             return (rc, stdout, _clixml.replace_stderr_clixml(stderr))
@@ -1617,7 +1610,8 @@ def modify_module(
         default_interpreters=default_interpreters,
     )
 
-    b_module_data = module_bits.b_module_data
+    if module_bits.b_module_data:
+        b_module_data = module_bits.b_module_data
     shebang = module_bits.shebang
 
     if shebang is None and module_bits.module_style != 'binary':

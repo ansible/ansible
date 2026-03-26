@@ -150,6 +150,9 @@ namespace Ansible.Basic
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None, AccessControlType.Allow);
                     dirSecurity.AddAccessRule(ace);
+#else
+                    UnixFileMode userMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+#endif
 
                     string baseDir = Path.GetFullPath(Environment.ExpandEnvironmentVariables(remoteTmp));
                     if (!Directory.Exists(baseDir))
@@ -157,10 +160,14 @@ namespace Ansible.Basic
                         string failedMsg = null;
                         try
                         {
+#if WINDOWS
 #if CORECLR
                             FileSystemAclExtensions.CreateDirectory(dirSecurity, baseDir);
 #else
                             Directory.CreateDirectory(baseDir, dirSecurity);
+#endif
+#else
+                            Directory.CreateDirectory(baseDir, userMode);
 #endif
                         }
                         catch (Exception e)
@@ -176,8 +183,8 @@ namespace Ansible.Basic
                         }
                         else
                         {
-                            NTAccount currentUser = (NTAccount)user.Translate(typeof(NTAccount));
-                            string warnMsg = String.Format("Module remote_tmp {0} did not exist and was created with FullControl to {1}, ", baseDir, currentUser.ToString());
+                            string currentUser = Environment.UserName;
+                            string warnMsg = String.Format("Module remote_tmp {0} did not exist and was created with FullControl to {1}, ", baseDir, currentUser);
                             warnMsg += "this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually";
                             Warn(warnMsg);
                         }
@@ -187,18 +194,19 @@ namespace Ansible.Basic
                     string dirName = String.Format("ansible-moduletmp-{0}-{1}-{2}", dateTime, System.Diagnostics.Process.GetCurrentProcess().Id,
                         new Random().Next(0, int.MaxValue));
                     string newTmpdir = Path.Combine(baseDir, dirName);
+#if WINDOWS
 #if CORECLR
                     FileSystemAclExtensions.CreateDirectory(dirSecurity, newTmpdir);
 #else
                     Directory.CreateDirectory(newTmpdir, dirSecurity);
 #endif
+#else
+                    Directory.CreateDirectory(newTmpdir, userMode);
+#endif
                     tmpdir = newTmpdir;
 
                     if (!KeepRemoteFiles)
                         cleanupFiles.Add(tmpdir);
-#else
-                    throw new NotImplementedException("Tmpdir is only supported on Windows");
-#endif
                 }
                 return tmpdir;
             }

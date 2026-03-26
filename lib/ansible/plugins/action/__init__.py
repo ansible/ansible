@@ -348,7 +348,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         return module_bits, module_path
 
-    def _compute_environment_string(self, raw_environment_out=None):
+    def _compute_environment_string(self, raw_environment_out=None) -> str:
         """
         Builds the environment string to be used when executing the remote task.
         """
@@ -1052,7 +1052,11 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # If the module_style turns out to not be new and we didn't create the
         # remote tmp here, it will still be created. This must be done before
         # calling self._update_module_args() so the module wrapper has the
-        # correct remote_tmp value set
+        # correct remote_tmp value set.
+        # FUTURE: Async shouldn't be part of a connection's capabilities but
+        # rather part of the module's exec/style caps. The current setup is
+        # hard to achieve this as we need to build the module_args before we
+        # can build the module so we keep this here for now.
         if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
             self._make_tmp_path()
             tmpdir = self._connection._shell.tmpdir
@@ -1076,44 +1080,62 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         module_bits, module_path = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        (module_style, shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
+        (module_style, module_shebang, module_data) = (module_bits.module_style, module_bits.shebang, module_bits.b_module_data)
         display.vvv("Using module file %s" % module_path)
-        if not shebang and module_style != 'binary':
+        if not module_shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        self._used_interpreter = shebang
-        remote_module_path = None
+        # If the module payload has async builtin, e.g. pwsh exec_wrapper, then
+        # we can bypass the async_wrapper.py and pipelining checks done for
+        # async as it's treated like a normal module.
+        wrap_async = wrap_async and not module_bits.has_async
 
-        if not self._is_pipelining_enabled(module_style, wrap_async):
-            # we might need remote tmp dir
+        self._used_interpreter = module_shebang
+
+        # FUTURE: Instead of module_style we should add "capabilities" to the
+        # module_bits dataclass that indicate things like argument format.
+        # This will reduce the cognitive overload of trying to remember all the
+        # different styles and what they mean.
+        args_file_path = None
+        remote_module_path = None
+        remote_files = []
+        if not self._is_pipelining_enabled(module_style) or wrap_async:
             if tmpdir is None:
                 self._make_tmp_path()
                 tmpdir = self._connection._shell.tmpdir
 
+            remote_files.append(tmpdir)
+
+            if module_style != 'new':
+                # binary, old, and non_native_want_json module styles use an
+                # args file to store the module arguments.
+                args_file_path = self._connection._shell.join_path(tmpdir, 'args')
+                remote_files.append(args_file_path)
+
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmpdir, 'AnsiballZ_%s' % remote_module_filename)
+            remote_files.append(remote_module_path)
 
-        args_file_path = None
-        if module_style in ('old', 'non_native_want_json', 'binary'):
-            # we'll also need a tmp file to hold our module arguments
-            args_file_path = self._connection._shell.join_path(tmpdir, 'args')
-
-        if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote %s" % remote_module_path)
-            if module_style == 'binary':
-                self._transfer_file(module_path, remote_module_path)
-            else:
+            if module_data:
+                # modify_module edited the data in some way, we cannot transfer
+                # from the existing path.
                 self._transfer_data(remote_module_path, module_data)
-            if module_style == 'old':
-                # we need to dump the module args to a k=v string in a file on
-                # the remote system, which can be read and parsed by the module
-                args_data = ""
-                for k, v in module_args.items():
-                    args_data += '%s=%s ' % (k, shlex.quote(str(v)))
-                self._transfer_data(args_file_path, args_data)
-            elif module_style in ('non_native_want_json', 'binary'):
-                profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
-                self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
+            else:
+                self._transfer_file(module_path, remote_module_path)
+
+            if args_file_path:
+                if module_style == 'old':
+                    # we need to dump the module args to a k=v string in a file on
+                    # the remote system, which can be read and parsed by the module
+                    args_data = ""
+                    for k, v in module_args.items():
+                        args_data += '%s=%s ' % (k, shlex.quote(str(v)))
+                    self._transfer_data(args_file_path, args_data)
+                else:
+                    profile_encoder = get_module_encoder(module_bits.serialization_profile, Direction.CONTROLLER_TO_MODULE)
+                    self._transfer_data(args_file_path, json.dumps(module_args, cls=profile_encoder))
+
             display.debug("done transferring module to remote")
 
         environment_string = ''
@@ -1125,60 +1147,67 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if remove_async_dir is not None:
             del self._task.environment[remove_async_dir]
 
-        remote_files = []
-        if tmpdir and remote_module_path:
-            remote_files = [tmpdir, remote_module_path]
+        module_in_data: bytes | None = None
+        module_cmd = ''
+        module_cmd_args: list[str] = []
 
-        if args_file_path:
-            remote_files.append(args_file_path)
+        # FUTURE: If we can deprecated and remove shell.build_module_command()
+        # we can move all this logic into the get_command_args for all module
+        # types rather than it being opt in per exec style.
+        if cmd_args := module_bits.get_command_args(remote_module_path):
+            module_cmd_args, module_in_data = cmd_args
 
-        sudoable = not module_bits.has_become
-        in_data = None
-        cmd = ""
+        else:
+            if remote_module_path:
+                module_cmd_args = [remote_module_path]
+            else:
+                module_in_data = module_data
 
-        if wrap_async and not self._connection.always_pipeline_modules:
+            # We still skip build_module_command if using async as that always
+            # built its own command. The async_wrapper expects the full command
+            # to run so we need to add the shebang and args path (if set).
+            if wrap_async:
+                if module_shebang:
+                    module_interpreter = module_shebang.replace('#!', '').strip()
+                    module_cmd_args.insert(0, module_interpreter)
+
+                if args_file_path:
+                    module_cmd_args.append(args_file_path)
+
+            else:
+                module_cmd = self._connection._shell.build_module_command(
+                    environment_string,
+                    module_shebang,
+                    " ".join(module_cmd_args),
+                    arg_path=args_file_path,
+                ).strip()
+
+        if wrap_async:
             # configure, upload, and chmod the async_wrapper module
             (async_module_bits, async_module_path) = self._configure_module(module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
-            (shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
+            (async_shebang, async_module_data) = (async_module_bits.shebang, async_module_bits.b_module_data)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
-            async_limit = self._task.async_val
+            async_limit = str(self._task.async_val)
             async_jid = f'j{secrets.randbelow(999999999999)}'
 
             # call the interpreter for async_wrapper directly
             # this permits use of a script for an interpreter on non-Linux platforms
-            interpreter = shebang.replace('#!', '').strip()
-            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, remote_module_path]
+            interpreter = async_shebang.replace('#!', '').strip()
 
+            preserve_tmp = str(not self._should_remove_tmp_path(tmpdir)).lower()
+            async_cmd = [interpreter, remote_async_module_path, async_jid, async_limit, preserve_tmp, remote_module_path]
+            async_cmd.extend(module_cmd_args)
+
+            module_cmd_args = async_cmd
+
+        if not module_cmd:
+            module_cmd = self._connection._shell.join(module_cmd_args)
             if environment_string:
-                async_cmd.insert(0, environment_string)
-
-            if args_file_path:
-                async_cmd.append(args_file_path)
-            else:
-                # maintain a fixed number of positional parameters for async_wrapper
-                async_cmd.append('_')
-
-            if not self._should_remove_tmp_path(tmpdir):
-                async_cmd.append("-preserve_tmp")
-
-            cmd = " ".join(to_text(x) for x in async_cmd)
-
-        elif cmd_args := module_bits.get_command_args(remote_module_path, args_file_path, self._connection._shell):
-            cmd, in_data = cmd_args
-            if environment_string:
-                cmd = f"{environment_string} {cmd}"
-
-        else:
-            if self._is_pipelining_enabled(module_style):
-                in_data = module_data
-            else:
-                cmd = remote_module_path
-
-            cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
+                module_cmd = f"{environment_string} {module_cmd}"
 
         # Fix permissions of the tmpdir path and tmpdir files. This should be called after all
         # files have been transferred.
@@ -1188,7 +1217,12 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, process_result=module_bits.process_result)
+        res = self._low_level_execute_command(
+            module_cmd,
+            sudoable=not module_bits.has_become,
+            in_data=module_in_data,
+            process_result=module_bits.process_result,
+        )
 
         # parse the main result
         data = self._parse_returned_data(res, module_bits.serialization_profile)

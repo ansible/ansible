@@ -75,6 +75,14 @@ def test_replace_stderr_clixml_with_header_but_no_data():
     assert actual == expected
 
 
+def test_replace_stderr_clixml_with_vt_colors():
+    data = b'#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">' \
+        b'<S S="Error">_x001B_[31;1mException: _x001B_[31;1mabc_x001B_[0m_x000D__x000A_</S></Objs>'
+    expected = b"Exception: abc\r\n"
+    actual = _clixml.replace_stderr_clixml(data)
+    assert actual == expected
+
+
 def test_extract_clixml_empty():
     empty = '#< CLIXML\r\n<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"></Objs>'
     expected = []

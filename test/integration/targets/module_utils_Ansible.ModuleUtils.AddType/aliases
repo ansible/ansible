@@ -1,3 +1,5 @@
+posix
 windows
+shippable/powershell/group1
 shippable/windows/group1
 shippable/windows/smoketest

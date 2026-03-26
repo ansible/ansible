@@ -191,6 +191,15 @@ stages:
               test: fedora43
           groups:
             - 7
+  - stage: PowerShell
+    dependsOn: []
+    jobs:
+      - template: templates/matrix.yml
+        parameters:
+          nameFormat: PowerShell {0}
+          testFormat: powershell/{0}/1
+          targets:
+            - name: 7.6
   - stage: Galaxy
     dependsOn: []
     jobs:
@@ -251,6 +260,7 @@ stages:
       - Remote
       - Remote_Targeted
       - Docker
+      - PowerShell
       - Galaxy
       - Generic
       - Incidental_Windows
