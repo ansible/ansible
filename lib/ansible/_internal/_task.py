@@ -482,6 +482,7 @@ class TaskArgsFinalizer:
 
 
 class Source(enum.Enum):
+    ACTION = enum.auto()
     ANY = enum.auto()
 
 
@@ -710,6 +711,10 @@ def _convert_deprecations(value: object) -> list[_messages.DeprecationSummary] |
     return deprecations
 
 
+# RPFIX-3: this is currently on things that are marked as needing to use a dedicated API (likely obsolete, nothing sets Source.ACTION anymore, kill it all?),
+DROP_AND_WARN = ResolvedField(name='__drop__', type=str, optional=True, field=None, metadata=FieldSettings())
+
+
 class VariableLayer(enum.IntEnum):
     """Variable layer at which variables are registered."""
 
@@ -889,7 +894,7 @@ class UnifiedTaskResult:
 
     @classmethod
     @functools.cache
-    def get_result_key_to_resolved_field_mapping(cls) -> dict[str, ResolvedField]:
+    def get_result_key_to_resolved_field_mapping(cls, source_is_module: bool) -> dict[str, ResolvedField]:
         mapping = {}
         type_hints = t.get_type_hints(cls)
 
@@ -897,7 +902,9 @@ class UnifiedTaskResult:
             metadata = t.cast(FieldSettings, dc_field.metadata.get('ansible', _DEFAULT_FIELD_SETTINGS))
             resolved_field = ResolvedField.from_field(type_hints, metadata, dc_field)
 
-            if metadata.source is Source.ANY:
+            if metadata.source is Source.ACTION and source_is_module:
+                mapping[resolved_field.result_key] = DROP_AND_WARN
+            elif metadata.source is Source.ACTION or metadata.source is Source.ANY:
                 mapping[resolved_field.result_key] = resolved_field
 
         return mapping
@@ -927,7 +934,7 @@ class UnifiedTaskResult:
         if not isinstance(result, dict):
             raise TypeError(f'Malformed result. Received {type(result)} instead of {dict}.')
 
-        fields = cls.get_result_key_to_resolved_field_mapping()
+        fields = cls.get_result_key_to_resolved_field_mapping(source_is_module=source_is_module)
         result_data: dict[str, object] = {}
         kwargs: dict[str, t.Any] = dict(
             result_data=result_data,
@@ -935,7 +942,10 @@ class UnifiedTaskResult:
 
         for key, value in result.items():
             if resolved_field := fields.get(key):
-                kwargs[resolved_field.name] = cls.convert_field(resolved_field, value)
+                if resolved_field is DROP_AND_WARN:
+                    display.warning(f"Removed reserved key {key!r} from module result.", obj=value)
+                else:
+                    kwargs[resolved_field.name] = cls.convert_field(resolved_field, value)
             elif source_is_module and key.startswith('_ansible_'):
                 display.warning(f"Removed reserved key {key!r} from module result.", obj=value)
             else:
