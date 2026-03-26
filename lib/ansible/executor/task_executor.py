@@ -240,14 +240,7 @@ class TaskExecutor:
 
             # break loop if break_when conditions are met
             if self._task.loop_control and self._task.loop_control.break_when:
-                break_when = self._task.loop_control.get_validated_value(
-                    'break_when',
-                    self._task.loop_control.fattributes.get('break_when'),
-                    self._task.loop_control.break_when,
-                    task_ctx.task_templar,
-                )
-
-                if self._task._resolve_conditional(break_when, task_ctx.task_vars):
+                if self._task._resolve_conditional(self._task.loop_control.break_when, task_ctx.task_vars):
                     task_ctx.record_break_when()
                     break
 

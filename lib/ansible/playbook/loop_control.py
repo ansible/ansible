@@ -32,7 +32,7 @@ class LoopControl(FieldAttributeBase):
     pause = NonInheritableFieldAttribute(isa='float', default=0, always_post_validate=True)
     extended = NonInheritableFieldAttribute(isa='bool', always_post_validate=True)
     extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True)
-    break_when = NonInheritableFieldAttribute(isa='list', default=list)
+    break_when = NonInheritableFieldAttribute(isa='list', default=list, always_post_validate=True)
 
     def __init__(self):
         super(LoopControl, self).__init__()

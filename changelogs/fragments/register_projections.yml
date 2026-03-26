@@ -16,6 +16,7 @@ major_changes:
 minor_changes:
   - loops - The registered result of a loop task no longer contains the ``skipped`` key when it would be ``False``.
 bugfixes:
+  - loops - The ``break_when`` keyword is now validated when the value is falsey.
   - ignore_errors - Templated values for the ``ignore_errors`` keyword behave more consistently in looped tasks.
     If ``ignore_errors`` resolves ``True`` for any loop item, errors will be ignored for the entire task.
   - ignore_unreachable - Templated values for the ``ignore_unreachable`` keyword behave more consistently in looped tasks.
