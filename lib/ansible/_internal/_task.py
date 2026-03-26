@@ -326,10 +326,7 @@ class TaskContext(AmbientContextBase):
 
         # _item_index will be None if start_loop was not called due to a field attribute error
         if not TaskContext.current().is_loop or self._item_index is None:
-            if self._raw_loop_results:
-                self._raw_loop_results.clear()
-                # RPFIX-1: UX: we should be able to show the existing task exception (if present) here, before discarding it
-
+            self._raw_loop_results.clear()
             self._raw_loop_results.append(utr)
 
             return
