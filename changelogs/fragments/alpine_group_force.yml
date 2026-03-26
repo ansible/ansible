@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - user - raise an error if force=true is used while deleting the group on BusyBox based distros (https://github.com/ansible/ansible/issues/85565).

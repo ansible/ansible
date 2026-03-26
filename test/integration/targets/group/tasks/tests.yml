@@ -388,6 +388,35 @@
             state: absent
       when: ansible_distribution not in ["MacOSX", "Alpine", "FreeBSD"]
 
+    # https://github.com/ansible/ansible/issues/85565
+    - block:
+        - name: Create a group
+          group:
+            name: groupdeltest
+            state: present
+
+        - name: Use force to delete the group
+          group:
+            name: groupdeltest
+            state: absent
+            force: true
+          ignore_errors: true
+          register: force_delete
+
+        - name: assert an error occurred while deleting the group with force=true
+          assert:
+            that:
+              - force_delete is failed
+              - "'The force option is not supported' in force_delete.msg"
+
+      always:
+        - name: Cleanup group
+          group:
+            name: groupdeltest
+            state: absent
+
+      when: ansible_distribution in ["MacOSX", "Alpine", "FreeBSD"]
+
     # create system group
 
     - name: remove group
