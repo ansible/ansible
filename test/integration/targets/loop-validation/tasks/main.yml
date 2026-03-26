@@ -68,5 +68,9 @@
   register: result
 
 - assert:
-    that: |
-      result.msg == "Conditional expressions must be strings."
+    that:
+      - result.msg == "One or more items failed"
+      - result is failed
+      - result.results[0].break_when_result == "Conditional expressions must be strings."
+      - result.results[0].msg == "Hello world!"
+      - result.results[0] is failed

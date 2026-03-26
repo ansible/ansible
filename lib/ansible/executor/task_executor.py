@@ -222,6 +222,13 @@ class TaskExecutor:
 
                 utr = self._execute()
 
+                if self._task.loop_control and self._task.loop_control.break_when:
+                    try:
+                        utr.set_break_when_result(self._task._resolve_conditional(self._task.loop_control.break_when, task_ctx.task_vars))
+                    except AnsibleError as ex:
+                        # RPFIX-5: UX: This this bypasses AnsibleTaskError handling, resulting in less information than a normal task failure.
+                        utr.set_break_when_result(ex)
+
                 self._update_task_connection()
 
                 if utr.failed or utr.unreachable:
@@ -237,12 +244,6 @@ class TaskExecutor:
 
             # update the connection value on the original task to reflect the resolved value
             self._update_task_connection()
-
-            # break loop if break_when conditions are met
-            if self._task.loop_control and self._task.loop_control.break_when:
-                if self._task._resolve_conditional(self._task.loop_control.break_when, task_ctx.task_vars):
-                    task_ctx.record_break_when()
-                    break
 
         if last_loop_task:
             # FUTURE: hide this in Task/LoopContext once they're fully implemented
@@ -399,6 +400,7 @@ class TaskExecutor:
             if not conditional_result:
                 return UnifiedTaskResult.record_conditional_false(conditional_item)
         except AnsibleError as e:
+            # RPFIX-5: UX: error handling for 'when' should work similarly to failed_when, changed_when and break_when
             # FUTURE: this error handling seems problematic; shouldn't a failed loop expression always be an error, rather than letting an item-oriented `when`
             #  expression be treated as a task-oriented one and sweeping the failure under the rug if it happens to be False? If so, this re-raise and the
             #  one just below it should be removed in favor of letting it fly from get_loop_items.
@@ -592,10 +594,9 @@ class TaskExecutor:
 
                 try:
                     if self._task.changed_when:
-                        utr.changed = self._task._resolve_conditional(self._task.changed_when, task_ctx.task_vars)
+                        utr.set_changed_when_result(self._task._resolve_conditional(self._task.changed_when, task_ctx.task_vars))
                 except AnsibleError as e:
-                    # RPFIX-5: UX: shouldn't an exception here be handled the same way as for failed_when? (and same for break_when, when, until?)
-                    utr.set_changed_when_result_on_failure(e)
+                    utr.set_changed_when_result(e)
                 else:
                     try:
                         if self._task.failed_when:
@@ -604,6 +605,7 @@ class TaskExecutor:
                         utr.set_failed_when_result(e)
 
             if retries > 1:
+                # RPFIX-5: UX: error handling for 'until' should work similarly to failed_when, changed_when and break_when
                 if self._task._resolve_conditional(self._task.until or [not utr.failed], task_ctx.task_vars):
                     break
                 else:

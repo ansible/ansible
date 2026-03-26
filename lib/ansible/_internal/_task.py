@@ -291,7 +291,7 @@ class TaskContext(AmbientContextBase):
             yield item_index, item
 
             if self._break_when_triggered:
-                raise RuntimeError("Cannot continue loop evaluation after break_when is triggered.")
+                break
 
         self._has_loop_exited = True
 
@@ -377,10 +377,6 @@ class TaskContext(AmbientContextBase):
                 item_label = self.task_templar.resolve_variable_expression(self._loop_var)
 
         utr.loop_item_label = item_label
-
-    def record_break_when(self) -> None:
-        self._break_when_triggered = True
-        self._has_loop_exited = True
 
     def build_loop_result(self, preview: bool = False) -> UnifiedTaskResult:
         if not self.is_loop:
@@ -843,8 +839,6 @@ class UnifiedTaskResult:
 
         return current_deprecations
 
-    failed_when_result: object | None = dataclasses.field(default=None, metadata=export_only())
-
     ansible_facts: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export())
     async_result: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=export_only())
     ansible_parsed: bool | None = None  # formerly _ansible_parsed
@@ -879,8 +873,14 @@ class UnifiedTaskResult:
     """The `skipped_reason` field is deprecated. Use `skip_reason` instead."""
 
     false_condition: object | None = dataclasses.field(default=None, metadata=export_only())
-    changed_when_result: str | None = dataclasses.field(default=None, metadata=export_only())
+
+    changed_when_result: object | None = dataclasses.field(default=None, metadata=export_only())  # RPFIX-9: FUTURE: `bool | str` once validator supports that
+    failed_when_result: object | None = dataclasses.field(default=None, metadata=export_only())  # RPFIX-9: FUTURE: `bool | str` once validator supports that
+    break_when_result: object | None = dataclasses.field(default=None, metadata=export_only())  # RPFIX-9: FUTURE: `bool | str` once validator supports that
+
+    changed_when_suppressed_exception: _messages.ErrorSummary | None = dataclasses.field(default=None, metadata=export_only())
     failed_when_suppressed_exception: _messages.ErrorSummary | None = dataclasses.field(default=None, metadata=export_only())
+    break_when_suppressed_exception: _messages.ErrorSummary | None = dataclasses.field(default=None, metadata=export_only())
 
     loop_var: str | None = dataclasses.field(default=None, metadata=export_only('ansible_loop_var'))
     loop_index_var: str | None = dataclasses.field(default=None, metadata=export_only('ansible_index_var'))
@@ -1274,18 +1274,53 @@ class UnifiedTaskResult:
 
         return utr
 
-    def set_changed_when_result_on_failure(self, value: Exception) -> None:
-        # RPFIX-1: UX: this is probably needed when resolving the error handling below
-        # if self.exception:
-        #     self.changed_when_suppressed_exception = self.exception
-        #     self.exception = None
+    def set_break_when_result(self, value: bool | Exception | None = None) -> None:
+        task_ctx = TaskContext.current()
 
-        self.failed = True
-        self.changed_when_result = str(value)
-        # RPFIX-1: UX: this needs the same treatment as failed_when to preserve any exception detail from the task itself, add the right error message
-        #   and point at the failing conditional expression.
+        result: bool | str
 
-    def set_failed_when_result(self, value: Exception | bool) -> None:
+        if isinstance(value, bool):
+            result = value
+            break_when = value
+        else:
+            result = str(value)
+            break_when = True
+
+            if self.exception:
+                self.break_when_suppressed_exception = self.exception
+
+            self.failed = True
+            self.exception = _messages.ErrorSummary(
+                event=_error_factory.ControllerEventFactory.from_exception(value, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+            )
+
+        if break_when:
+            task_ctx._break_when_triggered = True
+            task_ctx._has_loop_exited = True
+
+        self.break_when_result = result
+
+    def set_changed_when_result(self, value: bool | Exception) -> None:
+        result: bool | str
+
+        if isinstance(value, bool):
+            result = value
+
+            self.changed = value
+        else:
+            if self.exception:
+                self.changed_when_suppressed_exception = self.exception
+
+            result = str(value)
+
+            self.failed = True
+            self.exception = _messages.ErrorSummary(
+                event=_error_factory.ControllerEventFactory.from_exception(value, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+            )
+
+        self.changed_when_result = result
+
+    def set_failed_when_result(self, value: bool | Exception) -> None:
         # RPFIX-5: DOC: document exception suppression logic in changelog et al
         #  The use of any failed_when expression will suppress the existing value of `exception` and store it in `failed_when_suppressed_exception`,
         #  regardless if the expression result is True, False, or an exception. For True and exception, the `exception` value in the task result becomes
@@ -1295,7 +1330,7 @@ class UnifiedTaskResult:
             self.failed_when_suppressed_exception = self.exception
             self.exception = None
 
-        result: object
+        result: bool | str
 
         if isinstance(value, bool):
             result = value

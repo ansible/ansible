@@ -15,6 +15,10 @@ major_changes:
     The pending results of the current task can be accessed via its ``result`` and ``loop_result`` properties.
 minor_changes:
   - loops - The registered result of a loop task no longer contains the ``skipped`` key when it would be ``False``.
+  - changed_when - A ``changed_when_result`` key is always present in results when a ``changed_when`` expression is used.
+  - break_when - A ``break_when_result`` key is always present in results when a ``break_when`` expression is used.
+  - changed_when - A ``changed_when_suppressed_exception`` key is added to a result when a ``changed_when`` expression fails and masks an existing exception in a result.
+  - break_when - A ``break_when_suppressed_exception`` key is added to a result when a ``break_when`` expression fails and masks an existing exception in a result.
 bugfixes:
   - loops - The ``break_when`` keyword is now validated when the value is falsey.
   - ignore_errors - Templated values for the ``ignore_errors`` keyword behave more consistently in looped tasks.
@@ -22,5 +26,6 @@ bugfixes:
   - ignore_unreachable - Templated values for the ``ignore_unreachable`` keyword behave more consistently in looped tasks.
     If ``ignore_unreachable`` resolves ``True`` for any loop item, unreachable hosts will be ignored for the entire task.
   - ignore_errors - Invalid values for ``ignore_errors`` will always be treated as ``False``
+  - break_when - A failed ``break_when`` expression now preserves the loop structure of a result and any loop item results.
 breaking_changes:
   - ...
