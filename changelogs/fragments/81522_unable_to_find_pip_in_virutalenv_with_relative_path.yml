@@ -1,0 +1,2 @@
+bugfixes:
+  - pip - consider the relative path for chdir is specified with virutalenv path (https://github.com/ansible/ansible/issues/81522).
