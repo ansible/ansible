@@ -1,3 +1,0 @@
-bugfixes:
-  - pip - When installing multiple packages with ``editable=True``, ensure each package is editable.
-  - pip - Prevent passing ``-e`` to ``pip`` when the ``editable`` parameter and ``requirements`` parameter are set.
