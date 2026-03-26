@@ -32,13 +32,6 @@ if t.TYPE_CHECKING:
 
 display = Display()
 
-IGNORE = frozenset(
-    {
-        'failed',
-        'skipped',
-    }
-)
-
 PRESERVE = frozenset(
     {
         '_ansible_no_log',
@@ -48,17 +41,6 @@ PRESERVE = frozenset(
         'exception',
         'retries',
         'warnings',
-    }
-)
-
-# stuff callbacks need
-CLEAN_EXCEPTIONS = frozenset(
-    {
-        '_ansible_delegated_vars',  # filtered elsewhere, used for detection/reporting of effective delegation
-        '_ansible_item_label',  # to know actual 'item' variable
-        '_ansible_no_log',  # jic we didn't clean up well enough, DON'T LOG
-        '_ansible_verbose_always',  # for debug and other actions, to always expand data (pretty jsonification)
-        '_ansible_verbose_override',  # controls display of ansible_facts, gathering would be very noise with -v otherwise
     }
 )
 
@@ -486,11 +468,17 @@ class Source(enum.Enum):
     ANY = enum.auto()
 
 
+class Destination(enum.Enum):
+    CALLBACK = enum.auto()
+    NOT_CALLBACK = enum.auto()
+    ANY = enum.auto()
+
+
 @dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
 class FieldSettings:
     key: str | None = None
     source: Source | None = None
-    exportable: bool = False
+    destination: Destination | None = None
     conversion_func: t.Callable[[object], object] | None = None
 
 
@@ -544,12 +532,13 @@ class ResolvedField:
 def export_only(
     key: str | None = None,
     *,
+    destination: Destination = Destination.ANY,
     conversion_func: t.Callable[[object], object] | None = None,
 ) -> dict[str, t.Any]:
     return field(
         key,
         source=None,
-        exportable=True,
+        destination=destination,
         conversion_func=conversion_func,
     )
 
@@ -557,12 +546,14 @@ def export_only(
 def import_export(
     key: str | None = None,
     *,
+    source: Source = Source.ANY,
+    destination: Destination = Destination.ANY,
     conversion_func: t.Callable[[object], object] | None = None,
 ) -> dict[str, t.Any]:
     return field(
         key,
-        source=Source.ANY,
-        exportable=True,
+        source=source,
+        destination=destination,
         conversion_func=conversion_func,
     )
 
@@ -571,14 +562,14 @@ def field(
     key: str | None = None,
     *,
     source: Source | None = None,
-    exportable: bool = False,
+    destination: Destination | None = None,
     conversion_func: t.Callable[[object], object] | None = None,
 ) -> dict[str, t.Any]:
     return dict(
         ansible=FieldSettings(
             key=key,
             source=source,
-            exportable=exportable,
+            destination=destination,
             conversion_func=conversion_func,
         )
     )
@@ -743,7 +734,7 @@ class UnifiedTaskResult:
     def changed(self, value: bool) -> None:
         self._changed = value
 
-    _failed: bool | None = dataclasses.field(default=None, metadata=import_export("failed"))
+    _failed: bool | None = dataclasses.field(default=None, metadata=import_export("failed", destination=Destination.NOT_CALLBACK))
 
     @property
     def failed(self) -> bool:
@@ -780,7 +771,7 @@ class UnifiedTaskResult:
     def unreachable(self, value: bool) -> None:
         self._unreachable = value
 
-    _skipped: bool | None = dataclasses.field(default=None, metadata=import_export("skipped"))
+    _skipped: bool | None = dataclasses.field(default=None, metadata=import_export("skipped", destination=Destination.NOT_CALLBACK))
 
     @property
     def skipped(self) -> bool | None:
@@ -843,10 +834,19 @@ class UnifiedTaskResult:
     ansible_facts: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export())
     async_result: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=export_only())
     ansible_parsed: bool | None = None  # formerly _ansible_parsed
+    invocation: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export(destination=Destination.CALLBACK))
     exception: _messages.ErrorSummary | None = dataclasses.field(default=None, metadata=import_export())
     finished: bool | None = dataclasses.field(default=None, metadata=import_export())
     msg: object | None = dataclasses.field(default=None, metadata=import_export())
-    no_log: bool | None = dataclasses.field(default=None, metadata=import_export("_ansible_no_log", conversion_func=_convert_no_log))
+    no_log: bool | None = dataclasses.field(
+        default=None, metadata=import_export("_ansible_no_log", conversion_func=_convert_no_log, source=Source.ACTION, destination=Destination.CALLBACK)
+    )
+    verbose_always: bool | None = dataclasses.field(
+        default=None, metadata=import_export("_ansible_verbose_always", source=Source.ACTION, destination=Destination.CALLBACK)
+    )
+    verbose_override: bool | None = dataclasses.field(
+        default=None, metadata=import_export("_ansible_verbose_override", source=Source.ACTION, destination=Destination.CALLBACK)
+    )
     rc: int | None = dataclasses.field(default=None, metadata=import_export())
     suppress_tmpdir_delete: bool | None = dataclasses.field(default=None, metadata=field("_ansible_suppress_tmpdir_delete", source=Source.ANY))
     module_stderr: str | None = dataclasses.field(default=None, metadata=export_only())
@@ -858,7 +858,9 @@ class UnifiedTaskResult:
     notify: list[str] = dataclasses.field(default_factory=list)
     delegated_host: str | None = None
     # RPFIX-1: API: rename delegated_vars to something like `callback_delegated_var_subset_of_crap`
-    delegated_vars: dict[str, object] | None = dataclasses.field(default=None, metadata=export_only("_ansible_delegated_vars"))
+    delegated_vars: dict[str, object] | None = dataclasses.field(
+        default=None, metadata=export_only("_ansible_delegated_vars", destination=Destination.CALLBACK)
+    )
     diff: object | None = dataclasses.field(default=None, metadata=import_export())  # RPFIX-9: FUTURE: validation with custom conversion func
     pending_changes: PendingChanges = dataclasses.field(default_factory=PendingChanges)
     """Changes which will be applied when the action completes, including on failure."""
@@ -885,7 +887,7 @@ class UnifiedTaskResult:
 
     loop_var: str | None = dataclasses.field(default=None, metadata=export_only('ansible_loop_var'))
     loop_index_var: str | None = dataclasses.field(default=None, metadata=export_only('ansible_index_var'))
-    loop_item_label: object | None = dataclasses.field(default=None, metadata=export_only('_ansible_item_label'))
+    loop_item_label: object | None = dataclasses.field(default=None, metadata=export_only('_ansible_item_label', destination=Destination.CALLBACK))
     loop_item: object | None = dataclasses.field(default=None, metadata=export_only())  # exported as self.loop_var value
     loop_index: object | None = dataclasses.field(default=None, metadata=export_only())  # exported as self.loop_index_var value
     loop_extended: dict[str, object] | None = dataclasses.field(default=None, metadata=export_only('ansible_loop'))
@@ -910,13 +912,17 @@ class UnifiedTaskResult:
 
     @classmethod
     @functools.cache
-    def _get_field_name_to_result_key_mapping(cls) -> dict[str, str]:
+    def _get_field_name_to_result_key_mapping(cls, for_callback: bool) -> dict[str, str]:
         mapping = {}
 
         for dc_field in dataclasses.fields(cls):
             metadata = t.cast(FieldSettings, dc_field.metadata.get('ansible', _DEFAULT_FIELD_SETTINGS))
 
-            if metadata.exportable:
+            if (
+                metadata.destination is Destination.ANY
+                or (for_callback and metadata.destination is Destination.CALLBACK)
+                or (not for_callback and metadata.destination is Destination.NOT_CALLBACK)
+            ):
                 key = metadata.key or dc_field.name
                 field_name = key if hasattr(cls, key) else dc_field.name  # properties matching the exported key take precedence over the field during export
 
@@ -966,7 +972,7 @@ class UnifiedTaskResult:
     def as_result_dict(self, for_callback: bool = False, censor_callback_result: bool = False) -> dict[str, object]:
         result: dict[str, t.Any] = {
             self._result_key_magic(result_key): value
-            for field_name, result_key in self._get_field_name_to_result_key_mapping().items()
+            for field_name, result_key in self._get_field_name_to_result_key_mapping(for_callback).items()
             if (value := getattr(self, field_name)) is not None
         }
 
@@ -989,12 +995,6 @@ class UnifiedTaskResult:
             if censor_callback_result:
                 result = {key: value for key in PRESERVE if (value := result.get(key, ...)) is not ...}
                 result.update(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result")
-
-            # always drop failed/skipped from callback dict
-            result = {k: v for k, v in module_response_deepcopy(result).items() if k not in IGNORE}
-
-            # remove most internal keys not relevant to callbacks
-            strip_internal_keys(result, exceptions=CLEAN_EXCEPTIONS)
 
         if self.loop_results is not None:
             # loop results need to be added after censor_result on the outer result since it's currently naive about whether it's looking at a loop item or not

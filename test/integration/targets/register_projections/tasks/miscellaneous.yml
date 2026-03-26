@@ -10,7 +10,6 @@
 - name: Assert equivalence of plain registration and base-case registration
   assert:
     that:
-      - plain_register.invocation == registered_var.invocation
       - plain_register.stdout == registered_var.stdout
 
 - name: Test equivalence of registration, plain, in loop
@@ -27,9 +26,7 @@
 - name: Assert equivalence of plain registration and project
   assert:
     that:
-      - plain_loop_result.results[0].invocation == registered_var_in_loop.results[0].invocation
       - plain_loop_result.results[0].stdout == registered_var_in_loop.results[0].stdout
-      - plain_loop_result.results[1].invocation == registered_var_in_loop.results[1].invocation
       - plain_loop_result.results[1].stdout == registered_var_in_loop.results[1].stdout
 
 - name: Check registration of loop
