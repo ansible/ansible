@@ -507,8 +507,8 @@
           - permission_issue is success
           - not permission_issue.changed
           - permission_issue.skipped_paths|length == 1
-          - "'{{ test_dir }}/readable/1-unreadable' in permission_issue.skipped_paths"
-          - "'Permission denied' in permission_issue.skipped_paths['{{ test_dir }}/readable/1-unreadable']"
+          - (test_dir + '/readable/1-unreadable') in permission_issue.skipped_paths
+          - "'Permission denied' in permission_issue.skipped_paths[test_dir + '/readable/1-unreadable']"
           - permission_issue.matched == 1
   always:
     - name: cleanup test directory
@@ -543,6 +543,6 @@
         that:
           - homedir_search is success
           - homedir_search.matched == 1
-          - '"{{ homedir }}/wharevs.txt" in astest_list'
+          - (homedir + '/wharevs.txt') in astest_list
       vars:
         homedir: "{{ test_user.home }}"
