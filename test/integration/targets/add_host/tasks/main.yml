@@ -133,15 +133,14 @@
 
 - assert:
     that:
-# RPFIX-1: RPC: restore changed tests once add_host/add_group has been fixed
-#      - add_testhost01 is changed
+      - add_testhost01 is changed
       - add_testhost01_idem is not changed
-#      - hostvar_testhost01 is changed
+      - hostvar_testhost01 is changed
       - hostvar_testhost01_idem is not changed
-#      - add_testhost02 is changed
+      - add_testhost02 is changed
       - add_testhost02_idem is not changed
-#      - add_group_testhost02 is changed
-#      - add_group_testhost01 is changed
+      - add_group_testhost02 is changed
+      - add_group_testhost01 is changed
       - add_group_testhost02_idem is not changed
       - add_group_testhost01_idem is not changed
       - groups['testhostgroup']|length == 2
@@ -171,11 +170,10 @@
 - name: verify correct changed results
   assert:
     that:
-# RPFIX-1: RPC: restore changed tests once add_host/add_group has been fixed
-#      - add_host_loop_res.results[0] is changed
-#      - add_host_loop_res.results[1] is changed
+      - add_host_loop_res.results[0] is changed
+      - add_host_loop_res.results[1] is changed
       - add_host_loop_res.results[2] is not changed
-#      - add_host_loop_res is changed
+      - add_host_loop_res is changed
 
 - name: Add host with host:port in name
   add_host:
