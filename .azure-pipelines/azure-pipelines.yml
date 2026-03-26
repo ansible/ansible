@@ -199,8 +199,7 @@ stages:
           nameFormat: PowerShell {0}
           testFormat: powershell/{0}/1
           targets:
-            - name: PowerShell 7.6
-              test: docker/ubuntu2404/7.6
+            - name: 7.6
   - stage: Galaxy
     dependsOn: []
     jobs:
