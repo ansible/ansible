@@ -1617,8 +1617,8 @@ class Connection(ConnectionBase):
         """ override parent method and ensure we don't request a tty """
 
         if getattr(self._shell, "_IS_WINDOWS", False):
-             # pipelining is always used on Windows
-             return True
+            # pipelining is always used on Windows
+            return True
         elif self._is_tty_requested():
             return False
         else:

@@ -314,10 +314,10 @@ class ConnectionBase(AnsiblePlugin):
                 is_enabled = getattr(self._play_context, 'pipelining', False)
 
         # We should deprecate always_pipeline_modules and has_native_async in favor of plugins just overriding this
-        # method. We cannot add it now as plugins will need to be compatible with older Ansible verions that still need
+        # method. We cannot add it now as plugins will need to be compatible with older Ansible versions that still need
         # to set this to be true. This function was added in 2.19 and when we expect 2.19 being a baseline for plugins
-        # we can add a runtime deprecation that checks whether these are True and if so warn the funciton should be
-        # overriden instead.
+        # we can add a runtime deprecation that checks whether these are True and if so warn the function should be
+        # overridden instead.
         # deprecate: description='Revisit adding a deprecation or bump the core_version' core_version='2.24'
         conditions = [
             is_enabled or self.always_pipeline_modules,       # enabled via config or forced via connection (eg winrm)
