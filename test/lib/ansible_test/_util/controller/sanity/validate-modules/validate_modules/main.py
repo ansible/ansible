@@ -881,7 +881,6 @@ class ModuleValidator(Validator):
         doc = None
         # We have two ways of marking deprecated/removed files. Have to check each one
         # individually and then make sure they all agree
-        deprecated = False
         doc_deprecated = None  # doc legally might not exist
         routing_says_deprecated = False
 
@@ -893,7 +892,6 @@ class ModuleValidator(Validator):
                 # consult meta/runtime.yml for collection to see if this is deprecated
                 # consult ansible_builtin_runtime.yml for ansible.builtin to see if this is deprecated
                 routing_says_deprecated = True
-                deprecated = True
 
         if self._python_module():
             doc_info = self._get_py_docs()
@@ -1036,7 +1034,7 @@ class ModuleValidator(Validator):
                 doc_schema(
                     module_name,
                     for_collection=bool(self.collection),
-                    deprecated_module=deprecated or doc_deprecated,
+                    deprecated_module=doc_deprecated,
                     plugin_type=self.plugin_type,
                 ),
                 'DOCUMENTATION',
@@ -1123,14 +1121,7 @@ class ModuleValidator(Validator):
 
         # Check for mismatched deprecation
         if not self.collection:
-            mismatched_deprecation = True
-            if not (deprecated or doc_deprecated):
-                mismatched_deprecation = False
-            else:
-                if doc_deprecated or not doc:
-                    mismatched_deprecation = False
-
-            if mismatched_deprecation:
+            if doc_deprecated != routing_says_deprecated:
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
