@@ -400,21 +400,27 @@ class TaskExecutor:
             if not conditional_result:
                 return UnifiedTaskResult.record_conditional_false(conditional_item)
         except AnsibleError as e:
-            # RPFIX-5: UX: error handling for 'when' should work similarly to failed_when, changed_when and break_when
             # FUTURE: this error handling seems problematic; shouldn't a failed loop expression always be an error, rather than letting an item-oriented `when`
             #  expression be treated as a task-oriented one and sweeping the failure under the rug if it happens to be False? If so, this re-raise and the
             #  one just below it should be removed in favor of letting it fly from get_loop_items.
-            # loop error takes precedence
-            if self._loop_eval_error is not None:
+            try:
+                # The original error's obj should contain the failed expression, which should be origin tagged.
+                # This error is intended to provide additional context (the message) for the original error.
+                # By repeating the original error's obj here, the error display will group the two errors together.
+                raise AnsibleError("A 'when' expression failed.", obj=e.obj) from e
+            except AnsibleError as ae:
+                if self._loop_eval_error is None:
+                    raise
+
                 # Display the error from the conditional as well to prevent
                 # losing information useful for debugging.
-                display.v(to_text(e))
-                raise self._loop_eval_error  # pylint: disable=raising-bad-type
-            raise
+                display.error(ae)
+
+            raise self._loop_eval_error
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
-            raise self._loop_eval_error  # pylint: disable=raising-bad-type
+            raise self._loop_eval_error
 
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with delegation
         # and undefined vars (correct values are in cvars later on and connection plugins, if still error, blows up there)
