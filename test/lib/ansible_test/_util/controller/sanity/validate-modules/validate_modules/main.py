@@ -1034,7 +1034,7 @@ class ModuleValidator(Validator):
                 doc_schema(
                     module_name,
                     for_collection=bool(self.collection),
-                    deprecated_module=doc_deprecated,
+                    deprecated_module=routing_says_deprecated or doc_deprecated,
                     plugin_type=self.plugin_type,
                 ),
                 'DOCUMENTATION',
