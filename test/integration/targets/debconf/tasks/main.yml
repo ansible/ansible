@@ -294,7 +294,43 @@
       assert:
         that:
           - not invalid_flag.changed
-          - '"is not a string and conversion is not allowed" in invalid_flag.msg'
+          - '"Invalid value provided for vtype" in invalid_flag.msg'
+
+    - name: Set question for test
+      set_fact:
+        question7: ansible/test7
+
+    - name: Create a string question
+      debconf:
+        name: ansible
+        question: "{{ question7 }}"
+        vtype: string
+        value: "1"
+      diff: true
+
+    - name: Mark as seen
+      debconf:
+        name: ansible
+        question: "{{ question7 }}"
+        vtype: seen
+        value: true
+      diff: true
+
+    - name: Mark as seen false
+      debconf:
+        name: ansible
+        question: "{{ question7 }}"
+        vtype: seen
+        value: false
+      diff: true
+      register: result
+
+    - name: Validate result
+      assert:
+        that:
+          - result.changed
+          - result.current[question7] == 'false'
+          - result.previous[question7] == 'true'
 
   always:
     - name: uninstall debconf-utils

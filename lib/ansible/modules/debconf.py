@@ -229,12 +229,22 @@ def main():
 
         if vtype == 'seen':
             input_value = to_text(value).lower()
-            if input_value not in ['true', 'false']:
-                module.fail_json(msg=f"Invalid value provided for vtype 'seen': {input_value}")
+            valid_values = ['true', 'false']
+            if input_value not in valid_values:
+                module.fail_json(msg=f"Invalid value provided for vtype {vtype}: {input_value}. Valid values are: {(', ').join(valid_values)}")
             value = input_value
 
         if vtype not in ('boolean', 'seen', 'multiselect'):
-            value = _check_type_str_no_conversion(value)
+            try:
+                value = _check_type_str_no_conversion(value)
+            except TypeError as exc:
+                module.fail_json(msg=f"Invalid value provided for vtype '{vtype}'", exception=exc)
+
+        if vtype == 'multiselect' and isinstance(value, list):
+            try:
+                value = ", ".join(sorted(value))
+            except TypeError as exc:
+                module.fail_json(msg=f"Invalid value provided for vtype '{vtype}': {to_native(exc)}")
 
         # if question doesn't exist, value cannot match
         if question not in prev:
@@ -247,10 +257,6 @@ def main():
             elif vtype == 'password':
                 existing = get_password_value(module, pkg, question, vtype)
             elif vtype == 'multiselect' and isinstance(value, list):
-                try:
-                    value = sorted(value)
-                except TypeError as exc:
-                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
                 existing = sorted([i.strip() for i in existing.split(",")])
             elif vtype == 'seen':
                 # vtype seen is a special case where we only care if the question is seen or not
@@ -265,18 +271,13 @@ def main():
 
     if changed:
         if not module.check_mode:
-            if vtype == 'multiselect' and isinstance(value, list):
-                try:
-                    value = ", ".join(value)
-                except TypeError as exc:
-                    module.fail_json(msg="Invalid value provided for 'multiselect': %s" % to_native(exc))
             rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
 
         curr = {question: value}
         if question in prev:
-            prev = {question: prev[question]}
+            prev = {question: existing}
         else:
             prev[question] = ''
 
