@@ -991,7 +991,13 @@ class DocCLI(CLI, RoleMixin):
 
         # Display the docs
         if do_json:
-            jdump(docs)
+            new_docs = {}
+            for key, value in docs.items():
+                if isinstance(value, tuple):
+                    new_docs[key] = value[0]
+                else:
+                    new_docs[key] = value
+            jdump(new_docs)
         else:
             text = []
             if plugin_type in C.DOCUMENTABLE_PLUGINS:
