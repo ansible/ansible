@@ -1,0 +1,6 @@
+bugfixes:
+  - ansiballz - Eagerly load the JSON serialization profile in the module loader
+    to prevent ``FileNotFoundError`` when ``exit_json()`` attempts to resolve
+    the profile after the ansiballz zip payload has been deleted by
+    ``do_cleanup_files()``
+    (https://github.com/ansible/ansible/issues/86738).

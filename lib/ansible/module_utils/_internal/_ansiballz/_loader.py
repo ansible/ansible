@@ -32,6 +32,12 @@ def run_module(
             extension_module = importlib.import_module(f'{_ansiballz.__name__}._extensions.{extension}')
             extension_module.run(args)
 
+        # Eagerly resolve and cache the JSON serialization profile module
+        # before running the user module. This ensures the profile is in
+        # sys.modules and available during exit_json() even after
+        # do_cleanup_files() has deleted the ansiballz zip payload.
+        get_module_encoder(profile, Direction.MODULE_TO_CONTROLLER)
+
         _run_module(
             json_params=json_params,
             profile=profile,
