@@ -602,9 +602,14 @@ class TaskExecutor:
                         utr.set_failed_when_result(e)
 
             if retries > 1:
-                # RPFIX-5: UX: error handling for 'until' should work similarly to failed_when, changed_when and break_when
-                if self._task._resolve_conditional(self._task.until or [not utr.failed], task_ctx.task_vars):
-                    break
+                try:
+                    if self._task._resolve_conditional(self._task.until or [not utr.failed], task_ctx.task_vars):
+                        break
+                except AnsibleError as e:
+                    # The original error's obj should contain the failed expression, which should be origin tagged.
+                    # This error is intended to provide additional context (the message) for the original error.
+                    # By repeating the original error's obj here, the error display will group the two errors together.
+                    raise AnsibleError("An 'until' expression failed.", obj=e.obj) from e
 
                 # no conditional check, or it failed, so sleep for the specified time
                 if attempt < retries:
