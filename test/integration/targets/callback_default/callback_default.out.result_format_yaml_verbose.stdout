@@ -5,6 +5,7 @@ PLAY [testhost] ****************************************************************
 TASK [Changed task] ************************************************************
 changed: [testhost] => 
     changed: true
+    changed_when_result: true
     cmd:
     - echo
     - foo
@@ -22,6 +23,7 @@ changed: [testhost] =>
 TASK [Ok task] *****************************************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     cmd:
     - echo
     - foo
@@ -217,6 +219,7 @@ changed: [testhost] =>
 TASK [replace] *****************************************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     msg: 1 replacements made
     rc: 0
 
@@ -262,6 +265,7 @@ changed: [testhost] =>
 RUNNING HANDLER [Test handler 2] ***********************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     cmd:
     - echo
     - foo
