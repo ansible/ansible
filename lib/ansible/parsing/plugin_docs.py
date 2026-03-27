@@ -125,7 +125,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
 
 def read_docstub(filename):
     """
-    Quickly find short_description and deprecatedusing string methods instead of node parsing.
+    Quickly find short_description and deprecated using string methods instead of node parsing.
     This does not return a full set of documentation strings and is intended for
     operations like ansible-doc -l.
     """

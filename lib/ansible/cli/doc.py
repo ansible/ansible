@@ -1140,7 +1140,7 @@ class DocCLI(CLI, RoleMixin):
 
         return text
 
-    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, str]:
+    def _get_plugin_list_descriptions(self, plugins: dict[str, _PluginDocMetadata]) -> dict[str, tuple[str, bool]]:
 
         descs = {}
         for plugin, plugin_info in plugins.items():
@@ -1171,7 +1171,7 @@ class DocCLI(CLI, RoleMixin):
                 # Do a final fallback to see if the plugin is a shadowed Jinja2 plugin
                 # without any explicit documentation.
                 if doc is None and plugin_info.jinja_builtin_short_description:
-                    descs[plugin] = plugin_info.jinja_builtin_short_description
+                    descs[plugin] = (plugin_info.jinja_builtin_short_description, False)
                     continue
 
                 if docerror:
