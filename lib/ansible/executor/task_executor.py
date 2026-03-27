@@ -605,15 +605,15 @@ class TaskExecutor:
                 # RPFIX-5: UX: error handling for 'until' should work similarly to failed_when, changed_when and break_when
                 if self._task._resolve_conditional(self._task.until or [not utr.failed], task_ctx.task_vars):
                     break
-                else:
-                    # no conditional check, or it failed, so sleep for the specified time
-                    if attempt < retries:
-                        utr.retries = retries
-                        utr.attempts = attempt + 1
-                        display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._final_q.send_callback('v2_runner_retry', self._host, self._task, utr)
-                        time.sleep(delay)
-                        self._handler = self._get_action_handler(templar=task_ctx.task_templar)
+
+                # no conditional check, or it failed, so sleep for the specified time
+                if attempt < retries:
+                    utr.retries = retries
+                    utr.attempts = attempt + 1
+                    display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
+                    self._final_q.send_callback('v2_runner_retry', self._host, self._task, utr)
+                    time.sleep(delay)
+                    self._handler = self._get_action_handler(templar=task_ctx.task_templar)
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
