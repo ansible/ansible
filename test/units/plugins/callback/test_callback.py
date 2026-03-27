@@ -59,7 +59,7 @@ class TestCallback(unittest.TestCase):
 
     def test_host_label_delegated(self):
         mock_task.delegate_to = 'host2'
-        utr = UnifiedTaskResult(is_module=False, delegated_host="host2", delegated_vars=dict(ansible_host='host2'))
+        utr = UnifiedTaskResult(is_module=False, delegated_host="host2", callback_delegated_vars_subset=dict(ansible_host='host2'))
         result = CallbackTaskResult(
             host=Host('host1'),
             task=mock_task,

@@ -222,7 +222,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         parent_group_names: list[str] | None = None,
     ) -> bool:
         """Add the given host to inventory."""
-        # RPFIX-1: API: should this live somewhere other than ActionBase, now that it no longer needs self?
         return _task.TaskContext.current().inventory_rpc_client.add_host(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
@@ -237,7 +236,6 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         parent_group_names: list[str] | None = None,
     ) -> bool:
         """Add the given group to inventory."""
-        # RPFIX-1: API: should this live somewhere other than ActionBase, now that it no longer needs self?
         task_ctx = _task.TaskContext.current()
         host_name = task_ctx.host_name
 

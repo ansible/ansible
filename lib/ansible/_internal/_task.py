@@ -23,7 +23,6 @@ from ansible.parsing import vault as _vault
 from ansible.template import trust_as_template
 from ansible.utils.display import Display
 from ansible.utils import vars as _vars
-from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
 if t.TYPE_CHECKING:
     from ansible.playbook.task import Task
@@ -44,7 +43,6 @@ PRESERVE = frozenset(
     }
 )
 
-# RPFIX-1: API: bikeshed the name for _task.polymorphic_result
 POLYMORPHIC_RESULT_EXPRESSION = trust_as_template("_task.polymorphic_result")
 
 
@@ -706,9 +704,11 @@ DROP_AND_WARN = ResolvedField(name='__drop__', type=str, optional=True, field=No
 
 
 class VariableLayer(enum.IntEnum):
-    """Variable layer at which variables are registered."""
+    """
+    Variable layer at which variables are registered.
 
-    # RPFIX-1: API: this needs to be part of the public API, unless we're not allowing collections to register at non-default layers initially
+    CAUTION: This enum is exposed as public API in ActionBase.
+    """
 
     # IMPORTANT: The order of these enum values determines the order in which they will be applied to variable manager.
     #            This matters for precedence of layers for which variable manager does not independently track.
@@ -716,7 +716,7 @@ class VariableLayer(enum.IntEnum):
     CACHEABLE_FACT = enum.auto()
     INCLUDE_VARS = enum.auto()
     EPHEMERAL_FACT = enum.auto()
-    REGISTER_VARS = enum.auto()  # RPFIX-1: API: this will be used when UnifiedTaskResult.registered_values is killed off
+    REGISTER_VARS = enum.auto()
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -857,8 +857,7 @@ class UnifiedTaskResult:
     retries: int | None = dataclasses.field(default=None, metadata=export_only())
     notify: list[str] = dataclasses.field(default_factory=list)
     delegated_host: str | None = None
-    # RPFIX-1: API: rename delegated_vars to something like `callback_delegated_var_subset_of_crap`
-    delegated_vars: dict[str, object] | None = dataclasses.field(
+    callback_delegated_vars_subset: dict[str, object] | None = dataclasses.field(
         default=None, metadata=export_only("_ansible_delegated_vars", destination=Destination.CALLBACK)
     )
     diff: object | None = dataclasses.field(default=None, metadata=import_export())  # RPFIX-9: FUTURE: validation with custom conversion func
@@ -1038,6 +1037,7 @@ class UnifiedTaskResult:
                 except Exception as ex:
                     registered_errors.append(ex)
 
+        # RPFIX-9: FUTURE: merge registered_values into the pending VariableLayer.REGISTER_VARS layer instead of having a separate field
         self.registered_values = registered_values
 
         if not registered_errors:
@@ -1158,7 +1158,7 @@ class UnifiedTaskResult:
     @classmethod
     def from_module_result_dict(cls, result: dict[str, object]) -> t.Self:
         if (results := result.get('results', ...)) is not ... and (not isinstance(results, c.Sequence) or isinstance(results, str)):
-            # deprecated: description='deprecate the value of ansible_module_results' ansible_core='2.25'
+            # deprecated: description='deprecate the value of ansible_module_results' core_version='2.25'
             # results = deprecate_value(
             #     value=results,
             #     msg="The 'ansible_module_results' result key is deprecated.",

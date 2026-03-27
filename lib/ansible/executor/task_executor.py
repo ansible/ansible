@@ -634,7 +634,7 @@ class TaskExecutor:
         # also now add connection vars results when delegating
         if self._task.delegate_to:
             utr.delegated_host = self._task.delegate_to
-            utr.delegated_vars = dict(
+            utr.callback_delegated_vars_subset = dict(
                 ansible_delegated_host=self._task.delegate_to,
                 ansible_connection=current_connection,
             )
@@ -646,7 +646,7 @@ class TaskExecutor:
 
                 # FUTURE: this is horribly inefficient
                 for plugin_option_name in C.config.get_plugin_options_from_var("connection", current_connection, plugin_var_name):
-                    utr.delegated_vars[plugin_var_name] = self._connection.get_option(plugin_option_name)
+                    utr.callback_delegated_vars_subset[plugin_var_name] = self._connection.get_option(plugin_option_name)
 
         # and return
         display.debug("attempt loop complete, returning result")
