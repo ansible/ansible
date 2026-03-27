@@ -55,8 +55,13 @@ class ConnectionBase(AnsiblePlugin):
     """
 
     has_pipelining = False
-    has_native_async = False  # eg, winrm
-    always_pipeline_modules = False  # eg, winrm
+
+    # The next 2 options are obsolete and should not be set to True. Plugins should instead override
+    # is_pipelining_enabled if they need to change the pipelining behaviour. We cannot mark as deprecated yet as some
+    # plugins may still need to set these for compatibility with older Ansible versions still in use.
+    has_native_async = False
+    always_pipeline_modules = False
+
     has_tty = True  # for interacting with become plugins
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
@@ -308,7 +313,12 @@ class ConnectionBase(AnsiblePlugin):
             except KeyError:
                 is_enabled = getattr(self._play_context, 'pipelining', False)
 
-        # TODO: deprecate always_pipeline_modules and has_native_async in favor for each plugin overriding this function
+        # We should deprecate always_pipeline_modules and has_native_async in favor of plugins just overriding this
+        # method. We cannot add it now as plugins will need to be compatible with older Ansible versions that still need
+        # to set this to be true. This function was added in 2.19 and when we expect 2.19 being a baseline for plugins
+        # we can add a runtime deprecation that checks whether these are True and if so warn the function should be
+        # overridden instead.
+        # deprecate: description='Revisit adding a deprecation or bump the core_version' core_version='2.24'
         conditions = [
             is_enabled or self.always_pipeline_modules,       # enabled via config or forced via connection (eg winrm)
             not wrap_async or self.has_native_async,          # async does not normally support pipelining unless it does (eg winrm)

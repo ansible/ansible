@@ -660,8 +660,6 @@ class Connection(ConnectionBase):
         # we need to set various properties to ensure SSH on Windows continues
         # to work
         if getattr(self._shell, "_IS_WINDOWS", False):
-            self.has_native_async = True
-            self.always_pipeline_modules = True
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.allow_executable = False
 
@@ -1618,7 +1616,10 @@ class Connection(ConnectionBase):
     def is_pipelining_enabled(self, wrap_async=False):
         """ override parent method and ensure we don't request a tty """
 
-        if self._is_tty_requested():
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            # pipelining is always used on Windows
+            return True
+        elif self._is_tty_requested():
             return False
         else:
             return super(Connection, self).is_pipelining_enabled(wrap_async)
