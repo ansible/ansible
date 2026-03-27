@@ -14,7 +14,7 @@
           raw: exit {{ item }}
           ignore_errors: '{{ item == 1 }}'
           register: result
-          loop: [ 0,2,1 ]
+          loop: [0, 2, 1]
 
         - name: No host should reach this task
           debug:
