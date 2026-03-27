@@ -1309,7 +1309,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             utr.set_fact(self._discovered_interpreter_key, self._discovered_interpreter)
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
-        return utr.as_result_dict()
+        return utr.as_result_dict(for_round_trip=True)
 
     def _parse_returned_data(self, res: LowLevelExecuteCommandResult, profile: str) -> _task.UnifiedTaskResult:
         try:

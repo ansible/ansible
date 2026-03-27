@@ -911,7 +911,7 @@ class UnifiedTaskResult:
 
     @classmethod
     @functools.cache
-    def _get_field_name_to_result_key_mapping(cls, for_callback: bool) -> dict[str, str]:
+    def _get_field_name_to_result_key_mapping(cls, *, for_callback: bool, for_round_trip: bool) -> dict[str, str]:
         mapping = {}
 
         for dc_field in dataclasses.fields(cls):
@@ -919,8 +919,8 @@ class UnifiedTaskResult:
 
             if (
                 metadata.destination is Destination.ANY
-                or (for_callback and metadata.destination is Destination.CALLBACK)
-                or (not for_callback and metadata.destination is Destination.NOT_CALLBACK)
+                or ((for_round_trip or for_callback) and metadata.destination is Destination.CALLBACK)
+                or ((for_round_trip or not for_callback) and metadata.destination is Destination.NOT_CALLBACK)
             ):
                 key = metadata.key or dc_field.name
                 field_name = key if hasattr(cls, key) else dc_field.name  # properties matching the exported key take precedence over the field during export
@@ -968,10 +968,10 @@ class UnifiedTaskResult:
             case _:
                 return key
 
-    def as_result_dict(self, for_callback: bool = False, censor_callback_result: bool = False) -> dict[str, object]:
+    def as_result_dict(self, *, for_callback: bool = False, for_round_trip: bool = False, censor_callback_result: bool = False) -> dict[str, object]:
         result: dict[str, t.Any] = {
             self._result_key_magic(result_key): value
-            for field_name, result_key in self._get_field_name_to_result_key_mapping(for_callback).items()
+            for field_name, result_key in self._get_field_name_to_result_key_mapping(for_callback=for_callback, for_round_trip=for_round_trip).items()
             if (value := getattr(self, field_name)) is not None
         }
 
@@ -999,7 +999,11 @@ class UnifiedTaskResult:
             # loop results need to be added after censor_result on the outer result since it's currently naive about whether it's looking at a loop item or not
             result.update(
                 results=[
-                    loop_result.as_result_dict(for_callback=for_callback, censor_callback_result=censor_callback_result or loop_result.no_log)
+                    loop_result.as_result_dict(
+                        for_callback=for_callback,
+                        for_round_trip=for_round_trip,
+                        censor_callback_result=censor_callback_result or loop_result.no_log,
+                    )
                     for loop_result in self.loop_results
                 ]
             )
