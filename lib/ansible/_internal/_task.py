@@ -1287,7 +1287,7 @@ class UnifiedTaskResult:
 
         return utr
 
-    def set_break_when_result(self, value: bool | Exception | None = None) -> None:
+    def set_break_when_result(self, value: bool | AnsibleError) -> None:
         task_ctx = TaskContext.current()
 
         result: bool | str
@@ -1297,6 +1297,15 @@ class UnifiedTaskResult:
             break_when = value
         else:
             result = str(value)
+
+            try:
+                # The original error's obj should contain the failed expression, which should be origin tagged.
+                # This error is intended to provide additional context (the message) for the original error.
+                # By repeating the original error's obj here, the error display will group the two errors together.
+                raise AnsibleError("A 'break_when' expression failed.", obj=value.obj) from value
+            except Exception as ex:
+                wrapped_ex = ex
+
             break_when = True
 
             if self.exception:
@@ -1304,7 +1313,8 @@ class UnifiedTaskResult:
 
             self.failed = True
             self.exception = _messages.ErrorSummary(
-                event=_error_factory.ControllerEventFactory.from_exception(value, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+                # pylint: disable=used-before-assignment
+                event=_error_factory.ControllerEventFactory.from_exception(wrapped_ex, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
             )
 
         if break_when:
@@ -1313,7 +1323,7 @@ class UnifiedTaskResult:
 
         self.break_when_result = result
 
-    def set_changed_when_result(self, value: bool | Exception) -> None:
+    def set_changed_when_result(self, value: bool | AnsibleError) -> None:
         result: bool | str
 
         if isinstance(value, bool):
@@ -1326,14 +1336,23 @@ class UnifiedTaskResult:
 
             result = str(value)
 
+            try:
+                # The original error's obj should contain the failed expression, which should be origin tagged.
+                # This error is intended to provide additional context (the message) for the original error.
+                # By repeating the original error's obj here, the error display will group the two errors together.
+                raise AnsibleError("A 'changed_when' expression failed.", obj=value.obj) from value
+            except Exception as ex:
+                wrapped_ex = ex
+
             self.failed = True
             self.exception = _messages.ErrorSummary(
-                event=_error_factory.ControllerEventFactory.from_exception(value, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+                # pylint: disable=used-before-assignment
+                event=_error_factory.ControllerEventFactory.from_exception(wrapped_ex, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
             )
 
         self.changed_when_result = result
 
-    def set_failed_when_result(self, value: bool | Exception) -> None:
+    def set_failed_when_result(self, value: bool | AnsibleError) -> None:
         # RPFIX-5: DOC: document exception suppression logic in changelog et al
         #  The use of any failed_when expression will suppress the existing value of `exception` and store it in `failed_when_suppressed_exception`,
         #  regardless if the expression result is True, False, or an exception. For True and exception, the `exception` value in the task result becomes
@@ -1371,9 +1390,18 @@ class UnifiedTaskResult:
         else:
             result = str(value)
 
+            try:
+                # The original error's obj should contain the failed expression, which should be origin tagged.
+                # This error is intended to provide additional context (the message) for the original error.
+                # By repeating the original error's obj here, the error display will group the two errors together.
+                raise AnsibleError("A 'failed_when' expression failed.", obj=value.obj) from value
+            except Exception as ex:
+                wrapped_ex = ex
+
             self.failed = True
             self.exception = _messages.ErrorSummary(
-                event=_error_factory.ControllerEventFactory.from_exception(value, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
+                # pylint: disable=used-before-assignment
+                event=_error_factory.ControllerEventFactory.from_exception(wrapped_ex, _traceback.is_traceback_enabled(_traceback.TracebackEvent.ERROR)),
             )
 
         self.failed_when_result = result

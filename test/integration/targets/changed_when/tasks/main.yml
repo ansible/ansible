@@ -125,4 +125,4 @@
       - failed_task.changed_when_result is contains "division by zero"
       - failed_task.changed_when_suppressed_exception is defined  # RPFIX-9: FUTURE: enable traceback and verify this is the ping crash
       - failed_task.exception is defined  # RPFIX-9: FUTURE: enable traceback and verify this is the exception from the failed changed_when expression
-      - failed_task.msg is search "Task failed. Module failed. Error rendering expression. division by zero"
+      - failed_task.msg is search "Task failed. Module failed. A 'changed_when' expression failed. Error rendering expression. division by zero"
