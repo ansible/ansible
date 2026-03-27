@@ -16,6 +16,8 @@
 
   - import_tasks: 'apt-builddep.yml'
 
+  - import_tasks: 'apt_update.yml'
+
   - block:
       - import_tasks: 'repo.yml'
     always:

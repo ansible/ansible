@@ -224,6 +224,7 @@ notes:
    - If the interpreter can't import C(python3-apt) the module will check for it in system-owned interpreters as well.
      If the dependency can't be found, depending on the value of O(auto_install_module_deps) the module will attempt to install it.
      If the dependency is found or installed, the module will be respawned under the correct interpreter.
+   - From ansible-core 2.21, if the apt lists directory is absent, the module will recreate it by running C(apt-get update).
 """
 
 EXAMPLES = """
@@ -1224,6 +1225,17 @@ def get_updated_cache_time():
     return mtimestamp, updated_cache_time
 
 
+def recreate_cache(module, max_retries=2):
+    retries = 0
+    update_cmd = ['apt-get', 'update', '-q']
+    while retries < max_retries:
+        rc, stdout, stderr = module.run_command(update_cmd)
+        retries += 1
+        if rc == 0:
+            break
+    return rc, stdout, stderr
+
+
 # https://github.com/ansible/ansible-modules-core/issues/2951
 def get_cache(module):
     """Attempt to get the cache object and update till it works"""
@@ -1233,18 +1245,20 @@ def get_cache(module):
     except SystemError as e:
         if '/var/lib/apt/lists/' in to_native(e).lower():
             # update cache until files are fixed or retries exceeded
-            retries = 0
-            while retries < 2:
-                (rc, so, se) = module.run_command(['apt-get', 'update', '-q'])
-                retries += 1
-                if rc == 0:
-                    break
+            rc, stdout, stderr = recreate_cache(module)
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
+                module.fail_json(msg=f'Updating the cache to correct corrupt package lists failed:\n{to_native(e)}\n{stdout + stderr}', rc=rc)
             # try again
             cache = apt.Cache()
         else:
             module.fail_json(msg=to_native(e))
+
+    # Check if the cache is valid
+    if not os.path.isdir(apt_pkg.config.find_dir("Dir::State::Lists")):
+        rc, stdout, stderr = recreate_cache(module)
+        if rc != 0:
+            module.fail_json(msg=f'Failed to recreate the cache: {stdout + stderr}', rc=rc)
+        cache = apt.Cache()
     return cache
 
 
