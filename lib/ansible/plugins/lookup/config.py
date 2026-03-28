@@ -111,7 +111,7 @@ class LookupModule(LookupBase):
 
         for term in terms:
             if not isinstance(term, str):
-                raise AnsibleError(f'Invalid setting identifier, {term!r} is not a {str}, its a {type(term)}.')
+                raise AnsibleError(f"Invalid setting identifier, {term!r} is not a {str}, it's a {type(term)}.")
 
             result = Sentinel
             origin = None
