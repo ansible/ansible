@@ -126,13 +126,12 @@ class LookupModule(LookupBase):
             try:
                 result, origin = C.config.get_config_value_and_origin(term, plugin_type=ptype, plugin_name=pname, variables=var_context)
             except AnsibleUndefinedConfigEntry as e:
-                match missing:
-                    case 'error':
-                        raise
-                    case 'skip':
-                        pass
-                    case 'warn':
-                        self._display.error_as_warning(msg=f"Skipping {term}.", exception=e)
+                if missing == 'error':
+                    raise
+                elif missing == 'skip':
+                    pass
+                elif missing == 'warn':
+                    self._display.error_as_warning(msg=f"Skipping {term}.", exception=e)
 
             if result is not Sentinel:
                 if show_origin:
