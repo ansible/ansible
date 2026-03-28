@@ -1,0 +1,38 @@
+- name: Use clear_host_errors to clear active host failures
+  hosts:
+    - testhost
+    - testhost2
+  gather_facts: no
+  strategy: "{{ test_strategy }}"
+  tasks:
+    - name: Delay host responsible for executing clear_host_errors
+      wait_for:
+        timeout: 1
+      when:
+        - test_strategy == 'free'
+        - inventory_hostname == 'testhost'
+
+    - block:
+        - name: Fail a host in a block that has an always section
+          fail:
+          when: inventory_hostname == 'testhost2'
+
+        - meta: clear_host_errors
+      always:
+        - debug:
+            msg: 'Running always'
+
+    - name: Set a fact for the failed host
+      set_fact:
+        recovered_within_same_play: True
+      delegate_to: testhost
+      delegate_facts: True
+      when: inventory_hostname == 'testhost2'
+
+- name: Test failed host with an active run state completed the previous play
+  hosts: testhost
+  gather_facts: no
+  tasks:
+    - assert:
+        that:
+          - recovered_within_same_play | default(False)

@@ -600,7 +600,7 @@ class StrategyBase:
                 ignore_unreachable = original_task.ignore_unreachable
                 if not ignore_unreachable:
                     self._tqm._unreachable_hosts[original_host.name] = True
-                    iterator._play._removed_hosts.append(original_host.name)
+                    iterator.end_host(original_host.name)
                     self._tqm._stats.increment('dark', original_host.name)
                 else:
                     self._tqm._stats.increment('ok', original_host.name)

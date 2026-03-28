@@ -73,6 +73,16 @@ for test_strategy in linear free; do
   grep -qv 'Failed to end_batch' <<< "$out"
 done
 
+# test clear_host_errors meta task
+for playbook in test_clear_host_errors/*; do
+  for strategy in linear free; do
+    ansible-playbook "$playbook" -i inventory.yml -e test_strategy="$strategy" "$@" || {
+      echo "Test $playbook failed using strategy $strategy"
+      exit 1
+    }
+  done
+done
+
 # test refresh
 ansible-playbook -i inventory_refresh.yml refresh.yml "$@"
 ansible-playbook -i inventory_refresh.yml refresh_preserve_dynamic.yml "$@"
