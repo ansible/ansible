@@ -442,9 +442,7 @@ class StrategyBase:
                     _add(fact_key)
         if always_keys:
             _pop = facts.pop
-            always_facts = {
-                'ansible_facts': dict((k, _pop(k)) for k in list(facts) if k in always_keys)
-            }
+            always_facts = dict((k, _pop(k)) for k in list(facts) if k in always_keys)
             host_list = self.get_delegated_hosts(result, task)
             _set_host_facts = self._variable_manager.set_host_facts
             for target_host in host_list:

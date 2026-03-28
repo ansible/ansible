@@ -4,6 +4,13 @@
     - name: Test python interpreter discovery with delegate_to without delegate_facts
       ping:
       delegate_to: testhost
+
+    - name: Test interpreter discovery fact is delegated regardless of delegate_facts
+      assert:
+        that:
+          - hostvars['testhost']['ansible_facts']['discovered_interpreter_python'] is defined
+          - hostvars['localhost']['ansible_facts']['discovered_interpreter_python'] is undefined
+
     - name: Test python interpreter discovery with delegate_to with delegate_facts
       ping:
       delegate_to: testhost
