@@ -248,10 +248,10 @@ def main():
     params['replace'] = to_text(params['replace'], errors='surrogate_or_strict', nonstring='passthru')
 
     if os.path.isdir(path):
-        module.fail_json(rc=256, msg='Path %s is a directory !' % path)
+        module.fail_json(rc=256, msg='Path %s is a directory!' % path)
 
     if not os.path.exists(path):
-        module.fail_json(rc=257, msg='Path %s does not exist !' % path)
+        module.fail_json(rc=257, msg='Path %s does not exist!' % path)
     else:
         try:
             with open(path, 'r', encoding=encoding) as f:

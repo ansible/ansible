@@ -79,7 +79,7 @@ EXAMPLES = r"""
     - ansible.builtin.validate_argument_spec:
         argument_spec: "{{ lookup('ansible.builtin.file', 'nakedoptions.yml') }}"
         provided_arguments:
-          but: "that i can define on the include itself, like in it's `vars:` keyword"
+          but: "that i can define on the include itself, like in its `vars:` keyword"
 
     - name: the include itself
       vars:

@@ -304,7 +304,7 @@ def present(module, dest, regexp, search_string, line, insertafter, insertbefore
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
         if not create:
-            module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+            module.fail_json(rc=257, msg='Destination %s does not exist!' % dest)
         b_destpath = os.path.dirname(b_dest)
         if b_destpath and not os.path.exists(b_destpath) and not module.check_mode:
             try:
@@ -610,7 +610,7 @@ def main():
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
-        module.fail_json(rc=256, msg='Path %s is a directory !' % path)
+        module.fail_json(rc=256, msg='Path %s is a directory!' % path)
 
     if params['state'] == 'present':
         if backrefs and regexp is None:

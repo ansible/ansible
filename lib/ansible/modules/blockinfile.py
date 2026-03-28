@@ -267,13 +267,13 @@ def main():
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
-                         msg='Path %s is a directory !' % path)
+                         msg='Path %s is a directory!' % path)
 
     path_exists = os.path.exists(path)
     if not path_exists:
         if not module.boolean(params['create']):
             module.fail_json(rc=257,
-                             msg='Path %s does not exist !' % path)
+                             msg='Path %s does not exist!' % path)
         destpath = os.path.dirname(path)
         if destpath and not os.path.exists(destpath) and not module.check_mode:
             try:

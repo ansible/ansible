@@ -333,7 +333,7 @@ class ConfigCLI(CLI):
                 continue
 
             if not opt.get('description'):
-                # its a plugin
+                # it's a plugin
                 new_sections = self._get_settings_ini(opt, seen)
                 for s in new_sections:
                     if s in sections:

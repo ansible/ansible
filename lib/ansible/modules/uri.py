@@ -639,7 +639,7 @@ def main():
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
     if body_format == 'json':
-        # Encode the body unless its a string, then assume it is pre-formatted JSON
+        # Encode the body unless it's a string, then assume it is pre-formatted JSON
         if not isinstance(body, str):
             body = json.dumps(body)
         if 'content-type' not in [header.lower() for header in dict_headers]:

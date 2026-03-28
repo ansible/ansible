@@ -378,7 +378,7 @@ def main():
         if local_mods and force:
             svn.revert()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
+        module.fail_json(msg="ERROR: %s folder already exists, but it's not a subversion repository." % (dest,))
 
     if export:
         module.exit_json(changed=True)
