@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible_delegated_host variable added to reflect currently delegated_to host's functional inventory_hostname
