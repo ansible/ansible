@@ -1,0 +1,34 @@
+- name: check for skipped keys
+  block:
+    - name: skip me
+      debug:
+      when: false
+      register: skipped
+
+    - name: check for keys
+      assert:
+        that:
+          - ((skipped.keys() | intersect(['skip_reason', 'skipped_reason'])) | length) == 2
+    
+    - name: check for keys
+      debug:
+        msg: '{{ skipped[item] }}'
+      loop: ['skip_reason', 'skipped_reason']
+
+    - name: skip me2
+      return_skipkey:
+      register: skip_key
+
+    - name: check for keys
+      assert:
+        that:
+          - ((skipped.keys() | intersect(['skip_reason', 'skipped_reason'])) | length) == 2
+
+    - name: skip me3
+      return_skipkey:
+      register: skipped_key
+
+    - name: check for keys
+      assert:
+        that:
+          - ((skipped.keys() | intersect(['skip_reason', 'skipped_reason'])) | length) == 2

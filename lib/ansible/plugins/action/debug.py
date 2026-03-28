@@ -83,7 +83,7 @@ class ActionModule(ActionBase):
             replacing_behavior.emit_warnings()
 
         else:
-            result['skipped_reason'] = "Verbosity threshold not met."
+            result['skip_reason'] = "Verbosity threshold not met."
             result['skipped'] = True
 
         result['failed'] = False

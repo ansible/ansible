@@ -53,6 +53,7 @@ skipping: [testhost] =>
     changed: false
     false_condition: false
     skip_reason: Conditional result was False
+    skipped_reason: Conditional result was False
 
 TASK [Task with var in name (foo bar)] *****************************************
 changed: [testhost] => 
@@ -215,11 +216,11 @@ ok: [testhost] =>
 
 TASK [debug] *******************************************************************
 skipping: [testhost] => 
-    skipped_reason: No items in the list
+    {}
 
 TASK [debug] *******************************************************************
 skipping: [testhost] => 
-    skipped_reason: No items in the list
+    {}
 
 TASK [debug] *******************************************************************
 skipping: [testhost] => (item=1)  => 

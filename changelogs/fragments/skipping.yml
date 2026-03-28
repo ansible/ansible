@@ -1,0 +1,6 @@
+bugfixes:
+  - For a skipped task, the results will now contain both ``skip_reason`` and ``skipped_reason`` for all cases of skipping a task. 
+    Until now it used one or the other depending on the situation, this will ensure consistent returns from now on.
+
+deprecated_features:  
+  - The ``skipped_reason`` present in the results from a skipped task will be removed, use ``skip_reason`` instead.

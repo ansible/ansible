@@ -10,10 +10,11 @@ import functools
 import typing as t
 
 from ansible import constants
-from ansible.utils import vars as _vars
-from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
-from ansible.module_utils._internal import _messages
 from ansible._internal import _collection_proxy
+from ansible.module_utils._internal import _messages, _deprecator
+from ansible.module_utils._internal._datatag import _tags
+from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
+from ansible.utils import vars as _vars
 
 if t.TYPE_CHECKING:
     from ansible.inventory.host import Host
@@ -29,6 +30,13 @@ CLEAN_EXCEPTIONS = (
     '_ansible_item_label',  # to know actual 'item' variable
     '_ansible_no_log',  # jic we didn't clean up well enough, DON'T LOG
     '_ansible_verbose_override',  # controls display of ansible_facts, gathering would be very noise with -v otherwise
+)
+
+_DEPRECATE_SKIPPED_REASON = _tags.Deprecated(
+    msg='skipped_reason` is deprecated due to duplication.',
+    version='2.25',
+    deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
+    help_text='Use `skip_reason` instead.',
 )
 
 
@@ -55,6 +63,12 @@ class _BaseTaskResult:
         self.__task = task
         self._return_data = return_data  # FIXME: this should be immutable, but strategy result processing mutates it in some corner cases
         self.__task_fields = task_fields
+
+        # core now sends both for now, deprecate access to skipped_reason
+        skipped = return_data.get('skipped_reason', return_data.get('skip_reason', None))
+        if skipped is not None:
+            return_data['skip_reason'] = skipped
+            return_data['skipped_reason'] = _DEPRECATE_SKIPPED_REASON.tag(skipped)
 
     @property
     def host(self) -> Host:

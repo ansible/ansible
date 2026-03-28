@@ -107,6 +107,8 @@ test/integration/targets/powershell_exec_wrapper/tasks/main.yml no-smart-quotes 
 test/integration/targets/powershell_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/powershell_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
+test/integration/targets/results/library/return_skipkey.sh shebang
+test/integration/targets/results/library/return_skippedkey.sh shebang
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-unwanted-characters
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-unwanted-characters
