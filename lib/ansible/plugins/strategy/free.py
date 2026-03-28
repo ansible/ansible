@@ -33,6 +33,7 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.executor.play_iterator import IteratingStates
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
@@ -253,9 +254,29 @@ class StrategyModule(StrategyBase):
                         for r in included_file._results:
                             r._return_data['failed'] = True
                             r._return_data['reason'] = str(ex)
-                            self._tqm._stats.increment('failures', r.host.name)
+                            if r.host not in failed_includes_hosts:
+                                state_when_failed = iterator.get_state_for_host(r.host.name)
+                                iterator.mark_host_failed(r.host)
+
+                                state, dummy = iterator.get_next_task_for_host(r.host, peek=True)
+                                if iterator.is_failed(r.host) and state and state.run_state == IteratingStates.COMPLETE:
+                                    self._tqm._failed_hosts[r.host.name] = True
+
+                                if iterator.is_any_block_rescuing(state_when_failed):
+                                    self._tqm._stats.increment('rescued', r.host.name)
+                                    iterator._play._removed_hosts.remove(r.host.name)
+                                    self._variable_manager.set_nonpersistent_facts(
+                                        r.host.name,
+                                        dict(
+                                            ansible_failed_task=r.task.dump_attrs(),
+                                            ansible_failed_result=r._return_data,
+                                        ),
+                                    )
+                                else:
+                                    self._tqm._stats.increment('failures', r.host.name)
+
+                                failed_includes_hosts.add(r.host)
                             self._tqm.send_callback('v2_runner_on_failed', r)
-                            failed_includes_hosts.add(r.host)
                         continue
                     else:
                         # since we skip incrementing the stats when the task result is
@@ -281,10 +302,6 @@ class StrategyModule(StrategyBase):
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
-
-                for host in failed_includes_hosts:
-                    self._tqm._failed_hosts[host.name] = True
-                    iterator.mark_host_failed(host)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
                 for host in hosts_left:

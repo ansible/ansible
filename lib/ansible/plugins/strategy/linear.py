@@ -39,7 +39,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.inventory.host import Host
 from ansible.playbook.task import Task
-from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.playbook.play_context import PlayContext
 from ansible.executor import task_result as _task_result
 
@@ -288,19 +288,35 @@ class StrategyModule(StrategyBase):
                             for r in included_file._results:
                                 r._return_data['failed'] = True
                                 r._return_data['reason'] = str(ex)
-                                self._tqm._stats.increment('failures', r.host.name)
+                                if r.host not in failed_includes_hosts:
+                                    state_when_failed = iterator.get_state_for_host(r.host.name)
+                                    iterator.mark_host_failed(r.host)
+
+                                    state, dummy = iterator.get_next_task_for_host(r.host, peek=True)
+                                    if iterator.is_failed(r.host) and state and state.run_state == IteratingStates.COMPLETE:
+                                        self._tqm._failed_hosts[r.host.name] = True
+
+                                    if iterator.is_any_block_rescuing(state_when_failed):
+                                        self._tqm._stats.increment('rescued', r.host.name)
+                                        iterator._play._removed_hosts.remove(r.host.name)
+                                        self._variable_manager.set_nonpersistent_facts(
+                                            r.host.name,
+                                            dict(
+                                                ansible_failed_task=r.task.dump_attrs(),
+                                                ansible_failed_result=r._return_data,
+                                            ),
+                                        )
+                                    else:
+                                        self._tqm._stats.increment('failures', r.host.name)
+
+                                    failed_includes_hosts.add(r.host)
                                 self._tqm.send_callback('v2_runner_on_failed', r)
-                                failed_includes_hosts.add(r.host)
                         else:
                             # since we skip incrementing the stats when the task result is
                             # first processed, we do so now for each host in the list
                             for host in included_file._hosts:
                                 self._tqm._stats.increment('ok', host.name)
                             self._tqm.send_callback('v2_playbook_on_include', included_file)
-
-                    for host in failed_includes_hosts:
-                        self._tqm._failed_hosts[host.name] = True
-                        iterator.mark_host_failed(host)
 
                     # finally go through all of the hosts and append the
                     # accumulated blocks to their list of tasks

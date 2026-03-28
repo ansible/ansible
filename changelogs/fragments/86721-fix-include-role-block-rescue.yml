@@ -1,0 +1,2 @@
+bugfixes:
+  - include_role - Properly handle block/rescue when ``include_role`` references a nonexistent role inside a ``block/rescue``. Previously the host was unconditionally marked as failed, rescue stats were not incremented, and subsequent plays would skip the host. The error handling now mirrors normal task failure behavior by transitioning to the rescue section and correctly tracking rescued stats (https://github.com/ansible/ansible/issues/86721).
