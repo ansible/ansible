@@ -26,10 +26,10 @@ class ACMEProvider(CloudProvider):
         super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        if os.environ.get('ANSIBLE_ACME_CONTAINER'):
-            self.image = os.environ.get('ANSIBLE_ACME_CONTAINER')
-        else:
-            self.image = 'quay.io/ansible/acme-test-container:2.4.0'
+        self.image = os.getenv(
+            'ANSIBLE_ACME_CONTAINER',
+            'quay.io/ansible/acme-test-container:2.4.1',
+        )
 
         self.uses_docker = True
 
