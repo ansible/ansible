@@ -613,7 +613,6 @@ _dataclass_validation.inject_post_init_validation(AddHost, allow_subclasses=True
 @dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
 class AddGroup:
     group_name: str
-    group_vars: dict[str, object] | None = None
     parent_group_names: list[str]
 
     def __post_init__(self): ...

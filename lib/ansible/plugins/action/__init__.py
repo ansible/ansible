@@ -214,6 +214,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if force or not self._task.async_val:
             self._remove_tmp_path(self._connection._shell.tmpdir)
 
+    @_internal.experimental
     def add_host(
         self,
         host_name: str,
@@ -221,27 +222,32 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         host_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
     ) -> bool:
-        """Add the given host to inventory."""
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Add the given host to inventory.
+        """
         return _task.TaskContext.current().inventory_rpc_client.add_host(_task.AddHost(
             host_name=host_name,
             host_vars=host_vars,
             parent_group_names=parent_group_names,
         ))
 
+    @_internal.experimental
     def add_group(
         self,
         group_name: str,
         *,
-        group_vars: dict[str, object] | None = None,
         parent_group_names: list[str] | None = None,
     ) -> bool:
-        """Add the given group to inventory."""
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Add the given group to inventory.
+        """
         task_ctx = _task.TaskContext.current()
         host_name = task_ctx.host_name
 
         return task_ctx.inventory_rpc_client.add_group(host_name, _task.AddGroup(
             group_name=group_name,
-            group_vars=group_vars,
             parent_group_names=parent_group_names,
         ))
 
