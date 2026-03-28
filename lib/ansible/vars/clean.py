@@ -155,13 +155,17 @@ def clean_facts(facts):
     return strip_internal_keys(data)
 
 
+def namespace_fact_name(fact_name):
+    """ return fact name w/o an ansible_ prefix """
+    if fact_name.startswith('ansible_') and fact_name not in ('ansible_local',):
+        return fact_name[8:]
+    return fact_name
+
+
 def namespace_facts(facts):
     """ return all facts inside 'ansible_facts' w/o an ansible_ prefix """
     deprefixed = {}
     for k in facts:
-        if k.startswith('ansible_') and k not in ('ansible_local',):
-            deprefixed[k[8:]] = module_response_deepcopy(facts[k])
-        else:
-            deprefixed[k] = module_response_deepcopy(facts[k])
+        deprefixed[namespace_fact_name(k)] = module_response_deepcopy(facts[k])
 
     return {'ansible_facts': deprefixed}

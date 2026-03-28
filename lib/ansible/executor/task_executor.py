@@ -682,7 +682,7 @@ class TaskExecutor:
                     vars_copy['ansible_facts'] = combine_vars(vars_copy.get('ansible_facts', {}), namespace_facts(af))
                     if _INJECT_FACTS:
                         if _INJECT_FACTS_ORIGIN == 'default':
-                            cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                            cleaned_toplevel = {k: _deprecate_top_level_fact(v, k) for k, v in clean_facts(af).items()}
                         else:
                             cleaned_toplevel = clean_facts(af)
                         vars_copy.update(cleaned_toplevel)
@@ -782,7 +782,7 @@ class TaskExecutor:
                     if _INJECT_FACTS_ORIGIN == 'default':
                         # This happens x2 due to loops and being able to use values in subsequent iterations
                         # these copies are later discarded in favor of 'total/final' one on loop end.
-                        cleaned_toplevel = {k: _deprecate_top_level_fact(v) for k, v in clean_facts(af).items()}
+                        cleaned_toplevel = {k: _deprecate_top_level_fact(v, k) for k, v in clean_facts(af).items()}
                     else:
                         cleaned_toplevel = clean_facts(af)
                     variables.update(cleaned_toplevel)
