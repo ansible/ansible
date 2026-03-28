@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import random
 
 from ....config import (
     IntegrationConfig,
@@ -10,6 +11,7 @@ from ....config import (
 
 from ....containers import (
     run_support_container,
+    wait_for_file,
 )
 
 from . import (
@@ -63,6 +65,18 @@ class ACMEProvider(CloudProvider):
         if not descriptor:
             return
 
+        if not self.args.explain:
+            def check(content: str) -> bool:
+                return content.startswith("-----BEGIN CERTIFICATE-----")
+
+            # It would be better to query the controller's /root-certificate-for-acme-endpoint endpoint,
+            # but that's more expensive
+            root_ca = wait_for_file(self.args, descriptor.name, '/pebble-src/test/certs/pebble.minica.pem', sleep=1, tries=30, check=check)
+
+            self._set_cloud_config('acme_endpoint_root_ca_certificate_content', root_ca)
+            rnd = random.randbytes(6).hex()
+            self._set_cloud_config('acme_endpoint_root_ca_certificate_filename', f'/tmp/acme-simulator-ca-cert-{rnd}.pem')
+
         self._set_cloud_config('acme_host', hostname)
 
     def _setup_static(self) -> None:
@@ -74,8 +88,16 @@ class ACMEEnvironment(CloudEnvironment):
 
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
+        ca_path_content = self._get_cloud_config('acme_endpoint_root_ca_certificate_content')
+        ca_path = self._get_cloud_config('acme_endpoint_root_ca_certificate_filename')
+        acme_host = self._get_cloud_config('acme_host')
+        acme_directory = f'https://{acme_host}:14000/dir'
+
         ansible_vars = dict(
-            acme_host=self._get_cloud_config('acme_host'),
+            acme_endpoint_root_ca_certificate_content=ca_path_content,
+            acme_endpoint_root_ca_certificate_filename=ca_path,
+            acme_host=acme_host,
+            acme_directory=acme_directory,
         )
 
         return CloudEnvironmentConfig(
