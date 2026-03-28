@@ -102,4 +102,11 @@ class ACMEEnvironment(CloudEnvironment):
 
         return CloudEnvironmentConfig(
             ansible_vars=ansible_vars,
+            module_defaults={
+                'group/acme': {
+                    'ca_path': ca_path,
+                    'acme_version': 2,
+                    'acme_directory': acme_directory,
+                },
+            },
         )
