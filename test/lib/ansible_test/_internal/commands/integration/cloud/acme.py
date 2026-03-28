@@ -49,18 +49,21 @@ class ACMEProvider(CloudProvider):
             14000,  # Pebble ACME CA
         ]
 
+        hostname = 'pebble'
+
         descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
             'acme-simulator',
             ports,
+            aliases=[hostname],
         )
 
         if not descriptor:
             return
 
-        self._set_cloud_config('acme_host', descriptor.name)
+        self._set_cloud_config('acme_host', hostname)
 
     def _setup_static(self) -> None:
         raise NotImplementedError()
