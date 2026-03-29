@@ -244,7 +244,7 @@ class VaultCLI(CLI):
 
         loader.set_vault_secrets(vault_secrets)
 
-        # FIXME: do we need to create VaultEditor here? it's not reused
+        # FIXME: do we need to create VaultEditor here? its not reused
         vault = VaultLib(vault_secrets)
         self.editor = VaultEditor(vault)
 

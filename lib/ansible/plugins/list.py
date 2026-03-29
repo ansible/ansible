@@ -86,7 +86,7 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0, docs=False):
                     full_path = os.path.join(b_path, plugin_file)
 
                     if os.path.isdir(full_path):
-                        # it's a dir, recurse
+                        # its a dir, recurse
                         if collection in C.SYNTHETIC_COLLECTIONS:
                             if not os.path.exists(os.path.join(full_path, b'__init__.py')):
                                 # dont recurse for synthetic unless init.py present
