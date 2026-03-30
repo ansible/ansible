@@ -8,9 +8,9 @@ import re
 import sys
 import typing as t
 
+import importlib.util
 from importlib import import_module
 
-from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (
     _AnsibleCollectionFinder, _AnsibleCollectionLoader, _AnsibleCollectionNSPkgLoader, _AnsibleCollectionPkgLoader,
@@ -28,35 +28,6 @@ def teardown(*args, **kwargs):
     reset_collections_loader_state()
 
 # BEGIN STANDALONE TESTS - these exercise behaviors of the individual components without the import machinery
-
-
-@pytest.mark.filterwarnings(
-    'ignore:'
-    r'find_module\(\) is deprecated and slated for removal in Python 3\.12; use find_spec\(\) instead'
-    ':DeprecationWarning',
-    'ignore:'
-    r'FileFinder\.find_loader\(\) is deprecated and slated for removal in Python 3\.12; use find_spec\(\) instead'
-    ':DeprecationWarning',
-)
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason='Testing Python 2 codepath (find_module) on Python 3, <= 3.11')
-def test_find_module_py3_lt_312():
-    dir_to_a_file = os.path.dirname(ping_module.__file__)
-    path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
-
-    # setuptools may fall back to find_module on Python 3 if find_spec returns None
-    # see https://github.com/pypa/setuptools/pull/2918
-    assert path_hook_finder.find_spec('missing') is None
-    assert path_hook_finder.find_module('missing') is None
-
-
-@pytest.mark.skipif(sys.version_info < (3, 12), reason='Testing Python 2 codepath (find_module) on Python >= 3.12')
-def test_find_module_py3_gt_311():
-    dir_to_a_file = os.path.dirname(ping_module.__file__)
-    path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
-
-    # setuptools may fall back to find_module on Python 3 if find_spec returns None
-    # see https://github.com/pypa/setuptools/pull/2918
-    assert path_hook_finder.find_spec('missing') is None
 
 
 def test_finder_setup():
@@ -86,36 +57,36 @@ def test_finder_setup():
 
 def test_finder_not_interested():
     f = get_default_finder()
-    assert f.find_module('nothanks') is None
-    assert f.find_module('nothanks.sub', path=['/bogus/dir']) is None
+    assert f.find_spec('nothanks', path=None) is None
+    assert f.find_spec('nothanks.sub', path=['/bogus/dir']) is None
 
 
 def test_finder_ns():
     # ensure we can still load ansible_collections and ansible_collections.ansible when they don't exist on disk
     f = _AnsibleCollectionFinder(paths=['/bogus/bogus'])
-    loader = f.find_module('ansible_collections')
-    assert isinstance(loader, _AnsibleCollectionRootPkgLoader)
+    spec = f.find_spec('ansible_collections', path=None)
+    assert isinstance(spec.loader, _AnsibleCollectionRootPkgLoader)
 
-    loader = f.find_module('ansible_collections.ansible', path=['/bogus/bogus'])
-    assert isinstance(loader, _AnsibleCollectionNSPkgLoader)
+    spec = f.find_spec('ansible_collections.ansible', path=['/bogus/bogus'])
+    assert isinstance(spec.loader, _AnsibleCollectionNSPkgLoader)
 
     f = get_default_finder()
-    loader = f.find_module('ansible_collections')
-    assert isinstance(loader, _AnsibleCollectionRootPkgLoader)
+    spec = f.find_spec('ansible_collections', path=None)
+    assert isinstance(spec.loader, _AnsibleCollectionRootPkgLoader)
 
     # path is not allowed for top-level
     with pytest.raises(ValueError):
-        f.find_module('ansible_collections', path=['whatever'])
+        f.find_spec('ansible_collections', path=['whatever'])
 
     # path is required for subpackages
     with pytest.raises(ValueError):
-        f.find_module('ansible_collections.whatever', path=None)
+        f.find_spec('ansible_collections.whatever', path=None)
 
     paths = [os.path.join(p, 'ansible_collections/nonexistns') for p in default_test_collection_paths]
 
     # test missing
-    loader = f.find_module('ansible_collections.nonexistns', paths)
-    assert loader is None
+    spec = f.find_spec('ansible_collections.nonexistns', paths)
+    assert spec is None
 
 
 # keep these up top to make sure the loader install/remove are working, since we rely on them heavily in the tests
@@ -171,8 +142,8 @@ def test_finder_coll():
         parent_pkg = name.rpartition('.')[0]
         for paths in test_paths:
             paths = [os.path.join(p, parent_pkg.replace('.', '/')) for p in paths]
-            loader = f.find_module(name, path=paths)
-            assert isinstance(loader, _AnsibleCollectionPkgLoader)
+            spec = f.find_spec(name, path=paths)
+            assert isinstance(spec.loader, _AnsibleCollectionPkgLoader)
 
 
 def test_root_loader_not_interested():
@@ -190,13 +161,15 @@ def test_root_loader():
         sys.modules.pop(name, None)
         loader = _AnsibleCollectionRootPkgLoader(name, paths)
         assert repr(loader).startswith('_AnsibleCollectionRootPkgLoader(path=')
-        module = loader.load_module(name)
+        spec = importlib.util.spec_from_loader(name, loader)
+        spec.submodule_search_locations = loader._subpackage_search_paths
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
         assert module.__name__ == name
         assert module.__path__ == [p for p in extend_paths(paths, name) if os.path.isdir(p)]
         # even if the dir exists somewhere, this loader doesn't support get_data, so make __file__ a non-file
         assert module.__file__ == '<ansible_synthetic_collection_package>'
         assert module.__package__ == name
-        assert sys.modules.get(name) == module
 
 
 def test_nspkg_loader_not_interested():
@@ -217,13 +190,15 @@ def test_nspkg_loader_load_module():
         sys.modules.pop(name, None)
         loader = _AnsibleCollectionNSPkgLoader(name, path_list=paths)
         assert repr(loader).startswith('_AnsibleCollectionNSPkgLoader(path=')
-        module = loader.load_module(name)
+        spec = importlib.util.spec_from_loader(name, loader)
+        spec.submodule_search_locations = loader._subpackage_search_paths
+        module = importlib.util.module_from_spec(spec)
+        loader.exec_module(module)
         assert module.__name__ == name
         assert isinstance(module.__loader__, _AnsibleCollectionNSPkgLoader)
         assert module.__path__ == existing_child_paths
         assert module.__package__ == name
         assert module.__file__ == '<ansible_synthetic_collection_package>'
-        assert sys.modules.get(name) == module
 
 
 def test_collpkg_loader_not_interested():
@@ -246,7 +221,12 @@ def test_collpkg_loader_load_module():
             sys.modules.pop(name, None)
             loader = _AnsibleCollectionPkgLoader(name, path_list=paths)
             assert repr(loader).startswith('_AnsibleCollectionPkgLoader(path=')
-            module = loader.load_module(name)
+            spec = importlib.util.spec_from_loader(name, loader)
+            # Finder normally sets this, but we're bypassing it in this test
+            spec.submodule_search_locations = loader._subpackage_search_paths
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            loader.exec_module(module)
             assert module.__name__ == name
             assert isinstance(module.__loader__, _AnsibleCollectionPkgLoader)
             if is_builtin:
@@ -272,7 +252,11 @@ def test_collpkg_loader_load_module():
 
             with patch.object(_collection_finder, '_meta_yml_to_dict', side_effect=Exception('bang')):
                 with pytest.raises(Exception) as ex:
-                    _AnsibleCollectionPkgLoader(name, path_list=paths).load_module(name)
+                    loader = _AnsibleCollectionPkgLoader(name, path_list=paths)
+                    spec = importlib.util.spec_from_loader(name, loader)
+                    spec.submodule_search_locations = loader._subpackage_search_paths
+                    module = importlib.util.module_from_spec(spec)
+                    loader.exec_module(module)
 
                 assert 'error parsing collection metadata' in str(ex.value)
 
@@ -305,12 +289,12 @@ def test_path_hook_setup():
 
 
 def test_path_hook_importerror():
-    # ensure that AnsiblePathHookFinder.find_module swallows ImportError from path hook delegation on Py3, eg if the delegated
+    # ensure that AnsiblePathHookFinder.find_spec swallows ImportError from path hook delegation on Py3, eg if the delegated
     # path hook gets passed a file on sys.path (python36.zip)
     reset_collections_loader_state()
     path_to_a_file = os.path.join(default_test_collection_paths[0], 'ansible_collections/testns/testcoll/plugins/action/my_action.py')
     # it's a bug if the following pops an ImportError...
-    assert _AnsiblePathHookFinder(_AnsibleCollectionFinder(), path_to_a_file).find_module('foo.bar.my_action') is None
+    assert _AnsiblePathHookFinder(_AnsibleCollectionFinder(), path_to_a_file).find_spec('foo.bar.my_action') is None
 
 
 def test_new_or_existing_module():

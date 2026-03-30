@@ -51,14 +51,8 @@ def main():
             return sys.modules[name]
 
     from io import BytesIO, TextIOWrapper
-
-    try:
-        from importlib.util import spec_from_loader, module_from_spec
-        from importlib.machinery import SourceFileLoader, ModuleSpec  # pylint: disable=unused-import
-    except ImportError:
-        has_py3_loader = False
-    else:
-        has_py3_loader = True
+    from importlib.util import spec_from_loader, module_from_spec
+    from importlib.machinery import SourceFileLoader, ModuleSpec
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
@@ -136,6 +130,16 @@ def main():
         ansible_module.__path__ = ansible.__path__
         ansible_module.__package__ = ansible.__package__
 
+        # Create a proper __spec__ for the synthetic module to support modern import machinery
+        # Use the original loader so resource access (files()) works correctly
+        ansible_module.__spec__ = ModuleSpec(
+            name=ansible.__name__,
+            loader=ansible.__spec__.loader if ansible.__spec__ else None,
+            origin=ansible.__file__,
+            is_package=True
+        )
+        ansible_module.__spec__.submodule_search_locations = ansible.__path__
+
         sys.modules[ansible.__name__] = ansible_module
 
     class ImporterAnsibleModuleException(Exception):
@@ -161,10 +165,8 @@ def main():
             """Return the spec from the loader or None"""
             loader = self._get_loader(fullname, path=path)
             if loader is not None:
-                if has_py3_loader:
-                    # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loader
-                    return spec_from_loader(fullname, loader)  # type: ignore[arg-type]
-                raise ImportError("Failed to import '%s' due to a bug in ansible-test. Check importlib imports for typos." % fullname)
+                # loader is expected to be Optional[importlib.abc.Loader], but RestrictedModuleLoader does not inherit from importlib.abc.Loader
+                return spec_from_loader(fullname, loader)  # type: ignore[arg-type]
             return None
 
         def find_module(self, fullname, path=None):
@@ -203,7 +205,7 @@ def main():
                 if is_name_in_namepace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
-                if collection_loader.find_module(fullname, path):
+                if collection_loader.find_spec(fullname, path):
                     return self  # restrict access to collection files that exist
 
                 return None  # collection file does not exist, do not restrict access
