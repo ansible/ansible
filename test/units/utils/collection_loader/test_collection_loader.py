@@ -889,6 +889,29 @@ def test_importlib_resources_module():
     assert module_utils == my_util
 
 
+def test_importlib_resources_builtin_redirect():
+    """Test that files() works correctly with ansible.builtin redirects."""
+    from importlib.resources import files
+    from pathlib import Path
+
+    # Initialize the collection loader with builtin support
+    from ansible.plugins.loader import init_plugin_loader
+    init_plugin_loader()
+
+    # Test that builtin redirects work with files()
+    builtin_modules = files('ansible_collections.ansible.builtin.plugins.modules')
+    real_modules = files('ansible.modules')
+    assert builtin_modules == real_modules
+
+    builtin_module_utils = files('ansible_collections.ansible.builtin.plugins.module_utils')
+    real_module_utils = files('ansible.module_utils')
+    assert builtin_module_utils == real_module_utils
+
+    builtin_plugins = files('ansible_collections.ansible.builtin.plugins')
+    real_plugins = files('ansible.plugins')
+    assert builtin_plugins == real_plugins
+
+
 # BEGIN TEST SUPPORT
 
 default_test_collection_paths = [

@@ -169,7 +169,11 @@ class _AnsibleTraversableResources(TraversableResources):
         is_ns = parts[0] == 'ansible_collections' and len(parts) < 3
 
         if isinstance(package, str):
-            if is_ns:
+            # Check if the module is already loaded - if so, use it directly
+            # This handles redirected modules correctly
+            if package in sys.modules:
+                package = sys.modules[package]
+            elif is_ns:
                 # Don't use ``spec_from_loader`` here, because that will point
                 # to exactly 1 location for a namespace. Use ``find_spec``
                 # to get a list of all locations for the namespace
@@ -177,12 +181,20 @@ class _AnsibleTraversableResources(TraversableResources):
                 if package is None:
                     raise ImportError(f'No module named {self._package!r}')
             else:
-                package = spec_from_loader(package, self._loader)
+                # Use find_spec to get the proper spec with origin set
+                package = find_spec(package)
+                if package is None:
+                    raise ImportError(f'No module named {self._package!r}')
         elif not isinstance(package, ModuleType):
             raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
 
         if is_ns:
-            return _AnsibleNSTraversable(*package.submodule_search_locations)
+            # Handle both spec objects (which have submodule_search_locations)
+            # and module objects (which have __path__)
+            if isinstance(package, ModuleType):
+                return _AnsibleNSTraversable(*package.__path__)
+            else:
+                return _AnsibleNSTraversable(*package.submodule_search_locations)
         # In Python 3.12+, files() returns the parent directory for both packages
         # and modules, so a module and its containing package return the same path
         return pathlib.Path(self._get_path(package)).parent
