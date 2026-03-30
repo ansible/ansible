@@ -868,6 +868,27 @@ def test_importlib_resources():
     assert next(module_utils.glob('__init__.py')) == nestcoll_mu_init
 
 
+def test_importlib_resources_module():
+    """Test Python 3.12+ behavior where files() returns parent for both packages and modules."""
+    from importlib.resources import files
+    from pathlib import Path
+
+    f = get_default_finder()
+    reset_collections_loader_state(f)
+
+    # Test that calling files() on a module returns the same path as calling it on the package
+    module_utils = files('ansible_collections.testns.testcoll.plugins.module_utils')
+    my_util = files('ansible_collections.testns.testcoll.plugins.module_utils.my_util')
+
+    assert isinstance(module_utils, Path)
+    assert isinstance(my_util, Path)
+
+    assert module_utils.is_dir()
+    assert my_util.is_dir()
+    # This is the key assertion: module and package should return the same path
+    assert module_utils == my_util
+
+
 # BEGIN TEST SUPPORT
 
 default_test_collection_paths = [

@@ -163,13 +163,6 @@ class _AnsibleTraversableResources(TraversableResources):
         module_filename = os.path.basename(origin)
         return module_filename in {'__synthetic__', '__init__.py'}
 
-    def _ensure_package(self, package):
-        if self._is_ansible_ns_package(package):
-            # Short circuit our loaders
-            return
-        if self._get_package(package) != package.__name__:
-            raise TypeError('%r is not a package' % package.__name__)
-
     def files(self):
         package = self._package
         parts = package.split('.')
@@ -188,9 +181,10 @@ class _AnsibleTraversableResources(TraversableResources):
         elif not isinstance(package, ModuleType):
             raise TypeError('Expected string or module, got %r' % package.__class__.__name__)
 
-        self._ensure_package(package)
         if is_ns:
             return _AnsibleNSTraversable(*package.submodule_search_locations)
+        # In Python 3.12+, files() returns the parent directory for both packages
+        # and modules, so a module and its containing package return the same path
         return pathlib.Path(self._get_path(package)).parent
 
 
