@@ -20,6 +20,7 @@ import yaml
 
 from collections import defaultdict, namedtuple
 from importlib import import_module
+from importlib.util import find_spec
 from yaml.parser import ParserError
 
 from ansible import __version__ as ansible_version
@@ -681,14 +682,18 @@ class PluginLoader:
             n_resource += extension
 
         pkg = sys.modules.get(acr.n_python_package_name)
-        if not pkg:
-            # FIXME: there must be cheaper/safer way to do this
+        if pkg:
+            pkg_path = os.path.dirname(pkg.__file__)
+        else:
+            # Use find_spec to locate package without executing it
             try:
-                pkg = import_module(acr.n_python_package_name)
+                spec = find_spec(acr.n_python_package_name)
             except ImportError:
+                # find_spec can raise if traversing through a non-existent intermediate package
+                spec = None
+            if not spec or not spec.origin:
                 return plugin_load_context.nope('Python package {0} not found'.format(acr.n_python_package_name))
-
-        pkg_path = os.path.dirname(pkg.__file__)
+            pkg_path = os.path.dirname(spec.origin)
 
         n_resource_path = os.path.join(pkg_path, n_resource)
 

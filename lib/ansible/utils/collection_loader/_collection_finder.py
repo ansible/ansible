@@ -445,8 +445,6 @@ class _AnsiblePathHookFinder:
 
 
 class _AnsibleCollectionPkgLoaderBase:
-    _allows_package_code = False
-
     def __init__(self, fullname, path_list=None):
         self._fullname = fullname
         self._redirect_module = None
@@ -689,6 +687,10 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
             # only search within the first collection we found
             self._subpackage_search_paths = [self._subpackage_search_paths[0]]
 
+        # Force collection root packages to always be synthetic (no __init__.py execution)
+        # This prevents arbitrary code execution at the collection root level
+        self._source_code_path = None
+
     def _load_module(self, module):
         if not _meta_yml_to_dict:
             raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
@@ -752,7 +754,6 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
     # HACK: stash this in a better place
     _redirected_package_map = {}  # type: dict[str, str]
-    _allows_package_code = True
 
     def _validate_args(self):
         super(_AnsibleCollectionLoader, self)._validate_args()
@@ -811,7 +812,13 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
         found_path, has_code, package_path = self._module_file_from_path(self._package_to_load, candidate_paths[0])
 
         # still here? we found something to load...
-        if has_code:
+        # Detect if we're loading a module package (ansible_collections.*.*.plugins.modules.*)
+        # Modules are not allowed to have shared code in __init__.py
+        is_module = self._split_name[3:5] == ['plugins', 'modules']
+
+        # Only allow code execution for leaf modules or non-module packages
+        # For modules specifically, force packages to be synthetic (no __init__.py execution)
+        if has_code and not (package_path and is_module):
             self._source_code_path = found_path
 
         if package_path:

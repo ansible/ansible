@@ -10,6 +10,7 @@ import typing as t
 
 import importlib.util
 from importlib import import_module
+from importlib.util import find_spec
 
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (
@@ -618,6 +619,21 @@ def test_empty_vs_no_code():
     # ensure empty package inits do have a code object
     assert module_utils.__loader__.get_source(module_utils.__name__) == b''
     assert module_utils.__loader__.get_code(module_utils.__name__) is not None
+
+
+def test_module_packages_no_exec():
+    """Test that module packages don't execute __init__.py when using find_spec."""
+    finder = get_default_finder()
+    reset_collections_loader_state(finder)
+
+    # This should not execute the modules/__init__.py which has raise Exception('this should never run')
+    spec = find_spec('ansible_collections.testns.testcoll.plugins.modules')
+    assert spec is not None
+    assert spec.loader is not None
+
+    # Verify the package is synthetic (no source code)
+    assert spec.loader.get_source('ansible_collections.testns.testcoll.plugins.modules') is None
+    assert spec.loader.get_code('ansible_collections.testns.testcoll.plugins.modules') is None
 
 
 def test_finder_playbook_paths():
