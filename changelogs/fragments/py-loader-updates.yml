@@ -1,0 +1,4 @@
+minor_changes:
+- collection finder - Remove exec side effects from our loader implementation
+- collection finder - Align ``_AnsibleTraversableResources`` with behavior changes in py3.12+ with a file/module
+- collection finder - Address ``importlib.resources`` issues with ``ansible_collections.ansible.builtin``
