@@ -21,7 +21,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.executor.task_result import _RawTaskResult
+from ansible._internal._task import HostTaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
@@ -44,7 +44,7 @@ class IncludedFile:
         self._task = task
         self._hosts: list[Host] = []
         self._is_role = is_role
-        self._results: list[_RawTaskResult] = []
+        self._results: list[HostTaskResult] = []
 
     def add_host(self, host: Host) -> None:
         if host not in self._hosts:
@@ -68,7 +68,7 @@ class IncludedFile:
 
     @staticmethod
     def process_include_results(
-        results: list[_RawTaskResult],
+        results: list[HostTaskResult],
         iterator,
         loader: DataLoader,
         variable_manager: VariableManager,
@@ -84,15 +84,16 @@ class IncludedFile:
             if original_task.action in C._ACTION_ALL_INCLUDES:
 
                 if original_task.loop:
-                    if 'results' not in res._return_data:
+                    if res.utr.loop_results is None:
                         continue
-                    include_results = res._loop_results
-                else:
-                    include_results = [res._return_data]
 
-                for include_result in include_results:
+                    include_utrs = res.utr.loop_results
+                else:
+                    include_utrs = [res.utr]
+
+                for include_utr in include_utrs:
                     # if the task result was skipped or failed, continue
-                    if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result and include_result['failed']:
+                    if include_utr.skipped or include_utr.failed:
                         continue
 
                     cache_key = (iterator._play, original_host, original_task)
@@ -101,20 +102,21 @@ class IncludedFile:
                     except KeyError:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
 
-                    include_args = include_result.pop('include_args', dict())
+                    include_args = include_utr.include_args or {}  # This shouldn't be necessary, we should always have include_args -- avoid type complaints.
                     special_vars = {}
-                    loop_var = include_result.get('ansible_loop_var', 'item')
-                    index_var = include_result.get('ansible_index_var')
-                    if loop_var in include_result:
-                        task_vars[loop_var] = special_vars[loop_var] = include_result[loop_var]
-                        task_vars['ansible_loop_var'] = special_vars['ansible_loop_var'] = loop_var
-                    if index_var and index_var in include_result:
-                        task_vars[index_var] = special_vars[index_var] = include_result[index_var]
-                        task_vars['ansible_index_var'] = special_vars['ansible_index_var'] = index_var
-                    if '_ansible_item_label' in include_result:
-                        task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_result['_ansible_item_label']
-                    if 'ansible_loop' in include_result:
-                        task_vars['ansible_loop'] = special_vars['ansible_loop'] = include_result['ansible_loop']
+
+                    # Since includes aren't run through workers, task_vars with the same internal state keys as result dicts with current item metadata
+                    # are abused to allow callback infra like _get_item_label to transparently work on both.
+                    if include_utr.loop_var is not None:
+                        task_vars[include_utr.loop_var] = special_vars[include_utr.loop_var] = include_utr.loop_item
+                        task_vars['ansible_loop_var'] = special_vars['ansible_loop_var'] = include_utr.loop_var
+                    if include_utr.loop_index_var is not None:
+                        task_vars[include_utr.loop_index_var] = special_vars[include_utr.loop_index_var] = include_utr.loop_index
+                        task_vars['ansible_index_var'] = special_vars['ansible_index_var'] = include_utr.loop_index_var
+                    if include_utr.loop_item_label is not None:
+                        task_vars['_ansible_item_label'] = special_vars['_ansible_item_label'] = include_utr.loop_item_label
+                    if include_utr.loop_extended is not None:
+                        task_vars['ansible_loop'] = special_vars['ansible_loop'] = include_utr.loop_extended
                     if original_task.no_log and '_ansible_no_log' not in include_args:
                         task_vars['_ansible_no_log'] = special_vars['_ansible_no_log'] = original_task.no_log
 
@@ -158,7 +160,7 @@ class IncludedFile:
                                     cumulative_path = os.path.join(parent_include_dir, cumulative_path)
                                 else:
                                     cumulative_path = parent_include_dir
-                                include_target = include_result['include']
+                                include_target = include_utr.include_file
                                 if original_task._role:
                                     dirname = 'handlers' if isinstance(original_task, Handler) else 'tasks'
                                     new_basedir = os.path.join(original_task._role._role_path, dirname, cumulative_path)
@@ -184,14 +186,14 @@ class IncludedFile:
 
                         if include_file is None:
                             if original_task._role:
-                                include_target = include_result['include']
+                                include_target = include_utr.include_file
                                 include_file = loader.path_dwim_relative(
                                     original_task._role._role_path,
                                     'handlers' if isinstance(original_task, Handler) else 'tasks',
                                     include_target,
                                     is_role=True)
                             else:
-                                include_file = loader.path_dwim(include_result['include'])
+                                include_file = loader.path_dwim(include_utr.include_file)
 
                         inc_file = IncludedFile(include_file, include_args, special_vars, original_task)
                     else:

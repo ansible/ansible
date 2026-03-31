@@ -1,0 +1,37 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Add a second host to check the behavior of localhost
+      add_host:
+        name: checker
+
+- hosts: localhost,checker
+  gather_facts: no
+  tasks:
+    - when: inventory_hostname == "localhost"
+      block:
+        - name: Ignore only one of two loop item failures
+          raw: exit {{ item }}
+          ignore_errors: '{{ item == 1 }}'
+          register: result
+          loop: [0, 2, 1]
+
+        - name: No host should reach this task
+          debug:
+            msg: should never reach this task
+          register: unwanted_result
+
+- hosts: checker
+  gather_facts: no
+  tasks:
+    - assert:
+        that:
+          - hostvars.localhost.result is failed
+          - hostvars.localhost.result.results | length == 3
+          - hostvars.localhost.result.results[0] is not failed
+          - hostvars.localhost.result.results[1] is failed
+          - hostvars.localhost.result.results[2] is failed
+          - hostvars.localhost.unwanted_result is not defined
+
+    - debug:
+        msg: CHECKS PASSED

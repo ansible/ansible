@@ -1,3 +1,3 @@
-nonexistent ansible_host=169.254.199.200
+nonexistent ansible_host=localhost ansible_port=9999
 bad_put_file ansible_host=localhost ansible_connection=bad_put_file
 bad_exec ansible_host=localhost ansible_connection=bad_exec

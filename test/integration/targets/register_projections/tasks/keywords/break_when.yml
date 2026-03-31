@@ -1,0 +1,38 @@
+- name: Use register projections in 'break_when' with a loop
+  debug:
+  loop: [1, 2, 3]
+  loop_control:
+    break_when: break_when_loop_rp == 2
+  register:
+    break_when_loop_rp: _task.loop_result.results | length
+    break_when_loop_rp_results: _task.loop_result.results
+    break_when_loop_rp_item: item
+
+- name: Verify results
+  assert:
+    that:
+      - break_when_loop_rp == 2
+      - break_when_loop_rp_item == 2
+      - break_when_loop_rp_results | length == 2
+
+- name: Use a 'break_when' that depends on a 'failed_when' and 'changed_when'
+  debug:
+  loop: [1, 2, 3]
+  loop_control:
+    break_when: _task.result is failed
+  failed_when: _task.result is changed
+  changed_when: break_when_failed_change_projection
+  register:
+    break_when_failed_change_projection: item == 2
+    break_when_failed_result: _task.polymorphic_result
+  ignore_errors: yes
+
+- name: Verify results
+  assert:
+    that:
+      - break_when_failed_result is failed
+      - break_when_failed_result.results | length == 2
+      - break_when_failed_result.results[0] is not failed
+      - break_when_failed_result.results[1] is failed
+      - break_when_failed_result.results[0] is not changed
+      - break_when_failed_result.results[1] is changed

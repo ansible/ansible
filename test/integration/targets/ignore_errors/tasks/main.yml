@@ -20,3 +20,6 @@
   shell: /bin/false
   register: failed
   ignore_errors: True
+
+- debug:
+    msg: '{{ failed }}'

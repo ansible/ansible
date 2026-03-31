@@ -30,9 +30,11 @@ DOCUMENTATION = """
 """
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError, AnsibleValueOmittedError
+from ansible._internal import _task
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError, AnsibleValueOmittedError, AnsibleUndefinedVariable
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
+from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible._internal._templating._engine import TemplateEngine
@@ -41,7 +43,6 @@ from ansible.inventory.host import Host
 from ansible.playbook.task import Task
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook.play_context import PlayContext
-from ansible.executor import task_result as _task_result
 
 display = Display()
 
@@ -94,7 +95,7 @@ class StrategyModule(StrategyBase):
 
         return host_tasks
 
-    def run(self, iterator, play_context: PlayContext):  # type: ignore[override]
+    def run(self, iterator: PlayIterator, play_context: PlayContext):  # type: ignore[override]
         """
         The linear strategy is simple - get the next task and queue
         it for all hosts, then wait for the queue to drain before
@@ -123,16 +124,14 @@ class StrategyModule(StrategyBase):
                 # skip control
                 skip_rest = False
                 choose_step = True
+                run_once: bool | None = None
+                any_errors_fatal: bool | None = None
 
-                # flag set if task is set to any_errors_fatal
-                any_errors_fatal = False
-
-                results: list[_task_result._RawTaskResult] = []
+                results: list[_task.HostTaskResult] = []
                 for (host, task) in host_tasks:
                     if self._tqm._terminated:
                         break
 
-                    run_once = False
                     work_to_do = True
 
                     host_name = host.get_name()
@@ -148,26 +147,29 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
+                    task_action: str | None = None
+                    action: ActionBase | None = None
+
                     try:
                         task_action = templar.template(task.action)
                     except AnsibleValueOmittedError:
                         raise AnsibleParserError("Omit is not valid for the `action` keyword.", obj=task.action) from None
-
-                    try:
-                        action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
-                    except KeyError:
-                        # we don't care here, because the action may simply not have a
-                        # corresponding action plugin
-                        action = None
+                    except AnsibleUndefinedVariable:
+                        pass  # may be loop dependent -- this prevents us from checking for 'meta' and BYPASS_HOST_LOOP
+                    else:
+                        try:
+                            action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
+                        except KeyError:
+                            # we don't care here, because the action may simply not have a
+                            # corresponding action plugin
+                            pass
 
                     if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task._get_meta() not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers', 'end_role'):
-                            run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
-                            any_errors_fatal = True
+
+                        pending_run_once = task._get_meta() not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers', 'end_role')
                     else:
                         # handle step if needed, skip meta actions as they are used internally
                         if self._step and choose_step:
@@ -177,10 +179,7 @@ class StrategyModule(StrategyBase):
                                 skip_rest = True
                                 break
 
-                        run_once = action and getattr(action, 'BYPASS_HOST_LOOP', False) or templar.template(task.run_once)
-
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
-                            any_errors_fatal = True
+                        pending_run_once = action and action.BYPASS_HOST_LOOP or templar.template(task.run_once)
 
                         if not callback_sent:
                             task.post_validate_attribute("name", templar=templar)
@@ -194,6 +193,28 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host_name] = True
                         self._queue_task(host, task, task_vars, play_context)
                         del task_vars
+
+                    if run_once is None:
+                        run_once = pending_run_once
+                        task.run_once = run_once
+                    elif run_once != pending_run_once:
+                        display.warning(
+                            msg="The calculated run_once value changed between hosts and will be ignored.",
+                            obj=task.get_ds(),
+                            help_text="The calculated value of run_once must not change between hosts for the same task, "
+                                      "including implied values from dynamically resolved actions.",
+                        )
+
+                    pending_any_errors_fatal = templar.template(task.any_errors_fatal)
+
+                    if any_errors_fatal is None:
+                        any_errors_fatal = pending_any_errors_fatal
+                    elif any_errors_fatal != pending_any_errors_fatal:
+                        display.warning(
+                            msg="The value of any_errors_fatal changed on a subsequent host and will be ignored.",
+                            obj=task.get_ds(),
+                            help_text="The value of any_errors_fatal must not change between hosts for the same task.",
+                        )
 
                     if isinstance(task, Handler):
                         if run_once:
@@ -283,11 +304,14 @@ class StrategyModule(StrategyBase):
                         except AnsibleParserError:
                             raise
                         except AnsibleError as ex:
-                            # FIXME: send the error to the callback; don't directly write to display here
-                            display.error(ex)
                             for r in included_file._results:
-                                r._return_data['failed'] = True
-                                r._return_data['reason'] = str(ex)
+                                # RPFIX-9: FUTURE: do this better, instead of creating a throw-away UTR to merge onto the existing one
+                                utr = _task.UnifiedTaskResult._create_from_exception(ex, source_is_module=False)
+
+                                r.utr.failed = utr.failed
+                                r.utr.exception = utr.exception
+                                r.utr.msg = utr.msg
+
                                 self._tqm._stats.increment('failures', r.host.name)
                                 self._tqm.send_callback('v2_runner_on_failed', r)
                                 failed_includes_hosts.add(r.host)
@@ -317,15 +341,20 @@ class StrategyModule(StrategyBase):
                 display.debug("results queue empty")
 
                 display.debug("checking for any_errors_fatal")
-                failed_hosts = []
-                unreachable_hosts = []
+                failed_hosts: list[str] = []
+                unreachable_hosts: list[str] = []
+                mark_hosts_failed = False
+
                 for res in results:
-                    if res.is_failed():
+                    if res.utr.failed:
                         failed_hosts.append(res.host.name)
-                    elif res.is_unreachable():
+                    elif res.utr.unreachable:
                         unreachable_hosts.append(res.host.name)
 
-                if any_errors_fatal and (failed_hosts or unreachable_hosts):
+                    if (any_errors_fatal or run_once) and not res.utr.ignore_errors:
+                        mark_hosts_failed = True
+
+                if mark_hosts_failed and (failed_hosts or unreachable_hosts):
                     for host in hosts_left:
                         if host.name not in failed_hosts:
                             self._tqm._failed_hosts[host.name] = True

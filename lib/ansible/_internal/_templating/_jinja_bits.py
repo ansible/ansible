@@ -34,6 +34,7 @@ from ansible.module_utils._internal._datatag import (
     AnsibleTagHelper,
 )
 
+from ansible._internal._errors import _error_utils
 from ansible._internal._errors._handler import ErrorAction
 from ansible._internal._datatag._tags import Origin, TrustedAsTemplate
 
@@ -69,6 +70,7 @@ from ansible.module_utils import _internal
 from ansible.module_utils._internal import _ambient_context, _dataclass_validation
 from ansible.plugins.loader import filter_loader, test_loader
 from ansible.vars.hostvars import HostVars, HostVarsVars
+from .._errors import _attribute_unavailable
 from ...module_utils.datatag import native_type_name
 
 JINJA2_OVERRIDE = '#jinja2:'
@@ -793,7 +795,10 @@ class AnsibleEnvironment(SandboxedEnvironment):
         return result
 
     def getitem(self, obj: t.Any, argument: t.Any) -> t.Any:
-        value = super().getitem(obj, argument)
+        try:
+            value = super().getitem(obj, argument)
+        except _attribute_unavailable.AttributeUnavailableError as ex:
+            value = self.undefined(obj=obj, name=str(argument), hint=_error_utils.format_exception_message(ex))
 
         AnsibleAccessContext.current().access(value)
 
@@ -812,6 +817,8 @@ class AnsibleEnvironment(SandboxedEnvironment):
 
         try:
             value = getattr(obj, attribute)
+        except _attribute_unavailable.AttributeUnavailableError as ex:
+            value = self.undefined(obj=obj, name=attribute, hint=_error_utils.format_exception_message(ex))
         except AttributeError:
             value = _sentinel
         else:

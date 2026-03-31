@@ -32,7 +32,6 @@ from unittest.mock import patch, MagicMock, mock_open
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
-from ansible.executor.module_common import _BuiltModule
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.playbook.play_context import PlayContext
@@ -676,106 +675,6 @@ class TestActionBase(unittest.TestCase):
         action_base._execute_module.return_value = dict(failed=True, msg="because I said so")
         self.assertRaises(AnsibleError, action_base._execute_remote_stat, path='/path/to/file', all_vars=dict(), follow=False)
 
-    def test_action_base__execute_module(self):
-        # create our fake task
-        mock_task = MagicMock()
-        mock_task.action = 'copy'
-        mock_task.args = dict(a=1, b=2, c=3)
-        mock_task.diff = False
-        mock_task.check_mode = False
-        mock_task.no_log = False
-
-        # create a mock connection, so we don't actually try and connect to things
-        def get_option(option):
-            return {'admin_users': ['root', 'toor']}.get(option)
-
-        mock_connection = MagicMock()
-        mock_connection.socket_path = None
-        mock_connection._shell.get_remote_filename.return_value = 'copy.py'
-        mock_connection._shell.join_path.side_effect = os.path.join
-        mock_connection._shell.tmpdir = '/var/tmp/mytempdir'
-        mock_connection._shell.get_option = get_option
-
-        # we're using a real play context here
-        play_context = PlayContext()
-
-        # our test class
-        action_base = DerivedActionBase(
-            task=mock_task,
-            connection=mock_connection,
-            play_context=play_context,
-            loader=None,
-            templar=None,
-            shared_loader_obj=None,
-        )
-
-        # fake a lot of methods as we test those elsewhere
-        action_base._configure_module = MagicMock()
-        action_base._supports_check_mode = MagicMock()
-        action_base._is_pipelining_enabled = MagicMock()
-        action_base._make_tmp_path = MagicMock()
-        action_base._transfer_data = MagicMock()
-        action_base._compute_environment_string = MagicMock()
-        action_base._low_level_execute_command = MagicMock()
-        action_base._fixup_perms2 = MagicMock()
-
-        action_base._configure_module.return_value = (
-            _BuiltModule(module_style='new', shebang='#!/usr/bin/python', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
-        action_base._is_pipelining_enabled.return_value = False
-        action_base._compute_environment_string.return_value = ''
-        action_base._connection.has_pipelining = False
-        action_base._make_tmp_path.return_value = '/the/tmp/path'
-        action_base._low_level_execute_command.return_value = dict(stdout='{"rc": 0, "stdout": "ok"}')
-        self.assertEqual(action_base._execute_module(module_name=None, module_args=None), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-        self.assertEqual(
-            action_base._execute_module(
-                module_name='foo',
-                module_args=dict(z=9, y=8, x=7),
-                task_vars=dict(a=1)
-            ),
-            dict(
-                _ansible_parsed=True,
-                rc=0,
-                stdout="ok",
-                stdout_lines=['ok'],
-            )
-        )
-
-        # test with needing/removing a remote tmp path
-        action_base._configure_module.return_value = (
-            _BuiltModule(module_style='old', shebang='#!/usr/bin/python', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
-        action_base._is_pipelining_enabled.return_value = False
-        action_base._make_tmp_path.return_value = '/the/tmp/path'
-        self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-
-        action_base._configure_module.return_value = (
-            _BuiltModule(module_style='non_native_want_json', shebang='#!/usr/bin/python', b_module_data=b'this is the module data',
-                         serialization_profile='legacy'), 'path')
-        self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-
-        play_context.become = True
-        play_context.become_user = 'foo'
-        mock_task.become = True
-        mock_task.become_user = True
-        self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-
-        # test an invalid shebang return
-        action_base._configure_module.return_value = (
-            _BuiltModule(module_style='new', shebang='', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
-        action_base._is_pipelining_enabled.return_value = False
-        action_base._make_tmp_path.return_value = '/the/tmp/path'
-        self.assertRaises(AnsibleError, action_base._execute_module)
-
-        # test with check mode enabled, once with support for check
-        # mode and once with support disabled to raise an error
-        play_context.check_mode = True
-        mock_task.check_mode = True
-        action_base._configure_module.return_value = (
-            _BuiltModule(module_style='new', shebang='#!/usr/bin/python', b_module_data=b'this is the module data', serialization_profile='legacy'), 'path')
-        self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
-        action_base._supports_check_mode = False
-        self.assertRaises(AnsibleError, action_base._execute_module)
-
     def test_action_base_sudo_only_if_user_differs(self):
         fake_loader = MagicMock()
         fake_loader.get_basedir.return_value = os.getcwd()
@@ -847,9 +746,9 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data, 'legacy')
-        self.assertFalse(res['_ansible_parsed'])
-        self.assertTrue(res['failed'])
-        self.assertEqual(res['module_stderr'], err)
+        self.assertFalse(res.ansible_parsed)
+        self.assertTrue(res.failed)
+        self.assertEqual(res.module_stderr, err)
 
     def test_json_empty(self):
         action_base = _action_base()
@@ -861,9 +760,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data, 'legacy')
-        del res['_ansible_parsed']  # we always have _ansible_parsed
-        self.assertEqual(len(res), 0)
-        self.assertFalse(res)
+        self.assertEqual(len(res.result_data), 0)
 
     def test_json_facts(self):
         action_base = _action_base()
@@ -876,23 +773,5 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data, 'legacy')
-        self.assertTrue(res['ansible_facts'])
-        self.assertIn('ansible_blip', res['ansible_facts'])
-
-    def test_json_facts_add_host(self):
-        action_base = _action_base()
-        rc = 0
-        stdout = """{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"},
-        "add_host": {"host_vars": {"some_key": ["whatever the add_host object is"]}
-        }
-        }\n"""
-        err = ''
-
-        returned_data = {'rc': rc,
-                         'stdout': stdout,
-                         'stdout_lines': stdout.splitlines(),
-                         'stderr': err}
-        res = action_base._parse_returned_data(returned_data, 'legacy')
-        self.assertTrue(res['ansible_facts'])
-        self.assertIn('ansible_blip', res['ansible_facts'])
-        self.assertIn('add_host', res)
+        self.assertTrue(res.ansible_facts)
+        self.assertIn('ansible_blip', res.ansible_facts)

@@ -172,6 +172,9 @@
   poll: 1
   register: async_result
 
+- debug:
+    var: async_result
+
 - name: validate response
   assert:
     that:

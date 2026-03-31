@@ -6,10 +6,9 @@ from __future__ import annotations
 import os
 import re
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, Sequence, Mapping
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
 from ansible.plugins.loader import connection_loader
 from ansible.utils.display import Display
 
@@ -41,7 +40,7 @@ def module_response_deepcopy(v):
     backwards compatibility, in case we need to extend this function
     to handle our specific needs:
 
-    * ``ansible.executor.task_result._RawTaskResult.as_callback_task_result``
+    * ``ansible.executor.task_result._as_callback_task_result``
     * ``ansible.vars.clean.clean_facts``
     * ``ansible.vars.namespace_facts``
     """
@@ -63,56 +62,25 @@ def module_response_deepcopy(v):
     return ret
 
 
-def strip_internal_keys(dirty, exceptions=None):
-    # All keys starting with _ansible_ are internal, so change the 'dirty' mapping and remove them.
-
-    if exceptions is None:
-        exceptions = tuple()
-
-    if isinstance(dirty, MutableSequence):
-
-        for element in dirty:
-            if isinstance(element, (MutableMapping, MutableSequence)):
+def strip_internal_keys[T: Sequence | MutableMapping](dirty: T, exceptions: set[str] | frozenset[str] = frozenset()) -> T:
+    """Recursively remove items from mappings whose keys start with `_ansible`, unless the key is in `exceptions`."""
+    match dirty:
+        case str():
+            return dirty
+        case Sequence():
+            for element in dirty:
                 strip_internal_keys(element, exceptions=exceptions)
-
-    elif isinstance(dirty, MutableMapping):
-
-        # listify to avoid updating dict while iterating over it
-        for k in list(dirty.keys()):
-            if isinstance(k, str):
-                if k.startswith('_ansible_') and k not in exceptions:
-                    del dirty[k]
-                    continue
-
-            if isinstance(dirty[k], (MutableMapping, MutableSequence)):
-                strip_internal_keys(dirty[k], exceptions=exceptions)
-    else:
-        raise AnsibleError("Cannot strip invalid keys from %s" % type(dirty))
+        case MutableMapping():
+            for key in list(dirty.keys()):
+                if isinstance(key, str) and key.startswith('_ansible_') and key not in exceptions:
+                    del dirty[key]
+                else:
+                    strip_internal_keys(dirty[key], exceptions=exceptions)
 
     return dirty
 
 
-def remove_internal_keys(data):
-    """
-    More nuanced version of strip_internal_keys
-    """
-    for key in list(data.keys()):
-        if (key.startswith('_ansible_') and key != '_ansible_parsed') or key in C.INTERNAL_RESULT_KEYS:
-            display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
-            del data[key]
-
-    # remove bad/empty internal keys
-    for key in ['warnings', 'deprecations']:
-        if key in data and not data[key]:
-            del data[key]
-
-    # cleanse fact values that are allowed from actions but not modules
-    for key in list(data.get('ansible_facts', {}).keys()):
-        if key.startswith('discovered_interpreter_') or key.startswith('ansible_discovered_interpreter_'):
-            del data['ansible_facts'][key]
-
-
-def clean_facts(facts):
+def clean_facts(facts: Mapping[str, object]):
     """ remove facts that can override internal keys or otherwise deemed unsafe """
     data = module_response_deepcopy(facts)
 
@@ -137,7 +105,7 @@ def clean_facts(facts):
                 remove_keys.add(fact_key)
 
     # remove some KNOWN keys
-    for hard in C.RESTRICTED_RESULT_KEYS + C.INTERNAL_RESULT_KEYS:
+    for hard in C.RESTRICTED_RESULT_KEYS:
         if hard in fact_keys:
             remove_keys.add(hard)
 
@@ -155,7 +123,7 @@ def clean_facts(facts):
     return strip_internal_keys(data)
 
 
-def namespace_facts(facts):
+def namespace_facts(facts: Mapping[str, object]) -> dict[str, object]:
     """ return all facts inside 'ansible_facts' w/o an ansible_ prefix """
     deprefixed = {}
     for k in facts:

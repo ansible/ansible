@@ -1,0 +1,46 @@
+# Warnings and deprecations are imported into the warning context when module results are processed.
+# These tests ensure that the warnings/deprecations are visible during task execution despite this.
+
+- name: Emit no warning or deprecation
+  ping:
+  failed_when: _task.result.warnings | length > 0 or _task.result.deprecations | length > 0
+  register: no_warning_or_deprecation
+
+- name: Emit a warning and deprecation
+  warning-deprecation:
+  register: unchanged
+
+- name: Make task changed when a specific warning is visible during task execution
+  warning-deprecation:
+  changed_when: _task.result.warnings[0] == "This is a warning from a module"
+  register: warning_changed
+
+- name: Make task changed when a specific deprecation is visible during task execution
+  warning-deprecation:
+  changed_when: _task.result.deprecations[0].msg == "This is a deprecation from a module"
+  register: deprecation_changed
+
+- name: Make task failed when a specific warning is visible during task execution
+  warning-deprecation:
+  failed_when: _task.result.warnings[0] == "This is a warning from a module"
+  register: warning_failed
+  ignore_errors: yes
+
+- name: Make task failed when a specific deprecation is visible during task execution
+  warning-deprecation:
+  failed_when: _task.result.deprecations[0].msg == "This is a deprecation from a module"
+  register: deprecation_failed
+  ignore_errors: yes
+
+- name: Check task results
+  assert:
+    that:
+      - "'warnings' not in no_warning_or_deprecation"
+      - "'deprecations' not in no_warning_or_deprecation"
+      - "'warnings' in unchanged"
+      - "'deprecations' in unchanged"
+      - unchanged is not changed
+      - warning_changed is changed
+      - deprecation_changed is changed
+      - warning_failed is failed
+      - deprecation_failed is failed

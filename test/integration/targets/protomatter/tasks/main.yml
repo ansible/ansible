@@ -12,7 +12,20 @@
     var: lookup('emit_deprecation_warning')
   vars:
     ansible_deprecation_warnings: true
-  register: deprecation_warning
+  register:
+    deprecation_warning: _task.result
+    not_unmasked: deprecation_warning.deprecations[0].deprecator | type_debug
+    unmasked_scalar: (deprecation_warning.deprecations[0] | ansible._protomatter.unmask("PluginInfo")).deprecator | type_debug
+    unmasked_list: (deprecation_warning.deprecations[0] | ansible._protomatter.unmask(["PluginInfo"])).deprecator | type_debug
+
+- name: test the unmask filter
+  assert:
+    that:
+      - not_unmasked == 'dict'
+      - unmasked_scalar == "PluginInfo"
+      - unmasked_list == "PluginInfo"
+      - 1 | ansible._protomatter.unmask("PluginInfo") == 1
+      - missing_var | ansible._protomatter.unmask("PluginInfo") is undefined
 
 - name: create variables to test the apply_trust filter
   set_fact:
@@ -87,15 +100,6 @@
   vars:
     some_var: Hello
 
-- name: test the unmask filter
-  assert:
-    that:
-      - deprecation_warning.deprecations[0].deprecator | type_debug == 'dict'
-      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask("PluginInfo")).deprecator | type_debug == "PluginInfo"
-      - (deprecation_warning.deprecations[0] | ansible._protomatter.unmask(["PluginInfo"])).deprecator | type_debug == "PluginInfo"
-      - 1 | ansible._protomatter.unmask("PluginInfo") == 1
-      - missing_var | ansible._protomatter.unmask("PluginInfo") is undefined
-
 - name: unmask with an invalid type for type_names
   debug:
     msg: "{{ [] | ansible._protomatter.unmask(invalid_type) }}"
@@ -123,22 +127,30 @@
 - transform_factory:
   vars:
     ansible_deprecation_warnings: true
-  register: transformed
+  register:
+    transformed: _task.result
+    json_fallback_to_str: (transformed | ansible._protomatter.unmask(['WarningSummary','DeprecationSummary'])) | to_json(profile='fallback_to_str')
+    warning_summary: (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0] | type_debug
+    warning_summary_event: (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0].event | type_debug
+    deprecation_summary_event: (transformed.deprecations | ansible._protomatter.unmask(['DeprecationSummary']))[0].event | type_debug
+    # unmask the wrong type, ensure that the default transform still occurs
+    wrong_type_unmasked: (transformed.warnings | ansible._protomatter.unmask('EncryptedString'))[0] | type_debug
+    # unmask at a higher level, validate that it propagates to child lazies
+    warning_summary_propagated_event: (transformed | ansible._protomatter.unmask(['WarningSummary'])).warnings[0].event | type_debug
 
 - debug:
-    var: (transformed | ansible._protomatter.unmask(['WarningSummary','DeprecationSummary'])) | to_json(profile='fallback_to_str')
+    var: json_fallback_to_str
 
 - name: validate transformed and unmasked values
   assert:
     that:
+      - json_fallback_to_str is contains "WarningSummary(event=Event(msg='a warning',"
       - transformed.warnings | length > 0
       - transformed.warnings[0] | type_debug == 'str'
-      - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0] | type_debug == 'WarningSummary'
-      - (transformed.warnings | ansible._protomatter.unmask(['WarningSummary']))[0].event | type_debug == 'Event'
+      - warning_summary == 'WarningSummary'
+      - warning_summary_event == 'Event'
       - transformed.deprecations | length > 0
       - transformed.deprecations[0] | type_debug == 'dict'
-      - (transformed.deprecations | ansible._protomatter.unmask(['DeprecationSummary']))[0].event | type_debug == 'Event'
-      # unmask the wrong type, ensure that the default transform still occurs
-      - (transformed.warnings | ansible._protomatter.unmask('EncryptedString'))[0] | type_debug == 'str'
-      # unmask at a higher level, validate that it propagates to child lazies
-      - (transformed | ansible._protomatter.unmask(['WarningSummary'])).warnings[0].event | type_debug == 'Event'
+      - deprecation_summary_event == 'Event'
+      - wrong_type_unmasked == 'str'
+      - warning_summary_propagated_event == 'Event'

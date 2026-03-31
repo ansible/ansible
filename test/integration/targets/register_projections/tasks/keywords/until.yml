@@ -1,0 +1,33 @@
+- name: Use register projections in 'until' without a loop
+  debug:
+  retries: 3
+  delay: 0
+  until: until_rp
+  register:
+    until_rp: _task.result.attempts == until_rp_expected
+    until_rp_expected: 1 + 1
+    until_rp_result: _task.result
+
+- name: Verify results
+  assert:
+    that:
+      - until_rp_result.attempts == 2
+
+- name: Use register projections in 'until' with a loop
+  debug:
+  retries: 3
+  delay: 0
+  until: until_loop_rp
+  loop: [1, 2, 3]
+  register:
+    until_loop_rp: _task.result.attempts == until_loop_rp_expected
+    until_loop_rp_expected: _task.loop_result.results | length
+    until_loop_rp_results: _task.loop_result.results
+
+- name: Verify results
+  assert:
+    that:
+      - until_loop_rp_results | length == 3
+      - until_loop_rp_results[0].attempts == 1
+      - until_loop_rp_results[1].attempts == 2
+      - until_loop_rp_results[2].attempts == 3

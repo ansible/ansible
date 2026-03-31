@@ -1,0 +1,53 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - add_host:
+        name: dynamichost
+        ansible_connection: local
+        exitval: 1
+
+- hosts: localhost, dynamichost
+  gather_facts: no
+  tasks:
+    - name: Test ignore_errors on first task
+      raw: exit {{ exitval | default(0) }}
+      ignore_errors: "{{ item }}"
+      loop:
+        - true
+        - false
+      register: ignore_first_error
+
+    - name: Test ignore_errors on second task
+      raw: exit {{ exitval | default(0) }}
+      ignore_errors: "{{ item }}"
+      loop:
+        - false
+        - true
+      register: ignore_second_error
+
+    - name: Test ignore_errors failed in with single item (fail)
+      raw: exit {{ exitval | default(0) }}
+      ignore_errors: "{{ item }}"
+      loop:
+        - false
+      register: fail_single_error
+
+    - name: Run only on localhost
+      raw: echo "still here"
+      register: localhost_only
+
+    - meta: clear_host_errors
+
+- hosts: localhost, dynamichost
+  gather_facts: false
+  tasks:
+    - assert:
+        that:
+          - ignore_first_error is failed
+          - ignore_first_error.results | reject("failed") | length == 0
+          - ignore_second_error is failed
+          - ignore_second_error.results | reject("failed") | length == 0
+          - fail_single_error is failed
+          - fail_single_error.results[0] is failed
+          - localhost_only is undefined
+      when: inventory_hostname == "dynamichost"

@@ -1,0 +1,19 @@
+- name: use an invalid break_when on a failed task
+  ping:
+    data: crash
+  register: failed_task
+  loop: [1, 2, 3]
+  loop_control:
+    break_when: 1 / 0 if item == 2 else False
+  ignore_errors: yes
+
+- name: verify the suppressed exception was preserved
+  assert:
+    that:
+      - failed_task is failed
+      - failed_task.results | length == 2  # the failing expression aborts the loop early
+      - failed_task.results[1] is failed
+      - failed_task.results[1].break_when_result is contains "division by zero"
+      - failed_task.results[1].break_when_suppressed_exception is defined  # RPFIX-9: FUTURE: enable traceback and verify this is the ping crash
+      - failed_task.results[1].exception is defined  # RPFIX-9: FUTURE: enable traceback and verify this is the exception from the failed break_when expression
+      - failed_task.results[1].msg is search "Task failed. Module failed. boom"

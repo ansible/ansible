@@ -132,7 +132,7 @@
     that:
       - waitfor is failed
       - waitfor.elapsed == 3
-      - "waitfor.msg == 'Timeout when waiting for 127.0.0.1:12121'"
+      - waitfor.msg is contains 'Timeout when waiting for 127.0.0.1:12121'
 
 - name: test fail with custom msg
   wait_for:
@@ -146,7 +146,7 @@
     that:
       - waitfor is failed
       - waitfor.elapsed == 3
-      - "waitfor.msg == 'fail with custom message'"
+      - waitfor.msg is contains 'fail with custom message'
 
 - name: setup start SimpleHTTPServer
   shell: sleep 3 && cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}

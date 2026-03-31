@@ -1,0 +1,30 @@
+major_changes:
+  # RPFIX-5: DOC: finish this and draft docs/porting guide together; links to docs/porting guide?
+  - register projections - The ``register`` task keyword allows mapping multiple variable names to Jinja expressions to transform task results and other variables.
+    The mapping form can replace many usages of ``set_fact`` and allows order-independent chained access to other variable expressions within the same task.
+  - task implicit object - A new ``_task`` implicit object is available for use in ``register`` and task conditional expressions (e.g., ``failed_when``).
+    The result of the current task can be accessed via the ``_task.result`` property, without the use of ``register``.
+    Under a loop, ``_task.result`` is the most recently completed result and ``_task.loop_result`` provides access to accumulated loop results.
+    The ``_task.polymorphic_result`` property provides compatibility with classic name-only ``register`` in loops.
+    The value is the result of the most recent loop iteration, then becomes the final list loop result once the loop is complete.
+  - action plugins - Actions can directly register variables at several precedence layers using the ``register_host_variables`` method on ``ActionBase``.
+    Previously, variable registration could only be simulated by user action plugins by returning ``ansible_facts`` with insecure fact injection.
+minor_changes:
+  - loops - The registered result of a loop task no longer contains the ``skipped`` key when it would be ``False``.
+  - changed_when - A ``changed_when_result`` key is always present in results when a ``changed_when`` expression is used.
+  - break_when - A ``break_when_result`` key is always present in results when a ``break_when`` expression is used.
+  - changed_when - A ``changed_when_suppressed_exception`` key is added to a result when a ``changed_when`` expression fails and masks an existing exception in a result.
+  - break_when - A ``break_when_suppressed_exception`` key is added to a result when a ``break_when`` expression fails and masks an existing exception in a result.
+  - module/action results - A ``results`` key returned from an action or module is always preserved.
+    Previously the ``results`` key was sometimes removed, depending on the type of its value.
+  - loops - The ``break_when`` keyword is now validated when the value is falsey.
+  - ignore_errors - Templated values for the ``ignore_errors`` keyword behave more consistently in looped tasks.
+    If ``ignore_errors`` resolves ``True`` for any loop item, errors will be ignored for the entire task.
+  - ignore_unreachable - Templated values for the ``ignore_unreachable`` keyword behave more consistently in looped tasks.
+    If ``ignore_unreachable`` resolves ``True`` for any loop item, unreachable hosts will be ignored for the entire task.
+  - ignore_errors - Invalid values for ``ignore_errors`` will always be treated as ``False``
+  - break_when - A failed ``break_when`` expression now preserves the loop structure of a result and any loop item results.
+bugfixes:
+  - task conditionals - An error in any task conditional (e.g., ``when``, ``until``, ``failed_when``) always causes the task to report a descriptive failure while preserving the task result.
+    The resulting task failure is always recoverable via ``ignore_errors``.
+    Previous inconsistent error handling in task conditionals could result in warnings, loss of completed task results, recoverable task errors, unrecoverable task errors, or failure of the Ansible controller process.

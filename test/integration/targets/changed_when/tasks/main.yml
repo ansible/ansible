@@ -109,3 +109,20 @@
 - assert:
     that:
       - add_host_loop_res is changed
+
+- name: use an invalid changed_when on a failed task
+  ping:
+    data: crash
+  register: failed_task
+  changed_when: 1 / 0
+  ignore_errors: yes
+
+- name: verify the suppressed exception was preserved
+  assert:
+    that:
+      - failed_task is not changed
+      - failed_task is failed
+      - failed_task.changed_when_result is contains "division by zero"
+      - failed_task.changed_when_suppressed_exception is defined  # RPFIX-9: FUTURE: enable traceback and verify this is the ping crash
+      - failed_task.exception is defined  # RPFIX-9: FUTURE: enable traceback and verify this is the exception from the failed changed_when expression
+      - failed_task.msg is search "Task failed. Module failed. A 'changed_when' expression failed. Error rendering expression. division by zero"

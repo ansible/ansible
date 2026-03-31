@@ -1,15 +1,3 @@
----
-- hosts: localhost
-  gather_facts: false
-  tasks:
-    - name: Hi
-      ping:
-- hosts: [localhost, nonexistent]
-  ignore_unreachable: true
-  gather_facts: false
-  tasks:
-    - name: Hi
-      ping:
 - hosts: nonexistent
   ignore_unreachable: true
   gather_facts: false
@@ -22,8 +10,14 @@
     - name: Hi
       ping:
       register: should_fail
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - meta: clear_host_errors
+
     - assert:
         that:
-          - 'should_fail is unreachable'
-          - 'not (should_fail is skipped)'
-          - 'not (should_fail is failed)'
+          - hostvars.nonexistent.should_fail is unreachable
+          - hostvars.nonexistent.should_fail is not skipped
+          - hostvars.nonexistent.should_fail is not failed

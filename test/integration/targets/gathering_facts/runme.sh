@@ -2,6 +2,9 @@
 
 set -eux
 
+# ensure task vars reflect facts during loops
+ansible-playbook ansible_facts_as_task_vars.yml -i ../../inventory "$@"
+
 #ANSIBLE_CACHE_PLUGINS=cache_plugins/ ANSIBLE_CACHE_PLUGIN=none ansible-playbook test_gathering_facts.yml -i inventory -v "$@"
 ansible-playbook test_gathering_facts.yml -i inventory -e output_dir="$OUTPUT_DIR" -v "$@"
 #ANSIBLE_CACHE_PLUGIN=base ansible-playbook test_gathering_facts.yml -i inventory -v "$@"

@@ -29,20 +29,21 @@ import typing as t
 import collections.abc as _c
 
 from collections import deque
+from sqlite3 import NotSupportedError
 
-
-from ansible import constants as C
+from ansible import constants as C, constants
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleTemplateError
+from ansible.errors import AnsibleError, AnsibleTemplateError
 from ansible.executor.play_iterator import IteratingStates, PlayIterator
 from ansible.executor.process.worker import WorkerProcess
-from ansible.executor.task_result import _RawTaskResult, _WireTaskResult
+from ansible._internal._task import WireTaskResult, HostTaskResult
 from ansible.executor.task_queue_manager import CallbackSend, DisplaySend, PromptSend, TaskQueueManager
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
@@ -50,8 +51,7 @@ from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
-from ansible.utils.vars import combine_vars
-from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
+from ansible._internal import _task, _rpc_host
 
 if t.TYPE_CHECKING:
     from ansible.playbook.role_include import IncludeRole
@@ -59,12 +59,6 @@ if t.TYPE_CHECKING:
 display = Display()
 
 __all__ = ['StrategyBase']
-
-# This list can be an exact match, or start of string bound
-# does not accept regex
-ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
-    'discovered_interpreter_',
-))
 
 
 class StrategySentinel:
@@ -77,19 +71,20 @@ if t.TYPE_CHECKING:
     from ansible.inventory.host import Host
 
 
-def _get_item_vars(result, task):
+def _get_item_vars(utr: _task.UnifiedTaskResult, task: Task) -> dict[str, object]:
+    # RPFIX-9: FUTURE: need a more consistent way to reconstitute/replay loop state controller-side (may be resolved when RPC is implemented)
     item_vars = {}
+
     if task.loop or task.loop_with:
-        loop_var = result.get('ansible_loop_var', 'item')
-        index_var = result.get('ansible_index_var')
-        if loop_var in result:
-            item_vars[loop_var] = result[loop_var]
-        if index_var and index_var in result:
-            item_vars[index_var] = result[index_var]
-        if '_ansible_item_label' in result:
-            item_vars['_ansible_item_label'] = result['_ansible_item_label']
-        if 'ansible_loop' in result:
-            item_vars['ansible_loop'] = result['ansible_loop']
+        if utr.loop_var is not None:
+            item_vars[utr.loop_var] = utr.loop_item
+        if utr.loop_index_var is not None:
+            item_vars[utr.loop_index_var] = utr.loop_index
+        if utr.loop_item_label is not None:
+            item_vars['_ansible_item_label'] = utr.loop_item_label
+        if utr.loop_extended is not None:
+            item_vars['ansible_loop'] = utr.loop_extended
+
     return item_vars
 
 
@@ -105,10 +100,10 @@ def results_thread_main(strategy: StrategyBase) -> None:
                 dmethod = getattr(display, result.method)
                 dmethod(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
-                task_result = strategy._convert_wire_task_result_to_raw(result.wire_task_result)
+                task_result = strategy._convert_wire_task_result_to_host_task_result(result.wire_task_result)
                 strategy._tqm.send_callback(result.method_name, task_result)
-            elif isinstance(result, _WireTaskResult):
-                result = strategy._convert_wire_task_result_to_raw(result)
+            elif isinstance(result, WireTaskResult):
+                result = strategy._convert_wire_task_result_to_host_task_result(result)
                 with strategy._results_lock:
                     strategy._results.append(result)
             elif isinstance(result, PromptSend):
@@ -140,19 +135,19 @@ def results_thread_main(strategy: StrategyBase) -> None:
 def debug_closure(func):
     """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
     @functools.wraps(func)
-    def inner(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[_RawTaskResult]:
+    def inner(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[HostTaskResult]:
         status_to_stats_map = (
-            ('is_failed', 'failures'),
-            ('is_unreachable', 'dark'),
-            ('is_changed', 'changed'),
-            ('is_skipped', 'skipped'),
+            ('failed', 'failures'),
+            ('unreachable', 'dark'),
+            ('changed', 'changed'),
+            ('skipped', 'skipped'),
         )
 
         # We don't know the host yet, copy the previous states, for lookup after we process new results
         prev_host_states = iterator.host_states.copy()
 
-        results: list[_RawTaskResult] = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
-        _processed_results: list[_RawTaskResult] = []
+        results: list[HostTaskResult] = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
+        _processed_results: list[HostTaskResult] = []
 
         for result in results:
             task = result.task
@@ -166,7 +161,7 @@ def debug_closure(func):
             except KeyError:
                 prev_host_state = iterator.get_host_state(host)
 
-            while result.needs_debugger(globally_enabled=self.debugger_active):
+            while _needs_debugger(task=result.task, utr=result.utr, globally_enabled=self.debugger_active):
                 next_action = NextAction()
                 dbg = Debugger(task, host, task_vars, play_context, result, next_action)
                 dbg.cmdloop()
@@ -174,15 +169,15 @@ def debug_closure(func):
                 if next_action.result == NextAction.REDO:
                     # rollback host state
                     self._tqm.clear_failed_hosts()
-                    if task.run_once and iterator._play.strategy in add_internal_fqcns(('linear',)) and result.is_failed():
+                    if task.run_once and iterator._play.strategy in add_internal_fqcns(('linear',)) and result.utr.failed:
                         for host_name, state in prev_host_states.items():
                             if host_name == host.name:
                                 continue
                             iterator.set_state_for_host(host_name, state)
                             iterator._play._removed_hosts.remove(host_name)
                     iterator.set_state_for_host(host.name, prev_host_state)
-                    for method, what in status_to_stats_map:
-                        if getattr(result, method)():
+                    for attr, what in status_to_stats_map:
+                        if getattr(result.utr, attr):
                             self._tqm._stats.decrement(what, host.name)
                     self._tqm._stats.decrement('ok', host.name)
 
@@ -202,6 +197,25 @@ def debug_closure(func):
 
         return _processed_results
     return inner
+
+
+def _needs_debugger(task: Task, utr: _task.UnifiedTaskResult, globally_enabled: bool = False) -> bool:
+    ignore_errors: bool = constants.config.get_config_value('TASK_DEBUGGER_IGNORE_ERRORS') and utr.ignore_errors
+    ret = globally_enabled and ((utr.failed and not ignore_errors) or bool(utr.unreachable))
+
+    match task.debugger:
+        case 'always':
+            ret = True
+        case 'never':
+            ret = False
+        case 'on_failed' if utr.failed and not ignore_errors:
+            ret = True
+        case 'on_unreachable' if utr.unreachable:
+            ret = True
+        case 'on_skipped' if utr.skipped:
+            ret = True
+
+    return ret
 
 
 class StrategyBase:
@@ -225,6 +239,8 @@ class StrategyBase:
         self._final_q = tqm._final_q
         self._step = context.CLIARGS.get('step', False)
         self._diff = context.CLIARGS.get('diff', False)
+        self._rpc_queue: queue.Queue[_rpc_host.AsyncRPCOperation] = queue.Queue()
+        """Pending worker AsyncRPCOperations that need to be serviced under the result thread."""
 
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
@@ -242,7 +258,7 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts: dict[str, bool] = dict()
 
-        self._results: deque[_RawTaskResult] = deque()
+        self._results: deque[HostTaskResult] = deque()
         self._results_lock = threading.Condition(threading.Lock())
 
         # create the result processing thread for reading results in the background
@@ -289,7 +305,7 @@ class StrategyBase:
         self._final_q.put(_sentinel)
         self._results_thread.join()
 
-    def run(self, iterator, play_context, result=0):
+    def run(self, iterator: PlayIterator, play_context: PlayContext, result=0):
         # execute one more pass through the iterator without peeking, to
         # make sure that all of the hosts are advanced to their final task.
         # This should be safe, as everything should be IteratingStates.COMPLETE by
@@ -361,6 +377,8 @@ class StrategyBase:
             queued = False
             starting_worker = self._cur_worker
             while True:
+                self._process_rpc_queue()
+
                 if self._cur_worker >= rewind_point:
                     self._cur_worker = 0
 
@@ -418,40 +436,8 @@ class StrategyBase:
             host_list = [task_host.name]
         return host_list
 
-    def get_delegated_hosts(self, result, task):
-        host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
-        return [host_name or task.delegate_to]
-
-    def _set_always_delegated_facts(self, result, task):
-        """Sets host facts for ``delegate_to`` hosts for facts that should
-        always be delegated
-
-        This operation mutates ``result`` to remove the always delegated facts
-
-        See ``ALWAYS_DELEGATE_FACT_PREFIXES``
-        """
-        if task.delegate_to is None:
-            return
-
-        facts = result['ansible_facts']
-        always_keys = set()
-        _add = always_keys.add
-        for fact_key in facts:
-            for always_key in ALWAYS_DELEGATE_FACT_PREFIXES:
-                if fact_key.startswith(always_key):
-                    _add(fact_key)
-        if always_keys:
-            _pop = facts.pop
-            always_facts = {
-                'ansible_facts': dict((k, _pop(k)) for k in list(facts) if k in always_keys)
-            }
-            host_list = self.get_delegated_hosts(result, task)
-            _set_host_facts = self._variable_manager.set_host_facts
-            for target_host in host_list:
-                _set_host_facts(target_host, always_facts)
-
-    def _convert_wire_task_result_to_raw(self, wire_task_result: _WireTaskResult) -> _RawTaskResult:
-        """Return a `_RawTaskResult` created from a `_WireTaskResult`."""
+    def _convert_wire_task_result_to_host_task_result(self, wire_task_result: WireTaskResult) -> HostTaskResult:
+        """Rehydrate a `HostTaskResult` from a serialized `WireTaskResult`."""
         host = self._inventory.get_host(wire_task_result.host_name)
         queue_cache_entry = (host.name, wire_task_result.task_uuid)
 
@@ -471,11 +457,10 @@ class StrategyBase:
 
         task.from_attrs(wire_task_result.task_fields)
 
-        return _RawTaskResult(
+        return HostTaskResult(
             host=host,
             task=task,
-            return_data=wire_task_result.return_data,
-            task_fields=wire_task_result.task_fields,
+            utr=wire_task_result.utr,
         )
 
     def search_handlers_by_notification(self, notification: str, iterator: PlayIterator) -> t.Generator[Handler, None, None]:
@@ -533,15 +518,26 @@ class StrategyBase:
                 seen.add(handler.name)
                 yield handler
 
+    def _process_rpc_queue(self) -> None:
+        try:
+            while True:
+                rpc_request = self._rpc_queue.get(block=False)
+                rpc_request.dispatch()
+        except queue.Empty:
+            pass
+
     @debug_closure
-    def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[_RawTaskResult]:
+    def _process_pending_results(self, iterator: PlayIterator, one_pass: bool = False, max_passes: int | None = None) -> list[HostTaskResult]:
         """
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
         """
         ret_results = []
         cur_pass = 0
+
         while True:
+            self._process_rpc_queue()
+
             try:
                 self._results_lock.acquire()
                 task_result = self._results.popleft()
@@ -555,13 +551,16 @@ class StrategyBase:
 
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
-            if task_result.is_failed():
+
+            if task_result.utr.failed:
                 role_ran = True
-                ignore_errors = original_task.ignore_errors
+                ignore_errors = task_result.utr.ignore_errors
+
                 if not ignore_errors:
                     # save the current state before failing it for later inspection
                     state_when_failed = iterator.get_state_for_host(original_host.name)
                     display.debug("marking %s as failed" % original_host.name)
+
                     if original_task.run_once:
                         # if we're using run_once, we have to fail every host here
                         for h in self._inventory.get_hosts(iterator._play.hosts):
@@ -580,12 +579,14 @@ class StrategyBase:
                     # within the rescue/always
                     if iterator.is_any_block_rescuing(state_when_failed):
                         self._tqm._stats.increment('rescued', original_host.name)
+
                         iterator._play._removed_hosts.remove(original_host.name)
+
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
                             dict(
                                 ansible_failed_task=original_task.dump_attrs(),
-                                ansible_failed_result=task_result._return_data,
+                                ansible_failed_result=task_result.utr.as_result_dict(),
                             ),
                         )
                     else:
@@ -593,40 +594,48 @@ class StrategyBase:
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
                     self._tqm._stats.increment('ignored', original_host.name)
-                    if task_result.is_changed():
+
+                    if task_result.utr.changed:
                         self._tqm._stats.increment('changed', original_host.name)
+
                 self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
-            elif task_result.is_unreachable():
-                ignore_unreachable = original_task.ignore_unreachable
-                if not ignore_unreachable:
+            elif task_result.utr.unreachable:
+                if not task_result.utr.ignore_unreachable:
                     self._tqm._unreachable_hosts[original_host.name] = True
+
                     iterator._play._removed_hosts.append(original_host.name)
+
                     self._tqm._stats.increment('dark', original_host.name)
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
                     self._tqm._stats.increment('ignored', original_host.name)
+
                 self._tqm.send_callback('v2_runner_on_unreachable', task_result)
-            elif task_result.is_skipped():
+            elif task_result.utr.skipped:
                 self._tqm._stats.increment('skipped', original_host.name)
                 self._tqm.send_callback('v2_runner_on_skipped', task_result)
             else:
                 role_ran = True
 
+                result_utrs: list[_task.UnifiedTaskResult]
+
                 if original_task.loop:
                     # this task had a loop, and has more than one result, so
                     # loop over all of them instead of a single result
-                    result_items = task_result._loop_results
+                    result_utrs = task_result.utr.loop_results
                 else:
-                    result_items = [task_result._return_data]
+                    result_utrs = [task_result.utr]
 
-                for result_item in result_items:
-                    if '_ansible_notify' in result_item and task_result.is_changed():
+                for result_utr in result_utrs:
+                    if result_utr.notify and task_result.utr.changed:
                         # only ensure that notified handlers exist, if so save the notifications for when
                         # handlers are actually flushed so the last defined handlers are executed,
                         # otherwise depending on the setting either error or warn
                         host_state = iterator.get_state_for_host(original_host.name)
-                        for notification in result_item['_ansible_notify']:
+
+                        for notification in result_utr.notify:
                             handler: type[Sentinel] | Handler = Sentinel
+
                             for handler in self.search_handlers_by_notification(notification, iterator):
                                 if host_state.run_state == IteratingStates.HANDLERS:
                                     # we're currently iterating handlers, so we need to expand this now
@@ -638,127 +647,86 @@ class StrategyBase:
                                     iterator.add_notification(original_host.name, notification)
                                     display.vv(f"Notification for handler {notification} has been saved.")
                                     break
+
                             if handler is Sentinel:
                                 msg = (
                                     f"The requested handler '{notification}' was not found in either the main handlers"
                                     " list nor in the listening handlers list"
                                 )
+
                                 if C.ERROR_ON_MISSING_HANDLER:
                                     raise AnsibleError(msg)
-                                else:
-                                    display.warning(msg)
 
-                    if 'add_host' in result_item:
-                        # this task added a new host (add_host module)
-                        new_host_info = result_item.get('add_host', dict())
-                        self._inventory.add_dynamic_host(new_host_info, result_item)
-                        # ensure host is available for subsequent plays
-                        if result_item.get('changed') and new_host_info['host_name'] not in self._hosts_cache_all:
-                            self._hosts_cache_all.append(new_host_info['host_name'])
+                                display.warning(msg)
 
-                    elif 'add_group' in result_item:
-                        # this task added a new group (group_by module)
-                        self._inventory.add_dynamic_group(original_host, result_item)
+                    if result_utr.pending_changes.register_host_variables:
+                        original_host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                    if 'add_host' in result_item or 'add_group' in result_item:
-                        item_vars = _get_item_vars(result_item, original_task)
-                        found_task_vars = self._queued_task_cache.get((original_host.name, task_result.task._uuid))['task_vars']
-                        if item_vars:
-                            all_task_vars = combine_vars(found_task_vars, item_vars)
+                        if original_task.delegate_to and original_task.delegate_facts:
+                            potentially_delegated_host_list = [result_utr.delegated_host or original_task.delegate_to]
                         else:
-                            all_task_vars = found_task_vars
-                        all_task_vars[original_task.register] = result_item
+                            potentially_delegated_host_list = original_host_list
 
-                        if original_task.changed_when:
-                            result_item['changed'] = original_task._resolve_conditional(original_task.changed_when, all_task_vars)
+                        # Apply changes from register_host_variables to variable manager in sorted order,
+                        # to ensure consistent variable precedence based on layer.
+                        for variable_layer, variables in sorted(result_utr.pending_changes.register_host_variables.items()):
+                            match variable_layer:
+                                case _task.VariableLayer.REGISTER_VARS:
+                                    for target_host in original_host_list:
+                                        self._variable_manager.set_nonpersistent_facts(target_host, variables)
+                                case _task.VariableLayer.CACHEABLE_FACT:
+                                    for target_host in potentially_delegated_host_list:
+                                        self._variable_manager.set_host_facts(target_host, variables)
+                                case _task.VariableLayer.EPHEMERAL_FACT:
+                                    for target_host in potentially_delegated_host_list:
+                                        self._variable_manager.set_nonpersistent_facts(target_host, variables)
+                                case _task.VariableLayer.INCLUDE_VARS:
+                                    for target_host in potentially_delegated_host_list:
+                                        for var_name, var_value in variables.items():
+                                            self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                                case _:
+                                    raise NotSupportedError(f"Unsupported variable layer: {variable_layer}")
 
-                        if original_task.failed_when:
-                            result_item['failed_when_result'] = result_item['failed'] = (
-                                original_task._resolve_conditional(original_task.failed_when, all_task_vars))
+                    if result_utr.stats is not None:
+                        stats_data = result_utr.stats['data']
 
-                        if original_task.loop or original_task.loop_with:
-                            new_item_result = _RawTaskResult(
-                                task_result.host,
-                                task_result.task,
-                                result_item,
-                                task_result.task_fields,
-                            )
-                            self._tqm.send_callback('v2_runner_item_on_ok', new_item_result)
-                            if result_item.get('changed', False):
-                                task_result._return_data['changed'] = True
-                            if result_item.get('failed', False):
-                                task_result._return_data['failed'] = True
-
-                    if 'ansible_facts' in result_item and original_task.action not in C._ACTION_DEBUG:
-                        # if delegated fact and we are delegating facts, we need to change target host for them
-                        if original_task.delegate_to is not None and original_task.delegate_facts:
-                            host_list = self.get_delegated_hosts(result_item, original_task)
-                        else:
-                            # Set facts that should always be on the delegated hosts
-                            self._set_always_delegated_facts(result_item, original_task)
-
-                            host_list = self.get_task_hosts(iterator, original_host, original_task)
-
-                        if original_task.action in C._ACTION_INCLUDE_VARS:
-                            for (var_name, var_value) in result_item['ansible_facts'].items():
-                                # find the host we're actually referring too here, which may
-                                # be a host that is not really in inventory at all
-                                for target_host in host_list:
-                                    self._variable_manager.set_host_variable(target_host, var_name, var_value)
-                        else:
-                            cacheable = result_item.pop('_ansible_facts_cacheable', False)
-                            for target_host in host_list:
-                                # so set_fact is a misnomer but 'cacheable = true' was meant to create an 'actual fact'
-                                # to avoid issues with precedence and confusion with set_fact normal operation,
-                                # we set BOTH fact and nonpersistent_facts (aka hostvar)
-                                # when fact is retrieved from cache in subsequent operations it will have the lower precedence,
-                                # but for playbook setting it the 'higher' precedence is kept
-                                is_set_fact = original_task.action in C._ACTION_SET_FACT
-                                if not is_set_fact or cacheable:
-                                    self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
-                                if is_set_fact:
-                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
-
-                    if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
-
-                        if 'per_host' not in result_item['ansible_stats'] or result_item['ansible_stats']['per_host']:
+                        if result_utr.stats.get('per_host'):
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
                         else:
                             host_list = [None]
 
-                        data = result_item['ansible_stats']['data']
-                        aggregate = 'aggregate' in result_item['ansible_stats'] and result_item['ansible_stats']['aggregate']
-                        for myhost in host_list:
-                            for k in data.keys():
-                                if aggregate:
-                                    self._tqm._stats.update_custom_stats(k, data[k], myhost)
-                                else:
-                                    self._tqm._stats.set_custom_stats(k, data[k], myhost)
+                        aggregate = result_utr.stats.get('aggregate')
 
-                if 'diff' in task_result._return_data:
+                        for myhost in host_list:
+                            for k in stats_data.keys():
+                                if aggregate:
+                                    self._tqm._stats.update_custom_stats(k, stats_data[k], myhost)
+                                else:
+                                    self._tqm._stats.set_custom_stats(k, stats_data[k], myhost)
+
+                if task_result.utr.diff is not None:
+                    # this case is only for non-loops; loop item diff callbacks are dispatched directly by TaskExecutor
                     if self._diff or getattr(original_task, 'diff', False):
                         self._tqm.send_callback('v2_on_file_diff', task_result)
 
                 if not isinstance(original_task, TaskInclude):
                     self._tqm._stats.increment('ok', original_host.name)
-                    if task_result.is_changed():
+
+                    if task_result.utr.changed:
                         self._tqm._stats.increment('changed', original_host.name)
 
                 # finally, send the ok for this task
                 self._tqm.send_callback('v2_runner_on_ok', task_result)
 
             # register final results
-            if original_task.register:
+            if task_result.utr.registered_values:
                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._return_data))
-                if 'invocation' in clean_copy:
-                    del clean_copy['invocation']
-
                 for target_host in host_list:
-                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
+                    self._variable_manager.set_nonpersistent_facts(target_host, task_result.utr.registered_values)
 
             self._pending_results -= 1
+
             if original_host.name in self._blocked_hosts:
                 del self._blocked_hosts[original_host.name]
 
@@ -824,32 +792,23 @@ class StrategyBase:
         using PlayIterator.mark_host_failed().
         """
         display.debug("loading included file: %s" % included_file._filename)
-        try:
-            data = self._loader.load_from_file(included_file._filename, trusted_as_template=True)
-            if data is None:
-                return []
-            elif not isinstance(data, list):
-                raise AnsibleError("included task files must contain a list of tasks")
+        data = self._loader.load_from_file(included_file._filename, trusted_as_template=True)
+        if data is None:
+            return []
+        elif not isinstance(data, list):
+            raise AnsibleError("included task files must contain a list of tasks", obj=data)
 
-            ti_copy = self._copy_included_file(included_file)
+        ti_copy = self._copy_included_file(included_file)
 
-            block_list = load_list_of_blocks(
-                data,
-                play=iterator._play,
-                parent_block=ti_copy.build_parent_block(),
-                role=included_file._task._role,
-                use_handlers=is_handler,
-                loader=self._loader,
-                variable_manager=self._variable_manager,
-            )
-        except AnsibleParserError:
-            raise
-        except AnsibleError as e:
-            if isinstance(e, AnsibleFileNotFound):
-                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
-            else:
-                reason = to_text(e)
-            raise AnsibleError(reason) from e
+        block_list = load_list_of_blocks(
+            data,
+            play=iterator._play,
+            parent_block=ti_copy.build_parent_block(),
+            role=included_file._task._role,
+            use_handlers=is_handler,
+            loader=self._loader,
+            variable_manager=self._variable_manager,
+        )
 
         display.debug("done processing included file")
         return block_list
@@ -891,6 +850,7 @@ class StrategyBase:
             if not task.when:
                 return True
 
+            # FUTURE: If this when fails it will take down the process.
             return task._resolve_conditional(task.when, self._variable_manager.get_vars(
                 play=iterator._play, host=conditional_host, task=task, _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all))
 
@@ -1045,12 +1005,11 @@ class StrategyBase:
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
-        result: dict[str, object] = {'msg': msg}
+        utr = _task.UnifiedTaskResult.from_action_result_dict({})
+        utr.msg = msg
+
         if skipped:
-            result['skipped'] = True
-            result['skip_reason'] = skip_reason
-        else:
-            result['changed'] = False
+            utr.set_skipped(skip_reason)
 
         header = skip_reason if skipped else msg
         if task.implicit:
@@ -1058,10 +1017,10 @@ class StrategyBase:
         else:
             display.vv(f"META: {header}")
 
-        res = _RawTaskResult(target_host, task, result, {})
         if skipped:
-            self._tqm.send_callback('v2_runner_on_skipped', res)
-        return [res]
+            self._tqm.send_callback('v2_runner_on_skipped', target_host, task, utr)
+
+        return [HostTaskResult(host=target_host, task=task, utr=utr)]
 
     def _get_cached_role(self, task, play):
         return play._get_cached_role(task._role)
@@ -1078,14 +1037,12 @@ class StrategyBase:
                     hosts_left.append(self._inventory.get_host(host))
         return hosts_left
 
-    def update_active_connections(self, results: _c.Iterable[_RawTaskResult]) -> None:
+    def update_active_connections(self, results: _c.Iterable[HostTaskResult]) -> None:
         """ updates the current active persistent connections """
-        for r in results:
-            if 'args' in r.task_fields:
-                socket_path = r.task_fields['args'].get('_ansible_socket')
-                if socket_path:
-                    if r.host not in self._active_connections:
-                        self._active_connections[r.host] = socket_path
+        for result in results:
+            if socket_path := result.task.args.get('_ansible_socket'):
+                if result.host not in self._active_connections:
+                    self._active_connections[result.host] = socket_path
 
 
 class NextAction(object):

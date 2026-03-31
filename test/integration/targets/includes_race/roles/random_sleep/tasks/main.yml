@@ -5,4 +5,4 @@
     sleep_time: "{{ 3 | random }}"
 
 - name: Do random sleep
-  shell: sleep "{{ sleep_time }}"
+  raw: sleep "{{ sleep_time }}"

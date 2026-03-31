@@ -11,7 +11,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible._internal._datatag._tags import SourceWasEncrypted
 from ansible.module_utils.common.text.converters import to_native
-from ansible.plugins.action import ActionBase
+from ansible.plugins.action import ActionBase, VariableLayer
 from ansible.utils.vars import combine_vars
 
 
@@ -146,6 +146,9 @@ class ActionModule(ActionBase):
             results = combine_vars(existing_variables, results, merge=merge_hashes)
 
         result['ansible_included_var_files'] = self.included_files
+        self.register_host_variables(results, VariableLayer.INCLUDE_VARS)
+        # until INJECT_FACTS_AS_VARS is removed, this prevent ansible_facts in the action result from getting added to the vars cache
+        self.register_host_variables({}, VariableLayer.CACHEABLE_FACT)
         result['ansible_facts'] = results
         result['_ansible_no_log'] = not self.show_content
 

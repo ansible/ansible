@@ -9,4 +9,4 @@ def do_echo():
 
     with patch_module_args():
         module = AnsibleModule(argument_spec={})
-        module.exit_json(args_in=p)
+        module.exit_json(args_in={k: v for k, v in p.items() if not k.startswith('_')})

@@ -3,39 +3,50 @@
   tasks:
   - name: Test ignore_unreachable for all items (pass)
     ping:
-    ignore_unreachable: "{{ item.ignore_unreachable }}"
+    ignore_unreachable: "{{ item }}"
     loop:
-      - ignore_unreachable: true
-      - ignore_unreachable: true
-    register: unreachable_ignored
+      - true
+      - false
+    register: ignore_first
 
-  - name: Test ignore_unreachable for second item (fail)
+  - name: Test ignore_unreachable for second item (pass)
     ping:
-    ignore_unreachable: "{{ item.ignore_unreachable }}"
+    ignore_unreachable: "{{ item }}"
     loop:
-      - ignore_unreachable: false
-      - ignore_unreachable: true
-    register: unreachable_first
+      - false
+      - true
+    register: ignore_second
 
-  - meta: clear_host_errors
-
-  - name: Test ignore_unreachable for first item (fail)
+  - name: Test ignore_unreachable for single item (fail)
     ping:
-    ignore_unreachable: "{{ item.ignore_unreachable }}"
+    ignore_unreachable: "{{ item }}"
     loop:
-      - ignore_unreachable: true
-      - ignore_unreachable: false
-    register: unreachable_last
+      - false
+    register: dont_ignore
 
+  - name: Run a task only as localhost
+    ping:
+    register: runs_on_localhost_only
+
+
+- hosts: localhost, nonexistent
+  gather_facts: false
+  tasks:
   - meta: clear_host_errors
 
   - assert:
       that:
-        - unreachable_ignored is not unreachable
-        - unreachable_first["results"][0] is unreachable
-        - unreachable_first["results"][-1] is not unreachable
-        - unreachable_first is unreachable
-        - unreachable_last["results"][-1] is unreachable
-        - unreachable_last["results"][0] is not unreachable
-        - unreachable_last is unreachable
-    when: inventory_hostname == 'nonexistent'
+        - ignore_first is unreachable
+        - ignore_first.results[0] is unreachable
+        - ignore_first.results[-1] is unreachable
+        - ignore_second is unreachable
+        - ignore_second.results[0] is unreachable
+        - ignore_second.results[-1] is unreachable
+        - dont_ignore is unreachable
+        - dont_ignore.results[0] is unreachable
+        - runs_on_localhost_only is undefined
+    when: inventory_hostname == "nonexistent"
+
+  - name: Indicate test passed (checked by grep after playbook runs)
+    debug:
+      msg: "{{ 'PASS' ~ 'ED' }}"
