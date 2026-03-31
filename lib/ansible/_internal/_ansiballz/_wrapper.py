@@ -240,13 +240,15 @@ def _ansiballz_main(
 
     encoded_params = params.encode()
 
-    # There's a race condition with the controller removing the
-    # remote_tmpdir and this module executing under async.  So we cannot
-    # store this in remote_tmpdir (use system tempdir instead)
+    # Uses scriptdir to ensure we stay on the common remote_tmp
     # Only need to use [ansible_module]_payload_ in the temp_path until we move to zipimport
     # (this helps ansible-test produce coverage stats)
     # IMPORTANT: The real path must be used here to ensure a remote debugger such as PyCharm (using pydevd) can resolve paths correctly.
-    temp_path = os.path.realpath(tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_'))
+    try:
+        temp_path = os.path.realpath(tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_', dir=scriptdir))
+    except OSError:
+        # fallback to system temp on permission error, normally due to becoming unprivileged user
+        temp_path = os.path.realpath(tempfile.mkdtemp(prefix='ansible_' + ansible_module + '_payload_'))
 
     try:
         zipped_mod = os.path.join(temp_path, 'ansible_' + ansible_module + '_payload.zip')
