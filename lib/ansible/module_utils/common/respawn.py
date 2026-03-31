@@ -5,15 +5,12 @@ from __future__ import annotations
 
 import collections.abc as _c
 import os
-import pathlib
 import subprocess
 import sys
 import typing as t
 
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.module_utils._internal._ansiballz import _respawn
-
-_ANSIBLE_PARENT_PATH = pathlib.Path(__file__).parents[3]
 
 
 def has_respawned():
@@ -42,31 +39,28 @@ def respawn_module(interpreter_path) -> t.NoReturn:
 
     # FUTURE: we need a safe way to log that a respawn has occurred for forensic/debug purposes
     payload = _respawn.create_payload()
-    stdin_read, stdin_write = os.pipe()
-    os.write(stdin_write, to_bytes(payload))
-    os.close(stdin_write)
-    rc = subprocess.call([interpreter_path, '--'], stdin=stdin_read)
+    rc = subprocess.run(
+        [interpreter_path, '--'],
+        input=to_bytes(payload),
+        check=False,
+    ).returncode
     sys.exit(rc)  # pylint: disable=ansible-bad-function
 
 
-def get_env_with_pythonpath() -> dict[str, str]:
-    """
-    Get an environment dict with PYTHONPATH set for Ansible library imports.
+def _create_probe_payload(module_names: list[str]) -> str:
+    """Create a probe payload that tests if modules can be imported."""
+    wrapper_code = sys.modules['__main__']._ansiballz_wrapper_source
+    zip_bytes = sys.modules['__main__']._ansiballz_zip_data
 
-    Sets PYTHONPATH to include the Ansible library root so modules can be
-    imported via 'python -m ansible.module_utils.X' even when running from
-    a zipfile (ansiballz).
+    payload = f'''{wrapper_code}
 
-    :returns: dict suitable for passing to subprocess as env parameter
-    """
-    pythonpath = os.getenv('PYTHONPATH', '')
+if __name__ == '__main__':
+    zip_data = {zip_bytes!r}
+    import sys
+    sys.exit(probe_imports(zip_data, {module_names!r}))
+'''
 
-    env = os.environ.copy()
-    env.update({
-        'PYTHONPATH': f'{_ANSIBLE_PARENT_PATH}:{pythonpath}'.rstrip(': ')
-    })
-
-    return env
+    return payload
 
 
 def probe_interpreters_for_module(
@@ -84,9 +78,6 @@ def probe_interpreters_for_module(
     FIXME environment description (do we want the utility method and/or stored location?)
     FIXME: describe module_name includes basic
     """
-    if env is None:
-        env = get_env_with_pythonpath()  # compatibility behavior
-
     if module_name is not None:
         if module_names:
             raise ValueError("The module_name and module_names arguments are mutually exclusive.")
@@ -96,22 +87,45 @@ def probe_interpreters_for_module(
     if not module_names:
         raise ValueError("No module names were specified.")
 
-    modules_string = ", ".join(module_names)
-    for interpreter_path in interpreter_paths:
-        if not os.path.exists(interpreter_path):
-            continue
-        try:
-            rc = subprocess.call(
-                [
-                    interpreter_path,
-                    '-c',
-                    f'import {modules_string}',
-                ],
-                env=env,
-            )
-            if rc == 0:
-                return interpreter_path
-        except Exception:
-            continue
+    # Check if any module requires ansible imports
+    needs_ansiballz = any(
+        name.startswith('ansible.') or name.startswith('ansible_collections.')
+        for name in module_names
+    )
+
+    if needs_ansiballz:
+        payload = _create_probe_payload(module_names)
+        for interpreter_path in interpreter_paths:
+            if not os.path.exists(interpreter_path):
+                continue
+            try:
+                rc = subprocess.run(
+                    [interpreter_path, '-'],
+                    input=to_bytes(payload),
+                    env=env,
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                ).returncode
+                if rc == 0:
+                    return interpreter_path
+            except Exception:
+                continue
+    else:
+        modules_string = ", ".join(module_names)
+        for interpreter_path in interpreter_paths:
+            if not os.path.exists(interpreter_path):
+                continue
+            try:
+                rc = subprocess.run(
+                    [interpreter_path, '-c', f'import {modules_string}'],
+                    env=env,
+                    check=False,
+                ).returncode
+                if rc == 0:
+                    return interpreter_path
+            except Exception:
+                continue
 
     return None

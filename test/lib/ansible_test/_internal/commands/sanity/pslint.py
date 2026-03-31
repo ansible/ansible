@@ -79,13 +79,8 @@ class PslintTest(SanityVersionNeutral):
         stdout = ''
 
         for cmd in cmds:
-            try:
-                stdout, stderr = run_command(args, cmd, env=env, capture=True)
-                status = 0
-            except SubprocessError as ex:
-                stdout = ex.stdout
-                stderr = ex.stderr
-                status = ex.status
+            stdout, stderr = run_command(args, cmd, env=env, capture=True)
+            status = 0
 
             if stderr:
                 raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
