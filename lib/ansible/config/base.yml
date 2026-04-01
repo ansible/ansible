@@ -1646,7 +1646,7 @@ GALAXY_COLLECTION_IMPORT_POLL_FACTOR:
     - name: ANSIBLE_GALAXY_COLLECTION_IMPORT_POLL_FACTOR
   version_added: "2.18"
 HOST_KEY_CHECKING:
-  # NOTE: constant not in use by ssh/paramiko plugins anymore, but they do support the same configuration sources
+  # NOTE: constant not in use by ssh plugin anymore, but it does support the same configuration sources
   # TODO: check non ssh connection plugins for use/migration
   name: Toggle host/key check
   default: True

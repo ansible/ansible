@@ -23,7 +23,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
-from ansible.playbook.attribute import Attribute, FieldAttribute, ConnectionFieldAttribute, NonInheritableFieldAttribute
+from ansible.playbook.attribute import Attribute, FieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
@@ -688,7 +688,7 @@ class Base(FieldAttributeBase):
     name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True)
 
     # connection/transport
-    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
     port = FieldAttribute(isa='int')
     remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
 

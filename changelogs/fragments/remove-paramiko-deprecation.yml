@@ -1,3 +1,6 @@
----
 removed_features:
-  - connection/paramiko - Remove the deprecated paramiko connection plugin (https://github.com/ansible/ansible/issues/86002).
+- >-
+  Removed deprecated ``ansible.builtin.paramiko`` connection plugin (https://github.com/ansible/ansible/issues/86002). Setting the ``connection`` keyword to ``persistent`` or ``smart`` no longer attempts to use ``paramiko``.
+deprecated_features:
+- >-
+  ``PluginLoader`` - Deprecate unused ``aliases`` attribute. Plugins in a collection should define aliases in the ``meta/runtime.yml`` file using the ``redirect`` field instead.
