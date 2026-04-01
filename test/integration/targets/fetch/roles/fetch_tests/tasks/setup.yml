@@ -8,11 +8,6 @@
       paths:
         - "{{ role_path }}/vars"
 
-- name: Work-around for locked users on Alpine
-  # see https://github.com/ansible/ansible/issues/68676
-  set_fact:
-    password: '*'
-  when: ansible_distribution == 'Alpine'
 
 - name: Create test user
   user:
