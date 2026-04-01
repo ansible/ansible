@@ -57,10 +57,12 @@ class AwsCloudProvider(CloudProvider):
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
-        aws_config_path = os.path.expanduser('~/.aws')
+        aws_config_file = os.path.expanduser('~/.aws/config')
 
-        if os.path.exists(aws_config_path) and isinstance(self.args.controller, OriginConfig):
-            raise ApplicationError('Rename "%s" or use the --docker or --remote option to isolate tests.' % aws_config_path)
+        if os.path.isfile(aws_config_file) and isinstance(self.args.controller, OriginConfig):
+            raise ApplicationError(
+                'Rename "%s" or use the --docker or --remote option to isolate tests.' % aws_config_file
+            )
 
         if not self._use_static_config():
             self._setup_dynamic()
@@ -75,16 +77,21 @@ class AwsCloudProvider(CloudProvider):
 
         response = aci.start()
 
-        if not self.args.explain:
-            credentials = response['aws']['credentials']
+        aws = response.get('aws', {})
+        credentials = aws.get('credentials')
 
+        if not credentials:
+            raise ApplicationError('Failed to obtain AWS credentials from AnsibleCoreCI.')
+
+        if not self.args.explain:
             values = dict(
                 ACCESS_KEY=credentials['access_key'],
                 SECRET_KEY=credentials['secret_key'],
                 SECURITY_TOKEN=credentials['session_token'],
-                REGION='us-east-1',
+                REGION=os.environ.get('AWS_REGION', 'us-east-1'),
             )
 
+            display.sensitive.add(values['ACCESS_KEY'])
             display.sensitive.add(values['SECRET_KEY'])
             display.sensitive.add(values['SECURITY_TOKEN'])
 
@@ -103,7 +110,9 @@ class AwsCloudEnvironment(CloudEnvironment):
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()
-        parser.read(self.config_path)
+
+        if not parser.read(self.config_path):
+            raise ApplicationError(f"Failed to read AWS config: {self.config_path}")
 
         ansible_vars: dict[str, t.Any] = dict(
             resource_prefix=self.resource_prefix,
@@ -129,6 +138,8 @@ class AwsCloudEnvironment(CloudEnvironment):
     def on_failure(self, target: IntegrationTarget, tries: int) -> None:
         """Callback to run when an integration target fails."""
         if not tries and self.managed:
-            display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '
-                           'https://docs.ansible.com/ansible/devel/collections/amazon/aws/docsite/dev_guidelines.html#aws-permissions-for-integration-tests'
-                           % target.name)
+            display.notice(
+                'If %s failed due to permissions, the IAM test policy may need to be updated. '
+                'https://docs.ansible.com/ansible/devel/collections/amazon/aws/docsite/dev_guidelines.html#aws-permissions-for-integration-tests'
+                % target.name
+            )
