@@ -113,7 +113,12 @@ try {
             $scriptInfo = Get-AnsibleScript -Name $scriptName
 
             if (Compare-PathFilterPattern -Patterns $coveragePathFilter -Path $scriptInfo.Path) {
-                $ast = [Parser]::ParseInput($scriptInfo.Script, [ref]$null, [ref]$null)
+                $parseErrors = $null
+                $ast = [Parser]::ParseInput($scriptInfo.Script, [ref]$null, [ref]$parseErrors)
+                if ($parseErrors) {
+                    $parseErrorText = $parseErrors -join "`n"
+                    throw "Failed to parse script '$($scriptInfo.Name)'`n$parseErrorText"
+                }
                 $covParams = @{
                     ScriptName = $scriptInfo.Name
                     ScriptBlockAst = $ast
