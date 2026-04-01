@@ -310,16 +310,16 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
         if patterns and not excludes:
             for p in patterns:
                 r = re.compile(p)
-                if r.match(f):
+                if r.fullmatch(f):
                     return True
 
         elif patterns and excludes:
             for p in patterns:
                 r = re.compile(p)
-                if r.match(f):
+                if r.fullmatch(f):
                     for e in excludes:
                         r = re.compile(e)
-                        if r.match(f):
+                        if r.fullmatch(f):
                             return False
                     return True
 
