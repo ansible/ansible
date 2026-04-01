@@ -32,6 +32,7 @@ DOCUMENTATION = """
 import time
 
 from ansible import constants as C
+from ansible._internal import _task
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.handler import Handler
 from ansible.playbook.included_file import IncludedFile
@@ -39,6 +40,8 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible._internal._templating._engine import TemplateEngine
 from ansible.utils.display import Display
+from ansible.executor.play_iterator import PlayIterator
+from ansible.playbook.play_context import PlayContext
 
 display = Display()
 
@@ -52,7 +55,7 @@ class StrategyModule(StrategyBase):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
 
-    def run(self, iterator, play_context):
+    def run(self, iterator: PlayIterator, play_context: PlayContext):  # type: ignore[override]
         """
         The "free" strategy is a bit more complex, in that it allows tasks to
         be sent to hosts as quickly as they can be processed. This means that
@@ -69,7 +72,7 @@ class StrategyModule(StrategyBase):
         # the last host to be given a task
         last_host = 0
 
-        result = self._tqm.RUN_OK
+        result = int(self._tqm.RUN_OK)
 
         # start with all workers being counted as being free
         workers_free = len(self._workers)
@@ -248,11 +251,14 @@ class StrategyModule(StrategyBase):
                     except AnsibleParserError:
                         raise
                     except AnsibleError as ex:
-                        # FIXME: send the error to the callback; don't directly write to display here
-                        display.error(ex)
                         for r in included_file._results:
-                            r._return_data['failed'] = True
-                            r._return_data['reason'] = str(ex)
+                            # RPFIX-9: FUTURE: do this better, instead of creating a throw-away UTR to merge onto the existing one
+                            utr = _task.UnifiedTaskResult._create_from_exception(ex, source_is_module=False)
+
+                            r.utr.failed = utr.failed
+                            r.utr.exception = utr.exception
+                            r.utr.msg = utr.msg
+
                             self._tqm._stats.increment('failures', r.host.name)
                             self._tqm.send_callback('v2_runner_on_failed', r)
                             failed_includes_hosts.add(r.host)

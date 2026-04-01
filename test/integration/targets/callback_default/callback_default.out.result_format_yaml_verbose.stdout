@@ -5,6 +5,7 @@ PLAY [testhost] ****************************************************************
 TASK [Changed task] ************************************************************
 changed: [testhost] => 
     changed: true
+    changed_when_result: true
     cmd:
     - echo
     - foo
@@ -22,6 +23,7 @@ changed: [testhost] =>
 TASK [Ok task] *****************************************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     cmd:
     - echo
     - foo
@@ -129,7 +131,7 @@ changed: [testhost] => (item=foo-3) =>
 TASK [debug loop] **************************************************************
 changed: [testhost] => (item=debug-1) => 
     msg: debug-1
-[ERROR]: Task failed: Action failed: debug-2
+[ERROR]: Task failed: Action failed: A 'failed_when' expression evaluated to 'True'.
 Origin: TEST_PATH/test.yml:38:7
 
 36
@@ -217,6 +219,7 @@ changed: [testhost] =>
 TASK [replace] *****************************************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     msg: 1 replacements made
     rc: 0
 
@@ -262,6 +265,7 @@ changed: [testhost] =>
 RUNNING HANDLER [Test handler 2] ***********************************************
 ok: [testhost] => 
     changed: false
+    changed_when_result: false
     cmd:
     - echo
     - foo

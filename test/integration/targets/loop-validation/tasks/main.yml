@@ -1,0 +1,76 @@
+- name: Invalid loop_control.loop_var value
+  debug:
+  loop: [1]
+  loop_control:
+    loop_var: "0"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: |
+      result.msg == "Invalid 'loop_var': Invalid variable name '0'."
+
+- name: Invalid loop_control.index_var value
+  debug:
+  loop: [1]
+  loop_control:
+    index_var: "0"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: |
+      result.msg == "Invalid 'index_var': Invalid variable name '0'."
+
+- name: Invalid loop_control.pause value
+  debug:
+  loop: [1]
+  loop_control:
+    pause: not-a-number
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: |
+      result.msg == "Error processing keyword 'pause': The value 'not-a-number' could not be converted to 'float'."
+
+- name: Invalid loop_control.extended value
+  debug:
+  loop: [1]
+  loop_control:
+    extended: not-a-bool
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: |
+      result.msg == "Error processing keyword 'extended': The value 'not-a-bool' could not be converted to 'bool'."
+
+- name: Invalid loop_control.extended_allitems value
+  debug:
+  loop: [1]
+  loop_control:
+    extended_allitems: not-a-bool
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: |
+      result.msg == "Error processing keyword 'extended_allitems': The value 'not-a-bool' could not be converted to 'bool'."
+
+- name: Invalid loop_control.break_when value
+  debug:
+  loop: [1]
+  loop_control:
+    break_when:
+      nope: sorry
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - result.msg == "One or more items failed"
+      - result is failed
+      - result.results[0].break_when_result == "Conditional expressions must be strings."
+      - result.results[0].msg == "Hello world!"
+      - result.results[0] is failed

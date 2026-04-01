@@ -21,6 +21,7 @@ from ansible.errors import AnsibleActionFail
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import validate_variable_name
+from . import VariableLayer
 
 
 class ActionModule(ActionBase):
@@ -50,8 +51,14 @@ class ActionModule(ActionBase):
 
         if facts:
             # just as _facts actions, we don't set changed=true as we are not modifying the actual host
+            if cacheable:
+                self.register_host_variables(facts, VariableLayer.CACHEABLE_FACT)
+            else:
+                self.register_host_variables({}, VariableLayer.CACHEABLE_FACT)  # disable legacy behavior of registering 'ansible_facts' from result dict
+
+            self.register_host_variables(facts, VariableLayer.EPHEMERAL_FACT)
+
             result['ansible_facts'] = facts
-            result['_ansible_facts_cacheable'] = cacheable
         else:
             # this should not happen, but JIC we get here
             raise AnsibleActionFail('Unable to create any variables with provided arguments')

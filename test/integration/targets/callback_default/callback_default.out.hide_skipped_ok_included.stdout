@@ -28,7 +28,7 @@ TASK [debug loop] **************************************************************
 changed: [testhost] => (item=debug-1) => {
     "msg": "debug-1"
 }
-[ERROR]: Task failed: Action failed: debug-2
+[ERROR]: Task failed: Action failed: A 'failed_when' expression evaluated to 'True'.
 Origin: TEST_PATH/test.yml:38:7
 
 36

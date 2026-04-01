@@ -1,0 +1,176 @@
+- name: Test equivalence of registration, plain
+  shell: echo hello
+  register: plain_register
+
+- name: Test equivalence of projection, project
+  shell: echo hello
+  register:
+    registered_var: _task.result
+
+- name: Assert equivalence of plain registration and base-case registration
+  assert:
+    that:
+      - plain_register.stdout == registered_var.stdout
+
+- name: Test equivalence of registration, plain, in loop
+  shell: echo {{item}}
+  register: plain_loop_result
+  loop: [ 1, 2 ]
+
+- name: Test equivalence of registration, project, in loop
+  shell: echo {{item}}
+  register:
+    registered_var_in_loop: _task.loop_result
+  loop: [ 1, 2 ]
+
+- name: Assert equivalence of plain registration and project
+  assert:
+    that:
+      - plain_loop_result.results[0].stdout == registered_var_in_loop.results[0].stdout
+      - plain_loop_result.results[1].stdout == registered_var_in_loop.results[1].stdout
+
+- name: Check registration of loop
+  shell: echo {{ item }}
+  register:
+    first_echo: _task.loop_result.results[0].stdout | default("foo")
+    second_echo: _task.loop_result.results[1].stdout | default("foo")
+    third_echo: _task.loop_result.results[2].stdout | default("foo")
+    task_loop_result: _task.loop_result
+  loop: [ 1, 2, 3 ]
+
+- name: Assert correct loop registration
+  assert:
+    that:
+      - first_echo == "1"
+      - second_echo == "2"
+      - third_echo == "3"
+
+- name: Check changed_when in loop
+  shell: echo {{ item }}
+  loop: [ 1, 2, 3, 4 ]
+  changed_when: _task.loop_result.results | length <= 1
+  register:
+    first_echo: _task.loop_result.results[0] | default("foo")
+    second_echo: _task.loop_result.results[1] | default("foo")
+    third_echo: _task.loop_result.results[2] | default("foo")
+    fourth_echo: _task.loop_result.results[3] | default("foo")
+
+- name: view
+  debug:
+    var: "{{ item }}"
+  loop:
+    - first_echo
+    - second_echo
+    - third_echo
+    - fourth_echo
+
+- name: Assert task results correctly changed
+  assert:
+    that:
+      - first_echo is changed
+      - second_echo is not changed
+      - third_echo is not changed
+      - fourth_echo is not changed
+
+- name: Check failed_when in loop
+  shell: echo {{ item }}; exit 1
+  loop: [ 1, 2, 3 ]
+  failed_when: _task.loop_result.results | length == 2
+  register:
+    first_echo: _task.loop_result.results[0] | default("foo")
+    second_echo: _task.loop_result.results[1] | default("foo")
+    third_echo: _task.loop_result.results[2] | default("foo")
+  ignore_errors: true
+
+- name: Assert task results correctly failed
+  assert:
+    that:
+      - first_echo is not failed
+      - second_echo is failed
+      - third_echo is not failed
+
+- name: Chained registrations
+  debug:
+    msg: Chained!
+  register:
+    one: _task.result
+    two: one
+    three: two
+
+- name: Verify chained registrations
+  assert:
+    that:
+      - one.msg == "Chained!"
+      - one == two
+      - two == three
+
+- name: Skipped task
+  debug:
+  when: no
+  register:
+    skipped_task: _task.result
+
+- name: Skipped only item
+  debug:
+  loop: [1]
+  when: no
+  register:
+    skipped_only_item: _task.loop_result
+
+- name: Skipped all items
+  debug:
+  loop: [1, 2, 3]
+  when: no
+  register:
+    skipped_all_items: _task.loop_result
+
+- name: Skipped first item
+  debug:
+  loop: [1, 2, 3]
+  when: item != 1
+  register:
+    skipped_first_item: _task.loop_result
+
+- name: Skipped middle item
+  debug:
+  loop: [1, 2, 3]
+  when: item != 2
+  register:
+    skipped_middle_item: _task.loop_result
+
+- name: Skipped last item
+  debug:
+  loop: [1, 2, 3]
+  when: item != 3
+  register:
+    skipped_last_item: _task.loop_result
+
+- name: Verify register works on skipped tasks and items
+  assert:
+    that:
+      - skipped_task is skipped
+      - skipped_only_item is skipped
+
+      - skipped_all_items is skipped
+      - skipped_all_items.results | length == 3
+      - skipped_all_items.results[0] is skipped
+      - skipped_all_items.results[1] is skipped
+      - skipped_all_items.results[2] is skipped
+
+      - skipped_first_item is not skipped
+      - skipped_first_item.results | length == 3
+      - skipped_first_item.results[0] is skipped
+      - skipped_first_item.results[1] is not skipped
+      - skipped_first_item.results[2] is not skipped
+
+      - skipped_middle_item is not skipped
+      - skipped_middle_item.results | length == 3
+      - skipped_middle_item.results[0] is not skipped
+      - skipped_middle_item.results[1] is skipped
+      - skipped_middle_item.results[2] is not skipped
+
+      - skipped_last_item is not skipped
+      - skipped_last_item.results | length == 3
+      - skipped_last_item.results[0] is not skipped
+      - skipped_last_item.results[1] is not skipped
+      - skipped_last_item.results[2] is skipped

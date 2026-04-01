@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from collections import abc as _c
-
+from ansible._internal import _task
 from ansible._internal._errors._alarm_timeout import AnsibleTimeoutError
 from ansible._internal._errors._error_utils import ContributesToTaskResult
 from ansible.module_utils.datatag import deprecate_value
@@ -14,8 +13,7 @@ class TaskTimeoutError(AnsibleTimeoutError, ContributesToTaskResult):
     This exception provides a result dictionary via the ContributesToTaskResult mixin.
     """
 
-    @property
-    def result_contribution(self) -> _c.Mapping[str, object]:
+    def as_task_result(self, utr: _task.UnifiedTaskResult) -> _task.UnifiedTaskResult:
         help_text = "Configure `DISPLAY_TRACEBACK` to see a traceback on timeout errors."
 
         frame = deprecate_value(
@@ -25,4 +23,6 @@ class TaskTimeoutError(AnsibleTimeoutError, ContributesToTaskResult):
             version="2.23",
         )
 
-        return dict(timedout=dict(frame=frame, period=self.timeout))
+        utr.result_data.update(timedout=dict(frame=frame, period=self.timeout))
+
+        return utr

@@ -34,6 +34,7 @@ from ansible._internal._json import EncryptedStringBehavior
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible._internal._datatag._tags import Origin
@@ -45,6 +46,8 @@ from ansible.vars.plugins import get_vars_from_inventory_sources
 
 if t.TYPE_CHECKING:
     from ansible.plugins.inventory import BaseInventoryPlugin
+    from ansible.inventory.host import Host
+    from ansible._internal._task import AddHost, AddGroup
 
 display = Display()
 
@@ -141,10 +144,10 @@ def split_host_pattern(pattern):
     return [p.strip() for p in patterns if p.strip()]
 
 
-class InventoryManager(object):
+class InventoryManager:
     """ Creates and manages inventory """
 
-    def __init__(self, loader, sources=None, parse=True, cache=True):
+    def __init__(self, loader: DataLoader, sources: list[str] | str | None = None, parse: bool = True, cache: bool = True) -> None:
 
         # base objects
         self._loader = loader
@@ -155,8 +158,8 @@ class InventoryManager(object):
         self._subset = None
 
         # caches
-        self._hosts_patterns_cache = {}  # resolved full patterns
-        self._pattern_cache = {}  # resolved individual patterns
+        self._hosts_patterns_cache: dict[tuple[str, ...], list[Host]] = {}  # resolved full patterns
+        self._pattern_cache: dict[str, list[Host]] = {}  # resolved individual patterns
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
@@ -170,8 +173,8 @@ class InventoryManager(object):
         if parse:
             self.parse_sources(cache=cache)
 
-        self._cached_dynamic_hosts = []
-        self._cached_dynamic_grouping = []
+        self._cached_dynamic_hosts: list[AddHost] = []
+        self._cached_dynamic_grouping: list[tuple[str, AddGroup]] = []
 
     @property
     def localhost(self):
@@ -356,11 +359,12 @@ class InventoryManager(object):
         self.clear_caches()
         self._inventory = InventoryData()
         self.parse_sources(cache=False)
-        for host in self._cached_dynamic_hosts:
-            self.add_dynamic_host(host, {'refresh': True})
-        for host, result in self._cached_dynamic_grouping:
-            result['refresh'] = True
-            self.add_dynamic_group(host, result)
+
+        for add_host in self._cached_dynamic_hosts:
+            self.add_dynamic_host(add_host, already_in_cache=True)
+
+        for host_name, add_group in self._cached_dynamic_grouping:
+            self.add_dynamic_group(host_name, add_group, already_in_cache=True)
 
     def _match_list(self, items, pattern_str):
         # compile patterns
@@ -667,86 +671,91 @@ class InventoryManager(object):
     def clear_pattern_cache(self):
         self._pattern_cache = {}
 
-    def add_dynamic_host(self, host_info, result_item):
+    def add_dynamic_host(self, host_info: AddHost, already_in_cache: bool = False) -> bool:
         """
         Helper function to add a new host to inventory based on a task result.
         """
-
         changed = False
-        if not result_item.get('refresh'):
+
+        if not already_in_cache:
             self._cached_dynamic_hosts.append(host_info)
 
-        if host_info:
-            host_name = host_info.get('host_name')
+        host_name = host_info.host_name
 
-            # Check if host in inventory, add if not
-            if host_name not in self.hosts:
-                self.add_host(host_name, 'all')
+        # Check if host in inventory, add if not
+        if host_name not in self.hosts:
+            self.add_host(host_name, 'all')
+            changed = True
+
+        new_host = self.hosts.get(host_name)
+
+        # Set/update the vars for this host
+        new_host_vars = new_host.get_vars()
+        new_host_combined_vars = combine_vars(new_host_vars, host_info.host_vars or {})
+
+        if new_host_vars != new_host_combined_vars:
+            new_host.vars = new_host_combined_vars
+            changed = True
+
+        new_groups = host_info.parent_group_names or []
+
+        for group_name in new_groups:
+            if group_name not in self.groups:
+                group_name = self._inventory.add_group(group_name)
                 changed = True
-            new_host = self.hosts.get(host_name)
 
-            # Set/update the vars for this host
-            new_host_vars = new_host.get_vars()
-            new_host_combined_vars = combine_vars(new_host_vars, host_info.get('host_vars', dict()))
-            if new_host_vars != new_host_combined_vars:
-                new_host.vars = new_host_combined_vars
+            new_group = self.groups[group_name]
+
+            if new_group.add_host(self.hosts[host_name]):
                 changed = True
 
-            new_groups = host_info.get('groups', [])
-            for group_name in new_groups:
-                if group_name not in self.groups:
-                    group_name = self._inventory.add_group(group_name)
-                    changed = True
-                new_group = self.groups[group_name]
-                if new_group.add_host(self.hosts[host_name]):
-                    changed = True
+        # reconcile inventory, ensures inventory rules are followed
+        if changed:
+            self.reconcile_inventory()
 
-            # reconcile inventory, ensures inventory rules are followed
-            if changed:
-                self.reconcile_inventory()
+        return changed
 
-            result_item['changed'] = changed
-
-    def add_dynamic_group(self, host, result_item):
+    def add_dynamic_group(self, host_name: str, group_info: AddGroup, already_in_cache: bool = False) -> bool:
         """
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
         """
-
         changed = False
 
-        if not result_item.get('refresh'):
-            self._cached_dynamic_grouping.append((host, result_item))
+        if not already_in_cache:
+            self._cached_dynamic_grouping.append((host_name, group_info))
 
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        real_host = self.hosts.get(host.name)
+        real_host = self.hosts.get(host_name)
+
         if real_host is None:
-            if host.name == self.localhost.name:
+            if host_name == self.localhost.name:
                 real_host = self.localhost
-            elif not result_item.get('refresh'):
-                raise AnsibleError('%s cannot be matched in inventory' % host.name)
+            elif not already_in_cache:  # RPFIX-5: BUG: pre-existing issue -- this error check probably needs to happen before mutation has already occurred
+                raise AnsibleError('%s cannot be matched in inventory' % host_name)
             else:
                 # host was removed from inventory during refresh, we should not process
-                return
+                return False
 
-        group_name = result_item.get('add_group')
-        parent_group_names = result_item.get('parent_groups', [])
+        group_name = group_info.group_name
 
         if group_name not in self.groups:
             group_name = self.add_group(group_name)
 
-        for name in parent_group_names:
+        for name in group_info.parent_group_names or []:
             if name not in self.groups:
                 # create the new group and add it to inventory
                 self.add_group(name)
                 changed = True
 
         group = self._inventory.groups[group_name]
-        for parent_group_name in parent_group_names:
+
+        for parent_group_name in group_info.parent_group_names or []:
             parent_group = self.groups[parent_group_name]
             new = parent_group.add_child_group(group)
+
             if new and not changed:
                 changed = True
 
@@ -759,7 +768,7 @@ class InventoryManager(object):
         if changed:
             self.reconcile_inventory()
 
-        result_item['changed'] = changed
+        return changed
 
 
 class _InventoryDataWrapper(_wrapt.ObjectProxy):

@@ -29,6 +29,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_m
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
 from ansible._internal._templating._engine import TemplateEngine
+from ansible._internal import _task
 
 display = Display()
 
@@ -186,7 +187,7 @@ class FieldAttributeBase:
 
     def get_ds(self):
         try:
-            return getattr(self, '_ds')
+            return self._ds
         except AttributeError:
             return None
 
@@ -234,7 +235,7 @@ class FieldAttributeBase:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
                                 "The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds()
+                                " however the incoming data structure is a %s" % (name, type(value)), obj=value
                             )
 
         self._validated = True
@@ -524,7 +525,7 @@ class FieldAttributeBase:
         setattr(self, name, value)
         return value
 
-    def post_validate(self, templar):
+    def post_validate(self, templar: TemplateEngine) -> None:
         """
         we can't tell that everything is of the right type until we have
         all the variables.  Run basic types (from isa) as well as
@@ -722,8 +723,9 @@ class Base(FieldAttributeBase):
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []  # type: list[str]
 
-    def update_result_no_log(self, templar: TemplateEngine, result: dict[str, t.Any]) -> None:
+    def update_result_no_log(self, templar: TemplateEngine, utr: _task.UnifiedTaskResult) -> None:
         """Set the post-validated no_log value for the result, falling back to a default on validation/templating failure with a warning."""
+        # RPFIX-9: FUTURE: consolidate this into UTR
 
         if self.finalized:
             no_log = self.no_log
@@ -734,15 +736,9 @@ class Base(FieldAttributeBase):
                 display.error_as_warning('Invalid no_log value for task, output will be masked.', exception=ex)
                 no_log = True
 
-        result_no_log = result.get('_ansible_no_log', False)
+        result_no_log = utr.no_log
 
-        if not isinstance(result_no_log, bool):
-            display.warning(f'Invalid _ansible_no_log value of type {type(result_no_log).__name__!r} in task result, output will be masked.')
-            no_log = True
-
-        no_log = no_log or result_no_log
-
-        result.update(_ansible_no_log=no_log)
+        utr.no_log = no_log or result_no_log
 
     def get_path(self) -> str:
         """ return the absolute path of the playbook object and its line number """

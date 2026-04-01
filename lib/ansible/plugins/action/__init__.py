@@ -17,10 +17,9 @@ import tempfile
 import typing as t
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 from ansible import constants as C
-from ansible._internal._errors import _captured, _error_utils
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module, _BuiltModule
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
@@ -29,15 +28,14 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.common.json import Direction, get_module_encoder, get_module_decoder
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
-from ansible.vars.clean import remove_internal_keys
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible import _internal
 from ansible._internal._templating import _engine
-
+from ansible._internal import _task
 from .. import _AnsiblePluginInfoMixin
 
 display = Display()
@@ -48,6 +46,8 @@ if t.TYPE_CHECKING:
     from ansible.playbook.task import Task
     from ansible.plugins.connection import ConnectionBase
     from ansible.template import Templar
+
+VariableLayer = _task.VariableLayer  # public API
 
 
 def _validate_utf8_json(d):
@@ -60,6 +60,14 @@ def _validate_utf8_json(d):
     elif isinstance(d, (list, tuple)):
         for o in d:
             _validate_utf8_json(o)
+
+
+class LowLevelExecuteCommandResult(t.TypedDict):
+    rc: int
+    stdout: str
+    stdout_lines: list[str]
+    stderr: str
+    stderr_lines: list[str]
 
 
 class ActionBase(ABC, _AnsiblePluginInfoMixin):
@@ -205,6 +213,56 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         """
         if force or not self._task.async_val:
             self._remove_tmp_path(self._connection._shell.tmpdir)
+
+    @_internal.experimental
+    def add_host(
+        self,
+        host_name: str,
+        *,
+        host_vars: dict[str, object] | None = None,
+        parent_group_names: list[str] | None = None,
+    ) -> bool:
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Add the given host to inventory.
+        """
+        return _task.TaskContext.current().inventory_rpc_client.add_host(_task.AddHost(
+            host_name=host_name,
+            host_vars=host_vars,
+            parent_group_names=parent_group_names,
+        ))
+
+    @_internal.experimental
+    def add_group(
+        self,
+        group_name: str,
+        *,
+        parent_group_names: list[str] | None = None,
+    ) -> bool:
+        """
+        EXPERIMENTAL: Unstable API subject to change at any time without notice.
+        Add the given group to inventory.
+        """
+        task_ctx = _task.TaskContext.current()
+        host_name = task_ctx.host_name
+
+        return task_ctx.inventory_rpc_client.add_group(host_name, _task.AddGroup(
+            group_name=group_name,
+            parent_group_names=parent_group_names,
+        ))
+
+    def register_host_variables(self, variables: dict[str, object], layer: VariableLayer = VariableLayer.REGISTER_VARS) -> None:
+        """
+        Register the given variables for the current host at the specified variable precedence layer.
+        Calling this method more than once for the same layer will override any previous value for the currently executing action.
+        """
+        self.__get_pending_changes().register_host_variables[layer] = variables
+
+    def __get_pending_changes(self) -> _task.PendingChanges:
+        if self._supports_async:
+            raise RuntimeError('Actions that support async cannot record pending changes.')
+
+        return _task.TaskContext.current().pending_changes
 
     @classmethod
     @contextlib.contextmanager
@@ -1029,8 +1087,17 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
-                        ignore_unknown_opts: bool = False):
+    def _execute_module(
+        self,
+        module_name: str | None = None,
+        module_args: dict[str, object] | None = None,
+        tmp: str | None = None,
+        task_vars: dict[str, object] | None = None,
+        persist_files: bool = False,
+        delete_remote_tmp: bool | None = None,
+        wrap_async: bool = False,
+        ignore_unknown_opts: bool = False,
+    ) -> dict[str, object]:
         """
         Transfer and run a module along with its arguments.
         """
@@ -1225,53 +1292,34 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         )
 
         # parse the main result
-        data = self._parse_returned_data(res, module_bits.serialization_profile)
+        utr = self._parse_returned_data(res, module_bits.serialization_profile)
 
         # NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
         # get internal info before cleaning
-        if data.pop("_ansible_suppress_tmpdir_delete", False):
+        if utr.suppress_tmpdir_delete:
             self._cleanup_remote_tmp = False
 
-        # NOTE: dnf returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
-        if 'results' in data and (not isinstance(data['results'], Sequence) or isinstance(data['results'], str)):
-            data['ansible_module_results'] = data['results']
-            del data['results']
-            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
-
         # remove internal keys
-        remove_internal_keys(data)
+        utr.remove_internal_keys()
 
         if wrap_async:
             # async_wrapper will clean up its tmpdir on its own so we want the controller side to
             # forget about it now
             self._connection._shell.tmpdir = None
 
-            # FIXME: for backwards compat, figure out if still makes sense
-            data['changed'] = True
-
-        # pre-split stdout/stderr into lines if needed
-        if 'stdout' in data and 'stdout_lines' not in data:
-            # if the value is 'False', a default won't catch it.
-            txt = data.get('stdout', None) or u''
-            data['stdout_lines'] = txt.splitlines()
-        if 'stderr' in data and 'stderr_lines' not in data:
-            # if the value is 'False', a default won't catch it.
-            txt = data.get('stderr', None) or u''
-            data['stderr_lines'] = txt.splitlines()
+            # RPFIX-9: FUTURE: for backward compat (pre-RP), figure out if still makes sense
+            utr.changed = True
 
         # propagate interpreter discovery results back to the controller
         if self._discovered_interpreter_key:
-            if data.get('ansible_facts') is None:
-                data['ansible_facts'] = {}
-
-            data['ansible_facts'][self._discovered_interpreter_key] = self._discovered_interpreter
+            utr.set_fact(self._discovered_interpreter_key, self._discovered_interpreter)
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
-        return data
+        return utr.as_result_dict(for_round_trip=True)
 
-    def _parse_returned_data(self, res: dict[str, t.Any], profile: str) -> dict[str, t.Any]:
+    def _parse_returned_data(self, res: LowLevelExecuteCommandResult, profile: str) -> _task.UnifiedTaskResult:
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', ''), objects_only=True)
+            filtered_output, warnings = _filter_non_json_lines(res['stdout'], objects_only=True)
 
             for w in warnings:
                 display.warning(w)
@@ -1280,9 +1328,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
             data = json.loads(filtered_output, cls=decoder)
 
-            _captured.AnsibleModuleCapturedError.normalize_result_exception(data)
-
-            data.update(_ansible_parsed=True)  # this must occur after normalize_result_exception, since it checks the type of data to ensure it's a dict
+            utr = _task.UnifiedTaskResult.from_module_result_dict(data)
+            utr.ansible_parsed = True  # this must occur after normalize_result_exception, since it checks the type of data to ensure it's a dict
         except ValueError as ex:
             message = "Module result deserialization failed."
             help_text = ""
@@ -1294,7 +1341,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 # see: https://github.com/ansible/ansible/pull/53534
                 not_found_err_re = re.compile(rf'{re.escape(interpreter)}: (?:No such file or directory|not found|command not found)')
 
-                if not_found_err_re.search(res.get('stderr', '')) or not_found_err_re.search(res.get('stdout', '')):
+                if not_found_err_re.search(res['stderr']) or not_found_err_re.search(res['stdout']):
                     message = f"The module interpreter {interpreter!r} was not found."
                     help_text = 'Consider overriding the configured interpreter path for this host. '
                     include_cause_message = False  # cause context *might* be useful in the traceback, but the JSON deserialization failure message is not
@@ -1314,19 +1361,13 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
                 raise error from ex
             except AnsibleError as ansible_ex:
-                sentinel = object()
+                utr = _task.UnifiedTaskResult.create_from_module_exception(ansible_ex)
+                utr.ansible_parsed = False
+                utr.module_stdout = res['stdout']
+                utr.module_stderr = res['stderr']
+                utr.rc = res['rc']
 
-                data = _error_utils.result_dict_from_exception(ansible_ex)
-                data.update(
-                    _ansible_parsed=False,
-                    module_stdout=res.get('stdout', ''),
-                    module_stderr=res.get('stderr', sentinel),
-                    rc=res.get('rc', sentinel),
-                )
-
-                data = {k: v for k, v in data.items() if v is not sentinel}
-
-        return data
+        return utr
 
     # FIXME: move to connection base
     def _low_level_execute_command(
@@ -1338,7 +1379,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         encoding_errors: str = 'surrogate_then_replace',
         chdir: str | None = None,
         process_result: Callable[[int, bytes, bytes], tuple[int, bytes, bytes]] | None = None,
-    ):
+    ) -> LowLevelExecuteCommandResult:
         """
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to

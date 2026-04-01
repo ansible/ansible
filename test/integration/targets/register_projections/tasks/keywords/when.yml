@@ -1,0 +1,69 @@
+- name: Use register projections in 'when' without a loop
+  debug:
+  # A non-loop task cannot use registered values in 'when', since register occurs after the action runs.
+  when: when_rp | default(1) == 1
+  register:
+    when_rp: "2"
+    when_result: _task.result
+
+- name: Verify results
+  assert:
+    that:
+      - when_result.msg == "Hello world!"
+
+- name: Use register projections in 'when' with a loop
+  debug:
+  loop: [1, 2, 3, 4, 5, 6]
+  when: when_loop_rp | default(0) in (1, 3)
+  register:
+    when_loop_rp: _task.loop_result.results | length
+    when_loop_rp_results: _task.loop_result.results
+    when_loop_rp_item: item
+
+- name: Verify results
+  assert:
+    that:
+      - when_loop_rp == 6
+      - when_loop_rp_item == 6
+      # Results are recorded after the action runs, but 'when' is evaluated before.
+      # That means the 2nd and 4th loop items are executed, since 'when' does not see the results from the current item.
+      - when_loop_rp_results[0] is skipped
+      - when_loop_rp_results[1] is not skipped
+      - when_loop_rp_results[2] is skipped
+      - when_loop_rp_results[3] is not skipped
+      - when_loop_rp_results[4] is skipped
+      - when_loop_rp_results[5] is skipped
+
+- name: Use '_task.result' in 'when' with a loop on the first item
+  debug:
+  loop: [1, 2, 3]
+  # On the first loop iteration, '_task.result' is not yet available, so a default needs to be provided.
+  when: |
+    (_task.result | default({"msg": "First!"})).get("msg") != "First!"
+  register: result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.results | length == 3
+      - result.results[0] is skipped
+      - result.results[1] is not skipped
+      - result.results[2] is not skipped
+
+- name: Use '_task.result' in 'when' with a loop to access the previous item
+  debug:
+  loop: [1, 2, 3, 4, 5]
+  # This 'when' expression consults the previous item's results.
+  # As a result, alternating items are skipped, starting with the first item.
+  when: _task.result | default({}) is skipped
+  register: result
+
+- name: Verify the result
+  assert:
+    that:
+      - result.results | length == 5
+      - result.results[0] is skipped
+      - result.results[1] is not skipped
+      - result.results[2] is skipped
+      - result.results[3] is not skipped
+      - result.results[4] is skipped

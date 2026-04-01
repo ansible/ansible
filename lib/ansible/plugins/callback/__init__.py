@@ -509,7 +509,7 @@ class CallbackBase(AnsiblePlugin):
         if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
         else:
-            item = result.get('_ansible_item_label', result.get('item'))
+            item = result.get('_ansible_item_label', result.get('item'))  # RPFIX-9: FUTURE: this default shouldn't be here
         return item
 
     def _process_items(self, result: CallbackTaskResult) -> None:

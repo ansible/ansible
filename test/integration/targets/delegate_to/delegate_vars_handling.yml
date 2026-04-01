@@ -31,7 +31,7 @@
       set_fact:
          ansible_host: 127.0.0.1
          ansible_connection: ssh
-         ansible_ssh_common_args: 'MEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE'
+         ansible_ssh_port: 9876
          ansible_connection_timeout: 5
 
     - name: fail to ping with bad args
