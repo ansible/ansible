@@ -6,13 +6,16 @@ parameters:
   # Each item in the list must contain a "job" and "name" key.
   - name: jobs
     type: object
+  - name: jobTimeoutInMinutes
+    type: number
+    default: 65
 
 jobs:
   - ${{ each job in parameters.jobs }}:
     - job: test_${{ replace(replace(replace(replace(job.test, '/', '_'), '.', '_'), '-', '_'), '@', '_') }}
       displayName: ${{ job.name }}
       container: $[ variables.defaultContainer ]
-      timeoutInMinutes: 65
+      timeoutInMinutes: ${{ parameters.jobTimeoutInMinutes }}
       workspace:
         clean: all
       steps:

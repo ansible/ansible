@@ -1,0 +1,2 @@
+minor_changes:
+  - CI: allow configuring Azure Pipelines test job timeouts via template parameter.
