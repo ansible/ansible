@@ -175,37 +175,24 @@ class Play(Base, Taggable, CollectionSearch):
 
         return super(Play, self).preprocess_data(ds)
 
-    # DTFIX-FUTURE: these do nothing but augment the exception message; DRY and nuke
+    def _load(self, attr: str, ds: object) -> list[Block]:
+        """
+        Loads a list of blocks from a list which may be mixed tasks/blocks.
+        Bare tasks outside of a block are given an implicit block.
+        """
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError as ex:
+            raise AnsibleParserError(f"A malformed block was encountered while loading {attr}.", obj=self._ds) from ex
 
     def _load_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_pre_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_post_tasks(self, attr, ds):
-        """
-        Loads a list of blocks from a list which may be mixed tasks/blocks.
-        Bare tasks outside of a block are given an implicit block.
-        """
-        try:
-            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
-        except AssertionError as ex:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks.", obj=self._ds) from ex
+        return self._load(attr, ds)
 
     def _load_handlers(self, attr, ds):
         """
