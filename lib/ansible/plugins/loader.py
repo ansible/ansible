@@ -56,7 +56,7 @@ import importlib.util
 if t.TYPE_CHECKING:
     from ansible.plugins.cache import BaseCacheModule
 
-_PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
+_PLUGIN_FILTERS = {}  # type: dict[str, t.DefaultDict[str, frozenset]]
 display = Display()
 
 get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
@@ -746,9 +746,14 @@ class PluginLoader:
         plugin_load_context.redirect_list.append(name)
         plugin_load_context.resolved = False
 
-        if name in _PLUGIN_FILTERS[self.package]:
-            plugin_load_context.exit_reason = '{0} matched a defined plugin filter'.format(name)
-            return plugin_load_context
+        if self.package in C.FILTERABLE_PLUGINS:
+            if name in _PLUGIN_FILTERS[self.package]['reject']:
+                plugin_load_context.exit_reason = f'{name} rejected due to the plugin filter'
+                return plugin_load_context
+
+            if _PLUGIN_FILTERS[self.package]['allow'] and name not in _PLUGIN_FILTERS[self.package]['allow']:
+                plugin_load_context.exit_reason = f'{name} rejected as it is not in the plugin filter'
+                return plugin_load_context
 
         if mod_type:
             suffix = mod_type
@@ -1174,10 +1179,14 @@ class PluginLoader:
             else:
                 ref_name = fqcn
 
-            if not is_j2 and basename in _PLUGIN_FILTERS[self.package]:
-                # j2 plugins get processed in own class, here they would just be container files
-                display.debug("'%s' skipped due to a defined plugin filter" % basename)
-                continue
+            if not is_j2 :
+                if basename in _PLUGIN_FILTERS[self.package]['reject']:
+                    # j2 plugins get processed in own class, here they would just be container files
+                    display.debug(f"'{basename}' rejected due to a defined plugin filter")
+                    continue
+                if _PLUGIN_FILTERS[self.package]['allow'] and basename not in _PLUGIN_FILTERS[self.package]['allow']:
+                    display.debug(f"'{basename}' is not allwoed due to a defined plugin filter")
+                    continue
 
             if basename == '__init__' or (basename == 'base' and self.package == 'ansible.plugins.cache'):
                 # cache has legacy 'base.py' file, which is wrapper for __init__.py
@@ -1547,9 +1556,14 @@ class Jinja2Loader(PluginLoader):
                     display.debug(f'{plugin_name} skipped in {p_map._original_path}; Jinja plugin short names may not contain "."')
                     continue
 
-                if plugin_name in _PLUGIN_FILTERS[self.package]:
-                    display.debug("%s skipped due to a defined plugin filter" % plugin_name)
-                    continue
+                if self.package in C.FILTERABLE_PLUGINS:
+                    if plugin_name in _PLUGIN_FILTERS[self.package]['reject']:
+                        display.debug("%s skipped due to a defined plugin filter" % plugin_name)
+                        continue
+
+                    if _PLUGIN_FILTERS[self.package]['allow'] and plugin_name not in _PLUGIN_FILTERS[self.package]['allow']:
+                        display.debug("%s skipped due to not being defined in the  plugin filter" % plugin_name)
+                        continue
 
                 fqcn = plugin_name
                 collection = '.'.join(p_map.ansible_name.split('.')[:2]) if p_map.ansible_name.count('.') >= 2 else ''
@@ -1611,45 +1625,46 @@ def _load_plugin_filter():
             try:
                 filter_data = yaml.load(f, Loader=AnsibleInstrumentedLoader)
             except Exception as e:
-                display.warning(u'The plugin filter file, {0} was not parsable.'
-                                u' Skipping: {1}'.format(filter_cfg, to_text(e)))
+                display.warning(f'The plugin filter file, {filter_cfg} was not parsable. Skipping: {e!r}')
                 return filters
 
         try:
             version = filter_data['filter_version']
         except KeyError:
-            display.warning(u'The plugin filter file, {0} was invalid.'
-                            u' Skipping.'.format(filter_cfg))
+            display.warning(f'The plugin filter file, {filter_cfg} was invalid. Skipping.')
             return filters
 
         # Try to convert for people specifying version as a float instead of string
         version = to_text(version)
         version = version.strip()
 
-        # Modules and action plugins share the same reject list since the difference between the
-        # two isn't visible to the users
-        if version == u'1.0':
-            try:
-                filters['ansible.modules'] = frozenset(filter_data['module_rejectlist'])
-            except TypeError:
-                display.warning(u'Unable to parse the plugin filter file {0} as'
-                                u' module_rejectlist is not a list.'
-                                u' Skipping.'.format(filter_cfg))
-                return filters
-            filters['ansible.plugins.action'] = filters['ansible.modules']
-        else:
-            display.warning(u'The plugin filter file, {0} was a version not recognized by this'
-                            u' version of Ansible. Skipping.'.format(filter_cfg))
+        match version:
+            case '1.0':
+                try:
+                    for plugin_type in C.FILTERABLE_PLUGINS:
+                        key = f'ansible.{plugin_type}'
+                        if plugin_type == 'module':  # modules are always 'special'
+                            key += 's'
+                        filters[key]['reject'] = frozenset(filter_data.get(f'{plugin_type}_rejectlist', []))
+                        filters[key]['allow'] = frozenset(filter_data.get(f'{plugin_type}_allowlist', []))
+                except TypeError as e:
+                    display.warning(f'Skipping {plugin_type} filter list in file {filter_cfg!r} as it is not a list: {e!r}')
+
+                if filters.get('ansible.modules', {}).get('reject') or filters('ansible.modules', {}).get('allow'):
+                    # Modules and action plugins share the same reject list since the difference between the two isn't visible to the users
+                    filters['ansible.plugins.action'] = filters['ansible.modules']
+                else:
+                    raise AnsibleError(f'The plugin filter file, {filter_cfg!r}, exists but has no valid entries.')
+            case _:
+                raise AnsibleError(f'The plugin filter file, {filter_cfg!r}, is incompatible with this version of Ansible.')
     else:
         if user_set:
-            display.warning(u'The plugin filter file, {0} does not exist.'
-                            u' Skipping.'.format(filter_cfg))
+            display.warning(f'The plugin filter file, {filter_cfg} does not exist. Skipping.')
 
     # Special case: the stat module as Ansible can run very few things if stat is rejected
-    if 'stat' in filters['ansible.modules']:
-        raise AnsibleError('The stat module was specified in the module reject list file, {0}, but'
-                           ' Ansible will not function without the stat module.  Please remove stat'
-                           ' from the reject list.'.format(to_native(filter_cfg)))
+    if 'stat' in filters.get('ansible.modules', {}).get('reject', []):
+        raise AnsibleError(f'The stat module was specified in the module reject list in {filter_cfg}, but'
+                           ' Ansible will not function without the stat module. Please remove stat from the reject list.')
     return filters
 
 
