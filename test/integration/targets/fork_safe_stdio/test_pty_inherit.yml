@@ -1,0 +1,15 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  # NB: this test must be run under a tty/pty
+  - name: ensure /dev/tty is not available to forked worker with session isolation enabled
+    raw: python -c 'import os; print(os.isatty(os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)))'
+    vars:
+      ansible_worker_session_isolation: true
+    failed_when: _task.result.rc == 0
+
+  - name: ensure /dev/tty is available to forked worker with session isolation disabled
+    raw: python -c 'import os; print(os.isatty(os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)))'
+    vars:
+      ansible_worker_session_isolation: false
+    failed_when: _task.result.rc != 0
