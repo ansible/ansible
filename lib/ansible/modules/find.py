@@ -42,7 +42,7 @@ options:
             - The pattern is matched against the file base name, excluding the directory.
             - If O(use_regex=true), the pattern matches against the beginning of the file name using Python's
               C(re.match(\)). To match the entire file name rather than just a prefix, anchor the end of the
-              pattern with V($): for example, to match all C(.md) files, use V(.*\\.md$) instead of V(\\.md).
+              pattern with V($). For example, to match all C(.md) files, use V(.*\\.md$) instead of V(\\.md).
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
