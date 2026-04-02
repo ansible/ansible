@@ -841,11 +841,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False, plugi
     if module_name.startswith('_') and not for_collection:
         module_name = module_name[1:]
         deprecated_module = True
-    if for_collection is False and plugin_type == 'connection' and module_name == 'paramiko_ssh':
-        # The plugin loader has a hard-coded exception: when the builtin connection 'paramiko' is
-        # referenced, it loads 'paramiko_ssh' instead. That's why in this plugin, the name must be
-        # 'paramiko' and not 'paramiko_ssh'.
-        module_name = 'paramiko'
     doc_schema_dict = {
         Required('module' if plugin_type == 'module' else 'name'): module_name,
         Required('short_description'): doc_string,

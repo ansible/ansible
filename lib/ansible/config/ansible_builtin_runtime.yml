@@ -53,6 +53,8 @@ plugin_routing:
       redirect: ansible.netcommon.network_cli
     persistent:
       redirect: ansible.netcommon.persistent
+    smart:
+      redirect: ansible.legacy.ssh
   modules:
     # test entry
     formerly_core_ping:

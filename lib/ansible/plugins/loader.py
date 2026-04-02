@@ -25,6 +25,7 @@ from yaml.parser import ParserError
 from ansible import __version__ as ansible_version
 from ansible import _internal, constants as C
 from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
+from ansible.module_utils.common.sentinel import Sentinel
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.module_utils.datatag import deprecator_from_collection_name
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -55,6 +56,13 @@ import importlib.util
 
 if t.TYPE_CHECKING:
     from ansible.plugins.cache import BaseCacheModule
+
+_ALIASES_MSG = (
+    "Aliases should be defined in the collection's meta/runtime.yml file, "
+    "by using symlinks, or the caller should query the plugin loader for "
+    "each identifier. Set the DISPLAY_TRACEBACK configuration to 'deprecated' "
+    "to see details."
+)
 
 _PLUGIN_FILTERS = defaultdict(frozenset)  # type: t.DefaultDict[str, frozenset]
 display = Display()
@@ -304,18 +312,21 @@ class PluginLoader:
         package: str,
         config: str | list[str],
         subdir: str,
-        aliases: dict[str, str] | None = None,
+        aliases: dict[str, str] | None | t.Type[Sentinel] = Sentinel,
         required_base_class: str | None = None,
     ) -> None:
-        aliases = {} if aliases is None else aliases
 
         self.class_name = class_name
         self.base_class = required_base_class
         self.package = package
         self.subdir = subdir
 
-        # FIXME: remove alias dict in favor of alias by symlink?
-        self.aliases = aliases
+        if aliases is not Sentinel:
+            display.deprecated(
+                msg=f"Instantiating {self.type} PluginLoader with aliases is deprecated. {_ALIASES_MSG}",
+                version="2.25",
+            )
+        self._aliases: dict[str, str] = aliases if aliases and aliases is not Sentinel else {}  # type: ignore[assignment]
 
         if config and not isinstance(config, list):
             config = [config]
@@ -341,6 +352,22 @@ class PluginLoader:
         self._plugin_instance_cache: dict[str, tuple[object, PluginLoadContext]] | None = {} if self.subdir == 'vars_plugins' else None
 
         self._searched_paths: set[str] = set()
+
+    @property
+    def aliases(self):
+        display.deprecated(
+            msg=f"The {self.type} PluginLoader attribute 'aliases' is deprecated. {_ALIASES_MSG}",
+            version="2.25",
+        )
+        return self._aliases
+
+    @aliases.setter
+    def aliases(self, value):
+        display.deprecated(
+            msg=f"Setting {self.type} PluginLoader attribute 'aliases' is deprecated. {_ALIASES_MSG}",
+            version="2.25",
+        )
+        self._aliases = value
 
     @property
     def type(self):
@@ -396,7 +423,7 @@ class PluginLoader:
             package=self.package,
             config=self.config,
             subdir=self.subdir,
-            aliases=self.aliases,
+            aliases=self._aliases,
             _extra_dirs=self._extra_dirs,
             _searched_paths=self._searched_paths,
             PATH_CACHE=PATH_CACHE[self.class_name],
@@ -839,7 +866,7 @@ class PluginLoader:
         plugin_load_context.resolved = False
 
         if check_aliases:
-            name = self.aliases.get(name, name)
+            name = self._aliases.get(name, name)
 
         # The particular cache to look for modules within.  This matches the
         # requested mod_type
@@ -1021,8 +1048,8 @@ class PluginLoader:
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
         collection_list = kwargs.pop('collection_list', None)
-        if name in self.aliases:
-            name = self.aliases[name]
+        if name in self._aliases:
+            name = self._aliases[name]
 
         if (cached_result := (self._plugin_instance_cache or {}).get(name)) and cached_result[1].resolved:
             # Resolving the FQCN is slow, even if we've passed in the resolved FQCN.
@@ -1281,7 +1308,7 @@ class Jinja2Loader(PluginLoader):
     assumptions and dedupe logic.
     """
 
-    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=None, required_base_class=None) -> None:
+    def __init__(self, class_name, package, config, subdir, plugin_wrapper_type, aliases=Sentinel, required_base_class=None) -> None:
         super(Jinja2Loader, self).__init__(class_name, package, config, subdir, aliases=aliases, required_base_class=required_base_class)
         self._plugin_wrapper_type = plugin_wrapper_type
         self._plugin_type_friendly_name = 'filter' if plugin_wrapper_type is AnsibleJinja2Filter else 'test'
@@ -1759,7 +1786,6 @@ connection_loader = PluginLoader(
     'ansible.plugins.connection',
     C.DEFAULT_CONNECTION_PLUGIN_PATH,
     'connection_plugins',
-    aliases={'paramiko': 'paramiko_ssh'},
     required_base_class='ConnectionBase',
 )
 

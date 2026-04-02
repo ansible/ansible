@@ -1,2 +1,0 @@
-- name: Install Paramiko for Python 3 on Alpine
-  command: apk add py3-paramiko
