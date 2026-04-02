@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-vault - keep the original contents when the EDITOR returns failure when using ``ansible-vault edit``.
