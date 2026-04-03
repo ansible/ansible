@@ -80,7 +80,10 @@ if t.TYPE_CHECKING:
     ManifestValueType = t.Dict[CollectionInfoKeysType, t.Union[int, str, t.List[str], t.Dict[str, str], None]]
     CollectionManifestType = t.Dict[ManifestKeysType, ManifestValueType]
     FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str, int, None]]
-    FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
+
+    class FilesManifestType(t.TypedDict):
+        files: t.List[FileManifestEntryType]
+        format: int
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
