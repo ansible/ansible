@@ -177,13 +177,17 @@
     - "{{ repo_dir }}/track_sub_remote_main"
     - "{{ repo_dir }}/track_sub_parent_multi"
 
-- name: TRACK-SUBMODULES-BRANCH | create submodule repo using 'master'
+- name: TRACK-SUBMODULES-BRANCH | create submodule repo with 'develop' branch
   shell: |
     set -eEu
-    git init -b master
+    git init
     echo "initial" > file1.txt
     git add file1.txt
-    git commit -m "initial on master"
+    git commit -m "initial on main"
+    git checkout -b develop
+    echo "dev" > file2.txt
+    git add file2.txt
+    git commit -m "initial on develop"
   args:
     chdir: "{{ repo_dir }}/track_sub_remote_master"
 
@@ -205,9 +209,8 @@
     git add README.md
     git commit -m "parent initial"
 
-    git submodule add "{{ repo_dir }}/track_sub_remote_master" sub_master
+    git submodule add -b develop "{{ repo_dir }}/track_sub_remote_master" sub_develop
     git submodule add "{{ repo_dir }}/track_sub_remote_main" sub_main
-    git config -f .gitmodules submodule.sub_master.branch master
     git config -f .gitmodules submodule.sub_main.branch main
     git add .gitmodules
     git commit -m "add two submodules with different branches"
