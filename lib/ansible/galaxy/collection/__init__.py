@@ -32,6 +32,7 @@ from io import BytesIO
 from importlib.metadata import distribution
 from importlib.resources import files
 from itertools import chain
+from operator import itemgetter
 
 try:
     from packaging.requirements import Requirement as PkgReq
@@ -1070,15 +1071,19 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns,
         raise AnsibleError('"build_ignore" and "manifest" are mutually exclusive')
 
     if manifest_control is not Sentinel:
-        return _build_files_manifest_distlib(
+        manifest = _build_files_manifest_distlib(
             b_collection_path,
             namespace,
             name,
             manifest_control,
             license_file,
         )
+    else:
+        manifest = _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
-    return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
+    manifest['files'].sort(key=itemgetter('name'))
+
+    return manifest
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_control,
@@ -1180,7 +1185,6 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_c
             )
 
         manifest['files'].append(manifest_entry)
-    manifest["files"].sort(key=lambda x: x["name"])
     return manifest
 
 
@@ -1253,7 +1257,6 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
                 )
 
     _walk(b_collection_path, b_collection_path)
-    manifest["files"].sort(key=lambda x: x["name"])
 
     return manifest
 
