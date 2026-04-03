@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - sort the FILES.json for ansible galaxy build based on name. (https://github.com/ansible/ansible/issues/82792).
