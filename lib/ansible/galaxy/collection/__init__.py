@@ -1373,7 +1373,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
     """
     os.makedirs(b_collection_output, mode=S_IRWXU_RXG_RXO)
 
-    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
+    files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True, sort_keys=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
 
@@ -1386,7 +1386,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         os.chmod(b_path, S_IRWU_RG_RO)
 
     base_directories = []
-    for file_info in sorted(file_manifest['files'], key=lambda x: x['name']):
+    for file_info in file_manifest['files']:
         if file_info['name'] == '.':
             continue
 
