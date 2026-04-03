@@ -163,6 +163,101 @@
     that:
       - track_fallback_update.changed
 
+# --- Test 3: two submodules with different default branches ---
+
+- name: TRACK-SUBMODULES-BRANCH | create dirs for multi-branch test
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ repo_dir }}/track_sub_remote_master"
+    - "{{ repo_dir }}/track_sub_remote_main"
+    - "{{ repo_dir }}/track_sub_parent_multi"
+
+- name: TRACK-SUBMODULES-BRANCH | create submodule repo using 'master'
+  shell: |
+    set -eEu
+    git init -b master
+    echo "initial" > file1.txt
+    git add file1.txt
+    git commit -m "initial on master"
+  args:
+    chdir: "{{ repo_dir }}/track_sub_remote_master"
+
+- name: TRACK-SUBMODULES-BRANCH | create submodule repo using 'main'
+  shell: |
+    set -eEu
+    git init
+    echo "initial" > file1.txt
+    git add file1.txt
+    git commit -m "initial on main"
+  args:
+    chdir: "{{ repo_dir }}/track_sub_remote_main"
+
+- name: TRACK-SUBMODULES-BRANCH | create parent with two submodules on different branches
+  shell: |
+    set -eEu
+    git init
+    echo "parent" > README.md
+    git add README.md
+    git commit -m "parent initial"
+
+    git submodule add "{{ repo_dir }}/track_sub_remote_master" sub_master
+    git submodule add "{{ repo_dir }}/track_sub_remote_main" sub_main
+    git config -f .gitmodules submodule.sub_master.branch master
+    git config -f .gitmodules submodule.sub_main.branch main
+    git add .gitmodules
+    git commit -m "add two submodules with different branches"
+  args:
+    chdir: "{{ repo_dir }}/track_sub_parent_multi"
+
+- name: TRACK-SUBMODULES-BRANCH | clean checkout dir for multi-branch test
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: TRACK-SUBMODULES-BRANCH | clone parent with two submodules
+  git:
+    repo: "{{ repo_dir }}/track_sub_parent_multi"
+    dest: "{{ checkout_dir }}"
+    recursive: yes
+    track_submodules: yes
+
+- name: TRACK-SUBMODULES-BRANCH | re-run should show no changes
+  git:
+    repo: "{{ repo_dir }}/track_sub_parent_multi"
+    dest: "{{ checkout_dir }}"
+    recursive: yes
+    track_submodules: yes
+  register: track_multi_initial
+
+- name: TRACK-SUBMODULES-BRANCH | assert no change on re-run with two submodules
+  assert:
+    that:
+      - not track_multi_initial.changed
+
+- name: TRACK-SUBMODULES-BRANCH | push update to only the 'main' submodule
+  shell: |
+    set -eEu
+    echo "update" > file2.txt
+    git add file2.txt
+    git commit -m "second commit on main"
+  args:
+    chdir: "{{ repo_dir }}/track_sub_remote_main"
+
+- name: TRACK-SUBMODULES-BRANCH | re-run should detect change in sub_main only
+  git:
+    repo: "{{ repo_dir }}/track_sub_parent_multi"
+    dest: "{{ checkout_dir }}"
+    recursive: yes
+    track_submodules: yes
+  register: track_multi_update
+
+- name: TRACK-SUBMODULES-BRANCH | assert change detected with mixed-branch submodules
+  assert:
+    that:
+      - track_multi_update.changed
+
 # --- Cleanup ---
 
 - name: TRACK-SUBMODULES-BRANCH | clean checkout dir

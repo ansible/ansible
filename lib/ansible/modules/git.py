@@ -1001,8 +1001,14 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             for submodule in begin:
                 branch = get_submodule_branch(git_path, module, dest, submodule)
                 version_ref = f'{remote}/{branch}' if branch != 'HEAD' else 'HEAD'
-                sub_versions = get_submodule_versions(git_path, module, dest, version_ref)
-                after.update(sub_versions)
+                submodule_path = os.path.join(dest, submodule)
+                cmd = [git_path, 'rev-parse', version_ref]
+                (rc, out, err) = module.run_command(cmd, cwd=submodule_path)
+                if rc != 0:
+                    module.fail_json(
+                        msg='Unable to determine hash of submodule %s at %s' % (submodule, version_ref),
+                        stdout=out, stderr=err, rc=rc)
+                after[submodule] = out.strip()
             if begin != after:
                 changed = True
         else:
