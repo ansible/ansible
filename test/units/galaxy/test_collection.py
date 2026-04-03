@@ -838,8 +838,7 @@ def test_build_with_symlink_inside_collection(collection_input):
         actual_file = secure_hash_s(linked_file_obj.read())
         linked_file_obj.close()
 
-        # shasum test/units/cli/test_data/collection_skeleton/README.md
-        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'
+        assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
 
 
 def test_build_files_manifest_sorted_by_name(collection_input):

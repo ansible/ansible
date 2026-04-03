@@ -7,7 +7,7 @@
     force: yes
 
 - name: build basic collection based on current directory with dangling symlink
-  command: ansible-galaxy collection build {{galaxy_verbosity}}
+  command: ansible-galaxy collection build {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
   register: fail_symlink_build
@@ -25,7 +25,7 @@
     state: absent
 
 - name: build basic collection based on current directory
-  command: ansible-galaxy collection build {{galaxy_verbosity}}
+  command: ansible-galaxy collection build {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
   register: build_current_dir
@@ -38,11 +38,11 @@
 - name: assert build basic collection based on current directory
   assert:
     that:
-      - '"Created collection for ansible_test.my_collection" in build_current_dir.stdout'
-      - build_current_dir_actual.stat.exists
+    - '"Created collection for ansible_test.my_collection" in build_current_dir.stdout'
+    - build_current_dir_actual.stat.exists
 
 - name: build basic collection based on relative dir
-  command: ansible-galaxy collection build scratch/ansible_test/my_collection {{galaxy_verbosity }}
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: build_relative_dir
@@ -55,11 +55,11 @@
 - name: assert build basic collection based on relative dir
   assert:
     that:
-      - '"Created collection for ansible_test.my_collection" in build_relative_dir.stdout'
-      - build_relative_dir_actual.stat.exists
+    - '"Created collection for ansible_test.my_collection" in build_relative_dir.stdout'
+    - build_relative_dir_actual.stat.exists
 
 - name: fail to build existing collection without force
-  command: ansible-galaxy collection build scratch/ansible_test/my_collection {{galaxy_verbosity }}
+  command: ansible-galaxy collection build scratch/ansible_test/my_collection {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   ignore_errors: yes
@@ -70,14 +70,13 @@
   args:
     chdir: '{{ galaxy_dir }}'
   register:
-    build_existing_force_stdout: _task.result.stdout
     artifact_path: _task.result.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first
 
 - name: assert build existing collection
   assert:
     that:
-      - '"use --force to re-create the collection artifact" in build_existing_no_force.stderr'
-      - '"Created collection for ansible_test.my_collection" in build_existing_force_stdout'
+    - '"use --force to re-create the collection artifact" in build_existing_no_force.stderr'
+    - '"Created collection for ansible_test.my_collection" in build_existing_force.stdout'
 
 - name: Define extraction path
   set_fact:
@@ -130,13 +129,13 @@
 - name: assert ignored files are not present in the archive
   assert:
     that:
-      - item not in tar_output.stdout_lines
+    - item not in tar_output.stdout_lines
   loop: '{{ collection_ignored_files }}'
 
 - name: assert ignored directories are not present in the archive
   assert:
     that:
-      - item not in tar_output.stdout_lines
+    - item not in tar_output.stdout_lines
   loop: '{{ collection_ignored_directories }}'
 
 # Additional comprehensive tests for FILES.json sorting robustness
