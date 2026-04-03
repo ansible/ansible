@@ -5,7 +5,10 @@
 # .gitmodules and falls back to remote HEAD, instead of hardcoding 'master'.
 #
 
-# --- Setup local repos for this test ---
+# --- Setup ---
+
+- name: TRACK-SUBMODULES-BRANCH | allow local file transport for submodule clones
+  shell: git config --global protocol.file.allow always
 
 - name: TRACK-SUBMODULES-BRANCH | create local repo dirs
   file:
