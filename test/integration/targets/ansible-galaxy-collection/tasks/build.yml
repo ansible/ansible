@@ -70,7 +70,8 @@
   args:
     chdir: '{{ galaxy_dir }}'
   register:
-    artifact_path: _task.result.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first
+    build_existing_force: _task.result
+    artifact_path: build_existing_force.stdout_lines | select('search', 'Created collection for ansible_test.my_collection at ') | map('regex_replace', '.* at (.*)$', '\\1') | first
 
 - name: assert build existing collection
   assert:
