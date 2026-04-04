@@ -1,6 +1,8 @@
 ---
 - name: test Ansible.Basic.cs
   ansible_basic_tests:
+  vars:
+    ansible_inject_invocation: true
   register: ansible_basic_test
 
 - name: assert test Ansible.Basic.cs

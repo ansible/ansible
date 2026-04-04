@@ -28,6 +28,7 @@ def stdin(request):
     args.setdefault('_ansible_remote_tmp', '/tmp')
     args.setdefault('_ansible_keep_remote_files', False)
     args.setdefault('_ansible_tracebacks_for', [])
+    args.setdefault('_ansible_inject_invocation', True)
 
     with patch_module_args(args):
         yield

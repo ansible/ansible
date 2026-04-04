@@ -1087,6 +1087,8 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         module_args['_ansible_tracebacks_for'] = _traceback.traceback_for()
 
+        module_args['_ansible_inject_invocation'] = C.config.get_config_value('INJECT_INVOCATION', variables=task_vars)
+
     def _execute_module(
         self,
         module_name: str | None = None,

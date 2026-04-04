@@ -1,0 +1,44 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: test ping with default invocation disabled
+      ping:
+        data: blar
+      failed_when: _task.result.invocation is defined
+
+    - name: test ping with invocation enabled
+      vars:
+        ansible_inject_invocation: true
+      ping:
+        data: blar
+      failed_when: _task.result.invocation != dict(module_args=dict(data="blar"))
+
+    - name: test looped ping with default invocation disabled
+      ping:
+        data: blar {{ item }}
+      loop: [1, 2]
+      failed_when: _task.result.invocation is defined
+
+    - name: test looped ping with invocation enabled
+      vars:
+        ansible_inject_invocation: true
+      ping:
+        data: blar {{ item }}
+      loop: [1, 2]
+      failed_when: _task.result.invocation != dict(module_args=dict(data="blar " ~ item))
+      register: looped_ping
+
+    - assert:
+        that:
+        - looped_ping.results[0].invocation.module_args == dict(data="blar 1")
+        - looped_ping.results[1].invocation.module_args == dict(data="blar 2")
+
+    - name: test custom invocation module with invocation disabled
+      direct_invocation:
+      failed_when: _task.result.invocation is defined
+
+    - name: test custom invocation module with invocation enabled
+      vars:
+        ansible_inject_invocation: true
+      direct_invocation:
+      failed_when: _task.result.invocation != dict(manually_generated=true)

@@ -1,0 +1,7 @@
+minor_changes:
+  - task results - Python and Powershell modules do not include the ``invocation`` task result key by default.
+    Injection of the ``invocation`` task result key for Python and Powershell modules may be enabled with the var-settable ``INJECT_INVOCATION`` config item.
+    Most callbacks mask ``invocation`` when displaying a task or loop item result.
+bugfixes:
+  - task results - The ``invocation`` item result key omitted from registered values for looped task results, unless enabled via ``INJECT_INVOCATION``.
+    Previously, it was deleted from registered non-loop results and only available to callbacks.

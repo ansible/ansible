@@ -17,3 +17,5 @@ ANSIBLE_MODULE_UTILS=other_mu_dir ansible-playbook module_utils_envvar.yml -i ..
 ansible-playbook module_utils_common_dict_transformation.yml -i ../../inventory "$@"
 
 ansible-playbook module_utils_common_network.yml -i ../../inventory "$@"
+
+ansible-playbook module_utils_basic_invocation.yml "$@"
