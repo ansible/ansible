@@ -75,6 +75,8 @@ class HostState:
         self.always_child_state = None
         self.did_rescue = False
         self.did_start_at_task = False
+        self.start_at_target_block = None
+        self.start_at_target_task = None
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -133,6 +135,8 @@ class HostState:
         new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
+        new_state.start_at_target_block = self.start_at_target_block
+        new_state.start_at_target_task = self.start_at_target_task
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
         if self.rescue_child_state is not None:
@@ -237,6 +241,10 @@ class PlayIterator:
                 # finally, reset the host's state to IteratingStates.SETUP
                 if start_at_matched:
                     self._host_states[host.name].did_start_at_task = True
+                    self._host_states[host.name].start_at_target_block = self._host_states[host.name].cur_block
+                    self._host_states[host.name].start_at_target_task = self._host_states[host.name].cur_regular_task
+                    self._host_states[host.name].cur_block = 0
+                    self._host_states[host.name].cur_regular_task = 0
                     self._host_states[host.name].run_state = IteratingStates.SETUP
 
         if start_at_matched:
@@ -326,6 +334,14 @@ class PlayIterator:
                     if not state.did_start_at_task:
                         state.cur_block += 1
                         state.cur_regular_task = 0
+                        state.cur_rescue_task = 0
+                        state.cur_always_task = 0
+                        state.tasks_child_state = None
+                        state.rescue_child_state = None
+                        state.always_child_state = None
+                    elif state.start_at_target_block is not None:
+                        state.cur_block = state.start_at_target_block
+                        state.cur_regular_task = state.start_at_target_task
                         state.cur_rescue_task = 0
                         state.cur_always_task = 0
                         state.tasks_child_state = None

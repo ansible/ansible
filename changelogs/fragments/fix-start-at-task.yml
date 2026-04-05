@@ -1,0 +1,2 @@
+bugfixes:
+  - "``ansible-playbook`` - fix ``--start-at-task`` silently skipping all tasks when the target is not the first task in the play (https://github.com/ansible/ansible/pull/86777)."
