@@ -484,6 +484,13 @@ class DistributionFiles:
         if "clearlinux" not in name.lower():
             return False, clear_facts
 
+        # Validate that the os-release content actually belongs to Clear Linux
+        # before attempting to parse. Without this check, any system that has
+        # /usr/lib/os-release (e.g. Gentoo) could be misidentified as ClearLinux
+        # because the name parameter alone is not sufficient for identification.
+        if 'ID=clear-linux-os' not in data and 'Clear Linux' not in data:
+            return False, clear_facts
+
         pname = re.search('NAME="(.*)"', data)
         if pname:
             if 'Clear Linux' not in pname.groups()[0]:
