@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 77.0.3, <= 80.3.1"]  # lower bound to support license/license-files (PEP 639), upper bound for latest version tested at release
+requires = ["setuptools >= 77.0.3, <= 82.0.1"]  # lower bound to support license/license-files (PEP 639), upper bound for latest version tested at release
 build-backend = "setuptools.build_meta"
 
 [project]
