@@ -1,4 +1,0 @@
-bugfixes:
-  - pip - When installing multiple packages with ``editable=True``, ensure each package is editable 
-   (https://github.com/ansible/ansible/issues/77755).
-  - pip - Prevent passing ``-e`` to ``pip`` when the ``editable`` and ``requirements`` parameters are both used.

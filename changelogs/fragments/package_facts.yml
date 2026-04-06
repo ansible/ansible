@@ -1,3 +1,0 @@
----
-bugfixes:
-    - package_facts - typecast bytes to string while returning facts (https://github.com/ansible/ansible/issues/85937).

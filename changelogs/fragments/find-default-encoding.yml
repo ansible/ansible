@@ -1,3 +1,0 @@
----
-minor_changes:
-  - find - add locale encoding in err msg when none is given

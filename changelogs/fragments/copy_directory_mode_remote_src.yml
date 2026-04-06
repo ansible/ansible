@@ -1,3 +1,0 @@
----
-bugfixes:
-    - copy - honor directory_mode when copying directories with remote_src=True (https://github.com/ansible/ansible/issues/81292).

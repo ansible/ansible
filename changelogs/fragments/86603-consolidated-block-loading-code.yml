@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-playbook - consolidated block and task loading code to remove duplicated logic (https://github.com/ansible/ansible/pull/86603).

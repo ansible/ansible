@@ -1,2 +1,0 @@
-bugfixes:
-  - templating - Fix traceback when using ``deepcopy`` on an imported template (https://github.com/ansible/ansible/issues/86723).

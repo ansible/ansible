@@ -1,3 +1,0 @@
----
-minor_changes:
-    - package_facts - use apk query instead of apk info for gathering package facts in Alpine (https://github.com/ansible/ansible/issues/86579).

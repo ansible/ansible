@@ -1,3 +1,0 @@
-minor_changes:
-  - "ansible-test acme cloud plugin - update to the 2.4.0 ACME test image, which upgrades Pebble to 2.10.0, Go to 1.26, and Python to 3.14,
-     and generally updates all contained Python dependencies (https://github.com/ansible/ansible/pull/86740)."

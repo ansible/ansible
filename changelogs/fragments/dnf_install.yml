@@ -1,3 +1,0 @@
----
-bugfixes:
-   - dnf5 - return failure message which occurred while running RPM scriptlet (https://github.com/ansible/ansible/issues/86117).

@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Restore code coverage reporting for Python code residing in integration tests.

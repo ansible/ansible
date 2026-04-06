@@ -1,2 +1,0 @@
-minor_changes:
-  - service - add support for GNU Hurd systems, which use SysV init scripts (https://github.com/ansible/ansible/pull/86622).

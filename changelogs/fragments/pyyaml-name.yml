@@ -1,2 +1,0 @@
-bugfixes:
-  - yaml loading - Fix traceback when parsing YAML strings (not files) when using the pure Python implementation of PyYAML.

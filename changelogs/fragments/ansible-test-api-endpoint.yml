@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Use the new API endpoint for the Ansible Core CI service.

@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-connection - Prevent unpickling failures in module contexts by ensuring that AnsibleTaggedObjects in pickled responses are converted to plain types in ``JsonRpcServer``.

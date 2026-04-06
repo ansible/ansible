@@ -1,4 +1,0 @@
-bugfixes:
-  - user - emit a warning when the ``seuser`` parameter is set on a system where
-    SELinux is not enabled, instead of silently ignoring it
-    (https://github.com/ansible/ansible/issues/85542).
