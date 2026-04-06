@@ -1,2 +1,0 @@
-removed_features:
-  - Removed deprecated ``handle_stats_and_callbacks`` parameter of the ``StrategyBase._load_included_file`` method. (https://github.com/ansible/ansible/issues/86003)

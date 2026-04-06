@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Switch managed macOS remotes from x86_64 to aarch64.
-  - ansible-test - Replace the ``parallels`` managed macOS provider with a new ``mac`` provider.

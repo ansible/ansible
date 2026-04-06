@@ -1,3 +1,0 @@
----
-minor_changes:
-    - filter - Use datetime.strftime instead of time.strftime in strftime (https://github.com/ansible/ansible/issues/86260).

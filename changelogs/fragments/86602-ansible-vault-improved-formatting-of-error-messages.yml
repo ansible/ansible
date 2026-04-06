@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-vault - improved error messages for better clarity and context when
-    vault operations fail, helping users diagnose configuration or file access
-    issues more easily (https://github.com/ansible/ansible/pull/86602).

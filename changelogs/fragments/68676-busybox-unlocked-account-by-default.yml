@@ -1,2 +1,0 @@
-bugfixes:
-  - user - create accounts in an unlocked state by default on BusyBox (https://github.com/ansible/ansible/issues/68676)

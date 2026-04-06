@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-test - Missing git submodules in the source tree now result in a warning instead of an error.
-  - ansible-test - When using the ``env --list-files`` option, non-filename output is now sent to stderr.

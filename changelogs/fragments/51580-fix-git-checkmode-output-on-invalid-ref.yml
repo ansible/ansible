@@ -1,2 +1,0 @@
-bugfixes:
-  - git - Correct the output of git checkmode to a failure when the ``version`` supplied is an invalid ref (https://github.com/ansible/ansible/issues/51580)

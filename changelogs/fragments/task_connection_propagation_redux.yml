@@ -1,3 +1,0 @@
-bugfixes:
-  - callbacks - The value of ``TaskResult.task.connection`` properly reflects the loaded connection name used.
-    Previously, incorrect values were reported in some cases.

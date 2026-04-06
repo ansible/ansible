@@ -1,3 +1,0 @@
----
-removed_features:
-    - git - removed deprecated alias gpg_whitelist (https://github.com/ansible/ansible/issues/86004).

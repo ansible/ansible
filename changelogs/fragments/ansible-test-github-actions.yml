@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Add support for using the Ansible Core CI service from GitHub Actions.

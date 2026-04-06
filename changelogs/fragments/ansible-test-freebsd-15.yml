@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Replace FreeBSD 13.5 remote with 15.0.

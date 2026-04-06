@@ -1,4 +1,0 @@
-bugfixes:
-  - >-
-    Fix up ``powershell`` shell commands when using a connection plugin that does not support stdin/pipeline input -
-    https://github.com/ansible/ansible/issues/86397

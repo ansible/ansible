@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix interpreter discovery on delegated ``async`` tasks (https://github.com/ansible/ansible/issues/86491)

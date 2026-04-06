@@ -1,3 +1,0 @@
-deprecated_features:
-- >
-  ``ansible.module_utils.six`` - The ``six`` compatibility library provided at ``ansible.module_utils.six`` is deprecated, and planned for removal in ansible-core 2.24

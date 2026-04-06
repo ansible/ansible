@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Add container/remote aliases for more loosely specifying managed test environments.

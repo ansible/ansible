@@ -1,2 +1,0 @@
-bugfixes:
-  - user - fix modifying users on BusyBox (https://github.com/ansible/ansible/issues/66679)
