@@ -1,4 +1,6 @@
 bugfixes:
 - >-
-  ``--start-at-task`` - fix gathering facts and validating play arguments.
+  ``--start-at-task`` - fix starting at the requested task
+  instead of starting at the next block or play. Play level
+  tasks run first.
   (https://github.com/ansible/ansible/issues/86268)
