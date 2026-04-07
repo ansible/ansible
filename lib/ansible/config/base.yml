@@ -874,22 +874,6 @@ DEFAULT_KEEP_REMOTE_FILES:
   ini:
   - {key: keep_remote_files, section: defaults}
   type: boolean
-DEFAULT_LIBVIRT_LXC_NOSECLABEL:
-  name: No security label on Lxc
-  default: False
-  description:
-    - "This setting causes libvirt to connect to LXC containers by passing ``--noseclabel`` parameter to ``virsh`` command.
-      This is necessary when running on systems which do not have SELinux."
-  env:
-  - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
-  ini:
-  - {key: libvirt_lxc_noseclabel, section: selinux}
-  type: boolean
-  version_added: "2.1"
-  deprecated:
-    why: This option was moved to the plugin itself
-    version: "2.22"
-    alternatives: Use the option from the plugin itself.
 DEFAULT_LOAD_CALLBACK_PLUGINS:
   name: Load callbacks for adhoc
   default: False
