@@ -43,6 +43,7 @@ _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
 _SOURCE_METADATA_FILE = b'GALAXY.yml'
+_SOURCE_JSON_FILE = b'source.json'
 
 display = Display()
 
@@ -115,6 +116,75 @@ def _validate_v1_source_info_schema(
     validation_result = validator.validate(provided_arguments)
 
     return validation_result.error_messages
+
+
+def _validate_source_json_schema(
+    namespace: str,
+    name: str,
+    version: str,
+    provided_arguments: dict[str, object],
+) -> list[str]:
+    """Validate source.json schema for PURL generation."""
+    argument_spec_data = dict(
+        format_version=dict(choices=["1.0.0"]),
+        namespace=dict(choices=[namespace]),
+        name=dict(choices=[name]),
+        version=dict(choices=[version]),
+        type=dict(choices=["galaxy", "git", "url", "file", "dir"]),
+        repository_url=dict(),
+        download_url=dict(),
+        vcs_url=dict(),
+    )
+
+    if not isinstance(provided_arguments, dict):
+        raise AnsibleError(
+            f'Invalid source.json for {namespace}.{name}:{version}, expected a dict and got {type(provided_arguments)}'
+        )
+    validator = ArgumentSpecValidator(argument_spec_data)
+    validation_result = validator.validate(provided_arguments)
+
+    return validation_result.error_messages
+
+
+def get_validated_source_json(
+    b_source_json_path: bytes,
+    namespace: str,
+    name: str,
+    version: str,
+) -> dict[str, object] | None:
+    """Read and validate source.json for PURL generation."""
+    source_json_path = to_text(b_source_json_path, errors='surrogate_or_strict')
+
+    if not os.path.isfile(b_source_json_path):
+        return None
+
+    try:
+        import json
+        with open(b_source_json_path, mode='rb') as fd:
+            metadata = json.load(fd)
+    except OSError as e:
+        display.warning(
+            f"Error reading source.json at '{source_json_path}': {to_text(e, errors='surrogate_or_strict')}"
+        )
+        return None
+    except json.JSONDecodeError as e:
+        display.warning(
+            f"Error parsing source.json at '{source_json_path}': {to_text(e, errors='surrogate_or_strict')}"
+        )
+        return None
+
+    if not isinstance(metadata, dict):
+        display.warning(f"Error reading source.json at '{source_json_path}': expected a JSON object")
+        return None
+
+    schema_errors = _validate_source_json_schema(namespace, name, version, metadata)
+    if schema_errors:
+        display.warning(f"Ignoring source.json at {source_json_path} due to the following errors:")
+        display.warning("\n".join(schema_errors))
+        display.warning("Correct the source.json by reinstalling the collection.")
+        return None
+
+    return metadata
 
 
 def _is_collection_src_dir(dir_path: bytes | str) -> bool:

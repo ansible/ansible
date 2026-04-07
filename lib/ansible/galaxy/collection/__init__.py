@@ -337,6 +337,7 @@ def verify_local_collection(local_collection, remote_collection, artifacts_manag
 
     b_ignore_patterns = [
         b'*.pyc',
+        b'*source.json',  # Created at install time for PURL generation, not in original tarball
     ]
 
     # Find any paths not in the FILES.json
@@ -1534,6 +1535,9 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
                 artifacts_manager
             )
 
+    # Write source.json for all collection types to enable PURL generation by scanners
+    write_source_json(collection, b_collection_path, artifacts_manager)
+
     display.display(
         '{coll!s} was installed successfully'.
         format(coll=to_text(collection)),
@@ -1561,6 +1565,24 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         if os.path.isdir(b_info_dir):
             shutil.rmtree(b_info_dir)
         raise
+
+
+def write_source_json(collection: Candidate, b_collection_path: bytes, artifacts_manager: ConcreteArtifactsManager) -> None:
+    """Write source.json for PURL generation by scanners.
+
+    This file is created for all collection types (galaxy, git, url, file, dir)
+    to enable tools like Syft to generate correct Package URLs for SBOMs.
+    """
+    source_data = artifacts_manager.get_artifact_source_json(collection)
+
+    b_source_json_path = os.path.join(b_collection_path, b'source.json')
+
+    try:
+        with open(b_source_json_path, mode='w') as fd:
+            json.dump(source_data, fd, indent=2)
+        os.chmod(b_source_json_path, S_IRWU_RG_RO)
+    except Exception as e:
+        display.warning(f"Failed to write source.json for {collection}: {e}")
 
 
 def remove_source_metadata(collection, b_collection_path):

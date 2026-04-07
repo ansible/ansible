@@ -125,6 +125,42 @@ class ConcreteArtifactsManager:
             "signatures": metadata.signatures,
         }
 
+    def get_artifact_source_json(self, collection: Candidate) -> dict[str, str]:
+        """Generate source.json data for PURL generation.
+
+        This method handles all collection types (galaxy, git, url, file, dir)
+        and returns metadata that enables scanners to generate correct PURLs.
+        """
+        base = {
+            "format_version": "1.0.0",
+            "namespace": collection.namespace,
+            "name": collection.name,
+            "version": collection.ver,
+            "type": collection.type,
+        }
+
+        if collection.type == "galaxy":
+            try:
+                metadata, server = self._galaxy_collection_cache[collection]
+                base["repository_url"] = server.api_server
+                base["download_url"] = metadata.download_url
+            except KeyError:
+                # Fall back to just the server URL if available
+                if hasattr(collection.src, 'api_server'):
+                    base["repository_url"] = collection.src.api_server
+        elif collection.type == "git":
+            # Format as VCS URL per PURL spec
+            src = collection.src
+            if not src.startswith(('git+', 'git@')):
+                src = f"git+{src}"
+            base["vcs_url"] = src
+        elif collection.type == "url":
+            base["download_url"] = collection.src
+        # For 'file' and 'dir' types, we only record the type
+        # The local path is not useful after container builds
+
+        return base
+
     def get_galaxy_artifact_path(self, collection: Candidate) -> bytes:
         """Given a Galaxy-stored collection, return a cached path.
 

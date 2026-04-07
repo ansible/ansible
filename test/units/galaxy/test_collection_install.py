@@ -819,7 +819,7 @@ def test_install_collection(collection_artifact, monkeypatch):
     actual_files = os.listdir(collection_path)
     actual_files.sort()
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
-                            b'runme.sh']
+                            b'runme.sh', b'source.json']
 
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == S_IRWXU_RXG_RXO
     assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == S_IRWU_RG_RO
@@ -855,7 +855,7 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
     actual_files = os.listdir(collection_path)
     actual_files.sort()
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
-                            b'runme.sh']
+                            b'runme.sh', b'source.json']
 
     assert mock_display.call_count == 2
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
@@ -886,7 +886,7 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
     actual_files = os.listdir(collection_path)
     actual_files.sort()
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
-                            b'runme.sh']
+                            b'runme.sh', b'source.json']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
         actual_manifest = json.loads(to_text(manifest_obj.read()))
@@ -926,7 +926,7 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     actual_files = os.listdir(collection_path)
     actual_files.sort()
     assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
-                            b'runme.sh']
+                            b'runme.sh', b'source.json']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
         actual_manifest = json.loads(to_text(manifest_obj.read()))
