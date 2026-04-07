@@ -926,6 +926,11 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         command_privileged = False
         expected_mounts: tuple[CGroupMount, ...]
 
+        docker_socket = '/var/run/docker.sock'
+
+        if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
+            options.extend(['--volume', f'{docker_socket}:{docker_socket}'])
+
         cgroup_version = get_docker_info(self.args).cgroup_version
 
         if self.config.cgroup == CGroupVersion.NONE:
@@ -1359,11 +1364,6 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         if self.config.seccomp != 'default':
             options.extend(['--security-opt', f'seccomp={self.config.seccomp}'])
-
-        docker_socket = '/var/run/docker.sock'
-
-        if get_docker_hostname() != 'localhost' or os.path.exists(docker_socket):
-            options.extend(['--volume', f'{docker_socket}:{docker_socket}'])
 
         return options
 
