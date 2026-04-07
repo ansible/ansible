@@ -60,6 +60,7 @@ from ...io import (
 from ...util import (
     ApplicationError,
     display,
+    get_ansible_version,
     SubprocessError,
     remove_tree,
 )
@@ -856,6 +857,7 @@ def integration_environment(
         ANSIBLE_CALLBACKS_ENABLED=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
+        ANSIBLE_TEST_ANSIBLE_VERSION=get_ansible_version(),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
