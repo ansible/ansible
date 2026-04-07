@@ -37,12 +37,12 @@ __all__ = ['PlayIterator', 'IteratingStates', 'FailedStates']
 
 class IteratingStates(IntEnum):
     SETUP = 0
-    VALIDATE = 1
-    TASKS = 2
-    RESCUE = 3
-    ALWAYS = 4
-    HANDLERS = 5
-    COMPLETE = 6
+    TASKS = 1
+    RESCUE = 2
+    ALWAYS = 3
+    HANDLERS = 4
+    COMPLETE = 5
+    VALIDATE = 6
 
 
 class FailedStates(IntFlag):
@@ -52,6 +52,7 @@ class FailedStates(IntFlag):
     RESCUE = 4
     ALWAYS = 8
     HANDLERS = 16  # NOTE not in use anymore
+    VALIDATE = 32
 
 
 class HostState:
@@ -185,7 +186,7 @@ class PlayIterator:
                     'path': self._play._metadata_path,
                 },
             },
-            'tags': ['always'],
+            'tags': ['always'] if not self._play.tags else [],
         }, block=setup_block)
 
         validation_task.set_loader(self._play._loader)
@@ -294,7 +295,7 @@ class PlayIterator:
                 # done it for this host; or if 'explicit' and the play sets
                 # gather_facts to True; or if 'implicit' and the play does
                 # NOT explicitly set gather_facts to False.
-                gather_facts = len(self._blocks[0].block) > state.run_state
+                gather_facts = len(self._blocks[0].block) >= 1
                 gathering = C.DEFAULT_GATHERING
                 implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
                 if gather_facts and (
@@ -302,13 +303,13 @@ class PlayIterator:
                     (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or
                     (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name))
                 ):
-                    task = self._blocks[0].block[state.run_state]
+                    task = self._blocks[0].block[0]
 
                 state.run_state = IteratingStates.VALIDATE
 
             elif state.run_state == IteratingStates.VALIDATE:
-                if len(self._blocks[0].block) > state.run_state and self._play.validate_argspec:
-                    task = self._blocks[0].block[state.run_state]
+                if len(self._blocks[0].block) >= 2 and self._play.validate_argspec:
+                    task = self._blocks[0].block[1]
 
                 state.run_state = IteratingStates.TASKS
                 if not state.did_start_at_task:
@@ -479,6 +480,9 @@ class PlayIterator:
     def _set_failed_state(self, state):
         if state.run_state == IteratingStates.SETUP:
             state.fail_state |= FailedStates.SETUP
+            state.run_state = IteratingStates.COMPLETE
+        elif state.run_state == IteratingStates.VALIDATE:
+            state.fail_state |= FailedStates.VALIDATE
             state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.TASKS:
             if state.tasks_child_state is not None:
