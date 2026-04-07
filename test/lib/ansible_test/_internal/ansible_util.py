@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import shutil
 import typing as t
 
 from .constants import (
     ANSIBLE_BIN_SYMLINK_MAP,
     SOFT_RLIMIT_NOFILE,
+)
+
+from .io import (
+    write_text_file,
 )
 
 from .util import (
@@ -22,6 +27,7 @@ from .util import (
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
     MODE_FILE_EXECUTE,
+    get_ansible_version,
     raw_command,
     verified_chmod,
 )
@@ -249,15 +255,12 @@ def get_cli_path(path: str) -> str:
     raise RuntimeError(path)
 
 
-# noinspection PyUnusedLocal
 @mutex
 def get_ansible_python_path(args: CommonConfig) -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the ansible package.
     If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
     """
-    del args  # not currently used
-
     try:
         return get_ansible_python_path.python_path  # type: ignore[attr-defined]
     except AttributeError:
@@ -274,9 +277,36 @@ def get_ansible_python_path(args: CommonConfig) -> str:
 
         os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
 
+    if not args.explain:
+        generate_dist_info(python_path)
+
     get_ansible_python_path.python_path = python_path  # type: ignore[attr-defined]
 
     return python_path
+
+
+def generate_dist_info(path: str) -> None:
+    """Generate a dist-info in the specified base directory."""
+    version = get_ansible_version()
+    metadata = f'''\
+Metadata-Version: 2.1
+Name: ansible-core
+Version: {version}
+'''
+    python_path = pathlib.Path(path)
+
+    current_dist_info = python_path / f'ansible_core-{version}.dist-info'
+
+    for dist_info in pathlib.Path(path).glob('ansible_core-*.dist-info'):
+        if dist_info == current_dist_info:
+            continue
+        shutil.rmtree(dist_info, ignore_errors=True)
+
+    metadata_path = current_dist_info / 'METADATA'
+    if metadata_path.is_file():
+        return
+
+    write_text_file(str(metadata_path), metadata, create_directories=True)
 
 
 class CollectionDetail:
