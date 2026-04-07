@@ -841,6 +841,20 @@ def test_build_with_symlink_inside_collection(collection_input):
         assert actual_file == '08f24200b9fbe18903e7a50930c9d0df0b8d7da3'  # shasum test/units/cli/test_data/collection_skeleton/README.md
 
 
+def test_build_files_manifest_sorted_by_name(collection_input):
+    """Verify _build_files_manifest returns files sorted by name."""
+    input_dir = collection_input[0]
+
+    for filename in ['z.txt', 'a.txt', 'm.txt']:
+        with open(os.path.join(input_dir, filename), 'w') as f:
+            f.write('test')
+
+    manifest = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection', [], Sentinel, None)
+    names = [entry['name'] for entry in manifest['files']]
+
+    assert names == sorted(names)
+
+
 def test_publish_no_wait(galaxy_server, collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
