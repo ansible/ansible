@@ -17,17 +17,6 @@ description:
   - If you wish to update an existing repository definition use M(community.general.ini_file) instead.
 
 options:
-  async:
-    description:
-      - If set to V(true) Yum will download packages and metadata from this
-        repo in parallel, if possible.
-      - In ansible-core 2.11, 2.12, and 2.13 the default value is V(true).
-      - This option has been removed in RHEL 8. If you're using one of the
-        versions listed above, you can set this option to V(null) to avoid passing an
-        unknown configuration option.
-      - This parameter is deprecated as it has been removed on systems supported by ansible-core
-        and will be removed in ansible-core 2.22.
-    type: bool
   bandwidth:
     description:
       - Maximum available network bandwidth in bytes/second. Used with the
@@ -58,16 +47,6 @@ options:
     default: ~
     type: bool
     version_added: '2.18'
-  deltarpm_metadata_percentage:
-    description:
-      - When the relative size of deltarpm metadata vs pkgs is larger than
-        this, deltarpm metadata is not downloaded from the repo. Note that you
-        can give values over V(100), so V(200) means that the metadata is
-        required to be half the size of the packages. Use V(0) to turn off
-        this check, and always download metadata.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    type: str
   deltarpm_percentage:
     description:
       - When the relative size of delta vs pkg is larger than this, delta is
@@ -115,12 +94,6 @@ options:
       - File name without the C(.repo) extension to save the repo in. Defaults
         to the value of O(name).
     type: str
-  gpgcakey:
-    description:
-      - A URL pointing to the ASCII-armored CA key file for the repository.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    type: str
   gpgcheck:
     description:
       - Tells yum whether or not it should perform a GPG signature check on
@@ -140,18 +113,6 @@ options:
         available. The default is V(null).
     version_added: '2.11'
     type: bool
-  http_caching:
-    description:
-      - Determines how upstream HTTP caches are instructed to handle any HTTP
-        downloads that Yum does.
-      - V(all) means that all HTTP downloads should be cached.
-      - V(packages) means that only RPM package downloads should be cached (but
-         not repository metadata downloads).
-      - V(none) means that no HTTP downloads should be cached.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    choices: [all, packages, none]
-    type: str
   include:
     description:
       - Include external configuration file. Both, local path and URL is
@@ -175,40 +136,10 @@ options:
       - V(6) or V(IPv6) - resolve to IPv6 addresses only.
     choices: ['4', '6', IPv4, IPv6, whatever]
     type: str
-  keepalive:
-    description:
-      - This tells yum whether or not HTTP/1.1 keepalive should be used with
-        this repository. This can improve transfer speeds by using one
-        connection when downloading multiple files from a repository.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    type: bool
   metadata_expire:
     description:
       - Time (in seconds) after which the metadata will expire.
       - Default value is 6 hours.
-    type: str
-  metadata_expire_filter:
-    description:
-      - Filter the O(metadata_expire) time, allowing a trade of speed for
-        accuracy if a command doesn't require it. Each yum command can specify
-        that it requires a certain level of timeliness quality from the remote
-        repos. from "I'm about to install/upgrade, so this better be current"
-        to "Anything that's available is good enough".
-      - V(never) - Nothing is filtered, always obey O(metadata_expire).
-      - V(read-only:past) - Commands that only care about past information are
-        filtered from metadata expiring. Eg. C(yum history) info (if history
-        needs to lookup anything about a previous transaction, then by
-        definition the remote package was available in the past).
-      - V(read-only:present) - Commands that are balanced between past and
-        future. Eg. C(yum list yum).
-      - V(read-only:future) - Commands that are likely to result in running
-        other commands which will require the latest metadata. Eg.
-        C(yum check-update).
-      - Note that this option does not override C(yum clean expire-cache).
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
     type: str
   metalink:
     description:
@@ -223,14 +154,6 @@ options:
       - Specifies a URL to a file containing a list of baseurls.
       - This, the O(baseurl) or O(metalink) parameters are required if O(state) is set to
         V(present).
-    type: str
-  mirrorlist_expire:
-    description:
-      - Time (in seconds) after which the mirrorlist locally cached will
-        expire.
-      - Default value is 6 hours.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
     type: str
   name:
     description:
@@ -249,12 +172,6 @@ options:
         from 1 to 99.
       - This option only works if the YUM Priorities plugin is installed.
     type: str
-  protect:
-    description:
-      - Protect packages from updates from other repositories.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    type: bool
   proxy:
     description:
       - URL to the proxy server that yum should use. Set to V(_none_) to
@@ -294,17 +211,6 @@ options:
         contacted for any reason. This should be set carefully as all repos are
         consulted for any given command.
     type: bool
-  ssl_check_cert_permissions:
-    description:
-      - Whether yum should check the permissions on the paths for the
-        certificates on the repository (both remote and local).
-      - If we can't read any of the files then yum will force
-        O(skip_if_unavailable) to be V(true). This is most useful for non-root
-        processes which use yum on repos that have client cert files which are
-        readable only by root.
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
-    type: bool
   sslcacert:
     description:
       - Path to the directory containing the databases of the certificate
@@ -343,14 +249,6 @@ options:
   timeout:
     description:
       - Number of seconds to wait for a connection before timing out.
-    type: str
-  ui_repoid_vars:
-    description:
-      - When a repository id is displayed, append these yum variables to the
-        string if they are used in the O(baseurl)/etc. Variables are appended
-        in the order listed (and found).
-      - This parameter is deprecated as it has no effect with dnf as an underlying package manager
-        and will be removed in ansible-core 2.22.
     type: str
   username:
     description:
@@ -458,27 +356,6 @@ class YumRepo:
         for key, value in sorted(self.params.items()):
             if value is None:
                 continue
-            if key == 'async':
-                self.module.deprecate(
-                    "'async' parameter is deprecated as it has been removed on systems supported by ansible-core",
-                    version='2.22',
-                )
-            elif key in {
-                "deltarpm_metadata_percentage",
-                "gpgcakey",
-                "http_caching",
-                "keepalive",
-                "metadata_expire_filter",
-                "mirrorlist_expire",
-                "protect",
-                "ssl_check_cert_permissions",
-                "ui_repoid_vars",
-            }:
-                self.module.deprecate(
-                    f"'{key}' parameter is deprecated as it has no effect with dnf "
-                    "as an underlying package manager.",
-                    version='2.22'
-                )
             if isinstance(value, bool):
                 value = str(int(value))
             self.repofile.set(self.section, key, value)
@@ -526,7 +403,6 @@ def main():
         baseurl=dict(type='list', elements='str'),
         cost=dict(),
         countme=dict(type='bool'),
-        deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
         description=dict(),
         enabled=dict(type='bool'),
@@ -534,29 +410,18 @@ def main():
         exclude=dict(type='list', elements='str', aliases=['excludepkgs']),
         failovermethod=dict(choices=['roundrobin', 'priority']),
         file=dict(),
-        gpgcakey=dict(no_log=False),
         gpgcheck=dict(type='bool'),
         gpgkey=dict(type='list', elements='str', no_log=False),
         module_hotfixes=dict(type='bool'),
-        http_caching=dict(choices=['all', 'packages', 'none']),
         include=dict(),
         includepkgs=dict(type='list', elements='str'),
         ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
-        keepalive=dict(type='bool'),
         metadata_expire=dict(),
-        metadata_expire_filter=dict(
-            choices=[
-                'never',
-                'read-only:past',
-                'read-only:present',
-                'read-only:future']),
         metalink=dict(),
         mirrorlist=dict(),
-        mirrorlist_expire=dict(),
         name=dict(required=True),
         password=dict(no_log=True),
         priority=dict(),
-        protect=dict(type='bool'),
         proxy=dict(),
         proxy_password=dict(no_log=True),
         proxy_username=dict(),
@@ -566,19 +431,14 @@ def main():
         s3_enabled=dict(type='bool'),
         skip_if_unavailable=dict(type='bool'),
         sslcacert=dict(aliases=['ca_cert']),
-        ssl_check_cert_permissions=dict(type='bool'),
         sslclientcert=dict(aliases=['client_cert']),
         sslclientkey=dict(aliases=['client_key'], no_log=False),
         sslverify=dict(type='bool', aliases=['validate_certs']),
         state=dict(choices=['present', 'absent'], default='present'),
         throttle=dict(),
         timeout=dict(),
-        ui_repoid_vars=dict(),
         username=dict(),
     )
-
-    # async is a Python keyword
-    argument_spec['async'] = dict(type='bool')
 
     module = AnsibleModule(
         required_if=[
