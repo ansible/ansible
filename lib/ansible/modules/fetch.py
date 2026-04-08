@@ -86,7 +86,7 @@ notes:
 - Prior to Ansible 2.5 this module would not fail if reading the remote
   file was impossible unless O(fail_on_missing) was set.
 - In Ansible 2.5 or later, playbook authors are encouraged to use
-  C(fail_when) or C(ignore_errors) to get this ability. They may
+  C(failed_when) or C(ignore_errors) to get this ability. They may
   also explicitly set O(fail_on_missing) to V(false) to get the
   non-failing behaviour.
 seealso:
