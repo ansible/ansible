@@ -259,7 +259,7 @@ class StrategyBase:
         self._blocked_hosts: dict[str, bool] = dict()
 
         self._results: deque[HostTaskResult] = deque()
-        self._results_lock = threading.Condition(threading.Lock())
+        self._results_lock = threading.Lock()
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
