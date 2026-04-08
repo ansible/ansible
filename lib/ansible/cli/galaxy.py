@@ -78,8 +78,10 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
-        # FIXME: use validate_certs context from Galaxy servers when downloading collections
-        # .get used here for when this is used in a non-CLI context
+        # configures validate_certs for type 'url' only
+        # type 'galaxy' inherits and overrides resolved_validate_certs
+        # type 'git' recalculates resolved_validate_certs
+        # NOTE: .get used here for when this is used in a non-CLI context
         artifacts_manager_kwargs = {'validate_certs': context.CLIARGS.get('resolved_validate_certs', True)}
 
         keyring = context.CLIARGS.get('keyring', None)

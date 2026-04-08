@@ -146,11 +146,8 @@ class MultiGalaxyAPIProxy:
             else:
                 self._concrete_art_mgr.save_collection_source(
                     collection_candidate,
-                    version_metadata.download_url,
-                    version_metadata.artifact_sha256,
-                    api.token,
-                    version_metadata.signatures_url,
-                    version_metadata.signatures,
+                    version_metadata,
+                    api
                 )
                 return version_metadata
 
