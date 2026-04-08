@@ -115,6 +115,7 @@ def run_support_container(
     env: t.Optional[dict[str, str]] = None,
     options: t.Optional[list[str]] = None,
     publish_ports: bool = True,
+    data_container: bool = False,
 ) -> t.Optional[ContainerDescriptor]:
     """
     Start a container used to support tests, but not run them.
@@ -178,6 +179,7 @@ def run_support_container(
         running,
         cleanup,
         env,
+        data_container,
     )
 
     with support_containers_mutex:
@@ -366,7 +368,7 @@ class ContainerAccess:
         if self.forwards:
             ports = list(self.forwards.items())
         else:
-            ports = [(port, port) for port in self.ports]
+            ports = [(port, port) for port in self.ports or []]
 
         return ports
 
@@ -451,7 +453,7 @@ def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     managed: dict[str, dict[str, ContainerAccess]] = {}
 
     for name, container in support_containers.items():
-        if container.details is None:
+        if container.data_container:
             # data containers will not be started, and will be missing details
             continue
         if container.details.published_ports:
@@ -662,6 +664,7 @@ class ContainerDescriptor:
         running: bool,
         cleanup: bool,
         env: t.Optional[dict[str, str]],
+        data_container: bool,
     ) -> None:
         self.image = image
         self.context = context
@@ -674,6 +677,7 @@ class ContainerDescriptor:
         self.cleanup = cleanup
         self.env = env
         self.details: t.Optional[SupportContainer] = None
+        self.data_container = data_container
 
     def start(self, args: EnvironmentConfig) -> None:
         """Start the container. Used for containers which are created, but not started."""

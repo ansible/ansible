@@ -81,7 +81,20 @@ class GalaxyProvider(CloudProvider):
         # This container is created separately from the actual galaxy container due to
         # needing it created for postgres, but the galaxy container has a dependency on knowing the postgres
         # container id
-        gdata = run_support_container(self.args, self.platform, self.galaxy_image, 'galaxy-data', [0], start=False)
+        #
+        # Podman does not extract the image contents until the container starts, this is not true of Docker.
+        # The container will start and then immediately exit to conserve resources.
+        gdata = run_support_container(
+            self.args,
+            self.platform,
+            self.galaxy_image,
+            'galaxy-data',
+            [],
+            publish_ports=False,
+            cmd=['/bin/true'],
+            start=True,
+            data_container=True,
+        )
         if not gdata:
             return
 
