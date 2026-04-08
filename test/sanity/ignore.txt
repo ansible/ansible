@@ -272,5 +272,4 @@ test/integration/targets/lineinfile/files/testnoeof.txt trailing-newline  # Spec
 test/units/errors/fixtures/inputs/long_file.txt trailing-newline
 test/units/errors/fixtures/inputs/one_line_file.txt trailing-newline
 test/units/errors/fixtures/inputs/short_file_missing_trailing_newline.txt trailing-newline
-lib/ansible/module_utils/six/__init__.py pylint:ansible-deprecated-version-comment  # TODO: 2.21
 .github/RELEASE_NAMES.txt release-names  # TODO: 2.21
