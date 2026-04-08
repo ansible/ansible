@@ -1,0 +1,47 @@
+{
+    "name": "Gentoo 2.18",
+    "distro": {
+        "codename": "n/a",
+        "id": "gentoo",
+        "name": "Gentoo",
+        "version": "2.18",
+        "version_best": "2.18",
+        "lsb_release_info": {
+            "lsb_version": "n/a",
+            "distributor_id": "Gentoo",
+            "description": "Gentoo Linux",
+            "release": "2.18",
+            "codename": "n/a"
+        },
+        "os_release_info": {
+            "name": "Gentoo",
+            "id": "gentoo",
+            "pretty_name": "Gentoo Linux",
+            "version": "2.18",
+            "version_id": "2.18",
+            "home_url": "https://www.gentoo.org/",
+            "support_url": "https://www.gentoo.org/support/",
+            "bug_report_url": "https://bugs.gentoo.org/",
+            "ansi_color": "1;32"
+        }
+    },
+    "input": {
+        "/etc/os-release": "NAME='Gentoo'\nID='gentoo'\nPRETTY_NAME='Gentoo Linux'\nVERSION='2.18'\nVERSION_ID='2.18'\nHOME_URL='https://www.gentoo.org/'\nSUPPORT_URL='https://www.gentoo.org/support/'\nBUG_REPORT_URL='https://bugs.gentoo.org/'\nANSI_COLOR='1;32'\n",
+        "/etc/gentoo-release": "Gentoo Base System release 2.18\n",
+        "/etc/lsb-release": "DISTRIB_ID=\"Gentoo\"\n",
+        "/usr/lib/os-release": "NAME='Gentoo'\nID='gentoo'\nPRETTY_NAME='Gentoo Linux'\nVERSION='2.18'\nVERSION_ID='2.18'\nHOME_URL='https://www.gentoo.org/'\nSUPPORT_URL='https://www.gentoo.org/support/'\nBUG_REPORT_URL='https://bugs.gentoo.org/'\nANSI_COLOR='1;32'\n"
+    },
+    "platform.dist": [
+        "gentoo",
+        "2.18",
+        "n/a"
+    ],
+    "result": {
+        "distribution": "Gentoo",
+        "distribution_version": "2.18",
+        "distribution_release": "n/a",
+        "distribution_major_version": "2",
+        "os_family": "Gentoo"
+    },
+    "platform.release": "6.18.2-p1-gentoo-dist"
+}
