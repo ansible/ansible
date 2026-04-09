@@ -249,6 +249,7 @@ def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
     coverage_config = """
 [run]
+core = ctrace
 branch = True
 concurrency =
     multiprocessing
@@ -289,6 +290,7 @@ def generate_collection_coverage_config() -> str:
 
     coverage_config = f"""
 [run]
+core = ctrace
 branch = True
 concurrency =
     multiprocessing
