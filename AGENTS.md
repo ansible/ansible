@@ -178,6 +178,7 @@ The skill uses `hacking/azp/download.py` to download console logs into a directo
 
 **Advanced usage:**
 The download script supports filtering and customization:
+
 ```bash
 # Download only logs matching specific job names
 ./hacking/azp/download.py <build_id> --console-logs --match-job-name "Sanity.*"

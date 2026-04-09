@@ -9,7 +9,8 @@ Azure Pipelines Logs Downloader
 
 Download Azure Pipelines CI logs for analyzing test failures and CI issues.
 
-**IMPORTANT**: Always ask the user before downloading logs. The download may take 5-10 minutes (or longer for large CI runs) depending on the number of jobs and log size.
+**IMPORTANT**: Always ask the user before downloading logs. The download may take 5-10 minutes (or longer for large CI runs)
+depending on the number of jobs and log size.
 
 Usage
 -----
@@ -23,7 +24,7 @@ Arguments
 
 - `pr_number`: GitHub PR number (will extract build ID from latest CI run)
 - `build_id`: Azure Pipelines build ID (numeric)
-- `build_url`: Full Azure Pipelines URL (e.g., https://dev.azure.com/ansible/ansible/_build/results?buildId=12345)
+- `build_url`: Full Azure Pipelines URL (e.g., <https://dev.azure.com/ansible/ansible/_build/results?buildId=12345>)
 
 Implementation
 --------------
@@ -46,6 +47,7 @@ Process Steps
    - If given a build ID: Use directly
 
 3. **Download logs**: Run `hacking/azp/download.py` with appropriate flags:
+
    ```bash
    ./hacking/azp/download.py <build_id_or_url> --console-logs -v
    ```
