@@ -1,0 +1,3 @@
+deprecated_features:
+  - >
+    ``ansible.module_utils.six`` - A runtime deprecation warning is now emitted when importing the ``six`` compatibility library, deprecated in ansible-core 2.21 and planned for removal in ansible-core 2.24 (https://github.com/ansible/ansible/issues/86789).
