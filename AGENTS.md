@@ -42,6 +42,7 @@ gh pr view <number> --comments                            # Check for ansibot CI
 gh pr checks <number>                                     # Get Azure Pipelines URLs
 gh pr checkout <number>                                   # Switch to PR branch
 gh pr diff <number>                                       # See all changes
+/azp-logs <number>                                        # Download CI logs for PR
 ```
 
 **Container Selection:**
@@ -150,6 +151,43 @@ This shows:
 3. Focus on failed jobs (marked as `fail`) and examine their specific error output
 4. For sanity test failures, the error messages usually indicate exactly what needs to be fixed
 5. For test failures, run the same tests locally using `ansible-test` to reproduce and debug
+
+**5. Downloading Azure Pipelines logs for analysis:**
+
+When CI failures need deeper investigation beyond what's visible in ansibot comments or the web UI, use the `/azp-logs` skill:
+
+```bash
+# Download logs using PR number (automatically finds latest build)
+/azp-logs <pr_number>
+
+# Or use build ID directly from gh pr checks output
+/azp-logs <build_id>
+
+# Or use the full Azure Pipelines URL
+/azp-logs https://dev.azure.com/ansible/ansible/_build/results?buildId=12345
+```
+
+The skill uses `hacking/azp/download.py` to download console logs into a directory named after the build ID.
+
+**After downloading, analyze the logs:**
+- Grep for common failure patterns: `grep -r "FAILED\|ERROR\|Traceback" <build_id>/`
+- Focus on logs from failed jobs identified in `gh pr checks` output
+- Compare error messages with ansibot comments to get full context
+- Sanity test failures usually have clear error messages with file:line references
+- Integration/unit test failures may require examining full test output and tracebacks
+
+**Advanced usage:**
+The download script supports filtering and customization:
+
+```bash
+# Download only logs matching specific job names
+./hacking/azp/download.py <build_id> --console-logs --match-job-name "Sanity.*"
+
+# Download artifacts and metadata too
+./hacking/azp/download.py <build_id> --all
+```
+
+See `.claude/skills/azp-logs/SKILL.md` for complete documentation.
 
 ## PR Review Guidelines
 
