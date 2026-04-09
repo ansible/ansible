@@ -226,7 +226,7 @@ def _invoke_lookup(*, plugin_name: str, lookup_terms: list, lookup_kwargs: dict[
 
     with JinjaCallContext(accept_lazy_markers=instance.accept_lazy_markers):
         try:
-            if _TemplateConfig.allow_embedded_templates:
+            if invoked_as_with or _TemplateConfig.allow_embedded_templates:
                 # for backwards compat, only trust constant templates in lookup terms
                 with JinjaCallContext(accept_lazy_markers=True):
                     # Force lazy marker support on for this call; the plugin's understanding is irrelevant, as is any existing context, since this backward

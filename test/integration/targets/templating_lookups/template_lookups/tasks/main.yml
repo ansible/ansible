@@ -88,3 +88,21 @@
       - password1 != password2
 
 - include_tasks: ./errors.yml
+
+- name: use with_ lookup that contained templated values
+  debug:
+    msg: one={{ item.0 }} two={{ item.1 }}
+  with_together:
+    - "{{ things1 }}"
+    - "{{ things2 }}"
+  vars:
+    things1: [a, b]
+    things2: [1, 2]
+  register: with_together_template
+
+- name: make sure with_ lookup with templated vars had 2 results and the values were properly templated
+  assert:
+    that:
+      - with_together_template.results | length == 2
+      - with_together_template.results[0].msg == 'one=a two=1'
+      - with_together_template.results[1].msg == 'one=b two=2'

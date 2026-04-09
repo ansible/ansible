@@ -1,0 +1,2 @@
+bugfixes:
+  - Ensure templating still occurs when using ``with_`` loops and ``ALLOW_EMBEDDED_TEMPLATES=false``
