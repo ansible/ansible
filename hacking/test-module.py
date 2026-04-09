@@ -33,6 +33,7 @@ from __future__ import annotations
 import glob
 import optparse
 import os
+import stat
 import subprocess
 import sys
 import traceback
@@ -196,7 +197,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
 
 
 def ansiballz_setup(modfile, modname, interpreters):
-    os.system("chmod +x %s" % modfile)
+    os.chmod(modfile, os.stat(modfile).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     if 'ansible_python_interpreter' in interpreters:
         command = [interpreters['ansible_python_interpreter']]
@@ -242,7 +243,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         if 'ansible_python_interpreter' in interpreters:
             invoke = "%s " % interpreters['ansible_python_interpreter']
 
-    os.system("chmod +x %s" % modfile)
+    os.chmod(modfile, os.stat(modfile).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     invoke = "%s%s" % (invoke, modfile)
     if argspath is not None:
