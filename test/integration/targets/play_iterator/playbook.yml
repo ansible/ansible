@@ -1,10 +1,15 @@
 ---
 - hosts: localhost
-  gather_facts: false
+  gather_facts: "{{ setup | default(False) }}"
+  validate_argspec: "{{ spec | default(omit) }}"
   tasks:
-    - name:
-      debug:
-        msg: foo
+    - name: "task 1"
+      fail:
+
     - name: "task 2"
       debug:
         msg: bar
+
+    - assert:
+        that: ansible_facts.gather_subset == ["all"]
+      when: setup | default(False)

@@ -186,12 +186,12 @@
   vars:
     playbook_name: tagged_play
 
-- name: Test validation always runs otherwise
-  command: ansible-playbook {{ playbook }} --tags task_level_tag -e 'required_str="success"'
+- name: Test validation only runs when the play tag runs
+  command: ansible-playbook {{ playbook }} --tags mismatch
   vars:
     playbook_name: tagged_play
   register: result
 
 - assert:
     that:
-      - result.stdout is search("Validating arguments against arg spec Tagged Play")
+      - result.stdout is not search("Validating arguments against arg spec Tagged Play")

@@ -1,0 +1,9 @@
+bugfixes:
+- >-
+  ``--start-at-task`` - fix starting at the requested task
+  instead of starting at the next block or play. Play level
+  tasks run first.
+  (https://github.com/ansible/ansible/issues/86268)
+- >-
+  Fix ``validate_argspec`` when tags are defined on the play.
+  The ``always`` tag is only added if the play has no tags.

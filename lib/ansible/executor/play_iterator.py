@@ -42,6 +42,7 @@ class IteratingStates(IntEnum):
     ALWAYS = 3
     HANDLERS = 4
     COMPLETE = 5
+    VALIDATE = 6
 
 
 class FailedStates(IntFlag):
@@ -51,6 +52,7 @@ class FailedStates(IntFlag):
     RESCUE = 4
     ALWAYS = 8
     HANDLERS = 16  # NOTE not in use anymore
+    VALIDATE = 32
 
 
 class HostState:
@@ -69,7 +71,6 @@ class HostState:
         self.fail_state = FailedStates.NONE
         self.pre_flushing_run_state = None
         self.update_handlers = True
-        self.pending_setup = False
         self.tasks_child_state = None
         self.rescue_child_state = None
         self.always_child_state = None
@@ -81,7 +82,7 @@ class HostState:
 
     def __str__(self):
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handlers=%d, run_state=%s, fail_state=%s, "
-                "pre_flushing_run_state=%s, update_handlers=%s, pending_setup=%s, "
+                "pre_flushing_run_state=%s, update_handlers=%s, "
                 "tasks child state? (%s), rescue child state? (%s), always child state? (%s), "
                 "did rescue? %s, did start at task? %s" % (
                     self.cur_block,
@@ -93,7 +94,6 @@ class HostState:
                     self.fail_state,
                     self.pre_flushing_run_state,
                     self.update_handlers,
-                    self.pending_setup,
                     self.tasks_child_state,
                     self.rescue_child_state,
                     self.always_child_state,
@@ -107,7 +107,7 @@ class HostState:
 
         for attr in ('_blocks',
                      'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task', 'cur_handlers_task',
-                     'run_state', 'fail_state', 'pre_flushing_run_state', 'update_handlers', 'pending_setup',
+                     'run_state', 'fail_state', 'pre_flushing_run_state', 'update_handlers',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
@@ -130,7 +130,6 @@ class HostState:
         new_state.fail_state = self.fail_state
         new_state.pre_flushing_run_state = self.pre_flushing_run_state
         new_state.update_handlers = self.update_handlers
-        new_state.pending_setup = self.pending_setup
         new_state.did_rescue = self.did_rescue
         new_state.did_start_at_task = self.did_start_at_task
         if self.tasks_child_state is not None:
@@ -187,7 +186,7 @@ class PlayIterator:
                     'path': self._play._metadata_path,
                 },
             },
-            'tags': ['always'],
+            'tags': ['always'] if not self._play.tags else [],
         }, block=setup_block)
 
         validation_task.set_loader(self._play._loader)
@@ -292,51 +291,37 @@ class PlayIterator:
                 return (state, None)
 
             if state.run_state == IteratingStates.SETUP:
-                # First, we check to see if we completed both setup tasks injected
-                # during play compilation in __init__ above.
-                # If not, below we will determine if we do in fact want to gather
-                # facts or validate arguments for the specified host.
-                state.pending_setup = state.cur_regular_task < len(block.block)
-                if state.pending_setup:
-                    task = block.block[state.cur_regular_task]
+                # Gather facts if the default is 'smart' and we have not yet
+                # done it for this host; or if 'explicit' and the play sets
+                # gather_facts to True; or if 'implicit' and the play does
+                # NOT explicitly set gather_facts to False.
+                gather_facts = len(self._blocks[0].block) >= 1
+                gathering = C.DEFAULT_GATHERING
+                implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+                if gather_facts and (
+                    (gathering == 'implicit' and implied) or
+                    (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or
+                    (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name))
+                ):
+                    task = self._blocks[0].block[0]
 
-                    # Gather facts if the default is 'smart' and we have not yet
-                    # done it for this host; or if 'explicit' and the play sets
-                    # gather_facts to True; or if 'implicit' and the play does
-                    # NOT explicitly set gather_facts to False.
-                    gather_facts = bool(state.cur_regular_task == 0)
-                    gathering = C.DEFAULT_GATHERING
-                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts, strict=False)
+                state.run_state = IteratingStates.VALIDATE
 
-                    if gather_facts and not (
-                        (gathering == 'implicit' and implied) or
-                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or
-                        (gathering == 'smart' and implied and not self._variable_manager._facts_gathered_for_host(host.name))
-                    ):
-                        task = None
-                    elif not gather_facts and not self._play.validate_argspec:
-                        task = None
+            elif state.run_state == IteratingStates.VALIDATE:
+                if len(self._blocks[0].block) >= 2 and self._play.validate_argspec:
+                    task = self._blocks[0].block[1]
 
-                    state.cur_regular_task += 1
-                else:
-                    # This is the last trip through IteratingStates.SETUP, so we
-                    # move onto the next block in the list while setting the run
-                    # state to IteratingStates.TASKS
-                    state.run_state = IteratingStates.TASKS
-                    if not state.did_start_at_task:
-                        state.cur_block += 1
-                        state.cur_regular_task = 0
-                        state.cur_rescue_task = 0
-                        state.cur_always_task = 0
-                        state.tasks_child_state = None
-                        state.rescue_child_state = None
-                        state.always_child_state = None
+                state.run_state = IteratingStates.TASKS
+                if not state.did_start_at_task:
+                    state.cur_block += 1
+                    state.cur_regular_task = 0
+                    state.cur_rescue_task = 0
+                    state.cur_always_task = 0
+                    state.tasks_child_state = None
+                    state.rescue_child_state = None
+                    state.always_child_state = None
 
             elif state.run_state == IteratingStates.TASKS:
-                # clear the pending setup flag, since we're past that and it didn't fail
-                if state.pending_setup:
-                    state.pending_setup = False
-
                 # First, we check for a child task state that is not failed, and if we
                 # have one recurse into it for the next task. If we're done with the child
                 # state, we clear it and drop back to getting the next task from the list.
@@ -495,6 +480,9 @@ class PlayIterator:
     def _set_failed_state(self, state):
         if state.run_state == IteratingStates.SETUP:
             state.fail_state |= FailedStates.SETUP
+            state.run_state = IteratingStates.COMPLETE
+        elif state.run_state == IteratingStates.VALIDATE:
+            state.fail_state |= FailedStates.VALIDATE
             state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.TASKS:
             if state.tasks_child_state is not None:
