@@ -42,6 +42,7 @@ gh pr view <number> --comments                            # Check for ansibot CI
 gh pr checks <number>                                     # Get Azure Pipelines URLs
 gh pr checkout <number>                                   # Switch to PR branch
 gh pr diff <number>                                       # See all changes
+/azp-logs <number>                                        # Download CI logs for PR
 ```
 
 **Container Selection:**
@@ -153,40 +154,39 @@ This shows:
 
 **5. Downloading Azure Pipelines logs for analysis:**
 
-When CI failures need deeper investigation beyond what's visible in ansibot comments or the web UI:
+When CI failures need deeper investigation beyond what's visible in ansibot comments or the web UI, use the `/azp-logs` skill:
 
 ```bash
-# Step 1: Get the Azure Pipelines URL from gh pr checks
-gh pr checks <number>
-# Look for URLs like: https://dev.azure.com/ansible/ansible/_build/results?buildId=12345
+# Download logs using PR number (automatically finds latest build)
+/azp-logs <pr_number>
+
+# Or use build ID directly from gh pr checks output
+/azp-logs <build_id>
+
+# Or use the full Azure Pipelines URL
+/azp-logs https://dev.azure.com/ansible/ansible/_build/results?buildId=12345
 ```
 
-From the Azure Pipelines URL, extract the `buildId` parameter (e.g., `12345` from `?buildId=12345`).
+The skill uses `hacking/azp/download.py` to download console logs into a directory named after the build ID.
 
-```bash
-# Step 2: Download all logs as a zip file using the Azure DevOps API
-# Format: https://dev.azure.com/{org}/{project}/_apis/build/builds/{buildId}/logs?$format=zip&api-version=7.1
-# For ansible project:
-curl -L -o ci-logs.zip \
-  "https://dev.azure.com/ansible/ansible/_apis/build/builds/{buildId}/logs?\$format=zip&api-version=7.1"
-
-# Step 3: Extract and examine logs
-unzip ci-logs.zip -d ci-logs/
-```
-
-**Notes:**
-- No authentication needed (public project)
-- The `$format=zip` parameter returns all job logs in one archive
-- Escape the `$` as `\$` in bash/zsh shells
-- Each log file in the zip corresponds to a CI job/task
-- Look for files with "fail" or error messages in their content
-
-**Analyzing downloaded logs:**
-- Grep for common failure patterns: `grep -r "FAILED\|ERROR\|Traceback" ci-logs/`
+**After downloading, analyze the logs:**
+- Grep for common failure patterns: `grep -r "FAILED\|ERROR\|Traceback" <build_id>/`
 - Focus on logs from failed jobs identified in `gh pr checks` output
 - Compare error messages with ansibot comments to get full context
 - Sanity test failures usually have clear error messages with file:line references
 - Integration/unit test failures may require examining full test output and tracebacks
+
+**Advanced usage:**
+The download script supports filtering and customization:
+```bash
+# Download only logs matching specific job names
+./hacking/azp/download.py <build_id> --console-logs --match-job-name "Sanity.*"
+
+# Download artifacts and metadata too
+./hacking/azp/download.py <build_id> --all
+```
+
+See `.claude/skills/azp-logs/SKILL.md` for complete documentation.
 
 ## PR Review Guidelines
 
