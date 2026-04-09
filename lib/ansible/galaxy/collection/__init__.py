@@ -86,6 +86,7 @@ if t.TYPE_CHECKING:
         format: int
 
 import ansible.constants as C
+from ansible import _internal
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
@@ -1478,7 +1479,10 @@ def find_existing_collections(path_filter, artifacts_manager, namespace_filter=N
         b_collection_path = to_bytes(collection_path.as_posix())
 
         try:
-            req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
+            if collection_path.is_relative_to(os.path.dirname(_internal.__file__)):
+                req = Candidate.from_dir_path_implicit(b_collection_path)
+            else:
+                req = Candidate.from_dir_path_as_unknown(b_collection_path, artifacts_manager)
         except ValueError as val_err:
             display.warning(f'{val_err}')
             continue

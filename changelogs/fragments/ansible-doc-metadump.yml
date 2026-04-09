@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - ansible-doc - skip _protomatter while metadata dump (https://github.com/ansible/ansible/issues/85689).
