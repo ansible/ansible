@@ -1,7 +1,7 @@
-base image=quay.io/ansible/base-test-container:v2.21-4 python=3.14,3.9,3.10,3.11,3.12,3.13 powershell=7.6
-default image=quay.io/ansible/default-test-container:v2.21-4 python=3.14,3.9,3.10,3.11,3.12,3.13 powershell=7.6 context=collection
-default image=quay.io/ansible/ansible-core-test-container:v2.21-4 python=3.14,3.9,3.10,3.11,3.12,3.13 powershell=7.6 context=ansible-core
-alpine323 image=quay.io/ansible/alpine-test-container:3.23-v2.21-2 python=3.12 cgroup=none audit=none alias=alpine
-fedora43 image=quay.io/ansible/fedora-test-container:43-v2.21-2 python=3.14 cgroup=v2-only alias=fedora
-ubuntu2204 image=quay.io/ansible/ubuntu-test-container:22.04-v2.21-2 python=3.10
-ubuntu2404 image=quay.io/ansible/ubuntu-test-container:24.04-v2.21-2 python=3.12 alias=ubuntu
+base image=quay.io/ansible/base-test-container:v2.22-0 python=3.14,3.9,3.10,3.11,3.12,3.13,3.15 powershell=7.6
+default image=quay.io/ansible/default-test-container:v2.22-0 python=3.14,3.9,3.10,3.11,3.12,3.13,3.15 powershell=7.6 context=collection
+default image=quay.io/ansible/ansible-core-test-container:v2.22-0 python=3.14,3.9,3.10,3.11,3.12,3.13,3.15 powershell=7.6 context=ansible-core
+alpine323 image=quay.io/ansible/alpine-test-container:3.23-v2.22-0 python=3.12 cgroup=none audit=none alias=alpine
+fedora43 image=quay.io/ansible/fedora-test-container:43-v2.22-0 python=3.14 cgroup=v2-only alias=fedora
+ubuntu2204 image=quay.io/ansible/ubuntu-test-container:22.04-v2.22-0 python=3.10
+ubuntu2404 image=quay.io/ansible/ubuntu-test-container:24.04-v2.22-0 python=3.12 alias=ubuntu

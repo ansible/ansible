@@ -60,6 +60,7 @@ stages:
             - test: 3.12
             - test: 3.13
             - test: 3.14
+            - test: 3.15
   - stage: Windows
     dependsOn: []
     jobs:
@@ -211,6 +212,7 @@ stages:
             - test: 3.12
             - test: 3.13
             - test: 3.14
+            - test: 3.15
   - stage: Generic
     dependsOn: []
     jobs:
@@ -222,6 +224,7 @@ stages:
             - test: 3.12
             - test: 3.13
             - test: 3.14
+            - test: 3.15
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []

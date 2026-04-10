@@ -1,0 +1,2 @@
+major_changes:
+  - ansible - Add support for Python 3.15.
