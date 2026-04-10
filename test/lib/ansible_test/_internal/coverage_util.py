@@ -69,7 +69,8 @@ class CoverageVersion:
 
 COVERAGE_VERSIONS = (
     # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
-    CoverageVersion('7.10.7', 7, (3, 9), (3, 14)),
+    CoverageVersion('7.13.5', 7, (3, 10), (3, 15)),
+    CoverageVersion('7.10.7', 7, (3, 9), (3, 9)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
@@ -248,6 +249,7 @@ def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
     coverage_config = """
 [run]
+core = ctrace
 branch = True
 concurrency =
     multiprocessing
@@ -288,6 +290,7 @@ def generate_collection_coverage_config() -> str:
 
     coverage_config = f"""
 [run]
+core = ctrace
 branch = True
 concurrency =
     multiprocessing

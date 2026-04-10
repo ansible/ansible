@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import os
+import sys
 
 import unittest
 from unittest.mock import patch, MagicMock
@@ -49,10 +50,12 @@ class TestErrors(unittest.TestCase):
         bam = MagicMock()
         bam.__file__ = '/path/to/my/foo/bar/bam/__init__.py'
         bar_pkg.bam = bam
-        foo_pkg.return_value.bar = bar_pkg
+        foo_pkg.bar = bar_pkg
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('builtins.__import__', foo_pkg):
-            self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
+        sys.modules['foo'] = foo_pkg
+        sys.modules['foo.bar'] = bar_pkg
+        sys.modules['foo.bar.bam'] = bam
+        self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):
         pl = PluginLoader('test', '', 'test', 'test_plugin')
