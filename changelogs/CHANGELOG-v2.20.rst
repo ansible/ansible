@@ -4,6 +4,31 @@ ansible-core 2.20 "Good Times Bad Times" Release Notes
 
 .. contents:: Topics
 
+v2.20.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-04-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Generate ``dist_info`` when running tests.
+- ansible-test - Replace the ``parallels`` managed macOS provider with a new ``mac`` provider.
+- ansible-test - Switch managed macOS remotes from x86_64 to aarch64.
+
+Bugfixes
+--------
+
+- Fix ``validate_argspec`` when tags are defined on the play. The ``always`` tag is only added if the play has no tags.
+- ``--start-at-task`` - fix starting at the requested task instead of starting at the next block or play. Play level tasks run first. (https://github.com/ansible/ansible/issues/86268)
+- ansible-galaxy collection - Fix using the server configuration for ``validate_certs`` when downloading collections. (https://github.com/ansible/ansible/issues/86694)
+- ansible_facts[os_*] - Contained wrong information, if ClearLinux parsing was tried before falling back to general os-release parsing
+- templating - Fix traceback when using ``deepcopy`` on an imported template (https://github.com/ansible/ansible/issues/86723).
+
 v2.20.4
 =======
 
