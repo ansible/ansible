@@ -1559,3 +1559,25 @@ releases:
     - configlookupfix.yml
     - pyyaml-name.yml
     release_date: '2026-03-16'
+  2.19.9rc1:
+    changes:
+      bugfixes:
+      - ansible-galaxy collection - Fix using the server configuration for ``validate_certs``
+        when downloading collections. (https://github.com/ansible/ansible/issues/86694)
+      minor_changes:
+      - ansible-test - Generate ``dist_info`` when running tests.
+      - ansible-test - Replace the ``parallels`` managed macOS provider with a new
+        ``mac`` provider.
+      - ansible-test - Switch managed macOS remotes from x86_64 to aarch64.
+      release_summary: '| Release Date: 2026-04-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.9rc1_summary.yaml
+    - ansible-galaxy-validate_certs-server-config.yml
+    - ansible-test-dist-info.yml
+    - ansible-test-macos-aarch64.yml
+    release_date: '2026-04-13'

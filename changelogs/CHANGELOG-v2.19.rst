@@ -4,6 +4,27 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.9rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-04-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Generate ``dist_info`` when running tests.
+- ansible-test - Replace the ``parallels`` managed macOS provider with a new ``mac`` provider.
+- ansible-test - Switch managed macOS remotes from x86_64 to aarch64.
+
+Bugfixes
+--------
+
+- ansible-galaxy collection - Fix using the server configuration for ``validate_certs`` when downloading collections. (https://github.com/ansible/ansible/issues/86694)
+
 v2.19.8
 =======
 
