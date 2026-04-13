@@ -806,6 +806,24 @@ releases:
     - ansible-test-completion-aliases.yml
     - ansible-test-github-actions.yml
     release_date: '2026-03-16'
+  2.18.16rc1:
+    changes:
+      minor_changes:
+      - ansible-test - Generate ``dist_info`` when running tests.
+      - ansible-test - Replace the ``parallels`` managed macOS provider with a new
+        ``mac`` provider.
+      - ansible-test - Switch managed macOS remotes from x86_64 to aarch64.
+      release_summary: '| Release Date: 2026-04-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.16rc1_summary.yaml
+    - ansible-test-dist-info.yml
+    - ansible-test-macos-aarch64.yml
+    release_date: '2026-04-13'
   2.18.1rc1:
     changes:
       bugfixes:
