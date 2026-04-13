@@ -4,6 +4,22 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.16rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-04-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Generate ``dist_info`` when running tests.
+- ansible-test - Replace the ``parallels`` managed macOS provider with a new ``mac`` provider.
+- ansible-test - Switch managed macOS remotes from x86_64 to aarch64.
+
 v2.18.15
 ========
 
