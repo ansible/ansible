@@ -4,6 +4,27 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2026-04-13
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Generate ``dist_info`` when running tests.
+- ansible-test - Upgrade the distro-specific test containers.
+
+Bugfixes
+--------
+
+- Fix ``validate_argspec`` when tags are defined on the play. The ``always`` tag is only added if the play has no tags.
+- ``--start-at-task`` - fix starting at the requested task instead of starting at the next block or play. Play level tasks run first. (https://github.com/ansible/ansible/issues/86268)
+
 v2.21.0b1
 =========
 

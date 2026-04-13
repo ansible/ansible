@@ -551,3 +551,25 @@ releases:
     - varloaderror.yml
     - winrm-kerberos.yml
     release_date: '2026-04-06'
+  2.21.0b2:
+    changes:
+      bugfixes:
+      - Fix ``validate_argspec`` when tags are defined on the play. The ``always``
+        tag is only added if the play has no tags.
+      - '``--start-at-task`` - fix starting at the requested task instead of starting
+        at the next block or play. Play level tasks run first. (https://github.com/ansible/ansible/issues/86268)'
+      minor_changes:
+      - ansible-test - Generate ``dist_info`` when running tests.
+      - ansible-test - Upgrade the distro-specific test containers.
+      release_summary: '| Release Date: 2026-04-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+    codename: The Rain Song
+    fragments:
+    - 2.21.0b2_summary.yaml
+    - ansible-test-dist-info.yml
+    - ansible-test-update-distro-containers.yml
+    - start-at-task-fact-gathering.yml
+    release_date: '2026-04-13'
