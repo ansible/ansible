@@ -123,7 +123,18 @@ EXAMPLES = r"""
   no_log: True
 """
 
-RETURN = r"""#"""
+RETURN = r"""
+current:
+    description: Current value(s) of the debconf selection(s).
+    returned: always
+    type: dict
+    sample: {'locales/default_environment_locale': 'fr_FR.UTF-8'}
+previous:
+    description: Previous value(s) of the debconf selection(s) before change.
+    returned: changed
+    type: dict
+    sample: {'locales/default_environment_locale': 'en_US.UTF-8'}
+"""
 
 from ansible.module_utils.common.text.converters import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
