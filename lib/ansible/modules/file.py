@@ -231,6 +231,16 @@ path:
     returned: O(state=absent), O(state=directory), O(state=file)
     type: str
     sample: /path/to/file.txt
+src:
+    description: Source path of the symlink or hardlink.
+    returned: O(state=link), O(state=hard)
+    type: str
+    sample: /file/to/link/to
+state:
+    description: State of the target after module execution.
+    returned: O(state=absent)
+    type: str
+    sample: absent
 """
 
 import errno
