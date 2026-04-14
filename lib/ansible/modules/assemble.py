@@ -123,6 +123,51 @@ EXAMPLES = r"""
     validate: /usr/sbin/sshd -t -f %s
 """
 
+RETURN = r"""
+src:
+    description: Source directory path containing the fragments.
+    returned: always
+    type: str
+    sample: /etc/someapp/fragments
+dest:
+    description: Destination file path where fragments are assembled.
+    returned: always
+    type: str
+    sample: /etc/someapp/someapp.conf
+checksum:
+    description: SHA1 checksum of the assembled file.
+    returned: always
+    type: str
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+md5sum:
+    description: MD5 checksum of the assembled file.
+    returned: always
+    type: str
+    sample: 2a5aeecc61dc98c4d780b14b330e3282
+    notes:
+        - Returns V(null) when FIPS mode is active.
+validation:
+    description: Output from the validation command.
+    returned: when O(validate) parameter is specified
+    type: dict
+    contains:
+        rc:
+            description: Return code from the validation command.
+            returned: always
+            type: int
+            sample: 0
+        stdout:
+            description: Standard output from the validation command.
+            returned: always
+            type: str
+            sample: "configuration OK"
+        stderr:
+            description: Standard error from the validation command.
+            returned: always
+            type: str
+            sample: ""
+"""
+
 import codecs
 import os
 import re
