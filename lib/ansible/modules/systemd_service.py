@@ -152,6 +152,21 @@ EXAMPLES = """
 """
 
 RETURN = """
+name:
+    description: The name of the systemd unit
+    returned: always
+    type: str
+    sample: "httpd"
+state:
+    description: The state of the systemd unit
+    returned: when O(state) is provided
+    type: str
+    sample: "started"
+enabled:
+    description: Whether the systemd unit is enabled
+    returned: when O(enabled) is provided
+    type: bool
+    sample: true
 status:
     description: A dictionary with the key=value pairs returned from C(systemctl show).
     returned: success
