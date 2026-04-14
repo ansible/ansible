@@ -13,29 +13,24 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        # Get the connection object
         connection = self._connection
         original_write_stdin = connection._winrm_write_stdin
 
         def failing_write_stdin(_command_id, _stdin_iterator):
-            """Replacement that always fails"""
             raise Exception("INJECTED TEST FAILURE: stdin write failed")
 
         try:
             connection._winrm_write_stdin = failing_write_stdin
 
             # Execute a module that will use stdin (pipelining is on by default)
-            # win_ping returns valid JSON: {"ping": "pong"}
             module_result = self._execute_module(
                 module_name='ansible.windows.win_ping',
                 module_args={},
                 task_vars=task_vars,
             )
 
-            # Merge the module result
             result.update(module_result)
         finally:
-            # Restore original method
             connection._winrm_write_stdin = original_write_stdin
 
         return result
