@@ -738,6 +738,12 @@ class UnifiedTaskResult:
     @property
     def failed(self) -> bool:
         if self._failed is None and self.rc is not None and self.rc != 0:
+            display.deprecated(
+                msg="Inferred task failure from non-zero 'rc' in task result and missing 'failed' key.",
+                version="2.25",
+                help_text="Failed task results must include the 'failed' key (included automatically by 'fail_json' and unhandled exceptions).",
+            )
+
             return True
 
         if self.failed_when_result is not None:
@@ -846,7 +852,8 @@ class UnifiedTaskResult:
     verbose_override: bool | None = dataclasses.field(
         default=None, metadata=import_export("_ansible_verbose_override", source=Source.ACTION, destination=Destination.CALLBACK)
     )
-    rc: int | None = dataclasses.field(default=None, metadata=import_export())
+    # deprecated: description='Remove rc field when it is no longer consulted or normalized by result infra.' core_version='2.25'
+    rc: object | None = dataclasses.field(default=None, metadata=import_export())
     suppress_tmpdir_delete: bool | None = dataclasses.field(default=None, metadata=field("_ansible_suppress_tmpdir_delete", source=Source.ANY))
     module_stderr: str | None = dataclasses.field(default=None, metadata=export_only())
     module_stdout: str | None = dataclasses.field(default=None, metadata=export_only())
