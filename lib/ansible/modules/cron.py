@@ -213,7 +213,28 @@ EXAMPLES = r"""
     state: absent
 """
 
-RETURN = r"""#"""
+RETURN = r"""
+jobs:
+    description: List of all job names in the crontab.
+    returned: always
+    type: list
+    sample: ["check dirs", "do the job"]
+envs:
+    description: List of all environment variable names in the crontab.
+    returned: always
+    type: list
+    sample: ["PATH", "APP_HOME"]
+cron_file:
+    description: Path to the cron file managed by this module.
+    returned: when O(cron_file) parameter is specified
+    type: str
+    sample: /etc/cron.d/ansible_yum-autoupdate
+state:
+    description: State of the cron file.
+    returned: when removing a job causes the entire cron file to be deleted
+    type: str
+    sample: absent
+"""
 
 import os
 import platform
