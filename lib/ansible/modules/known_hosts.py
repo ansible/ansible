@@ -89,17 +89,6 @@ EXAMPLES = r"""
     state: present
 """
 
-# Makes sure public host keys are present or absent in the given known_hosts
-# file.
-#
-# Arguments
-# =========
-#    name = hostname whose key should be added (alias: host)
-#    key = line(s) to add to known_hosts file
-#    path = the known_hosts file to edit (default: ~/.ssh/known_hosts)
-#    hash_host = yes|no (default: no) hash the hostname in the known_hosts file
-#    state = absent|present (default: present)
-
 import base64
 import copy
 import hashlib
