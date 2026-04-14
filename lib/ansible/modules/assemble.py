@@ -140,12 +140,10 @@ checksum:
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 md5sum:
-    description: MD5 checksum of the assembled file.
+    description: MD5 checksum of the assembled file. Returns V(null) when FIPS mode is active.
     returned: always
     type: str
     sample: 2a5aeecc61dc98c4d780b14b330e3282
-    notes:
-        - Returns V(null) when FIPS mode is active.
 validation:
     description: Output from the validation command.
     returned: when O(validate) parameter is specified

@@ -175,7 +175,7 @@ state:
   description: The source string state passed into the module
   returned: always
   type: str
-  sample: "absent", "present"
+  sample: "absent"
 """
 
 import copy

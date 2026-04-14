@@ -369,7 +369,7 @@ response:
     description: the HTTP response message from a failed request
     returned: when request fails
     type: str
-    sample: HTTP Error 404: Not Found
+    sample: "HTTP Error 404: Not Found"
 """
 
 import email.message
