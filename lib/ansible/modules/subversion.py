@@ -128,7 +128,18 @@ EXAMPLES = """
     update: no
 """
 
-RETURN = r"""#"""
+RETURN = r"""
+before:
+  description: The revision and URL before the update
+  returned: success, when repository exists
+  type: raw
+  sample: "Revision: 1889134"
+after:
+  description: The revision and URL after the update
+  returned: success
+  type: raw
+  sample: "Revision: 1889134"
+"""
 
 import os
 import re
