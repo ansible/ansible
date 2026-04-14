@@ -242,11 +242,6 @@ checksum:
     returned: success
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
-backup_file:
-    description: Name of backup file created.
-    returned: changed and if backup=yes
-    type: str
-    sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
     description: Group id of the file, after execution.
     returned: success
