@@ -81,3 +81,15 @@
     assert:
       that:
       - stderr_clixml.stderr_lines == ['Test 🎵 _x005F_ _x005Z_.']
+
+  - name: Test stdin write failure error message
+    test_stdin_failure:
+    ignore_errors: true
+    register: stdin_write_fail
+
+  - assert:
+      that:
+        - stdin_write_fail is failed
+        - stdin_write_fail.warnings | default([]) | select('search', warning_substring) | list | length > 0
+    vars:
+      warning_substring: "ERROR DURING WINRM SEND INPUT TO "
