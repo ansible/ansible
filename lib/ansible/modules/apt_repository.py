@@ -170,6 +170,12 @@ sources_removed:
   type: list
   sample: ["/etc/apt/sources.list.d/artifacts_elastic_co_packages_6_x_apt.list"]
   version_added: "2.15"
+
+state:
+  description: The source string state passed into the module
+  returned: always
+  type: str
+  sample: "absent", "present"
 """
 
 import copy
