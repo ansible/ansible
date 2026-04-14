@@ -123,8 +123,6 @@ EXAMPLES = r"""
     validate: /usr/sbin/sshd -t -f %s
 """
 
-RETURN = r"""#"""
-
 import codecs
 import os
 import re
