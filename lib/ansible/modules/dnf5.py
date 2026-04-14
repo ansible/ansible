@@ -328,12 +328,8 @@ EXAMPLES = """
     autoremove: no
 """
 
+# FIXME: These should NOT be module return keys. Ditto for dnf module. Follow up with deprecations to rename.
 RETURN = """
-msg:
-  description: Additional information about the result
-  returned: always
-  type: str
-  sample: "Nothing to do"
 results:
   description: A list of the dnf transaction results
   returned: success
@@ -344,11 +340,6 @@ failures:
   returned: failure
   type: list
   sample: ["Argument 'lsof' matches only excluded packages."]
-rc:
-  description: For compatibility, 0 for success, 1 for failure
-  returned: always
-  type: int
-  sample: 0
 """
 
 import os
