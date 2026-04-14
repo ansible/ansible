@@ -6,7 +6,7 @@ from ansible.plugins.action import ActionBase
 
 class ActionModule(ActionBase):
     """
-    Custom action plugin to test WinRM stdin failure recovery (lines 618-624).
+    Custom action plugin to trip a failure using the winrm connection plugin.
     This patches the connection's _winrm_write_stdin to fail deterministically.
     """
 
@@ -15,17 +15,13 @@ class ActionModule(ActionBase):
 
         # Get the connection object
         connection = self._connection
-
-        # Save the original method
         original_write_stdin = connection._winrm_write_stdin
 
         def failing_write_stdin(_command_id, _stdin_iterator):
             """Replacement that always fails"""
-            # Now raise the injected exception
             raise Exception("INJECTED TEST FAILURE: stdin write failed")
 
         try:
-            # Patch the method to inject failure
             connection._winrm_write_stdin = failing_write_stdin
 
             # Execute a module that will use stdin (pipelining is on by default)
@@ -39,7 +35,7 @@ class ActionModule(ActionBase):
             # Merge the module result
             result.update(module_result)
         finally:
-            # Always restore original method
+            # Restore original method
             connection._winrm_write_stdin = original_write_stdin
 
         return result
