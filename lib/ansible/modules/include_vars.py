@@ -182,11 +182,6 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
-ansible_facts:
-  description: Variables that were included and their values
-  returned: success
-  type: dict
-  sample: {'variable': 'value'}
 ansible_included_var_files:
   description: A list of files that were successfully included
   returned: success
