@@ -547,6 +547,49 @@ EXAMPLES = r"""
     jump: ACCEPT
 """
 
+RETURN = r"""
+ip_version:
+    description: The IP version used for the rule.
+    returned: always
+    type: str
+    sample: ipv4
+table:
+    description: The table the rule was applied to.
+    returned: always
+    type: str
+    sample: filter
+chain:
+    description: The chain the rule was applied to.
+    returned: always
+    type: str
+    sample: INPUT
+flush:
+    description: Whether the chain was flushed.
+    returned: always
+    type: bool
+    sample: false
+rule:
+    description: The constructed iptables rule as a string.
+    returned: always
+    type: str
+    sample: -p tcp -m tcp --dport 22 -j ACCEPT
+state:
+    description: The state of the rule (present or absent).
+    returned: always
+    type: str
+    sample: present
+chain_management:
+    description: Whether chain management was enabled.
+    returned: always
+    type: bool
+    sample: false
+wait:
+    description: The wait option used with iptables command.
+    returned: always
+    type: str
+    sample: null
+"""
+
 import re
 
 from ansible.module_utils.compat.version import LooseVersion
