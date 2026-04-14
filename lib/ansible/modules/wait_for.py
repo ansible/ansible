@@ -215,6 +215,26 @@ elapsed:
   returned: always
   type: int
   sample: 23
+state:
+  description: The state that was waited for
+  returned: always
+  type: str
+  sample: started
+port:
+  description: The port number that was waited for
+  returned: when O(port) is provided
+  type: int
+  sample: 22
+search_regex:
+  description: The search regex pattern that was used
+  returned: when O(search_regex) is provided
+  type: str
+  sample: "completed"
+path:
+  description: The file path that was waited for
+  returned: when O(path) is provided
+  type: str
+  sample: /tmp/foo
 match_groups:
   description: Tuple containing all the subgroups of the match as returned by U(https://docs.python.org/3/library/re.html#re.Match.groups)
   returned: always
