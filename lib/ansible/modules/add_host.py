@@ -112,3 +112,27 @@ EXAMPLES = r"""
     groups: done
   loop: "{{ ansible_play_hosts }}"
 """
+
+RETURN = r"""
+add_host:
+  description: Information about the host that was added to inventory.
+  returned: always
+  type: dict
+  contains:
+    host_name:
+      description: The name of the host that was added.
+      returned: always
+      type: str
+      sample: "new_server.example.com"
+    groups:
+      description: The list of groups the host was added to.
+      returned: always
+      type: list
+      elements: str
+      sample: ["webservers", "production"]
+    host_vars:
+      description: The variables that were assigned to the host.
+      returned: always
+      type: dict
+      sample: {"ansible_port": 2222, "foo": 42}
+"""
