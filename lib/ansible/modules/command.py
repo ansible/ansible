@@ -191,6 +191,13 @@ delta:
   returned: always
   type: str
   sample: '0:00:00.001529'
+stdout:
+  description:
+    - The standard output from the command execution.
+    - When O(creates) or O(removes) causes the task to skip, contains an informational skip message instead of command output.
+  returned: always
+  type: str
+  sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 cmd:
   description: The command executed by the task.
   returned: always
@@ -199,6 +206,7 @@ cmd:
   - echo
   - hello
 """
+# TODO: Deprecate the skip message usage of stdout in favor of skip_reason
 
 import datetime
 import glob

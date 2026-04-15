@@ -163,4 +163,13 @@ end:
     returned: always
     type: str
     sample: '2016-02-25 09:18:26.755339'
+stdout:
+    description:
+      - The standard output from the command execution.
+      - When O(creates) or O(removes) causes the task to skip, contains an informational skip message instead of command output.
+      - This module delegates to M(ansible.builtin.command), so see that module's return values for additional details.
+    returned: always
+    type: str
+    sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 """
+# TODO: Deprecate the skip message usage of stdout in favor of skip_reason
