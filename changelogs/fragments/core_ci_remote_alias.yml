@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test remote alias - Alias values for ``--controller`` and ``--target`` are properly resolved for ``remote``.
+    Previously, remote alias values (e.g. ``fedora/latest``) resolved to the correct name only for the legacy ``--remote`` arg, failing with an unknown image error for the newer args.
