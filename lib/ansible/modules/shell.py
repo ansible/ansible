@@ -153,6 +153,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
+# This module will always include return values from the command module.
 start:
     description: The command execution start time.
     returned: always

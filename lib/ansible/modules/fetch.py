@@ -123,6 +123,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
+# This module will sometimes include return values from the slurp module (for files with checksum '1' or empty/None).
 dest:
   description: Path to the local file that was fetched.
   returned: success

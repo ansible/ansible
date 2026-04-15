@@ -124,6 +124,7 @@ EXAMPLES = r"""
 """
 
 RETURN = r"""
+# This module will sometimes include return values from the copy module (when file content changes) or file module (when only attributes are managed).
 src:
     description: Source directory path containing the fragments.
     returned: always
