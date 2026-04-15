@@ -86,3 +86,17 @@ EXAMPLES = r"""
   ansible.builtin.group_by:
     key: done
 """
+
+RETURN = r"""
+add_group:
+  description: The name of the group that was added (spaces converted to dashes).
+  returned: always
+  type: str
+  sample: "red-hat-linux"
+parent_groups:
+  description: List of parent groups for the newly created group (spaces converted to dashes).
+  returned: always
+  type: list
+  elements: str
+  sample: ["all"]
+"""
