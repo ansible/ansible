@@ -404,11 +404,14 @@ class ActionModule(ActionBase):
             if self._task.args.get(internal, None) is not None:
                 raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
-        # NOTE: Ensure parity with modules/copy.py argument_spec
+        # NOTE: Ensure parity with modules/copy.py argument_spec.
+        # Exception: content uses type='raw' here (module uses 'str') because
+        # the action plugin handles dict/list content via json.dumps before
+        # passing it to the module.
         module_args = dict(
             src=dict(type='path'),
             _original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
-            content=dict(type='str', no_log=True),
+            content=dict(type='raw', no_log=True),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True),
@@ -434,7 +437,15 @@ class ActionModule(ActionBase):
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
         remote_src = self._task.args.get('remote_src', False)
-        local_follow = self._task.args.get('local_follow', True)
+        local_follow = self._task.args.get('local_follow')
+        if local_follow is None:
+            local_follow = True
+
+        # Catch empty string src that passed required_one_of but is not valid
+        if not source and content is None:
+            result['failed'] = True
+            result['msg'] = 'src (or content) is required'
+            return self._ensure_invocation(result)
 
         if content is not None and dest is not None and dest.endswith("/"):
             result['failed'] = True
