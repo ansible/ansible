@@ -96,3 +96,12 @@ EXAMPLES = r"""
     - "Provisioning based on YOUR_KEY which is: {{ lookup('ansible.builtin.env', 'YOUR_KEY') }}"
     - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 """
+
+RETURN = r"""
+# When using the 'var' option, the variable name is used as the return key with its value.
+skipped_reason:
+  description: Reason why the debug task was skipped.
+  returned: when verbosity threshold is not met
+  type: str
+  sample: "Verbosity threshold not met."
+"""
