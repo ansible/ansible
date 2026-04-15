@@ -383,6 +383,7 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
         super().apply_defaults(context, defaults)
 
         self.become = self.become or defaults.become
+        self.name = defaults.name
 
     @property
     def have_root(self) -> bool:
@@ -412,6 +413,7 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
         super().apply_defaults(context, defaults)
 
         self.connection = self.connection or defaults.connection
+        self.name = defaults.name
 
 
 @dataclasses.dataclass
