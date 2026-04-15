@@ -391,6 +391,20 @@ EXAMPLES = """
     state: present
 """
 
+# FIXME: These should NOT be module return keys. Ditto for dnf5 module. Follow up with deprecations to rename.
+RETURN = """
+results:
+  description: A list of the dnf transaction results
+  returned: success
+  type: list
+  sample: ["Installed: lsof-4.94.0-4.fc37.x86_64"]
+failures:
+  description: A list of the dnf transaction failures
+  returned: failure
+  type: list
+  sample: ["No package lsof available."]
+"""
+
 import json
 import sys
 
