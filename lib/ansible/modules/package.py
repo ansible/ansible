@@ -92,3 +92,8 @@ EXAMPLES = """
     state: present
     use: dnf
 """
+
+RETURN = """
+# Return values depend on the underlying package manager module that is invoked.
+# See the documentation for the specific package manager module (dnf, apt, yum, etc.) for details.
+"""
