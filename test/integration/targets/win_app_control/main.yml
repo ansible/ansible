@@ -20,14 +20,7 @@
       - ansible_install_dir is defined
       - local_tmp_dir is defined
 
-  - name: get OS version
-    ansible.windows.win_powershell:
-      script: (Get-Item -LiteralPath $env:SystemRoot\System32\kernel32.dll).VersionInfo.ProductVersion.ToString()
-    register: os_version
-
-  - name: setup and test block for 2019 and later
-    when:
-    - os_version.output[0] is version('10.0.17763', '>=')  # 2019+
+  - name: setup and test block
     block:
     - name: get test remote tmp dir
       import_role:
