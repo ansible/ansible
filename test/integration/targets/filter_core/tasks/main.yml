@@ -31,6 +31,18 @@
       - |
         ([{'a': 1}] | groupby('a'))[0] | string == "(1, [{'a': 1}])"
 
+- name: test groupby filter with default value
+  vars:
+    users:
+      - name: Alice
+        city: NY
+      - name: Bob
+  assert:
+    that:
+      - users | groupby('city', default='Unknown') | length == 2
+      - (users | groupby('city', default='Unknown') | selectattr('grouper', 'equalto', 'NY'))[0].list | length == 1
+      - (users | groupby('city', default='Unknown') | selectattr('grouper', 'equalto', 'Unknown'))[0].list | length == 1
+
 - name: test updated default filter
   assert:
     that:
