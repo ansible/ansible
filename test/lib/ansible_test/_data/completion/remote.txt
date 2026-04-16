@@ -1,6 +1,6 @@
 alpine/3.23 python=3.12 become=doas_sudo provider=aws arch=x86_64 alias=alpine/3,alpine/latest
 alpine become=doas_sudo provider=aws arch=x86_64
-fedora/43 python=3.14 become=sudo provider=aws arch=x86_64 alias=fedora/latest
+fedora/44 python=3.14 become=sudo provider=aws arch=x86_64 alias=fedora/latest
 fedora become=sudo provider=aws arch=x86_64
 freebsd/14.4 python=3.14 python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64 alias=freebsd/14
 freebsd/15.0 python=3.12 python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64 alias=freebsd/15,freebsd/latest
