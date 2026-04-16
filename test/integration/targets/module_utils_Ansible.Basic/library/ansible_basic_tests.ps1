@@ -2045,33 +2045,10 @@ test_no_log - Invoked with:
             $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
 
-        if ([System.Environment]::OSVersion.Version -lt [Version]'10.0') {
-            # Older hosts can only do delete on close. This means Dir1 and its
-            # file will still be present but Dir2 should be deleted.
-            $expected_msg = "Failure cleaning temp path '$actual_tmpdir': IOException Directory contains files still open by other processes"
-            $output.warnings.Count | Assert-Equal -Expected 1
-            $output.warnings[0] | Assert-Equal -Expected $expected_msg
+        (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
+        $output.warnings.Count | Assert-Equal -Expected 0
 
-            (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $true
-            (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
-            # Test-Path tries to open the file in a way that fails if it's marked as deleted
-            (Get-ChildItem -LiteralPath $dir1 -File).Count | Assert-Equal -Expected 1
-            (Test-Path -LiteralPath $dir2 -PathType Container) | Assert-Equal -Expected $false
-            (Test-Path -LiteralPath $file3 -PathType Leaf) | Assert-Equal -Expected $false
-
-            # Releasing the file handle releases the lock on the file deleting
-            # it. Unfortunately the parent dir will still be present
-            $fs.Dispose()
-            (Test-Path -LiteralPath $dir1 -PathType Container) | Assert-Equal -Expected $true
-            (Test-Path -LiteralPath $file1 -PathType Leaf) | Assert-Equal -Expected $false
-        }
-        else {
-            # Server 2016+ can use the POSIX APIs which will delete it straight away
-            (Test-Path -LiteralPath $actual_tmpdir -PathType Container) | Assert-Equal -Expected $false
-            $output.warnings.Count | Assert-Equal -Expected 0
-
-            $fs.Dispose()
-        }
+        $fs.Dispose()
 
         Remove-Item -LiteralPath $remote_tmp -Force -Recurse
     }

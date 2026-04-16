@@ -69,8 +69,6 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}/1
           targets:
-            - name: 2016 WinRM HTTP WinPS
-              test: 2016/winrm/http/5.1
             - name: 2019 WinRM HTTPS WinPS
               test: 2019/winrm/https/5.1
             - name: 2022 WinRM HTTPS WinPS
@@ -234,8 +232,6 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
-            - name: 2016 WinRM HTTP WinPS
-              test: 2016/winrm/http/5.1
             - name: 2019 WinRM HTTPS WinPS
               test: 2019/winrm/https/5.1
             - name: 2022 WinRM HTTPS WinPS
