@@ -246,7 +246,14 @@ EXAMPLES = r"""
     backrefs: yes
 """
 
-RETURN = r"""#"""
+RETURN = r"""
+found:
+    description:
+      - Number of lines found matching the search criteria.
+    returned: when state=absent
+    type: int
+    sample: 3
+"""
 
 import os
 import re

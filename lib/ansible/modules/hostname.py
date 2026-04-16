@@ -64,6 +64,15 @@ EXAMPLES = """
     use: systemd
 """
 
+RETURN = r"""
+name:
+    description:
+      - The hostname that was set.
+    returned: always
+    type: str
+    sample: web01
+"""
+
 import os
 import platform
 import socket
