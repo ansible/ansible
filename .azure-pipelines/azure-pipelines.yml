@@ -132,8 +132,8 @@ stages:
           targets:
             - name: Alpine 3.23
               test: alpine/3.23
-            - name: Fedora 43
-              test: fedora/43
+            - name: Fedora 44
+              test: fedora/44
             - name: RHEL 9.7
               test: rhel/9.7
             - name: RHEL 10.1
@@ -161,8 +161,8 @@ stages:
           targets:
             - name: Alpine 3.23
               test: alpine323
-            - name: Fedora 43
-              test: fedora43
+            - name: Fedora 44
+              test: fedora44
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -176,8 +176,8 @@ stages:
           targets:
             - name: Alpine 3.23
               test: alpine323
-            - name: Fedora 43
-              test: fedora43
+            - name: Fedora 44
+              test: fedora44
             - name: Ubuntu 24.04
               test: ubuntu2404
           groups:
@@ -188,8 +188,8 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Fedora 43
-              test: fedora43
+            - name: Fedora 44
+              test: fedora44
           groups:
             - 7
   - stage: PowerShell
