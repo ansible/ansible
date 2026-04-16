@@ -666,6 +666,7 @@ class GroupTuple(t.NamedTuple):
 _lazy_containers.register_known_types(GroupTuple)
 
 
+@accept_lazy_markers
 @pass_environment
 def _cleansed_groupby(*args, **kwargs):
     res = sync_do_groupby(*args, **kwargs)
