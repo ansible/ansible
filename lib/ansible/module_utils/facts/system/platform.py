@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 import socket
 import platform
@@ -33,6 +34,7 @@ class PlatformFactCollector(BaseFactCollector):
     name = 'platform'
     _fact_ids = set(['system',
                      'kernel',
+                     'kernel_modules',
                      'kernel_version',
                      'machine',
                      'python_version',
@@ -44,6 +46,7 @@ class PlatformFactCollector(BaseFactCollector):
         # platform.system() can be Linux, Darwin, Java, or Windows
         platform_facts['system'] = platform.system()
         platform_facts['kernel'] = platform.release()
+        platform_facts['kernel_modules'] = []
         platform_facts['kernel_version'] = platform.version()
         platform_facts['machine'] = platform.machine()
 
@@ -93,5 +96,11 @@ class PlatformFactCollector(BaseFactCollector):
         if machine_id:
             machine_id = machine_id.splitlines()[0]
             platform_facts["machine_id"] = machine_id
+
+        with contextlib.suppress(Exception):
+            with open("/proc/modules") as __f:
+                kmods = sorted(line.split()[0] for line in __f)
+        if kmods:
+            platform_facts['kernel_modules'] = kmods
 
         return platform_facts
