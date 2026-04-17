@@ -103,8 +103,8 @@ options:
         version_added: "1.9"
     force:
         description:
-            - If V(true), any modified files in the working
-              repository will be discarded.  Prior to 0.7, this was always
+            - If V(true), any modified files in the working repository and 
+              local commits will be discarded.  Prior to 0.7, this was always
               V(true) and could not be disabled.  Prior to 1.9, the default was
               V(true).
         type: bool
