@@ -1041,7 +1041,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
             if version == 'HEAD' or force:
                 cmd = f"{git_path} reset --hard {remote}/{target_version}"
             else:
-                if 'ahead' in out:
+                if 'ahead' in out or 'diverged' in out:
                     module.fail_json(
                         msg=f"Unable to advance to {remote}/{target_version} because local commits will be lost. "
                         f"Use `force: yes` to overwrite local commits"
