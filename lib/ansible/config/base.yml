@@ -2093,6 +2093,22 @@ _TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR:
   choices: *basic_error
   env: [{name: _ANSIBLE_TEMPLAR_UNTRUSTED_TEMPLATE_BEHAVIOR}]
   version_added: '2.19'
+WORKER_SESSION_ISOLATION:
+  name: Control worker session isolation
+  description:
+    - Ansible forked workers run session-isolated by default to avoid contention on shared TTYs.
+    - If access to the inherited parent TTY is required, set this option to ``false`` to disable session isolation.
+    - Disabling session isolation should be limited to the smallest possible scope by setting the ``ansible_worker_session_isolation`` variable on individual tasks, blocks, plays, roles, or hosts as needed.
+  default: true
+  env:
+  - name: ANSIBLE_WORKER_SESSION_ISOLATION
+  ini:
+    - key: worker_session_isolation
+      section: defaults
+  vars:
+  - { name: ansible_worker_session_isolation }
+  type: boolean
+  version_added: '2.21'
 WORKER_SHUTDOWN_POLL_COUNT:
   name: Worker Shutdown Poll Count
   default: 0
