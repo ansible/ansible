@@ -132,3 +132,87 @@
 
 - name: LOCALMODS | clear checkout_dir
   file: state=absent path={{ checkout_dir }}
+
+# Regression test for https://github.com/ansible/ansible/issues/83367
+- name: Check that commits aren't overwritten
+  vars:
+    branch: "testbranch"
+  block:
+  - name: LOCALMODS | create branch on remote
+    shell: |
+      git checkout -b {{ branch }}
+      echo "remote" > c
+      git add c
+      git commit -m "remote branch"
+    args:
+      chdir: "{{ repo_dir }}/localmods"
+
+  - name: LOCALMODS | checkout repo with branch
+    git:
+      repo: '{{ repo_dir }}/localmods'
+      dest: '{{ checkout_dir }}'
+      version: '{{ branch }}'
+
+  - name: LOCALMODS | make local commit
+    shell: |
+      echo "local" > b
+      git add b
+      git commit -m "local"
+      git rev-parse HEAD
+    args:
+      chdir: "{{ checkout_dir }}"
+    register: local_commit
+
+  - name: LOCALMODS | rerun git module without force (should fail)
+    git:
+      repo: '{{ repo_dir }}/localmods'
+      dest: '{{ checkout_dir }}'
+      version: '{{ branch }}'
+    register: rerun_no_force
+    ignore_errors: yes
+
+  - name: LOCALMODS | assert task failed with local commits ahead
+    assert:
+      that:
+        - rerun_no_force is failed
+
+  - name: LOCALMODS | verify local commit still exists after failed run
+    shell: git rev-parse HEAD
+    args:
+      chdir: "{{ checkout_dir }}"
+    register: commit_after_fail
+
+  - name: LOCALMODS | assert local commit preserved after failure
+    assert:
+      that:
+        - local_commit.stdout_lines[-1] == commit_after_fail.stdout
+
+  - name: LOCALMODS | rerun git module with force (should succeed and reset)
+    git:
+      repo: '{{ repo_dir }}/localmods'
+      dest: '{{ checkout_dir }}'
+      version: '{{ branch }}'
+      force: yes
+    register: rerun_with_force
+
+  - name: LOCALMODS | get remote commit hash
+    shell: git rev-parse origin/{{ branch }}
+    args:
+      chdir: "{{ checkout_dir }}"
+    register: remote_commit
+
+  - name: LOCALMODS | verify local commit was reset
+    shell: git rev-parse HEAD
+    args:
+      chdir: "{{ checkout_dir }}"
+    register: commit_after_force
+
+  - name: LOCALMODS | assert force reset to remote
+    assert:
+      that:
+        - local_commit.stdout_lines[-1] != commit_after_force.stdout
+        - commit_after_force.stdout == remote_commit.stdout
+        - rerun_with_force is changed
+
+  - name: LOCALMODS | clear checkout_dir
+    file: state=absent path={{ checkout_dir }}
