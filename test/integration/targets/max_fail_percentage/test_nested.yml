@@ -1,0 +1,13 @@
+# Test that max_fail_percentage triggers correctly when a failure occurs
+# inside a nested block (with include_tasks), even when a rescue section
+# handles the error. Reproduces https://github.com/ansible/ansible/issues/86574
+- hosts: all
+  gather_facts: false
+  max_fail_percentage: 0
+  tasks:
+    - name: include main tasks
+      include_tasks: tasks/main_tasks.yml
+
+    - name: Marker task - should NOT run for any host
+      debug:
+        msg: "marker task on {{ inventory_hostname }}"

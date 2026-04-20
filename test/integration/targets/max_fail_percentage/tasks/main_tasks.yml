@@ -1,0 +1,18 @@
+- name: Outer block
+  block:
+    - name: Include prereq tasks
+      include_tasks: tasks/prereq_tasks.yml
+
+    - name: Task after prereq
+      debug:
+        msg: "{{ inventory_hostname }} - passed prereq"
+
+  rescue:
+    - name: Rescue - re-raise failure
+      fail:
+        msg: "{{ inventory_hostname }} - rescue re-raising failure"
+
+  always:
+    - name: Always cleanup
+      debug:
+        msg: "always cleanup"

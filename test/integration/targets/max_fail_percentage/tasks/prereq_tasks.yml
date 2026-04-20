@@ -1,0 +1,10 @@
+- name: Inner block (no rescue)
+  block:
+    - name: Fail for first host only
+      fail:
+        msg: "prereq failure"
+      when: inventory_hostname == ansible_play_batch[0]
+
+    - name: Prereq success
+      debug:
+        msg: "{{ inventory_hostname }} - prereq succeeded"

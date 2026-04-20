@@ -365,7 +365,12 @@ class StrategyModule(StrategyBase):
                 if iterator._play.max_fail_percentage is not None and len(results) > 0:
                     percentage = iterator._play.max_fail_percentage / 100.0
 
-                    if (len(self._tqm._failed_hosts) / iterator.batch_size) > percentage:
+                    # Include both hosts that just failed in this task round and
+                    # hosts already marked as failed (from previous tasks/batches).
+                    # This ensures failures inside blocks (which aren't yet in
+                    # _tqm._failed_hosts) are counted toward the percentage.
+                    batch_failed = set(failed_hosts) | set(self._tqm._failed_hosts)
+                    if (len(batch_failed) / iterator.batch_size) > percentage:
                         for host in hosts_left:
                             # don't double-mark hosts, or the iterator will potentially
                             # fail them out of the rescue/always states
@@ -373,8 +378,7 @@ class StrategyModule(StrategyBase):
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                         self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                        result |= self._tqm.RUN_FAILED_BREAK_PLAY
-                    display.debug('(%s failed / %s total )> %s max fail' % (len(self._tqm._failed_hosts), iterator.batch_size, percentage))
+                    display.debug('(%s failed / %s total )> %s max fail' % (len(batch_failed), iterator.batch_size, percentage))
                 display.debug("done checking for max_fail_percentage")
 
                 display.debug("checking to see if all hosts have failed and the running result is not ok")

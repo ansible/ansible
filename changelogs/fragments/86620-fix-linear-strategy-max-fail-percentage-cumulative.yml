@@ -1,0 +1,2 @@
+bugfixes:
+  - linear strategy - Ensure ``max_fail_percentage`` is correctly calculated when using ``serial`` and across nested blocks, while also ensuring ``rescue`` and ``always`` tasks execute for failed hosts (https://github.com/ansible/ansible/pull/86620).
