@@ -123,6 +123,22 @@
           - peek is failed
           - "'_diff_peek' in peek['msg']"
 
+    # https://github.com/ansible/ansible/issues/86607
+    - name: Test copy with non-string src type
+      copy:
+        src:
+          foo: bar
+        dest: /tmp/
+        mode: "0755"
+      register: non_string_src
+      ignore_errors: true
+
+    - name: Assert non-string src type fails with clear error
+      assert:
+        that:
+          - non_string_src is failed
+          - "'Could not find or access' in non_string_src['msg']"
+
   always:
     - name: Cleaning
       file:

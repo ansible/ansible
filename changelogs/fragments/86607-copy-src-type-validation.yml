@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - copy - use ``validate_argument_spec()`` for action plugin argument validation, consistent with other action plugins (https://github.com/ansible/ansible/issues/86607).

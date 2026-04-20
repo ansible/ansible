@@ -305,7 +305,7 @@
   assert:
     that:
       - failed_copy is failed
-      - "'dest is required' in failed_copy.msg"
+      - "'missing required arguments: dest' in failed_copy.msg"
 
 - name: Try without source to ensure it fails
   copy:
@@ -321,7 +321,7 @@
   assert:
     that:
       - failed_copy is failed
-      - "'src (or content) is required' in failed_copy.msg"
+      - "'one of the following is required: src, content' in failed_copy.msg"
 
 - name: Try with both src and content to ensure it fails
   copy:
