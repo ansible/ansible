@@ -103,7 +103,7 @@ options:
         version_added: "1.9"
     force:
         description:
-            - If V(true), any modified files in the working repository and 
+            - If V(true), any modified files in the working repository and
               local commits will be discarded.  Prior to 0.7, this was always
               V(true) and could not be disabled.  Prior to 1.9, the default was
               V(true).
@@ -1035,25 +1035,28 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
     target_version = get_head_branch(git_path, module, dest, remote) if version == 'HEAD' else version
 
     if is_local_branch(git_path, module, dest, target_version):
-        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, target_version), check_rc=True, cwd=dest)
+        (rc, out, err) = module.run_command(f"{git_path} checkout --force {target_version}", check_rc=True, cwd=dest)
 
         if is_remote_branch(git_path, module, dest, remote, target_version):
             if version == 'HEAD' or force:
-                cmd = "%s reset --hard %s/%s" % (git_path, remote, target_version)
+                cmd = f"{git_path} reset --hard {remote}/{target_version}"
             else:
                 if 'ahead' in out:
-                    module.fail_json(msg=f"Unable to advance to {remote}/{target_version} because local commits will be lost. Use `force: yes` to overwrite local commits")
+                    module.fail_json(
+                        msg=f"Unable to advance to {remote}/{target_version} because local commits will be lost. "
+                        f"Use `force: yes` to overwrite local commits"
+                    )
                 cmd = f"{git_path} merge --ff-only {remote}/{target_version}"
             (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
 
     elif is_remote_branch(git_path, module, dest, remote, target_version):
         if depth:
             set_remote_branch(git_path, module, dest, remote, target_version, depth)
-        cmd = "%s checkout --track -b %s %s/%s" % (git_path, target_version, remote, target_version)
+        cmd = f"{git_path} checkout --track -b {target_version} {remote}/{target_version}"
         (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
 
     else:
-        cmd = "%s checkout --force %s" % (git_path, target_version)
+        cmd = f"{git_path} checkout --force {target_version}"
         (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
 
     if verify_commit:
