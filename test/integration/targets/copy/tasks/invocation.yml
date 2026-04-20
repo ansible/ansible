@@ -1,0 +1,15 @@
+- copy:
+    content: blah {{ lookup('pipe', 'date') }}
+    dest: '{{ local_temp_dir }}/copytmp.txt'
+  loop: [true, false]
+  vars:
+    ansible_inject_invocation: '{{ item }}'
+  register: copyout
+
+- debug:
+    var: copyout
+
+- assert:
+    that:
+      - copyout.results[0].invocation is defined
+      - copyout.results[1].invocation is not defined
