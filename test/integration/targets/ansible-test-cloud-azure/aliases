@@ -1,3 +1,4 @@
 cloud/azure
 shippable/generic/group1
 context/controller
+disabled/yes  # Azure credential provisioner pool broken in Core CI (likely SP policy)
