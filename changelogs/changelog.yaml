@@ -1559,6 +1559,17 @@ releases:
     - configlookupfix.yml
     - pyyaml-name.yml
     release_date: '2026-03-16'
+  2.19.9:
+    changes:
+      release_summary: '| Release Date: 2026-04-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.9_summary.yaml
+    release_date: '2026-04-20'
   2.19.9rc1:
     changes:
       bugfixes:
