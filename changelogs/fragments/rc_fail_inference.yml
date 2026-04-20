@@ -1,0 +1,4 @@
+deprecated_features:
+  - task result - Inferred task failure from a non-zero ``rc`` key and absence of a ``failed`` key will be deprecated in Ansible Core 2.22.
+    Actions and modules must explicitly communicate failure by setting the ``failed`` key, using APIs that do so, or raising an unhandled exception.
+    In future releases, the ``rc`` key will receive no special handling during task result processing.
