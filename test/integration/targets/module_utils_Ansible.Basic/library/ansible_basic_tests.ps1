@@ -1414,37 +1414,6 @@ test_no_log - Invoked with:
         $actual | Assert-DictionaryEqual -Expected $expected
     }
 
-    "Run with exec wrapper warnings" = {
-        [Ansible.Basic.AnsibleModule]::_WrapperWarnings = [System.Collections.Generic.List[string]]@('Warning 1', 'Warning 2')
-        try {
-            $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-            $m.Warn("Warning 3")
-
-            $failed = $false
-            try {
-                $m.ExitJson()
-            }
-            catch [System.Management.Automation.RuntimeException] {
-                $failed = $true
-                $_.Exception.Message | Assert-Equal -Expected "exit: 0"
-                $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
-            }
-            $failed | Assert-Equal -Expected $true
-        }
-        finally {
-            [Ansible.Basic.AnsibleModule]::_WrapperWarnings = $null
-        }
-
-        $expected = @{
-            changed = $false
-            invocation = @{
-                module_args = @{}
-            }
-            warnings = @("Warning 3", "Warning 1", "Warning 2")
-        }
-        $actual | Assert-DictionaryEqual -Expected $expected
-    }
-
     "FailJson with message" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
 

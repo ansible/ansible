@@ -1469,7 +1469,26 @@ if __name__ == "__main__":
             return interpreter_args, module_data
 
         def parse_clixml_stderr(rc: int, stdout: bytes, stderr: bytes) -> tuple[int, bytes, bytes]:
-            return (rc, stdout, _clixml.replace_stderr_clixml(stderr))
+            filtered_stdout = []
+
+            for line in stdout.splitlines(keepends=True):
+                if line.startswith(b"_AnsibleExecWrapperWarning: "):
+                    warning_line = to_text(line[28:])
+                    try:
+                        warning_record = json.loads(warning_line)
+                        display.warning(
+                            msg=warning_record['msg'],
+                            help_text=warning_record['help_text'],
+                            formatted_traceback=warning_record['formatted_traceback'])
+                    except (KeyError, ValueError) as e:
+                        display.warning(
+                            f"Failed to parse warning from PowerShell exec wrapper: {e}. Line: {warning_line}")
+
+                    continue
+
+                filtered_stdout.append(line)
+
+            return (rc, b"".join(filtered_stdout), _clixml.replace_stderr_clixml(stderr))
 
         command_lookup = get_module_command_args
         process_result = parse_clixml_stderr

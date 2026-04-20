@@ -41,10 +41,6 @@ namespace Ansible.Basic
 
         public static bool _DebugArgSpec = false;
 
-        // Used by the executor scripts to store warnings from the wrapper functions.
-        // This is public to avoid reflection but should not be used by modules.
-        public static List<string> _WrapperWarnings;
-
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
@@ -1403,14 +1399,6 @@ namespace Ansible.Basic
         {
             if (!result.ContainsKey("invocation"))
                 result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
-
-            if (_WrapperWarnings != null)
-            {
-                foreach (string warning in _WrapperWarnings)
-                {
-                    warnings.Add(warning);
-                }
-            }
 
             if (warnings.Count > 0)
                 result["warnings"] = warnings;

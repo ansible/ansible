@@ -421,7 +421,11 @@ class Connection(ConnectionBase):
                  connection.transport.endpoint), host=self._psrp_host
             )
             try:
-                self.runspace.open()
+                # _AnsibleIsPSRP is a special marker used by exec_wrapper to
+                # identify that the connection plugin is PSRP.
+                self.runspace.open(application_arguments={
+                    "_AnsibleIsPSRP": True,
+                })
             except AuthenticationError as e:
                 raise AnsibleConnectionFailure("failed to authenticate with "
                                                "the server: %s" % to_native(e))
