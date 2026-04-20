@@ -1636,6 +1636,21 @@ HOST_PATTERN_MISMATCH:
   choices:
     <<: *basic_error
   version_added: "2.8"
+INJECT_INVOCATION:
+  name: Control task result injection of ``invocation``
+  description:
+    - When enabled, an ``invocation`` key will be added to the task result with the module/action arguments used.
+      Most callback plugins mask the ``invocation`` key from task result display by default.
+  type: boolean
+  default: false
+  env:
+    - name: ANSIBLE_INJECT_INVOCATION
+  ini:
+    - key: interpreter_python
+      section: defaults
+  vars:
+    - name: ansible_inject_invocation
+  version_added: "2.21"
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution
   default: auto

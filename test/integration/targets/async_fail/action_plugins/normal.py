@@ -33,12 +33,6 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         if not result.get('skipped'):
-
-            if result.get('invocation', {}).get('module_args'):
-                # avoid passing to modules in case of no_log
-                # should not be set anymore but here for backwards compatibility
-                del result['invocation']['module_args']
-
             # FUTURE: better to let _execute_module calculate this internally?
             wrap_async = self._task.async_val
 

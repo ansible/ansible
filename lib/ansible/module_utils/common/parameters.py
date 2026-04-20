@@ -82,6 +82,7 @@ PASS_VARS: dict[str, t.Any] = {
     'diff': ('_diff', False),
     'keep_remote_files': ('_keep_remote_files', False),
     'ignore_unknown_opts': ('_ignore_unknown_opts', False),
+    'inject_invocation': ('_inject_invocation', False),
     'module_name': ('_name', None),
     'no_log': ('no_log', False),
     'remote_tmp': ('_remote_tmp', None),

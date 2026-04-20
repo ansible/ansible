@@ -13,6 +13,8 @@
   # DTFIX-FUTURE: move this and other target-side tests to a separate data_tagging_target integration test
   - name: run our sample module and keep its output
     tagging_sample:
+    vars:
+      ansible_inject_invocation: true
     register: demo_out
 
   - name: reference a deprecated return value from a template, we should see a deprecation warning pointing here

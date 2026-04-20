@@ -833,7 +833,6 @@ class UnifiedTaskResult:
     ansible_facts: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export())
     async_result: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=export_only())
     ansible_parsed: bool | None = None  # formerly _ansible_parsed
-    invocation: dict[str, t.Any] | None = dataclasses.field(default=None, metadata=import_export(destination=Destination.CALLBACK))
     exception: _messages.ErrorSummary | None = dataclasses.field(default=None, metadata=import_export())
     finished: bool | None = dataclasses.field(default=None, metadata=import_export())
     msg: object | None = dataclasses.field(default=None, metadata=import_export())

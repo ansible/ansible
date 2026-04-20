@@ -13,7 +13,7 @@ set -eux
 # and don't dedupe before the role successfully completes
 [ "$(ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags conditional_skipped | grep -c '"msg": "A"')" = "1" ]
 [ "$(ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags conditional_failed | grep -c '"msg": "failed_when task succeeded"')" = "1" ]
-[ "$(ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachable -vvv | grep -c '"data": "reachable"')" = "1" ]
+[ "$(ANSIBLE_INJECT_INVOCATION=1 ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachable -vvv | grep -c '"data": "reachable"')" = "1" ]
 ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachable | grep -e 'ignored=2'
 
 # include/import can execute another instance of role

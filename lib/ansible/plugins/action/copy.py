@@ -23,6 +23,7 @@ import os
 import os.path
 import stat
 import tempfile
+import typing as _t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
@@ -202,12 +203,16 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _ensure_invocation(self, result):
+    def _ensure_invocation(self, result: dict[str, _t.Any], task_vars: dict[str, _t.Any] | None = None) -> dict[str, _t.Any]:
         # NOTE: adding invocation arguments here needs to be kept in sync with
         # any no_log specified in the argument_spec in the module.
         # This is not automatic.
         # NOTE: do not add to this. This should be made a generic function for action plugins.
         # This should also use the same argspec as the module instead of keeping it in sync.
+        if not C.config.get_config_value('INJECT_INVOCATION', variables=task_vars or {}, templar=self._templar):
+            result.pop('invocation', None)
+            return result
+
         if 'invocation' not in result:
             if self._task.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
@@ -404,6 +409,15 @@ class ActionModule(ActionBase):
             os.remove(content_tempfile)
 
     def run(self, tmp=None, task_vars=None):
+        try:
+            result = self._run(task_vars=task_vars)
+            return self._ensure_invocation(result, task_vars=task_vars)
+        except AnsibleActionFail as aaf:
+            # twiddle `invocation` on the stored result, if any
+            self._ensure_invocation(aaf.result, task_vars=task_vars)
+            raise
+
+    def _run(self, tmp=None, task_vars=None):
         """ handler for file transfer operations """
         if task_vars is None:
             task_vars = dict()
@@ -436,7 +450,7 @@ class ActionModule(ActionBase):
             del result['failed']
 
         if result.get('failed'):
-            return self._ensure_invocation(result)
+            return result
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -452,15 +466,13 @@ class ActionModule(ActionBase):
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception as ex:
-                self._ensure_invocation(result)
-
                 raise AnsibleActionFail(message="could not write content temp file", result=result) from ex
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
             result.update(self._execute_module(module_name='ansible.legacy.copy', task_vars=task_vars))
-            return self._ensure_invocation(result)
+            return result
         else:
             # find_needle returns a path that may not have a trailing slash on
             # a directory so we need to determine that now (we use it just
@@ -471,8 +483,6 @@ class ActionModule(ActionBase):
                 # find in expected paths
                 source = self._find_needle('files', source)
             except AnsibleError as ex:
-                self._ensure_invocation(result)
-
                 raise AnsibleActionFail(result=result) from ex
 
             if trailing_slash != source.endswith(os.path.sep):
@@ -527,7 +537,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return self._ensure_invocation(result)
+                return result
 
             while (source_rel := os.path.dirname(source_rel)) != '':
                 implicit_directories.add(source_rel)
@@ -555,7 +565,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return self._ensure_invocation(result)
+                return result
 
             module_executed = True
             changed = changed or module_return.get('changed', False)
@@ -582,7 +592,7 @@ class ActionModule(ActionBase):
 
             if module_return.get('failed'):
                 result.update(module_return)
-                return self._ensure_invocation(result)
+                return result
 
             changed = changed or module_return.get('changed', False)
 
@@ -599,4 +609,4 @@ class ActionModule(ActionBase):
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
 
-        return self._ensure_invocation(result)
+        return result

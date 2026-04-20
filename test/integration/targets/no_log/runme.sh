@@ -2,6 +2,9 @@
 
 set -eux -o pipefail
 
+# test was originally written to assume invocation was always injected
+export ANSIBLE_INJECT_INVOCATION=1
+
 # ensure _ansible_no_log returned by actions is actually respected
 ansible-playbook ansible_no_log_in_result.yml -vvvvv > "${OUTPUT_DIR}/output.log" 2> /dev/null
 

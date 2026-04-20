@@ -2,6 +2,7 @@
   command: ansible -m ping localhost -vvv
   environment:
     ANSIBLE_KEEP_REMOTE_FILES: 1
+    ANSIBLE_INJECT_INVOCATION: 1
   register: wrapper
 
 - name: Locate the generated AnsiballZ wrapper
