@@ -52,7 +52,7 @@ def to_yaml(a, *_args, default_flow_style: bool | None = None, vault_behavior: s
     """Serialize input as terse flow-style YAML."""
 
     if vault_behavior and vault_behavior not in VaultBehaviors:
-        raise AnsibleFilterError(f"The vault parameter must be one of {", ".join(VaultBehaviors)}")
+        raise AnsibleFilterError(f"The vault parameter must be one of {', '.join(VaultBehaviors)}")
 
     behavior = VaultBehaviors(vault_behavior) if vault_behavior else VaultBehaviors.decrypt
 
@@ -663,15 +663,16 @@ class GroupTuple(t.NamedTuple):
         return tuple.__repr__(self)
 
 
-_lazy_containers.register_known_types(GroupTuple)
-
-
+@accept_lazy_markers
 @pass_environment
 def _cleansed_groupby(*args, **kwargs):
     res = sync_do_groupby(*args, **kwargs)
     res = [GroupTuple(grouper=g.grouper, list=g.list) for g in res]
 
     return res
+
+
+_lazy_containers.register_known_types(GroupTuple)
 
 # DTFIX-FUTURE: make these dumb wrappers more dynamic
 
