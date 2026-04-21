@@ -322,6 +322,7 @@ notes:
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
   - On distributions using BusyBox, this module uses C(adduser), C(chpasswd), C(deluser), and C(delgroup).
     The C(/etc/passwd) file is modified directly by this module and is backed up before modification.
+  - On distributions using BusyBox, O(move_home) is supported only if C(shadow) package is installed.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
@@ -3345,6 +3346,16 @@ class BusyBox(User):
                 self.module.backup_local(self.PASSWORDFILE)
                 self.module.atomic_move(tmpfile, self.PASSWORDFILE)
 
+        # Manage home directory
+        if self.move_home:
+            usermod_bin = self.module.get_bin_path('usermod')
+            if usermod_bin is not None:
+                cmd = [usermod_bin, '-d', self.home, '-m', self.name]
+                rc, out, err = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+            else:
+                self.module.warn("usermod command not found, skipping home directory move")
         return rc, out, err
 
 

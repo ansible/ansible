@@ -36,3 +36,4 @@
   when: ansible_facts.system == 'FreeBSD'
 - import_tasks: test_seuser_warning.yml
 - import_tasks: ssh_keygen.yml
+- include_tasks: test_modify_user_home.yml
