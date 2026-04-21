@@ -1032,37 +1032,50 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
 
 
 def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_allowlist, force=False):
-    target_version = get_head_branch(git_path, module, dest, remote) if version == 'HEAD' else version
-
-    if is_local_branch(git_path, module, dest, target_version):
-        (rc, out, err) = module.run_command(f"{git_path} checkout --force {target_version}", check_rc=True, cwd=dest)
-
-        if is_remote_branch(git_path, module, dest, remote, target_version):
-            if version == 'HEAD' or force:
-                cmd = f"{git_path} reset --hard {remote}/{target_version}"
-            else:
-                if 'ahead' in out or 'diverged' in out:
-                    module.fail_json(
-                        msg=f"Unable to advance to {remote}/{target_version} because local commits will be lost. "
-                        f"Use `force: yes` to overwrite local commits"
-                    )
-                cmd = f"{git_path} merge --ff-only {remote}/{target_version}"
-            (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-
-    elif is_remote_branch(git_path, module, dest, remote, target_version):
-        if depth:
-            set_remote_branch(git_path, module, dest, remote, target_version, depth)
-        cmd = f"{git_path} checkout --track -b {target_version} {remote}/{target_version}"
-        (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
-
+    cmd = ''
+    if version == 'HEAD':
+        branch = get_head_branch(git_path, module, dest, remote)
+        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch), cwd=dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to checkout branch %s" % branch,
+                             stdout=out, stderr=err, rc=rc)
+        cmd = "%s reset --hard %s/%s --" % (git_path, remote, branch)
     else:
-        cmd = f"{git_path} checkout --force {target_version}"
-        (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+        # FIXME check for local_branch first, should have been fetched already
+        if is_remote_branch(git_path, module, dest, remote, version):  # REMOTE=TRUE
+            if depth and not is_local_branch(git_path, module, dest, version):  # REMOTE=TRUE, LOCAL=FALSE, DEPTH=TRUE
+                # git clone --depth implies --single-branch, which makes
+                # the checkout fail if the version changes
+                # fetch the remote branch, to be able to check it out next
+                set_remote_branch(git_path, module, dest, remote, version, depth)
+            if not is_local_branch(git_path, module, dest, version):  # REMOTE=TRUE, LOCAL=FALSE
+                cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
+            else:  # REMOTE=TRUE, LOCAL=TRUE
+                (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
+                if rc != 0:
+                    module.fail_json(msg="Failed to checkout branch %s" % version, stdout=out, stderr=err, rc=rc)
+                if ('ahead' in out or 'diverged' in out) and not force:
+                    module.fail_json(msg=f"Unable to advance to {remote}/{version} because local commits will be lost. "
+                                     f"Use `force: yes` to overwrite local commits.")
+                if force:
+                    cmd = f"{git_path} reset --hard {remote}/{version}"
+                else:
+                    cmd = f"{git_path} merge --ff-only {remote}/{version}"
+        else:  # REMOTE=FALSE, implicit local4
+            cmd = "%s checkout --force %s" % (git_path, version)
+    (rc, out1, err1) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        if version != 'HEAD':
+            module.fail_json(msg="Failed to checkout %s" % (version),
+                             stdout=out1, stderr=err1, rc=rc, cmd=cmd)
+        else:
+            module.fail_json(msg="Failed to checkout branch %s" % (branch),
+                             stdout=out1, stderr=err1, rc=rc, cmd=cmd)
 
     if verify_commit:
         verify_commit_sign(git_path, module, dest, version, gpg_allowlist)
 
-    return (rc, out, err)
+    return (rc, out1, err1)
 
 
 def verify_commit_sign(git_path, module, dest, version, gpg_allowlist):
