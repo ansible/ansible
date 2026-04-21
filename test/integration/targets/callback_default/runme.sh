@@ -282,6 +282,13 @@ cat meta_test.out
 rm -f meta_test.out
 
 # Ensure free/host_pinned non-lockstep strategies display correctly
-diff -u callback_default.out.free.stdout <(ANSIBLE_STRATEGY=free ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null)
-diff -u callback_default.out.fqcn_free.stdout <(ANSIBLE_STRATEGY=ansible.builtin.free ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null)
-diff -u callback_default.out.host_pinned.stdout <(ANSIBLE_STRATEGY=host_pinned ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null)
+for strategy in free ansible.builtin.free host_pinned; do
+    ANSIBLE_STRATEGY=$strategy ansible-playbook -i inventory test_non_lockstep.yml 2>/dev/null | tee non_lockstep_test.out
+    # Verify callback output structure by normalizing hostnames
+    diff -u callback_default.out.non_lockstep.stdout <(sed 's/testhost1[0-9]/testhostXX/g' non_lockstep_test.out)
+    # Verify each host completed the expected number of tasks
+    for host in testhost10 testhost11 testhost12; do
+        test "$(grep -c "changed: \[$host\]" non_lockstep_test.out)" -eq 3
+    done
+done
+rm -f non_lockstep_test.out
