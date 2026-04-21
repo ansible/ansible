@@ -21,7 +21,7 @@
 - name: FORMATS | check for tags
   stat:
     path: "{{ repo_dir }}/format1/.git/refs/tags"
-  register: tags
+  register: tags_result
 
 - name: FORMATS | check for HEAD
   stat:
@@ -31,7 +31,7 @@
 - name: FORMATS | assert presence of tags/trunk/branches
   assert:
     that:
-      - "tags.stat.isdir"
+      - "tags_result.stat.isdir"
       - "head.stat.isreg"
 
 - name: FORMATS | verify on a reclone things are marked unchanged
