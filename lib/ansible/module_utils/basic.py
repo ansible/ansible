@@ -1443,8 +1443,11 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        if 'invocation' not in kwargs:
-            kwargs['invocation'] = {'module_args': self.params}
+        if _PARSED_MODULE_ARGS.get('_ansible_inject_invocation', False):
+            if 'invocation' not in kwargs:
+                kwargs['invocation'] = {'module_args': self.params}
+        else:
+            kwargs.pop('invocation', None)
 
         if 'warnings' in kwargs:
             self.deprecate(  # pylint: disable=ansible-deprecated-unnecessary-collection-name

@@ -57,6 +57,7 @@ namespace Ansible.Basic
         private List<Dictionary<string, string>> deprecations = new List<Dictionary<string, string>>();
         private List<string> cleanupFiles = new List<string>();
         private string[] _tracebacksFor = new string[0];
+        private bool injectInvocation = false;
 
         private Dictionary<string, string> passVars = new Dictionary<string, string>()
         {
@@ -67,6 +68,7 @@ namespace Ansible.Basic
             { "diff", "DiffMode" },
             { "keep_remote_files", "KeepRemoteFiles" },
             { "ignore_unknown_opts", "ignoreUnknownOpts" },
+            { "inject_invocation", "injectInvocation" },
             { "module_name", "ModuleName" },
             { "no_log", "NoLog" },
             { "remote_tmp", "remoteTmp" },
@@ -80,7 +82,7 @@ namespace Ansible.Basic
             { "verbosity", "Verbosity" },
             { "version", "AnsibleVersion" },
         };
-        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "no_log" };
+        private List<string> passBools = new List<string>() { "check_mode", "debug", "diff", "keep_remote_files", "ignore_unknown_opts", "inject_invocation", "no_log" };
         private List<string> passInts = new List<string>() { "verbosity" };
         private string[] passStringArrays = new string[] { "tracebacks_for" };
         private Dictionary<string, List<object>> specDefaults = new Dictionary<string, List<object>>()
@@ -281,8 +283,10 @@ namespace Ansible.Basic
             CheckArguments(argumentSpec, Params, legalInputs);
 
             // Set a Ansible friendly invocation value in the result object
-            Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
-            Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+            if (injectInvocation) {
+                Dictionary<string, object> invocation = new Dictionary<string, object>() { { "module_args", Params } };
+                Result["invocation"] = RemoveNoLogValues(invocation, noLogValues);
+            }
 
             if (!NoLog)
                 LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
@@ -1401,7 +1405,7 @@ namespace Ansible.Basic
 
         private string GetFormattedResults(Dictionary<string, object> result)
         {
-            if (!result.ContainsKey("invocation"))
+            if (injectInvocation && !result.ContainsKey("invocation"))
                 result["invocation"] = new Dictionary<string, object>() { { "module_args", RemoveNoLogValues(Params, noLogValues) } };
 
             if (_WrapperWarnings != null)
