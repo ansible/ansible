@@ -4,6 +4,32 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.0b3
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2026-04-21
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Minor Changes
+-------------
+
+- task results - Python and Powershell modules do not include the ``invocation`` task result key by default. Injection of the ``invocation`` task result key for Python and Powershell modules may be enabled with the var-settable ``INJECT_INVOCATION`` config item. Most callbacks mask ``invocation`` when displaying a task or loop item result.
+- worker process - When controller and forked child workers must share a TTY, the ``WORKER_SESSION_ISOLATION`` config item can be set to ``false`` (via variable/config/envvar) to disable forked worker session isolation.
+
+Deprecated Features
+-------------------
+
+- task result - Inferred task failure from a non-zero ``rc`` key and absence of a ``failed`` key will be deprecated in Ansible Core 2.22. Actions and modules must explicitly communicate failure by setting the ``failed`` key, using APIs that do so, or raising an unhandled exception. In future releases, the ``rc`` key will receive no special handling during task result processing.
+
+Bugfixes
+--------
+
+- ansible-test remote alias - Alias values for ``--controller`` and ``--target`` are properly resolved for ``remote``. Previously, remote alias values (e.g. ``fedora/latest``) resolved to the correct name only for the legacy ``--remote`` arg, failing with an unknown image error for the newer args.
+- task results - The ``invocation`` item result key omitted from registered values for looped task results, unless enabled via ``INJECT_INVOCATION``. Previously, it was deleted from registered non-loop results and only available to callbacks.
+
 v2.21.0b2
 =========
 
