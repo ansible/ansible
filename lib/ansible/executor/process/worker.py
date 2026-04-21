@@ -30,6 +30,7 @@ import typing as t
 from multiprocessing.queues import Queue
 
 from ansible._internal import _task
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
@@ -153,7 +154,11 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         with stdio fds.
         """
         try:
-            os.setsid()
+            if C.config.get_config_value('WORKER_SESSION_ISOLATION', variables=self._task_vars):
+                os.setsid()  # create a new session and process group for this worker (fully isolated from parent session resources, e.g., inherited TTY)
+            else:
+                os.setpgid(0, 0)  # isolation disabled, just make this worker a new process group leader for granular child process tracking
+
             # Create new fds for stdin/stdout/stderr, but also capture python uses of sys.stdout/stderr
             for fds, mode in (
                     ((STDIN_FILENO,), os.O_RDWR | os.O_NONBLOCK),
