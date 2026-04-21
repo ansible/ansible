@@ -1042,15 +1042,15 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
         cmd = "%s reset --hard %s/%s --" % (git_path, remote, branch)
     else:
         # FIXME check for local_branch first, should have been fetched already
-        if is_remote_branch(git_path, module, dest, remote, version):  # REMOTE=TRUE
-            if depth and not is_local_branch(git_path, module, dest, version):  # REMOTE=TRUE, LOCAL=FALSE, DEPTH=TRUE
+        if is_remote_branch(git_path, module, dest, remote, version):
+            if depth and not is_local_branch(git_path, module, dest, version):
                 # git clone --depth implies --single-branch, which makes
                 # the checkout fail if the version changes
                 # fetch the remote branch, to be able to check it out next
                 set_remote_branch(git_path, module, dest, remote, version, depth)
-            if not is_local_branch(git_path, module, dest, version):  # REMOTE=TRUE, LOCAL=FALSE
+            if not is_local_branch(git_path, module, dest, version):
                 cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
-            else:  # REMOTE=TRUE, LOCAL=TRUE
+            else:
                 (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
                 if rc != 0:
                     module.fail_json(msg="Failed to checkout branch %s" % version, stdout=out, stderr=err, rc=rc)
@@ -1061,7 +1061,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
                     cmd = f"{git_path} reset --hard {remote}/{version}"
                 else:
                     cmd = f"{git_path} merge --ff-only {remote}/{version}"
-        else:  # REMOTE=FALSE, implicit local4
+        else:
             cmd = "%s checkout --force %s" % (git_path, version)
     (rc, out1, err1) = module.run_command(cmd, cwd=dest)
     if rc != 0:
