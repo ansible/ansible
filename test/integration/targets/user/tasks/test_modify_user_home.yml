@@ -1,0 +1,43 @@
+---
+- name: Run test for Alpine Linux only
+  meta: end_host
+  when: ansible_distribution != 'Alpine'
+
+- name: Move user home directory
+  block:
+    - name: Add shadow package for Alpine Linux
+      command: apk add shadow
+
+    - name: Create user with home directory
+      user:
+        name: ansibulluser
+        home: /tmp/ansibulluser
+        state: present
+
+    - name: Move user home directory
+      user:
+        name: ansibulluser
+        home: /tmp/ansibulluser-moved
+        state: present
+        move_home: yes
+
+    - name: Stat user home directory
+      stat:
+        path: /tmp/ansibulluser-moved
+      register: user_home_directory
+
+    - name: Check if user home directory is moved
+      assert:
+        that:
+          - user_home_directory.stat.exists
+          - user_home_directory.stat.isdir
+          - user_home_directory.stat.pw_name == 'ansibulluser'
+
+  always:
+    - name: Remove user home directory
+      user:
+        name: ansibulluser
+        state: absent
+
+    - name: Remove package
+      command: apk del shadow
