@@ -408,7 +408,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
     if not is_fetch_success(info) and not url.startswith('file:/'):
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
+        module.fail_json(msg=f"Request failed with msg {info['msg']}", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
 
     # create a temporary file and copy content to do checksum-based replacement
     if tmp_dest:

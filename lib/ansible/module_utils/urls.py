@@ -1337,8 +1337,8 @@ def is_fetch_success(info: dict, additional_codes: list = None) -> bool:
     elif url.startswith('ftp'):
         return status is None
 
-    # Should never reach here, assume failure
-    return False
+    # Should never reach here, assume it behaves like http and ftp
+    return status == 200 or status is None
 
 
 def _suffixes(name):

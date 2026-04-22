@@ -213,6 +213,7 @@ def test_is_fetch_success():
         ('http://foo.com/file', 220, (220,), True),
         ('http://foo.com/file', 200, (220,), True),
         ('http://foo.com/file', 400, (220,), False),
+        ("Some nonsense fetch didn't catch", -1, None, False),
     ]
 
     for url, status, additional, expected in infos:
