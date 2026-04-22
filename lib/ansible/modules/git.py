@@ -168,9 +168,11 @@ options:
 
     track_submodules:
         description:
-            - If V(true), submodules will track the latest commit on their
-              master branch (or other branch specified in C(.gitmodules)).  If
-              V(false), submodules will be kept at the revision specified by the
+            - If V(true), submodules will track the latest commit on the branch specified in C(.gitmodules).
+              If no branch is specified in C(.gitmodules), it will use the remote HEAD.
+            - Currently, the value of remote is defaulted to C(origin).
+              Specifying the remote for the submodules is not supported.
+            - If V(false), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the C(--remote) flag
               to git submodule update.
         type: bool
