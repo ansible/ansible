@@ -285,4 +285,6 @@
         - diverged_with_force is changed
 
   - name: LOCALMODS | clear checkout_dir
-    file: state=absent path={{ checkout_dir }}
+    file: 
+       state: absent
+       path: "{{ checkout_dir }}"
