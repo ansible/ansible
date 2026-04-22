@@ -1,0 +1,4 @@
+bugfixes:
+  - git - use the branch configured in ``.gitmodules`` or the remote HEAD instead
+    of hardcoding ``master`` when ``track_submodules=yes``
+    (https://github.com/ansible/ansible/issues/77691).
