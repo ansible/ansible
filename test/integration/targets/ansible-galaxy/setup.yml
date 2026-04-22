@@ -42,7 +42,13 @@
       async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
       poll: 0
 
-    - wait_for: port=4443
+    - wait_for:
+        path: '{{ ws_dir }}/testserver.json'
+        timeout: 10
+
+    - wait_for:
+        port: 4443
+        timeout: 10
 
     - name: save results
       copy:
