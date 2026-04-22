@@ -3,6 +3,7 @@
     git_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/git_install.json") | from_json }}'
     openssl_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/openssl_install.json") | from_json }}'
     ws_dir: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/ws_dir.json") | from_json }}'
+    testserver_pid: '{{ lookup("file", ws_dir ~ "/testserver.json") | from_json }}'
   tasks:
     - name: cleanup
       include_tasks: "{{ cleanup_filename }}"
@@ -11,6 +12,9 @@
         - "cleanup-default.yml"
       loop_control:
         loop_var: cleanup_filename
+
+    - name: stop testserver
+      raw: kill -2 {{ testserver_pid }}
 
     - name: Remove default collection directories
       file:
