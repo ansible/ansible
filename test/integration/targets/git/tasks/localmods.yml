@@ -284,7 +284,8 @@
         - commit_after_diverged_force.stdout == remote_after_diverged.stdout
         - diverged_with_force is changed
 
-  - name: LOCALMODS | clear checkout_dir
+  always:
+  - name: LOCALMODS | cleanup checkout_dir
     file: 
        state: absent
        path: "{{ checkout_dir }}"
