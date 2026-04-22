@@ -168,9 +168,11 @@ options:
 
     track_submodules:
         description:
-            - If V(true), submodules will track the latest commit on their
-              master branch (or other branch specified in C(.gitmodules)).  If
-              V(false), submodules will be kept at the revision specified by the
+            - If V(true), submodules will track the latest commit on the branch specified in C(.gitmodules).
+              If no branch is specified in C(.gitmodules), it will use the remote HEAD.
+            - Currently, the value of remote is defaulted to C(origin).
+              Specifying the remote for the submodules is not supported.
+            - If V(false), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the C(--remote) flag
               to git submodule update.
         type: bool
@@ -563,6 +565,28 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
         module.fail_json(msg='Unable to find hash for submodule: %s' % subm_name)
 
     return submodules
+
+
+def get_submodule_branch(git_path, module, dest, submodule):
+    """Get the configured branch for a submodule from .gitmodules.
+
+    Falls back to the remote HEAD if no branch is configured.
+    """
+    cmd = [git_path, 'config', '-f', '.gitmodules',
+           f'submodule.{submodule}.branch']
+    rc, out, _err = module.run_command(cmd, cwd=dest)
+    if rc == 0 and out.strip():
+        return out.strip()
+
+    # No branch configured in .gitmodules, use remote HEAD
+    submodule_path = os.path.join(dest, submodule)
+    cmd = [git_path, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD']
+    rc, out, _err = module.run_command(cmd, cwd=submodule_path)
+    if rc == 0 and out.strip():
+        # Returns e.g. "origin/main", strip the remote prefix
+        return out.strip().split('/', 1)[-1]
+
+    return 'HEAD'
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
@@ -974,10 +998,19 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             module.fail_json(msg="Failed to fetch submodules: %s" % out + err)
 
         if track_submodules:
-            # Compare against submodule HEAD
-            # FIXME: determine this from .gitmodules
-            version = 'master'
-            after = get_submodule_versions(git_path, module, dest, '%s/%s' % (remote, version))
+            # Compare each submodule against its configured remote branch
+            after = {}
+            for submodule in begin:
+                branch = get_submodule_branch(git_path, module, dest, submodule)
+                version_ref = f'{remote}/{branch}' if branch != 'HEAD' else 'HEAD'
+                submodule_path = os.path.join(dest, submodule)
+                cmd = [git_path, 'rev-parse', version_ref]
+                (rc, out, err) = module.run_command(cmd, cwd=submodule_path)
+                if rc != 0:
+                    module.fail_json(
+                        msg='Unable to determine hash of submodule %s at %s' % (submodule, version_ref),
+                        stdout=out, stderr=err, rc=rc)
+                after[submodule] = out.strip()
             if begin != after:
                 changed = True
         else:
