@@ -24,6 +24,12 @@ ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachabl
 
 # ensure _from role overrides are supported
 [ "$(ansible-playbook from_files.yml -i ../../inventory --tags syntax | grep -c '"msg": "subdir"')" = "1" ]
+# test no dupes when role specified multiple times with _from overrides
+[ "$(ansible-playbook from_files.yml -i ../../inventory --tags dupes | grep -c '"msg": "subdir"')" = "1" ]
+# ensure no dedups happens for role that points to different tasks
+[ "$(ansible-playbook from_files.yml -i ../../inventory --tags mixed | grep -c '"msg": "A\|subdir"')" = "2" ]
+# test no dupes when role uses default main value for _from overrides
+[ "$(ansible-playbook from_files.yml -i ../../inventory --tags default | grep -c '"msg": "A"')" = "1" ]
 
 # ensure role data is merged correctly
 ansible-playbook data_integrity.yml -i ../../inventory "$@"

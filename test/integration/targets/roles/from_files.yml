@@ -5,3 +5,31 @@
   roles:
     - role: a
       tasks_from: subdir/entrypoint.yml
+
+- name: test that deduping allows for 1 successful execution if the role duplicated with _from overrides
+  hosts: localhost
+  gather_facts: false
+  tags: [ 'dupes' ]
+  roles:
+    - role: a
+      tasks_from: subdir/entrypoint.yml
+    - role: a
+      tasks_from: subdir/entrypoint.yml
+
+- name: test that deduping differentiates role definition with and without _from overrides
+  hosts: localhost
+  gather_facts: false
+  tags: [ 'mixed' ]
+  roles:
+    - role: a
+    - role: a
+      tasks_from: subdir/entrypoint.yml
+
+- name: test that deduping handles _from overrides evaluated to default
+  hosts: localhost
+  gather_facts: false
+  tags: [ 'default' ]
+  roles:
+    - role: a
+    - role: a
+      tasks_from: "./../tasks/{{ 'ma' ~ 'in' }}.yml"

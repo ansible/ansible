@@ -158,6 +158,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         if from_files is None:
             from_files = {}
         self._from_files: dict[str, list[str]] = from_files
+        self._effective_files: dict[str, list[str]] = dict()
 
         # Indicates whether this role was included via include/import_role
         self.from_include: bool = from_include
@@ -185,6 +186,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
     def _get_hash_dict(self):
         if self._hash:
             return self._hash
+
         self._hash = MappingProxyType(
             {
                 'name': self.get_name(),
@@ -192,7 +194,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 'params': MappingProxyType(self.get_role_params()),
                 'when': self.when,
                 'tags': self.tags,
-                'from_files': MappingProxyType(self._from_files),
+                'effective_files': MappingProxyType(self._effective_files),
                 'vars': MappingProxyType(self.vars),
                 'from_include': self.from_include,
             }
@@ -251,20 +253,20 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             setattr(self, f'_{attr_name}', getattr(role_include, f'_{attr_name}', Sentinel))
 
         # vars and default vars are regular dictionaries
-        self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
+        self._role_vars, self._effective_files['vars'] = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
         if self._role_vars is None:
             self._role_vars = {}
         elif not isinstance(self._role_vars, Mapping):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
+        self._default_vars, self._effective_files['defaults'] = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
             self._default_vars = {}
         elif not isinstance(self._default_vars, Mapping):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         # load the role's other files, if they exist
-        metadata = self._load_role_yaml('meta')
+        metadata, self._effective_files['meta'] = self._load_role_yaml('meta')
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
@@ -295,7 +297,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
 
-        task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
+        task_data, self._effective_files['tasks'] = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
 
         if self._should_validate:
             role_argspecs = self._get_role_argspecs()
@@ -307,7 +309,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             except AssertionError as ex:
                 raise AnsibleParserError(f"The tasks/main.yml file for role {self._role_name!r} must contain a list of tasks.", obj=task_data) from ex
 
-        handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
+        handler_data, self._effective_files['handlers'] = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
@@ -333,7 +335,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             full_path = base_argspec_path + ext
             if self._loader.path_exists(full_path):
                 # Note: _load_role_yaml() takes care of rebuilding the path.
-                argument_specs = self._load_role_yaml('meta', main='argument_specs')
+                argument_specs = self._load_role_yaml('meta', main='argument_specs')[0]
                 try:
                     return argument_specs.get('argument_specs') or {}
                 except AttributeError:
@@ -415,10 +417,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                           If false, highlander rules. Only for vars(dicts) and not tasks(lists).
         :type allow_dir: bool
 
-        :returns: data from the matched file(s), type can be dict or list depending on vars or tasks.
+        :returns: two-element tuple with data from the matched file(s)
+                  and list containing the matched files relative to the role subdir.
+                  The type of data can be dict or list depending on vars or tasks.
         """
         data = None
         file_path = os.path.join(self._role_path, subdir)
+        evaluated_files = []
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
             # Valid extensions and ordering for roles is hard-coded to maintain portability
             extensions = ['.yml', '.yaml', '.json']  # same as default for YAML_FILENAME_EXTENSIONS
@@ -433,6 +438,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 extensions.insert(0, '')
 
             # not really 'find_vars_files' but find_files_with_extensions_default_to_yaml_filename_extensions
+            # note that 'find_vars_files' sorts the results so there's no reason to do it manually for evaluated_files
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
                 for found in found_files:
@@ -442,15 +448,22 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                                          f"as it is not inside the expected role path: {file_path!r}")
 
                     new_data = self._loader.load_from_file(found, trusted_as_template=True)
-                    if new_data:
-                        if data is not None and isinstance(new_data, Mapping):
-                            data = combine_vars(data, new_data)
-                        else:
-                            data = new_data
 
-                        # found data so no need to continue unless we want to merge
-                        if not allow_dir:
-                            break
+                    # resolve the path and store only the relevant portion of it (i.e., meaningful for hashing)
+                    evaluated_files.append(os.path.relpath(found, file_path))
+
+                    # skip empty data from further assignment/merging
+                    if not new_data:
+                        continue
+
+                    if data is not None and isinstance(new_data, Mapping):
+                        data = combine_vars(data, new_data)
+                    else:
+                        data = new_data
+
+                    # found data so no need to continue unless we want to merge
+                    if not allow_dir:
+                        break
 
             elif main is not None:
                 # this won't trigger with default only when <subdir>_from is specified
@@ -459,7 +472,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
             # this won't trigger with default only when <subdir>_from is specified
             raise self._FAIL(f"Could not find specified file in role, its '{subdir}/' is not usable.")
 
-        return data
+        return data, evaluated_files
 
     def _load_dependencies(self):
         """
