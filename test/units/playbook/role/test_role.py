@@ -410,3 +410,22 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r.get_name(), "foo_complex")
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_role_is_hashable_and_set_dedupes(self):
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_hashable/tasks/main.yml": "- shell: echo hi",
+        })
+
+        mock_play = MagicMock()
+        mock_play.role_cache = {}
+
+        i1 = RoleInclude.load(dict(role='foo_hashable'), play=mock_play, loader=fake_loader)
+        r1 = Role.load(i1, play=mock_play)
+        i2 = RoleInclude.load(dict(role='foo_hashable'), play=mock_play, loader=fake_loader)
+        r2 = Role.load(i2, play=mock_play)
+
+        hash(r1)
+        self.assertEqual(r1, r2)
+        self.assertEqual(hash(r1), hash(r2))
+        self.assertEqual(len({r1, r2}), 1)

@@ -1,0 +1,2 @@
+minor_changes:
+  - role - ``Role.get_vars()`` now deduplicates transitive dependencies via a set rather than a list, reducing complexity from O(D\ :sup:`2`\ ) to O(D); ``Role`` gains an ``__hash__`` method consistent with its existing ``__eq__``.

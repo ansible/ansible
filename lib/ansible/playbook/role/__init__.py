@@ -205,6 +205,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
         return self._get_hash_dict() == other._get_hash_dict()
 
+    def __hash__(self):
+        # Subset of _get_hash_dict fields; any two roles that compare equal share the same (name, path).
+        return hash((self.get_name(), self.get_role_path()))
+
     @staticmethod
     def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True, rescuable=True):
         if from_files is None:
@@ -536,14 +540,14 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
         all_vars = self.get_inherited_vars(dep_chain, only_exports=only_exports)
 
         # get exported variables from meta/dependencies
-        seen = []
+        seen = set()
         for dep in self.get_all_dependencies():
             # Avoid rerunning dupe deps since they can have vars from previous invocations and they accumulate in deps
             # TODO: re-examine dep loading to see if we are somehow improperly adding the same dep too many times
             if dep not in seen:
                 # only take 'exportable' vars from deps
                 all_vars = combine_vars(all_vars, dep.get_vars(include_params=False, only_exports=True))
-                seen.append(dep)
+                seen.add(dep)
 
         # role_vars come from vars/ in a role
         all_vars = combine_vars(all_vars, self._role_vars)
