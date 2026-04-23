@@ -10,7 +10,7 @@ import http.client
 import urllib.error
 from http.cookiejar import Cookie
 
-from ansible.module_utils.urls import fetch_url, ConnectionError
+from ansible.module_utils.urls import fetch_url, is_fetch_success, ConnectionError
 
 import pytest
 from unittest.mock import MagicMock
@@ -197,3 +197,24 @@ def test_fetch_url_badstatusline(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = http.client.BadStatusLine('TESTS')
     r, info = fetch_url(fake_ansible_module, BASE_URL)
     assert info == {'msg': 'Connection failure: connection was closed before a valid response was received: TESTS', 'status': -1, 'url': BASE_URL}
+
+
+# is_fetch_success is highly coupled to fetch_url, unit test here.
+def test_is_fetch_success():
+    infos = [
+        ('ftp://some/dir/file.txt', None, None, True),
+        ('ftps://another/dir/f.txt', -1, None, False),
+        ('ftp://foo/dir/f.md', None, (-1,), True),
+        ('ftp://foo/dir/f.md', -1, (-1,), True),
+        ('https://foo.com/file', 200, None, True),
+        ('https://foo.com/file', 400, None, False),
+        ('http://foo.com/file', 200, None, True),
+        ('http://foo.com/file', 400, None, False),
+        ('http://foo.com/file', 220, (220,), True),
+        ('http://foo.com/file', 200, (220,), True),
+        ('http://foo.com/file', 400, (220,), False),
+        ("Some nonsense fetch didn't catch", -1, None, False),
+    ]
+
+    for url, status, additional, expected in infos:
+        assert expected == is_fetch_success(dict(url=url, status=status), additional_codes=additional)

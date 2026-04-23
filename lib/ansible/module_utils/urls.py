@@ -1315,6 +1315,32 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     return r, info
 
 
+def is_fetch_success(info: dict, additional_codes: list = None) -> bool:
+    """Determine if a fetch_url response is successful independent of the protocol.
+    :arg info: info dictionary returned from fetch_url
+
+    :kwarg additional_codes: (Optional) List of additional status codes that will be considered a success"""
+
+    status = info.get('status', -1)
+    url = info.get('url', '').lower()
+
+    # Allow user to override with specific codes
+    if additional_codes and status in additional_codes:
+        return True
+
+    # General failure
+    if status == -1:
+        return False
+
+    if url.startswith('http'):
+        return status == 200
+    if url.startswith('ftp'):
+        return status is None
+
+    # Should never reach here, assume it behaves like http and ftp
+    return status == 200 or status is None
+
+
 def _suffixes(name):
     """A list of the final component's suffixes, if any."""
     if name.endswith('.'):
