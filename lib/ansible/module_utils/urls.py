@@ -1334,7 +1334,7 @@ def is_fetch_success(info: dict, additional_codes: list = None) -> bool:
 
     if url.startswith('http'):
         return status == 200
-    elif url.startswith('ftp'):
+    if url.startswith('ftp'):
         return status is None
 
     # Should never reach here, assume it behaves like http and ftp
