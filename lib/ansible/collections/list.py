@@ -13,10 +13,10 @@ display = Display()
 
 
 @with_collection_artifacts_manager
-def list_collections(coll_filter=None, search_paths=None, dedupe=True, artifacts_manager=None):
+def list_collections(coll_filter=None, search_paths=None, dedupe=True, artifacts_manager=None, include_internal=True):
 
     collections = {}
-    for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter, artifacts_manager=artifacts_manager, dedupe=dedupe):
+    for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter, artifacts_manager=artifacts_manager, dedupe=dedupe, include_internal=include_internal):
         if collection := _get_collection_name_from_path(candidate):
             collections[collection] = candidate
         else:
@@ -25,7 +25,7 @@ def list_collections(coll_filter=None, search_paths=None, dedupe=True, artifacts
 
 
 @with_collection_artifacts_manager
-def list_collection_dirs(search_paths=None, coll_filter=None, artifacts_manager=None, dedupe=True):
+def list_collection_dirs(search_paths=None, coll_filter=None, artifacts_manager=None, dedupe=True, include_internal=True):
     """
     Return paths for the specific collections found in passed or configured search paths
     :param search_paths: list of text-string paths, if none load default config
@@ -58,7 +58,7 @@ def list_collection_dirs(search_paths=None, coll_filter=None, artifacts_manager=
         namespace_filter = sorted(namespace_filter)
 
     for req in find_existing_collections(search_paths, artifacts_manager, namespace_filter=namespace_filter,
-                                         collection_filter=collection_filter, dedupe=dedupe):
+                                         collection_filter=collection_filter, dedupe=dedupe, include_internal=include_internal):
 
         if not has_pure_namespace_filter and coll_filter is not None and req.fqcn not in coll_filter:
             continue

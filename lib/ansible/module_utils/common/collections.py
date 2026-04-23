@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 
+import typing as t
 from collections.abc import Hashable, Mapping, MutableMapping, Sequence  # pylint: disable=unused-import
 
 from ansible.module_utils._internal import _no_six

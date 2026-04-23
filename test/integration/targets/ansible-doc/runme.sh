@@ -33,6 +33,14 @@ ansible-doc -t keyword asldkfjaslidfhals 2>&1 | grep "${GREP_OPTS[@]}" 'Skipping
 echo "Check if deprecation collection name is printed"
 ansible-doc --playbook-dir ./ testns.testcol.randommodule 2>&1 | grep "${GREP_OPTS[@]}" "Will be removed in: testns.testcol"
 
+echo "test metadata dump for internal collection"
+ansible-doc --metadata-dump 2>&1 | tee metadata-dump.txt
+if grep -q "ansible._protomatter" metadata-dump.txt; then
+    # NOTE: detect FQCN
+	echo "Found internal collection 'ansible._protomatter' in metadata dump, instead of skipping it"
+	exit 1
+fi
+
 # collections testing
 (
 unset ANSIBLE_PLAYBOOK_DIR
