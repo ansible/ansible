@@ -1426,6 +1426,17 @@ FACTS_MODULES:
   type: list
   vars:
     - name: ansible_facts_modules
+FQDN_ONLY_PULL_LIMIT:
+  name: Pull limit only uses FQDN
+  default: False
+  type: bool
+  description:
+    - Toggle to exclusively use the fully qualified domain name in the C(--limit) which C(ansible-pull) uses to execute the playbook.
+    - When C(False) it will also include the shortened hostname. For example, '-l targethost.example.com,targethost'.
+  env: [{name: ANSIBLE_FQDN_ONLY_PULL_LIMIT}]
+  ini:
+  - {key: fqdn_only_limit, section: pull}
+  version_added: '2.21'
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
   description:
