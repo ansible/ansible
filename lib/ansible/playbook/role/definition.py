@@ -20,7 +20,7 @@ from __future__ import annotations
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._internal._datatag import AnsibleTagHelper
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.base import Base
@@ -33,6 +33,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_r
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
+
 __all__ = ['RoleDefinition']
 
 display = Display()
@@ -41,6 +42,17 @@ display = Display()
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     role = NonInheritableFieldAttribute(isa='string')
+
+    defaults_from = NonInheritableFieldAttribute(isa='string')
+    handlers_from = NonInheritableFieldAttribute(isa='string')
+    tasks_from = NonInheritableFieldAttribute(isa='string')
+    vars_from = NonInheritableFieldAttribute(isa='string')
+
+    # A mapping from role definition keys (tasks_from, vars_from, ...)
+    # to dedicated from_files dictionary keys (tasks, vars)
+    FROM_FILES_ASSOC = {
+        ('%s_from' % k): k for k in ('defaults', 'handlers', 'tasks', 'vars')
+    }
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
@@ -53,6 +65,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         self._role_path = None
         self._role_collection = None
         self._role_basedir = role_basedir
+        self._role_from_files = dict()
         self._role_params = dict()
         self._collection_list = collection_list
 
@@ -88,6 +101,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         role_name = self._load_role_name(ds)
         (role_name, role_path) = self._load_role_path(role_name)
 
+        # then pull the role-specific file overrides
+        role_from_files = self._load_role_from_files(ds)
+
         # next, we split the role params out from the valid role
         # attributes and update the new datastructure with that
         # result and the role name
@@ -99,8 +115,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # set the role name in the new ds
         new_ds['role'] = role_name
 
-        # we store the role path internally
+        # we store the role path and file overrides internally
         self._role_path = role_path
+        self._role_from_files = role_from_files
 
         # and return the cleaned-up data structure
         return new_ds
@@ -127,6 +144,33 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             role_name = templar.template(role_name)
 
         return role_name
+
+    def _load_role_from_files(self, ds):
+        """
+        Returns a dictionary specifying the role-specific file overrides
+        (e.g., tasks) from the role definition (e.g., tasks_from).
+        It is typically expected to be used by the Role.load
+        """
+
+        # if the role definition is a plain string, there is nothing to process
+        if isinstance(ds, str):
+            return dict()
+
+        # create a template engine instance in order to handle dynamic values
+        if self._variable_manager is not None:
+            templar = TemplateEngine(loader=self._loader, variables=self._variable_manager.get_vars(play=self._play))
+        else:
+            templar = TemplateEngine(loader=self._loader)
+
+        from_files = dict()
+        for role_key in set(RoleDefinition.FROM_FILES_ASSOC.keys()).intersection(ds):
+            value = templar.template(ds.get(role_key))
+            if not isinstance(value, str):
+                raise AnsibleParserError('Expected a string for %s but got %s instead' % (role_key, type(value)))
+
+            from_files[RoleDefinition.FROM_FILES_ASSOC[role_key]] = value
+
+        return from_files
 
     def _load_role_path(self, role_name):
         """
@@ -228,6 +272,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     def get_role_path(self):
         return self._role_path
+
+    def get_role_from_files(self):
+        return self._role_from_files.copy()
 
     def get_name(self, include_role_fqcn=True):
         if include_role_fqcn:

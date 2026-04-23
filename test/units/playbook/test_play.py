@@ -161,6 +161,39 @@ def test_play_with_roles(mocker):
     assert isinstance(p.get_roles()[0], Role)
 
 
+def test_play_with_roles_with_from_files(mocker):
+    mocker.patch('ansible.playbook.role.definition.RoleDefinition._load_role_path', return_value=('foo', '/etc/ansible/roles/foo'))
+    fake_loader = DictDataLoader({
+        "/etc/ansible/roles/foo/tasks/main.yml": """
+        - name: bar
+          command: bar
+        """,
+        "/etc/ansible/roles/foo/tasks/custom.yml": """
+        - name: baz
+          command: baz
+        """,
+    })
+
+    mock_var_manager = mocker.MagicMock()
+    mock_var_manager.get_vars.return_value = {}
+
+    p = Play.load(dict(
+        name="test play",
+        hosts=['foo'],
+        gather_facts=False,
+        roles=[dict(name='foo', tasks_from='custom.yml')],
+    ), loader=fake_loader, variable_manager=mock_var_manager)
+
+    blocks = p.compile()
+
+    # filter meta blocks and only retrieve the command block
+    tasks = [block.get_tasks()[0] for block in blocks if 'meta' not in block.get_tasks()[0].get_name()]
+
+    # only one command block is expected to be loaded, and it must be what tasks_from overrides
+    assert len(tasks) == 1
+    assert tasks[0].name == 'baz'
+
+
 def test_play_compile():
     p = Play.load(dict(
         name="test play",

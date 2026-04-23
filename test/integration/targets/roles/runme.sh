@@ -22,6 +22,9 @@ ansible-playbook role_complete.yml -i ../../inventory -i fake, --tags unreachabl
 
 [ "$(ansible-playbook dupe_inheritance.yml -i ../../inventory | grep -c '"msg": "abc"')" = "3" ]
 
+# ensure _from role overrides are supported
+[ "$(ansible-playbook from_files.yml -i ../../inventory --tags syntax | grep -c '"msg": "subdir"')" = "1" ]
+
 # ensure role data is merged correctly
 ansible-playbook data_integrity.yml -i ../../inventory "$@"
 

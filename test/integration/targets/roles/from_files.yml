@@ -1,0 +1,7 @@
+- name: test that roles definition supports _from overrides
+  hosts: localhost
+  tags: [ 'syntax' ]
+  gather_facts: false
+  roles:
+    - role: a
+      tasks_from: subdir/entrypoint.yml

@@ -207,8 +207,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
 
     @staticmethod
     def load(role_include, play, parent_role=None, from_files=None, from_include=False, validate=True, public=None, static=True, rescuable=True):
+        # try to load from_files from the role itself if it is not passed directly
         if from_files is None:
-            from_files = {}
+            from_files = role_include.get_role_from_files()
+
         try:
             # TODO: need to fix cycle detection in role load (maybe use an empty dict
             #  for the in-flight in role cache as a sentinel that we're already trying to load
