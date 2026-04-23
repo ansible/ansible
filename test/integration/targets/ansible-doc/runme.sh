@@ -35,8 +35,8 @@ ansible-doc --playbook-dir ./ testns.testcol.randommodule 2>&1 | grep "${GREP_OP
 
 echo "test metadata dump for internal collection"
 ansible-doc --metadata-dump 2>&1 | tee metadata-dump.txt
-if grep -q "ansible._protomatter" metadata-dump.txt; then
-	# NOTE: detect FQCN
+if grep -q "lib/ansible/_internal/ansible_collections/ansible/_protomatter" metadata-dump.txt; then
+	# NOTE: detect FQCN or internal path
 	echo "Found internal collection 'ansible._protomatter' in metadata dump, instead of skipping it"
 	exit 1
 fi

@@ -16,7 +16,14 @@ display = Display()
 def list_collections(coll_filter=None, search_paths=None, dedupe=True, artifacts_manager=None, include_internal=True):
 
     collections = {}
-    for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter, artifacts_manager=artifacts_manager, dedupe=dedupe, include_internal=include_internal):
+    candidates = list_collection_dirs(
+        search_paths=search_paths,
+        coll_filter=coll_filter,
+        artifacts_manager=artifacts_manager,
+        dedupe=dedupe,
+        include_internal=include_internal,
+    )
+    for candidate in candidates:
         if collection := _get_collection_name_from_path(candidate):
             collections[collection] = candidate
         else:
