@@ -1,0 +1,3 @@
+---
+bugfixes:
+- git - Fixed the issue where fetching a specific branch would fail if the remote tracking branch was missing. This typically occurs when the initial git clone was performed using the --single-branch or --depth parameters." (https://github.com/ansible/ansible/issues/82007).
