@@ -1,0 +1,4 @@
+bugfixes:
+  - rpm_key - Fix module failure when fetching GPG keys from FTP URLs (https://github.com/ansible/ansible/issues/83321).
+minor_changes:
+  - module_utils.urls - Added ``is_fetch_success()`` function for protocol-aware success detection of ``fetch_url()`` responses.

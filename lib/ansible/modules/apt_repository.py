@@ -186,7 +186,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.file import S_IRWU_RG_RO as DEFAULT_SOURCES_PERM
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
 from ansible.module_utils.common.text.converters import to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, is_fetch_success
 
 from ansible.module_utils.common.locale import get_best_parsable_locale
 
@@ -470,7 +470,7 @@ class UbuntuSourcesList(SourcesList):
 
         headers = dict(Accept='application/json')
         response, info = fetch_url(self.module, lp_api, headers=headers)
-        if info['status'] != 200:
+        if not is_fetch_success(info):
             self.module.fail_json(msg="failed to fetch PPA information, error was: %s" % info['msg'])
         return json.loads(to_native(response.read()))
 

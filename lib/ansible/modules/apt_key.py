@@ -179,7 +179,7 @@ import os
 from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, is_fetch_success
 
 
 apt_key_bin = None
@@ -316,7 +316,7 @@ def download_key(module, url):
     try:
         # note: validate_certs and other args are pulled from module directly
         rsp, info = fetch_url(module, url, use_proxy=True)
-        if info['status'] != 200:
+        if not is_fetch_success(info):
             module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
 
         return rsp.read()
