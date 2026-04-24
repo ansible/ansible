@@ -1,0 +1,2 @@
+bugfixes:
+  - git - fix ``force`` parameter to properly preserve local commits when set to ``false`` and fail with a clear error message (https://github.com/ansible/ansible/issues/83367)
