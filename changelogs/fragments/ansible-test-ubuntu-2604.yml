@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Replace Ubuntu 22.04 container and remote with 26.04.

@@ -184,6 +184,14 @@ def get_test_scenarios() -> list[TestScenario]:
             # Disabling the 'unix-chkpwd' profile works around the issue, but does not solve the underlying problem.
             disable_apparmor_profile_unix_chkpwd = engine == 'podman' and os_release.id == 'ubuntu' and container_name.startswith('fedora')
 
+            # The AppArmor policy for pasta on Ubuntu 26.04 prevents podman from stopping containers.
+            # Attempting to do so fails with an error like:
+            # rootless netns: kill network process: permission denied
+            # AppArmor denials such as the following show up in dmesg output:
+            # [ 1606.740536] audit: type=1400 audit(1777052086.084:226): apparmor="DENIED" operation="signal" class="signal" profile="pasta" pid=28252
+            #   comm="podman" requested_mask="receive" denied_mask="receive" signal=term peer="podman"
+            disable_apparmor_profile_pasta = engine == 'podman' and os_release.id == 'ubuntu' and os_release.version_id == '26.04'
+
             cgroup_version = get_docker_info(engine).cgroup_version
 
             user_scenarios = [
@@ -238,6 +246,7 @@ def get_test_scenarios() -> list[TestScenario]:
                         debug_systemd=debug_systemd,
                         probe_cgroups=probe_cgroups,
                         disable_apparmor_profile_unix_chkpwd=disable_apparmor_profile_unix_chkpwd,
+                        disable_apparmor_profile_pasta=disable_apparmor_profile_pasta,
                     )
                 )
 
@@ -336,6 +345,10 @@ def run_test(scenario: TestScenario) -> TestResult:
             os.symlink('/etc/apparmor.d/unix-chkpwd', '/etc/apparmor.d/disable/unix-chkpwd')
             run_command('apparmor_parser', '-R', '/etc/apparmor.d/unix-chkpwd')
 
+        if scenario.disable_apparmor_profile_pasta:
+            os.symlink('/etc/apparmor.d/usr.bin.pasta', '/etc/apparmor.d/disable/usr.bin.pasta')
+            run_command('apparmor_parser', '-R', '/etc/apparmor.d/usr.bin.pasta')
+
         for test_command in test_commands:
             def run_test_command() -> SubprocessResult:
                 if os_release.id == 'alpine' and scenario.user_scenario.actual.name != 'root':
@@ -361,6 +374,10 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_apparmor_profile_unix_chkpwd:
             os.unlink('/etc/apparmor.d/disable/unix-chkpwd')
             run_command('apparmor_parser', '/etc/apparmor.d/unix-chkpwd')
+
+        if scenario.disable_apparmor_profile_pasta:
+            os.unlink('/etc/apparmor.d/disable/usr.bin.pasta')
+            run_command('apparmor_parser', '/etc/apparmor.d/usr.bin.pasta')
 
         if scenario.enable_sha1:
             run_command('update-crypto-policies', '--set', 'DEFAULT')
@@ -622,6 +639,7 @@ class TestScenario:
     debug_systemd: bool
     probe_cgroups: bool
     disable_apparmor_profile_unix_chkpwd: bool
+    disable_apparmor_profile_pasta: bool
 
     @property
     def tags(self) -> tuple[str, ...]:
@@ -644,6 +662,9 @@ class TestScenario:
 
         if self.disable_apparmor_profile_unix_chkpwd:
             tags.append('apparmor(unix-chkpwd): disabled')
+
+        if self.disable_apparmor_profile_pasta:
+            tags.append('apparmor(pasta): disabled')
 
         return tuple(tags)
 
@@ -1065,7 +1086,7 @@ class AptBootstrapper(Bootstrapper):
         if cls.install_podman():
             # NOTE: Install crun to make it available to podman, otherwise installing docker.io can cause podman to use runc instead.
             # Using podman rootless requires the `newuidmap` and `slirp4netns` commands.
-            packages.extend(('podman', 'crun', 'uidmap', 'slirp4netns'))
+            packages.extend(('podman', 'crun', 'uidmap', 'slirp4netns', 'passt'))
 
         run_command('apt-get', 'install', *packages, '-y', '--no-install-recommends', env=apt_env)
 
