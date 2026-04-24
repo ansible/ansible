@@ -114,6 +114,7 @@ DOCUMENTATION = """
               - name: ANSIBLE_SSH_ASKPASS_COMMAND
           vars:
               - name: ansible_ssh_askpass_command
+          version_added: '2.22'
       ssh_args:
           description: Arguments to pass to all SSH CLI tools.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
@@ -1088,7 +1089,7 @@ class Connection(ConnectionBase):
             # If the user has DISPLAY set, assume it is there for a reason
             env['DISPLAY'] = '-'
 
-        if askpass:= self.get_option('ssh_askpass_command'):
+        if askpass := self.get_option('ssh_askpass_command'):
             display.vvv(f'SSH_ASKPASS is set to {askpass}')
             env['SSH_ASKPASS'] = askpass
             env['ANSIBLE_PASSWORD'] = conn_password
