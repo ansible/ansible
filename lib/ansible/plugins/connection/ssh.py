@@ -91,6 +91,29 @@ DOCUMENTATION = """
           vars:
               - name: ansible_sshpass_prompt
           version_added: '2.10'
+      ssh_askpass_command:
+          description:
+              - Path to a program to use as the C(SSH_ASKPASS) helper when
+                C(password_mechanism=ssh_askpass) is enabled.
+              - The specified program is executed by the SSH client to obtain
+                authentication credentials such as passwords or multi-factor
+                authentication (MFA) responses.
+              - The helper receives the authentication prompt as its first argument
+                and must write the response to standard output.
+              - The program must be non-interactive and should not produce any output
+                other than the requested credential.
+              - This option allows custom implementations (for example, scripts that
+                generate one-time passwords or integrate with external authentication systems).
+              - When not set, a default helper may be used if available.
+          type: string
+          default: ''
+          ini:
+              - section: 'ssh_connection'
+                key: 'ssh_askpass_command'
+          env:
+              - name: ANSIBLE_SSH_ASKPASS_COMMAND
+          vars:
+              - name: ansible_ssh_askpass_command
       ssh_args:
           description: Arguments to pass to all SSH CLI tools.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
@@ -1064,6 +1087,12 @@ class Connection(ConnectionBase):
         if not env.get('DISPLAY'):
             # If the user has DISPLAY set, assume it is there for a reason
             env['DISPLAY'] = '-'
+
+        if askpass:= self.get_option('ssh_askpass_command'):
+            display.vvv(f'SSH_ASKPASS is set to {askpass}')
+            env['SSH_ASKPASS'] = askpass
+            env['ANSIBLE_PASSWORD'] = conn_password
+            env['SSH_ASKPASS_REQUIRE'] = 'prefer'
 
         popen_kwargs['env'] = env
         # start_new_session runs setsid which detaches the tty to support the use of ASKPASS prior to openssh 8.4
