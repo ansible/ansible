@@ -275,7 +275,8 @@ options:
         description:
             - Number of days since January 1, 1970 when the password was last changed.
             - Supported on Linux only.
-            - Requires the C(chage) command, or C(lchage) when O(local=true).
+            - Requires password aging utilities on the target system.
+            - Uses C(lchage) when O(local=true).
         type: int
         version_added: "2.22"
     umask:
