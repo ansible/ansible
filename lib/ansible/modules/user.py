@@ -271,6 +271,13 @@ options:
             - Supported on Linux only.
         type: int
         version_added: "2.16"
+    password_expire_last_changed:
+        description:
+            - Number of days since January 1, 1970 when the password was last changed.
+            - Supported on Linux only.
+            - Requires the C(chage) command, or C(lchage) when O(local=true).
+        type: int
+        version_added: "2.22"
     umask:
         description:
             - Sets the umask of the user.
@@ -589,6 +596,7 @@ class User(object):
     distribution = None  # type: str | None
     PASSWORDFILE = '/etc/passwd'
     SHADOWFILE = '/etc/shadow'  # type: str | None
+    SHADOWFILE_LAST_CHANGED_INDEX = 2
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
@@ -634,6 +642,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.password_expire_warn = module.params['password_expire_warn']
+        self.password_expire_last_changed = module.params['password_expire_last_changed']
         self.umask = module.params['umask']
         self.inactive = module.params['password_expire_account_disable']
         self.uid_min = module.params['uid_min']
@@ -1167,6 +1176,7 @@ class User(object):
         min_needs_change = self.password_expire_min is not None
         max_needs_change = self.password_expire_max is not None
         warn_needs_change = self.password_expire_warn is not None
+        last_changed_needs_change = self.password_expire_last_changed is not None
 
         if HAVE_SPWD:
             try:
@@ -1177,11 +1187,16 @@ class User(object):
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
             max_needs_change &= self.password_expire_max != shadow_info.sp_max
             warn_needs_change &= self.password_expire_warn != shadow_info.sp_warn
+            last_changed_needs_change &= self.password_expire_last_changed != shadow_info.sp_lstchg
+        elif last_changed_needs_change:
+            _passwd, _expires, last_changed = self.get_shadow_info()
+            if last_changed != '':
+                last_changed_needs_change &= self.password_expire_last_changed != int(last_changed)
 
-        if not (min_needs_change or max_needs_change or warn_needs_change):
+        if not (min_needs_change or max_needs_change or warn_needs_change or last_changed_needs_change):
             return (None, '', '')  # target state already reached
 
-        command_name = 'chage'
+        command_name = 'lchage' if self.local else 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
         if min_needs_change:
             cmd.extend(["-m", self.password_expire_min])
@@ -1189,39 +1204,49 @@ class User(object):
             cmd.extend(["-M", self.password_expire_max])
         if warn_needs_change:
             cmd.extend(["-W", self.password_expire_warn])
+        if last_changed_needs_change:
+            cmd.extend(["-d", self.password_expire_last_changed])
         cmd.append(self.name)
 
         return self.execute_command(cmd)
 
-    def user_password(self):
+    def get_shadow_info(self):
         passwd = ''
         expires = ''
+        last_changed = ''
         if HAVE_SPWD:
             try:
                 shadow_info = getspnam(to_bytes(self.name))
                 passwd = to_native(shadow_info.sp_pwdp)
                 expires = shadow_info.sp_expire
-                return passwd, expires
+                last_changed = shadow_info.sp_lstchg
+                return passwd, expires, last_changed
             except ValueError:
-                return passwd, expires
+                return passwd, expires, last_changed
 
         if not self.user_exists():
-            return passwd, expires
+            return passwd, expires, last_changed
         elif self.SHADOWFILE:
-            passwd, expires = self.parse_shadow_file()
+            passwd, expires, last_changed = self.parse_shadow_file()
 
+        return passwd, expires, last_changed
+
+    def user_password(self):
+        passwd, expires, _last_changed = self.get_shadow_info()
         return passwd, expires
 
     def parse_shadow_file(self):
         passwd = ''
         expires = ''
+        last_changed = ''
         if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
             with open(self.SHADOWFILE, 'r') as f:
                 for line in f:
                     if line.startswith('%s:' % self.name):
                         passwd = line.split(':')[1]
+                        last_changed = line.split(':')[self.SHADOWFILE_LAST_CHANGED_INDEX] or -1
                         expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
-        return passwd, expires
+        return passwd, expires, last_changed
 
     def get_ssh_key_path(self):
         info = self.user_info()
@@ -3396,6 +3421,7 @@ def main():
             password_expire_max=dict(type='int', no_log=False),
             password_expire_min=dict(type='int', no_log=False),
             password_expire_warn=dict(type='int', no_log=False),
+            password_expire_last_changed=dict(type='int', no_log=False),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
