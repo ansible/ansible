@@ -1,0 +1,2 @@
+bugfixes:
+  - sudo become plugin is now compatible with sudo-rs (rust implementation).
