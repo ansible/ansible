@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - dnf - handle exception while reading invalid DNF configuration file (https://github.com/ansible/ansible/issues/85681).
