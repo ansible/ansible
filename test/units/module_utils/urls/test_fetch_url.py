@@ -200,21 +200,22 @@ def test_fetch_url_badstatusline(open_url_mock, fake_ansible_module):
 
 
 # is_fetch_success is highly coupled to fetch_url, unit test here.
-def test_is_fetch_success():
-    infos = [
-        ('ftp://some/dir/file.txt', None, None, True),
-        ('ftps://another/dir/f.txt', -1, None, False),
-        ('ftp://foo/dir/f.md', None, (-1,), True),
-        ('ftp://foo/dir/f.md', -1, (-1,), True),
-        ('https://foo.com/file', 200, None, True),
-        ('https://foo.com/file', 400, None, False),
-        ('http://foo.com/file', 200, None, True),
-        ('http://foo.com/file', 400, None, False),
-        ('http://foo.com/file', 220, (220,), True),
-        ('http://foo.com/file', 200, (220,), True),
-        ('http://foo.com/file', 400, (220,), False),
-        ("Some nonsense fetch didn't catch", -1, None, False),
+@pytest.mark.parametrize(
+    'url, status, additional, expected',
+    [
+        pytest.param('ftp://some/dir/file.txt', None, None, True, id='ftp_success'),
+        pytest.param('ftps://another/dir/f.txt', -1, None, False, id='ftps_failure'),
+        pytest.param('ftp://foo/dir/f.md', None, (-1,), True, id='ftp_failure'),
+        pytest.param('ftp://foo/dir/f.md', -1, (-1,), True, id='ftp_failure_additional'),
+        pytest.param('https://foo.com/file', 200, None, True, id='https_success'),
+        pytest.param('https://foo.com/file', 400, None, False, id='https_failure'),
+        pytest.param('http://foo.com/file', 200, None, True, id='http_success'),
+        pytest.param('http://foo.com/file', 400, None, False, id='http_failure'),
+        pytest.param('http://foo.com/file', 220, (220,), True, id='http_success_additional'),
+        pytest.param('http://foo.com/file', 200, (220,), True, id='http_success_additional_2'),
+        pytest.param('http://foo.com/file', 400, (220,), False, id='http_failure_additional'),
+        pytest.param("Some nonsense fetch didn't catch", -1, None, False, id='nonsense_failure'),
     ]
-
-    for url, status, additional, expected in infos:
-        assert expected == is_fetch_success(dict(url=url, status=status), additional_codes=additional)
+)
+def test_is_fetch_success(url, status, additional, expected):
+    assert expected == is_fetch_success(dict(url=url, status=status), additional_codes=additional)
