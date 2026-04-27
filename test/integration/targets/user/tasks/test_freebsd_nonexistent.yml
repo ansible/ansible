@@ -1,0 +1,47 @@
+---
+# Test for issue #86368 - ensure /nonexistent is not created on FreeBSD
+# when modifying a user to add them to a group
+
+- name: Create a test user with /nonexistent as home directory
+  user:
+    name: ansibulltestuser
+    home: /nonexistent
+    create_home: no
+    state: present
+  register: user_create
+
+- name: Create a test group
+  group:
+    name: ansibulltestgroup
+    state: present
+
+- name: Add user to group (should not create /nonexistent)
+  user:
+    name: ansibulltestuser
+    groups: ansibulltestgroup
+    append: true
+  register: user_modify
+
+- name: Check if /nonexistent was created (it should not exist)
+  stat:
+    path: /nonexistent
+  register: nonexistent_stat
+
+- name: Validate that /nonexistent was not created
+  assert:
+    that:
+      - user_create is changed
+      - user_modify is changed
+      - not nonexistent_stat.stat.exists
+    fail_msg: "/nonexistent directory should not be created when adding user to group"
+
+- name: Clean up - remove test user
+  user:
+    name: ansibulltestuser
+    state: absent
+    force: true
+
+- name: Clean up - remove test group
+  group:
+    name: ansibulltestgroup
+    state: absent

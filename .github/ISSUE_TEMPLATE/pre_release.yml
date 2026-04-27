@@ -1,0 +1,42 @@
+name: Pre-Release Bug Report
+description: File a bug report against a pre-release version
+labels:
+  - bug
+  - pre_release
+assignees:
+  - nitzmahone
+  - mattclay
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+  - type: textarea
+    attributes:
+      label: Ansible Version
+      description: Paste the full output from `ansible --version` below.
+      render: console
+      placeholder: $ ansible --version
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Summary
+      description: Describe the issue with any relevant steps to reproduce.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: <!-- Bot instructions (ignore this) -->
+      options:
+        - |
+          <!--
+          ### Component Name
+          bin/ansible
+          ### Issue Type
+          Bug Report
+          ### Configuration
+          ### OS / Environment
+          -->
+    validations:
+      required: true

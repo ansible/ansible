@@ -1,0 +1,101 @@
+- hosts: testhost3
+  vars:
+    template_role: ./roles/test_template
+    output_dir: "{{ playbook_dir }}"
+    templated_var: foo
+    templated_dict: { 'hello': 'world' }
+  tasks:
+    - name: Test no delegate_to
+      setup:
+      register: setup_results
+
+    - assert:
+        that:
+          - '"127.0.0.3" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'
+
+    - name: Test delegate_to with host in inventory
+      setup:
+      register: setup_results
+      delegate_to: testhost4
+
+    - debug: var=setup_results
+
+    - assert:
+        that:
+          - '"127.0.0.4" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'
+
+    - name: Test delegate_to with host not in inventory
+      setup:
+      register: setup_results
+      delegate_to: 127.0.0.254
+
+    - assert:
+        that:
+          - '"127.0.0.254" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'
+#
+# Smoketest some other modules do not error as a canary
+#
+    - name: Test file works with delegate_to and a host in inventory
+      file: path={{ output_dir }}/foo.txt mode=0644 state=touch
+      delegate_to: testhost4
+
+    - name: Test file works with delegate_to and a host not in inventory
+      file: path={{ output_dir }}/tmp.txt mode=0644 state=touch
+      delegate_to: 127.0.0.254
+
+    - name: Test template works with delegate_to and a host in inventory
+      template: src={{ template_role }}/templates/foo.j2 dest={{ output_dir }}/foo.txt
+      delegate_to: testhost4
+
+    - name: Test template works with delegate_to and a host not in inventory
+      template: src={{ template_role }}/templates/foo.j2 dest={{ output_dir }}/foo.txt
+      delegate_to: 127.0.0.254
+
+    - name: remove test file
+      file: path={{ output_dir }}/foo.txt state=absent
+
+    - name: remove test file
+      file: path={{ output_dir }}/tmp.txt state=absent
+
+    - name: Use omit to thwart delegation
+      ping:
+      delegate_to: "{{ jenkins_install_key_on|default(omit) }}"
+      register: d_omitted
+
+    - name: Use empty to thwart delegation should fail
+      ping:
+      delegate_to: "{{ jenkins_install_key_on }}"
+      when: jenkins_install_key_on != ""
+      vars:
+        jenkins_install_key_on: ''
+      ignore_errors: true
+      register: d_empty
+
+    - name: Ensure previous 2 tests actually did what was expected
+      assert:
+        that:
+          - d_omitted is success
+          - d_empty is failed
+
+- name: verify delegation with per host vars
+  hosts: testhost6
+  gather_facts: yes
+  tasks:
+    - debug: msg={{ansible_facts['env']}}
+
+    - name: ensure normal facts still work as expected
+      assert:
+        that:
+          - '"127.0.0.3" in ansible_facts["env"]["SSH_CONNECTION"]'
+
+    - name: Test delegate_to with other host defined using same named var
+      setup:
+      register: setup_results
+      delegate_to: testhost7
+
+    - debug: msg={{setup_results.ansible_facts.ansible_env}}
+
+    - name: verify ssh plugin resolves variable for ansible_host correctly
+      assert:
+        that:
+          - '"127.0.0.4" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'

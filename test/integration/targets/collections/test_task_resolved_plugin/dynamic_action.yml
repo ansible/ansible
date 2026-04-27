@@ -1,0 +1,10 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: Run dynamic action
+      action: "{{ inventory_hostname }}"
+
+    - name: Run dynamic action in loop
+      action: "{{ inventory_hostname }}"
+      loop: [1]

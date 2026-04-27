@@ -1,0 +1,52 @@
+- hosts: localhost,nonexistent
+  gather_facts: false
+  tasks:
+  - name: Test ignore_unreachable for all items (pass)
+    ping:
+    ignore_unreachable: "{{ item }}"
+    loop:
+      - true
+      - false
+    register: ignore_first
+
+  - name: Test ignore_unreachable for second item (pass)
+    ping:
+    ignore_unreachable: "{{ item }}"
+    loop:
+      - false
+      - true
+    register: ignore_second
+
+  - name: Test ignore_unreachable for single item (fail)
+    ping:
+    ignore_unreachable: "{{ item }}"
+    loop:
+      - false
+    register: dont_ignore
+
+  - name: Run a task only as localhost
+    ping:
+    register: runs_on_localhost_only
+
+
+- hosts: localhost, nonexistent
+  gather_facts: false
+  tasks:
+  - meta: clear_host_errors
+
+  - assert:
+      that:
+        - ignore_first is unreachable
+        - ignore_first.results[0] is unreachable
+        - ignore_first.results[-1] is unreachable
+        - ignore_second is unreachable
+        - ignore_second.results[0] is unreachable
+        - ignore_second.results[-1] is unreachable
+        - dont_ignore is unreachable
+        - dont_ignore.results[0] is unreachable
+        - runs_on_localhost_only is undefined
+    when: inventory_hostname == "nonexistent"
+
+  - name: Indicate test passed (checked by grep after playbook runs)
+    debug:
+      msg: "{{ 'PASS' ~ 'ED' }}"

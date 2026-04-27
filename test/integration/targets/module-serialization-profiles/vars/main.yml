@@ -1,0 +1,14 @@
+data:
+  date: 2024-01-02
+  time: "{{ data.datetime.time() }}"
+  datetime: 2024-01-02T03:04:05
+  int: 1
+  float: 1.1
+  str: hi
+  bool: true
+  none: ~
+  dict:
+    hi: mom
+  list:
+    - hi
+  # NOTE: cannot test tuple or set here because they're converted to list during templating

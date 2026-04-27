@@ -1,0 +1,10 @@
+- name: show file contents
+  debug:
+    msg: '{{ q("fileglob", seed + ".*") }}'
+  register: found
+
+- name: did we get right one?
+  assert:
+    that:
+        - found['msg'][0].endswith(seed + '.txt')
+        - q('file', found['msg'][0])[0] == expected[seed]

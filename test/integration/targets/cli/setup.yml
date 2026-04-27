@@ -1,0 +1,42 @@
+- hosts: localhost
+  gather_facts: yes
+  roles:
+    - setup_pexpect
+
+  tasks:
+    - name: Test ansible-playbook and ansible with -K
+      block:
+        - name: Create user to connect as
+          user:
+            name: cliuser1
+            shell: /bin/bash
+            groups: wheel
+            append: yes
+            password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
+        - name: Create user to become
+          user:
+            name: cliuser2
+            shell: /bin/bash
+            password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
+        # Sometimes this file doesn't get removed, and we need it gone to ssh
+        - name: Remove /run/nologin
+          file:
+            path: /run/nologin
+            state: absent
+        # Make Ansible run Python to run Ansible
+        - name: Run the test
+          shell: python test_k_and_K.py {{ ansible_python_interpreter }}
+      always:
+        - name: Remove users
+          user:
+            name: "{{ item }}"
+            state: absent
+          with_items:
+            - cliuser1
+            - cliuser2
+      # For now, we don't test this everywhere, because `user` works differently
+      # on some platforms, as does sudo/sudoers. On Fedora, we can just add
+      # the user to 'wheel' and things magically work.
+      # TODO: In theory, we should test this with all the different 'become'
+      # plugins in base.
+      when: ansible_distribution == 'Fedora'

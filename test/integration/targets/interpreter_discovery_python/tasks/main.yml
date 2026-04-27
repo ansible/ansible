@@ -1,0 +1,198 @@
+- name: ensure we can override ansible_python_interpreter
+  vars:
+    ansible_python_interpreter: overriddenpython
+  assert:
+    that:
+    - ansible_python_interpreter == 'overriddenpython'
+    fail_msg: "'ansible_python_interpreter' appears to be set at a high precedence to {{ ansible_python_interpreter }},
+              which breaks this test."
+
+- name: snag some facts to validate for later
+  set_fact:
+    distro: '{{ ansible_distribution | lower }}'
+    distro_version: '{{ ansible_distribution_version }}'
+    distro_major_version: '{{ ansible_distribution_major_version }}'
+    os_family: '{{ ansible_os_family }}'
+
+- name: test that python discovery is working and that fact persistence makes it only run once
+  block:
+  - name: clear facts to force interpreter discovery to run
+    meta: clear_facts
+
+  - name: trigger discovery with auto
+    vars:
+      ansible_python_interpreter: auto
+    ping:
+    register: auto_out
+
+  - name: get the interpreter being used on the target to execute modules
+    vars:
+      # keep this set so we can verify we didn't repeat discovery
+      ansible_python_interpreter: auto
+    test_echo_module:
+    register: echoout
+
+  - name: clear facts to force interpreter discovery to run again
+    meta: clear_facts
+
+  - name: get the interpreter being used on the target to execute modules with ansible_facts
+    vars:
+      # keep this set so we can verify we didn't repeat discovery
+      ansible_python_interpreter: auto
+    test_echo_module:
+      facts:
+        sandwich: ham
+    register: echoout_with_facts
+
+  - when: distro == 'macosx'
+    block:
+      - name: Get the sys.executable for the macos discovered interpreter, as it may be different than the actual path
+        raw: '{{ auto_out.ansible_facts.discovered_interpreter_python }} -c "import sys; print(sys.executable)"'
+        register: discovered_sys_executable
+
+      - set_fact:
+          normalized_discovered_interpreter: '{{ discovered_sys_executable.stdout_lines[0] }}'
+
+  - set_fact:
+      normalized_discovered_interpreter: '{{ auto_out.ansible_facts.discovered_interpreter_python }}'
+    when: distro != 'macosx'
+
+  - assert:
+      that:
+      - auto_out.ansible_facts.discovered_interpreter_python is defined
+      # whatever it found should be python 3.x
+      - auto_out.ansible_facts.discovered_interpreter_python is search 'bin/python3.*'
+      - echoout.running_python_interpreter == normalized_discovered_interpreter
+      # verify that discovery didn't run again (if it did, we'd have the fact in the result)
+      - echoout.ansible_facts is not defined or echoout.ansible_facts.discovered_interpreter_python is not defined
+      - echoout_with_facts.ansible_facts is defined
+      - echoout_with_facts.running_python_interpreter == normalized_discovered_interpreter
+
+- name: test no interpreter found behavior
+  block:
+  - name: clear facts to force interpreter discovery to run
+    meta: clear_facts
+
+  - name: trigger discovery with auto
+    vars:
+      ansible_python_interpreter: auto
+      ansible_interpreter_python_fallback:
+        - /usr/bin/does_not_exist
+    ping:
+    register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
+
+  - name: check for warning and default interpreter
+    assert:
+      that:
+       - discovery.warnings | length == 1
+       - discovery.warnings[0] is contains "No python interpreters found for host"
+       - discovery.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+
+  - name: clear facts to force interpreter discovery to run
+    meta: clear_facts
+
+  - name: trigger discovery with auto_silent
+    vars:
+      ansible_python_interpreter: auto_silent
+      ansible_interpreter_python_fallback:
+        - /usr/bin/does_not_exist
+    ping:
+    register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
+
+  - name: verify auto_silent suppresses warning
+    assert:
+      that:
+       - discovery.warnings | default([]) | length == 0
+       - discovery.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+
+- name: test bad fallback interpreter
+  block:
+  - name: clear facts to force interpreter discovery to run
+    meta: clear_facts
+
+  - name: trigger discovery with auto
+    vars:
+      ansible_python_interpreter: auto
+      # This test takes advantage of the fact the existing code performs manual quoting instead of using shlex.quote.
+      # If that is ever fixed, it may be difficult (or impossible) to trigger the error condition covered here.
+      ansible_interpreter_python_fallback:
+        - "'i_have_a_single_quote"
+    ping:
+    register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
+
+  - debug:
+      var: discovery
+
+  - name: check for warning and default interpreter
+    assert:
+      that:
+       - discovery.warnings | length == 2
+       - discovery.warnings[0] is contains "Unhandled error in Python interpreter discovery for host"
+       - discovery.warnings[1] is contains "Host 'testhost' is using the discovered Python interpreter at '/usr/bin/python3'"
+       - discovery.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+
+  - name: clear facts to force interpreter discovery to run
+    meta: clear_facts
+
+  - name: trigger discovery with auto_silent
+    vars:
+      ansible_python_interpreter: auto_silent
+      # This test takes advantage of the fact the existing code performs manual quoting instead of using shlex.quote.
+      # If that is ever fixed, it may be difficult (or impossible) to trigger the error condition covered here.
+      ansible_interpreter_python_fallback:
+        - "'i_have_a_single_quote"
+    ping:
+    register: discovery
+    ignore_errors: yes  # the fallback interpreter /usr/bin/python3 may not exist (e.g. FreeBSD)
+
+  - debug:
+      var: discovery
+
+  - name: verify auto_silent suppresses warning
+    assert:
+      that:
+       - discovery.warnings | default([]) | length == 0
+       - discovery.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+
+- name: test that auto_silent never warns and got the same answer as auto
+  block:
+  - name: clear facts to force interpreter discovery to run
+    meta: clear_facts
+
+  - name: initial task to trigger discovery
+    vars:
+      ansible_python_interpreter: auto_silent
+    ping:
+    register: auto_silent_out
+
+  - assert:
+      that:
+      - auto_silent_out.warnings is not defined
+      - auto_silent_out.ansible_facts.discovered_interpreter_python == auto_out.ansible_facts.discovered_interpreter_python
+
+- name: ensure modules can't set discovered_interpreter_X or ansible_X_interpreter
+  block:
+  - test_echo_module:
+      facts:
+        ansible_discovered_interpreter_bogus: from module
+        discovered_interpreter_bogus: from_module
+        ansible_bogus_interpreter: from_module
+        test_fact: from_module
+    register: echoout
+
+  - assert:
+      that:
+      - test_fact == 'from_module'
+      - discovered_interpreter_bogus | default('nope') == 'nope'
+      - ansible_bogus_interpreter | default('nope') == 'nope'
+      # this one will exist in facts, but with its prefix removed
+      - ansible_facts['ansible_bogus_interpreter'] | default('nope') == 'nope'
+      - ansible_facts['discovered_interpreter_bogus'] | default('nope') == 'nope'
+
+  always:
+  - meta: clear_facts
+
+- include_tasks: config_templating.yml

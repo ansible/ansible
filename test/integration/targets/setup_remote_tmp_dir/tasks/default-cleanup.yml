@@ -1,0 +1,13 @@
+- name: Ensure temporary directory has correct perms to delete
+  file:
+    path: "{{ remote_tmp_dir }}"
+    mode: u+rwx
+    recurse: yes
+    follow: no
+  no_log: yes
+
+- name: delete temporary directory
+  file:
+    path: "{{ remote_tmp_dir }}"
+    state: absent
+  no_log: yes

@@ -1,0 +1,87 @@
+- name: Test missing binaries
+  when: ansible_pkg_mgr in ('dnf', 'apt', 'pkgng')
+  block:
+    - name: Remove zip binaries
+      package:
+        state: absent
+        name:
+          - zip
+          - unzip
+      notify: restore packages
+
+    - name: create unarchive destinations
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
+        state: directory
+      loop:
+        - zip
+        - tar
+
+    # With the zip binaries absent and tar still present, this task should work
+    - name: unarchive a tar file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.tar'
+        dest: '{{remote_tmp_dir}}/test-unarchive-tar'
+        remote_src: yes
+      register: tar
+
+    - name: unarchive a zip file
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.zip'
+        dest: '{{remote_tmp_dir}}/test-unarchive-zip'
+        list_files: True
+        remote_src: yes
+      register: zip_fail
+      ignore_errors: yes
+      # FreeBSD does not have zipinfo, but does have a bootstrapped unzip in /usr/bin
+      # which alone is sufficient to run unarchive.
+      # Exclude /usr/bin from the PATH to test having no binary available.
+      environment:
+        PATH: "{{ ENV_PATH }}"
+      vars:
+        ENV_PATH: "{{ ansible_env['PATH']| regex_replace(re, '') }}"
+        re: '[^A-Za-z](\/usr\/bin:?)'
+
+    - name: Ensure tasks worked as expected
+      assert:
+        that:
+          - tar is success
+          - zip_fail is failed
+          - zip_fail.msg is search('Unable to find required')
+
+    - name: unarchive a zip file using unzip without zipinfo
+      unarchive:
+        src: '{{remote_tmp_dir}}/test-unarchive.zip'
+        dest: '{{remote_tmp_dir}}/test-unarchive-zip'
+        list_files: True
+        remote_src: yes
+      register: zip_success
+      # FreeBSD does not have zipinfo, but does have a bootstrapped unzip in /usr/bin
+      # which alone is sufficient to run unarchive.
+      when: ansible_pkg_mgr == 'pkgng'
+
+    - assert:
+        that:
+          - zip_success is success
+          - zip_success.changed
+          # Verify that file list is generated
+          - "'files' in zip_success"
+          - zip_success['files'] | length == 3
+          - "'foo-unarchive.txt' in zip_success['files']"
+          - "'foo-unarchive-777.txt' in zip_success['files']"
+          - "'FOO-UNAR.TXT' in zip_success['files']"
+      when: ansible_pkg_mgr == 'pkgng'
+
+    - name: Remove unarchive destinations
+      file:
+        path: '{{ remote_tmp_dir }}/test-unarchive-{{ item }}'
+        state: absent
+      loop:
+        - zip
+        - tar
+
+    - name: Reinstall zip binaries
+      package:
+        name:
+          - zip
+          - unzip

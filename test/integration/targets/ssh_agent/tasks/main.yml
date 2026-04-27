@@ -1,0 +1,17 @@
+- delegate_to: localhost
+  block:
+    # bcrypt is required for the ssh_keygen action
+    - name: install bcrypt
+      pip:
+        name: bcrypt
+      register: bcrypt
+
+    - import_tasks: tests.yml
+      environment:
+        ANSIBLE_FORCE_COLOR: no
+  always:
+    - name: uninstall bcrypt
+      pip:
+        name: bcrypt
+        state: absent
+      when: bcrypt is changed

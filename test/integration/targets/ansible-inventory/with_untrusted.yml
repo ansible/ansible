@@ -1,0 +1,16 @@
+with_untrusted:
+  hosts:
+    localhost:
+  vars:
+    untrusted_template_str: !unsafe '{{ untrusted template string should round-trip as untrusted }}'
+    untrusted_non_template_str: !unsafe untrusted non-template string should round-trip as untrusted
+    trusted_template_str: '{{ "trusted template string should round-trip as trusted" }}'
+    trusted_non_template_str: trusted non-template string should round-trip as trusted
+    int: 42
+    float: 3.14159
+    date: 2024-01-01  # JSON serializes as string
+    datetime: 2024-01-01 12:01:01  # JSON serializes as string
+    bool: true
+    none: ~
+    dict: {}
+    list: []

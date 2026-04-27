@@ -1,0 +1,16 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    deprecation_message: 'The internal "vars" dictionary is deprecated'
+  tasks:
+    - shell: !unsafe ansible -m debug  -a "msg='{{vars}}'" localhost
+      register: just_vars
+   
+    - shell: !unsafe ansible -m debug  -a 'msg="{{vars["'"ansible_python_interpreter"'"]}}"' localhost
+      register: sub_vars 
+
+    - name: verify we got deprecation
+      assert:
+        that:
+          - deprecation_message in just_vars.stderr
+          - deprecation_message in sub_vars.stderr

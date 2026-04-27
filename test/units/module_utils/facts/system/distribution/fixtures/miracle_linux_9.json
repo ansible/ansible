@@ -1,0 +1,39 @@
+{
+    "name": "MIRACLE LINUX 9.2",
+	"distro": {
+	    "codename": "Feige",
+		"id": "miraclelinux",
+		"name": "MIRACLE LINUX",
+		"version": "9.2",
+		"version_best": "9.2",
+		"lsb_release_info": {},
+		"os_release_info": {
+		    "name": "MIRACLE LINUX",
+			"version": "9.2 (Feige)",
+			"id": "miraclelinux",
+			"version_id": "9.2",
+			"pretty_name": "MIRACLE LINUX 9.2 (Feige)",
+			"ansi_color": "0;32",
+			"codename": "Feige"
+		}
+	},
+	"input": {
+		"/etc/miraclelinux-release": "MIRACLE LINUX release 9.2 (Feige)\n",
+		"/etc/redhat-release": "MIRACLE LINUX release 9.2 (Feige)\n",
+	    "/etc/system-release": "MIRACLE LINUX release 9.2 (Feige)\n",
+		"/etc/os-release": "NAME=\"MIRACLE LINUX\"\nVERSION=\"9.2 (Feige)\"\nID=\"miraclelinux\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"9.2\"\nPLATFORM_ID=\"platform:el9\"\nPRETTY_NAME=\"MIRACLE LINUX 9.2 (Feige)\"\nANSI_COLOR=\"0;32\"\nLOGO=\"fedora-logo-icon\"\nCPE_NAME=\"cpe:/o:cybertrust_japan:miracle_linux:9\"\nHOME_URL=\"https://www.cybertrust.co.jp/miracle-linux/\"\nDOCUMENTATION_URL=\"https://www.miraclelinux.com/support/miraclelinux9\"\nBUG_REPORT_URL=\"https://bugzilla.asianux.com/\"\n\nMIRACLELINUX_SUPPORT_PRODUCT=\"MIRACLE LINUX\"\nMIRACLELINUX_SUPPORT_PRODUCT_VERSION=\"9\""
+	},
+	"platform.dist": [
+	    "miraclelinux",
+		"9.2",
+		"Feige"
+	],
+	"result": {
+	    "distribution": "MIRACLE",
+		"distribution_version": "9.2",
+		"distribution_release": "Feige",
+		"distribution_major_version": "9",
+		"os_family": "RedHat"
+	},
+	"platform.release": "5.14.0-284.25.1.el9_2.x86_64"
+}

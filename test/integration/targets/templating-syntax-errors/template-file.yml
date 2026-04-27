@@ -1,0 +1,7 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - template:
+        src: template-file.j2
+        dest: template-file.txt
+      ignore_errors: yes

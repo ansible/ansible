@@ -1,0 +1,1 @@
+{{hostvars['h1'].host_var}}

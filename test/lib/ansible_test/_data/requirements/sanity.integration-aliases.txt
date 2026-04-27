@@ -1,0 +1,2 @@
+# edit "sanity.integration-aliases.in" and generate with: hacking/update-sanity-requirements.py --test integration-aliases
+PyYAML==6.0.3

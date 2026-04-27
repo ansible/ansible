@@ -1,0 +1,15 @@
+- name: "Test validate_argspec and module_defaults interaction"
+  hosts: localhost
+  module_defaults:
+    validate_argument_spec:
+      provided_arguments: |
+          {% set defined_vars = {} %}
+          {% set ignore = ['group_names', 'groups', 'inventory_hostname', 'inventory_hostname_short', 'playbook_dir'] %}
+          {% for key, value in hostvars[inventory_hostname].items() %}
+          {% if value is defined and not (key is search("^ansible_.*$") or key in ignore) %}
+          {% set _ = defined_vars.update({key: value}) %}
+          {% endif %}
+          {% endfor %}
+          {{ defined_vars }}
+  gather_facts: no
+  validate_argspec: True

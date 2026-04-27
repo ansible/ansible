@@ -1,0 +1,72 @@
+- name: attempt to use a filter plugin that fails to load
+  raw: echo {{ '' | broken }}
+  ignore_errors: yes
+  register: error
+
+- assert:
+    that:
+      - error is failed
+      - |
+        error.msg is contains("filter plugin 'broken' failed to load: boom")
+
+- name: attempt to use a filter plugin that is not found
+  raw: echo {{ '' | nope }}
+  ignore_errors: yes
+  register: error
+
+- assert:
+    that:
+      - error is failed
+      - error.msg is contains("No filter named 'nope'")
+
+- name: attempt to use a test plugin that fails to load
+  raw: echo {{ '' is broken }}
+  ignore_errors: yes
+  register: error
+
+- assert:
+    that:
+      - error is failed
+      - |
+        error.msg is contains("test plugin 'broken' failed to load: boom")
+
+- name: attempt to use a test plugin that is not found
+  raw: echo {{ '' is nope }}
+  ignore_errors: yes
+  register: error
+
+- assert:
+    that:
+      - error is failed
+      - error.msg is contains("No test named 'nope'")
+
+- name: attempt to use a lookup plugin that fails to load
+  raw: echo {{ lookup('broken') }}
+  ignore_errors: yes
+  register: error
+
+- assert:
+    that:
+      - error is failed
+      - |
+        error.msg is contains("lookup plugin 'broken' failed to load: boom")
+
+- name: attempt to use a lookup plugin that is not found
+  raw: echo {{ lookup('nope') }}
+  ignore_errors: yes
+  register: error
+
+- assert:
+    that:
+      - error is failed
+      - error.msg is contains("lookup plugin 'nope' was not found")
+
+- name: verify plugin errors are captured
+  assert:
+    that:
+      - (syntax_error | ansible._protomatter.dump_object).exception.message is contains "Syntax error in template"
+      - (undef(0) | ansible._protomatter.dump_object).exception.message is contains "argument must be of type"
+      - (lookup('pipe', 'exit 1') | ansible._protomatter.dump_object).exception.message is contains "lookup plugin 'pipe' failed"
+      - ('{' | from_json | ansible._protomatter.dump_object).exception.message is contains "Expecting property name enclosed in double quotes"
+  vars:
+    syntax_error: "{{ #'"

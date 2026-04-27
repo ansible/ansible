@@ -1,0 +1,4 @@
+# macOS requires users to be in an additional group for ssh access
+
+_fetch_group: staff
+_fetch_additional_groups: com.apple.access_ssh

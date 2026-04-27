@@ -1,0 +1,8 @@
+---
+- name: Check if we get correct failed_task details
+  assert:
+    that:
+      - ansible_failed_task.name == "Setup"
+      - ansible_failed_task.action == "fail"
+  vars:
+    ansible_connection: local

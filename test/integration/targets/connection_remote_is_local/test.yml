@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - ping:
+      vars:
+        ansible_connection: remote_is_local
+        ansible_pipelining: false
+        ansible_remote_tmp: /i/dont/exist

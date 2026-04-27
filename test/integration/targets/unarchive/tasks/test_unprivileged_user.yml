@@ -1,0 +1,63 @@
+- name: Test unarchiving twice as unprivileged user
+  vars:
+    ansible_become: yes
+    ansible_become_user: "{{ test_user_name }}"
+    ansible_become_password: "{{ test_user_plaintext_password }}"
+  block:
+    - name: prep our file
+      copy:
+        src: foo.txt
+        dest: "{{ test_user.home }}/foo-unarchive.txt"
+        mode: preserve
+
+    - name: Prep a zip file as {{ test_user.name }} user
+      shell: zip unarchivetest1-unarchive.zip foo-unarchive.txt
+      args:
+        chdir: "{{ test_user.home }}"
+        creates: "{{ test_user.home }}/unarchivetest1-unarchive.zip"
+
+    - name: create our zip unarchive destination as {{ test_user.name }} user
+      file:
+        path: "{{ test_user.home }}/unarchivetest1-unarchive-zip"
+        state: directory
+
+    - name: unarchive a zip file as {{ test_user.name }} user
+      unarchive:
+        src: "{{ test_user.home }}/unarchivetest1-unarchive.zip"
+        dest: "{{ test_user.home }}/unarchivetest1-unarchive-zip"
+        remote_src: yes
+        list_files: True
+      register: unarchive10
+
+    - name: stat the unarchived file
+      stat:
+        path: "{{ test_user.home }}/unarchivetest1-unarchive-zip/foo-unarchive.txt"
+      register: archive_path
+
+    - name: verify that the tasks performed as expected
+      assert:
+        that:
+          - unarchive10 is changed
+          # Verify that file list is generated
+          - "'files' in unarchive10"
+          - unarchive10['files']| length == 1
+          - "'foo-unarchive.txt' in unarchive10['files']"
+          - archive_path.stat.exists
+
+    - name: repeat the last request to verify no changes
+      unarchive:
+        src: "{{ test_user.home }}/unarchivetest1-unarchive.zip"
+        dest: "{{ test_user.home }}/unarchivetest1-unarchive-zip"
+        remote_src: yes
+        list_files: True
+      register: unarchive10b
+
+    # Due to a bug in the date calculation used to determine if a change
+    # was made or not, this check is unreliable. This seems to only happen on
+    # Ubuntu 1604.
+    # https://github.com/ansible/ansible/blob/58145dff9ca1a713f8ed295a0076779a91c41cba/lib/ansible/modules/unarchive.py#L472-L474
+    - name: Check that unarchiving again reports no change
+      assert:
+        that:
+          - unarchive10b is not changed
+      ignore_errors: yes

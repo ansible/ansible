@@ -1,0 +1,7 @@
+{
+    "output": "path-line-column-code-message",
+    "error_code": "ansible-test",
+    "extensions": [
+        ".md"
+    ]
+}

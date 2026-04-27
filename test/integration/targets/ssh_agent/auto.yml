@@ -1,0 +1,48 @@
+- hosts: testhost
+  tasks:
+    - set_fact:
+        key_types:
+          - ed25519
+          - rsa
+          - ecdsa
+
+    - set_fact:
+        key_types: "{{ key_types + ['dsa'] }}"
+      when:
+        - ansible_distribution == "RedHat"
+        - ansible_distribution_major_version | int == 9
+
+    - include_tasks: test_key.yml
+      loop: "{{ key_types }}"
+      loop_control:
+        extended: true
+
+    - ssh_agent:
+        action: remove
+        pubkey: "{{ sshkey.public_key }}"
+
+    - ssh_agent:
+        action: list
+      register: keys
+
+    - assert:
+        that:
+          - keys.nkeys == key_types | length - 1
+
+    - name: remove all keys
+      ssh_agent:
+        action: remove_all
+      register: r
+
+    - assert:
+        that:
+          - r is success
+          - r.nkeys_removed == key_types | length - 1
+
+    - ssh_agent:
+        action: list
+      register: keys
+
+    - assert:
+        that:
+          - keys.nkeys == 0

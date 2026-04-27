@@ -1,0 +1,5 @@
+DOCUMENTATION:
+    module: facts_one
+    short_description: random facts returned
+    version_added: historical
+    description: random facts for testing

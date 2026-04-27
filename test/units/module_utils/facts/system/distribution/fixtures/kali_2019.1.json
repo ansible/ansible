@@ -1,0 +1,25 @@
+{
+    "name": "Kali 2019.1",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\nVERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\nSUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n",
+        "/etc/lsb-release": "DISTRIB_ID=Kali\nDISTRIB_RELEASE=kali-rolling\nDISTRIB_CODENAME=kali-rolling\nDISTRIB_DESCRIPTION=\"Kali GNU/Linux Rolling\"\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\nVERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\nSUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n"
+    },
+    "platform.dist": ["kali", "2019.1", ""],
+    "distro": {
+        "codename": "kali-rolling",
+        "id": "kali",
+        "name": "Kali GNU/Linux Rolling",
+        "version": "2019.1",
+        "version_best": "2019.1",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Kali",
+        "distribution_version": "2019.1",
+        "distribution_release": "kali-rolling",
+        "distribution_major_version": "2019",
+        "os_family": "Debian"
+    }
+}

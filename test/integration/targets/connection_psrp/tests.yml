@@ -1,0 +1,169 @@
+---
+# these are extra tests for psrp that aren't covered under test/integration/targets/connection/*
+- name: test out psrp specific tests
+  hosts: windows
+  serial: 1
+  gather_facts: no
+
+  tasks:
+  - name: reboot the host
+    ansible.windows.win_reboot:
+
+  - name: test complex objects in raw output
+    # until PyYAML is upgraded to 4.x we need to use the \U escape for a unicode codepoint
+    # and enclose in a quote to it translates the \U
+    raw: "
+      [PSCustomObject]@{string = 'string'};
+      [PSCustomObject]@{unicode = 'poo - \U0001F4A9'};
+      [PSCustomObject]@{integer = 1};
+      [PSCustomObject]@{list = @(1, 2)};
+      Get-Service -Name winrm;
+      Write-Output -InputObject 'string - \U0001F4A9';"
+    register: raw_out
+
+  - name: assert complex objects in raw output
+    assert:
+      that:
+      - raw_out.stdout_lines|count == 6
+      - "raw_out.stdout_lines[0] == 'string: string'"
+      - "raw_out.stdout_lines[1] == 'unicode: poo - \U0001F4A9'"
+      - "raw_out.stdout_lines[2] == 'integer: 1'"
+      - "raw_out.stdout_lines[3] == \"list: [1, 2]\""
+      - raw_out.stdout_lines[4] == "winrm"
+      - raw_out.stdout_lines[5] == "string - \U0001F4A9"
+
+  - name: test error record stderr
+    raw: |
+      Write-Error -Message error1 -ErrorId MyId1
+
+      $exp = [ArgumentException]::new("error exception")
+      Write-Error -Exception $exp -Message 'error details' -ErrorId MyId2
+    register: raw_err
+
+  - name: assert error record stderr
+    assert:
+      that:
+      - raw_err.stdout == ""
+      - >-
+        "error1\r\n    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException\r\n    + FullyQualifiedErrorId : MyId1" in raw_err.stderr
+      - >-
+        "error details\r\n    + CategoryInfo          : NotSpecified: (:) [Write-Error], ArgumentException\r\n    + FullyQualifiedErrorId : MyId2" in raw_err.stderr
+
+  - name: test subprocess stderr and rc
+    raw: powershell.exe -command '$host.UI.WriteErrorLine(''stderr 1''); $host.UI.WriteErrorLine(''stderr 2''); $host.UI.WriteErrorLine(''stderr 3''); exit 2'
+    register: raw_stderr
+    failed_when: raw_stderr.rc != 2
+
+  - name: assert test subprocess stderr and rc
+    assert:
+      that:
+      - raw_stderr.stdout == ""
+      - raw_stderr.stderr == "stderr 1\r\nstderr 2\r\nstderr 3\r\n"
+
+  - name: test out become with psrp
+    win_whoami:
+    register: whoami_out
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: assert test out become with psrp
+    assert:
+      that:
+      - whoami_out.account.sid == "S-1-5-18"
+
+  - name: test out async with psrp
+    win_shell: Start-Sleep -Seconds 2; Write-Output abc
+    async: 10
+    poll: 1
+    register: async_out
+
+  - name: assert est out async with psrp
+    assert:
+      that:
+      - async_out.stdout_lines == ["abc"]
+
+  - name: Output unicode characters from Powershell using PSRP
+    win_command: "powershell.exe -ExecutionPolicy ByPass -Command \"Write-Host '\U0001F4A9'\""
+    register: command_unicode_output
+
+  - name: Assert unicode output
+    assert:
+      that:
+      - command_unicode_output is changed
+      - command_unicode_output.rc == 0
+      - "command_unicode_output.stdout == '\U0001F4A9\n'"
+      - command_unicode_output.stderr == ''
+
+  - name: Output unicode characters from Powershell using PSRP
+    win_shell: "Write-Host '\U0001F4A9'"
+    register: shell_unicode_output
+
+  - name: Assert unicode output
+    assert:
+      that:
+      - shell_unicode_output is changed
+      - shell_unicode_output.rc == 0
+      - "shell_unicode_output.stdout == '\U0001F4A9\n'"
+      - shell_unicode_output.stderr == ''
+
+  - name: copy empty file
+    win_copy:
+      src: empty.txt
+      dest: C:\Windows\TEMP\empty.txt
+    register: copy_empty
+
+  - name: get result of copy empty file
+    win_stat:
+      path: C:\Windows\TEMP\empty.txt
+      get_checksum: yes
+    register: copy_empty_actual
+
+  - name: assert copy empty file
+    assert:
+      that:
+      - copy_empty.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      - copy_empty_actual.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      - copy_empty_actual.stat.size == 0
+
+  - block:
+    - name: fetch empty file
+      fetch:
+        src: C:\Windows\TEMP\empty.txt
+        dest: /tmp/empty.txt
+        flat: yes
+      register: fetch_empty
+
+    - name: get result of fetch empty file
+      stat:
+        path: /tmp/empty.txt
+        get_checksum: yes
+      register: fetch_empty_actual
+      delegate_to: localhost
+
+    - name: assert fetch empty file
+      assert:
+        that:
+        - fetch_empty.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        - fetch_empty_actual.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        - fetch_empty_actual.stat.size == 0
+
+    always:
+    - name: remove tmp file
+      file:
+        path: /tmp/empty.txt
+        state: absent
+      delegate_to: localhost
+
+  - name: Test PSRP HTTP connection
+    win_ping:
+    vars:
+      ansible_port: 5985
+      ansible_psrp_protocol: http
+
+  - name: Test PSRP HTTPS connection
+    win_ping:
+    vars:
+      ansible_port: 5986
+      ansible_psrp_protocol: https
+      ansible_psrp_cert_validation: ignore

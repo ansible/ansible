@@ -1,0 +1,5 @@
+windows
+shippable/windows/group1
+shippable/windows/smoketest
+needs/target/connection
+needs/target/setup_remote_tmp_dir

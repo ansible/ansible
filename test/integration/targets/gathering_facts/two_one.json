@@ -1,0 +1,27 @@
+{
+    "_ansible_facts_gathered": true,
+    "common_dict_fact": {
+        "key_four": "from facts_two",
+        "key_one": "from facts_one",
+        "key_two": "from facts_one"
+    },
+    "common_fact": "also from facts_one module",
+    "common_list_fact": [
+        "two",
+        "four",
+        "one",
+        "three",
+        "five"
+    ],
+    "common_list_fact2": [
+        "four",
+        "four",
+        "one",
+        "two",
+        "three",
+        "five",
+        "five"
+    ],
+    "factsone": "from facts_one module",
+    "factstwo": "from facts_two module"
+}

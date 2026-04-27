@@ -1,0 +1,42 @@
+# Copyright (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: skip test on unsupported platforms
+  meta: end_play
+  when: ansible_distribution not in ('Ubuntu', 'Debian')
+
+- block:
+  - import_tasks: 'apt.yml'
+
+  - import_tasks: 'apt_deb_depend.yml'
+
+  - import_tasks: 'url-with-deps.yml'
+
+  - import_tasks: 'apt-multiarch.yml'
+
+  - import_tasks: 'apt-builddep.yml'
+
+  - import_tasks: 'apt_update.yml'
+
+  - block:
+      - import_tasks: 'repo.yml'
+    always:
+      - file:
+          path: /etc/apt/sources.list.d/file_tmp_repo.list
+          state: absent
+      - file:
+          name: "{{ repodir }}"
+          state: absent
+
+  always:
+    - name: Check if the target is managed by ansible-test
+      stat:
+        path: /etc/ansible-test.bootstrap
+      register: marker
+
+    - name: Ensure the EXTERNALLY-MANAGED marker is not present on the target
+      command: |
+        {{ ansible_python_interpreter | quote }}
+        -c
+        'import sysconfig; import pathlib; (pathlib.Path(sysconfig.get_path("stdlib")) / "EXTERNALLY-MANAGED").unlink(missing_ok=True);'
+      when: marker.stat.exists

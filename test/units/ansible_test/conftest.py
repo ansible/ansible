@@ -1,0 +1,13 @@
+from __future__ import annotations
+
+
+import os
+import pytest
+import sys
+
+
+@pytest.fixture(autouse=True, scope='session')
+def inject_ansible_test():
+    """Make ansible_test available on `sys.path` for unit testing ansible-test."""
+    test_lib = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'lib')
+    sys.path.insert(0, test_lib)

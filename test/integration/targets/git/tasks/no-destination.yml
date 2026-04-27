@@ -1,0 +1,13 @@
+# Test a non-updating repo query with no destination specified
+
+- name: NO-DESTINATION | get info on a repo without updating and with no destination specified
+  git:
+    repo: '{{ repo_dir }}/minimal'
+    update: no
+    clone: no
+    accept_hostkey: yes
+  register: git_result
+
+- assert:
+    that:
+      - git_result is changed

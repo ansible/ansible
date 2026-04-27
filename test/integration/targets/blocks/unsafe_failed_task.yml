@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    data: {}
+  tasks:
+    - block:
+        - name: template error
+          debug:
+            msg: "{{ data.value }}"
+      rescue:
+        - debug:
+            msg: "{{ ansible_failed_task.action }}"
+
+        - assert:
+            that:
+              - ansible_failed_task.name == "template error"
+              - ansible_failed_task.action == "debug"

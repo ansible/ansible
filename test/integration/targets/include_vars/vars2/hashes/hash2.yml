@@ -1,0 +1,7 @@
+---
+config:
+  key1: 1
+  key2: { b: 22 }
+  key3: 3
+previously_undefined:
+  key1: { a: 1 }

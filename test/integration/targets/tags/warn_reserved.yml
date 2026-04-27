@@ -1,0 +1,6 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+    - debug: msg=not tagged
+    - debug: msg=taggged
+      tags: tagged

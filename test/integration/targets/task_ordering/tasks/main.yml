@@ -1,0 +1,15 @@
+- set_fact:
+    temppath: "{{ remote_tmp_dir }}/output.txt"
+
+- include_tasks: taskorder-include.yml
+  with_items:
+  - 1
+  - 2
+  - 3
+
+- slurp:
+    src: "{{ temppath }}"
+  register: tempout
+
+- assert:
+    that: tempout.content | b64decode == "one.1.two.1.three.1.four.1.one.2.two.2.three.2.four.2.one.3.two.3.three.3.four.3."

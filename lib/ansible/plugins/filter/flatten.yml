@@ -1,0 +1,33 @@
+DOCUMENTATION:
+  name: flatten
+  version_added: "2.5"
+  short_description: flatten lists within a list
+  description:
+    - For a given list, take any elements that are lists and insert their elements into the parent list directly.
+  positional: _input, levels, skip_nulls
+  options:
+    _input:
+      description: List to flatten.
+      type: list
+      elements: any
+      required: true
+    levels:
+      description: Number of recursive list depths to flatten.
+      type: int
+    skip_nulls:
+      description: Skip V(null)/V(None) elements when inserting into the top list.
+      type: bool
+      default: true
+
+EXAMPLES: |
+
+    # [1,2,3,4,5,6]
+    flat: "{{ [1 , 2, [3, [4, 5]], 6] | flatten }}"
+
+    # [1,2,3,[4,5],6]
+    flatone: "{{ [1, 2, [3, [4, 5]], 6] | flatten(1) }}"
+
+RETURN:
+  _value:
+    description: The flattened list.
+    type: list

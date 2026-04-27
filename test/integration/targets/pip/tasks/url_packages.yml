@@ -1,0 +1,174 @@
+- name: Create local package
+  vars:
+    repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
+  block:
+  - name: Create a nested package directory layout
+    file:
+      path: "{{ repo_path }}/dummy-root/dummy-subdirectory"
+      recurse: yes
+      state: directory
+      mode: '0755'
+
+  - name: Create a root-level pyproject.toml
+    copy:
+      dest: "{{ repo_path }}/pyproject.toml"
+      content: |
+        [build-system]
+        requires = ["setuptools == 80.0.0"]
+        build-backend = "setuptools.build_meta"
+
+        [project]
+        name = "dummy-root"
+        version = "0.0.1"
+        dependencies = []
+
+  - name: Create nested package's pyproject.toml
+    copy:
+      dest: "{{ repo_path }}/dummy-root/dummy-subdirectory/pyproject.toml"
+      content: |
+        [build-system]
+        requires = ["setuptools == 80.0.0"]
+        build-backend = "setuptools.build_meta"
+
+        [project]
+        name = "nested-package"
+        version = "0.0.1"
+        dependencies = []
+
+  - name: Create git repository
+    command:
+      cmd: "{{ item }}"
+    args:
+      chdir: "{{ repo_path }}"
+    environment:
+      GIT_CONFIG_NOSYSTEM: 1
+    loop:
+      - git init .
+      - git add .
+      - git -c user.name="Ansible Test" -c user.email="ansible@ansible.ansible" commit -m "First commit"
+
+- name: Setup venvs
+  # We test for correct handling of vcs packages only in pip versions >= 24.1
+  # Despite dry-run being added in 22.2, it fails in several cases until 24.1
+  vars:
+    modern_pip_venv_version: "25.2"
+    outdated_pip_venv_version: "24.0"
+  block:
+    - name: Set venv paths
+      set_fact:
+        modern_pip_venv_path: "{{ remote_tmp_dir }}/modernvenv"
+        outdated_pip_venv_path: "{{ remote_tmp_dir }}/outdatedvenv"
+
+    - name: Create modern venv
+      pip:
+        name: pip=={{modern_pip_venv_version}}
+        virtualenv: "{{ modern_pip_venv_path }}"
+
+    - name: Create outdated venv
+      pip:
+        name: pip=={{outdated_pip_venv_version}}
+        virtualenv: "{{ outdated_pip_venv_path }}"
+
+- name: Check vcs package installation and checking functionality
+  vars:
+    repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
+    venv_path: "{{ modern_pip_venv_path }}"
+  block:
+  - name: Check installation of packages via git
+    pip:
+      name: "git+file://{{ repo_path }}/.git"
+      virtualenv: "{{ venv_path }}"
+    check_mode: true
+    register: check_git_install_to_empty_venv
+    environment:
+      FORCE_COLOR: "1"  # Here to encourage pip to include ansi color escape codes to validate pip output parsing
+
+  - name: Install package via git
+    pip:
+      name: "git+file://{{ repo_path }}/.git"
+      virtualenv: "{{ venv_path }}"
+
+  - name: Re-check to ensure not changed
+    pip:
+      name: "git+file://{{ repo_path }}/.git"
+      virtualenv: "{{ venv_path }}"
+    check_mode: true
+    register: check_reinstall_one_pkg
+
+  - name: Re-check with multiple to ensure changed
+    pip:
+      name:
+        - "git+file://{{ repo_path }}/.git"
+        - "nested-package @ git+file://{{ repo_path }}/.git#subdirectory=dummy-root/dummy-subdirectory"
+      virtualenv: "{{ venv_path }}"
+    check_mode: true
+    register: check_reinstall_two
+
+  - name: Re-install dummy-root to ensure not changed
+    pip:
+      name: "git+file://{{ repo_path }}/.git"
+      virtualenv: "{{ venv_path }}"
+    check_mode: true
+    register: reinstall_git_pkg
+
+  - name: Assert that git repo wasn't installed
+    assert:
+      that:
+        - check_git_install_to_empty_venv is changed
+        - check_reinstall_one_pkg is not changed
+        - check_reinstall_two is changed
+        - reinstall_git_pkg is not changed
+
+  - name: Install nonsense git repo
+    pip:
+      name: "git+https://notawebsite.tld/doesntexist/doesntexist"
+      virtualenv: "{{ venv_path }}"
+    check_mode: true
+    register: check_failure_on_bad_repo
+    ignore_errors: true
+
+  - name: Assert failure on nonsense git
+    assert:
+      that: check_failure_on_bad_repo is failed
+
+  - name: Check installation of file-path package
+    pip:
+      virtualenv: "{{ venv_path }}"
+      name: "{{ repo_path }}"
+    check_mode: true
+    register: check_file_install_root
+
+  - name: Check installation of file-path package
+    pip:
+      virtualenv: "{{ venv_path }}"
+      name: "{{ repo_path }}/dummy-root/dummy-subdirectory"
+    check_mode: true
+    register: check_file_install_subdirectory
+
+  - name: Assert changed for file-path packages
+    assert:
+      that:
+        - check_file_install_root is not changed
+        - check_file_install_subdirectory is changed
+
+# This tests for default behavior in the outdated versions of pip
+- name: Check for failure in handling vcs packages with outdated pip
+  vars:
+    repo_path: "{{ remote_tmp_dir }}/pip_vcs_pkgs"
+    venv_path: "{{ outdated_pip_venv_path }}"
+  block:
+    - name: Install file-path package to fresh outdated venv
+      pip:
+        name: "{{ repo_path }}"
+        virtualenv: "{{ venv_path }}"
+
+    - name: Check installation of file-path package to venv
+      pip:
+        name: "{{ repo_path }}"
+        virtualenv: "{{ venv_path }}"
+      check_mode: true
+      register: pip_result
+
+    - name: Assert improper name resolution due to outdated pip
+      assert:
+        that: pip_result is changed

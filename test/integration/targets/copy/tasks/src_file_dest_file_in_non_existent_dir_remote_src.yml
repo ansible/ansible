@@ -1,0 +1,32 @@
+- name: Ensure that dest top directory doesn't exist
+  file:
+    path: '{{ remote_dir }}/{{ dest.split("/")[0] }}'
+    state: absent
+
+- name: create src file
+  file:
+    path: foo.txt
+    state: touch
+
+- name: Copy file, dest is a file in non-existing target directory
+  copy:
+    src: foo.txt
+    dest: '{{ remote_dir }}/{{ dest }}'
+    remote_src: true
+  register: copy_result
+  ignore_errors: True
+
+- name: Assert copy failed
+  assert:
+    that:
+      - 'copy_result is failed'
+
+- name: Stat dest path
+  stat:
+    path: '{{ remote_dir }}/{{ dest.split("/")[0] }}'
+  register: stat_file_in_dir_result
+
+- name: assert that dest doesn't exist
+  assert:
+    that:
+      - 'not stat_file_in_dir_result.stat.exists'

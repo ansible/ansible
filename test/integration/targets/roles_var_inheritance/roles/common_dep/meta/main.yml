@@ -1,0 +1,4 @@
+dependencies:
+  - role: nested_dep
+    vars:
+      nested_var: "{{ test_var }}"

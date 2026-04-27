@@ -1,0 +1,62 @@
+- name: test that endpoint offers Negotiate auth
+  uri:
+    url: http://{{ httpbin_host }}/gssapi
+    status_code: 401
+  register: no_auth_failure
+  failed_when: no_auth_failure.www_authenticate != 'Negotiate'
+
+- name: test Negotiate auth over HTTP with explicit credentials
+  uri:
+    url: http://{{ httpbin_host }}/gssapi
+    use_gssapi: yes
+    url_username: '{{ krb5_username }}'
+    url_password: '{{ krb5_password }}'
+    return_content: yes
+  register: http_explicit
+
+- name: test Negotiate auth over HTTPS with explicit credentials
+  uri:
+    url: https://{{ httpbin_host }}/gssapi
+    use_gssapi: yes
+    url_username: '{{ krb5_username }}'
+    url_password: '{{ krb5_password }}'
+    return_content: yes
+  register: https_explicit
+
+- name: assert test Negotiate auth with implicit credentials
+  assert:
+    that:
+    - http_explicit.status == 200
+    - http_explicit.content | trim == 'Microsoft Rulz'
+    - https_explicit.status == 200
+    - https_explicit.content | trim == 'Microsoft Rulz'
+
+- name: skip tests on macOS, I cannot seem to get it to read a credential from a custom ccache
+  when: ansible_facts.distribution != 'MacOSX'
+  block:
+  - name: get Kerberos ticket for implicit auth tests
+    httptester_kinit:
+      username: '{{ krb5_username }}'
+      password: '{{ krb5_password }}'
+
+  - name: test Negotiate auth over HTTP with implicit credentials
+    uri:
+      url: http://{{ httpbin_host }}/gssapi
+      use_gssapi: yes
+      return_content: yes
+    register: http_implicit
+
+  - name: test Negotiate auth over HTTPS with implicit credentials
+    uri:
+      url: https://{{ httpbin_host }}/gssapi
+      use_gssapi: yes
+      return_content: yes
+    register: https_implicit
+
+  - name: assert test Negotiate auth with implicit credentials
+    assert:
+      that:
+      - http_implicit.status == 200
+      - http_implicit.content | trim == 'Microsoft Rulz'
+      - https_implicit.status == 200
+      - https_implicit.content | trim == 'Microsoft Rulz'

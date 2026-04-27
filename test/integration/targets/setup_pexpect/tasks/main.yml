@@ -1,0 +1,19 @@
+- name: Copy constraints file
+  copy:
+    src: constraints.txt
+    dest: "{{ remote_tmp_dir }}/pexpect-constraints.txt"
+
+- name: Install pexpect with --user
+  pip:
+    name: pexpect
+    extra_args: '--user --constraint "{{ remote_tmp_dir }}/pexpect-constraints.txt"'
+    state: present
+  ignore_errors: yes  # fails when inside a virtual environment
+  register: pip_user
+
+- name: Install pexpect
+  pip:
+    name: pexpect
+    extra_args: '--constraint "{{ remote_tmp_dir }}/pexpect-constraints.txt"'
+    state: present
+  when: pip_user is failed

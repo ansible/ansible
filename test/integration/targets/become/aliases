@@ -1,0 +1,6 @@
+destructive
+shippable/posix/group1
+context/target
+gather_facts/no
+needs/root
+setup/always/setup_passlib_controller  # required for setup_test_user

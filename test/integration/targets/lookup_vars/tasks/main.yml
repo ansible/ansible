@@ -1,0 +1,55 @@
+- name: Test that we can give it a single value and receive a single value
+  set_fact:
+    var_host: '{{ lookup("vars", "ansible_host") }}'
+
+- assert:
+    that:
+      - 'var_host == ansible_host'
+
+- name: Test that we can give a list of values to var and receive a list of values back
+  set_fact:
+    var_host_info: '{{ query("vars", "ansible_host", "ansible_connection") }}'
+
+- assert:
+    that:
+      - 'var_host_info[0] == ansible_host'
+      - 'var_host_info[1] == ansible_connection'
+
+- block:
+  - name: EXPECTED FAILURE - test invalid var
+    raw: '{{ lookup("vars", "doesnotexist") }}'
+
+  - fail:
+      msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test invalid var"
+          - expected in ansible_failed_result.msg
+      vars:
+        expected: "No variable named 'doesnotexist' was found"
+
+- block:
+  - name: EXPECTED FAILURE - test invalid var type
+    debug:
+      var: '{{ lookup("vars", 42) }}'
+
+  - fail:
+      msg: "should not get here"
+
+  rescue:
+    - assert:
+        that:
+          - ansible_failed_task.name == "EXPECTED FAILURE - test invalid var type"
+          - expected in ansible_failed_result.msg
+      vars:
+        expected: "Variable name must be 'str' not 'int'"
+
+- name: test default
+  set_fact:
+    expected_default_var: '{{ lookup("vars", "doesnotexist", default="some text") }}'
+
+- assert:
+    that:
+      - expected_default_var == "some text"

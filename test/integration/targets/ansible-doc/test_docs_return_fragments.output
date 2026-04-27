@@ -1,0 +1,34 @@
+> MODULE test_docs_return_fragments
+
+  Test module
+
+AUTHOR: Ansible Core Team
+
+EXAMPLES:
+
+
+RETURN VALUES:
+
+- a_first  A first result.
+        returned: success
+        type: str
+
+- m_middle  This should be in the middle.
+             Has some more data
+        returned: success and 1st of month
+        type: dict
+        contains:
+
+        - suboption  A suboption.
+          choices: [ARF, BARN, c_without_capital_first_letter]
+          type: str
+
+- y_notlast  A return from fragment
+        returned: it depends TM
+        type: str
+
+- z_last  A a return from fragment with merge.
+        example: this is a merge
+        returned: success
+        type: str
+

@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: normal task
+      ping:
+
+    - name: force warning
+      ping:
+      when: "{{pepe == 1}}"
+      vars:
+        lola: 1
+        pepe: lola

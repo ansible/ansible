@@ -1,0 +1,457 @@
+---
+- hosts: localhost
+  gather_facts: false
+  roles:
+      - { role: a, a_str: "roles" }
+
+  vars:
+    INT_VALUE: 42
+
+  tasks:
+
+      - name: "Valid simple role usage with include_role"
+        include_role:
+          name: a
+        vars:
+          a_str: "include_role"
+
+      - name: "Valid simple role usage with import_role"
+        import_role:
+          name: a
+        vars:
+            a_str: "import_role"
+
+      - name: "Valid role usage (more args)"
+        include_role:
+          name: b
+        vars:
+          b_str: "xyz"
+          b_int: 5
+          b_bool: true
+
+      - name: "Valid simple role usage with include_role of different entry point"
+        include_role:
+          name: a
+          tasks_from: "alternate"
+        vars:
+          a_int: 256
+
+      - name: "Valid simple role usage with import_role of different entry point"
+        import_role:
+          name: a
+          tasks_from: "alternate"
+        vars:
+          a_int: 512
+
+      - name: "Valid simple role usage with a templated value"
+        import_role:
+          name: a
+        vars:
+          a_int: "{{ INT_VALUE }}"
+          a_str: "import_role"
+
+      - name: "Call role entry point that is defined, but has no spec data"
+        import_role:
+          name: a
+          tasks_from: "no_spec_entrypoint"
+
+- name: "New play to reset vars: Test include_role fails"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    expected_returned_spec:
+      b_bool:
+        required: true
+        type: "bool"
+      b_int:
+        required: true
+        type: "int"
+      b_str:
+        required: true
+        type: "str"
+
+  tasks:
+      - block:
+        - name: "Invalid role usage"
+          include_role:
+            name: b
+          vars:
+            b_bool: 7
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+
+          - name: "Validate failure"
+            assert:
+              that:
+                - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
+                - ansible_failed_result.argument_errors | length == 2
+                - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "b"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/b')"
+                - ansible_failed_result.argument_spec_data == expected_returned_spec
+
+
+- name: "New play to reset vars: Test import_role fails"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    expected_returned_spec:
+      b_bool:
+        required: true
+        type: "bool"
+      b_int:
+        required: true
+        type: "int"
+      b_str:
+        required: true
+        type: "str"
+
+  tasks:
+      - block:
+        - name: "Invalid role usage"
+          import_role:
+            name: b
+          vars:
+            b_bool: 7
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+
+          - name: "Validate failure"
+            assert:
+              that:
+                - ansible_failed_task.name == "Validating arguments against arg spec 'main' - Main entry point for role B."
+                - ansible_failed_result.argument_errors | length == 2
+                - "'missing required arguments: b_int, b_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "b"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/b')"
+                - ansible_failed_result.argument_spec_data == expected_returned_spec
+
+
+- name: "New play to reset vars: Test nested role including/importing role succeeds"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    c_dict: {}
+    c_int: 1
+    c_list: []
+    c_raw: ~
+    a_str: "some string"
+    a_int: 42
+  tasks:
+      - name: "Test import_role of role C"
+        import_role:
+          name: c
+
+      - name: "Test include_role of role C"
+        include_role:
+          name: c
+
+- name: "New play to reset vars: Test nested role including/importing role fails with null required options"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    a_main_spec:
+      a_str:
+        required: true
+        type: "str"
+    c_main_spec:
+      c_int:
+        required: true
+        type: "int"
+      c_list:
+        required: true
+        type: "list"
+      c_dict:
+        required: true
+        type: "dict"
+      c_raw:
+        required: true
+        type: "raw"
+    # role c calls a's main and alternate entrypoints
+    a_str: ''
+    c_dict: {}
+    c_int: 0
+    c_list: []
+    c_raw: ~
+  tasks:
+    - name: test type coercion fails on None for required int
+      block:
+        - name: "Test import_role of role C (missing c_int)"
+          import_role:
+            name: c
+          vars:
+            c_int: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == c_main_spec
+          vars:
+            error: >-
+              argument 'c_int' is of type NoneType and we were unable to convert to int: "None" cannot be converted to an int
+
+    - name: test type coercion fails on None for required list
+      block:
+        - name: "Test import_role of role C (missing c_list)"
+          import_role:
+            name: c
+          vars:
+            c_list: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == c_main_spec
+          vars:
+            error: >-
+              argument 'c_list' is of type NoneType and we were unable to convert to list:
+              <class 'NoneType'> cannot be converted to a list
+
+    - name: test type coercion fails on None for required dict
+      block:
+        - name: "Test import_role of role C (missing c_dict)"
+          import_role:
+            name: c
+          vars:
+            c_dict: ~
+        - fail:
+            msg: "Should not get here"
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # NOTE: a bug here that prevents us from getting ansible_failed_task
+              - ansible_failed_result.argument_errors == [error]
+              - ansible_failed_result.argument_spec_data == c_main_spec
+          vars:
+            error: >-
+              argument 'c_dict' is of type NoneType and we were unable to convert to dict:
+              <class 'NoneType'> cannot be converted to a dict
+
+- name: "New play to reset vars: Test nested role including/importing role fails"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    main_expected_returned_spec:
+      a_str:
+        required: true
+        type: "str"
+    alternate_expected_returned_spec:
+      a_int:
+        required: true
+        type: "int"
+
+    c_int: 100
+    c_list: []
+    c_dict: {}
+    c_raw: ~
+  tasks:
+      - block:
+        - name: "Test import_role of role C (missing a_str)"
+          import_role:
+            name: c
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+          - name: "Validate import_role failure"
+            assert:
+              that:
+                # NOTE: a bug here that prevents us from getting ansible_failed_task
+                - ansible_failed_result.argument_errors | length == 1
+                - "'missing required arguments: a_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "a"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
+                - ansible_failed_result.argument_spec_data == main_expected_returned_spec
+
+      - block:
+        - name: "Test include_role of role C (missing a_int from `alternate` entry point)"
+          include_role:
+            name: c
+          vars:
+            a_str: "some string"
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+          - name: "Validate include_role failure"
+            assert:
+              that:
+                # NOTE: a bug here that prevents us from getting ansible_failed_task
+                - ansible_failed_result.argument_errors | length == 1
+                - "'missing required arguments: a_int' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "alternate"
+                - ansible_failed_result.validate_args_context.name == "a"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/a')"
+                - ansible_failed_result.argument_spec_data == alternate_expected_returned_spec
+
+- name: "New play to reset vars: Test role with no tasks can fail"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+      - block:
+        - name: "Test import_role of role role_with_no_tasks (missing a_str)"
+          import_role:
+            name: role_with_no_tasks
+
+        - fail:
+            msg: "Should not get here"
+
+        rescue:
+          - debug:
+              var: ansible_failed_result
+          - name: "Validate import_role failure"
+            assert:
+              that:
+                # NOTE: a bug here that prevents us from getting ansible_failed_task
+                - ansible_failed_result.argument_errors | length == 1
+                - "'missing required arguments: a_str' in ansible_failed_result.argument_errors"
+                - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+                - ansible_failed_result.validate_args_context.name == "role_with_no_tasks"
+                - ansible_failed_result.validate_args_context.type == "role"
+                - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/role_with_no_tasks')"
+
+- name: "New play to reset vars: Test disabling role validation with rolespec_validate=False"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+      - name: "Test import_role of role C (missing a_str), but validation turned off"
+        import_role:
+          name: c
+          rolespec_validate: False
+      - fail:
+          msg: "Should not get here"
+
+      rescue:
+        - debug:
+            var: ansible_failed_result
+        - name: "Validate import_role failure"
+          assert:
+            that:
+              # We expect the role to actually run, but will fail because an undefined variable was referenced
+              # and validation wasn't performed up front (thus not returning 'argument_errors').
+              - "'argument_errors' not in ansible_failed_result"
+              - |
+                ansible_failed_result.msg is contains "'c_int' is undefined"
+
+- name: "New play to reset vars: Test collection-based role"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: "Valid collection-based role usage"
+      import_role:
+        name: "foo.bar.blah"
+      vars:
+        blah_str: "some string"
+
+
+- name: "New play to reset vars: Test collection-based role will fail"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - block:
+      - name: "Invalid collection-based role usage"
+        import_role:
+          name: "foo.bar.blah"
+      - fail:
+          msg: "Should not get here"
+      rescue:
+        - debug: var=ansible_failed_result
+        - name: "Validate import_role failure for collection-based role"
+          assert:
+            that:
+              - ansible_failed_result.argument_errors | length == 1
+              - "'missing required arguments: blah_str' in ansible_failed_result.argument_errors"
+              - ansible_failed_result.validate_args_context.argument_spec_name == "main"
+              - ansible_failed_result.validate_args_context.name == "blah"
+              - ansible_failed_result.validate_args_context.type == "role"
+              - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/collections/ansible_collections/foo/bar/roles/blah')"
+
+- name: "New play to reset vars: Test templating succeeds"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    value_some_choices: "choice2"
+    value_some_list: [1.5]
+    value_some_dict: {"some_key": "some_value"}
+    value_some_int: 1
+    value_some_float: 1.5
+    value_some_json: '{[1, 3, 3] 345345|45v<#!}'
+    value_some_jsonarg: {"foo": [1, 3, 3]}
+    value_some_second_level: True
+    value_third_level: 5
+  tasks:
+    - block:
+      - include_role:
+          name: test1
+        vars:
+          some_choices: "{{ value_some_choices }}"
+          some_list: "{{ value_some_list }}"
+          some_dict: "{{ value_some_dict }}"
+          some_int: "{{ value_some_int }}"
+          some_float: "{{ value_some_float }}"
+          some_json: "{{ value_some_json }}"
+          some_jsonarg: "{{ value_some_jsonarg }}"
+          some_dict_options:
+            some_second_level: "{{ value_some_second_level }}"
+          multi_level_option:
+            second_level:
+              third_level: "{{ value_third_level }}"
+      rescue:
+        - debug: var=ansible_failed_result
+        - fail:
+            msg: "Should not get here"
+
+- name: "New play to reset vars: Test empty argument_specs.yml"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Import role with an empty argument_specs.yml
+      import_role:
+        name: empty_file
+
+- name: "New play to reset vars: Test empty argument_specs key"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Import role with an empty argument_specs key
+      import_role:
+        name: empty_argspec

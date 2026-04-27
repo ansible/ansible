@@ -1,0 +1,43 @@
+DOCUMENTATION:
+  name: regex_findall
+  version_added: "2.0"
+  short_description: extract all regex matches from string
+  description:
+    - Search in a string or extract all the parts of a string matching a regular expression.
+  positional: _input, _regex
+  options:
+    _input:
+      description: String to match against.
+      type: str
+      required: true
+    _regex:
+      description: Regular expression string that defines the match.
+      type: str
+    multiline:
+      description: Search across line endings if V(True), do not if otherwise.
+      type: bool
+      default: no
+    ignorecase:
+      description: Force the search to be case insensitive if V(True), case sensitive otherwise.
+      type: bool
+      default: no
+
+EXAMPLES: |
+
+  # all_pirates => ['CAR', 'tar', 'bar']
+  all_pirates: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True, ignorecase=True) }}"
+
+  # Using inline regex flags instead of passing options to filter
+  # See https://docs.python.org/3/library/re.html for more information
+  # on inline regex flags
+  # all_pirates => ['CAR', 'tar', 'bar']
+  all_pirates: "{{ 'CAR\ntar\nfoo\nbar\n' | regex_findall('(?im)^.ar$') }}"
+
+  # get_ips => ['8.8.8.8', '8.8.4.4']
+  get_ips: "{{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}"
+
+RETURN:
+  _value:
+    description: List of matched strings.
+    type: list
+    elements: str

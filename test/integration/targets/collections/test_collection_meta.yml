@@ -1,0 +1,75 @@
+- hosts: localhost
+  gather_facts: no
+  collections:
+  - testns.testcoll
+  vars:
+    # redirect connection
+    ansible_connection: testns.testcoll.redirected_local
+  tasks:
+  - assert:
+      that: ('data' | testns.testcoll.testfilter) == 'data_via_testfilter_from_userdir'
+
+  # redirect module (multiple levels)
+  - multilevel1:
+  # redirect action
+  - uses_redirected_action:
+  # redirect import (consumed via action)
+  - uses_redirected_import:
+  # redirect lookup
+  - assert:
+      that: lookup('formerly_core_lookup') == 'mylookup_from_user_dir'
+  # redirect filter
+  - assert:
+      that: ('yes' | formerly_core_filter) == True
+  # redirect filter (multiple levels)
+  - assert:
+      that: ('data' | testns.testredirect.multi_redirect_filter) == 'data_via_testfilter_from_userdir'
+  # invalid filter redirect
+  - debug: msg="{{ 'data' | testns.testredirect.dead_end }}"
+    ignore_errors: yes
+    register: redirect_failure
+  - assert:
+      that:
+        - redirect_failure is failed
+        - redirect_failure.msg is contains("No filter named 'testns.testredirect.dead_end'")
+  # recursive filter redirect
+  - debug: msg="{{ 'data' | testns.testredirect.recursive_redirect }}"
+    ignore_errors: yes
+    register: redirect_failure
+  - assert:
+      that:
+        - redirect_failure is failed
+        - '"recursive collection redirect found for ''testns.testredirect.recursive_redirect''" in redirect_failure.msg'
+  # invalid filter redirect
+  - debug: msg="{{ 'data' | testns.testredirect.invalid_redirect }}"
+    ignore_errors: yes
+    register: redirect_failure
+  - assert:
+      that:
+        - redirect_failure is failed
+        - error in redirect_failure.msg
+    vars:
+      error: "Collection testns.testredirect contains invalid redirect for testns.testredirect.invalid_redirect: contextual_redirect"
+  # legacy filter should mask redirected
+  - assert:
+      that: ('' | formerly_core_masked_filter) == 'hello from overridden formerly_core_masked_filter'
+  # redirect test
+  - assert:
+      that:
+      - "'stuff' is formerly_core_test('tuf')"
+      - "'hello override' is formerly_core_masked_test"
+  # redirect module (formerly internal)
+  - formerly_core_ping:
+  # redirect module from collection (with subdir)
+  - testns.testcoll.module_subdir.subdir_ping_module:
+  # redirect module_utils plugin (consumed via module)
+  - uses_core_redirected_mu:
+  # deprecated module (issues warning)
+  - deprecated_ping:
+  # redirect module (internal alias)
+  - aliased_ping:
+  # redirect module (cycle detection, fatal)
+#  - looped_ping:
+
+  # removed module (fatal)
+#  - dead_ping:

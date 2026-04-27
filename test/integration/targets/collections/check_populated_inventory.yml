@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - assert:
+      that:
+        - "groups.all | length == 2"
+        - "groups.ungrouped == groups.all"
+        - "'cache_host_a' in groups.all"
+        - "'dynamic_host_a' in groups.all"

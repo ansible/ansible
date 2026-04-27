@@ -1,0 +1,8 @@
+- name: Assert that appropriate tasks were run
+  assert:
+    that:
+      - set_in_tasks1 is undefined
+      - set_in_tasks2 is undefined
+      - set_in_tasks5
+  tags:
+    - validate

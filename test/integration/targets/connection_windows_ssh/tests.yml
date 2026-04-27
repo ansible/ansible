@@ -1,0 +1,44 @@
+---
+- name: test out Windows SSH specific tests
+  hosts: windows
+  serial: 1
+  gather_facts: no
+
+  tasks:
+  - name: test out become with Windows SSH
+    win_whoami:
+    register: win_ssh_become
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: assert test out become with Windows SSH
+    assert:
+      that:
+      - win_ssh_become.account.sid == "S-1-5-18"
+
+  - name: test out async with Windows SSH
+    win_shell: Write-Host café
+    async: 20
+    poll: 3
+    register: win_ssh_async
+
+  - name: assert test out async with Windows SSH
+    assert:
+      that:
+      - win_ssh_async is changed
+      - win_ssh_async.rc == 0
+      - win_ssh_async.stdout == "café\n"
+      - win_ssh_async.stderr == ""
+
+  # Ensures the connection plugin can handle a timeout
+  # without raising another error.
+  - name: run command with timeout
+    win_shell: Start-Sleep -Seconds 10
+    timeout: 5
+    register: timeout_cmd
+    ignore_errors: true
+
+  - assert:
+      that:
+      - timeout_cmd.msg is contains 'Timed out after'

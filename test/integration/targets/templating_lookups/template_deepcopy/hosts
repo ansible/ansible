@@ -1,0 +1,1 @@
+h1 ansible_connection=local host_var=foo

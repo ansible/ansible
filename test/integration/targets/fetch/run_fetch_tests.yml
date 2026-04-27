@@ -1,0 +1,5 @@
+- name: call fetch_tests role
+  hosts: testhost
+  gather_facts: false
+  roles:
+    - fetch_tests

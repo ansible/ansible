@@ -1,0 +1,324 @@
+---
+- name: verify that the default value is indeed 1
+  assert:
+    that:
+      - "testing == 1"
+      - "base_dir == 'defaults'"
+
+- name: include the vars/environments/development/all.yml
+  include_vars:
+    file: environments/development/all.yml
+  register: included_one_file
+
+- name: verify that the correct file has been loaded and default value is indeed 789
+  assert:
+    that:
+      - "testing == 789"
+      - "base_dir == 'environments/development'"
+      - "included_one_file.ansible_included_var_files | length == 1"
+      - "'vars/environments/development/all.yml' in included_one_file.ansible_included_var_files[0]"
+
+- name: include the vars/environments/development/all.yml and save results in all
+  include_vars:
+    file: environments/development/all.yml
+    name: all
+
+- name: verify that the values are stored in the all variable
+  assert:
+    that:
+      - "all['testing'] == 789"
+      - "all['base_dir'] == 'environments/development'"
+
+- name: include the all directory in vars
+  include_vars:
+    dir: all
+    depth: 1
+
+- name: verify that the default value is indeed 123
+  assert:
+    that:
+      - "testing == 123"
+      - "base_dir == 'all'"
+
+- name: include var files with extension only
+  include_vars:
+    dir: webapp
+    ignore_unknown_extensions: True
+    extensions: ['', 'yaml', 'yml', 'json']
+  register: include_without_file_extension
+
+- name: verify that only files with valid extensions are loaded
+  assert:
+    that:
+      - webapp_version is defined
+      - "'file_without_extension' in include_without_file_extension.ansible_included_var_files | join(' ')"
+
+- name: include every directory in vars
+  include_vars:
+    dir: vars
+    extensions: ['', 'yaml', 'yml', 'json']
+    ignore_files:
+      - no_auto_unsafe.yml
+  register: include_every_dir
+
+- name: invalid type for ignore_files
+  include_vars:
+    dir: vars
+    ignore_files: 123
+  register: invalid_ignore_files
+  ignore_errors: True
+
+- name: non-existent directory
+  include_vars:
+    dir: non_existent_dir
+  register: non_existent_dir_results
+  ignore_errors: True
+
+- name: invalid option
+  include_vars:
+    blah: 123
+  ignore_errors: True
+  register: invalid_option_results
+
+- name: provide non-compatible files and dir parameter together
+  include_vars:
+    dir: vars
+    file: main.yml
+  ignore_errors: True
+  register: invalid_files_dir_results
+
+- name: provide file value to a dir param
+  include_vars:
+    dir: environments/development/all.yml
+  register: non_file_dir_results
+  ignore_errors: True
+
+- name: invalid extensions value
+  include_vars:
+    dir: vars
+    extensions: 123
+  register: invalid_extensions_results
+  ignore_errors: True
+
+- name: verify all parameters are validated
+  assert:
+    that:
+      - "invalid_ignore_files is failed"
+      - "'option must be a list' in invalid_ignore_files.msg"
+      - "non_existent_dir_results is failed"
+      - "'directory does not exist' in non_existent_dir_results.message"
+      - "invalid_option_results is failed"
+      - "'is not a valid option' in invalid_option_results.msg"
+      - "invalid_files_dir_results is failed"
+      - "'these are incompatible' in invalid_files_dir_results.msg"
+      - "non_file_dir_results is failed"
+      - "'is not a directory' in non_file_dir_results.message"
+      - "invalid_extensions_results is failed"
+      - "'option must be a list' in invalid_extensions_results.msg"
+
+- name: verify that the correct files have been loaded and overwrite based on alphabetical order
+  assert:
+    that:
+      - "testing == 456"
+      - "base_dir == 'services'"
+      - "webapp_containers == 10"
+      - "include_every_dir.ansible_included_var_files | length == 7"
+      - "'vars/all/all.yml' in include_every_dir.ansible_included_var_files[0]"
+      - "'vars/environments/development/all.yml' in include_every_dir.ansible_included_var_files[1]"
+      - "'vars/environments/development/services/webapp.yml' in include_every_dir.ansible_included_var_files[2]"
+      - "'vars/services/webapp.yml' in include_every_dir.ansible_included_var_files[5]"
+      - "'vars/webapp/file_without_extension' in include_every_dir.ansible_included_var_files[6]"
+
+- name: include every directory in vars except files matching webapp.yml
+  include_vars:
+    dir: vars
+    ignore_files:
+      - webapp.yml
+      - file_without_extension
+      - no_auto_unsafe.yml
+  register: include_without_webapp
+
+- name: verify that the webapp.yml file was not included
+  assert:
+    that:
+      - "testing == 789"
+      - "base_dir == 'environments/development'"
+      - "include_without_webapp.ansible_included_var_files | length == 4"
+      - "'webapp.yml' not in (include_without_webapp.ansible_included_var_files | join(' '))"
+      - "'file_without_extension' not in (include_without_webapp.ansible_included_var_files | join(' '))"
+
+- name: include only files matching webapp.yml
+  include_vars:
+    dir: environments
+    files_matching: webapp.yml
+  register: include_match_webapp
+
+- name: verify that only files matching webapp.yml and in the environments directory get loaded.
+  assert:
+    that:
+      - "testing == 101112"
+      - "base_dir == 'development/services'"
+      - "webapp_containers == 20"
+      - "include_match_webapp.ansible_included_var_files | length == 1"
+      - "'vars/environments/development/services/webapp.yml' in include_match_webapp.ansible_included_var_files[0]"
+      - "'all.yml' not in (include_match_webapp.ansible_included_var_files | join(' '))"
+
+- name: include only files matching webapp.yml and store results in webapp
+  include_vars:
+    dir: environments
+    files_matching: webapp.yml
+    name: webapp
+
+- name: verify that only files matching webapp.yml and in the environments directory get loaded into stored variable webapp.
+  assert:
+    that:
+      - "webapp['testing'] == 101112"
+      - "webapp['base_dir'] == 'development/services'"
+      - "webapp['webapp_containers'] == 20"
+
+- name: include var files without extension
+  include_vars:
+    dir: webapp
+    ignore_unknown_extensions: False
+  register: include_with_unknown_file_extension
+  ignore_errors: True
+
+- name: verify that files without valid extensions are loaded
+  assert:
+    that:
+      - "'a valid extension' in include_with_unknown_file_extension.message"
+
+- name: include var with raw params
+  include_vars: >
+    services/service_vars.yml
+
+- name: Verify that files with raw params is include without new line character
+  assert:
+    that:
+      - "service_name ==  'my_custom_service'"
+
+- name: Check NoneType for raw params and file
+  include_vars:
+    file: "{{ lookup('first_found', possible_files, errors='ignore') }}"
+  vars:
+    possible_files:
+    - "does_not_exist.yml"
+  ignore_errors: True
+  register: include_with_non_existent_file
+
+- name: Verify that file and raw_params provide correct error message to user
+  assert:
+    that:
+      - "'Could not find file' in include_with_non_existent_file.message"
+
+- name: include var (FQCN) with raw params
+  ansible.builtin.include_vars: >
+    services/service_vars_fqcn.yml
+
+- name: Verify that FQCN of include_vars works
+  assert:
+    that:
+      - "'my_custom_service' == service_name_fqcn"
+      - "'my_custom_service' == service_name_tmpl_fqcn"
+
+- name: Include a vars file with a hash variable
+  include_vars:
+    file: vars2/hashes/hash1.yml
+
+- name: Verify the hash variable
+  assert:
+    that:
+      - "config | length == 3"
+      - "config.key0 == 0"
+      - "config.key1 == 0"
+      - "config.key2 | length == 1"
+      - "config.key2.a == 21"
+
+- name: Include the second file to merge the hash variable
+  include_vars:
+    file: vars2/hashes/hash2.yml
+    hash_behaviour: merge
+
+- name: Verify that the hash is merged
+  assert:
+    that:
+      - "config | length == 4"
+      - "config.key0 == 0"
+      - "config.key1 == 1"
+      - "config.key2 | length == 2"
+      - "config.key2.a == 21"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
+- name: Include the second file again without hash_behaviour option
+  include_vars:
+    file: vars2/hashes/hash2.yml
+
+- name: Verify that the properties from the first file is cleared
+  assert:
+    that:
+      - "config | length == 3"
+      - "config.key1 == 1"
+      - "config.key2 | length == 1"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
+- name: Include a vars dir with hash variables
+  include_vars:
+    dir: "{{ role_path }}/vars2/hashes/"
+    hash_behaviour: merge
+
+- name: Verify that the hash is merged after vars files are accumulated
+  assert:
+    that:
+      - "config | length == 3"
+      - "config.key0 is undefined"
+      - "config.key1 == 1"
+      - "config.key2 | length == 1"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
+- include_vars:
+    file: no_auto_unsafe.yml
+  register: baz
+
+- assert:
+    that:
+      - baz.ansible_facts.foo is ansible._protomatter.tagged_with("TrustedAsTemplate")
+
+- name: setup test following symlinks
+  delegate_to: localhost
+  block:
+    - name: create directory to test following symlinks
+      file:
+        path: "{{ role_path }}/test_symlink"
+        state: directory
+
+    - name: create symlink to the vars2 dir
+      file:
+        src: "{{ role_path }}/vars2"
+        dest: "{{ role_path }}/test_symlink/symlink"
+        state: link
+
+- name: include vars by following the symlink
+  include_vars:
+    dir: "{{ role_path }}/test_symlink"
+  register: follow_sym
+
+- assert:
+    that: follow_sym.ansible_included_var_files | sort == [hash1, hash2]
+  vars:
+    hash1: "{{ role_path }}/test_symlink/symlink/hashes/hash1.yml"
+    hash2: "{{ role_path }}/test_symlink/symlink/hashes/hash2.yml"
+
+- name: Test include_vars includes everything to the correct depth
+  ansible.builtin.include_vars:
+    dir: "{{ role_path }}/files/test_depth"
+    depth: 3
+    name: test_depth_var
+  register: test_depth
+
+- assert:
+    that:
+      - "test_depth.ansible_included_var_files|length == 8"
+      - "test_depth_var.keys()|length == 8"

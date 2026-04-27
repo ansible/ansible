@@ -1,0 +1,45 @@
+- name: skip unsupported distros
+  meta: end_host
+  when: ansible_distribution in ['Alpine']
+
+- name: map *bsd to rc init system
+  set_fact:
+    service_type: >-
+      {{
+        'rc' if ansible_distribution.lower().endswith('bsd')
+        else ansible_service_mgr
+      }}
+
+- name: install the test daemon script
+  copy:
+    src: ansible_test_service.py
+    dest: /usr/sbin/ansible_test_service
+    mode: '755'
+
+- name: rewrite shebang in the test daemon script
+  lineinfile:
+    path: /usr/sbin/ansible_test_service
+    line: "#!{{ ansible_python_interpreter | realpath }}"
+    insertbefore: BOF
+    firstmatch: yes
+
+- block:
+    - name: display value of service_type
+      debug:
+        msg: 'service_type: {{ service_type }}'
+
+    - name: setup test service script
+      include_tasks: '{{ service_type }}_setup.yml'
+
+    - name: execute tests
+      import_tasks: tests.yml
+
+  always:
+    - name: disable and stop ansible test service
+      service:
+        name: ansible_test
+        state: stopped
+        enabled: false
+
+    # cleaning up changes made by this playbook
+    - include_tasks: '{{ service_type }}_cleanup.yml'

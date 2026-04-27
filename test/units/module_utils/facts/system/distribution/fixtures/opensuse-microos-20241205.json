@@ -1,0 +1,23 @@
+{
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "opensuse-microos",
+        "name": "openSUSE MicroOS",
+        "version": "20241205",
+        "version_best": "20241205",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"openSUSE MicroOS\"\n# VERSION=\"20241205\"\nID=opensuse-microos\nID_LIKE=\"suse opensuse opensuse-tumbleweed microos sl-micro\"\nVERSION_ID=\"20241205\"\nPRETTY_NAME=\"openSUSE MicroOS\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:microos:20241205\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\nDOCUMENTATION_URL=\"https://en.opensuse.org/Portal:MicroOS\"\nLOGO=\"distributor-logo-MicroOS\"\n"
+    },
+    "name": "openSUSE MicroOS 20241205",
+    "result": {
+        "distribution_release": "",
+        "distribution": "openSUSE MicroOS",
+        "distribution_major_version": "20241205",
+        "os_family": "Suse",
+        "distribution_version": "20241205"
+    }
+}

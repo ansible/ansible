@@ -1,0 +1,20 @@
+- name: test with_items
+  set_fact: "{{ item }}=moo"
+  with_items:
+    - 'foo'
+    - 'bar'
+
+- name: Undefined var, skipped
+  debug:
+  with_items:
+    - '{{ baz }}'
+  when: false
+
+- debug: var=foo
+- debug: var=bar
+
+- name: verify with_items results
+  assert:
+    that:
+        - "foo == 'moo'"
+        - "bar == 'moo'"

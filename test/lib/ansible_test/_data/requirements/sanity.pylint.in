@@ -1,0 +1,2 @@
+pylint
+pyyaml  # needed for collection_detail.py

@@ -1,0 +1,6 @@
+namespace: ns
+name: ps_only
+version: 1.0.0
+readme: README.md
+authors:
+    - Ansible

@@ -1,0 +1,53 @@
+- name: Attempt to fetch a non-existent file - do not fail on missing
+  fetch:
+    src: "{{ remote_tmp_dir }}/doesnotexist"
+    dest: "{{ output_dir }}/fetched"
+    fail_on_missing: no
+  register: fetch_missing_nofail
+
+- name: Attempt to fetch a non-existent file - fail on missing
+  fetch:
+    src: "{{ remote_tmp_dir }}/doesnotexist"
+    dest: "{{ output_dir }}/fetched"
+    fail_on_missing: yes
+  register: fetch_missing
+  ignore_errors: yes
+
+- name: Attempt to fetch a non-existent file - fail on missing implicit
+  fetch:
+    src: "{{ remote_tmp_dir }}/doesnotexist"
+    dest: "{{ output_dir }}/fetched"
+  register: fetch_missing_implicit
+  ignore_errors: yes
+
+- name: Attempt to fetch a directory - should not fail but return a message
+  fetch:
+    src: "{{ remote_tmp_dir }}"
+    dest: "{{ output_dir }}/somedir"
+    fail_on_missing: no
+  register: fetch_dir
+
+- name: Attempt to fetch a directory - should fail
+  fetch:
+    src: "{{ remote_tmp_dir }}"
+    dest: "{{ output_dir }}/somedir"
+    fail_on_missing: yes
+  register: failed_fetch_dir
+  ignore_errors: yes
+
+- name: Check fetch missing with failure with implicit fail
+  assert:
+    that:
+      - fetch_missing_nofail.msg is search('ignored')
+      - fetch_missing_nofail is not changed
+      - fetch_missing is failed
+      - fetch_missing is not changed
+      - fetch_missing.msg is search ('remote file does not exist')
+      - fetch_missing_implicit is failed
+      - fetch_missing_implicit is not changed
+      - fetch_missing_implicit.msg is search ('remote file does not exist')
+      - fetch_dir is not changed
+      - fetch_dir.msg is search('is a directory')
+      - failed_fetch_dir is failed
+      - failed_fetch_dir is not changed
+      - failed_fetch_dir.msg is search('is a directory')

@@ -1,0 +1,9 @@
+- name: this needs to be here
+  debug:
+    msg: "hello"
+- include_tasks: inner.yml
+  with_items:
+  - '1'
+- ansible.builtin.include_tasks: inner_fqcn.yml
+  with_items:
+  - '1'

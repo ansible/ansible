@@ -1,0 +1,19 @@
+  - name: Set variables to verify lookup_list
+    set_fact: "{{ item if (item is string)|bool else item[0] }}={{ item }}"
+    with_list:
+      - a
+      - [b, c]
+      - d
+
+  - name: Verify lookup_list
+    assert:
+      that:
+          - a is defined
+          - b is defined
+          - c is not defined
+          - d is defined
+          - b is iterable and b is not string
+          - b|length == 2
+          - a == a
+          - b == ['b', 'c']
+          - d == d

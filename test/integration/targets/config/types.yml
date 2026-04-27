@@ -1,0 +1,26 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: ensures we got the values we expected
+      block:
+        - name: initialize plugin
+          debug: msg={{ lookup('types', 'starting test') }}
+
+        - set_fact:
+            valid: '{{ lookup("config", "valid", plugin_type="lookup", plugin_name="types") }}'
+            mustunquote: '{{ lookup("config", "mustunquote", plugin_type="lookup", plugin_name="types") }}'
+            notvalid: '{{ lookup("config", "notvalid", plugin_type="lookup", plugin_name="types") }}'
+            totallynotvalid: '{{ lookup("config", "totallynotvalid", plugin_type="lookup", plugin_name="types") }}'
+            str_mustunquote: '{{ lookup("config", "str_mustunquote", plugin_type="lookup", plugin_name="types") }}'
+        - assert:
+            that:
+            - valid|type_debug == "list"
+            - mustunquote|type_debug == "list"
+            - notvalid|type_debug == "list"
+            - totallynotvalid|type_debug == "list"
+            - valid[0]|int == 1
+            - mustunquote[0]|int == 1
+            - "notvalid[0] == '[1'"
+            # using 'and true' to avoid quote hell
+            - totallynotvalid[0] == "['1'" and True
+            - str_mustunquote == "foo"

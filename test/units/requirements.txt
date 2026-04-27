@@ -1,0 +1,5 @@
+bcrypt < 5 ; python_version >= '3.12'  # controller only, bcrypt 5+ not compatible with passlib
+passlib ; python_version >= '3.12'  # controller only
+pexpect ; python_version >= '3.12'  # controller only
+pywinrm ; python_version >= '3.12'  # controller only
+typing_extensions; python_version < '3.11'  # some unit tests need Annotated and get_type_hints(include_extras=True)

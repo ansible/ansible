@@ -1,0 +1,6 @@
+mock
+pytest
+pytest-mock
+pytest-xdist
+pyyaml  # required by the collection loader (only needed for collections)
+typing_extensions; python_version < '3.11'  # some unit tests need Annotated and get_type_hints(include_extras=True)

@@ -1,0 +1,5 @@
+---
+filter_version: 1.0
+module_rejectlist:
+  # Ping is special
+  - ping

@@ -1,0 +1,6 @@
+plugins/modules/bad.py import
+plugins/modules/bad.py pylint:ansible-bad-module-import
+plugins/lookup/bad.py import
+tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function
+tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import
+tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from

@@ -1,0 +1,166 @@
+---
+###################################################################
+# 2nd search_string tests
+
+- name: Deploy the teststring.conf file
+  copy:
+    src: teststring.conf
+    dest: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the teststring.conf file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '6037f13e419b132eb3fd20a89e60c6c87a6add38'
+      - result.state == 'file'
+
+# Test instertafter
+- name: Insert lines after with string
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+    search_string: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertafter: "{{ item.after }}"
+  with_items: "{{ test_befaf_regexp }}"
+  register: _multitest_5
+
+- name: Do the same thing again and check for changes
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+    search_string: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertafter: "{{ item.after }}"
+  with_items: "{{ test_befaf_regexp }}"
+  register: _multitest_6
+
+- name: Assert that the file was changed the first time but not the second time
+  assert:
+    that:
+      - item.0 is changed
+      - item.1 is not changed
+  with_together:
+    - "{{ _multitest_5.results }}"
+    - "{{ _multitest_6.results }}"
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the file contents match what is expected
+  assert:
+    that:
+      - result.stat.checksum == '06e2c456e5028dd7bcd0b117b5927a1139458c82'
+
+- name: Do the same thing a third time without string and check for changes
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+    line: "{{ item.line }}"
+    insertafter: "{{ item.after }}"
+  with_items: "{{ test_befaf_regexp }}"
+  register: _multitest_7
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the file was changed when no string was provided
+  assert:
+    that:
+      - item is not changed
+  with_items: "{{ _multitest_7.results }}"
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the file contents match what is expected
+  assert:
+    that:
+      - result.stat.checksum == '06e2c456e5028dd7bcd0b117b5927a1139458c82'
+
+# Test insertbefore
+- name: Deploy the test.conf file
+  copy:
+    src: teststring.conf
+    dest: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the teststring.conf file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '6037f13e419b132eb3fd20a89e60c6c87a6add38'
+      - result.state == 'file'
+
+- name: Insert lines before with string
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+    search_string: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertbefore: "{{ item.before }}"
+  with_items: "{{ test_befaf_regexp }}"
+  register: _multitest_8
+
+- name: Do the same thing again and check for changes
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+    search_string: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertbefore: "{{ item.before }}"
+  with_items: "{{ test_befaf_regexp }}"
+  register: _multitest_9
+
+- name: Assert that the file was changed the first time but not the second time
+  assert:
+    that:
+      - item.0 is changed
+      - item.1 is not changed
+  with_together:
+    - "{{ _multitest_8.results }}"
+    - "{{ _multitest_9.results }}"
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the file contents match what is expected
+  assert:
+    that:
+      - result.stat.checksum == 'c3be9438a07c44d4c256cebfcdbca15a15b1db91'
+
+- name: Do the same thing a third time without string and check for changes
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+    line: "{{ item.line }}"
+    insertbefore: "{{ item.before }}"
+  with_items: "{{ test_befaf_regexp }}"
+  register: _multitest_10
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the file was changed when no string was provided
+  assert:
+    that:
+      - item is not changed
+  with_items: "{{ _multitest_10.results }}"
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.conf"
+  register: result
+
+- name: Assert that the file contents match what is expected
+  assert:
+    that:
+      - result.stat.checksum == 'c3be9438a07c44d4c256cebfcdbca15a15b1db91'
+
+# End of string tests
+###################################################################

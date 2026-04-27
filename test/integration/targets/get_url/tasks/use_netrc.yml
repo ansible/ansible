@@ -1,0 +1,54 @@
+- name: Write out netrc
+  copy:
+    dest: "{{ remote_tmp_dir }}/netrc"
+    content: |
+      machine {{ httpbin_host }}
+      login foo
+      password bar
+
+- name: Test with netrc forced Basic auth
+  get_url:
+    url: https://{{ httpbin_host }}/basic-auth/foo/bar
+    headers:
+      Authorization: Bearer foobar
+    dest: "{{ remote_tmp_dir }}/msg.txt"
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+
+- name: Read msg.txt file
+  ansible.builtin.slurp:
+    src: "{{ remote_tmp_dir }}/msg.txt"
+  register: response
+
+- name: assert Test with netrc forced Basic auth
+  assert:
+    that:
+     - (response['content'] | b64decode | from_json).user == 'foo'
+
+- name: Test Bearer authorization is successful with use_netrc=False
+  get_url:
+    url: https://{{ httpbin_host }}/bearer
+    use_netrc: false
+    headers:
+      Authorization: Bearer foobar
+    dest: "{{ remote_tmp_dir }}/msg.txt"
+  environment:
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+
+- name: Read msg.txt file
+  ansible.builtin.slurp:
+    src: "{{ remote_tmp_dir }}/msg.txt"
+  register: response
+
+- name: assert Test Bearer authorization is successful with use_netrc=False
+  assert:
+    that:
+     - (response['content'] | b64decode | from_json).token == 'foobar'
+
+- name: Clean up
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ remote_tmp_dir }}/netrc"
+    - "{{ remote_tmp_dir }}/msg.txt"

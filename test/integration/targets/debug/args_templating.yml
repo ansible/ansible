@@ -1,0 +1,114 @@
+- name: splat args that don't resolve to a dict
+  debug:
+  args: '{{ "i am a string go bang" }}'
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+    - result is failed
+    - result.msg is contains "Finalization of task args"
+
+- name: merge splatted and local args with omit (local takes precedence for conflicts)
+  vars:
+    should_not_see_me: '{{ 1 / 0 }}'
+    some_var_value: some var value
+    splatted_debug_args:
+      msg: '{{ omit }}'   # this should be dropped before argspec validation and not cause a failure
+      var: should_not_see_me  # this should be masked by the explicit on-task `var` arg value
+  debug:
+    var: some_var_value
+  args: '{{ splatted_debug_args }}'
+  register: result
+
+- assert:
+    that:
+    - result.some_var_value == "some var value"
+
+- name: verify that local args are merged
+  vars:
+    debug_args:
+      var: this should conflict and fail
+  debug:
+    msg: this one please
+  args: '{{ debug_args }}'
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+    - result is failed
+    - '"mutually exclusive" in result.msg'
+
+- name: entire args dict omitted
+  debug:
+  args: '{{ omit }}'
+  register: result
+
+- assert:
+    that: result.msg == "Hello world!"
+
+- name: templated var input can be omitted
+  debug:
+    var: '{{ omit }}'
+  register: result
+
+- assert:
+    that:
+      - result.msg == "Hello world!"
+
+- name: static var that resolves to omit should give a warning and placeholder output
+  vars:
+    indirect_omit: '{{ omit }}'
+  debug:
+    var: indirect_omit
+  register: result
+
+- assert:
+    that:
+      - result.indirect_omit == "<<Omit>>"
+      - result.warnings | length == 1
+      - result.warnings[0] is contains "could not be omitted"
+
+- name: templated verbosity should work
+  debug:
+    verbosity: '{{ 100 }}'
+  register: result
+
+- assert:
+    that:
+      - result is skipped
+
+# this capability worked <=2.18; we'd need to have a special templating mode that propagates trust for all
+# inline constant strings in visit_Const (vs just those with handlebars today)... If present, this allows some degree
+# of dynamic variable selection for `var` (eg ternary), but you could also just use `msg`.
+- name: templated var with trusted scalar silently fails
+  vars:
+    trusted_varname: hi mom
+  debug:
+    var: '{{ "trusted_varname" }}'
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      #- result.trusted_varname == "hi mom"  # this is what <=2.18 does
+      - result is failed
+      - result.msg is contains 'untrusted template or expression'
+
+- vars:
+    k1: v1
+    k2: v2
+  block:
+  - name: debug var indirection works for trusted string literals
+    debug:
+      var: '{{ item }}'
+    loop:
+      - k1
+      - k2
+    register: var_indirect_loop
+
+  - assert:
+      that:
+        - var_indirect_loop.results[0].k1 == k1
+        - var_indirect_loop.results[1].k2 == k2

@@ -1,0 +1,10 @@
+- name: list keys for debugging
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys"
+
+- name: revoke key
+  command:
+    cmd: "gpg --no-tty --homedir {{ gpg_homedir }} --import"
+    stdin: '{{ pulp_rejected_repo.gpgkey }}'
+
+- name: list keys for debugging
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys"

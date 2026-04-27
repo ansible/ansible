@@ -1,0 +1,19 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    conditions:
+      - my is defined
+      - my == 'var'
+      - "'webservers' in groups"
+      - "'web_host.example.com' in groups['webservers']"
+  tasks:
+    - name: Make sure all is loaded
+      assert:
+        that: '{{conditions}}'
+
+    - name: Reload inventory, forces extra vars re-eval from diff basedir
+      meta: refresh_inventory
+
+    - name: Make sure all is loaded, again
+      assert:
+        that: '{{conditions}}'

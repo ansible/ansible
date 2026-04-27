@@ -1,0 +1,20 @@
+plugin: ansible.builtin.constructed
+strict: True
+keyed_groups:
+  - key: hostvar0
+  - key: hostvar1
+  - key: hostvar2
+
+  - key: hostvar0
+    separator: 'separator'
+  - key: hostvar1
+    separator: 'separator'
+  - key: hostvar2
+    separator: 'separator'
+
+  - key: hostvar0
+    prefix: 'prefix'
+  - key: hostvar1
+    prefix: 'prefix'
+  - key: hostvar2
+    prefix: 'prefix'

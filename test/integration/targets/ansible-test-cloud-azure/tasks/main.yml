@@ -1,0 +1,18 @@
+- name: Verify variables are set
+  assert:
+    that:
+      - azure_client_id is defined
+      - azure_secret is defined
+      - azure_subscription_id is defined
+      - azure_tenant is defined
+      - resource_group is defined
+      - resource_group_secondary is defined
+- name: Show variables
+  debug:
+    msg: "{{ lookup('vars', item) }}"
+  with_items:
+    - azure_client_id
+    - azure_subscription_id
+    - azure_tenant
+    - resource_group
+    - resource_group_secondary

@@ -1,0 +1,16 @@
+- when: ansible_distribution == "Fedora"
+  block:
+    - command: "dnf install -y 'dnf-command(copr)'"
+
+    - name: Test against dnf5 nightly build to detect any issues early
+      command: dnf copr enable -y rpmsoftwaremanagement/dnf-nightly
+
+    - name: Run DNF tests
+      include_role:
+        name: dnf
+      vars:
+        # Since dnf-latest is the only dnf target that installs the latest version
+        # test the 'auto_install_module_deps' feature here.
+        test_auto_install: true
+  always:
+    - command: dnf copr disable -y rpmsoftwaremanagement/dnf-nightly

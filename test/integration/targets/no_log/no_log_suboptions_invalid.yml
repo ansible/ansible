@@ -1,0 +1,48 @@
+- name: test no log with suboptions
+  hosts: testhost
+  gather_facts: no
+  ignore_errors: yes
+
+  tasks:
+    - include_vars: secretvars.yml
+      no_log: true
+
+    - name: Task with suboptions and invalid parameter
+      module:
+        secret: "{{ s201 }}"
+        invalid: param
+        subopt_dict:
+          str_sub_opt1:  "{{ s202 }}"
+          str_sub_opt2: otherstring
+          nested_subopt:
+            n_subopt1:  "{{ s203 }}"
+
+        subopt_list:
+          - subopt1:  "{{ s204 }}"
+            subopt2: thridstring
+          - subopt1:  "{{ s205 }}"
+
+    - name: Task with suboptions as string with invalid parameter
+      module:
+        secret: "{{ s213 }}"
+        invalid: param
+        subopt_dict: str_sub_opt1={{ s206 }}
+
+    - name: Task with suboptions with dict instead of list
+      module:
+        secret:  "{{ s207 }}"
+        subopt_dict:
+          str_sub_opt1: "{{ s208 }}"
+          str_sub_opt2: otherstring
+          nested_subopt:
+            n_subopt1: "{{ s209 }}"
+        subopt_list:
+          foo: bar
+
+    - name: Task with suboptions with incorrect data type
+      module:
+        secret: "{{ s210 }}"
+        subopt_dict: 9068.21361
+        subopt_list:
+          - subopt1: "{{ s211 }}"
+          - subopt1: "{{ s212 }}"

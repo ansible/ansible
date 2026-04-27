@@ -1,0 +1,29 @@
+- testmodule:
+  register: testmodule_out_from_non_coll_role
+
+- embedded_module:
+  register: embedded_module_out_from_non_coll_role
+
+- name: check collections list from role meta
+  plugin_lookup:
+  register: pluginlookup_out
+
+- debug: var=pluginlookup_out
+
+- debug:
+    msg: '{{ test_role_input | default("(undefined)") }}'
+  register: test_role_output
+
+- assert:
+    that:
+    - test_role_input is not defined or test_role_input == test_role_output.msg
+
+- vars:
+    test_role_input: include another non-coll role
+  block:
+  - include_role:
+      name: non_coll_role_to_call
+
+  - assert:
+      that:
+        - non_coll_role_to_call_test_role_output.msg == test_role_input

@@ -1,0 +1,28 @@
+DOCUMENTATION:
+  name: relpath
+  author: Jakub Jirutka (@jirutka)
+  version_added: "1.7"
+  short_description: Make a path relative
+  positional: _input, start
+  description:
+    - Converts the given path to a relative path from the O(start),
+      or relative to the directory given in O(start).
+  options:
+    _input:
+      description: A path.
+      type: str
+      required: true
+    start:
+      description: The directory the path should be relative to. If not supplied the current working directory will be used.
+      type: str
+
+EXAMPLES: |
+
+  # foobar => ../test/me.txt
+  testing: "{{ '/tmp/test/me.txt' | relpath('/tmp/other/') }}"
+  otherrelpath: "{{ mypath | relpath(mydir) }}"
+
+RETURN:
+  _value:
+    description: The relative path.
+    type: str

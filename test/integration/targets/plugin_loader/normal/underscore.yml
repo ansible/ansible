@@ -1,0 +1,15 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Load a deprecated module
+      underscore:
+      register: res
+
+    - name: Load a deprecated module that is a symlink
+      symlink:
+      register: sym
+
+    - assert:
+        that:
+          - res.source == 'legacy_library_dir'
+          - sym.source == 'legacy_library_dir'

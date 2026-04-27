@@ -1,0 +1,17 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [include_role : does-not-exist] *******************************************
+[ERROR]: The role 'does-not-exist' was not found in: TEST_PATH/roles:/<<HOMEDIR>>/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:TEST_PATH
+Origin: TEST_PATH/test_include_role_fails.yml:5:15
+
+3   tasks:
+4     - include_role:
+5         name: does-not-exist
+                ^ column 15
+
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "The role 'does-not-exist' was not found in: TEST_PATH/roles:/<<HOMEDIR>>/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:TEST_PATH"}
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+

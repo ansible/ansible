@@ -1,0 +1,37 @@
+- name: create a dedicated broken host and a working copy of localhost to delegate to
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - add_host:
+        name: busted
+        ansible_connection: ssh
+        ansible_host: localhost
+        ansible_port: 1
+    - add_host:
+        name: delegate_to_local
+        ansible_connection: local
+        ansible_python_interpreter: '{{ ansible_playbook_python }}'
+
+- name: play targets an unreachable host, delegates to a working one
+  hosts: busted
+  gather_facts: no
+  tasks:
+    - name: attempt to connect to a broken host
+      ping:
+      timeout: 5  # backstop for a tarpit port or dropped packets
+      ignore_errors: true
+      ignore_unreachable: true
+      register: broken_ping
+    - assert:
+        that:
+         - broken_ping is unreachable
+
+    - name: delegate to the valid host
+      ping:
+      delegate_to: delegate_to_local
+      register: delegated_ping
+
+    - assert:
+        that:
+          - delegated_ping is success
+          - delegated_ping is reachable

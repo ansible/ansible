@@ -1,0 +1,8 @@
+- name: test delegated async
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - command: sleep 3
+      delegate_to: testhost2
+      async: 5
+      poll: 1

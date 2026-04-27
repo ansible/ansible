@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: mount
+  author: Ansible Core
+  version_added: "2.5"
+  short_description: does the path resolve to mount point
+  description:
+    - Check if the provided path maps to a filesystem mount point on the controller (localhost).
+  aliases: [is_mount]
+  options:
+    _input:
+      description: A path.
+      type: path
+
+EXAMPLES: |
+  vars:
+    ihopefalse: "{{ '/etc/hosts' is mount }}"
+    normallytrue: "{{ '/tmp' is mount }}"
+
+RETURN:
+  _value:
+    description: Returns V(True) if the path corresponds to a mount point on the controller, V(False) if otherwise.
+    type: boolean

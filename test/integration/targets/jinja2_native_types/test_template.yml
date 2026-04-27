@@ -1,0 +1,27 @@
+- block:
+  - name: Template file with newlines
+    template:
+      src: test_template_newlines.j2
+      dest: test_template_newlines.res
+
+  - name: Dump template file
+    stat:
+      path: test_template_newlines.j2
+      get_checksum: yes
+    register: template_stat
+
+  - name: Dump result file
+    stat:
+      path: test_template_newlines.res
+      get_checksum: yes
+    register: result_stat
+
+  - name: Check that number of newlines from original template are preserved
+    assert:
+      that:
+        - template_stat.stat.checksum == result_stat.stat.checksum
+  always:
+    - name: Clean up
+      file:
+        path: test_template_newlines.res
+        state: absent

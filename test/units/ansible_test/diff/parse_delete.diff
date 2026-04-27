@@ -1,0 +1,16 @@
+diff --git a/changelogs/fragments/79263-runme-sh-logging-3cb482385bd59058.yaml b/changelogs/fragments/79263-runme-sh-logging-3cb482385bd59058.yaml
+deleted file mode 100644
+index a5bc88ffe3..0000000000
+--- a/changelogs/fragments/79263-runme-sh-logging-3cb482385bd59058.yaml
++++ /dev/null
+@@ -1,10 +0,0 @@
+----
+-
+-trivial:
+-  - >-
+-    integration tests — added command invocation logging via ``set -x``
+-    to ``runme.sh`` scripts where it was missing and improved failing
+-    fast in those scripts that use pipes (via ``set -o pipefail``).
+-    See `PR #79263` https://github.com/ansible/ansible/pull/79263>`__.
+-
+-...

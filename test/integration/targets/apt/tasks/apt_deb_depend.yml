@@ -1,0 +1,33 @@
+- block:
+  - name: Clean up before running tests
+    apt:
+      name:
+        - packageone
+        - packagetwo
+      state: absent
+
+  - name: Install packageone from deb URL
+    apt:
+      deb: https://ci-files.testing.ansible.com/test/integration/targets/apt/packageone_1.0_all.deb
+    register: packageone_installed
+
+  - name: Check if packagetwo is installed as part of packageone installation
+    shell: dpkg -s packagetwo
+
+  - name: Check if packageone and packagetwo are marked as auto
+    shell: apt-mark showauto packageone packagetwo
+    register: auto_installed
+
+  - name: Make sure packageone is installed manually and packagetwo is marked as auto
+    assert:
+      that:
+        - packageone_installed.changed
+        - auto_installed.stdout_lines == ["packagetwo"]
+
+  always:
+    - name: Clean up after tests
+      apt:
+        name:
+          - packageone
+          - packagetwo
+        state: absent

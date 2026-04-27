@@ -1,0 +1,42 @@
+---
+argument_specs:
+    main:
+        short_description: test_role1 from roles subdir
+        description:
+            - In to am attended desirous raptures B(declared) diverted confined at. Collected instantly remaining
+              up certainly to C(necessary) as. Over walk dull into son boy door went new.
+            - At or happiness commanded daughters as. Is I(handsome) an declared at received in extended vicinity
+              subjects. Into miss on he over been late pain an. Only week bore boy what fat case left use. Match round
+              scale now style far times. Your me past an much.
+        author:
+          - John Doe (@john)
+          - Jane Doe (@jane)
+        version_added: 1.2.0
+        notes:
+          - This is a role.
+          - More text.
+        seealso:
+          - module: ansible.builtin.file
+          - plugin: ansible.builtin.file
+            plugin_type: lookup
+            description: Reads a file from the controller.
+        options:
+            myopt1:
+                description:
+                    - First option.
+                type: "str"
+                required: true
+
+            myopt2:
+                description:
+                    - Second option
+                type: "int"
+                default: 8000
+
+            myopt3:
+                description:
+                    - Third option.
+                type: "str"
+                choices:
+                    - choice1
+                    - choice2

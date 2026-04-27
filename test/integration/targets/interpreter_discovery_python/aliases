@@ -1,0 +1,3 @@
+shippable/posix/group1
+non_local # workaround to allow override of ansible_python_interpreter; disables coverage on this integration target
+context/target

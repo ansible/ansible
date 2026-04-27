@@ -1,0 +1,76 @@
+# https://github.com/ansible/ansible/issues/46314
+- block:
+    - name: Remove upgrades from the equation
+      apt:
+        upgrade: true
+        state: present
+        update_cache: true
+
+    - name: Install foobar, installs foo as a dependency
+      apt:
+        name: foobar=1.0.0
+        allow_unauthenticated: true
+
+    - name: Check foobar version
+      shell: dpkg -s foobar | grep Version | awk '{print $2}'
+      register: foobar_version
+
+    - name: Ensure the correct version of foobar has been installed
+      assert:
+        that:
+          - "'1.0.0' in foobar_version.stdout"
+
+    - name: Remove foobar, leaving behind its dependency foo
+      apt:
+        name: foobar=1.0.0
+        state: absent
+
+    - name: Test autoremove + upgrade (check mode)
+      apt:
+        autoremove: true
+        upgrade: true
+      diff: true
+      check_mode: true
+      register: autoremove_check_mode
+
+    - name: Test autoremove + upgrade
+      apt:
+        autoremove: true
+        upgrade: true
+      diff: true
+      register: autoremove
+
+    - name: Check that something is changed
+      assert:
+        that:
+          - autoremove.changed
+          - autoremove_check_mode.changed
+
+    - name: Check foo version
+      shell: dpkg -s foo | grep Version | awk '{print $2}'
+      register: foo_version
+
+    - name: Check that old version removed correctly
+      assert:
+        that:
+          - "'1.0.1' not in foo_version.stdout"
+          - "foo_version.changed"
+
+    - name: Test autoremove + upgrade (Idempotant)
+      apt:
+        autoremove: true
+        upgrade: true
+      diff: true
+      register: second_upgrade_result
+
+    - name: Check that nothing has changed (Idempotant)
+      assert:
+        that:
+          - "second_upgrade_result.changed == false"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: true

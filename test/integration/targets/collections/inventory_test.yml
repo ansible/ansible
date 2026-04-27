@@ -1,0 +1,26 @@
+- name: test a collection-hosted connection plugin against hosts from collection-hosted inventory plugins
+  hosts: dynamic_host_a, dynamic_host_redirected
+  gather_facts: no
+  vars:
+    ansible_connection: testns.testcoll.localconn
+    ansible_localconn_connectionvar: from_play
+  tasks:
+  - raw: echo 'hello world'
+    register: connection_out
+
+  - assert:
+      that:
+      - connection_out.stdout == "localconn ran echo 'hello world'"
+      # ensure that the connection var we overrode above made it into the running config
+      - connection_out.stderr == "connectionvar is from_play"
+
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - assert:
+      that:
+      - hostvars['dynamic_host_a'] is defined
+      - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
+      - hostvars['dynamic_host_redirected'] is defined
+      - hostvars['dynamic_host_redirected'].connection_out.stdout == "localconn ran echo 'hello world'"

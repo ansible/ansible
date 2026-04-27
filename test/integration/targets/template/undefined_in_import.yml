@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - raw: echo {{ lookup('template', 'undefined_in_import.j2') }}
+      ignore_errors: true
+      register: res
+
+    - assert:
+        that:
+          - res.failed
+          - res.msg is contains("'undefined_variable' is undefined")

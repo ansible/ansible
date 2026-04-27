@@ -1,0 +1,10 @@
+- import_playbook: test_includes2.yml
+  vars:
+    parameter1: asdf
+    parameter2: jkl
+
+- import_playbook: test_includes3.yml
+
+- import_playbook: test_include_free.yml
+
+- import_playbook: test_include_host_pinned.yml

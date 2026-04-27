@@ -1,0 +1,45 @@
+- name: Ensure output_dir
+  file:
+    path: "{{output_dir}}"
+    state: directory
+
+- name: Touch a file in it
+  file:
+    path: "{{output_dir}}/original.txt"
+    state: touch
+
+- name: Create a symlink
+  file:
+    src: "{{output_dir}}/original.txt"
+    dest: "{{output_dir}}/soft.txt"
+    state: link
+
+- name: Create an hard link with follow to the sym link
+  file:
+    src: "{{output_dir}}/soft.txt"
+    dest: "{{output_dir}}/hard.txt"
+    state: hard
+    follow: yes
+
+- name: Create a symlink from another symlink
+  file:
+    src: "{{output_dir}}/soft.txt"
+    dest: "{{output_dir}}/soft2.txt"
+    follow: yes
+    state: link
+
+- name: Hard link stat
+  stat:
+    path: "{{output_dir}}/hard.txt"
+  register: hard_stat
+
+- name: Soft link stat
+  stat:
+    path: "{{output_dir}}/soft2.txt"
+  register: soft_stat
+
+- name: Check link status
+  assert:
+    that:
+      - "hard_stat.stat.exists == true"
+      - "soft_stat.stat.exists == true"

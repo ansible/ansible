@@ -1,0 +1,38 @@
+- name: Ensure task arg templating failures are handled properly
+  ping:
+    data: "{{ 5 / 0 | int }}"
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - "'division by zero' in result.msg"
+      - result.exception is defined
+
+- name: Ensure task arg templating failures do not stop later loop iterations
+  ping:
+    data: "{{ 5 / item }}"
+  ignore_errors: true
+  register: result
+  loop: [0, 0, 1]
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - result.results[0] is failed
+      - "'division by zero' in result.results[0].msg"
+      - result.results[0].exception is defined
+      - result.results[0].item == 0
+
+      - result.results[1] is failed
+      - "'division by zero' in result.results[1].msg"
+      - result.results[1].exception is defined
+      - result.results[1].item == 0
+
+      - result.results[2] is success
+      - result.results[2].ping == '5.0'
+      - result.results[2].exception is undefined
+      - result.results[2].item == 1

@@ -1,0 +1,40 @@
+# Current pip unconditionally uses md5.
+# We can re-enable if pip switches to a different hash or allows us to not check md5.
+
+- include_tasks:
+    file: break_system_packages.yml
+
+- name: remember selected virtualenv command
+  set_fact:
+    virtualenv: "{{ ansible_python_interpreter ~ ' -m venv' }}"
+
+- block:
+    - name: install git, needed for repo installs
+      package:
+        name: git
+        state: present
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
+      register: git_install
+
+    - name: ensure wheel is installed
+      pip:
+        name: wheel
+        extra_args: "-c {{ remote_constraints }}"
+
+    - include_tasks: pip.yml
+
+    - include_tasks: url_packages.yml
+
+    - include_tasks: no_setuptools.yml
+  always:
+    - name: platform specific cleanup
+      include_tasks: "{{ cleanup_filename }}"
+      with_first_found:
+        - "{{ ansible_distribution | lower }}_cleanup.yml"
+        - "default_cleanup.yml"
+      loop_control:
+        loop_var: cleanup_filename
+  when: ansible_fips|bool != True
+  module_defaults:
+    pip:
+      virtualenv_command: "{{ virtualenv }}"

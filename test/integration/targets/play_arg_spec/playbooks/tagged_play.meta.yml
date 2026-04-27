@@ -1,0 +1,6 @@
+argument_specs:
+  Tagged Play:
+    options:
+      required_str:
+        required: True
+        type: str

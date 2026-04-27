@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Print vars
+      debug:
+        var: vars
+
+    - name: Print hostvars
+      debug:
+        var: hostvars

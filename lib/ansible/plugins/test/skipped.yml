@@ -1,0 +1,22 @@
+DOCUMENTATION:
+  name: skipped
+  author: Ansible Core
+  version_added: "1.9"
+  short_description: Was task skipped
+  aliases: [skip]
+  description:
+    - Tests if task was skipped
+    - This test checks for the existence of a C(skipped) key in the input dictionary and that it is V(True) if present
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ taskresults is skipped }}
+
+RETURN:
+  _value:
+    description: Returns V(True) if the task was skipped, V(False) otherwise.
+    type: boolean

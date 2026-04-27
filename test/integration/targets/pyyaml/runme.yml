@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Read YAML from a string
+      assert:
+        that:
+          - "'1' | from_yaml == 1"
+          - "'[1]' | from_yaml == [1]"
+          - "'key: value' | from_yaml == {'key': 'value'}"

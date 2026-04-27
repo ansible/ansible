@@ -1,0 +1,7 @@
+- name: ensure configuration is loaded when we use FQCN and have already loaded using 'short name' (which is case will all builtin connection plugins)
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: relies on extra var being passed in with connection and fqcn
+      ping:
+      ignore_unreachable: True

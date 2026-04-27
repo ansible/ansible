@@ -1,0 +1,24 @@
+- name: create an unprivileged user on target
+  include_role:
+    name: setup_test_user
+    public: true
+  vars:
+    test_user_name: '{{ target_user_name }}'
+    test_user_groups: '{{ target_user_groups | default(omit) }}'
+
+- name: capture target user password
+  set_fact:
+    target_user_password: '{{ test_user_plaintext_password }}'
+
+- name: create an intermediate user on target with password-required sudo ability
+  include_role:
+    name: setup_test_user
+    public: true
+  vars:
+    test_user_name: "{{ intermediate_user_name }}"
+    test_user_groups: '{{ intermediate_user_groups | default(omit) }}'
+    test_user_allow_sudo: true
+
+- name: capture config values, intermediate user password from role
+  set_fact:
+    intermediate_user_password: "{{ test_user_plaintext_password }}"

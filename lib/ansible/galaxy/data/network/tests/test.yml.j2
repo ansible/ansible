@@ -1,0 +1,15 @@
+#SPDX-License-Identifier: MIT-0
+---
+- hosts: localhost
+  connection: network_cli
+  gather_facts: False
+
+  roles:
+    - {{ role_name }}
+
+- hosts: localhost
+  connection: netconf
+  gather_facts: False
+
+  roles:
+    - {{ role_name }}

@@ -1,0 +1,40 @@
+- name: Fetch the test file
+  fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
+  register: fetched
+
+- name: Fetch a second time to show no changes
+  fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
+  register: fetched_again
+
+- name: Fetch the test file in check mode
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/fetched"
+  check_mode: yes
+  register: fetch_check_mode
+
+- name: Fetch with dest ending in path sep
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}/"
+    flat: yes
+
+- name: Fetch with dest with relative path
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir[1:] }}"
+    flat: yes
+
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - fetched is changed
+      - fetched.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched.file == remote_tmp_dir ~ "/orig"
+      - fetched_again is not changed
+      - fetched_again.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - fetched_again.file == remote_tmp_dir ~ "/orig"
+      - fetched.remote_checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"
+      - lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"
+      - fetch_check_mode is skipped
+      - fetch_check_mode.msg is search('not \(yet\) supported')

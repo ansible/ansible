@@ -1,0 +1,587 @@
+# Test code for the command and shell modules.
+
+# Copyright: (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: use command with unsupported executable arg
+  command: ls /dev/null
+  args:
+    executable: /bogus
+  register: executable
+
+- name: assert executable warning was reported
+  assert:
+    that:
+      - executable.stdout == '/dev/null'
+      - executable.warnings | length() == 1
+      - "'no longer supported' in executable.warnings[0]"
+
+- name: use command with no command
+  command:
+  args:
+    chdir: /
+  register: no_command
+  ignore_errors: true
+
+- name: assert executable fails with no command
+  assert:
+    that:
+      - no_command is failed
+      - no_command.msg is contains 'one of the following is required'
+
+- name: use argv
+  command:
+    argv:
+      - echo
+      - testing
+  register: argv_command
+  ignore_errors: true
+
+- name: assert executable works with argv
+  assert:
+    that:
+      - "argv_command.stdout == 'testing'"
+
+- name: use argv and command string
+  command: echo testing
+  args:
+    argv:
+      - echo
+      - testing
+  register: argv_and_string_command
+  ignore_errors: true
+
+- name: assert executable fails with both argv and command string
+  assert:
+    that:
+      - argv_and_string_command is failed
+      - argv_and_string_command.msg is contains 'parameters are mutually exclusive'
+
+- set_fact:
+    remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_command_shell"
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ remote_tmp_dir_test }}"
+    state: directory
+
+- name: prep our test script
+  copy:
+    src: test.sh
+    dest: "{{ remote_tmp_dir_test }}"
+    mode: '0755'
+
+- name: prep our test script
+  copy:
+    src: create_afile.sh
+    dest: "{{ remote_tmp_dir_test }}"
+    mode: '0755'
+
+- name: prep our test script
+  copy:
+    src: remove_afile.sh
+    dest: "{{ remote_tmp_dir_test }}"
+    mode: '0755'
+
+- name: locate bash
+  shell: which bash
+  register: bash
+
+##
+## command
+##
+
+- name: execute the test.sh script via command
+  command: "{{ remote_tmp_dir_test }}/test.sh"
+  register: command_result0
+
+- name: assert that the script executed correctly
+  assert:
+    that:
+      - command_result0.rc == 0
+      - command_result0.stderr == ''
+      - command_result0.stdout == 'win'
+
+# executable
+
+# FIXME doesn't have the expected stdout.
+
+#- name: execute the test.sh script with executable via command
+#  command: "{{remote_tmp_dir_test }}/test.sh executable={{ bash.stdout }}"
+#  register: command_result1
+#
+#- name: assert that the script executed correctly with command
+#  assert:
+#    that:
+#      - "command_result1.rc == 0"
+#      - "command_result1.stderr == ''"
+#      - "command_result1.stdout == 'win'"
+
+# chdir
+
+- name: execute the test.sh script with chdir via command
+  command: ./test.sh
+  args:
+    chdir: "{{ remote_tmp_dir_test }}"
+  register: command_result2
+
+- name: Check invalid chdir
+  command: echo
+  args:
+    chdir: "{{ remote_tmp_dir }}/nope"
+  ignore_errors: yes
+  register: chdir_invalid
+
+- name: assert that the script executed correctly with chdir
+  assert:
+    that:
+      - command_result2.rc == 0
+      - command_result2.stderr == ''
+      - command_result2.stdout == 'win'
+      - chdir_invalid is failed
+      - chdir_invalid.msg is search('Unable to change directory')
+
+# creates
+
+- name: verify that afile.txt is absent
+  file:
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    state: absent
+
+- name: create afile.txt with create_afile.sh via command (check mode)
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/afile.txt"
+  args:
+    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: verify that afile.txt still does not exist
+  stat:
+    path: "{{remote_tmp_dir_test}}/afile.txt"
+  register: stat_result
+  failed_when: stat_result.stat.exists
+
+- name: create afile.txt with create_afile.sh via command
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/afile.txt"
+  args:
+    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+
+- name: verify that afile.txt is present
+  file:
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    state: file
+
+- name: re-run previous command using creates with globbing (check mode)
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    creates: "{{ remote_tmp_dir_test }}/afile.*"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - not check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: re-run previous command using creates with globbing
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    creates: "{{ remote_tmp_dir_test }}/afile.*"
+  register: command_result3
+
+- name: assert that creates with globbing is working
+  assert:
+    that:
+      - command_result3 is not changed
+
+# removes
+
+- name: remove afile.txt with remote_afile.sh via command (check mode)
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    removes: "{{ remote_tmp_dir_test }}/afile.txt"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: verify that afile.txt still exists
+  stat:
+    path: "{{remote_tmp_dir_test}}/afile.txt"
+  register: stat_result
+  failed_when: not stat_result.stat.exists
+
+- name: remove afile.txt with remote_afile.sh via command
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    removes: "{{ remote_tmp_dir_test }}/afile.txt"
+
+- name: verify that afile.txt is absent
+  file: path={{remote_tmp_dir_test}}/afile.txt state=absent
+
+- name: re-run previous command using removes with globbing (check mode)
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    removes: "{{ remote_tmp_dir_test }}/afile.*"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - not check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: re-run previous command using removes with globbing
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    removes: "{{ remote_tmp_dir_test }}/afile.*"
+  register: command_result4
+
+- name: assert that removes with globbing is working
+  assert:
+    that:
+      - command_result4.changed != True
+
+- name: pass stdin to cat via command
+  command: cat
+  args:
+    stdin: 'foobar'
+  register: command_result5
+
+- name: assert that stdin is passed
+  assert:
+    that:
+      - command_result5.stdout == 'foobar'
+
+- name: send to stdin literal multiline block
+  command: "{{ ansible_python.executable }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, \"buffer\") else sys.stdin).read()).hexdigest())'"
+  args:
+    stdin: |-
+      this is the first line
+      this is the second line
+
+      this line is after an empty line
+      this line is the last line
+  register: command_result6
+
+- name: assert the multiline input was passed correctly
+  assert:
+    that:
+      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
+
+- name: check default var expansion
+  command: /bin/sh -c 'echo "\$TEST"'
+  environment:
+    TEST: z
+  register: command_result7
+
+- name: assert vars were expanded
+  assert:
+    that:
+      - command_result7.stdout == '\\z'
+
+- name: check disabled var expansion
+  command: /bin/sh -c 'echo "\$TEST"'
+  args:
+    expand_argument_vars: false
+  environment:
+    TEST: z
+  register: command_result8
+
+- name: assert vars were not expanded
+  assert:
+    that:
+      - command_result8.stdout == '$TEST'
+
+##
+## shell
+##
+
+- name: Execute the test.sh script
+  shell: "{{ remote_tmp_dir_test }}/test.sh"
+  register: shell_result0
+
+- name: Assert that the script executed correctly
+  assert:
+    that:
+    - shell_result0 is changed
+    - shell_result0.cmd == remote_tmp_dir_test + '/test.sh'
+    - shell_result0.rc == 0
+    - shell_result0.stderr == ''
+    - shell_result0.stdout == 'win'
+
+# executable
+
+# FIXME doesn't pass the expected stdout
+
+#- name: execute the test.sh script
+#  shell: "{{remote_tmp_dir_test }}/test.sh executable={{ bash.stdout }}"
+#  register: shell_result1
+#
+#- name: assert that the shell executed correctly
+#  assert:
+#    that:
+#      - "shell_result1.rc == 0"
+#      - "shell_result1.stderr == ''"
+#      - "shell_result1.stdout == 'win'"
+
+# chdir
+
+- name: Execute the test.sh script with chdir
+  shell: ./test.sh
+  args:
+    chdir: "{{ remote_tmp_dir_test }}"
+  register: shell_result2
+
+- name: Assert that the shell executed correctly with chdir
+  assert:
+    that:
+    - shell_result2 is changed
+    - shell_result2.cmd == './test.sh'
+    - shell_result2.rc == 0
+    - shell_result2.stderr == ''
+    - shell_result2.stdout == 'win'
+
+# creates
+
+- name: Verify that afile.txt is absent
+  file:
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    state: absent
+
+- name: Execute the test.sh script with chdir
+  shell: "{{ remote_tmp_dir_test }}/test.sh > {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    chdir: "{{ remote_tmp_dir_test }}"
+    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+
+- name: Verify that afile.txt is present
+  file:
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    state: file
+
+# multiline
+
+- name: Remove test file previously created
+  file:
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    state: absent
+
+- name: Execute a shell command using a literal multiline block
+  args:
+    executable: "{{ bash.stdout }}"
+  shell: |
+    echo this is a \
+    "multiline echo" \
+    "with a new line
+    in quotes" \
+    | {{ ansible_python.executable }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())'
+    echo "this is a second line"
+  register: shell_result5
+
+- name: Assert the multiline shell command ran as expected
+  assert:
+    that:
+    - shell_result5 is changed
+    - shell_result5.rc == 0
+    - shell_result5.cmd == 'echo this is a "multiline echo" "with a new line\nin quotes" | ' + ansible_python.executable + ' -c \'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())\'\necho "this is a second line"\n'
+    - shell_result5.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'
+
+- name: Execute a shell command using a literal multiline block with arguments in it
+  shell: |
+    executable="{{ bash.stdout }}"
+    creates={{ remote_tmp_dir_test }}/afile.txt
+    echo "test"
+  register: shell_result6
+
+- name: Assert the multiline shell command with arguments in it run as expected
+  assert:
+    that:
+    - shell_result6 is changed
+    - shell_result6.rc == 0
+    - shell_result6.cmd == 'echo "test"\n'
+    - shell_result6.stdout == 'test'
+
+- name: Execute a shell command using a multiline block where whitespaces matter
+  shell: |
+    cat <<EOF
+    One
+      Two
+        Three
+    EOF
+  register: shell_result7
+
+- name: Assert the multiline shell command outputs with whitespaces preserved
+  assert:
+    that:
+    - shell_result7 is changed
+    - shell_result7.rc == 0
+    - shell_result7.cmd == 'cat <<EOF\nOne\n  Two\n    Three\nEOF\n'
+    - shell_result7.stdout == 'One\n  Two\n    Three'
+
+- name: execute a shell command with no trailing newline to stdin
+  shell: cat > {{remote_tmp_dir_test }}/afile.txt
+  args:
+    stdin: test
+    stdin_add_newline: no
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{remote_tmp_dir_test }}/afile.txt"
+    content: test
+  register: shell_result7
+  failed_when:
+    - shell_result7 is failed or
+      shell_result7 is changed
+
+- name: execute a shell command with trailing newline to stdin
+  shell: cat > {{remote_tmp_dir_test }}/afile.txt
+  args:
+    stdin: test
+    stdin_add_newline: yes
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{remote_tmp_dir_test }}/afile.txt"
+    content: |
+        test
+  register: shell_result8
+  failed_when:
+    - shell_result8 is failed or
+      shell_result8 is changed
+
+- name: execute a shell command with trailing newline to stdin, default
+  shell: cat > {{remote_tmp_dir_test }}/afile.txt
+  args:
+    stdin: test
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{remote_tmp_dir_test }}/afile.txt"
+    content: |
+        test
+  register: shell_result9
+  failed_when:
+    - shell_result9 is failed or
+      shell_result9 is changed
+
+- name: remove the previously created file
+  file:
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
+    state: absent
+
+- name: test check mode skip message
+  command:
+    cmd: "true"
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.msg"
+      - result.skipped
+      - not result.changed
+
+- name: test check mode creates/removes message
+  command:
+    cmd: "true"
+    creates: yes
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.msg"
+      - "'skipped' not in result"
+      - result.changed
+
+- name: command symlink handling
+  block:
+  - name: Create target folders
+    file:
+      path: '{{remote_tmp_dir}}/www_root/site'
+      state: directory
+
+  - name: Create symlink
+    file:
+      path: '{{remote_tmp_dir}}/www'
+      state: link
+      src: '{{remote_tmp_dir}}/www_root'
+
+  - name: check parent using chdir
+    shell: dirname "$PWD"
+    args:
+      chdir: '{{remote_tmp_dir}}/www/site'
+    register: parent_dir_chdir
+
+  - name: check parent using cd
+    shell: cd "{{remote_tmp_dir}}/www/site" && dirname "$PWD"
+    register: parent_dir_cd
+
+  - name: check expected outputs
+    assert:
+      that:
+        - parent_dir_chdir.stdout != parent_dir_cd.stdout
+        # These tests use endswith, to get around /private/tmp on macos
+        - 'parent_dir_cd.stdout.endswith(remote_tmp_dir ~ "/www")'
+        - 'parent_dir_chdir.stdout.endswith(remote_tmp_dir ~ "/www_root")'
+
+- name: Set print error command for Python 3
+  set_fact:
+    print_error_command: print(msg, file=sys.stderr)
+
+- name: run command with strip
+  command: '{{ ansible_python_interpreter }} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  register: command_strip
+
+- name: run command without strip
+  command: '{{ ansible_python_interpreter }} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  args:
+    strip_empty_ends: no
+  register: command_no_strip
+
+- name: Verify strip behavior worked as expected
+  assert:
+    that:
+      - command_strip.stdout == 'hello \n '
+      - command_strip.stderr == 'hello \n '
+      - command_no_strip.stdout== 'hello \n \r\n'
+      - command_no_strip.stderr == 'hello \n \r\n'
+
+- name: run shell with expand_argument_vars
+  shell: echo 'hi'
+  args:
+    expand_argument_vars: false
+  register: shell_expand_failure
+  ignore_errors: true
+
+- name: assert shell with expand_arguments_vars failed
+  assert:
+    that:
+      - shell_expand_failure is failed
+      - "shell_expand_failure.msg == 'Unsupported parameters for (shell) module: expand_argument_vars'"
+
+- name: Run command that backgrounds, to ensure no hang
+  shell: '{{ role_path }}/scripts/yoink.sh &'
+  delegate_to: localhost
+  timeout: 5
+
+- name: Run command that does not exist
+  command: commandthatdoesnotexist --would-be-awkward
+  register: res
+  failed_when: res.stdout != '' or res.stderr != ''

@@ -1,0 +1,77 @@
+- environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  vars:
+    scm_path: "{{ galaxy_dir }}/scms"
+    metadata:
+      collection1: |-
+        name: collection1
+        version: "1.0.0"
+        dependencies:
+          test_prereleases.collection2: '*'
+      collection2: |
+        name: collection2
+        version: "1.0.0-dev0"
+        dependencies: {}
+      namespace_boilerplate: |-
+        namespace: test_prereleases
+        readme: README.md
+        authors:
+          - "ansible-core"
+        description: test prerelease priority with virtual collections
+        license:
+          - GPL-2.0-or-later
+        license_file: ''
+        tags: []
+        repository: https://github.com/ansible/ansible
+        documentation: https://github.com/ansible/ansible
+        homepage: https://github.com/ansible/ansible
+        issues: https://github.com/ansible/ansible
+        build_ignore: []
+  block:
+    - name: Initialize git repository
+      command: 'git init {{ scm_path }}/test_prereleases'
+
+    - name: Configure committer for the repo
+      shell: git config user.email ansible-test@ansible.com && git config user.name ansible-test
+      args:
+        chdir: "{{ scm_path }}/test_prereleases"
+
+    - name: Add collections to the repo
+      file:
+        path: "{{ scm_path }}/test_prereleases/{{ item }}"
+        state: directory
+      loop:
+        - collection1
+        - collection2
+
+    - name: Add collection metadata
+      copy:
+        dest: "{{ scm_path }}/test_prereleases/{{ item }}/galaxy.yml"
+        content: "{{ metadata[item] + '\n' + metadata['namespace_boilerplate'] }}"
+      loop:
+        - collection1
+        - collection2
+
+    - name: Save the changes
+      shell: git add . && git commit -m "Add collections to test installing a git repo directly takes priority over indirect Galaxy dep"
+      args:
+        chdir: '{{ scm_path }}/test_prereleases'
+
+    - name: Validate the dependency also exists on Galaxy before test
+      command: "ansible-galaxy collection install test_prereleases.collection2"
+      register: prereq
+      failed_when: '"test_prereleases.collection2:1.0.0 was installed successfully" not in prereq.stdout'
+
+    - name: Install collections from source
+      command: "ansible-galaxy collection install git+file://{{ scm_path }}/test_prereleases"
+      register: prioritize_direct_req
+
+    - assert:
+        that:
+          - '"test_prereleases.collection2:1.0.0-dev0 was installed successfully" in prioritize_direct_req.stdout'
+
+  always:
+    - name: Clean up test repos
+      file:
+        path: "{{ scm_path }}"
+        state: absent

@@ -1,0 +1,1 @@
+plugins/modules/check-me.py:7:20: use `ansible.module_utils.urls.open_url` instead of `urlopen`

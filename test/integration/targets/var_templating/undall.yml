@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug:
+      vars:
+        mytest: '{{ und }}'

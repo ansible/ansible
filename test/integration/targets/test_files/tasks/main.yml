@@ -1,0 +1,60 @@
+- name: Create a broken symbolic link
+  file:
+    src: does_not_exist
+    dest: link_to_nonexistent_file
+    state: link
+    force: yes
+    follow: no
+
+- name: Assert directory tests work
+  assert:
+    that:
+      - "'.' is is_dir"  # old name
+      - "'.' is directory"
+      - "'does_not_exist' is not directory"
+
+- name: Assert file tests work
+  assert:
+    that:
+      - "(role_path + '/aliases') is is_file"  # old name
+      - "(role_path + '/aliases') is file"
+      - "'does_not_exist' is not file"
+
+- name: Assert link tests work
+  assert:
+    that:
+      - "'link_to_nonexistent_file' is link"
+      - "'.' is not link"
+
+- name: Assert exists tests work
+  assert:
+    that:
+      - "(role_path + '/aliases') is exists"
+      - "'link_to_nonexistent_file' is not exists"
+
+- name: Assert link_exists tests work
+  assert:
+    that:
+      - "'link_to_nonexistent_file' is link_exists"
+      - "'does_not_exist' is not link_exists"
+
+- name: Assert abs tests work
+  assert:
+    that:
+      - "'/' is is_abs"  # old name
+      - "'/' is abs"
+      - "'../' is not abs"
+
+- name: Assert same_file tests work
+  assert:
+    that:
+      - "'/' is is_same_file('/')"  # old name
+      - "'/' is same_file('/')"
+      - "'/' is not same_file(role_path + '/aliases')"
+
+- name: Assert mount tests work
+  assert:
+    that:
+      - "'/' is is_mount"  # old name
+      - "'/' is mount"
+      - "'/does_not_exist' is not mount"

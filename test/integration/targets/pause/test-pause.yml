@@ -1,0 +1,72 @@
+- name: Test pause
+  hosts: localhost
+  gather_facts: no
+  become: no
+
+  tasks:
+    - name: non-integer for duration (EXPECTED FAILURE)
+      pause:
+        seconds: hello
+      register: result
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - result is failed
+          - "'unable to convert to int' in result.msg"
+
+    - name: non-boolean for echo (EXPECTED FAILURE)
+      pause:
+        echo: hello
+      register: result
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - result is failed
+          - "'not a valid boolean' in result.msg"
+
+    - name: Less than 1
+      pause:
+        seconds: 0.1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ seconds')
+
+    - name: 1 second
+      pause:
+        seconds: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ seconds')
+
+    - name: 1 minute
+      pause:
+        minutes: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ minutes')
+
+    - name: minutes and seconds
+      pause:
+        minutes: 1
+        seconds: 1
+      register: exclusive
+      ignore_errors: yes
+
+    - name: invalid arg
+      pause:
+        foo: bar
+      register: invalid
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - '"parameters are mutually exclusive: minutes|seconds" in exclusive.msg'
+          - '"Unsupported parameters for (pause) module: foo." in invalid.msg'

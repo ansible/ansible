@@ -1,0 +1,7 @@
+shippable/posix/group2
+needs/root
+needs/target/setup_test_user
+needs/target/setup_remote_tmp_dir
+context/target
+destructive
+setup/always/setup_passlib_controller  # required for setup_test_user

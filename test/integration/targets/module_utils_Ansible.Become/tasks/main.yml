@@ -1,0 +1,28 @@
+---
+# Users by default don't have this right, temporarily enable it
+- name: ensure the Users group have the SeBatchLogonRight
+  win_user_right:
+    name: SeBatchLogonRight
+    users:
+    - Users
+    action: add
+  register: batch_user_add
+
+- block:
+  - name: test Ansible.Become.cs
+    ansible_become_tests:
+    register: ansible_become_tests
+
+  always:
+  - name: remove SeBatchLogonRight from users if added in test
+    win_user_right:
+      name: SeBatchLogonRight
+      users:
+      - Users
+      action: remove
+    when: batch_user_add is changed
+
+- name: assert test Ansible.Become.cs
+  assert:
+    that:
+    - ansible_become_tests.data == "success"

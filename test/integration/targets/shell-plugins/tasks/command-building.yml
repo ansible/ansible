@@ -1,0 +1,54 @@
+- vars:
+    atd: '{{ remote_tmp_dir }}/shell/t m p'
+    api: '{{ remote_tmp_dir }}/shell/p y t h o n'
+  block:
+    - name: create test dir
+      file:
+        path: '{{ atd|dirname }}'
+        state: directory
+
+    - name: create tempdir with spaces
+      file:
+        path: '{{ atd }}'
+        state: directory
+
+    - name: create symlink for ansible_python_interpreter to file with spaces
+      file:
+        dest: '{{ api }}'
+        src: '{{ ansible_facts.python.executable }}'
+        state: link
+
+    - name: run simple test playbook
+      command: >-
+        ansible-playbook -vvv -i inventory
+        -e 'ansible_python_interpreter="{{ api }}"'
+        -e 'ansible_pipelining=0'
+        "{{ role_path }}/test-command-building-playbook.yml"
+      environment:
+        ANSIBLE_REMOTE_TMP: '{{ atd }}'
+        ANSIBLE_NOCOLOR: "1"
+        ANSIBLE_FORCE_COLOR: "0"
+        TEST: "foo%D"
+      register: command_building
+      delegate_to: localhost
+
+    - debug:
+        var: command_building.stdout_lines
+
+    - block:
+        - debug:
+            var: py_cmd
+
+        - debug:
+            var: tmp_dir
+
+        - assert:
+            that:
+              - py_cmd in exec_line
+              - tmp_dir in exec_line
+      vars:
+        exec_line: '{{ command_building.stdout_lines | select("search", "EXEC.*p y t h o n") | first }}'
+        py_cmd: >-
+          '"'"'{{ api }}'"'"'
+        tmp_dir: >-
+          '"'"'{{ atd }}/ansible-tmp-

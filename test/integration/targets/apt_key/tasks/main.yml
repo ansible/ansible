@@ -1,0 +1,33 @@
+# Test code for the apt_key module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: apt key tests
+  when:
+    - ansible_distribution in ('Ubuntu', 'Debian')
+  block:
+  - shell: which apt-key
+    ignore_errors: True
+    register: has_aptkey
+
+  - name: actually test if i have apt-key
+    when: has_aptkey is success
+    block:
+      - import_tasks: 'apt_key.yml'
+      - import_tasks: 'apt_key_inline_data.yml'
+      - import_tasks: 'file.yml'
+      - import_tasks: 'apt_key_binary.yml'

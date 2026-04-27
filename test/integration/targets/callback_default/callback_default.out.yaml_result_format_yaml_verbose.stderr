@@ -1,0 +1,2 @@
++ ansible-playbook -i inventory test_yaml.yml -v
+++ set +x

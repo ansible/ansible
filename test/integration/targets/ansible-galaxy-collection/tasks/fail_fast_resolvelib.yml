@@ -1,0 +1,48 @@
+# resolvelib>=0.6.0 added an 'incompatibilities' parameter to find_matches
+# If incompatibilities aren't removed from the viable candidates, this example causes infinite recursion
+- name: test resolvelib removes incompatibilites in find_matches and errors quickly (prevent infinite recursion)
+  block:
+    - name: create collection dir
+      file:
+        dest: "{{ galaxy_dir }}/resolvelib/ns/coll"
+        state: directory
+
+    - name: create galaxy.yml with a dependency on a galaxy-sourced collection
+      copy:
+        dest: "{{ galaxy_dir }}/resolvelib/ns/coll/galaxy.yml"
+        content: |
+                namespace: ns
+                name: coll
+                authors:
+                  - ansible-core
+                readme: README.md
+                version: "1.0.0"
+                dependencies:
+                  namespace1.name1: "0.0.5"
+
+    - name: build the collection
+      command: ansible-galaxy collection build ns/coll
+      args:
+        chdir: "{{ galaxy_dir }}/resolvelib"
+
+    - name: install a conflicting version of the dep with the tarfile (expected failure)
+      command: ansible-galaxy collection install namespace1.name1:1.0.9 ns-coll-1.0.0.tar.gz -vvvvv -s {{ test_name }} -p collections/
+      args:
+        chdir: "{{ galaxy_dir }}/resolvelib"
+      timeout: 30
+      ignore_errors: yes
+      register: incompatible
+
+    - assert:
+        that:
+          - incompatible.failed
+          - not incompatible.msg is contains 'Timed out after'
+          - '"Failed to resolve the requested dependencies map" in incompatible.stderr'
+          - '"* namespace1.name1:1.0.9 (direct request)" in incompatible.stderr'
+          - '"* namespace1.name1:0.0.5 (dependency of ns.coll:1.0.0)" in incompatible.stderr'
+
+  always:
+    - name: cleanup resolvelib test
+      file:
+        dest: "{{ galaxy_dir }}/resolvelib"
+        state: absent

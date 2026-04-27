@@ -1,0 +1,15 @@
+- name: create manifest file
+  ansible.builtin.template:
+    src: '{{ manifest_file }}'
+    dest: '{{ local_tmp_dir }}/ansible_collections/ns/invalid_manifest/meta/powershell_signatures.psd1'
+  delegate_to: localhost
+
+- name: sign manifest file
+  ansible.builtin.script: >-
+    Set-ManifestSignature.ps1
+    -Path {{ local_tmp_dir ~ "/ansible_collections/ns/invalid_manifest/meta/powershell_signatures.psd1" | quote }}
+    -CertPath {{ local_tmp_dir ~ "/" ~ (cert_name | default("wdac-signing")) ~ ".pfx" | quote }}
+    -CertPass {{ cert_pw | quote }}
+  environment:
+    NO_COLOR: '1'
+  delegate_to: localhost

@@ -1,0 +1,38 @@
+{
+    "name": "Kylin Linux Advanced Server V10",
+    "distro": {
+        "codename": "Sword",
+        "id": "kylin",
+        "name": "Kylin Linux Advanced Server",
+        "version": "V10",
+        "version_best": "V10",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "Kylin Linux Advanced Server",
+            "version": "V10 (Sword)",
+            "id": "kylin",
+            "version_id": "V10",
+            "pretty_name": "Kylin Linux Advanced Server V10 (Sword)",
+            "ansi_color": "0;31",
+            "codename": "Sword"
+        }
+    },
+    "input": {
+        "/etc/system-release": "Kylin Linux Advanced Server release V10 (Sword)\n",
+        "/etc/os-release": "NAME=\"Kylin Linux Advanced Server\"\nVERSION=\"V10 (Sword)\"\nID=\"kylin\"\nVERSION_ID=\"V10\"\nPRETTY_NAME=\"Kylin Linux Advanced Server V10 (Sword)\"\nANSI_COLOR=\"0;31\"\n\n",
+        "/etc/lsb-release": "DISTRIB_ID=Kylin\nDISTRIB_RELEASE=V10\nDISTRIB_CODENAME=juniper\nDISTRIB_DESCRIPTION=\"Kylin V10\"\nDISTRIB_KYLIN_RELEASE=V10\nDISTRIB_VERSION_TYPE=enterprise\nDISTRIB_VERSION_MODE=normal\n"
+    },
+    "platform.dist": [
+        "kylin",
+        "V10",
+        "Sword"
+    ],
+    "result": {
+        "distribution": "Kylin Linux Advanced Server",
+        "distribution_version": "V10",
+        "distribution_release": "Sword",
+        "distribution_major_version": "V10",
+        "os_family": "RedHat"
+    },
+    "platform.release": "4.19.90-24.4.v2101.ky10.x86_64"
+}

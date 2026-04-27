@@ -1,0 +1,6 @@
+- hosts: testhost
+  gather_facts: no
+  name: cover generic and role-specific test cases
+  tasks:
+    - import_role:
+        name: include_vars

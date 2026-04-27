@@ -1,0 +1,36 @@
+---
+- name: verify tags work as expected
+  hosts: testhost
+  gather_facts: False
+  vars:
+    the_tags:
+      - tag3
+  tasks:
+    - name: Task_with_tag
+      debug: msg=
+      tags: tag
+    - name: Task_with_always_tag
+      debug: msg=
+      tags: always
+    - name: Task_with_unicode_tag
+      debug: msg=
+      tags: くらとみ
+    - name: Task_with_list_of_tags
+      debug: msg=
+      tags:
+      - café
+      - press
+    - name: Task_without_tag
+      debug: msg=
+    - name: Task_with_never_tag
+      debug: msg=NEVER
+      tags: ['never', 'donever']
+    - name: Task_with_csv_tags
+      debug: msg=csv
+      tags: tag1,tag2
+    - name: Task_with_templated_tags
+      debug: msg=templated
+      tags: "{{ the_tags }}"
+    - name: Task_with_meta_tags
+      meta: reset_connection
+      tags: meta_tag

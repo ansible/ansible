@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: unreachable
+  author: Ansible Core
+  version_added: "1.9"
+  short_description: Did task end due to the host was unreachable
+  description:
+    - Tests if task was not able to reach the host for execution
+    - This test checks for the existence of a C(unreachable) key in the input dictionary and that it's value is V(True)
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ taskresults is unreachable }}
+
+RETURN:
+  _value:
+    description: Returns V(True) if the task flagged the host as unreachable, V(False) otherwise.
+    type: boolean

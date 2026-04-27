@@ -1,0 +1,27 @@
+# This handler should only be called 1 time, if it's called more than once
+# this task should fail on subsequent executions
+- name: test_fqcn_handler
+  set_fact:
+    handler_counter: '{{ handler_counter|int + 1 }}'
+  failed_when: handler_counter|int > 1
+
+# The following handler contains the role name and should be callable as:
+# 'common_handlers test_fqcn_handler'
+# 'common_handlers : common_handlers test_fqcn_handler`
+# 'testns.testcoll.common_handlers : common_handlers test_fqcn_handler'
+- name: common_handlers test_fqcn_handler
+  set_fact:
+    handler_counter: '{{ handler_counter|int + 1}}'
+  failed_when: handler_counter|int > 2
+
+# The following handler starts with 'role name : ' and should _not_ be listed as:
+# 'common_handlers : common_handlers : test_fqcn_handler`
+# 'testns.testcoll.common_handlers : common_handlers : test_fqcn_handler'
+- name: 'common_handlers : test_fqcn_handler'
+  meta: noop
+
+# The following handler starts with 'fqcn : ' and should _not_ be listed as:
+# 'common_handlers : testns.testcoll.common_handlers : test_fqcn_handler`
+# 'testns.testcoll.common_handlers : testns.testcoll.common_handlers : test_fqcn_handler'
+- name: 'testns.testcoll.common_handlers : test_fqcn_handler'
+  meta: noop

@@ -1,0 +1,254 @@
+- name: Run a module which returns a warning and deprecation warning
+  noisy:
+  register: result
+
+- name: Verify the registered module results can be displayed without error
+  debug:
+    var: result
+
+- include_tasks: plugin_errors.yml
+
+- command: echo {% raw %}{{ foo }}{% endraw %}
+  register: result
+
+- assert:
+    that:
+      - result.stdout_lines|first == expected
+  vars:
+    expected: !unsafe '{{ foo }}'
+
+- name: Assert that templating treats strings that look like Python as strings (previously some conversions would apply)
+  assert:
+    that:
+      - foo | type_debug == 'str'
+      - |
+        foo == '{"null": null, "true": true, "false": false}'
+  vars:
+    foo: '{{ "" }}{"null": null, "true": true, "false": false}'
+
+- name: Ensure that valid Jinja builtin test plugin works even when its name is an invalid Ansible plugin name (1/2)
+  set_fact:
+    foo: '{{ [{"failed": false}] | selectattr("failed", "==", true) }}'
+
+- name: Ensure that a non-existent test plugin that is also an invalid Ansible plugin name fails properly (2/2)
+  raw: echo {{ [{}] | selectattr("failed", "asdf ", true) }}
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("No test named 'asdf '")
+
+- name: Ensure that runtime dispatch errors result in a failure
+  debug:
+    msg: "{{ lookup('vars', 'v1', default='', default='') }}"
+  ignore_errors: true
+  register: r
+
+- assert:
+    that:
+      - r is failed
+      - "'keyword argument repeated' in r.msg"
+
+- name: ensure nested indirect templating is lazy (only recurse to render containers with templated when one is leaving the template system)
+  vars:
+    tripwire_file: "{{ output_dir ~ '/bang' }}"
+    top_level: '{{ intermediate }}'
+    intermediate: '{{ lowest }}'
+    lowest:
+      key1: static data
+      key2:
+        subdict2:
+          unused_value_with_tripwire: '{{ lookup("pipe", "touch " ~ output_dir ~ "/bang") }}'
+  block:
+    - name: ensure tripwire file is missing
+      raw: rm -f {{ tripwire_file }}
+
+    - name: manipulate a var with nested indirected templates and ensure that only the areas we access are templated
+      set_fact:
+        am_i_lazy: '{{ top_level.key1 }}'
+
+    - name: check presence of tripwire
+      stat:
+        path: '{{ tripwire_file }}'
+      register: stat_res
+
+    - assert:
+        that:
+        - am_i_lazy == "static data"
+        - not stat_res.stat.exists
+
+# omitting output for brevity in CI
+- no_log: true
+  block:
+  - name: ensure that `hostvars` gets flattened properly from Templar
+    debug:
+      msg: '{{ hostvars }}'
+    register: hostvars_result
+
+  - name: ensure that `hostvars['somehost']` gets flattened properly from Templar
+    debug:
+      msg: '{{ hostvars.testhost }}'
+    register: hostvarsvars_result
+
+  - name: ensure that `vars` gets flattened properly from Templar
+    debug:
+      msg: '{{ vars }}'
+    register: vars_result
+
+- assert:
+    that:
+      - hostvars_result.msg.testhost.inventory_hostname == "testhost"
+      - hostvars_result.msg | type_debug == "dict"
+      - hostvarsvars_result.msg.inventory_hostname == "testhost"
+      - hostvarsvars_result.msg | type_debug == "dict"
+      - vars_result.msg.hostvars is defined
+      - vars_result.msg | type_debug == "dict"
+
+- vars:
+    task_scalar: i am a scalar
+    task_dict_yaml:
+      scalar_ref: '{{ task_scalar }}'
+    task_dict_jinja: '{{ {"scalar_ref": task_scalar} }}'
+    task_list_yaml: [ '{{ task_scalar }}' ]
+    task_list_jinja: '{{ [ task_scalar ] }}'
+  block:
+  - name: ensure that lazy containers with embedded templates handle equality-ish operators correctly
+    assert:
+      that:
+        - 'task_dict_yaml == {"scalar_ref": "i am a scalar"}'
+        - 'task_dict_jinja == {"scalar_ref": "i am a scalar"}'
+        - task_list_yaml == ["i am a scalar"]
+        - task_list_jinja == ["i am a scalar"]
+
+- name: trigger a template cycle that overflows the stack
+  vars:
+    cycle: '{{ cycle }}'
+  raw: echo {{ cycle }}
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - result.msg is contains("Recursive loop detected in template")
+
+- raw: "{{ 'x' in y }}"
+  ignore_errors: yes
+  register: error
+
+- name: check that proper error message is emitted when in operator is used
+  assert:
+    that: "\"'y' is undefined\" in error.msg"
+
+- name: test inline list containing a constant template arg to a lookup
+  debug:
+    msg: |-
+      {{ lookup('list', ['{{ 1 }}']) }}
+  register: result
+  failed_when: result.msg != [1]
+
+- name: test inline dict containing a constant template arg to a lookup
+  debug:
+    msg: |-
+      {{ lookup('dict', {'key': '{{ 1 }}'}) }}
+  register: result
+  failed_when: result.msg.value != 1
+
+- name: test inline constant template arg to a lookup in a non-optimizable expression
+  vars:
+    echo_me: hi mom
+  debug:
+    msg: |-
+      {{ lookup('pipe', 'echo "{{ echo_me }}"') }}
+  register: result
+  failed_when: result.msg != "hi mom"
+
+- name: ensure that embedded template constants are ignored outside conditionals and lookup args
+  raw: echo {{ "{{ 1 }}" }}
+  register: result
+  failed_when: result.stdout is not contains "{"
+
+- name: ensure that embedded template constants in locals work in lookup args
+  debug:
+    msg: |-        
+      {{ lookup('pipe', 'echo {{ "h" + "i" | string }}') }}
+  register: result
+
+- name: ensure that embedded template constants in locals are ignored outside conditionals and lookups
+  raw: |-
+    echo "{% set a = '{{ 1 }}' %}{% set b = '{{ 2 }}' %}{{ a + b }}"
+  register: result
+  failed_when: result.stdout is not contains("{")
+
+- name: ensure that embedded template constants in locals do not work in conditional-as-template fallback (pre-2.17 compat)
+  assert:
+    that: |-
+      {% set a = '{{ 1 }}' %}
+      {% set b = '{{ 2 }}' %}
+      {{ a + b == ("{" ~ "{ 1 }}{" ~ "{ 2 }}") }}
+  register: result
+
+- name: ensure that embedded non-string templates fail
+  raw: echo {{ {{ 1 }} }}
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+    - result is failed
+    - result.msg is contains("Syntax error")
+
+- vars:
+    dict_with_undecryptable_vault:
+      deeper:
+        vaulted_thing: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          63326561376261613563313535363635306336343061343735343931396538666263326333316135
+          3364323839336665663238376238336661636630316635360a613537653337363035373261623038
+          30633437653432623936376239376466316434393134393632313163633965353530376361626564
+          3262633163333464330a393161353063326562626665333138373839633165376639343166333561
+          3663
+  block:
+  - name: undecryptable vault values in a scalar template should trip on JSON serialization
+    debug:
+      msg: '{{ dict_with_undecryptable_vault | to_json }}'
+    ignore_errors: true
+    register: result
+
+  - assert:
+      that:
+        - result is failed
+        - result.msg is contains("undecryptable variable")
+
+  - name: undecryptable vault values in a list of templates should trip on JSON serialization
+    debug:
+      msg:
+      - '{{ dict_with_undecryptable_vault | to_json }}'
+    ignore_errors: true
+    register: result
+
+  - assert:
+      that:
+        - result is failed
+        - result.msg is contains("undecryptable variable")
+
+  - name: vaulted values are not trusted for templating
+    vars:
+      # value is {{ "not trusted" }} encrypted with "blarblar"
+      vaulted_with_template: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        36306639316132393663356162643765396231396462623962373832643539306635356639366633
+        6234303731383636623165633330653435336130613361370a373931613335353762376433636263
+        35363536613933396532636430646337393932393166396133613666386433353932373063356235
+        3666336365616535610a636534333332633930326331353533626332363263363666373730386264
+        31643561353465613030343632663036313963363634663231393665316437646530
+      decrypt_vaulted_value: '{{ vaulted_with_template | unvault("blarblar") }}'
+    debug:
+      var: decrypt_vaulted_value
+    register: vault_value_untrusted
+
+  - assert:
+      that:
+      - vault_value_untrusted.decrypt_vaulted_value == ('{' ~ '{ "not trusted" }}')

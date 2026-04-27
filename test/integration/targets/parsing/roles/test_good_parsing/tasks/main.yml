@@ -1,0 +1,226 @@
+# test code for the ping module
+# (c) 2014, Michael DeHaan <michael@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# various tests of things that should not cause parsing problems
+
+- set_fact:
+    test_input: "a=1 a=2 a=3"
+
+- set_fact:
+    multi_line: |
+      echo old
+      echo mcdonald
+      echo had
+      echo a
+      echo farm
+
+- shell: echo "dog"
+  register: result
+
+- assert:
+    that:
+       result.cmd == 'echo "dog"'
+
+- shell: echo 'dog'
+  register: result
+
+- assert:
+    that:
+       result.cmd == 'echo \'dog\''
+
+- name: a quoted argument is not sent to the shell module as anything but a string parameter
+  shell: echo 'dog' 'executable=/usr/bin/python'
+  register: result
+
+- debug: var=result.cmd
+
+- assert:
+    that:
+       result.cmd == "echo 'dog' 'executable=/usr/bin/python'"
+
+- name: it is valid to pass multiple key=value arguments because the shell doesn't check key=value arguments
+  shell: echo quackquack=here quackquack=everywhere
+  register: result
+
+- assert:
+    that:
+      result.cmd == 'echo quackquack=here quackquack=everywhere'
+
+- name: the same is true with quoting
+  shell: echo "quackquack=here quackquack=everywhere"
+  register: result
+
+- assert:
+    that:
+      result.cmd == 'echo "quackquack=here quackquack=everywhere"'
+
+- name: the same is true with quoting (B)
+  shell: echo "quackquack=here" "quackquack=everywhere"
+  register: result
+
+- name: the same is true with quoting (C)
+  shell: echo "quackquack=here" 'quackquack=everywhere'
+  register: result
+
+- name: the same is true with quoting (D)
+  shell: echo "quackquack=here" 'quackquack=everywhere'
+  register: result
+
+- name: the same is true with quoting (E)
+  shell: echo {{ test_input }}
+  register: result
+
+- assert:
+     that:
+        result.cmd == "echo a=1 a=2 a=3"
+
+- name: more shell duplicates
+  shell: echo foo=bar foo=bar
+  register: result
+
+- assert:
+    that:
+       result.cmd == "echo foo=bar foo=bar"
+
+- name: raw duplicates, noop
+  raw: env true foo=bar foo=bar
+
+- name: multi-line inline shell commands (should use script module but hey) are a thing
+  shell: "{{ multi_line }}"
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+       result.stdout_lines == [ 'old', 'mcdonald', 'had', 'a', 'farm' ]
+
+- name: passing same arg to shell command is legit
+  shell: echo foo --arg=a --arg=b
+  failed_when: False # just catch the exit code, parse error is what I care about, but should register and compare result
+  register: result
+
+- assert:
+    that:
+       # command shouldn't end in spaces, amend test once fixed
+       - result.cmd == "echo foo --arg=a --arg=b"
+
+- name: test includes with params
+  include_tasks: test_include.yml
+  vars:
+    fact_name: include_params
+    param: "{{ test_input }}"
+
+- name: assert the include set the correct fact for the param
+  assert:
+    that:
+      - include_params == test_input
+
+- name: test includes with quoted params
+  include_tasks: test_include.yml
+  vars:
+    fact_name: double_quoted_param
+    param: "this is a param with double quotes"
+
+- name: assert the include set the correct fact for the double quoted param
+  assert:
+    that:
+      - double_quoted_param == "this is a param with double quotes"
+
+- name: test includes with single quoted params
+  include_tasks: test_include.yml
+  vars:
+    fact_name: single_quoted_param
+    param: 'this is a param with single quotes'
+
+- name: assert the include set the correct fact for the single quoted param
+  assert:
+    that:
+      - single_quoted_param == "this is a param with single quotes"
+
+- name: test includes with quoted params in complex args
+  include_tasks: test_include.yml
+  vars:
+    fact_name: complex_param
+    param: "this is a param in a complex arg with double quotes"
+
+- name: assert the include set the correct fact for the params in complex args
+  assert:
+    that:
+      - complex_param == "this is a param in a complex arg with double quotes"
+
+- name: test variable module name
+  action: "{{ variable_module_name }} msg='this should be debugged'"
+  register: result
+
+- name: assert the task with variable module name ran
+  assert:
+    that:
+      - result.msg == "this should be debugged"
+
+- name: test conditional includes
+  include_tasks: test_include_conditional.yml
+  when: false
+
+- name: assert the nested include from test_include_conditional was not set
+  assert:
+    that:
+      - nested_include_var is undefined
+
+- name: test omit in complex args
+  set_fact:
+    foo: bar
+    spam: "{{ omit }}"
+    should_not_omit: "prefix{{ omit }}"
+
+- assert:
+    that:
+      - foo == 'bar'
+      - spam is undefined
+      - should_not_omit is defined
+
+- name: test omit in module args
+  set_fact: >
+    yo=whatsup
+    eggs="{{ omit }}"
+    default_omitted="{{ not_exists|default(omit) }}"
+    should_not_omit_1="prefix{{ omit }}"
+    should_not_omit_2="{{ omit }}suffix"
+    should_not_omit_3="__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
+
+- assert:
+    that:
+      - yo == 'whatsup'
+      - eggs is undefined
+      - default_omitted is undefined
+      - should_not_omit_1 is defined
+      - should_not_omit_2 is defined
+      - should_not_omit_3 == "__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
+
+- name: Ensure module names are stripped of extra spaces (local_action)
+  local_action: set_fact     b="b"
+  register: la_set_fact_b
+
+- name: Ensure module names are stripped of extra spaces (action)
+  action: set_fact     c="c"
+  register: la_set_fact_c
+
+- assert:
+    that:
+      - b == "b"
+      - c == "c"

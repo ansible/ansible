@@ -1,0 +1,15 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+  tasks:
+    - template:
+        src: macro_override.j2
+        dest: "{{ output_dir }}/macro_override.out"
+
+    - assert:
+        that:
+          - "'foobar' not in data"
+          - "'\"foo\" \"bar\"' in data"
+      vars:
+        data: "{{ lookup('file', output_dir ~ '/macro_override.out') }}"

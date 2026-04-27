@@ -1,0 +1,2 @@
+shippable/posix/group3
+setup/always/setup_passlib_controller  # required for setup_test_user

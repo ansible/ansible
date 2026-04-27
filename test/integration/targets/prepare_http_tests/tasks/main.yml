@@ -1,0 +1,35 @@
+# The docker --link functionality gives us an ENV var we can key off of to see if we have access to
+# the httptester container
+- set_fact:
+    has_httptester: "{{ lookup('env', 'HTTPTESTER') != '' }}"
+
+- name: make sure we have the ansible_os_family and ansible_distribution_version facts
+  setup:
+    gather_subset: distribution
+  when: ansible_facts == {}
+
+# If we are running with access to a httptester container, grab it's cacert and install it
+- block:
+    # Override hostname defaults with httptester linked names
+    - include_vars: httptester.yml
+
+    - include_tasks: "{{ lookup('first_found', files)}}"
+      vars:
+        files:
+          - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version }}.yml"
+          - "{{ ansible_os_family | lower }}.yml"
+          - "default.yml"
+  when:
+  - has_httptester|bool
+  # skip the setup if running on Windows Server 2008 as httptester is not available
+  - ansible_os_family != 'Windows' or (ansible_os_family == 'Windows' and not ansible_distribution_version.startswith("6.0."))
+
+- set_fact:
+    krb5_password: "{{ lookup('env', 'KRB5_PASSWORD') }}"
+
+- name: setup Kerberos client
+  include_tasks: kerberos.yml
+  when:
+  - has_httptester|bool
+  - ansible_os_family != 'Windows'
+  - krb5_password != ''

@@ -1,0 +1,46 @@
+- name: Clean up host and remove unprivileged users
+  hosts: ssh
+  gather_facts: yes
+  remote_user: root
+  tasks:
+    # Do this first so we can use tilde notation while the user still exists
+    - name: Delete homedirs
+      file:
+        path: '~{{ item }}'
+        state: absent
+      with_items:
+        - unpriv1
+        - unpriv2
+
+    - name: Delete users
+      user:
+        name: "{{ item }}"
+        state: absent
+        force: yes  # I think this is needed in case pipelining is used and the session remains open
+      with_items:
+        - unpriv1
+        - unpriv2
+
+    - name: Delete groups
+      group:
+        name: "{{ item }}"
+        state: absent
+      with_items:
+        - acommongroup
+        - unpriv1
+        - unpriv2
+
+    - name: Fix sudoers.d path for FreeBSD
+      set_fact:
+        sudoers_etc: /usr/local/etc
+      when: ansible_distribution == 'FreeBSD'
+
+    - name: Fix sudoers.d path for everything else
+      set_fact:
+        sudoers_etc: /etc
+      when: ansible_distribution != 'FreeBSD'
+
+    - name: Nuke custom sudoers file
+      file:
+        path: "{{ sudoers_etc }}/sudoers.d/unpriv1"
+        state: absent

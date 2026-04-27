@@ -1,0 +1,58 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - add_host:
+      name: host1
+      ansible_connection: local
+      ansible_host: 127.0.0.1
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: "{{ hostvars['host1']['x'] }}"
+      register: x_1
+    - debug:
+        msg: "{{ hostvars['host1']['y'] }}"
+      register: y_1
+    - debug:
+        msg: "{{ hostvars_['x'] }}"
+      vars:
+        hostvars_: "{{ hostvars['host1'] }}"
+      register: x_2
+    - debug:
+        msg: "{{ hostvars_['y'] }}"
+      vars:
+        hostvars_: "{{ hostvars['host1'] }}"
+      register: y_2
+
+    - assert:
+        that:
+          - x_1 == x_2
+          - y_1 == y_2
+          - x_1 == y_1
+
+    - debug:
+        msg: "{{ hostvars['host1']['nested_x']['value'] }}"
+      register: x_1
+    - debug:
+        msg: "{{ hostvars['host1']['nested_y']['value'] }}"
+      register: y_1
+    - debug:
+        msg: "{{ hostvars_['nested_x']['value'] }}"
+      vars:
+        hostvars_: "{{ hostvars['host1'] }}"
+      register: x_2
+    - debug:
+        msg: "{{ hostvars_['nested_y']['value'] }}"
+      vars:
+        hostvars_: "{{ hostvars['host1'] }}"
+      register: y_2
+
+    - assert:
+        that:
+          - x_1 == x_2
+          - y_1 == y_2
+          - x_1 == y_1

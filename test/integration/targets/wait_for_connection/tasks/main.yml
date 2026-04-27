@@ -1,0 +1,41 @@
+- name: Test normal connection to target node
+  wait_for_connection:
+    connect_timeout: 5
+    sleep: 1
+    timeout: 10
+
+- name: Test normal connection to target node with delay
+  wait_for_connection:
+    connect_timeout: 5
+    sleep: 1
+    timeout: 10
+    delay: 3
+  register: result
+
+- name: Verify delay was honored
+  assert:
+    that:
+      - result.elapsed >= 3
+
+- name: Use invalid parameter
+  wait_for_connection:
+    foo: bar
+  ignore_errors: yes
+  register: invalid_parameter
+
+- name: Ensure task fails with error
+  assert:
+    that:
+    - invalid_parameter is failed
+    - "invalid_parameter.msg == 'Invalid options for wait_for_connection: foo'"
+
+- name: Test local connection with wait_for_connection
+  command: ansible localhost -m wait_for_connection
+  delegate_to: localhost
+  register: local_wait_for_connection
+
+- name: Assert reset is a no-op rather than unimplemented
+  assert:
+    that: unexpected_warning not in local_wait_for_connection.stderr
+  vars:
+    unexpected_warning: "Reset is not implemented for this connection"

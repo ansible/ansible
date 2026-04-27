@@ -1,0 +1,34 @@
+# Test and validate playbook import
+- import_playbook: '{{ "playbook1.yml" }}'  # ensure templating occurs
+- import_playbook: validate1.yml
+
+# Test and validate conditional import
+- import_playbook: playbook2.yml
+  when: no
+
+- ansible.builtin.import_playbook: validate2.yml  # intentionally testing ansible.builtin
+
+- ansible.legacy.import_playbook: playbook3.yml  # intentionally testing ansible.legacy
+- import_playbook: playbook4.yml
+  when: include_next_playbook
+
+- import_playbook: validate34.yml
+
+- import_playbook: playbook_needing_vars.yml
+  vars:
+    import_playbook_role_name: import_playbook_role
+
+# https://github.com/ansible/ansible/issues/59548
+- import_playbook: sub_playbook/sub_playbook.yml
+
+- name: Use set_fact to declare a variable
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        a_var_from_set_fact: hello
+
+- name: Verify vars for import_playbook are not templated too early
+  import_playbook: playbook_using_a_var.yml
+  vars:
+    pb_var: "{{ a_var_from_set_fact }}"

@@ -1,0 +1,6 @@
+context/target
+needs/root
+skip/freebsd
+skip/macos
+shippable/posix/group2
+needs/target/setup_remote_tmp_dir

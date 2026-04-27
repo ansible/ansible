@@ -1,0 +1,3 @@
+[testgroup]
+testhost foo=bar
+testhost2 foo=baz

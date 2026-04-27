@@ -1,0 +1,6 @@
+---
+filter_version: 1.0
+module_rejectlist:
+  # Specify the name of a lookup plugin here.  This should have no effect as
+  # this is only for filtering modules
+  - list

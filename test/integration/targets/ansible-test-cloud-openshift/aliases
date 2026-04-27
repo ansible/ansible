@@ -1,0 +1,4 @@
+cloud/openshift
+shippable/generic/group1
+disabled  # the container crashes when using a non-default network on some docker hosts (such as Ubuntu 20.04)
+context/controller

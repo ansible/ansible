@@ -1,0 +1,47 @@
+- name: create temporary build directory
+  tempfile:
+    state: directory
+    suffix: ansible_test_leave_links_alone_during_touch
+  register: tempdir
+
+- name: create file
+  copy:
+    mode: 0600
+    content: "chicken"
+    dest: "{{ tempdir.path }}/somefile"
+
+- name: Create relative link
+  file:
+    src: somefile
+    dest: "{{ tempdir.path }}/somelink"
+    state: link
+
+- stat:
+    path: "{{ tempdir.path }}/somelink"
+  register: link
+
+- stat:
+    path: "{{ tempdir.path }}/somefile"
+  register: file
+
+- assert:
+    that:
+    - "file.stat.mode == '0600'"
+    - "link.stat.lnk_target == 'somefile'"
+
+- file:
+    path: "{{ tempdir.path }}/somelink"
+    mode: 0644
+
+- stat:
+    path: "{{ tempdir.path }}/somelink"
+  register: link
+
+- stat:
+    path: "{{ tempdir.path }}/somefile"
+  register: file
+
+- assert:
+    that:
+    - "file.stat.mode == '0644'"
+    - "link.stat.lnk_target == 'somefile'"
