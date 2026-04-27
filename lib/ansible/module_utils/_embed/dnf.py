@@ -98,7 +98,10 @@ def _configure_base(base, config_dict):
             raise _DnfScriptError(f'cannot read configuration file: {conf_file}')
         conf.config_file_path = conf_file
 
-    conf.read()
+    try:
+        conf.read()
+    except Exception as e:
+        raise _DnfScriptError(f'Error in configuration file: {e!r}')
     conf.debuglevel = 0
 
     disable_gpg_check = config_dict.get('disable_gpg_check', False)
