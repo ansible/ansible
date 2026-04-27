@@ -361,7 +361,7 @@ class RoleMixin(object):
             try:
                 meta = self._load_metadata(role, role_path, collection)
             except Exception as e:
-                display.vvv(f'No metadata for role ({role}) due to: {to_native(e)}')
+                display.vvv(f'No metadata for role ({role}) due to: {e!r}')
                 meta = {}
 
             argspec = self._load_argspec(role, role_path, collection)
