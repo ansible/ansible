@@ -4,6 +4,20 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-04-28
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Bugfixes
+--------
+
+- git - use the branch configured in ``.gitmodules`` or the remote HEAD instead of hardcoding ``master`` when ``track_submodules=yes`` (https://github.com/ansible/ansible/issues/77691).
+
 v2.21.0b3
 =========
 

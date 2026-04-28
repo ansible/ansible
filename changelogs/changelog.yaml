@@ -612,3 +612,18 @@ releases:
     - core_ci_remote_alias.yml
     - rc_fail_inference.yml
     release_date: '2026-04-21'
+  2.21.0rc1:
+    changes:
+      bugfixes:
+      - git - use the branch configured in ``.gitmodules`` or the remote HEAD instead
+        of hardcoding ``master`` when ``track_submodules=yes`` (https://github.com/ansible/ansible/issues/77691).
+      release_summary: '| Release Date: 2026-04-28
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+    codename: The Rain Song
+    fragments:
+    - 2.21.0rc1_summary.yaml
+    - 77691-git-track-submodules-branch.yml
+    release_date: '2026-04-28'
