@@ -116,8 +116,9 @@
       loop:
         - inventory/foo.py
         - galaxy.yml
+        - CLAUDE.md
 
-    - name: create an invalid skeleton ignore expression in ansible.cfg
+    - name: create a valid skeleton ignore expression in ansible.cfg
       copy:
         content: |
           [galaxy]
