@@ -715,13 +715,9 @@ class Package:
         return cls(name, version_string=version)
 
     @property
-    def version_specifier(self):
-        return getattr(self._requirement, 'specifier', None) or getattr(self._requirement,'specs', None)
-
-    @property
     def has_version_specifier(self):
         if self._plain_package:
-            return bool(self.version_specifier)
+            return bool(getattr(self._requirement, 'specifier', None) or getattr(self._requirement, 'specs', None))
         return False
 
     def is_satisfied_by(self, version_to_test):
