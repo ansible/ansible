@@ -419,7 +419,7 @@ def _get_cmd_options(module, cmd):
 def _get_packages(module, pip, chdir):
     """Return results of pip command to get packages."""
     # Try 'pip list' command first.
-    command = pip + ['list', '--format=freeze']
+    command = pip + ['list', '--format=json']
     locale = get_best_parsable_locale(module)
     lang_env = {'LANG': locale, 'LC_ALL': locale, 'LC_MESSAGES': locale}
     rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
@@ -427,24 +427,36 @@ def _get_packages(module, pip, chdir):
     # If there was an error (pip version too old) then use 'pip freeze'.
     if rc != 0:
         command = pip + ['freeze']
-        rc, out, err = module.run_command(command, cwd=chdir)
-        if rc != 0:
-            _fail(module, command, out, err)
+        rc, out, err = module.run_command(command, cwd=chdir, check_rc=True)
+        return ' '.join(command), out, err, {Package.from_freeze(line) for line in out.splitlines()}
 
-    return ' '.join(command), out, err
+    package_set = set()
+    freezeout = ""
+    for package_listing in json.loads(out):
+        name = package_listing['name']
+        version = package_listing['version']
+
+        package = Package(name, version, editable=package_listing.get('editable_project_location'))
+        package_set.add(package)
+        # Reconstitute the old output
+        freezeout += f"{name}=={version}\n"
+
+    return ' '.join(command), freezeout, err, package_set
 
 
 def _is_present(module, req, installed_pkgs, pkg_command):
     """Return whether or not package is installed."""
     for pkg in installed_pkgs:
-        if '==' in pkg:
-            pkg_name, pkg_version = pkg.split('==')
-            pkg_name = Package.canonicalize_name(pkg_name)
-        else:
-            continue
-
-        if pkg_name == req.package_name and req.is_satisfied_by(pkg_version):
-            return True
+        if pkg.package_name == req.package_name:
+            if req.has_version_specifier:
+                pkg_str = str(pkg)
+                if '==' in pkg_str:
+                    pkg_version = pkg_str.split('==', 1)[1]
+                    if req.is_satisfied_by(pkg_version):
+                        return True
+            else:
+                # No version requirement, just need matching name
+                return True
 
     return False
 
@@ -673,10 +685,11 @@ class Package:
 
     _CANONICALIZE_RE = re.compile(r'[-_.]+')
 
-    def __init__(self, name_string, version_string=None):
+    def __init__(self, name_string, version_string=None, editable=False):
         self._plain_package = False
         self.package_name = name_string
         self._requirement = None
+        self.editable = editable
 
         if version_string:
             version_string = version_string.lstrip()
@@ -696,10 +709,19 @@ class Package:
         except ValueError as e:
             pass
 
+    @classmethod
+    def from_freeze(cls, string):
+        name, version = string.split('==')
+        return cls(name, version_string=version)
+
+    @property
+    def version_specifier(self):
+        return getattr(self._requirement, 'specifier', None) or getattr(self._requirement,'specs', None)
+
     @property
     def has_version_specifier(self):
         if self._plain_package:
-            return bool(getattr(self._requirement, 'specifier', None) or getattr(self._requirement, 'specs', None))
+            return bool(self.version_specifier)
         return False
 
     def is_satisfied_by(self, version_to_test):
@@ -729,6 +751,15 @@ class Package:
         if self._plain_package:
             return to_native(self._requirement)
         return self.package_name
+
+    def __hash__(self):
+        return hash((str(self), self.editable))
+
+    def __eq__(self, other):
+        if not isinstance(other, Package):
+            return False
+        return (str(self) == str(other) and
+                self.editable == other.editable)
 
 
 def main():
@@ -881,15 +912,13 @@ def main():
             if extra_args or requirements or state == 'latest' or not name:
                 module.exit_json(changed=True)
 
-            pkg_cmd, out_pip, err_pip = _get_packages(module, pip, chdir)
+            pkg_cmd, out_pip, err_pip, pkg_set = _get_packages(module, pip, chdir)
 
             out += out_pip
             err += err_pip
 
             changed = False
             if name:
-                pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
-
                 if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
                     # Older versions of pip (pre-1.3) do not have pip list.
                     # pip freeze does not list setuptools or pip in its output
@@ -898,21 +927,19 @@ def main():
                         if pkg in name:
                             formatted_dep = _get_package_info(module, pkg, py_bin)
                             if formatted_dep is not None:
-                                pkg_list.append(formatted_dep)
+                                pkg_set.add(Package.from_freeze(formatted_dep))
                                 out += '%s\n' % formatted_dep
 
                 normalized_package_list = _resolve_package_names(module, packages, pip, py_bin)
 
                 for package in normalized_package_list:
-                    is_present = _is_present(module, package, pkg_list, pkg_cmd)
+                    is_present = _is_present(module, package, pkg_set, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
             module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
 
-        out_freeze_before = None
-        if requirements or has_vcs:
-            dummy, out_freeze_before, dummy = _get_packages(module, pip, chdir)
+        _cmd, _out, _err, out_freeze_before = _get_packages(module, pip, chdir)
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -923,14 +950,8 @@ def main():
         elif rc != 0:
             _fail(module, cmd, out, err)
 
-        if state == 'absent':
-            changed = 'Successfully uninstalled' in out_pip
-        else:
-            if out_freeze_before is None:
-                changed = 'Successfully installed' in out_pip
-            else:
-                dummy, out_freeze_after, dummy = _get_packages(module, pip, chdir)
-                changed = out_freeze_before != out_freeze_after
+        _rc, _out, _err, out_freeze_after = _get_packages(module, pip, chdir)
+        changed = out_freeze_before != out_freeze_after
 
         changed = changed or venv_created
 
