@@ -634,11 +634,16 @@ class Connection(ConnectionBase):
             stdout = to_text(b_stdout)
             stderr = to_text(b_stderr)
 
+            log_stdout = stdout
+            log_stderr = stderr
+            if self._play_context.no_log:
+                log_stdout = log_stderr = '<censored due to no log>'
+
             if from_exec:
-                display.vvvvv('WINRM RESULT <Response code %d, out %r, err %r>' % (rc, stdout, stderr), host=self._winrm_host)
+                display.vvvvv('WINRM RESULT <Response code %d, out %r, err %r>' % (rc, log_stdout, log_stderr), host=self._winrm_host)
             display.vvvvvv('WINRM RC %d' % rc, host=self._winrm_host)
-            display.vvvvvv('WINRM STDOUT %s' % stdout, host=self._winrm_host)
-            display.vvvvvv('WINRM STDERR %s' % stderr, host=self._winrm_host)
+            display.vvvvvv('WINRM STDOUT %s' % log_stdout, host=self._winrm_host)
+            display.vvvvvv('WINRM STDERR %s' % log_stderr, host=self._winrm_host)
 
             # This is done after logging so we can still see the raw stderr for
             # debugging purposes.
