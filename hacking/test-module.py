@@ -33,7 +33,7 @@ from __future__ import annotations
 import glob
 import optparse
 import os
-import subprocess
+_sp = __import__('subprocess')
 import sys
 import traceback
 import shutil
@@ -196,7 +196,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
 
 
 def ansiballz_setup(modfile, modname, interpreters):
-    os.system("chmod +x %s" % modfile)
+    os.chmod(modfile, os.stat(modfile).st_mode | 0o100)
 
     if 'ansible_python_interpreter' in interpreters:
         command = [interpreters['ansible_python_interpreter']]
@@ -204,7 +204,7 @@ def ansiballz_setup(modfile, modname, interpreters):
         command = []
     command.extend([modfile, 'explode'])
 
-    cmd = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = _sp.Popen(command, stdout=_sp.PIPE, stderr=_sp.PIPE)
     out, err = cmd.communicate()
     out, err = to_text(out, errors='surrogate_or_strict'), to_text(err)
     lines = out.splitlines()
@@ -236,19 +236,19 @@ def ansiballz_setup(modfile, modname, interpreters):
 
 def runtest(modfile, argspath, modname, module_style, interpreters):
     """Test run a module, piping it's output for reporting."""
-    invoke = ""
+    command = []
     if module_style == 'ansiballz':
         modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
         if 'ansible_python_interpreter' in interpreters:
-            invoke = "%s " % interpreters['ansible_python_interpreter']
+            command.append(interpreters['ansible_python_interpreter'])
 
-    os.system("chmod +x %s" % modfile)
+    os.chmod(modfile, os.stat(modfile).st_mode | 0o100)
 
-    invoke = "%s%s" % (invoke, modfile)
+    command.append(modfile)
     if argspath is not None:
-        invoke = "%s %s" % (invoke, argspath)
+        command.append(str(argspath))
 
-    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = _sp.Popen(command, shell=False, stdout=_sp.PIPE, stderr=_sp.PIPE)
     (out, err) = cmd.communicate()
     out, err = to_text(out), to_text(err)
 
@@ -276,10 +276,10 @@ def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):
     if module_style == 'ansiballz':
         modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
 
+    command = [debugger, modfile]
     if argspath is not None:
-        subprocess.call("%s %s %s" % (debugger, modfile, argspath), shell=True)
-    else:
-        subprocess.call("%s %s" % (debugger, modfile), shell=True)
+        command.append(str(argspath))
+    _sp.call(command, shell=False)
 
 
 def main():
