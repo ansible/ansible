@@ -1092,7 +1092,6 @@ class Connection(ConnectionBase):
         if askpass := self.get_option('ssh_askpass_command'):
             display.vvv(f'SSH_ASKPASS is set to {askpass}')
             env['SSH_ASKPASS'] = askpass
-            env['ANSIBLE_PASSWORD'] = conn_password
             env['SSH_ASKPASS_REQUIRE'] = 'prefer'
 
         popen_kwargs['env'] = env
