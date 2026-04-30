@@ -2092,7 +2092,13 @@ class AnsibleModule(object):
                 stdout_changed = False
                 for key, event in events:
                     b_chunk = key.fileobj.read(32768)
-                    if not b_chunk and b_chunk is not None:
+                    if b_chunk is None:
+                        # Non-blocking read returned None (no data currently available).
+                        # This can happen with certain file-like objects or in edge cases.
+                        # Skip this chunk and try again on next select iteration.
+                        continue
+                    if not b_chunk:
+                        # Empty bytes received, EOF reached
                         selector.unregister(key.fileobj)
                     elif key.fileobj == cmd.stdout:
                         stdout += b_chunk
