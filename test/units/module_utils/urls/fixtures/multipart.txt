@@ -97,7 +97,6 @@ V2N4OXhzcnpYbkNLRTNaaUdiV2YxWk1TemZSUGFqWlNtdEZIVTJuRXA4cGQycFZ3YlVkRHFXNQpU
 emdXUEgyRnJ2OGpOTWNzOWhRUFZlKzRBSW54c29wMUZVR0JjdEJEcG9iUkJ1Yk9nWDVmTStiMEdk
 WndBTHBJCmJnWDlURHpEVVJ1OVF4b2t4WG5xZXZDRnBVQVFoZWtqQ1FtQU9KMjhnVjVaakZwTldG
 YTVjY0o0emZPdwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-
 --===============3996062709511591449==
 Content-Transfer-Encoding: base64
 Content-Type: application/octet-stream
@@ -133,7 +132,6 @@ dWV0SS9pSS9vM3dPekx2ekFvR0FJck9oMzBySHQ4d2l0N0VMQVJ5eAp3UGtwMkFSWVhyS2ZYM05F
 UzRjNjd6U0FpKzNkQ2p4UnF5d3FUSTBnTGljeU1sajh6RXU5WUU5SXgvcmw4bFJaCm5ROUxabXF2
 N1FIemhMVFVDUEdnWlluZW12QnpvN3IwZVc4T2FnNTJkYmNKTzZGQnN6ZldyeHNrbS9mWDI1UmIK
 V1B4aWgydmRSeTgxNGROUFcyNXJnZHc9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
-
 --===============3996062709511591449==
 Content-Transfer-Encoding: base64
 Content-Type: text/plain
@@ -142,11 +140,18 @@ Content-Disposition: form-data; name="file6"; filename="client.txt"
 Y2xpZW50LnBlbSBhbmQgY2xpZW50LmtleSB3ZXJlIHJldHJpZXZlZCBmcm9tIGh0dHB0ZXN0ZXIg
 ZG9ja2VyIGltYWdlOgoKYW5zaWJsZS9hbnNpYmxlQHNoYTI1NjpmYTVkZWY4YzI5NGZjNTA4MTNh
 ZjEzMWMwYjU3Mzc1OTRkODUyYWJhYzljYmU3YmEzOGUxN2JmMWM4NDc2ZjNmCg==
-
 --===============3996062709511591449==
 Content-Transfer-Encoding: 7bit
 Content-Type: text/plain
 Content-Disposition: form-data; name="file7"; filename="client.txt"
+
+client.pem and client.key were retrieved from httptester docker image:
+
+ansible/ansible@sha256:fa5def8c294fc50813af131c0b5737594d852abac9cbe7ba38e17bf1c8476f3f
+
+--===============3996062709511591449==
+Content-Type: text/plain
+Content-Disposition: form-data; name="file8"; filename="client.txt"
 
 client.pem and client.key were retrieved from httptester docker image:
 

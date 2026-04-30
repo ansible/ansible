@@ -445,10 +445,10 @@ from urllib.parse import urlencode, urljoin
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.urls import (
+    create_multipart,
     fetch_url,
     get_response_filename,
     parse_content_type,
-    prepare_multipart,
     url_argument_spec,
     url_redirect_argument_spec,
 )
@@ -648,7 +648,9 @@ def main():
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
     elif body_format == 'form-multipart':
         try:
-            content_type, body = prepare_multipart(body)
+            multipart = create_multipart(body)
+            content_type = multipart.content_type
+            body = multipart.as_fp()
         except (TypeError, ValueError) as e:
             module.fail_json(msg='failed to parse body as form-multipart: %s' % to_native(e))
         dict_headers['Content-Type'] = content_type
