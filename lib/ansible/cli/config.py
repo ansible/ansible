@@ -103,8 +103,6 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
-        common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
-                            help="Filter down to a specific plugin type.")
         common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
 
         subparsers = self.parser.add_subparsers(dest='action')
@@ -112,11 +110,15 @@ class ConfigCLI(CLI):
 
         list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
+        list_parser.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                                 help="Filter down to a specific plugin type.")
         list_parser.add_argument('--format', '-f', dest='format', action='store', choices=['json', 'yaml'], default='yaml',
                                  help='Output format for list')
 
         dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
         dump_parser.set_defaults(func=self.execute_dump)
+        dump_parser.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                                 help="Filter down to a specific plugin type.")
         dump_parser.add_argument('--only-changed', '--changed-only', dest='only_changed', action='store_true',
                                  help="Only show configurations that have changed from the default")
         dump_parser.add_argument('--format', '-f', dest='format', action='store', choices=['json', 'yaml', 'display'], default='display',
@@ -124,9 +126,13 @@ class ConfigCLI(CLI):
 
         view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
+        view_parser.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                                 help="Filter down to a specific plugin type.")
 
         init_parser = subparsers.add_parser('init', help='Create initial configuration', parents=[common])
         init_parser.set_defaults(func=self.execute_init)
+        init_parser.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                                 help="Filter down to a specific plugin type.")
         init_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env', 'vars'], default='ini',
                                  help='Output format for init')
         init_parser.add_argument('--disabled', dest='commented', action='store_true', default=False,
@@ -134,11 +140,13 @@ class ConfigCLI(CLI):
 
         validate_parser = subparsers.add_parser('validate',
                                                 help='Validate the configuration file and environment variables. '
-                                                     'By default it only checks the base settings without accounting for plugins (see -t).',
+                                                     'By default it checks the base settings and plugin settings (see -t).',
                                                 parents=[common])
         validate_parser.set_defaults(func=self.execute_validate)
-        validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'] , default='ini',
-                                     help='Output format for init')
+        validate_parser.add_argument("-t", "--type", action="store", default='all', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+                                     help="Filter down to a specific plugin type.")
+        validate_parser.add_argument('--format', '-f', dest='format', action='store', choices=['ini', 'env'], default='ini',
+                                     help='Output format for validate')
 
     def post_process_args(self, options):
         options = super(ConfigCLI, self).post_process_args(options)
