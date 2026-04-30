@@ -1,0 +1,4 @@
+bugfixes:
+  - ssh-agent - fix partial socket reads
+  - ssh-agent - fix wire format serialization for zero-length values
+  - ssh-agent - cap agent response size to match OpenSSH limits
