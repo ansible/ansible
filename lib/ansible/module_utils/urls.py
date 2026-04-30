@@ -30,6 +30,7 @@ this code instead.
 from __future__ import annotations
 
 import base64
+import datetime as _datetime
 import email.encoders
 import email.mime.application
 import email.mime.multipart
@@ -38,6 +39,7 @@ import email.parser
 import email.policy
 import email.utils
 import http.client
+import io as _io
 import mimetypes
 import netrc
 import os
@@ -45,12 +47,15 @@ import platform
 import re
 import socket
 import tempfile
+import time as _time
 import traceback
 import types  # pylint: disable=unused-import
 import urllib.error
 import urllib.request
+from collections import abc as _c
 from contextlib import contextmanager
 from http import cookiejar
+from urllib.parse import ParseResult as _ParseResult
 from urllib.parse import unquote, urlparse, urlunparse
 from urllib.request import BaseHandler
 
@@ -68,6 +73,7 @@ else:
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.common.collections import Mapping, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.compat import typing as _t
 
 try:
     import ssl
@@ -472,8 +478,15 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
         )
 
 
-def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_certs=True, client_cert=None,
-                 client_key=None):
+def make_context(
+    cafile: str | None = None,
+    cadata: bytearray | None = None,
+    capath: str | None = None,
+    ciphers: list[str] | None = None,
+    validate_certs: bool = True,
+    client_cert: str | None = None,
+    client_key: str | None = None
+) -> ssl.SSLContext:
     if ciphers is None:
         ciphers = []
 
@@ -511,14 +524,18 @@ def make_context(cafile=None, cadata=None, capath=None, ciphers=None, validate_c
     return context
 
 
-def get_ca_certs(cafile=None, capath=None):
+def get_ca_certs(
+    cafile: str | None = None,
+    capath: str | None = None,
+) -> tuple[bytearray, list[str]]:
     # tries to find a valid CA cert in one of the
     # standard locations for the current distribution
 
     # Using a dict, instead of a set for order, the value is meaningless and will be None
     # Not directly using a bytearray to avoid duplicates with fast lookup
-    cadata = {}
+    cadata: dict[bytes, None] = {}
 
+    paths_checked: _c.Iterable
     # If cafile is passed, we are only using that for verification,
     # don't add additional ca certs
     if cafile:
@@ -568,9 +585,9 @@ def get_ca_certs(cafile=None, capath=None):
         if not path or path == default_capath or not os.path.isdir(path):
             continue
 
-        for f in os.listdir(path):
-            full_path = os.path.join(path, f)
-            if os.path.isfile(full_path) and os.path.splitext(f)[1] in {'.pem', '.cer', '.crt'}:
+        for filename in os.listdir(path):
+            full_path = os.path.join(path, filename)
+            if os.path.isfile(full_path) and os.path.splitext(filename)[1] in {'.pem', '.cer', '.crt'}:
                 try:
                     with open(full_path, 'r', errors='surrogateescape') as cert_file:
                         cert = cert_file.read()
@@ -620,7 +637,7 @@ def get_channel_binding_cert_hash(certificate_der):
     return digest.finalize()
 
 
-def rfc2822_date_string(timetuple, zone='-0000'):
+def rfc2822_date_string(timetuple: _time.struct_time, zone: str = '-0000') -> str:
     """Accepts a timetuple and optional zone which defaults to ``-0000``
     and returns a date string as specified by RFC 2822, e.g.:
 
@@ -637,11 +654,18 @@ def rfc2822_date_string(timetuple, zone='-0000'):
         zone)
 
 
-def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_auth, use_netrc):
-    headers = {}
-    handlers = []
+def _configure_auth(
+    url: str,
+    url_username: str | None,
+    url_password: str | None,
+    use_gssapi: bool | None,
+    force_basic_auth: bool | None,
+    use_netrc: bool | None
+) -> tuple[str, dict[str, str], list[urllib.request.BaseHandler]]:
+    headers: dict[str, str] = {}
+    handlers: list[urllib.request.BaseHandler] = []
 
-    parsed = urlparse(url)
+    parsed: _ParseResult = urlparse(url)
     if parsed.scheme == 'ftp':
         return url, headers, handlers
 
@@ -661,7 +685,7 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
         password = unquote(password)
 
         # reconstruct url without credentials
-        url = urlunparse(parsed._replace(netloc=netloc))
+        url = _t.cast(str, urlunparse(parsed._replace(netloc=netloc)))
 
     if use_gssapi:
         if HTTPGSSAPIAuthHandler:  # type: ignore[truthy-function]
@@ -671,7 +695,7 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
                                                url='https://pypi.org/project/gssapi/')
             raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
 
-    elif username and not force_basic_auth:
+    elif username and password is not None and not force_basic_auth:
         passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
 
         # this creates a password manager
@@ -693,7 +717,7 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
     elif use_netrc:
         try:
             rc = netrc.netrc(os.environ.get('NETRC'))
-            login = rc.authenticators(parsed.hostname)
+            login = rc.authenticators(_t.cast(str, parsed.hostname))
         except OSError:
             login = None
 
@@ -705,12 +729,33 @@ def _configure_auth(url, url_username, url_password, use_gssapi, force_basic_aut
     return url, headers, handlers
 
 
+_FollowRedirects: _t.TypeAlias = _t.Literal['urllib2', 'all', 'yes', 'safe', 'none']
+
+
 class Request:
-    def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
-                 url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
-                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None, unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True,
-                 context=None):
+    def __init__(
+        self,
+        headers: dict[str, str] | None = None,
+        use_proxy: bool | None = True,
+        force: bool | None = False,
+        timeout: int | None = 10,
+        validate_certs: bool | None = True,
+        url_username: str | None = None,
+        url_password: str | None = None,
+        http_agent: str | None = None,
+        force_basic_auth: bool | None = False,
+        follow_redirects: _FollowRedirects | None = 'urllib2',
+        client_cert: str | None = None,
+        client_key: str | None = None,
+        cookies: cookiejar.CookieJar | None = None,
+        unix_socket: str | None = None,
+        ca_path: str | None = None,
+        unredirected_headers: list[str] | None = None,
+        decompress: bool | None = True,
+        ciphers: list[str] | None = None,
+        use_netrc: bool | None = True,
+        context: ssl.SSLContext | None = None,
+    ) -> None:
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that can be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -760,13 +805,34 @@ class Request:
             return fallback
         return value
 
-    def open(self, method, url, data=None, headers=None, use_proxy=None,
-             force=None, last_mod_time=None, timeout=None, validate_certs=None,
-             url_username=None, url_password=None, http_agent=None,
-             force_basic_auth=None, follow_redirects=None,
-             client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None, unredirected_headers=None, decompress=None,
-             ciphers=None, use_netrc=None, context=None):
+    def open(
+        self,
+        method: str,
+        url: str,
+        data: _io.BufferedReader | None = None,
+        headers: dict[str, str] | None = None,
+        use_proxy: bool | None = None,
+        force: bool | None = None,
+        last_mod_time: _datetime.datetime | None = None,
+        timeout: int | None = None,
+        validate_certs: bool | None = None,
+        url_username: str | None = None,
+        url_password: str | None = None,
+        http_agent: str | None = None,
+        force_basic_auth: bool | None = None,
+        follow_redirects: _FollowRedirects | None = None,
+        client_cert: str | None = None,
+        client_key: str | None = None,
+        cookies: cookiejar.CookieJar | None = None,
+        use_gssapi: bool | None = False,
+        unix_socket: str | None = None,
+        ca_path: str | None = None,
+        unredirected_headers: list[str] | None = None,
+        decompress: bool | None = None,
+        ciphers: list[str] | None = None,
+        use_netrc: bool | None = None,
+        context: ssl.SSLContext | None = None,
+    ) -> http.client.HTTPResponse:
         """
         Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -808,7 +874,7 @@ class Request:
         :kwarg decompress: (optional) Whether to attempt to decompress gzip content-encoded responses
         :kwarg ciphers: (optional) List of ciphers to use
         :kwarg use_netrc: (optional) Boolean determining whether to use credentials from ~/.netrc file
-        :kwarg context: (optional) ssl.Context object for SSL validation. When provided, all other SSL related
+        :kwarg context: (optional) ssl.SSLContext object for SSL validation. When provided, all other SSL related
             arguments are ignored. See make_context.
         :returns: HTTPResponse. Added in Ansible 2.9
         """
@@ -839,7 +905,7 @@ class Request:
         use_netrc = self._fallback(use_netrc, self.use_netrc)
         context = self._fallback(context, self.context)
 
-        handlers = []
+        handlers: list[urllib.request.BaseHandler] = []
 
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
@@ -860,7 +926,7 @@ class Request:
                 client_cert=client_cert,
                 client_key=client_key,
             )
-        if unix_socket:
+        if unix_socket and UnixHTTPSHandler:
             ssl_handler = UnixHTTPSHandler(unix_socket=unix_socket, context=context)
         else:
             ssl_handler = urllib.request.HTTPSHandler(context=context)
@@ -983,13 +1049,32 @@ class Request:
         return self.open('DELETE', url, **kwargs)
 
 
-def open_url(url, data=None, headers=None, method=None, use_proxy=True,
-             force=False, last_mod_time=None, timeout=10, validate_certs=True,
-             url_username=None, url_password=None, http_agent=None,
-             force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None, decompress=True, ciphers=None, use_netrc=True):
+def open_url(
+    url: str,
+    data: _io.BufferedReader | None = None,
+    headers: dict[str, str] | None = None,
+    method: str | None = None,
+    use_proxy: bool | None = True,
+    force: bool | None = False,
+    last_mod_time: _datetime.datetime | None = None,
+    timeout: int | None = 10,
+    validate_certs: bool | None = True,
+    url_username: str | None = None,
+    url_password: str | None = None,
+    http_agent: str | None = None,
+    force_basic_auth: bool | None = False,
+    follow_redirects: _FollowRedirects | None = 'urllib2',
+    client_cert: str | None = None,
+    client_key: str | None = None,
+    cookies: cookiejar.CookieJar | None = None,
+    use_gssapi: bool | None = False,
+    unix_socket: str | None = None,
+    ca_path: str | None = None,
+    unredirected_headers: list[str] | None = None,
+    decompress: bool | None = True,
+    ciphers: list[str] | None = None,
+    use_netrc: bool | None = True,
+) -> http.client.HTTPResponse:
     """
     Sends a request via HTTP(S) or FTP using urllib (Python3)
 
@@ -1130,7 +1215,8 @@ def basic_auth_header(username, password):
     """
     if password is None:
         password = ''
-    return b"Basic %s" % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
+    encoded = base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
+    return f"Basic {encoded.decode()}"
 
 
 def url_argument_spec():
