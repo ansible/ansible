@@ -63,7 +63,7 @@ else:
     GzipFile = gzip.GzipFile  # type: ignore[assignment,misc]
 
 from ansible.module_utils.basic import missing_required_lib
-from ansible.module_utils.common.collections import Mapping, is_sequence
+from ansible.module_utils.common.collections import Mapping, OrderedSet, is_sequence
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.compat import typing as _t
 
@@ -513,9 +513,8 @@ def get_ca_certs(cafile=None, capath=None):
     # tries to find a valid CA cert in one of the
     # standard locations for the current distribution
 
-    # Using a dict, instead of a set for order, the value is meaningless and will be None
     # Not directly using a bytearray to avoid duplicates with fast lookup
-    cadata = {}
+    cadata = OrderedSet()
 
     # If cafile is passed, we are only using that for verification,
     # don't add additional ca certs
@@ -524,7 +523,7 @@ def get_ca_certs(cafile=None, capath=None):
         with open(to_bytes(cafile, errors='surrogate_or_strict'), 'r', errors='surrogateescape') as f:
             for pem in extract_pem_certs(f.read()):
                 b_der = ssl.PEM_cert_to_DER_cert(pem)
-                cadata[b_der] = None
+                cadata.add(b_der)
         return bytearray().join(cadata), paths_checked
 
     default_verify_paths = ssl.get_default_verify_paths()
@@ -575,7 +574,7 @@ def get_ca_certs(cafile=None, capath=None):
                     try:
                         for pem in extract_pem_certs(cert):
                             b_der = ssl.PEM_cert_to_DER_cert(pem)
-                            cadata[b_der] = None
+                            cadata.add(b_der)
                     except Exception:
                         continue
                 except OSError:

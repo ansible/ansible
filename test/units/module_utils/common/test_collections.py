@@ -8,7 +8,7 @@ from __future__ import annotations
 import pytest
 
 from collections.abc import Sequence
-from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
+from ansible.module_utils.common.collections import ImmutableDict, OrderedSet, is_iterable, is_sequence
 
 
 class SeqStub:
@@ -146,3 +146,323 @@ class TestImmutableDict:
         actual_repr = repr(imdict)
         expected_repr = "ImmutableDict({0})".format(initial_data_repr)
         assert actual_repr == expected_repr
+
+
+class TestOrderedSet:
+    def test_init_empty(self):
+        o = OrderedSet()
+        assert len(o) == 0
+        assert list(o) == []
+
+    def test_init_with_iterable(self):
+        o = OrderedSet(['foo', 'bar', 'baz'])
+        assert list(o) == ['foo', 'bar', 'baz']
+
+    def test_init_deduplication(self):
+        o = OrderedSet([1, 2, 1, 3, 2, 4])
+        assert list(o) == [1, 2, 3, 4]
+
+    def test_repr(self):
+        o = OrderedSet([1, 2, 3])
+        assert repr(o) == "OrderedSet([1, 2, 3])"
+
+    def test_repr_empty(self):
+        o = OrderedSet()
+        assert repr(o) == "OrderedSet([])"
+
+    def test_len(self):
+        o = OrderedSet([1, 2, 3])
+        assert len(o) == 3
+
+    def test_len_empty(self):
+        o = OrderedSet()
+        assert len(o) == 0
+
+    @pytest.mark.parametrize('value,expected', [
+        ('foo', True),
+        ('missing', False),
+        (1, False),
+    ])
+    def test_contains(self, value, expected):
+        o = OrderedSet(['foo', 'bar', 'baz'])
+        assert (value in o) == expected
+
+    def test_iter_preserves_order(self):
+        expected = ['foo', 'bar', 'baz']
+        o = OrderedSet(expected)
+        assert list(o) == expected
+
+    def test_add(self):
+        o = OrderedSet()
+        o.add('foo')
+        assert 'foo' in o
+        assert list(o) == ['foo']
+
+    def test_add_duplicate(self):
+        o = OrderedSet(['foo', 'bar'])
+        o.add('foo')
+        assert list(o) == ['foo', 'bar']
+
+    def test_discard_existing(self):
+        o = OrderedSet(['foo', 'bar', 'baz'])
+        o.discard('bar')
+        assert list(o) == ['foo', 'baz']
+
+    def test_discard_missing(self):
+        o = OrderedSet(['foo', 'bar'])
+        o.discard('missing')
+        assert list(o) == ['foo', 'bar']
+
+    def test_clear(self):
+        o = OrderedSet(['foo', 'bar', 'baz'])
+        o.clear()
+        assert len(o) == 0
+        assert list(o) == []
+
+    def test_copy(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz'])
+        o2 = o1.copy()
+        assert o1 == o2
+        assert o1 is not o2
+
+    def test_copy_independence(self):
+        o1 = OrderedSet(['foo', 'bar'])
+        o2 = o1.copy()
+        o2.add('baz')
+        assert list(o1) == ['foo', 'bar']
+        assert list(o2) == ['foo', 'bar', 'baz']
+
+    def test_eq_same_order(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2, 3])
+        assert o1 == o2
+
+    def test_eq_different_order(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([3, 2, 1])
+        assert o1 != o2
+
+    def test_eq_different_elements(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2, 4])
+        assert o1 != o2
+
+    def test_eq_different_length(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2])
+        assert o1 != o2
+
+    @pytest.mark.parametrize('other', [
+        set([1, 2, 3]),
+        [1, 2, 3],
+        {1: 2, 2: 3, 3: 4},
+        'abc',
+    ])
+    def test_eq_with_non_orderedset(self, other):
+        o = OrderedSet([1, 2, 3])
+        assert (o == other) is False
+
+    def test_difference(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        result = o1 - o2
+        assert list(result) == ['foo', 'baz']
+
+    def test_difference_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        result = o1.difference(o2)
+        assert list(result) == ['foo', 'baz']
+
+    def test_difference_update(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        o1 -= o2
+        assert list(o1) == ['foo', 'baz']
+
+    def test_difference_update_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        o1.difference_update(o2)
+        assert list(o1) == ['foo', 'baz']
+
+    def test_intersection(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        result = o1 & o2
+        assert list(result) == ['bar', 'qux']
+
+    def test_intersection_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        result = o1.intersection(o2)
+        assert list(result) == ['bar', 'qux']
+
+    def test_intersection_update(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        o1 &= o2
+        assert list(o1) == ['bar', 'qux']
+
+    def test_intersection_update_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham'])
+        o1.intersection_update(o2)
+        assert list(o1) == ['bar', 'qux']
+
+    def test_union(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+        result = o1 | o2
+        assert list(result) == ['foo', 'bar', 'baz', 'qux', 'ham', 'sandwich']
+
+    def test_union_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+        result = o1.union(o2)
+        assert list(result) == ['foo', 'bar', 'baz', 'qux', 'ham', 'sandwich']
+
+    def test_update(self):
+        o1 = OrderedSet(['foo', 'bar'])
+        o1 |= ['baz', 'qux']
+        assert list(o1) == ['foo', 'bar', 'baz', 'qux']
+
+    def test_update_method(self):
+        o1 = OrderedSet(['foo', 'bar'])
+        o1.update(['baz', 'qux'])
+        assert list(o1) == ['foo', 'bar', 'baz', 'qux']
+
+    def test_symmetric_difference(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+        result = o1 ^ o2
+        assert list(result) == ['foo', 'baz', 'ham', 'sandwich']
+
+    def test_symmetric_difference_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+        result = o1.symmetric_difference(o2)
+        assert list(result) == ['foo', 'baz', 'ham', 'sandwich']
+
+    def test_symmetric_difference_update(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+        o1 ^= o2
+        assert list(o1) == ['foo', 'baz', 'ham', 'sandwich']
+
+    def test_symmetric_difference_update_method(self):
+        o1 = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        o2 = OrderedSet(['qux', 'bar', 'ham', 'sandwich'])
+        o1.symmetric_difference_update(o2)
+        assert list(o1) == ['foo', 'baz', 'ham', 'sandwich']
+
+    def test_issubset_true(self):
+        o1 = OrderedSet([1, 2])
+        o2 = OrderedSet([1, 2, 3])
+        assert o1.issubset(o2)
+        assert o1 <= o2
+
+    def test_issubset_different_order(self):
+        o1 = OrderedSet([2, 1])
+        o2 = OrderedSet([1, 2, 3])
+        assert o1.issubset(o2)
+        assert o1 <= o2
+
+    def test_issubset_false(self):
+        o1 = OrderedSet([1, 2, 4])
+        o2 = OrderedSet([1, 2, 3])
+        assert not o1.issubset(o2)
+        assert not (o1 <= o2)  # pylint: disable=unnecessary-negation
+
+    def test_issubset_equal(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2, 3])
+        assert o1.issubset(o2)
+        assert o1 <= o2
+
+    def test_issuperset_true(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2])
+        assert o1.issuperset(o2)
+        assert o1 >= o2
+
+    def test_issuperset_different_order(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([2, 1])
+        assert o1.issuperset(o2)
+        assert o1 >= o2
+
+    def test_issuperset_false(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2, 4])
+        assert not o1.issuperset(o2)
+        assert not (o1 >= o2)  # pylint: disable=unnecessary-negation
+
+    def test_issuperset_equal(self):
+        o1 = OrderedSet([1, 2, 3])
+        o2 = OrderedSet([1, 2, 3])
+        assert o1.issuperset(o2)
+        assert o1 >= o2
+
+    def test_rand_intersection(self):
+        o = OrderedSet(['bar', 'qux'])
+        s = {'foo', 'bar', 'baz', 'qux'}
+        result = s & o
+        assert isinstance(result, OrderedSet)
+        assert list(result) == ['bar', 'qux']
+
+    def test_ror_union(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = s | o
+        assert isinstance(result, OrderedSet)
+        assert list(result) == ['foo', 'bar', 'baz', 'qux', 'ham']
+
+    def test_rsub_difference(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = s - o
+        assert isinstance(result, OrderedSet)
+        assert list(result) == ['ham']
+
+    def test_rxor_symmetric_difference(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = s ^ o
+        assert isinstance(result, OrderedSet)
+        assert set(result) == {'foo', 'baz', 'ham'}
+
+    def test_intersection_with_regular_set(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = o & s
+        assert list(result) == ['bar', 'qux']
+
+    def test_difference_with_regular_set(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = o - s
+        assert list(result) == ['foo', 'baz']
+
+    def test_union_with_regular_set(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = o | s
+        assert list(result) == ['foo', 'bar', 'baz', 'qux', 'ham']
+
+    def test_symmetric_difference_with_regular_set(self):
+        o = OrderedSet(['foo', 'bar', 'baz', 'qux'])
+        s = {'qux', 'bar', 'ham'}
+        result = o ^ s
+        assert set(result) == {'foo', 'baz', 'ham'}
+
+    def test_union_preserves_left_order_for_duplicates(self):
+        o1 = OrderedSet([1, 2, 3, 4])
+        o2 = OrderedSet([3, 5, 1, 6])
+        result = o1 | o2
+        assert list(result) == [1, 2, 3, 4, 5, 6]
+
+    def test_update_with_duplicates(self):
+        o = OrderedSet([1, 2, 3])
+        o.update([3, 4, 1, 5])
+        assert list(o) == [1, 2, 3, 4, 5]
