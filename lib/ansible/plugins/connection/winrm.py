@@ -640,10 +640,10 @@ class Connection(ConnectionBase):
                 log_stdout = log_stderr = '<censored due to no log>'
 
             if from_exec:
-                display.vvvvv('WINRM RESULT <Response code %d, out %r, err %r>' % (rc, log_stdout, log_stderr), host=self._winrm_host)
+                display.vvvvv(f'WINRM RESULT <Response code {rc}, out {log_stdout!r}, err {log_stderr!r}>', host=self._winrm_host)
             display.vvvvvv('WINRM RC %d' % rc, host=self._winrm_host)
-            display.vvvvvv('WINRM STDOUT %s' % log_stdout, host=self._winrm_host)
-            display.vvvvvv('WINRM STDERR %s' % log_stderr, host=self._winrm_host)
+            display.vvvvvv(f'WINRM STDOUT {log_stdout}', host=self._winrm_host)
+            display.vvvvvv(f'WINRM STDERR {log_stderr}', host=self._winrm_host)
 
             # This is done after logging so we can still see the raw stderr for
             # debugging purposes.

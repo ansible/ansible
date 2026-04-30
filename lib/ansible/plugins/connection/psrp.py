@@ -772,8 +772,8 @@ class Connection(ConnectionBase):
             log_stdout = log_stderr = '<censored due to no log>'
 
         display.vvvvv("PSRP RC: %d" % rc, host=self._psrp_host)
-        display.vvvvv("PSRP STDOUT: %s" % log_stdout, host=self._psrp_host)
-        display.vvvvv("PSRP STDERR: %s" % log_stderr, host=self._psrp_host)
+        display.vvvvv(f"PSRP STDOUT: {log_stdout}", host=self._psrp_host)
+        display.vvvvv(f"PSRP STDERR: {log_stderr}", host=self._psrp_host)
 
         # reset the host back output back to defaults, needed if running
         # multiple pipelines on the same RunspacePool
