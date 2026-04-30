@@ -1,0 +1,2 @@
+bugfixes:
+  - module_utils/basic.py - Fix ``AnsibleModule.run_command()`` to handle ``None`` return from non-blocking pipe reads (https://github.com/ansible/ansible/issues/86920).
