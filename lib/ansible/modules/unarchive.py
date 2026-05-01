@@ -252,11 +252,12 @@ import stat
 import time
 from functools import partial
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, cast
 from zipfile import ZipFile
 
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
@@ -820,7 +821,7 @@ class TgzArchive(object):
         self.tar_type = None
         self.zipflag = '-z'
         self._files_in_archive = []
-        self._files_created_by_archive = None
+        self._files_created_by_archive: OrderedSet[str] | None = None
 
     def _get_tar_type(self):
         cmd = [self.cmd_path, '--version']
@@ -886,18 +887,19 @@ class TgzArchive(object):
         created directories so that their metadata can be properly set.
         """
 
-        if not self._files_created_by_archive:
-            self._files_created_by_archive = dict()  # Use dict as ordered set
+        if self._files_created_by_archive is None:
+            self._files_created_by_archive = cast(OrderedSet[str], OrderedSet())
+            assert self._files_created_by_archive is not None  # For type hinting
             for file in self.files_in_archive:
                 filepath = Path(file)
-                self._files_created_by_archive[str(filepath)] = None
+                self._files_created_by_archive.add(str(filepath))
                 for parent in filepath.parents:
-                    self._files_created_by_archive[str(parent)] = None
+                    self._files_created_by_archive.add(str(parent))
 
-            self._files_created_by_archive.pop('.', None)
-            self._files_created_by_archive.pop('..', None)
+            self._files_created_by_archive.discard('.')
+            self._files_created_by_archive.discard('..')
 
-        yield from self._files_created_by_archive.keys()
+        yield from self._files_created_by_archive
 
     def is_unarchived(self):
         cmd = [self.cmd_path, '--diff', '-C', self.b_dest]
