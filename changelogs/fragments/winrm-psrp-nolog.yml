@@ -1,0 +1,5 @@
+security_fixes:
+  - >-
+    winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+  - >-
+    psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
