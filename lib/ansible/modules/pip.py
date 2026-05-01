@@ -326,29 +326,8 @@ from ansible.module_utils.basic import AnsibleModule, is_executable, missing_req
 from ansible.module_utils.common.locale import get_best_parsable_locale
 
 
-#: Python one-liners to be run at the command line that will determine the
-# installed version for these special libraries.  These are libraries that
-# don't end up in the output of pip freeze.
-_SPECIAL_PACKAGE_CHECKERS = {
-    'importlib': {
-        'setuptools': 'from importlib.metadata import version; print(version("setuptools"))',
-        'pip': 'from importlib.metadata import version; print(version("pip"))',
-    },
-    'pkg_resources': {
-        'setuptools': 'import setuptools; print(setuptools.__version__)',
-        'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)',
-    }
-}
-
-_VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
-
 op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
            "<": operator.lt, "==": operator.eq, "!=": operator.ne, "~=": operator.ge}
-
-
-def _is_vcs_url(name):
-    """Test whether a name is a vcs url or not."""
-    return re.match(_VCS_RE, name)
 
 
 def _is_venv_command(command):
@@ -416,19 +395,13 @@ def _get_cmd_options(module, cmd):
     return cmd_options
 
 
-def _get_packages(module, pip, chdir):
+def _get_packages(module, pip, chdir, include_freezeout=False):
     """Return results of pip command to get packages."""
     # Try 'pip list' command first.
     command = pip + ['list', '--format=json']
     locale = get_best_parsable_locale(module)
     lang_env = {'LANG': locale, 'LC_ALL': locale, 'LC_MESSAGES': locale}
     rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
-
-    # If there was an error (pip version too old) then use 'pip freeze'.
-    if rc != 0:
-        command = pip + ['freeze']
-        rc, out, err = module.run_command(command, cwd=chdir, check_rc=True)
-        return ' '.join(command), out, err, {Package.from_freeze(line) for line in out.splitlines()}
 
     package_set = set()
     freezeout = ""
@@ -438,14 +411,16 @@ def _get_packages(module, pip, chdir):
 
         package = Package(name, version, editable=package_listing.get('editable_project_location'))
         package_set.add(package)
-        # Reconstitute the old output
-        freezeout += f"{name}=={version}\n"
+        # Reconstitute the old freeze-style output for backwards compatibility
+        if include_freezeout:
+            freezeout += f"{name}=={version}\n"
 
-    return ' '.join(command), freezeout, err, package_set
+    out = freezeout if include_freezeout else out
+    return ' '.join(command), out, err, package_set
 
 
-def _is_present(module, req, installed_pkgs, pkg_command):
-    """Return whether or not package is installed."""
+def _get_installed_req(req, installed_pkgs):
+    """Return installed req"""
     for pkg in installed_pkgs:
         if pkg.package_name == req.package_name:
             if req.has_version_specifier:
@@ -453,12 +428,12 @@ def _is_present(module, req, installed_pkgs, pkg_command):
                 if '==' in pkg_str:
                     pkg_version = pkg_str.split('==', 1)[1]
                     if req.is_satisfied_by(pkg_version):
-                        return True
+                        return pkg
             else:
                 # No version requirement, just need matching name
-                return True
+                return pkg
 
-    return False
+    return None
 
 
 def _get_pip(module, env=None, executable=None):
@@ -549,30 +524,6 @@ def _fail(module, cmd, out, err):
     module.fail_json(cmd=cmd, msg=msg)
 
 
-def _get_package_info(module, package, python_bin=None):
-    """This is only needed for special packages which do not show up in pip freeze
-
-    pip and setuptools fall into this category.
-
-    :returns: a string containing the version number if the package is
-        installed.  None if the package is not installed.
-    """
-    if python_bin is None:
-        return
-
-    discovery_mechanism = 'pkg_resources'
-    importlib_rc = module.run_command([python_bin, '-c', 'import importlib.metadata'])[0]
-    if importlib_rc == 0:
-        discovery_mechanism = 'importlib'
-
-    rc, out, err = module.run_command([python_bin, '-c', _SPECIAL_PACKAGE_CHECKERS[discovery_mechanism][package]])
-    if rc:
-        formatted_dep = None
-    else:
-        formatted_dep = '%s==%s' % (package, out.strip())
-    return formatted_dep
-
-
 def setup_virtualenv(module, env, chdir, out, err):
     if module.check_mode:
         module.exit_json(changed=True)
@@ -628,7 +579,7 @@ def _resolve_package_names(
         module: AnsibleModule,
         package_list: list[Package],
         pip: list[str],
-        python_bin: str,
+        pip_version: str,
 ) -> list[Package]:
     """Resolve package references in the list.
 
@@ -643,9 +594,8 @@ def _resolve_package_names(
     # pip install --dry-run is not available in pip versions older than 22.2 and it doesn't
     # work correctly on all cases until 24.1, so check for this and use the non-resolved
     # package names if pip is outdated.
-    pip_dep = _get_package_info(module, "pip", python_bin)
 
-    installed_pip = LooseVersion(pip_dep.split('==')[1])
+    installed_pip = LooseVersion(pip_version)
     minimum_pip = LooseVersion("24.1")
 
     if installed_pip < minimum_pip:
@@ -685,7 +635,7 @@ class Package:
 
     _CANONICALIZE_RE = re.compile(r'[-_.]+')
 
-    def __init__(self, name_string, version_string=None, editable=False):
+    def __init__(self, name_string, version_string=None, editable=None):
         self._plain_package = False
         self.package_name = name_string
         self._requirement = None
@@ -708,11 +658,6 @@ class Package:
             self._plain_package = True
         except ValueError as e:
             pass
-
-    @classmethod
-    def from_freeze(cls, string):
-        name, version = string.split('==')
-        return cls(name, version_string=version)
 
     @property
     def has_version_specifier(self):
@@ -836,9 +781,6 @@ def main():
             if not os.path.exists(os.path.join(env, 'bin', 'activate')):
                 venv_created = True
                 out, err, venv_cmd = setup_virtualenv(module, env, chdir, out, err)
-            py_bin = os.path.join(env, 'bin', 'python')
-        else:
-            py_bin = module.params['executable'] or sys.executable
 
         pip = _get_pip(module, env, module.params['executable'])
 
@@ -854,15 +796,7 @@ def main():
         if env:
             path_prefix = os.path.join(env, 'bin')
 
-        # Automatically apply -e option to extra_args when source is a VCS url. VCS
-        # includes those beginning with svn+, git+, hg+ or bzr+
-        has_vcs = False
         if name:
-            for pkg in name:
-                if pkg and _is_vcs_url(pkg):
-                    has_vcs = True
-                    break
-
             # convert raw input package names to Package instances
             packages = [Package(pkg) for pkg in _recover_package_name(name)]
             # check invalid combination of arguments
@@ -908,34 +842,25 @@ def main():
             if extra_args or requirements or state == 'latest' or not name:
                 module.exit_json(changed=True)
 
-            pkg_cmd, out_pip, err_pip, pkg_set = _get_packages(module, pip, chdir)
+            pkg_cmd, out_pip, err_pip, installed_pkg_set = _get_packages(module, pip, chdir, include_freezeout=True)
 
             out += out_pip
             err += err_pip
 
+            installed_pip = _get_installed_req(Package('pip'), installed_pkg_set)
+            pip_version = str(installed_pip).split("==", 1)[1]
             changed = False
             if name:
-                if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
-                    # Older versions of pip (pre-1.3) do not have pip list.
-                    # pip freeze does not list setuptools or pip in its output
-                    # So we need to get those via a specialcase
-                    for pkg in ('setuptools', 'pip'):
-                        if pkg in name:
-                            formatted_dep = _get_package_info(module, pkg, py_bin)
-                            if formatted_dep is not None:
-                                pkg_set.add(Package.from_freeze(formatted_dep))
-                                out += '%s\n' % formatted_dep
-
-                normalized_package_list = _resolve_package_names(module, packages, pip, py_bin)
+                normalized_package_list = _resolve_package_names(module, packages, pip, pip_version)
 
                 for package in normalized_package_list:
-                    is_present = _is_present(module, package, pkg_set, pkg_cmd)
+                    is_present = _get_installed_req(package, installed_pkg_set)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
-            module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
+            module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)  # Currently lies by saying what *is* run rather than what *would* be run
 
-        _cmd, _out, _err, out_freeze_before = _get_packages(module, pip, chdir)
+        _cmd, _out, _err, installed_set_before = _get_packages(module, pip, chdir)
 
         rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
@@ -946,10 +871,8 @@ def main():
         elif rc != 0:
             _fail(module, cmd, out, err)
 
-        _rc, _out, _err, out_freeze_after = _get_packages(module, pip, chdir)
-        changed = out_freeze_before != out_freeze_after
-
-        changed = changed or venv_created
+        _cmd, _out, _err, installed_set_after = _get_packages(module, pip, chdir)
+        changed = (installed_set_before != installed_set_after) or venv_created
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                          state=state, requirements=requirements, virtualenv=env,
