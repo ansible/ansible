@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import collections.abc as c
 import os
 import random
+import time
+import typing as t
 
 from ....config import (
     IntegrationConfig,
@@ -11,7 +14,19 @@ from ....config import (
 
 from ....containers import (
     run_support_container,
-    wait_for_file,
+)
+
+from ....http import (
+    HttpClient,
+)
+
+from ....util import (
+    ApplicationError,
+    display,
+)
+
+from ....util_common import (
+    CommonConfig,
 )
 
 from . import (
@@ -19,6 +34,41 @@ from . import (
     CloudEnvironmentConfig,
     CloudProvider,
 )
+
+
+def wait_for_url(
+    args: CommonConfig,
+    url: str,
+    *,
+    sleep: int,
+    tries: int,
+    check: t.Optional[c.Callable[[int, str], bool]] = None,
+) -> tuple[int, str]:
+    """Wait for the specified URL to become available and return its HTTP status code and contents."""
+    display.info(f"Waiting for URL {url!r}", verbosity=1)
+
+    if not check:
+        def check(status: int, content: str) -> bool:  # pylint: disable=unused-argument
+            return 200 <= status < 300
+
+    client = HttpClient(args)
+    for _iteration in range(1, tries):
+        if _iteration > 1:
+            time.sleep(sleep)
+
+        try:
+            response = client.get(url)
+            status, content = response.status_code, response.response
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            status, content = -1, f"Error: {exc}"
+            continue
+
+        display.info(f"GET {url} -> {status}: {content!r}", verbosity=2)
+
+        if check(status, content):
+            return status, content
+
+    raise ApplicationError(f"Timeout waiting for URL {url!r}; last status was {status} and last content was {content!r}")
 
 
 class ACMEProvider(CloudProvider):
@@ -66,12 +116,14 @@ class ACMEProvider(CloudProvider):
             return
 
         if not self.args.explain:
-            def check(content: str) -> bool:
-                return content.startswith("-----BEGIN CERTIFICATE-----")
+            def check(status: int, content: str) -> bool:
+                return 200 <= status < 300 and content.startswith("-----BEGIN CERTIFICATE-----")
 
-            # It would be better to query the controller's /root-certificate-for-acme-endpoint endpoint,
-            # but that's more expensive
-            root_ca = wait_for_file(self.args, descriptor.name, '/pebble-src/test/certs/pebble.minica.pem', sleep=1, tries=30, check=check)
+            if 5000 in descriptor.details.published_ports:
+                our_hostname = f"localhost:{descriptor.details.published_ports[5000]}"
+            else:
+                our_hostname = f"{descriptor.details.container_ip}:5000"
+            dummy, root_ca = wait_for_url(self.args, f"http://{our_hostname}/root-certificate-for-acme-endpoint", sleep=1, tries=30, check=check)
 
             self._set_cloud_config('acme_endpoint_root_ca_certificate_content', root_ca)
             rnd = random.randbytes(6).hex()
