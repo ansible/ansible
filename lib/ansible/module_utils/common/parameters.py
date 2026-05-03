@@ -868,7 +868,8 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
 
     deferred_removals = deque()
 
-    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    # sort ensuring we always handle longer strings vs subsets
+    no_log_strings = sorted([to_native(s, errors='surrogate_or_strict') for s in no_log_strings], key=len, reverse=True)
     new_value = _sanitize_keys_conditions(obj, no_log_strings, ignore_keys, deferred_removals)
 
     while deferred_removals:
@@ -908,7 +909,8 @@ def remove_values(value, no_log_strings):
 
     deferred_removals = deque()
 
-    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    # sort ensuring we always handle longer strings vs subsets
+    no_log_strings = sorted([to_native(s, errors='surrogate_or_strict') for s in no_log_strings], key=len, reverse=True)
     new_value = _remove_values_conditions(value, no_log_strings, deferred_removals)
 
     while deferred_removals:
