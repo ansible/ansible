@@ -200,8 +200,18 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        hostnames = ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
-        if hostnames:
+        # Only include FQDNs in the auto-limit to prevent short hostnames
+        # from colliding with inventory group names (issue #86854)
+        limit_hosts = list(set([host, node]))
+        # Only add short hostname variants if they are genuinely different
+        # AND don't risk shadowing group names — skip split()[0] tokens entirely
+        # when the FQDN is already present, as --limit resolves both hosts and groups
+        hostnames = ','.join(limit_hosts)
+        user_limit = context.CLIARGS.get('subset')
+        if user_limit:
+            # User explicitly passed --limit, honour it for checkout too
+            limit_opts = user_limit
+        elif hostnames:
             limit_opts = 'localhost,%s,127.0.0.1' % hostnames
         else:
             limit_opts = 'localhost,127.0.0.1'
