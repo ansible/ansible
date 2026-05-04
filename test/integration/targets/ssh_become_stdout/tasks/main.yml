@@ -1,0 +1,35 @@
+- name: run setup script
+  ansible.builtin.command:
+    argv:
+     - "python"
+     - "{{ role_path }}/files/runme.py"
+  delegate_to: localhost
+
+- name: get ip of container
+  ansible.builtin.command:
+    argv:
+      - docker
+      - inspect
+      - -f
+      - "{{ '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' }}"
+      - host1
+  register: host1_ip
+
+- name: add host 1
+  ansible.builtin.add_host:
+    hostname: "{{ host1_ip.stdout }}"
+    ansible_user: john
+    ansible_password: 12345
+    ansible_become_password: 12345
+
+- name: run_test_script
+  become: yes
+  become_user: root
+  script: "{{ role_path }}/files/test_script.sh"
+  register: A
+  delegate_to: "{{ host1_ip.stdout }}"
+
+- name: assert_no_empty_string_output
+  assert:
+    that:
+      - A.stdout_lines[0] == "line1"

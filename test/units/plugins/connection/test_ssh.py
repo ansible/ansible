@@ -597,3 +597,44 @@ class TestSSHConnectionRetries(object):
         assert b_stdout == b"my_stdout\nsecond_line"
         assert b_stderr == b"my_stderr"
         assert self.mock_popen.call_count == 2
+
+    def test_ssh_examine_output_removes_blank_line_before_become_success(self):
+        pc = PlayContext()
+        conn = connection_loader.get('ssh', pc)
+
+        conn.set_become_plugin(become_loader.get('sudo'))
+
+        conn.become.check_missing_password = MagicMock()
+        conn.become.check_incorrect_password = MagicMock()
+        conn.become.check_success = MagicMock()
+        conn.become.expect_prompt = MagicMock()
+        conn.become.check_password_prompt = MagicMock()
+
+        conn.become.check_missing_password.return_value = False
+        conn.become.check_incorrect_password.return_value = False
+        conn.become.expect_prompt.return_value = True
+        conn.become.success = True
+
+        conn._flags = {}
+        conn._flags['become_success'] = False
+
+        def check_success_local(x):
+            if b"BECOME-SUCCESS..." in x:
+                conn._flags['become_success'] = True
+                return True
+            return False
+
+        def check_password_prompt(x):
+            if b"[sudo] password:" in x:
+                return True
+
+            return False
+
+        conn.become.check_success.side_effect = check_success_local
+        conn.become.check_password_prompt.side_effect = check_password_prompt
+
+        output = conn._examine_output("stdout", "abc", b"[sudo] password:\r\n\r\nBECOME-SUCCESS...\r\nline 1\r\n", True)[0]
+
+        output_str = output.decode()
+
+        assert output_str == "line 1\r\n"
