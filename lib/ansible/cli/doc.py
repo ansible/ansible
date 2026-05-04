@@ -1066,8 +1066,13 @@ class DocCLI(CLI, RoleMixin):
         collection_name = result.plugin_resolved_collection
 
         try:
-            doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-                                            collection_name=collection_name, plugin_type=plugin_type)
+            doc, __, __, __ = get_docstring(
+                filename=filename,
+                fragment_loader=fragment_loader,
+                verbose=(context.CLIARGS['verbosity'] > 0),
+                collection_name=collection_name,
+                plugin_type=plugin_type,
+            )
         except Exception as ex:
             raise AnsibleError(f"{plugin_type} {plugin_name} at {filename!r} has a documentation formatting error or is missing documentation.") from ex
 

@@ -484,7 +484,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader)
+                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(filename=in_path, fragment_loader=fragment_loader)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -519,7 +519,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
+        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(filename=in_path, fragment_loader=fragment_loader, plugin_type='module')
         return list(oc['options'].keys())
 
     def run(self):
