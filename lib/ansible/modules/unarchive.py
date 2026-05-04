@@ -821,7 +821,6 @@ class TgzArchive(object):
         self.tar_type = None
         self.zipflag = '-z'
         self._files_in_archive = []
-        self._files_created_by_archive: OrderedSet[str] | None = None
 
     def _get_tar_type(self):
         cmd = [self.cmd_path, '--version']
@@ -886,20 +885,17 @@ class TgzArchive(object):
         while excluding the containing directory. This property includes those implicitly
         created directories so that their metadata can be properly set.
         """
+        files_created = cast(OrderedSet[str], OrderedSet())
+        for file in self.files_in_archive:
+            filepath = Path(file)
+            files_created.add(str(filepath))
+            for parent in filepath.parents:
+                files_created.add(str(parent))
 
-        if self._files_created_by_archive is None:
-            self._files_created_by_archive = cast(OrderedSet[str], OrderedSet())
-            assert self._files_created_by_archive is not None  # For type hinting
-            for file in self.files_in_archive:
-                filepath = Path(file)
-                self._files_created_by_archive.add(str(filepath))
-                for parent in filepath.parents:
-                    self._files_created_by_archive.add(str(parent))
+        files_created.discard('.')
+        files_created.discard('..')
 
-            self._files_created_by_archive.discard('.')
-            self._files_created_by_archive.discard('..')
-
-        yield from self._files_created_by_archive
+        yield from files_created
 
     def is_unarchived(self):
         cmd = [self.cmd_path, '--diff', '-C', self.b_dest]
