@@ -1006,6 +1006,9 @@ class Connection(ConnectionBase):
                 display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_nopasswd_error'] = True
 
+            if self.become.success and not self._flags['become_success'] and not b_line.rstrip():
+                suppress_output = True
+
             if not suppress_output:
                 output.append(b_line)
 
