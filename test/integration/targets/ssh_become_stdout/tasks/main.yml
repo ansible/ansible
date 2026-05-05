@@ -1,35 +1,47 @@
-- name: run setup script
-  ansible.builtin.command:
-    argv:
-     - "python"
-     - "{{ role_path }}/files/runme.py"
-  delegate_to: localhost
+- name: ansible test user
+  import_role:
+    role: setup_test_user
+  vars:
+    test_user_allow_sudo: true
 
-- name: get ip of container
-  ansible.builtin.command:
-    argv:
-      - docker
-      - inspect
-      - -f
-      - "{{ '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' }}"
-      - host1
-  register: host1_ip
+- name: setup ssh
+  when: ansible_facts.system != 'Darwin'
+  block:
+    - name: find file
+      ansible.builtin.find:
+        paths: /etc/ssh
+        recurse: true
+        contains: PasswordAuthentication
+      register: files_with_authentication
 
-- name: add host 1
-  ansible.builtin.add_host:
-    hostname: "{{ host1_ip.stdout }}"
-    ansible_user: john
-    ansible_password: 12345
-    ansible_become_password: 12345
+    - name: replace password authentication to yes
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regexp: ^PasswordAuthentication
+        line: PasswordAuthentication yes
+      loop: "{{ files_with_authentication.files | default([{'path': '/etc/ssh/sshd_config'}], true) | map(attribute='path') }}"
 
-- name: run_test_script
-  become: yes
+    - name: restart ssh service
+      ansible.builtin.service:
+        name: ssh{{ '' if ansible_facts.os_family == 'Debian' else 'd' }}
+        state: restarted
+
+- name: run test script
+  ansible.builtin.script: "{{ role_path }}/files/test_script.sh"
+  become: true
   become_user: root
-  script: "{{ role_path }}/files/test_script.sh"
-  register: A
-  delegate_to: "{{ host1_ip.stdout }}"
+  register: script_result
+  vars:
+    ansible_connection: ssh
+    ansible_become: true
+    ansible_host: localhost
+    ansible_user: "{{ test_user_name }}"
+    ansible_password: "{{ test_user_plaintext_password }}"
+    ansible_become_password: "{{ test_user_plaintext_password }}"
+    ansible_ssh_args: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    ansible_ssh_password_mechanism: ssh_askpass
 
-- name: assert_no_empty_string_output
-  assert:
+- name: assert script stdout
+  ansible.builtin.assert:
     that:
-      - A.stdout_lines[0] == "line1"
+      - script_result.stdout_lines == ['line1']
