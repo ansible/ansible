@@ -36,7 +36,7 @@ from ansible.vars.manager import VariableManager
 display = Display()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class HV:
     host: Host
     vars: dict = field(compare=False, hash=False)
