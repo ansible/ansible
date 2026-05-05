@@ -59,6 +59,16 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.yolo --type test | s
 expected_out="$(sed '1 s/\(^> TEST testns\.testcol\.yolo\).*(.*)$/\1/' yolo-text.output)"
 test "$current_out" == "$expected_out"
 
+# PAGER is set to less by default, so we need to test with other pagers
+for pager in more cat; do
+    echo "testing with pager $pager"
+    PAGER=$pager ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" -v "Invalid collection name"
+done
+
+# set pager to empty string
+echo "testing with pager empty"
+PAGER="" ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep "${GREP_OPTS[@]}" -v "Invalid collection name"
+
 # ensure we do work with valid collection name for list
 ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection name"
 

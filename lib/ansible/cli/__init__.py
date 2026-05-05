@@ -514,17 +514,19 @@ class CLI(ABC):
             p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.communicate()
             if p.returncode == 0:
-                CLI.pager_pipe(text, 'less')
+                CLI.pager_pipe(text, pager='less')
             else:
                 display.display(text, screen_only=True)
 
     @staticmethod
-    def pager_pipe(text):
+    def pager_pipe(text, pager=None):
         """ pipe text through a pager """
-        if 'less' in CLI.PAGER:
+        pager_cmd = pager or CLI.PAGER
+
+        if 'less' in pager_cmd:
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
-            cmd = subprocess.Popen(CLI.PAGER, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+            cmd = subprocess.Popen(pager_cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
             cmd.communicate(input=to_bytes(text))
         except (OSError, KeyboardInterrupt):
             pass
