@@ -16,6 +16,7 @@ from ansible.module_utils.common.text.converters import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 from ansible._internal._datatag import _tags
 
 _FRAGMENTABLE = ('DOCUMENTATION', 'RETURN')
@@ -212,19 +213,24 @@ def add_fragments(doc, filename, fragment_loader, is_module=False, section='DOCU
         raise AnsibleFragmentError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
-def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=None, plugin_type=None):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=Sentinel, plugin_type=None):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
+    if is_module is Sentinel:
+        is_module = None
+    else:
+        display.deprecated(
+            msg="The is_module argument is deprecated.",
+            version="2.25",
+            help_text="Use plugin_type='module' instead.",
+        )
     if is_module is None:
         if plugin_type is None:
             is_module = False
         else:
             is_module = (plugin_type == 'module')
-    else:
-        # TODO deprecate is_module argument, now that we have 'type'
-        pass
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
@@ -335,7 +341,13 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     collection_name = context.plugin_resolved_collection
 
     try:
-        docs = get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
+        docs = get_docstring(
+            filename=filename,
+            fragment_loader=fragment_loader,
+            verbose=verbose,
+            collection_name=collection_name,
+            plugin_type=plugin_type,
+        )
     except Exception as ex:
         raise AnsibleParserError(f'{plugin_type} plugin {plugin!r} did not contain a DOCUMENTATION attribute in {filename!r}.') from ex
 
@@ -343,7 +355,13 @@ def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
     if not docs[0]:
         for newfile in _find_adjacent(filename, plugin, C.DOC_EXTENSIONS):
             try:
-                docs = get_docstring(newfile, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type)
+                docs = get_docstring(
+                    filename=newfile,
+                    fragment_loader=fragment_loader,
+                    verbose=verbose,
+                    collection_name=collection_name,
+                    plugin_type=plugin_type,
+                )
                 filename = newfile
                 if docs[0] is not None:
                     break
