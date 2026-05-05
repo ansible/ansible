@@ -36,6 +36,13 @@ display = Display()
 
 
 class IncludedFile:
+    """Recombines include task results from multiple hosts into consolidated IncludedFile objects.
+
+    TaskExecutor processes include tasks per-host in workers, returning include metadata without loading
+    the included file. Strategy plugins collect these per-host results and call process_include_results()
+    to consolidate them: hosts with identical (filename, args, vars, task) are merged into a single
+    IncludedFile, allowing the strategy to load and process the included tasks once for all affected hosts.
+    """
 
     def __init__(self, filename, args, vars, task, is_role: bool = False) -> None:
         self._filename = filename
@@ -209,6 +216,12 @@ class IncludedFile:
 
                         inc_file = IncludedFile(role_name, include_args, special_vars, new_task, is_role=True)
 
+                    # Deduplication loop handles multiple facets:
+                    # 1. Cross-host consolidation: merge hosts with same (filename, args, vars, task) into one IncludedFile
+                    # 2. Loop iteration tracking: each loop item creates distinct execution context per-host
+                    # 3. Duplicate loop items: loop=[a,b,a] means 3 executions; same host+context creates NEW IncludedFile
+                    # 4. Order preservation: execution order depends on IncludedFile list order
+                    # If host already exists in matched IncludedFile (ValueError from add_host), advance idx to find/create next occurrence
                     idx = 0
                     orig_inc_file = inc_file
                     while 1:
