@@ -971,10 +971,13 @@ class ModuleValidator(Validator):
 
             with CaptureStd():
                 try:
-                    get_docstring(os.path.abspath(self.path), fragment_loader=fragment_loader,
-                                  verbose=True,
-                                  collection_name=self.collection_name,
-                                  plugin_type=self.plugin_type)
+                    get_docstring(
+                        filename=os.path.abspath(self.path),
+                        fragment_loader=fragment_loader,
+                        verbose=True,
+                        collection_name=self.collection_name,
+                        plugin_type=self.plugin_type,
+                    )
                 except AnsibleFragmentError:
                     # Will be re-triggered below when explicitly calling add_fragments()
                     pass
@@ -2181,8 +2184,11 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    os.path.abspath(self.base_module), fragment_loader, verbose=True, collection_name=self.collection_name,
-                    is_module=self.plugin_type == 'module')
+                    filename=os.path.abspath(self.base_module),
+                    fragment_loader=fragment_loader,
+                    verbose=True,
+                    collection_name=self.collection_name,
+                    plugin_type=self.plugin_type)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']

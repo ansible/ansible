@@ -1,0 +1,3 @@
+---
+deprecated_features:
+    - Deprecate is_module in get_docstring API in favor of passing ``plugin_type='module'``.
