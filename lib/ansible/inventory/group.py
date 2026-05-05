@@ -11,6 +11,7 @@ from itertools import chain
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, validate_variable_name
@@ -66,8 +67,8 @@ class Group:
         self.hosts: list[Host] = []
         self._hosts: set[str] | None = None
         self.vars: dict[str, t.Any] = {}
-        self.child_groups: list[Group] = []
-        self.parent_groups: list[Group] = []
+        self.child_groups: OrderedSet[Group] = OrderedSet()
+        self.parent_groups: OrderedSet[Group] = OrderedSet()
         self._hosts_cache: list[Host] | None = None
         self.priority: int = 1
 
@@ -77,7 +78,7 @@ class Group:
     def __str__(self):
         return self.get_name()
 
-    def _walk_relationship(self, rel, include_self=False, preserve_ordering=False) -> set[Group] | list[Group]:
+    def _walk_relationship(self, rel, include_self=False) -> OrderedSet[Group]:
         """
         Given `rel` that is an iterable property of Group,
         consitituting a directed acyclic graph among all groups,
@@ -91,36 +92,31 @@ class Group:
         F
         Called on F, returns set of (A, B, C, D, E)
         """
-        seen: set[Group] = set([])
+        seen: OrderedSet[Group] = OrderedSet([self] if include_self else [])
+        seen.update(getattr(self, rel))
         unprocessed = set(getattr(self, rel))
         if include_self:
             unprocessed.add(self)
-        if preserve_ordering:
-            ordered: list[Group] = [self] if include_self else []
-            ordered.extend(getattr(self, rel))
 
         while unprocessed:
-            seen.update(unprocessed)
+            for item in unprocessed:
+                seen.add(item)
             new_unprocessed = set([])
 
             for new_item in chain.from_iterable(getattr(g, rel) for g in unprocessed):
                 new_unprocessed.add(new_item)
-                if preserve_ordering:
-                    if new_item not in seen:
-                        ordered.append(new_item)
+                seen.add(new_item)
 
             new_unprocessed.difference_update(seen)
             unprocessed = new_unprocessed
 
-        if preserve_ordering:
-            return ordered
         return seen
 
-    def get_ancestors(self) -> set[Group]:
-        return t.cast(set, self._walk_relationship('parent_groups'))
+    def get_ancestors(self) -> OrderedSet[Group]:
+        return self._walk_relationship('parent_groups')
 
-    def get_descendants(self, **kwargs) -> set[Group] | list[Group]:
-        return self._walk_relationship('child_groups', **kwargs)
+    def get_descendants(self, include_self=False) -> OrderedSet[Group]:
+        return self._walk_relationship('child_groups', include_self=include_self)
 
     @property
     def host_names(self) -> set[str]:
@@ -148,7 +144,7 @@ class Group:
             new_ancestors.difference_update(start_ancestors)
 
             added = True
-            self.child_groups.append(group)
+            self.child_groups.add(group)
 
             # update the depth of the child
             group.depth = max([self.depth + 1, group.depth])
@@ -158,8 +154,8 @@ class Group:
 
             # now add self to child's parent_groups list, but only if there
             # isn't already a group with the same name
-            if self.name not in [g.name for g in group.parent_groups]:
-                group.parent_groups.append(self)
+            if self.name not in {g.name for g in group.parent_groups}:
+                group.parent_groups.add(self)
                 for h in group.get_hosts():
                     h.populate_ancestors(additions=new_ancestors)
 
@@ -235,17 +231,14 @@ class Group:
 
     def _get_hosts(self) -> list[Host]:
 
-        hosts: list[Host] = []
-        seen: set[Host] = set()
-        for kid in self.get_descendants(include_self=True, preserve_ordering=True):
+        hosts: OrderedSet[Host] = OrderedSet()
+        for kid in self.get_descendants(include_self=True):
             kid_hosts = kid.hosts
             for kk in kid_hosts:
-                if kk not in seen:
-                    seen.add(kk)
-                    if self.name == 'all' and kk.implicit:
-                        continue
-                    hosts.append(kk)
-        return hosts
+                if self.name == 'all' and kk.implicit:
+                    continue
+                hosts.add(kk)
+        return list(hosts)
 
     def get_vars(self) -> dict[str, t.Any]:
         return self.vars.copy()

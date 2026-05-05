@@ -108,7 +108,7 @@ def test_keyed_group_empty_construction(inventory_module):
     inventory_module._add_host_to_keyed_groups(
         _trust(keyed_groups), host.vars, host.name, strict=True
     )
-    assert host.groups == []
+    assert list(host.groups) == []
 
 
 def test_keyed_group_host_confusion(inventory_module):
@@ -153,7 +153,7 @@ def test_keyed_parent_groups(inventory_module):
     assert 'region_list' in inventory_module.inventory.groups
     region_group = inventory_module.inventory.groups['region_japan']
     all_regions = inventory_module.inventory.groups['region_list']
-    assert all_regions.child_groups == [region_group]
+    assert list(all_regions.child_groups) == [region_group]
     assert region_group.hosts == [host1, host2]
 
 
@@ -202,9 +202,9 @@ def test_parent_group_templating(inventory_module):
     nicknames_group = inventory_module.inventory.groups['nickname']
     assert [child.name for child in nicknames_group.child_groups] == ['betsy']
     # second keyed group actually generated the parent group of the first keyed group
-    assert nicknames_group.child_groups == [betsys_group]
+    assert list(nicknames_group.child_groups) == [betsys_group]
     # assert that these are, in fact, the same object
-    assert nicknames_group.child_groups[0] is betsys_group
+    assert list(nicknames_group.child_groups)[0] is betsys_group
     # "betsy" has two parents
     locations_group = inventory_module.inventory.groups['field']
     assert [child.name for child in locations_group.child_groups] == ['betsy']

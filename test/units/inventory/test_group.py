@@ -8,6 +8,7 @@ import pytest
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.errors import AnsibleError
+from ansible.module_utils.common.collections import OrderedSet
 
 
 def test_depth_update():
@@ -49,8 +50,8 @@ def test_depth_recursion():
     B = Group('B')
     A.add_child_group(B)
     # hypothetical of adding B as child group to A
-    A.parent_groups.append(B)
-    B.child_groups.append(A)
+    A.parent_groups.add(B)
+    B.child_groups.add(A)
     # can't update depths of groups, because of loop
     with pytest.raises(AnsibleError):
         B._check_children_depth()
@@ -140,10 +141,10 @@ def test_ancestors_recursive_loop_safe():
     """
     A = Group('A')
     B = Group('B')
-    A.parent_groups.append(B)
-    B.parent_groups.append(A)
+    A.parent_groups.add(B)
+    B.parent_groups.add(A)
     # finishes in finite time
-    assert A.get_ancestors() == set([A, B])
+    assert A.get_ancestors() == OrderedSet([B, A])
 
 
 @pytest.mark.parametrize("priority, expected", [

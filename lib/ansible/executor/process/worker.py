@@ -35,6 +35,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_queue_manager import FinalQueue, STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
 from ansible.inventory.host import Host
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
@@ -228,7 +229,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         utr.finalize_registered_values()
 
         self._host.vars = dict()
-        self._host.groups = []
+        self._host.groups = OrderedSet()
 
         for name, stdio in (('stdout', sys.stdout), ('stderr', sys.stderr)):
             if data := stdio.getvalue():  # type: ignore[union-attr]

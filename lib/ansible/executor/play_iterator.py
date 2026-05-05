@@ -23,6 +23,7 @@ from enum import IntEnum, IntFlag
 
 from ansible import constants as C
 from ansible.errors import AnsibleAssertionError
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
@@ -60,7 +61,7 @@ class HostState:
         self._blocks = blocks[:]
         self.handlers = []
 
-        self.handler_notifications = []
+        self.handler_notifications = OrderedSet()
 
         self.cur_block = 0
         self.cur_regular_task = 0
@@ -120,7 +121,7 @@ class HostState:
     def copy(self):
         new_state = HostState(self._blocks)
         new_state.handlers = self.handlers[:]
-        new_state.handler_notifications = self.handler_notifications[:]
+        new_state.handler_notifications = self.handler_notifications.copy()
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
@@ -653,11 +654,10 @@ class PlayIterator:
     def add_notification(self, hostname: str, notification: str) -> None:
         # preserve order
         host_state = self._host_states[hostname]
-        if notification not in host_state.handler_notifications:
-            host_state.handler_notifications.append(notification)
+        host_state.handler_notifications.add(notification)
 
     def clear_notification(self, hostname: str, notification: str) -> None:
-        self._host_states[hostname].handler_notifications.remove(notification)
+        self._host_states[hostname].handler_notifications.discard(notification)
 
     def end_host(self, hostname: str) -> None:
         """Used by ``end_host``, ``end_batch`` and ``end_play`` meta tasks to end executing given host."""

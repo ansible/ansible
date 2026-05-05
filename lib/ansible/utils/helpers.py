@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 from ansible.module_utils._internal import _no_six
+from ansible.module_utils.common.collections import OrderedSet
 
 
 def pct_to_int(value, num_items, min_value=1):
@@ -45,8 +46,7 @@ def deduplicate_list(original_list):
     """
     Creates a deduplicated list with the order in which each item is first found.
     """
-    seen = set()
-    return [x for x in original_list if x not in seen and not seen.add(x)]
+    return list(OrderedSet(original_list))
 
 
 def __getattr__(importable_name):

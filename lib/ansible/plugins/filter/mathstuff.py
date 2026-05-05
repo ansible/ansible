@@ -28,6 +28,7 @@ from collections.abc import Mapping, Iterable
 from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.common.text import formatters
 from ansible.utils.display import Display
 
@@ -82,7 +83,7 @@ def unique(environment, a, case_sensitive=None, attribute=None):
 @pass_environment
 def intersect(environment, a, b):
     try:
-        c = list(set(a) & set(b))
+        c = list(OrderedSet(a) & OrderedSet(b))
     except TypeError:
         c = unique(environment, [x for x in a if x in b], True)
     return c
@@ -91,7 +92,7 @@ def intersect(environment, a, b):
 @pass_environment
 def difference(environment, a, b):
     try:
-        c = list(set(a) - set(b))
+        c = list(OrderedSet(a) - OrderedSet(b))
     except TypeError:
         c = unique(environment, [x for x in a if x not in b], True)
     return c
@@ -100,7 +101,7 @@ def difference(environment, a, b):
 @pass_environment
 def symmetric_difference(environment, a, b):
     try:
-        c = list(set(a) ^ set(b))
+        c = list(OrderedSet(a) ^ OrderedSet(b))
     except TypeError:
         isect = intersect(environment, a, b)
         c = [x for x in union(environment, a, b) if x not in isect]
@@ -110,7 +111,7 @@ def symmetric_difference(environment, a, b):
 @pass_environment
 def union(environment, a, b):
     try:
-        c = list(set(a) | set(b))
+        c = list(OrderedSet(a) | OrderedSet(b))
     except TypeError:
         c = unique(environment, a + b, True)
     return c

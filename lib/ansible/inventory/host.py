@@ -24,6 +24,7 @@ from collections.abc import Mapping, MutableMapping
 
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group, InventoryObjectType
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.parsing.utils.addresses import patterns
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, get_unique_id, validate_variable_name
@@ -60,7 +61,7 @@ class Host:
         name = helpers.remove_trust(name)
 
         self.vars: dict[str, t.Any] = {}
-        self.groups: list[Group] = []
+        self.groups: OrderedSet[Group] = OrderedSet()
         self._uuid: str | None = None
 
         self.name: str = name
@@ -83,28 +84,22 @@ class Host:
             for group in self.groups:
                 self.add_group(group)
         else:
-            for group in additions:
-                if group not in self.groups:
-                    self.groups.append(group)
+            self.groups.update(OrderedSet(additions))
 
     def add_group(self, group: Group) -> bool:
-        added = False
         # populate ancestors first
         for oldg in group.get_ancestors():
-            if oldg not in self.groups:
-                self.groups.append(oldg)
+            self.groups.add(oldg)
 
         # actually add group
         if group not in self.groups:
-            self.groups.append(group)
-            added = True
-        return added
+            self.groups.add(group)
+            return True
+        return False
 
     def remove_group(self, group: Group) -> bool:
-        removed = False
         if group in self.groups:
-            self.groups.remove(group)
-            removed = True
+            self.groups.discard(group)
 
             # remove exclusive ancestors, xcept all!
             for oldg in group.get_ancestors():
@@ -114,7 +109,8 @@ class Host:
                             break
                     else:
                         self.remove_group(oldg)
-        return removed
+            return True
+        return False
 
     def set_variable(self, key: str, value: t.Any) -> None:
         key = helpers.remove_trust(key)
@@ -130,7 +126,7 @@ class Host:
             self.vars[key] = value
 
     def get_groups(self) -> list[Group]:
-        return self.groups
+        return list(self.groups)
 
     def get_magic_vars(self) -> dict[str, t.Any]:
         results: dict[str, t.Any] = dict(

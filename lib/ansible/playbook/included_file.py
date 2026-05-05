@@ -23,6 +23,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible._internal._task import HostTaskResult
 from ansible.inventory.host import Host
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.common.text.converters import to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.handler import Handler
@@ -42,16 +43,14 @@ class IncludedFile:
         self._args = args
         self._vars = vars
         self._task = task
-        self._hosts: list[Host] = []
+        self._hosts: OrderedSet[Host] = OrderedSet()
         self._is_role = is_role
         self._results: list[HostTaskResult] = []
 
     def add_host(self, host: Host) -> None:
-        if host not in self._hosts:
-            self._hosts.append(host)
-            return
-
-        raise ValueError()
+        if host in self._hosts:
+            raise ValueError()
+        self._hosts.add(host)
 
     def __eq__(self, other):
         if not isinstance(other, IncludedFile):

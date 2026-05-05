@@ -281,7 +281,7 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 if is_handler:
                                     for task in new_block.block:
-                                        task.notified_hosts = included_file._hosts[:]
+                                        task.notified_hosts = included_file._hosts.copy()
                                     final_block = new_block
                                 else:
                                     task_vars = self._variable_manager.get_vars(
