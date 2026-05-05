@@ -21,24 +21,24 @@ from __future__ import annotations
 import fnmatch
 import functools
 import os
+import random
 import re
 import itertools
 import typing as t
 
 from operator import attrgetter
-from random import shuffle
 
 from ansible import constants as C
 from ansible._internal import _json, _wrapt
 from ansible._internal._json import EncryptedStringBehavior
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.data import InventoryData
+from ansible.module_utils.common.collections import OrderedSet
 from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible._internal._datatag._tags import Origin
-from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -155,7 +155,7 @@ class InventoryManager:
         self._subset = None
 
         # caches
-        self._hosts_patterns_cache: dict[tuple[str, ...], list[Host]] = {}  # resolved full patterns
+        self._hosts_patterns_cache: dict[tuple[str, ...], OrderedSet[Host]] = {}  # resolved full patterns
         self._pattern_cache: dict[str, list[Host]] = {}  # resolved individual patterns
 
         # the inventory dirs, files, script paths or lists of hosts
@@ -380,14 +380,14 @@ class InventoryManager:
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None):
+    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None) -> list[Host]:
         """
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
         or applied subsets
         """
 
-        hosts = []
+        hosts: OrderedSet[Host] = OrderedSet()
 
         # Check if pattern already computed
         if isinstance(pattern, list):
@@ -408,7 +408,7 @@ class InventoryManager:
 
             if pattern_hash not in self._hosts_patterns_cache:
 
-                hosts = list(self._inventory.hosts.values())
+                hosts |= OrderedSet(self._inventory.hosts.values())
 
                 if not ignore_limits and self._subset:
                     hosts = self._evaluate_patterns(self._subset, hosts)
@@ -417,58 +417,55 @@ class InventoryManager:
                 hosts = self._evaluate_patterns(patterns, hosts)
 
                 if not ignore_restrictions and self._restriction:
-                    hosts = [h for h in hosts if h.name in self._restriction]
+                    hosts = OrderedSet(h for h in hosts if h.name in self._restriction)
 
-                self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
+                self._hosts_patterns_cache[pattern_hash] = hosts
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
-                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+                hosts = OrderedSet(sorted(self._hosts_patterns_cache[pattern_hash], key=attrgetter('name'), reverse=(order == 'reverse_sorted')))
             elif order == 'reverse_inventory':
-                hosts = self._hosts_patterns_cache[pattern_hash][::-1]
+                hosts = OrderedSet(reversed(list(self._hosts_patterns_cache[pattern_hash])))
             else:
-                hosts = self._hosts_patterns_cache[pattern_hash][:]
+                hosts = self._hosts_patterns_cache[pattern_hash].copy()
                 if order == 'shuffle':
-                    shuffle(hosts)
+                    hosts = OrderedSet(sorted(hosts, key=lambda x: random.random()))
                 elif order not in [None, 'inventory']:
                     raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
-        return hosts
+        return list(hosts)
 
-    def _evaluate_patterns(self, patterns: list[str], hosts: list[Host]) -> list[Host]:
+    def _evaluate_patterns(self, patterns: list[str], hosts: OrderedSet[Host]) -> OrderedSet[Host]:
         """
         Filters a list of hosts by applying patterns.
         """
 
         pattern_regular, pattern_intersection, pattern_exclude = order_patterns(patterns)
-        hosts_set = set(hosts)
 
         if pattern_regular:
             matched = set()
             for p in pattern_regular:
                 if p in self._inventory.hosts:
                     target_host = self._inventory.get_host(p)
-                    if target_host in hosts_set:
+                    if target_host in hosts:
                         matched.add(target_host)
                 else:
                     that = self._match_one_pattern(p)
-                    matched.update(h for h in that if h in hosts_set or h.implicit)
+                    matched.update(h for h in that if h in hosts or h.implicit)
 
-            hosts = [h for h in hosts if h in matched]
-            for h in matched - hosts_set:
+            result = OrderedSet(h for h in hosts if h in matched)
+            for h in matched - hosts:
                 if h.implicit:
-                    hosts.append(h)
-            hosts_set = matched
+                    result.add(h)
+            hosts = result
 
         for p in pattern_intersection:
             that = set(self._match_one_pattern(p))
-            hosts = [h for h in hosts if h in that]
-            hosts_set = hosts_set & that
+            hosts = hosts & that
 
         for p in pattern_exclude:
             that = set(self._match_one_pattern(p))
-            hosts = [h for h in hosts if h not in that]
-            hosts_set = hosts_set - that
+            hosts = hosts - that
 
         return hosts
 
@@ -637,7 +634,7 @@ class InventoryManager:
         """
         if restriction is None:
             return
-        elif not isinstance(restriction, list):
+        elif not isinstance(restriction, (list, OrderedSet)):
             restriction = [restriction]
         self._restriction = set(to_text(h.name) for h in restriction)
 
