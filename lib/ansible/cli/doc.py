@@ -361,7 +361,7 @@ class RoleMixin(object):
             try:
                 meta = self._load_metadata(role, role_path, collection)
             except Exception as e:
-                display.vvv('No metadata for role (%s) due to: %s' % (role, to_native(e)), True)
+                display.vvv(f'No metadata for role ({role}) due to: {e}')
                 meta = {}
 
             argspec = self._load_argspec(role, role_path, collection)
@@ -369,7 +369,7 @@ class RoleMixin(object):
                 if fail_on_errors:
                     raise argspec['exception']
                 else:
-                    display.warning('Skipping role (%s) due to: %s' % (role, argspec['error']), True)
+                    display.warning(f'Skipping role ({role}) due to: {argspec["error"]}')
                     continue
 
             fqcn, summary = self._build_summary(role, collection, meta, argspec)
