@@ -993,7 +993,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
         # Fetch updates
         begin = get_submodule_versions(git_path, module, dest)
         cmd = [git_path, 'submodule', 'foreach', git_path, 'fetch']
-        (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+        (rc, out, err) = module.run_command(cmd, cwd=dest)
         if rc != 0:
             module.fail_json(msg="Failed to fetch submodules: %s" % out + err)
 
@@ -1016,7 +1016,7 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
         else:
             # Compare against the superproject's expectation
             cmd = [git_path, 'submodule', 'status']
-            (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+            (rc, out, err) = module.run_command(cmd, cwd=dest)
             if rc != 0:
                 module.fail_json(msg='Failed to retrieve submodule status: %s' % out + err)
             for line in out.splitlines():
