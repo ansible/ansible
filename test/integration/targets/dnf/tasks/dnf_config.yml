@@ -1,0 +1,30 @@
+---
+- name: Create a broken dnf config file
+  copy:
+    content: '[broken_section\nname=value'
+    dest: '{{ remote_tmp_dir }}/broken.conf'
+  register: broken_conf
+
+- name: Use broken conf file
+  dnf:
+    name: bash
+    state: present
+    conf_file: '{{ broken_conf.dest }}'
+  register: dnf_bash_result
+  ignore_errors: true
+
+- name: Verify that broken conf raises an error
+  assert:
+    that:
+      - "dnf_bash_result is failed"
+      - "'Error in configuration file' in dnf_bash_result.msg"
+  when: ansible_facts['distribution'] == 'Fedora'
+
+- name: Verify that broken conf raises an error on RHEL
+  assert:
+    that:
+      - "dnf_bash_result is failed"
+      - "'Parsing file' in dnf_bash_result.msg"
+  when:
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution_major_version'] in (9, 10)

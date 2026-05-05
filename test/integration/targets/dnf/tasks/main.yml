@@ -43,6 +43,7 @@
     - include_tasks: logging.yml
     - include_tasks: cacheonly.yml
     - include_tasks: multilib.yml
+    - include_tasks: dnf_config.yml
 
 # Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
 - include_tasks: dnfreleasever.yml
