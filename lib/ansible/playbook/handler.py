@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import typing as _t
+
 from ansible.errors import AnsibleAssertionError
 from ansible.playbook.attribute import NonInheritableFieldAttribute
 from ansible.playbook.task import Task
@@ -72,7 +74,7 @@ class Handler(Task):
     def is_host_notified(self, host):
         return host in self.notified_hosts
 
-    def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Task:
-        new_me = super().copy(exclude_parent, exclude_tasks)
+    def copy(self, exclude_parent: bool = False, exclude_tasks: bool = False) -> Handler:
+        new_me = _t.cast(Handler, super().copy(exclude_parent, exclude_tasks))
         new_me.notified_hosts = self.notified_hosts.copy()
         return new_me
