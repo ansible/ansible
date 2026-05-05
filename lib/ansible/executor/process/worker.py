@@ -27,6 +27,8 @@ import traceback
 import types
 import typing as t
 
+from collections import defaultdict
+
 # from inspect import stack
 from multiprocessing.popen_fork import Popen as ForkPopen
 from multiprocessing.queues import Queue
@@ -65,6 +67,14 @@ class WorkerPopen(ForkPopen):
     """
     Custom implementation of multiprocessing's `Popen` class with enhancements to the poll method.
     """
+
+    # arbitrary limit for now...
+    POLL_ERROR_COUNT_MAX = 10
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._poll_error_count = defaultdict(int)
+
     def poll(self, flag=os.WNOHANG):
         # display.debug(f"poll caller: {stack()[1].function}")
         if self.returncode is None:
@@ -75,7 +85,11 @@ class WorkerPopen(ForkPopen):
                 # e.errno == errno.ECHILD == 10
                 return None
             except OSError as e:
-                display.error(f"poll error: PID {self.pid}: {e}")
+                self._poll_error_count[self.pid] += 1
+                display.error(f"poll error #{self._poll_error_count[self.pid]} for PID {self.pid}: {e}")
+                if self._poll_error_count[self.pid] > self.POLL_ERROR_COUNT_MAX:
+                    # What should we return here?
+                    return 100
                 return None
             if pid == self.pid:
                 self.returncode = os.waitstatus_to_exitcode(sts)
