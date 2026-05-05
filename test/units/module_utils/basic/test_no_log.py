@@ -160,3 +160,20 @@ class TestRemoveValues:
 
         assert inner_list == self.OMIT
         assert levels == 10000
+
+    def test_substring_redaction_order(self):
+        """Test that longer strings are redacted first to prevent partial leakage.
+
+        When one no_log string is a substring of another, the longer string
+        must be redacted first. Otherwise, replacing the shorter string first
+        would leave parts of the longer string exposed.
+        """
+        # 'test_pass2' is a substring of 'test_pass222'
+        no_log_strings = frozenset(['test_pass2', 'test_pass222'])
+        value = ['test_pass2', 'test_pass222']
+
+        result = remove_values(value, no_log_strings)
+
+        # Both should be fully redacted, not partially
+        assert result[0] == self.OMIT
+        assert result[1] == self.OMIT
