@@ -24,7 +24,7 @@
           nested_subopt:
             n_subopt1: "{{ s102 }}"
         subopt_list:
-            - subopt1: "{{103}}"
+            - subopt1: "{{ s103 }}"
       register: short_first 
 
     - name: Task with suboptions long
@@ -35,7 +35,7 @@
           nested_subopt:
             n_subopt1: "{{ s102 }}"
         subopt_list:
-            - subopt1: "{{103}}"
+            - subopt1: "{{ s103 }}"
       register: middle_top
 
     - name: Task with suboptions long
@@ -46,7 +46,7 @@
           nested_subopt:
             n_subopt1: "{{ sec }}"
         subopt_list:
-            - subopt1: "{{103}}"
+            - subopt1: "{{ s103 }}"
       register: middle_bottom
 
     - name: check output
