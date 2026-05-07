@@ -223,6 +223,12 @@ class TaskQueueManager:
         """
         signal.signal(signum, signal.SIG_DFL)
 
+        if (my_pid := os.getpid()) in [worker.pid for worker in self._workers if worker is not None]:
+            # Race condition: forked child may receive SIGTERM/SIGINT before
+            # the inherited handlers from the parent have been replaced.
+            display.error(f'Worker PID {my_pid} received signal "{signum}: {signal.strsignal(signum)}" before detachment.')
+            return
+
         for worker in self._workers:
             if worker is None or not worker.is_alive():
                 continue
