@@ -5,18 +5,21 @@ DOCUMENTATION:
   description:
     - Escape special characters in a string for use in a regular expression.
   positional: _input, re_type
-  notes:
-    - posix_extended is not implemented yet
   options:
     _input:
       description: String to escape.
       type: str
       required: true
     re_type:
-      description: Which type of escaping to use.
+      description:
+        - Which type of escaping to use.
+        - If set to V(python), Escape all regular expressions special characters from string.
+        - If set to V(posix_basic), Escape all POSIX Basic Regular Expressions special characters from string.
+        - If set to V(posix_extended), Escape all POSIX Extended Regular Expressions special characters from string.
+        - V(posix_extended) is added in Ansible Core 2.22.
       type: str
       default: python
-      choices: [python, posix_basic]
+      choices: [python, posix_basic, posix_extended]
 
 EXAMPLES: |
 
