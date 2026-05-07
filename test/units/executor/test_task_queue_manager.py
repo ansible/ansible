@@ -19,7 +19,7 @@ class TestTQMSignalHandler:
         This tests the race condition where a forked child receives SIGTERM/SIGINT
         before the inherited handlers from the parent have been replaced.
         When os.getpid() matches a worker PID, we're in the child and should
-        return early without attempting worker management.
+        skip worker management but still re-send the signal to self.
         """
         mock_inventory = mocker.Mock()
         mock_var_manager = mocker.Mock()
@@ -60,8 +60,14 @@ class TestTQMSignalHandler:
         error_msg = mock_display.error.call_args[0][0]
         assert f'Worker PID 12345 received signal "{signum}: {signame}" before detachment' in error_msg
 
-        # Verify no workers were signaled (early return)
-        assert not mock_os_kill.called
+        # Verify other workers were NOT signaled, but self was signaled
+        worker_kill_calls = [call for call in mock_os_kill.call_args_list if call[0][0] == 67890]
+        assert len(worker_kill_calls) == 0, "Other workers should not be signaled in race condition"
+
+        # Verify signal was resent to self (my_pid = 12345)
+        self_kill_calls = [call for call in mock_os_kill.call_args_list if call[0][0] == 12345]
+        assert len(self_kill_calls) == 1, "Signal should be resent to self"
+        assert self_kill_calls[0][0] == (12345, signum)
 
     def test_signal_handler_normal_operation(self, mocker):
         """Test signal handler in a normal parent process operation."""
@@ -182,7 +188,7 @@ class TestTQMSignalHandler:
         assert len(kill_calls) == 0
 
     def test_signal_handler_with_sigint_raises_keyboard_interrupt(self, mocker):
-        """Test that SIGINT raises KeyboardInterrupt after handling."""
+        """Test that SIGINT in the parent process raises KeyboardInterrupt after signaling workers."""
         mock_inventory = mocker.Mock()
         mock_var_manager = mocker.Mock()
         mock_loader = mocker.Mock()
@@ -209,8 +215,13 @@ class TestTQMSignalHandler:
 
         mocker.patch('ansible.executor.task_queue_manager.display')
         mocker.patch('ansible.executor.task_queue_manager.signal.signal')
-        mocker.patch('ansible.executor.task_queue_manager.os.kill')
+        mock_os_kill = mocker.patch('ansible.executor.task_queue_manager.os.kill')
 
-        # SIGINT should raise KeyboardInterrupt
+        # SIGINT in parent should raise KeyboardInterrupt
         with pytest.raises(KeyboardInterrupt):
             tqm._signal_handler(signal.SIGINT, None)
+
+        # Verify worker was signaled before raising
+        worker_kill_calls = [call for call in mock_os_kill.call_args_list if call[0][0] == 12345]
+        assert len(worker_kill_calls) == 1
+        assert worker_kill_calls[0][0] == (12345, signal.SIGINT)

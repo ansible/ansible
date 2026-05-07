@@ -223,34 +223,34 @@ class TaskQueueManager:
         """
         signal.signal(signum, signal.SIG_DFL)
 
-        if (my_pid := os.getpid()) in [worker.pid for worker in self._workers if worker is not None]:
+        my_pid = os.getpid()
+        signame = signal.strsignal(signum)
+
+        if my_pid in [worker.pid for worker in self._workers if worker is not None]:
             # Race condition: forked child may receive SIGTERM/SIGINT before
             # the inherited handlers from the parent have been replaced.
-            display.error(f'Worker PID {my_pid} received signal "{signum}: {signal.strsignal(signum)}" before detachment.')
-            return
+            display.error(f'Worker PID {my_pid} received signal "{signum}: {signame}" before detachment.')
+        else:
+            for worker in self._workers:
+                if worker is None or not worker.is_alive():
+                    continue
+                if worker.pid:
+                    try:
+                        # notify workers
+                        os.kill(worker.pid, signum)
+                    except OSError as e:
+                        if e.errno != errno.ESRCH:
+                            display.error(f'Unable to send {signame} to child[{worker.pid}]: {e}')
 
-        for worker in self._workers:
-            if worker is None or not worker.is_alive():
-                continue
-            if worker.pid:
-                try:
-                    # notify workers
-                    os.kill(worker.pid, signum)
-                except OSError as e:
-                    if e.errno != errno.ESRCH:
-                        signame = signal.strsignal(signum)
-                        display.error(f'Unable to send {signame} to child[{worker.pid}]: {e}')
+            if signum == signal.SIGINT:
+                # Defer to CLI handling
+                raise KeyboardInterrupt()
 
-        if signum == signal.SIGINT:
-            # Defer to CLI handling
-            raise KeyboardInterrupt()
-
-        pid = os.getpid()
+        # Default signal handler was restored, so resend the signal to self.
         try:
-            os.kill(pid, signum)
+            os.kill(my_pid, signum)
         except OSError as e:
-            signame = signal.strsignal(signum)
-            display.error(f'Unable to send {signame} to {pid}: {e}')
+            display.error(f'Unable to send {signame} to {my_pid}: {e}')
 
     def load_callbacks(self):
         """
