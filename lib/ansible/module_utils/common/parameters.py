@@ -500,7 +500,7 @@ def _set_defaults(argument_spec, parameters, set_default=True):
     return no_log_values
 
 
-def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
+def _sanitize_keys_conditions(value, deferred_removals):
     """ Helper method to :func:`sanitize_keys` to build ``deferred_removals`` and avoid deep recursion. """
     if isinstance(value, (str, bytes)):
         return value
@@ -868,8 +868,9 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
 
     deferred_removals = deque()
 
-    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
-    new_value = _sanitize_keys_conditions(obj, no_log_strings, ignore_keys, deferred_removals)
+    # sort ensuring we always handle longer strings vs subsets
+    no_log_strings = sorted([to_native(s, errors='surrogate_or_strict') for s in no_log_strings], key=len, reverse=True)
+    new_value = _sanitize_keys_conditions(obj, deferred_removals)
 
     while deferred_removals:
         old_data, new_data = deferred_removals.popleft()
@@ -877,15 +878,15 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
         if isinstance(new_data, Mapping):
             for old_key, old_elem in old_data.items():
                 if old_key in ignore_keys or old_key.startswith('_ansible'):
-                    new_data[old_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+                    new_data[old_key] = _sanitize_keys_conditions(old_elem, deferred_removals)
                 else:
                     # Sanitize the old key. We take advantage of the sanitizing code in
                     # _remove_values_conditions() rather than recreating it here.
                     new_key = _remove_values_conditions(old_key, no_log_strings, None)
-                    new_data[new_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+                    new_data[new_key] = _sanitize_keys_conditions(old_elem, deferred_removals)
         else:
             for elem in old_data:
-                new_elem = _sanitize_keys_conditions(elem, no_log_strings, ignore_keys, deferred_removals)
+                new_elem = _sanitize_keys_conditions(elem, deferred_removals)
                 if isinstance(new_data, MutableSequence):
                     new_data.append(new_elem)
                 elif isinstance(new_data, MutableSet):
@@ -908,7 +909,8 @@ def remove_values(value, no_log_strings):
 
     deferred_removals = deque()
 
-    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    # sort ensuring we always handle longer strings vs subsets
+    no_log_strings = sorted([to_native(s, errors='surrogate_or_strict') for s in no_log_strings], key=len, reverse=True)
     new_value = _remove_values_conditions(value, no_log_strings, deferred_removals)
 
     while deferred_removals:
