@@ -37,7 +37,7 @@ def main():
 
         }
     )
-    module.exit_json(msg='done')
+    module.exit_json(msg='done', values=', '.join([str(v) for v in module.params.values() if v]))
 
 
 if __name__ == '__main__':
