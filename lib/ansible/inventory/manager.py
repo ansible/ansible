@@ -45,7 +45,6 @@ from ansible.utils.vars import combine_vars
 from ansible.vars.plugins import get_vars_from_inventory_sources
 
 if t.TYPE_CHECKING:
-    from ansible.inventory.host import Host
     from ansible.plugins.inventory import BaseInventoryPlugin
     from ansible.inventory.host import Host
     from ansible._internal._task import AddHost, AddGroup
