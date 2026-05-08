@@ -438,12 +438,6 @@
   vars:
     d: {}
 
-- name: Verify regex_escape raises on posix_extended (failure expected)
-  set_fact:
-    foo: '{{"]]^"|regex_escape(re_type="posix_extended")}}'
-  ignore_errors: yes
-  register: regex_escape_fail_1
-
 - name: Verify regex_escape raises on other re_type (failure expected)
   set_fact:
     foo: '{{"]]^"|regex_escape(re_type="haha")}}'
@@ -454,8 +448,9 @@
   assert:
     that:
       - '"]]^"|regex_escape(re_type="posix_basic") == "\\]\\]\\^"'
-      - regex_escape_fail_1 is failed
-      - '"Regex type (posix_extended) not yet implemented" is in regex_escape_fail_1.msg'
+      - '"]]^"|regex_escape(re_type="posix_extended") == "\\]\\]\\^"'
+      - '"^f.*o(.*)$"|regex_escape(re_type="posix_extended") == "\\^f\\.\\*o\\(\\.\\*\\)\\$"'
+      - '"(a|b)"|regex_escape(re_type="posix_extended") == "\\(a\\|b\\)"'
       - regex_escape_fail_2 is failed
       - '"Invalid regex type (haha)" is in regex_escape_fail_2.msg'
 
