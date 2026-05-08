@@ -271,6 +271,12 @@ options:
             - Supported on Linux only.
         type: int
         version_added: "2.16"
+    password_last_change:
+        description:
+            - The date of the last password change in epoch (days since 1970-01-01).
+            - Supported on Linux only, not supported on distributions using BusyBox.
+        type: int
+        version_added: "2.22"
     umask:
         description:
             - Sets the umask of the user.
@@ -634,6 +640,7 @@ class User(object):
         self.password_expire_max = module.params['password_expire_max']
         self.password_expire_min = module.params['password_expire_min']
         self.password_expire_warn = module.params['password_expire_warn']
+        self.password_last_change = module.params['password_last_change']
         self.umask = module.params['umask']
         self.inactive = module.params['password_expire_account_disable']
         self.uid_min = module.params['uid_min']
@@ -1167,6 +1174,7 @@ class User(object):
         min_needs_change = self.password_expire_min is not None
         max_needs_change = self.password_expire_max is not None
         warn_needs_change = self.password_expire_warn is not None
+        lstchg_needs_change = self.password_last_change is not None
 
         if HAVE_SPWD:
             try:
@@ -1177,8 +1185,9 @@ class User(object):
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
             max_needs_change &= self.password_expire_max != shadow_info.sp_max
             warn_needs_change &= self.password_expire_warn != shadow_info.sp_warn
+            lstchg_needs_change &= self.password_last_change != shadow_info.sp_lstchg
 
-        if not (min_needs_change or max_needs_change or warn_needs_change):
+        if not (min_needs_change or max_needs_change or warn_needs_change or lstchg_needs_change):
             return (None, '', '')  # target state already reached
 
         command_name = 'chage'
@@ -1189,6 +1198,8 @@ class User(object):
             cmd.extend(["-M", self.password_expire_max])
         if warn_needs_change:
             cmd.extend(["-W", self.password_expire_warn])
+        if lstchg_needs_change:
+            cmd.extend(["-d", self.password_last_change])
         cmd.append(self.name)
 
         return self.execute_command(cmd)
@@ -3419,6 +3430,7 @@ def main():
             ssh_key_passphrase=dict(type='str', no_log=True),
             update_password=dict(type='str', default='always', choices=['always', 'on_create'], no_log=False),
             expires=dict(type='float'),
+            password_last_change=dict(type='int', no_log=False),
             password_lock=dict(type='bool', no_log=False),
             local=dict(type='bool'),
             profile=dict(type='str'),

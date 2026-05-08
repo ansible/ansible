@@ -12,6 +12,7 @@
 - import_tasks: test_no_home_fallback.yml
 - include_tasks: test_expires.yml
   when: ansible_distribution != 'Alpine'
+- include_tasks: test_password_last_change.yml
 - import_tasks: test_expires_new_account.yml
 - import_tasks: test_expires_new_account_epoch_negative.yml
 - import_tasks: test_expires_no_shadow.yml
