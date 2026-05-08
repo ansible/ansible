@@ -5,23 +5,32 @@ DOCUMENTATION:
   description:
     - Escape special characters in a string for use in a regular expression.
   positional: _input, re_type
-  notes:
-    - posix_extended is not implemented yet
   options:
     _input:
       description: String to escape.
       type: str
       required: true
     re_type:
-      description: Which type of escaping to use.
+      description:
+        - Which type of escaping to use.
+        - V(posix_extended) is added in Ansible Core 2.22.
       type: str
       default: python
-      choices: [python, posix_basic]
+      choices:
+        python: Preserves all regular expressions special characters in string.
+        posix_basic: Preserves all POSIX Basic Regular Expressions special characters in string.
+        posix_extended: Preserves all POSIX Extended Regular Expressions special characters in string.
 
 EXAMPLES: |
 
   # safe_for_regex => '\^f\.\*o\(\.\*\)\$'
   safe_for_regex: "{{ '^f.*o(.*)$' | regex_escape() }}"
+
+  # safe_for_posix_basic => '\\]\\]\\^'
+  safe_for_posix_basic: "{{ ']]^' | regex_escape(re_type='posix_basic') }}"
+
+  # safe_for_posix_extended => '\\^f\\.\\*o\\(\\.\\*\\)\\$'
+  safe_for_posix_extended: "{{ '^f.*o(.*)$' | regex_escape(re_type='posix_extended') }}"
 
 RETURN:
   _value:

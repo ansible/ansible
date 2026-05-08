@@ -1,0 +1,2 @@
+minor_changes:
+  - filter - ``regex_escape`` implement ``re_type=posix_extended`` for POSIX ERE literal escaping (https://github.com/ansible/ansible/pull/86949).
