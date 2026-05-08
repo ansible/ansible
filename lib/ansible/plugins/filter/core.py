@@ -245,17 +245,19 @@ def ternary(value, true_val, false_val, none_val=None):
 def regex_escape(string, re_type='python'):
     """Escape all regular expressions special characters from STRING."""
     string = to_text(string, errors='surrogate_or_strict', nonstring='simplerepr')
-    if re_type == 'python':
-        return re.escape(string)
-    if re_type == 'posix_basic':
-        # list of BRE special chars:
-        # https://en.wikibooks.org/wiki/Regular_Expressions/POSIX_Basic_Regular_Expressions
-        return regex_replace(string, r'([].[^$*\\])', r'\\\1')
-    if re_type == 'posix_extended':
-        # IEEE Std 1003.1 ERE metacharacters (for literals, prefix backslash).
-        # https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html
-        return regex_replace(string, r'([\^\$\.\*\+\?\[\]\|\(\)\{\}\\])', r'\\\1')
-    raise AnsibleFilterError('Invalid regex type (%s)' % re_type)
+    match re_type:
+        case 'python':
+            return re.escape(string)
+        case 'posix_basic':
+            # list of BRE special chars:
+            # https://en.wikibooks.org/wiki/Regular_Expressions/POSIX_Basic_Regular_Expressions
+            return regex_replace(string, r'([].[^$*\\])', r'\\\1')
+        case 'posix_extended':
+            # IEEE Std 1003.1 ERE metacharacters (for literals, prefix backslash).
+            # https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html
+            return regex_replace(string, r'([\^\$\.\*\+\?\[\]\|\(\)\{\}\\])', r'\\\1')
+        case _:
+            raise AnsibleFilterError(f'Invalid regex type ({re_type})')
 
 
 def from_yaml(data):
