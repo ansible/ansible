@@ -17,9 +17,9 @@ DOCUMENTATION:
       type: str
       default: python
       choices:
-        python: Escape all regular expressions special characters from string.
-        posix_basic: Escape all POSIX Basic Regular Expressions special characters from string.
-        posix_extended: Escape all POSIX Extended Regular Expressions special characters from string.
+        python: Preserves all regular expressions special characters in string.
+        posix_basic: Preserves all POSIX Basic Regular Expressions special characters in string.
+        posix_extended: Preserves all POSIX Extended Regular Expressions special characters in string.
 
 EXAMPLES: |
 
