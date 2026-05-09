@@ -1,0 +1,7 @@
+bugfixes:
+  - >-
+    ssh connection plugin - fix ``sshpass`` falsely marking a host ``UNREACHABLE`` when a task
+    fails. ``fail_json()`` always exits with code 1, which ``sshpass`` propagates back to Ansible.
+    Exit code 1 was being treated as a ``sshpass`` protocol error and raised as a connection failure.
+    Only exit code 5 (bad password) now raises an authentication failure; all other non-zero exit
+    codes are passed through as task failures.
