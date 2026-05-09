@@ -6,6 +6,8 @@ import dataclasses
 import sys
 import typing as t
 
+# deprecated: description='remove this patch once Python 3.14 is no longer supported on targets' python_version='3.14'
+
 from . import CallablePatch
 
 # trigger the bug by exposing typing.ClassVar via a module reference that is not `typing`
@@ -24,7 +26,7 @@ class DataclassesIsTypePatch(CallablePatch):
         @dataclasses.dataclass
         class CheckClassVar:
             # this is the broken case requiring patching: ClassVar dot-referenced from a module that is not `typing` is treated as an instance field
-            # DTFIX-FUTURE: file/link CPython bug report, deprecate this patch if/when it's fixed in CPython
+            # fixed in CPython 3.15.0b1, see: https://github.com/python/cpython/pull/140541
             a_classvar: _ts.ClassVar[int]  # type: ignore[name-defined]
             a_field: int
 
