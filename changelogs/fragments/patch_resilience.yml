@@ -1,0 +1,2 @@
+bugfixes:
+  - Internal patch framework - Defer failure on missing target patch attribute until `is_patch_needed` validator has confirmed that the behavior to be patched is present.
