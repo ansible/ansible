@@ -4,6 +4,27 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.10rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-05-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Security Fixes
+--------------
+
+- psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+- winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+
+Bugfixes
+--------
+
+- ansible-test remote alias - Alias values for ``--controller`` and ``--target`` are properly resolved for ``remote``. Previously, remote alias values (e.g. ``fedora/latest``) resolved to the correct name only for the legacy ``--remote`` arg, failing with an unknown image error for the newer args.
+- module_utils/basic.py - Fix ``AnsibleModule.run_command()`` to handle ``None`` return from non-blocking pipe reads (https://github.com/ansible/ansible/issues/86920).
+
 v2.19.9
 =======
 
