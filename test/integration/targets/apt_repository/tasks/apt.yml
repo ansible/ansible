@@ -314,6 +314,18 @@
       - result is failed
       - result.msg == 'Please set argument \'repo\' to a non-empty value'
 
+- name: Test apt_repository with missing component
+  apt_repository:
+    repo: deb http://archive.canonical.com/ubuntu jammy
+    state: present
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Invalid repository string: deb http://archive.canonical.com/ubuntu jammy'
+
 #
 # TEST: keep symlink
 #

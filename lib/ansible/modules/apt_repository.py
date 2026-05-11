@@ -207,6 +207,23 @@ APT_KEY_DIRS = ['/etc/apt/keyrings', '/etc/apt/trusted.gpg.d', '/usr/share/keyri
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
+def _source_has_components(chunks):
+    if len(chunks) < 4:
+        return False
+
+    first_spec_index = 1
+    if chunks[first_spec_index].startswith('['):
+        while first_spec_index < len(chunks) and not chunks[first_spec_index].endswith(']'):
+            first_spec_index += 1
+
+        if first_spec_index == len(chunks):
+            return False
+
+        first_spec_index += 1
+
+    return len(chunks[first_spec_index:]) >= 3
+
+
 def install_python_apt(module, apt_pkg_name):
 
     if not module.check_mode:
@@ -309,8 +326,9 @@ class SourcesList(object):
         if source:
             chunks = source.split()
             if chunks[0] in VALID_SOURCE_TYPES:
-                valid = True
-                source = ' '.join(chunks)
+                if _source_has_components(chunks):
+                    valid = True
+                    source = ' '.join(chunks)
 
         if raise_if_invalid_or_disabled and (not valid or not enabled):
             raise InvalidSource(line)
