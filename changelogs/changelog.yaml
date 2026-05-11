@@ -619,3 +619,32 @@ releases:
     - clearlinux-gentoo-parsing.yml
     - start-at-task-fact-gathering.yml
     release_date: '2026-04-13'
+  2.20.6rc1:
+    changes:
+      bugfixes:
+      - ansible-test remote alias - Alias values for ``--controller`` and ``--target``
+        are properly resolved for ``remote``. Previously, remote alias values (e.g.
+        ``fedora/latest``) resolved to the correct name only for the legacy ``--remote``
+        arg, failing with an unknown image error for the newer args.
+      - git - use the branch configured in ``.gitmodules`` or the remote HEAD instead
+        of hardcoding ``master`` when ``track_submodules=yes`` (https://github.com/ansible/ansible/issues/77691).
+      - module_utils/basic.py - Fix ``AnsibleModule.run_command()`` to handle ``None``
+        return from non-blocking pipe reads (https://github.com/ansible/ansible/issues/86920).
+      release_summary: '| Release Date: 2026-05-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.20/porting_guides/porting_guide_core_2.20.html>`__
+
+        '
+      security_fixes:
+      - 'psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log:
+        true`` set'
+      - 'winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log:
+        true`` set'
+    codename: Good Times Bad Times
+    fragments:
+    - 2.20.6rc1_summary.yaml
+    - 77691-git-track-submodules-branch.yml
+    - 86920-fix-run-command-none-read.yml
+    - core_ci_remote_alias.yml
+    - winrm-psrp-nolog.yml
+    release_date: '2026-05-11'
