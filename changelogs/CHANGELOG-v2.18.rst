@@ -4,6 +4,26 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
+v2.18.17rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-05-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+Security Fixes
+--------------
+
+- psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+- winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+
+Bugfixes
+--------
+
+- ansible-test remote alias - Alias values for ``--controller`` and ``--target`` are properly resolved for ``remote``. Previously, remote alias values (e.g. ``fedora/latest``) resolved to the correct name only for the legacy ``--remote`` arg, failing with an unknown image error for the newer args.
+
 v2.18.16
 ========
 
