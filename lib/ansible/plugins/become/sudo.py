@@ -103,15 +103,15 @@ class BecomeModule(BecomeBase):
     fail = ('Sorry, try again.',)
     missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
 
-    def check_password_prompt(self, b_output):
+    def check_password_prompt(self, b_output: bytes) -> bool:
+        # try GNU sudo first
         matched = super().check_password_prompt(b_output)
         if not matched:
-            # might be using sudo-rs, which is not backwards compatible
-            prompt = self.prompt
-            self.prompt = f"[sudo: {prompt}] Password:"  # handle extra text from sudo-rs
-            matched = super().check_password_prompt(b_output)
-            self.prompt = prompt
-
+            # try sudo-rs, which is not backwards compatible and does i18n
+            # Sample: '[sudo: [sudo via ansible, key=csfhjsshkagnlthoutcsjownopciscow] password:] Password:'
+            sudo_rs = re.compile(fr"\[sudo:\s+{re.escape(self.prompt)}\]\s+\S.+\Z".encode())
+            # using match as the line MUST start with this
+            matched = any(sudo_rs.match(l) for l in b_output.splitlines())
         return matched
 
     def build_become_command(self, cmd, shell):
