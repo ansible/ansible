@@ -1,4 +1,4 @@
 ---
 minor_changes:
   - ansible-galaxy - Perform shallow (depth=1) git clone when version is HEAD
-  - ansible-galaxy - Don't perform unneccessary checkout when version is HEAD
+  - ansible-galaxy - Don't perform unnecessary checkout when version is HEAD
