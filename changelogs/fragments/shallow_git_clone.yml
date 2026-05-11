@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - ansible-galaxy - Perform shallow (depth=1) git clone when version is HEAD
