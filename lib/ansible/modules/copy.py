@@ -117,6 +117,17 @@ options:
     - If this is not provided, ansible will use the local calculated checksum of the src file.
     type: str
     version_added: '2.5'
+  preserve_xattrs:
+    description:
+    - Preserve extended file attributes (xattrs) when copying a file, including the C(user), C(trusted), C(system) and C(security) namespaces.
+    - Useful for IMA-enabled systems where C(security.ima) and C(security.evm) signatures must travel with the file.
+    - Requires Linux. Setting attributes in the C(security.*) namespace usually requires root privileges and a filesystem that supports xattrs.
+    - The C(security.selinux) attribute is intentionally not copied; SELinux contexts are managed through O(seuser), O(serole), O(setype) and O(selevel).
+    - When O(remote_src=false) the xattrs are read from the source on the controller; otherwise they are read from the source on the managed node.
+    - Existing xattrs on the destination are not removed; only the attributes present on the source are applied.
+    type: bool
+    default: false
+    version_added: '2.22'
 extends_documentation_fragment:
     - decrypt
     - files
@@ -219,6 +230,13 @@ EXAMPLES = r"""
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no
+
+- name: Copy a binary preserving IMA signature xattrs
+  ansible.builtin.copy:
+    src: /usr/local/bin/signed-binary
+    dest: /usr/local/bin/signed-binary
+    mode: '0755'
+    preserve_xattrs: true
 """
 
 RETURN = r"""
@@ -284,6 +302,7 @@ state:
     sample: file
 """
 
+import base64
 import errno
 import filecmp
 import os
@@ -296,9 +315,70 @@ from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
+# SELinux contexts are managed via the dedicated seuser/serole/setype/selevel
+# options, so they must not be copied through the generic xattr path.
+SELINUX_XATTR = 'security.selinux'
+
+
 class AnsibleModuleError(Exception):
     def __init__(self, results):
         self.results = results
+
+
+def _xattrs_supported():
+    return hasattr(os, 'listxattr')
+
+
+def _read_xattrs(module, path):
+    """Read xattrs from ``path`` and return ``{name: bytes_value}``.
+
+    Skips ``security.selinux`` (handled by dedicated SELinux parameters).
+    """
+    try:
+        names = os.listxattr(path)
+    except OSError as ex:
+        module.fail_json(msg="Failed to list xattrs on %s: %s" % (to_native(path), to_native(ex)))
+    result = {}
+    for name in names:
+        if name == SELINUX_XATTR:
+            continue
+        try:
+            result[name] = os.getxattr(path, name)
+        except OSError as ex:
+            module.warn("Could not read xattr %s on %s: %s" % (name, to_native(path), to_native(ex)))
+    return result
+
+
+def _decode_xattrs(xattrs_b64):
+    """Decode a ``{name: base64_str}`` dict into ``{name: bytes}``."""
+    return {name: base64.b64decode(value) for name, value in xattrs_b64.items()}
+
+
+def _xattrs_differ(path, desired):
+    for name, value in desired.items():
+        try:
+            current = os.getxattr(path, name)
+        except OSError:
+            return True
+        if current != value:
+            return True
+    return False
+
+
+def _apply_xattrs(module, path, desired):
+    """Apply ``{name: bytes}`` xattrs to ``path``. Returns True if a change was needed."""
+    if not desired:
+        return False
+    if not _xattrs_differ(path, desired):
+        return False
+    if module.check_mode:
+        return True
+    for name, value in desired.items():
+        try:
+            os.setxattr(path, name, value)
+        except OSError as ex:
+            module.fail_json(msg="Failed to set xattr %s on %s: %s" % (name, to_native(path), to_native(ex)))
+    return True
 
 
 def split_pre_existing_dir(dirname):
@@ -478,6 +558,8 @@ def main():
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
             follow=dict(type='bool', default=False),
+            preserve_xattrs=dict(type='bool', default=False),
+            _xattrs_data=dict(type='dict', no_log=True),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -665,6 +747,20 @@ def main():
     if os.path.isdir(b_dest) and directory_mode is not None:
         file_args['mode'] = directory_mode
     res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+
+    if module.params['preserve_xattrs'] and os.path.isfile(b_dest):
+        if not _xattrs_supported():
+            module.fail_json(msg='preserve_xattrs=true requires a platform with xattr support (Linux).')
+
+        xattrs_data = module.params.get('_xattrs_data')
+        if xattrs_data is not None:
+            desired_xattrs = _decode_xattrs(xattrs_data)
+        else:
+            # remote_src or direct module invocation: read xattrs from src on the target host.
+            desired_xattrs = _read_xattrs(module, b_src)
+
+        if _apply_xattrs(module, b_dest, desired_xattrs):
+            res_args['changed'] = True
 
     module.exit_json(**res_args)
 

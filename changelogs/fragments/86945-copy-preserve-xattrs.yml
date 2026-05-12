@@ -1,0 +1,5 @@
+minor_changes:
+  - copy - add ``preserve_xattrs`` option to preserve Linux extended attributes
+    (``user``, ``trusted``, ``system`` and ``security`` namespaces) when copying
+    files, useful for IMA-enabled systems
+    (https://github.com/ansible/ansible/issues/86945).

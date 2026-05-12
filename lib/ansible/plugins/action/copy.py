@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import os.path
@@ -32,6 +33,36 @@ from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
+
+
+# Skip security.selinux: SELinux contexts are managed through the
+# seuser/serole/setype/selevel parameters and must not be carried over via xattrs.
+_SELINUX_XATTR = 'security.selinux'
+
+
+def _collect_local_xattrs(path):
+    """Read xattrs from a local file and return ``{name: base64_str}`` for JSON transport.
+
+    Returns ``None`` when the platform does not support xattrs, or an empty dict
+    if the path has none. Errors reading individual attributes are skipped silently
+    so a missing capability cannot break a copy.
+    """
+    if not hasattr(os, 'listxattr'):
+        return None
+    try:
+        names = os.listxattr(path)
+    except OSError:
+        return None
+    result = {}
+    for name in names:
+        if name == _SELINUX_XATTR:
+            continue
+        try:
+            value = os.getxattr(path, name)
+        except OSError:
+            continue
+        result[name] = base64.b64encode(value).decode('ascii')
+    return result
 
 
 # Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
@@ -284,7 +315,11 @@ class ActionModule(ActionBase):
         # Generate a hash of the local file.
         local_checksum = checksum(source_full)
 
-        if local_checksum != dest_status['checksum']:
+        # When preserving xattrs, the copy module must always be invoked so it can
+        # reconcile xattrs on the destination, even if the file content is unchanged.
+        preserve_xattrs = boolean(self._task.args.get('preserve_xattrs', False), strict=False)
+
+        if local_checksum != dest_status['checksum'] or preserve_xattrs:
             # The checksums don't match and we will change or error out.
 
             if self._task.diff and not raw:
@@ -344,6 +379,15 @@ class ActionModule(ActionBase):
 
             if lmode:
                 new_module_args['mode'] = lmode
+
+            if boolean(self._task.args.get('preserve_xattrs', False), strict=False):
+                xattrs_data = _collect_local_xattrs(source_full)
+                if xattrs_data is None:
+                    raise AnsibleActionFail(
+                        'preserve_xattrs=true is set but the controller platform does not support reading xattrs.',
+                        result=result,
+                    )
+                new_module_args['_xattrs_data'] = xattrs_data
 
             module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
 
@@ -427,7 +471,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # ensure user is not setting internal parameters
-        for internal in ('_original_basename', '_diff_peek'):
+        for internal in ('_original_basename', '_diff_peek', '_xattrs_data'):
             if self._task.args.get(internal, None) is not None:
                 raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
