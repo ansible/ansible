@@ -1,0 +1,3 @@
+bugfixes:
+  - meta pseudo-action - Fixed callback args passed to ``v2_runner_on_skipped`` when any ``meta`` action was skipped by a ``when`` condition; added test coverage.
+    A previous regression caused the callback dispatch to be omitted and a warning issued.

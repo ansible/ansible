@@ -40,8 +40,10 @@ done
 
 # test end_play meta task
 for test_strategy in linear free; do
-  out="$(ansible-playbook test_end_play.yml -i inventory.yml -e test_strategy=$test_strategy -vv "$@")"
+  # $@ omitted to avoid additional verbosity, which will line-break and indent the JSON output we need to check
+  out="$(ansible-playbook test_end_play.yml -i inventory.yml -e test_strategy=$test_strategy -vv)"
 
+  grep -q "skipping:.*end_play conditional evaluated to False, continuing play" <<< "$out"
   grep -q "META: ending play" <<< "$out"
   grep -qv 'Failed to end using end_play' <<< "$out"
 
