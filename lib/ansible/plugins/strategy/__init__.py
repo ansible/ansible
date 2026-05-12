@@ -1017,10 +1017,12 @@ class StrategyBase:
         else:
             display.vv(f"META: {header}")
 
-        if skipped:
-            self._tqm.send_callback('v2_runner_on_skipped', target_host, task, utr)
+        htr = HostTaskResult(host=target_host, task=task, utr=utr)
 
-        return [HostTaskResult(host=target_host, task=task, utr=utr)]
+        if skipped:
+            self._tqm.send_callback('v2_runner_on_skipped', htr)
+
+        return [htr]
 
     def _get_cached_role(self, task, play):
         return play._get_cached_role(task._role)
