@@ -3,6 +3,10 @@
   gather_facts: no
   strategy: "{{ test_strategy | default('linear') }}"
   tasks:
+    - name: Skipped end_play
+      meta: end_play
+      when: false
+
     - debug:
         msg: "Testing end_play on host {{ inventory_hostname }}"
 
