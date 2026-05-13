@@ -396,6 +396,7 @@ import sys
 
 from ansible.module_utils.urls import fetch_file
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.datatag import deprecate_value
 from ansible.module_utils.common.respawn import get_env_with_pythonpath, probe_interpreters_for_module
 from ansible.module_utils.embed import EmbedManager
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
@@ -459,7 +460,11 @@ class DnfModule(YumDnf):
             self.module.fail_json(
                 msg='Could not import the dnf python module. '
                     f'Please install `python3-dnf` package. (attempted {interpreters})',
-                results=[]
+                results = deprecate_value([],
+                                      msg='dnf result `results` is deprecated',
+                                      help_text='Use `transactions` instead',
+                                      version='2.25'),
+                transactions = [],
             )
 
         return interpreter
@@ -489,21 +494,33 @@ class DnfModule(YumDnf):
                 return {
                     'failed': True,
                     'msg': f'No output from dnf script. stderr: {stderr}',
-                    'results': [],
+                    'results': deprecate_value([],
+                                               msg="dnf result `results` is deprecated",
+                                               help_text="Use `transactions` instead",
+                                               version="2.25"),
+                    'transactions': [],
                     'rc': rc
                 }
         except json.JSONDecodeError as e:
             return {
                 'failed': True,
                 'msg': f'Failed to parse JSON from dnf script: {e}. stdout: {stdout}',
-                'results': [],
+                'results': deprecate_value([],
+                                          msg="dnf result `results` is deprecated",
+                                          help_text="Use `transactions` instead",
+                                          version="2.25"),
+                'transactions': [],
                 'rc': 1
             }
         except Exception as e:
             return {
                 'failed': True,
                 'msg': f'Failed to execute dnf script: {e}',
-                'results': [],
+                'results': deprecate_value([],
+                                           msg="dnf result `results` is deprecated",
+                                           help_text="Use `transactions` instead",
+                                           version="2.25"),
+                'transactions': [],
                 'rc': 1
             }
 
@@ -518,12 +535,23 @@ class DnfModule(YumDnf):
         )
 
         if result.get('failed'):
-            self.module.fail_json(msg=result['msg'], results=[], rc=1)
+            self.module.fail_json(msg=result['msg'],
+                                  results = deprecate_value([],
+                                                            msg="dnf result `results` is deprecated",
+                                                            help_text="Use `transactions` instead",
+                                                            version="2.25"),
+                                  transactions = [],
+                                  rc=1)
 
         for warning in result.get('warnings', []):
             self.module.warn(warning)
 
-        self.module.exit_json(msg='', results=result['results'])
+        self.module.exit_json(msg='',
+                              results = deprecate_value(result['results'],
+                                                        msg="dnf result `results` is deprecated",
+                                                        help_text="Use `transactions` instead",
+                                                        version="2.25"),
+                              transactions = result['results'])
 
     def ensure(self):
         names = [fetch_file(self.module, name) if '://' in name else name for name in self.names]
@@ -556,14 +584,26 @@ class DnfModule(YumDnf):
             if result.get('failures'):
                 self.module.fail_json(
                     msg=error_msg,
-                    failures=result['failures'],
-                    results=result.get('results', []),
+                    failures=deprecate_value(result['failures'],
+                                             msg="dnf result `failures` is deprecated",
+                                             help_text="Use `transaction_errors` instead.",
+                                             version="2.25"),
+                    transaction_errors=result['failures'],
+                    results=deprecate_value(result.get('results', []),
+                                            msg="dnf result `results` is deprecated",
+                                            help_text="Use `transactions` instead",
+                                            version="2.25"),
+                    transactions=result.get('results', []),
                     rc=result.get('rc', 1)
                 )
             else:
                 self.module.fail_json(
                     msg=error_msg,
-                    results=result.get('results', []),
+                    results=deprecate_value(result.get('results', []),
+                                            msg="dnf result `results` is deprecated",
+                                            help_text="Use `transactions` instead",
+                                            version="2.25"),
+                    transactions=result.get('results', []),
                     rc=result.get('rc', 1)
                 )
 
@@ -571,14 +611,22 @@ class DnfModule(YumDnf):
             self.module.exit_json(
                 msg=result.get('msg', ''),
                 changed=True,
-                results=result.get('results', []),
+                results=deprecate_value(result.get('results', []),
+                                        msg="dnf result `results` is deprecated",
+                                        help_text="Use `transactions` instead",
+                                        version="2.25"),
+                transactions=result.get('results', []),
                 rc=result.get('rc', 0)
             )
         else:
             self.module.exit_json(
                 msg=result.get('msg', 'Nothing to do'),
                 changed=False,
-                results=result.get('results', []),
+                results=deprecate_value(result.get('results', []),
+                                        msg="dnf result `results` is deprecated",
+                                        help_text="Use `transactions` instead",
+                                        version="2.25"),
+                transactions=result.get('results', []),
                 rc=result.get('rc', 0)
             )
 
@@ -593,7 +641,11 @@ class DnfModule(YumDnf):
         if result.get('failed'):
             self.module.fail_json(
                 msg=result['msg'],
-                results=[],
+                results=deprecate_value([],
+                                        msg="dnf result `results` is deprecated",
+                                        help_text="Use `transactions` instead",
+                                        version="2.25"),
+                transactions=[],
                 rc=1
             )
 
@@ -603,7 +655,11 @@ class DnfModule(YumDnf):
         self.module.exit_json(
             msg='Cache updated',
             changed=result.get('changed', False),
-            results=[],
+            results=deprecate_value([],
+                                    msg="dnf result `results` is deprecated",
+                                    help_text="Use `transactions` instead",
+                                    version="2.25"),
+            transactions=[],
             rc=0
         )
 
