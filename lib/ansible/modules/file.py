@@ -974,6 +974,7 @@ def main():
             force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
             follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
             _diff_peek=dict(type='bool'),  # Internal use only, for internal checks in the action plugins
+            _xattrs_data=dict(type='dict', no_log=True),  # Internal use only, base64-encoded source xattrs from the action plugin
             src=dict(type='path'),  # Note: Should not be in file_common_args in future
             modification_time=dict(type='str'),
             modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),

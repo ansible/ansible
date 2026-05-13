@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import base64
 import json
 import os
 import os.path
@@ -30,39 +29,38 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleActionFail, AnsibleFileNotFound
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.xattrs import encode_xattrs, read_xattrs, xattrs_supported
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
 
-# Skip security.selinux: SELinux contexts are managed through the
-# seuser/serole/setype/selevel parameters and must not be carried over via xattrs.
-_SELINUX_XATTR = 'security.selinux'
+def _xattrs_wanted_from_source(mode):
+    """Return True if the action plugin needs to read source xattrs for this mode."""
+    return mode in ('source', 'merge')
 
 
-def _collect_local_xattrs(path):
-    """Read xattrs from a local file and return ``{name: base64_str}`` for JSON transport.
+def _collect_local_xattrs(path, error_mode):
+    """Read xattrs from a local controller-side file and return ``{name: base64-str}``.
 
-    Returns ``None`` when the platform does not support xattrs, or an empty dict
-    if the path has none. Errors reading individual attributes are skipped silently
-    so a missing capability cannot break a copy.
+    Returns ``None`` when xattrs are unsupported. Errors are turned into
+    AnsibleActionFail when *error_mode* is ``fail``; otherwise the caller decides.
     """
-    if not hasattr(os, 'listxattr'):
+    if not xattrs_supported():
+        if error_mode == 'fail':
+            raise AnsibleActionFail(
+                'preserve_xattrs requires a controller platform with xattr support (Linux).'
+            )
         return None
     try:
-        names = os.listxattr(path)
-    except OSError:
+        xattrs = read_xattrs(path)
+    except OSError as ex:
+        if error_mode == 'fail':
+            raise AnsibleActionFail(
+                f'could not read xattrs from controller-side source {path!r}: {ex}'
+            ) from ex
         return None
-    result = {}
-    for name in names:
-        if name == _SELINUX_XATTR:
-            continue
-        try:
-            value = os.getxattr(path, name)
-        except OSError:
-            continue
-        result[name] = base64.b64encode(value).decode('ascii')
-    return result
+    return encode_xattrs(xattrs) if xattrs else {}
 
 
 # Supplement the FILE_COMMON_ARGUMENTS with arguments that are specific to file
@@ -315,11 +313,16 @@ class ActionModule(ActionBase):
         # Generate a hash of the local file.
         local_checksum = checksum(source_full)
 
-        # When preserving xattrs, the copy module must always be invoked so it can
-        # reconcile xattrs on the destination, even if the file content is unchanged.
-        preserve_xattrs = boolean(self._task.args.get('preserve_xattrs', False), strict=False)
+        # Collect source xattrs once on the controller; the same payload is shipped to either
+        # the copy module (full path) or the file module (short-circuit path) so xattrs land
+        # on the destination regardless of whether the file content actually changed.
+        preserve_xattrs_mode = self._task.args.get('preserve_xattrs')
+        xattr_error_mode = self._task.args.get('xattr_error_mode', 'fail')
+        xattrs_payload = None
+        if _xattrs_wanted_from_source(preserve_xattrs_mode):
+            xattrs_payload = _collect_local_xattrs(source_full, xattr_error_mode)
 
-        if local_checksum != dest_status['checksum'] or preserve_xattrs:
+        if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
             if self._task.diff and not raw:
@@ -380,14 +383,8 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
-            if boolean(self._task.args.get('preserve_xattrs', False), strict=False):
-                xattrs_data = _collect_local_xattrs(source_full)
-                if xattrs_data is None:
-                    raise AnsibleActionFail(
-                        'preserve_xattrs=true is set but the controller platform does not support reading xattrs.',
-                        result=result,
-                    )
-                new_module_args['_xattrs_data'] = xattrs_data
+            if xattrs_payload is not None:
+                new_module_args['_xattrs_data'] = xattrs_payload
 
             module_return = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
 
@@ -426,6 +423,12 @@ class ActionModule(ActionBase):
 
             if lmode:
                 new_module_args['mode'] = lmode
+
+            # When content matches but xattrs may differ, hand the collected source xattrs to
+            # the file module so set_fs_attributes_if_different can reconcile them without
+            # falling back to a full copy. This keeps recursive copies fast.
+            if xattrs_payload is not None:
+                new_module_args['_xattrs_data'] = xattrs_payload
 
             # Execute the file module.
             module_return = self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars)

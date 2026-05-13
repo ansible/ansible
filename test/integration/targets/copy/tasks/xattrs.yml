@@ -4,13 +4,11 @@
       apt:
         name: attr
       when: ansible_pkg_mgr == 'apt'
-      register: setup_attr_apt
 
     - name: Install attr (RedHat)
       dnf:
         name: attr
       when: ansible_pkg_mgr == 'dnf'
-      register: setup_attr_dnf
 
     - name: Create a controller-side source file
       copy:
@@ -18,9 +16,12 @@
         dest: '{{ local_temp_dir }}/xattr_src.txt'
       delegate_to: localhost
 
-    - name: Tag the source with a user xattr on the controller
-      command: setfattr -n user.ansible_test -v 'hello-xattrs' '{{ local_temp_dir }}/xattr_src.txt'
+    - name: Tag the source with two user xattrs on the controller
+      command: '{{ item }}'
       delegate_to: localhost
+      loop:
+        - setfattr -n user.ansible_test -v 'hello-xattrs' {{ local_temp_dir }}/xattr_src.txt
+        - setfattr -n user.ansible_extra -v 'extra-tag' {{ local_temp_dir }}/xattr_src.txt
       register: setfattr_src
       ignore_errors: yes
 
@@ -28,131 +29,223 @@
       meta: end_play
       when: setfattr_src is failed
 
-    - name: Copy with preserve_xattrs=false should not carry xattrs across
+    # 1. preserve_xattrs=no -> destination has no source xattrs.
+    - name: Copy with preserve_xattrs=no should not carry xattrs across
       copy:
         src: '{{ local_temp_dir }}/xattr_src.txt'
-        dest: '{{ remote_dir }}/xattr_off.txt'
-        preserve_xattrs: false
+        dest: '{{ remote_dir }}/xattr_no.txt'
+        preserve_xattrs: no
+      register: copy_no
 
-    - name: Read xattrs from dest (preserve_xattrs=false)
-      command: getfattr --absolute-names -d -m '^user\.' '{{ remote_dir }}/xattr_off.txt'
-      register: xattrs_off
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/xattr_no.txt
+      register: xattrs_no
+      changed_when: false
+      failed_when: false
+
+    - assert:
+        that:
+          - copy_no is changed
+          - "'user.ansible_test' not in xattrs_no.stdout"
+
+    # 2. preserve_xattrs=source -> source xattrs propagate.
+    - name: Copy with preserve_xattrs=source
+      copy:
+        src: '{{ local_temp_dir }}/xattr_src.txt'
+        dest: '{{ remote_dir }}/xattr_source.txt'
+        preserve_xattrs: source
+      register: copy_source
+
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/xattr_source.txt
+      register: xattrs_source_dump
       changed_when: false
 
-    - name: Verify xattrs were not preserved when option is off
-      assert:
+    - assert:
         that:
-          - "'user.ansible_test' not in xattrs_off.stdout"
+          - copy_source is changed
+          - "'user.ansible_test=\"hello-xattrs\"' in xattrs_source_dump.stdout"
+          - "'user.ansible_extra=\"extra-tag\"' in xattrs_source_dump.stdout"
 
-    - name: Copy with preserve_xattrs=true
+    # 3. Re-run is idempotent.
+    - name: Re-run preserve_xattrs=source is idempotent
       copy:
         src: '{{ local_temp_dir }}/xattr_src.txt'
-        dest: '{{ remote_dir }}/xattr_on.txt'
-        preserve_xattrs: true
-      register: xattr_copy_first
+        dest: '{{ remote_dir }}/xattr_source.txt'
+        preserve_xattrs: source
+      register: copy_source_second
 
-    - name: Read xattrs from dest (preserve_xattrs=true)
-      command: getfattr --absolute-names -d -m '^user\.' '{{ remote_dir }}/xattr_on.txt'
-      register: xattrs_on
-      changed_when: false
-
-    - name: Verify xattrs were preserved on the destination
-      assert:
+    - assert:
         that:
-          - xattr_copy_first is changed
-          - "'user.ansible_test=\"hello-xattrs\"' in xattrs_on.stdout"
+          - copy_source_second is not changed
 
-    - name: Copy again should be idempotent
-      copy:
-        src: '{{ local_temp_dir }}/xattr_src.txt'
-        dest: '{{ remote_dir }}/xattr_on.txt'
-        preserve_xattrs: true
-      register: xattr_copy_second
-
-    - name: Verify the second run did not report a change
-      assert:
-        that:
-          - xattr_copy_second is not changed
-
+    # 4. Source xattr mutated, content unchanged -> xattrs reconciled without forcing a full copy.
     - name: Mutate the source xattr on the controller
-      command: setfattr -n user.ansible_test -v 'changed-value' '{{ local_temp_dir }}/xattr_src.txt'
+      command: setfattr -n user.ansible_test -v 'changed-value' {{ local_temp_dir }}/xattr_src.txt
       delegate_to: localhost
 
-    - name: Copy again, expecting xattr change but no content change
+    - name: Copy again, content unchanged but xattrs differ
       copy:
         src: '{{ local_temp_dir }}/xattr_src.txt'
-        dest: '{{ remote_dir }}/xattr_on.txt'
-        preserve_xattrs: true
-      register: xattr_copy_mutated
+        dest: '{{ remote_dir }}/xattr_source.txt'
+        preserve_xattrs: source
+      register: copy_source_mutated
 
-    - name: Read updated xattrs on the destination
-      command: getfattr --absolute-names -d -m '^user\.' '{{ remote_dir }}/xattr_on.txt'
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/xattr_source.txt
       register: xattrs_after_mutation
       changed_when: false
 
-    - name: Verify the updated xattr value propagated to the destination
-      assert:
+    - assert:
         that:
-          - xattr_copy_mutated is changed
+          - copy_source_mutated is changed
           - "'user.ansible_test=\"changed-value\"' in xattrs_after_mutation.stdout"
 
+    # 5. preserve_xattrs=target keeps whatever the destination already had.
+    - name: Pre-tag a destination with its own xattr
+      copy:
+        content: 'target-existing-content'
+        dest: '{{ remote_dir }}/xattr_target.txt'
+
+    - command: setfattr -n user.target_only -v 'target-value' {{ remote_dir }}/xattr_target.txt
+
+    - name: Copy with preserve_xattrs=target keeps target's xattr
+      copy:
+        src: '{{ local_temp_dir }}/xattr_src.txt'
+        dest: '{{ remote_dir }}/xattr_target.txt'
+        preserve_xattrs: target
+
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/xattr_target.txt
+      register: xattrs_target_dump
+      changed_when: false
+
+    - assert:
+        that:
+          - "'user.target_only=\"target-value\"' in xattrs_target_dump.stdout"
+          - "'user.ansible_test' not in xattrs_target_dump.stdout"
+        fail_msg: 'preserve_xattrs=target should keep target xattrs and not pull in source xattrs'
+
+    # 6. preserve_xattrs=merge combines target's xattrs with the source's.
+    - name: Pre-tag another destination
+      copy:
+        content: 'merge-existing-content'
+        dest: '{{ remote_dir }}/xattr_merge.txt'
+
+    - command: setfattr -n user.target_only -v 'keep-me' {{ remote_dir }}/xattr_merge.txt
+
+    - name: Copy with preserve_xattrs=merge
+      copy:
+        src: '{{ local_temp_dir }}/xattr_src.txt'
+        dest: '{{ remote_dir }}/xattr_merge.txt'
+        preserve_xattrs: merge
+
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/xattr_merge.txt
+      register: xattrs_merge_dump
+      changed_when: false
+
+    - assert:
+        that:
+          - "'user.target_only=\"keep-me\"' in xattrs_merge_dump.stdout"
+          - "'user.ansible_test=\"changed-value\"' in xattrs_merge_dump.stdout"
+          - "'user.ansible_extra=\"extra-tag\"' in xattrs_merge_dump.stdout"
+
+    # 7. check_mode does not touch the destination.
     - name: Check mode must not touch the destination
       copy:
         src: '{{ local_temp_dir }}/xattr_src.txt'
         dest: '{{ remote_dir }}/xattr_check_mode.txt'
-        preserve_xattrs: true
+        preserve_xattrs: source
       check_mode: yes
       register: xattr_check
 
-    - name: Stat the check-mode destination
-      stat:
+    - stat:
         path: '{{ remote_dir }}/xattr_check_mode.txt'
       register: xattr_check_stat
 
-    - name: Verify check mode reported a change but did not write the file
-      assert:
+    - assert:
         that:
           - xattr_check is changed
           - not xattr_check_stat.stat.exists
 
-    - name: Prepare a remote source file for the remote_src path
+    # 8. remote_src path.
+    - name: Prepare a remote source file
       copy:
         content: 'remote-src-xattr-content'
         dest: '{{ remote_dir }}/xattr_remote_src.txt'
 
-    - name: Tag the remote source with a user xattr
-      command: setfattr -n user.ansible_remote -v 'remote-tag' '{{ remote_dir }}/xattr_remote_src.txt'
+    - command: setfattr -n user.ansible_remote -v 'remote-tag' {{ remote_dir }}/xattr_remote_src.txt
 
-    - name: Copy with remote_src and preserve_xattrs
+    - name: Copy with remote_src and preserve_xattrs=source
       copy:
         src: '{{ remote_dir }}/xattr_remote_src.txt'
         dest: '{{ remote_dir }}/xattr_remote_dst.txt'
         remote_src: true
-        preserve_xattrs: true
+        preserve_xattrs: source
 
-    - name: Read xattrs from remote_src destination
-      command: getfattr --absolute-names -d -m '^user\.' '{{ remote_dir }}/xattr_remote_dst.txt'
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/xattr_remote_dst.txt
       register: xattrs_remote_dst
       changed_when: false
 
-    - name: Verify xattrs were preserved with remote_src
-      assert:
+    - assert:
         that:
           - "'user.ansible_remote=\"remote-tag\"' in xattrs_remote_dst.stdout"
 
+    # 9. xattr_error_mode=warn keeps a non-Linux-style failure non-fatal.
+    # We exercise the path by asking for source xattrs from a tmpfs-typed location
+    # where they may be missing; the absence shouldn't fail the task.
+    - name: Source with no xattrs at all
+      copy:
+        content: 'no-xattr-content'
+        dest: '{{ local_temp_dir }}/no_xattr_src.txt'
+      delegate_to: localhost
+
+    - name: Copy with preserve_xattrs=source on a source that has no xattrs
+      copy:
+        src: '{{ local_temp_dir }}/no_xattr_src.txt'
+        dest: '{{ remote_dir }}/no_xattr_dst.txt'
+        preserve_xattrs: source
+        xattr_error_mode: warn
+
+    - command: getfattr --absolute-names -d -m '^user\.' {{ remote_dir }}/no_xattr_dst.txt
+      register: no_xattr_dst_dump
+      changed_when: false
+      failed_when: false
+
+    - assert:
+        that:
+          - "'user.' not in no_xattr_dst_dump.stdout"
+
+    # 10. _xattrs_data is internal and must be rejected if the user tries to set it.
+    - name: Reject user-supplied _xattrs_data
+      copy:
+        src: '{{ local_temp_dir }}/xattr_src.txt'
+        dest: '{{ remote_dir }}/xattr_inject.txt'
+        _xattrs_data:
+          user.injected: 'aGVsbG8='
+      register: inject_attempt
+      ignore_errors: true
+
+    - assert:
+        that:
+          - inject_attempt is failed
+          - "'_xattrs_data' in (inject_attempt.msg | default(''))"
+
   always:
-    - name: Clean up controller-side xattr source
+    - name: Clean up controller-side artefacts
       file:
-        path: '{{ local_temp_dir }}/xattr_src.txt'
+        path: '{{ item }}'
         state: absent
       delegate_to: localhost
+      loop:
+        - '{{ local_temp_dir }}/xattr_src.txt'
+        - '{{ local_temp_dir }}/no_xattr_src.txt'
 
     - name: Clean up remote xattr artefacts
       file:
         path: '{{ item }}'
         state: absent
       loop:
-        - '{{ remote_dir }}/xattr_off.txt'
-        - '{{ remote_dir }}/xattr_on.txt'
+        - '{{ remote_dir }}/xattr_no.txt'
+        - '{{ remote_dir }}/xattr_source.txt'
+        - '{{ remote_dir }}/xattr_target.txt'
+        - '{{ remote_dir }}/xattr_merge.txt'
         - '{{ remote_dir }}/xattr_remote_src.txt'
         - '{{ remote_dir }}/xattr_remote_dst.txt'
+        - '{{ remote_dir }}/no_xattr_dst.txt'

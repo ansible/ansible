@@ -171,6 +171,34 @@ from ansible.module_utils.common.warnings import (
     get_warnings,
     warn,
 )
+from ansible.module_utils.common.xattrs import (
+    PRESERVE_MODES as _XATTR_PRESERVE_MODES,
+    ERROR_MODES as _XATTR_ERROR_MODES,
+    SELINUX_XATTR as _SELINUX_XATTR,
+    apply_xattrs as _apply_xattrs,
+    decode_xattrs as _decode_xattrs,
+    diff_xattrs as _diff_xattrs,
+    read_xattrs as _read_xattrs_for_path,
+    reconcile_desired as _reconcile_xattrs,
+    xattrs_supported as _xattrs_supported,
+)
+
+
+def _xattrs_for_diff(xattrs):
+    """Render ``{name: bytes}`` xattrs as a sorted dict of human-readable strings for diff output.
+
+    Bytes that decode as UTF-8 are shown literally; otherwise they are
+    represented as ``0s<base64>`` so callers can still see what changed.
+    """
+    import base64 as _b64
+    rendered = {}
+    for name, value in xattrs.items():
+        try:
+            rendered[name] = value.decode('utf-8')
+        except (UnicodeDecodeError, AttributeError):
+            rendered[name] = '0s' + _b64.b64encode(value).decode('ascii')
+    return dict(sorted(rendered.items()))
+
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -202,6 +230,13 @@ FILE_COMMON_ARGUMENTS = dict(
     setype=dict(type='str'),
     attributes=dict(type='str', aliases=['attr']),
     unsafe_writes=dict(type='bool', default=False, fallback=(env_fallback, ['ANSIBLE_UNSAFE_WRITES'])),  # should be available to any module using atomic_move
+    # Linux extended attributes. The 'target' default is interpreted by
+    # set_xattrs_if_different so leaving the option unset stays a no-op on
+    # platforms without xattr support. The internal _xattrs_data transport
+    # arg is declared per-module (copy, file) rather than here so it does
+    # not pollute every module that uses add_file_common_args.
+    preserve_xattrs=dict(type='str', choices=list(_XATTR_PRESERVE_MODES)),
+    xattr_error_mode=dict(type='str', choices=list(_XATTR_ERROR_MODES), default='fail'),
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -605,10 +640,15 @@ class AnsibleModule(object):
                 secontext[i] = default_secontext[i]
 
         attributes = params.get('attributes', None)
+        preserve_xattrs = params.get('preserve_xattrs', None)
+        xattr_error_mode = params.get('xattr_error_mode', 'fail')
+        xattrs_data = params.get('_xattrs_data', None)
         return dict(
             path=path, mode=mode, owner=owner, group=group,
             seuser=seuser, serole=serole, setype=setype,
             selevel=selevel, secontext=secontext, attributes=attributes,
+            preserve_xattrs=preserve_xattrs, xattr_error_mode=xattr_error_mode,
+            _xattrs_data=xattrs_data,
         )
 
     # Detect whether using selinux that is MLS-aware.
@@ -1144,7 +1184,89 @@ class AnsibleModule(object):
         changed = self.set_attributes_if_different(
             file_args['path'], file_args['attributes'], changed, diff, expand
         )
+        changed = self.set_xattrs_if_different(
+            file_args['path'], file_args.get('preserve_xattrs'),
+            file_args.get('_xattrs_data'), file_args.get('xattr_error_mode', 'fail'),
+            changed, diff, expand,
+        )
         return changed
+
+    def set_xattrs_if_different(self, path, mode, source_xattrs_b64, error_mode,
+                                changed, diff=None, expand=True):
+        """Reconcile xattrs on *path* according to *mode*.
+
+        ``mode`` is one of ``no|target|source|merge`` (or ``None`` to leave them alone
+        on platforms without xattr support). ``source_xattrs_b64`` carries the source
+        file's xattrs as a ``{name: base64-str}`` dict — the controller-side action
+        plugin populates it for the C(source) and C(merge) modes; otherwise it can be
+        ``None`` and source xattrs are read from disk only when needed.
+        """
+        # mode==None means "user didn't ask"; stay completely silent on unsupported
+        # platforms. atomic_move still preserves target xattrs as a side effect.
+        if mode is None:
+            return changed
+
+        if not _xattrs_supported():
+            return self._xattr_handle_error(error_mode,
+                                            'xattrs are not supported on this platform',
+                                            mode_explicit=True)
+
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+
+        if self.check_file_absent_if_check_mode(b_path):
+            return True
+
+        try:
+            target_xattrs = _read_xattrs_for_path(b_path)
+        except OSError as ex:
+            self._xattr_handle_error(error_mode, "could not read xattrs from %s: %s" % (to_text(b_path), to_native(ex)),
+                                     mode_explicit=True)
+            return changed
+
+        source_xattrs = _decode_xattrs(source_xattrs_b64) if source_xattrs_b64 else None
+        try:
+            desired, exact = _reconcile_xattrs(mode, source_xattrs, target_xattrs)
+        except ValueError as ex:
+            self.fail_json(msg=str(ex))
+
+        # Drop SELinux on both sides defensively (the helpers already skip it on read,
+        # but a caller could have stuffed it into source_xattrs_b64).
+        desired.pop(_SELINUX_XATTR, None)
+
+        _to_set, _to_remove = _diff_xattrs(target_xattrs or {}, desired, exact=exact)
+        if not _to_set and not _to_remove:
+            return changed
+
+        if diff is not None:
+            diff.setdefault('before', {})['xattrs'] = _xattrs_for_diff(target_xattrs or {})
+            diff.setdefault('after', {})['xattrs'] = _xattrs_for_diff(desired)
+
+        if self.check_mode:
+            return True
+
+        try:
+            attr_changed, _to_set, _to_remove = _apply_xattrs(b_path, desired, exact=exact)
+        except OSError as ex:
+            return self._xattr_handle_error(error_mode,
+                                            "could not apply xattrs to %s: %s" % (to_text(b_path), to_native(ex)),
+                                            mode_explicit=True) or changed
+
+        return changed or attr_changed
+
+    def _xattr_handle_error(self, error_mode, message, mode_explicit):
+        """Implement the fail/warn/ignore branching for xattr-related errors.
+
+        Returns the resulting ``changed`` contribution (always False — errors do not
+        report changes).
+        """
+        if error_mode == 'ignore' or not mode_explicit:
+            return False
+        if error_mode == 'warn':
+            self.warn(message)
+            return False
+        self.fail_json(msg=message)
 
     def check_file_absent_if_check_mode(self, file_path):
         return self.check_mode and not os.path.exists(file_path)
@@ -1720,6 +1842,10 @@ class AnsibleModule(object):
         to work around limitations, corner cases and ensure selinux context is saved if possible"""
         context = None
         dest_stat = None
+        # Capture target xattrs explicitly so we can reapply them after the move even when
+        # the fallback path that does not call shutil.copystat is taken. This mirrors how
+        # chattr-style attributes are reattached to the new dest below.
+        dest_xattrs = None
         b_src = to_bytes(src, errors='surrogate_or_strict')
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
         if os.path.exists(b_dest) and keep_dest_attrs:
@@ -1733,6 +1859,10 @@ class AnsibleModule(object):
                     raise
             if self.selinux_enabled():
                 context = self.selinux_context(dest)
+            try:
+                dest_xattrs = _read_xattrs_for_path(b_dest)
+            except OSError:
+                dest_xattrs = None
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
@@ -1831,6 +1961,17 @@ class AnsibleModule(object):
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
+
+        # Reattach the previous destination's xattrs. shutil.copystat usually does this in the
+        # fast path, but it is bypassed when the mkstemp+shutil.copy fallback runs and when
+        # _unsafe_writes is used. Reapply explicitly so target xattrs are not silently dropped.
+        if dest_xattrs:
+            try:
+                _apply_xattrs(b_dest, dest_xattrs, exact=False)
+            except OSError:
+                # Filesystem refuses xattrs or we lost the capability that previously held them.
+                # Stay quiet — atomic_move is infrastructure; modules express loud failures.
+                pass
 
     def _unsafe_writes(self, src, dest):
         # sadly there are some situations where we cannot ensure atomicity, but only if
