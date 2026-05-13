@@ -362,38 +362,38 @@
         - "dpkg_result.rc != 0"
 
 # INSTALL WITHOUT REMOVALS
-- name: Install hello, that conflicts with hello-traditional
+- name: Install postfix, that conflicts with exim4
   apt:
-    pkg: hello
+    pkg: postfix
     state: present
     update_cache: no
 
-- name: check hello
-  shell: dpkg-query -l hello
+- name: check postfix
+  shell: dpkg-query -l postfix
   register: dpkg_result
 
-- name: verify installation of hello
+- name: verify installation of postfix
   assert:
     that:
         - "dpkg_result.rc == 0"
 
-- name: Try installing hello-traditional, that conflicts with hello
+- name: Try installing exim4, that conflicts with postfix
   apt:
-    pkg: hello-traditional
+    pkg: exim4
     state: present
     fail_on_autoremove: yes
   ignore_errors: yes
   register: apt_result
 
-- name: verify failure of installing hello-traditional, because it is required to remove hello to install.
+- name: verify failure of installing exim4, because it is required to remove hello to install.
   assert:
     that:
       - apt_result is failed
       - '"Packages need to be removed but remove is disabled." in apt_result.msg'
 
-- name: uninstall hello with apt
+- name: uninstall postfix with apt
   apt:
-    pkg: hello
+    pkg: postfix
     state: absent
     purge: yes
     update_cache: no
