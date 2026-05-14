@@ -1,2 +1,0 @@
-minor_changes:
-  - git - remove redundant `check_rc` to allow for the error condition to print a better message
