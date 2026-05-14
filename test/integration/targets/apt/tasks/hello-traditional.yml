@@ -1,0 +1,55 @@
+- name: create hello-traditional from hello, cleanup not needed, OUTPUT_DIR gets cleared
+  vars:
+    outdir: '{{lookup("env", "OUTPUT_DIR")}}'
+    workdir: '{{outdir}}/hello-traditional'
+    control: '{{workdir}}/DEBIAN/control'
+  block:
+    - name: ensure we have our dirs
+      file:
+        path: '{{item}}'
+        state: directory
+      loop:
+        - '{{outdir}}'
+        - '{{workdir}}'
+        - '{{workdir}}/DEBIAN'
+
+    - name: download deb
+      shell:
+        cmd: apt download hello
+        chdir: '{{outdir}}'
+
+    - name: extract files and metafiles
+      shell: '{{" ".join(["dpkg-deb", "-" + item.flag, outdir + "/hello_*.deb", workdir + item.dest])}}'
+      loop:
+        - flag: e
+          dest: /DEBIAN/
+        - flag: x
+          dest: /
+
+    - name: in case conflict didn't exist
+      lineinfile:
+        path: '{{control}}'
+        regexp: '^Conflicts: hello'
+        line: 'Conflicts: hello'
+
+    - name: modify into hello-traditional, conflicting!!!
+      replace:
+        path: '{{control}}'
+        regexp: '{{item.old}}'
+        replace: '{{item.new}}'
+      loop:
+        - old: '^Package: hello$'
+          new: 'Package: hello-traditional'
+        - old: '^Conflicts: hello-traditional$'
+          new: 'Conflicts: hello'
+
+    - name: build hello
+      shell: dpkg-deb -b {{workdir}} {{outdir}}/hello-traditional.deb
+
+    - name: Try again, now try installing hello-traditional, that conflicts with hello
+      apt:
+        deb: '{{outdir}}/hello-traditional.deb'
+        state: present
+        fail_on_autoremove: yes
+      ignore_errors: yes
+      register: apt_result

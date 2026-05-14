@@ -138,6 +138,8 @@ stages:
               test: rhel/10.1
             - name: Ubuntu 24.04
               test: ubuntu/24.04
+            - name: Ubuntu 26.04
+              test: ubuntu/26.04
           groups:
             - 6
   - stage: Remote_Targeted
@@ -161,10 +163,10 @@ stages:
               test: alpine323
             - name: Fedora 44
               test: fedora44
-            - name: Ubuntu 22.04
-              test: ubuntu2204
             - name: Ubuntu 24.04
               test: ubuntu2404
+            - name: Ubuntu 26.04
+              test: ubuntu2604
           groups:
             - 1
             - 2
@@ -178,6 +180,8 @@ stages:
               test: fedora44
             - name: Ubuntu 24.04
               test: ubuntu2404
+            - name: Ubuntu 26.04
+              test: ubuntu2604
           groups:
             - 3
             - 4
