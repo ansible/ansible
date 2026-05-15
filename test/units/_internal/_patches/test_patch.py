@@ -17,7 +17,7 @@ class BogusPatch(CallablePatch):
         return True
 
     def __call__(self, annotation, cls, a_module, a_type, is_type_predicate) -> bool:
-        raise NotImplementedError("should not be called")
+        raise NotImplementedError("should not be called")  # pragma: nocover
 
 
 def test_bogus_patch():
