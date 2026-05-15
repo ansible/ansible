@@ -42,7 +42,7 @@ class CallablePatch(abc.ABC):
     @classmethod
     def get_current_implementation(cls) -> t.Any:
         """Get the current (possibly patched) implementation from the patch target container."""
-        return getattr(cls.target_container, cls.target_attribute)
+        return getattr(cls.target_container, cls.target_attribute, ...)
 
     @classmethod
     def patch(cls) -> None:
@@ -54,6 +54,12 @@ class CallablePatch(abc.ABC):
 
         if not cls.is_patch_needed():
             return
+
+        if cls.unpatched_implementation is ...:
+            raise RuntimeError(
+                f"Patch {cls.__name__!r} appears to be needed, but implementation to be patched "
+                f"('{cls.target_container.__name__}.{cls.target_attribute}') is not present."
+            )
 
         # __call__ requires an instance (otherwise it'll be __new__)
         setattr(cls.target_container, cls.target_attribute, cls())
