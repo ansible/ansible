@@ -221,7 +221,10 @@ AGNOSTIC_BECOME_PROMPT:
   name: Display an agnostic become prompt
   default: True
   type: boolean
-  description: Display an agnostic become prompt instead of displaying a prompt containing the command line supplied become method.
+  description:
+    - When enabled, become password prompts begin with ``BECOME`` instead of the uppercased become method name.
+    - This lets callers detect become password prompts without knowing which become method is in use.
+    - When password prompting for the connection is also enabled, the become prompt also indicates that it defaults to the connection password.
   env: [{name: ANSIBLE_AGNOSTIC_BECOME_PROMPT}]
   ini:
     - {key: agnostic_become_prompt, section: privilege_escalation}
