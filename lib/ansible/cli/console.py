@@ -273,7 +273,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if arg:
             try:
                 forks = int(arg)
-            except TypeError:
+            except (TypeError, ValueError) as e:
                 display.error('Invalid argument for "forks"')
                 self.usage_forks()
 
