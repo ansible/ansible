@@ -282,7 +282,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 self.set_prompt()
 
             else:
-                display.display('forks must be greater than or equal to 1')
+                display.error('forks must be greater than or equal to 1')
         else:
             self.usage_forks()
 
