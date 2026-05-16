@@ -274,7 +274,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             try:
                 forks = int(arg)
             except (TypeError, ValueError) as e:
-                display.error('Invalid argument for "forks"')
+                display.error('The number of forks must be a valid positive integer: %s' % to_text(e))
                 self.usage_forks()
 
             if forks > 0:
