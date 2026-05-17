@@ -842,9 +842,9 @@ class ModuleValidator(Validator):
                     )
                 prev_positional.add(pos_opt)
 
-        normalized_option_alias_names = dict()
+        normalized_option_alias_names: dict[str, dict[str, set[str]]] = dict()
 
-        def add_option_alias_name(name, option_name):
+        def add_option_alias_name(name: str, option_name: str) -> None:
             normalized_name = str(name).lower()
             normalized_option_alias_names.setdefault(normalized_name, {}).setdefault(option_name, set()).add(name)
 
