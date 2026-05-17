@@ -17,6 +17,7 @@ DOCUMENTATION = """
       - Either a list of files O(_terms) or a key O(files) with a list of files is required for this plugin to operate.
     notes:
       - This lookup can be used in 'dual mode', either passing a list of file names or a dictionary that has O(files) and O(paths).
+    positional: _terms
     options:
       _terms:
         description: A list of file names.
