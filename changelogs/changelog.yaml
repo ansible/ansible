@@ -1,5 +1,16 @@
 ancestor: 2.20.0
 releases:
+  2.21.0:
+    changes:
+      release_summary: '| Release Date: 2026-05-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+    codename: The Rain Song
+    fragments:
+    - 2.21.0_summary.yaml
+    release_date: '2026-05-18'
   2.21.0b1:
     changes:
       breaking_changes:
