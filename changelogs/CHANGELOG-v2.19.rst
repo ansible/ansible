@@ -4,13 +4,13 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
-v2.19.10rc1
-===========
+v2.19.10
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2026-05-11
+| Release Date: 2026-05-18
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
 
 Security Fixes
