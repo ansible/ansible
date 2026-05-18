@@ -1073,16 +1073,19 @@ class User(object):
 
     def parse_local_groups(self):
         if not os.path.exists(self.GROUPFILE):
-            self.module.fail_json(msg="'local: true' specified but unable to find local group file {0} to parse.".format(self.GROUPFILE))
+            self.module.fail_json(msg=f"'local: true' specified but unable to find local group file {self.GROUPFILE} to parse.")
         groups = {}
         with open(self.GROUPFILE, 'r') as f:
-            for x, line in enumerate(f.readlines()):
-                entry = line[:-1].split(':')
+            for linenum, line in enumerate(f):
+                line = line.strip()
+                if not line:
+                    continue
+                entry = line.split(':')
                 if len(entry) != 4:
-                    self.module.fail_json(msg="unable to parse group file {0}: line {1}: incorrect number of fields".format(self.GROUPFILE, x))
-                groups[entry[0]] = entry[2]
-        if len(groups) == 0:
-            self.module.warn("'local: true' specified but found 0 local groups in file {0}".format(self.GROUPFILE))
+                    self.module.fail_json(msg=f"unable to parse group file {self.GROUPFILE}: line {linenum}: incorrect number of fields")
+                groups[entry[0]] = int(entry[2])
+        if not groups:
+            self.module.warn(f"'local: true' specified but found 0 local groups in file {self.GROUPFILE}")
         self.local_groups = groups
 
     def local_group_exists(self, group):
@@ -1091,10 +1094,7 @@ class User(object):
         try:
             # Try group as a gid first
             gid = int(group)
-            for v in self.local_groups.values():
-                if v == gid:
-                    return True
-            return False
+            return gid in self.local_groups.values()
         except ValueError:
             return group in self.local_groups
 

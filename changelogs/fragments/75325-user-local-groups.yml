@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix ``local: true`` group handling to ignore non-local NSS groups (https://github.com/ansible/ansible/issues/75325).

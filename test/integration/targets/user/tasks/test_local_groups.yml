@@ -1,0 +1,108 @@
+# Test that local: true correctly handles non-local NSS groups
+# https://github.com/ansible/ansible/issues/75325
+
+- name: Test local user groups with non-local NSS groups
+  become: true
+  vars:
+    local_groups_user: ansibletestlocal
+    local_group: localgroup
+    nonlocal_group: ldapgroup
+  block:
+    - name: Install libnss-extrausers
+      apt:
+        name: libnss-extrausers
+        state: present
+        update_cache: true
+
+    - name: Configure NSS to use extrausers
+      lineinfile:
+        path: /etc/nsswitch.conf
+        regexp: '^group:'
+        line: 'group: files extrausers systemd'
+        backup: true
+
+    - name: Create extrausers directory
+      file:
+        path: /var/lib/extrausers
+        state: directory
+        mode: '0755'
+
+    - name: Create extrausers group file with non-local group
+      copy:
+        content: "{{ nonlocal_group }}:x:9999:\n"
+        dest: /var/lib/extrausers/group
+        mode: '0644'
+
+    - name: Create user primary group
+      group:
+        name: "{{ local_groups_user }}"
+        state: present
+
+    - name: Create local group
+      group:
+        name: "{{ local_group }}"
+        state: present
+
+    - name: Create local user in both groups
+      user:
+        name: "{{ local_groups_user }}"
+        group: "{{ local_groups_user }}"
+        groups: "{{ local_group }}"
+        local: true
+        create_home: true
+
+    - name: Add user to non-local group
+      lineinfile:
+        path: /var/lib/extrausers/group
+        regexp: "^{{ nonlocal_group }}:x:9999:"
+        line: "{{ nonlocal_group }}:x:9999:{{ local_groups_user }}"
+
+    - name: Update user with local=true (first run)
+      user:
+        name: "{{ local_groups_user }}"
+        groups: "{{ local_group }}"
+        local: true
+        append: false
+      register: local_groups_first_run
+
+    - name: Update user with local=true (second run)
+      user:
+        name: "{{ local_groups_user }}"
+        groups: "{{ local_group }}"
+        local: true
+        append: false
+      register: local_groups_second_run
+
+    - name: Assert fix works and is idempotent
+      assert:
+        that:
+          - local_groups_first_run is not failed
+          - local_groups_second_run is not changed
+
+  always:
+    - name: Clean up test user
+      user:
+        name: "{{ local_groups_user }}"
+        state: absent
+        remove: true
+      ignore_errors: true
+
+    - name: Clean up groups
+      group:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ local_groups_user }}"
+        - "{{ local_group }}"
+      ignore_errors: true
+
+    - name: Remove extrausers directory
+      file:
+        path: /var/lib/extrausers
+        state: absent
+
+    - name: Restore NSS configuration
+      lineinfile:
+        path: /etc/nsswitch.conf
+        regexp: '^group:'
+        line: 'group: files systemd'
