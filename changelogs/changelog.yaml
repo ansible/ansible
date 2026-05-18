@@ -835,6 +835,17 @@ releases:
     - ansible-test-dist-info.yml
     - ansible-test-macos-aarch64.yml
     release_date: '2026-04-13'
+  2.18.17:
+    changes:
+      release_summary: '| Release Date: 2026-05-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.17_summary.yaml
+    release_date: '2026-05-18'
   2.18.17rc1:
     changes:
       bugfixes:
