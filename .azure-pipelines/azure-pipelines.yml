@@ -84,34 +84,22 @@ stages:
       - template: templates/matrix.yml  # context/target
         parameters:
           targets:
-            - name: macOS 14.3
-              test: macos/14.3
             - name: RHEL 9.7 py39
               test: rhel/9.7@3.9
             - name: RHEL 9.7 py312
               test: rhel/9.7@3.12
             - name: RHEL 10.1
               test: rhel/10.1
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
-            - name: FreeBSD 14.1
-              test: freebsd/14.1
           groups:
             - 1
             - 2
       - template: templates/matrix.yml  # context/controller
         parameters:
           targets:
-            - name: macOS 14.3
-              test: macos/14.3
             - name: RHEL 9.7
               test: rhel/9.7
             - name: RHEL 10.1
               test: rhel/10.1
-            - name: FreeBSD 13.5
-              test: freebsd/13.5
-            - name: FreeBSD 14.1
-              test: freebsd/14.1
           groups:
             - 3
             - 4
@@ -119,10 +107,6 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.20
-              test: alpine/3.20
-            - name: Fedora 40
-              test: fedora/40
             - name: RHEL 9.7
               test: rhel/9.7
             - name: RHEL 10.1
@@ -138,10 +122,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.20
-              test: alpine320
-            - name: Fedora 40
-              test: fedora40
             - name: Ubuntu 22.04
               test: ubuntu2204
             - name: Ubuntu 24.04
@@ -153,10 +133,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.20
-              test: alpine320
-            - name: Fedora 40
-              test: fedora40
             - name: Ubuntu 24.04
               test: ubuntu2404
           groups:
