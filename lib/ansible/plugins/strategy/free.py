@@ -230,9 +230,9 @@ class StrategyModule(StrategyBase):
                     is_handler = False
                     try:
                         if included_file._is_role:
-                            new_ir = self._copy_included_file(included_file)
+                            ir = included_file._task
 
-                            new_blocks, handler_blocks = new_ir.get_block_list(
+                            new_blocks, handler_blocks = ir.get_block_list(
                                 play=iterator._play,
                                 variable_manager=self._variable_manager,
                                 loader=self._loader,
