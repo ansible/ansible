@@ -401,9 +401,13 @@ bootstrap_remote_rhel_9()
     # Instead, ansible-test will install it using pip.
     # packaging and resolvelib are missing for controller supported Python versions, so we just
     # skip them and let ansible-test install them from PyPI.
+    #
+    # sqlite-libs needs to be specified currently to get sqlite3 imports working
+    # https://redhat.atlassian.net/browse/RHEL-178008
     if [ "${controller}" ]; then
         packages="
             ${packages}
+            sqlite-libs
             ${py_pkg_prefix}-cryptography
             ${py_pkg_prefix}-pyyaml
             "
