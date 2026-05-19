@@ -47,3 +47,13 @@ class TestPlaybookCLI(unittest.TestCase):
 
         with pytest.raises(KeyError):
             variable_manager._fact_cache.get('testhost')
+
+    def test_check_password_option(self):
+        cli = PlaybookCLI(args=["ansible-playbook", "--check-password", "foobar.yml"])
+        cli.parse()
+        assert context.CLIARGS['check_password'] is True
+
+    def test_check_password_default(self):
+        cli = PlaybookCLI(args=["ansible-playbook", "foobar.yml"])
+        cli.parse()
+        assert context.CLIARGS.get('check_password', False) is False

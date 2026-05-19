@@ -383,6 +383,12 @@ def add_connect_options(parser):
     """Add options for commands which need to connection to other hosts"""
     connect_group = parser.add_argument_group("Connection Options", "control as whom and how to connect to hosts")
 
+    connect_group.add_argument(
+        '--check-password', default=C.DEFAULT_CHECK_PASSWORD, dest='check_password',
+        action='store_true',
+        help='Connect to the first host to verify the password before connecting to all hosts.'
+    )
+
     connect_group.add_argument('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                                help='use this file to authenticate the connection', type=unfrack_path())
     connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',

@@ -15,11 +15,11 @@ import stat
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleAuthenticationFailure, AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils.common.text.converters import to_bytes
 from ansible.playbook.block import Block
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.loader import add_all_plugin_dirs, connection_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.display import Display
@@ -144,6 +144,15 @@ class PlaybookCLI(CLI):
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
         CLI.get_host_list(inventory, context.CLIARGS['subset'])
 
+        # verify password against first host if --check-password is set
+        if context.CLIARGS.get('check_password', False) and not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
+                context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
+            hosts = CLI.get_host_list(inventory, context.CLIARGS['subset'])
+            try:
+                _verify_connection_first_host(inventory, hosts[0], loader, passwords)
+            except AnsibleError as exc:
+                raise AnsibleOptionsError("Password verification failed on the first host: %s" % exc)
+
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
                                 variable_manager=variable_manager, loader=loader,
@@ -224,6 +233,52 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
+
+
+def _verify_connection_first_host(inventory, first_host, loader, passwords):
+    """Verify connection password against the first host before fanning out."""
+    from ansible.playbook.play_context import PlayContext
+
+    host_name = first_host.get_name()
+    host_vars = inventory.get_host_variables(first_host)
+
+    # Update host vars with ansible_password if we have a connection password
+    if passwords.get('conn_pass'):
+        host_vars['ansible_password'] = passwords['conn_pass']
+
+    # Build play context from CLI args
+    play_context = PlayContext(passwords=passwords)
+    # Override the host for connection purposes
+    play_context.remote_addr = host_vars.get('ansible_host', host_name)
+
+    # Create the connection plugin
+    conn_type = context.CLIARGS.get('connection', C.DEFAULT_TRANSPORT) or 'ssh'
+    conn = connection_loader.get(conn_type, play_context, C.DEFAULT_INTERNAL_THREADED_POOL_SIZE)
+    if conn is None:
+        return
+
+    conn.set_options(var_options=host_vars)
+    # Ensure the password is set on the connection's play context
+    conn._play_context.password = passwords.get('conn_pass', '') or ''
+
+    try:
+        conn.connect(play_context=play_context)
+        rc, stdout, stderr = conn.exec_command('exec echo ansible-ping-ok', in_data=b'', sudoable=False)
+        conn.cleanup()
+        if rc != 0:
+            raise AnsibleError('ssh authentication failed')
+    except AnsibleAuthenticationFailure:
+        conn.close()
+        raise
+    except AnsibleError:
+        conn.close()
+        raise
+    except Exception:
+        # Connection not available for this type, skip verification
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def main(args=None):

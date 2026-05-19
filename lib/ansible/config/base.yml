@@ -576,6 +576,18 @@ DEFAULT_ASK_PASS:
   - {key: ask_pass, section: defaults}
   type: boolean
   yaml: {key: defaults.ask_pass}
+DEFAULT_CHECK_PASSWORD:
+  name: Check password on first host before fanning out
+  default: False
+  description:
+    - This controls whether Ansible will attempt a connection to the first host in the inventory
+      using the provided password before attempting to connect to all hosts.
+    - This is useful to prevent account lockouts that can occur when an incorrect password is
+      sent simultaneously to many hosts.
+  env: [{name: ANSIBLE_CHECK_PASSWORD}]
+  ini:
+  - {key: check_password, section: defaults}
+  type: boolean
 DEFAULT_ASK_VAULT_PASS:
   name: Ask for the vault password(s)
   default: False

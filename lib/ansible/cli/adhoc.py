@@ -15,7 +15,8 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
-from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.plugins.loader import connection_loader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
@@ -134,6 +135,13 @@ class AdHocCLI(CLI):
                 hosts = []
                 display.warning("No hosts matched, nothing to do")
 
+        # verify password against first host if --check-password is set
+        if context.CLIARGS.get('check_password', False) and hosts:
+            try:
+                _verify_connection_first_host(inventory, hosts[0], loader, passwords, play_ds)
+            except AnsibleError as exc:
+                raise AnsibleOptionsError("Password verification failed on the first host: %s" % exc)
+
         # just listing hosts?
         if context.CLIARGS['listhosts']:
             display.display('  hosts (%d):' % len(hosts))
@@ -207,6 +215,52 @@ class AdHocCLI(CLI):
                 loader.cleanup_all_tmp_files()
 
         return result
+
+
+def _verify_connection_first_host(inventory, first_host, loader, passwords, play_ds):
+    """Verify connection password against the first host before fanning out."""
+    from ansible.playbook.play_context import PlayContext
+
+    host_name = first_host.get_name()
+    host_vars = inventory.get_host_variables(first_host)
+
+    # Update host vars with ansible_password if we have a connection password
+    if passwords.get('conn_pass'):
+        host_vars['ansible_password'] = passwords['conn_pass']
+
+    # Build play context from CLI args
+    play_context = PlayContext(passwords=passwords)
+    # Override the host for connection purposes
+    play_context.remote_addr = host_vars.get('ansible_host', host_name)
+
+    # Create the connection plugin
+    conn_type = context.CLIARGS.get('connection', C.DEFAULT_TRANSPORT) or 'ssh'
+    conn = connection_loader.get(conn_type, play_context, C.DEFAULT_INTERNAL_THREADED_POOL_SIZE)
+    if conn is None:
+        return
+
+    conn.set_options(var_options=host_vars)
+    # Ensure the password is set on the connection's play context
+    conn._play_context.password = passwords.get('conn_pass', '') or ''
+
+    try:
+        conn.connect(play_context=play_context)
+        rc, stdout, stderr = conn.exec_command('exec echo ansible-ping-ok', in_data=b'', sudoable=False)
+        conn.cleanup()
+        if rc != 0:
+            raise AnsibleError('ssh authentication failed')
+    except AnsibleAuthenticationFailure:
+        conn.close()
+        raise
+    except AnsibleError:
+        conn.close()
+        raise
+    except Exception:
+        # Connection not available for this type, skip verification
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def main(args=None):

@@ -109,3 +109,22 @@ def test_ansible_version(capsys):
     assert re.match('  python version = .*$', version_lines[6]), 'Incorrect python version in "ansible --version" output'
     assert re.match('  jinja version = .*$', version_lines[7]), 'Incorrect jinja version in "ansible --version" output'
     assert re.match('  pyyaml version = .*$', version_lines[8]), 'Missing pyyaml version in "ansible --version" output'
+
+
+def test_check_password_option():
+    """ Test that --check-password option is recognized and sets the flag """
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', '-m', 'command', '--check-password', 'localhost', '-a', 'echo hi'])
+    adhoc_cli.parse()
+    assert context.CLIARGS['check_password'] is True
+
+
+def test_check_password_default():
+    """ Test that --check-password defaults to False """
+    import argparse
+    from ansible.cli.arguments import option_helpers as opt_help
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('hosts', nargs='?')
+    opt_help.add_connect_options(parser)
+    args = parser.parse_args(['localhost'])
+    assert args.check_password is False
