@@ -42,4 +42,10 @@ def do_debug(
         help='inventory source to use for debugging',
     )
 
+    parser.add_argument(
+        '--nologo',
+        help='do not display the debug shell banner for interactive sessions',
+        action='store_true',
+    )
+
     do_pwsh_debug(subparsers, parser, completer)

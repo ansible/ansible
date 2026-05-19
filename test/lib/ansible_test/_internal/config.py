@@ -278,6 +278,7 @@ class DebugConfig(CommonConfig):
         self.inventory = args.inventory
         self.interactive = sys.stdin.isatty() and not args.cmd  # debug should only be interactive when stdin is a TTY and no command was given
         self.display_stderr = True
+        self.nologo = args.nologo
 
 
 class PwshDebugConfig(DebugConfig):

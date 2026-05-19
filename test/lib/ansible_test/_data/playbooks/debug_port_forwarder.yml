@@ -8,11 +8,46 @@
       msg: Expected to be run with a single host, got {{ ansible_play_hosts_all | length }}
     run_once: true
 
+  - name: If running on local fail with a similar error to only implicit localhost available
+    ansible.builtin.fail:
+      msg: no hosts matched  # Same error used when no hosts are available
+    when: ansible_connection | default('') in ['local', 'ansible.builtin.local']
+
   - name: Verify the connection plugin is SSH
     ansible.builtin.assert:
       that:
         - ansible_connection | default('ssh') in ['ssh', 'ansible.builtin.ssh']
-      msg: Expected to be connected via SSH, got {{ ansible_connection | default('unknown') }}
+      msg: Expected to be connected via SSH or local, got {{ ansible_connection | default('unknown') }}
+
+  - name: Verify the mandatory variables are set
+    ansible.builtin.assert:
+      that:
+      - _ansible_test_debugger_host_info_path is defined
+      - _ansible_test_debugger_ssh_log_path is defined
+
+  - name: Get remote hostname for display purposes
+    ansible.builtin.raw: hostname
+    ignore_errors: true
+    register:
+      remote_hostname: _task.result.stdout | trim
+
+  - name: Clear SSH log path to ensure final task has the correct port information
+    ansible.builtin.file:
+      path: '{{ _ansible_test_debugger_ssh_log_path }}'
+      state: absent
+    delegate_to: localhost
+
+  - name: Write remote host information to host info path
+    ansible.builtin.copy:
+      dest: '{{ _ansible_test_debugger_host_info_path }}'
+      content: >-
+        {{
+          {
+            "inventory_hostname": inventory_hostname,
+            "hostname": remote_hostname | default("Unknown"),
+          } | to_json
+        }}
+    delegate_to: localhost
 
   - name: Run long running command to keep connection alive
     ansible.builtin.raw: >-

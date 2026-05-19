@@ -93,15 +93,18 @@ $debugPayloadJson = $debugPayload | ConvertTo-Json -Depth 2 -Compress
 # we add a shim that connects to the current proc's named pipe and read/write
 # to the socket instead.
 $proc = Get-Process -Id $pid
-$procTime = if ($PSVersionTable.PSVersion -lt '6.0' -or $IsWindows) {
-    $proc.StartTime.ToFileTime().ToString([CultureInfo]::InvariantCulture)
+if ($PSVersionTable.PSVersion -lt '6.0' -or $IsWindows) {
+    $procTime = $proc.StartTime.ToFileTime().ToString([CultureInfo]::InvariantCulture)
+    $appDomain = 'DefaultAppDomain'
 }
 else {
-    $proc.StartTime.ToFileTime().ToString("X8").Substring(1, 8)
+    $procTime = $proc.StartTime.ToFileTime().ToString("X8").Substring(1, 8)
+    $appDomain = 'None'
 }
-$pipeName = 'PSHost.{0}.{1}.DefaultAppDomain.{2}' -f (
+$pipeName = 'PSHost.{0}.{1}.{2}.{3}' -f (
     $procTime,
     $pid,
+    $appDomain,
     $proc.ProcessName
 )
 
@@ -216,7 +219,14 @@ try {
                     }
 
                     $null = $taskList.Remove($finishedTask)
-                    $null = $finishedTask.GetAwaiter().GetResult()
+                    try {
+                        $null = $finishedTask.GetAwaiter().GetResult()
+                    } catch {
+                        # It's not great to ignore exceptions but as this is
+                        # only for cleanup purposes we don't want to throw and
+                        # have a working run fail. Most likely failures are
+                        # things like cancellations or IO on pipe/socket.
+                    }
                 }
             })
     )
