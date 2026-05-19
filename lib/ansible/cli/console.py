@@ -25,8 +25,9 @@ from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
+from ansible.playbook.play_context import PlayContext
 from ansible.plugins.list import list_plugins
-from ansible.plugins.loader import module_loader, fragment_loader
+from ansible.plugins.loader import connection_loader, fragment_loader, module_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 from ansible._internal._datatag._tags import TrustedAsTemplate
@@ -565,6 +566,13 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.groups = self.inventory.list_groups()
         self.hosts = [x.name for x in hosts]
 
+        # verify connection password against first host before entering REPL
+        if context.CLIARGS.get('check_password', False) and hosts:
+            try:
+                _verify_connection_first_host(self.inventory, hosts[0], self.loader, self.passwords)
+            except Exception as exc:
+                raise SystemExit("Password verification failed on the first host: %s" % exc)
+
         # This hack is to work around readline issues on a mac:
         #  http://stackoverflow.com/a/7116997/541202
         if 'libedit' in readline.__doc__:
@@ -601,6 +609,52 @@ class ConsoleCLI(CLI, cmd.Cmd):
             raise AttributeError(f"{self.__class__} does not have a {name} attribute")
 
         return attr
+
+
+def _verify_connection_first_host(inventory, first_host, loader, passwords):
+    """Verify connection password against the first host before fanning out."""
+    from ansible.errors import AnsibleAuthenticationFailure, AnsibleError
+
+    host_name = first_host.get_name()
+    host_vars = inventory.get_host_variables(first_host)
+
+    # Update host vars with ansible_password if we have a connection password
+    if passwords.get('conn_pass'):
+        host_vars['ansible_password'] = passwords['conn_pass']
+
+    # Build play context from CLI args
+    play_context = PlayContext(passwords=passwords)
+    # Override the host for connection purposes
+    play_context.remote_addr = host_vars.get('ansible_host', host_name)
+
+    # Create the connection plugin
+    conn_type = context.CLIARGS.get('connection', C.DEFAULT_TRANSPORT) or 'ssh'
+    conn = connection_loader.get(conn_type, play_context, C.DEFAULT_INTERNAL_THREADED_POOL_SIZE)
+    if conn is None:
+        return
+
+    conn.set_options(var_options=host_vars)
+    # Ensure the password is set on the connection's play context
+    conn._play_context.password = passwords.get('conn_pass', '') or ''
+
+    try:
+        conn.connect(play_context=play_context)
+        rc, stdout, stderr = conn.exec_command('exec echo ansible-ping-ok', in_data=b'', sudoable=False)
+        conn.cleanup()
+        if rc != 0:
+            raise AnsibleError('ssh authentication failed')
+    except AnsibleAuthenticationFailure:
+        conn.close()
+        raise
+    except AnsibleError:
+        conn.close()
+        raise
+    except Exception:
+        # Connection not available for this type, skip verification
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def main(args=None):
