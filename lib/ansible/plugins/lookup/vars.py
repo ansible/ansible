@@ -30,23 +30,23 @@ EXAMPLES = """
     variablename: hello
     myvar: ename
 
-- name: Show default empty since i dont have 'variablnotename'
+- name: Show default empty since I don't have 'variablnotename'
   ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar, default='') }}"
   vars:
     variablename: hello
     myvar: notename
 
-- name: Produce an error since i dont have 'variablnotename'
+- name: Produce an error since I don't have 'variablnotename'
   ansible.builtin.debug: msg="{{ q('vars', 'variabl' + myvar) }}"
   ignore_errors: True
   vars:
     variablename: hello
     myvar: notename
 
-- name: find several related variables
+- name: Find several related variables
   ansible.builtin.debug: msg="{{ query('ansible.builtin.vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
 
-- name: show values from variables found via varnames (note "*" is used to dereference the list to a 'list of arguments')
+- name: Show values from variables found via varnames (note "*" is used to dereference the list to a 'list of arguments')
   debug: msg="{{ q('vars', *q('varnames', 'ansible_play_.+')) }}"
 
 - name: Access nested variables
@@ -57,7 +57,7 @@ EXAMPLES = """
         sub_var: 12
     myvar: ename
 
-- name: alternate way to find some 'prefixed vars' in loop
+- name: Alternate way to find some 'prefixed vars' in loop
   ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'ansible_play_' + item) }}"
   loop:
     - hosts
