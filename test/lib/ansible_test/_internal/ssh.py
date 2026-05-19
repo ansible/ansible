@@ -170,6 +170,7 @@ class AnsibleSshForwarder:
         inventory: str | None = None,
         host_limit: str | None = None,
     ) -> AnsibleSshForwarder:
+        """Create a new AnsibleSshForwarder instance, starting the ansible-playbook process that will set up the SSH port forwards."""
         if isinstance(args, EnvironmentConfig):
             python = args.controller_python
         else:
@@ -210,7 +211,6 @@ class AnsibleSshForwarder:
             for forward_host, forward_port in forwards:
                 bind_port = 0  # request SSH to automatically assign a port on the remote side
                 ssh_args.extend(['-R', f'{bind_port}:{forward_host}:{forward_port}'])
-
 
             playbook_path = pathlib.Path(ANSIBLE_TEST_DATA_ROOT) / 'playbooks' / 'debug_port_forwarder.yml'
             playbook_extra_args = dict(
@@ -301,10 +301,11 @@ class AnsibleSshForwarder:
         return self._forwards
 
     def get_host_info(self, timeout: int | None = None) -> AnsibleSshForwarderHostInfo:
+        """Get information about the remote host that Ansible is connecting to for SSH port forwarding."""
         if self._host_info is not None:
             return self._host_info
 
-        elif self._process is None:  # explain mode
+        if self._process is None:  # explain mode
             self._host_info = AnsibleSshForwarderHostInfo(
                 inventory_hostname='explain-mode',
                 hostname='explain-mode',
@@ -329,10 +330,9 @@ class AnsibleSshForwarder:
                     )
                     return self._host_info
 
-                else:
-                    msg = f"Ansible port forwarding playbook process exited before host facts were collected. " \
-                        f"Ansible process exited with code {rc}. Ansible playbook output:\n{stdout}"
-                    raise ApplicationError(msg)
+                msg = f"Ansible port forwarding playbook process exited before host facts were collected. " \
+                    f"Ansible process exited with code {rc}. Ansible playbook output:\n{stdout}"
+                raise ApplicationError(msg)
 
             if timeout is not None and time.time() - start_time > timeout:
                 rc = self._terminate_process()
