@@ -13,9 +13,9 @@ from ansible.cli import CLI
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.errors import AnsibleAuthenticationFailure, AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.executor.task_queue_manager import AnsibleEndPlay, TaskQueueManager
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.plugins.loader import connection_loader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
@@ -138,7 +138,7 @@ class AdHocCLI(CLI):
         # verify password against first host if --check-password is set
         if context.CLIARGS.get('check_password', False) and hosts:
             try:
-                _verify_connection_first_host(inventory, hosts[0], loader, passwords, play_ds)
+                _verify_connection_first_host(inventory, hosts[0], loader, passwords)
             except AnsibleError as exc:
                 raise AnsibleOptionsError("Password verification failed on the first host: %s" % exc)
 
@@ -217,7 +217,7 @@ class AdHocCLI(CLI):
         return result
 
 
-def _verify_connection_first_host(inventory, first_host, loader, passwords, play_ds):
+def _verify_connection_first_host(inventory, first_host, loader, passwords):
     """Verify connection password against the first host before fanning out."""
     from ansible.playbook.play_context import PlayContext
 

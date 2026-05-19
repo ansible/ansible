@@ -145,7 +145,8 @@ class PlaybookCLI(CLI):
         CLI.get_host_list(inventory, context.CLIARGS['subset'])
 
         # verify password against first host if --check-password is set
-        if context.CLIARGS.get('check_password', False) and not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
+        if context.CLIARGS.get('check_password', False) and not (
+                context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
                 context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
             hosts = CLI.get_host_list(inventory, context.CLIARGS['subset'])
             try:
