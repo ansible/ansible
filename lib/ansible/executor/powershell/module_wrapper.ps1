@@ -177,7 +177,7 @@ if ($scriptInfo.ShouldConstrain) {
 
     if ($DebugParam.Count) {
         throw "Cannot run untrusted PowerShell script '$Script' in ConstrainedLanguage mode with a debugger."
-     }
+    }
 
     # If the module is marked as needing to be constrained then we set the
     # language mode to ConstrainedLanguage so that when parsed inside the

@@ -221,11 +221,13 @@ try {
                     $null = $taskList.Remove($finishedTask)
                     try {
                         $null = $finishedTask.GetAwaiter().GetResult()
-                    } catch {
+                    }
+                    catch {
                         # It's not great to ignore exceptions but as this is
                         # only for cleanup purposes we don't want to throw and
                         # have a working run fail. Most likely failures are
                         # things like cancellations or IO on pipe/socket.
+                        $null = $null  # For pslint empty catch block
                     }
                 }
             })
