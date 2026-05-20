@@ -860,6 +860,8 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False, plugi
         doc_schema_dict['author'] = All(Any(None, list_string_types, str), author)
     if plugin_type == 'callback':
         doc_schema_dict[Required('type')] = Any('aggregate', 'notification', 'stdout')
+    if plugin_type in ('lookup', 'filter', 'test'):
+        doc_schema_dict['positional'] = Any(list_string_types, str)
 
     if for_collection:
         # Optional

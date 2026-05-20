@@ -13,6 +13,7 @@ DOCUMENTATION = """
       - "To clarify with an example, [ 'a', 'b' ] and [ 1, 2 ] turn into [ ('a',1), ('b', 2) ]"
       - This is basically the same as the 'zip_longest' filter and Python function
       - Any 'unbalanced' elements will be substituted with 'None'
+    positional: _terms
     options:
       _terms:
         description: list of lists to merge

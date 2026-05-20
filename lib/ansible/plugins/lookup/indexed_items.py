@@ -11,6 +11,7 @@ DOCUMENTATION = """
     description:
       - use this lookup if you want to loop over an array and also get the numeric index of where you are in the array as you go
       - any list given will be transformed with each resulting element having the it's previous position in item.0 and its value in item.1
+    positional: _terms
     options:
       _terms:
         description: list of items

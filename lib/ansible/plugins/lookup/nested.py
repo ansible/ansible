@@ -9,6 +9,7 @@ DOCUMENTATION = """
     short_description: composes a list with nested elements of other lists
     description:
         - Takes the input lists and returns a list with elements that are lists composed of the elements of the input lists
+    positional: _raw
     options:
       _raw:
          description:

@@ -12,6 +12,7 @@ DOCUMENTATION = """
       - "The ini lookup reads the contents of a file in INI format C(key1=value1).
         This plugin retrieves the value on the right side after the equal sign C('=') of a given section C([section])."
       - "You can also read a property file which - in this case - does not contain section."
+    positional: _terms
     options:
       _terms:
         description: The key(s) to look up.

@@ -10,6 +10,7 @@ version_added: "1.9"
 short_description: return contents from URL
 description:
     - Returns the content of the URL requested to be used as data in play.
+positional: _terms
 options:
   _terms:
     description: urls to query

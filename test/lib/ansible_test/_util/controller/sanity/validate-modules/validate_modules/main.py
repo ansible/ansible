@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import traceback
+import typing as t
 import warnings
 
 from collections import OrderedDict
@@ -816,21 +817,40 @@ class ModuleValidator(Validator):
                 msg='%s: %s' % (combined_path, error_message)
             )
 
-    def _validate_option_docs(self, options, context=None):
+    def _validate_option_docs(self, options: t.Any, *, context: list[str] | None = None, positional: t.Any | None = None) -> None:
         if not isinstance(options, dict):
             return
         if context is None:
             context = []
 
-        normalized_option_alias_names = dict()
+        if isinstance(positional, str):
+            positional = [part.strip() for part in positional.split(",")] if positional else []
+        if isinstance(positional, list):
+            prev_positional = set()
+            for pos_opt in positional:
+                if pos_opt in prev_positional:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='positional-repeated',
+                        msg=f"The option {pos_opt!r} is listed as a positional option more than once",
+                    )
+                if pos_opt not in options:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='positional-not-option',
+                        msg=f"{pos_opt!r} is listed as a positional option, but is not an option of the plugin",
+                    )
+                prev_positional.add(pos_opt)
 
-        def add_option_alias_name(name, option_name):
+        normalized_option_alias_names: dict[str, dict[str, set[str]]] = dict()
+
+        def add_option_alias_name(name: str, option_name: str) -> None:
             normalized_name = str(name).lower()
             normalized_option_alias_names.setdefault(normalized_name, {}).setdefault(option_name, set()).add(name)
 
         for option, data in options.items():
             if 'suboptions' in data:
-                self._validate_option_docs(data.get('suboptions'), context + [option])
+                self._validate_option_docs(data.get('suboptions'), context=context + [option])
             add_option_alias_name(option, option)
             if 'aliases' in data and isinstance(data['aliases'], list):
                 for alias in data['aliases']:
@@ -1045,7 +1065,7 @@ class ModuleValidator(Validator):
             )
 
             if doc:
-                self._validate_option_docs(doc.get('options'))
+                self._validate_option_docs(doc.get('options'), positional=doc.get('positional'))
 
             self._validate_all_semantic_markup(doc, returns)
 
