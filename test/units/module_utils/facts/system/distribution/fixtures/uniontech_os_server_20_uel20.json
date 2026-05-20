@@ -1,0 +1,29 @@
+{
+    "name": "UnionTech OS Server 20 (uel20)",
+    "distro": {
+        "codename": "fuyu",
+        "id": "uos",
+        "name": "UnionTech OS Server 20",
+        "version": "20",
+        "version_best": "20",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"UnionTech OS Server 20\"\nNAME=\"UnionTech OS Server 20\"\nVERSION_ID=\"20\"\nVERSION=\"20\"\nID=\"uos\"\nPLATFORM_ID=\"platform:uel20\"\nHOME_URL=\"https://www.chinauos.com/\"\nBUG_REPORT_URL=\"https://bbs.chinauos.com/\"\nVERSION_CODENAME=\"fuyu\"\n",
+        "/etc/lsb-release": "DISTRIB_ID=\"Uos\"\nDISTRIB_RELEASE=\"20\"\nDISTRIB_DESCRIPTION=\"UnionTech OS Server 20\"\nDISTRIB_CODENAME=\"fuyu\"\n",
+        "/etc/system-release": "uos release 20 (fuyu)\n"
+    },
+    "platform.dist": [
+        "uos",
+        "20",
+        "fuyu"
+    ],
+    "result": {
+        "distribution": "UnionTech",
+        "distribution_version": "20",
+        "distribution_release": "fuyu",
+        "distribution_major_version": "20",
+        "os_family": "RedHat"
+    }
+}
