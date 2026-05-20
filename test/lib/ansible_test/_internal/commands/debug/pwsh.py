@@ -80,7 +80,7 @@ def command_pwsh_debug(args: PwshDebugConfig) -> None:
             target_inventory_hostname = 'localhost'
             target_hostname = 'localhost'
 
-            if not args.limit or args.limit != 'localhost':
+            if not args.limit or args.limit not in ('127.0.0.1', 'localhost', '::1'):
                 # We forward the local ports to the remote host through an Ansible playbook.
                 # This allows Ansible to handle the SSH connection and host selection
                 # based on the user provided inventory. This is skipped if the
