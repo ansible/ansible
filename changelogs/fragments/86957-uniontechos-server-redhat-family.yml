@@ -1,0 +1,2 @@
+bugfixes:
+  - distribution facts - classify UnionTech OS Server (UOS Server) as ``RedHat`` ``os_family`` instead of ``Debian``. UOS Server is RPM-based and built on top of openAnolis (A version, codename ``kongzi``) or openEuler (E version, codename ``fuyu``), and advertises ``PLATFORM_ID="platform:uel*"`` in ``/etc/os-release``. The Debian-based Desktop edition is unchanged (https://github.com/ansible/ansible/issues/86957).
