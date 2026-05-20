@@ -10,6 +10,7 @@ DOCUMENTATION = """
     short_description: read file contents
     description:
         - This lookup returns the contents from a file on the Ansible controller's file system.
+    positional: _terms
     options:
       _terms:
         description: path(s) of files to read

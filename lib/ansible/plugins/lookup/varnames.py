@@ -9,6 +9,7 @@ DOCUMENTATION = """
     short_description: Lookup matching variable names
     description:
       - Retrieves a list of matching Ansible variable names.
+    positional: _terms
     options:
       _terms:
         description: List of Python regex patterns to search for in variable names.

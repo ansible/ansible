@@ -11,6 +11,7 @@ DOCUMENTATION = """
     description:
       - Allows you to query the environment variables available on the
         controller when you invoked Ansible.
+    positional: _terms
     options:
       _terms:
         description:

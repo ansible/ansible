@@ -10,6 +10,7 @@ DOCUMENTATION = """
     short_description: traverse nested key from a list of dictionaries
     description:
       - Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those records.
+    positional: _terms
     options:
       _terms:
          description: tuple of list of dictionaries and dictionary key to extract
