@@ -1,0 +1,2 @@
+bugfixes:
+  - git - remove redundant error checks after `run_command(check_rc=True)`
