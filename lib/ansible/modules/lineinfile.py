@@ -218,7 +218,7 @@ EXAMPLES = r"""
   ansible.builtin.lineinfile:
     path: /tmp/testfile
     line: 192.168.1.99 foo.lab.net foo
-    create: yes
+    create: true
 
 # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
 - name: Ensure the JBoss memory settings are exactly as needed
@@ -226,7 +226,7 @@ EXAMPLES = r"""
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
-    backrefs: yes
+    backrefs: true
 
 # NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - name: Validate the sudoers file before saving
@@ -243,7 +243,7 @@ EXAMPLES = r"""
     path: /tmp/config
     regexp: ^(host=).*
     line: \g<1>{{ hostname }}
-    backrefs: yes
+    backrefs: true
 """
 
 RETURN = r"""#"""
