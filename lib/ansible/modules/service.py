@@ -140,7 +140,7 @@ EXAMPLES = r"""
 - name: Enable service httpd, and not touch the state
   ansible.builtin.service:
     name: httpd
-    enabled: yes
+    enabled: true
 
 - name: Start service foo, based on running process /usr/bin/foo
   ansible.builtin.service:
