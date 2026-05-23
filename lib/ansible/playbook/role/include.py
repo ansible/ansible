@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import re
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.role.definition import RoleDefinition
@@ -37,13 +39,40 @@ class RoleInclude(RoleDefinition, Delegatable):
                                           loader=loader, collection_list=collection_list)
 
     @staticmethod
-    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=None):
+    def load(data, play, current_role_path=None, parent_role=None,
+             variable_manager=None, loader=None, collection_list=None):
 
-        if not (isinstance(data, str) or isinstance(data, dict)):
+        if not isinstance(data, (str, dict)):
             raise AnsibleParserError("Invalid role definition.", obj=data)
 
         if isinstance(data, str) and ',' in data:
             raise AnsibleError("Invalid old style role requirement: %s" % data)
 
-        ri = RoleInclude(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader, collection_list=collection_list)
-        return ri.load_data(data, variable_manager=variable_manager, loader=loader)
+        # Detect collection role names with invalid characters.
+        # Collection role names must only contain lowercase letters, digits
+        # and underscores. Catch this early to give a clear error instead of
+        # the misleading "role not found" message. Fixes: #75023
+        if isinstance(data, str) and data.count('.') == 2:
+            role_name_part = data.split('.')[-1]
+            if not re.match(r'^[a-z0-9_]+$', role_name_part):
+                suggested_name = re.sub(r'[^a-z0-9_]', '_', role_name_part.lower())
+                raise AnsibleError(
+                    "Invalid collection role name '%s'. "
+                    "Role names in collections may contain only "
+                    "lowercase letters, numbers, and underscores. "
+                    "Consider renaming '%s' to '%s'."
+                    % (role_name_part, role_name_part, suggested_name)
+                )
+
+        ri = RoleInclude(
+            play=play,
+            role_basedir=current_role_path,
+            variable_manager=variable_manager,
+            loader=loader,
+            collection_list=collection_list
+        )
+        return ri.load_data(
+            data,
+            variable_manager=variable_manager,
+            loader=loader
+        )
