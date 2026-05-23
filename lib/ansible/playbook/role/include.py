@@ -52,17 +52,20 @@ class RoleInclude(RoleDefinition, Delegatable):
         # Collection role names must only contain lowercase letters, digits
         # and underscores. Catch this early to give a clear error instead of
         # the misleading "role not found" message. Fixes: #75023
-        if isinstance(data, str) and data.count('.') == 2:
-            role_name_part = data.split('.')[-1]
-            if not re.match(r'^[a-z0-9_]+$', role_name_part):
-                suggested_name = re.sub(r'[^a-z0-9_]', '_', role_name_part.lower())
-                raise AnsibleError(
-                    "Invalid collection role name '%s'. "
-                    "Role names in collections may contain only "
-                    "lowercase letters, numbers, and underscores. "
-                    "Consider renaming '%s' to '%s'."
-                    % (role_name_part, role_name_part, suggested_name)
-                )
+        if isinstance(data, str) and '.' in data:
+            parts = data.split('.')
+            if len(parts) == 3:
+                namespace, collection, role_name_part = parts
+                if re.match(r'^[a-z0-9_]+$', namespace) and re.match(r'^[a-z0-9_]+$', collection):
+                    if not re.match(r'^[a-z0-9_]+$', role_name_part):
+                        suggested_name = re.sub(r'[^a-z0-9_]', '_', role_name_part.lower())
+                        raise AnsibleError(
+                            "Invalid collection role name '%s'. "
+                            "Role names in collections may contain only "
+                            "lowercase letters, numbers, and underscores. "
+                            "Consider renaming '%s' to '%s'."
+                            % (role_name_part, role_name_part, suggested_name)
+                        )
 
         ri = RoleInclude(
             play=play,
