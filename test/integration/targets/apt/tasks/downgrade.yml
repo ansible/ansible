@@ -88,4 +88,3 @@
         that:
           - apt_remove_allow_downgrade is success
           - apt_remove_allow_downgrade is changed
-
