@@ -46,10 +46,6 @@ def test_expand_pkgspec_from_fnmatches(test_input, expected):
     """Test positive cases of ``expand_pkgspec_from_fnmatches``."""
     assert expand_pkgspec_from_fnmatches(None, test_input, fake_cache) == expected
 
-    from unittest.mock import MagicMock, patch
-
-    from ansible.modules import apt as apt_module
-
 
 def test_remove_passes_allow_downgrades_flag():
     """Regression test for https://github.com/ansible/ansible/issues/85804."""
