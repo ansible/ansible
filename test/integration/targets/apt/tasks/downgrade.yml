@@ -66,6 +66,19 @@
       that:
         - "apt_downgrade_second_downgrade.changed == false"
 
+  - name: remove foo with allow_downgrade (regression test for #85804)
+    apt:
+      name: foo
+      state: absent
+      allow_downgrade: yes
+    register: apt_remove_allow_downgrade
+
+  - name: verify removal with allow_downgrade succeeded
+    assert:
+      that:
+        - apt_remove_allow_downgrade is success
+        - apt_remove_allow_downgrade is changed
+
   always:
     - name: Clean up
       apt:
@@ -75,16 +88,3 @@
 
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
-
-    - name: remove foo with allow_downgrade (regression test for #85804)
-      apt:
-        name: foo
-        state: absent
-        allow_downgrade: yes
-      register: apt_remove_allow_downgrade
-
-    - name: verify removal with allow_downgrade succeeded
-      assert:
-        that:
-          - apt_remove_allow_downgrade is success
-          - apt_remove_allow_downgrade is changed
