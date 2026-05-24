@@ -58,15 +58,13 @@ def test_remove_passes_allow_downgrades_flag():
     module.run_command.return_value = (0, '', '')
 
     with patch.object(apt_module, 'expand_pkgspec_from_fnmatches', return_value=['foo']), \
-        patch.object(apt_module, 'package_split', return_value=('foo', None, None)), \
-        patch.object(apt_module, 'package_status', return_value=(True, '1.0', False, False)), \
-        patch.object(apt_module, 'PolicyRcD'), \
-        patch.object(apt_module, 'parse_diff', return_value={}), \
-        patch.object(apt_module, 'APT_GET_CMD', '/usr/bin/apt-get', create=True):
+            patch.object(apt_module, 'package_split', return_value=('foo', None, None)), \
+            patch.object(apt_module, 'package_status', return_value=(True, '1.0', False, False)), \
+            patch.object(apt_module, 'PolicyRcD'), \
+            patch.object(apt_module, 'parse_diff', return_value={}), \
+            patch.object(apt_module, 'APT_GET_CMD', '/usr/bin/apt-get', create=True):
         apt_module.remove(module, ['foo'], MagicMock(), allow_downgrade=True)
-
 
     cmd = module.run_command.call_args[0][0]
     assert '--allow-downgrades' in cmd
     assert '--allow-downgrade ' not in cmd  # guard against singular-flag regression
-
