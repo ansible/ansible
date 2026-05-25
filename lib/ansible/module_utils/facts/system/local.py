@@ -15,7 +15,7 @@ from io import StringIO
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-
+from ansible.module_utils.facts.timeout import timeout, TimeoutError
 
 class LocalFactCollector(BaseFactCollector):
     name = 'local'
@@ -48,10 +48,19 @@ class LocalFactCollector(BaseFactCollector):
                 continue
             if executable_fact:
                 try:
-                    # run it
-                    rc, out, err = module.run_command(fn)
+                    # run it with timeout decorator
+                    @timeout()
+                    def run_fact_with_timeout():
+                        return module.run_command(fn)
+                        
+                    rc, out, err = run_fact_with_timeout()
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
+                except TimeoutError as e:
+                    failed = 'Timeout executing fact script (%s): %s' % (fn, to_text(e))
+                    local[fact_base] = failed
+                    module.warn(failed)
+                    continue
                 except OSError as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
 
@@ -59,6 +68,7 @@ class LocalFactCollector(BaseFactCollector):
                     local[fact_base] = failed
                     module.warn(failed)
                     continue
+
             else:
                 # ignores exceptions and returns empty
                 out = get_file_content(fn, default='')
