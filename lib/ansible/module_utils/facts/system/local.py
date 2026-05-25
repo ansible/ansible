@@ -67,7 +67,6 @@ class LocalFactCollector(BaseFactCollector):
             else:
                 # ignores exceptions and returns empty
                 out = get_file_content(fn, default='')
-
             try:
                 # ensure we have unicode
                 out = to_text(out, errors='surrogate_or_strict')
