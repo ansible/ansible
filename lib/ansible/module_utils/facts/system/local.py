@@ -52,7 +52,6 @@ class LocalFactCollector(BaseFactCollector):
                     @timeout()
                     def run_fact_with_timeout():
                         return module.run_command(fn)
-                        
                     rc, out, err = run_fact_with_timeout()
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
