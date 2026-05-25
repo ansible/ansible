@@ -15,7 +15,7 @@ from io import StringIO
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.facts.timeout import timeout, TimeoutError
+from ansible.module_utils.facts.timeout import timeout
 
 
 class LocalFactCollector(BaseFactCollector):
