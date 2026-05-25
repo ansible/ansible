@@ -53,3 +53,33 @@
       - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
       - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
       - setup_result['ansible_facts']['ansible_local']['bad'].startswith('error loading facts as ini')
+
+- name: test gather_timeout with slow fact script
+  block:
+  - name: copy slow fact script
+    copy:
+      src: slowscript.fact
+      dest: "{{ fact_dir }}/slowscript.fact"
+      mode: '0775'
+      
+  - name: gather facts with short timeout (should timeout)
+    setup:
+      fact_path: "{{ fact_dir | expanduser }}"
+      filter: "*local*"
+      gather_timeout: 5
+    register: timeout_result
+
+  - name: verify slow script timed out properly
+    assert:
+      that:
+        - "'ansible_local' in timeout_result.ansible_facts"
+        - "'slowscript' in timeout_result.ansible_facts['ansible_local']"
+        - timeout_result.ansible_facts['ansible_local']['slowscript'] is string
+        - "'Could not execute fact script' in timeout_result.ansible_facts['ansible_local']['slowscript'] or 'Failure executing fact script' in timeout_result.ansible_facts['ansible_local']['slowscript']"
+      fail_msg: "Slow script should have timed out and returned an error message"
+
+  - name: verify timeout completed within reasonable time
+    assert:
+      that:
+        - timeout_result is defined
+      fail_msg: "Fact gathering should have timed out, not hung indefinitely"
