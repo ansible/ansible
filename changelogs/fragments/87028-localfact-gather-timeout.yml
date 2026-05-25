@@ -1,0 +1,2 @@
+bugfixes:
+   - setup - Fix LocalFactCollector to respect gather_timeout when executing custom facts from "/etc/ansible/facts.d/" directory (https://github.com/ansible/ansible/issues/87028).
