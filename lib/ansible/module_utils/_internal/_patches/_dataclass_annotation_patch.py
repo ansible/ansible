@@ -22,6 +22,15 @@ class DataclassesIsTypePatch(CallablePatch):
     target_attribute = '_is_type'
 
     @classmethod
+    def get_current_implementation(cls) -> t.Any:
+        # the codepath for this patch is triggered while building manpages
+        # resulting with an AttributeError with Python 3.15
+        # make it harmless by returning None instead
+        if not hasattr(dataclasses, '_is_type'):
+            return None
+        return super().get_current_implementation()
+
+    @classmethod
     def is_patch_needed(cls) -> bool:
         @dataclasses.dataclass
         class CheckClassVar:
