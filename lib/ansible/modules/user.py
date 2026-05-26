@@ -154,7 +154,7 @@ options:
             - The behavior is the same as C(userdel --selinux-user), check the man page for details and support.
         type: bool
         default: no
-        version_added: "2.21"
+        version_added: "2.22"
     login_class:
         description:
             - Optionally sets the user's login class, a feature of most BSD OSs.
