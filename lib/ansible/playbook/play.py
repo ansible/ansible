@@ -320,7 +320,7 @@ class Play(Base, Taggable, CollectionSearch):
             if self.pre_tasks:
                 b.block = self.pre_tasks
             else:
-                nt = noop_task.copy(exclude_parent=True)
+                nt = noop_task.copy()
                 nt._parent = b
                 b.block = [nt]
             b.always = [flush_block]
@@ -331,7 +331,7 @@ class Play(Base, Taggable, CollectionSearch):
             if tasks:
                 b.block = tasks
             else:
-                nt = noop_task.copy(exclude_parent=True)
+                nt = noop_task.copy()
                 nt._parent = b
                 b.block = [nt]
             b.always = [flush_block]
@@ -341,7 +341,7 @@ class Play(Base, Taggable, CollectionSearch):
             if self.post_tasks:
                 b.block = self.post_tasks
             else:
-                nt = noop_task.copy(exclude_parent=True)
+                nt = noop_task.copy()
                 nt._parent = b
                 b.block = [nt]
             b.always = [flush_block]
@@ -385,12 +385,8 @@ class Play(Base, Taggable, CollectionSearch):
         return tasklist
 
     def copy(self):
-        new_me = super(Play, self).copy()
+        new_me = super().copy()
         new_me.role_cache = self.role_cache.copy()
-        new_me._included_conditional = self._included_conditional
-        new_me._included_path = self._included_path
-        new_me._action_groups = self._action_groups
-        new_me._group_actions = self._group_actions
         return new_me
 
     def _post_validate_validate_argspec(self, attr: NonInheritableFieldAttribute, value: object, templar: _TE) -> str | None:

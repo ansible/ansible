@@ -9,9 +9,9 @@ import itertools
 import operator
 import os
 
+import copy
 import typing as t
 
-from copy import copy as shallowcopy
 from functools import cache
 
 from ansible import constants as C
@@ -423,29 +423,12 @@ class FieldAttributeBase:
             self._squashed = True
 
     def copy(self):
-        """
-        Create a copy of this object and return it.
-        """
-
-        try:
-            new_me = self.__class__()
-        except RecursionError as ex:
-            raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion.") from ex
-
+        new_me = copy.copy(self)
+        nd = new_me.__dict__
         for name in self.fattributes:
-            setattr(new_me, name, shallowcopy(getattr(self, f'_{name}', Sentinel)))
-
-        new_me._loader = self._loader
-        new_me._variable_manager = self._variable_manager
-        new_me._origin = self._origin
-        new_me._validated = self._validated
-        new_me._finalized = self._finalized
-        new_me._uuid = self._uuid
-
-        # if the ds value was set on the object, copy it to the new copy too
-        if hasattr(self, '_ds'):
-            new_me._ds = self._ds
-
+            n = f'_{name}'
+            if (v := nd.get(n)) is not None and isinstance(v, (list, dict)):
+                nd[n] = v.copy()
         return new_me
 
     def get_validated_value(self, name, attribute, value, templar):

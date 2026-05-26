@@ -17,6 +17,9 @@
 
 from __future__ import annotations
 
+import itertools
+import typing as t
+
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.common.sentinel import Sentinel
 from ansible.playbook.attribute import NonInheritableFieldAttribute
@@ -27,6 +30,9 @@ from ansible.playbook.delegatable import Delegatable
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.notifiable import Notifiable
 from ansible.playbook.taggable import Taggable
+
+if t.TYPE_CHECKING:
+    from ansible.playbook.task import Task
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatable):
@@ -40,13 +46,12 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
     # similar to the 'else' clause for exceptions
     # otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False):
         self._play = play
         self._role = role
         self._parent = None
         self._dep_chain = None
         self._use_handlers = use_handlers
-        self._implicit = implicit
 
         if task_include:
             self._parent = task_include
@@ -83,8 +88,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
 
     @staticmethod
     def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-        implicit = not Block.is_block(data)
-        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers, implicit=implicit)
+        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
 
     @staticmethod
@@ -150,49 +154,36 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         else:
             return self._dep_chain[:]
 
-    def copy(self, exclude_parent=False, exclude_tasks=False):
-        def _dupe_task_list(task_list, new_block):
-            new_task_list = []
-            for task in task_list:
-                new_task = task.copy(exclude_parent=True, exclude_tasks=exclude_tasks)
-                if task._parent:
-                    new_task._parent = task._parent.copy(exclude_tasks=True)
-                    if task._parent == new_block:
-                        # If task._parent is the same as new_block, just replace it
-                        new_task._parent = new_block
-                    else:
-                        # task may not be a direct child of new_block, search for the correct place to insert new_block
-                        cur_obj = new_task._parent
-                        while cur_obj._parent and cur_obj._parent != new_block:
-                            cur_obj = cur_obj._parent
+    def _copy_tasks(self, tasks: list[Block | Task]) -> list[Block | Task]:
+        new_tasks = []
+        for task in tasks:
+            new_task = task.copy()
+            if task._parent._uuid == self._uuid:
+                new_task._parent = self
+            else:
+                if new_task._parent.statically_loaded:
+                    new_task._parent = new_task._parent.copy()
+                # parent is include/import, skip one level
+                new_task._parent._parent = self
+            new_tasks.append(new_task)
+        return new_tasks
 
-                        cur_obj._parent = new_block
-                else:
-                    new_task._parent = new_block
-                new_task_list.append(new_task)
-            return new_task_list
+    def copy(self) -> t.Self:
+        """Copy this block and return the new copy.
 
-        new_me = super(Block, self).copy()
-        new_me._play = self._play
-        new_me._use_handlers = self._use_handlers
+        The blocks and tasks within are recursively copied and re-parented.
+        The new copy still points to its original parent. It is the responsibility
+        of the caller to change the ``_parent`` attribute if needed.
+        """
+        new_me = super().copy()
 
         if self._dep_chain is not None:
             new_me._dep_chain = self._dep_chain[:]
 
-        new_me._parent = None
-        if self._parent and not exclude_parent:
-            new_me._parent = self._parent.copy(exclude_tasks=True)
+        new_me.block = new_me._copy_tasks(self.block)
+        new_me.rescue = new_me._copy_tasks(self.rescue)
+        new_me.always = new_me._copy_tasks(self.always)
 
-        if not exclude_tasks:
-            new_me.block = _dupe_task_list(self.block or [], new_me)
-            new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
-            new_me.always = _dupe_task_list(self.always or [], new_me)
-
-        new_me._role = None
-        if self._role:
-            new_me._role = self._role
-
-        new_me.validate()
         return new_me
 
     def set_loader(self, loader):
@@ -284,45 +275,29 @@ class Block(Base, Conditional, CollectionSearch, Taggable, Notifiable, Delegatab
         """
         Creates a new block, with task lists filtered based on the tags.
         """
-
         def evaluate_and_append_task(target):
             tmp_list = []
             for task in target:
                 if isinstance(task, Block):
-                    filtered_block = evaluate_block(task)
-                    if filtered_block.has_tasks():
-                        tmp_list.append(filtered_block)
+                    task.filter_tagged_tasks(all_vars)
+                    if task.has_tasks():
+                        tmp_list.append(task)
                 elif task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
-        def evaluate_block(block):
-            new_block = block.copy(exclude_parent=True, exclude_tasks=True)
-            new_block._parent = block._parent
-            new_block.block = evaluate_and_append_task(block.block)
-            new_block.rescue = evaluate_and_append_task(block.rescue)
-            new_block.always = evaluate_and_append_task(block.always)
-            return new_block
-
-        return evaluate_block(self)
+        self.block = evaluate_and_append_task(self.block)
+        self.rescue = evaluate_and_append_task(self.rescue)
+        self.always = evaluate_and_append_task(self.always)
 
     def get_tasks(self):
-        def evaluate_and_append_task(target):
-            tmp_list = []
-            for task in target:
-                if isinstance(task, Block):
-                    tmp_list.extend(evaluate_block(task))
-                else:
-                    tmp_list.append(task)
-            return tmp_list
-
-        def evaluate_block(block):
-            rv = evaluate_and_append_task(block.block)
-            rv.extend(evaluate_and_append_task(block.rescue))
-            rv.extend(evaluate_and_append_task(block.always))
-            return rv
-
-        return evaluate_block(self)
+        task_list = []
+        for task in itertools.chain(self.block, self.rescue, self.always):
+            if isinstance(task, Block):
+                task_list.extend(task.get_tasks())
+            else:
+                task_list.append(task)
+        return task_list
 
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
