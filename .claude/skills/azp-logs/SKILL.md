@@ -1,7 +1,9 @@
 ---
+name: azp-logs
 description: Download Azure Pipelines CI logs for analysis
 argument-hint: <pr_number|build_id|build_url>
 allowed-tools: [Bash(gh pr view:*), Bash(gh pr checks:*), Bash(ls:*), Read, Grep]
+user-invocable: true
 ---
 
 Azure Pipelines Logs Downloader
