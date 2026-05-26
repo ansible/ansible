@@ -92,7 +92,9 @@ DOCUMENTATION = """
               - name: ansible_sshpass_prompt
           version_added: '2.10'
       ssh_args:
-          description: Arguments to pass to all SSH CLI tools.
+          description: Arguments to pass to all SSH CLI tools. The use of C(LocalForward) or C(-L)
+                       along with the default C(-C) can lead to an insecure configuration. Ensure
+                       these options are not used in combination.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
           type: string
           ini:
