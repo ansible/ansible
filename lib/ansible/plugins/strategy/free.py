@@ -92,6 +92,11 @@ class StrategyModule(StrategyBase):
                 result = False
                 break
 
+            # Reset last_host if it's out of bounds for the current hosts_left
+            # This can happen when hosts become unreachable between iterations
+            if last_host >= len(hosts_left):
+                last_host = 0
+
             work_to_do = False        # assume we have no more work to do
             starting_host = last_host  # save current position so we know when we've looped back around and need to break
 
