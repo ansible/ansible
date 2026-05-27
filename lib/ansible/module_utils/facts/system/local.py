@@ -59,10 +59,10 @@ class LocalFactCollector(BaseFactCollector):
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
                 except OSError as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
-                except TimeoutError as e:  # ← MINIMAL FIX: Add this line
+                except TimeoutError as e:  
                     failed = "Could not execute fact script (%s): %s" % (fn, to_text(e))
 
-                if failed is not None:  # ← MINIMAL FIX: Add this block
+                if failed is not None: 
                     local[fact_base] = failed
                     module.warn(failed)
                     continue
