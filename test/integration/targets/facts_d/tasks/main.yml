@@ -3,30 +3,30 @@
 
 - name: prep for local facts tests
   block:
-    - name: set factdir var
-      set_fact: fact_dir={{remote_tmp_dir}}/facts.d
+  - name: set factdir var
+    set_fact: fact_dir={{remote_tmp_dir}}/facts.d
 
-    - name: create fact dir
-      file: path={{ fact_dir }} state=directory
+  - name: create fact dir
+    file: path={{ fact_dir }} state=directory
 
-    - name: copy local facts test files
-      copy: src={{ item["name"] }}.fact dest={{ fact_dir }}/ mode={{ item["mode"]|default(omit) }}
-      loop:
-        - name: preferences
-        - name: basdscript
-          mode: "0775"
-        - name: goodscript
-          mode: "0775"
-        - name: unreadable
-          mode: "0000"
-        - name: bad
+  - name: copy local facts test files
+    copy: src={{ item['name'] }}.fact dest={{ fact_dir }}/ mode={{ item['mode']|default(omit) }}
+    loop:
+    - name: preferences
+    - name: basdscript
+      mode: '0775'
+    - name: goodscript
+      mode: '0775'
+    - name: unreadable
+      mode: '0000'
+    - name: bad
 
-    - name: Create dangling symlink
-      file:
-        path: "{{ fact_dir }}/dead_symlink.fact"
-        src: /tmp/dead_symlink
-        force: yes
-        state: link
+  - name: Create dangling symlink
+    file:
+      path: "{{ fact_dir }}/dead_symlink.fact"
+      src: /tmp/dead_symlink
+      force: yes
+      state: link
 
 - name: force fact gather to get ansible_local
   setup:
@@ -40,19 +40,19 @@
 - name: check for expected results from local facts
   assert:
     that:
-      - "'ansible_facts' in setup_result"
-      - "'ansible_local' in setup_result.ansible_facts"
-      - "'ansible_env' not in setup_result.ansible_facts"
-      - "'ansible_user_id' not in setup_result.ansible_facts"
-      - "'preferences' in setup_result.ansible_facts['ansible_local']"
-      - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
-      - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
-      - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
-      - setup_result["ansible_facts"]["ansible_local"]["goodscript"]["script_ran"]|bool
-      - setup_result["ansible_facts"]["ansible_local"]["basdscript"].startswith("Failure executing fact script")
-      - setup_result["ansible_facts"]["ansible_local"]["unreadable"].startswith("error loading facts")
-      - setup_result["ansible_facts"]["ansible_local"]["dead_symlink"].startswith("Could not stat fact")
-      - setup_result["ansible_facts"]["ansible_local"]["bad"].startswith("error loading facts as ini")
+    - "'ansible_facts' in setup_result"
+    - "'ansible_local' in setup_result.ansible_facts"
+    - "'ansible_env' not in setup_result.ansible_facts"
+    - "'ansible_user_id' not in setup_result.ansible_facts"
+    - "'preferences' in setup_result.ansible_facts['ansible_local']"
+    - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
+    - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"
+    - "setup_result.ansible_facts['ansible_local']['preferences']['general']['bar'] == 'loaded'"
+    - setup_result['ansible_facts']['ansible_local']['goodscript']['script_ran']|bool
+    - setup_result['ansible_facts']['ansible_local']['basdscript'].startswith("Failure executing fact script")
+    - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
+    - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
+    - setup_result['ansible_facts']['ansible_local']['bad'].startswith('error loading facts as ini')
 
 - name: test gather_timeout with slow fact script
   block:
@@ -60,8 +60,8 @@
       copy:
         src: slowscript.fact
         dest: "{{ fact_dir }}/slowscript.fact"
-        mode: "0775"
-      
+        mode: '0775'
+
     - name: gather facts with short timeout (should timeout)
       setup:
         fact_path: "{{ fact_dir | expanduser }}"
@@ -73,7 +73,7 @@
       assert:
         that:
           - timeout_result.ansible_facts is defined
-          - timeout_result["ansible_facts"]["ansible_local"]["slowscript"] is search(timeout_expected)
+          - timeout_result['ansible_facts']['ansible_local']['slowscript'] is search(timeout_expected)
         fail_msg: "Slow script should have timed out and returned an error message"
       vars:
         timeout_expected: >-
@@ -93,7 +93,7 @@
           #!/bin/sh
           echo '{"speed": "fast", "status": "success"}'
         dest: "{{ fact_dir }}/fast.fact"
-        mode: "0775"
+        mode: '0775'
 
     - name: copy multiple fact scripts in order
       copy:
@@ -101,9 +101,9 @@
         dest: "{{ fact_dir }}/{{ item.dest }}"
         mode: "{{ item.mode }}"
       loop:
-        - { src: goodscript.fact, dest: aaa_fast.fact, mode: "0775" }
-        - { src: slowscript.fact, dest: bbb_slow.fact, mode: "0775" }
-        - { src: goodscript.fact, dest: ccc_fast.fact, mode: "0775" }
+        - { src: goodscript.fact, dest: aaa_fast.fact, mode: '0775' }
+        - { src: slowscript.fact, dest: bbb_slow.fact, mode: '0775' }
+        - { src: goodscript.fact, dest: ccc_fast.fact, mode: '0775' }
 
     - name: gather facts with timeout
       setup:
@@ -116,9 +116,9 @@
       assert:
         that:
           - multi_result.ansible_facts.ansible_local is defined
-          - multi_result["ansible_facts"]["ansible_local"]["aaa_fast"] is defined
-          - multi_result["ansible_facts"]["ansible_local"]["bbb_slow"] is search("Timer expired")
-          - multi_result["ansible_facts"]["ansible_local"]["ccc_fast"] is defined
+          - multi_result['ansible_facts']['ansible_local']['aaa_fast'] is defined
+          - multi_result['ansible_facts']['ansible_local']['bbb_slow'] is search("Timer expired")
+          - multi_result['ansible_facts']['ansible_local']['ccc_fast'] is defined
         fail_msg: "Facts before and after timeout should be preserved"
 
 - name: test first fact timing out
@@ -137,7 +137,7 @@
       copy:
         src: "{{ item.src }}"
         dest: "{{ fact_dir }}/{{ item.dest }}"
-        mode: "0775"
+        mode: '0775'
       loop:
         - { src: slowscript.fact, dest: aaa_timeout.fact }
         - { src: goodscript.fact, dest: bbb_fast.fact }
@@ -154,7 +154,7 @@
       assert:
         that:
           - first_timeout_result.ansible_facts.ansible_local is defined
-          - first_timeout_result["ansible_facts"]["ansible_local"]["aaa_timeout"] is search("Timer expired")
-          - first_timeout_result["ansible_facts"]["ansible_local"]["bbb_fast"] is defined
-          - first_timeout_result["ansible_facts"]["ansible_local"]["ccc_fast"] is defined
+          - first_timeout_result['ansible_facts']['ansible_local']['aaa_timeout'] is search("Timer expired")
+          - first_timeout_result['ansible_facts']['ansible_local']['bbb_fast'] is defined
+          - first_timeout_result['ansible_facts']['ansible_local']['ccc_fast'] is defined
         fail_msg: "Facts after first timeout should still be collected"
