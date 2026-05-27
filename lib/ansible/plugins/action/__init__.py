@@ -1129,6 +1129,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if not self._is_pipelining_enabled("new", wrap_async) and tmpdir is None:
             self._make_tmp_path()
             tmpdir = self._connection._shell.tmpdir
+            display.vvv("Pipelining is enabled.")
 
         if task_vars is None:
             task_vars = dict()
