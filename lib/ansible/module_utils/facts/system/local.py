@@ -1,7 +1,7 @@
 # Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# from __future__ import annotations  # Commented for Python 3.6 compatibility
+from __future__ import annotations
 
 import configparser
 import glob
