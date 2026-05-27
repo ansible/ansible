@@ -190,8 +190,6 @@ class Role(Base, Conditional, Taggable, CollectionSearch, Delegatable):
                 'name': self.get_name(),
                 'path': self.get_role_path(),
                 'params': MappingProxyType(self.get_role_params()),
-                'when': self.when,
-                'tags': self.tags,
                 'from_files': MappingProxyType(self._from_files),
                 'vars': MappingProxyType(self.vars),
                 'from_include': self.from_include,
