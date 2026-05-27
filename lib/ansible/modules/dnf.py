@@ -117,8 +117,8 @@ options:
     version_added: "2.4"
   exclude:
     description:
-      - Package name(s) to exclude when O(state=present), or latest. This can be a
-        list or a comma separated string.
+      - Package name(s) to exclude from the operation. This can be a list or a comma separated string.
+      - Works with all O(state) values, including V(absent), V(present), and V(latest).
     version_added: "2.7"
     type: list
     elements: str

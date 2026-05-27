@@ -1,0 +1,69 @@
+- name: Test `exclude`
+  block:
+  - name: Ensure no lsof
+    dnf:
+      name: lsof
+      state: removed
+
+  - name: Try installing lsof latest with exclude
+    dnf:
+      name: lsof
+      state: latest
+      exclude: ls*
+    register: latest_excluded
+    ignore_errors: true
+
+  - name: Try installing lsof present with exclude
+    dnf:
+      name: lsof
+      state: present
+      exclude: lsof
+    register: present_excluded
+    ignore_errors: true
+
+  - name: Install lsof present with non-matching exclude
+    dnf:
+      name: lsof
+      state: present
+      exclude: neovim
+    register: present_non_matching_exclude
+
+  - name: Try removing lsof with matching exclude
+    dnf:
+      name: lsof
+      state: absent
+      exclude: lsof
+    register: absent_excluded
+    ignore_errors: true
+
+  - name: Try removing lsof with non-matching exclude
+    dnf:
+      name: lsof
+      state: absent
+      exclude: neovim
+    register: absent_non_matching_exclude
+
+  - name: Assert correct exclude behavior (dnf5)
+    assert:
+      that:
+        - latest_excluded is failed
+        - present_excluded is failed
+        - present_non_matching_exclude is changed
+        - absent_excluded is not changed
+        - absent_non_matching_exclude is changed
+    when: dnf5
+
+  - name: Assert correct exclude behavior (dnf4)
+    assert:
+      that:
+        - latest_excluded is not changed
+        - present_excluded is not changed
+        - present_non_matching_exclude is changed
+        - absent_excluded is not changed
+        - absent_non_matching_exclude is changed
+    when: not dnf5
+  always:
+    - name: Ensure no lsof
+      dnf:
+        name: lsof
+        state: absent
