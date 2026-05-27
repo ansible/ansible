@@ -1,7 +1,7 @@
 # Copyright: Contributors to the Ansible project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import annotations
+# from __future__ import annotations  # Commented for Python 3.6 compatibility
 
 import configparser
 import glob
@@ -15,7 +15,7 @@ from io import StringIO
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
-from ansible.module_utils.facts.timeout import timeout
+from ansible.module_utils.facts.timeout import timeout, TimeoutError
 
 
 class LocalFactCollector(BaseFactCollector):
@@ -59,8 +59,10 @@ class LocalFactCollector(BaseFactCollector):
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
                 except OSError as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
+                except TimeoutError as e:  # ← MINIMAL FIX: Add this line
+                    failed = "Could not execute fact script (%s): %s" % (fn, to_text(e))
 
-                if failed is not None:
+                if failed is not None:  # ← MINIMAL FIX: Add this block
                     local[fact_base] = failed
                     module.warn(failed)
                     continue
