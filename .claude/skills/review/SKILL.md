@@ -1,7 +1,9 @@
 ---
+name: review
 description: Review an Ansible PR following the project's standardized process from CLAUDE.md
 argument-hint: <pr_number>
 allowed-tools: [TodoWrite, Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh pr checkout:*), Bash(gh pr checks:*), Read, Grep, Glob, Search]
+user-invocable: true
 ---
 
 PR Review Command
