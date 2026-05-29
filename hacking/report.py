@@ -11,6 +11,35 @@ import sqlite3
 import sys
 
 DATABASE_PATH = os.path.expanduser('~/.ansible/report.db')
+
+_TABLES_SQL = {
+    'modules': (
+        'DROP TABLE IF EXISTS "modules"',
+        'CREATE TABLE "modules" (module TEXT, namespace TEXT, path TEXT, version_added TEXT)',
+        'INSERT INTO "modules" VALUES (:module, :namespace, :path, :version_added)',
+    ),
+    'coverage': (
+        'DROP TABLE IF EXISTS "coverage"',
+        'CREATE TABLE "coverage" (path TEXT, coverage REAL, lines INTEGER, hit INTEGER, partial INTEGER, missed INTEGER)',
+        'INSERT INTO "coverage" VALUES (:path, :coverage, :lines, :hit, :partial, :missed)',
+    ),
+    'integration_targets': (
+        'DROP TABLE IF EXISTS "integration_targets"',
+        'CREATE TABLE "integration_targets" (target TEXT, type TEXT, path TEXT, script_path TEXT)',
+        'INSERT INTO "integration_targets" VALUES (:target, :type, :path, :script_path)',
+    ),
+    'integration_target_aliases': (
+        'DROP TABLE IF EXISTS "integration_target_aliases"',
+        'CREATE TABLE "integration_target_aliases" (target TEXT, alias TEXT)',
+        'INSERT INTO "integration_target_aliases" VALUES (:target, :alias)',
+    ),
+    'integration_target_modules': (
+        'DROP TABLE IF EXISTS "integration_target_modules"',
+        'CREATE TABLE "integration_target_modules" (target TEXT, module TEXT)',
+        'INSERT INTO "integration_target_modules" VALUES (:target, :module)',
+    ),
+}
+
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + '/'
 ANSIBLE_PATH = os.path.join(BASE_PATH, 'lib')
 ANSIBLE_TEST_PATH = os.path.join(BASE_PATH, 'test/lib')
@@ -194,19 +223,15 @@ def populate_integration_targets():
 
 
 def create_table(cursor, name, columns):
-    schema = ', '.join('%s %s' % column for column in columns)
-
-    cursor.execute('DROP TABLE IF EXISTS %s' % name)
-    cursor.execute('CREATE TABLE %s (%s)' % (name, schema))
+    cursor.execute(_TABLES_SQL[name][0])
+    cursor.execute(_TABLES_SQL[name][1])
 
 
 def populate_table(cursor, rows, name, columns):
     create_table(cursor, name, columns)
 
-    values = ', '.join([':%s' % column[0] for column in columns])
-
     for row in rows:
-        cursor.execute('INSERT INTO %s VALUES (%s)' % (name, values), row)
+        cursor.execute(_TABLES_SQL[name][2], row)
 
 
 def populate_data(data):
