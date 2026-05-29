@@ -1,0 +1,2 @@
+bugfixes:
+  - user - On BusyBox systems, warn when an invalid shell is specified (https://github.com/ansible/ansible/pull/86342)
