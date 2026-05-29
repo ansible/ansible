@@ -54,7 +54,7 @@ class LocalFactCollector(BaseFactCollector):
                 continue
             if executable_fact:
                 try:
-                    rc, out, err = run_fact(fn)
+                    rc, out, err = timeout(module.run_command)(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
                 except OSError as e:

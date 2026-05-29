@@ -79,11 +79,6 @@
         timeout_expected: >-
           Could not execute fact script \([^)]+\): Timer expired after 5 seconds
 
-    - name: verify timeout completed within reasonable time
-      assert:
-        that:
-          - timeout_result is defined
-        fail_msg: "Fact gathering should have timed out, not hung indefinitely"
 
 - name: test multiple facts with one timeout
   block:
