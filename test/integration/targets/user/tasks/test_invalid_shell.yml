@@ -1,0 +1,26 @@
+---
+- name: Run test for Alpine Linux only
+  meta: end_host
+  when: ansible_distribution != 'Alpine'
+
+- name: Move user home directory
+  block:
+    - name: Create user with invalid shell
+      user:
+        name: ansibulluser
+        shell: /tmp/ansibulluser
+        state: present
+      register: user_output
+      ignore_errors: true
+
+    - name: Check if user output contains error
+      assert:
+        that:
+          - user_output.warnings is defined
+          - user_output.warnings is search("'/tmp/ansibulluser' is not listed as a valid shell on the remote host")
+
+  always:
+    - name: Remove user
+      user:
+        name: ansibulluser
+        state: absent

@@ -3133,6 +3133,24 @@ class BusyBox(User):
         - remove_user()
         - modify_user()
     """
+    def _validate_shell(self):
+        if not self.shell:
+            return
+
+        try:
+            with open("/etc/shells", "r") as f:
+                shells = [
+                    shell
+                    for shell in (line.strip() for line in f)
+                    if shell
+                    and not shell.startswith("#")
+                ]
+        except FileNotFoundError:
+            return
+
+        if self.shell not in shells:
+            self.module.warn(f"'{self.shell}' is not listed as a valid shell on the remote host.")
+
     def _build_password_string(self, current_password=None):
         """
         Build the appropriate password string based on the current password and
@@ -3165,6 +3183,8 @@ class BusyBox(User):
 
     def create_user(self):
         cmd = [self.module.get_bin_path('adduser', True)]
+
+        self._validate_shell()
 
         cmd.append('-D')
 
@@ -3274,6 +3294,8 @@ class BusyBox(User):
 
         add_cmd_bin = self.module.get_bin_path('adduser', True)
         remove_cmd_bin = self.module.get_bin_path('delgroup', True)
+
+        self._validate_shell()
 
         # Manage group membership
         if self.groups:
