@@ -34,11 +34,6 @@ class LocalFactCollector(BaseFactCollector):
         if not fact_path or not os.path.exists(fact_path):
             return local_facts
 
-        # Define timeout-wrapped function outside the loop
-        @timeout()
-        def run_fact(fact_file):
-            return module.run_command(fact_file)
-
         local = {}
         # go over .fact files, run executables, read rest, skip bad with warning and note
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
@@ -57,19 +52,17 @@ class LocalFactCollector(BaseFactCollector):
                     rc, out, err = timeout(module.run_command)(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
-                except OSError as e:
-                    failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
-                except TimeoutError as e:
-                    failed = "Could not execute fact script (%s): %s" % (fn, to_text(e))
+                except (OSError, TimeoutError) as e:
+                    failed = "Timedout while executing fact script (%s): %s" % (fn, to_text(e))
 
                 if failed is not None:
                     local[fact_base] = failed
                     module.warn(failed)
                     continue
-
             else:
                 # ignores exceptions and returns empty
                 out = get_file_content(fn, default='')
+
             try:
                 # ensure we have unicode
                 out = to_text(out, errors='surrogate_or_strict')
