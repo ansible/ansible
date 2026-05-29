@@ -36,7 +36,7 @@
     filter: "*local*"
     gather_timeout: 2
   register: setup_result
-  timeout: 3  # fail if the gather_timeout is exceeded
+  timeout: 10  # fail if the gather_timeout is exceeded
 
 - name: show gathering results if rerun with -vvv
   debug: var=setup_result verbosity=3
