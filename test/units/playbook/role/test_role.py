@@ -24,7 +24,6 @@ import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.errors import AnsibleError
 from ansible.errors import AnsibleParserError
 from ansible.playbook.block import Block
 
@@ -411,5 +410,3 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r.get_name(), "foo_complex")
-
-
