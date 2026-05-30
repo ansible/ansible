@@ -835,3 +835,33 @@
 - assert:
     that:
       - get_dir_filename.dest == remote_tmp_dir ~ "/filename.json"
+
+# https://github.com/ansible/ansible/issues/64016
+# Test that get_url does not re-download when force=no, no checksum
+# specified, and destination file already exists
+- name: Define test file for no-checksum force=no test
+  set_fact:
+    no_checksum_dstfile: "{{ remote_tmp_dir }}/no_checksum_force_no_test.txt"
+
+- name: Download file initially (first download)
+  get_url:
+    url: "file://{{ source_file_copied.dest }}"
+    dest: "{{ no_checksum_dstfile }}"
+  register: result_first_download
+
+- name: Assert first download was successful
+  assert:
+    that:
+      - result_first_download is changed
+
+- name: Download same file again with force=no and no checksum
+  get_url:
+    url: "file://{{ source_file_copied.dest }}"
+    dest: "{{ no_checksum_dstfile }}"
+    force: no
+  register: result_no_redownload
+
+- name: Assert file was not re-downloaded when force=no and no checksum
+  assert:
+    that:
+      - result_no_redownload is not changed

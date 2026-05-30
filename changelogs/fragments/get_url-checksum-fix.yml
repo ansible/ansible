@@ -1,0 +1,4 @@
+bugfixes:
+  - get_url - fix re-downloading file when force=no and destination
+    already exists but no checksum is specified
+    (https://github.com/ansible/ansible/issues/64016).
