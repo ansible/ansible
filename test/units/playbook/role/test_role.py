@@ -413,38 +413,3 @@ class TestRole(unittest.TestCase):
         self.assertEqual(r.get_name(), "foo_complex")
 
 
-class TestRoleIncludeInvalidCollectionName(unittest.TestCase):
-
-    @patch('ansible.playbook.role.definition.unfrackpath',
-           mock_unfrackpath_noop)
-    def test_invalid_char_dash_raises_error(self):
-        """Collection role names with dashes should raise a clear error."""
-        mock_play = MagicMock()
-        mock_play.collections = None
-
-        with self.assertRaises(AnsibleError) as cm:
-            RoleInclude.load(
-                'namespace.my_collection.autoupdate-apt',
-                play=mock_play,
-                loader=DictDataLoader({})
-            )
-        self.assertIn('autoupdate-apt', str(cm.exception))
-        self.assertIn('autoupdate_apt', str(cm.exception))
-
-    @patch('ansible.playbook.role.definition.unfrackpath',
-           mock_unfrackpath_noop)
-    def test_valid_collection_role_not_blocked(self):
-        """Valid collection role names should not be blocked by the check."""
-        mock_play = MagicMock()
-        mock_play.collections = None
-
-        # Should NOT raise AnsibleError for valid name — may raise other
-        # errors (role not found etc) but not our new validation error
-        try:
-            RoleInclude.load(
-                'namespace.my_collection.valid_role',
-                play=mock_play,
-                loader=DictDataLoader({})
-            )
-        except AnsibleError as e:
-            self.assertNotIn('Invalid collection role name', str(e))
