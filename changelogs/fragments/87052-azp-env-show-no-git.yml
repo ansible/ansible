@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - In Azure Pipelines, gracefully disable change detection when git metadata is unavailable instead of failing while resolving merge-parent commits (https://github.com/ansible/ansible/issues/87052).

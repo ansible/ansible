@@ -190,6 +190,8 @@ class AzurePipelinesChanges:
         self.org = self.org_uri.strip('/').split('/')[-1]
         self.is_pr = self.pr_branch_name is not None
 
+        commits = None
+
         if self.is_pr:
             # HEAD is a merge commit of the PR branch into the target branch
             # HEAD^1 is HEAD of the target branch (first parent of merge commit)
@@ -202,24 +204,34 @@ class AzurePipelinesChanges:
             commits = self.get_successful_merge_run_commits()
 
             self.branch = self.source_branch_name
-            self.base_commit = self.get_last_successful_commit(commits)
+            self.base_commit = None
             self.commit = 'HEAD'
 
-        self.commit = self.git.run_git(['rev-parse', self.commit]).strip()
+        try:
+            if commits:
+                self.base_commit = self.get_last_successful_commit(commits)
 
-        if self.base_commit:
-            self.base_commit = self.git.run_git(['rev-parse', self.base_commit]).strip()
+            self.commit = self.git.run_git(['rev-parse', self.commit]).strip()
 
-            # <commit>...<commit>
-            # This form is to view the changes on the branch containing and up to the second <commit>, starting at a common ancestor of both <commit>.
-            # see: https://git-scm.com/docs/git-diff
-            dot_range = '%s...%s' % (self.base_commit, self.commit)
+            if self.base_commit:
+                self.base_commit = self.git.run_git(['rev-parse', self.base_commit]).strip()
 
-            self.paths = sorted(self.git.get_diff_names([dot_range]))
-            self.diff = self.git.get_diff([dot_range])
-        else:
+                # <commit>...<commit>
+                # This form is to view the changes on the branch containing and up to the second <commit>, starting at a common ancestor of both <commit>.
+                # see: https://git-scm.com/docs/git-diff
+                dot_range = '%s...%s' % (self.base_commit, self.commit)
+
+                self.paths = sorted(self.git.get_diff_names([dot_range]))
+                self.diff = self.git.get_diff([dot_range])
+            else:
+                self.paths = None  # act as though change detection not enabled, do not filter targets
+                self.diff = []
+        except ApplicationError as ex:
+            self.base_commit = ''
+            self.commit = ''
             self.paths = None  # act as though change detection not enabled, do not filter targets
             self.diff = []
+            display.warning(f'Cannot determine changes. All tests will be executed. Reason: {ex}')
 
     def get_successful_merge_run_commits(self) -> set[str]:
         """

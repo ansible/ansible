@@ -12,7 +12,7 @@ if t.TYPE_CHECKING:
     from ansible_test._internal.ci.azp import AzurePipelinesChanges
 
 
-def create_azure_pipelines_changes(mocker: pytest_mock.MockerFixture) -> AzurePipelinesChanges:
+def create_azure_pipelines_changes(mocker: pytest_mock.MockerFixture, *, pull_request: bool = False) -> AzurePipelinesChanges:
     """Prepare an AzurePipelinesChanges instance for testing."""
     from ansible_test._internal.ci.azp import AzurePipelinesChanges
     from ansible_test._internal.config import CommonConfig
@@ -36,6 +36,13 @@ def create_azure_pipelines_changes(mocker: pytest_mock.MockerFixture) -> AzurePi
         BUILD_SOURCEBRANCH='devel',
         BUILD_SOURCEBRANCHNAME='devel',
     )
+
+    if pull_request:
+        env.update(
+            BUILD_SOURCEBRANCH='refs/pull/1/merge',
+            BUILD_SOURCEBRANCHNAME='merge',
+            SYSTEM_PULLREQUEST_TARGETBRANCH='devel',
+        )
 
     mocker.patch.dict(os.environ, env, clear=True)
 
@@ -94,3 +101,42 @@ def test_get_successful_merge_run_commits(
         patched_warning.assert_not_called()
 
     assert spy_get_successful_merge_run_commits.spy_return == (expected_commits or set())
+
+
+def test_pull_request_without_git_metadata_runs_all_tests(mocker: pytest_mock.MockerFixture) -> None:
+    """Verify AZP pull requests degrade gracefully when git metadata is unavailable."""
+    from ansible_test._internal.git import Git
+    from ansible_test._internal.util import SubprocessError, display
+
+    patched_run_git = mocker.patch.object(
+        Git,
+        'run_git',
+        side_effect=SubprocessError(
+            ['git', 'rev-parse', 'HEAD^2'],
+            status=128,
+            stderr='fatal: not a git repository',
+        ),
+    )
+    patched_get_diff_names = mocker.patch.object(Git, 'get_diff_names')
+    patched_get_diff = mocker.patch.object(Git, 'get_diff')
+    patched_warning = mocker.patch.object(display, 'warning')
+
+    changes = create_azure_pipelines_changes(mocker, pull_request=True)
+
+    assert changes.is_pr is True
+    assert changes.branch == 'devel'
+    assert changes.base_commit == ''
+    assert changes.commit == ''
+    assert changes.paths is None
+    assert changes.diff == []
+
+    patched_run_git.assert_called_once_with(['rev-parse', 'HEAD^2'])
+    patched_get_diff_names.assert_not_called()
+    patched_get_diff.assert_not_called()
+
+    patched_warning.assert_called_once()
+    warning = patched_warning.call_args.args[0]
+
+    assert warning.startswith('Cannot determine changes. All tests will be executed. Reason: Command "git rev-parse')
+    assert 'HEAD^2' in warning
+    assert 'not a git repository' in warning
