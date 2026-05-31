@@ -1,2 +1,2 @@
 bugfixes:
-   - setup - Enforce gather_timeout for individual custom fact files in "/etc/ansible/facts.d/" directory. Note that the timeout applies per-file, so multiple fact files may take longer than the specified gather_timeout value (https://github.com/ansible/ansible/issues/87028).
+  - setup - Apply gather_timeout to individual custom fact files in /etc/ansible/facts.d/. Total execution time may exceed the timeout when multiple fact files are present (https://github.com/ansible/ansible/issues/87028).
