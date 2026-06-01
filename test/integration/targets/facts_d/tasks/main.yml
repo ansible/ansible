@@ -57,5 +57,5 @@
       - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
       - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
       - setup_result['ansible_facts']['ansible_local']['bad'].startswith('error loading facts as ini')
-      - setup_result['ansible_facts']['ansible_local']['slowscript'].startswith('Timedout while executing fact script')
+      - setup_result['ansible_facts']['ansible_local']['slowscript'].startswith('Could not execute fact script')
       - setup_result['ansible_facts']['ansible_local']['slowscript'].endswith('Timer expired after 2 seconds')
