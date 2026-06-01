@@ -41,7 +41,7 @@ class LocalFactCollector(BaseFactCollector):
         # configured timeout value (potentially up to timeout × number_of_fact_scripts).
         # Each fact script is guaranteed not to exceed the timeout duration.
         # A future enhancement could implement a global timeout across all fact gathering.
-        
+
         # go over .fact files, run executables, read rest, skip bad with warning and note
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # use filename for key where it will sit under local facts
