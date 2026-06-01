@@ -18,15 +18,9 @@
 
 from __future__ import annotations
 
-import warnings
-
 try:
-    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
-
-        import passlib
-        from passlib.handlers import pbkdf2
+    import passlib
+    from passlib.handlers import pbkdf2
 except ImportError:  # pragma: nocover
     passlib = None
     pbkdf2 = None
