@@ -35,6 +35,13 @@ class LocalFactCollector(BaseFactCollector):
             return local_facts
 
         local = {}
+
+        # NOTE: gather_timeout applies per local fact script, not globally across all facts.
+        # If multiple local fact scripts are slow, the total gather time may exceed the
+        # configured timeout value (potentially up to timeout × number_of_fact_scripts).
+        # Each fact script is guaranteed not to exceed the timeout duration.
+        # A future enhancement could implement a global timeout across all fact gathering.
+        
         # go over .fact files, run executables, read rest, skip bad with warning and note
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # use filename for key where it will sit under local facts
@@ -53,7 +60,7 @@ class LocalFactCollector(BaseFactCollector):
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
                 except (OSError, TimeoutError) as e:
-                    failed = "Timedout while executing fact script (%s): %s" % (fn, to_text(e))
+                    failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
 
                 if failed is not None:
                     local[fact_base] = failed
