@@ -116,6 +116,14 @@
       loop:
         - inventory/foo.py
         - galaxy.yml
+        - CLAUDE.md
+
+    - name: create a valid skeleton ignore expression in ansible.cfg
+      copy:
+        content: |
+          [galaxy]
+          collection_skeleton_ignore=^\./CLAUDE.md$
+        dest: "{{ galaxy_dir }}/scratch/skeleton/ansible.cfg"
 
     - name: create symlinks
       file:
@@ -151,6 +159,7 @@
         - galaxy.yml
         - plugins/inventory/foo.py
         - README
+        - CLAUDE.md
 
     - assert:
         that:
@@ -159,6 +168,7 @@
           - stat_result.results[2].stat.islnk
           - stat_result.results[3].stat.isreg
           - stat_result.results[4].stat.isreg
+          - not stat_result.results[5].stat.exists
 
     - name: Verify the README was templated successfully
       copy:
