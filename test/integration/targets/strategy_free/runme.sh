@@ -13,4 +13,4 @@ set +e
 result="$(ansible-playbook free_index_error.yml -i free_hosts "$@" 2>&1)"
 set -e
 grep -q "\[host1\]: UNREACHABLE!" <<< "$result"
-grep -qv "IndexError: list index out of range" <<< "$result"
+! grep -q "IndexError: list index out of range" <<< "$result"
