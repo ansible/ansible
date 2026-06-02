@@ -234,6 +234,7 @@
         local: yes
 
 - name: Test move_home for local users
+  when: ansible_facts.system in ['Linux']
   block:
     - name: Create local_ansibulluser
       user:
