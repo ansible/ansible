@@ -3331,6 +3331,20 @@ class BusyBox(User):
                 if rc is not None and rc != 0:
                     self.module.fail_json(name=self.name, msg=err, rc=rc)
 
+        # Move the home before rewriting /etc/passwd so usermod can still
+        # locate the current home directory contents.
+        if self.move_home and self.home is not None and user_info[5] != self.home:
+            usermod_bin = self.module.get_bin_path('usermod')
+            if usermod_bin is not None:
+                cmd = [usermod_bin, '-d', self.home, '-m', self.name]
+                rc, out, err = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+                user_info = self.user_info()
+            else:
+                self.module.warn("usermod command not found, skipping home directory move")
+
         # Manage user settings
         uid = user_info[2]
         if self.uid is not None:
@@ -3368,16 +3382,6 @@ class BusyBox(User):
                 self.module.backup_local(self.PASSWORDFILE)
                 self.module.atomic_move(tmpfile, self.PASSWORDFILE)
 
-        # Manage home directory
-        if self.move_home:
-            usermod_bin = self.module.get_bin_path('usermod')
-            if usermod_bin is not None:
-                cmd = [usermod_bin, '-d', self.home, '-m', self.name]
-                rc, out, err = self.execute_command(cmd)
-                if rc is not None and rc != 0:
-                    self.module.fail_json(name=self.name, msg=err, rc=rc)
-            else:
-                self.module.warn("usermod command not found, skipping home directory move")
         return rc, out, err
 
 
