@@ -14,6 +14,14 @@
         home: /tmp/ansibulluser
         state: present
 
+    - name: Create sentinel file in the old home directory
+      copy:
+        content: sentinel
+        dest: /tmp/ansibulluser/sentinel
+        owner: ansibulluser
+        group: ansibulluser
+        mode: '0644'
+
     - name: Move user home directory
       user:
         name: ansibulluser
@@ -26,18 +34,38 @@
         path: /tmp/ansibulluser-moved
       register: user_home_directory
 
+    - name: Stat sentinel file in the new home directory
+      stat:
+        path: /tmp/ansibulluser-moved/sentinel
+      register: moved_sentinel_file
+
+    - name: Stat sentinel file in the old home directory
+      stat:
+        path: /tmp/ansibulluser/sentinel
+      register: old_sentinel_file
+
     - name: Check if user home directory is moved
       assert:
         that:
           - user_home_directory.stat.exists
           - user_home_directory.stat.isdir
           - user_home_directory.stat.pw_name == 'ansibulluser'
+          - moved_sentinel_file.stat.exists
+          - not old_sentinel_file.stat.exists
 
   always:
     - name: Remove user home directory
       user:
         name: ansibulluser
         state: absent
+
+    - name: Remove old and new home directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/ansibulluser
+        - /tmp/ansibulluser-moved
 
     - name: Remove package
       command: apk del shadow
