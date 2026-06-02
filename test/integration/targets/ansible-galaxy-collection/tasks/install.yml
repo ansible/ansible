@@ -708,13 +708,13 @@
 
 # test --ignore-signature-status-code passed multiple times
 - name: reinstall collections with only one valid signature by ignoring the other errors
-  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_errors }}
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_flags }}
   register: install_req
   vars:
     req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
     cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
-    ignore_errors: "--ignore-signature-status-code BADSIG --ignore-signature-status-code FAILURE"
+    ignore_flags: "--ignore-signature-status-code BADSIG --ignore-signature-status-code FAILURE"
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
@@ -735,13 +735,13 @@
 
 # test --ignore-signature-status-code passed once with a list
 - name: reinstall collections with only one valid signature by ignoring the other errors
-  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_errors }}
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_flags }}
   register: install_req
   vars:
     req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
     cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
-    ignore_errors: "--ignore-signature-status-codes BADSIG FAILURE"
+    ignore_flags: "--ignore-signature-status-codes BADSIG FAILURE"
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
