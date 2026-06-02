@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-galaxy collection install - reject directory entries whose path
+    escapes the collection directory when extracting a collection artifact,
+    matching the containment check already applied to file entries.

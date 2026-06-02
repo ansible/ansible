@@ -1689,7 +1689,10 @@ def _extract_tar_dir(tar, dirname, b_dest):
     except KeyError:
         raise AnsibleError("Unable to extract '%s' from collection" % dirname)
 
-    b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
+    b_dir_path = os.path.abspath(os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict')))
+    if not _is_child_path(b_dir_path, b_dest):
+        raise AnsibleError("Cannot extract tar entry '%s' as it will be placed outside the collection directory"
+                           % to_native(dirname, errors='surrogate_or_strict'))
 
     b_parent_path = os.path.dirname(b_dir_path)
     os.makedirs(b_parent_path, mode=S_IRWXU_RXG_RXO, exist_ok=True)
