@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Allow root to use sudo on managed Alpine instances.

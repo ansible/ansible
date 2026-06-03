@@ -1,0 +1,2 @@
+bugfixes:
+  - su become plugin - Add recognition of password failure for BusyBox version of ``su``.

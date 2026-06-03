@@ -230,6 +230,9 @@ bootstrap_remote_alpine()
         && break
         retry_or_fail
     done
+
+    # Allow root to use sudo to facilitate become testing as is done in other test environments.
+    echo "root ALL=(ALL) ALL" > /etc/sudoers.d/root
 }
 
 bootstrap_remote_fedora()
