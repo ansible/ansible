@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-core - Surface the underlying Local RPC server startup exception instead of reporting a generic timeout when startup fails before the server signals readiness (https://github.com/ansible/ansible/issues/87031).
