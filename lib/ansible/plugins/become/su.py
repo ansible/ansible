@@ -104,7 +104,10 @@ class BecomeModule(BecomeBase):
     pipelining = False
 
     # messages for detecting prompted password issues
-    fail = ('Authentication failure',)
+    fail = (
+        'Authentication failure',
+        'incorrect password',  # BusyBox
+    )
 
     SU_PROMPT_LOCALIZATIONS = [
         'Password',
