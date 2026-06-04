@@ -130,12 +130,8 @@ stages:
           targets:
             - name: Fedora 44
               test: fedora/44
-            - name: RHEL 9.7
-              test: rhel/9.7
             - name: RHEL 10.1
               test: rhel/10.1
-            - name: Ubuntu 24.04
-              test: ubuntu/24.04
             - name: Ubuntu 26.04
               test: ubuntu/26.04
           groups:
