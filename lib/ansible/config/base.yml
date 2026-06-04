@@ -1646,7 +1646,7 @@ INJECT_INVOCATION:
   env:
     - name: ANSIBLE_INJECT_INVOCATION
   ini:
-    - key: interpreter_python
+    - key: inject_invocation
       section: defaults
   vars:
     - name: ansible_inject_invocation
