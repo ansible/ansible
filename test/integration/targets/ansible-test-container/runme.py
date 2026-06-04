@@ -161,6 +161,9 @@ def get_test_scenarios() -> list[TestScenario]:
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
             debug_systemd = cgroup != 'none'
 
+            if engine == 'docker' and container_name.startswith('alpine'):
+                continue  # TODO: restore Docker testing of Alpine once it's able to be used as a controller again (probably Alpine 3.24)
+
             # The AppArmor policy for pasta on Ubuntu 26.04 prevents podman from stopping containers.
             # Attempting to do so fails with an error like:
             # rootless netns: kill network process: permission denied
@@ -242,7 +245,12 @@ def run_test(scenario: TestScenario) -> TestResult:
     target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
 
     entries = get_container_completion_entries()
-    alpine_container = [name for name in entries if name.startswith('alpine')][0]
+
+    # For the split test, Alpine Linux is preferred as the controller. There are two reasons for this:
+    # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
+    # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
+    # Unfortunately, this isn't always possible, such as when an Alpine release isn't available with support for controller Python versions.
+    controller_container = [name for name in entries if name.startswith('base')][0]
 
     commands = [
         # The cgroup probe is only performed for the first test of the target.
@@ -250,10 +258,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         # The controller will be tested separately as a target.
         # This ensures that both the probe and no-probe code paths are functional.
         [*integration, *integration_options, *target_only_options],
-        # For the split test we'll use Alpine Linux as the controller. There are two reasons for this:
-        # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
-        # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
-        [*integration, '--controller', f'docker:{alpine_container}', *integration_options],
+        [*integration, '--controller', f'docker:{controller_container}', *integration_options],
     ]
 
     common_env: dict[str, str] = {}
