@@ -72,7 +72,7 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
         elif scm == 'hg':
             clone_cmd.append('--insecure')
 
-    clone_cmd.extend([src, name])
+    clone_cmd.extend(['--', src, name])
 
     run_scm_cmd(clone_cmd, tempdir)
 
