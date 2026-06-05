@@ -472,8 +472,6 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
 SSHPASS_AVAILABLE = None
 SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
-_HAS_RESOURCE_TRACK = sys.version_info[:2] >= (3, 13)
-
 PKCS11_DEFAULT_PROMPT = 'Enter PIN for '
 SSH_ASKPASS_DEFAULT_PROMPT = 'assword'
 
@@ -632,11 +630,6 @@ def _clean_resources(func):
                 self.shm.close()
                 with contextlib.suppress(FileNotFoundError):
                     self.shm.unlink()
-                    if not _HAS_RESOURCE_TRACK:
-                        # deprecated: description='unneeded due to track argument for SharedMemory' python_version='3.12'
-                        # There is a resource tracking issue where the resource is deleted, but tracking still has a record
-                        # This will effectively overwrite the record and remove it
-                        SharedMemory(name=self.shm.name, create=True, size=1).unlink()
         return ret
     return inner
 
@@ -1038,11 +1031,7 @@ class Connection(ConnectionBase):
         if not conn_password:
             return popen_kwargs
 
-        kwargs = {}
-        if _HAS_RESOURCE_TRACK:
-            # deprecated: description='track argument for SharedMemory always available' python_version='3.12'
-            kwargs['track'] = False
-        self.shm = shm = SharedMemory(create=True, size=16384, **kwargs)  # type: ignore[arg-type]
+        self.shm = shm = SharedMemory(create=True, size=16384, track=False)
 
         sshpass_prompt = self.get_option('sshpass_prompt')
         if not sshpass_prompt and pkcs11_provider:

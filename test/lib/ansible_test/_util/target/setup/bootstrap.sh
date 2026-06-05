@@ -305,11 +305,6 @@ bootstrap_remote_freebsd()
                 cryptography_pkg=""  # not available
                 pyyaml_pkg=""  # not available
                 ;;
-            "15.0/3.12")
-                jinja2_pkg=""  # not available
-                cryptography_pkg=""  # not available
-                pyyaml_pkg=""  # not available
-                ;;
             *)
                 # just assume nothing is available
                 jinja2_pkg=""  # not available
@@ -429,7 +424,11 @@ bootstrap_remote_rhel_10()
 {
     optimize_dnf
 
-    py_pkg_prefix="python3"
+    if [ "${python_version}" = "3.12" ]; then
+        py_pkg_prefix="python3"
+    else
+        py_pkg_prefix="python${python_version}"
+    fi
 
     packages="
         gcc
@@ -437,14 +436,13 @@ bootstrap_remote_rhel_10()
         ${py_pkg_prefix}-pip
         "
 
+    # Jinja2, packaging and resolvelib are missing for controller supported Python versions, so we just
+    # skip them and let ansible-test install them from PyPI.
     if [ "${controller}" ]; then
         packages="
             ${packages}
             ${py_pkg_prefix}-cryptography
-            ${py_pkg_prefix}-jinja2
-            ${py_pkg_prefix}-packaging
             ${py_pkg_prefix}-pyyaml
-            ${py_pkg_prefix}-resolvelib
             "
     fi
 

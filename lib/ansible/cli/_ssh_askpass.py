@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import multiprocessing.resource_tracker
 import os
 import re
 import sys
@@ -27,19 +26,10 @@ def handle_prompt(prompt: str) -> bool:
         sys.stdout.flush()
         return True
 
-    # deprecated: description='Python 3.13 and later support track' python_version='3.12'
-    can_track = sys.version_info[:2] >= (3, 13)
-    kwargs = dict(track=False) if can_track else {}
-
     # This SharedMemory instance is intentionally not closed or unlinked.
     # Closing will occur naturally in the SharedMemory finalizer.
     # Unlinking is the responsibility of the process which created it.
-    shm = SharedMemory(name=os.environ['_ANSIBLE_SSH_ASKPASS_SHM'], **kwargs)
-
-    if not can_track:
-        # When track=False is not available, we must unregister explicitly, since it otherwise only occurs during unlink.
-        # This avoids resource tracker noise on stderr during process exit.
-        multiprocessing.resource_tracker.unregister(shm._name, 'shared_memory')
+    shm = SharedMemory(name=os.environ['_ANSIBLE_SSH_ASKPASS_SHM'], track=False)
 
     cfg = json.loads(shm.buf.tobytes().rstrip(b'\x00'))
 

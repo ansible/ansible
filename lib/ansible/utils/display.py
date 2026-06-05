@@ -174,8 +174,7 @@ class FilterUserInjector(logging.Filter):
 
     try:
         username = getpass.getuser()
-    except (ImportError, KeyError, OSError):
-        # deprecated: description='only OSError is required for Python 3.13+' python_version='3.12'
+    except OSError:
         # people like to make containers w/o actual valid passwd/shadow and use host uids
         username = 'uid=%s' % os.getuid()
 

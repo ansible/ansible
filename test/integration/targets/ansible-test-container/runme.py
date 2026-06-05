@@ -156,28 +156,13 @@ def get_test_scenarios() -> list[TestScenario]:
         image = settings['image']
         cgroup = settings.get('cgroup', 'v1-v2')
 
-        if container_name == 'centos6' and os_release.id == 'alpine':
-            # Alpine kernels do not emulate vsyscall by default, which causes the centos6 container to fail during init.
-            # See: https://unix.stackexchange.com/questions/478387/running-a-centos-docker-image-on-arch-linux-exits-with-code-139
-            # Other distributions enable settings which trap vsyscall by default.
-            # See: https://www.kernelconfig.io/config_legacy_vsyscall_xonly
-            # See: https://www.kernelconfig.io/config_legacy_vsyscall_emulate
-            continue
-
         for engine in available_engines:
             # TODO: figure out how to get tests passing using docker without disabling selinux
             disable_selinux = os_release.id == 'fedora' and engine == 'docker' and cgroup != 'none'
             debug_systemd = cgroup != 'none'
 
-            # The sleep+pkill used to support the cgroup probe causes problems with the centos6 container.
-            # It results in sshd connections being refused or reset for many, but not all, container instances.
-            # The underlying cause of this issue is unknown.
-            probe_cgroups = container_name != 'centos6'
-
-            # The default RHEL 9 crypto policy prevents use of SHA-1.
-            # This results in SSH errors with centos6 containers: ssh_dispatch_run_fatal: Connection to 1.2.3.4 port 22: error in libcrypto
-            # See: https://access.redhat.com/solutions/6816771
-            enable_sha1 = os_release.id == 'rhel' and os_release.version_id.startswith('9.') and container_name == 'centos6'
+            if engine == 'docker' and container_name.startswith('alpine'):
+                continue  # TODO: restore Docker testing of Alpine once it's able to be used as a controller again (probably Alpine 3.24)
 
             # The AppArmor policy for pasta on Ubuntu 26.04 prevents podman from stopping containers.
             # Attempting to do so fails with an error like:
@@ -237,9 +222,7 @@ def get_test_scenarios() -> list[TestScenario]:
                         image=image,
                         disable_selinux=disable_selinux,
                         expose_cgroup_version=expose_cgroup_version,
-                        enable_sha1=enable_sha1,
                         debug_systemd=debug_systemd,
-                        probe_cgroups=probe_cgroups,
                         disable_apparmor_profile_pasta=disable_apparmor_profile_pasta,
                     )
                 )
@@ -255,16 +238,19 @@ def run_test(scenario: TestScenario) -> TestResult:
 
     integration = ['ansible-test', 'integration', 'split']
     integration_options = ['--target', f'docker:{scenario.container_name}', '--color', '--truncate', '0', '-v']
-    target_only_options = []
 
     if scenario.debug_systemd:
         integration_options.append('--dev-systemd-debug')
 
-    if scenario.probe_cgroups:
-        target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
+    target_only_options = ['--dev-probe-cgroups', str(LOG_PATH)]
 
     entries = get_container_completion_entries()
-    alpine_container = [name for name in entries if name.startswith('alpine')][0]
+
+    # For the split test, Alpine Linux is preferred as the controller. There are two reasons for this:
+    # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
+    # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
+    # Unfortunately, this isn't always possible, such as when an Alpine release isn't available with support for controller Python versions.
+    controller_container = [name for name in entries if name.startswith('base')][0]
 
     commands = [
         # The cgroup probe is only performed for the first test of the target.
@@ -272,10 +258,7 @@ def run_test(scenario: TestScenario) -> TestResult:
         # The controller will be tested separately as a target.
         # This ensures that both the probe and no-probe code paths are functional.
         [*integration, *integration_options, *target_only_options],
-        # For the split test we'll use Alpine Linux as the controller. There are two reasons for this:
-        # 1) It doesn't require the cgroup v1 hack, so we can test a target that doesn't need that.
-        # 2) It doesn't require disabling selinux, so we can test a target that doesn't need that.
-        [*integration, '--controller', f'docker:{alpine_container}', *integration_options],
+        [*integration, '--controller', f'docker:{controller_container}', *integration_options],
     ]
 
     common_env: dict[str, str] = {}
@@ -332,9 +315,6 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_selinux:
             run_command('setenforce', 'permissive')
 
-        if scenario.enable_sha1:
-            run_command('update-crypto-policies', '--set', 'DEFAULT:SHA1')
-
         if scenario.disable_apparmor_profile_pasta:
             os.symlink('/etc/apparmor.d/usr.bin.pasta', '/etc/apparmor.d/disable/usr.bin.pasta')
             run_command('apparmor_parser', '-R', '/etc/apparmor.d/usr.bin.pasta')
@@ -364,9 +344,6 @@ def run_test(scenario: TestScenario) -> TestResult:
         if scenario.disable_apparmor_profile_pasta:
             os.unlink('/etc/apparmor.d/disable/usr.bin.pasta')
             run_command('apparmor_parser', '/etc/apparmor.d/usr.bin.pasta')
-
-        if scenario.enable_sha1:
-            run_command('update-crypto-policies', '--set', 'DEFAULT')
 
         if scenario.disable_selinux:
             run_command('setenforce', 'enforcing')
@@ -621,9 +598,7 @@ class TestScenario:
     image: str
     disable_selinux: bool
     expose_cgroup_version: int | None
-    enable_sha1: bool
     debug_systemd: bool
-    probe_cgroups: bool
     disable_apparmor_profile_pasta: bool
 
     @property
@@ -641,9 +616,6 @@ class TestScenario:
 
         if self.expose_cgroup_version is not None:
             tags.append(f'cgroup: {self.expose_cgroup_version}')
-
-        if self.enable_sha1:
-            tags.append('sha1: enabled')
 
         if self.disable_apparmor_profile_pasta:
             tags.append('apparmor(pasta): disabled')

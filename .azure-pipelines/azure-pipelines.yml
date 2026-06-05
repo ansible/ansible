@@ -99,8 +99,10 @@ stages:
               test: rhel/9.7@3.9
             - name: RHEL 9.7 py312
               test: rhel/9.7@3.12
-            - name: RHEL 10.1
-              test: rhel/10.1
+            - name: RHEL 10.1 py312
+              test: rhel/10.1@3.12
+            - name: RHEL 10.1 py314
+              test: rhel/10.1@3.14
             - name: FreeBSD 14.4
               test: freebsd/14.4
             - name: FreeBSD 15.0
@@ -119,8 +121,6 @@ stages:
               test: rhel/10.1
             - name: FreeBSD 14.4
               test: freebsd/14.4
-            - name: FreeBSD 15.0
-              test: freebsd/15.0
           groups:
             - 3
             - 4
@@ -128,16 +128,10 @@ stages:
       - template: templates/matrix.yml  # context/controller (ansible-test container management)
         parameters:
           targets:
-            - name: Alpine 3.23
-              test: alpine/3.23
             - name: Fedora 44
               test: fedora/44
-            - name: RHEL 9.7
-              test: rhel/9.7
             - name: RHEL 10.1
               test: rhel/10.1
-            - name: Ubuntu 24.04
-              test: ubuntu/24.04
             - name: Ubuntu 26.04
               test: ubuntu/26.04
           groups:
@@ -174,8 +168,6 @@ stages:
         parameters:
           testFormat: linux/{0}
           targets:
-            - name: Alpine 3.23
-              test: alpine323
             - name: Fedora 44
               test: fedora44
             - name: Ubuntu 24.04
@@ -211,7 +203,6 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.12
             - test: 3.13
             - test: 3.14
             - test: 3.15
@@ -223,7 +214,6 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.12
             - test: 3.13
             - test: 3.14
             - test: 3.15
