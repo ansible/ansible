@@ -232,3 +232,41 @@
         force: yes
         remove: yes
         local: yes
+
+- name: Test move_home for local users
+  when: ansible_facts.system in ['Linux']
+  block:
+    - name: Create local_ansibulluser
+      user:
+        name: local_ansibulluser
+        state: present
+        local: yes
+        createhome: false
+      register: local_user_test_8
+
+    - name: Move home for local_ansibulluser
+      user:
+        name: local_ansibulluser
+        state: present
+        local: yes
+        move_home: true
+        home: /home/local_ansibulluser_move_home
+        createhome: true
+      register: local_user_test_9
+
+    - name: Check if warnings were displayed properly
+      assert:
+        that:
+          - local_user_test_8.changed
+          - local_user_test_9.changed
+          - local_user_test_9.warnings is defined
+          - local_user_test_9.warnings[0] is search("Ignoring move_home since")
+
+  always:
+    - name: Clean up local_ansibulluser
+      user:
+        name: local_ansibulluser
+        state: absent
+        force: yes
+        remove: yes
+        local: yes
