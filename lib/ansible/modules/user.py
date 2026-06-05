@@ -126,6 +126,7 @@ options:
         description:
             - "If set to V(true) when used with O(home), attempt to move the user's old home
               directory to the specified directory if it isn't there already and the old home exists."
+            - If O(local) is set to V(true), this option will be ignored if the current home directory does not exist.
         type: bool
         default: no
     system:
@@ -978,11 +979,15 @@ class User(object):
             cmd.append('-c')
             cmd.append(self.comment)
 
-        if self.home is not None and info[5] != self.home:
+        existing_home = info[5]
+        if self.home is not None and existing_home != self.home:
             cmd.append('-d')
             cmd.append(self.home)
             if self.move_home:
-                cmd.append('-m')
+                if self.local and not os.path.exists(existing_home):
+                    self.module.warn("Ignoring move_home since home directory %s does not exist, but local is true" % existing_home)
+                else:
+                    cmd.append('-m')
 
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
