@@ -1672,6 +1672,7 @@ INTERPRETER_PYTHON:
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
+  - python3.15
   - python3.14
   - python3.13
   - python3.12

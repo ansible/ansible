@@ -65,7 +65,6 @@ lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub f
 lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
-lib/ansible/_internal/_wrapt.py mypy-3.12!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.13!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.14!skip # vendored code
 lib/ansible/_internal/_wrapt.py mypy-3.15!skip # vendored code

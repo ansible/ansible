@@ -6,7 +6,6 @@ from __future__ import annotations
 import random
 import secrets
 import string
-import warnings
 
 from dataclasses import dataclass
 
@@ -19,17 +18,13 @@ PASSLIB_E = None
 PASSLIB_AVAILABLE = False
 
 try:
-    # deprecated: description='warning suppression only required for Python 3.12 and earlier' python_version='3.12'
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', message="'crypt' is deprecated and slated for removal in Python 3.13", category=DeprecationWarning)
-
-        import passlib
-        import passlib.hash
-        from passlib.utils.handlers import HasRawSalt, PrefixWrapper
-        try:
-            from passlib.utils.binary import bcrypt64
-        except ImportError:
-            from passlib.utils import bcrypt64
+    import passlib
+    import passlib.hash
+    from passlib.utils.handlers import HasRawSalt, PrefixWrapper
+    try:
+        from passlib.utils.binary import bcrypt64
+    except ImportError:
+        from passlib.utils import bcrypt64
 
     PASSLIB_AVAILABLE = True
 except Exception as e:
