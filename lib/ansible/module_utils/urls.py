@@ -460,6 +460,16 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             if code == 301 and method == 'POST':
                 method = 'GET'
 
+        # Strip credential-bearing headers when the redirect crosses to a
+        # different origin (scheme, host or port), otherwise a redirect to an
+        # attacker-controlled location leaks the caller's credentials.
+        old_origin = urlparse(req.get_full_url())
+        new_origin = urlparse(newurl)
+        if (old_origin.scheme, old_origin.hostname, old_origin.port) != \
+                (new_origin.scheme, new_origin.hostname, new_origin.port):
+            req_headers = {k: v for k, v in req_headers.items()
+                           if k.lower() not in ('authorization', 'cookie', 'proxy-authorization')}
+
         return urllib.request.Request(
             newurl,
             data=data,
