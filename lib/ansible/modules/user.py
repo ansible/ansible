@@ -126,7 +126,7 @@ options:
         description:
             - "If set to V(true) when used with O(home), attempt to move the user's old home
               directory to the specified directory if it isn't there already and the old home exists."
-            - If O(local) is set to V(true), this option will be ignored if the currenthome directory does not exist.
+            - If O(local) is set to V(true), this option will be ignored if the current home directory does not exist.
         type: bool
         default: no
     system:
