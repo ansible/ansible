@@ -1,0 +1,3 @@
+- name: web role task
+  debug:
+    msg: "WEB"

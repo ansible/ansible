@@ -1,0 +1,6 @@
+- name: dynamic role inclusion via the roles_include keyword
+  hosts: testhost
+  gather_facts: false
+  roles_include:
+    - {role: web, tags: [web]}
+    - {role: db, tags: [db]}

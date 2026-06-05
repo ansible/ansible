@@ -161,6 +161,92 @@ def test_play_with_roles(mocker):
     assert isinstance(p.get_roles()[0], Role)
 
 
+def _include_role_tasks(blocks):
+    """Collect every IncludeRole task found in a compiled list of blocks."""
+    from ansible.playbook.role_include import IncludeRole
+
+    found = []
+    for block in blocks:
+        for task in block.block + block.rescue + block.always:
+            if isinstance(task, IncludeRole):
+                found.append(task)
+    return found
+
+
+def test_play_with_roles_include():
+    p = Play.load(dict(
+        name="test play",
+        hosts=['foo'],
+        gather_facts=False,
+        roles_include=[dict(role='foo', tags=['foo'])],
+    ))
+
+    blocks = p.compile()
+    assert all(isinstance(block, Block) for block in blocks)
+
+    # roles_include is dynamic: the role is not statically compiled, so it does
+    # not appear in the play's static roles list at parse time.
+    assert p.get_roles() == []
+
+    includes = _include_role_tasks(blocks)
+    assert len(includes) == 1
+    ir = includes[0]
+    assert ir._role_name == 'foo'
+    # tags gate selection of the include itself, and propagate to the role's
+    # own tasks via apply.
+    assert 'foo' in ir.tags
+    assert ir.args['apply']['tags'] == ['foo']
+
+
+def test_play_with_roles_include_bare_string():
+    p = Play.load(dict(
+        name="test play",
+        hosts=['foo'],
+        gather_facts=False,
+        roles_include=['foo'],
+    ))
+
+    includes = _include_role_tasks(p.compile())
+    assert len(includes) == 1
+    assert includes[0]._role_name == 'foo'
+
+
+def test_play_with_roles_include_runs_before_tasks():
+    p = Play.load(dict(
+        name="test play",
+        hosts=['foo'],
+        gather_facts=False,
+        roles_include=['foo'],
+        tasks=[dict(action='shell echo "hello world"')],
+    ))
+
+    blocks = p.compile()
+    include_idx = next(i for i, b in enumerate(blocks) if _include_role_tasks([b]))
+    task_idx = next(
+        i for i, b in enumerate(blocks)
+        for t in b.block if getattr(t, 'action', None) == 'shell'
+    )
+    assert include_idx < task_idx
+
+
+@pytest.mark.parametrize(
+    'value',
+    (
+        'foo',                       # not a list
+        [dict(notrole='foo')],       # mapping without a 'role' key
+        [42],                        # neither a string nor a mapping
+    ),
+)
+def test_play_with_invalid_roles_include(value):
+    with pytest.raises(AnsibleParserError):
+        Play.load(dict(
+            name="test play",
+            hosts=['foo'],
+            gather_facts=False,
+            roles_include=value,
+        ))
+
+
 def test_play_compile():
     p = Play.load(dict(
         name="test play",

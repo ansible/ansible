@@ -74,6 +74,7 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Role Attributes
     roles = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
+    roles_include = NonInheritableFieldAttribute(isa='list', default=list, priority=90)
 
     # Block (Task) Lists Attributes
     handlers = NonInheritableFieldAttribute(isa='list', default=list, priority=-1)
@@ -231,6 +232,51 @@ class Play(Base, Taggable, CollectionSearch):
 
         return self.roles
 
+    def _load_roles_include(self, attr, ds):
+        """
+        Loads ``roles_include`` into a list of blocks, the dynamic counterpart to
+        the static ``roles`` keyword. Each entry uses the same syntax as ``roles``
+        (a bare role name or a mapping with a ``role`` key) but is desugared into an
+        ``include_role`` task, so roles are resolved at runtime rather than at parse
+        time. A role skipped by ``--tags`` is therefore never loaded, and its
+        automatic argument-spec validation task is never created.
+        """
+
+        if ds is None:
+            return []
+
+        if not isinstance(ds, list):
+            raise AnsibleParserError("roles_include must be a list of roles.", obj=self._ds)
+
+        return self._load(attr, [self._roles_include_task(entry) for entry in ds])
+
+    @staticmethod
+    def _roles_include_task(entry):
+        """Desugar a single ``roles_include`` entry into an ``include_role`` task ds."""
+        if isinstance(entry, str):
+            entry = {'role': entry}
+        if not isinstance(entry, dict) or 'role' not in entry:
+            raise AnsibleParserError(
+                "A roles_include entry must be a role name or a mapping with a 'role' key, "
+                "but got: %r" % (entry,)
+            )
+
+        task = {'include_role': {'name': entry['role']}}
+
+        # ``tags`` gate selection of the include itself (so ``--tags`` can skip the
+        # whole role) and, via ``apply``, propagate onto the role's own tasks.
+        tags = entry.get('tags')
+        if tags is not None:
+            task['include_role']['apply'] = {'tags': tags}
+            task['tags'] = tags
+
+        # Keywords that apply to the include task rather than the role lookup.
+        for key in ('when', 'vars', 'name'):
+            if key in entry:
+                task[key] = entry[key]
+
+        return task
+
     def _load_vars_prompt(self, attr, ds):
         # avoid circular dep
         from ansible.vars.manager import preprocess_vars
@@ -326,7 +372,7 @@ class Play(Base, Taggable, CollectionSearch):
             b.always = [flush_block]
             block_list.append(b)
 
-            tasks = self._compile_roles() + self.tasks
+            tasks = self._compile_roles() + self.roles_include + self.tasks
             b = Block(play=self)
             if tasks:
                 b.block = tasks
@@ -352,6 +398,7 @@ class Play(Base, Taggable, CollectionSearch):
         block_list.extend(self.pre_tasks)
         block_list.append(flush_block)
         block_list.extend(self._compile_roles())
+        block_list.extend(self.roles_include)
         block_list.extend(self.tasks)
         block_list.append(flush_block)
         block_list.extend(self.post_tasks)

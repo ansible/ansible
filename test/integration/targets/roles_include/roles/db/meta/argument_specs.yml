@@ -1,0 +1,11 @@
+---
+# A spec so that loading this role triggers the automatic, always-tagged
+# "Validating arguments against arg spec" task. The option has a default, so
+# validation always succeeds; the point is whether the validation runs at all.
+argument_specs:
+  main:
+    short_description: db role
+    options:
+      db_flag:
+        type: bool
+        default: true

@@ -1,0 +1,9 @@
+# Same roles via the static roles: keyword, for contrast in runme.sh: under a
+# tag filter the unselected role is still loaded, so its always-tagged arg-spec
+# validation runs - the overhead roles_include avoids.
+- name: static role inclusion via the roles keyword
+  hosts: testhost
+  gather_facts: false
+  roles:
+    - {role: web, tags: [web]}
+    - {role: db, tags: [db]}

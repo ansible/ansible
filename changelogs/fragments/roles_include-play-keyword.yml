@@ -1,0 +1,5 @@
+minor_changes:
+  - play - add a ``roles_include`` play keyword, the dynamic (``include_role``) counterpart to the
+    static ``roles`` keyword. Roles listed under ``roles_include`` are resolved at runtime, so a
+    role skipped by ``--tags`` is never loaded and its automatic argument-spec validation task is
+    never created.
