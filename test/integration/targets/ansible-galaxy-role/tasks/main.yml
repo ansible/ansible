@@ -70,3 +70,4 @@
 
 - import_tasks: dir-traversal.yml
 - import_tasks: valid-role-symlinks.yml
+- import_tasks: git-config-injection.yml
