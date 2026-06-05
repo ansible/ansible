@@ -220,7 +220,7 @@ def get_platform():
     the result of calling :py:func:`platform.system`.
     """
     deprecate(
-        msg="The `get_platfrom()` function from `ansible.module_utils.basic` is deprecated.",
+        msg="The `get_platform()` function from `ansible.module_utils.basic` is deprecated.",
         version="2.24",
         help_text="Use `platform.system()` from the Python standard library instead.",
     )
