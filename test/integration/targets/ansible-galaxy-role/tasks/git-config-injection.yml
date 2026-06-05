@@ -1,0 +1,23 @@
+- vars:
+    invalid_git_opts: '-ccore.sshCommand=sh -c "id > {{ remote_tmp_dir }}/role_exe"'
+    # use SSH protocol to test core.sshCommand is not configured
+    dummy_repo: git@github.com:ansible/nosuchrepo.git
+  block:
+    - name: Create invalid requirements file
+      copy:
+        dest: "{{ remote_tmp_dir }}/invalid-requirements.yml"
+        content: |
+          - src: {{ invalid_git_opts }}
+            scm: git
+            name: {{ dummy_repo }}
+          - src: {{ dummy_repo }}
+            scm: git
+            name: {{ invalid_git_opts }}
+
+    - name: Attempt to install invalid role requirements
+      command: ansible-galaxy install -r {{ remote_tmp_dir }}/invalid-requirements.yml --ignore-errors
+
+    - name: Validate git core.sshCommand did not run
+      stat:
+        path: "{{ remote_tmp_dir }}/role_exe"
+      failed_when: _task.result.stat.exists
