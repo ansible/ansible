@@ -23,19 +23,24 @@
     - name: Attempt to install invalid role requirements
       command: ansible-galaxy install -r {{ remote_tmp_dir }}/invalid-requirements.yml --ignore-errors
       register: result
+      environment:
+        ANSIBLE_NOCOLOR: True
+        ANSIBLE_FORCE_COLOR: False
 
     - name: Validate git core.sshCommand did not run
       stat:
         path: "{{ remote_tmp_dir }}/role_exe"
-      failed_when: _task.result.stat.exists
+      register: stat_result
+      failed_when: stat_result.stat.exists
 
     - name: Verify the invalid field is treated as a single positional argument (repo or dest)
       assert:
         that:
-          - result.stderr is search(error1)
-          - result.stderr is search(error2)
-          - (result.stderr | regex_findall("git clone") | length) == (result.stderr | regex_findall("git clone --") | length) == 2
+          - stderr is search(error1)
+          - stderr is search(error2)
+          - (stderr | regex_findall("git clone") | length) == (stderr | regex_findall("git clone --") | length) == 2
       vars:
+        stderr: "{{ result.stderr | regex_replace('\\n', ' ') }}"
         error1: "repository '{{ invalid_git_opts }}' does not exist"
         error2: "Cloning into '{{ invalid_git_opts }}'"
 
