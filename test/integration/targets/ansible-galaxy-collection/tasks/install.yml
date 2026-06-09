@@ -317,6 +317,26 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
+- name: setup tarball with a path traversal collection name - {{ test_id }}
+  script: build_bad_name_tar.py {{ galaxy_dir | quote }}
+
+- name: fail to install a collection whose metadata name escapes the collection path - {{ test_id }}
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/badname-test-1.0.0.tar.gz' {{ galaxy_verbosity }}
+  register: fail_bad_name
+  failed_when: fail_bad_name.rc != 1 and "invalid collection name" not in fail_bad_name.stderr
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of failed collection install with a path traversal name - {{ test_id }}
+  stat:
+    path: '{{ galaxy_dir }}/outside'
+  register: fail_bad_name_actual
+
+- name: assert collection with a path traversal name was rejected before any path was built - {{ test_id }}
+  assert:
+    that:
+    - not fail_bad_name_actual.stat.exists
+
 - name: install a collection from a URI - {{ test_id }}
   command: ansible-galaxy collection install {{ amanda }}/artifacts/namespace4-name-1.0.0.tar.gz {{ galaxy_verbosity }}
   register: install_uri

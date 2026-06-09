@@ -1,0 +1,2 @@
+security_fixes:
+  - ansible-galaxy collection install - Validate the collection name read from an artifact's ``MANIFEST.json`` before using it to build the installation path, so a crafted ``namespace`` or ``name`` containing path separators or ``..`` can no longer redirect the install destination outside the collections directory.
