@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 
+import fcntl
 import json
 import shlex
 import shutil
@@ -118,15 +119,20 @@ def _filter_non_json_lines(data):
 
 def jwrite(info):
     jobfile = job_path + ".tmp"
-    tjob = open(jobfile, "w")
-    try:
-        tjob.write(json.dumps(info))
-    except OSError as ex:
-        notice(f'failed to write to {jobfile!r}: {ex}')
-        raise
-    finally:
-        tjob.close()
-        os.rename(jobfile, job_path)
+    with open(jobfile, "w") as tjob:
+        try:
+            fcntl.flock(tjob.fileno(), fcntl.LOCK_EX)
+        except OSError as ex:
+            notice(f'failed to acquire lock for {jobfile!r}: {ex}')
+            raise
+        try:
+            tjob.write(json.dumps(info))
+        except OSError as ex:
+            notice(f'failed to write to {jobfile!r}: {ex}')
+            raise
+        finally:
+            os.rename(jobfile, job_path)
+            fcntl.flock(tjob.fileno(), fcntl.LOCK_UN)
 
 
 def _run_module(jid, *module_args):
@@ -291,11 +297,15 @@ def main():
                 os.setpgid(sub_pid, sub_pid)
 
                 notice("Start watching %s (%s)" % (sub_pid, remaining))
+
+                if remaining != 0 and step >= remaining:
+                    step = remaining / 2
+
                 time.sleep(step)
+
                 while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
-                    notice("%s still running (%s)" % (sub_pid, remaining))
-                    time.sleep(step)
                     remaining = remaining - step
+                    notice("%s still running (%s)" % (sub_pid, remaining))
                     if remaining <= 0:
                         # ensure we leave response in poll location
                         res = {'msg': 'Timeout exceeded', 'failed': True, 'child_pid': sub_pid}
@@ -309,6 +319,8 @@ def main():
                         if not preserve_tmp:
                             shutil.rmtree(os.path.dirname(wrapped_module), True)
                         end(res)
+
+                    time.sleep(step)
                 notice("Done in kid B.")
                 if not preserve_tmp:
                     shutil.rmtree(os.path.dirname(wrapped_module), True)
