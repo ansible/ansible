@@ -1,7 +1,6 @@
-
 - name: Test sudo with i18n, required for sudo-rs
   become: yes
-  when: ansible_facts[''] == 'Linux'
+  when: ansible_facts['system'] == 'Linux' and ansible_facts['os_distribution'] == 'Ubuntu'
   vars:
     testlocales:
       - en_US.UTF-8   # Password
@@ -22,7 +21,7 @@
           loop: '{{testlocales}}'
 
         - name: Generate locales
-          shell: 'locale-gen --keep-existing 
+          shell: locale-gen --keep-existing
 
     - name: Actually test sudo with locales
       become_method: sudo
