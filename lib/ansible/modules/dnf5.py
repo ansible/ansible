@@ -335,7 +335,7 @@ msg:
   type: str
   sample: "Nothing to do"
 results:
-  description: A list of the dnf transaction results (deprecated for removal in 2.25. Use transactions instead)
+  description: A list of the dnf transaction results (deprecated for removal in 2.25. Use RV(transactions) instead)
   returned: success
   type: list
   sample: ["Installed: lsof-4.94.0-4.fc37.x86_64"]
@@ -344,8 +344,9 @@ transactions:
   returned: success
   type: list
   sample: ["Installed: lsof-4.94.0-4.fc37.x86_64"]
+  version_added: 2.22
 failures:
-  description: A list of the dnf transaction failures (deprecated for removal in 2.25. Use transaction_errors instead)
+  description: A list of the dnf transaction failures (deprecated for removal in 2.25. Use RV(transaction_errors) instead)
   returned: failure
   type: list
   sample: ["Argument 'lsof' matches only excluded packages."]
@@ -354,6 +355,7 @@ transaction_errors:
   returned: failure
   type: list
   sample: ["Argument 'lsof' matches only excluded packages."]
+  version_added: 2.22
 rc:
   description: For compatibility, 0 for success, 1 for failure
   returned: always
