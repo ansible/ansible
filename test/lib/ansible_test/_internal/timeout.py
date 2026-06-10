@@ -20,6 +20,7 @@ from .config import (
 )
 
 from .util import (
+    cache,
     display,
     TimeoutExpiredError,
 )
@@ -81,6 +82,7 @@ class TimeoutDetail:
         )
 
 
+@cache
 def get_timeout() -> TimeoutDetail | None:
     """Return details about the currently set timeout, if any, otherwise return None."""
     try:

@@ -36,6 +36,7 @@ from ...docker_util import (
 )
 
 from ...constants import (
+    TIMEOUT_MARGIN_SECONDS,
     TIMEOUT_PATH,
 )
 
@@ -137,6 +138,9 @@ def set_timeout(args: EnvConfig) -> None:
 
     if timeout:
         display.info(f'Setting a {timeout.duration} minute test timeout which will end at: {timeout.deadline}', verbosity=1)
+
+        if timeout.duration * 60 <= TIMEOUT_MARGIN_SECONDS:
+            display.warning(f'The {timeout.duration} minute timeout may be too short for the faulthandler callback to provide useful diagnostics.')
     else:
         display.info('Clearing existing test timeout.', verbosity=1)
 
