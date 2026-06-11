@@ -1133,6 +1133,22 @@ releases:
     - 86237-rpm-key-librpm.yml
     - ansible-test-github-actions.yml
     release_date: '2026-03-16'
+  2.16.19rc1:
+    changes:
+      release_summary: '| Release Date: 2026-06-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+        '
+      security_fixes:
+      - ansible-galaxy install - Ensure role requirements are passed as positional
+        arguments to :command:`git clone`. Previously, a malicious role author could
+        inject arbitrary git configuration in role dependencies. (CVE-2026-11332)
+    codename: All My Love
+    fragments:
+    - 2.16.19rc1_summary.yaml
+    - fix-cloning-malformed-role-requirements.yml
+    release_date: '2026-06-11'
   2.16.1rc1:
     changes:
       breaking_changes:
