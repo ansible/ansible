@@ -5,6 +5,21 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
+v2.16.19rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-06-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
+
+
+Security Fixes
+--------------
+
+- ansible-galaxy install - Ensure role requirements are passed as positional arguments to :command:`git clone`. Previously, a malicious role author could inject arbitrary git configuration in role dependencies. (CVE-2026-11332)
+
 v2.16.18
 ========
 
