@@ -4,6 +4,33 @@ ansible-core 2.21 "The Rain Song" Release Notes
 
 .. contents:: Topics
 
+v2.21.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2026-06-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+Security Fixes
+--------------
+
+- ansible-galaxy install - Ensure role requirements are passed as positional arguments to :command:`git clone`. Previously, a malicious role author could inject arbitrary git configuration in role dependencies. (CVE-2026-11332)
+- psrp - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+- winrm - Do not log raw stdout/stderr on verbosity 5 when task has ``no_log: true`` set
+
+Bugfixes
+--------
+
+- cli - handle empty value for PAGER (https://github.com/ansible/ansible/issues/86898).
+- config - use correct key value for inject_invocation setting (https://github.com/ansible/ansible/issues/86999).
+- free strategy - Fix ``IndexError`` when hosts become unreachable during playbook execution (https://github.com/ansible/ansible/issues/87027).
+- meta pseudo-action - Fixed callback args passed to ``v2_runner_on_skipped`` when any ``meta`` action was skipped by a ``when`` condition; added test coverage. A previous regression caused the callback dispatch to be omitted and a warning issued.
+- module_utils sanitize_keys and remove_value functions now sort their input to ensure matching subsets are always obscured.
+- module_utils/basic.py - Fix ``AnsibleModule.run_command()`` to handle ``None`` return from non-blocking pipe reads (https://github.com/ansible/ansible/issues/86920).
+- wait_for - use ``errno.ENOENT`` symbolic constant instead of hardcoded value for improved code portability.
+
 v2.21.0
 =======
 
