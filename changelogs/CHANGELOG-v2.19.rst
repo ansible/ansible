@@ -4,6 +4,30 @@ ansible-core 2.19 "What Is and What Should Never Be" Release Notes
 
 .. contents:: Topics
 
+v2.19.11rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2026-06-11
+| `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+Minor Changes
+-------------
+
+- ansible-test - Replace FreeBSD 14.2 with 14.3.
+
+Security Fixes
+--------------
+
+- ansible-galaxy install - Ensure role requirements are passed as positional arguments to :command:`git clone`. Previously, a malicious role author could inject arbitrary git configuration in role dependencies. (CVE-2026-11332)
+
+Bugfixes
+--------
+
+- module_utils sanitize_keys and remove_value functions now sort their input to ensure matching subsets are always obscured.
+
 v2.19.10
 ========
 
