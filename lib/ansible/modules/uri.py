@@ -125,9 +125,6 @@ options:
       - The socket level timeout in seconds
     type: int
     default: 30
-  decrypt:
-    default : no
-    version_added: "2.22"
   headers:
     description:
         - Add custom HTTP headers to a request in the format of a YAML hash. As
@@ -608,8 +605,6 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
-
-        # Used by the action plugin for local src files.
         decrypt=dict(type='bool', default=False),
     )
 
