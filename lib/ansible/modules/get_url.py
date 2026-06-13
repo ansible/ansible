@@ -116,6 +116,12 @@ options:
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
     default: yes
+  server_hostname:
+    description:
+      - Explicit TLS server hostname (SNI) to use for certificate validation.
+      - Useful when connecting to an HTTPS service by IP address.
+    type: str
+    version_added: '2.22'
   timeout:
     description:
       - Timeout in seconds for URL request.

@@ -141,6 +141,12 @@ options:
     type: bool
     default: true
     version_added: '1.9.2'
+  server_hostname:
+    description:
+      - Explicit TLS server hostname (SNI) to use for certificate validation.
+      - Useful when connecting to an HTTPS service by IP address.
+    type: str
+    version_added: '2.22'
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
@@ -235,6 +241,7 @@ notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
   - For Windows targets, use the M(ansible.windows.win_uri) module instead.
+  - When using O(server_hostname) with an IP address URL, you may need to set the C(Host) header explicitly.
 seealso:
 - module: ansible.builtin.get_url
 - module: ansible.windows.win_uri
@@ -264,6 +271,14 @@ EXAMPLES = r"""
     force_basic_auth: true
     status_code: 201
     body_format: json
+
+- name: Connect by IP with explicit SNI hostname
+  ansible.builtin.uri:
+    url: https://192.0.2.10/api/health
+    server_hostname: example.com
+    headers:
+      Host: example.com
+    validate_certs: true
 
 - name: Login to a form based webpage, then use the returned cookie to access the app in later tasks
   ansible.builtin.uri:
@@ -566,7 +581,8 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            use_proxy=module.params['use_proxy'], decompress=decompress,
-                           ciphers=ciphers, use_netrc=use_netrc, force=module.params['force'], **kwargs)
+                           ciphers=ciphers, use_netrc=use_netrc, force=module.params['force'],
+                           server_hostname=module.params.get('server_hostname'), **kwargs)
 
     if src:
         # Try to close the open file handle
@@ -604,6 +620,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        server_hostname=dict(type='str'),
     )
 
     module = AnsibleModule(

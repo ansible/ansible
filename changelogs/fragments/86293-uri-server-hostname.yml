@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible.builtin.uri - add ``server_hostname`` to set TLS SNI and certificate hostname validation when connecting by IP (https://github.com/ansible/ansible/issues/86293)

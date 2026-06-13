@@ -360,6 +360,51 @@
       - 'sni_host in result.content'
   when: ansible_python.has_sslcontext
 
+- name: Resolve SNI hostname to IP
+  command: >-
+    {{ ansible_python.executable }} -c
+    "import socket; print(socket.gethostbyname('{{ sni_host }}'))"
+  register: sni_host_lookup
+  changed_when: false
+  failed_when: sni_host_lookup.rc != 0 or sni_host_lookup.stdout | length == 0
+  when: ansible_python.has_sslcontext
+
+- name: Set SNI IP address
+  set_fact:
+    sni_host_ip: "{{ sni_host_lookup.stdout | trim }}"
+  when: ansible_python.has_sslcontext
+
+- name: Test SNI with IP and explicit server_hostname
+  uri:
+    url: "https://{{ sni_host_ip }}/"
+    server_hostname: "{{ sni_host }}"
+    headers:
+      Host: "{{ sni_host }}"
+    return_content: true
+  register: result_sni_ip
+  when: ansible_python.has_sslcontext
+
+- name: Assert SNI verification succeeds with IP and server_hostname
+  assert:
+    that:
+      - result_sni_ip is successful
+      - 'sni_host in result_sni_ip.content'
+  when: ansible_python.has_sslcontext
+
+- name: Test SNI with IP without server_hostname
+  uri:
+    url: "https://{{ sni_host_ip }}/"
+  register: result_sni_ip_no_hostname
+  ignore_errors: true
+  when: ansible_python.has_sslcontext
+
+- name: Assert SNI verification fails without server_hostname
+  assert:
+    that:
+      - result_sni_ip_no_hostname is failed
+      - "'Hostname mismatch' in result_sni_ip_no_hostname.msg or 'IP address mismatch' in result_sni_ip_no_hostname.msg or (result_sni_ip_no_hostname.msg is match('hostname .* doesn.t match .*'))"
+  when: ansible_python.has_sslcontext
+
 - name: validate the status_codes are correct
   uri:
     url: "https://{{ httpbin_host }}/status/202"
