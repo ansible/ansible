@@ -24,7 +24,7 @@ _server_ready: threading.Event = threading.Event()
 class LocalNotAProcess(BaseProcess):
     """Minimal BaseProcess impl that runs `target` locally in a thread instead of a subprocess."""
 
-    def __init__(self, *posargs, target, args, **kwargs):
+    def __init__(self, *posargs: t.Any, target: t.Callable[..., t.Any], args: tuple[t.Any, ...], **kwargs: t.Any) -> None:
         super().__init__(*posargs, **kwargs)
 
         self._args = args
@@ -40,7 +40,7 @@ class LocalNotAProcess(BaseProcess):
         except BaseException as ex:
             self._startup_exception = ex
 
-    def start(self):
+    def start(self) -> None:
         if threading.current_thread() is not threading.main_thread():
             # temporary signal patch is only safe under the main thread; guaranteed to be restored before it can be used
             raise RuntimeError("Local RPC server must be started from the main thread.")
