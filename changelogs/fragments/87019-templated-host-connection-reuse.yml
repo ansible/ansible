@@ -1,0 +1,2 @@
+bugfixes:
+  - task_executor - Fix connection reuse when ``ansible_host`` is templated to prevent connection churn and resource leaks on loop iterations (https://github.com/ansible/ansible/issues/87019).

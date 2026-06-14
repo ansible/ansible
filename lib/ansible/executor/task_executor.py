@@ -477,13 +477,18 @@ class TaskExecutor:
         else:
             current_connection = self._task.connection
 
+        # Template remote_addr values before comparison to handle templated ansible_host
+        # This prevents connection churn when ansible_host is a Jinja template
+        templated_remote_addr = connection_templar.template(self._play_context.remote_addr)
+        connection_remote_addr = connection_templar.template(self._connection._play_context.remote_addr) if self._connection else None
+
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 not self._connection.matches_name([current_connection]) or
                 # pc compare, left here for old plugins, but should be irrelevant for those
                 # using get_option, since they are cleared each iteration.
-                self._play_context.remote_addr != self._connection._play_context.remote_addr):
+                templated_remote_addr != connection_remote_addr):
             self._connection = self._get_connection(cvars, connection_templar, current_connection)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
