@@ -38,6 +38,19 @@ __all__ = ['RoleDefinition']
 display = Display()
 
 
+def _is_role_path(role_name):
+    """Return True when a role name was provided as an explicit filesystem path."""
+    expanded_role_name = os.path.expanduser(os.path.expandvars(role_name))
+    path_separators = {os.path.sep, os.path.altsep, '/'}
+    path_separators.discard(None)
+
+    return (
+        expanded_role_name in (os.path.curdir, os.path.pardir) or
+        os.path.isabs(expanded_role_name) or
+        any(separator in expanded_role_name for separator in path_separators)
+    )
+
+
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     role = NonInheritableFieldAttribute(isa='string')
@@ -188,10 +201,11 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
                 return (role_name, role_path)
 
         # if not found elsewhere try to extract path from name
-        role_path = unfrackpath(role_name)
-        if self._loader.path_exists(role_path):
-            role_name = os.path.basename(role_name)
-            return (role_name, role_path)
+        if _is_role_path(role_name):
+            role_path = unfrackpath(role_name)
+            if self._loader.path_exists(role_path):
+                role_name = os.path.basename(role_name)
+                return (role_name, role_path)
 
         searches = (self._collection_list or []) + role_search_paths
 

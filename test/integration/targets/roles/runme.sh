@@ -40,6 +40,24 @@ done
 # ensure subdir contained to role in tasks_from is valid
 ansible-playbook test_subdirs.yml -i ../../inventory "$@"
 
+# ensure bare role names are not resolved from the ansible-playbook working directory
+target_dir="$(pwd)"
+cwd_role_lookup_dir="$(mktemp -d)"
+trap 'rm -rf "${cwd_role_lookup_dir}"' EXIT
+mkdir -p "${cwd_role_lookup_dir}/cwd/testrole/tasks"
+cat > "${cwd_role_lookup_dir}/cwd/testrole/tasks/main.yml" << EOF
+- ansible.builtin.debug:
+    msg: this should not load from cwd
+EOF
+(
+  cd "${cwd_role_lookup_dir}/cwd"
+  ansible-playbook "${target_dir}/cwd_role_lookup.yml" -i "${target_dir}/../../inventory" > "${cwd_role_lookup_dir}/cwd_role_lookup_output.log" 2>&1
+) && {
+  echo "Test failed for cwd_role_lookup.yml, playbook unexpectedly found role from cwd."
+  exit 1
+}
+grep "role 'testrole' was not found" "${cwd_role_lookup_dir}/cwd_role_lookup_output.log" > /dev/null
+
 # ensure vars scope is correct
 ansible-playbook vars_scope.yml -i ../../inventory "$@"
 

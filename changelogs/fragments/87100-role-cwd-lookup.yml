@@ -1,0 +1,2 @@
+bugfixes:
+  - roles - prevent bare role names from being resolved from the current working directory of the ``ansible-playbook`` process.

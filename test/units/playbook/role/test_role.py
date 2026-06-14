@@ -19,12 +19,13 @@ from __future__ import annotations
 
 from collections.abc import Container
 
+import os
 import pytest
 
 import unittest
 from unittest.mock import patch, MagicMock
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
 
 from units.mock.loader import DictDataLoader
@@ -152,6 +153,47 @@ class TestHashParams(unittest.TestCase):
         for key in params_dict:
             self.assertTrue(key in params_dict)
             self.assertIn(key, params_dict)
+
+
+def _make_role_loader(playbook_dir, role_dir):
+    loader = DictDataLoader({
+        os.path.join(role_dir, 'tasks', 'main.yml'): """
+        - debug:
+            msg: should not load from cwd
+        """,
+    })
+    loader.get_basedir = lambda: str(playbook_dir)
+    return loader
+
+
+def test_bare_role_name_is_not_resolved_from_cwd(tmp_path, monkeypatch):
+    playbook_dir = tmp_path / 'playbooks'
+    cwd_role_dir = tmp_path / 'cwd' / 'testrole'
+    playbook_dir.mkdir()
+    cwd_role_dir.mkdir(parents=True)
+    monkeypatch.chdir(tmp_path / 'cwd')
+
+    mock_play = MagicMock()
+    mock_play.role_cache = {}
+
+    with pytest.raises(AnsibleError, match="The role 'testrole' was not found in:"):
+        RoleInclude.load('testrole', play=mock_play, loader=_make_role_loader(playbook_dir, str(cwd_role_dir)))
+
+
+def test_explicit_role_path_is_resolved_from_cwd(tmp_path, monkeypatch):
+    playbook_dir = tmp_path / 'playbooks'
+    cwd_role_dir = tmp_path / 'cwd' / 'testrole'
+    playbook_dir.mkdir()
+    cwd_role_dir.mkdir(parents=True)
+    monkeypatch.chdir(tmp_path / 'cwd')
+
+    mock_play = MagicMock()
+    mock_play.role_cache = {}
+
+    role_include = RoleInclude.load(os.path.join('.', 'testrole'), play=mock_play, loader=_make_role_loader(playbook_dir, str(cwd_role_dir)))
+
+    assert role_include.role == 'testrole'
+    assert role_include.get_role_path() == os.path.realpath(cwd_role_dir)
 
 
 class TestRole(unittest.TestCase):
