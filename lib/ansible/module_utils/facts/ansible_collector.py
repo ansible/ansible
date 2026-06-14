@@ -148,7 +148,7 @@ def get_ansible_collector(all_collector_classes,
         collector_obj = collector_class(namespace=namespace)
         collectors.append(collector_obj)
 
-    # Add a collector that knows what gather_subset we used so it it can provide a fact
+    # Add a collector that knows what gather_subset we used so it can provide a fact
     collector_meta_data_collector = \
         CollectorMetaDataCollector(gather_subset=gather_subset,
                                    module_setup=True)
