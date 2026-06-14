@@ -858,7 +858,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # Step 4: World-readable temp directory
         if self.get_shell_option('world_readable_temp'):
             # chown and fs acls failed -- do things this insecure way only if
-            # the user opted in in the config file
+            # the user opted in the config file
             display.warning(
                 'Using world-readable permissions for temporary files Ansible '
                 'needs to create when becoming an unprivileged user. This may '
