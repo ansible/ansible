@@ -1,0 +1,108 @@
+# Test for issue #86856: copy module should show diffs for recursive directory copies
+# This test verifies that when copying a directory recursively with diff=yes,
+# the module accumulates diffs from all files in the directory tree.
+
+- block:
+
+    - name: Create a test directory structure with multiple files
+      tempfile:
+        state: directory
+        prefix: ansible_test_recursive_diff_
+      register: test_dir
+      delegate_to: localhost
+
+    - name: Create source directory structure
+      file:
+        path: "{{ test_dir.path }}/src/{{ item }}"
+        state: directory
+      loop:
+        - subdir1
+        - subdir2
+      delegate_to: localhost
+
+    - name: Create source files with initial content
+      copy:
+        dest: "{{ test_dir.path }}/src/{{ item.path }}"
+        content: "{{ item.content }}"
+      loop:
+        - { path: 'file1.txt', content: 'initial content 1' }
+        - { path: 'subdir1/file2.txt', content: 'initial content 2' }
+        - { path: 'subdir2/file3.txt', content: 'initial content 3' }
+      delegate_to: localhost
+
+    - name: Create destination directory
+      file:
+        path: "{{ test_dir.path }}/dest"
+        state: directory
+      delegate_to: localhost
+
+    - name: Initial copy to establish baseline
+      copy:
+        src: "{{ test_dir.path }}/src/"
+        dest: "{{ test_dir.path }}/dest/"
+      delegate_to: localhost
+
+    - name: Modify source files to create diffs
+      copy:
+        dest: "{{ test_dir.path }}/src/{{ item.path }}"
+        content: "{{ item.content }}"
+      loop:
+        - { path: 'file1.txt', content: 'modified content 1' }
+        - { path: 'subdir1/file2.txt', content: 'modified content 2' }
+        - { path: 'subdir2/file3.txt', content: 'modified content 3' }
+      delegate_to: localhost
+
+    - name: Recursive copy with diff enabled
+      copy:
+        src: "{{ test_dir.path }}/src/"
+        dest: "{{ test_dir.path }}/dest/"
+      diff: yes
+      register: recursive_diff_result
+      delegate_to: localhost
+
+    - name: Verify diff output structure
+      assert:
+        that:
+          - recursive_diff_result is changed
+          - "'diff' in recursive_diff_result"
+          - "recursive_diff_result.diff is iterable"
+          - "recursive_diff_result.diff | length > 0"
+        fail_msg: "Recursive copy should produce diff output when diff=yes"
+        success_msg: "Recursive copy produced diff output"
+
+    - name: Verify diffs are accumulated for multiple files
+      assert:
+        that:
+          - "recursive_diff_result.diff | length >= 3"
+        fail_msg: "Expected at least 3 diffs (one per modified file), got {{ recursive_diff_result.diff | length }}"
+        success_msg: "Found {{ recursive_diff_result.diff | length }} diffs as expected"
+
+    - name: Verify diff content contains expected changes
+      assert:
+        that:
+          - "'modified content' in (recursive_diff_result.diff | map(attribute='after') | join(' '))"
+        fail_msg: "Diff output should contain the modified content"
+        success_msg: "Diff output contains expected modified content"
+
+    - name: Test idempotency - second copy should not produce diffs
+      copy:
+        src: "{{ test_dir.path }}/src/"
+        dest: "{{ test_dir.path }}/dest/"
+      diff: yes
+      register: idempotent_diff_result
+      delegate_to: localhost
+
+    - name: Verify idempotent copy has no meaningful diffs
+      assert:
+        that:
+          - idempotent_diff_result is not changed
+        fail_msg: "Second copy should be idempotent (no changes)"
+        success_msg: "Second copy correctly shows no changes"
+
+  always:
+    - name: Clean up test directory
+      file:
+        path: "{{ test_dir.path }}"
+        state: absent
+      delegate_to: localhost
+      when: test_dir is defined and test_dir.path is defined
