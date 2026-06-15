@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime
 import os
+import re
 import typing as t
 
 from collections import deque
@@ -852,12 +853,45 @@ def set_fallbacks(argument_spec, parameters):
     return no_log_values
 
 
+def _sanitize_key_name(key, no_log_strings, no_log_strings_set):
+    """Sanitize a single key name by replacing no_log segments with ``********``.
+
+    A no_log string is only replaced when it appears as a complete *segment* of
+    the key name -- delimited by ``-``, ``_``, or the start/end of the string.
+    This preserves the substring-censoring behavior added in
+    `#69653 <https://github.com/ansible/ansible/pull/69653>`_ (e.g.
+    ``some-password`` → ``some-********``) while avoiding false positives where
+    a no_log value is merely a substring of a larger segment (e.g. ``status``
+    must NOT become ``********us`` when ``stat`` is a no_log value).
+    See `#87094 <https://github.com/ansible/ansible/issues/87094>`_.
+
+    If the entire key name is exactly a no_log value, it is replaced with
+    ``VALUE_SPECIFIED_IN_NO_LOG_PARAMETER``.
+    """
+    if key in no_log_strings_set:
+        return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+
+    # Build a regex that matches any no_log string as a complete segment.
+    # Segments are delimited by '-', '_', or string boundaries.
+    # no_log_strings is already sorted longest-first so the alternation tries
+    # longer matches before shorter ones.
+    pattern = r'(?:(?<=[-_])|(?<=^))(?:' + '|'.join(re.escape(s) for s in no_log_strings) + r')(?=[-_]|$)'
+    return re.sub(pattern, '*' * 8, key)
+
+
 def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
     """Sanitize the keys in a container object by removing ``no_log`` values from key names.
 
     This is a companion function to the :func:`remove_values` function. Similar to that function,
     we make use of ``deferred_removals`` to avoid hitting maximum recursion depth in cases of
     large data structures.
+
+    Key names are sanitized using segment-based matching: a ``no_log`` string is
+    only replaced when it appears as a complete segment of the key name
+    (delimited by ``-``, ``_``, or string boundaries).  This avoids false
+    positives where a ``no_log`` value is merely a substring of a larger word
+    in the key (e.g. ``status`` is left alone when ``stat`` is a ``no_log``
+    value).  See https://github.com/ansible/ansible/issues/87094.
 
     :arg obj: The container object to sanitize. Non-container objects are returned unmodified.
     :arg no_log_strings: A set of string values we do not want logged.
@@ -870,6 +904,7 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
 
     # sort ensuring we always handle longer strings vs subsets
     no_log_strings = sorted([to_native(s, errors='surrogate_or_strict') for s in no_log_strings], key=len, reverse=True)
+    no_log_strings_set = set(no_log_strings)
     new_value = _sanitize_keys_conditions(obj, deferred_removals)
 
     while deferred_removals:
@@ -880,16 +915,7 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
                 if old_key in ignore_keys or old_key.startswith('_ansible'):
                     new_data[old_key] = _sanitize_keys_conditions(old_elem, deferred_removals)
                 else:
-                    # Sanitize the old key.
-                    # Only the exact key name is considered a secret; partial
-                    # substring matches must not be used here, since that would
-                    # mangle unrelated keys (e.g. ``status`` becoming
-                    # ``********us`` when ``stat`` is a no_log value). See
-                    # https://github.com/ansible/ansible/issues/87094.
-                    if old_key in no_log_strings:
-                        new_key = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-                    else:
-                        new_key = old_key
+                    new_key = _sanitize_key_name(old_key, no_log_strings, no_log_strings_set)
                     new_data[new_key] = _sanitize_keys_conditions(old_elem, deferred_removals)
         else:
             for elem in old_data:

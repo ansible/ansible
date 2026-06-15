@@ -36,9 +36,9 @@ def _run_comparison(obj):
         [1, 2],
 
         {'key1': ['value1a', 'value1b'],
-         'some-password': 'value-for-some-password',
+         'some-********': 'value-for-some-password',
          'key2': {'key3': set(['value3a', 'value3b']),
-                  'i-have-a-secret': {'secret-password': 'value-for-secret-password', 'key4': 'value4'}
+                  'i-have-a-********': {'********-********': 'value-for-secret-password', 'key4': 'value4'}
                   }
          },
 
@@ -84,14 +84,11 @@ def test_sanitize_keys_with_ignores():
              'another-secret': 2,
              'status': 'okie dokie'}
 
-    # Keys whose names are exact matches of no_log strings would be replaced
-    # with VALUE_SPECIFIED_IN_NO_LOG_PARAMETER, but ``rc`` is in
-    # ``ignore_keys`` so it is preserved. Keys whose names merely contain a
-    # no_log substring are left alone -- see sanitize_keys() docstring.
+    # We expect to change 'test-rc' but NOT 'rc'.
     expected = {'changed': True,
                 'rc': 0,
-                'test-rc': 1,
-                'another-secret': 2,
+                'test-********': 1,
+                'another-********': 2,
                 'status': 'okie dokie'}
 
     ret = sanitize_keys(value, no_log_strings, ignore_keys)
@@ -99,7 +96,7 @@ def test_sanitize_keys_with_ignores():
 
 
 def test_sanitize_keys_partial_substring_not_mangled():
-    """Keys must not be modified when a no_log string is only a substring of the key name.
+    """Keys must not be modified when a no_log string is only a substring of a segment in the key name.
 
     Regression test for https://github.com/ansible/ansible/issues/87094 --
     the ``uri`` module was turning ``status`` into ``********us`` whenever the
@@ -134,6 +131,30 @@ def test_sanitize_keys_exact_key_match_replaced():
     expected = {'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER': 'hunter2',
                 'user': 'admin',
                 'status': 200}
+
+    ret = sanitize_keys(value, no_log_strings)
+    assert ret == expected
+
+
+def test_sanitize_keys_segment_match():
+    """A no_log string is censored when it appears as a complete segment of the key name.
+
+    This verifies that the behavior from PR #69653 is preserved: keys like
+    ``some-password`` are censored to ``some-********`` when ``password`` is a
+    no_log value, because ``password`` is a complete segment delimited by ``-``.
+    """
+
+    no_log_strings = set(['password', 'secret'])
+
+    value = {'some-password': 'value1',
+             'my_secret_key': 'value2',
+             'password-field': 'value3',
+             'field-secret': 'value4'}
+
+    expected = {'some-********': 'value1',
+                'my_********_key': 'value2',
+                '********-field': 'value3',
+                'field-********': 'value4'}
 
     ret = sanitize_keys(value, no_log_strings)
     assert ret == expected

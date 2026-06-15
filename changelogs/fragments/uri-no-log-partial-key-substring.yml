@@ -1,7 +1,11 @@
 bugfixes:
-  - uri - Do not censor ``no_log`` substring occurrences inside response key names.
-    Previously, supplying a ``password`` value that happened to be a substring of a
-    response key (for example ``status`` containing ``stat``) would mangle that key
-    in the module's registered result (for example ``********us``). Key names are
-    only replaced when the entire key exactly matches a ``no_log`` value
+  - uri - Fix false-positive ``no_log`` key censoring when a ``no_log`` value is a
+    substring of a response key name but not a complete segment. Previously,
+    supplying a ``password`` value that happened to be a substring of a response
+    key (for example ``status`` containing ``stat``) would mangle that key in the
+    module's registered result (for example ``********us``). Key names are now
+    only censored when a ``no_log`` value appears as a complete segment delimited
+    by ``-``, ``_``, or string boundaries. This preserves the intentional
+    segment-censoring behavior (for example ``some-password`` → ``some-********``)
+    while avoiding false positives
     (https://github.com/ansible/ansible/issues/87094).
