@@ -1,0 +1,2 @@
+bugfixes:
+  - action plugin - Warn and skip platform-specific chmod ACL attempts when setfacl is not found on remote host (https://github.com/ansible/ansible/issues/85503)

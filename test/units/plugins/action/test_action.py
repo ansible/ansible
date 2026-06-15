@@ -558,6 +558,83 @@ class TestActionBase(unittest.TestCase):
             None)
         assertThrowRegex('on the temporary files Ansible needs to create')
 
+    def test_action_base__fixup_perms2_setfacl_not_found(self):
+        """Test that when setfacl is not found (rc=127), platform-specific
+        chmod ACL attempts (macOS, Solaris) are skipped and a helpful error
+        message is produced mentioning the acl package."""
+        mock_task = MagicMock()
+        mock_connection = MagicMock()
+        play_context = PlayContext()
+        action_base = DerivedActionBase(
+            task=mock_task,
+            connection=mock_connection,
+            play_context=play_context,
+            loader=None,
+            templar=None,
+            shared_loader_obj=None,
+        )
+        action_base._low_level_execute_command = MagicMock()
+        remote_paths = ['/tmp/foo/bar.txt', '/tmp/baz.txt']
+        remote_user = 'remoteuser1'
+
+        action_base.get_become_option = MagicMock()
+        action_base.get_become_option.return_value = 'remoteuser2'
+
+        action_base._connection._shell._IS_WINDOWS = False
+        action_base._is_become_unprivileged = MagicMock()
+        action_base._is_become_unprivileged.return_value = True
+
+        # setfacl returns rc=127 (not found)
+        action_base._remote_set_user_facl = MagicMock()
+        action_base._remote_set_user_facl.return_value = {
+            'rc': 127,
+            'stdout': '',
+            'stderr': 'setfacl: command not found',
+        }
+
+        # Step 3b: chmod succeeds
+        action_base._remote_chmod = MagicMock()
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': '',
+            'stderr': '',
+        }
+
+        # Step 3c: chown fails (unprivileged remote user)
+        action_base._remote_chown = MagicMock()
+        action_base._remote_chown.return_value = {
+            'rc': 1,
+            'stdout': '',
+            'stderr': 'Operation not permitted',
+        }
+        action_base._get_admin_users = MagicMock()
+        action_base._get_admin_users.return_value = ['root']
+
+        # No common group, no world-readable
+        def get_shell_option_setfacl_nf(option, *args, **kwargs):
+            if option == 'admin_users':
+                return ['root']
+            return None
+        action_base.get_shell_option = MagicMock()
+        action_base.get_shell_option.side_effect = get_shell_option_setfacl_nf
+
+        # Should raise with the acl package error message, not a confusing
+        # chmod error about 'A+user:...' syntax.
+        with self.assertRaises(AnsibleError) as ctx:
+            action_base._fixup_perms2(
+                remote_paths,
+                remote_user=remote_user,
+                execute=True)
+
+        error_msg = str(ctx.exception)
+        self.assertIn('setfacl', error_msg)
+        self.assertIn('acl package', error_msg)
+
+        # Verify that _remote_chmod was only called for Step 3b (u+rwx),
+        # NOT for macOS (+a) or Solaris (A+user:...) chmod ACL attempts.
+        action_base._remote_chmod.assert_called_once_with(
+            remote_paths, 'u+rwx')
+
     def test_action_base__remove_tmp_path(self):
         # create our fake task
         mock_task = MagicMock()

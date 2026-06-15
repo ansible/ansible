@@ -746,6 +746,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             become_user,
             setfacl_mode)
 
+        setfacl_not_found = False
         match res.get('rc'):
             case 0:
                 return remote_paths
@@ -754,7 +755,13 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 self._display.debug(f"setfacl command failed with an invalid syntax. Trying chmod instead. Err: {res!r}")
             case 127:
                 # setfacl binary does not exists or we don't have permission to use it.
+                setfacl_not_found = True
                 self._display.debug(f"setfacl binary does not exist or does not have permission to use it. Trying chmod instead. Err: {res!r}")
+                display.warning(
+                    "setfacl command not found on the remote host. "
+                    "This is usually because the 'acl' package is not installed. "
+                    "Falling back to chown/chmod for temporary file permissions."
+                )
             case _:
                 # generic debug message
                 self._display.debug(f'Failed to set facl {setfacl_mode}, got:{res!r}')
@@ -789,20 +796,25 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # macOS chmod's +a flag takes its own argument. As a slight hack, we
         # pass that argument as the first element of remote_paths. So we end
         # up running `chmod +a [that argument] [file 1] [file 2] ...`
-        try:
-            res = self._remote_chmod([chmod_acl_mode] + list(remote_paths), '+a')
-        except AnsibleAuthenticationFailure as e:
-            # Solaris-based chmod will return 5 when it sees an invalid mode,
-            # and +a is invalid there. Because it returns 5, which is the same
-            # thing sshpass returns on auth failure, our sshpass code will
-            # assume that auth failed. If we don't handle that case here, none
-            # of the other logic below will get run. This is fairly hacky and a
-            # corner case, but probably one that shows up pretty often in
-            # Solaris-based environments (and possibly others).
-            pass
-        else:
-            if res['rc'] == 0:
-                return remote_paths
+        #
+        # When setfacl is not found (likely missing acl package), skip
+        # platform-specific chmod ACL attempts (macOS, Solaris) as they will
+        # also fail and produce confusing error messages.
+        if not setfacl_not_found:
+            try:
+                res = self._remote_chmod([chmod_acl_mode] + list(remote_paths), '+a')
+            except AnsibleAuthenticationFailure as e:
+                # Solaris-based chmod will return 5 when it sees an invalid mode,
+                # and +a is invalid there. Because it returns 5, which is the same
+                # thing sshpass returns on auth failure, our sshpass code will
+                # assume that auth failed. If we don't handle that case here, none
+                # of the other logic below will get run. This is fairly hacky and a
+                # corner case, but probably one that shows up pretty often in
+                # Solaris-based environments (and possibly others).
+                pass
+            else:
+                if res['rc'] == 0:
+                    return remote_paths
 
         # Step 3e: Try Solaris/OpenSolaris/OpenIndiana-sans-setfacl chmod
         # Similar to macOS above, Solaris 11.4 drops setfacl and takes file ACLs
@@ -810,9 +822,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # using either setfacl or chmod, and compatibility depends on filesystem.
         # It should be possible to debug this branch by installing OpenIndiana
         # (use ZFS) and going unpriv -> unpriv.
-        res = self._remote_chmod(remote_paths, posix_acl_mode)
-        if res['rc'] == 0:
-            return remote_paths
+        if not setfacl_not_found:
+            res = self._remote_chmod(remote_paths, posix_acl_mode)
+            if res['rc'] == 0:
+                return remote_paths
 
         # we'll need this down here
         become_link = get_versioned_doclink('playbook_guide/playbooks_privilege_escalation.html')
@@ -872,6 +885,17 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 '(rc: {0}, err: {1})'.format(
                     res['rc'],
                     to_native(res['stderr'])))
+
+        if setfacl_not_found:
+            raise AnsibleError(
+                'Failed to set permissions on the temporary files Ansible needs '
+                'to create when becoming an unprivileged user. The setfacl command '
+                'was not found on the remote host (the acl package may not be '
+                'installed), and chown to the become_user failed. '
+                'Install the acl package on the remote host, or configure '
+                'allow_world_readable_tmpfiles or common_remote_group. '
+                'For more information, see %s'
+                '#risks-of-becoming-an-unprivileged-user' % become_link)
 
         raise AnsibleError(
             'Failed to set permissions on the temporary files Ansible needs '
