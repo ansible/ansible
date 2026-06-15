@@ -247,7 +247,7 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = all_vars.new_child(task._role.get_default_vars(dep_chain=task.get_dep_chain()), key=f'role-defaults-{role.get_name()}')
+                all_vars = all_vars.new_child(task._role.get_default_vars(dep_chain=task.get_dep_chain()), key=f'role-defaults-{task._role.get_name()}')
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -407,7 +407,7 @@ class VariableManager:
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = all_vars.new_child(task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False), key=f'role-vars-{role.get_name()}')
+                all_vars = all_vars.new_child(task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False), key=f'role-vars-{task._role.get_name()}')
             all_vars = all_vars.new_child(task.get_vars(), key='task-vars')
 
         # next, we merge in the vars cache (include vars) and nonpersistent
@@ -424,7 +424,7 @@ class VariableManager:
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
             if task._role:
-                all_vars = all_vars.new_child(task._role.get_role_params(task.get_dep_chain()), key=f'role-params-{role.get_name()}')
+                all_vars = all_vars.new_child(task._role.get_role_params(task.get_dep_chain()), key=f'role-params-{task._role.get_name()}')
             all_vars = all_vars.new_child(task.get_include_params(), key='include-params')
 
         # extra vars
