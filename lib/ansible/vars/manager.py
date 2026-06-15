@@ -229,6 +229,8 @@ class VariableManager:
         if play:
             # get role defaults (lowest precedence)
             for role in play.roles:
+                if task and task._role == role:
+                    continue
                 if role.public:
                     all_vars = all_vars.new_child(role.get_default_vars(), key=f'role-defaults-{role.get_name()}')
 
@@ -399,6 +401,8 @@ class VariableManager:
 
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
+                if task and task._role == role:
+                    continue
                 if role.public:
                     all_vars = all_vars.new_child(role.get_vars(include_params=False, only_exports=True), key=f'role-vars-{role.get_name()}')
 

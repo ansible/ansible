@@ -349,6 +349,8 @@ class StrategyBase:
 
         display.debug("entering _queue_task() for %s/%s" % (host.name, task.action))
 
+        task_vars = dict(task_vars)
+
         # create a templar and template things we need later for the queuing process
         templar = TemplateEngine(loader=self._loader, variables=task_vars)
 
