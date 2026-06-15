@@ -53,12 +53,12 @@ class TestCopyActionValidation(unittest.TestCase):
             'dest': '/tmp/',
             'mode': '0755'
         }
-        
+
         am = self._build_action_module(args)
-        
+
         with self.assertRaises(AnsibleActionFail) as cm:
             am.run(task_vars={})
-        
+
         # Should get a validation error, not an AttributeError
         error_msg = str(cm.exception)
         self.assertIn('src', error_msg.lower())
@@ -69,12 +69,12 @@ class TestCopyActionValidation(unittest.TestCase):
             'src': ['/path/to/file1', '/path/to/file2'],
             'dest': '/tmp/',
         }
-        
+
         am = self._build_action_module(args)
-        
+
         with self.assertRaises(AnsibleActionFail) as cm:
             am.run(task_vars={})
-        
+
         error_msg = str(cm.exception)
         self.assertIn('src', error_msg.lower())
 
@@ -83,12 +83,12 @@ class TestCopyActionValidation(unittest.TestCase):
         args = {
             'dest': '/tmp/',
         }
-        
+
         am = self._build_action_module(args)
-        
+
         with self.assertRaises(AnsibleActionFail) as cm:
             am.run(task_vars={})
-        
+
         error_msg = str(cm.exception)
         # Should mention that src or content is required
         self.assertTrue('src' in error_msg.lower() or 'content' in error_msg.lower())
@@ -98,12 +98,12 @@ class TestCopyActionValidation(unittest.TestCase):
         args = {
             'src': '/path/to/file',
         }
-        
+
         am = self._build_action_module(args)
-        
+
         with self.assertRaises(AnsibleActionFail) as cm:
             am.run(task_vars={})
-        
+
         error_msg = str(cm.exception)
         self.assertIn('dest', error_msg.lower())
 
@@ -114,15 +114,15 @@ class TestCopyActionValidation(unittest.TestCase):
             'content': 'some content',
             'dest': '/tmp/file',
         }
-        
+
         am = self._build_action_module(args)
-        
+
         with self.assertRaises(AnsibleActionFail) as cm:
             am.run(task_vars={})
-        
+
         error_msg = str(cm.exception)
         # Should mention mutual exclusivity
-        self.assertTrue('mutually exclusive' in error_msg.lower() or 
+        self.assertTrue('mutually exclusive' in error_msg.lower() or
                        ('src' in error_msg.lower() and 'content' in error_msg.lower()))
 
     def test_content_with_directory_dest_raises_error(self):
@@ -131,11 +131,11 @@ class TestCopyActionValidation(unittest.TestCase):
             'content': 'some content',
             'dest': '/tmp/',
         }
-        
+
         am = self._build_action_module(args)
-        
+
         result = am.run(task_vars={})
-        
+
         self.assertTrue(result.get('failed'))
         self.assertIn('content', result['msg'].lower())
         self.assertIn('dir', result['msg'].lower())
@@ -146,15 +146,15 @@ class TestCopyActionValidation(unittest.TestCase):
             'src': '/path/to/file',
             'dest': '/tmp/file',
         }
-        
+
         am = self._build_action_module(args)
-        
+
         # Mock the parts that would fail due to file not existing
         with patch.object(am, '_find_needle', side_effect=Exception("File not found")):
             # Should get past validation and fail on file operations
             with self.assertRaises(Exception) as cm:
                 am.run(task_vars={})
-            
+
             # Should NOT be a validation error
             error_msg = str(cm.exception)
             self.assertNotIn('parameter', error_msg.lower())
