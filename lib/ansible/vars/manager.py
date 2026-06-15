@@ -20,7 +20,7 @@ from __future__ import annotations
 import sys
 import typing as t
 
-from collections import defaultdict
+from collections import ChainMap, defaultdict
 from collections.abc import Mapping, MutableMapping
 
 from ansible import constants as C
@@ -60,6 +60,21 @@ _DEPRECATE_VARS = _tags.Deprecated(
     deprecator=_deprecator.ANSIBLE_CORE_DEPRECATOR,
     help_text='Use the `vars` and `varnames` lookups instead.',
 )
+
+
+class AChainMap(ChainMap):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._key_map = {}
+
+    def new_child(self, m=None, key=None, **kwargs):
+        new_chain_map = super().new_child(m=m, **kwargs)
+        if key:
+            self._key_map[key] = new_chain_map.maps[0]
+        return new_chain_map
+
+    def get_child(self, key):
+        return self._key_map[key]
 
 
 def _deprecate_top_level_fact(value: t.Any) -> t.Any:
@@ -189,7 +204,7 @@ class VariableManager:
 
         display.debug("in VariableManager get_vars()")
 
-        all_vars: dict[str, t.Any] = dict()
+        all_vars: AChainMap[str, t.Any] = AChainMap()
         magic_variables = self._get_magic_variables(
             play=play,
             host=host,
@@ -215,7 +230,7 @@ class VariableManager:
             # get role defaults (lowest precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
+                    all_vars = all_vars.new_child(role.get_default_vars(), key=f'role-defaults-{role.get_name()}')
 
         if task:
             # set basedirs
@@ -232,7 +247,7 @@ class VariableManager:
             # (v1) made sure each task had a copy of its roles default vars
             # TODO: investigate why we need play or include_role check?
             if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
-                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), "role '%s' defaults" % task._role.name)
+                all_vars = all_vars.new_child(task._role.get_default_vars(dep_chain=task.get_dep_chain()), key=f'role-defaults-{role.get_name()}')
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -289,14 +304,14 @@ class VariableManager:
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
                     display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                    all_vars = _combine_and_track(all_vars, locals()[entry](), "group vars, precedence entry '%s'" % entry)
+                    all_vars = all_vars.new_child(locals()[entry](), key=f'var-precedence-{entry}')
                 else:
                     display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = _combine_and_track(all_vars, host.get_vars(), "host vars for '%s'" % host)
-            all_vars = _combine_and_track(all_vars, _plugins_inventory([host]), "inventory host_vars for '%s'" % host)
-            all_vars = _combine_and_track(all_vars, _plugins_play([host]), "playbook host_vars for '%s'" % host)
+            all_vars = all_vars.new_child(host.get_vars(), key='host-vars')
+            all_vars = all_vars.new_child(_plugins_inventory([host]), key='inventory-plugin-host-vars')
+            all_vars = all_vars.new_child(_plugins_play([host]), key='play-plugins-host-vars')
 
             # finally, the facts caches for this host, if they exist
             try:
@@ -305,20 +320,20 @@ class VariableManager:
                 except KeyError:
                     facts = {}
 
-                all_vars |= namespace_facts(facts)
+                all_vars = all_vars.new_child(namespace_facts(facts), key='fact-cache')
 
                 # push facts to main namespace
                 if _INJECT_FACTS:
                     clean_top = _clean_and_deprecate_top_level_facts(facts)
-                    all_vars = _combine_and_track(all_vars, clean_top, "facts")
+                    all_vars = all_vars.new_child(clean_top, key='inject-facts')
                 else:
                     # always 'promote' ansible_local, even if empty
-                    all_vars = _combine_and_track(all_vars, {'ansible_local': facts.get('ansible_local', {})}, "facts")
+                    all_vars = all_vars.new_child({'ansible_local': facts.get('ansible_local', {})}, key='ansible-local')
             except KeyError:
                 pass
 
         if play:
-            all_vars = _combine_and_track(all_vars, play.get_vars(), "play vars")
+            all_vars = all_vars.new_child(play.get_vars(), key='play-vars')
 
             vars_files = play.get_vars_files()
 
@@ -328,8 +343,8 @@ class VariableManager:
                 # NOTE: this makes them depend on host vars/facts so things like
                 #       ansible_facts['os_distribution'] can be used, ala include_vars.
                 #       Consider DEPRECATING this in the future, since we have include_vars ...
-                temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(temp_vars, magic_variables)
+                temp_vars = all_vars.new_child(self._extra_vars)
+                temp_vars = temp_vars.new_child(magic_variables)
                 templar = TemplateEngine(loader=self._loader, variables=temp_vars)
 
                 # we assume each item in the list is itself a list, as we
@@ -357,7 +372,7 @@ class VariableManager:
                             data = preprocess_vars(self._loader.load_from_file(found_file, unsafe=True, cache='vaulted', trusted_as_template=True))
                             if data is not None:
                                 for item in data:
-                                    all_vars = _combine_and_track(all_vars, item, f"play vars_files from {vars_file!r}")
+                                    all_vars = all_vars.new_child(item, key=f'vars-file-{vars_file}')
                             display.vvv(f"Read `vars_file` {found_file!r}.")
                             break
                         except AnsibleFileNotFound:
@@ -385,24 +400,23 @@ class VariableManager:
             # We now merge in all exported vars from all roles in the play (very high precedence)
             for role in play.roles:
                 if role.public:
-                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False, only_exports=True), "role '%s' exported vars" % role.name)
+                    all_vars = all_vars.new_child(role.get_vars(include_params=False, only_exports=True), key=f'role-vars-{role.get_name()}')
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False),
-                                              "role '%s' all vars" % task._role.name)
-            all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
+                all_vars = all_vars.new_child(task._role.get_vars(task.get_dep_chain(), include_params=False, only_exports=False), key=f'role-vars-{role.get_name()}')
+            all_vars = all_vars.new_child(task.get_vars(), key='task-vars')
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
         if host:
             # include_vars non-persistent cache
-            all_vars = _combine_and_track(all_vars, self._vars_cache.get(host.get_name(), dict()), "include_vars")
+            all_vars = all_vars.new_child(self._vars_cache.get(host.get_name(), dict()), key='vars-cache')
             # fact non-persistent cache (this also includes registered variables and host variables set at runtime)
-            all_vars = _combine_and_track(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), "set_fact")
+            all_vars = all_vars.new_child(self._nonpersistent_fact_cache.get(host.name, dict()), key='nonpersistent-facts-cache')
 
         # next, we merge in role params and task include params
         if task:
@@ -410,26 +424,27 @@ class VariableManager:
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
             if task._role:
-                all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role params")
-            all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
+                all_vars = all_vars.new_child(task._role.get_role_params(task.get_dep_chain()), key=f'role-params-{role.get_name()}')
+            all_vars = all_vars.new_child(task.get_include_params(), key='include-params')
 
         # extra vars
-        all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
+        all_vars = all_vars.new_child(self._extra_vars, key='extra-vars')
 
         # before we add 'reserved vars', check we didn't add any reserved vars
         warn_if_reserved(all_vars)
 
         # magic variables
-        all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
+        all_vars = all_vars.new_child(magic_variables, key='magic-vars')
 
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it
         if task:
-            all_vars['environment'] = task.environment
+            all_vars = all_vars.new_child({'environment': task.environment}, key='environment')
 
         # 'vars' magic var
         if task or play:
-            all_vars['vars'] = _DEPRECATE_VARS.tag({})
+            top_vars = _DEPRECATE_VARS.tag({})
+            all_vars = all_vars.new_child({'vars': top_vars}, 'vars-var')
             for k, v in all_vars.items():
                 # has to be copy, otherwise recursive ref
                 all_vars['vars'][k] = _DEPRECATE_VARS.tag(v)
