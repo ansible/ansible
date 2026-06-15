@@ -757,7 +757,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                 # setfacl binary does not exists or we don't have permission to use it.
                 setfacl_not_found = True
                 self._display.debug(f"setfacl binary does not exist or does not have permission to use it. Trying chmod instead. Err: {res!r}")
-                display.warning(
+                display.v(
                     "setfacl command not found on the remote host. "
                     "This is usually because the 'acl' package is not installed. "
                     "Falling back to chown/chmod for temporary file permissions."
