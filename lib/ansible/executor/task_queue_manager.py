@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import faulthandler
 import errno
@@ -195,11 +196,9 @@ class TaskQueueManager:
 
         # duplicate stderr for debugging use
         # FOR INTERNAL USE ONLY
-        try:
+        with contextlib.suppress(Exception):
             os.dup2(STDERR_FILENO, 100 + STDERR_FILENO)
             os.set_inheritable(100 + STDERR_FILENO, True)
-        except Exception as e:
-            pass
 
         try:
             # Done in tqm, and not display, because this is only needed for commands that execute tasks

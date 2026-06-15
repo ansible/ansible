@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import errno
 import faulthandler
 import io
@@ -197,10 +198,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         self._detach()
 
         _debug.register(partial(display.display, stderr=True))
-        try:
+        with contextlib.suppress(Exception):
             faulthandler.enable(file=STDERR_FILENO + 100, all_threads=True)
-        except Exception:
-            pass
 
         # propagate signals
         signal.signal(signal.SIGINT, self._term)
