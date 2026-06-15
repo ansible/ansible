@@ -796,25 +796,20 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # macOS chmod's +a flag takes its own argument. As a slight hack, we
         # pass that argument as the first element of remote_paths. So we end
         # up running `chmod +a [that argument] [file 1] [file 2] ...`
-        #
-        # When setfacl is not found (likely missing acl package), skip
-        # platform-specific chmod ACL attempts (macOS, Solaris) as they will
-        # also fail and produce confusing error messages.
-        if not setfacl_not_found:
-            try:
-                res = self._remote_chmod([chmod_acl_mode] + list(remote_paths), '+a')
-            except AnsibleAuthenticationFailure as e:
-                # Solaris-based chmod will return 5 when it sees an invalid mode,
-                # and +a is invalid there. Because it returns 5, which is the same
-                # thing sshpass returns on auth failure, our sshpass code will
-                # assume that auth failed. If we don't handle that case here, none
-                # of the other logic below will get run. This is fairly hacky and a
-                # corner case, but probably one that shows up pretty often in
-                # Solaris-based environments (and possibly others).
-                pass
-            else:
-                if res['rc'] == 0:
-                    return remote_paths
+        try:
+            res = self._remote_chmod([chmod_acl_mode] + list(remote_paths), '+a')
+        except AnsibleAuthenticationFailure as e:
+            # Solaris-based chmod will return 5 when it sees an invalid mode,
+            # and +a is invalid there. Because it returns 5, which is the same
+            # thing sshpass returns on auth failure, our sshpass code will
+            # assume that auth failed. If we don't handle that case here, none
+            # of the other logic below will get run. This is fairly hacky and a
+            # corner case, but probably one that shows up pretty often in
+            # Solaris-based environments (and possibly others).
+            pass
+        else:
+            if res['rc'] == 0:
+                return remote_paths
 
         # Step 3e: Try Solaris/OpenSolaris/OpenIndiana-sans-setfacl chmod
         # Similar to macOS above, Solaris 11.4 drops setfacl and takes file ACLs
@@ -822,6 +817,10 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         # using either setfacl or chmod, and compatibility depends on filesystem.
         # It should be possible to debug this branch by installing OpenIndiana
         # (use ZFS) and going unpriv -> unpriv.
+        #
+        # When setfacl is not found (likely missing acl package on Linux), skip
+        # the Solaris chmod ACL attempt as it will also fail and produce
+        # confusing error messages like "chmod: invalid mode: 'A+user:...'"
         if not setfacl_not_found:
             res = self._remote_chmod(remote_paths, posix_acl_mode)
             if res['rc'] == 0:
