@@ -479,8 +479,13 @@ class TaskExecutor:
 
         # Template remote_addr values before comparison to handle templated ansible_host
         # This prevents connection churn when ansible_host is a Jinja template
-        templated_remote_addr = connection_templar.template(self._play_context.remote_addr)
-        connection_remote_addr = connection_templar.template(self._connection._play_context.remote_addr) if self._connection else None
+        try:
+            templated_remote_addr = connection_templar.template(self._play_context.remote_addr) if self._play_context.remote_addr else None
+            connection_remote_addr = connection_templar.template(self._connection._play_context.remote_addr) if self._connection and self._connection._play_context.remote_addr else None
+        except Exception:
+            # If templating fails, fall back to direct comparison
+            templated_remote_addr = self._play_context.remote_addr
+            connection_remote_addr = self._connection._play_context.remote_addr if self._connection else None
 
         # get the connection and the handler for this execution
         if (not self._connection or
