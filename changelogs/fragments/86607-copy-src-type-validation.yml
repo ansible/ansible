@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - Add explicit type validation for src parameter to provide clear error messages when non-string types are passed (https://github.com/ansible/ansible/issues/86607)

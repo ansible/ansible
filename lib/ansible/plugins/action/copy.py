@@ -431,25 +431,50 @@ class ActionModule(ActionBase):
             if self._task.args.get(internal, None) is not None:
                 raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
+        # Explicit type check for src before validate_argument_spec, since type='path'
+        # will silently convert non-string types (like dicts) to their string representation
+        src_value = self._task.args.get('src')
+        if src_value is not None and not isinstance(src_value, str):
+            raise AnsibleActionFail(
+                f"Invalid type for 'src': expected string, got {type(src_value).__name__}"
+            )
+
+        # Validate arguments using the standard validate_argument_spec framework
+        module_args = dict(
+            src=dict(type='path'),
+            _original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
+            content=dict(type='raw', no_log=True),  # raw to preserve dict/list for json.dumps
+            dest=dict(type='path', required=True),
+            backup=dict(type='bool', default=False),
+            force=dict(type='bool', default=True),
+            validate=dict(type='str'),
+            directory_mode=dict(type='raw'),
+            remote_src=dict(type='bool', default=False),
+            local_follow=dict(type='bool', default=True),
+            checksum=dict(type='str'),
+            follow=dict(type='bool', default=False),
+            decrypt=dict(type='bool', default=True),
+        )
+
+        module_args |= {k: v for k, v in FILE_COMMON_ARGUMENTS.items() if k in REAL_FILE_ARGS}
+
+        validation_result, new_task_args = self.validate_argument_spec(
+            argument_spec=module_args,
+            mutually_exclusive=[('src', 'content')],
+            required_one_of=[('src', 'content')],
+        )
+        self._task.args = new_task_args
+
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
-        result['failed'] = True
-        if not source and content is None:
-            result['msg'] = 'src (or content) is required'
-        elif not dest:
-            result['msg'] = 'dest is required'
-        elif source and content is not None:
-            result['msg'] = 'src and content are mutually exclusive'
-        elif content is not None and dest is not None and dest.endswith("/"):
+        # Manual check for content + directory dest (not expressible via argument spec)
+        if content is not None and dest is not None and dest.endswith("/"):
+            result['failed'] = True
             result['msg'] = "can not use content with a dir as dest"
-        else:
-            del result['failed']
-
-        if result.get('failed'):
             return result
 
         # Define content_tempfile in case we set it after finding content populated.
