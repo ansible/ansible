@@ -887,7 +887,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
 
         if setfacl_not_found:
             raise AnsibleError(
-                'Failed to set permissions on the temporary files Ansible needs '
+                'Failed to set permissions on the temporary files required '
                 'to create when becoming an unprivileged user. The setfacl command '
                 'was not found on the remote host (the acl package may not be '
                 'installed), and chown to the become_user failed. '
