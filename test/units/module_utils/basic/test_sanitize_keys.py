@@ -36,9 +36,9 @@ def _run_comparison(obj):
         [1, 2],
 
         {'key1': ['value1a', 'value1b'],
-         'some-********': 'value-for-some-password',
+         'some-password': 'value-for-some-password',
          'key2': {'key3': set(['value3a', 'value3b']),
-                  'i-have-a-********': {'********-********': 'value-for-secret-password', 'key4': 'value4'}
+                  'i-have-a-secret': {'secret-password': 'value-for-secret-password', 'key4': 'value4'}
                   }
          },
 
@@ -84,12 +84,56 @@ def test_sanitize_keys_with_ignores():
              'another-secret': 2,
              'status': 'okie dokie'}
 
-    # We expect to change 'test-rc' but NOT 'rc'.
+    # Keys whose names are exact matches of no_log strings would be replaced
+    # with VALUE_SPECIFIED_IN_NO_LOG_PARAMETER, but ``rc`` is in
+    # ``ignore_keys`` so it is preserved. Keys whose names merely contain a
+    # no_log substring are left alone -- see sanitize_keys() docstring.
     expected = {'changed': True,
                 'rc': 0,
-                'test-********': 1,
-                'another-********': 2,
+                'test-rc': 1,
+                'another-secret': 2,
                 'status': 'okie dokie'}
 
     ret = sanitize_keys(value, no_log_strings, ignore_keys)
+    assert ret == expected
+
+
+def test_sanitize_keys_partial_substring_not_mangled():
+    """Keys must not be modified when a no_log string is only a substring of the key name.
+
+    Regression test for https://github.com/ansible/ansible/issues/87094 --
+    the ``uri`` module was turning ``status`` into ``********us`` whenever the
+    supplied ``password`` value happened to be a substring of a response key.
+    """
+
+    no_log_strings = set(['stat'])
+
+    value = {'status': -1,
+             'url': 'http://localhost:8080',
+             'changed': False,
+             'failed': False}
+
+    expected = {'status': -1,
+                'url': 'http://localhost:8080',
+                'changed': False,
+                'failed': False}
+
+    ret = sanitize_keys(value, no_log_strings)
+    assert ret == expected
+
+
+def test_sanitize_keys_exact_key_match_replaced():
+    """A key whose name is exactly a no_log value is fully replaced."""
+
+    no_log_strings = set(['password'])
+
+    value = {'password': 'hunter2',
+             'user': 'admin',
+             'status': 200}
+
+    expected = {'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER': 'hunter2',
+                'user': 'admin',
+                'status': 200}
+
+    ret = sanitize_keys(value, no_log_strings)
     assert ret == expected

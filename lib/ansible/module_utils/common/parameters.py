@@ -880,9 +880,16 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
                 if old_key in ignore_keys or old_key.startswith('_ansible'):
                     new_data[old_key] = _sanitize_keys_conditions(old_elem, deferred_removals)
                 else:
-                    # Sanitize the old key. We take advantage of the sanitizing code in
-                    # _remove_values_conditions() rather than recreating it here.
-                    new_key = _remove_values_conditions(old_key, no_log_strings, None)
+                    # Sanitize the old key.
+                    # Only the exact key name is considered a secret; partial
+                    # substring matches must not be used here, since that would
+                    # mangle unrelated keys (e.g. ``status`` becoming
+                    # ``********us`` when ``stat`` is a no_log value). See
+                    # https://github.com/ansible/ansible/issues/87094.
+                    if old_key in no_log_strings:
+                        new_key = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+                    else:
+                        new_key = old_key
                     new_data[new_key] = _sanitize_keys_conditions(old_elem, deferred_removals)
         else:
             for elem in old_data:
