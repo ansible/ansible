@@ -457,6 +457,14 @@ class VariableManager:
                 all_vars['vars'][k] = _DEPRECATE_VARS.tag(v)
 
         display.debug("done with get_vars()")
+        if C.DEFAULT_HASH_BEHAVIOUR == 'merge':
+            # To maintain a legit ChainMap, this should be moved into use of the
+            # ChainMap
+            merged_vars = {}
+            for m in reversed(all_vars.maps):
+                merged_vars = combine_vars(merged_vars, m)
+            return AChainMap(merged_vars)
+
         return all_vars
 
     def _facts_gathered_for_host(self, hostname) -> bool:
