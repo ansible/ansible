@@ -1504,30 +1504,29 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
                     diff['before_header'] = destination
                     diff['before'] = to_text(dest_contents)
 
-            if source_file:
-                st = os.stat(source)
-                if C.MAX_FILE_SIZE_FOR_DIFF > 0 and st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
-                    diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
-                else:
-                    display.debug("Reading local copy of the file %s" % source)
-                    try:
-                        with open(source, 'rb') as src:
-                            src_contents = src.read()
-                    except Exception as e:
-                        raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, to_native(e)))
-
-                    if b"\x00" in src_contents:
-                        diff['src_binary'] = 1
-                    else:
-                        if content:
-                            diff['after_header'] = destination
-                        else:
-                            diff['after_header'] = source
-                        diff['after'] = to_text(src_contents)
+            st = os.stat(source)
+            if C.MAX_FILE_SIZE_FOR_DIFF > 0 and st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
+                diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
-                display.debug(u"source of file passed in")
-                diff['after_header'] = u'dynamically generated'
-                diff['after'] = source
+                display.debug("Reading local copy of the file %s" % source)
+                try:
+                    with open(source, 'rb') as src:
+                        src_contents = src.read()
+                except Exception as e:
+                    raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, to_native(e)))
+
+                if b"\x00" in src_contents:
+                    diff['src_binary'] = 1
+                elif source_file:
+                    if content:
+                        diff['after_header'] = destination
+                    else:
+                        diff['after_header'] = source
+                    diff['after'] = to_text(src_contents)
+                else:
+                    display.debug(u"source of file passed in")
+                    diff['after_header'] = u'dynamically generated'
+                    diff['after'] = to_text(src_contents)
 
         if self._task.no_log:
             if 'before' in diff:
