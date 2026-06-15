@@ -569,12 +569,12 @@ class VariableManager:
                 delegated_host = Host(name=delegated_host_name)
 
         delegated_vars['ansible_delegated_vars'] = {
-            delegated_host_name: self.get_vars(
+            delegated_host_name: dict(self.get_vars(
                 play=task.get_play(),
                 host=delegated_host,
                 task=task,
                 include_hostvars=True,
-            )
+            ))
         }
         delegated_vars['ansible_delegated_vars'][delegated_host_name]['inventory_hostname'] = variables.get('inventory_hostname')
 
