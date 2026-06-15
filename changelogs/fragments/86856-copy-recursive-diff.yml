@@ -1,0 +1,2 @@
+bugfixes:
+  - copy - Accumulate and preserve diffs when copying directories recursively (https://github.com/ansible/ansible/issues/86856)
