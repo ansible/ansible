@@ -179,7 +179,7 @@ class VariableManager:
         _hosts: list[str] | None = None,
         _hosts_all: list[str] | None = None,
         stage: str = 'task',
-    ) -> dict[str, t.Any]:
+    ) -> AChainMap:
         """
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -204,7 +204,7 @@ class VariableManager:
 
         display.debug("in VariableManager get_vars()")
 
-        all_vars: AChainMap[str, t.Any] = AChainMap()
+        all_vars = AChainMap()
         magic_variables = self._get_magic_variables(
             play=play,
             host=host,
@@ -450,7 +450,7 @@ class VariableManager:
 
         # 'vars' magic var
         if task or play:
-            top_vars = _DEPRECATE_VARS.tag({})
+            top_vars: dict[str, t.Any] = _DEPRECATE_VARS.tag({})
             all_vars = all_vars.new_child({'vars': top_vars}, 'vars-var')
             for k, v in all_vars.items():
                 # has to be copy, otherwise recursive ref
