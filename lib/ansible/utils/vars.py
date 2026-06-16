@@ -34,11 +34,13 @@ from ansible.module_utils.datatag import native_type_name
 from ansible.module_utils.common.text.converters import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.display import Display
 
 _MAXSIZE = 2 ** 32
 cur_id = 0
 node_mac = ("%012x" % uuid.getnode())[:12]
 random_int = ("%08x" % secrets.randbelow(_MAXSIZE))[:8]
+display = Display()
 
 
 def get_unique_id():
@@ -199,6 +201,11 @@ def load_extra_vars(loader: DataLoader) -> dict[str, t.Any]:
             else:
                 # Arguments as Key-value
                 data = parse_kv(extra_vars_opt)
+                if '_raw_params' in data:
+                    display.warning(f"Ignoring unparsable data: {data['_raw_params']}")
+                    del data['_raw_params']
+                    if not data:  # if only bad args, reset to none to fail below
+                        data = None
 
             if isinstance(data, MutableMapping):
                 extra_vars = combine_vars(extra_vars, data)

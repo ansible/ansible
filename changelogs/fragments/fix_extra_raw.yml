@@ -1,0 +1,3 @@
+bugfixes:
+  - extra vars now errors on invalid data is supplied and does not create a `_raw_params` incorrectly anymore.
+  - extra vars now warns when partially invalid data is supplied.
