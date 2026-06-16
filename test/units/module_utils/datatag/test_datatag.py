@@ -94,6 +94,9 @@ def assert_round_trip(original_value, round_tripped_value, via_copy=False):
     assert original_value == round_tripped_value
     assert AnsibleTagHelper.tags(original_value) == AnsibleTagHelper.tags(round_tripped_value)
 
+    if isinstance(original_value, (datetime.datetime, datetime.time)) and isinstance(round_tripped_value, (datetime.datetime, datetime.time)):
+        assert original_value.fold == round_tripped_value.fold  # fold isn't included in equality, so we have to check it explicitly
+
     if via_copy and type(original_value) is tuple:  # pylint: disable=unidiomatic-typecheck
         # copy.copy/copy.deepcopy significantly complicate the rules for reference equality with tuple, skip the following checks for values sourced that way
         # tuple impl of __copy__ always returns the same instance, __deepcopy__ always returns the same instance if its contents are immutable
@@ -376,9 +379,9 @@ class TestDatatagTarget(AutoParamSupport):
         42.0,
         42,
         "hi mom",
-        datetime.datetime(2023, 9, 15, 21, 5, 30, 1900, datetime.timezone.utc),
+        datetime.datetime(2023, 9, 15, 21, 5, 30, 1900, datetime.timezone.utc, fold=1),
         datetime.date(2023, 9, 15),
-        datetime.time(21, 5, 30, 1900),
+        datetime.time(21, 5, 30, 1900, fold=1),
     ]
 
     tagged_object_instances: t.List[AnsibleTaggedObject] = [

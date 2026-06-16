@@ -330,8 +330,7 @@ class AnsibleSerializableTime(AnsibleSerializableWrapper[datetime.time]):
 
     @classmethod
     def _from_dict(cls: t.Type[_TAnsibleSerializable], d: t.Dict[str, t.Any]) -> datetime.time:
-        value = datetime.time.fromisoformat(d['iso8601'])
-        value.replace(fold=d['fold'])
+        value = datetime.time.fromisoformat(d['iso8601']).replace(fold=d['fold'])
 
         return value
 
@@ -347,8 +346,7 @@ class AnsibleSerializableDateTime(AnsibleSerializableWrapper[datetime.datetime])
 
     @classmethod
     def _from_dict(cls: t.Type[_TAnsibleSerializable], d: t.Dict[str, t.Any]) -> datetime.datetime:
-        value = datetime.datetime.fromisoformat(d['iso8601'])
-        value.replace(fold=d['fold'])
+        value = datetime.datetime.fromisoformat(d['iso8601']).replace(fold=d['fold'])
 
         return value
 
