@@ -301,17 +301,16 @@ def main():
                     remaining = remaining - step
                     notice("%s still running (%s)" % (sub_pid, remaining))
                     if remaining <= 0:
-                        # ensure we leave response in poll location
-                        res = {'msg': 'Timeout exceeded', 'failed': True, 'child_pid': sub_pid}
-                        global job_path
-                        job_path = job_path + ".wrapper"
-                        jwrite(res)
-
                         # actually kill it
                         notice("Timeout reached, now killing %s" % (sub_pid))
                         os.killpg(sub_pid, signal.SIGKILL)
                         notice("Sent kill to group %s " % sub_pid)
                         time.sleep(1)
+
+                        # ensure we leave response in poll location
+                        res = {'msg': 'Timeout exceeded', 'failed': True, 'child_pid': sub_pid}
+                        jwrite(res)
+
                         if not preserve_tmp:
                             shutil.rmtree(os.path.dirname(wrapped_module), True)
                         end(res)
