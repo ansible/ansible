@@ -1013,6 +1013,10 @@ def main():
             appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
             module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
+        if state in ('link', 'hard'):
+            path = to_native(os.path.abspath(to_bytes(path, errors='surrogate_or_strict')), errors='surrogate_or_strict')
+            module.params['path'] = path
+
         if state == 'file':
             result = ensure_file_attributes(path, follow, timestamps)
         elif state == 'directory':
