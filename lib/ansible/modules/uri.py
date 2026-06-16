@@ -220,6 +220,12 @@ options:
     type: bool
     default: true
     version_added: '2.14'
+  decrypt:
+    description:
+      - Whether to decrypt the response body if it is encrypted.
+    type: bool
+    default: no
+    version_added: '2.22'
 extends_documentation_fragment:
   - action_common_attributes
   - files
@@ -604,6 +610,7 @@ def main():
         decompress=dict(type='bool', default=True),
         ciphers=dict(type='list', elements='str'),
         use_netrc=dict(type='bool', default=True),
+        decrypt=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(

@@ -778,3 +778,32 @@
   assert:
     that:
       - uri_check.msg == "This action (uri) does not support check mode."
+
+- name: Create plain test file
+  ansible.builtin.copy:
+    dest: "{{ remote_tmp_dir }}/vault_plain.json"
+    content: '{"test_key": "test_value", "feature": "uri_decrypt"}'
+    mode: 0600
+
+- name: Encrypt test file
+  ansible.builtin.command: >
+    ansible-vault encrypt {{ remote_tmp_dir }}/vault_plain.json
+    --vault-password-file {{ role_path }}/files/vault_password.txt
+    --output {{ remote_tmp_dir }}/vault_encrypted.json
+  changed_when: true
+
+- name: URI decrypts Vault file via src
+  ansible.builtin.uri:
+    url: "http://localhost:{{ http_port }}/post"
+    method: POST
+    src: "{{ remote_tmp_dir }}/vault_encrypted.json"
+    decrypt: true
+    body_format: json
+    return_content: yes
+  register: success_result
+
+- name: Verify successful decryption
+  ansible.builtin.assert:
+    that:
+      - success_result.status == 200
+      - success_result.json.test_key == "test_value"
