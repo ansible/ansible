@@ -1,2 +1,2 @@
 bugfixes:
-  - copy - Add explicit type validation for src parameter to provide clear error messages when non-string types are passed (https://github.com/ansible/ansible/issues/86607)
+  - copy - validate parameter types in the action plugin and provide a clear error message when a non-string value (such as a dict) is passed to ``src`` instead of crashing with an ``AttributeError`` (https://github.com/ansible/ansible/issues/86607).

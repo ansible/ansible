@@ -234,7 +234,6 @@ class ActionModule(ActionBase):
                    dest, task_vars, follow):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
-        raw = boolean(self._task.args.get('raw', 'no'), strict=False)
 
         result = {}
         result['diff'] = []
@@ -287,7 +286,7 @@ class ActionModule(ActionBase):
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
-            if self._task.diff and not raw:
+            if self._task.diff:
                 result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars, content))
 
             if self._task.check_mode:
@@ -303,12 +302,7 @@ class ActionModule(ActionBase):
             if suffix:
                 tmp_src += suffix
 
-            remote_path = None
-
-            if not raw:
-                remote_path = self._transfer_file(source_full, tmp_src)
-            else:
-                self._transfer_file(source_full, dest_file)
+            remote_path = self._transfer_file(source_full, tmp_src)
 
             # We have copied the file remotely and no longer require our content_tempfile
             self._remove_tempfile_if_content_defined(content, content_tempfile)
@@ -321,10 +315,6 @@ class ActionModule(ActionBase):
             # fix file permissions when the copy is done as a different user
             if remote_path:
                 self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
-
-            if raw:
-                # Continue to next iteration if raw is defined.
-                return None
 
             # Run the copy module
 
@@ -352,9 +342,6 @@ class ActionModule(ActionBase):
             # the file module in case we want to change attributes
             self._remove_tempfile_if_content_defined(content, content_tempfile)
             self._loader.cleanup_tmp_file(source_full)
-
-            if raw:
-                return None
 
             # Fix for https://github.com/ansible/ansible-modules-core/issues/1568.
             # If checksums match, and follow = True, find out if 'dest' is a link. If so,
@@ -439,12 +426,17 @@ class ActionModule(ActionBase):
                 f"Invalid type for 'src': expected string, got {type(src_value).__name__}"
             )
 
-        # Validate arguments using the standard validate_argument_spec framework
+        # Validate arguments using the standard validate_argument_spec framework.
+        # NOTE: src and dest use type='str' here (not 'path') intentionally. The
+        # 'path' type expands ~ and environment variables on the controller, but
+        # these paths must be expanded on the remote host (e.g. so ~ resolves to
+        # the become_user's home, not the controller user's). The remote copy/file
+        # modules use type='path' and perform that expansion remotely.
         module_args = dict(
-            src=dict(type='path'),
+            src=dict(type='str'),
             _original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             content=dict(type='raw', no_log=True),  # raw to preserve dict/list for json.dumps
-            dest=dict(type='path', required=True),
+            dest=dict(type='str', required=True),
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True),
             validate=dict(type='str'),
@@ -456,7 +448,16 @@ class ActionModule(ActionBase):
             decrypt=dict(type='bool', default=True),
         )
 
-        module_args |= {k: v for k, v in FILE_COMMON_ARGUMENTS.items() if k in REAL_FILE_ARGS}
+        # Override path-typed FILE_COMMON_ARGUMENTS with str to avoid controller-side
+        # expansion; remote modules handle path expansion themselves.
+        file_args = {}
+        for k, v in FILE_COMMON_ARGUMENTS.items():
+            if k in REAL_FILE_ARGS:
+                v = dict(v)
+                if v.get('type') == 'path':
+                    v['type'] = 'str'
+                file_args[k] = v
+        module_args |= file_args
 
         validation_result, new_task_args = self.validate_argument_spec(
             argument_spec=module_args,
