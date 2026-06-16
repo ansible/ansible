@@ -91,8 +91,9 @@ class AChainMap(ChainMap):
 
     def new_child(self, m=None, key=None, **kwargs):
         new_chain_map = super().new_child(m=m, **kwargs)
+        new_chain_map._key_map = self._key_map
         if key:
-            self._key_map[key] = new_chain_map.maps[0]
+            new_chain_map._key_map[key] = new_chain_map.maps[0]
         return new_chain_map
 
     def get_child(self, key):
