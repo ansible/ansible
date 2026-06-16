@@ -123,7 +123,7 @@ class TestCopyActionValidation(unittest.TestCase):
         error_msg = str(cm.exception)
         # Should mention mutual exclusivity
         self.assertTrue('mutually exclusive' in error_msg.lower() or
-                       ('src' in error_msg.lower() and 'content' in error_msg.lower()))
+                        ('src' in error_msg.lower() and 'content' in error_msg.lower()))
 
     def test_content_with_directory_dest_raises_error(self):
         """Test that content with directory dest (trailing slash) raises error"""
