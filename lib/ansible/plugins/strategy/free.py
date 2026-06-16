@@ -109,7 +109,7 @@ class StrategyModule(StrategyBase):
                 host_name = host.get_name()
 
                 # peek at the next task for the host, to see if there's
-                # anything to do do for this host
+                # anything to do for this host
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state, host=host_name)
                 display.debug("free host task: %s" % task, host=host_name)
