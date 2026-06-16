@@ -226,7 +226,7 @@ class TaskExecutor:
                     try:
                         utr.set_break_when_result(self._task._resolve_conditional(self._task.loop_control.break_when, task_ctx.task_vars))
                     except AnsibleError as ex:
-                        # RPFIX-5: UX: This this bypasses AnsibleTaskError handling, resulting in less information than a normal task failure.
+                        # RPFIX-5: UX: This bypasses AnsibleTaskError handling, resulting in less information than a normal task failure.
                         utr.set_break_when_result(ex)
 
                 self._update_task_connection()
