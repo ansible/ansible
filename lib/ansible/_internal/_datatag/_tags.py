@@ -64,9 +64,9 @@ class Origin(AnsibleDatatagBase):
     def _post_validate(self) -> None:
         if self.path:
             if not self.path.startswith('/'):
-                raise RuntimeError('The `src` field must be an absolute path.')
+                raise RuntimeError('The `path` field must be an absolute path.')
         elif not self.description:
-            raise RuntimeError('The `src` or `description` field must be specified.')
+            raise RuntimeError('The `path` or `description` field must be specified.')
 
     def __str__(self) -> str:
         """Renders the origin in the form of path:line_num:col_num, omitting missing/invalid elements from the right."""
