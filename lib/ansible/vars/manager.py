@@ -66,6 +66,28 @@ class AChainMap(ChainMap):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._key_map = {}
+        self._merged = None
+
+    @property
+    def maps(self):
+        if self._merged is not None:
+            # TODO: if the intent of this class having keyed maps is to allow
+            # targeted manipulation, this cache needs to be busted. I'm
+            # hesitant to track manipulation to bust, so either it needs to be
+            # an explicit action or ``get_child`` does it naively, on the
+            # assumption that a get is consistent with the need to manipulate
+            return [self._merged]
+        elif C.DEFAULT_HASH_BEHAVIOUR == 'merge':
+            merged_vars = {}
+            for m in reversed(self._maps):
+                merged_vars = combine_vars(merged_vars, m)
+            self._merged = merged_vars
+            return [merged_vars]
+        return self._maps
+
+    @maps.setter
+    def maps(self, value):
+        self._maps = value
 
     def new_child(self, m=None, key=None, **kwargs):
         new_chain_map = super().new_child(m=m, **kwargs)
@@ -457,14 +479,6 @@ class VariableManager:
                 all_vars['vars'][k] = _DEPRECATE_VARS.tag(v)
 
         display.debug("done with get_vars()")
-        if C.DEFAULT_HASH_BEHAVIOUR == 'merge':
-            # To maintain a legit ChainMap, this should be moved into use of the
-            # ChainMap
-            merged_vars = {}
-            for m in reversed(all_vars.maps):
-                merged_vars = combine_vars(merged_vars, m)
-            return AChainMap(merged_vars)
-
         return all_vars
 
     def _facts_gathered_for_host(self, hostname) -> bool:
