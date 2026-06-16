@@ -234,6 +234,7 @@ class ActionModule(ActionBase):
                    dest, task_vars, follow):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
+        raw = boolean(self._task.args.get('raw', 'no'), strict=False)
 
         result = {}
         result['diff'] = []
@@ -286,7 +287,7 @@ class ActionModule(ActionBase):
         if local_checksum != dest_status['checksum']:
             # The checksums don't match and we will change or error out.
 
-            if self._task.diff:
+            if self._task.diff and not raw:
                 result['diff'].append(self._get_diff_data(dest_file, source_full, task_vars, content))
 
             if self._task.check_mode:
@@ -302,7 +303,12 @@ class ActionModule(ActionBase):
             if suffix:
                 tmp_src += suffix
 
-            remote_path = self._transfer_file(source_full, tmp_src)
+            remote_path = None
+
+            if not raw:
+                remote_path = self._transfer_file(source_full, tmp_src)
+            else:
+                self._transfer_file(source_full, dest_file)
 
             # We have copied the file remotely and no longer require our content_tempfile
             self._remove_tempfile_if_content_defined(content, content_tempfile)
@@ -315,6 +321,10 @@ class ActionModule(ActionBase):
             # fix file permissions when the copy is done as a different user
             if remote_path:
                 self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+
+            if raw:
+                # Continue to next iteration if raw is defined.
+                return None
 
             # Run the copy module
 
@@ -342,6 +352,9 @@ class ActionModule(ActionBase):
             # the file module in case we want to change attributes
             self._remove_tempfile_if_content_defined(content, content_tempfile)
             self._loader.cleanup_tmp_file(source_full)
+
+            if raw:
+                return None
 
             # Fix for https://github.com/ansible/ansible-modules-core/issues/1568.
             # If checksums match, and follow = True, find out if 'dest' is a link. If so,
@@ -418,53 +431,20 @@ class ActionModule(ActionBase):
             if self._task.args.get(internal, None) is not None:
                 raise AnsibleActionFail(f'Invalid parameter specified: "{internal}"')
 
-        # Explicit type check for src before validate_argument_spec, since type='path'
-        # will silently convert non-string types (like dicts) to their string representation
-        src_value = self._task.args.get('src')
-        if src_value is not None and not isinstance(src_value, str):
-            raise AnsibleActionFail(
-                f"Invalid type for 'src': expected string, got {type(src_value).__name__}"
-            )
-
-        # Validate arguments using the standard validate_argument_spec framework.
-        # NOTE: src and dest use type='str' here (not 'path') intentionally. The
-        # 'path' type expands ~ and environment variables on the controller, but
-        # these paths must be expanded on the remote host (e.g. so ~ resolves to
-        # the become_user's home, not the controller user's). The remote copy/file
-        # modules use type='path' and perform that expansion remotely.
-        module_args = dict(
-            src=dict(type='str'),
-            _original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
-            content=dict(type='raw', no_log=True),  # raw to preserve dict/list for json.dumps
-            dest=dict(type='str', required=True),
-            backup=dict(type='bool', default=False),
-            force=dict(type='bool', default=True),
-            validate=dict(type='str'),
-            directory_mode=dict(type='raw'),
-            remote_src=dict(type='bool', default=False),
-            local_follow=dict(type='bool', default=True),
-            checksum=dict(type='str'),
-            follow=dict(type='bool', default=False),
-            decrypt=dict(type='bool', default=True),
-        )
-
-        # Override path-typed FILE_COMMON_ARGUMENTS with str to avoid controller-side
-        # expansion; remote modules handle path expansion themselves.
-        file_args = {}
-        for k, v in FILE_COMMON_ARGUMENTS.items():
-            if k in REAL_FILE_ARGS:
-                v = dict(v)
-                if v.get('type') == 'path':
-                    v['type'] = 'str'
-                file_args[k] = v
-        module_args |= file_args
-
-        validation_result, new_task_args = self.validate_argument_spec(
-            argument_spec=module_args,
-            mutually_exclusive=[('src', 'content')],
-            required_one_of=[('src', 'content')],
-        )
-        self._task.args = new_task_args
+        # Validate the types of the path parameters before using them. These are
+        # not coerced via the argument spec on the controller because path
+        # expansion (e.g. of ~ or env vars) must happen on the remote host, not here
+        # (the remote copy/file modules use type='path' and expand paths themselves).
+        # Without this check a non-string value such as a dict would be used as a
+        # path and fail later with an opaque AttributeError (see issue 86607).
+        # Note: 'content' is intentionally not checked here, as a dict/list is a
+        # valid value that is later serialized to JSON.
+        for str_param in ('src', 'dest'):
+            value = self._task.args.get(str_param)
+            if value is not None and not isinstance(value, str):
+                raise AnsibleActionFail(
+                    "%s must be a string, but got %s instead" % (str_param, type(value).__name__)
+                )
 
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
@@ -472,10 +452,19 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
 
-        # Manual check for content + directory dest (not expressible via argument spec)
-        if content is not None and dest is not None and dest.endswith("/"):
-            result['failed'] = True
+        result['failed'] = True
+        if not source and content is None:
+            result['msg'] = 'src (or content) is required'
+        elif not dest:
+            result['msg'] = 'dest is required'
+        elif source and content is not None:
+            result['msg'] = 'src and content are mutually exclusive'
+        elif content is not None and dest is not None and dest.endswith("/"):
             result['msg'] = "can not use content with a dir as dest"
+        else:
+            del result['failed']
+
+        if result.get('failed'):
             return result
 
         # Define content_tempfile in case we set it after finding content populated.
@@ -497,9 +486,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            # Filter out action-plugin-only parameters before passing to the module
-            remote_module_args = _create_remote_copy_args(self._task.args)
-            result.update(self._execute_module(module_name='ansible.legacy.copy', module_args=remote_module_args, task_vars=task_vars))
+            result.update(self._execute_module(module_name='ansible.legacy.copy', task_vars=task_vars))
             return result
         else:
             # find_needle returns a path that may not have a trailing slash on
