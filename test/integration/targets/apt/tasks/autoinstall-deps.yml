@@ -63,4 +63,3 @@
     - "'changed' in apt_result"
     - apt_result is not changed
     - "dpkg_result.rc == 1"
-

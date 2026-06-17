@@ -29,7 +29,7 @@
           name: "{{ repodir }}"
           state: absent
 
-  - name: Test python3-apt auto instalation
+  - name: Test python3-apt auto installation
     block:
       - name: Remove packages that depend on python3-apt
         command:
