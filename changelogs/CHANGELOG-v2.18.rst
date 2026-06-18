@@ -4,13 +4,13 @@ ansible-core 2.18 "Fool in the Rain" Release Notes
 
 .. contents:: Topics
 
-v2.18.18rc1
-===========
+v2.18.18
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2026-06-11
+| Release Date: 2026-06-18
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
 
 Security Fixes
