@@ -3,7 +3,7 @@
 
 - name: skip test on unsupported platforms
   meta: end_play
-  when: ansible_distribution not in ('Ubuntu', 'Debian')
+  when: ansible_facts["distribution"] not in ('Ubuntu', 'Debian')
 
 - block:
   - import_tasks: 'apt.yml'
