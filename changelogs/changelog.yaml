@@ -638,6 +638,17 @@ releases:
     - 2.21.0rc1_summary.yaml
     - 77691-git-track-submodules-branch.yml
     release_date: '2026-04-28'
+  2.21.1:
+    changes:
+      release_summary: '| Release Date: 2026-06-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.21/porting_guides/porting_guide_core_2.21.html>`__
+
+        '
+    codename: The Rain Song
+    fragments:
+    - 2.21.1_summary.yaml
+    release_date: '2026-06-18'
   2.21.1rc1:
     changes:
       bugfixes:
