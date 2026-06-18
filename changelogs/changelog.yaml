@@ -1246,6 +1246,17 @@ releases:
     - core_ci_remote_alias.yml
     - winrm-psrp-nolog.yml
     release_date: '2026-05-11'
+  2.19.11:
+    changes:
+      release_summary: '| Release Date: 2026-06-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.19/porting_guides/porting_guide_core_2.19.html>`__
+
+        '
+    codename: What Is and What Should Never Be
+    fragments:
+    - 2.19.11_summary.yaml
+    release_date: '2026-06-18'
   2.19.11rc1:
     changes:
       bugfixes:
