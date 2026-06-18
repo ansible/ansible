@@ -22,7 +22,6 @@ class LocalFactCollector(BaseFactCollector):
     name = 'local'
     _fact_ids = set()  # type: t.Set[str]
 
-    @timeout()
     def collect(self, module=None, collected_facts=None):
         local_facts = {}
         local_facts['local'] = {}
@@ -51,7 +50,7 @@ class LocalFactCollector(BaseFactCollector):
             if executable_fact:
                 try:
                     # run it
-                    rc, out, err = module.run_command(fn)
+                    rc, out, err = timeout(module.run_command)(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
                 except (OSError, TimeoutError) as e:
