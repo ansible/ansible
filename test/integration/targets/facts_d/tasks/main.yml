@@ -20,6 +20,8 @@
         - name: unreadable
           mode: '0000'
         - name: bad
+        - name: slowscript
+          mode: '0775'
 
     - name: Create dangling symlink
       file:
@@ -32,7 +34,9 @@
   setup:
     fact_path: "{{ fact_dir | expanduser }}"
     filter: "*local*"
+    gather_timeout: 2
   register: setup_result
+  timeout: 10
 
 - name: show gathering results if rerun with -vvv
   debug: var=setup_result verbosity=3
@@ -53,3 +57,5 @@
       - setup_result['ansible_facts']['ansible_local']['unreadable'].startswith('error loading facts')
       - setup_result['ansible_facts']['ansible_local']['dead_symlink'].startswith('Could not stat fact')
       - setup_result['ansible_facts']['ansible_local']['bad'].startswith('error loading facts as ini')
+      - setup_result['ansible_facts']['ansible_local']['slowscript'].startswith('Could not execute fact script')
+      - setup_result['ansible_facts']['ansible_local']['slowscript'].endswith('Timer expired after 2 seconds')

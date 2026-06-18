@@ -15,12 +15,14 @@ from io import StringIO
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
+from ansible.module_utils.facts.timeout import timeout
 
 
 class LocalFactCollector(BaseFactCollector):
     name = 'local'
     _fact_ids = set()  # type: t.Set[str]
 
+    @timeout()
     def collect(self, module=None, collected_facts=None):
         local_facts = {}
         local_facts['local'] = {}
@@ -52,7 +54,7 @@ class LocalFactCollector(BaseFactCollector):
                     rc, out, err = module.run_command(fn)
                     if rc != 0:
                         failed = 'Failure executing fact script (%s), rc: %s, err: %s' % (fn, rc, err)
-                except OSError as e:
+                except (OSError, TimeoutError) as e:
                     failed = 'Could not execute fact script (%s): %s' % (fn, to_text(e))
 
                 if failed is not None:
