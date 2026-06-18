@@ -5,13 +5,13 @@ ansible-core 2.16 "All My Love" Release Notes
 .. contents:: Topics
 
 
-v2.16.19rc1
-===========
+v2.16.19
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2026-06-11
+| Release Date: 2026-06-18
 | `Porting Guide <https://docs.ansible.com/ansible-core/2.16/porting_guides/porting_guide_core_2.16.html>`__
 
 
