@@ -869,6 +869,17 @@ releases:
     - core_ci_remote_alias.yml
     - winrm-psrp-nolog.yml
     release_date: '2026-05-11'
+  2.18.18:
+    changes:
+      release_summary: '| Release Date: 2026-06-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible-core/2.18/porting_guides/porting_guide_core_2.18.html>`__
+
+        '
+    codename: Fool in the Rain
+    fragments:
+    - 2.18.18_summary.yaml
+    release_date: '2026-06-18'
   2.18.18rc1:
     changes:
       release_summary: '| Release Date: 2026-06-11
