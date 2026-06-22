@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import faulthandler
 import os
 import pathlib
@@ -33,14 +34,15 @@ def _write_stacktraces(_signum, _frame):
     stacktrace_dir = os.environ.get('ANSIBLE_STACKTRACE_DIR', tempfile.gettempdir())
     file = pathlib.Path(stacktrace_dir) / f'ansible-{pid}.debug'
 
-    with file.open('a') as trace_file:
-        trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
+    with contextlib.suppress(Exception):
+        with file.open('a') as trace_file:
+            trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
 
-        trace_file.write(f'*** Process {pid} stacktrace\n\n')
-        traceback.print_stack(f=_frame, file=trace_file)
+            trace_file.write(f'*** Process {pid} stacktrace\n\n')
+            traceback.print_stack(f=_frame, file=trace_file)
 
-        trace_file.write('\n\n*** Thread stacktraces\n\n')
-        faulthandler.dump_traceback(file=trace_file)
+            trace_file.write('\n\n*** Thread stacktraces\n\n')
+            faulthandler.dump_traceback(file=trace_file)
 
 
 def register_for_stacktrace():
