@@ -56,8 +56,10 @@ if ! grep -q "Thread stacktraces" "$STACKTRACE_FILE"; then
 fi
 
 # Check for child process stacktrace files
+CHILD_PIDS_COUNT=0
 CHILD_FILES_FOUND=0
 for child_pid in $CHILD_PIDS; do
+    CHILD_PIDS_COUNT=$((CHILD_PIDS_COUNT + 1))
     CHILD_FILE=$(find -L "$TEMP_DIR" -name "ansible-${child_pid}.debug" 2>/dev/null | head -1)
     if [[ -n "$CHILD_FILE" ]]; then
         echo "Found stacktrace file for child process $child_pid: $CHILD_FILE"
@@ -66,8 +68,8 @@ for child_pid in $CHILD_PIDS; do
     fi
 done
 
-if [[ -n "$CHILD_PIDS" ]] && [[ $CHILD_FILES_FOUND -eq 0 ]]; then
-    echo "FAIL: Child processes found but no child stacktrace files created"
+if [[ $CHILD_PIDS_COUNT -gt 0 ]] && [[ $CHILD_FILES_FOUND -ne $CHILD_PIDS_COUNT ]]; then
+    echo "FAIL: Expected stacktrace files for all $CHILD_PIDS_COUNT child processes, but found only $CHILD_FILES_FOUND"
     kill $ANSIBLE_PID 2>/dev/null || true
     exit 1
 else
@@ -129,8 +131,10 @@ if ! grep -q "Process ${ANSIBLE_PID} stacktrace" "$STACKTRACE_FILE"; then
 fi
 
 # Check for child process stacktrace files in custom directory
+CHILD_PIDS_COUNT=0
 CHILD_FILES_FOUND=0
 for child_pid in $CHILD_PIDS; do
+    CHILD_PIDS_COUNT=$((CHILD_PIDS_COUNT + 1))
     CHILD_FILE="${CUSTOM_DIR}/ansible-${child_pid}.debug"
     if [[ -f "$CHILD_FILE" ]]; then
         echo "Found stacktrace file for child process $child_pid in custom directory"
@@ -138,8 +142,8 @@ for child_pid in $CHILD_PIDS; do
     fi
 done
 
-if [[ -n "$CHILD_PIDS" ]] && [[ $CHILD_FILES_FOUND -eq 0 ]]; then
-    echo "FAIL: Child processes found but no child stacktrace files in custom directory"
+if [[ $CHILD_PIDS_COUNT -gt 0 ]] && [[ $CHILD_FILES_FOUND -ne $CHILD_PIDS_COUNT ]]; then
+    echo "FAIL: Expected stacktrace files for all $CHILD_PIDS_COUNT child processes in custom directory, but found only $CHILD_FILES_FOUND"
     kill $ANSIBLE_PID 2>/dev/null || true
     rm -rf "$CUSTOM_DIR"
     exit 1
