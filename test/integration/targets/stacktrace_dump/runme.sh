@@ -30,7 +30,7 @@ done
 sleep 1
 
 # Find the stacktrace file for main process in temp directory
-STACKTRACE_FILE=$(find "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
+STACKTRACE_FILE=$(find -L "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
 
 if [[ -z "$STACKTRACE_FILE" ]]; then
     echo "FAIL: Stacktrace file not found in $TEMP_DIR for main process"
@@ -58,7 +58,7 @@ fi
 # Check for child process stacktrace files
 CHILD_FILES_FOUND=0
 for child_pid in $CHILD_PIDS; do
-    CHILD_FILE=$(find "$TEMP_DIR" -name "ansible-${child_pid}.debug" 2>/dev/null | head -1)
+    CHILD_FILE=$(find -L "$TEMP_DIR" -name "ansible-${child_pid}.debug" 2>/dev/null | head -1)
     if [[ -n "$CHILD_FILE" ]]; then
         echo "Found stacktrace file for child process $child_pid: $CHILD_FILE"
         CHILD_FILES_FOUND=$((CHILD_FILES_FOUND + 1))
@@ -174,7 +174,7 @@ kill -SIGUSR1 $ANSIBLE_PID
 sleep 1
 
 # Find the stacktrace file
-STACKTRACE_FILE=$(find "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
+STACKTRACE_FILE=$(find -L "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
 
 if [[ -z "$STACKTRACE_FILE" ]]; then
     echo "FAIL: Stacktrace file not found"
