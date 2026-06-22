@@ -3,7 +3,7 @@
 set -eux
 
 # Get the system temp directory (platform-independent)
-TEMP_DIR=$(python3 -c "import tempfile; print(tempfile.gettempdir())")
+TEMP_DIR=$($ANSIBLE_TEST_PYTHON_INTERPRETER -c "import tempfile; print(tempfile.gettempdir())")
 
 # Test 1: Default behavior - stacktrace written to temp directory
 echo "=== Test 1: Stacktrace dump to default temp directory ==="
