@@ -197,9 +197,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         display.set_queue(self._final_q)
         self._detach()
 
-        _debug.register(partial(display.display, stderr=True))
-        with contextlib.suppress(Exception):
-            faulthandler.enable(file=STDERR_FILENO + 100, all_threads=True)
+        _debug.register_for_stacktrace()
 
         # propagate signals
         signal.signal(signal.SIGINT, self._term)

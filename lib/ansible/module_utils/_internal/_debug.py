@@ -3,38 +3,42 @@
 
 from __future__ import annotations
 
-import os as _os
-import pathlib as _pathlib
-import platform as _platform
-import signal as _signal
-import sys as _sys
-import tempfile as _tempfile
-import threading as _threading
-import traceback as _traceback
-from datetime import datetime as _datetime
+import faulthandler
+import os
+import pathlib
+import platform
+import signal
+import tempfile
+import traceback
+
+from datetime import datetime
 
 
-def _writer(msg):
-    now = _datetime.now()
-    pid = _os.getpid()
-    file = _pathlib.Path(_tempfile.gettempdir()) / f'ansible-{pid}.debug'
+def _write_stacktraces(_signum, _frame):
+    """
+    Signal handler to write debug stacktrace information to a file.
 
-    with file.open('a') as f:
-        f.write(f'=== {now.isoformat()} on {_platform.node()} ===\n')
-        f.write(msg)
-        f.write('\n')
+    Captures two types of stacktraces:
+    1. Current process stacktrace using `traceback.print_stack()` with the signal frame
+       (the frame parameter is crucial - without it, we'd only see the signal handler's stack)
+    2. All thread stacktraces using `faulthandler.dump_traceback()`
+
+    This combination is useful for debugging deadlocks and other concurrency issues.
+    """
+    now = datetime.now()
+    pid = os.getpid()
+    file = pathlib.Path(tempfile.gettempdir()) / f'ansible-{pid}.debug'
+
+    with file.open('a') as trace_file:
+        trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')
+
+        trace_file.write(f'*** Process {pid} stacktrace\n\n')
+        traceback.print_stack(f=_frame, file=trace_file)
+
+        trace_file.write('\n\n*** Thread stacktraces\n\n')
+        faulthandler.dump_traceback(file=trace_file)
 
 
-def _handle_trap(writer):
-    def inner(_signum, _frame):
-        frames = _sys._current_frames()
-        for thread in _threading.enumerate():
-            frame = frames[thread.ident]
-            stack = ''.join(_traceback.format_stack(frame)[:-1])
-            writer(f'{thread.name}:\n{stack}')
-
-    return inner
-
-
-def register(writer=_writer):
-    _signal.signal(_signal.SIGTRAP, _handle_trap(writer))
+def register_for_stacktrace():
+    """Register a signal handler to write debug stacktrace information to a file."""
+    signal.signal(signal.SIGUSR1, _write_stacktraces)

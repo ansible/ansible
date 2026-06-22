@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import contextlib
 import dataclasses
-import faulthandler
 import errno
 import os
 import sys
@@ -29,7 +28,6 @@ import threading
 import time
 import typing as t
 import multiprocessing.queues
-from functools import partial
 
 from ansible import constants as C
 from ansible import context
@@ -194,12 +192,6 @@ class TaskQueueManager:
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
-        # duplicate stderr for debugging use
-        # FOR INTERNAL USE ONLY
-        with contextlib.suppress(Exception):
-            os.dup2(STDERR_FILENO, 100 + STDERR_FILENO)
-            os.set_inheritable(100 + STDERR_FILENO, True)
-
         try:
             # Done in tqm, and not display, because this is only needed for commands that execute tasks
             for fd in (STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO):
@@ -219,8 +211,7 @@ class TaskQueueManager:
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
 
-        _debug.register(partial(display.display, stderr=True))
-        faulthandler.enable(all_threads=True)
+        _debug.register_for_stacktrace()
 
     def _initialize_processes(self, num: int) -> None:
         # mutable update to ensure the reference stays the same

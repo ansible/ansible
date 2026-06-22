@@ -29,7 +29,6 @@ import __main__
 import atexit
 import dataclasses as _dataclasses
 import errno
-import faulthandler
 import grp
 import fcntl
 import locale
@@ -41,7 +40,6 @@ import select
 import selectors
 import shlex
 import shutil
-import signal
 import stat
 import subprocess
 import tempfile
@@ -367,8 +365,7 @@ class AnsibleModule(object):
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         """
 
-        _debug.register()
-        faulthandler.enable(all_threads=True)
+        _debug.register_for_stacktrace()
 
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
