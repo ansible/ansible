@@ -24,10 +24,14 @@ def _write_stacktraces(_signum, _frame):
     2. All thread stacktraces using `faulthandler.dump_traceback()`
 
     This combination is useful for debugging deadlocks and other concurrency issues.
+
+    The stacktrace file location can be controlled via the ANSIBLE_STACKTRACE_DIR
+    environment variable, defaulting to the system temporary directory.
     """
     now = datetime.now()
     pid = os.getpid()
-    file = pathlib.Path(tempfile.gettempdir()) / f'ansible-{pid}.debug'
+    stacktrace_dir = os.environ.get('ANSIBLE_STACKTRACE_DIR', tempfile.gettempdir())
+    file = pathlib.Path(stacktrace_dir) / f'ansible-{pid}.debug'
 
     with file.open('a') as trace_file:
         trace_file.write(f'=== {now.isoformat()} on {platform.node()} ===\n\n')

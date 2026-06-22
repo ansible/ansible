@@ -17,9 +17,7 @@
 
 from __future__ import annotations
 
-import contextlib
 import errno
-import faulthandler
 import io
 import os
 import signal
@@ -28,7 +26,6 @@ import textwrap
 import traceback
 import types
 import typing as t
-from functools import partial
 
 from multiprocessing.queues import Queue
 
