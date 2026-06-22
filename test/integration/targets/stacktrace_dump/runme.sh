@@ -2,32 +2,43 @@
 
 set -eux
 
+# Get the system temp directory (platform-independent)
+TEMP_DIR=$(python3 -c "import tempfile; print(tempfile.gettempdir())")
+
 # Test 1: Default behavior - stacktrace written to temp directory
 echo "=== Test 1: Stacktrace dump to default temp directory ==="
+echo "Using temp directory: $TEMP_DIR"
 
 # Start ansible-playbook in background with a long-running task
 ansible-playbook -i inventory playbook.yml &
 ANSIBLE_PID=$!
 
-# Give it time to start executing
+# Give it time to start executing and spawn workers
 sleep 2
 
-# Send SIGUSR1 signal to trigger stacktrace dump
-kill -SIGUSR1 $ANSIBLE_PID
+# Find all subprocess PIDs
+CHILD_PIDS=$(pgrep -P $ANSIBLE_PID 2>/dev/null || true)
 
-# Give it time to write the file
+# Send SIGUSR1 signal to main process and all children
+kill -SIGUSR1 $ANSIBLE_PID
+# shellcheck disable=SC2086
+for child_pid in $CHILD_PIDS; do
+    kill -SIGUSR1 $child_pid 2>/dev/null || true
+done
+
+# Give it time to write the files
 sleep 1
 
-# Find the stacktrace file in temp directory
-STACKTRACE_FILE=$(find /tmp -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
+# Find the stacktrace file for main process in temp directory
+STACKTRACE_FILE=$(find "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
 
 if [[ -z "$STACKTRACE_FILE" ]]; then
-    echo "FAIL: Stacktrace file not found in /tmp"
+    echo "FAIL: Stacktrace file not found in $TEMP_DIR for main process"
     kill $ANSIBLE_PID 2>/dev/null || true
     exit 1
 fi
 
-echo "Found stacktrace file: $STACKTRACE_FILE"
+echo "Found stacktrace file for main process: $STACKTRACE_FILE"
 
 # Verify file contains expected content
 if ! grep -q "Process ${ANSIBLE_PID} stacktrace" "$STACKTRACE_FILE"; then
@@ -42,6 +53,25 @@ if ! grep -q "Thread stacktraces" "$STACKTRACE_FILE"; then
     cat "$STACKTRACE_FILE"
     kill $ANSIBLE_PID 2>/dev/null || true
     exit 1
+fi
+
+# Check for child process stacktrace files
+CHILD_FILES_FOUND=0
+for child_pid in $CHILD_PIDS; do
+    CHILD_FILE=$(find "$TEMP_DIR" -name "ansible-${child_pid}.debug" 2>/dev/null | head -1)
+    if [[ -n "$CHILD_FILE" ]]; then
+        echo "Found stacktrace file for child process $child_pid: $CHILD_FILE"
+        CHILD_FILES_FOUND=$((CHILD_FILES_FOUND + 1))
+        rm -f "$CHILD_FILE"
+    fi
+done
+
+if [[ -n "$CHILD_PIDS" ]] && [[ $CHILD_FILES_FOUND -eq 0 ]]; then
+    echo "FAIL: Child processes found but no child stacktrace files created"
+    kill $ANSIBLE_PID 2>/dev/null || true
+    exit 1
+else
+    echo "Found stacktrace files for $CHILD_FILES_FOUND child process(es)"
 fi
 
 # Clean up
@@ -62,11 +92,18 @@ export ANSIBLE_STACKTRACE_DIR="$CUSTOM_DIR"
 ansible-playbook -i inventory playbook.yml &
 ANSIBLE_PID=$!
 
-# Give it time to start executing
+# Give it time to start executing and spawn workers
 sleep 2
 
-# Send SIGUSR1 signal
+# Find all subprocess PIDs
+CHILD_PIDS=$(pgrep -P $ANSIBLE_PID 2>/dev/null || true)
+
+# Send SIGUSR1 signal to main process and all children
 kill -SIGUSR1 $ANSIBLE_PID
+# shellcheck disable=SC2086
+for child_pid in $CHILD_PIDS; do
+    kill -SIGUSR1 $child_pid 2>/dev/null || true
+done
 
 # Give it time to write the file
 sleep 1
@@ -89,6 +126,25 @@ if ! grep -q "Process ${ANSIBLE_PID} stacktrace" "$STACKTRACE_FILE"; then
     cat "$STACKTRACE_FILE"
     kill $ANSIBLE_PID 2>/dev/null || true
     exit 1
+fi
+
+# Check for child process stacktrace files in custom directory
+CHILD_FILES_FOUND=0
+for child_pid in $CHILD_PIDS; do
+    CHILD_FILE="${CUSTOM_DIR}/ansible-${child_pid}.debug"
+    if [[ -f "$CHILD_FILE" ]]; then
+        echo "Found stacktrace file for child process $child_pid in custom directory"
+        CHILD_FILES_FOUND=$((CHILD_FILES_FOUND + 1))
+    fi
+done
+
+if [[ -n "$CHILD_PIDS" ]] && [[ $CHILD_FILES_FOUND -eq 0 ]]; then
+    echo "FAIL: Child processes found but no child stacktrace files in custom directory"
+    kill $ANSIBLE_PID 2>/dev/null || true
+    rm -rf "$CUSTOM_DIR"
+    exit 1
+else
+    echo "Found stacktrace files for $CHILD_FILES_FOUND child process(es) in custom directory"
 fi
 
 # Clean up
@@ -118,7 +174,7 @@ kill -SIGUSR1 $ANSIBLE_PID
 sleep 1
 
 # Find the stacktrace file
-STACKTRACE_FILE=$(find /tmp -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
+STACKTRACE_FILE=$(find "$TEMP_DIR" -name "ansible-${ANSIBLE_PID}.debug" 2>/dev/null | head -1)
 
 if [[ -z "$STACKTRACE_FILE" ]]; then
     echo "FAIL: Stacktrace file not found"
