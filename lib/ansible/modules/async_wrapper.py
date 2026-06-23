@@ -291,24 +291,31 @@ def main():
                 os.setpgid(sub_pid, sub_pid)
 
                 notice("Start watching %s (%s)" % (sub_pid, remaining))
-                time.sleep(step)
-                while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
-                    notice("%s still running (%s)" % (sub_pid, remaining))
-                    time.sleep(step)
-                    remaining = remaining - step
-                    if remaining <= 0:
-                        # ensure we leave response in poll location
-                        res = {'msg': 'Timeout exceeded', 'failed': True, 'child_pid': sub_pid}
-                        jwrite(res)
 
+                if remaining != 0 and step >= remaining:
+                    step = remaining / 2
+
+                time.sleep(step)
+
+                while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
+                    remaining = remaining - step
+                    notice("%s still running (%s)" % (sub_pid, remaining))
+                    if remaining <= 0:
                         # actually kill it
                         notice("Timeout reached, now killing %s" % (sub_pid))
                         os.killpg(sub_pid, signal.SIGKILL)
                         notice("Sent kill to group %s " % sub_pid)
                         time.sleep(1)
+
+                        # ensure we leave response in poll location
+                        res = {'msg': 'Timeout exceeded', 'failed': True, 'child_pid': sub_pid}
+                        jwrite(res)
+
                         if not preserve_tmp:
                             shutil.rmtree(os.path.dirname(wrapped_module), True)
                         end(res)
+
+                    time.sleep(step)
                 notice("Done in kid B.")
                 if not preserve_tmp:
                     shutil.rmtree(os.path.dirname(wrapped_module), True)
