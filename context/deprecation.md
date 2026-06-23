@@ -11,10 +11,3 @@ Backward compatibility is prioritized over most other concerns.
 ## Deprecating code
 
 Use `Display.deprecated` or `AnsibleModule.deprecate` with the removal version.
-
-## Deprecating builtin plugins
-
-Deprecate builtin plugins using entries in `lib/ansible/config/ansible_builtin_runtime.yml`
-with `deprecation.removal_version` and `deprecation.warning_text`.
-This is preferred over the legacy underscore-prefix filename convention
-because it works for both FQCN and short-name plugin lookups.
