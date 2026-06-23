@@ -868,6 +868,42 @@
     - install_symlink_actual.results[5].stat.islnk
     - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
 
+- name: create existing collection replacement target for force install over symlink - {{ test_id }}
+  file:
+    path: '{{ galaxy_dir }}/scratch/symlink-force-target'
+    state: directory
+
+- name: replace installed collection path with symlink before force install - {{ test_id }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
+    src: '{{ galaxy_dir }}/scratch/symlink-force-target'
+    state: link
+    force: true
+
+- name: force install collection over existing symlink - {{ test_id }}
+  command: ansible-galaxy collection install symlink.symlink -s '{{ test_name }}' --force {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: install_symlink_force
+
+- name: get result of force install collection over existing symlink - {{ test_id }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
+  register: install_symlink_force_actual
+
+- name: get result of force installed collection manifest - {{ test_id }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink/MANIFEST.json'
+  register: install_symlink_force_manifest
+
+- name: assert force install collection over existing symlink - {{ test_id }}
+  assert:
+    that:
+    - '"Installing ''symlink.symlink:1.0.0'' to" in install_symlink_force.stdout'
+    - install_symlink_force_actual.stat.isdir
+    - not install_symlink_force_actual.stat.islnk
+    - install_symlink_force_manifest.stat.isreg
+
 
 # Testing an install from source to check that symlinks to directories
 # are preserved (see issue https://github.com/ansible/ansible/issues/78442)
