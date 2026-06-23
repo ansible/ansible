@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from ansible.inventory.group import Group
+from ansible.inventory.group import Group, to_safe_group_name
 from ansible.inventory.host import Host
 from ansible.errors import AnsibleError
 
@@ -169,3 +169,44 @@ def test_set_priority_invalid_values(priority, expected):
     group = Group('test_group')
     group.set_priority(priority)
     assert group.priority == expected
+
+
+class TestToSafeGroupName:
+    def test_normalizes_hyphen(self):
+        assert to_safe_group_name('qa-windows', force=True) == 'qa_windows'
+
+    def test_warning_names_both_original_and_normalized(self, capsys):
+        from ansible.utils.display import Display
+        warnings = []
+        original_warning = Display.warning
+
+        def capture(self, msg, **kwargs):
+            warnings.append(msg)
+
+        Display.warning = capture
+        try:
+            result = to_safe_group_name('qa-windows', force=True, silent=False)
+        finally:
+            Display.warning = original_warning
+
+        assert result == 'qa_windows'
+        assert any('qa-windows' in w and 'qa_windows' in w for w in warnings)
+
+    def test_silent_suppresses_warning(self):
+        from ansible.utils.display import Display
+        warnings = []
+        original_warning = Display.warning
+
+        def capture(self, msg, **kwargs):
+            warnings.append(msg)
+
+        Display.warning = capture
+        try:
+            to_safe_group_name('qa-windows', force=True, silent=True)
+        finally:
+            Display.warning = original_warning
+
+        assert not warnings
+
+    def test_valid_name_unchanged(self):
+        assert to_safe_group_name('valid_name') == 'valid_name'
