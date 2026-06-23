@@ -5,7 +5,8 @@ All testing uses `ansible-test`, which supports sanity tests (linting/static ana
 ## Sanity tests
 
 Sanity tests don't require `--docker`.
-Some tests may be skipped if their dependencies aren't installed locally (e.g. additional Python versions, shellcheck, PowerShell), but this rarely matters when testing your own changes.
+Some tests may be skipped if their dependencies aren't installed locally (e.g. additional Python versions, shellcheck, PowerShell),
+but this rarely matters when testing your own changes.
 
 Run sanity tests against all files in your change set, not just the ones you're actively editing.
 
