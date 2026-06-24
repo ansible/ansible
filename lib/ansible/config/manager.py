@@ -701,7 +701,9 @@ class ConfigManager:
                     origin = 'default'
                     value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin, origin_ftype=origin_ftype)
                 else:
-                    raise AnsibleOptionsError(f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value.') from ex
+                    raise AnsibleOptionsError(
+                        f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value {value!r}.'
+                    ) from ex
 
             # deal with restricted values
             if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
@@ -725,7 +727,7 @@ class ConfigManager:
                         valid = defs[config]['choices']
 
                     raise AnsibleOptionsError(
-                        f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value.',
+                        f'Config {_get_config_label(plugin_type, plugin_name, config)} from {origin!r} has an invalid value {value!r}.',
                         help_text=f'Valid values are: {valid}'
                     )
 
