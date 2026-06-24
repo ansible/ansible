@@ -30,6 +30,7 @@ def main() -> None:
 
     frontmatter_allowed_prefixes = [
         ".claude/",
+        ".github/",
     ]
 
     frontmatter_paths = []
