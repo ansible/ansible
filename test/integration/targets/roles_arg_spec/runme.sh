@@ -26,7 +26,22 @@ ansible-playbook test_play_level_role_fails.yml -i ../../inventory "$@"
 test $? -ne 0
 set -e
 
-# Test the validation task is tagged with 'always' by specifying an unused tag.
-# The task is tagged with 'foo' but we use 'bar' in the call below and expect
-# the validation task to run anyway since it is tagged 'always'.
-ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar | grep "a : Validating arguments against arg spec 'main' - Main entry point for role A."
+VALIDATION_TASK="Validating arguments against arg spec 'main' - Main entry point for role A."
+
+# Test that a role's validation task respects tags like any other role task.
+
+# When running with --tags foo, only the foo-tagged role should validate.
+output=$(ansible-playbook test_tags.yml -i ../../inventory "$@" --tags foo)
+test "$(echo "$output" | grep -c "$VALIDATION_TASK")" = 1
+
+# When running with a tag that matches no role, nothing validates.
+output=$(ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar)
+test "$(echo "$output" | grep -c "$VALIDATION_TASK")" = 0
+
+# When running with --skip-tags on a role's tag, that role's validation is skipped.
+output=$(ansible-playbook test_tags.yml -i ../../inventory "$@" --skip-tags foo)
+test "$(echo "$output" | grep -c "$VALIDATION_TASK")" = 2
+
+# Without any tag filter, all roles validate.
+output=$(ansible-playbook test_tags.yml -i ../../inventory "$@")
+test "$(echo "$output" | grep -c "$VALIDATION_TASK")" = 3
