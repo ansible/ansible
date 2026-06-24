@@ -306,7 +306,7 @@ bootstrap_remote_rhel_8()
         ${py_pkg_prefix}-devel
         "
 
-    # pip isn't included in the Python devel package under Python 3.11
+    # pip is only included in the Python 3.6 devel package
     if [ "${python_version}" != "3.6" ]; then
         packages="
             ${packages}
@@ -323,7 +323,7 @@ bootstrap_remote_rhel_8()
             "
     fi
 
-    # Python 3.11 isn't a module like the earlier versions
+    # Python 3.12 isn't a module like the earlier versions
     if [ "${python_version}" = "3.6" ]; then
         while true; do
             # shellcheck disable=SC2086
@@ -358,7 +358,7 @@ bootstrap_remote_rhel_9()
         ${py_pkg_prefix}-devel
         "
 
-    # pip is not included in the Python devel package under Python 3.11
+    # pip is only included in the Python 3.9 devel package
     if [ "${python_version}" != "3.9" ]; then
         packages="
             ${packages}
@@ -368,7 +368,7 @@ bootstrap_remote_rhel_9()
 
     # Jinja2 is not installed with an OS package since the provided version is too old.
     # Instead, ansible-test will install it using pip.
-    # packaging and resolvelib are missing for Python 3.11 (and possible later) so we just
+    # packaging and resolvelib are missing for the non-default Python so we just
     # skip them and let ansible-test install them from PyPI.
     #
     # sqlite-libs needs to be specified currently to get sqlite3 imports working
@@ -397,6 +397,7 @@ bootstrap_remote_rhel_10()
 
     packages="
         gcc
+        python3-packaging
         ${py_pkg_prefix}-devel
         ${py_pkg_prefix}-pip
         "

@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-test - Use Python 3.12 instead of 3.11 on RHEL 8.10 remotes.
+  - ansible-test - Replace RHEL 9.7 remote with 9.8 and use Python 3.12 instead of 3.11.
+  - ansible-test - Replace RHEL 10.1 remote with 10.2.
