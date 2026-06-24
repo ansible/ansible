@@ -36,7 +36,7 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.vvvv('Replacing ' + msg)
-                    warn = "Group name '%s' was normalized to '%s'. Use '%s' in limits and patterns." % (original, name, name)
+                    warn = f"Group name '{original}' was normalized to '{name}'. Use '{name}' in limits and patterns."
             else:
                 if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
                     display.vvvv('Not replacing %s' % msg)
