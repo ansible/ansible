@@ -8,6 +8,7 @@ import pytest
 from ansible.inventory.group import Group, to_safe_group_name
 from ansible.inventory.host import Host
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
 
 
 def test_depth_update():
@@ -171,42 +172,23 @@ def test_set_priority_invalid_values(priority, expected):
     assert group.priority == expected
 
 
-class TestToSafeGroupName:
-    def test_normalizes_hyphen(self):
-        assert to_safe_group_name('qa-windows', force=True) == 'qa_windows'
+@pytest.mark.parametrize("name, kwargs, expected", [
+    pytest.param('qa-windows', {'force': True}, 'qa_windows', id="hyphen normalized"),
+    pytest.param('valid_name', {}, 'valid_name', id="valid name unchanged"),
+])
+def test_to_safe_group_name_normalization(name, kwargs, expected):
+    assert to_safe_group_name(name, **kwargs) == expected
 
-    def test_warning_names_both_original_and_normalized(self, capsys):
-        from ansible.utils.display import Display
-        warnings = []
-        original_warning = Display.warning
 
-        def capture(self, msg, **kwargs):
-            warnings.append(msg)
-
-        Display.warning = capture
-        try:
-            result = to_safe_group_name('qa-windows', force=True, silent=False)
-        finally:
-            Display.warning = original_warning
-
-        assert result == 'qa_windows'
+@pytest.mark.parametrize("silent, expect_warning", [
+    pytest.param(False, True, id="warning emitted when not silent"),
+    pytest.param(True, False, id="warning suppressed when silent"),
+])
+def test_to_safe_group_name_warning(monkeypatch, silent, expect_warning):
+    warnings = []
+    monkeypatch.setattr(Display, 'warning', lambda self, msg, **kw: warnings.append(msg))
+    to_safe_group_name('qa-windows', force=True, silent=silent)
+    if expect_warning:
         assert any('qa-windows' in w and 'qa_windows' in w for w in warnings)
-
-    def test_silent_suppresses_warning(self):
-        from ansible.utils.display import Display
-        warnings = []
-        original_warning = Display.warning
-
-        def capture(self, msg, **kwargs):
-            warnings.append(msg)
-
-        Display.warning = capture
-        try:
-            to_safe_group_name('qa-windows', force=True, silent=True)
-        finally:
-            Display.warning = original_warning
-
+    else:
         assert not warnings
-
-    def test_valid_name_unchanged(self):
-        assert to_safe_group_name('valid_name') == 'valid_name'
