@@ -151,7 +151,7 @@ def test_missing_lchmod_is_link(am, mock_stats, mocker, monkeypatch, check_mode)
     mocker.stopall()
 
 
-@pytest.mark.parametrize('stdin,',
+@pytest.mark.parametrize('stdin',
                          ({},),
                          indirect=['stdin'])
 def test_missing_lchmod_is_link_in_sticky_dir(am, mock_stats, mocker):
