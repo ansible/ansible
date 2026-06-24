@@ -6,21 +6,23 @@ user-invocable: true
 
 # System Instructions
 
-When this skill is invoked, read the AGENTS.md file from the repository root (`@../../../AGENTS.md`) and load its content into context. This provides comprehensive Ansible development guidelines.
+When this skill is invoked, read the AGENTS.md file from the repository root (`@../../../AGENTS.md`) and load its content into context.
+This provides comprehensive Ansible development guidelines.
 
 After loading AGENTS.md, provide the user with confirmation that the context has been loaded and is available for answering questions or guiding development work.
 
 If AGENTS.md cannot be found, inform the user and suggest they may be in a directory without the full ansible-core repository.
 
-# Usage
+## Usage
 
 Invoke this skill to load Ansible development context:
 
-```
+```claude
 /context
 ```
 
-The skill provides all guidelines and conventions that would normally be in AGENTS.md, making them available even when working outside the ansible-core repository or in environments where AGENTS.md is not accessible.
+The skill provides all guidelines and conventions that would normally be in AGENTS.md,
+making them available even when working outside the ansible-core repository or in environments where AGENTS.md is not accessible.
 
 ## When to Use
 
@@ -31,7 +33,8 @@ The skill provides all guidelines and conventions that would normally be in AGEN
 
 ## What This Skill Does
 
-This skill is informational only - it loads comprehensive Ansible development knowledge into context but performs no actions. After invocation, all subsequent responses will have access to:
+This skill is informational only - it loads comprehensive Ansible development knowledge into context but performs no actions.
+After invocation, all subsequent responses will have access to:
 
 - Testing commands
 - PR review processes and checklists
