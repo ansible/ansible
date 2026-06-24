@@ -8,6 +8,9 @@ ANSIBLE_TIMEOUT='' ansible -m ping testhost -i ../../inventory "$@"
 # env var is wrong type, this should be a fatal error pointing at the setting
 ANSIBLE_TIMEOUT='lola' ansible -m ping testhost -i ../../inventory "$@" 2>&1 | grep "Config 'DEFAULT_TIMEOUT' from 'env: ANSIBLE_TIMEOUT' has an invalid value"
 
+#env var is not in choices, this should be a fatail error pointing at the setting
+ANSIBLE_DISPLAY_TRACEBACK='lola' ansible-config dump 2>&1 | grep "Config 'DISPLAY_TRACEBACK' from 'env: ANSIBLE_DISPLAY_TRACEBACK' has an invalid value."
+
 # https://github.com/ansible/ansible/issues/69577
 ANSIBLE_REMOTE_TMP="$HOME/.ansible/directory_with_no_space"  ansible -m ping testhost -i ../../inventory "$@"
 
