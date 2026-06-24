@@ -1,7 +1,3 @@
-.claude/skills/azp-logs/SKILL.md pymarkdown!skip  # Claude Code skill with YAML frontmatter
-.claude/skills/context/SKILL.md pymarkdown!skip  # Claude Code skill with YAML frontmatter
-.claude/skills/review/SKILL.md pymarkdown!skip  # Claude Code skill with YAML frontmatter
-.github/ISSUE_TEMPLATE/internal_issue.md pymarkdown!skip
 lib/ansible/_internal/_wrapt.py black!skip  # vendored code
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/keyword_desc.yml no-unwanted-files
