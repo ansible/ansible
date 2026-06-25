@@ -40,6 +40,7 @@
         "Final"
     ],
     "result": {
+        "distribution_cpe_name": "cpe:/o:tencentos:tencentos:3",
         "distribution": "TencentOS",
         "distribution_version": "3.1",
         "distribution_release": "Final",
