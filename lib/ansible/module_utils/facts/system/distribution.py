@@ -11,7 +11,7 @@ import re
 import typing as t
 
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
-    get_distribution_codename
+    get_distribution_codename, get_distribution_cpe_name
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -631,6 +631,9 @@ class Distribution(object):
         # look for an os family alias for the 'distribution', if there isn't one, use 'distribution'
         distribution_facts['os_family'] = self.OS_FAMILY.get(distro, None) or distro
 
+        # CPE name as published in the os-release file (when the distro provides one)
+        distribution_facts['distribution_cpe_name'] = get_distribution_cpe_name()
+
         return distribution_facts
 
     def get_distribution_AIX(self):
@@ -768,6 +771,7 @@ class DistributionFactCollector(BaseFactCollector):
     _fact_ids = set(['distribution_version',
                      'distribution_release',
                      'distribution_major_version',
+                     'distribution_cpe_name',
                      'os_family'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
