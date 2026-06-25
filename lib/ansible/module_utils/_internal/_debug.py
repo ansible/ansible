@@ -31,7 +31,7 @@ def _write_stacktraces(_signum, _frame):
     """
     now = datetime.now()
     pid = os.getpid()
-    stacktrace_dir = os.environ.get('ANSIBLE_STACKTRACE_DIR', tempfile.gettempdir())
+    stacktrace_dir = tempfile.gettempdir()
     file = pathlib.Path(stacktrace_dir) / f'ansible-{pid}.debug'
 
     with contextlib.suppress(Exception):
