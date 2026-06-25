@@ -42,15 +42,15 @@ Sync the local devel branch with the identified upstream remote:
 Step 3: Determine the stable branches for the backport
 -------------------------------------------------------
 
-Check the support matrix at <https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html#release-support-matrix>.
+Refer to the backport policy in `context/contributing.md`:
 
-Ask the user what type of fix this is:
+- Bug fixes: backported to latest stable only
+- Critical bug fixes: backported to latest and previous stable
+- Security issues: must be reported to security@ansible.com privately (not via GitHub)
 
-- General bug fix → backport to latest stable only
-- Critical bug fix → backport to latest and previous stable
-- Security fix → backport to all supported stable branches
+Ask the user what type of fix this is and confirm the target branches before proceeding.
 
-Confirm the target branches with the user before proceeding.
+To identify available stable branches, run: `git ls-remote --heads <upstream_remote> 'refs/heads/stable-*'`
 
 Step 4: Create the backport branches
 -------------------------------------
