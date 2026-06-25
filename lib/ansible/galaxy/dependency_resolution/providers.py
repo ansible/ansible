@@ -401,7 +401,7 @@ class CollectionDependencyProvider(AbstractProvider):
         if (
                 requirement.is_virtual or
                 candidate.is_virtual or
-                requirement.ver == '*'
+                requirement.ver in ('*', 'latest')
         ):
             return True
 

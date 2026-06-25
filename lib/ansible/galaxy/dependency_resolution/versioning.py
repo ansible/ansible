@@ -52,7 +52,7 @@ def meets_requirements(version: str, requirements: str) -> bool:
             requirement = req
             op = operator.eq
 
-        if requirement == '*' or version == '*':
+        if requirement in ('*', 'latest') or version in ('*', 'latest'):
             continue
 
         if not op(
