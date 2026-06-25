@@ -710,6 +710,9 @@ class PathMapper:
         if path.startswith('changelogs/'):
             return minimal
 
+        if path.startswith('context/'):
+            return minimal
+
         if path.startswith('hacking/'):
             return minimal
 

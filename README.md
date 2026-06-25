@@ -70,7 +70,9 @@ For more ways to get in touch, see [Communicating with the Ansible community](ht
 
 ## Coding Guidelines
 
-We document our Coding Guidelines in the [Developer Guide](https://docs.ansible.com/ansible/devel/dev_guide/). We particularly suggest you review:
+Development context for ansible-core can be found in the [context](context/) directory.
+
+We also document our Coding Guidelines in the [Developer Guide](https://docs.ansible.com/ansible/devel/dev_guide/). We particularly suggest you review:
 
 * [Contributing your module to Ansible](https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_checklist.html)
 * [Conventions, tips, and pitfalls](https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_best_practices.html)
