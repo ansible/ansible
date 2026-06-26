@@ -783,7 +783,7 @@ def main():
     if env and chdir:
         env = os.path.join(chdir, env)
     elif env and not os.path.isabs(env):
-        env = os.path.join(os.getcwd(),env)
+        env = os.path.join(os.getcwd(), env)
 
     if umask and not isinstance(umask, int):
         try:

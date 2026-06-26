@@ -25,6 +25,7 @@ class DataclassesIsTypePatch(CallablePatch):
     def is_patch_needed(cls) -> bool:
         if sys.version_info >= (3, 15):
             return False
+
         @dataclasses.dataclass
         class CheckClassVar:
             # this is the broken case requiring patching: ClassVar dot-referenced from a module that is not `typing` is treated as an instance field
