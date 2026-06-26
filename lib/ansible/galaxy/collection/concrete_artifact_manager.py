@@ -435,11 +435,14 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             format(repo_url=to_native(git_url))
         ) from err
 
+    # Use '--' to ensure git_url and the destination are treated strictly as
+    # positional arguments, defending against git option injection from
+    # collection requirements.
     # Perform a shallow clone if simply cloning HEAD
     if version == 'HEAD':
-        git_clone_cmd = [git_executable, 'clone', '--depth=1', git_url, to_text(b_checkout_path)]
+        git_clone_cmd = [git_executable, 'clone', '--depth=1', '--', git_url, to_text(b_checkout_path)]
     else:
-        git_clone_cmd = [git_executable, 'clone', git_url, to_text(b_checkout_path)]
+        git_clone_cmd = [git_executable, 'clone', '--', git_url, to_text(b_checkout_path)]
     # FIXME: '--branch', version
 
     if context.CLIARGS['ignore_certs'] or C.GALAXY_IGNORE_CERTS:

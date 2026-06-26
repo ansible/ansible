@@ -144,7 +144,7 @@ def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeyp
         repo += '/'
 
     git_executable = get_bin_path('git')
-    clone_cmd = [git_executable, 'clone', repo, '']
+    clone_cmd = [git_executable, 'clone', '--', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
     assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, '-c', 'advice.detachedHead=false', 'checkout', 'commitish')
@@ -175,7 +175,7 @@ def test_concrete_artifact_manager_scm_cmd_shallow(url, version, trailing_slash,
     if trailing_slash:
         repo += '/'
     git_executable = get_bin_path('git')
-    shallow_clone_cmd = [git_executable, 'clone', '--depth=1', repo, '']
+    shallow_clone_cmd = [git_executable, 'clone', '--depth=1', '--', repo, '']
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == shallow_clone_cmd
     assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
@@ -205,11 +205,50 @@ def test_concrete_artifact_manager_scm_cmd_validate_certs(ignore_certs_cli, igno
     assert mock_subprocess_check_call.call_count == 2
 
     git_executable = get_bin_path('git')
-    clone_cmd = [git_executable, 'clone', '--depth=1', url, '']
+    clone_cmd = [git_executable, 'clone', '--depth=1', '--', url, '']
     if expected_ignore_certs:
         clone_cmd.extend(['-c', 'http.sslVerify=false'])
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
+
+
+def test_concrete_artifact_manager_scm_cmd_uses_separator_with_git_plus_format(monkeypatch):
+    """Test that '--' separator is used for git+<string> requirements.
+
+    Directly addresses review feedback:
+    - Collection git sources are specified using the 'git+<repo>' string format
+      (the supported way for requirements and dependencies, not 'source:' + type).
+    - This test passes exactly that format to the function, parses it with
+      the real parse_scm, and verifies that the resulting git_url is placed
+      after '--' in the git clone command.
+
+    Note that in real execution many such inputs fail earlier at mkdtemp
+    (due to name derivation), but the separator is still required for
+    defense-in-depth and to match the role implementation.
+    """
+    context.CLIARGS._store = {'ignore_certs': False}
+    mock_subprocess_check_call = MagicMock()
+    monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
+    mock_mkdtemp = MagicMock(return_value='')
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'mkdtemp', mock_mkdtemp)
+
+    # Use the exact git+<string> format supported for collection requirements
+    # (and galaxy.yml dependencies). This input produces a clean name derivation
+    # ("repo") so it would reach git clone, while the resulting git_url starts
+    # with "-" (simulating a malicious option injection attempt).
+    git_plus_input = 'git+-c core.sshCommand=evil@example.com:evil/repo.git'
+    collection.concrete_artifact_manager._extract_collection_from_git(git_plus_input, 'HEAD', b'path')
+
+    git_executable = get_bin_path('git')
+
+    # Use the real parse_scm to get the exact git_url (the "path" element)
+    # that ends up in the clone command. For this input it starts with '-',
+    # so without '--' it would be misinterpreted as a git option.
+    git_url = collection.concrete_artifact_manager.parse_scm(git_plus_input, 'HEAD')[2]
+    expected_clone = [git_executable, 'clone', '--depth=1', '--', git_url, '']
+
+    assert mock_subprocess_check_call.call_args_list[0].args[0] == expected_clone
     assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
 
 
