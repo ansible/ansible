@@ -21,7 +21,13 @@ def main() -> t.Never:
 
 
 def handle_prompt(prompt: str) -> bool:
-    if re.search(r'(The authenticity of host |differs from the key for the IP address)', prompt):
+    if (ssh_askpass_prompt := os.environ.get('SSH_ASKPASS_PROMPT')) == 'none':
+        return True
+
+    if (
+        ssh_askpass_prompt == 'confirm' or
+        re.search(r'(The authenticity of host |differs from the key for the IP address)', prompt)
+    ):
         sys.stdout.write('no')
         sys.stdout.flush()
         return True

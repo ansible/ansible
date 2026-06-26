@@ -1,0 +1,2 @@
+minor_changes:
+  - ssh connection plugin - inspect ``SSH_ASKPASS_PROMPT`` in ``SSH_ASKPASS`` script for reliability (https://github.com/ansible/ansible/issues/86319)
