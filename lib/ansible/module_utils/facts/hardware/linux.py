@@ -880,12 +880,21 @@ class LinuxHardware(Hardware):
 
         if os.getuid() == 0:
             lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
+            duplicate_vgs = 0
+            duplicate_lvs = 0
 
             # vgs fields: VG #PV #LV #SN Attr VSize VFree
             vgs = {}
             rc, vg_lines, err = self.module.run_command('%s %s' % (vgs_cmd, lvm_util_options))
             for vg_line in vg_lines.splitlines():
                 items = vg_line.strip().split(',')
+                vg_name = items[0]
+                if vg_name in vgs:
+                    duplicate_vgs += 1
+                    self.module.debug(
+                        "Duplicate LVM volume group name '%s' encountered while gathering LVM facts; "
+                        "overwriting existing ansible_facts['lvm']['vgs'] entry with line: %s" % (vg_name, vg_line)
+                    )
                 vgs[items[0]] = {
                     'size_g': items[-2],
                     'free_g': items[-1],
@@ -906,6 +915,12 @@ class LinuxHardware(Hardware):
                     lv_name = items[0]
                     # The LV name is only unique per VG, so the top level fact lvs can be misleading.
                     # TODO: deprecate lvs in favor of vgs
+                    if lv_name in lvs:
+                        duplicate_lvs += 1
+                        self.module.debug(
+                            "Duplicate LVM logical volume name '%s' encountered while gathering LVM facts; "
+                            "overwriting existing ansible_facts['lvm']['lvs'] entry with line: %s" % (lv_name, lv_line)
+                        )
                     lvs[lv_name] = {'size_g': items[3], 'vg': vg_name}
                     try:
                         vgs[vg_name]['lvs'][lv_name] = {'size_g': items[3]}
@@ -926,6 +941,13 @@ class LinuxHardware(Hardware):
                         'size_g': items[4],
                         'free_g': items[5],
                         'vg': items[1]}
+
+            if duplicate_vgs or duplicate_lvs:
+                self.module.warn(
+                    "Duplicate LVM names were encountered while gathering LVM facts; "
+                    "overwrites applied: vgs=%d, lvs=%d."
+                    % (duplicate_vgs, duplicate_lvs)
+                )
 
             lvm_facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
 
