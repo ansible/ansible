@@ -96,7 +96,7 @@ class TestCryptFacade:
         with pytest.raises(ValueError, match=r'crypt failed: invalid salt or unsupported algorithm'):
             crypt_facade.crypt(b"test", b"123")
 
-    @pytest.mark.parametrize('failure_token', list(_FAILURE_TOKENS))
+    @pytest.mark.parametrize('failure_token', sorted(list(_FAILURE_TOKENS)))
     def test_crypt_result_failure(self, mocker: MockerFixture, failure_token: bytes) -> None:
         """Test crypt() implementation returning failure token raises ValueError."""
         crypt_facade = CryptFacade()
