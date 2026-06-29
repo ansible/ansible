@@ -181,7 +181,8 @@ class CryptHash(BaseHash):
         saltstring = f'${ident}' if ident else ''
         if rounds:
             if self.algo_data.rounds_format == 'cost':
-                saltstring += f'${rounds}'
+                # musl libc requires a 2-digit bcrypt cost ($2b$05$, not $2b$5$).
+                saltstring += f'${rounds:02d}'
             else:
                 saltstring += f'$rounds={rounds}'
         saltstring += f'${salt}'
