@@ -221,6 +221,25 @@ class TestVaultCli(unittest.TestCase):
         cli.parse()
         cli.run()
 
+    @patch('ansible.cli.vault.display.display')
+    @patch('ansible.cli.vault.sys.stdout.isatty', return_value=True)
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    def test_decrypt_to_stdout_separates_success_message_from_plaintext(
+        self,
+        mock_vault_editor,
+        mock_setup_vault_secrets,
+        mock_stdout_isatty,
+        mock_display,
+    ):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt', '--output', '-', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+
+        mock_vault_editor.return_value.decrypt_file.assert_called_once_with('/dev/null/foo', output_file='-')
+        mock_display.assert_called_once_with("\nDecryption successful", stderr=True)
+
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
     def test_view(self, mock_vault_editor, mock_setup_vault_secrets):
