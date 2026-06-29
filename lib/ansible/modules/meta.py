@@ -20,10 +20,12 @@ options:
         - This module takes a free form command, as a string. There is not an actual option named "free form".  See the examples!
         - V(flush_handlers) makes Ansible run any handler tasks which have thus far been notified. Ansible inserts these tasks internally at certain
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
-        - V(refresh_inventory) (added in Ansible 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
-          re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
-          or, if available for your specific inventory datasource (for example P(amazon.aws.aws_ec2#inventory)), you can use the an inventory plugin instead
-          of an inventory script). This is mainly useful when additional hosts are created and users wish to use them instead of using the
+        - V(refresh_inventory) (added in Ansible 2.0) forces the inventory manager to reload inventory sources, which in the case of dynamic inventory
+          scripts means they will be re-executed. The reload updates host and group structure and inventory-provided variables from those sources.
+          Dynamic hosts added by M(ansible.builtin.add_host) and dynamic groups created by M(ansible.builtin.group_by) are preserved from the in-memory
+          inventory cache. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable
+          the cache or, if available for your specific inventory datasource (for example P(amazon.aws.aws_ec2#inventory)), you can use an inventory plugin
+          instead of an inventory script). This is mainly useful when additional hosts are created and users wish to use them instead of using the
           M(ansible.builtin.add_host) module.
         - Note that neither V(refresh_inventory) nor the M(ansible.builtin.add_host) add hosts to the hosts the current play iterates over.
           However, if needed, you can explicitly delegate tasks to new hosts with C(delegate_to). Generally,
