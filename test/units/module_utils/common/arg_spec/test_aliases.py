@@ -88,7 +88,7 @@ ALIAS_TEST_CASES_INVALID: list[tuple[str, dict, dict, dict, str]] = [
 
 @pytest.mark.parametrize(
     ('arg_spec', 'parameters', 'expected', 'deprecation', 'warning'),
-    ((i[1:]) for i in ALIAS_TEST_CASES),
+    [i[1:] for i in ALIAS_TEST_CASES],
     ids=[i[0] for i in ALIAS_TEST_CASES]
 )
 def test_aliases(arg_spec, parameters, expected, deprecation, warning):
@@ -117,7 +117,7 @@ def test_aliases(arg_spec, parameters, expected, deprecation, warning):
 
 @pytest.mark.parametrize(
     ('arg_spec', 'parameters', 'expected', 'error'),
-    ((i[1:]) for i in ALIAS_TEST_CASES_INVALID),
+    [i[1:] for i in ALIAS_TEST_CASES_INVALID],
     ids=[i[0] for i in ALIAS_TEST_CASES_INVALID]
 )
 def test_aliases_invalid(arg_spec, parameters, expected, error):

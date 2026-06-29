@@ -56,7 +56,7 @@ class TestAnsibleModuleTmpDir:
         ),
     )
 
-    @pytest.mark.parametrize('args, expected, stat_exists', ((s, e, t) for s, t, e in DATA))
+    @pytest.mark.parametrize('args, expected, stat_exists', [(s, e, t) for s, t, e in DATA])
     def test_tmpdir_property(self, monkeypatch, args, expected, stat_exists):
         makedirs = {'called': False}
 
