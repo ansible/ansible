@@ -196,7 +196,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
 
 
 def ansiballz_setup(modfile, modname, interpreters):
-    os.system("chmod +x %s" % modfile)
+    os.chmod(modfile, os.stat(modfile).st_mode | 0o100)
 
     if 'ansible_python_interpreter' in interpreters:
         command = [interpreters['ansible_python_interpreter']]
@@ -242,7 +242,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         if 'ansible_python_interpreter' in interpreters:
             invoke = "%s " % interpreters['ansible_python_interpreter']
 
-    os.system("chmod +x %s" % modfile)
+    os.chmod(modfile, os.stat(modfile).st_mode | 0o100)
 
     invoke = "%s%s" % (invoke, modfile)
     if argspath is not None:
