@@ -91,9 +91,6 @@ test_default_temp_directory() {
 test_multiple_signals_append() {
     echo "=== Test: Multiple SIGUSR1 signals append to file ==="
 
-    # Unset custom directory from Test 2
-    unset ANSIBLE_STACKTRACE_DIR
-
     # Start ansible-playbook in background
     ansible-playbook -i inventory playbook.yml &
     local ANSIBLE_PID

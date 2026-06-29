@@ -1,0 +1,35 @@
+- name: Use custom module to send SIGUSR1 to AnsiballZ process
+  custom_module:
+  register: result
+
+- debug:
+    msg: "Sent SIGUSR1 to {{ result.process_pid }}"
+
+- name: Locate stacktrace dump file
+  find:
+    paths: "{{ result.tempdir }}"
+    patterns: "ansible-{{ result.process_pid }}.debug"
+  register: found_files
+
+- assert:
+    that:
+      - found_files.files | length == 1
+
+- block:
+  - name: Read file contents
+    command: "cat {{ found_files.files[0].path }}"
+    register: file_contents
+
+  - set_fact:
+      msg1: "Process {{ result.process_pid }} stacktrace"
+
+  - assert:
+      that:
+        - msg1 in file_contents.stdout
+        - "'Thread stacktraces' in file_contents.stdout"
+
+  always:
+    - name: Remove stacktrace dump file
+      file:
+        path: "{{ found_files.files[0].path }}"
+        state: absent
