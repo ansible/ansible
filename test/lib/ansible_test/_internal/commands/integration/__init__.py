@@ -8,6 +8,7 @@ import dataclasses
 import datetime
 import json
 import os
+import pathlib
 import re
 import shutil
 import tempfile
@@ -57,7 +58,12 @@ from ...io import (
     read_text_file,
 )
 
+from ...constants import (
+    TIMEOUT_MARGIN_SECONDS,
+)
+
 from ...util import (
+    ANSIBLE_TEST_CONTROLLER_ROOT,
     ApplicationError,
     display,
     get_ansible_version,
@@ -131,6 +137,10 @@ from .filters import (
 
 from .coverage import (
     CoverageManager,
+)
+
+from ...timeout import (
+    get_timeout,
 )
 
 
@@ -306,7 +316,11 @@ def integration_test_environment(
         ansible_config = ansible_config_src
         vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
-        yield IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        test_env = IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+
+        with test_env.run():
+            yield test_env
+
         return
 
     # When testing a collection, the temporary directory must reside within the collection.
@@ -385,7 +399,10 @@ def integration_test_environment(
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file, collection_roots)
+        test_env = IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file, collection_roots)
+
+        with test_env.run():
+            yield test_env
     finally:
         if not args.explain:
             remove_tree(temp_dir)
@@ -850,6 +867,11 @@ def integration_environment(
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
 
+    timeout = get_timeout()
+
+    if timeout:
+        callback_plugins.append('ansible_test._internal.timeout')
+
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
         JUNIT_TASK_RELATIVE_PATH=test_env.test_dir,
@@ -861,6 +883,16 @@ def integration_environment(
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
+
+    if timeout:
+        collections_path = env.get('ANSIBLE_COLLECTIONS_PATH', '')
+        collections_path = f'{ANSIBLE_TEST_CONTROLLER_ROOT}:{collections_path}' if collections_path else ANSIBLE_TEST_CONTROLLER_ROOT
+
+        integration.update(
+            ANSIBLE_COLLECTIONS_PATH=collections_path,
+            ANSIBLE_TEST_TIMEOUT_DEADLINE=str(timeout.deadline.timestamp() - TIMEOUT_MARGIN_SECONDS),
+            ANSIBLE_TEST_TIMEOUT_DIR=str(test_env.timeout_dir),
+        )
 
     if args.debug_strategy:
         env.update(ANSIBLE_STRATEGY='debug')
@@ -891,6 +923,44 @@ class IntegrationEnvironment:
     ansible_config: str
     vars_file: str
     collection_roots: list[str] = dataclasses.field(default_factory=list)
+
+    @property
+    def timeout_dir(self) -> pathlib.Path:
+        """Return the path for timeout dump files."""
+        return pathlib.Path(self.test_dir) / 'timeout'
+
+    @contextlib.contextmanager
+    def run(self) -> c.Iterator[None]:
+        """Context manager that checks for timeout dumps after the test runs."""
+        try:
+            yield
+        finally:
+            self.check_timeout_dumps()
+
+    def check_timeout_dumps(self) -> None:
+        """Check for timeout dump files and raise an error if any contain tracebacks."""
+        if not (timeout := get_timeout()):
+            return
+
+        if not self.timeout_dir.is_dir():
+            return
+
+        found = False
+
+        for dump_file in sorted(self.timeout_dir.iterdir()):
+            lines = dump_file.read_text().splitlines()
+
+            if len(lines) <= 2:  # first line is the command, second is the timeout status, traceback, if any, follows
+                continue
+
+            found = True
+            display.error(f'Timeout traceback detected ({dump_file.name}):\n' + '\n'.join(lines))
+
+        if found:
+            raise ApplicationError(
+                f'Tests aborted by the timeout callback after approaching the {timeout.duration} minute time limit.'
+                ' See traceback(s) above for process state.'
+            )
 
     def update_environment(self, env: dict[str, str]) -> None:
         """Update the given environment dictionary with the variables necessary for this integration environment."""
