@@ -236,19 +236,19 @@ def ansiballz_setup(modfile, modname, interpreters):
 
 def runtest(modfile, argspath, modname, module_style, interpreters):
     """Test run a module, piping it's output for reporting."""
-    invoke = ""
+    invoke = []
     if module_style == 'ansiballz':
         modfile, argspath = ansiballz_setup(modfile, modname, interpreters)
         if 'ansible_python_interpreter' in interpreters:
-            invoke = "%s " % interpreters['ansible_python_interpreter']
+            invoke = [interpreters['ansible_python_interpreter']]
 
     os.system("chmod +x %s" % modfile)
 
-    invoke = "%s%s" % (invoke, modfile)
+    invoke.append(modfile)
     if argspath is not None:
-        invoke = "%s %s" % (invoke, argspath)
+        invoke.append(str(argspath))
 
-    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = subprocess.Popen(invoke, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     out, err = to_text(out), to_text(err)
 
