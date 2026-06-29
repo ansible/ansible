@@ -25,6 +25,9 @@ options:
           or, if available for your specific inventory datasource (for example P(amazon.aws.aws_ec2#inventory)), you can use the an inventory plugin instead
           of an inventory script). This is mainly useful when additional hosts are created and users wish to use them instead of using the
           M(ansible.builtin.add_host) module.
+        - Inventory refresh reloads inventory sources and the variables they provide, re-runs inventory plugins, and rebuilds the host and group structure
+          from the reloaded inventory. Dynamic hosts created by M(ansible.builtin.add_host) and dynamic groups created by
+          M(ansible.builtin.group_by) are restored from Ansible's in-memory cache.
         - Note that neither V(refresh_inventory) nor the M(ansible.builtin.add_host) add hosts to the hosts the current play iterates over.
           However, if needed, you can explicitly delegate tasks to new hosts with C(delegate_to). Generally,
           C(delegate_to) can be used against hosts regardless of whether they are in the inventory or not, as long as
