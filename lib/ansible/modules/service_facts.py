@@ -89,8 +89,15 @@ ansible_facts:
           sample: running
         status:
           description:
-          - State of the service.
-          - Either V(enabled), V(disabled), V(static), V(indirect) or V(unknown).
+          - Status of the service.
+          - For systemd services, this is usually the unit file state reported by
+            C(systemctl list-unit-files), such as V(enabled), V(disabled), V(static),
+            V(indirect), V(generated), or V(masked).
+          - When unit file data is unavailable, or systemd reports a problem state,
+            values can also include V(not-found), V(failed), V(active), V(inactive),
+            or V(unknown).
+          - For other supported init systems, this commonly reports whether the
+            service is V(enabled), V(disabled), or V(unknown).
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart or OpenBSD
           type: str
           sample: enabled
