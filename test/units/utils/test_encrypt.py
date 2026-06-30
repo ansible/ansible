@@ -288,6 +288,16 @@ class TestCryptHash:
         with pytest.raises(AnsibleError, match=r"crypt does not support 'sha256_crypt' algorithm"):
             crypt_hash.hash("123", salt="12345678")
 
+    def test_build_saltstring_bcrypt_cost_padding(self, mocker: MockerFixture) -> None:
+        """musl libc requires a 2-digit bcrypt cost in the salt string."""
+        mocker.patch('ansible.utils.encrypt.HAS_CRYPT', True)
+        mocker.patch('ansible._internal._encryption._crypt.CryptFacade.has_crypt_gensalt', False)
+
+        crypt_hash = encrypt.CryptHash("bcrypt")
+        saltstring = crypt_hash._build_saltstring('2b', 5, '1234567890123456789012', None)
+
+        assert saltstring == '$2b$05$1234567890123456789012'
+
 
 class TestPasslibHash:
     """

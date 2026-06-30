@@ -82,7 +82,7 @@ class TestCryptFacade:
 
     def test_crypt_fail_errno(self, mocker: MockerFixture) -> None:
         """Test crypt() setting failure errno raises OSError."""
-        mocker.patch('ctypes.get_errno', return_value=errno.EBADFD)
+        mocker.patch('ctypes.get_errno', return_value=errno.EBADF)
         crypt_facade = CryptFacade()
 
         with pytest.raises(OSError, match=r'crypt failed:'):
@@ -96,10 +96,11 @@ class TestCryptFacade:
         with pytest.raises(ValueError, match=r'crypt failed: invalid salt or unsupported algorithm'):
             crypt_facade.crypt(b"test", b"123")
 
-    def test_crypt_result_failure(self, mocker: MockerFixture) -> None:
+    @pytest.mark.parametrize('failure_token', sorted(list(_FAILURE_TOKENS)))
+    def test_crypt_result_failure(self, mocker: MockerFixture, failure_token: bytes) -> None:
         """Test crypt() implementation returning failure token raises ValueError."""
         crypt_facade = CryptFacade()
-        mocker.patch.object(crypt_facade, '_crypt_impl', return_value=list(_FAILURE_TOKENS)[0])
+        mocker.patch.object(crypt_facade, '_crypt_impl', return_value=failure_token)
 
         with pytest.raises(ValueError, match=r'crypt failed: invalid salt or unsupported algorithm'):
             crypt_facade.crypt(b"test", b"123")
@@ -124,7 +125,7 @@ class TestCryptFacade:
 
     def test_crypt_gensalt_fail_errno(self, mocker: MockerFixture) -> None:
         """Test crypt_gensalt() setting failure errno raises OSError."""
-        mocker.patch('ctypes.get_errno', return_value=errno.EBADFD)
+        mocker.patch('ctypes.get_errno', return_value=errno.EBADF)
         crypt_facade = CryptFacade()
 
         with pytest.raises(OSError, match=r'crypt_gensalt failed:'):
