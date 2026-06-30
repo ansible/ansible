@@ -110,6 +110,7 @@ options:
     - This flag indicates that filesystem links in the source tree, if they exist, should be followed.
     type: bool
     version_added: '2.4'
+    default: true
   checksum:
     description:
     - SHA1 checksum of the file being transferred.
