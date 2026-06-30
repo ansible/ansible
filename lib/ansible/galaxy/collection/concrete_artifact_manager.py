@@ -268,12 +268,12 @@ class ConcreteArtifactsManager:
             self._get_direct_collection_name(collection),
         ))
 
-        if not AnsibleCollectionRef.is_valid_collection_name(fqcn):
+        try:
+            AnsibleCollectionRef.assert_valid_collection_name(fqcn)
+        except ValueError as e:
             raise AnsibleError(
-                f"Invalid collection metadata in the collection at {collection.src!r}: "
-                f"collection namespace or name contains invalid characters: {fqcn!r}. "
-                "namespace and name must only contain [a-zA-Z0-9_] characters."
-            )
+                f"Invalid collection metadata at {collection.src!r}: {e}"
+            ) from e
 
         return fqcn
 
