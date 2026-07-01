@@ -68,7 +68,7 @@ attributes:
     diff_mode:
       support: none
     ignore_conditional:
-      details: Only some options support conditionals and when they do they act 'bypassing the host loop', taking the values from first available host
+      details: Only some options support conditionals, see the notes below
       support: partial
     connection:
       details: Most options in this action do not use a connection, except V(reset_connection) which still does not connect to the remote
@@ -78,6 +78,9 @@ attributes:
 notes:
     - V(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using O(ansible.builtin.set_fact#module:cacheable=True),
       but not the current host variable it creates for the current run.
+    - Meta actions that do not support conditionals ignore the C(when) conditional.
+    - Some meta actions support conditionals. These conditionals act as if C(bypass_host_loop) is enabled,
+      which means the condition is evaluated from the first available host and not separately for each host.
     - Skipping M(ansible.builtin.meta) tasks with tags is not supported before Ansible 2.11.
 seealso:
 - module: ansible.builtin.assert
