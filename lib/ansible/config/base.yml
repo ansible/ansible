@@ -1504,7 +1504,12 @@ GALAXY_SERVER_LIST:
   version_added: "2.9"
 GALAXY_TOKEN_PATH:
   default: '{{ ANSIBLE_HOME ~ "/galaxy_token" }}'
-  description: "Local path to galaxy access token file"
+  description:
+  - Local path to a Galaxy access token file.
+  - The file must be YAML with the token stored under the ``token`` key.
+  - Configured Galaxy servers from :ref:`galaxy_server_list` use the token
+    defined in the matching ``[galaxy_server.{{item}}]`` entry or environment
+    variable instead of this file.
   env: [{name: ANSIBLE_GALAXY_TOKEN_PATH}]
   ini:
   - {key: token_path, section: galaxy}
