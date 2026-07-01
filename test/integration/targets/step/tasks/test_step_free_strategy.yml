@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: false
+  strategy: free
+  tasks:
+    - ping:
