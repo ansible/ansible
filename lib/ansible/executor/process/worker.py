@@ -189,12 +189,11 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         a try/except added in far-away code can cause a crashed child process
         to suddenly assume the role and prior state of its parent.
         """
-        # Set the queue on Display so calls to Display.display are proxied over the queue
-        display.set_queue(self._final_q)
-        self._detach()
-        # propagate signals
         signal.signal(signal.SIGINT, self._term)
         signal.signal(signal.SIGTERM, self._term)
+
+        display.set_queue(self._final_q)
+        self._detach()
 
         try:
             with _task.TaskContext.create(task=self._task, task_vars=self._task_vars, host_name=self._host.name):

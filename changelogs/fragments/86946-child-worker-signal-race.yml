@@ -1,0 +1,4 @@
+bugfixes:
+- TaskQueueManager - fix ``AssertionError`` crash when a forked worker process
+  receives SIGTERM/SIGINT before replacing inherited parent signal handlers
+  (https://github.com/ansible/ansible/issues/86946).

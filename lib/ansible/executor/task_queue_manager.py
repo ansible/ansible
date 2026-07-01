@@ -145,6 +145,7 @@ class TaskQueueManager:
     RUN_UNKNOWN_ERROR = 255  # never leaves PlaybookExecutor.run, intentionally includes the bit value for 8
 
     _callback_dispatch_error_handler = ErrorHandler.from_config('_CALLBACK_DISPATCH_ERROR_BEHAVIOR')
+    _fork_handler_registered = False
 
     def __init__(
         self,
@@ -209,9 +210,21 @@ class TaskQueueManager:
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
 
+        if not TaskQueueManager._fork_handler_registered:
+            os.register_at_fork(after_in_child=TaskQueueManager._reset_child_signals)
+            TaskQueueManager._fork_handler_registered = True
+
     def _initialize_processes(self, num: int) -> None:
         # mutable update to ensure the reference stays the same
         self._workers[:] = [None] * num
+
+    @staticmethod
+    def _reset_child_signals() -> None:
+        """``after_in_child`` fork callback that restores default signal
+        disposition before any child code runs, closing the race window
+        where an inherited parent handler could execute in the child."""
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def _signal_handler(self, signum, frame) -> None:
         """
@@ -223,12 +236,20 @@ class TaskQueueManager:
         """
         signal.signal(signum, signal.SIG_DFL)
 
+        my_pid = os.getpid()
+
+        if any(w is not None and w.pid == my_pid for w in self._workers):
+            # Forked child received a signal before replacing the inherited
+            # parent handlers. Default disposition is now restored above;
+            # re-raise so the default handler terminates the child cleanly.
+            os.kill(my_pid, signum)
+            return
+
         for worker in self._workers:
             if worker is None or not worker.is_alive():
                 continue
             if worker.pid:
                 try:
-                    # notify workers
                     os.kill(worker.pid, signum)
                 except OSError as e:
                     if e.errno != errno.ESRCH:
@@ -239,12 +260,11 @@ class TaskQueueManager:
             # Defer to CLI handling
             raise KeyboardInterrupt()
 
-        pid = os.getpid()
         try:
-            os.kill(pid, signum)
+            os.kill(my_pid, signum)
         except OSError as e:
             signame = signal.strsignal(signum)
-            display.error(f'Unable to send {signame} to {pid}: {e}')
+            display.error(f'Unable to send {signame} to {my_pid}: {e}')
 
     def load_callbacks(self):
         """
