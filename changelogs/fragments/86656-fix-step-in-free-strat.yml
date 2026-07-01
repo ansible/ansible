@@ -1,0 +1,2 @@
+bugfixes:
+  - free strategy - prevent hanging on skipping a task using ``--step`` (https://github.com/ansible/ansible/issues/86656)
