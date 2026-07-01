@@ -1024,10 +1024,11 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
             data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
-    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False):
+    def _update_module_args(self, module_name, module_args, task_vars, ignore_unknown_opts: bool = False, check_mode: bool | None = None):
 
         # set check mode in the module arguments, if required
-        if self._task.check_mode:
+        effective_check_mode = self._task.check_mode if check_mode is None else check_mode
+        if effective_check_mode:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
@@ -1099,9 +1100,17 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         delete_remote_tmp: bool | None = None,
         wrap_async: bool = False,
         ignore_unknown_opts: bool = False,
+        check_mode: bool | None = None,
     ) -> dict[str, object]:
         """
         Transfer and run a module along with its arguments.
+
+        :kwarg check_mode: Override check mode for this module execution.
+            ``None`` (default) inherits check mode from the task. ``True``
+            forces check mode on, ``False`` forces it off. This is useful
+            when an action plugin needs to execute a module that gathers
+            information without modifying state, even when the task is
+            running in check mode.
         """
         if tmp is not None:
             display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
@@ -1139,7 +1148,7 @@ class ActionBase(ABC, _AnsiblePluginInfoMixin):
         if module_args is None:
             module_args = self._task.args
 
-        self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts)
+        self._update_module_args(module_name, module_args, task_vars, ignore_unknown_opts=ignore_unknown_opts, check_mode=check_mode)
 
         remove_async_dir = None
         if wrap_async or self._task.async_val:

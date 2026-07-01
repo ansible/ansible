@@ -1,0 +1,5 @@
+minor_changes:
+  - action plugins - ``ActionBase._execute_module()`` now accepts an optional ``check_mode`` parameter
+    to override the task's check mode for a specific module execution. This avoids the fragile
+    workaround of temporarily mutating ``self._task.check_mode``
+    (https://github.com/ansible/ansible/issues/87071).
