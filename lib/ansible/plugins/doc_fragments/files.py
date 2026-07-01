@@ -34,8 +34,8 @@ options:
   owner:
     description:
     - Name of the user that should own the filesystem object, as would be fed to C(chown).
-    - When left unspecified, it uses the current user unless you are root, in which
-      case it can preserve the previous ownership.
+    - When left unspecified, existing filesystem objects keep their current ownership.
+    - Newly created filesystem objects are owned by the user running the module.
     - Specifying a numeric username (for example, "1000") will be assumed to be a user ID (UID) and not a username.
       To prevent confusion, avoid using purely numeric usernames.
 
@@ -43,8 +43,9 @@ options:
   group:
     description:
     - Name of the group that should own the filesystem object, as would be fed to C(chown).
-    - When left unspecified, it uses the current group of the current user unless you are root,
-      in which case it can preserve the previous ownership.
+    - When left unspecified, existing filesystem objects keep their current group ownership.
+    - Newly created filesystem objects use the default group of the user running the module,
+      or the group of the parent directory if the operating system applies setgid inheritance.
     - Specifying a numeric group name (for example, "1000") will be assumed to be a group ID (GID) and not a group name.
       To prevent confusion, avoid using purely numeric group names.
     type: str
