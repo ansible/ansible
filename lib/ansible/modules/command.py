@@ -50,16 +50,20 @@ options:
     description:
       - The command module takes a free form string as a command to run.
       - There is no actual parameter named C(free_form).
+      - Use O(cmd) or O(argv) instead of free form to avoid parsing values that contain quotes or other characters
+        that Ansible could interpret before running the command.
   cmd:
     type: str
     description:
       - The command to run.
+      - Use O(cmd) instead of free form when the command contains values that should not be parsed as key=value arguments.
   argv:
     type: list
     elements: str
     description:
       - Passes the command as a list rather than a string.
       - Use O(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+      - Use O(argv) when values contain spaces, quotes, or other characters that need to be passed exactly.
       - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
