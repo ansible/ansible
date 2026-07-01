@@ -23,6 +23,8 @@ options:
   apply:
     description:
       - Accepts a hash of task keywords (for example C(tags), C(become)) that will be applied to the tasks within the include.
+      - Task keyword inheritance also applies to any nested tasks included by those tasks.
+        For example, tags applied with this option are inherited by tasks loaded through nested includes.
     type: str
     version_added: '2.7'
   free-form:
