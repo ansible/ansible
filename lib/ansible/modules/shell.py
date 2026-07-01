@@ -27,11 +27,14 @@ options:
       - The shell module takes a free form command to run, as a string.
       - There is no actual parameter named 'free form'.
       - See the examples on how to use this module.
+      - Use O(cmd) instead of free form to avoid parsing commands that contain quotes or other characters
+        that Ansible could interpret before passing the command to the shell.
     type: str
   cmd:
     type: str
     description:
       - The command to run followed by optional arguments.
+      - Use O(cmd) when the command contains values that should not be parsed as key=value arguments.
   creates:
     description:
       - A filename, when it already exists, this step will B(not) be run.
@@ -122,6 +125,12 @@ EXAMPLES = r"""
   ansible.builtin.shell:
     cmd: ls -l | grep log
     chdir: somedir/
+
+- name: Run a multiline shell command that contains shell-specific syntax
+  ansible.builtin.shell:
+    cmd: |
+      # This comment's apostrophe is passed to the shell.
+      echo "done"
 
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
   ansible.builtin.shell: cat < /tmp/*txt
