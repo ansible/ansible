@@ -145,6 +145,9 @@ notes:
       are not touched. This is the same behavior as a normal archive extraction.
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
+    - When O(mode) is not specified, files with Unix permissions in the archive
+      retain those permissions. For archive entries without Unix permissions, the
+      target system C(umask) is applied.
 seealso:
 - module: community.general.archive
 - module: community.general.iso_extract
