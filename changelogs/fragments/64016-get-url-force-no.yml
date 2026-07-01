@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - skip downloading an existing destination when force=false and no checksum is provided, matching the documented behavior that existing files are not downloaded unless forced.
