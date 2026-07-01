@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 __all__ = ['CryptFacade']
 
-_FAILURE_TOKENS = frozenset({b'*0', b'*1'})
+_FAILURE_TOKENS = frozenset({b'*', b'*0', b'*1'})
 
 
 @dataclass(frozen=True)
@@ -93,10 +93,9 @@ class CryptFacade:
 
             if self._use_crypt_r:
                 self._crypt_impl.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(self._CryptData)]
-                self._crypt_impl.restype = ctypes.c_char_p
             else:
                 self._crypt_impl.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-                self._crypt_impl.restype = ctypes.c_char_p
+            self._crypt_impl.restype = ctypes.c_char_p
 
             # Try to load crypt_gensalt (available in libxcrypt)
             try:
@@ -133,10 +132,7 @@ class CryptFacade:
             error_msg = os.strerror(errno)
             raise OSError(errno, f'crypt failed: {error_msg}')
 
-        if result is None:
-            raise ValueError('crypt failed: invalid salt or unsupported algorithm')
-
-        if result in _FAILURE_TOKENS:
+        if result is None or result in _FAILURE_TOKENS:
             raise ValueError('crypt failed: invalid salt or unsupported algorithm')
 
         return result
