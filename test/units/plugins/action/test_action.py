@@ -775,3 +775,53 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         res = action_base._parse_returned_data(returned_data, 'legacy')
         self.assertTrue(res.ansible_facts)
         self.assertIn('ansible_blip', res.ansible_facts)
+
+
+class TestUpdateModuleArgsCheckMode(unittest.TestCase):
+
+    def _make_action(self, task_check_mode=False):
+        action_base = _action_base()
+        mock_task = MagicMock()
+        mock_task.check_mode = task_check_mode
+        mock_task.no_log = False
+        mock_task.diff = False
+        mock_task.delegate_to = None
+        mock_task.environment = []
+        action_base._task = mock_task
+        return action_base
+
+    def test_inherits_task_check_mode_true(self):
+        action = self._make_action(task_check_mode=True)
+        module_args = {}
+        action._update_module_args('test_module', module_args, {})
+        self.assertTrue(module_args['_ansible_check_mode'])
+
+    def test_inherits_task_check_mode_false(self):
+        action = self._make_action(task_check_mode=False)
+        module_args = {}
+        action._update_module_args('test_module', module_args, {})
+        self.assertFalse(module_args['_ansible_check_mode'])
+
+    def test_override_check_mode_false_when_task_is_check(self):
+        action = self._make_action(task_check_mode=True)
+        module_args = {}
+        action._update_module_args('test_module', module_args, {}, check_mode=False)
+        self.assertFalse(module_args['_ansible_check_mode'])
+
+    def test_override_check_mode_true_when_task_is_not_check(self):
+        action = self._make_action(task_check_mode=False)
+        module_args = {}
+        action._update_module_args('test_module', module_args, {}, check_mode=True)
+        self.assertTrue(module_args['_ansible_check_mode'])
+
+    def test_override_none_inherits_from_task(self):
+        action = self._make_action(task_check_mode=True)
+        module_args = {}
+        action._update_module_args('test_module', module_args, {}, check_mode=None)
+        self.assertTrue(module_args['_ansible_check_mode'])
+
+    def test_override_does_not_mutate_task(self):
+        action = self._make_action(task_check_mode=True)
+        module_args = {}
+        action._update_module_args('test_module', module_args, {}, check_mode=False)
+        self.assertTrue(action._task.check_mode)
